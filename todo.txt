@@ -1,0 +1,88 @@
+================================================================================
+todo:
+================================================================================
+
+--------------------------------------------------------------------------------
+gameplay
+--------------------------------------------------------------------------------
+
+Dynamic concave mesh (gimpact) support.  Needed for cars/planes etc.
+
+physical constraints, for car doors, ragdolls, etc
+
+extract actor models
+
+extract skeleton data for actor models
+
+
+
+--------------------------------------------------------------------------------
+cosmetic
+--------------------------------------------------------------------------------
+
+weather (caelum?)
+
+make use of the night vertex colours in the meshes (currently ignored, i think)
+
+sea water (hydrax?)
+
+other water
+
+lua bindings for hardware animation
+
+get actors animated correctly
+
+
+
+--------------------------------------------------------------------------------
+performance
+--------------------------------------------------------------------------------
+
+set up a timeDemo simulation for quantative performance measurements
+
+binary collision file format
+binary contains precomputed data for bvh-based collision meshes
+
+Collision meshes to be considered a resource like graphical meshes
+
+rigid body creation triggers creation of CollisionMesh instance if not already
+existing
+
+rigid body creation triggers loading of CollisionMesh instance if not already loaded
+
+background resource loading includes collision meshes
+
+display the occl zones, find out if i can use them for occlusion culling
+
+might be able to do my own tests with some triangles or axis-aligned quads.
+make sure that from all angles, all objects whose centres lie behind the quads
+are fully occluded.  alternatively check all 8 corners of the aabb of the
+object being rendered (better as it's only slow in the occluded case where we
+make a saving)
+
+minimising the number of occl zones is very important for performance
+(obviously)
+
+
+
+
+--------------------------------------------------------------------------------
+user interface
+--------------------------------------------------------------------------------
+
+Keyboard repeat on windows
+
+sticky keys when lose focus, in X11
+
+sticky keys when switch to lua console, generally
+
+unify app_error app_verbose app_line print echo and console.print, and the
+various assertions
+
+- use Ogre::LogManager
+
+- set up app_verbose as a stream
+
+write windows gdi thingy for stdout ("rich text")
+
+a better system for binding keys, e.g. to drive cars (use ideas from quake)

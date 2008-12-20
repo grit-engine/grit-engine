@@ -1,0 +1,16 @@
+/*
+material GTABase {
+        technique GL : base_tech {
+                pass depth_write_pass : depth_write_pass' { }
+                pass base : gl_base_pass' { }
+        }
+}
+
+material GTABase' {
+        technique * {
+                pass * {
+                }
+        }
+}
+                        
+*/

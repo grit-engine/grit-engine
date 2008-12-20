@@ -1,0 +1,126 @@
+header {
+    #include <cstdlib>  // for: strtof()
+}
+
+token {
+
+    TCOL
+
+    ATTRIBUTES
+    STATIC
+    MASS
+    INERTIA
+    FRICTION
+    RESTITUTION
+    LINEAR_DAMPING
+    ANGULAR_DAMPING
+    LINEAR_SLEEP_THRESHOLD
+    ANGULAR_SLEEP_THRESHOLD
+    CCD_MOTION_THRESHOLD
+    CCD_SWEPT_SPHERE_RADIUS
+    
+
+    MARGIN
+    SHRINK
+    CENTRE
+    NORMAL
+    ORIENTATION
+    DIMENSIONS
+    RADIUS
+    HEIGHT
+    DISTANCE
+    VERTEXES
+    FACES
+
+    COMPOUND
+    HULL
+    BOX
+    CYLINDER
+    CONE
+    SPHERE
+    PLANE
+    CAPSULE
+    MULTISPHERE
+    TRIMESH
+
+    SEMI
+    LBRACE
+    RBRACE
+    NATURAL
+    FLOAT
+    HEX
+    UNKNOWN
+}
+
+start = MAIN;
+
+mode END_OF_FILE :
+<inheritable: only>
+{
+    <<EOF>>                            => QUEX_TKN_TERMINATION;
+}
+
+mode MAIN : END_OF_FILE
+    <exit: COMMENT>
+    <entry: COMMENT>
+{
+    [ \t\r\n\v]+                       { }
+    "//"[^\n]*                         { }
+    "/*"                               { self << COMMENT; }
+
+    "TCOL1.0"                          => QUEX_TKN_TCOL;
+
+    "attributes"                       => QUEX_TKN_ATTRIBUTES;
+    "static"                           => QUEX_TKN_STATIC;
+    "mass"                             => QUEX_TKN_MASS;
+    "inertia"                          => QUEX_TKN_INERTIA;
+    "friction"                         => QUEX_TKN_FRICTION;
+    "restitution"                      => QUEX_TKN_RESTITUTION;
+    "linear_damping"                   => QUEX_TKN_LINEAR_DAMPING;
+    "angular_damping"                  => QUEX_TKN_ANGULAR_DAMPING;
+    "linear_sleep_threshold"           => QUEX_TKN_LINEAR_SLEEP_THRESHOLD;
+    "angular_sleep_threshold"          => QUEX_TKN_ANGULAR_SLEEP_THRESHOLD;
+    "ccd_motion_threshold"             => QUEX_TKN_CCD_MOTION_THRESHOLD;
+    "ccd_swept_sphere_radius"          => QUEX_TKN_CCD_SWEPT_SPHERE_RADIUS;
+
+    "margin"                           => QUEX_TKN_MARGIN;
+    "shrink"                           => QUEX_TKN_SHRINK;
+    "center"|"centre"                  => QUEX_TKN_CENTRE;
+    "normal"                           => QUEX_TKN_NORMAL;
+    "orientation"                      => QUEX_TKN_ORIENTATION;
+    "dimensions"                       => QUEX_TKN_DIMENSIONS;
+    "radius"                           => QUEX_TKN_RADIUS;
+    "height"                           => QUEX_TKN_HEIGHT;
+    "distance"                         => QUEX_TKN_DISTANCE;
+    "vertexes"|"vertices"              => QUEX_TKN_VERTEXES;
+    "faces"                            => QUEX_TKN_FACES;
+
+    "compound"                         => QUEX_TKN_COMPOUND;
+    "hull"                             => QUEX_TKN_HULL;
+    "box"                              => QUEX_TKN_BOX;
+    "cylinder"                         => QUEX_TKN_CYLINDER;
+    "cone"                             => QUEX_TKN_CONE;
+    "sphere"                           => QUEX_TKN_SPHERE;
+    "plane"                            => QUEX_TKN_PLANE;
+    "capsule"                          => QUEX_TKN_CAPSULE;
+    "multisphere"                      => QUEX_TKN_MULTISPHERE;
+    "trimesh"                          => QUEX_TKN_TRIMESH;
+
+
+    ";"                                => QUEX_TKN_SEMI;
+    "{"                                => QUEX_TKN_LBRACE;
+    "}"                                => QUEX_TKN_RBRACE;
+    0|[1-9][0-9]*                      => QUEX_TKN_NATURAL(atoi((char*)Lexeme));
+    ("-"|"+")?(0|[1-9][0-9]*|[0-9]+"."[0-9]*|[0-9]*"."[0-9]+)                => QUEX_TKN_FLOAT(Lexeme);
+    "0x"[0-9A-Za-z]+                   => QUEX_TKN_HEX(Lexeme);
+    .                                  => QUEX_TKN_UNKNOWN;
+}
+
+mode COMMENT : END_OF_FILE
+    <exit: MAIN>
+    <entry: MAIN>
+{
+    "*/"                            { self << MAIN; }
+    "//"[^\n]*                      { }
+    .|\n                            { }
+}
