@@ -118,7 +118,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)Dependencies\include&quot;;&quot;$(ProjectDir)lua-5.1.2\src&quot;;&quot;$(SolutionDir)bullet-2.69\src&quot;;&quot;$(ProjectDir)&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4\src&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -137,10 +137,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libboost_thread-vc90-mt-1_35.lib cg.lib FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OgreMainStatic.lib Plugin_OctreeSceneManagerStatic.lib OpenEXR.lib Plugin_ParticleFXStatic.lib RenderSystem_Direct3D9Static.lib RenderSystem_GLStatic.lib zlib.lib zziplib.lib OgreWin32Resources.res libbulletcollision.lib libbulletdynamics.lib libbulletmath.lib"
+				AdditionalDependencies="libboost_thread-vc90-mt-1_37.lib FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OgreMainStatic.lib Plugin_OctreeSceneManagerStatic.lib Plugin_ParticleFXStatic.lib RenderSystem_Direct3D9Static.lib RenderSystem_GLStatic.lib zlib.lib zziplib.lib OgreWin32Resources.res libbulletcollision.lib libbulletdynamics.lib libbulletmath.lib"
 				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\bullet-2.69\out\release8\libs&quot;;&quot;$(SolutionDir)\Dependencies\lib\Release&quot;"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(SolutionDir)\dependencies\ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release8\libs&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -187,18 +187,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\FPEntity.c++"
-				>
-			</File>
-			<File
-				RelativePath=".\src\FPSceneManager.c++"
-				>
-			</File>
-			<File
-				RelativePath=".\src\FPSceneNode.c++"
-				>
-			</File>
-			<File
 				RelativePath=".\src\Grit.c++"
 				>
 			</File>
@@ -224,6 +212,10 @@
 			</File>
 			<File
 				RelativePath=".\src\lua_wrappers_core.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\lua_wrappers_gpuprog.c++"
 				>
 			</File>
 			<File
