@@ -32,6 +32,10 @@ lua bindings for hardware animation
 
 get actors animated correctly
 
+make shadows work properly
+
+experiment with depth shadow mapping
+
 
 
 --------------------------------------------------------------------------------
