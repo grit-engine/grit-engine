@@ -50,3 +50,27 @@ colread: colread.o ColParser.o TColParser.o $(LEXER).o $(LEXER)-core-engine.o
 clean:
 	rm -fv $(TARGETS) *.o
 
+# DO NOT DELETE
+
+ColParser.o: ../src/ColParser.h ../../grit_core/src/TColParser.h
+ColParser.o: ../../grit_core/src/TColLexer
+ColParser.o: ../../grit_core/src/TColLexer-token_ids ../src/ios_util.h
+colread.o: ../src/ios_util.h ../../grit_core/src/TColParser.h
+colread.o: ../../grit_core/src/TColLexer
+colread.o: ../../grit_core/src/TColLexer-token_ids ../src/ColParser.h
+dffread.o: ../src/ios_util.h ../src/dffread.h ../src/ideread.h
+dffread.o: ../src/tex_dups.h
+dirutil.o: ../src/dirutil.h ../src/ios_util.h
+extract.o: ../src/imgread.h ../src/iplread.h ../src/ideread.h
+extract.o: ../src/tex_dups.h ../src/dffread.h ../src/txdread.h
+extract.o: ../../grit_core/src/TColParser.h
+extract.o: ../../grit_core/src/TColLexer
+extract.o: ../../grit_core/src/TColLexer-token_ids ../src/ColParser.h
+extract.o: ../src/ios_util.h ../src/dirutil.h
+ideread.o: ../src/ideread.h ../src/ios_util.h
+ifpread.o: ../src/ios_util.h
+imgread.o: ../src/ios_util.h ../src/imgread.h
+iplread.o: ../src/iplread.h ../src/ios_util.h
+iplread.o: ../../grit_core/src/console_colour.h
+tex_dups.o: ../src/tex_dups.h
+txdread.o: ../src/ios_util.h ../src/txdread.h

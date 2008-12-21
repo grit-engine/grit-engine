@@ -110,8 +110,13 @@ static inline unsigned short ios_read_u8(std::istream &in)
 
 static inline float ios_read_float(std::istream &in)
 {{{
-        unsigned long val = ios_read_u32(in);
-        return *(float*)(void*)&val;
+        union floatint {
+                unsigned long i;
+                float f;
+        };
+        floatint val;
+        val.i = ios_read_u32(in);
+        return val.f;
 }}}
 
 static inline void ios_read_byte_array(std::istream &in,
