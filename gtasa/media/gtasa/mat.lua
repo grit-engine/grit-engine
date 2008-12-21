@@ -43,19 +43,18 @@ read_matbin("san_andreas.matbin", function (mname, r,g,b,a, tname, has_alpha, no
                                                 mat:setLightingEnabled(t,p,false)
                                         end
             
+                                        local alpha_reject = stain and 0 or 63
+                                        if mat==mat1 then
+                                                mat:setAlphaRejection(t,p,">",alpha_reject)
+                                        else
+                                                if mat:hasFragmentProgram(t,p) then
+                                                        mat:setFragmentConstantFloat(t,p,"alpha_rej",alpha_reject/255)
+                                                end
+                                        end
 
-                                        if has_alpha or mat==mat2 then
-                                                local alpha_reject = stain and 0 or 63
+                                        if has_alpha then
                                                 mat:setSceneBlending(t,p,"SRC_ALPHA","ONE_MINUS_SRC_ALPHA")
                                                 mat:setTransparentSortingForced(t,p,true)
-                                                if mat==mat1 then
-                                                        mat:setAlphaRejection(t,p,">",alpha_reject)
-                                                else
-                                                        -- mat:setDepthBias(t,p,-10,0)
-                                                        if mat:hasFragmentProgram(t,p) then
-                                                                mat:setFragmentConstantFloat(t,p,"alpha_rej",alpha_reject/255)
-                                                        end
-                                                end
                                         end
 
                                         if stain then
