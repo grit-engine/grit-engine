@@ -46,6 +46,7 @@ Grit::Grit (Ogre::Root *ogre, Mouse *mouse, Keyboard *keyboard, Grit *& grit) :
         keyboard(keyboard),
         clickedClose(false),
         hasTerminated(false),
+        L(NULL),
         gom(new GritObjectManager())
 {
 

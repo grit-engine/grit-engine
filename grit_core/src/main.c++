@@ -5,7 +5,6 @@
 
 #ifdef NO_PLUGINS
 #  include "OgreOctreePlugin.h"
-#  include "OgreCgPlugin.h"
 #  include "OgreGLPlugin.h"
 #  include "OgreParticleFXPlugin.h"
 #  ifdef WIN32

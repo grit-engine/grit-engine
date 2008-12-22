@@ -10,7 +10,7 @@
 #include <istream>
 #include <iomanip>
 #include <algorithm>
-
+#include <locale>
 
 #include "ideread.h"
 #include "ios_util.h"

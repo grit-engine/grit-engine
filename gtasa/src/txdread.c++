@@ -2,6 +2,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <locale>
 
 #include "ios_util.h"
 #include "txdread.h"

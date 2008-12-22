@@ -175,7 +175,8 @@ static inline bool is_unused (const Ogre::SharedPtr<T>& r)
 }
 
 void BackgroundMeshLoader::finishedWith (const ResourcePtrSet &s) {
-        for (ResourcePtrSet::iterator i=s.begin(), i_=s.end() ; i!=i_ ; ++i) {
+        typedef ResourcePtrSet::const_iterator I;
+        for (I i=s.begin(), i_=s.end() ; i!=i_ ; ++i) {
                 finishedWith(*i);
         }
 }

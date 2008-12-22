@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <locale>
 
 #include "iplread.h"
 #include "ios_util.h"

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <locale>
 
 #include "imgread.h"
 #include "iplread.h"
@@ -15,6 +16,12 @@
 #include "ios_util.h"
 #include "dirutil.h"
 
+#ifdef near
+#undef near
+#endif
+#ifdef far
+#undef far
+#endif
  
 void dump_stats (std::ostream &out, Objs &objs) //{{{
 {
@@ -171,7 +178,8 @@ void process_txds (std::ostream &out,
                 ensuredir(txddir);
                 Txd txd(imgf,txddir);
                 const Txd::Names &n = txd.getNames();
-                for (Txd::Names::iterator j=n.begin(),j_=n.end();j!=j_;++j) {
+                typedef Txd::Names::const_iterator TI;
+                for (TI j=n.begin(),j_=n.end();j!=j_;++j) {
                         const std::string &texname = *j;
                         texs.insert(imgname+"/"+fname+"/"+texname+".dds");
                 }
@@ -447,8 +455,8 @@ void extract (const std::string &gta_dir,
 
                 if (!used_ids[o.id]) continue;
 
-                //out << "id: " << o.id << "  "
-                //    << "dff: " << o.dff << std::endl;
+                out << "id: " << o.id << "  "
+                    << "dff: " << o.dff << std::endl;
 
                 struct dff dff;
                 std::string dff_name = o.dff+".dff";
@@ -525,7 +533,7 @@ void extract (const std::string &gta_dir,
                 bool use_col = true;
 
                 // once only
-                if (cols_i.find(tcol_name)==cols.end()) {
+                if (cols_i.find(tcol_name)==cols_i.end()) {
                         if (!(o.flags && OBJ_FLAG_NO_COL))
                                 out<<"Couldn't find col \""<<tcol_name<<"\" "
                                    <<"referenced from "<<o.id<<std::endl;

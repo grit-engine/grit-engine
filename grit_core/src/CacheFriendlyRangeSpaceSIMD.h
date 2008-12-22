@@ -13,59 +13,114 @@ template <typename T> class CacheFriendlyRangeSpace;
 #include "SSEAllocator.h"
 #include "app_error.h"
 
-template <typename T>
-class CacheFriendlyRangeSpace {
+#ifdef near
+#undef near
+#endif
+
+class SIMDVector4 {
 
     protected:
 
-
-
-        class Position {
-
-            protected:
-
-                typedef float v4sf __attribute__ ((vector_size (16)));
-
-                struct PositionRaw {
-                        inline void updateSphere (float x_, float y_, float z_,
-                                             float d_)
-                        {
-                                x=x_ ; y=y_ ; z=z_ ; d=d_;
-                        }
+        union U {
+                struct Raw {
                         float x, y, z, d;
-                };
-
-                union PositionAbstraction {
-                        PositionRaw raw;
-                        v4sf vector;
-                };
-
-
-            public:
-
-                inline void updateSphere (float x, float y, float z, float d)
-                {
-                        pos.raw.updateSphere(x,y,z,d);
-                }
-
-                // only meaningful if other.d == 0 || d = 0
-                inline bool near (const Position &other, const float factor2)
-                {
-                        PositionAbstraction diff;
-                        diff.vector = pos.vector - other.pos.vector;
-                        diff.vector *= diff.vector;
-                        return diff.raw.x + diff.raw.y + diff.raw.z
-                                < diff.raw.d * factor2;
-                }
-
-
-            protected:
-
-                PositionAbstraction pos;
+                } raw;
+                //float simd __attribute__ ((vector_size (16)));
+                __m128 simd;
         };
 
-        typedef std::vector<Position,SSEAllocator<Position> > Positions;
 
+    public:
+
+        inline void updateAll (float x, float y, float z, float d)
+        {
+                u.raw.x = x;
+                u.raw.y = y;
+                u.raw.z = z;
+                u.raw.d = d;
+        }
+
+        inline float x(void) const { return u.raw.x; }
+        inline float y(void) const { return u.raw.y; }
+        inline float z(void) const { return u.raw.z; }
+        inline float d(void) const { return u.raw.d; }
+
+#ifdef WIN32
+        SIMDVector4 operator- (const SIMDVector4 &b) const
+        {
+                SIMDVector4 r;
+                r.u.simd = _mm_sub_ps(u.simd, b.u.simd);
+                return r;
+        }
+
+        SIMDVector4 operator* (const SIMDVector4 &b) const
+        {
+                SIMDVector4 r;
+                r.u.simd = _mm_mul_ps(u.simd, b.u.simd);
+                return r;
+        }
+#else
+        SIMDVector4 operator- (const SIMDVector4 &b) const
+        {
+                SIMDVector4 r;
+                r.u.simd = u.simd - b.u.simd;
+                return r;
+        }
+
+        SIMDVector4 operator* (const SIMDVector4 &b) const
+        {
+                SIMDVector4 r;
+                r.u.simd = u.simd * b.u.simd;
+                return r;
+        }
+#endif
+        SIMDVector4 &operator*= (SIMDVector4 &b)
+        {
+                *this = *this * b;
+                return *this;
+        }
+
+     protected:
+
+        U u;
+};
+
+// msvc needs a horrible wrapper class because it can't handle aligned parameters
+// thus operations like resize() and push_back() cause compile errors
+#ifdef WIN32
+class SIMDVector4s {
+
+    public:
+
+        struct Stupid { float x, y, z, d; };
+        typedef std::vector<Stupid,SSEAllocator<Stupid> > Wrapped;
+        typedef Wrapped::size_type size_type;
+
+        void pop_back (void) { wrapped.pop_back(); }
+
+        void push_back (const SIMDVector4 &v)
+        { wrapped.push_back(reinterpret_cast<const Stupid&>(v)); }
+
+        void clear (void) { wrapped.clear(); }
+
+        SIMDVector4 &operator[] (size_type index)
+        { return reinterpret_cast<SIMDVector4&>(wrapped[index]); }
+
+        const SIMDVector4 &operator[] (size_type index) const
+        { return reinterpret_cast<const SIMDVector4&>(wrapped[index]); }
+
+        Wrapped::size_type size (void) const { return wrapped.size(); }
+
+
+    protected:
+        Wrapped wrapped;
+};
+#else
+typedef std::vector<SIMDVector4,SSEAllocator<SIMDVector4> > SIMDVector4s;
+#endif
+
+template <typename T>
+class CacheFriendlyRangeSpace {
 
     public:
 
@@ -73,9 +128,9 @@ class CacheFriendlyRangeSpace {
 
         CacheFriendlyRangeSpace() : hence(0) { }
 
-        virtual ~CacheFriendlyRangeSpace() { }
+        ~CacheFriendlyRangeSpace() { }
 
-        virtual void add (const T &o)
+        void add (const T &o)
         {
                 typename Cargo::iterator begin = cargo.begin(),
                                              end = cargo.end();
@@ -84,24 +139,37 @@ class CacheFriendlyRangeSpace {
                 
                 size_t index = cargo.size();
                 cargo.push_back(o);
-                positions.push_back(Position());
+                positions.push_back(SIMDVector4());
                 o->updateIndex(index);
         }
 
-        virtual inline void updateSphere (size_t index, Ogre::Real x,
-                                            Ogre::Real y, Ogre::Real z,
-                                            Ogre::Real d)
+        inline void updateSphere (size_t index, Ogre::Real x,
+                                  Ogre::Real y, Ogre::Real z,
+                                  Ogre::Real d)
         {
-                positions[index].updateSphere(x,y,z,d);
+                positions[index].updateAll(x,y,z,d);
         }
 
+        // only meaningful if the radius is stored in pos.d and
+        // other.d is 0, thus the subtraction and squaring
+        // yields d^2
+        static inline bool near (const SIMDVector4 &pos,
+                                 const SIMDVector4 &centre,
+                                 const float factor2)
+        {
+                SIMDVector4 diff;
+                diff = pos - centre;
+                diff *= diff;
+                return diff.x() + diff.y() + diff.z()
+                        < diff.d() * factor2;
+        }
 
-        virtual void getPresent (const Ogre::Real x,
-                                 const Ogre::Real y,
-                                 const Ogre::Real z,
-                                 size_t num,
-                                 const Ogre::Real factor,
-                                 Cargo &found)
+        void getPresent (const Ogre::Real x,
+                         const Ogre::Real y,
+                         const Ogre::Real z,
+                         size_t num,
+                         const Ogre::Real factor,
+                         Cargo &found)
         {
                 if (num==0) return;
                 if (cargo.size()==0) return;
@@ -109,29 +177,26 @@ class CacheFriendlyRangeSpace {
                 if (hence>=cargo.size()) hence = 0;
 
                 // iterate from this point for a while
-                typename Positions::iterator begin = positions.begin(),
-                                             iter = begin + hence,
-                                             end = positions.end();
+                SIMDVector4s::size_type iter = hence, end = positions.size();                
 
                 if (num>positions.size()) {
-                        iter = begin;
+                        iter = 0;
                         num = positions.size();
                 }
 
-                Position home;
+                SIMDVector4 home;
                 float factor2 = factor*factor;
-                home.updateSphere(x,y,z,0);
-                for (size_t i=0 ; i<num ; ++i) {
-                        Position &pos = *iter;
-                        if (home.near(pos,factor2)) {
-                                T &o = *(cargo.begin() + (iter-begin));
-                                found.push_back(o);
+                home.updateAll(x,y,z,0);
+                for (SIMDVector4s::size_type i=0 ; i<num ; ++i) {
+                        SIMDVector4 &pos = positions[iter];
+                        if (near(home,pos,factor2)) {
+                                found.push_back(cargo[iter]);
                         }
                         iter++;
-                        if (iter==end) iter=begin;
+                        if (iter==end) iter=0;
                 }
 
-                hence = iter - positions.begin();
+                hence = iter;
         }
 
         virtual void remove (const T &o)
@@ -165,7 +230,7 @@ class CacheFriendlyRangeSpace {
     protected:
 
         size_t hence;
-        Positions positions;
+        SIMDVector4s positions;
         Cargo cargo;
 };
 

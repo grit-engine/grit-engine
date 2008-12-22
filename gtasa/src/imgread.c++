@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
+#include <locale>
 
 #include "ios_util.h"
 #include "imgread.h"

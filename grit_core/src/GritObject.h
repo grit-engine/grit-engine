@@ -23,6 +23,13 @@ typedef std::set<GritObjectPtr> GObjSet;
 #include "BackgroundMeshLoader.h"
 #include "lua_wrappers_primitives.h"
 
+#ifdef near
+#undef near
+#endif
+#ifdef far
+#undef far
+#endif
+
 class GritObject {
 
     public:

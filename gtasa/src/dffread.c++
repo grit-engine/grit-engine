@@ -23,6 +23,15 @@
 #include "ideread.h"
 #include "tex_dups.h"
 
+#ifdef rad2
+#undef rad2
+#endif
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 
 #define HEX(x) std::hex<<(x)<<std::dec
 
@@ -1020,8 +1029,8 @@ static const std::string &export_or_provide_mat (const StringSet &texs,
     material &m = g.materials[mindex];
 
     bool has_alpha = false; // old method(stupid): obj.flags & OBJ_FLAG_ALPHA1;
-    bool no_alpha_reject = obj.flags & OBJ_FLAG_NO_SHADOW;
-    bool double_sided = obj.flags & OBJ_FLAG_DRAW_BACKFACE;
+    bool no_alpha_reject = 0 != (obj.flags & OBJ_FLAG_NO_SHADOW);
+    bool double_sided = 0 != (obj.flags & OBJ_FLAG_DRAW_BACKFACE);
     bool dynamic_lighting = g.normals.size()>0;
 
     float R = ((m.colour >> 0) & 0xFF) / 255.0f;
@@ -1263,7 +1272,7 @@ Ogre::MeshSerializer *serialiser;
 void init_ogre (void)
 {
     lmgr = new Ogre::LogManager();
-    lmgr->createLog("Ogre.log",false,true); // log is disabled for now
+    lmgr->createLog("Ogre.log",true,false,false); // log is disabled for now
     lmgr->setLogDetail(Ogre::LL_LOW);
 
     rgmgr = new Ogre::ResourceGroupManager();
