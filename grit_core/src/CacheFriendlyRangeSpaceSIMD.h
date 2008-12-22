@@ -25,8 +25,11 @@ class SIMDVector4 {
                 struct Raw {
                         float x, y, z, d;
                 } raw;
-                //float simd __attribute__ ((vector_size (16)));
+                #ifdef WIN32
                 __m128 simd;
+                #else
+                float simd __attribute__ ((vector_size (16)));
+                #endif
         };
 
 
