@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)Dependencies\include&quot;;&quot;$(SolutionDir)grit_core\lua-5.1.2\src&quot;;&quot;$(SolutionDir)..\bullet-2.69\src&quot;;&quot;$(SolutionDir)grit_core&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4\src&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -61,10 +61,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="OgreMainStaticSemithreaded_d.lib cg.lib FreeImaged.lib freetype235_D.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OpenEXR.lib zlibd.lib zziplibd.lib OgreWin32Resources_d.res Plugin_OctreeSceneManagerStatic_d.lib Plugin_CgProgramManagerStatic_d.lib Plugin_ParticleFXStatic_d.lib RenderSystem_Direct3D9Static_d.lib RenderSystem_GLStatic_d.lib"
+				AdditionalDependencies="OgreMainStatic_d.lib FreeImaged.lib freetype235_D.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OpenEXR.lib zlibd.lib zziplibd.lib OgreWin32Resources_d.res Plugin_OctreeSceneManagerStatic_d.lib Plugin_ParticleFXStatic_d.lib RenderSystem_Direct3D9Static_d.lib RenderSystem_GLStatic_d.lib libbulletcollision.lib libbulletdynamics.lib libbulletmath.lib"
 				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\bullet-2.69\out\release8\libs&quot;;&quot;$(SolutionDir)\Dependencies\lib\Debug&quot;"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Debug&quot;;&quot;$(SolutionDir)\dependencies\ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\debug_dll8\build\libbulletmath&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\debug_dll8\build\libbulletcollision&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\debug_dll8\build\libbulletdynamics&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -137,10 +137,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libboost_thread-vc90-mt-1_37.lib FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OgreMainStatic.lib Plugin_OctreeSceneManagerStatic.lib Plugin_ParticleFXStatic.lib RenderSystem_Direct3D9Static.lib RenderSystem_GLStatic.lib zlib.lib zziplib.lib OgreWin32Resources.res libbulletcollision.lib libbulletdynamics.lib libbulletmath.lib"
+				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OgreMainStatic.lib Plugin_OctreeSceneManagerStatic.lib Plugin_ParticleFXStatic.lib RenderSystem_Direct3D9Static.lib RenderSystem_GLStatic.lib zlib.lib zziplib.lib OgreWin32Resources.res libbulletcollision.lib libbulletdynamics.lib libbulletmath.lib"
 				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(SolutionDir)\dependencies\ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release8\libs&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(SolutionDir)\dependencies\ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletmath&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletcollision&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletdynamics&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"

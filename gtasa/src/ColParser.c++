@@ -1,5 +1,8 @@
+#include <locale>
+
 #include "ColParser.h"
 #include "ios_util.h"
+
 
 static inline int tolowr (int c)
 {

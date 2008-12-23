@@ -40,6 +40,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\grit_core\src&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;"
+				PreprocessorDefinitions="WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -57,6 +59,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="OgreMainStatic_d.lib zlibd.lib zziplibd.lib OgreWin32Resources_d.res libbulletcollision.lib libbulletmath.lib"
+				OutputFile="$(OutDir)\Extract_$(ConfigurationName).exe"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Debug&quot;;&quot;$(SolutionDir)\dependencies\ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\debug_dll8\build\libbulletmath&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\debug_dll8\build\libbulletcollision&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
 			/>
@@ -130,7 +135,7 @@
 				AdditionalDependencies="OgreMainStatic.lib zlib.lib zziplib.lib OgreWin32Resources.res libbulletcollision.lib libbulletmath.lib"
 				OutputFile="$(OutDir)\Extract_$(ConfigurationName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(SolutionDir)\dependencies\ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release8\libs&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(SolutionDir)\dependencies\ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletmath&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletcollision&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
