@@ -11,14 +11,14 @@
 #define HDSZ (124)
 #define HDSZT (124+4)
 
-#define DDSD_CAPS 0x00000001 // required
-#define DDSD_HEIGHT 0x00000002 // required
-#define DDSD_WIDTH 0x00000004 // required
-#define DDSD_PITCH 0x00000008 // used for uncompressed textures
+#define DDSD_CAPS        0x00000001 // required
+#define DDSD_HEIGHT      0x00000002 // required
+#define DDSD_WIDTH       0x00000004 // required
+#define DDSD_PITCH       0x00000008 // used for uncompressed textures
 #define DDSD_PIXELFORMAT 0x00001000 // required
 #define DDSD_MIPMAPCOUNT 0x00020000
-#define DDSD_LINEARSIZE 0x00080000 // used for compressed textures
-#define DDSD_DEPTH 0x00800000 // don't need this
+#define DDSD_LINEARSIZE  0x00080000 // used for compressed textures
+#define DDSD_DEPTH       0x00800000 // don't need this
 
 #define DDPF_ALPHAPIXELS 0x00000001
 #define DDPF_FOURCC 0x00000004
@@ -99,15 +99,16 @@ void Txd::readTx (std::istream &f,
         ASSERT(d3d_tex_format==0 || d3d_tex_format==0x15 || d3d_tex_format==0x16
             || d3d_tex_format==0x31545844 || d3d_tex_format==0x33545844);
 
+        bool compressed= d3d_tex_format==0x31545844||d3d_tex_format==0x33545844;
+
         unsigned short width = ios_read_u16(f);
         unsigned short height = ios_read_u16(f);
 
         unsigned char depth = ios_read_u8(f);
-        // no 24 bit textures in  gta_sa
+        // no 24 bit textures in gta sa
         ASSERT(depth==8 || depth==16 || depth==32);
 
         unsigned char levels = ios_read_u8(f);
-        // note: we only use the first level
         ASSERT(levels>0);
 
         unsigned char tex_code_type = ios_read_u8(f);
@@ -157,27 +158,27 @@ void Txd::readTx (std::istream &f,
                 return;
         }
 
+        unsigned long imgsize = ios_read_u32(f);
+
         std::ofstream ddsf;
         std::string ddsname = dest_dir + "/" + tex_name + ".dds";
         ddsf.open(ddsname.c_str(),std::ios::binary);
         ASSERT_IO_SUCCESSFUL(ddsf,"creating new dds file: \""+ddsname+"\"");
 
         bool has_alpha = flags&1;
-        bool compressed= d3d_tex_format==0x31545844||d3d_tex_format==0x33545844;
 
         ios_write_u32(ddsf,0x20534444); // "DDS "
         ios_write_u32(ddsf,HDSZ);
         unsigned long ddsflags = 0;
-        ddsflags |= DDSD_CAPS|DDSD_PIXELFORMAT|DDSD_WIDTH|DDSD_HEIGHT;
-        //ddsflags |= compressed ? DDSD_LINEARSIZE : DDSD_PITCH;
+        ddsflags |= DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
+        ddsflags |= compressed ? DDSD_LINEARSIZE : DDSD_PITCH;
         ddsflags |= DDSD_MIPMAPCOUNT;
         ios_write_u32(ddsf,ddsflags);
         ios_write_u32(ddsf,height);
         ios_write_u32(ddsf,width);
-        //ios_write_u32(ddsf,compressed?root_size:width*depth/8);
-        ios_write_u32(ddsf,0); // electing not to provide pitch
+        ios_write_u32(ddsf,compressed?imgsize:width*depth/8);
         ios_write_u32(ddsf,0); // not a volume texture
-        ios_write_u32(ddsf,levels); // mipmaps
+        ios_write_u32(ddsf, (compressed && levels>3) ? levels-2 : levels);
         for (int i=0 ; i<11 ; i++)
                 ios_write_u32(ddsf,0); // "reserved"
 
@@ -216,7 +217,9 @@ void Txd::readTx (std::istream &f,
         ios_write_u32(ddsf,0);
 
         for (unsigned char i=0 ; i<levels ; i++) {
-                unsigned long imgsize = ios_read_u32(f);
+                if (i>0) {
+                        imgsize = ios_read_u32(f);
+                }
 
                 unsigned char *dds = new unsigned char[imgsize];
                 ios_read_byte_array(f, dds, imgsize);
