@@ -88,5 +88,3 @@ various assertions
 - set up app_verbose as a stream
 
 write windows gdi thingy for stdout ("rich text")
-
-a better system for binding keys, e.g. to drive cars (use ideas from quake)
