@@ -100,10 +100,10 @@ static inline signed short ios_read_s16(std::istream &in)
         return r;
 }}}
 
-static inline unsigned short ios_read_u8(std::istream &in)
+static inline unsigned char ios_read_u8(std::istream &in)
 {{{
-        char raw[1];
-        in.read(raw,sizeof raw);
+        unsigned char raw[1];
+        in.read((char*)raw,sizeof raw);
         ASSERT_IO_SUCCESSFUL(in,"reading uint8");
         return raw[0];
 }}}
@@ -176,7 +176,7 @@ static inline void ios_write_str(std::ostream &out, const std::string &s)
 }}}
 
 static inline void ios_write_byte_array(std::ostream &out,
-                                        unsigned char *raw,size_t sz)
+                                        const unsigned char *raw,size_t sz)
 {{{
         out.write((char*)raw,sz);
         ASSERT_IO_SUCCESSFUL(out,"writing byte array");

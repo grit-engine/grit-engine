@@ -42,6 +42,12 @@
 #define RWTEX 0x15
 #define RWTEXDICT 0x16
 
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 
 // these are for writing to memory blocks
 
@@ -171,14 +177,14 @@ void Txd::readTx (std::istream &f,
         ios_write_u32(ddsf,HDSZ);
         unsigned long ddsflags = 0;
         ddsflags |= DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
-        ddsflags |= compressed ? DDSD_LINEARSIZE : DDSD_PITCH;
+        //ddsflags |= compressed ? DDSD_LINEARSIZE : DDSD_PITCH;
         ddsflags |= DDSD_MIPMAPCOUNT;
         ios_write_u32(ddsf,ddsflags);
         ios_write_u32(ddsf,height);
         ios_write_u32(ddsf,width);
-        ios_write_u32(ddsf,compressed?imgsize:width*depth/8);
+        ios_write_u32(ddsf,0); //compressed?imgsize:width*depth/8);
         ios_write_u32(ddsf,0); // not a volume texture
-        ios_write_u32(ddsf, (compressed && levels>3) ? levels-2 : levels);
+        ios_write_u32(ddsf, levels);
         for (int i=0 ; i<11 ; i++)
                 ios_write_u32(ddsf,0); // "reserved"
 
@@ -219,6 +225,40 @@ void Txd::readTx (std::istream &f,
         for (unsigned char i=0 ; i<levels ; i++) {
                 if (i>0) {
                         imgsize = ios_read_u32(f);
+                }
+
+                if (imgsize==0 && compressed) {
+                        // sometimes txds do not give a mipmap level
+                        // if it is smaller (width or height) than 4 pixels
+                        // as dxt1-3 are stored in 4x4 pixel chunks
+                        // so we generate black mipmap levels here
+                        unsigned long mmwidth = width, mmheight=height;
+                        for (unsigned char j=0 ; j<i ; ++j) {
+                                mmwidth = std::max(1UL,mmwidth/2);
+                                mmheight = std::max(1UL,mmheight/2);
+                        }
+                        // we need width/height measured in whole 4x4 blocks
+                        mmwidth = (mmwidth+3)/4;
+                        mmheight = (mmheight+3)/4;
+                        unsigned long blocks = mmwidth * mmheight;
+                        const unsigned char block8[] = {0,0,0,0,
+                                                       0,0,0,0};
+                        const unsigned char block16[] = {255,255,0,0,
+                                                       0,0,0,0,
+                                                       0,0,0,0,
+                                                       0,0,0,0};
+                        switch (d3d_tex_format) {
+                                case 0x31545844: // dxt1: 8 bytes per block
+                                for (unsigned long j=0 ; j<blocks ; ++j) {
+                                        ios_write_byte_array(ddsf,block8,8);
+                                }
+                                break;
+                                case 0x33545844: // dxt3: 16 bytes per block
+                                for (unsigned long j=0 ; j<blocks ; ++j) {
+                                        ios_write_byte_array(ddsf,block16,16);
+                                }
+                        }
+                        continue;
                 }
 
                 unsigned char *dds = new unsigned char[imgsize];

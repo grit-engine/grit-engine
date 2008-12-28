@@ -50,20 +50,20 @@ void ifpread(std::istream &f, std::string p)
                                 std::stringstream p4_;
                                 p4_ << p3 << ".frame["<<k<<"]";
                                 std::string p4(p4_.str());
-                                float qx = ios_read_s16(f) / 4096.0;
-                                float qy = ios_read_s16(f) / 4096.0;
-                                float qz = ios_read_s16(f) / 4096.0;
-                                float qw = ios_read_s16(f) / 4096.0;
+                                float qx = ios_read_s16(f) / 4096.0f;
+                                float qy = ios_read_s16(f) / 4096.0f;
+                                float qz = ios_read_s16(f) / 4096.0f;
+                                float qw = ios_read_s16(f) / 4096.0f;
                                 std::cout<<p4<<".quat_x: "<<qx<<"\n";
                                 std::cout<<p4<<".quat_y: "<<qy<<"\n";
                                 std::cout<<p4<<".quat_z: "<<qz<<"\n";
                                 std::cout<<p4<<".quat_w: "<<qw<<"\n";
-                                float time = ios_read_u16(f) / 60.0;
+                                float time = ios_read_u16(f) / 60.0f;
                                 std::cout<<p4<<".time: "<<time<<"\n";
                                 if (frame_type==4) {
-                                        float px = ios_read_s16(f) / 1024.0;
-                                        float py = ios_read_s16(f) / 1024.0;
-                                        float pz = ios_read_s16(f) / 1024.0;
+                                        float px = ios_read_s16(f) / 1024.0f;
+                                        float py = ios_read_s16(f) / 1024.0f;
+                                        float pz = ios_read_s16(f) / 1024.0f;
                                         std::cout<<p4<<".pos_x: "<<px<<"\n";
                                         std::cout<<p4<<".pos_y: "<<py<<"\n";
                                         std::cout<<p4<<".pos_z: "<<pz<<"\n";
