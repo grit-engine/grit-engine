@@ -703,6 +703,17 @@ TRY_END
 }
 
 
+static int quat_invert (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::Quaternion,q,1,QUAT_TAG);
+        q = q.Inverse();
+        return 0;
+TRY_END
+}
+
+
 static int quat_normalise (lua_State *L)
 {
 TRY_START
@@ -745,6 +756,8 @@ TRY_START
                 lua_pushnumber(L,q.w);
         } else if (key=="wxyz") {
                 push_cfunction(L,quat_xyzw);
+        } else if (key=="invert") {
+                push_cfunction(L,quat_invert);
         } else if (key=="inverse") {
                 push(L,new Ogre::Quaternion(q.Inverse()),QUAT_TAG);
         } else if (key=="unitInverse") {

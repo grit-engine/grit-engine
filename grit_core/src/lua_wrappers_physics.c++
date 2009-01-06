@@ -192,6 +192,55 @@ TRY_END
 }
 
 
+static int rbody_world_position_xyz (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        const Ogre::Vector3 &v = self->getPosition();
+        lua_pushnumber(L,v.x);
+        lua_pushnumber(L,v.y);
+        lua_pushnumber(L,v.z);
+        return 3;
+TRY_END
+}
+
+
+static int rbody_world_orientation_wxyz (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        const Ogre::Quaternion &q = self->getOrientation();
+        lua_pushnumber(L,q.w);
+        lua_pushnumber(L,q.x);
+        lua_pushnumber(L,q.y);
+        lua_pushnumber(L,q.z);
+        return 4;
+TRY_END
+}
+
+
+static int rbody_local_pos (lua_State *L)
+{
+TRY_START
+        if (lua_gettop(L)==3) {
+                GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+                GET_UD_MACRO(Ogre::Vector3,local_pos,2,VECTOR3_TAG);
+                GET_UD_MACRO(Ogre::Vector3,result,3,VECTOR3_TAG);
+                result = self->getPosition() + self->getOrientation() * local_pos;
+                return 0;
+        }
+        check_args(L,2);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        GET_UD_MACRO(Ogre::Vector3,local_pos,2,VECTOR3_TAG);
+        Ogre::Vector3 result = self->getPosition() + self->getOrientation() * local_pos;
+        push(L, new Ogre::Vector3(result), VECTOR3_TAG);
+        return 1;
+TRY_END
+}
+
+
 static int rbody_local_vel (lua_State *L)
 {
 TRY_START
@@ -269,8 +318,12 @@ TRY_START
 
         } else if (key=="worldPosition") {
                 push(L, new Ogre::Vector3(self->getPosition()), VECTOR3_TAG);
+        } else if (key=="getWorldPositionXYZ") {
+                push_cfunction(L,rbody_world_position_xyz);
         } else if (key=="worldOrientation") {
                 push(L, new Ogre::Quaternion(self->getOrientation()), QUAT_TAG);
+        } else if (key=="getWorldOrientationWXYZ") {
+                push_cfunction(L,rbody_world_orientation_wxyz);
 
         } else if (key=="linearVelocity") {
                 push(L, new Ogre::Vector3(self->getLinearVelocity()),
@@ -278,6 +331,8 @@ TRY_START
         } else if (key=="angularVelocity") {
                 push(L, new Ogre::Vector3(self->getAngularVelocity()),
                         VECTOR3_TAG);
+        } else if (key=="getLocalPosition") {
+                push_cfunction(L,rbody_local_pos);
         } else if (key=="getLocalVelocity") {
                 push_cfunction(L,rbody_local_vel);
 
