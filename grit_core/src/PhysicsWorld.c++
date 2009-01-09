@@ -395,6 +395,18 @@ void RigidBody::destroy (lua_State *L)
         self.setNull();
 }
 
+RigidBody::~RigidBody (void)
+{
+        if (body==NULL) return;
+        APP_ERROR("destructing RigidBody","destroy() was not called");
+        world->world->removeRigidBody(body);
+        delete body;
+        body = NULL;
+        // the next line will cause the counter to go negative but should cause
+        // no problem
+        self.setNull();
+}
+
 void RigidBody::getWorldTransform (btTransform& into_here) const
 {
         into_here = lastXform;

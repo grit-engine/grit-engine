@@ -222,7 +222,7 @@ class RigidBody : public btMotionState {
                    const Ogre::Quaternion &quat);
 
 
-        ~RigidBody (void) { }
+        ~RigidBody (void);
 
         void destroy (lua_State *L);
 
