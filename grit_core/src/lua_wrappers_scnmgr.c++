@@ -211,6 +211,10 @@ TRY_START
         } else if (key=="derivedOrientation") {
                 push(L,new Ogre::Quaternion(self._getDerivedOrientation()),
                        QUAT_TAG);
+        } else if (key=="inheritOrientation") {
+                lua_pushboolean(L,self.getInheritOrientation());
+        } else if (key=="inheritScale") {
+                lua_pushboolean(L,self.getInheritScale());
         } else if (key=="translate") {
                 push_cfunction(L,node_translate);
         } else if (key=="setPositionOrientation") {
@@ -278,6 +282,12 @@ TRY_START
         } else if (key=="scale") {
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self.setScale(v);
+        } else if (key=="inheritOrientation") {
+                bool v = 0!=lua_toboolean(L,3);
+                self.setInheritOrientation(v);
+        } else if (key=="inheritScale") {
+                bool v = 0!=lua_toboolean(L,3);
+                self.setInheritScale(v);
         } else {
                 my_lua_error(L,"Not a valid SceneNode member: "+key);
         }
