@@ -9,6 +9,9 @@
 //#include <GIMPACT/Bullet/btGImpactShape.h>
 //#include <GIMPACT/Bullet/btGImpactCollisionAlgorithm.h>
 
+#include "BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h"
+
+
 void DynamicsWorld::step (void)
 {
         if (!dirty) {
@@ -99,7 +102,7 @@ PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
         world = new DynamicsWorld(colDisp,broadphase,conSolver,colConf);
 
 
-        //btGImpactCollisionAlgorithm::registerAlgorithm(colDisp);
+        btGImpactCollisionAlgorithm::registerAlgorithm(colDisp);
         
         world->setGravity(btVector3(0,0,-9.8));
 }

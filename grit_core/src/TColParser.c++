@@ -637,6 +637,14 @@ static void parse_static_trimesh_shape (const Ogre::String &name,
 }
 
 
+static void parse_dynamic_trimesh_shape (const Ogre::String &name,
+                                         quex::TColLexer* qlex,
+                                         TriMesh &triMesh)
+{
+        parse_static_trimesh_shape(name,qlex,triMesh);
+}
+
+
 void parse_tcol_1_0 (const Ogre::String &name,
                      quex::TColLexer* qlex,
                      TColFile &file)
@@ -793,7 +801,8 @@ void parse_tcol_1_0 (const Ogre::String &name,
                         file.usingTriMesh = true;
                         parse_static_trimesh_shape(name,qlex,file.triMesh);
                 } else {
-                        err(name,qlex,"dynamic trimesh not implemented yet");
+                        file.usingTriMesh = true;
+                        parse_dynamic_trimesh_shape(name,qlex,file.triMesh);
                 }
                 ensure_token(name,qlex,QUEX_TKN_TERMINATION);
                 break;

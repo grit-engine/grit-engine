@@ -6,7 +6,11 @@
 #include "CollisionMesh.h"
 #include "TColParser.h"
 
+#include "app_error.h"
+
 #include <LinearMath/btGeometryUtil.h>
+#include <BulletCollision/Gimpact/btGImpactShape.h>
+#include <../Extras/GIMPACTUtils/btGImpactConvexDecompositionShape.h>
 
 
 btCompoundShape *import_compound (const Compound &c,
@@ -92,8 +96,6 @@ btCollisionShape *import_trimesh (const TriMesh &f,
                                   CollisionMesh *cm,
                                   LooseEnds &les)
 {
-        (void) cm;
-
         Vertexes *vertexes = new Vertexes();
         les.push_back(new LooseEndImpl<Vertexes>(vertexes));
         int sz = f.vertexes.size();
@@ -110,9 +112,27 @@ btCollisionShape *import_trimesh (const TriMesh &f,
                 vertexes->size(), &((*vertexes)[0][0]), sizeof(btVector3));
         les.push_back(new LooseEndImpl<btTriangleIndexVertexArray>(v));
 
-        btCollisionShape *s = new btBvhTriangleMeshShape(v,true,true);
-        s->setMargin(0);
-        les.push_back(new LooseEndImpl<btCollisionShape>(s));
+        btCollisionShape *s;
+
+        if (cm->getMass()==0) {
+                s = new btBvhTriangleMeshShape(v,true,true);
+                s->setMargin(0);
+                les.push_back(new LooseEndImpl<btCollisionShape>(s));
+        } else {
+                btGImpactShapeInterface *s2 = new btGImpactMeshShape(v);
+                //we don't have a good way of 'shrinking' meshes as we
+                //did with the convex hulls so leave margin at 0 for now
+                s2->setMargin(0);
+                /* this is hopelessly awful in comparison (but faster)
+                btGImpactShapeInterface *s2 =
+                        new btGImpactConvexDecompositionShape(v,
+                                                              btVector3(1,1,1),
+                                                              0.01);
+                */
+                s2->updateBound();
+                s = s2;
+                les.push_back(new LooseEndImpl<btCollisionShape>(s));
+        }
 
         return s;
 }
