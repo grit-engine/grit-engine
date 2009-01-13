@@ -7,9 +7,82 @@
 
 
 #include "lua_wrappers_primitives.h"
+#include "SplineTable.h"
 
 
 
+
+
+// PLOT ==================================================================== {{{
+
+typedef SplineTable<float> Plot;
+
+int plot_make (lua_State *L)
+{
+TRY_START
+        Plot *self = new Plot();
+        check_args(L,1);
+        int table = lua_gettop(L);
+        if (!lua_istable(L,table))
+                my_lua_error(L,"Parameter should be a table");
+        for (lua_pushnil(L) ; lua_next(L,table)!=0 ; lua_pop(L,1)) {
+                // the name is held in the object anyway
+                Ogre::Real k = luaL_checknumber(L,-2);
+                Ogre::Real v = luaL_checknumber(L,-1);
+                self->addPoint(k,v);
+        }
+        self->commit();
+        push(L,self,PLOT_TAG);
+        return 1;
+TRY_END
+}
+
+TOSTRING_ADDR_MACRO(plot,Plot,PLOT_TAG)
+
+GC_MACRO(Plot,plot,PLOT_TAG)
+
+static int plot_index(lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Plot,self,1,PLOT_TAG);
+        if (lua_type(L,2)==LUA_TNUMBER) {
+                Ogre::Real k = luaL_checknumber(L,2);
+                lua_pushnumber(L,self[k]);
+        } else {
+                std::string key  = luaL_checkstring(L,2);
+                if (key=="minX") {
+                        lua_pushnumber(L,self.minX());
+                } else if (key=="maxX") {
+                        lua_pushnumber(L,self.maxX());
+                } else {
+                        my_lua_error(L,"Not a readable Plot member: "+key);
+                }
+        }
+        return 1;
+TRY_END
+}
+
+static int plot_newindex(lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(Plot,self,1,PLOT_TAG);
+        (void) self;
+        std::string key  = luaL_checkstring(L,2);
+        if (false) {
+        } else {
+                my_lua_error(L,"Not a writeable Plot member: "+key);
+        }
+        return 0;
+TRY_END
+}
+
+EQ_PTR_MACRO(Plot,plot,PLOT_TAG)
+
+MT_MACRO_NEWINDEX(plot);
+
+// }}}
 
 
 // STRINGDB ================================================================ {{{

@@ -1324,6 +1324,7 @@ static const luaL_reg global[] = {
         {"Timer",timer_make},
         {"Vector3",vector3_make},
         {"Quat",quat_make},
+        {"Plot",plot_make},
         {"Spline",spline_make},
         {"StringDB",stringdb_make},
         {"SceneManager" ,global_make_scnmgr},
@@ -1394,6 +1395,7 @@ lua_State *init_lua(const char *filename)
         ADD_MT_MACRO(vector3,VECTOR3_TAG);
         ADD_MT_MACRO(quat,QUAT_TAG);
         ADD_MT_MACRO(spline,SPLINE_TAG);
+        ADD_MT_MACRO(plot,PLOT_TAG);
         ADD_MT_MACRO(stringdb,STRINGDB_TAG);
         ADD_MT_MACRO(scnmgr,SCNMGR_TAG);
         ADD_MT_MACRO(node,NODE_TAG);
