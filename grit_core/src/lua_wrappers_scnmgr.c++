@@ -733,6 +733,16 @@ shadow_type_from_string (lua_State *L, const std::string& t)
 }
 
 
+static int scnmgr_update_scene_graph (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
+        self.getRootSceneNode()->_update(true,false);
+        return 0;
+TRY_END
+}
+
 
 static int scnmgr_destroy(lua_State *L)
 {
@@ -965,6 +975,10 @@ TRY_START
                 push_node(L,self.getSkyBoxNode());
         } else if (key=="root") {
                 push_node(L,self.getRootSceneNode());
+
+        } else if (key=="updateSceneGraph") {
+                push_cfunction(L, scnmgr_update_scene_graph);
+
         } else {
                 my_lua_error(L,"Not a valid SceneManager member: "+key);
         }
@@ -1037,39 +1051,6 @@ TRY_START
                 bool v = 0!=lua_toboolean(L,3);
                 self.setShadowUseInfiniteFarPlane(v);
 
-
-/*
-        } else if (key=="visibilityRate") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                fp->setVisibilityRate(luaL_checknumber(L,3));
-        } else if (key=="fadeNearFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                fp->setFadeNearFactor(luaL_checknumber(L,3));
-        } else if (key=="fadeFarFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                fp->setFadeFarFactor(luaL_checknumber(L,3));
-        } else if (key=="loadsPerFrame") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                fp->setLoadsPerFrame(check_t<size_t>(L,3));
-        } else if (key=="preloadRate") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                fp->setPreloadRate(luaL_checknumber(L,3));
-        } else if (key=="preloadRadiusFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                fp->setPreloadRadiusFactor(luaL_checknumber(L,3));
-        } else if (key=="preloadLookAheadFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                fp->setPreloadLookAheadFactor(luaL_checknumber(L,3));
-        } else if (key=="preloadLookAheadMax") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                fp->setPreloadLookAheadMax(luaL_checknumber(L,3));
-        } else if (key=="visibilityFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                fp->setVisibilityFactor(luaL_checknumber(L,3));
-        } else if (key=="nearFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                fp->setNearFactor(luaL_checknumber(L,3));
-*/
         } else {
                 my_lua_error(L,"Not a valid SceneManager member: "+key);
         }

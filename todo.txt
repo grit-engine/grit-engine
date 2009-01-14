@@ -6,14 +6,25 @@ todo:
 gameplay
 --------------------------------------------------------------------------------
 
-Dynamic concave mesh (gimpact) support.  Needed for cars/planes etc.
+general physics:
+    - constraints (particlarly cone twist and hinge constraints)
+    - explosions (ghost object + ray casts?) (sphere + contact iteration?)
+    - bumpy triangle meshes
 
-physical constraints, for car doors, ragdolls, etc
+vehicles:
+    - constraints (particularly hinge constraint for car doors)
+    - integrate friction + engine model somehow
+    - study handling.cfg
+    - extract graphics and collision meshes from gta vehicles
+    - sort out Focus
 
-extract actor models
-
-extract skeleton data for actor models
-
+actors:
+    - constraints for ragdoll (particlarly cone twist and hinge constraints)
+    - extract actor models
+    - extract skeleton data
+    - lua bindings for hardware animation
+    - study bullet character controller
+    - play with capsule
 
 
 --------------------------------------------------------------------------------
@@ -28,11 +39,7 @@ sea water (hydrax?)
 
 other water
 
-lua bindings for hardware animation
-
-get actors animated correctly
-
-make shadows work properly
+make shadows work properly with extracted gtasa models
 
 experiment with depth shadow mapping
 
