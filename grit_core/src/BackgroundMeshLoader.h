@@ -124,6 +124,7 @@ class BackgroundMeshLoader : public Ogre::Singleton<BackgroundMeshLoader> {
         OGRE_THREAD_SYNCHRONISER(mCVar)
 
         ResourcePtrSet mBastards;
+        volatile unsigned short mNumBastards;
 
         Demands mDemands;
 

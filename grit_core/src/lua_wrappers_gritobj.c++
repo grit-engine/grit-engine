@@ -467,6 +467,7 @@ TRY_START
                         my_lua_error(L,"user value's type not supported.");
                 }
         }
+        o->init(L,o);
         push_gritobj(L,o);
         return 1;
 TRY_END

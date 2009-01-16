@@ -10,13 +10,16 @@ general physics:
     - constraints (particlarly cone twist and hinge constraints)
     - explosions (ghost object + ray casts?) (sphere + contact iteration?)
     - bumpy triangle meshes
+    - collision detection for camera
 
 vehicles:
     - constraints (particularly hinge constraint for car doors)
     - integrate friction + engine model somehow
+    - stateful wheel spin
     - study handling.cfg
     - extract graphics and collision meshes from gta vehicles
-    - sort out Focus
+    - bottoming out
+    - one-way collision meshes to avoid tunnelling/jamming
 
 actors:
     - constraints for ragdoll (particlarly cone twist and hinge constraints)

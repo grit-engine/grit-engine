@@ -14,7 +14,8 @@
 
 
 BackgroundMeshLoader::BackgroundMeshLoader (void)
-      : mThread(NULL), mCurrent(NULL), mQuit(false), mAllowance(0)
+      : mNumBastards(0), mThread(NULL), mCurrent(NULL),
+        mQuit(false), mAllowance(0)
 {
         OGRE_LOCK_AUTO_MUTEX;
 
@@ -71,12 +72,16 @@ void BackgroundMeshLoader::remove (Demand *d)
 
 void BackgroundMeshLoader::handleBastards (void)
 {
+        // access volatile field without taking lock first
+        // worst case we return early, i.e. will pick up bastards next time
+        if (mNumBastards==0) return;
         ResourcePtrSet s;
         {
                 OGRE_LOCK_AUTO_MUTEX;
-                if (mBastards.size()==0) return;
+                if (mNumBastards==0) return;
                 s = mBastards;
                 mBastards.clear();
+                mNumBastards = 0;
         }
 
         finishedWith(s);
@@ -106,6 +111,7 @@ void BackgroundMeshLoader::operator() (void)
                                         i=pending.begin(), i_=pending.end() ;
                                                                   i!=i_ ; ++i) {
                                         mBastards.insert(*i);
+                                        mNumBastards = mBastards.size();
                                 }
                                //asynchronously call sm.finishedWith(resource);
                         }

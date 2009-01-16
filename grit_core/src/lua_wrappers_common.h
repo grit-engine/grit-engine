@@ -14,11 +14,11 @@ extern "C" {
 
 
 
-static inline void *ensure_valid(lua_State *L, void *ptr, std::string tag)
+static inline void *ensure_valid(lua_State *L, void *ptr, const char *tag)
 {
         void *_ptr = *static_cast<void**>(ptr);
         if (_ptr==NULL)
-                my_lua_error(L,"Object disabled: "+tag);
+                my_lua_error(L,"Object disabled: "+std::string(tag));
         return _ptr;
 }
 

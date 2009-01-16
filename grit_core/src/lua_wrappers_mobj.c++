@@ -592,6 +592,25 @@ TRY_END
 }
 
 
+static int entity_set_custom_parameter_all (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        unsigned int varindex = (unsigned int) check_int(L,2,0,UINT_MAX);
+        Ogre::Real v1 = luaL_checknumber(L,3);
+        Ogre::Real v2 = luaL_checknumber(L,4);
+        Ogre::Real v3 = luaL_checknumber(L,5);
+        Ogre::Real v4 = luaL_checknumber(L,6);
+        for (size_t i=0 ; i<self.getNumSubEntities() ; ++i) {
+                Ogre::SubEntity *se = self.getSubEntity(i);
+                se->setCustomParameter(varindex,Ogre::Vector4(v1,v2,v3,v4));
+        }
+        return 0;
+TRY_END
+}
+
+
 static int entity_get_custom_parameter (lua_State *L)
 {
 TRY_START
@@ -643,33 +662,37 @@ TRY_END
 static int entity_index(lua_State *L)
 {
 TRY_START
+        // this was determined (via profiling) to be hot code
+        // so is appropriately "massaged"
         check_args(L,2);
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
-        std::string key = luaL_checkstring(L,2);
-        if (key == "displaySkeleton") {
+        const char *key = luaL_checkstring(L,2);
+        if (0==strcmp(key,"displaySkeleton")) {
                 lua_pushboolean(L,self.getDisplaySkeleton());
-        } else if (key == "numSubEntities") {
-                lua_pushnumber(L,self.getNumSubEntities());
-        } else if (key == "mesh") {
-                push_mesh(L,self.getMesh());
-        } else if (key == "getPolygonModeOverrideable") {
-                push_cfunction(L,entity_get_polygon_mode_overrideable);
-        } else if (key == "setPolygonModeOverrideable") {
-                push_cfunction(L,entity_set_polygon_mode_overrideable);
-        } else if (key == "getMaterial") {
-                push_cfunction(L,entity_get_material);
-        } else if (key == "getMaterialName") {
-                push_cfunction(L,entity_get_material_name);
-        } else if (key == "setMaterial") {
-                push_cfunction(L,entity_set_material);
-        } else if (key == "setCustomParameter") {
+        } else if (0==strcmp(key,"setCustomParameterAll")) {
+                push_cfunction(L,entity_set_custom_parameter_all);
+        } else if (0==strcmp(key,"setCustomParameter")) {
                 push_cfunction(L,entity_set_custom_parameter);
-        } else if (key == "getCustomParameter") {
+        } else if (0==strcmp(key,"getCustomParameter")) {
                 push_cfunction(L,entity_get_custom_parameter);
-        } else if (key == "destroy") {
+        } else if (0==strcmp(key,"getMaterial")) {
+                push_cfunction(L,entity_get_material);
+        } else if (0==strcmp(key,"getMaterialName")) {
+                push_cfunction(L,entity_get_material_name);
+        } else if (0==strcmp(key,"setMaterial")) {
+                push_cfunction(L,entity_set_material);
+        } else if (0==strcmp(key,"numSubEntities")) {
+                lua_pushnumber(L,self.getNumSubEntities());
+        } else if (0==strcmp(key,"mesh")) {
+                push_mesh(L,self.getMesh());
+        } else if (0==strcmp(key,"getPolygonModeOverrideable")) {
+                push_cfunction(L,entity_get_polygon_mode_overrideable);
+        } else if (0==strcmp(key,"setPolygonModeOverrideable")) {
+                push_cfunction(L,entity_set_polygon_mode_overrideable);
+        } else if (0==strcmp(key,"destroy")) {
                 push_cfunction(L,entity_destroy);
         } else if (!mobj_index(L,self,key)) {
-                my_lua_error(L,"Not a readable Entity member: " + key);
+                my_lua_error(L,"Not a readable Entity member: " + std::string(key));
         }
         return 1;
 TRY_END

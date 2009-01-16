@@ -103,6 +103,7 @@ GritObjectPtr GritObjectManager::addObject (
         Ogre::String name,
         GritClass *grit_class)
 {
+        (void) L; // may need this again some day
         if (gfx==NULL) {
                 OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
                             "No graphics engine set up, call setGFX()",
@@ -129,8 +130,6 @@ GritObjectPtr GritObjectManager::addObject (
         GritObjectPtr self = GritObjectPtr(new GritObject(name,grit_class));
         gObjs[name] = self;
         rs.add(self);
-
-        self->init(L, self);
 
         return self;
 }
