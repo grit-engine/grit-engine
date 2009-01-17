@@ -21,6 +21,7 @@ extern "C" {
 }
 
 #include "CollisionMesh.h"
+#include "TColParser.h"
 
 #include "GritObject.h"
 
