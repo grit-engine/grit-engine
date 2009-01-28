@@ -115,29 +115,44 @@ btVector3 get_face_normal (const btStridingMeshInterface *mesh, int face) {
         r.normalize();
         return r;
 }
+*/
 
 void contact_added_callback_obj (btManifoldPoint& cp,
                                  const btCollisionObject* colObj,
                                  int partId, int index)
 {
         (void) partId;
+        (void) index;
         const btCollisionShape *shape = colObj->getCollisionShape();
+
         if (shape->getShapeType() != TRIANGLE_SHAPE_PROXYTYPE) return;
+        const btTriangleShape *tshape =
+               static_cast<const btTriangleShape*>(colObj->getCollisionShape());
+
+
         const btCollisionShape *parent = colObj->getRootCollisionShape();
         if (parent == NULL) return;
         if (parent->getShapeType() != TRIANGLE_MESH_SHAPE_PROXYTYPE) return;
-        const btTriangleMeshShape *parent2 =
-                static_cast<const btTriangleMeshShape*>(parent);
-        const btStridingMeshInterface *mesh = parent2->getMeshInterface();
-        btVector3 face_normal = get_face_normal(mesh,index);
-        btScalar dot = face_normal.dot(cp.m_normalWorldOnB);
-        //btScalar magnitude = cp.m_normalWorldOnB.length();
-        //cp.m_normalWorldOnB = dot > 0 ? face_normal : face_normal;
-        //cp.m_normalWorldOnB *= magnitude;
-}
-*/
 
-/*
+        btTransform orient = colObj->getWorldTransform();
+        orient.setOrigin( btVector3(0.0f,0.0f,0.0f ) );
+
+        btVector3 v1 = tshape->m_vertices1[0];
+        btVector3 v2 = tshape->m_vertices1[1];
+        btVector3 v3 = tshape->m_vertices1[2];
+
+        btVector3 normal = (v2-v1).cross(v3-v1);
+
+        normal = orient * normal;
+        normal.normalize();
+
+        btScalar dot = normal.dot(cp.m_normalWorldOnB);
+        btScalar magnitude = cp.m_normalWorldOnB.length();
+        normal *= dot > 0 ? magnitude : -magnitude;
+
+        cp.m_normalWorldOnB = normal;
+}
+
 bool contact_added_callback (btManifoldPoint& cp,
                              const btCollisionObject* colObj0,
                              int partId0, int index0,
@@ -149,7 +164,6 @@ bool contact_added_callback (btManifoldPoint& cp,
         //std::cout << to_ogre(cp.m_normalWorldOnB) << std::endl;
         return true;
 }       
-*/
 
 
 extern ContactAddedCallback gContactAddedCallback;
@@ -174,7 +188,7 @@ PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
 
         btGImpactCollisionAlgorithm::registerAlgorithm(colDisp);
 
-        //gContactAddedCallback = contact_added_callback;
+        gContactAddedCallback = contact_added_callback;
         
         world->setGravity(btVector3(0,0,-9.8));
 }
