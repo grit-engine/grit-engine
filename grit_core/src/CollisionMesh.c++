@@ -122,7 +122,7 @@ btCollisionShape *import_trimesh (const TriMesh &f,
                 btGImpactShapeInterface *s2 = new btGImpactMeshShape(v);
                 //we don't have a good way of 'shrinking' meshes as we
                 //did with the convex hulls so leave margin at 0 for now
-                s2->setMargin(0);
+                s2->setMargin(0.05);
                 /* this is hopelessly awful in comparison (but faster)
                 btGImpactShapeInterface *s2 =
                         new btGImpactConvexDecompositionShape(v,

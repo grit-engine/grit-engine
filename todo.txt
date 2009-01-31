@@ -9,7 +9,6 @@ gameplay
 general physics:
     - constraints (particlarly cone twist and hinge constraints)
     - explosions (ghost object + ray casts?) (sphere + contact iteration?)
-    - bumpy triangle meshes
     - collision detection for camera
 
 vehicles:
@@ -19,7 +18,6 @@ vehicles:
     - study handling.cfg
     - extract graphics and collision meshes from gta vehicles
     - bottoming out
-    - one-way collision meshes to avoid tunnelling/jamming
 
 actors:
     - constraints for ragdoll (particlarly cone twist and hinge constraints)

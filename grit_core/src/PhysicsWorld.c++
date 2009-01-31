@@ -132,25 +132,43 @@ void contact_added_callback_obj (btManifoldPoint& cp,
 
         const btCollisionShape *parent = colObj->getRootCollisionShape();
         if (parent == NULL) return;
-        if (parent->getShapeType() != TRIANGLE_MESH_SHAPE_PROXYTYPE) return;
+        switch (parent->getShapeType()) {
+                case TRIANGLE_MESH_SHAPE_PROXYTYPE: {
 
-        btTransform orient = colObj->getWorldTransform();
-        orient.setOrigin( btVector3(0.0f,0.0f,0.0f ) );
+                        btVector3 normal;
+                        tshape->calcNormal(normal);
 
-        btVector3 v1 = tshape->m_vertices1[0];
-        btVector3 v2 = tshape->m_vertices1[1];
-        btVector3 v3 = tshape->m_vertices1[2];
+                        const btMatrix3x3 &orient =
+                                colObj->getWorldTransform().getBasis();
 
-        btVector3 normal = (v2-v1).cross(v3-v1);
+                        normal = orient * normal;
 
-        normal = orient * normal;
-        normal.normalize();
+                        btScalar dot = normal.dot(cp.m_normalWorldOnB);
+                        btScalar magnitude = cp.m_normalWorldOnB.length();
+                        normal *= dot > 0 ? magnitude : -magnitude;
 
-        btScalar dot = normal.dot(cp.m_normalWorldOnB);
-        btScalar magnitude = cp.m_normalWorldOnB.length();
-        normal *= dot > 0 ? magnitude : -magnitude;
+                        cp.m_normalWorldOnB = normal;
 
-        cp.m_normalWorldOnB = normal;
+                } ; break;
+                case GIMPACT_SHAPE_PROXYTYPE: {
+
+                        btVector3 normal;
+                        tshape->calcNormal(normal);
+                        normal *= -1;
+
+                        const btMatrix3x3 &orient =
+                                colObj->getWorldTransform().getBasis();
+
+                        normal = orient * normal;
+
+                        btScalar dot = normal.dot(cp.m_normalWorldOnB);
+                        
+                        if (dot < 0)
+                                cp.m_normalWorldOnB -= 2 * dot * normal;
+
+
+                } ; break;
+        }
 }
 
 bool contact_added_callback (btManifoldPoint& cp,
@@ -160,7 +178,7 @@ bool contact_added_callback (btManifoldPoint& cp,
                              int partId1, int index1)
 {
         contact_added_callback_obj(cp, colObj0, partId0, index0);
-        contact_added_callback_obj(cp, colObj1, partId1, index1);
+        //contact_added_callback_obj(cp, colObj1, partId1, index1);
         //std::cout << to_ogre(cp.m_normalWorldOnB) << std::endl;
         return true;
 }       
