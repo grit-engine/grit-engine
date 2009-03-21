@@ -134,24 +134,30 @@ class GritObject {
         }
 
         void setLuaValue (const Ogre::String &key,
-                                  const Ogre::String &s)
+                          const Ogre::String &s)
         {
                 luaValues[key].type = 1;
                 luaValues[key].str = s;
         }
 
         void setLuaValue (const Ogre::String &key,
-                                  const Ogre::Vector3 &v3)
+                          const Ogre::Vector3 &v3)
         {
                 luaValues[key].type = 2;
                 luaValues[key].v3 = v3;
         }
 
         void setLuaValue (const Ogre::String &key,
-                                  const Ogre::Quaternion &q)
+                          const Ogre::Quaternion &q)
         {
                 luaValues[key].type = 3;
                 luaValues[key].q = q;
+        }
+
+        void setLuaValue (const Ogre::String &key, bool b)
+        {
+                luaValues[key].type = 4;
+                luaValues[key].b = b;
         }
 
         void pushLuaValue (lua_State *L, const Ogre::String &key)
@@ -172,6 +178,9 @@ class GritObject {
                                 break;
                                 case 3:
                                 push(L,new Ogre::Quaternion(v.q),QUAT_TAG);
+                                break;
+                                case 4:
+                                lua_pushboolean(L,v.b);
                                 break;
                         }
                 }
@@ -293,6 +302,7 @@ class GritObject {
                 Ogre::Real real;
                 Ogre::Vector3 v3;
                 Ogre::Quaternion q;
+                bool b;
         };
 
         GritObjectPtr near, far;
