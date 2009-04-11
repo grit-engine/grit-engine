@@ -1,3 +1,4 @@
+#include <iostream>
 #include <sstream>
 
 #include "KeyboardX11.h"
@@ -7,6 +8,7 @@ KeyboardX11::KeyboardX11(size_t window)
 {
 
         #define MAP_KEY(xk,k) xKeysDown.insert(std::make_pair(xk,"+"k)); \
+                              xKeysRep.insert(std::make_pair(xk,"="k)); \
                               xKeysUp.insert(std::make_pair(xk,"-"k))
 
         MAP_KEY(XK_1, "1");
@@ -193,40 +195,100 @@ KeyboardX11::KeyboardX11(size_t window)
 
 KeyboardX11::~KeyboardX11()
 {
-        if(display)
-        {
+        if(display) {
                 getPresses();
                 XCloseDisplay(display);
         }
 }
 
+void KeyboardX11::add_key (Keyboard::Presses &keys, KeySym key, int kind)
+{
+        bool contains = currentlyPressed.find(key)!=currentlyPressed.end();
+        const char *string;
+        switch (kind) {
+                case -1:
+                if (!contains) return;
+                string = xKeysUp[key];
+                if (string) currentlyPressed.erase(key);
+                break;
+                case 0:
+                if (!contains) {
+                        add_key(keys, key, 1);
+                        return;
+                } 
+                string = xKeysRep[key];
+                break;
+                case 1:
+                if (contains) return;
+                string = xKeysDown[key];
+                if (string) currentlyPressed.insert(key);
+                break;
+        }
+        //std::cout << "key: " << string << std::endl;
+        if (string)
+                keys.push_back(string);
+}
+
 Keyboard::Presses KeyboardX11::getPresses()
 {
-        Keyboard::Presses r; // what we return
+
+        Keyboard::Presses r; // collect presses here
         XEvent event;
 
-        //Poll x11 for events mouse events
+        //Poll x11 for events
+
+        bool last_was_release = false;
+        KeySym last;
 
         while(XPending(display) > 0) {
 
                 XNextEvent(display, &event);
 
-                int release = 0;
-
                 switch (event.type) {
 
-                        case KeyRelease:
-                        release = 1;
+                        case FocusOut: {
+                                // Any key we currently recognise as being held
+                                // down is "released" (note a repeating key
+                                // will still repeat upon refocus)
 
-                        case KeyPress:
+                                typedef std::set<KeySym>::iterator I;
+                                std::set<KeySym> s = currentlyPressed;
+                                for (I i=s.begin(),i_=s.end() ; i!=i_ ; ++i) {
+                                        add_key(r, *i, -1);
+                                }
+                                last_was_release = false;
+                        } break;
 
-                        KeySym key = XLookupKeysym(&event.xkey, 0);
+                        case KeyRelease: {
+                                if (last_was_release) {
+                                        add_key(r, last, -1);
+                                }
+                                KeySym key = XLookupKeysym(&event.xkey, 0);
+                                last = key;
+                                last_was_release = true;
+                        } break;
 
-                        const char *string = (release?xKeysUp:xKeysDown)[key];
-                        if (string)
-                                r.push_back(string);
+                        case KeyPress: {
+                                KeySym key = XLookupKeysym(&event.xkey, 0);
+                                if (last_was_release) {
+                                        if (last!=key) {
+                                                // different key, add both
+                                                add_key(r, last, -1);
+                                                add_key(r, key, 1);
+                                        } else {
+                                                add_key(r, key, 0);
+                                        }
+                                } else {
+                                        add_key(r, key, 1);
+                                }
+                                last_was_release = false;
+                        } break;
 
                 }
+        }
+
+        if (last_was_release) {
+                add_key(r, last, -1);
         }
 
         return r;

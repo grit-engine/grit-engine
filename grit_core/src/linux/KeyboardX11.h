@@ -1,3 +1,4 @@
+#include <set>
 #include <map>
 
 #include <X11/Xlib.h>
@@ -17,6 +18,9 @@ public:
 
         virtual Presses getPresses();
 
+        virtual void add_key (Keyboard::Presses &keys, KeySym key, int kind);
+
+
         //virtual u32 get_unicode(unsigned int key);
 
 protected:
@@ -25,8 +29,10 @@ protected:
         Window win;
 
         std::map<KeySym,const char*> xKeysUp;
+        std::map<KeySym,const char*> xKeysRep;
         std::map<KeySym,const char*> xKeysDown;
 
+        std::set<KeySym> currentlyPressed;
 };
 
 // vim: shiftwidth=8:tabstop=8:expandtab
