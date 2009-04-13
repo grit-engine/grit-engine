@@ -109,6 +109,7 @@ template<class T> class SplineTable {
                 }
                 // should never get here
                 abort();
+                return 0.0;  // MSVC doesn't understand abort()
         }
 
     protected:

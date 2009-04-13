@@ -62,11 +62,22 @@ static const char *result_str(HRESULT r)
 
 #define BAD_DI_RESULT(r,i_was) app_error(__FILE__,__LINE__,i_was,result_str(r))
 
+static ULONGLONG millis()
+{
+        FILETIME time;
+        GetSystemTimeAsFileTime(&time);
+        ULARGE_INTEGER millis;
+        millis.LowPart = time.dwLowDateTime;
+        millis.HighPart = time.dwHighDateTime;
+        return millis.QuadPart/10000;
+}
+
 KeyboardDirectInput8::KeyboardDirectInput8(size_t window)
 {
 
         #define MAP_KEY(kc,k) keysDown.insert(std::make_pair(kc,"+"k)); \
-                                keysUp.insert(std::make_pair(kc,"-"k))
+                              keysRep.insert(std::make_pair(kc,"="k)); \
+                              keysUp.insert(std::make_pair(kc,"-"k))
 
         MAP_KEY(DIK_1, "1");
         MAP_KEY(DIK_2, "2");
@@ -224,6 +235,7 @@ KeyboardDirectInput8::KeyboardDirectInput8(size_t window)
         r = dev->SetProperty(DIPROP_BUFFERSIZE, &dipdw.diph );
         if (FAILED(r)) BAD_DI_RESULT(r,"setting buffer size");
 
+        lastTime = millis();
 }
 
 KeyboardDirectInput8::~KeyboardDirectInput8()
@@ -238,8 +250,14 @@ KeyboardDirectInput8::~KeyboardDirectInput8()
         }
 }
 
+unsigned long repeatRate = 60;
+unsigned long repeatDelay = 300;
+        
+
 Keyboard::Presses KeyboardDirectInput8::getPresses()
 {
+        ULONGLONG this_time = millis();
+
         Keyboard::Presses ret;
 
         DWORD num_elements = BUFFSZ;
@@ -259,12 +277,31 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
         } else {
                 // finally, process events
                 for (DWORD i=0 ; i<num_elements ; i++) {
-
                         DWORD kc = buf[i].dwOfs;
-                        ret.push_back((buf[i].dwData&0x80?keysDown:keysUp)[kc]);
+                        bool down = 0!=(buf[i].dwData & 0x80);
+                        if (down) {
+                                pressTime[kc] = this_time;
+                                ret.push_back(keysDown[kc]);
+                        } else {
+                                pressTime.erase(kc);
+                                ret.push_back(keysUp[kc]);
+                        }
                 }
         }
 
+        typedef std::map<DWORD, ULONGLONG>::iterator I;
+        for (I i=pressTime.begin(), i_=pressTime.end() ; i!=i_ ; ++i) {
+                // repeat
+                DWORD key = i->first;
+                ULONGLONG &press_time = i->second;
+                if (press_time + repeatDelay > this_time) continue; // hasn't been held down long enough yet
+                ULONGLONG repeat_period = 1000 / repeatRate;
+                for (; press_time + repeatDelay + repeat_period <= this_time ; press_time += repeat_period) {
+                        ret.push_back(keysRep[key]);
+                }
+        }
+
+        lastTime = this_time;
         return ret;
 }
 

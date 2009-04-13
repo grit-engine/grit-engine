@@ -1,4 +1,5 @@
 #include <map>
+#include <set>
 
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
@@ -25,8 +26,10 @@ protected:
 
         IDirectInputDevice8 *dev;
 
-        std::map<DWORD,const char *> keysUp, keysDown;
+        std::map<DWORD,const char *> keysUp, keysDown, keysRep;
+        std::map<DWORD, ULONGLONG> pressTime;
 
+        ULONGLONG lastTime;
 };
 
 // vim: shiftwidth=8:tabstop=8:expandtab
