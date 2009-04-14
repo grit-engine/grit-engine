@@ -9,7 +9,7 @@ gameplay
 general physics:
     - constraints (particlarly cone twist and hinge constraints)
     - explosions (ghost object + ray casts?) (sphere + contact iteration?)
-    - collision detection for camera
+    - full collision detection for camera
 
 vehicles:
     - constraints (particularly hinge constraint for car doors)
@@ -81,10 +81,6 @@ minimising the number of occl zones is very important for performance
 --------------------------------------------------------------------------------
 user interface
 --------------------------------------------------------------------------------
-
-Keyboard repeat on windows
-
-sticky keys when lose focus, in X11
 
 sticky keys when switch to lua console, generally
 
