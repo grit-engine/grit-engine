@@ -23,6 +23,9 @@
 #include "Grit.h"
 #include "BackgroundMeshLoader.h"
 #include "app_error.h"
+#include "CentralisedLog.h"
+
+CentralisedLog clog;
 
 Grit *grit = NULL;
 
@@ -30,26 +33,18 @@ Grit *grit = NULL;
 
 void app_verbose(char const* file, int line, const std::string& msg)
 {
-        std::cout<<BOLD GREEN"VERBOSE "RESET
-                 <<BOLD<<file<<NOBOLD":"BOLD<<line<<NOBOLD
-                 <<": \""BOLD BLUE<<msg<<RESET"\"";
-        std::cout<<std::endl;
+        clog.echo(msg);
 }
 
 void app_error(char const* file, int line,
                const std::string& i_was, const std::string& msg)
 {
-        std::cout<<BOLD RED"ERROR "RESET
-                 <<BOLD<<file<<NOBOLD":"BOLD<<line<<NOBOLD
-                 <<": \""BOLD YELLOW<<msg<<RESET"\"";
-        if (i_was!="")
-                std::cout<<" ("BOLD YELLOW<<i_was<<RESET")";
-        std::cout<<std::endl;
+        clog.echo(msg);
 }
 
 void app_line(const std::string &msg)
 {
-        std::cout<<BOLD<<msg<<NOBOLD<<std::endl;
+        clog.echo(msg);
 }
 
 int already_fatal = 0;
@@ -71,6 +66,12 @@ int main(int argc, const char **argv)
 
         try {
 
+
+                Ogre::LogManager *lmgr = OGRE_NEW Ogre::LogManager();
+                Ogre::Log *ogre_log = OGRE_NEW Ogre::Log("",false,true);
+                ogre_log->addListener(&clog);
+                lmgr->setDefaultLog(ogre_log);
+                lmgr->setLogDetail(Ogre::LL_BOREME);
 
                 #ifdef NO_PLUGINS
                         Ogre::Root* ogre = OGRE_NEW Ogre::Root("");

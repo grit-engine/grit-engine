@@ -317,6 +317,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\CentralisedLog.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\CollisionMesh.h"
 				>
 			</File>

@@ -16,6 +16,7 @@
 #include "matbin.h"
 #include "sleep.h"
 #include "HUD.h"
+#include "CentralisedLog.h"
 
 
 #include "lua_wrappers_primitives.h"
@@ -1085,6 +1086,31 @@ TRY_END
 }
 
 
+static int global_echo (lua_State *L)
+{
+TRY_START
+        std::stringstream ss;
+        int args = lua_gettop(L);
+        for (int i=1 ; i<=args ; ++i) {
+                if (i>1) ss << "\t";
+                ss << lua_tostring(L,i);
+        }
+        clog.echo(ss.str());
+        return 0;
+TRY_END
+}
+
+
+static int global_console_poll (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushstring(L,clog.consolePoll().c_str());
+        return 1;
+TRY_END
+}
+
+
 static int global_add_font (lua_State *L)
 {
 TRY_START
@@ -1228,6 +1254,8 @@ static const luaL_reg global[] = {
         {"error",global_error},
         {"error_handler",global_error_handler},
         {"alive",global_alive},
+        {"echo",global_echo},
+        {"console_poll",global_console_poll},
 
         {"pump",global_pump},
         {"clicked_close",global_clicked_close},

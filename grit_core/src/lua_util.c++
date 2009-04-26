@@ -180,10 +180,10 @@ int my_lua_error_handler(lua_State *l, lua_State *coro, int levelhack)
                   str.c_str());
         for (size_t i=1 ; i<tb.size() ; i++) {
                 if (tb[i].gap) {
-                        app_line("...");
+                        app_line("\t...");
                 } else {
                         std::stringstream ss;
-                        ss << tb[i].file << ":" << tb[i].line << ": "
+                        ss << "\t" << tb[i].file << ":" << tb[i].line << ": "
                            << tb[i].func_name;
                         app_line(ss.str().c_str());
                 }
