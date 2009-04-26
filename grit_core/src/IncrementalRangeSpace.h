@@ -9,7 +9,7 @@ template <typename T> class IncrementalRangeSpace;
 #include <math.h>
 
 
-#include "app_error.h"
+#include "CentralisedLog.h"
 
 template <typename T>
 class IncrementalRangeSpace {

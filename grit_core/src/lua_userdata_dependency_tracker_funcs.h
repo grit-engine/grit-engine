@@ -7,7 +7,7 @@ static void vec_nullify_remove (std::vector<void**>& v, T **ud)
         void *const* ptr = (void *const*) ud; //thankyou c++
         std::vector<void**>::iterator i = std::find(v.begin(),v.end(),ptr);
         if (i==v.end()) {
-                APP_ERROR("gc'ing","Spurious userdata!");
+                CERR<<"gc'ing: Spurious userdata!"<<std::endl;
                 app_fatal();
         }
         **i = NULL;
@@ -27,8 +27,7 @@ static void map_remove_only (std::map<T,T2>& m, T k)
 {
         typename std::map<T,T2>::iterator i = m.find(k);
         if (i==m.end()) {
-                std::stringstream ss;
-                APP_ERROR("gc'ing","Map does not contain item!");
+                CERR<<"gc'ing: Map does not contain item!"<<std::endl;
                 app_fatal();
         }
         m.erase(i);

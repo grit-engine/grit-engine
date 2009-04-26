@@ -84,11 +84,4 @@ user interface
 
 sticky keys when switch to lua console, generally
 
-unify app_error app_verbose app_line print echo and console.print, and the
-various assertions
-
-- use Ogre::LogManager
-
-- set up app_verbose as a stream
-
 write windows gdi thingy for stdout ("rich text")

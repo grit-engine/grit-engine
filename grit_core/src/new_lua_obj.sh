@@ -18,7 +18,7 @@ TRY_START
         check_args(L,1);
         GET_UD_MACRO_OFFSET(UNKNOWN_TYPE,self,1,UNKNOWN_TAG,0);
         if (self==NULL) return 0;
-        APP_VERBOSE("nullifying "UNKNOWN_TAG);
+        CVERB << "nullifying "UNKNOWN_TAG << std::endl;
         vec_nullify_remove(grit->getUserDataTables().UDNAME[self],&self);
         return 0;
 TRY_END
@@ -29,7 +29,7 @@ static int NAME_destroy (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(UNKNOWN_TYPE,self,1,UNKNOWN_TAG);
-        APP_VERBOSE("destroying "UNKNOWN_TAG);
+        CVERB << "destroying "UNKNOWN_TAG << std::endl;
         self.destroySomehow();
         map_nullify_remove(grit->getUserDataTables().UDNAME,&self);
         return 0;

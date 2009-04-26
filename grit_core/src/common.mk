@@ -73,26 +73,31 @@ clean:
 # DO NOT DELETE
 
 BackgroundMeshLoader.o: ../src/sleep.h ../src/BackgroundMeshLoader.h
-BackgroundMeshLoader.o: ../src/app_error.h
+BackgroundMeshLoader.o: ../src/CentralisedLog.h
+BackgroundMeshLoader.o: ../src/console_colour.h
 CollisionMesh.o: ../src/CollisionMesh.h ../src/LooseEnd.h
 CollisionMesh.o: ../src/TColParser.h ../src/TColLexer
-CollisionMesh.o: ../src/TColLexer-token_ids
+CollisionMesh.o: ../src/TColLexer-token_ids ../src/CentralisedLog.h
+CollisionMesh.o: ../src/console_colour.h
 Grit.o: ../src/Grit.h ../src/lua_userdata_dependency_tracker.h
-Grit.o: ../src/sleep.h ../src/ray.h ../src/app_error.h
-Grit.o: ../src/lua_util.h ../src/Mouse.h ../src/Keyboard.h
-Grit.o: ../src/lua_wrappers_core.h ../src/GritObject.h
-Grit.o: ../src/PhysicsWorld.h ../src/CollisionMesh.h
-Grit.o: ../src/LooseEnd.h ../src/GritObjectManager.h
+Grit.o: ../src/sleep.h ../src/ray.h ../src/CentralisedLog.h
+Grit.o: ../src/console_colour.h ../src/lua_util.h ../src/Mouse.h
+Grit.o: ../src/Keyboard.h ../src/lua_wrappers_core.h
+Grit.o: ../src/GritObject.h ../src/PhysicsWorld.h
+Grit.o: ../src/CollisionMesh.h ../src/LooseEnd.h ../src/TColParser.h
+Grit.o: ../src/TColLexer ../src/TColLexer-token_ids
+Grit.o: ../src/GritObjectManager.h
 Grit.o: ../src/CacheFriendlyRangeSpaceSIMD.h ../src/SSEAllocator.h
 Grit.o: ../src/BackgroundMeshLoader.h
 Grit.o: ../src/lua_wrappers_primitives.h ../src/lua_wrappers_common.h
 Grit.o: ../src/HUD.h ../src/TextListOverlayElement.h
 GritObject.o: ../src/PhysicsWorld.h ../src/CollisionMesh.h
-GritObject.o: ../src/LooseEnd.h ../src/GritObject.h
+GritObject.o: ../src/LooseEnd.h ../src/TColParser.h ../src/TColLexer
+GritObject.o: ../src/TColLexer-token_ids ../src/GritObject.h
 GritObject.o: ../src/GritObjectManager.h
 GritObject.o: ../src/CacheFriendlyRangeSpaceSIMD.h
-GritObject.o: ../src/SSEAllocator.h ../src/app_error.h
-GritObject.o: ../src/BackgroundMeshLoader.h
+GritObject.o: ../src/SSEAllocator.h ../src/CentralisedLog.h
+GritObject.o: ../src/console_colour.h ../src/BackgroundMeshLoader.h
 GritObject.o: ../src/lua_wrappers_primitives.h
 GritObject.o: ../src/lua_wrappers_common.h ../src/lua_util.h
 GritObject.o: ../src/lua_wrappers_gritobj.h
@@ -101,28 +106,33 @@ GritObject.o: ../src/lua_wrappers_scnmgr.h ../src/Grit.h
 GritObject.o: ../src/lua_userdata_dependency_tracker.h
 GritObjectManager.o: ../src/GritObjectManager.h ../src/GritObject.h
 GritObjectManager.o: ../src/PhysicsWorld.h ../src/CollisionMesh.h
-GritObjectManager.o: ../src/LooseEnd.h ../src/BackgroundMeshLoader.h
-GritObjectManager.o: ../src/app_error.h
+GritObjectManager.o: ../src/LooseEnd.h ../src/TColParser.h
+GritObjectManager.o: ../src/TColLexer ../src/TColLexer-token_ids
+GritObjectManager.o: ../src/BackgroundMeshLoader.h
+GritObjectManager.o: ../src/CentralisedLog.h ../src/console_colour.h
 GritObjectManager.o: ../src/lua_wrappers_primitives.h
 GritObjectManager.o: ../src/lua_wrappers_common.h ../src/lua_util.h
 GritObjectManager.o: ../src/CacheFriendlyRangeSpaceSIMD.h
 GritObjectManager.o: ../src/SSEAllocator.h ../src/Grit.h
 GritObjectManager.o: ../src/lua_userdata_dependency_tracker.h
 HUD.o: ../src/HUD.h ../src/TextListOverlayElement.h
-HUD.o: ../src/app_error.h
-lua_util.o: ../src/lua_util.h ../src/app_error.h
+HUD.o: ../src/CentralisedLog.h ../src/console_colour.h
+lua_util.o: ../src/lua_util.h ../src/CentralisedLog.h
+lua_util.o: ../src/console_colour.h
 lua_wrappers_core.o: ../src/Grit.h
 lua_wrappers_core.o: ../src/lua_userdata_dependency_tracker.h
 lua_wrappers_core.o: ../src/Keyboard.h ../src/Mouse.h
-lua_wrappers_core.o: ../src/BackgroundMeshLoader.h ../src/app_error.h
+lua_wrappers_core.o: ../src/BackgroundMeshLoader.h
+lua_wrappers_core.o: ../src/CentralisedLog.h ../src/console_colour.h
 lua_wrappers_core.o: ../src/matbin.h ../src/sleep.h ../src/HUD.h
 lua_wrappers_core.o: ../src/TextListOverlayElement.h
 lua_wrappers_core.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_core.o: ../src/lua_wrappers_common.h ../src/lua_util.h
 lua_wrappers_core.o: ../src/lua_wrappers_physics.h
 lua_wrappers_core.o: ../src/PhysicsWorld.h ../src/CollisionMesh.h
-lua_wrappers_core.o: ../src/LooseEnd.h ../src/GritObject.h
-lua_wrappers_core.o: ../src/GritObjectManager.h
+lua_wrappers_core.o: ../src/LooseEnd.h ../src/TColParser.h
+lua_wrappers_core.o: ../src/TColLexer ../src/TColLexer-token_ids
+lua_wrappers_core.o: ../src/GritObject.h ../src/GritObjectManager.h
 lua_wrappers_core.o: ../src/CacheFriendlyRangeSpaceSIMD.h
 lua_wrappers_core.o: ../src/SSEAllocator.h ../src/lua_wrappers_mobj.h
 lua_wrappers_core.o: ../src/lua_wrappers_scnmgr.h
@@ -135,12 +145,16 @@ lua_wrappers_core.o: ../src/lua_wrappers_gritobj.h
 lua_wrappers_core.o: ../src/lua_wrappers_hud.h
 lua_wrappers_gpuprog.o: ../src/lua_wrappers_gpuprog.h
 lua_wrappers_gpuprog.o: ../src/lua_wrappers_common.h
-lua_wrappers_gpuprog.o: ../src/lua_util.h ../src/app_error.h
+lua_wrappers_gpuprog.o: ../src/lua_util.h ../src/CentralisedLog.h
+lua_wrappers_gpuprog.o: ../src/console_colour.h
 lua_wrappers_gritobj.o: ../src/GritObjectManager.h
 lua_wrappers_gritobj.o: ../src/GritObject.h ../src/PhysicsWorld.h
 lua_wrappers_gritobj.o: ../src/CollisionMesh.h ../src/LooseEnd.h
+lua_wrappers_gritobj.o: ../src/TColParser.h ../src/TColLexer
+lua_wrappers_gritobj.o: ../src/TColLexer-token_ids
 lua_wrappers_gritobj.o: ../src/BackgroundMeshLoader.h
-lua_wrappers_gritobj.o: ../src/app_error.h
+lua_wrappers_gritobj.o: ../src/CentralisedLog.h
+lua_wrappers_gritobj.o: ../src/console_colour.h
 lua_wrappers_gritobj.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_gritobj.o: ../src/lua_wrappers_common.h
 lua_wrappers_gritobj.o: ../src/lua_util.h
@@ -153,28 +167,34 @@ lua_wrappers_gritobj.o: ../src/lua_wrappers_scnmgr.h
 lua_wrappers_hud.o: ../src/HUD.h ../src/TextListOverlayElement.h
 lua_wrappers_hud.o: ../src/lua_wrappers_hud.h
 lua_wrappers_hud.o: ../src/lua_wrappers_common.h ../src/lua_util.h
-lua_wrappers_hud.o: ../src/app_error.h ../src/lua_wrappers_material.h
+lua_wrappers_hud.o: ../src/CentralisedLog.h ../src/console_colour.h
+lua_wrappers_hud.o: ../src/lua_wrappers_material.h
 lua_wrappers_material.o: ../src/lua_wrappers_material.h
 lua_wrappers_material.o: ../src/lua_wrappers_common.h
-lua_wrappers_material.o: ../src/lua_util.h ../src/app_error.h
+lua_wrappers_material.o: ../src/lua_util.h ../src/CentralisedLog.h
+lua_wrappers_material.o: ../src/console_colour.h
 lua_wrappers_mesh.o: ../src/lua_wrappers_mesh.h
 lua_wrappers_mesh.o: ../src/lua_wrappers_common.h ../src/lua_util.h
-lua_wrappers_mesh.o: ../src/app_error.h
+lua_wrappers_mesh.o: ../src/CentralisedLog.h ../src/console_colour.h
 lua_wrappers_mesh.o: ../src/lua_wrappers_material.h
 lua_wrappers_mobj.o: ../src/Grit.h
 lua_wrappers_mobj.o: ../src/lua_userdata_dependency_tracker.h
 lua_wrappers_mobj.o: ../src/lua_wrappers_mobj.h
 lua_wrappers_mobj.o: ../src/lua_wrappers_common.h ../src/lua_util.h
-lua_wrappers_mobj.o: ../src/app_error.h ../src/lua_wrappers_scnmgr.h
+lua_wrappers_mobj.o: ../src/CentralisedLog.h ../src/console_colour.h
+lua_wrappers_mobj.o: ../src/lua_wrappers_scnmgr.h
 lua_wrappers_mobj.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_mobj.o: ../src/lua_wrappers_material.h
 lua_wrappers_mobj.o: ../src/lua_wrappers_mesh.h
 lua_wrappers_mobj.o: ../src/lua_userdata_dependency_tracker_funcs.h
 lua_wrappers_physics.o: ../src/PhysicsWorld.h ../src/CollisionMesh.h
-lua_wrappers_physics.o: ../src/LooseEnd.h ../src/GritObject.h
+lua_wrappers_physics.o: ../src/LooseEnd.h ../src/TColParser.h
+lua_wrappers_physics.o: ../src/TColLexer ../src/TColLexer-token_ids
+lua_wrappers_physics.o: ../src/GritObject.h
 lua_wrappers_physics.o: ../src/GritObjectManager.h
 lua_wrappers_physics.o: ../src/CacheFriendlyRangeSpaceSIMD.h
-lua_wrappers_physics.o: ../src/SSEAllocator.h ../src/app_error.h
+lua_wrappers_physics.o: ../src/SSEAllocator.h ../src/CentralisedLog.h
+lua_wrappers_physics.o: ../src/console_colour.h
 lua_wrappers_physics.o: ../src/BackgroundMeshLoader.h
 lua_wrappers_physics.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_physics.o: ../src/lua_wrappers_common.h
@@ -182,38 +202,46 @@ lua_wrappers_physics.o: ../src/lua_util.h
 lua_wrappers_physics.o: ../src/lua_wrappers_physics.h
 lua_wrappers_primitives.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_primitives.o: ../src/lua_wrappers_common.h
-lua_wrappers_primitives.o: ../src/lua_util.h ../src/app_error.h
+lua_wrappers_primitives.o: ../src/lua_util.h ../src/CentralisedLog.h
+lua_wrappers_primitives.o: ../src/console_colour.h
+lua_wrappers_primitives.o: ../src/SplineTable.h
 lua_wrappers_render.o: ../src/Grit.h
 lua_wrappers_render.o: ../src/lua_userdata_dependency_tracker.h
 lua_wrappers_render.o: ../src/lua_wrappers_render.h
 lua_wrappers_render.o: ../src/lua_wrappers_common.h ../src/lua_util.h
-lua_wrappers_render.o: ../src/app_error.h ../src/lua_wrappers_tex.h
+lua_wrappers_render.o: ../src/CentralisedLog.h
+lua_wrappers_render.o: ../src/console_colour.h
+lua_wrappers_render.o: ../src/lua_wrappers_tex.h
 lua_wrappers_render.o: ../src/lua_wrappers_mobj.h
 lua_wrappers_render.o: ../src/lua_userdata_dependency_tracker_funcs.h
 lua_wrappers_scnmgr.o: ../src/Grit.h
 lua_wrappers_scnmgr.o: ../src/lua_userdata_dependency_tracker.h
 lua_wrappers_scnmgr.o: ../src/lua_wrappers_scnmgr.h
 lua_wrappers_scnmgr.o: ../src/lua_wrappers_common.h ../src/lua_util.h
-lua_wrappers_scnmgr.o: ../src/app_error.h ../src/lua_wrappers_mobj.h
+lua_wrappers_scnmgr.o: ../src/CentralisedLog.h
+lua_wrappers_scnmgr.o: ../src/console_colour.h
+lua_wrappers_scnmgr.o: ../src/lua_wrappers_mobj.h
 lua_wrappers_scnmgr.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_scnmgr.o: ../src/lua_wrappers_material.h
 lua_wrappers_scnmgr.o: ../src/lua_wrappers_tex.h
 lua_wrappers_scnmgr.o: ../src/lua_userdata_dependency_tracker_funcs.h
 lua_wrappers_tex.o: ../src/lua_wrappers_tex.h
 lua_wrappers_tex.o: ../src/lua_wrappers_common.h ../src/lua_util.h
-lua_wrappers_tex.o: ../src/app_error.h ../src/lua_wrappers_render.h
+lua_wrappers_tex.o: ../src/CentralisedLog.h ../src/console_colour.h
+lua_wrappers_tex.o: ../src/lua_wrappers_render.h
 main.o: ../src/linux/KeyboardX11.h ../src/Keyboard.h
 main.o: ../src/linux/MouseX11.h ../src/Mouse.h ../src/Grit.h
 main.o: ../src/lua_userdata_dependency_tracker.h
-main.o: ../src/BackgroundMeshLoader.h ../src/app_error.h
+main.o: ../src/BackgroundMeshLoader.h ../src/CentralisedLog.h
 main.o: ../src/console_colour.h
 matbin.o: ../src/matbin.h ../src/ogre_datastream_util.h
 PhysicsWorld.o: ../src/PhysicsWorld.h ../src/CollisionMesh.h
-PhysicsWorld.o: ../src/LooseEnd.h ../src/GritObject.h
-PhysicsWorld.o: ../src/GritObjectManager.h
+PhysicsWorld.o: ../src/LooseEnd.h ../src/TColParser.h
+PhysicsWorld.o: ../src/TColLexer ../src/TColLexer-token_ids
+PhysicsWorld.o: ../src/GritObject.h ../src/GritObjectManager.h
 PhysicsWorld.o: ../src/CacheFriendlyRangeSpaceSIMD.h
-PhysicsWorld.o: ../src/SSEAllocator.h ../src/app_error.h
-PhysicsWorld.o: ../src/BackgroundMeshLoader.h
+PhysicsWorld.o: ../src/SSEAllocator.h ../src/CentralisedLog.h
+PhysicsWorld.o: ../src/console_colour.h ../src/BackgroundMeshLoader.h
 PhysicsWorld.o: ../src/lua_wrappers_primitives.h
 PhysicsWorld.o: ../src/lua_wrappers_common.h ../src/lua_util.h
 PhysicsWorld.o: ../src/Grit.h
@@ -223,13 +251,14 @@ ray.o: ../src/ray.h
 TColParser.o: ../src/TColLexer ../src/TColLexer-token_ids
 TColParser.o: ../src/TColParser.h
 TextListOverlayElement.o: ../src/TextListOverlayElement.h
-TextListOverlayElement.o: ../src/app_error.h ../src/Grit.h
+TextListOverlayElement.o: ../src/CentralisedLog.h
+TextListOverlayElement.o: ../src/console_colour.h ../src/Grit.h
 TextListOverlayElement.o: ../src/lua_userdata_dependency_tracker.h
 KeyboardX11.o: ../src/linux/KeyboardX11.h ../src/Keyboard.h
-KeyboardX11.o: ../src/app_error.h
+KeyboardX11.o: ../src/CentralisedLog.h ../src/console_colour.h
 MouseX11.o: ../src/linux/MouseX11.h ../src/Mouse.h
-MouseX11.o: ../src/app_error.h
+MouseX11.o: ../src/CentralisedLog.h ../src/console_colour.h
 KeyboardDirectInput8.o: ../src/win32/KeyboardDirectInput8.h
-KeyboardDirectInput8.o: ../src/Keyboard.h ../src/app_error.h
+KeyboardDirectInput8.o: ../src/Keyboard.h
 MouseDirectInput8.o: ../src/win32/MouseDirectInput8.h
-MouseDirectInput8.o: ../src/Mouse.h ../src/app_error.h
+MouseDirectInput8.o: ../src/Mouse.h

@@ -4,7 +4,7 @@
 #include "GritObject.h"
 #include "Grit.h"
 #include "lua_wrappers_physics.h"
-#include "app_error.h"
+#include "CentralisedLog.h"
 
 //#include <GIMPACT/Bullet/btGImpactShape.h>
 //#include <GIMPACT/Bullet/btGImpactCollisionAlgorithm.h>
@@ -509,7 +509,7 @@ void RigidBody::destroy (lua_State *L)
 RigidBody::~RigidBody (void)
 {
         if (body==NULL) return;
-        APP_ERROR("destructing RigidBody","destroy() was not called");
+        CERR << "destructing RigidBody: destroy() was not called" << std::endl;
         world->world->removeRigidBody(body);
         delete body;
         body = NULL;

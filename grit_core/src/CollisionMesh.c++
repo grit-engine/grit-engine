@@ -6,7 +6,7 @@
 #include "CollisionMesh.h"
 #include "TColParser.h"
 
-#include "app_error.h"
+#include "CentralisedLog.h"
 
 #include <LinearMath/btGeometryUtil.h>
 #include <BulletCollision/Gimpact/btGImpactShape.h>

@@ -3,7 +3,7 @@
 #include <OgreFontManager.h>
 
 #include "HUD.h"
-#include "app_error.h"
+#include "CentralisedLog.h"
 
 #define GET_CHAR(i) OGRE_DEREF_DISPLAYSTRING_ITERATOR((i))
 
@@ -166,7 +166,7 @@ namespace HUD {
                 } else if (type=="Text") {
                         tree = new Text(overlay,getWidth(),getHeight());
                 } else {
-                        APP_ERROR("","Unknown type \""+type+"\"");
+                        CERR<<"Unknown type \""<<type<<"\""<<std::endl;
                         app_fatal();
                 }
                 me->addChild(tree->getMe());

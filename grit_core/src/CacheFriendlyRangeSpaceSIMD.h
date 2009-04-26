@@ -11,7 +11,7 @@ template <typename T> class CacheFriendlyRangeSpace;
 
 
 #include "SSEAllocator.h"
-#include "app_error.h"
+#include "CentralisedLog.h"
 
 #ifdef near
 #undef near

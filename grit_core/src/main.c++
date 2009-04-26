@@ -22,7 +22,6 @@
 
 #include "Grit.h"
 #include "BackgroundMeshLoader.h"
-#include "app_error.h"
 #include "CentralisedLog.h"
 
 CentralisedLog clog;
@@ -30,22 +29,6 @@ CentralisedLog clog;
 Grit *grit = NULL;
 
 #include "console_colour.h"
-
-void app_verbose(char const* file, int line, const std::string& msg)
-{
-        clog.echo(msg);
-}
-
-void app_error(char const* file, int line,
-               const std::string& i_was, const std::string& msg)
-{
-        clog.echo(msg);
-}
-
-void app_line(const std::string &msg)
-{
-        clog.echo(msg);
-}
 
 int already_fatal = 0;
 
@@ -71,7 +54,7 @@ int main(int argc, const char **argv)
                 Ogre::Log *ogre_log = OGRE_NEW Ogre::Log("",false,true);
                 ogre_log->addListener(&clog);
                 lmgr->setDefaultLog(ogre_log);
-                lmgr->setLogDetail(Ogre::LL_BOREME);
+                lmgr->setLogDetail(Ogre::LL_NORMAL);
 
                 #ifdef NO_PLUGINS
                         Ogre::Root* ogre = OGRE_NEW Ogre::Root("");
@@ -100,9 +83,9 @@ int main(int argc, const char **argv)
 
 
                 if (!ogre->restoreConfig()) {
-                        APP_ERROR("Failure","reading ogre.cfg");
+                        CERR<<"Error reading ogre.cfg"<<std::endl;
                         if (!ogre->showConfigDialog()) {
-                                APP_ERROR("Failure","showing config dialogue");
+                                CERR<<"Error showing config dialog"<<std::endl;
                                 app_fatal();
                         }
                 }

@@ -1093,7 +1093,11 @@ TRY_START
         int args = lua_gettop(L);
         for (int i=1 ; i<=args ; ++i) {
                 if (i>1) ss << "\t";
-                ss << lua_tostring(L,i);
+                lua_getfield(L, LUA_GLOBALSINDEX, "console_tostring");
+                lua_pushvalue(L,i);
+                lua_call(L,1,1);
+                ss << lua_tostring(L,-1);
+                lua_pop(L,1);
         }
         clog.echo(ss.str());
         return 0;
@@ -1383,7 +1387,7 @@ TRY_START
         }
 
         std::string err = luaL_checkstring(L,-1);
-        APP_ERROR("PANIC!",err);
+        CERR<<"PANIC! "<<err<<std::endl;
         app_fatal();
         return 0;
 TRY_END
@@ -1454,7 +1458,7 @@ lua_State *init_lua(const char *filename)
         int status = luaL_loadfile(L,filename);
         if (status) {
                 const char *str = lua_tostring(L,-1);
-                APP_ERROR("loading lua file",str);
+                CERR << "loading lua file: " << str << std::endl;
                 lua_pop(L,1); // message
         } else {
                 // error handler should print stacktrace and stuff

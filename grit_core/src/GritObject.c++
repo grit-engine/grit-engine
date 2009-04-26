@@ -214,12 +214,9 @@ void GritObject::activate (lua_State *L,
                 // pop both the error handler and the nil activate function
                 // and the table
                 lua_pop(L,3);
-                std::string msg1 = "activating object: \"";
-                msg1 += name + "\"";
-                std::string msg2 = "class \"";
-                msg2 += gritClass->name + "\" does not have activate ";
-                msg2 += "function";
-                APP_ERROR(msg1,msg2);
+                CERR << "activating object: \""<<name<<"\": "
+                     << "class \""<<gritClass->name<<"\" "
+                     << "does not have activate function" << std::endl;
                 grit->getGOM().deleteObject(L,self);
                 STACK_CHECK;
                 return;
@@ -339,12 +336,9 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
         if (lua_isnil(L,-1)) {
                 lua_pop(L,3);
                 //stack is empty
-                std::string msg1 = "deactivating object: \"";
-                msg1 += name + "\"";
-                std::string msg2 = "class \"";
-                msg2 += gritClass->name + "\" does not have deactivate ";
-                msg2 += "function";
-                APP_ERROR(msg1,msg2);
+                CERR << "deactivating object: \""<<name<<"\": "
+                     << "class \""<<gritClass->name<<"\" "
+                     << "does not have deactivate function" << std::endl;
                 grit->getGOM().deleteObject(L,self);
                 STACK_CHECK;
                 // returning true indicates the object will be erased

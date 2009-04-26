@@ -7,7 +7,7 @@
 GritObjectManager::~GritObjectManager (void)
 {
         if (!shutdown)
-                APP_ERROR("destructing GritObjManager","not shutdown cleanly");
+                CERR<<"GritObjectManager: not shutdown cleanly"<<std::endl;
 }
 
 void GritObjectManager::doShutdown (lua_State *L)

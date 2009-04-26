@@ -2,7 +2,7 @@
 #include <sstream>
 
 #include "KeyboardX11.h"
-#include "../app_error.h"
+#include "../CentralisedLog.h"
 
 KeyboardX11::KeyboardX11(size_t window)
 {
@@ -187,7 +187,7 @@ KeyboardX11::KeyboardX11(size_t window)
         long event_mask = KeyPressMask | KeyReleaseMask;
         event_mask |= FocusChangeMask;
         if (XSelectInput(display, win, event_mask) == BadWindow) {
-                APP_ERROR("calling XSelectInput","BadWindow");
+                CERR << "calling XSelectInput: BadWindow" << std::endl;
                 app_fatal();
         }
 
@@ -238,7 +238,7 @@ Keyboard::Presses KeyboardX11::getPresses()
         //Poll x11 for events
 
         bool last_was_release = false;
-        KeySym last;
+        KeySym last = 0;
 
         while(XPending(display) > 0) {
 

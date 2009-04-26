@@ -12,7 +12,7 @@
 #include "Grit.h"
 #include "sleep.h"
 #include "ray.h"
-#include "app_error.h"
+#include "CentralisedLog.h"
 #include "lua_util.h"
 #include "Mouse.h"
 #include "Keyboard.h"
@@ -152,8 +152,8 @@ void Grit::doMain (int argc, const char **argv)
         if (lua_isnil(L,-1)) {
                 lua_pop(L,1); // nil 'main object'
                 lua_pop(L,1); //handler
-                std::string i_was = "invoking main:run(...)";
-                APP_ERROR(i_was.c_str(),"object \"main\" not found");
+                CERR << "invoking main:run(...): "
+                     << "object \"main\" not found";
                 app_fatal();
         }
 
@@ -161,8 +161,8 @@ void Grit::doMain (int argc, const char **argv)
         if (lua_isnil(L,-1)) {
                 lua_pop(L,1); // nil 'run function'
                 lua_pop(L,1); //handler
-                std::string i_was = "invoking main:run(...)";
-                APP_ERROR(i_was.c_str(),"function \"run\" not found");
+                CERR << "invoking main:run(...): "
+                     << "function \"run\" not found";
                 app_fatal();
         }
 

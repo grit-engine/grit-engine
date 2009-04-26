@@ -2,7 +2,7 @@
 
 #include "MouseX11.h"
 
-#include "../app_error.h"
+#include "../CentralisedLog.h"
 
 MouseX11::MouseX11(size_t window)
 {
@@ -15,7 +15,7 @@ MouseX11::MouseX11(size_t window)
         long event_mask = ButtonPressMask|ButtonReleaseMask|PointerMotionMask;
         event_mask |= FocusChangeMask;
         if (XSelectInput(display, win, event_mask) == BadWindow) {
-                APP_ERROR("calling XSelectInput","BadWindow");
+                CERR << "calling XSelectInput: BadWindow" << std::endl;
                 app_fatal();
         }
 

@@ -37,7 +37,7 @@ http://www.gnu.org/copyleft/lesser.txt
 #include <OgreFontManager.h>
 
 #include "TextListOverlayElement.h"
-#include "app_error.h"
+#include "CentralisedLog.h"
 #include "Grit.h"
 
 namespace HUD {

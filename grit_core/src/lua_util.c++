@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "lua_util.h"
+#include "CentralisedLog.h"
 
 
 // code nicked from ldblib.c
@@ -159,33 +160,30 @@ int my_lua_error_handler(lua_State *l, lua_State *coro, int levelhack)
         std::vector<struct stack_frame> tb = traceback(coro,level);
 
         if (tb.size()==0) {
-                APP_ERROR("getting traceback","ERROR LEVEL TOO HIGH!");
+                CERR<<"getting traceback: ERROR LEVEL TOO HIGH!"<<std::endl;
                 level=0;
                 tb = traceback(coro,level);
         }
 
         if (tb.size()==0) {
-                APP_ERROR("getting traceback","EVEN ZERO TOO HIGH!");
+                CERR<<"getting traceback: EVEN ZERO TOO HIGH!"<<std::endl;
                 return 1;
         }
 
+        // strip file:line from message if it is there
         std::stringstream ss; ss<<tb[0].file<<":"<<tb[0].line<<": ";
         std::string str_prefix1 = ss.str();
         std::string str_prefix2 = str.substr(0,str_prefix1.size());
         if (str_prefix1==str_prefix2)
                 str = str.substr(str_prefix1.size());
 
-        app_error(tb[0].file.c_str(), tb[0].line,
-                  tb[0].func_name.c_str(),
-                  str.c_str());
+        CLOG << BOLD << RED << tb[0].file << ":" << tb[0].line << ": " << str << std::endl;
         for (size_t i=1 ; i<tb.size() ; i++) {
                 if (tb[i].gap) {
-                        app_line("\t...");
+                        CLOG << "\t..." << std::endl;
                 } else {
-                        std::stringstream ss;
-                        ss << "\t" << tb[i].file << ":" << tb[i].line << ": "
-                           << tb[i].func_name;
-                        app_line(ss.str().c_str());
+                        CLOG << RED << "\t" << tb[i].file << ":" << tb[i].line << ": "
+                           << tb[i].func_name << std::endl;
                 }
         }
         return 1;
@@ -238,10 +236,8 @@ void *lua_alloc (void *ud, void *ptr, size_t osize, size_t nsize)
 void check_stack (lua_State *l, int size)
 {
         if (!lua_checkstack(l,size)) {
-                std::stringstream ss;
-                ss << "Failed to guarantee " << size <<", current top is "
-                   << lua_gettop(l);
-                APP_ERROR("lua_checkstack",ss.str());
+                CERR << "lua_checkstack: Failed to guarantee " << size
+                     << ", current top is " << lua_gettop(l) << std::endl;
         }
 }
 

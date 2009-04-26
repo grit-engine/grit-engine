@@ -478,7 +478,7 @@ TRY_START
                 lua_getglobal(L,"MAIN_STATE");
                 lua_State *lbase = lua_tothread(L,4);
                 if (lbase==NULL) {
-                        APP_ERROR("accessing MAIN_STATE","null pointer!");
+                        CERR<<"accessing MAIN_STATE: null pointer!"<<std::endl;
                 } else {
                         lua_pop(L,1);
                         lua_xmove(L,lbase,3);
@@ -519,7 +519,7 @@ TRY_START
                 lua_getglobal(L,"MAIN_STATE");
                 lua_State *lbase = lua_tothread(L,4);
                 if (lbase==NULL) {
-                        APP_ERROR("accessing MAIN_STATE","null pointer!");
+                        CERR<<"accessing MAIN_STATE: null pointer!"<<std::endl;
                 } else {
                         lua_pop(L,1);
                         lua_xmove(L,lbase,3);

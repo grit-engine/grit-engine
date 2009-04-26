@@ -10,7 +10,7 @@ template <typename T> class CacheFriendlyRangeSpace;
 #include <cmath>
 
 
-#include "app_error.h"
+#include "CentralisedLog.h"
 
 template <typename T>
 class CacheFriendlyRangeSpace {

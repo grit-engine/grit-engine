@@ -16,7 +16,7 @@ struct Demand;
 #include <OgreAtomicWrappers.h>
 
 
-#include "app_error.h"
+#include "CentralisedLog.h"
 
 
 template<typename T> class LRUQueue {

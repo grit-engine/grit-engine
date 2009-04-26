@@ -11,7 +11,7 @@ extern "C" {
 #include <lualib.h>
 }
 
-#include "app_error.h"
+#include "CentralisedLog.h"
 
 
 #ifdef __GNUC__
