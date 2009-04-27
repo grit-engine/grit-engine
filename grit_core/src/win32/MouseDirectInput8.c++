@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "MouseDirectInput8.h"
-#include "../app_error.h"
+#include "../CentralisedLog.h"
 
 
 #define BUFFSZ 128
@@ -60,7 +60,7 @@ static const char *result_str(HRESULT r)
         }
 }}}
 
-#define BAD_DI_RESULT(r,i_was) app_error(__FILE__,__LINE__,i_was,result_str(r))
+#define BAD_DI_RESULT(r,i_was) do { CERR<<i_was<<": "<<result_str(r)<<std::endl; } while (0)
 
 MouseDirectInput8::MouseDirectInput8(size_t window)
 {

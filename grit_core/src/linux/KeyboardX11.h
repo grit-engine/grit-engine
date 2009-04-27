@@ -20,6 +20,8 @@ public:
 
         virtual void add_key (Keyboard::Presses &keys, KeySym key, int kind);
 
+        // It's easier to just pick up focus change events from X ourselves
+        virtual void lostFocus () { }
 
         //virtual u32 get_unicode(unsigned int key);
 

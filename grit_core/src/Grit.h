@@ -30,7 +30,9 @@ public:
 
         virtual ~Grit ();
 
-        virtual void windowResized(Ogre::RenderWindow* rw);
+        virtual void windowResized(Ogre::RenderWindow *rw);
+
+        virtual void windowFocusChange(Ogre::RenderWindow *rw);
 
         virtual void windowClosed(Ogre::RenderWindow *rw);
 

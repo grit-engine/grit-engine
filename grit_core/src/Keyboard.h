@@ -15,6 +15,8 @@ public:
 
         virtual Presses getPresses() = 0;
 
+        virtual void lostFocus() = 0;
+
 };
 
 inline Keyboard::~Keyboard() {}

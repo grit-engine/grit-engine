@@ -497,6 +497,8 @@ TRY_START
                 lua_pushboolean(L,self.isFullScreen());
         } else if (key=="isActive") {
                 lua_pushboolean(L,self.isActive());
+        } else if (key=="autoDeactivate") {
+                lua_pushboolean(L,self.isDeactivatedOnFocusChange());
         } else if (key=="visible") {
                 lua_pushboolean(L,self.isVisible());
         } else {
@@ -516,6 +518,9 @@ TRY_START
         } else if (key=="visible") {
                 bool b = 0!=lua_toboolean(L,3);
                 self.setVisible(b);
+        } else if (key=="autoDeactivate") {
+                bool b = 0!=lua_toboolean(L,3);
+                self.setDeactivateOnFocusChange(b);
         } else {
                 my_lua_error(L,"Not a valid RenderWindow member: "+key);
         }

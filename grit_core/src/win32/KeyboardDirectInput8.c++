@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "KeyboardDirectInput8.h"
-#include "../app_error.h"
+#include "../CentralisedLog.h"
 
 
 #define BUFFSZ 128
@@ -60,7 +60,7 @@ static const char *result_str(HRESULT r)
         }
 }}}
 
-#define BAD_DI_RESULT(r,i_was) app_error(__FILE__,__LINE__,i_was,result_str(r))
+#define BAD_DI_RESULT(r,i_was) do { CERR<<i_was<<": "<<result_str(r)<<std::endl; } while (0)
 
 static ULONGLONG millis()
 {
@@ -73,6 +73,7 @@ static ULONGLONG millis()
 }
 
 KeyboardDirectInput8::KeyboardDirectInput8(size_t window)
+      : focusWasLost(false)
 {
 
         #define MAP_KEY(kc,k) keysDown.insert(std::make_pair(kc,"+"k)); \
@@ -256,9 +257,11 @@ unsigned long repeatDelay = 300;
 
 Keyboard::Presses KeyboardDirectInput8::getPresses()
 {
-        ULONGLONG this_time = millis();
+        typedef std::map<DWORD, ULONGLONG>::iterator I;
 
         Keyboard::Presses ret;
+
+        ULONGLONG this_time = millis();
 
         DWORD num_elements = BUFFSZ;
         DIDEVICEOBJECTDATA buf[BUFFSZ];
@@ -289,7 +292,16 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
                 }
         }
 
-        typedef std::map<DWORD, ULONGLONG>::iterator I;
+        if (focusWasLost) {
+                // generate fake events to stop keys getting "jammed"
+                for (I i=pressTime.begin(), i_=pressTime.end() ; i!=i_ ; ++i) {
+                        DWORD key = i->first;
+                        ret.push_back(keysUp[key]);
+                }
+                pressTime.clear();
+                focusWasLost = false;
+        }
+
         for (I i=pressTime.begin(), i_=pressTime.end() ; i!=i_ ; ++i) {
                 // repeat
                 DWORD key = i->first;
