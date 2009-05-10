@@ -11,11 +11,17 @@ public:
 
         typedef std::vector<const char*> Presses;
 
+        Keyboard() : flushRequested(false) { }
+
         virtual ~Keyboard() = 0;
 
         virtual Presses getPresses() = 0;
 
-        virtual void lostFocus() = 0;
+        virtual void flush() { flushRequested = true; }
+
+protected:
+
+        bool flushRequested;
 
 };
 

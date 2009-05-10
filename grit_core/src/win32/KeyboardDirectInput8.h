@@ -17,14 +17,9 @@ public:
 
         virtual Presses getPresses();
 
-        virtual void lostFocus() { focusWasLost = true; }
-
-
 protected:
 
         HWND win;
-
-        bool focusWasLost;
 
         IDirectInput8 *directInput;
 

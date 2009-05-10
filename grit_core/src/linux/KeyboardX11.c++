@@ -247,15 +247,7 @@ Keyboard::Presses KeyboardX11::getPresses()
                 switch (event.type) {
 
                         case FocusOut: {
-                                // Any key we currently recognise as being held
-                                // down is "released" (note a repeating key
-                                // will still repeat upon refocus)
-
-                                typedef std::set<KeySym>::iterator I;
-                                std::set<KeySym> s = currentlyPressed;
-                                for (I i=s.begin(),i_=s.end() ; i!=i_ ; ++i) {
-                                        add_key(r, *i, -1);
-                                }
+                                flushRequested = true;
                                 last_was_release = false;
                         } break;
 
@@ -291,6 +283,18 @@ Keyboard::Presses KeyboardX11::getPresses()
                 add_key(r, last, -1);
         }
 
+        if (flushRequested) {
+                // Any key we currently recognise as being held
+                // down is "released" (note a repeating key
+                // will still repeat upon refocus)
+
+                typedef std::set<KeySym>::iterator I;
+                std::set<KeySym> s = currentlyPressed;
+                for (I i=s.begin(),i_=s.end() ; i!=i_ ; ++i) {
+                        add_key(r, *i, -1);
+                }
+                flushRequested = false;
+        }
         return r;
 }
 

@@ -53,6 +53,15 @@ TRY_START
 TRY_END
 }
 
+static int global_keyb_flush (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        grit->getKeyboard()->flush();
+        return 0;
+TRY_END
+}
+
 static int global_get_mouse_events (lua_State *L)
 {
 TRY_START
@@ -1265,6 +1274,7 @@ static const luaL_reg global[] = {
         {"clicked_close",global_clicked_close},
 
         {"get_keyb_presses",global_get_keyb_presses},
+        {"keyb_flush",global_keyb_flush},
         {"get_mouse_events",global_get_mouse_events},
         {"set_mouse_pos",global_set_mouse_pos},
         {"get_mouse_hide",global_get_mouse_hide},

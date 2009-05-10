@@ -108,7 +108,7 @@ void Grit::windowResized (Ogre::RenderWindow* rw)
         (void) rw;
         if (hasTerminated) return;
         (*hud)->parentResized(getWin()->getWidth(),getWin()->getHeight());
-        keyboard->lostFocus();
+        keyboard->flush();
 }
 
 void Grit::windowClosed (Ogre::RenderWindow *rw)
@@ -120,7 +120,7 @@ void Grit::windowClosed (Ogre::RenderWindow *rw)
 void Grit::windowFocusChange (Ogre::RenderWindow *rw)
 {
         if (hasTerminated) return;
-        keyboard->lostFocus();
+        keyboard->flush();
 }
 
 void Grit::render ()

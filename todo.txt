@@ -82,6 +82,4 @@ minimising the number of occl zones is very important for performance
 user interface
 --------------------------------------------------------------------------------
 
-sticky keys when switch to lua console, generally
-
 write windows gdi thingy for stdout ("rich text")

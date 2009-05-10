@@ -73,7 +73,6 @@ static ULONGLONG millis()
 }
 
 KeyboardDirectInput8::KeyboardDirectInput8(size_t window)
-      : focusWasLost(false)
 {
 
         #define MAP_KEY(kc,k) keysDown.insert(std::make_pair(kc,"+"k)); \
@@ -292,14 +291,14 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
                 }
         }
 
-        if (focusWasLost) {
+        if (flushRequested) {
                 // generate fake events to stop keys getting "jammed"
                 for (I i=pressTime.begin(), i_=pressTime.end() ; i!=i_ ; ++i) {
                         DWORD key = i->first;
                         ret.push_back(keysUp[key]);
                 }
                 pressTime.clear();
-                focusWasLost = false;
+                flushRequested = false;
         }
 
         for (I i=pressTime.begin(), i_=pressTime.end() ; i!=i_ ; ++i) {
