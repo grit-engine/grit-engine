@@ -260,5 +260,8 @@ MouseX11.o: ../src/linux/MouseX11.h ../src/Mouse.h
 MouseX11.o: ../src/CentralisedLog.h ../src/console_colour.h
 KeyboardDirectInput8.o: ../src/win32/KeyboardDirectInput8.h
 KeyboardDirectInput8.o: ../src/Keyboard.h
+KeyboardDirectInput8.o: ../src/CentralisedLog.h
+KeyboardDirectInput8.o: ../src/console_colour.h
 MouseDirectInput8.o: ../src/win32/MouseDirectInput8.h
-MouseDirectInput8.o: ../src/Mouse.h
+MouseDirectInput8.o: ../src/Mouse.h ../src/CentralisedLog.h
+MouseDirectInput8.o: ../src/console_colour.h
