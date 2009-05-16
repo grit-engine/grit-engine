@@ -108,40 +108,40 @@ KeyboardDirectInput8::KeyboardDirectInput8(size_t window)
 
         MAP_KEY(DIK_TAB, "Tab");
         MAP_KEY(DIK_RETURN, "Return");
-        MAP_KEY(DIK_LCONTROL, "LCtrl");
-        MAP_KEY(DIK_RCONTROL, "RCtrl");
+        MAP_KEY(DIK_LCONTROL, "Ctrl");
+        MAP_KEY(DIK_RCONTROL, "Ctrl");
 
         MAP_KEY(DIK_COLON, ":");
         MAP_KEY(DIK_SEMICOLON, ";");
         MAP_KEY(DIK_APOSTROPHE, "'");
         MAP_KEY(DIK_GRAVE, "`");
 
-        MAP_KEY(DIK_A, "A");
-        MAP_KEY(DIK_B, "B");
-        MAP_KEY(DIK_C, "C");
-        MAP_KEY(DIK_D, "D");
-        MAP_KEY(DIK_E, "E");
-        MAP_KEY(DIK_F, "F");
-        MAP_KEY(DIK_G, "G");
-        MAP_KEY(DIK_H, "H");
-        MAP_KEY(DIK_I, "I");
-        MAP_KEY(DIK_J, "J");
-        MAP_KEY(DIK_K, "K");
-        MAP_KEY(DIK_L, "L");
-        MAP_KEY(DIK_M, "M");
-        MAP_KEY(DIK_N, "N");
-        MAP_KEY(DIK_O, "O");
-        MAP_KEY(DIK_P, "P");
-        MAP_KEY(DIK_Q, "Q");
-        MAP_KEY(DIK_R, "R");
-        MAP_KEY(DIK_S, "S");
-        MAP_KEY(DIK_T, "T");
-        MAP_KEY(DIK_U, "U");
-        MAP_KEY(DIK_V, "V");
-        MAP_KEY(DIK_W, "W");
-        MAP_KEY(DIK_X, "X");
-        MAP_KEY(DIK_Y, "Y");
-        MAP_KEY(DIK_Z, "Z");
+        MAP_KEY(DIK_A, "a");
+        MAP_KEY(DIK_B, "b");
+        MAP_KEY(DIK_C, "c");
+        MAP_KEY(DIK_D, "d");
+        MAP_KEY(DIK_E, "e");
+        MAP_KEY(DIK_F, "f");
+        MAP_KEY(DIK_G, "g");
+        MAP_KEY(DIK_H, "h");
+        MAP_KEY(DIK_I, "i");
+        MAP_KEY(DIK_J, "j");
+        MAP_KEY(DIK_K, "k");
+        MAP_KEY(DIK_L, "l");
+        MAP_KEY(DIK_M, "m");
+        MAP_KEY(DIK_N, "n");
+        MAP_KEY(DIK_O, "o");
+        MAP_KEY(DIK_P, "p");
+        MAP_KEY(DIK_Q, "q");
+        MAP_KEY(DIK_R, "r");
+        MAP_KEY(DIK_S, "s");
+        MAP_KEY(DIK_T, "t");
+        MAP_KEY(DIK_U, "u");
+        MAP_KEY(DIK_V, "v");
+        MAP_KEY(DIK_W, "w");
+        MAP_KEY(DIK_X, "x");
+        MAP_KEY(DIK_Y, "y");
+        MAP_KEY(DIK_Z, "z");
 
         MAP_KEY(DIK_F1, "F1");
         MAP_KEY(DIK_F2, "F2");
@@ -186,16 +186,16 @@ KeyboardDirectInput8::KeyboardDirectInput8(size_t window)
         MAP_KEY(DIK_SCROLL, "Scroll");
         MAP_KEY(DIK_PAUSE, "Pause");
 
-        MAP_KEY(DIK_RSHIFT, "RShift");
-        MAP_KEY(DIK_LSHIFT, "LShift");
-        MAP_KEY(DIK_RALT, "RAlt");
-        MAP_KEY(DIK_LALT, "LAlt");
+        MAP_KEY(DIK_RSHIFT, "Shift");
+        MAP_KEY(DIK_LSHIFT, "Shift");
+        MAP_KEY(DIK_RALT, "Alt");
+        MAP_KEY(DIK_LALT, "Alt");
 
         MAP_KEY(DIK_INSERT, "Insert");
         MAP_KEY(DIK_DELETE, "Delete");
 
-        MAP_KEY(DIK_LWIN, "LWin");
-        MAP_KEY(DIK_RWIN, "RWin");
+        MAP_KEY(DIK_LWIN, "Win");
+        MAP_KEY(DIK_RWIN, "Win");
         MAP_KEY(DIK_APPS, "Menu");
 
 
@@ -260,12 +260,13 @@ unsigned long repeatDelay = 300;
 
 Keyboard::Press KeyboardDirectInput8::getShifted(const Press &press)
 {
-        Press r;
-        r = press;
-        if (r.length()==2) {
-            r[2] = ::toupper(r[2]);
+        const char caps[] =
+            "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ"
+            "1!2\"3?4$5%6^7&8*9(0)" "-_=+[{]};:'@#~,<.>/?`?\\|";
+        for (size_t i=0 ; i<sizeof(caps) ; i+=2) {
+            if (press[1]==caps[i]) return press.substr(0,1)+caps[i+1];
         }
-        return r;
+        return press;
 }        
 
 Keyboard::Presses KeyboardDirectInput8::getPresses()
@@ -295,6 +296,10 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
                 for (DWORD i=0 ; i<num_elements ; i++) {
                         DWORD kc = buf[i].dwOfs;
                         bool down = 0!=(buf[i].dwData & 0x80);
+                        if (verbose) {
+                                CLOG << "dinput: " << kc
+                                     << " = " << down << std::endl;
+                        }
                         if (down) {
                                 pressTime[kc] = this_time;
                                 ret.push_back(keysDown[kc]);
