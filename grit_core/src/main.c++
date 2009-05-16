@@ -110,8 +110,6 @@ int main(int argc, const char **argv)
                 } else {
                         Ogre::RenderSystem *rs =
                                 ogre->getRenderSystemByName("OpenGL Rendering Subsystem");
-                        rs->setConfigOption("Colour Depth","32");
-                        rs->setConfigOption("Display Frequency","N/A");
                         rs->setConfigOption("FSAA","0");
                         rs->setConfigOption("Full Screen",use_fullscreen?"Yes":"No");
                         rs->setConfigOption("RTT Preferred Mode","FBO");

@@ -13,9 +13,8 @@ LINKING=echo "Linking: [1;32m$@[0m"
 	@$(COMPILING)
 	@$(COMPILER) -c $< -o $@ $(CFLAGS)
 
-LEXER=TColLexer
-../src/$(LEXER): ../src/$(LEXER).qx
-	cd ../src && $(QUEX_PATH)/quex-exe.py -i $< --engine $(LEXER)
+../src/TColLexer: ../src/TColLexer.qx
+	cd ../src && $(QUEX_PATH)/quex-exe.py -i $< --engine TColLexer
 
 %.o: ../src/%.cpp
 	@$(COMPILING)
@@ -24,33 +23,33 @@ LEXER=TColLexer
 
 
 COMMON_OBJ=\
-        main.o \
-        Grit.o \
-        matbin.o \
-        ray.o \
-        lua_util.o \
-        lua_wrappers_core.o \
-        lua_wrappers_mesh.o \
-        lua_wrappers_gpuprog.o \
-        lua_wrappers_render.o \
-        lua_wrappers_gritobj.o \
-        lua_wrappers_mobj.o \
-        lua_wrappers_scnmgr.o \
-        lua_wrappers_hud.o \
-        lua_wrappers_physics.o \
-        lua_wrappers_tex.o \
-        lua_wrappers_material.o \
-        lua_wrappers_primitives.o \
-        HUD.o \
-        TextListOverlayElement.o \
         BackgroundMeshLoader.o \
         CollisionMesh.o \
-        PhysicsWorld.o \
+        Grit.o \
         GritObject.o \
         GritObjectManager.o \
-        $(LEXER).o \
-        $(LEXER)-core-engine.o \
-        TColParser.o
+        HUD.o \
+        lua_util.o \
+        lua_wrappers_core.o \
+        lua_wrappers_gpuprog.o \
+        lua_wrappers_gritobj.o \
+        lua_wrappers_hud.o \
+        lua_wrappers_material.o \
+        lua_wrappers_mesh.o \
+        lua_wrappers_mobj.o \
+        lua_wrappers_physics.o \
+        lua_wrappers_primitives.o \
+        lua_wrappers_render.o \
+        lua_wrappers_scnmgr.o \
+        lua_wrappers_tex.o \
+        main.o \
+        matbin.o \
+        PhysicsWorld.o \
+        ray.o \
+        TColLexer.o \
+        TColLexer-core-engine.o \
+        TColParser.o \
+        TextListOverlayElement.o \
 
 grit.x11: $(COMMON_OBJ) MouseX11.o KeyboardX11.o posix_sleep.o
 	@$(LINKING)
@@ -262,6 +261,9 @@ KeyboardDirectInput8.o: ../src/win32/KeyboardDirectInput8.h
 KeyboardDirectInput8.o: ../src/Keyboard.h
 KeyboardDirectInput8.o: ../src/CentralisedLog.h
 KeyboardDirectInput8.o: ../src/console_colour.h
+KeyboardWinAPI.o: ../src/win32/KeyboardWinAPI.h
+KeyboardWinAPI.o: ../src/Keyboard.h ../src/CentralisedLog.h
+KeyboardWinAPI.o: ../src/console_colour.h
 MouseDirectInput8.o: ../src/win32/MouseDirectInput8.h
 MouseDirectInput8.o: ../src/Mouse.h ../src/CentralisedLog.h
 MouseDirectInput8.o: ../src/console_colour.h

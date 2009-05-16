@@ -10,19 +10,16 @@ KeyboardX11::KeyboardX11 (size_t window)
 
         #define MAP_KEY(xk,k) myKeyMap.insert(std::make_pair(xk,k))
 
-        // all the keys for which XKeysymToString would not return
+        // all the keys for which XLookupString followed by XKeySymToString would not return
         // what we want
-        MAP_KEY(XK_minus, "-");
-        MAP_KEY(XK_equal, "=");
-        MAP_KEY(XK_space, "Space");
-        MAP_KEY(XK_comma, ",");
-        MAP_KEY(XK_period, ".");
-        MAP_KEY(XK_numbersign, "#");
 
-        MAP_KEY(XK_backslash, "\\");
-        MAP_KEY(XK_slash, "/");
-        MAP_KEY(XK_bracketleft, "[");
-        MAP_KEY(XK_bracketright, "]");
+        // these guys return the ascii control code
+        MAP_KEY(XK_space, "Space");
+        MAP_KEY(XK_BackSpace, "BackSpace");
+        MAP_KEY(XK_Delete, "Delete");
+        MAP_KEY(XK_Tab, "Tab");
+        MAP_KEY(XK_Return, "Return");
+        MAP_KEY(XK_Escape, "Escape");
 
         MAP_KEY(XK_Caps_Lock, "CapsLock");
 
@@ -41,11 +38,6 @@ KeyboardX11::KeyboardX11 (size_t window)
         MAP_KEY(XK_Alt_L, "Alt");
         MAP_KEY(XK_Super_L, "LWin");
         MAP_KEY(XK_Super_R, "RWin");
-
-        MAP_KEY(XK_colon, ":");
-        MAP_KEY(XK_semicolon, ";");
-        MAP_KEY(XK_apostrophe, "'");
-        MAP_KEY(XK_grave, "`");
 
 
         //Keypad
@@ -104,32 +96,64 @@ KeyboardX11::~KeyboardX11 (void)
         }
 }
 
-void KeyboardX11::add_key (Keyboard::Presses &keys, KeySym key, int kind)
+static std::string key_to_string (XEvent &ev, std::map<KeySym,const char*> &my_key_map)
 {
-        bool contains = currentlyPressed.find(key)!=currentlyPressed.end();
-        const char *string;
+        KeySym key = XLookupKeysym(&ev.xkey, 0);
+        if (my_key_map.find(key) != my_key_map.end()) return my_key_map[key];
+     
+        char buf[1024];
+        int r = XLookupString(&ev.xkey, buf, sizeof buf, NULL, NULL);
+        const char *keystr = r ? buf : XKeysymToString(key);
+
+        // TODO: handle unicode properly
+        for (size_t i=0 ; i<strlen(keystr) ; ++i) {
+                unsigned char c = (unsigned char)keystr[i];
+                if (c<32 || c>127) return "?";
+        }
+
+        return keystr;
+}
+
+void KeyboardX11::add_key (Keyboard::Presses &keys, XEvent ev, int kind)
+{
+        const char *prefix[] = { "-", "=", "+" };
+        std::string str = prefix[kind+1];
+        ev.xkey.state = 0;
+        std::string keystr = key_to_string(ev, myKeyMap);
+        ev.xkey.state = ShiftMask;
+        std::string keystr2 = key_to_string(ev, myKeyMap);
+
+        str += keystr;
+
+        bool contains = currentlyPressed.find(keystr)!=currentlyPressed.end();
+
         switch (kind) {
                 case -1:
                 if (!contains) return;
-                string = xKeysUp[key];
-                if (string) currentlyPressed.erase(key);
+                currentlyPressed.erase(keystr);
                 break;
                 case 0:
                 if (!contains) {
-                        add_key(keys, key, 1);
+                        add_key(keys, ev, 1);
                         return;
                 } 
-                string = xKeysRep[key];
                 break;
                 case 1:
                 if (contains) return;
-                string = xKeysDown[key];
-                if (string) currentlyPressed.insert(key);
+                currentlyPressed.insert(keystr);
                 break;
         }
-        //std::cout << "key: " << string << std::endl;
-        if (string)
-                keys.push_back(string);
+        if (shiftMap[keystr] == "") {
+                shiftMap[keystr] = keystr2;
+                if (verbose) {
+                        CLOG << "X map: " << keystr
+                             << " -> " << keystr2 << std::endl;
+                }
+        }
+        if (verbose) {
+                CLOG << "X key: " << str << std::endl;
+        }
+        keys.push_back(str);
 }
 
 bool KeyboardX11::hasFocus (void)
@@ -146,7 +170,8 @@ Keyboard::Presses KeyboardX11::getPresses (void)
         //Poll x11 for events
 
         bool last_was_release = false;
-        KeySym last = 0;
+        KeySym last_key = 0;
+        XEvent last_event;
 
         while(XPending(display) > 0) {
 
@@ -166,28 +191,26 @@ Keyboard::Presses KeyboardX11::getPresses (void)
 
                         case KeyRelease: {
                                 if (last_was_release) {
-                                        add_key(r, last, -1);
+                                        add_key(r, last_event, -1);
                                 }
                                 KeySym key = XLookupKeysym(&event.xkey, 0);
-                                KeySym key2 = XLookupKeysym(&event.xkey, 1);
-                                last = key;
+                                last_key = key;
+                                last_event = event;
                                 last_was_release = true;
                         } break;
 
                         case KeyPress: {
                                 KeySym key = XLookupKeysym(&event.xkey, 0);
-                                KeySym key2 = XLookupKeysym(&event.xkey, 1);
-                                shiftMap[key] = key2;
                                 if (last_was_release) {
-                                        if (last!=key) {
+                                        if (last_key!=key) {
                                                 // different key, add both
-                                                add_key(r, last, -1);
-                                                add_key(r, key, 1);
+                                                add_key(r, last_event, -1);
+                                                add_key(r, event, 1);
                                         } else {
-                                                add_key(r, key, 0);
+                                                add_key(r, event, 0);
                                         }
                                 } else {
-                                        add_key(r, key, 1);
+                                        add_key(r, event, 1);
                                 }
                                 last_was_release = false;
                         } break;
@@ -196,7 +219,7 @@ Keyboard::Presses KeyboardX11::getPresses (void)
         }
 
         if (last_was_release) {
-                add_key(r, last, -1);
+                add_key(r, last_event, -1);
         }
 
         if (flushRequested) {
@@ -204,11 +227,12 @@ Keyboard::Presses KeyboardX11::getPresses (void)
                 // down is "released" (note a repeating key
                 // will still repeat upon refocus)
 
-                typedef std::set<KeySym>::iterator I;
-                std::set<KeySym> s = currentlyPressed;
-                for (I i=s.begin(),i_=s.end() ; i!=i_ ; ++i) {
-                        add_key(r, *i, -1);
+                typedef std::set<Press>::iterator I;
+                for (I i=currentlyPressed.begin(),i_=currentlyPressed.end() ;
+                     i!=i_ ; ++i) {
+                        r.push_back("-"+*i);
                 }
+                currentlyPressed.clear();
                 flushRequested = false;
         }
         return r;

@@ -18,20 +18,22 @@ public:
 
         virtual Presses getPresses();
 
-        virtual Press getShifted(const Press &) = 0;
+        virtual Press getShifted(const Press &);
 
         virtual bool hasFocus (void);
 
 protected:
 
-        virtual void add_key (Keyboard::Presses &keys, KeySym key, int kind);
+        virtual void add_key (Keyboard::Presses &keys, XEvent event, int kind);
 
         Display *display;
         Window win;
 
         std::map<KeySym,const char*> myKeyMap;
 
-        std::set<KeySym> currentlyPressed;
+        std::set<Press> currentlyPressed;
+
+        std::map<Press, Press> shiftMap;
 
         bool focussed;
 };
