@@ -4,7 +4,6 @@
 template <typename T>
 static void vec_nullify_remove (std::vector<void**>& v, T **ud)
 {
-        if (ud==NULL) return;
         void *const* ptr = (void *const*) ud; //thankyou c++
         std::vector<void**>::iterator i = std::find(v.begin(),v.end(),ptr);
         if (i==v.end()) {
