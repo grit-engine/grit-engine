@@ -9,9 +9,11 @@ class Keyboard {
 
 public:
 
-        typedef std::vector<const char*> Presses;
+        typedef std::string Press;
 
-        Keyboard() : flushRequested(false) { }
+        typedef std::vector<Press> Presses;
+
+        Keyboard() : flushRequested(false), verbose(false) { }
 
         virtual ~Keyboard() = 0;
 
@@ -19,9 +21,18 @@ public:
 
         virtual void flush() { flushRequested = true; }
 
+        virtual Press getShifted(const Press &) = 0;
+
+        virtual bool hasFocus() = 0;
+
+        virtual void setVerbose (bool v) { verbose = v; }
+        virtual bool getVerbose (void) { return verbose; }
+
 protected:
 
         bool flushRequested;
+
+        bool verbose;
 
 };
 

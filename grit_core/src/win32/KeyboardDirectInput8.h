@@ -17,6 +17,10 @@ public:
 
         virtual Presses getPresses();
 
+        virtual bool hasFocus (void);
+
+        virtual Press getShifted (const Press&);
+
 protected:
 
         HWND win;

@@ -132,7 +132,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="OgreMainStatic.lib zlib.lib zziplib.lib OgreWin32Resources.res libbulletcollision.lib libbulletmath.lib"
+				AdditionalDependencies="OgreMainStatic.lib zlib.lib zziplib.lib $(SolutionDir)grit_core\src\win32\Resources.res libbulletcollision.lib libbulletmath.lib"
 				OutputFile="$(OutDir)\Extract_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(SolutionDir)\dependencies\ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletmath&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletcollision&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"

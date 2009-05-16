@@ -108,7 +108,6 @@ void Grit::windowResized (Ogre::RenderWindow* rw)
         (void) rw;
         if (hasTerminated) return;
         (*hud)->parentResized(getWin()->getWidth(),getWin()->getHeight());
-        keyboard->flush();
 }
 
 void Grit::windowClosed (Ogre::RenderWindow *rw)
@@ -117,10 +116,9 @@ void Grit::windowClosed (Ogre::RenderWindow *rw)
         clickedClose = true;
 }
 
-void Grit::windowFocusChange (Ogre::RenderWindow *rw)
+bool Grit::windowHasFocus (void)
 {
-        if (hasTerminated) return;
-        keyboard->flush();
+        return keyboard->hasFocus();
 }
 
 void Grit::render ()
@@ -133,20 +131,6 @@ bool Grit::hasClickedClose ()
         return clickedClose;
 }
 
-
-/*
-        Ogre::Light *light = scnmgr->createLight("Sky");
-        light->setType(Ogre::Light::LT_DIRECTIONAL);
-        light->setDirection(Ogre::Vector3(0, 0, -1));
-
-        light->setDiffuseColour( 0.0, 0, 0 );
-        light->setSpecularColour( 0, 0.0, 0 );
-*/
-
-/*
-        rsq = scnmgr->createRayQuery(Ogre::Ray());
-        rsq->setSortByDistance(true);
-*/
 
 void Grit::doMain (int argc, const char **argv)
 {

@@ -35,6 +35,15 @@
 
 // GLOBAL LIBRARY ========================================================== {{{
 
+static int global_have_focus (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushboolean(L,grit->windowHasFocus());
+        return 1;
+TRY_END
+}
+
 static int global_get_keyb_presses (lua_State *L)
 {
 TRY_START
@@ -43,7 +52,7 @@ TRY_START
 
         lua_createtable(L, presses.size(), 0);
         for (unsigned int i=0 ; i<presses.size() ; i++) {
-                const char *key = presses[i];
+                const char *key = presses[i].c_str();
                 lua_pushnumber(L,i+LUA_ARRAY_BASE);
                 lua_pushstring(L,key);
                 lua_settable(L,-3);
@@ -58,6 +67,36 @@ static int global_keyb_flush (lua_State *L)
 TRY_START
         check_args(L,0);
         grit->getKeyboard()->flush();
+        return 0;
+TRY_END
+}
+
+static int global_keyb_shift (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        std::string s = luaL_checkstring(L,1);
+        std::string r = grit->getKeyboard()->getShifted(s);
+        lua_pushstring(L,r.c_str());
+        return 1;
+TRY_END
+}
+
+static int global_get_keyb_verbose (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushboolean(L,grit->getKeyboard()->getVerbose());
+        return 1;
+TRY_END
+}
+
+static int global_set_keyb_verbose (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        bool b = 0!=lua_toboolean(L,1);
+        grit->getKeyboard()->setVerbose(b);
         return 0;
 TRY_END
 }
@@ -1272,9 +1311,13 @@ static const luaL_reg global[] = {
 
         {"pump",global_pump},
         {"clicked_close",global_clicked_close},
+        {"have_focus",global_have_focus},
 
         {"get_keyb_presses",global_get_keyb_presses},
         {"keyb_flush",global_keyb_flush},
+        {"keyb_shift",global_keyb_shift},
+        {"set_keyb_verbose",global_set_keyb_verbose},
+        {"get_keyb_verbose",global_get_keyb_verbose},
         {"get_mouse_events",global_get_mouse_events},
         {"set_mouse_pos",global_set_mouse_pos},
         {"get_mouse_hide",global_get_mouse_hide},

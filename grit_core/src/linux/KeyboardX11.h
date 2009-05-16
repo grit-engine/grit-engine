@@ -18,18 +18,22 @@ public:
 
         virtual Presses getPresses();
 
-        virtual void add_key (Keyboard::Presses &keys, KeySym key, int kind);
+        virtual Press getShifted(const Press &) = 0;
+
+        virtual bool hasFocus (void);
 
 protected:
+
+        virtual void add_key (Keyboard::Presses &keys, KeySym key, int kind);
 
         Display *display;
         Window win;
 
-        std::map<KeySym,const char*> xKeysUp;
-        std::map<KeySym,const char*> xKeysRep;
-        std::map<KeySym,const char*> xKeysDown;
+        std::map<KeySym,const char*> myKeyMap;
 
         std::set<KeySym> currentlyPressed;
+
+        bool focussed;
 };
 
 // vim: shiftwidth=8:tabstop=8:expandtab

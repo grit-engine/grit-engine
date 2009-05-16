@@ -250,9 +250,23 @@ KeyboardDirectInput8::~KeyboardDirectInput8()
         }
 }
 
+bool KeyboardDirectInput8::hasFocus (void)
+{
+        return GetActiveWindow() == win;
+}
+
 unsigned long repeatRate = 60;
 unsigned long repeatDelay = 300;
-        
+
+Keyboard::Press KeyboardDirectInput8::getShifted(const Press &press)
+{
+        Press r;
+        r = press;
+        if (r.length()==2) {
+            r[2] = ::toupper(r[2]);
+        }
+        return r;
+}        
 
 Keyboard::Presses KeyboardDirectInput8::getPresses()
 {

@@ -32,31 +32,27 @@ public:
 
         virtual void windowResized(Ogre::RenderWindow *rw);
 
-        virtual void windowFocusChange(Ogre::RenderWindow *rw);
+        virtual bool windowHasFocus (void);
 
-        virtual void windowClosed(Ogre::RenderWindow *rw);
+        virtual void windowClosed (Ogre::RenderWindow *rw);
 
-        //virtual void doMesh(char *name);
+        virtual void doMain (int argc, const char** argv);
 
-        //virtual void doIPL(int ipl_count, char **ipl_names);
+        virtual void render (void);
 
-        virtual void doMain(int argc, const char** argv);
+        virtual bool hasClickedClose (void);
 
-        virtual void render();
+        virtual Ogre::Root *getOgre (void);
+        virtual Ogre::RenderWindow *getWin (void);
+        virtual HUD::RootPtr getHUD (void);
 
-        virtual bool hasClickedClose();
+        virtual Mouse *getMouse (void);
 
-        virtual Ogre::Root *getOgre();
-        virtual Ogre::RenderWindow *getWin();
-        virtual HUD::RootPtr getHUD();
+        virtual Keyboard *getKeyboard (void);
 
-        virtual Mouse *getMouse();
+        virtual std::string toString (void);
 
-        virtual Keyboard *getKeyboard();
-
-        virtual std::string toString();
-
-        virtual UserDataTables& getUserDataTables();
+        virtual UserDataTables& getUserDataTables (void);
 
         virtual GritObjectManager &getGOM() { return *gom; }
 
@@ -69,8 +65,6 @@ protected:
         Mouse *mouse;
 
         Keyboard *keyboard;
-
-        //Ogre::RaySceneQuery *rsq;
 
         bool clickedClose;
 

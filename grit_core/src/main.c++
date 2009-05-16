@@ -15,6 +15,7 @@
 #ifdef WIN32
 #  include "win32/MouseDirectInput8.h"
 #  include "win32/KeyboardDirectInput8.h"
+#  include "win32/KeyboardWinAPI.h"
 #else
 #  include "linux/KeyboardX11.h"
 #  include "linux/MouseX11.h"
@@ -57,7 +58,7 @@ int main(int argc, const char **argv)
                 lmgr->setLogDetail(Ogre::LL_NORMAL);
 
                 #ifdef NO_PLUGINS
-                        Ogre::Root* ogre = OGRE_NEW Ogre::Root("");
+                        Ogre::Root* ogre = OGRE_NEW Ogre::Root("","","");
 
                         Ogre::GLPlugin *gl = OGRE_NEW Ogre::GLPlugin();
                         ogre->installPlugin(gl);
@@ -75,31 +76,64 @@ int main(int argc, const char **argv)
                         ogre->installPlugin(d3d9);
                         #endif
                 #else
-                        Ogre::Root* ogre = OGRE_NEW Ogre::Root();
+                        Ogre::Root* ogre = OGRE_NEW Ogre::Root("plugins.cfg","","");
                 #endif
 
                 BackgroundMeshLoader *bml = new BackgroundMeshLoader();
 
+                Ogre::ConfigFile cfg;
+		        try {
+        	        cfg.loadDirect("grit.cfg");
+		        } catch (Ogre::Exception) { }
 
+                #ifdef WIN32
+                bool use_d3d9 = cfg.getSetting("d3d9") == "yes";
+                bool use_dinput = cfg.getSetting("dinput") == "yes";
+                #else
+                bool use_d3d9 = false;
+                #endif
 
-                if (!ogre->restoreConfig()) {
-                        CERR<<"Error reading ogre.cfg"<<std::endl;
-                        if (!ogre->showConfigDialog()) {
-                                CERR<<"Error showing config dialog"<<std::endl;
-                                app_fatal();
-                        }
+                bool use_vsync = cfg.getSetting("vsync") == "yes";
+                bool use_fullscreen = cfg.getSetting("fullscreen") == "yes";
+
+                if (use_d3d9) {
+                        Ogre::RenderSystem *rs =
+                                ogre->getRenderSystemByName("Direct3D9 Rendering Subsystem");
+                        rs->setConfigOption("Allow NVPerfHUD","Yes");
+                        rs->setConfigOption("Anti aliasing","None");
+                        rs->setConfigOption("Floating-point mode","Consistent");
+                        rs->setConfigOption("Full Screen",use_fullscreen?"Yes":"No");
+                        rs->setConfigOption("VSync",use_vsync?"Yes":"No");
+                        rs->setConfigOption("Video Mode","800 x 600 @ 32-bit colour");
+                        rs->setConfigOption("sRGB Gamma Conversion","No");
+                        ogre->setRenderSystem(rs);
+                } else {
+                        Ogre::RenderSystem *rs =
+                                ogre->getRenderSystemByName("OpenGL Rendering Subsystem");
+                        rs->setConfigOption("Colour Depth","32");
+                        rs->setConfigOption("Display Frequency","N/A");
+                        rs->setConfigOption("FSAA","0");
+                        rs->setConfigOption("Full Screen",use_fullscreen?"Yes":"No");
+                        rs->setConfigOption("RTT Preferred Mode","FBO");
+                        rs->setConfigOption("VSync",use_vsync?"Yes":"No");
+                        rs->setConfigOption("Video Mode","800 x 600");
+                        rs->setConfigOption("sRGB Gamma Conversion","No");
+                        ogre->setRenderSystem(rs);
                 }
 
-
-                Ogre::RenderWindow *win = ogre->initialise(true,"Grit");
-
+                Ogre::RenderWindow *win = ogre->initialise(true,"Grit Game Window");
 
                 size_t winid;
                 win->getCustomAttribute("WINDOW", &winid);
 
                 #ifdef WIN32
                 Mouse *mouse = new MouseDirectInput8(winid);
-                Keyboard *keyb = new KeyboardDirectInput8(winid);
+                Keyboard *keyb = use_dinput ? (Keyboard *)new KeyboardDirectInput8(winid)
+                                            : (Keyboard *)new KeyboardWinAPI(winid);
+                HMODULE mod = GetModuleHandle(NULL);
+                HICON icon = LoadIcon(mod,MAKEINTRESOURCE(111));
+                SendMessage((HWND)winid, (UINT)WM_SETICON, (WPARAM) ICON_BIG, (LPARAM) icon);
+                SendMessage((HWND)winid, (UINT)WM_SETICON, (WPARAM) ICON_SMALL, (LPARAM) icon);
                 #else
                 Mouse *mouse = new MouseX11(winid);
                 Keyboard *keyb = new KeyboardX11(winid);
