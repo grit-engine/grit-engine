@@ -300,12 +300,19 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
                                 CLOG << "dinput: " << kc
                                      << " = " << down << std::endl;
                         }
+                        const char *keystr;
                         if (down) {
                                 pressTime[kc] = this_time;
-                                ret.push_back(keysDown[kc]);
+                                keystr = keysDown[kc];
                         } else {
                                 pressTime.erase(kc);
-                                ret.push_back(keysUp[kc]);
+                                keystr = keysUp[kc];
+                        }
+                        if (keystr!=NULL) {
+                                ret.push_back(keystr);
+                        } else {
+                                CERR << "dinput unrecognised key: " << kc
+                                     << " = " << down << std::endl;
                         }
                 }
         }
@@ -314,7 +321,9 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
                 // generate fake events to stop keys getting "jammed"
                 for (I i=pressTime.begin(), i_=pressTime.end() ; i!=i_ ; ++i) {
                         DWORD key = i->first;
-                        ret.push_back(keysUp[key]);
+                        char *keystr = keysUp[kc];
+                        if (keystr!=NULL)
+                                ret.push_back(keystr);
                 }
                 pressTime.clear();
                 flushRequested = false;

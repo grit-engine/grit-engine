@@ -7,8 +7,13 @@ include $(ROOT)/common.mk
 
 TARGETS=grit.x11 matbin
 
-grit: grit.x11
+grit: grit.x11 grit.x11.stripped
+
+%.stripped: %
+	strip -s $< -o $@
 
 all: $(TARGETS)
 
 include ../src/common.mk
+
+# vim: ts=8:sw=8:noexpandtab
