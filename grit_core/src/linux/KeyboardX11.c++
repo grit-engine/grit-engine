@@ -122,6 +122,8 @@ void KeyboardX11::add_key (Keyboard::Presses &keys, XEvent ev, int kind)
         std::string keystr = key_to_string(ev, myKeyMap);
         ev.xkey.state = ShiftMask;
         std::string keystr2 = key_to_string(ev, myKeyMap);
+        ev.xkey.state = Mod5Mask;
+        std::string keystr3 = key_to_string(ev, myKeyMap);
 
         str += keystr;
 
@@ -148,6 +150,13 @@ void KeyboardX11::add_key (Keyboard::Presses &keys, XEvent ev, int kind)
                 if (verbose) {
                         CLOG << "X map: " << keystr
                              << " -> " << keystr2 << std::endl;
+                }
+        }
+        if (altMap[keystr] == "") {
+                altMap[keystr] = keystr3;
+                if (verbose) {
+                        CLOG << "X map: " << keystr
+                             << " => " << keystr3 << std::endl;
                 }
         }
         if (verbose) {

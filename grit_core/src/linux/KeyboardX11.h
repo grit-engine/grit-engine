@@ -35,6 +35,7 @@ protected:
         std::set<Press> currentlyPressed;
 
         std::map<Press, Press> shiftMap;
+        std::map<Press, Press> altMap;
 
         bool focussed;
 };
