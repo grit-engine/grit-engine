@@ -241,7 +241,7 @@ void PhysicsWorld::pump (lua_State *L,
 {
         last_L = L;
         Ogre::Real step_size = world->getStepSize();
-        for (int counter = 0 ; counter < maxSteps ; counter++) {
+        for (int counter = 0 ; counter<maxSteps ; counter++) {
                 if (elapsed<step_size) break;
                 elapsed -= step_size;
                 world->step();

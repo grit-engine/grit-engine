@@ -73,48 +73,54 @@ static std::string break_horribly (TCHAR *buf, size_t sz)
         return r;
 }
 
-
-Keyboard::Press KeyboardWinAPI::getPress (WPARAM wParam, LPARAM scan_code)
+static Keyboard::Press get_string_press (WPARAM wParam, LPARAM scan_code,
+                                         bool shift, bool alt)
 {
-        Press r;
+        Keyboard::Press r;
         BYTE state[256] = {0};
-
+        if (shift) {
+                state[VK_SHIFT] = 0xFF;
+                state[VK_LSHIFT] = 0xFF;
+                state[VK_RSHIFT] = 0xFF;
+        }
+        if (alt) {
+                state[VK_MENU] = 0xFF;
+                state[VK_LMENU] = 0xFF;
+                state[VK_RMENU] = 0xFF;
+                state[VK_CONTROL] = 0xFF;
+                state[VK_CONTROL] = 0xFF;
+                state[VK_CONTROL] = 0xFF;
+        }
         TCHAR buf[1024] = {0};
         int ret = ToUnicodeEx(wParam, scan_code, state,
                               buf, sizeof(buf)/sizeof(*buf),
                               0, GetKeyboardLayout(0));
+        // TODO: support unicode properly
         if (ret==-1) {
-            if (verbose) { CLOG << "weird..." << std::endl; }
+            return "?";
         } else if (ret<0 || ret>=sizeof(buf)/sizeof(*buf)) {
             CERR << "ToUnicodeEx returned out of range: " << ret << std::endl;
+        } else if (ret != 1) {
+            return "?";
+        } else {
+            return break_horribly(buf,ret);
         }
-        buf[ret] = 0;
-        // TODO: support unicode properly
-        Press unshifted = break_horribly(buf, ret);
-        if (ret==1 && buf[0]>=32 && buf[0]<127) {
-            r = unshifted;
-        }
+}
 
-        state[VK_SHIFT] = 0xFF;
-        state[VK_LSHIFT] = 0xFF;
-        state[VK_RSHIFT] = 0xFF;
-        TCHAR buf2[1024] = {0};
-        ret = ToUnicodeEx(wParam, scan_code, state,
-                    buf2, sizeof(buf2)/sizeof(*buf2),
-                    0, GetKeyboardLayout(0));
-        if (ret==-1) {
-            if (verbose) { CLOG << "weird..." << std::endl; }
-        } else if (ret<0 || ret>=sizeof(buf)/sizeof(*buf)) {
-            CERR << "ToUnicodeEx returned out of range: " << ret << std::endl;
-        }
-        buf2[ret] = 0;
-        // TODO: support unicode properly
-        Press shifted = break_horribly(buf2, ret);
+Keyboard::Press KeyboardWinAPI::getPress (WPARAM wParam, LPARAM scan_code)
+{
+        Press unshifted = get_string_press(wParam,scan_code,false,false);
+        Press shifted = get_string_press(wParam,scan_code,true,false);
+        Press alted = get_string_press(wParam,scan_code,false,true);
         if (shiftMap[unshifted] == "") {
             if (verbose) CLOG << unshifted << " -> " << shifted << std::endl;
             shiftMap[unshifted] = shifted;
         }
-        return r;
+        if (altMap[unshifted] == "") {
+            if (verbose) CLOG << unshifted << " => " << alted << std::endl;
+            altMap[unshifted] = alted;
+        }
+        return unshifted;
 }
 
 LRESULT KeyboardWinAPI::wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -239,10 +245,12 @@ LRESULT KeyboardWinAPI::wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lP
 
 Keyboard::Press KeyboardWinAPI::getShifted (const Press &press)
 {
-        Press ret;
-        Press postfix = press.substr(1);
-        ret = press[0]+shiftMap[postfix];
-        return ret;
+        return shiftMap[press];
+}
+
+Keyboard::Press KeyboardWinAPI::getAlted (const Press &press)
+{
+        return altMap[press];
 }
 
 Keyboard::Presses KeyboardWinAPI::getPresses (void)

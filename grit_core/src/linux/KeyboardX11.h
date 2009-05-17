@@ -19,6 +19,7 @@ public:
         virtual Presses getPresses();
 
         virtual Press getShifted(const Press &);
+        virtual Press getAlted(const Press &);
 
         virtual bool hasFocus (void);
 

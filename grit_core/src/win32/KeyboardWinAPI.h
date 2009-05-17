@@ -20,6 +20,7 @@ class KeyboardWinAPI : public Keyboard {
         virtual bool hasFocus (void);
 
         virtual Press getShifted (const Press &);
+        virtual Press getAlted (const Press &);
 
         virtual LRESULT wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -41,6 +42,7 @@ class KeyboardWinAPI : public Keyboard {
         typedef std::map<Press,Press> ShiftMap;
 
         ShiftMap shiftMap;
+        ShiftMap altMap;
 };
 
 // vim: shiftwidth=8:tabstop=8:expandtab

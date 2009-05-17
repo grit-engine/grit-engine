@@ -20,6 +20,7 @@ public:
         virtual bool hasFocus (void);
 
         virtual Press getShifted (const Press&);
+        virtual Press getAlted (const Press&);
 
 protected:
 

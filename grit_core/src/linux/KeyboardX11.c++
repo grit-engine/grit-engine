@@ -241,10 +241,12 @@ Keyboard::Presses KeyboardX11::getPresses (void)
 
 Keyboard::Press KeyboardX11::getShifted (const Press &press)
 {
-        Press ret;
-        Press postfix = press.substr(1);
-        ret = press[0]+shiftMap[postfix];
-        return ret;
+        return shiftMap[press];
+}
+
+Keyboard::Press KeyboardX11::getAlted (const Press &press)
+{
+        return altMap[press];
 }
 
 

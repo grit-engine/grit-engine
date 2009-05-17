@@ -22,6 +22,7 @@ public:
         virtual void flush() { flushRequested = true; }
 
         virtual Press getShifted(const Press &) = 0;
+        virtual Press getAlted(const Press &) = 0;
 
         virtual bool hasFocus() = 0;
 

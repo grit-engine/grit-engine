@@ -264,8 +264,13 @@ Keyboard::Press KeyboardDirectInput8::getShifted(const Press &press)
             "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ"
             "1!2\"3?4$5%6^7&8*9(0)" "-_=+[{]};:'@#~,<.>/?`?\\|";
         for (size_t i=0 ; i<sizeof(caps) ; i+=2) {
-            if (press[1]==caps[i]) return press.substr(0,1)+caps[i+1];
+            if (press[0]==caps[i]) return Press(caps[i+1],1);
         }
+        return press;
+}        
+
+Keyboard::Press KeyboardDirectInput8::getAlted(const Press &press)
+{
         return press;
 }        
 
@@ -321,7 +326,7 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
                 // generate fake events to stop keys getting "jammed"
                 for (I i=pressTime.begin(), i_=pressTime.end() ; i!=i_ ; ++i) {
                         DWORD key = i->first;
-                        char *keystr = keysUp[kc];
+                        const char *keystr = keysUp[key];
                         if (keystr!=NULL)
                                 ret.push_back(keystr);
                 }
