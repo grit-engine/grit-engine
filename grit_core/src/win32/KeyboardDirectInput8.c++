@@ -264,7 +264,7 @@ Keyboard::Press KeyboardDirectInput8::getShifted(const Press &press)
             "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ"
             "1!2\"3?4$5%6^7&8*9(0)" "-_=+[{]};:'@#~,<.>/?`?\\|";
         for (size_t i=0 ; i<sizeof(caps) ; i+=2) {
-            if (press[0]==caps[i]) return Press(caps[i+1],1);
+            if (press[0]==caps[i]) return Press()+caps[i+1];
         }
         return press;
 }        
