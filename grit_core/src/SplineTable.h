@@ -78,10 +78,10 @@ template<class T> class SplineTable {
 
                 {
                         T minx = minX(), maxx = maxX();
-                        if (x<minx) {
+                        if (x<=minx) {
                                 return points[minx] + (x-minx)*tangents[minx];
                         }
-                        if (x>maxx) {
+                        if (x>=maxx) {
                                 return points[maxx] + (x-maxx)*tangents[maxx];
                         }
                 }
