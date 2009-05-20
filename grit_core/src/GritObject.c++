@@ -339,7 +339,9 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
                 CERR << "deactivating object: \""<<name<<"\": "
                      << "class \""<<gritClass->name<<"\" "
                      << "does not have deactivate function" << std::endl;
-                grit->getGOM().deleteObject(L,self);
+                luaL_unref(L,LUA_REGISTRYINDEX,lua);
+                lua = LUA_NOREF;
+
                 STACK_CHECK;
                 // returning true indicates the object will be erased
                 // to prevent the error reoccuring
@@ -357,7 +359,7 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
                 // pop the error message since the error handler will
                 // have already printed it out
                 lua_pop(L,1);
-                grit->getGOM().deleteObject(L,self);
+                killme = true;
                 //stack: err,class
         } else {
                 //stack: err,class,killme
