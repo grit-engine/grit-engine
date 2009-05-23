@@ -188,7 +188,7 @@ namespace HUD {
                         cv,
                         reinterpret_cast<Ogre::RGBA*> (vertex_ptr)
                 );
-                vertex_ptr += sizeof (Ogre::RGBA) / sizeof(vertex_ptr);
+                vertex_ptr += sizeof (Ogre::RGBA) / sizeof(*vertex_ptr);
         }
 
 
