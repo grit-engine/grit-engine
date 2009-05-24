@@ -906,6 +906,13 @@ TRY_START
                 lua_pushnumber(L,q.z);
         } else if (key=="w") {
                 lua_pushnumber(L,q.w);
+        } else if (key=="axis") {
+                Ogre::Vector3 axis(q.x, q.y, q.z);
+                axis.normalise();
+                push(L,new Ogre::Vector3(axis),VECTOR3_TAG);
+        } else if (key=="angle") {
+                Ogre::Real r = 2*Ogre::Math::ACos(q.w).valueDegrees();
+                lua_pushnumber(L,r);
         } else if (key=="wxyz") {
                 push_cfunction(L,quat_xyzw);
         } else if (key=="invert") {

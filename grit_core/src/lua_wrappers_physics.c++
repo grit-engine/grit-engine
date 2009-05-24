@@ -296,11 +296,13 @@ TRY_END
 static int rbody_ray_nearest (lua_State *L)
 {
 TRY_START
-        check_args(L,4);
+        check_args(L,6);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         GET_UD_MACRO(Ogre::Vector3,local_pos,2,VECTOR3_TAG);
         GET_UD_MACRO(Ogre::Vector3,local_dir,3,VECTOR3_TAG);
         Ogre::Real len = luaL_checknumber(L,4);
+        GET_UD_MACRO(Ogre::Vector3,ray_hit_point_ws,5,VECTOR3_TAG);
+        GET_UD_MACRO(Ogre::Vector3,ground_normal_ws,6,VECTOR3_TAG);
 
         Ogre::Vector3 end = local_pos + len * local_dir;
         Ogre::Vector3 start = local_pos;
@@ -319,10 +321,10 @@ TRY_START
         lua_pushboolean(L,true);
         lua_pushnumber(L,lrcb.nearestDist * len);
         push_rbody(L,lrcb.nearestRB->getPtr());
-        Ogre::Vector3 hit_point_ws = start + lrcb.nearestDist*(end-start);
-        push(L,new Ogre::Vector3(hit_point_ws),VECTOR3_TAG);
-        push(L,new Ogre::Vector3(lrcb.nearestRB->getOrientation() * lrcb.nearestN),VECTOR3_TAG);
-        return 5;
+        ray_hit_point_ws = start + lrcb.nearestDist*(end-start);
+        ground_normal_ws = lrcb.nearestRB->getOrientation()
+                         * lrcb.nearestN.normalisedCopy();
+        return 3;
 
 TRY_END
 }
