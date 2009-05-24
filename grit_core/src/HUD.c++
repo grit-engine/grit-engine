@@ -366,7 +366,7 @@ namespace HUD {
         bool end_word (DStr::const_iterator iter, DStr::const_iterator end)
         {
                 if (iter==end) return true;
-                if (GET_CHAR(iter+1)==' ') return true;
+                if (GET_CHAR(++iter)==' ') return true;
                 return false;
         }
 
@@ -472,8 +472,8 @@ namespace HUD {
                                 if (c=='\n' || c2==' ') {
                                         break_to++;
                                 }
-                                i = break_to - 1;
-                                break_from = break_to;
+                                break_from = i = break_to;
+                                i--;
 
                                 counter = 0;
                         }
