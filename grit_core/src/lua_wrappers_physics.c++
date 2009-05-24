@@ -6,6 +6,80 @@
 #include "lua_wrappers_primitives.h"
 #include "lua_wrappers_physics.h"
 
+// Ray Callbacks {{{
+
+class LuaRayCallback : public PhysicsWorld::RayCallback {
+    public:           
+        LuaRayCallback (lua_State *L_) : returnValues(0), L(L_) { }
+        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n)
+        {
+                push_rbody(L,rb.getPtr());
+                lua_pushnumber(L,dist);
+                push(L,new Ogre::Vector3(n),VECTOR3_TAG);
+                returnValues+=3; 
+        }
+        size_t returnValues;
+    protected:
+        lua_State *L;
+};
+
+class NearestLuaRayCallback : public PhysicsWorld::RayCallback {
+    public:           
+        NearestLuaRayCallback ()
+              : nearestRB(0),
+                nearestDist(std::numeric_limits<Ogre::Real>::max())
+        { }
+        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n)
+        {
+                if (dist<nearestDist) {
+                        nearestRB = &rb;
+                        nearestDist = dist;
+                        nearestN = n;
+                }
+        }
+        RigidBody *nearestRB;
+        Ogre::Real nearestDist;
+        Ogre::Vector3 nearestN;
+};
+
+
+class LuaSweepCallback : public PhysicsWorld::SweepCallback {
+    public:           
+        LuaSweepCallback (lua_State *L_) : returnValues(0), L(L_) { }
+        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n)
+        {
+                push_rbody(L,rb.getPtr());
+                lua_pushnumber(L,dist);
+                push(L,new Ogre::Vector3(n),VECTOR3_TAG);
+                returnValues+=3; 
+        }
+        size_t returnValues;
+    protected:
+        lua_State *L;
+};
+
+class NearestLuaSweepCallback : public PhysicsWorld::SweepCallback {
+    public:           
+        NearestLuaSweepCallback ()
+              : nearestRB(0),
+                nearestDist(std::numeric_limits<Ogre::Real>::max())
+        { }
+        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n)
+        {
+                if (dist<nearestDist) {
+                        nearestRB = &rb;
+                        nearestDist = dist;
+                        nearestN = n;
+                }
+        }
+        RigidBody *nearestRB;
+        Ogre::Real nearestDist;
+        Ogre::Vector3 nearestN;
+};
+
+// }}}
+
+
 
 // COLMESH ================================================================= {{{
 
@@ -164,11 +238,23 @@ TRY_END
 static int rbody_impulse (lua_State *L)
 {
 TRY_START
-        if (lua_gettop(L)==3) {
+        if (lua_gettop(L)==4) {
+                // local
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
                 GET_UD_MACRO(Ogre::Vector3,impulse,2,VECTOR3_TAG);
                 GET_UD_MACRO(Ogre::Vector3,rel_pos,3,VECTOR3_TAG);
-                self->impulse(impulse,rel_pos);
+                bool world_orientation = 0!=lua_toboolean(L,4);
+                if (world_orientation) {
+                        self->impulse(impulse,rel_pos);
+                } else {
+                        self->impulse(impulse,self->getOrientation()*rel_pos);
+                }
+        } else if (lua_gettop(L)==3) {
+                GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+                GET_UD_MACRO(Ogre::Vector3,impulse,2,VECTOR3_TAG);
+                GET_UD_MACRO(Ogre::Vector3,wpos,3,VECTOR3_TAG);
+                const Ogre::Vector3 &pos = self->getPosition();
+                self->impulse(impulse,wpos - pos);
         } else {
                 check_args(L,2);
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
@@ -188,6 +274,40 @@ TRY_START
         GET_UD_MACRO(Ogre::Vector3,torque,2,VECTOR3_TAG);
         self->torque(torque);
         return 0;
+TRY_END
+}
+
+
+static int rbody_ray_nearest (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        GET_UD_MACRO(Ogre::Vector3,local_pos,2,VECTOR3_TAG);
+        GET_UD_MACRO(Ogre::Vector3,local_dir,3,VECTOR3_TAG);
+        Ogre::Real len = luaL_checknumber(L,4);
+
+        Ogre::Vector3 end = local_pos + len * local_dir;
+        Ogre::Vector3 start = local_pos;
+
+        start = self->getOrientation()*start + self->getPosition();
+        end = self->getOrientation()*end + self->getPosition();
+
+        NearestLuaRayCallback lrcb;
+        self->world->ray(start,end,lrcb);
+        if (lrcb.nearestRB == NULL) {
+                lua_pushboolean(L,false);
+                lua_pushnumber(L,len);
+                return 2;
+        }
+        lua_pushboolean(L,true);
+        lua_pushnumber(L,lrcb.nearestDist * len);
+        push_rbody(L,lrcb.nearestRB->getPtr());
+        Ogre::Vector3 hit_point_ws = start + lrcb.nearestDist*(end-start);
+        push(L,new Ogre::Vector3(hit_point_ws),VECTOR3_TAG);
+        push(L,new Ogre::Vector3(lrcb.nearestN),VECTOR3_TAG);
+        return 5;
+
 TRY_END
 }
 
@@ -244,9 +364,14 @@ TRY_END
 static int rbody_local_vel (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
+        check_args(L,3);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        GET_UD_MACRO(Ogre::Vector3,local_pos,2,VECTOR3_TAG);
+        GET_UD_MACRO(Ogre::Vector3,pos,2,VECTOR3_TAG);
+        bool world_space = 0!=lua_toboolean(L,3);
+        Ogre::Vector3 local_pos = pos;
+        if (world_space) {
+                local_pos -= self->getPosition();
+        }
         const Ogre::Vector3 &local_vel = self->getLocalVelocity(local_pos);
         push(L, new Ogre::Vector3(local_vel), VECTOR3_TAG);
         return 1;
@@ -303,6 +428,9 @@ TRY_START
                 push_cfunction(L,rbody_impulse);
         } else if (key=="torque") {
                 push_cfunction(L,rbody_torque);
+
+        } else if (key=="rayNearest") {
+                push_cfunction(L,rbody_ray_nearest);
 
         } else if (key=="activate") {
                 push_cfunction(L,rbody_activate);
@@ -539,21 +667,6 @@ TRY_START
 TRY_END
 }
 
-class LuaRayCallback : public PhysicsWorld::RayCallback {
-    public:           
-        LuaRayCallback (lua_State *L_) : returnValues(0), L(L_) { }
-        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n)
-        {
-                push_rbody(L,rb.getPtr());
-                lua_pushnumber(L,dist);
-                push(L,new Ogre::Vector3(n),VECTOR3_TAG);
-                returnValues+=3; 
-        }
-        size_t returnValues;
-    protected:
-        lua_State *L;
-};
-
 static int pworld_ray (lua_State *L)
 {
 TRY_START
@@ -578,25 +691,6 @@ TRY_START
 TRY_END
 }
 
-
-class NearestLuaRayCallback : public PhysicsWorld::RayCallback {
-    public:           
-        NearestLuaRayCallback ()
-              : nearestRB(0),
-                nearestDist(std::numeric_limits<Ogre::Real>::max())
-        { }
-        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n)
-        {
-                if (dist<nearestDist) {
-                        nearestRB = &rb;
-                        nearestDist = dist;
-                        nearestN = n;
-                }
-        }
-        RigidBody *nearestRB;
-        Ogre::Real nearestDist;
-        Ogre::Vector3 nearestN;
-};
 
 static int pworld_ray_nearest (lua_State *L)
 {
@@ -630,21 +724,6 @@ TRY_END
 }
 
 
-class LuaSweepCallback : public PhysicsWorld::SweepCallback {
-    public:           
-        LuaSweepCallback (lua_State *L_) : returnValues(0), L(L_) { }
-        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n)
-        {
-                push_rbody(L,rb.getPtr());
-                lua_pushnumber(L,dist);
-                push(L,new Ogre::Vector3(n),VECTOR3_TAG);
-                returnValues+=3; 
-        }
-        size_t returnValues;
-    protected:
-        lua_State *L;
-};
-
 static int pworld_sweep (lua_State *L)
 {
 TRY_START
@@ -660,25 +739,6 @@ TRY_START
         return lscb.returnValues;
 TRY_END
 }
-
-class NearestLuaSweepCallback : public PhysicsWorld::SweepCallback {
-    public:           
-        NearestLuaSweepCallback ()
-              : nearestRB(0),
-                nearestDist(std::numeric_limits<Ogre::Real>::max())
-        { }
-        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n)
-        {
-                if (dist<nearestDist) {
-                        nearestRB = &rb;
-                        nearestDist = dist;
-                        nearestN = n;
-                }
-        }
-        RigidBody *nearestRB;
-        Ogre::Real nearestDist;
-        Ogre::Vector3 nearestN;
-};
 
 static int pworld_sweep_nearest (lua_State *L)
 {
