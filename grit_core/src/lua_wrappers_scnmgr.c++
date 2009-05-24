@@ -65,23 +65,48 @@ TRY_START
 TRY_END
 }
 
-static int node_set_position_orientation (lua_State *L)
+static int node_set_position (lua_State *L)
 {
 TRY_START
-        check_args(L,8);
+        check_args(L,4);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
         Ogre::Real px = luaL_checknumber(L,2);
         Ogre::Real py = luaL_checknumber(L,3);
         Ogre::Real pz = luaL_checknumber(L,4);
-        Ogre::Real rw = luaL_checknumber(L,5);
-        Ogre::Real rx = luaL_checknumber(L,6);
-        Ogre::Real ry = luaL_checknumber(L,7);
-        Ogre::Real rz = luaL_checknumber(L,8);
         self.setPosition(px,py,pz);
-        self.setOrientation(rw,rx,ry,rz);
         return 0;
 TRY_END
 }
+
+static int node_set_orientation (lua_State *L)
+{
+TRY_START
+        check_args(L,5);
+        GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
+        Ogre::Real qw = luaL_checknumber(L,2);
+        Ogre::Real qx = luaL_checknumber(L,3);
+        Ogre::Real qy = luaL_checknumber(L,4);
+        Ogre::Real qz = luaL_checknumber(L,5);
+        self.setOrientation(qw,qx,qy,qz);
+        return 0;
+TRY_END
+}
+
+static int node_set_orientation_angle (lua_State *L)
+{
+TRY_START
+        check_args(L,5);
+        GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
+        Ogre::Real angle = luaL_checknumber(L,2);
+        Ogre::Real qx = luaL_checknumber(L,3);
+        Ogre::Real qy = luaL_checknumber(L,4);
+        Ogre::Real qz = luaL_checknumber(L,5);
+        self.setOrientation(Ogre::Quaternion(Ogre::Degree(angle),
+                            Ogre::Vector3(qx,qy,qz).normalisedCopy()));
+        return 0;
+TRY_END
+}
+
 
 static int node_detach_all_objects (lua_State *L)
 {
@@ -217,8 +242,12 @@ TRY_START
                 lua_pushboolean(L,self.getInheritScale());
         } else if (key=="translate") {
                 push_cfunction(L,node_translate);
-        } else if (key=="setPositionOrientation") {
-                push_cfunction(L,node_set_position_orientation);
+        } else if (key=="setPosition") {
+                push_cfunction(L,node_set_position);
+        } else if (key=="setOrientation") {
+                push_cfunction(L,node_set_orientation);
+        } else if (key=="setOrientationAngle") {
+                push_cfunction(L,node_set_orientation_angle);
         } else if (key=="attachObject") {
                 push_cfunction(L,node_attach_object);
         } else if (key=="detachObject") {

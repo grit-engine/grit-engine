@@ -365,6 +365,11 @@ TRY_START
                 v.y = y;
                 v.z = z;
                 return 0;
+        } else if (lua_gettop(L)==2) {
+                GET_UD_MACRO(Ogre::Vector3,v,1,VECTOR3_TAG);
+                GET_UD_MACRO(Ogre::Vector3,v2,2,VECTOR3_TAG);
+                v = v2;
+                return 0;
         }
                 
         check_args(L,1);
@@ -415,11 +420,20 @@ static int vector3_rotate (lua_State *L)
 TRY_START
         if (lua_gettop(L)==5) {
                 GET_UD_MACRO(Ogre::Vector3,self,1,VECTOR3_TAG);
-                Ogre::Real w = luaL_checknumber(L,2);
+                Ogre::Real angle = luaL_checknumber(L,2);
                 Ogre::Real x = luaL_checknumber(L,3);
                 Ogre::Real y = luaL_checknumber(L,4);
                 Ogre::Real z = luaL_checknumber(L,5);
-                self = Ogre::Quaternion(w,x,y,z) * self;
+                Ogre::Vector3 axis(x,y,z);
+                axis.normalise();
+                self = Ogre::Quaternion(Ogre::Degree(angle), axis) * self;
+                return 0;
+        } else if (lua_gettop(L)==3) {
+                GET_UD_MACRO(Ogre::Vector3,self,1,VECTOR3_TAG);
+                Ogre::Real angle = luaL_checknumber(L,2);
+                GET_UD_MACRO(Ogre::Vector3,a,3,VECTOR3_TAG);
+                Ogre::Vector3 axis = a.normalisedCopy();
+                self = Ogre::Quaternion(Ogre::Degree(angle), axis) * self;
                 return 0;
         }
         check_args(L,2);
@@ -522,6 +536,18 @@ TRY_START
 TRY_END
 }
 
+static int vector3_set_as_cross_product (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(Ogre::Vector3,self,1,VECTOR3_TAG);
+        GET_UD_MACRO(Ogre::Vector3,a,2,VECTOR3_TAG);
+        GET_UD_MACRO(Ogre::Vector3,b,3,VECTOR3_TAG);
+        self = a.crossProduct(b);
+        return 0;
+TRY_END
+}
+
 static int vector3_dot (lua_State *L)
 {
 TRY_START
@@ -584,6 +610,8 @@ TRY_START
                 push_cfunction(L,vector3_abs_dot);
         } else if (key=="cross") {
                 push_cfunction(L,vector3_cross_product);
+        } else if (key=="setAsCross") {
+                push_cfunction(L,vector3_set_as_cross_product);
         } else if (key=="midPoint") {
                 push_cfunction(L,vector3_mid_point);
         } else if (key=="normalised") {
