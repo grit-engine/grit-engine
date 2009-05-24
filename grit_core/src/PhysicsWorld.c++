@@ -177,6 +177,9 @@ bool contact_added_callback (btManifoldPoint& cp,
                              const btCollisionObject* colObj1,
                              int partId1, int index1)
 {
+        (void) colObj1;
+        (void) partId1;
+        (void) index1;
         contact_added_callback_obj(cp, colObj0, partId0, index0);
         //contact_added_callback_obj(cp, colObj1, partId1, index1);
         //std::cout << to_ogre(cp.m_normalWorldOnB) << std::endl;
@@ -254,6 +257,16 @@ void PhysicsWorld::pump (lua_State *L,
                         RigidBody *rb =
                              static_cast<RigidBody*>(victim2->getMotionState());
                         rb->stepCallback(L);
+                }
+                for (int i=0 ; i<world->getNumCollisionObjects() ; ++i) {
+
+                        btCollisionObject* victim =
+                                world->getCollisionObjectArray()[i];
+                        btRigidBody* victim2 = btRigidBody::upcast(victim);
+                        if (victim2==NULL) continue;
+                        RigidBody *rb =
+                             static_cast<RigidBody*>(victim2->getMotionState());
+                        rb->stabiliseCallback(L);
                 }
         }
         // to handle errors raised by the lua callback
@@ -452,6 +465,7 @@ RigidBody::RigidBody (const PhysicsWorldPtr &world_,
         // first, peel callback from lua stack...
         updateCallbackIndex = LUA_NOREF;
         stepCallbackIndex = LUA_NOREF;
+        stabiliseCallbackIndex = LUA_NOREF;
 
         btCollisionShape *shape = colMesh->getShape();
         float mass = colMesh->getMass();
@@ -589,10 +603,37 @@ void RigidBody::stepCallback (lua_State *L)
         STACK_CHECK;
 }
 
+void RigidBody::stabiliseCallback (lua_State *L)
+{
+        if (stabiliseCallbackIndex==LUA_NOREF) return;
+        if (stabiliseCallbackIndex==LUA_REFNIL) return;
+
+        STACK_BASE;
+
+        // to handle errors raised by the lua callback
+        push_cfunction(L, my_lua_error_handler);
+        int error_handler = lua_gettop(L);
+
+        // get callback
+        lua_rawgeti(L,LUA_REGISTRYINDEX,stabiliseCallbackIndex);
+
+        // call callback (no args, no return values)
+        int status = lua_pcall(L,0,0,error_handler);
+        if (status) {
+                lua_pop(L,1);
+                luaL_unref(L,LUA_REGISTRYINDEX,stabiliseCallbackIndex);
+                stabiliseCallbackIndex = LUA_NOREF;
+        }
+
+        lua_pop(L,1); // error handler
+
+        STACK_CHECK;
+}
+
 void RigidBody::force (const Ogre::Vector3 &force)
 {
         if (body==NULL) return;
-        body->applyCentralForce(to_bullet(force));
+        body->applyCentralImpulse(to_bullet(force*world->getStepSize()));
         body->activate();
 }
 
@@ -600,7 +641,7 @@ void RigidBody::force (const Ogre::Vector3 &force,
                        const Ogre::Vector3 &rel_pos)
 {
         if (body==NULL) return;
-        body->applyForce(to_bullet(force),to_bullet(rel_pos));
+        body->applyImpulse(to_bullet(force*world->getStepSize()),to_bullet(rel_pos));
         body->activate();
 }
 

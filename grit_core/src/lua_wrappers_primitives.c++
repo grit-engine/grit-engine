@@ -408,8 +408,55 @@ TRY_START
         }
         check_args(L,2);
         GET_UD_MACRO(Ogre::Vector3,v,1,VECTOR3_TAG);
-        lua_Number n = luaL_checknumber(L,2);
-        v += n;
+        GET_UD_MACRO(Ogre::Vector3,v2,2,VECTOR3_TAG);
+        v += v2;
+        return 0;
+TRY_END
+}
+
+
+static int vector3_remove (lua_State *L)
+{
+TRY_START
+        if (lua_gettop(L)==4) {
+                GET_UD_MACRO(Ogre::Vector3,v,1,VECTOR3_TAG);
+                Ogre::Real x = luaL_checknumber(L,2);
+                Ogre::Real y = luaL_checknumber(L,3);
+                Ogre::Real z = luaL_checknumber(L,4);
+                v.x-=x;
+                v.y-=y;
+                v.z-=z;
+                return 0;
+        }
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::Vector3,v,1,VECTOR3_TAG);
+        GET_UD_MACRO(Ogre::Vector3,v2,2,VECTOR3_TAG);
+        v -= v2;
+        return 0;
+TRY_END
+}
+
+
+static int vector3_remove_component (lua_State *L)
+{
+TRY_START
+        Ogre::Vector3 *self;
+        Ogre::Vector3 comp;
+        if (lua_gettop(L)==4) {
+                GET_UD_MACRO(Ogre::Vector3,v,1,VECTOR3_TAG);
+                Ogre::Real x = luaL_checknumber(L,2);
+                Ogre::Real y = luaL_checknumber(L,3);
+                Ogre::Real z = luaL_checknumber(L,4);
+                self = &v;
+                comp = Ogre::Vector3(x,y,z);
+        } else {
+                check_args(L,2);
+                GET_UD_MACRO(Ogre::Vector3,v,1,VECTOR3_TAG);
+                GET_UD_MACRO(Ogre::Vector3,v2,2,VECTOR3_TAG);
+                self = &v;
+                comp = v2;
+        }
+        *self -= self->dotProduct(comp)*comp;
         return 0;
 TRY_END
 }
@@ -592,6 +639,10 @@ TRY_START
                 push_cfunction(L,vector3_xyz);
         } else if (key=="append") {
                 push_cfunction(L,vector3_append);
+        } else if (key=="remove") {
+                push_cfunction(L,vector3_remove);
+        } else if (key=="removeComponent") {
+                push_cfunction(L,vector3_remove_component);
         } else if (key=="scale") {
                 push_cfunction(L,vector3_scale);
         } else if (key=="rotate") {

@@ -260,6 +260,7 @@ class RigidBody : public btMotionState {
         }
 
         void stepCallback (lua_State *L);
+        void stabiliseCallback (lua_State *L);
 
         void activate (void);
         void deactivate (void);
@@ -336,13 +337,26 @@ class RigidBody : public btMotionState {
                 stepCallbackIndex = luaL_ref(L,LUA_REGISTRYINDEX);
         }
 
+        void pushStabiliseCallback (lua_State *L)
+        {
+                // pushes nil if index is LUA_NOREF
+                lua_rawgeti(L,LUA_REGISTRYINDEX,stabiliseCallbackIndex);
+        }
+
+        void setStabiliseCallback (lua_State *L)
+        {
+                // unref if not already
+                luaL_unref(L,LUA_REGISTRYINDEX,stabiliseCallbackIndex);
+                stabiliseCallbackIndex = luaL_ref(L,LUA_REGISTRYINDEX);
+        }
+
     protected:
 
         btTransform lastXform;
 
         int updateCallbackIndex;
-
         int stepCallbackIndex;
+        int stabiliseCallbackIndex;
 
         btRigidBody * body;
 

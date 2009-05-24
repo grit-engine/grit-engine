@@ -26,17 +26,20 @@ class LuaRayCallback : public PhysicsWorld::RayCallback {
 class NearestLuaRayCallback : public PhysicsWorld::RayCallback {
     public:           
         NearestLuaRayCallback ()
-              : nearestRB(0),
+              : ignoreRB(0),
+                nearestRB(0),
                 nearestDist(std::numeric_limits<Ogre::Real>::max())
         { }
         virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n)
         {
-                if (dist<nearestDist) {
+                if (&rb == ignoreRB) return;
+                if (dist < nearestDist) {
                         nearestRB = &rb;
                         nearestDist = dist;
                         nearestN = n;
                 }
         }
+        RigidBody *ignoreRB;
         RigidBody *nearestRB;
         Ogre::Real nearestDist;
         Ogre::Vector3 nearestN;
@@ -220,11 +223,23 @@ TRY_END
 static int rbody_force (lua_State *L)
 {
 TRY_START
-        if (lua_gettop(L)==3) {
+        if (lua_gettop(L)==4) {
+                // local
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
                 GET_UD_MACRO(Ogre::Vector3,force,2,VECTOR3_TAG);
                 GET_UD_MACRO(Ogre::Vector3,rel_pos,3,VECTOR3_TAG);
-                self->force(force,rel_pos);
+                bool world_orientation = 0!=lua_toboolean(L,4);
+                if (world_orientation) {
+                        self->force(force,rel_pos);
+                } else {
+                        self->force(force,self->getOrientation()*rel_pos);
+                }
+        } else if (lua_gettop(L)==3) {
+                GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+                GET_UD_MACRO(Ogre::Vector3,force,2,VECTOR3_TAG);
+                GET_UD_MACRO(Ogre::Vector3,wpos,3,VECTOR3_TAG);
+                const Ogre::Vector3 &pos = self->getPosition();
+                self->force(force,wpos-pos);
         } else {
                 check_args(L,2);
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
@@ -294,6 +309,7 @@ TRY_START
         end = self->getOrientation()*end + self->getPosition();
 
         NearestLuaRayCallback lrcb;
+        lrcb.ignoreRB = &*self;
         self->world->ray(start,end,lrcb);
         if (lrcb.nearestRB == NULL) {
                 lua_pushboolean(L,false);
@@ -305,7 +321,7 @@ TRY_START
         push_rbody(L,lrcb.nearestRB->getPtr());
         Ogre::Vector3 hit_point_ws = start + lrcb.nearestDist*(end-start);
         push(L,new Ogre::Vector3(hit_point_ws),VECTOR3_TAG);
-        push(L,new Ogre::Vector3(lrcb.nearestN),VECTOR3_TAG);
+        push(L,new Ogre::Vector3(lrcb.nearestRB->getOrientation() * lrcb.nearestN),VECTOR3_TAG);
         return 5;
 
 TRY_END
@@ -373,8 +389,10 @@ TRY_START
                 local_pos -= self->getPosition();
         }
         const Ogre::Vector3 &local_vel = self->getLocalVelocity(local_pos);
-        push(L, new Ogre::Vector3(local_vel), VECTOR3_TAG);
-        return 1;
+        lua_pushnumber(L,local_vel.x);
+        lua_pushnumber(L,local_vel.y);
+        lua_pushnumber(L,local_vel.z);
+        return 3;
 TRY_END
 }
 
@@ -487,6 +505,8 @@ TRY_START
                 self->pushUpdateCallback(L);
         } else if (key=="stepCallback") {
                 self->pushStepCallback(L);
+        } else if (key=="stabiliseCallback") {
+                self->pushStabiliseCallback(L);
         } else {
                 my_lua_error(L,"Not a readable RigidBody member: "+key);
         }
@@ -537,6 +557,8 @@ TRY_START
                 self->setUpdateCallback(L);
         } else if (key=="stepCallback") {
                 self->setStepCallback(L);
+        } else if (key=="stabiliseCallback") {
+                self->setStabiliseCallback(L);
         } else if (key=="inertia") {
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self->setInertia(v);
