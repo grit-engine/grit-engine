@@ -641,7 +641,8 @@ void RigidBody::force (const Ogre::Vector3 &force,
                        const Ogre::Vector3 &rel_pos)
 {
         if (body==NULL) return;
-        body->applyImpulse(to_bullet(force*world->getStepSize()),to_bullet(rel_pos));
+        body->applyImpulse(to_bullet(force*world->getStepSize()),
+                           to_bullet(rel_pos));
         body->activate();
 }
 
@@ -663,7 +664,14 @@ void RigidBody::impulse (const Ogre::Vector3 &impulse,
 void RigidBody::torque (const Ogre::Vector3 &torque)
 {
         if (body==NULL) return;
-        body->applyTorque(to_bullet(torque));
+        body->applyTorqueImpulse(to_bullet(torque*world->getStepSize()));
+        body->activate();
+}
+
+void RigidBody::torqueImpulse (const Ogre::Vector3 &torque)
+{
+        if (body==NULL) return;
+        body->applyTorqueImpulse(to_bullet(torque));
         body->activate();
 }
 

@@ -281,6 +281,18 @@ TRY_END
 }
 
 
+static int rbody_torque_impulse (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        GET_UD_MACRO(Ogre::Vector3,torque,2,VECTOR3_TAG);
+        self->torqueImpulse(torque);
+        return 0;
+TRY_END
+}
+
+
 static int rbody_torque (lua_State *L)
 {
 TRY_START
@@ -447,6 +459,8 @@ TRY_START
         } else if (key=="impulse") {
                 push_cfunction(L,rbody_impulse);
         } else if (key=="torque") {
+                push_cfunction(L,rbody_torque);
+        } else if (key=="torqueImpulse") {
                 push_cfunction(L,rbody_torque);
 
         } else if (key=="rayNearest") {

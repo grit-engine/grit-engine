@@ -272,6 +272,7 @@ class RigidBody : public btMotionState {
         void impulse (const Ogre::Vector3 &impulse,
                       const Ogre::Vector3 &rel_pos);
         void torque (const Ogre::Vector3 &torque);
+        void torqueImpulse (const Ogre::Vector3 &torque);
 
         Ogre::Real getLinearDamping (void) const;
         void setLinearDamping (Ogre::Real r);
