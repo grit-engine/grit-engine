@@ -23,6 +23,8 @@
 #include "ideread.h"
 #include "tex_dups.h"
 
+#define MODNAME std::string("gtasa")
+
 #ifdef rad2
 #undef rad2
 #endif
@@ -945,7 +947,7 @@ std::string get_tex_name (const std::string& img,
         txd = img+"/"+txd;
     }
 
-    tex_name = txd + "/" + tex_name;
+    tex_name = MODNAME + "/" + txd + "/" + tex_name;
 
     // if it's one of these textures, it is not found in a per-dff txd file
     // it is instead found in vehicle.txd
@@ -1058,7 +1060,7 @@ static const std::string &export_or_provide_mat (const StringSet &texs,
     m.rewrittenTextures = textures;
 
     std::ostringstream mname;
-    mname<<obj.id<<"/"<<mindex;
+    mname<<MODNAME<<"/"<<obj.id<<"/"<<mindex;
 
     const std::string &mat = already_seen(matdb, R,G,B,A, textures, has_alpha,
                                           no_alpha_reject, double_sided,

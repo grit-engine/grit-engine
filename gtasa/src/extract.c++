@@ -22,6 +22,8 @@
 #ifdef far
 #undef far
 #endif
+
+#define MODNAME std::string("gtasa")
  
 void dump_stats (std::ostream &out, Objs &objs) //{{{
 {
@@ -174,14 +176,17 @@ void process_txds (std::ostream &out,
                 if (ext!=".txd") continue;
                 //out<<"Extracting: "<<imgname<<"/"<<fname<<std::endl;
                 img.fileOffset(imgf,i);
-                std::string txddir = dest_dir+"/"+imgname+"/"+fname;
+                std::string txddir = dest_dir+"/"+MODNAME+"/"+imgname+"/"+fname;
                 ensuredir(txddir);
-                Txd txd(imgf,txddir);
+                Txd txd(imgf,txddir); // extract dds files
                 const Txd::Names &n = txd.getNames();
                 typedef Txd::Names::const_iterator TI;
                 for (TI j=n.begin(),j_=n.end();j!=j_;++j) {
                         const std::string &texname = *j;
-                        texs.insert(imgname+"/"+fname+"/"+texname+".dds");
+                        // build a list of all textures we
+                        // know about (relative to dest_dir)
+                        texs.insert(MODNAME+"/"+imgname+"/"+
+                                    fname+"/"+texname+".dds");
                 }
         }
 }
@@ -214,13 +219,16 @@ void process_cols (std::ostream &out,
                         std::string name;
                         parse_col(name,imgf,tcol);
 
-                        cols_including_empty.insert(imgname+"/"+name+".tcol");
+                        std::string tcolname =
+                                MODNAME+"/"+imgname+"/"+name+".tcol";
+
+                        cols_including_empty.insert(tcolname);
 
                         if (tcol.usingCompound || tcol.usingTriMesh) {
 
-                                cols.insert(imgname+"/"+name+".tcol");
+                                cols.insert(tcolname);
 
-                                name = dest_dir+"/"+imgname+"/"+name+".tcol";
+                                name = dest_dir+"/"+tcolname;
 
                                 std::ofstream out;
                                 out.open(name.c_str(), std::ios::binary);
@@ -379,7 +387,7 @@ void extract (const std::string &gta_dir,
 
 
         std::ofstream map;
-        map.open((dest_dir+"/map.lua").c_str(), std::ios::binary);
+        map.open((dest_dir+"/"+MODNAME+"/map.lua").c_str(), std::ios::binary);
         ASSERT_IO_SUCCESSFUL(map, "opening map.lua");
         map.precision(25);
 
@@ -401,8 +409,10 @@ void extract (const std::string &gta_dir,
                         }
                         used_ids[id] = true;
                         if (inst.is_low_detail) continue;
+                        std::stringstream cls;
+                        cls << MODNAME << "/" << inst.id;
                         if (inst.near_for==-1) {
-                                map<<"tryAdd(\""<<inst.id<<"\","
+                                map<<"tryAdd(\""<<cls.str()<<"\","
                                    <<inst.x<<","<<inst.y<<","<<inst.z;
                                 if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
                                         map<<",{rot=Quat("
@@ -412,7 +422,9 @@ void extract (const std::string &gta_dir,
                                 map<<")\n";
                         } else {
                                 const Inst &far = insts[inst.near_for];
-                                map<<"last=tryAdd(\""<<inst.id<<"\","
+                                std::stringstream farcls;
+                                farcls << MODNAME << "/" << far.id;
+                                map<<"last=tryAdd(\""<<cls.str()<<"\","
                                    <<inst.x<<","<<inst.y<<","<<inst.z;
                                 if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
                                         map<<",{rot=Quat("
@@ -420,7 +432,7 @@ void extract (const std::string &gta_dir,
                                            <<inst.ry<<","<<inst.rz<<")}";
                                 }
                                 map<<")\n";
-                                map<<"tryAdd(\""<<far.id<<"\","
+                                map<<"tryAdd(\""<<farcls.str()<<"\","
                                    <<far.x<<","<<far.y<<","<<far.z;
                                 map<<",{";
                                 if (far.rx!=0 || far.ry!=0 || far.rz!=0) {
@@ -437,7 +449,7 @@ void extract (const std::string &gta_dir,
         MatDB matdb;
 
         std::ofstream grit_classes;
-        grit_classes.open((dest_dir+"/grit_classes.lua").c_str(),
+        grit_classes.open((dest_dir+"/"+MODNAME+"/grit_classes.lua").c_str(),
                           std::ios::binary);
         ASSERT_IO_SUCCESSFUL(grit_classes, "opening grit_classes.lua");
 
@@ -445,7 +457,8 @@ void extract (const std::string &gta_dir,
         grit_classes << "local gom = get_gom()\n";
 
         std::ofstream matbin;
-        matbin.open((dest_dir+"/san_andreas.matbin").c_str(), std::ios::binary);
+        matbin.open((dest_dir+"/"+MODNAME+"/san_andreas.matbin").c_str(),
+                    std::ios::binary);
         ASSERT_IO_SUCCESSFUL(matbin, "opening san_andreas.matbin");
 
         Objs &objs = everything.objs;
@@ -507,7 +520,7 @@ void extract (const std::string &gta_dir,
                               + g.b_r;
 
                         std::stringstream out_name_ss;
-                        out_name_ss<<dest_dir<<"/"<<o.id<<".mesh";
+                        out_name_ss<<dest_dir<<"/"<<MODNAME<<"/"<<o.id<<".mesh";
                         std::string out_name = out_name_ss.str();
                         export_mesh(texs,img_name,
                                     out,out_name,
@@ -529,7 +542,7 @@ void extract (const std::string &gta_dir,
                 std::stringstream col_field;
                 std::string cls = "BaseClass";
 
-                std::string tcol_name = img_name+"/"+o.dff+".tcol";
+                std::string tcol_name = MODNAME+"/"+img_name+"/"+o.dff+".tcol";
                 bool use_col = true;
 
                 // once only
@@ -561,7 +574,7 @@ void extract (const std::string &gta_dir,
             
 
                 grit_classes<<"gom:addClass(extends("<<cls<<"){"
-                                <<"name=\"" <<o.id<<"\""
+                                <<"name=\""<<MODNAME<<"/"<<o.id<<"\""
                                 <<",renderingDistance="<<(o.draw_distance+rad)
                                 <<",textures=StringDB{"<<background_texs_ss.str()<<"}"
                                 <<col_field.str()<<"})\n";
@@ -578,7 +591,7 @@ int main(int argc, char **argv)
 
         if (argc!=2 && argc!=3) {
                 std::cerr<<"Usage: "<<argv[ 0]<<" <San Andreas Dir> "
-                         <<" [ <Destination Dir> ]"<<std::endl;
+                         <<" [ <Grit Dir> ]"<<std::endl;
                 return EXIT_FAILURE;
         }
 
