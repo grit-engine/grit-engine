@@ -58,7 +58,7 @@ Grit::Grit (Ogre::Root *ogre, Mouse *mouse, Keyboard *keyboard, Grit *& grit) :
 
         grit = this;
 
-        L = init_lua("lua_base/main.lua");
+        L = init_lua("system/init.lua");
 
         //APP_VERBOSE("adding event listener");
         Ogre::WindowEventUtilities::addWindowEventListener(getWin(), this);

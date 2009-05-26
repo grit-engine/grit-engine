@@ -1466,7 +1466,7 @@ lua_State *init_lua(const char *filename)
         luaL_openlibs(L);
 
         lua_getglobal(L,"package");
-        lua_pushstring(L,"./lua_base/?.lua");
+        lua_pushstring(L,"./system/?.lua");
         lua_setfield(L,-2,"path");
         lua_pushstring(L,"");
         lua_setfield(L,-2,"cpath");
