@@ -29,6 +29,7 @@ COMMON_OBJ=\
         GritObject.o \
         GritObjectManager.o \
         HUD.o \
+        ldbglue.o \
         lua_util.o \
         lua_wrappers_core.o \
         lua_wrappers_gpuprog.o \
