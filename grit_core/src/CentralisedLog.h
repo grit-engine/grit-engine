@@ -37,6 +37,8 @@ class CentralisedLog : public Ogre::LogListener {
                 return r;
         }
             
+        // used for storing incomplete lines (up to std::endl)
+        std::stringstream tmp;
 
     protected:
 
@@ -52,11 +54,12 @@ class CLog {
         CLog (const char *file, int line, bool error)
         {
                 if (error) {
-                        ss << BOLD << RED << "ERROR" << RESET;
+                        clog.tmp << BOLD << RED << "ERROR" << RESET;
                 } else {
-                        ss << BOLD << BLUE << "VERBOSE" << RESET;
+                        clog.tmp << BOLD << BLUE << "VERBOSE" << RESET;
                 }       
-                ss<<" ("<<BOLD<<file<<NOBOLD<<":"<<BOLD<<line<<NOBOLD<<"): ";
+                clog.tmp<<" ("<<BOLD<<file<<NOBOLD
+                        <<":"<<BOLD<<line<<NOBOLD<<"): ";
         }
 
         CLog () { }
@@ -66,23 +69,20 @@ class CLog {
         CLog &operator<< (manip *o)
         {
                 if (o == (manip*)std::endl) {
-                        clog.echo(ss.str());
-                        ss.str("");
+                        clog.echo(clog.tmp.str());
+                        clog.tmp.str("");
                 } else {
-                        ss << o;
+                        clog.tmp << o;
                 }
                 return *this;
         }
 
         template<typename T> CLog &operator<<(T const &o)
         {
-                ss << o;
+                clog.tmp << o;
                 return *this;
         }
 
-    protected:
-
-        std::stringstream ss;
 };
 
 /*

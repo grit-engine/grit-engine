@@ -177,13 +177,22 @@ int my_lua_error_handler(lua_State *l, lua_State *coro, int levelhack)
         if (str_prefix1==str_prefix2)
                 str = str.substr(str_prefix1.size());
 
-        CLOG << BOLD << RED << tb[0].file << ":" << tb[0].line << ": " << str << std::endl;
+        CLOG << BOLD << RED << tb[0].file;
+        int line = tb[0].line;
+        if (line > 0) {
+                CLOG << ":" << line;
+        }
+        CLOG << ": " << str << std::endl;
         for (size_t i=1 ; i<tb.size() ; i++) {
                 if (tb[i].gap) {
                         CLOG << "\t..." << std::endl;
                 } else {
-                        CLOG << RED << "\t" << tb[i].file << ":" << tb[i].line << ": "
-                           << tb[i].func_name << std::endl;
+                        CLOG << RED << "\t" << tb[i].file;
+                        int line = tb[0].line;
+                        if (line > 0) {
+                                CLOG << ":" << line;
+                        }
+                        CLOG << ": " << tb[i].func_name << std::endl;
                 }
         }
         return 1;
