@@ -461,7 +461,7 @@ TRY_START
         } else if (key=="torque") {
                 push_cfunction(L,rbody_torque);
         } else if (key=="torqueImpulse") {
-                push_cfunction(L,rbody_torque);
+                push_cfunction(L,rbody_torque_impulse);
 
         } else if (key=="rayNearest") {
                 push_cfunction(L,rbody_ray_nearest);
