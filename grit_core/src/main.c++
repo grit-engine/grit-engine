@@ -1,3 +1,4 @@
+#include <fenv.h>
 #include <errno.h>
 
 #include <Ogre.h>
@@ -57,6 +58,11 @@ int main(int argc, const char **argv)
                 lmgr->setDefaultLog(ogre_log);
                 lmgr->setLogDetail(Ogre::LL_NORMAL);
 
+                #ifdef FE_NOMASK_ENV
+                //feenableexcept(FE_INVALID);
+                //feenableexcept(FE_DIVBYZERO | FE_INVALID);
+                #endif
+
                 #ifdef NO_PLUGINS
                         Ogre::Root* ogre = OGRE_NEW Ogre::Root("","","");
 
@@ -82,9 +88,9 @@ int main(int argc, const char **argv)
                 BackgroundMeshLoader *bml = new BackgroundMeshLoader();
 
                 Ogre::ConfigFile cfg;
-		        try {
-        	        cfg.loadDirect("grit.cfg");
-		        } catch (Ogre::Exception) { }
+                try {
+                        cfg.loadDirect("grit.cfg");
+                } catch (Ogre::Exception) { }
 
                 #ifdef WIN32
                 bool use_d3d9 = cfg.getSetting("d3d9") == "yes";
