@@ -553,15 +553,23 @@ void RigidBody::setWorldTransform (const btTransform& current_xform)
 
         // args
         const btVector3 &pos = current_xform.getOrigin();
-        lua_pushnumber(L,pos.x()); // arg 1
-        lua_pushnumber(L,pos.y()); // arg 2
-        lua_pushnumber(L,pos.z()); // arg 3
         btQuaternion quat;
         current_xform.getBasis().getRotation(quat);
-        lua_pushnumber(L,quat.w()); // arg 4
-        lua_pushnumber(L,quat.x()); // arg 5
-        lua_pushnumber(L,quat.y()); // arg 6
-        lua_pushnumber(L,quat.z()); // arg 7
+        Ogre::Real x=pos.x(), y=pos.y(), z=pos.z();
+        Ogre::Real qw=quat.w(), qx=quat.x(), qy=quat.y(), qz=quat.z();
+        if (isnan(x) || isnan(y) || isnan(z) || isnan(qw) || isnan(qx) || isnan(qy) || isnan(qz)) {
+                CERR << "NaN from physics engine." << std::endl;
+                x = 0; y = 0; z = 0;
+                qw = 1; qx = 0; qy = 0; qz = 0;
+                // TODO: move the object back into the real world
+        }
+        lua_pushnumber(L,x); // arg 1
+        lua_pushnumber(L,y); // arg 2
+        lua_pushnumber(L,z); // arg 3
+        lua_pushnumber(L,qw); // arg 4
+        lua_pushnumber(L,qx); // arg 5
+        lua_pushnumber(L,qy); // arg 6
+        lua_pushnumber(L,qz); // arg 7
 
         // call callback (7 args, no return values)
         int status = lua_pcall(L,7,0,error_handler);

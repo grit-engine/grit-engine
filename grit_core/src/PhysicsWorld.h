@@ -1,6 +1,8 @@
 #include <OgreSharedPtr.h>
 #include <OgreException.h>
 
+#include "CentralisedLog.h"
+
 class PhysicsWorld;
 typedef Ogre::SharedPtr<PhysicsWorld> PhysicsWorldPtr;
 
@@ -27,21 +29,37 @@ extern "C" {
 
 static inline Ogre::Vector3 to_ogre(const btVector3 &from)
 {
+        if (isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
+                CERR << "NaN from bullet." << std::endl;
+                return Ogre::Vector3(0,0,0);
+        }
         return Ogre::Vector3 (from.x(), from.y(), from.z());
 }
 
 static inline Ogre::Quaternion to_ogre(const btQuaternion &from)
 {
+        if (isnan(from.w()) || isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
+                CERR << "NaN from bullet." << std::endl;
+                return Ogre::Quaternion(1,0,0,0);
+        }
         return Ogre::Quaternion (from.w(), from.x(), from.y(), from.z());
 }
 
 static inline btVector3 to_bullet (const Ogre::Vector3 &from)
 {
+        if (isnan(from.x) || isnan(from.y) || isnan(from.z)) {
+                CERR << "NaN from OGRE." << std::endl;
+                return btVector3(0,0,0);
+        }
         return btVector3(from.x,from.y,from.z);
 }
 
 static inline btQuaternion to_bullet (const Ogre::Quaternion &from)
 {
+        if (isnan(from.w) || isnan(from.x) || isnan(from.y) || isnan(from.z)) {
+                CERR << "NaN from OGRE." << std::endl;
+                return btQuaternion(0,0,0,1);
+        }
         return btQuaternion(from.x, from.y, from.z, from.w);
 }
 
