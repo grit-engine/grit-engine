@@ -547,7 +547,7 @@ void extract (const std::string &gta_dir,
 
                 // once only
                 if (cols_i.find(tcol_name)==cols_i.end()) {
-                        if (!(o.flags && OBJ_FLAG_NO_COL))
+                        if (!(o.flags & OBJ_FLAG_NO_COL))
                                 out<<"Couldn't find col \""<<tcol_name<<"\" "
                                    <<"referenced from "<<o.id<<std::endl;
                         use_col = false;
@@ -573,8 +573,11 @@ void extract (const std::string &gta_dir,
                 }
             
 
+                bool cast_shadow = o.flags & OBJ_FLAG_POLE_SHADOW;
+
                 grit_classes<<"gom:addClass(extends("<<cls<<"){"
-                                <<"name=\""<<MODNAME<<"/"<<o.id<<"\""
+                                <<"receiveShadows="<<(cast_shadow?"false":"true")
+                                <<",name=\""<<MODNAME<<"/"<<o.id<<"\""
                                 <<",renderingDistance="<<(o.draw_distance+rad)
                                 <<",textures=StringDB{"<<background_texs_ss.str()<<"}"
                                 <<col_field.str()<<"})\n";

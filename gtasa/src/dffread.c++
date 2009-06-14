@@ -1334,13 +1334,13 @@ void export_mesh (const StringSet &texs,
     }
 
     if (texture_coords) {
-    decl->addElement(0,offset,Ogre::VET_FLOAT2,Ogre::VES_TEXTURE_COORDINATES,0);
-    offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
+        decl->addElement(0,offset,Ogre::VET_FLOAT2,Ogre::VES_TEXTURE_COORDINATES,0);
+        offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
     }
 
     if (night_colours) {
-    decl->addElement(0,offset,Ogre::VET_FLOAT4,Ogre::VES_TEXTURE_COORDINATES,1);
-    offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT4);
+        decl->addElement(0,offset,Ogre::VET_FLOAT4,Ogre::VES_TEXTURE_COORDINATES,1);
+        offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT4);
     }
 
 
@@ -1512,4 +1512,4 @@ void export_mesh (const StringSet &texs,
 
 }}}
 
-// vim: shiftwidth=8:tabstop=8:expandtab
+// vim: shiftwidth=4:tabstop=4:expandtab
