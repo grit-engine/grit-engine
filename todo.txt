@@ -13,8 +13,6 @@ general physics:
 
 vehicles:
     - constraints (particularly hinge constraint for car doors)
-    - integrate friction + engine model somehow
-    - stateful wheel spin
     - study handling.cfg
     - extract graphics and collision meshes from gta vehicles
     - bottoming out
@@ -32,15 +30,11 @@ actors:
 cosmetic
 --------------------------------------------------------------------------------
 
-weather (caelum?)
+weather (caelum? needs cg)
 
-make use of the night vertex colours in the meshes (currently ignored, i think)
-
-sea water (hydrax?)
+sea water (hydrax? needs cg too)
 
 other water
-
-make shadows work properly with extracted gtasa models
 
 experiment with depth shadow mapping
 
@@ -49,6 +43,8 @@ experiment with depth shadow mapping
 --------------------------------------------------------------------------------
 performance
 --------------------------------------------------------------------------------
+
+move grit classes out of lua heap to ease garbage collection overhead
 
 set up a timeDemo simulation for quantative performance measurements
 
