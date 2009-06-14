@@ -84,6 +84,8 @@ TRY_START
         } else if (key=="renderTexture") {
                 Ogre::RenderTexture *rt = self->getBuffer()->getRenderTarget();
                 push_rtex(L,rt);
+        } else if (key=="name") {
+                lua_pushstring(L, self->getName().c_str());
         } else if (key=="type") {
                 lua_pushstring(L,
                               texture_type_to_string(L,self->getTextureType()));
