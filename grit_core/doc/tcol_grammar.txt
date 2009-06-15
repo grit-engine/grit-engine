@@ -58,7 +58,7 @@ Normal ::= <NORMAL> <FLOAT> <FLOAT> <FLOAT> <SEMICOLON>
 Distance ::= <MARGIN> <FLOAT> <SEMICOLON>
 
 
-TriMesh ::= <TRIMESH> <LBRACE> Vertexes Faces <RBRACE>
+TriMesh ::= <TRIMESH> <LBRACE> [ Margin ] Vertexes Faces <RBRACE>
 
 Faces ::= <FACES> <LBRACE>
               { <NATURAL> <NATURAL> <NATURAL> [ <HEX> ] <SEMICOLON> }
