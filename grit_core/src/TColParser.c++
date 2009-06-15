@@ -624,6 +624,8 @@ static void parse_static_trimesh_shape (const Ogre::String &name,
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
+        triMesh.margin = 0.00;
+
         ensure_token(name,qlex,QUEX_TKN_VERTEXES);
 
         parse_vertexes(name,qlex,triMesh.vertexes);
@@ -641,7 +643,34 @@ static void parse_dynamic_trimesh_shape (const Ogre::String &name,
                                          quex::TColLexer* qlex,
                                          TriMesh &triMesh)
 {
-        parse_static_trimesh_shape(name,qlex,triMesh);
+        ensure_token(name,qlex,QUEX_TKN_LBRACE);
+
+        triMesh.margin = 0.04;
+
+        quex::Token t; qlex->get_token(&t);
+        switch (t.type_id()) {
+
+                case QUEX_TKN_MARGIN:
+                triMesh.margin = parse_positive_real(name,qlex);
+                ensure_token(name,qlex,QUEX_TKN_SEMI);
+                ensure_token(name,qlex,QUEX_TKN_VERTEXES);
+                break;
+
+                case QUEX_TKN_VERTEXES:
+                break;
+
+                default:
+                err(name,qlex,t,"margin, vertexes");
+        }
+
+        parse_vertexes(name,qlex,triMesh.vertexes);
+
+        ensure_token(name,qlex,QUEX_TKN_FACES);
+
+        parse_faces(name,qlex,triMesh.vertexes.size(),triMesh.faces);
+
+        ensure_token(name,qlex,QUEX_TKN_RBRACE);
+
 }
 
 

@@ -88,6 +88,7 @@ typedef std::vector<Face> Faces;
 
 
 struct TriMesh {
+        Ogre::Real margin;
         Vertexes vertexes;
         Faces faces;
 };
