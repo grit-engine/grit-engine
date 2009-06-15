@@ -390,11 +390,8 @@ void PhysicsWorld::deleteMesh (const Ogre::String &name)
 
 class BulletRayCallback : public btCollisionWorld::RayResultCallback {
     public:
-        BulletRayCallback (PhysicsWorld::RayCallback &rcb_) : rcb(rcb_) { }
-        virtual btScalar AddSingleResult (btCollisionWorld::LocalRayResult &r,
-                                          bool b)
-        { return addSingleResult(r,b); }
-        virtual btScalar addSingleResult (btCollisionWorld::LocalRayResult &r,
+        BulletRayCallback (PhysicsWorld::SweepCallback &scb_) : scb(scb_) { }
+        virtual btScalar addSingleResult (btCollisionWorld::LocalRayResult&r,
                                           bool)
         {
                 btRigidBody *body = btRigidBody::upcast(r.m_collisionObject);
@@ -402,20 +399,13 @@ class BulletRayCallback : public btCollisionWorld::RayResultCallback {
                 RigidBody *rb= dynamic_cast<RigidBody*>(body->getMotionState());
                 if (rb == NULL) return r.m_hitFraction;
                 Ogre::Vector3 normal = to_ogre(r.m_hitNormalLocal);
-                rcb.result(*rb, r.m_hitFraction, normal);
+                // TODO other data from r
+                scb.result(*rb, r.m_hitFraction, normal);
                 return r.m_hitFraction;
         }
     protected:
-        PhysicsWorld::RayCallback &rcb;
+        PhysicsWorld::SweepCallback &scb;
 };
-
-void PhysicsWorld::ray (const Ogre::Vector3 &start,
-                        const Ogre::Vector3 &end,
-                        RayCallback &rcb) const
-{
-        BulletRayCallback brcb(rcb);
-        world->rayTest(to_bullet(start),to_bullet(end),brcb);
-}
 
 class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
     public:
@@ -435,6 +425,23 @@ class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
     protected:
         PhysicsWorld::SweepCallback &scb;
 };
+
+void PhysicsWorld::ray (const Ogre::Vector3 &start,
+                        const Ogre::Vector3 &end,
+                        SweepCallback &scb,
+                        Ogre::Real radius) const
+{
+        if (radius==0) {
+                BulletRayCallback brcb(scb);
+                world->rayTest(to_bullet(start),to_bullet(end),brcb);
+        } else {
+                BulletSweepCallback bscb(scb);
+                btSphereShape tmpSphere(radius);
+                btTransform from(btQuaternion(0,0,0,1),to_bullet(start));
+                btTransform to(btQuaternion(0,0,0,1),to_bullet(end));
+                world->convexSweepTest(&tmpSphere,from,to,bscb);
+        }
+}
 
 void PhysicsWorld::sweep (const CollisionMeshPtr &col_mesh,
                           const Ogre::Vector3 &startp,

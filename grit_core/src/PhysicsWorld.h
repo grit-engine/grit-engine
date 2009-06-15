@@ -135,7 +135,8 @@ class PhysicsWorld {
         static const CollisionMeshMap &getMeshes (void) { return colMeshes; }
 
         // to be extended by lua wrapper or whatever
-        class RayCallback {
+
+        class SweepCallback {
             public:
                 virtual void result (RigidBody &body,
                                      Ogre::Real d,
@@ -144,15 +145,9 @@ class PhysicsWorld {
 
         void ray (const Ogre::Vector3 &start,
                   const Ogre::Vector3 &end,
-                  RayCallback &rcb) const;
+                  SweepCallback &rcb,
+                  Ogre::Real radius=0) const;
 
-
-        class SweepCallback {
-            public:
-                virtual void result (RigidBody &body,
-                                     Ogre::Real d,
-                                     Ogre::Vector3 &normal) = 0;
-        };
 
         void sweep (const CollisionMeshPtr &col_mesh,
                     const Ogre::Vector3 &startp,
