@@ -9,13 +9,11 @@ gameplay
 general physics:
     - constraints (particlarly cone twist and hinge constraints)
     - explosions (ghost object + ray casts?) (sphere + contact iteration?)
-    - full collision detection for camera
 
 vehicles:
     - constraints (particularly hinge constraint for car doors)
     - study handling.cfg
     - extract graphics and collision meshes from gta vehicles
-    - bottoming out
 
 actors:
     - constraints for ragdoll (particlarly cone twist and hinge constraints)
@@ -35,8 +33,6 @@ weather (caelum? needs cg)
 sea water (hydrax? needs cg too)
 
 other water
-
-experiment with depth shadow mapping
 
 
 
