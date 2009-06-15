@@ -709,6 +709,75 @@ TRY_START
 TRY_END
 }
 
+static Ogre::PixelFormat
+pixel_format_from_string (lua_State *L, const std::string& s)
+{
+        if (s=="PF_UNKNOWN") return Ogre::PF_UNKNOWN; 
+        else if (s=="PF_L8") return Ogre::PF_L8; 
+        else if (s=="PF_BYTE_L") return Ogre::PF_BYTE_L; 
+        else if (s=="PF_L16") return Ogre::PF_L16; 
+        else if (s=="PF_SHORT_L") return Ogre::PF_SHORT_L; 
+        else if (s=="PF_A8") return Ogre::PF_A8; 
+        else if (s=="PF_BYTE_A") return Ogre::PF_BYTE_A; 
+        else if (s=="PF_A4L4") return Ogre::PF_A4L4; 
+        else if (s=="PF_BYTE_LA") return Ogre::PF_BYTE_LA; 
+        else if (s=="PF_R5G6B5") return Ogre::PF_R5G6B5; 
+        else if (s=="PF_B5G6R5") return Ogre::PF_B5G6R5; 
+        else if (s=="PF_R3G3B2") return Ogre::PF_R3G3B2; 
+        else if (s=="PF_A4R4G4B4") return Ogre::PF_A4R4G4B4; 
+        else if (s=="PF_A1R5G5B5") return Ogre::PF_A1R5G5B5; 
+        else if (s=="PF_R8G8B8") return Ogre::PF_R8G8B8; 
+        else if (s=="PF_B8G8R8") return Ogre::PF_B8G8R8; 
+        else if (s=="PF_A8R8G8B8") return Ogre::PF_A8R8G8B8; 
+        else if (s=="PF_A8B8G8R8") return Ogre::PF_A8B8G8R8; 
+        else if (s=="PF_B8G8R8A8") return Ogre::PF_B8G8R8A8; 
+        else if (s=="PF_R8G8B8A8") return Ogre::PF_R8G8B8A8; 
+        else if (s=="PF_X8R8G8B8") return Ogre::PF_X8R8G8B8; 
+        else if (s=="PF_X8B8G8R8") return Ogre::PF_X8B8G8R8; 
+        else if (s=="PF_BYTE_RGB") return Ogre::PF_BYTE_RGB; 
+        else if (s=="PF_BYTE_BGR") return Ogre::PF_BYTE_BGR; 
+        else if (s=="PF_BYTE_BGRA") return Ogre::PF_BYTE_BGRA; 
+        else if (s=="PF_BYTE_RGBA") return Ogre::PF_BYTE_RGBA; 
+        else if (s=="PF_A2R10G10B10") return Ogre::PF_A2R10G10B10; 
+        else if (s=="PF_A2B10G10R10") return Ogre::PF_A2B10G10R10; 
+        else if (s=="PF_DXT1") return Ogre::PF_DXT1; 
+        else if (s=="PF_DXT2") return Ogre::PF_DXT2; 
+        else if (s=="PF_DXT3") return Ogre::PF_DXT3; 
+        else if (s=="PF_DXT4") return Ogre::PF_DXT4; 
+        else if (s=="PF_DXT5") return Ogre::PF_DXT5; 
+        else if (s=="PF_FLOAT16_R") return Ogre::PF_FLOAT16_R; 
+        else if (s=="PF_FLOAT16_RGB") return Ogre::PF_FLOAT16_RGB; 
+        else if (s=="PF_FLOAT16_RGBA") return Ogre::PF_FLOAT16_RGBA; 
+        else if (s=="PF_FLOAT32_R") return Ogre::PF_FLOAT32_R; 
+        else if (s=="PF_FLOAT32_RGB") return Ogre::PF_FLOAT32_RGB; 
+        else if (s=="PF_FLOAT32_RGBA") return Ogre::PF_FLOAT32_RGBA; 
+        else if (s=="PF_FLOAT16_GR") return Ogre::PF_FLOAT16_GR; 
+        else if (s=="PF_FLOAT32_GR") return Ogre::PF_FLOAT32_GR; 
+        else if (s=="PF_DEPTH") return Ogre::PF_DEPTH; 
+        else if (s=="PF_SHORT_RGBA") return Ogre::PF_SHORT_RGBA; 
+        else if (s=="PF_SHORT_GR") return Ogre::PF_SHORT_GR; 
+        else if (s=="PF_SHORT_RGB") return Ogre::PF_SHORT_RGB; 
+        else if (s=="PF_COUNT") return Ogre::PF_COUNT; 
+        else {
+                my_lua_error(L,"Unrecognised pixel format: "+s);
+                return Ogre::PF_UNKNOWN; //never happens
+        }
+}
+
+static int scnmgr_set_shadow_texture_settings (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
+        size_t size = check_t<size_t>(L,2);
+        size_t count = check_t<size_t>(L,3);
+        std::string pf_ = luaL_checkstring(L,4);
+        Ogre::PixelFormat pf = pixel_format_from_string(L,pf_);
+        self.setShadowTextureSettings(size,count,pf);
+        return 0;
+TRY_END
+}
+
 static int scnmgr_get_shadow_texture (lua_State *L)
 {
 TRY_START
@@ -814,7 +883,6 @@ static int scnmgr_index(lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
-        //FPSceneManager *fp = dynamic_cast<FPSceneManager*>(&self);
         std::string key  = luaL_checkstring(L,2);
 
         if (key=="setSkyBox") {
@@ -836,7 +904,7 @@ TRY_START
                 push_cfunction(L,scnmgr_get_shadow_texture);
         } else if (key=="shadowDirLightTextureOffset") {
                 lua_pushnumber(L,self.getShadowDirLightTextureOffset());
-/* NOT IMPLEMENTED?!
+/* GETTERS NOT IMPLEMENTED?!
         } else if (key=="shadowTextureFadeStart") {
                 lua_pushnumber(L,self.getShadowTextureFadeStart());
         } else if (key=="shadowTextureFadeEnd") {
@@ -846,9 +914,16 @@ TRY_START
                 lua_pushboolean(L,self.getShadowTextureSelfShadow());
         } else if (key=="shadowCasterRenderBackFaces") {
                 lua_pushboolean(L,self.getShadowCasterRenderBackFaces());
-/*
+/* GETTER NOT IMPLEMENTED?!
         } else if (key=="shadowUseInfiniteFarPlane") {
                 lua_pushboolean(L,self.getShadowUseInfiniteFarPlane());
+*/
+
+        } else if (key=="setShadowTextureSettings") {
+                push_cfunction(L,scnmgr_set_shadow_texture_settings);
+/* GETTER NOT IMPLEMENTED?!
+        } else if (key=="shadowTextureCasterMaterial") {
+                mat_push(L,self.getShadowTextureCasterMaterial());
 */
 
         } else if (key=="setShadowColour") {
@@ -960,39 +1035,6 @@ TRY_START
         } else if (key=="destroy") {
                 push_cfunction(L,scnmgr_destroy);
 
-/*
-        } else if (key=="fadeFarFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                lua_pushnumber(L,fp->getFadeFarFactor());
-        } else if (key=="fadeNearFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                lua_pushnumber(L,fp->getFadeNearFactor());
-        } else if (key=="loadsPerFrame") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                lua_pushnumber(L,fp->getLoadsPerFrame());
-        } else if (key=="preloadRate") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                lua_pushnumber(L,fp->getPreloadRate());
-        } else if (key=="visibilityRate") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                lua_pushnumber(L,fp->getVisibilityRate());
-        } else if (key=="preloadLookAheadMax") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                lua_pushnumber(L,fp->getPreloadLookAheadMax());
-        } else if (key=="preloadLookAheadFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                lua_pushnumber(L,fp->getPreloadLookAheadFactor());
-        } else if (key=="preloadRadiusFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                lua_pushnumber(L,fp->getPreloadRadiusFactor());
-        } else if (key=="visibilityFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                lua_pushnumber(L,fp->getVisibilityFactor());
-        } else if (key=="nearFactor") {
-                if (fp==NULL) my_lua_error(L,"Not an FPSceneManager.");
-                lua_pushnumber(L,fp->getNearFactor());
-*/
-
         } else if (key=="showSceneNodes") {
                 lua_pushboolean(L,self.getDisplaySceneNodes());
         } else if (key=="showBoundingBoxes") {
@@ -1041,12 +1083,6 @@ TRY_START
         } else if (key=="shadowIndexBufferSize") {
                 size_t v = check_t<size_t>(L,3);
                 self.setShadowIndexBufferSize(v);
-        } else if (key=="shadowTextureCount") {
-                size_t v = check_t<size_t>(L,3);
-                self.setShadowTextureCount(v);
-        } else if (key=="shadowTextureSize") {
-                size_t v = check_t<size_t>(L,3);
-                self.setShadowTextureSize(v);
         } else if (key=="shadowDirLightTextureOffset") {
                 Ogre::Real v = luaL_checknumber(L,3);
                 self.setShadowDirLightTextureOffset(v);
@@ -1062,6 +1098,14 @@ TRY_START
         } else if (key=="shadowCasterRenderBackFaces") {
                 bool v = 0!=lua_toboolean(L,3);
                 self.setShadowCasterRenderBackFaces(v);
+        } else if (key=="shadowTextureCasterMaterial") {
+                if (lua_type(L,3)==LUA_TSTRING) {
+                        Ogre::String v = luaL_checkstring(L,3);
+                        self.setShadowTextureCasterMaterial(v);
+                } else {
+                        GET_UD_MACRO(Ogre::MaterialPtr,v,3,MAT_TAG);
+                        self.setShadowTextureCasterMaterial(v->getName());
+                }
         } else if (key=="shadowCameraSetup") {
                 Ogre::String v = luaL_checkstring(L,3);
                 Ogre::ShadowCameraSetup *p;
