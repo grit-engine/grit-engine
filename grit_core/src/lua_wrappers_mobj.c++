@@ -595,16 +595,34 @@ TRY_END
 static int entity_set_custom_parameter_all (lua_State *L)
 {
 TRY_START
-        check_args(L,6);
-        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
-        unsigned int varindex = (unsigned int) check_int(L,2,0,UINT_MAX);
-        Ogre::Real v1 = luaL_checknumber(L,3);
-        Ogre::Real v2 = luaL_checknumber(L,4);
-        Ogre::Real v3 = luaL_checknumber(L,5);
-        Ogre::Real v4 = luaL_checknumber(L,6);
-        for (size_t i=0 ; i<self.getNumSubEntities() ; ++i) {
-                Ogre::SubEntity *se = self.getSubEntity(i);
-                se->setCustomParameter(varindex,Ogre::Vector4(v1,v2,v3,v4));
+        if (lua_gettop(L)==4) {
+                GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+                unsigned int varindex = (unsigned int) check_int(L,2,0,UINT_MAX);
+                unsigned int elindex = (unsigned int) check_int(L,3,0,3);
+                Ogre::Real v = luaL_checknumber(L,4);
+                for (size_t i=0 ; i<self.getNumSubEntities() ; ++i) {
+                        Ogre::SubEntity *se = self.getSubEntity(i);
+                        Ogre::Vector4 cp = se->getCustomParameter(varindex);
+                        switch (elindex) {
+                                case 0: cp.x = v; break;
+                                case 1: cp.y = v; break;
+                                case 2: cp.z = v; break;
+                                case 3: cp.w = v; break;
+                        }
+                        se->setCustomParameter(varindex,cp);
+                }
+        } else {
+                check_args(L,6);
+                GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+                unsigned int varindex = (unsigned int) check_int(L,2,0,UINT_MAX);
+                Ogre::Real v1 = luaL_checknumber(L,3);
+                Ogre::Real v2 = luaL_checknumber(L,4);
+                Ogre::Real v3 = luaL_checknumber(L,5);
+                Ogre::Real v4 = luaL_checknumber(L,6);
+                for (size_t i=0 ; i<self.getNumSubEntities() ; ++i) {
+                        Ogre::SubEntity *se = self.getSubEntity(i);
+                        se->setCustomParameter(varindex,Ogre::Vector4(v1,v2,v3,v4));
+                }
         }
         return 0;
 TRY_END
