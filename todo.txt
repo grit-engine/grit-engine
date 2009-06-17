@@ -14,6 +14,7 @@ vehicles:
     - constraints (particularly hinge constraint for car doors)
     - study handling.cfg
     - extract graphics and collision meshes from gta vehicles
+    - make the bike bank properly
 
 actors:
     - constraints for ragdoll (particlarly cone twist and hinge constraints)
@@ -34,6 +35,13 @@ sea water (hydrax? needs cg too)
 
 other water
 
+chase cam ray needs to hit only world geometry
+
+foilage
+
+skid marks
+
+sparks
 
 
 --------------------------------------------------------------------------------

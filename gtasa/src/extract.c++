@@ -576,7 +576,7 @@ void extract (const std::string &gta_dir,
                 bool cast_shadow = o.flags & OBJ_FLAG_POLE_SHADOW;
 
                 grit_classes<<"gom:addClass(extends("<<cls<<"){"
-                                <<"receiveShadows="<<(cast_shadow?"false":"true")
+                                <<"castShadows="<<(cast_shadow?"true":"false")
                                 <<",name=\""<<MODNAME<<"/"<<o.id<<"\""
                                 <<",renderingDistance="<<(o.draw_distance+rad)
                                 <<",textures=StringDB{"<<background_texs_ss.str()<<"}"
