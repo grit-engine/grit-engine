@@ -275,7 +275,6 @@ Ogre::Real GritObject::calcFade (const Ogre::Real range2, bool &overlap)
 
         const Ogre::Real over = gom.fadeOverlapFactor;
 
-        const Ogre::Real overmid = (over+1)/2;
 
         Ogre::Real range = ::sqrt(range2);
 
@@ -286,21 +285,30 @@ Ogre::Real GritObject::calcFade (const Ogre::Real range2, bool &overlap)
                 if (fade<1) overlap = true;
         }
         if (far.isNull()) {
-                if (range2 > out*out) {
-                        Ogre::Real range = ::sqrt(range2);
+                if (range > out) {
                         fade = (1-range) / (1-out);
                 }
                 // doesn't actually do anything as there is no far
                 imposedFarFade = 1.0;
         } else {
-                if (range2 > overmid*overmid) {
+                //TODO: generalise hte following 2 options together
+                const Ogre::Real overmid = (over+1)/2;
+                if (range > overmid) {
                         fade = (1-range) / (1-overmid);
                         imposedFarFade = 1;
-                } else if (range2 > over*over) {
+                } else if (range > over) {
                         imposedFarFade = 1  -  (overmid-range) / (overmid-over);
                 } else {
                         imposedFarFade = 0;
                 }
+/*
+                if (range > over) {
+                        fade = (1-range) / (1-over);
+                        imposedFarFade = 1-fade;
+                } else {
+                        imposedFarFade = 0;
+                }
+*/
         }
         if (fade<0) fade = 0;
         if (imposedFarFade<0) imposedFarFade = 0;
