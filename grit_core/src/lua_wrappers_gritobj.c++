@@ -5,6 +5,77 @@
 #include "lua_wrappers_gritobj.h"
 #include "lua_wrappers_physics.h"
 #include "lua_wrappers_scnmgr.h"
+#include "lua_wrappers_primitives.h"
+
+// GRIT CLASS ============================================================= {{{
+
+void push_gritcls (lua_State *L, GritClass *self)
+{
+        if (self == NULL) {
+                lua_pushnil(L);
+        } else {
+                self->acquire();
+                push(L,self,GRITCLS_TAG);
+        }
+}
+
+static int gritcls_gc (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO_OFFSET(GritClass,self,1,GRITCLS_TAG,0);
+        self->release(L);
+        return 0;
+TRY_END
+}
+
+TOSTRING_GETNAME_MACRO(gritcls,GritClass,.name,GRITCLS_TAG)
+
+
+
+static int gritcls_index (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(GritClass,self,1,GRITCLS_TAG);
+        std::string key = luaL_checkstring(L,2);
+        if (key=="name") {
+                lua_pushstring(L,self.name.c_str());
+        } else if (key=="parent") {
+                self.pushParent(L);
+        } else {
+                self.get(L,key);
+        }
+        return 1;
+TRY_END
+}
+
+static int gritcls_newindex (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(GritClass,self,1,GRITCLS_TAG);
+        std::string key = luaL_checkstring(L,2);
+
+        if (key=="name") {
+                my_lua_error(L,"Not a writeable GritClass member: "+key);
+        } else if (key=="parent") {
+                my_lua_error(L,"Not a writeable GritClass member: "+key);
+        } else {
+                self.set(L,key);
+        }
+
+        return 0;
+TRY_END
+}
+
+EQ_PTR_MACRO(GritClass,gritcls,GRITCLS_TAG)
+
+MT_MACRO_NEWINDEX(gritcls);
+
+//}}}
+
+
 
 // GRIT OBJECT ============================================================= {{{
 
@@ -158,7 +229,7 @@ TRY_START
         } else if (key=="class") {
                 GritClass *c = self->getClass();
                 if (c==NULL) my_lua_error(L,"GritObject destroyed");
-                c->pushLuaTable(L);
+                push_gritcls(L,c);
         } else if (key=="className") {
                 GritClass *c = self->getClass();
                 if (c==NULL) my_lua_error(L,"GritObject destroyed");
@@ -168,16 +239,12 @@ TRY_START
         } else {
                 GritClass *c = self->getClass();
                 if (c==NULL) my_lua_error(L,"GritObject destroyed");
-                c->pushLuaTable(L);
-                // stack: table
-                lua_getfield(L,-1,key.c_str());
-                // stack: table, value
-                if (lua_isnil(L,-1)) {
-                        lua_pop(L,2);
-                        // stack: empty
-                        self->pushLuaValue(L,key);
-                }
-                
+                const char *err = self->userValues.luaGet(L);
+                if (err) my_lua_error(L, err);
+                if (!lua_isnil(L,-1)) return 1;
+                lua_pop(L,1);
+                // try class instead
+                c->get(L,key);
         }
         return 1;
 TRY_END
@@ -235,31 +302,8 @@ TRY_START
         } else {
                 GritClass *c = self->getClass();
                 if (c==NULL) my_lua_error(L,"GritObject destroyed");
-                c->pushLuaTable(L);
-                lua_getfield(L,-1,key.c_str());
-                if (!lua_isnil(L,-1)) {
-                        my_lua_error(L,"Not a writeable GritObject "
-                                       "member: "+key);
-                }
-                lua_pop(L,2);
-                
-                if (lua_type(L,3)==LUA_TNIL) {
-                        self->clearLuaValue(key);
-                } else if (lua_type(L,3)==LUA_TSTRING) {
-                        Ogre::String val = luaL_checkstring(L,3);
-                        self->setLuaValue(key,val);
-                } else if (lua_type(L,3)==LUA_TNUMBER) {
-                        Ogre::Real val = luaL_checknumber(L,3);
-                        self->setLuaValue(key,val);
-                } else if (has_tag(L,3,VECTOR3_TAG)) {
-                        GET_UD_MACRO(Ogre::Vector3,val,3,VECTOR3_TAG);
-                        self->setLuaValue(key,val);
-                } else if (has_tag(L,3,QUAT_TAG)) {
-                        GET_UD_MACRO(Ogre::Quaternion,val,3,QUAT_TAG);
-                        self->setLuaValue(key,val);
-                } else {
-                        my_lua_error(L,"Cannot store this type.");
-                } 
+                const char *err = self->userValues.luaSet(L);
+                if (err) my_lua_error(L, err);
         }
 
         return 0;
@@ -334,6 +378,7 @@ TRY_START
 TRY_END
 }
 
+/*
 static int gom_add_class (lua_State *L)
 {
 TRY_START
@@ -354,6 +399,22 @@ TRY_START
         return 1;
 TRY_END
 }
+*/
+
+static int gom_add_class (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        Ogre::String name = lua_tostring(L,2);
+        if (!lua_istable(L,3))
+                my_lua_error(L,"Second parameter should be a table");
+        if (!lua_istable(L,4))
+                my_lua_error(L,"Third parameter should be a table");
+        self.addClass(L, name);
+        return 1;
+TRY_END
+}
 
 static int gom_get_class (lua_State *L)
 {
@@ -361,7 +422,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
         Ogre::String name = luaL_checkstring(L,2);
-        self.getClass(name)->pushLuaTable(L);
+        push_gritcls(L,self.getClass(name));
         return 1;
 TRY_END
 }
@@ -425,9 +486,8 @@ TRY_START
         lua_pop(L,1);
 
         GritObjectPtr o = self.addObject(L,name,self.getClass(className));
-        o->setLuaValue("pos",Ogre::Vector3(x,y,z));
-        o->getClass()->pushLuaTable(L);
-        lua_getfield(L,-1,"renderingDistance");
+        o->userValues.set("spawnPos", Ogre::Vector3(x,y,z));
+        o->getClass()->get(L,"renderingDistance");
         if (lua_isnil(L,-1)) {
                 self.deleteObject(L,o);
                 my_lua_error(L,"no renderingDistance in class \""
@@ -440,7 +500,7 @@ TRY_START
         }
         Ogre::Real r = lua_tonumber(L,-1);
         o->updateSphere(x,y,z,r);
-        lua_pop(L,2);
+        lua_pop(L,1);
         // scan through table adding lua data to o
         for (lua_pushnil(L) ; lua_next(L,table_index)!=0 ; lua_pop(L,1)) {
                 if (lua_type(L,-2)!=LUA_TSTRING) {
@@ -450,24 +510,10 @@ TRY_START
                 Ogre::String key = luaL_checkstring(L,-2);
                 // the name is held in the object anyway
                 if (key=="name") continue;
-                if (lua_type(L,-1)==LUA_TSTRING) {
-                        Ogre::String val = luaL_checkstring(L,-1);
-                        o->setLuaValue(key,val);
-                } else if (lua_type(L,-1)==LUA_TNUMBER) {
-                        Ogre::Real val = luaL_checknumber(L,-1);
-                        o->setLuaValue(key,val);
-                } else if (lua_type(L,-1)==LUA_TBOOLEAN) {
-                        bool val = 0!=lua_toboolean(L,-1);
-                        o->setLuaValue(key,val);
-                } else if (has_tag(L,-1,VECTOR3_TAG)) {
-                        GET_UD_MACRO(Ogre::Vector3,val,-1,VECTOR3_TAG);
-                        o->setLuaValue(key,val);
-                } else if (has_tag(L,-1,QUAT_TAG)) {
-                        GET_UD_MACRO(Ogre::Quaternion,val,-1,QUAT_TAG);
-                        o->setLuaValue(key,val);
-                } else {
+                const char *err = o->userValues.luaSet(L);
+                if (err) {
                         self.deleteObject(L,o);
-                        my_lua_error(L,"user value's type not supported.");
+                        my_lua_error(L, err);
                 }
         }
         o->init(L,o);
@@ -574,7 +620,7 @@ TRY_START
                 unsigned int c = 0;
                 GritClassMap::iterator i, i_;
                 for (self.getClasses(i,i_) ; i!=i_ ; ++i) {
-                        i->second->pushLuaTable(L);
+                        push_gritcls(L,i->second);
                         lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
                         c++;                 
                 }       

@@ -1,17 +1,12 @@
-#include <map>
-
-#include <OgreString.h>
-
 class GritObjectManager;
-
-class GritClass;
-
-typedef std::map<Ogre::String,GritClass*> GritClassMap;
 
 
 #ifndef GritObjectManager_h
 #define GritObjectManager_h
 
+#include <map>
+
+#include <OgreString.h>
 #include <OgreVector3.h>
 #include <OgreQuaternion.h>
 
@@ -22,50 +17,12 @@ extern "C" {
 }
 
 
+#include "GritClass.h"
 #include "GritObject.h"
 #include "PhysicsWorld.h"
 #include "CacheFriendlyRangeSpaceSIMD.h"
 
-
-class GritClass {
-
-    public:
-
-        GritClass (lua_State *L, const Ogre::String &name_)
-              : name(name_), counter(1)
-        {
-                lua = luaL_ref(L,LUA_REGISTRYINDEX);
-        }
-
-        virtual ~GritClass (void) { }
-
-        virtual void pushLuaTable (lua_State *L)
-        {
-                lua_rawgeti(L,LUA_REGISTRYINDEX,lua);
-        }
-
-        const Ogre::String name;
-
-        virtual void acquire ()
-        {
-                counter++;
-        }
-
-        virtual void release (lua_State *L)
-        {
-                counter--;
-                if (counter>0) return;
-                luaL_unref(L,LUA_REGISTRYINDEX,lua);
-                delete this;
-        }
-
-    protected:
-
-        int counter;
-
-        int lua;
-
-};
+typedef std::map<Ogre::String,GritClass*> GritClassMap;
 
 class GritObjectManager {
 

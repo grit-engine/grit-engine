@@ -141,9 +141,9 @@ void GritObject::notifyFade (lua_State *L,
         //stack: err
 
         // call into lua...
-        gritClass->pushLuaTable(L);
+        push_gritcls(L,gritClass);
         //stack: err,class
-        lua_getfield(L, -1, "setFade");
+        gritClass->get(L,"setFade");
         //stack: err,class,callback
         if (lua_isnil(L,-1)) {
                 // no setFade function, do nothing
@@ -205,9 +205,9 @@ void GritObject::activate (lua_State *L,
         //stack: err
 
         // get the activate function
-        gritClass->pushLuaTable(L);
+        push_gritcls(L,gritClass);
         //stack: err,class
-        lua_getfield(L, -1, "activate");
+        gritClass->get(L,"activate");
         //stack: err,class,callback
         if (lua_isnil(L,-1)) {
                 // don't activate it as class does not have activate function
@@ -229,7 +229,7 @@ void GritObject::activate (lua_State *L,
 
         // push 4 args
         lua_checkstack(L,4);
-        gritClass->pushLuaTable(L); // the class
+        push_gritcls(L,gritClass); // the class (again)
         push_gritobj(L,self); // this
         push_node(L,root); // the graphics
         push_pworld(L,physics); // the physics
@@ -337,9 +337,9 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
         //stack: err
 
         // call into lua...
-        gritClass->pushLuaTable(L);
+        push_gritcls(L,gritClass);
         //stack: err,class
-        lua_getfield(L, -1, "deactivate");
+        gritClass->get(L,"deactivate");
         //stack: err,class,callback
         if (lua_isnil(L,-1)) {
                 lua_pop(L,3);
@@ -407,9 +407,9 @@ void GritObject::init (lua_State *L, const GritObjectPtr &self)
         // this would only lead to pulling the function from the class
         // indirectly which is a waste of time, may as well get it straight
         // from the class
-        gritClass->pushLuaTable(L);
+        push_gritcls(L,gritClass);
         //stack: err,class
-        lua_getfield(L, -1, "init");
+        gritClass->get(L,"init");
         //stack: err,class,callback
         if (lua_isnil(L,-1)) {
                 lua_pop(L,3);
@@ -423,8 +423,8 @@ void GritObject::init (lua_State *L, const GritObjectPtr &self)
 
         lua_checkstack(L,2);
         push_gritobj(L,self); // persistent grit obj
-        gritClass->pushLuaTable(L); // the class
-        //stack: err,class,callback,instance
+        push_gritcls(L,gritClass); // class (again)
+        //stack: err,class,callback,instance,class
         int status = lua_pcall(L,2,0,error_handler);
         if (status) {
                 //stack: err,class,msg

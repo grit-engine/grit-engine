@@ -25,6 +25,8 @@ actors:
     - play with capsule
 
 
+
+
 --------------------------------------------------------------------------------
 cosmetic
 --------------------------------------------------------------------------------
@@ -43,12 +45,14 @@ skid marks
 
 sparks
 
+smoke from behind car
+
+
+
 
 --------------------------------------------------------------------------------
 performance
 --------------------------------------------------------------------------------
-
-move grit classes out of lua heap to ease garbage collection overhead
 
 set up a timeDemo simulation for quantative performance measurements
 

@@ -6,43 +6,28 @@
 #include "lua_wrappers_primitives.h"
 #include "lua_wrappers_physics.h"
 
-// Ray Callbacks {{{
+// Sweep Callback {{{
+
+struct SweepResult { RigidBody *rb; Ogre::Real dist; Ogre::Vector3 n; };
+typedef std::vector<SweepResult> SweepResults;
 
 class LuaSweepCallback : public PhysicsWorld::SweepCallback {
     public:           
-        LuaSweepCallback (lua_State *L_) : returnValues(0), L(L_) { }
-        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n)
-        {
-                push_rbody(L,rb.getPtr());
-                lua_pushnumber(L,dist);
-                push(L,new Ogre::Vector3(n),VECTOR3_TAG);
-                returnValues+=3; 
-        }
-        size_t returnValues;
-    protected:
-        lua_State *L;
-};
-
-class NearestLuaSweepCallback : public PhysicsWorld::SweepCallback {
-    public:           
-        NearestLuaSweepCallback ()
-              : ignoreRB(0),
-                nearestRB(0),
-                nearestDist(std::numeric_limits<Ogre::Real>::max())
+        LuaSweepCallback (bool ignore_dynamic)
+              : ignoreDynamic(ignore_dynamic)
         { }
-        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n)
-        {
-                if (&rb == ignoreRB) return;
-                if (dist<nearestDist) {
-                        nearestRB = &rb;
-                        nearestDist = dist;
-                        nearestN = n;
-                }
+        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n) {
+                if (ignoreDynamic && rb.getMass()>0) return;
+                if (blacklist.find(&rb)!=blacklist.end()) return;
+                SweepResult r;
+                r.rb = &rb;
+                r.dist = dist;
+                r.n = n;
+                results.push_back(r);
         }
-        RigidBody *ignoreRB;
-        RigidBody *nearestRB;
-        Ogre::Real nearestDist;
-        Ogre::Vector3 nearestN;
+        std::set<RigidBody *> blacklist;
+        SweepResults results;
+        bool ignoreDynamic;
 };
 
 // }}}
@@ -269,113 +254,111 @@ TRY_START
 TRY_END
 }
 
-
-static int rbody_ray_nearest (lua_State *L)
+static void push_sweep_result (lua_State *L,
+                               const SweepResult &r, Ogre::Real len)
 {
-TRY_START
-        Ogre::Vector3 *ray_hit_point_ws = NULL;
-        Ogre::Vector3 *ground_normal_ws = NULL;
-        Ogre::Real radius = 0;
-        switch (lua_gettop(L)) {
-                case 7:
-                radius = luaL_checknumber(L,7);
-                case 6: {
-                        GET_UD_MACRO(Ogre::Vector3,ray_hit_point_ws_,5,VECTOR3_TAG);
-                        GET_UD_MACRO(Ogre::Vector3,ground_normal_ws_,6,VECTOR3_TAG);
-                        ray_hit_point_ws = &ray_hit_point_ws_;
-                        ground_normal_ws = &ground_normal_ws_;
-                } break;
-                case 5:
-                radius = luaL_checknumber(L,5);
-                case 4:
-                break;
-
-                default:
-                check_args(L,7);
-        }
-
-        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        GET_UD_MACRO(Ogre::Vector3,local_pos,2,VECTOR3_TAG);
-        GET_UD_MACRO(Ogre::Vector3,local_dir,3,VECTOR3_TAG);
-        Ogre::Real len = luaL_checknumber(L,4);
-
-        Ogre::Vector3 end = local_pos + len * local_dir;
-        Ogre::Vector3 start = local_pos;
-
-        start = self->getOrientation()*start + self->getPosition();
-        end = self->getOrientation()*end + self->getPosition();
-
-        NearestLuaSweepCallback lscb;
-        lscb.ignoreRB = &*self;
-        self->world->ray(start,end,lscb,radius);
-        if (lscb.nearestRB == NULL) {
-                lua_pushboolean(L,false);
-                lua_pushnumber(L,len);
-                return 2;
-        }
-        lua_pushboolean(L,true);
-        lua_pushnumber(L,lscb.nearestDist * len);
-        push_rbody(L,lscb.nearestRB->getPtr());
-        if (ray_hit_point_ws)
-                *ray_hit_point_ws = start + lscb.nearestDist*(end-start);
-        if (ground_normal_ws)
-                *ground_normal_ws = lscb.nearestRB->getOrientation()
-                                  * lscb.nearestN.normalisedCopy();
-        return 3;
-
-TRY_END
+        lua_pushnumber(L,r.dist * len);
+        push_rbody(L,r.rb->getPtr());
+        push(L,new Ogre::Vector3(r.rb->getOrientation()*r.n.normalisedCopy()),
+                                 VECTOR3_TAG);
 }
 
-
-static int rbody_ray_nearest_ws (lua_State *L)
+static int cast (lua_State *L)
 {
 TRY_START
-        Ogre::Vector3 *ray_hit_point_ws = NULL;
-        Ogre::Vector3 *ground_normal_ws = NULL;
+        check_args_min(L,7);
+
+        // use pointers because we want to assign them later
+        RigidBody *body = NULL;
+        PhysicsWorld *world;
+        if (has_tag(L,1,RBODY_TAG)) {
+                body = &***static_cast<RigidBodyPtr**>(lua_touserdata(L, 1));
+                world = &*(body->world);
+        } else {
+                GET_UD_MACRO(PhysicsWorldPtr,world_,1,PWORLD_TAG);
+                world = &*world_;
+        }
+        // one or other of col_mesh or radius will be used
+        CollisionMeshPtr *col_mesh = NULL;
         Ogre::Real radius = 0;
-        switch (lua_gettop(L)) {
-                case 7:
-                radius = luaL_checknumber(L,7);
-                case 6: {
-                        GET_UD_MACRO(Ogre::Vector3,ray_hit_point_ws_,5,VECTOR3_TAG);
-                        GET_UD_MACRO(Ogre::Vector3,ground_normal_ws_,6,VECTOR3_TAG);
-                        ray_hit_point_ws = &ray_hit_point_ws_;
-                        ground_normal_ws = &ground_normal_ws_;
-                } break;
-                case 5:
-                radius = luaL_checknumber(L,5);
-                case 4:
-                break;
-
-                default:
-                check_args(L,7);
+        if (lua_type(L,2) == LUA_TNUMBER) {
+                radius = lua_tonumber(L,2);
+        } else {
+                GET_UD_MACRO(CollisionMeshPtr,col_mesh_,2,COLMESH_TAG);
+                col_mesh = &col_mesh_;
         }
-        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        GET_UD_MACRO(Ogre::Vector3,world_pos,2,VECTOR3_TAG);
-        GET_UD_MACRO(Ogre::Vector3,world_dir,3,VECTOR3_TAG);
-        Ogre::Real len = luaL_checknumber(L,4);
 
-        Ogre::Vector3 end = world_pos + len * world_dir;
-        Ogre::Vector3 start = world_pos;
-
-        NearestLuaSweepCallback lscb;
-        lscb.ignoreRB = &*self;
-        self->world->ray(start,end,lscb,radius);
-        if (lscb.nearestRB == NULL) {
-                lua_pushboolean(L,false);
-                lua_pushnumber(L,len);
-                return 2;
+        Ogre::Vector3 start, end;
+        {
+                GET_UD_MACRO(Ogre::Vector3,start_,3,VECTOR3_TAG);
+                GET_UD_MACRO(Ogre::Vector3,end_,4,VECTOR3_TAG);
+                start = start_;
+                end = end_;
         }
-        lua_pushboolean(L,true);
-        lua_pushnumber(L,lscb.nearestDist * len);
-        push_rbody(L,lscb.nearestRB->getPtr());
-        if (ray_hit_point_ws)
-                *ray_hit_point_ws = start + lscb.nearestDist*(end-start);
-        if (ground_normal_ws)
-                *ground_normal_ws = lscb.nearestRB->getOrientation()
-                                  * lscb.nearestN.normalisedCopy();
-        return 3;
+        Ogre::Real len = luaL_checknumber(L,5);
 
+        if (len>0) {
+                // 'end' is actually a direction
+                end = start + len * end;
+        } else {
+                len = 1;
+        }
+
+        int base_line = 5;
+        Ogre::Quaternion startq(1,0,0,0);
+        Ogre::Quaternion endq(1,0,0,0);
+
+        if (col_mesh) {
+                check_args_min(L,9);
+                base_line += 2;
+                GET_UD_MACRO(Ogre::Quaternion,startq_,6,QUAT_TAG);
+                GET_UD_MACRO(Ogre::Quaternion,endq_,7,QUAT_TAG);
+                startq = startq_;
+                endq = endq_;
+        }
+
+        bool nearest_only = 0!=lua_toboolean(L,base_line+1);
+        bool ignore_dynamic = 0!=lua_toboolean(L,base_line+2);
+
+        base_line += 2;
+
+        if (body) {
+                start = body->getOrientation()*start + body->getPosition();
+                end = body->getOrientation()*end + body->getPosition();
+                startq = body->getOrientation() * startq;
+                endq = body->getOrientation() * endq;
+        }
+
+        int blacklist_number = lua_gettop(L) - base_line;
+
+        LuaSweepCallback lcb(ignore_dynamic);
+        for (int i=1 ; i<=blacklist_number ; ++i) {
+                GET_UD_MACRO(RigidBodyPtr,black,base_line+i,RBODY_TAG);
+                lcb.blacklist.insert(&*black);
+        }
+
+        if (col_mesh != NULL) {
+                world->sweep(*col_mesh,start,startq,end,endq,lcb);
+        } else {
+                world->ray(start,end,lcb,radius);
+        }
+        if (lcb.results.size()==0) return 0;
+        SweepResult nearest;
+        nearest.dist = FLT_MAX;
+        for (size_t i=0 ; i<lcb.results.size() ; ++i) {
+                SweepResult &r = lcb.results[i];
+                if (nearest_only) {
+                        if (r.dist<nearest.dist) nearest = r;
+                } else {
+                        push_sweep_result(L, r, len);
+                }
+        }
+        if (nearest_only) {
+                // push nearest
+                push_sweep_result(L, nearest, len);
+                return 3;
+        }
+        return lcb.results.size() * 3;
 TRY_END
 }
 
@@ -501,11 +484,8 @@ TRY_START
         } else if (key=="torqueImpulse") {
                 push_cfunction(L,rbody_torque_impulse);
 
-        } else if (key=="rayNearest") {
-                push_cfunction(L,rbody_ray_nearest);
-
-        } else if (key=="rayNearestWS") {
-                push_cfunction(L,rbody_ray_nearest_ws);
+        } else if (key=="cast") {
+                push_cfunction(L,cast);
 
         } else if (key=="activate") {
                 push_cfunction(L,rbody_activate);
@@ -746,102 +726,6 @@ TRY_START
 TRY_END
 }
 
-static int pworld_ray (lua_State *L)
-{
-TRY_START
-        LuaSweepCallback lscb(L);
-        if (lua_gettop(L)==4) {
-                GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-                GET_UD_MACRO(Ogre::Vector3,start,2,VECTOR3_TAG);
-                GET_UD_MACRO(Ogre::Quaternion,direction,3,QUAT_TAG);
-                Ogre::Real dist = luaL_checknumber(L,4);
-                Ogre::Vector3 end = direction * Ogre::Vector3(0,1,0);
-                end *= dist;
-                end += start;
-                self->ray(start,end,lscb);
-        } else {
-                check_args(L,3);
-                GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-                GET_UD_MACRO(Ogre::Vector3,start,2,VECTOR3_TAG);
-                GET_UD_MACRO(Ogre::Vector3,end,3,VECTOR3_TAG);
-                self->ray(start,end,lscb);
-        }
-        return lscb.returnValues;
-TRY_END
-}
-
-
-static int pworld_ray_nearest (lua_State *L)
-{
-TRY_START
-        NearestLuaSweepCallback lscb;
-        if (lua_gettop(L)==4) {
-                GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-                GET_UD_MACRO(Ogre::Vector3,start,2,VECTOR3_TAG);
-                GET_UD_MACRO(Ogre::Quaternion,direction,3,QUAT_TAG);
-                Ogre::Real dist = luaL_checknumber(L,4);
-                Ogre::Vector3 end = direction * Ogre::Vector3(0,1,0);
-                end *= dist;
-                end += start;
-                self->ray(start,end,lscb);
-        } else {
-                check_args(L,3);
-                GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-                GET_UD_MACRO(Ogre::Vector3,start,2,VECTOR3_TAG);
-                GET_UD_MACRO(Ogre::Vector3,end,3,VECTOR3_TAG);
-                self->ray(start,end,lscb);
-        }
-        if (lscb.nearestRB != NULL) {
-                push_rbody(L,lscb.nearestRB->getPtr());
-                lua_pushnumber(L,lscb.nearestDist);
-                push(L,new Ogre::Vector3(lscb.nearestN),VECTOR3_TAG);
-                return 3;
-        } else {
-                return 0;
-        }
-TRY_END
-}
-
-
-static int pworld_sweep (lua_State *L)
-{
-TRY_START
-        LuaSweepCallback lscb(L);
-        check_args(L,6);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        GET_UD_MACRO(CollisionMeshPtr,col_mesh,2,COLMESH_TAG);
-        GET_UD_MACRO(Ogre::Vector3,startp,3,VECTOR3_TAG);
-        GET_UD_MACRO(Ogre::Quaternion,startq,4,QUAT_TAG);
-        GET_UD_MACRO(Ogre::Vector3,endp,5,VECTOR3_TAG);
-        GET_UD_MACRO(Ogre::Quaternion,endq,6,QUAT_TAG);
-        self->sweep(col_mesh,startp,startq,endp,endq,lscb);
-        return lscb.returnValues;
-TRY_END
-}
-
-static int pworld_sweep_nearest (lua_State *L)
-{
-TRY_START
-        NearestLuaSweepCallback lscb;
-        check_args(L,6);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        GET_UD_MACRO(CollisionMeshPtr,col_mesh,2,COLMESH_TAG);
-        GET_UD_MACRO(Ogre::Vector3,startp,3,VECTOR3_TAG);
-        GET_UD_MACRO(Ogre::Quaternion,startq,4,QUAT_TAG);
-        GET_UD_MACRO(Ogre::Vector3,endp,5,VECTOR3_TAG);
-        GET_UD_MACRO(Ogre::Quaternion,endq,6,QUAT_TAG);
-        self->sweep(col_mesh,startp,startq,endp,endq,lscb);
-        if (lscb.nearestRB != NULL) {
-                push_rbody(L,lscb.nearestRB->getPtr());
-                lua_pushnumber(L,lscb.nearestDist);
-                push(L,new Ogre::Vector3(lscb.nearestN),VECTOR3_TAG);
-                return 3;
-        } else {
-                return 0;
-        }
-TRY_END
-}
-
 
 static int pworld_add_rigid_body (lua_State *L)
 {
@@ -874,14 +758,8 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
         std::string key = luaL_checkstring(L,2);
-        if (key=="ray") {
-                push_cfunction(L,pworld_ray);
-        } else if (key=="rayNearest") {
-                push_cfunction(L,pworld_ray_nearest);
-        } else if (key=="sweep") {
-                push_cfunction(L,pworld_sweep);
-        } else if (key=="sweepNearest") {
-                push_cfunction(L,pworld_sweep_nearest);
+        if (key=="cast") {
+                push_cfunction(L,cast);
         } else if (key=="pump") {
                 push_cfunction(L,pworld_pump);
         } else if (key=="addMesh") {

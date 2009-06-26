@@ -1487,6 +1487,7 @@ lua_State *init_lua(const char *filename)
         ADD_MT_MACRO(rbody,RBODY_TAG);
         ADD_MT_MACRO(colmesh,COLMESH_TAG);
         ADD_MT_MACRO(gom,GOM_TAG);
+        ADD_MT_MACRO(gritcls,GRITCLS_TAG);
         ADD_MT_MACRO(gritobj,GRITOBJ_TAG);
         ADD_MT_MACRO(timer,TIMER_TAG);
         ADD_MT_MACRO(vector3,VECTOR3_TAG);

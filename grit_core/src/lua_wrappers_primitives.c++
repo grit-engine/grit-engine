@@ -175,7 +175,7 @@ TRY_START
                                 lua_settable(L,-3);
                         }
                 } else {
-                        my_lua_error(L,"Not a readable Spline member: "+key);
+                        my_lua_error(L,"Not a readable StringDB member: "+key);
                 }
         }
         return 1;
@@ -200,7 +200,7 @@ TRY_START
                         GET_UD_MACRO(StringDB,v,3,STRINGDB_TAG);
                         self = v;
                 } else {
-                        my_lua_error(L,"Not a writeable Spline member: "+key);
+                        my_lua_error(L,"Not a writeable StringDB member: "+key);
                 }
         }
         return 0;

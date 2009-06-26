@@ -21,7 +21,7 @@ typedef std::set<GritObjectPtr> GObjSet;
 #include "PhysicsWorld.h"
 #include "GritObjectManager.h"
 #include "BackgroundMeshLoader.h"
-#include "lua_wrappers_primitives.h"
+#include "ExternalTable.h"
 
 #ifdef near
 #undef near
@@ -122,75 +122,6 @@ class GritObject {
                 return demand.mProcessed;
         }
 
-        bool hasLuaValue (const Ogre::String &key)
-        {
-                return luaValues.find(key)!=luaValues.end();
-        }
-
-        void setLuaValue (const Ogre::String &key, const Ogre::Real r)
-        {
-                luaValues[key].type = 0;
-                luaValues[key].real = r;
-        }
-
-        void setLuaValue (const Ogre::String &key,
-                          const Ogre::String &s)
-        {
-                luaValues[key].type = 1;
-                luaValues[key].str = s;
-        }
-
-        void setLuaValue (const Ogre::String &key,
-                          const Ogre::Vector3 &v3)
-        {
-                luaValues[key].type = 2;
-                luaValues[key].v3 = v3;
-        }
-
-        void setLuaValue (const Ogre::String &key,
-                          const Ogre::Quaternion &q)
-        {
-                luaValues[key].type = 3;
-                luaValues[key].q = q;
-        }
-
-        void setLuaValue (const Ogre::String &key, bool b)
-        {
-                luaValues[key].type = 4;
-                luaValues[key].b = b;
-        }
-
-        void pushLuaValue (lua_State *L, const Ogre::String &key)
-        {
-                if (!hasLuaValue(key)) {
-                        lua_pushnil(L);
-                } else {
-                        const LuaValue &v = luaValues[key];
-                        switch (v.type) {
-                                case 0:
-                                lua_pushnumber(L,v.real);
-                                break;
-                                case 1:
-                                lua_pushstring(L,v.str.c_str());
-                                break;
-                                case 2:
-                                push(L,new Ogre::Vector3(v.v3),VECTOR3_TAG);
-                                break;
-                                case 3:
-                                push(L,new Ogre::Quaternion(v.q),QUAT_TAG);
-                                break;
-                                case 4:
-                                lua_pushboolean(L,v.b);
-                                break;
-                        }
-                }
-        }
-
-        void clearLuaValue (const Ogre::String &key)
-        {
-                luaValues.erase(key);
-        }
-
         GritClass *getClass (void) { return gritClass; }
 
 
@@ -209,7 +140,7 @@ class GritObject {
 
         Ogre::Real getX() const { return x; }
         Ogre::Real getY() const { return y; }
-        Ogre::Real getZ() const { return y; }
+        Ogre::Real getZ() const { return z; }
         Ogre::Real getR() const { return r; }
                 
         const GritObjectPtr &getNear (void) const { return near; }
@@ -285,6 +216,8 @@ class GritObject {
 
         Ogre::Real getImposedFarFade (void) const { return imposedFarFade; }
 
+        ExternalTable userValues;
+
 
     protected:
 
@@ -296,24 +229,13 @@ class GritObject {
 
         int index;
 
-        struct LuaValue {
-                int type;
-                Ogre::String str;
-                Ogre::Real real;
-                Ogre::Vector3 v3;
-                Ogre::Quaternion q;
-                bool b;
-        };
-
         GritObjectPtr near, far;
                 
         StringPairs advanceResources;
 
-        typedef std::map<Ogre::String,LuaValue> LuaValueMap;
-        LuaValueMap luaValues;
-
         bool demandRegistered;
         Demand demand;
+
 
         Ogre::Real imposedFarFade;
         Ogre::Real lastFade;
