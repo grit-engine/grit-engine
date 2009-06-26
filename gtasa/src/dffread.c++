@@ -16,6 +16,7 @@
 #include <OgreLogManager.h>
 #include <OgreResourceGroupManager.h>
 #include <OgreMeshManager.h>
+#include <OgreLodStrategyManager.h>
 
 #include "ios_util.h"
 
@@ -1269,6 +1270,7 @@ Ogre::LogManager *lmgr;
 Ogre::ResourceGroupManager *rgmgr;
 Ogre::MeshManager *mmgr;
 Ogre::HardwareBufferManager *hwbmgr;
+Ogre::LodStrategyManager *lodsm;
 Ogre::MeshSerializer *serialiser;
 
 void init_ogre (void)
@@ -1280,6 +1282,8 @@ void init_ogre (void)
     rgmgr = new Ogre::ResourceGroupManager();
     mmgr = new Ogre::MeshManager();
     hwbmgr = new Ogre::DefaultHardwareBufferManager();
+
+    lodsm = new Ogre::LodStrategyManager();
 
     serialiser = new Ogre::MeshSerializer();
 }
