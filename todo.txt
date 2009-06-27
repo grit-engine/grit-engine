@@ -37,8 +37,6 @@ sea water (hydrax? needs cg too)
 
 other water
 
-chase cam ray needs to hit only world geometry
-
 foilage
 
 skid marks
