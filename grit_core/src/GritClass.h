@@ -30,6 +30,12 @@ class GritClass {
                 parentClass = luaL_ref(L,LUA_REGISTRYINDEX);
         }
 
+        void setParent (lua_State *L)
+        {
+                luaL_unref(L,LUA_REGISTRYINDEX,parentClass);
+                parentClass = luaL_ref(L,LUA_REGISTRYINDEX);
+        }
+
         void pushParent (lua_State *L)
         {
                 lua_rawgeti(L,LUA_REGISTRYINDEX,parentClass);
