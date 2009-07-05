@@ -14,7 +14,7 @@ LINKING=echo "Linking: [1;32m$@[0m"
 	@$(COMPILER) -c $< -o $@ $(CFLAGS)
 
 LEXER=TColLexer
-$(LEXER): ../src/$(LEXER).qx
+../src/$(LEXER): ../src/$(LEXER).qx
 	cd ../src && quex -i $< --engine $(LEXER) --token-queue 
 
 %.o: ../src/%.cpp
