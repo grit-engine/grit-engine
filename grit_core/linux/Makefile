@@ -16,7 +16,7 @@ all: $(TARGETS)
 
 depend:
 	makedepend -Y -f ../src/common.mk ../src/*.c++ ../src/linux/*.c++ ../src/win32/*.c++
-	sed -i 's_^[.][.]/src/\(\(linux\|win32\)/\)\?__g' ../src/common.mk
+	sed -i 's_^[.][.]/src/\(\(linux\|win32\)/\)\?\([^.]*[.]o:\)_\3_g' ../src/common.mk
 
 .PHONY: depend
 
