@@ -9,6 +9,7 @@ gameplay
 general physics:
     - constraints (particlarly cone twist and hinge constraints)
     - explosions (ghost object + ray casts?) (sphere + contact iteration?)
+    - callbacks on collisions
 
 vehicles:
     - constraints (particularly hinge constraint for car doors)
@@ -42,8 +43,6 @@ foilage
 skid marks
 
 sparks
-
-smoke from behind car
 
 
 
