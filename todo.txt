@@ -44,6 +44,9 @@ skid marks
 
 sparks
 
+shadows need hardware PCF
+
+shadows also need mip levels
 
 
 
