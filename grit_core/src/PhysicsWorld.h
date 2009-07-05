@@ -102,7 +102,7 @@ class PhysicsWorld {
 
         ~PhysicsWorld ();
 
-        void pump (lua_State *L, float time_step);
+        int pump (lua_State *L, float time_step);
 
         void setGravity (const Ogre::Vector3 &);
         Ogre::Vector3 getGravity (void) const;

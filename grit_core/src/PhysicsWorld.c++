@@ -239,12 +239,13 @@ PhysicsWorld::~PhysicsWorld ()
         delete colConf;
 }
 
-void PhysicsWorld::pump (lua_State *L,
+int PhysicsWorld::pump (lua_State *L,
                          float elapsed)
 {
         last_L = L;
         Ogre::Real step_size = world->getStepSize();
-        for (int counter = 0 ; counter<maxSteps ; counter++) {
+        int counter = 0;
+        for (; counter<maxSteps ; counter++) {
                 if (elapsed<step_size) break;
                 elapsed -= step_size;
                 world->step();
@@ -273,6 +274,7 @@ void PhysicsWorld::pump (lua_State *L,
         push_cfunction(L, my_lua_error_handler);
         world->end(elapsed);
         lua_pop(L,1); // error handler
+        return counter;
 }
 
 Ogre::Real PhysicsWorld::getDeactivationTime (void) const
@@ -431,7 +433,7 @@ void PhysicsWorld::ray (const Ogre::Vector3 &start,
                         SweepCallback &scb,
                         Ogre::Real radius) const
 {
-        if (radius==0) {
+        if (radius<0) {
                 BulletRayCallback brcb(scb);
                 world->rayTest(to_bullet(start),to_bullet(end),brcb);
         } else {

@@ -85,3 +85,20 @@ user interface
 --------------------------------------------------------------------------------
 
 write windows gdi thingy for stdout ("rich text")
+
+
+
+--------------------------------------------------------------------------------
+lua bindings
+--------------------------------------------------------------------------------
+
+make terminology consistent, e.g. between physics and graphics
+
+ensure error messages are consistent, e.g. "not a valid XXX member"
+
+fix the mess that is the vector/quaternion exploded vars support
+
+fix boolean args so that they are actually checked rather than just coerced
+
+consistently use resource pointers everywhere, not resource names
+

@@ -60,7 +60,7 @@ TRY_START
         if (key=="name") {
                 my_lua_error(L,"Not a writeable GritClass member: "+key);
         } else if (key=="parent") {
-                my_lua_error(L,"Not a writeable GritClass member: "+key);
+                self.setParent(L);
         } else {
                 self.set(L,key);
         }

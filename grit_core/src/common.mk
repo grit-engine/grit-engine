@@ -45,6 +45,7 @@ COMMON_OBJ=\
         lua_wrappers_render.o \
         lua_wrappers_scnmgr.o \
         lua_wrappers_tex.o \
+        LuaParticleSystem.o \
         main.o \
         matbin.o \
         PhysicsWorld.o \
@@ -125,6 +126,27 @@ GritObjectManager.o: ../src/SSEAllocator.h ../src/Grit.h
 GritObjectManager.o: ../src/lua_userdata_dependency_tracker.h
 HUD.o: ../src/HUD.h ../src/TextListOverlayElement.h
 HUD.o: ../src/CentralisedLog.h ../src/console_colour.h
+LuaParticleSystem.o: ../src/Grit.h
+LuaParticleSystem.o: ../src/lua_userdata_dependency_tracker.h
+LuaParticleSystem.o: ../src/CentralisedLog.h ../src/console_colour.h
+LuaParticleSystem.o: ../src/LuaParticleSystem.h ../src/lua_util.h
+PhysicsWorld.o: ../src/PhysicsWorld.h ../src/CentralisedLog.h
+PhysicsWorld.o: ../src/console_colour.h ../src/CollisionMesh.h
+PhysicsWorld.o: ../src/LooseEnd.h ../src/TColParser.h ../src/TColLexer
+PhysicsWorld.o: ../src/TColLexer-token_ids ../src/GritObject.h
+PhysicsWorld.o: ../src/GritObjectManager.h ../src/GritClass.h
+PhysicsWorld.o: ../src/ExternalTable.h ../src/lua_util.h
+PhysicsWorld.o: ../src/CacheFriendlyRangeSpaceSIMD.h
+PhysicsWorld.o: ../src/SSEAllocator.h ../src/BackgroundMeshLoader.h
+PhysicsWorld.o: ../src/Grit.h ../src/lua_userdata_dependency_tracker.h
+PhysicsWorld.o: ../src/lua_wrappers_physics.h
+PhysicsWorld.o: ../src/lua_wrappers_common.h
+TColParser.o: ../src/TColLexer ../src/TColLexer-token_ids
+TColParser.o: ../src/TColParser.h
+TextListOverlayElement.o: ../src/TextListOverlayElement.h
+TextListOverlayElement.o: ../src/CentralisedLog.h
+TextListOverlayElement.o: ../src/console_colour.h ../src/Grit.h
+TextListOverlayElement.o: ../src/lua_userdata_dependency_tracker.h
 lua_util.o: ../src/lua_util.h ../src/CentralisedLog.h
 lua_util.o: ../src/console_colour.h
 lua_wrappers_core.o: ../src/Grit.h
@@ -153,8 +175,8 @@ lua_wrappers_core.o: ../src/lua_wrappers_render.h
 lua_wrappers_core.o: ../src/lua_wrappers_gritobj.h
 lua_wrappers_core.o: ../src/lua_wrappers_hud.h
 lua_wrappers_gpuprog.o: ../src/lua_wrappers_gpuprog.h
-lua_wrappers_gpuprog.o: ../src/lua_wrappers_common.h
-lua_wrappers_gpuprog.o: ../src/lua_util.h ../src/CentralisedLog.h
+lua_wrappers_gpuprog.o: ../src/lua_wrappers_common.h ../src/lua_util.h
+lua_wrappers_gpuprog.o: ../src/CentralisedLog.h
 lua_wrappers_gpuprog.o: ../src/console_colour.h
 lua_wrappers_gritobj.o: ../src/GritObjectManager.h ../src/GritClass.h
 lua_wrappers_gritobj.o: ../src/ExternalTable.h ../src/lua_util.h
@@ -187,6 +209,7 @@ lua_wrappers_mesh.o: ../src/CentralisedLog.h ../src/console_colour.h
 lua_wrappers_mesh.o: ../src/lua_wrappers_material.h
 lua_wrappers_mobj.o: ../src/Grit.h
 lua_wrappers_mobj.o: ../src/lua_userdata_dependency_tracker.h
+lua_wrappers_mobj.o: ../src/LuaParticleSystem.h
 lua_wrappers_mobj.o: ../src/lua_wrappers_mobj.h
 lua_wrappers_mobj.o: ../src/lua_wrappers_common.h ../src/lua_util.h
 lua_wrappers_mobj.o: ../src/CentralisedLog.h ../src/console_colour.h
@@ -196,13 +219,12 @@ lua_wrappers_mobj.o: ../src/lua_wrappers_material.h
 lua_wrappers_mobj.o: ../src/lua_wrappers_mesh.h
 lua_wrappers_mobj.o: ../src/lua_userdata_dependency_tracker_funcs.h
 lua_wrappers_physics.o: ../src/PhysicsWorld.h ../src/CentralisedLog.h
-lua_wrappers_physics.o: ../src/console_colour.h
-lua_wrappers_physics.o: ../src/CollisionMesh.h ../src/LooseEnd.h
-lua_wrappers_physics.o: ../src/TColParser.h ../src/TColLexer
-lua_wrappers_physics.o: ../src/TColLexer-token_ids
-lua_wrappers_physics.o: ../src/GritObject.h
-lua_wrappers_physics.o: ../src/GritObjectManager.h ../src/GritClass.h
-lua_wrappers_physics.o: ../src/ExternalTable.h ../src/lua_util.h
+lua_wrappers_physics.o: ../src/console_colour.h ../src/CollisionMesh.h
+lua_wrappers_physics.o: ../src/LooseEnd.h ../src/TColParser.h
+lua_wrappers_physics.o: ../src/TColLexer ../src/TColLexer-token_ids
+lua_wrappers_physics.o: ../src/GritObject.h ../src/GritObjectManager.h
+lua_wrappers_physics.o: ../src/GritClass.h ../src/ExternalTable.h
+lua_wrappers_physics.o: ../src/lua_util.h
 lua_wrappers_physics.o: ../src/CacheFriendlyRangeSpaceSIMD.h
 lua_wrappers_physics.o: ../src/SSEAllocator.h
 lua_wrappers_physics.o: ../src/BackgroundMeshLoader.h
@@ -218,8 +240,7 @@ lua_wrappers_render.o: ../src/Grit.h
 lua_wrappers_render.o: ../src/lua_userdata_dependency_tracker.h
 lua_wrappers_render.o: ../src/lua_wrappers_render.h
 lua_wrappers_render.o: ../src/lua_wrappers_common.h ../src/lua_util.h
-lua_wrappers_render.o: ../src/CentralisedLog.h
-lua_wrappers_render.o: ../src/console_colour.h
+lua_wrappers_render.o: ../src/CentralisedLog.h ../src/console_colour.h
 lua_wrappers_render.o: ../src/lua_wrappers_tex.h
 lua_wrappers_render.o: ../src/lua_wrappers_mobj.h
 lua_wrappers_render.o: ../src/lua_userdata_dependency_tracker_funcs.h
@@ -227,8 +248,7 @@ lua_wrappers_scnmgr.o: ../src/Grit.h
 lua_wrappers_scnmgr.o: ../src/lua_userdata_dependency_tracker.h
 lua_wrappers_scnmgr.o: ../src/lua_wrappers_scnmgr.h
 lua_wrappers_scnmgr.o: ../src/lua_wrappers_common.h ../src/lua_util.h
-lua_wrappers_scnmgr.o: ../src/CentralisedLog.h
-lua_wrappers_scnmgr.o: ../src/console_colour.h
+lua_wrappers_scnmgr.o: ../src/CentralisedLog.h ../src/console_colour.h
 lua_wrappers_scnmgr.o: ../src/lua_wrappers_mobj.h
 lua_wrappers_scnmgr.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_scnmgr.o: ../src/lua_wrappers_material.h
@@ -242,28 +262,9 @@ main.o: ../src/linux/KeyboardX11.h ../src/Keyboard.h
 main.o: ../src/linux/MouseX11.h ../src/Mouse.h ../src/Grit.h
 main.o: ../src/lua_userdata_dependency_tracker.h
 main.o: ../src/BackgroundMeshLoader.h ../src/CentralisedLog.h
-main.o: ../src/console_colour.h
+main.o: ../src/console_colour.h ../src/LuaParticleSystem.h
 matbin.o: ../src/matbin.h ../src/ogre_datastream_util.h
-PhysicsWorld.o: ../src/PhysicsWorld.h ../src/CentralisedLog.h
-PhysicsWorld.o: ../src/console_colour.h ../src/CollisionMesh.h
-PhysicsWorld.o: ../src/LooseEnd.h ../src/TColParser.h
-PhysicsWorld.o: ../src/TColLexer ../src/TColLexer-token_ids
-PhysicsWorld.o: ../src/GritObject.h ../src/GritObjectManager.h
-PhysicsWorld.o: ../src/GritClass.h ../src/ExternalTable.h
-PhysicsWorld.o: ../src/lua_util.h
-PhysicsWorld.o: ../src/CacheFriendlyRangeSpaceSIMD.h
-PhysicsWorld.o: ../src/SSEAllocator.h ../src/BackgroundMeshLoader.h
-PhysicsWorld.o: ../src/Grit.h
-PhysicsWorld.o: ../src/lua_userdata_dependency_tracker.h
-PhysicsWorld.o: ../src/lua_wrappers_physics.h
-PhysicsWorld.o: ../src/lua_wrappers_common.h
 ray.o: ../src/ray.h
-TColParser.o: ../src/TColLexer ../src/TColLexer-token_ids
-TColParser.o: ../src/TColParser.h
-TextListOverlayElement.o: ../src/TextListOverlayElement.h
-TextListOverlayElement.o: ../src/CentralisedLog.h
-TextListOverlayElement.o: ../src/console_colour.h ../src/Grit.h
-TextListOverlayElement.o: ../src/lua_userdata_dependency_tracker.h
 KeyboardX11.o: ../src/linux/KeyboardX11.h ../src/Keyboard.h
 KeyboardX11.o: ../src/CentralisedLog.h ../src/console_colour.h
 MouseX11.o: ../src/linux/MouseX11.h ../src/Mouse.h

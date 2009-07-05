@@ -656,8 +656,9 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
         float time_step = luaL_checknumber(L,2);
-        self->pump(L,time_step);
-        return 0;
+        int iterations = self->pump(L,time_step);
+        lua_pushnumber(L,iterations);
+        return 1;
 TRY_END
 }
 

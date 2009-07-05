@@ -56,6 +56,8 @@ public:
 
         virtual GritObjectManager &getGOM() { return *gom; }
 
+        virtual lua_State *getLuaState (void) const { return L; }
+
 protected:
 
         Ogre::Root *ogre;

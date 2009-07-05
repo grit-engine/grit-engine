@@ -8,6 +8,7 @@ struct scnmgr_maps {
         std::map<Ogre::Entity*,std::vector<void**> > entities;
         std::map<Ogre::ManualObject*,std::vector<void**> > manobjs;
         std::map<Ogre::Light*,std::vector<void**> > lights;
+        std::map<Ogre::ParticleSystem*,std::vector<void**> > psyss;
         std::map<Ogre::StaticGeometry*,std::vector<void**> > statgeoms;
         std::map<Ogre::InstancedGeometry*,std::vector<void**> > instgeoms;
 };

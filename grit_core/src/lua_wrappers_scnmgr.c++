@@ -410,6 +410,35 @@ TRY_END
 }
 
 
+static int scnmgr_create_psys (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
+        const char *name = luaL_checkstring(L,2);
+        Ogre::ParticleSystem *psys = make_psys(&self, name);
+        push_psys(L,psys);
+        return 1;
+TRY_END
+}
+
+static int scnmgr_get_psys (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
+        const char *name = luaL_checkstring(L,2);
+        if (!self.hasParticleSystem(name)) {
+                lua_pushnil(L);
+                return 1;
+        }
+        Ogre::ParticleSystem *psys = self.getParticleSystem(name);
+        push_psys(L,psys);
+        return 1;
+TRY_END
+}
+
+
 static int scnmgr_create_cam (lua_State *L)
 {
 TRY_START
@@ -944,6 +973,11 @@ TRY_START
                 push_cfunction(L,scnmgr_create_light);
         } else if (key=="getLight") {
                 push_cfunction(L,scnmgr_get_light);
+
+        } else if (key=="createParticleSystem") {
+                push_cfunction(L,scnmgr_create_psys);
+        } else if (key=="getParticleSystem") {
+                push_cfunction(L,scnmgr_get_psys);
 
         } else if (key=="createCamera") {
                 push_cfunction(L,scnmgr_create_cam);

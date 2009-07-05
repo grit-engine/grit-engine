@@ -25,6 +25,7 @@
 #include "Grit.h"
 #include "BackgroundMeshLoader.h"
 #include "CentralisedLog.h"
+#include "LuaParticleSystem.h"
 
 CentralisedLog clog;
 
@@ -143,6 +144,11 @@ int main(int argc, const char **argv)
                 Keyboard *keyb = new KeyboardX11(winid);
                 #endif
 
+                Ogre::ParticleSystemManager::getSingleton()
+                        .addAffectorFactory(new LuaParticleAffectorFactory());
+
+                Ogre::ParticleSystemManager::getSingleton()
+                        .addRendererFactory(new LuaParticleRendererFactory());
 
                 new Grit(ogre,mouse,keyb,grit); // writes itself back to grit
 
