@@ -1,0 +1,236 @@
+#include <OgreParticleIterator.h>
+
+extern "C" {
+        #include "lua.h"
+        #include <lauxlib.h>
+        #include <lualib.h>
+}
+
+#include "Grit.h"
+#include "CentralisedLog.h"
+#include "LuaParticleSystem.h"
+#include "lua_util.h"
+
+
+LuaParticleData::LuaParticleData (void)
+      : Ogre::ParticleVisualData(),age(0),function(LUA_REFNIL),arg(LUA_REFNIL)
+{ }
+
+void LuaParticleData::setFunctionArg (lua_State *L)
+{
+        arg = luaL_ref(L,LUA_REGISTRYINDEX);
+        function = luaL_ref(L,LUA_REGISTRYINDEX);
+}
+
+void LuaParticleData::clearFunctionArg (lua_State *L)
+{
+        luaL_unref(L,LUA_REGISTRYINDEX,function);
+        luaL_unref(L,LUA_REGISTRYINDEX,arg);
+}
+
+void LuaParticleData::callCleanup (lua_State *L)
+{
+        // called to indicate a voluntary particle death
+        // or particle death due to error in lua callback
+        // or particle death due to reaching quota
+
+        if (function == LUA_REFNIL) return;
+
+        STACK_BASE;
+
+        push_cfunction(L, my_lua_error_handler);
+        int error_handler = lua_gettop(L);
+        // stack: err
+
+        lua_rawgeti(L,LUA_REGISTRYINDEX,function);
+        lua_rawgeti(L,LUA_REGISTRYINDEX,arg);
+        // stack: err,func,arg
+
+        int status = lua_pcall(L,1,0,error_handler);
+        if (status) {
+                // stack: err,msg
+                // pop the error message since the error handler will
+                // have already printed it out
+                lua_pop(L,1);
+                //stack: err
+        }
+        //stack: err
+
+        lua_pop(L,1);
+        //stack empty
+
+        STACK_CHECK;
+
+        clearFunctionArg(L);
+
+        // particle should be removed from system at this point
+}
+
+bool LuaParticleData::call (lua_State *L,
+                            Ogre::Real &x, Ogre::Real &y, Ogre::Real &z,
+                            Ogre::Real &rot,
+                            Ogre::Real &w, Ogre::Real &h,
+                            Ogre::Real &r, Ogre::Real &g, Ogre::Real &b,
+                            Ogre::Real &a,
+                            Ogre::Real &dx, Ogre::Real &dy, Ogre::Real &dz,
+                            Ogre::Real elapsed)
+{
+        age += elapsed;
+
+        if (function == LUA_REFNIL) return false;
+
+        lua_checkstack(L,20);
+
+        STACK_BASE;
+
+        push_cfunction(L, my_lua_error_handler);
+        int error_handler = lua_gettop(L);
+        // stack: err
+
+        int stack_base = lua_gettop(L);
+
+        lua_rawgeti(L,LUA_REGISTRYINDEX,function);
+        lua_rawgeti(L,LUA_REGISTRYINDEX,arg);
+
+        // stack: err,func,arg
+
+
+        lua_pushnumber(L,x);
+        lua_pushnumber(L,y);
+        lua_pushnumber(L,z);
+
+        lua_pushnumber(L,rot);
+
+        lua_pushnumber(L,w);
+        lua_pushnumber(L,h);
+
+        lua_pushnumber(L,r);
+        lua_pushnumber(L,g);
+        lua_pushnumber(L,b);
+        lua_pushnumber(L,a);
+
+        lua_pushnumber(L,dx);
+        lua_pushnumber(L,dy);
+        lua_pushnumber(L,dz);
+
+        lua_pushnumber(L,age);
+
+        lua_pushnumber(L,elapsed);
+
+        // stack: err,func,arg,16xfloat
+
+        bool destroy = false;
+
+        int status = lua_pcall(L,16,LUA_MULTRET,error_handler);
+        if (status) {
+                // stack: err,msg
+                // pop the error message since the error handler will
+                // have already printed it out
+                lua_pop(L,1);
+                //stack: err
+                destroy = true;
+        } else {
+                // stack: err,nresults*float
+                int nresults = lua_gettop(L) - stack_base;
+                if (nresults>13) {
+                        CERR << "Expected no more than 13 return values from "
+                             << "particle lua callback function" << std::endl;
+                        destroy = true;
+                } else if (nresults==1 && lua_type(L,-1)==LUA_TBOOLEAN &&
+                    !lua_toboolean(L,-1)) {
+                        destroy = true;
+                } else {
+                        switch (nresults) {
+                                case 13:
+                                dz = luaL_checknumber(L,stack_base+13);
+                                case 12:
+                                dy = luaL_checknumber(L,stack_base+12);
+                                case 11:
+                                dx = luaL_checknumber(L,stack_base+11);
+                                case 10:
+                                a = luaL_checknumber(L,stack_base+10);
+                                case 9:
+                                b = luaL_checknumber(L,stack_base+9);
+                                case 8:
+                                g = luaL_checknumber(L,stack_base+8);
+                                case 7:
+                                r = luaL_checknumber(L,stack_base+7);
+                                case 6:
+                                h = luaL_checknumber(L,stack_base+6);
+                                case 5:
+                                w = luaL_checknumber(L,stack_base+5);
+                                case 4:
+                                rot = luaL_checknumber(L,stack_base+4);
+                                case 3:
+                                z = luaL_checknumber(L,stack_base+3);
+                                case 2:
+                                y = luaL_checknumber(L,stack_base+2);
+                                case 1:
+                                x = luaL_checknumber(L,stack_base+1);
+                                case 0:;
+                        }
+                }
+                lua_pop(L,nresults);
+                //stack: err
+        }
+        //stack: err
+
+        lua_pop(L,1);
+        //stack empty
+
+        //even if there was an error, we keep the callback function registered
+        //so we can call it in cleanup mode
+
+        STACK_CHECK;
+
+        return destroy;
+}
+
+
+
+void LuaParticleAffector::_affectParticles (Ogre::ParticleSystem *ps,
+                                            Ogre::Real)
+{
+        Ogre::ParticleIterator pi = ps->_getIterator();
+        Ogre::Real elapsed = timer.getMicroseconds() / 1E6;
+        timer.reset();
+        while (!pi.end()) {
+                Ogre::Particle *p = pi.getNext();
+                LuaParticleData *pd =
+                        static_cast<LuaParticleData*>(p->getVisualData());
+                pd->affect(grit->getLuaState(), p, elapsed);
+        }        
+}
+
+void LuaParticleData::affect (lua_State *L,
+                              Ogre::Particle *p, Ogre::Real elapsed)
+{
+        Ogre::Real x = p->position.x;
+        Ogre::Real y = p->position.y;
+        Ogre::Real z = p->position.z;
+        Ogre::Real rot = p->rotation.valueDegrees();
+        Ogre::Real w = p->mWidth;
+        Ogre::Real h = p->mHeight;
+        Ogre::Real r = p->colour.r;
+        Ogre::Real g = p->colour.g;
+        Ogre::Real b = p->colour.b;
+        Ogre::Real a = p->colour.a;
+        Ogre::Real dx = p->direction.x;
+        Ogre::Real dy = p->direction.y;
+        Ogre::Real dz = p->direction.z;
+
+        bool destroy = call(L, x,y,z, rot, w,h, r,g,b,a, dx,dx,dz, elapsed);
+
+        if (destroy) {
+                callCleanup(L);
+                p->timeToLive = -1;
+        } else {
+                p->position = Ogre::Vector3(x,y,z);
+                p->direction = Ogre::Vector3(dx,dy,dz);
+                p->setRotation(Ogre::Degree(rot));
+                p->setDimensions(w,h);
+                p->colour = Ogre::ColourValue(r,g,b,a);
+        }
+
+}
+// vim: ts=8:sw=8:expandtab:textwidth=80

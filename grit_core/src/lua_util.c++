@@ -212,11 +212,11 @@ void lua_alloc_stats_get (size_t &counter, size_t &mallocs,
         frees = lua_alloc_stats_frees;
 }
 
-void lua_alloc_stats_reset ()
+void lua_alloc_stats_set (size_t mallocs, size_t reallocs, size_t frees)
 {
-        lua_alloc_stats_mallocs = 0;
-        lua_alloc_stats_reallocs = 0;
-        lua_alloc_stats_frees = 0;
+        lua_alloc_stats_mallocs = mallocs;
+        lua_alloc_stats_reallocs = reallocs;
+        lua_alloc_stats_frees = frees;
 }
 
 void *lua_alloc (void *ud, void *ptr, size_t osize, size_t nsize)

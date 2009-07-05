@@ -60,7 +60,7 @@ int my_lua_error_handler(lua_State *l);
 void lua_alloc_stats_get (size_t &counter, size_t &mallocs,
                           size_t &reallocs, size_t &frees);
         
-void lua_alloc_stats_reset ();
+void lua_alloc_stats_set (size_t mallocs, size_t reallocs, size_t frees);
 
 void *lua_alloc (void *ud, void *ptr, size_t osize, size_t nsize);
 

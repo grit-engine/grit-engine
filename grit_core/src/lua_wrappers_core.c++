@@ -1,3 +1,5 @@
+#include <limits.h>
+
 #include <OgreFont.h>
 #include <OgreFontManager.h>
 
@@ -795,11 +797,23 @@ TRY_START
 TRY_END
 }
 
+static int global_set_alloc_stats (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        size_t mallocs = (size_t)check_int(L,1,0,INT_MAX);
+        size_t reallocs = (size_t)check_int(L,2,0,INT_MAX);
+        size_t frees = (size_t)check_int(L,3,0,INT_MAX);
+        lua_alloc_stats_set(mallocs,reallocs,frees);
+        return 0;
+TRY_END
+}
+
 static int global_reset_alloc_stats (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        lua_alloc_stats_reset();
+        lua_alloc_stats_set(0,0,0);
         return 0;
 TRY_END
 }
@@ -1396,6 +1410,7 @@ static const luaL_reg global[] = {
         {"remove_gpuprog" ,global_remove_gpuprog},
 
         {"get_alloc_stats" ,global_get_alloc_stats},
+        {"set_alloc_stats" ,global_set_alloc_stats},
         {"reset_alloc_stats" ,global_reset_alloc_stats},
 
         {"get_in_queue_size" ,global_get_in_queue_size},
@@ -1501,6 +1516,7 @@ lua_State *init_lua(const char *filename)
         ADD_MT_MACRO(entity,ENTITY_TAG);
         ADD_MT_MACRO(manobj,MANOBJ_TAG);
         ADD_MT_MACRO(light,LIGHT_TAG);
+        ADD_MT_MACRO(psys,PSYS_TAG);
         ADD_MT_MACRO(viewport,VIEWPORT_TAG);
         ADD_MT_MACRO(statgeo,STATGEO_TAG);
         ADD_MT_MACRO(instgeo,INSTGEO_TAG);
