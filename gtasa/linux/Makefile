@@ -32,7 +32,7 @@ TColLexer-core-engine.o: ../../grit_core/linux/TColLexer-core-engine.o
 
 depend:
 	makedepend -Y -f ../src/common.mk -I ../../grit_core/src ../src/*.c++
-	sed -i 's_^[.][.]/src/__g' ../src/common.mk
+	sed -i 's_^[.][.]/src/\([^.]*.o:\)_\1_g' ../src/common.mk
 
 include ../src/common.mk
 
