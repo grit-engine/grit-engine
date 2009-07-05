@@ -14,6 +14,12 @@ grit: grit.x11 grit.x11.stripped
 
 all: $(TARGETS)
 
+depend:
+	makedepend -Y -f ../src/common.mk ../src/*.c++ ../src/linux/*.c++ ../src/win32/*.c++
+	sed -i 's_^[.][.]/src/\(\(linux\|win32\)/\)\?__g' ../src/common.mk
+
+.PHONY: depend
+
 include ../src/common.mk
 
 # vim: ts=8:sw=8:noexpandtab

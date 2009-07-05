@@ -30,6 +30,10 @@ TColParser.o: ../../grit_core/linux/TColParser.o
 TColLexer-core-engine.o: ../../grit_core/linux/TColLexer-core-engine.o
 	ln -sf "$^" "$@"
 
+depend:
+	makedepend -Y -f ../src/common.mk -I ../../grit_core/src ../src/*.c++
+	sed -i 's_^[.][.]/src/__g' ../src/common.mk
+
 include ../src/common.mk
 
 # vim: shiftwidth=8:tabstop=8:noexpandtab
