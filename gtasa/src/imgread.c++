@@ -21,8 +21,9 @@ static std::string& strlower (std::string& s)
 }
 
 
-Img::Img (std::istream &f)
+void Img::init (std::istream &f, std::string name_)
 {
+        name = name_;
         unsigned long version = ios_read_u32(f);
         ASSERT(version==0x32524556);
 
@@ -49,9 +50,9 @@ const std::string &Img::fileName (unsigned long i) const
         return names[i];
 }
 
-bool Img::fileExists (const std::string &name) const
+bool Img::fileExists (const std::string &fname) const
 {
-        return dir.find(name) != dir.end();
+        return dir.find(fname) != dir.end();
 }
 
 void Img::fileOffset (std::istream &f, unsigned long i) const
@@ -60,13 +61,17 @@ void Img::fileOffset (std::istream &f, unsigned long i) const
         ASSERT_IO_SUCCESSFUL(f,"seeking to: "+fileName(i));
 }
 
-void Img::fileOffset (std::istream &f, const std::string &name) const
+Img::Dir::const_iterator Img::find (const std::string &fname) const
 {
-        Dir::const_iterator iter = dir.find(name);
-
+        Dir::const_iterator iter = dir.find(fname);
         if (iter==dir.end())
-                IOS_EXCEPT("IMG file did not contain: \""+name+"\"");
-                
+                IOS_EXCEPT(name+" did not contain: \""+fname+"\"");
+        return iter;
+}
+
+void Img::fileOffset (std::istream &f, const std::string &fname) const
+{
+        Dir::const_iterator iter = find(fname);
         fileOffset(f, iter->second);
 }                               
 
@@ -75,13 +80,9 @@ unsigned long Img::fileOffset (unsigned long i) const
         return offsets[i];
 }
 
-unsigned long Img::fileOffset (const std::string &name) const
+unsigned long Img::fileOffset (const std::string &fname) const
 {
-        Dir::const_iterator iter = dir.find(name);
-
-        if (iter==dir.end())
-                IOS_EXCEPT("IMG file did not contain: \""+name+"\"");
-                
+        Dir::const_iterator iter = find(fname);
         return fileOffset(iter->second);
 }                               
 
@@ -90,12 +91,9 @@ unsigned long Img::fileSize (unsigned long i) const
         return sizes[i];
 }
 
-unsigned long Img::fileSize (const std::string &name) const
+unsigned long Img::fileSize (const std::string &fname) const
 {
-        Dir::const_iterator iter = dir.find(name);
-        if (iter==dir.end())
-                IOS_EXCEPT("IMG file did not contain: \""+name+"\"");
-                
+        Dir::const_iterator iter = find(fname);
         return fileSize(iter->second);
 }                               
 
@@ -147,7 +145,9 @@ int main(int argc, char *argv[])
                 in.open(argv[1], std::ios::binary);
                 ASSERT_IO_SUCCESSFUL(in,"opening IMG");
 
-                Img img(in);
+                Img img;
+
+                img.init(in, argv[1]);
 
                 if (!all_files) {
                         unsigned long off = img.fileOffset(extract);

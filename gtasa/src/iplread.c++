@@ -194,6 +194,7 @@ void IPL::addText (std::istream &f)
                 } else if (section=="cull" && strs.size()==11) {
                 } else if (section=="enex" && strs.size()==18) {
                 } else if (section=="path") {
+                } else if (section=="end" && str == "" ) {
                 } else {
                         std::cerr<<"In "<<section<<", couldn't understand ["
                                  <<strs.size()<<"] \""<<str<<"\"\n";

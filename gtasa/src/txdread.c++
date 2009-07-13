@@ -83,7 +83,9 @@ void Txd::readTx (std::istream &f,
         unsigned long filter_flags = ios_read_u32(f);
         ASSERT(filter_flags==0x1101 || filter_flags==0x1102 ||
                filter_flags==0x1106 || filter_flags==0x1206 ||
-               filter_flags==0x2106);
+               filter_flags==0x2106 ||
+               filter_flags==0 // gos_town
+        );
 
         std::string tex_name = ios_read_fixedstr(f,32);
         strlower(tex_name);
@@ -102,8 +104,10 @@ void Txd::readTx (std::istream &f,
         unsigned long d3d_tex_format = ios_read_u32(f);
         // 0 is unknown, 0x15 and 0x16 are raw with/without alpha
         // the other two are DXT1 and DXT3 (code is ascii DWORD)
+        // 1 is gostown unknown
         ASSERT(d3d_tex_format==0 || d3d_tex_format==0x15 || d3d_tex_format==0x16
-            || d3d_tex_format==0x31545844 || d3d_tex_format==0x33545844);
+            || d3d_tex_format==0x31545844 || d3d_tex_format==0x33545844
+            || d3d_tex_format==0x1);
 
         bool compressed= d3d_tex_format==0x31545844||d3d_tex_format==0x33545844;
 
@@ -122,7 +126,8 @@ void Txd::readTx (std::istream &f,
 
         unsigned char flags = ios_read_u8(f);
         // bit 1 = has alpha, bit 3 = compressed
-        ASSERT(flags==0x0 || flags==0x1 || flags==0x8 || flags==0x9); 
+        ASSERT(flags==0x0 || flags==0x1 || flags==0x8 || flags==0x9
+               || flags==0x3);  //gostown
 
         unsigned char palette_r[256];
         unsigned char palette_g[256];
@@ -145,12 +150,24 @@ void Txd::readTx (std::istream &f,
                 if (depth==16) {
                         ASSERT(flags==0x1);
                         d3d_tex_format = 0x31545844; //dxt1
+                        compressed = true;
                 } else if (depth==32) {
                         ASSERT(flags==0x0);
                         d3d_tex_format = 0x15;
                 } else {
                         IOS_EXCEPT("unrecognised file type");
                 }
+        }
+
+        if (d3d_tex_format==1) {
+                //gostown
+                ASSERT(vers==8);
+                ASSERT(flags==0x3);
+                ASSERT(depth==16);
+                ASSERT(filter_flags==0x1106);
+                ASSERT(alpha_flags==0x300);
+                d3d_tex_format = 0x33545844; //dxt3
+                compressed = true;
         }
 
         if (!output) {

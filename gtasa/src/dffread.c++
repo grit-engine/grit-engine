@@ -845,17 +845,26 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
         }
     }
 
-    c->lights.resize(num_lights);
-    for (unsigned long i=0 ; i<num_lights ; i++) {
+    // gos_town, racespot.dff has num_lights==0 but 10 light sections here so
+    // ignore this header value
+    //c->lights.resize(num_lights);
+    unsigned long totalsize; // used after the loop
+    int counter = 0;
+    while (true) {
+        light2 light;
         std::stringstream prefss;
-        prefss<<p<<"light["<<i<<"].";
+        prefss<<p<<"light["<<counter<<"].";
         std::string pref = prefss.str();
         ios_read_header(f,&type,&size,NULL,&file_version);
+        if (type==RW_EXT) {
+            totalsize = size;
+            break;
+        }
         ASSERT(type==RW_DATA);
         ASSERT(size==4);
         unsigned long num = ios_read_u32(f);
         (void)num;
-        //ASSERT(num==i+1);
+        //ASSERT(num==counter+1);
 
         ios_read_header(f,&type,&size,NULL,&file_version);
         ASSERT(type==RW_LIGHT);
@@ -864,28 +873,27 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
         ios_read_header(f,&type,&size,NULL,&file_version);
         ASSERT(type==RW_DATA);
         ASSERT(size==24);
-        c->lights[i].unk1 = ios_read_float(f);
-        VBOS(3,pref<<"unk1: "<<c->lights[i].unk1);
-        c->lights[i].unk3 = ios_read_float(f);
-        VBOS(3,pref<<"unk2: "<<c->lights[i].unk2);
-        c->lights[i].unk3 = ios_read_float(f);
-        VBOS(3,pref<<"unk3: "<<c->lights[i].unk3);
-        c->lights[i].unk4 = ios_read_float(f);
-        VBOS(3,pref<<"unk4: "<<c->lights[i].unk4);
-        c->lights[i].unk5 = ios_read_float(f);
-        VBOS(3,pref<<"unk5: "<<c->lights[i].unk5);
-        c->lights[i].unk6 = ios_read_float(f);
-        VBOS(3,pref<<"unk6: "<<c->lights[i].unk6);
+        light.unk1 = ios_read_float(f);
+        VBOS(3,pref<<"unk1: "<<light.unk1);
+        light.unk3 = ios_read_float(f);
+        VBOS(3,pref<<"unk2: "<<light.unk2);
+        light.unk3 = ios_read_float(f);
+        VBOS(3,pref<<"unk3: "<<light.unk3);
+        light.unk4 = ios_read_float(f);
+        VBOS(3,pref<<"unk4: "<<light.unk4);
+        light.unk5 = ios_read_float(f);
+        VBOS(3,pref<<"unk5: "<<light.unk5);
+        light.unk6 = ios_read_float(f);
+        VBOS(3,pref<<"unk6: "<<light.unk6);
 
         ios_read_header(f,&type,&size,NULL,&file_version);
         ASSERT(type==RW_EXT);
         ASSERT(size==0);
-        //
+
+        c->lights.push_back(light);
+        counter++;
     }
 
-    unsigned long totalsize;
-    ios_read_header(f,&type,&totalsize,NULL,&file_version);
-    ASSERT(type==RW_EXT);
     while (totalsize>0) {
         unsigned long size;
         ios_read_header(f,&type,&size,NULL,&file_version);
@@ -919,18 +927,6 @@ void ind (std::ostream &out, unsigned int level)
     for (unsigned int i=0 ; i<level ; i++)
         out << "  ";
 }
-
-/*
-
-const char *car_generic_texs[] = { //{{{
-"xvehicleenv128", "vehicletyres128", "vehiclesteering128", "vehiclespecdot64",
-"vehicleshatter128", "vehiclescratch64", "vehiclepoldecals128",
-"vehiclelightson128", "vehiclelights128", "vehiclegrunge256",
-"vehiclegeneric256", "vehicleenvmap128", "vehicledash32", "platecharset",
-"plateback3", "plateback2", "plateback1", "carplate", "carpback",
-}; //}}}
-
-*/
 
 
 #define ARRLEN(a) (sizeof a/sizeof *a)
@@ -1515,5 +1511,180 @@ void export_mesh (const StringSet &texs,
     delete [] vbuf;
 
 }}}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// DFFREAD CMDLINE TOOL STUFF //////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+#ifdef _DFFREAD_TEST
+
+#include "console_colour.h"
+
+void print_frame_tree (int d, struct dff *c, const std::string &p,
+                       int more, unsigned long node)
+{
+        const char *thing = more ? "├" : "└";
+        unsigned long num_children = c->frames[node].children.size();
+        const char *thing2 = num_children > 0 ? "┬" : "─";
+        VBOS(3,p<<thing<<"─"<<thing2<<"─\""<<c->frames[node].name<<"\"");
+        VBOS(3,"(frame:"<<node<<") ");
+        if (c->frames[node].geometry==0xFFFFFFFF) {
+                VBOS(3,"([0;31mDUMMY![0m) ");
+        } else {
+                VBOS(3,"([0;1;37mgeometry:"<<c->frames[node].geometry<<"[0m) ");
+        }
+        VBOS(3,"("<<c->frames[node].x<<","<<c->frames[node].y<<","<<c->frames[node].z<<")\n");
+
+        for (unsigned long i=0 ; i<num_children ; i++) {
+                unsigned long child = c->frames[node].children[i];
+                std::string pref = p+(more?"│":" ");
+                print_frame_tree(d,c,pref,i<num_children-1,child);
+        }
+}
+
+void list_orphans(int d,struct dff *c, const char *p)
+{
+        print_frame_tree(d,c,p,0,c->root_frame);
+        for (unsigned long i=0 ; i<c->geometries.size() ; i++) {
+                if (c->geometries[i].frame==0xFFFFFFFF) {
+                        VBOS(-1000,p<<"orphaned_geometry: "<<i<<"\n");
+                }
+        }
+}
+
+void app_verbose(char const* file, int line, const std::string& msg)
+{
+        std::cout<<BOLD GREEN"VERBOSE "RESET
+                 <<BOLD<<file<<NOBOLD":"BOLD<<line<<NOBOLD
+                 <<": \""BOLD BLUE<<msg<<RESET"\"";
+        std::cout<<std::endl;
+}
+
+void app_error(char const* file, int line,
+               const std::string& i_was, const std::string& msg)
+{
+        std::cout<<BOLD RED"ERROR "RESET
+                 <<BOLD<<file<<NOBOLD":"BOLD<<line<<NOBOLD
+                 <<": \""BOLD YELLOW<<msg<<RESET"\"";
+        if (i_was!="")
+                std::cout<<" ("BOLD YELLOW<<i_was<<RESET")";
+        std::cout<<std::endl;
+}
+
+void app_line(const std::string &msg)
+{
+        std::cout<<BOLD<<msg<<NOBOLD<<std::endl;
+}
+
+void app_fatal()
+{
+        abort();
+}
+
+#define VERSION "1.0"
+
+const char *info =
+"dffread (c) Dave Cunningham 2007  (version: "VERSION")\n"
+"I can convert renderware dffs into ogre XML, material, and matbin files.\n"
+"I can convert dff files with -d or entire img archives with -I.\n"
+"I need to look up each dff in an ide file to get texture information.\n"
+"I glob together identical materials to save space and increase batching.\n";
+
+const char *usage =
+"Usage: dffread { <opt> }\n\n"
+"where <opt> ::= \"-v\" | \"--verbose\"             increase debug level\n"
+"              | \"-q\" | \"--quiet\"               decrease debug level\n"
+"              | \"-t\" | \"--output-dir\"          files are created here\n"
+"              | \"-d\" <file> | \"--dff\" <file>   add to list of dffs\n\n"
+"              | \"-o\" | \"--orphans\"             list orphaned frames\n"
+"              | \"-O\" | \"--no-orphans\"          complement of above\n\n"
+"              | \"-h\" | \"--help\"                this message\n";
+
+std::string next_arg(int& so_far, int argc, char **argv)
+{
+        if (so_far==argc) {
+                std::cerr<<"Ran out of arguments."<<std::endl;
+                std::cerr<<usage<<std::endl;
+                exit(EXIT_FAILURE);
+        }
+        return argv[so_far++];
+}
+
+
+std::string get_ext(const std::string& name, std::string *base_name)
+{
+        std::string r;
+        std::string::size_type dot = name.find_last_of('.');
+        if (dot!=std::string::npos) {
+                r = name.substr(dot);
+                if (base_name) *base_name = name.substr(0,dot);
+        }
+        return r;
+}
+
+
+int main(int argc, char **argv)
+{
+        if (argc==1) {
+                std::cout<<info<<std::endl;
+                std::cout<<usage<<std::endl;
+        }
+
+        Strings dffs;
+
+        // default parameters
+        int d= 0;
+        bool orphans = false;
+
+        int so_far = 1;
+
+        while (so_far<argc) {
+                std::string arg = next_arg(so_far,argc,argv);
+                if (arg=="-v" || arg=="--verbose") {
+                        d++;
+                } else if (arg=="-q" || arg=="--quiet") {
+                        d--;
+                } else if (arg=="-o" || arg=="--orphans") {
+                        orphans = true;
+                } else if (arg=="-O" || arg=="--no-orphans") {
+                        orphans = false;
+                } else if (arg=="-d" || arg=="--dff") {
+                        std::string file_name = next_arg(so_far,argc,argv);
+                        if (get_ext(file_name,NULL)!=".dff") {
+                                std::cerr << file_name<<": does not end in .dff"
+                                          << std::endl;
+                                exit(EXIT_FAILURE);
+                        }
+                        dffs.push_back(file_name);
+                } else if (arg=="-h" || arg=="--help") {
+                        std::cout<<info<<std::endl;
+                        std::cout<<usage<<std::endl;
+                } else {
+                        std::cerr<<"Unrecognised argument: "<<arg<<std::endl;
+                        std::cerr<<usage<<std::endl;
+                        exit(EXIT_FAILURE);
+                } 
+        }
+
+        for (Strings::iterator i=dffs.begin() ; i!=dffs.end() ; i++) {
+                const char *name = i->c_str();
+                std::ifstream f;
+                f.open(name, std::ios::binary);
+                ASSERT_IO_SUCCESSFUL(f,"opening "+name);
+                VBOS(0,"reading dff: "<<name<<"\n");
+
+                struct dff dff;
+                ios_read_dff(d,f,&dff,(*i+"/").c_str());
+
+                if (orphans)
+                        list_orphans(d,&dff,(*i+"/").c_str());
+                
+        }
+
+        return EXIT_SUCCESS;
+}
+
+#endif
 
 // vim: shiftwidth=4:tabstop=4:expandtab

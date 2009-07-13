@@ -38,6 +38,10 @@ ideread: ../src/ideread.c++
 	@$(LINKING)
 	@$(COMPILER) -D_IDEREAD_TEST $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
 
+dffread: ../src/dffread.c++ tex_dups.o 
+	@$(LINKING)
+	@$(COMPILER) -D_DFFREAD_TEST $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+
 iplread: ../src/iplread.c++
 	@$(LINKING)
 	@$(COMPILER) -D_IPLREAD_TEST $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
