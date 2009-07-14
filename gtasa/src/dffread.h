@@ -233,7 +233,8 @@ void export_xml (const StringSet &texs,
                  const Obj &obj,
                  struct geometry &g,
                  MatDB &matdb,
-                 std::ostream &matbin);
+                 std::ostream &matbin,
+                 const std::string &mod_name);
 
 void init_ogre (void);
 
@@ -244,8 +245,8 @@ void export_mesh (const StringSet &texs,
                   const Obj &obj,
                   struct geometry &g,
                   MatDB &matdb,
-                  std::ostream &matbin);
-
+                  std::ostream &matbin,
+                  const std::string &mod_name);
 #endif
 
 // vim: shiftwidth=8:tabstop=8:expandtab

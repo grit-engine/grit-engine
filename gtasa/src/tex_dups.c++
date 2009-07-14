@@ -1,10 +1,17 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <string>
+
 #include "tex_dups.h"
 
-TexDupMap tex_dup_map;
+// stores whether a given texture can be substituted for another identical
+// texture to avoid duplicates
+typedef std::map<std::string, const char *> TexDupMap;
 
+static TexDupMap tex_dup_map;
+
+static bool initialised;
 
 const char *massive_array[]  =
 { // {{{
@@ -17868,6 +17875,15 @@ void init_tex_dup_map()
                 const char *b = massive_array[i+1];
                 tex_dup_map[a] = b;
         }
+        initialised = true;
+}
+
+std::string tex_dup (const std::string &in) 
+{
+        if (!initialised) return in;
+        TexDupMap::iterator i = tex_dup_map.find(in);
+        if (i==tex_dup_map.end()) return in;
+        return i->second;
 }
 
 

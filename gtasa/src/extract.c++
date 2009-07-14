@@ -303,6 +303,18 @@ void extract (const Config &cfg, std::ostream &out)
                 process_cols(out, cols, cols_i, img, dest_dir, cfg.modname);
         }
 
+        if (getenv("DUMP_TEX_LIST")) {
+                for (Txd::Names::iterator i=texs.begin(),i_=texs.end() ; i!=i_ ; ++i) {
+                        out << *i << std::endl;
+                }
+        }
+
+        if (getenv("DUMP_COL_LIST")) {
+                for (ColNames::iterator i=cols.begin(),i_=cols.end() ; i!=i_ ; ++i) {
+                        out << *i << std::endl;
+                }
+        }
+
         // ipls
         std::vector<IPL> ipls;
         for (size_t i=0 ; i<cfg.ipls.size() ; ++i) {
@@ -457,7 +469,7 @@ void extract (const Config &cfg, std::ostream &out)
                         std::string out_name = out_name_ss.str();
                         export_mesh(texs,img->name,
                                     out,out_name,
-                                    o,g,matdb,matbin);
+                                    o,g,matdb,matbin,cfg.modname);
 
                         MatSplits &ms = g.mat_spls;
                         for (MatSplits::iterator s=ms.begin(),
@@ -657,7 +669,6 @@ void extract_gostown (const std::string &gta_dir, const std::string &dest_dir)
         cfg.gta_dir = gta_dir;
         cfg.dest_dir = dest_dir;
 
-        init_tex_dup_map();
         init_ogre();
 
         cfg.imgs.push_back(std::pair<std::string,std::string>("/models/gta3.img","gta3.img"));
@@ -783,7 +794,5 @@ int main(int argc, char **argv)
         }
         return EXIT_SUCCESS;
 }
-
-
 
 // vim: shiftwidth=8:tabstop=8:expandtab

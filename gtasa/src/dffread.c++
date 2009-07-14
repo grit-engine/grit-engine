@@ -24,8 +24,6 @@
 #include "ideread.h"
 #include "tex_dups.h"
 
-#define MODNAME std::string("gtasa")
-
 #ifdef rad2
 #undef rad2
 #endif
@@ -933,7 +931,8 @@ void ind (std::ostream &out, unsigned int level)
 
 std::string get_tex_name (const std::string& img,
                           std::string txd,
-                          std::string tex_name)
+                          std::string tex_name,
+                          const std::string &mod_name)
 {{{
     strlower(tex_name);
     tex_name += ".dds";
@@ -944,27 +943,10 @@ std::string get_tex_name (const std::string& img,
         txd = img+"/"+txd;
     }
 
-    tex_name = MODNAME + "/" + txd + "/" + tex_name;
-
-    // if it's one of these textures, it is not found in a per-dff txd file
-    // it is instead found in vehicle.txd
-/*
-    for (unsigned long j=0 ; j<ARRLEN(car_generic_texs) ; j++) {
-        if (src==car_generic_texs[j]) {
-            // one of the generic textures,
-            // which we find in:
-            txd = "vehicle.txd";
-            break;
-        }
-    }
-*/
+    tex_name = mod_name + "/" + txd + "/" + tex_name;
 
     // if it's a duplicate of another texture, use the other texture instead
-    TexDupMap::iterator i = tex_dup_map.find(tex_name);
-
-    if (i!=tex_dup_map.end()) {
-        tex_name = i->second;
-    }
+    tex_name = tex_dup(tex_name);
 
     return tex_name;
 }}}
@@ -1022,7 +1004,8 @@ static const std::string &export_or_provide_mat (const StringSet &texs,
                                                  int mindex,
                                                  const Obj &obj,
                                                  MatDB &matdb,
-                                                 std::ostream &matbin)
+                                                 std::ostream &matbin,
+                                                 const std::string &mod_name)
 {{{
 
     material &m = g.materials[mindex];
@@ -1042,9 +1025,10 @@ static const std::string &export_or_provide_mat (const StringSet &texs,
     ASSERT(m.num_textures==1  || m.num_textures==0);
     for (unsigned int i=0 ; i<m.num_textures ; i++) {
         std::string tex_name;
-        tex_name=get_tex_name(img, obj.txd, m.textures[i].name);
+        tex_name=get_tex_name(img, obj.txd, m.textures[i].name, mod_name);
         if (tex_name=="") continue;
         if (!texs.empty() && texs.find(tex_name)==texs.end()) {
+                std::cerr << "Couldn't find tex: \""<<tex_name<<"\""<<std::endl;
                 tex_name = "";
         }
         textures.push_back(tex_name);
@@ -1057,7 +1041,7 @@ static const std::string &export_or_provide_mat (const StringSet &texs,
     m.rewrittenTextures = textures;
 
     std::ostringstream mname;
-    mname<<MODNAME<<"/"<<obj.id<<"/"<<mindex;
+    mname<<mod_name<<"/"<<obj.id<<"/"<<mindex;
 
     const std::string &mat = already_seen(matdb, R,G,B,A, textures, has_alpha,
                                           no_alpha_reject, double_sided,
@@ -1092,7 +1076,8 @@ void export_xml (const StringSet &texs,
                  const Obj &obj,
                  struct geometry &g,
                  MatDB &matdb,
-                 std::ostream &matbin)
+                 std::ostream &matbin,
+                 const std::string &mod_name)
 {{{
     out << "xml filename: " << fname << std::endl;
 
@@ -1184,7 +1169,7 @@ void export_xml (const StringSet &texs,
         }
 
         std::string mname =
-            export_or_provide_mat(texs,img,g,s->material,obj,matdb,matbin);
+            export_or_provide_mat(texs,img,g,s->material,obj,matdb,matbin,mod_name);
 
         s->surrogate = mname;
 
@@ -1291,7 +1276,8 @@ void export_mesh (const StringSet &texs,
                   const Obj &obj,
                   struct geometry &g,
                   MatDB &matdb,
-                  std::ostream &matbin)
+                  std::ostream &matbin,
+                  const std::string &mod_name)
 {{{
     (void) out;
     //out << "mesh filename: " << fname << std::endl;
@@ -1447,7 +1433,7 @@ void export_mesh (const StringSet &texs,
         unsigned short *ibuf_next = ibuf;
 
         std::string mname =
-            export_or_provide_mat(texs,img,g,s->material,obj,matdb,matbin);
+            export_or_provide_mat(texs,img,g,s->material,obj,matdb,matbin,mod_name);
 
         s->surrogate = mname;
 
@@ -1626,63 +1612,71 @@ std::string get_ext(const std::string& name, std::string *base_name)
 
 int main(int argc, char **argv)
 {
-        if (argc==1) {
-                std::cout<<info<<std::endl;
-                std::cout<<usage<<std::endl;
+    if (argc==1) {
+        std::cout<<info<<std::endl;
+        std::cout<<usage<<std::endl;
+    }
+
+    Strings dffs;
+
+    // default parameters
+    int d= 0;
+    bool orphans = false;
+
+    int so_far = 1;
+
+    while (so_far<argc) {
+        std::string arg = next_arg(so_far,argc,argv);
+        if (arg=="-v" || arg=="--verbose") {
+            d++;
+        } else if (arg=="-q" || arg=="--quiet") {
+            d--;
+        } else if (arg=="-o" || arg=="--orphans") {
+            orphans = true;
+        } else if (arg=="-O" || arg=="--no-orphans") {
+            orphans = false;
+        } else if (arg=="-d" || arg=="--dff") {
+            std::string file_name = next_arg(so_far,argc,argv);
+            if (get_ext(file_name,NULL)!=".dff") {
+                std::cerr << file_name<<": does not end in .dff"
+                          << std::endl;
+                exit(EXIT_FAILURE);
+            }
+            dffs.push_back(file_name);
+        } else if (arg=="-h" || arg=="--help") {
+            std::cout<<info<<std::endl;
+            std::cout<<usage<<std::endl;
+        } else {
+            std::cerr<<"Unrecognised argument: "<<arg<<std::endl;
+            std::cerr<<usage<<std::endl;
+            exit(EXIT_FAILURE);
+        } 
+    }
+
+    for (Strings::iterator i=dffs.begin() ; i!=dffs.end() ; i++) {
+        try {
+            const char *name = i->c_str();
+            std::ifstream f;
+            f.open(name, std::ios::binary);
+            ASSERT_IO_SUCCESSFUL(f,"opening "+name);
+            VBOS(0,"reading dff: "<<name<<"\n");
+
+            struct dff dff;
+            ios_read_dff(d,f,&dff,(*i+"/").c_str());
+
+            if (orphans)
+                list_orphans(d,&dff,(*i+"/").c_str());
+
+        } catch (Exception &e) {
+            std::cerr << "ERROR: "
+                      << e.getFullDescription() << std::endl;
+
+            return EXIT_FAILURE;
         }
 
-        Strings dffs;
+    }
 
-        // default parameters
-        int d= 0;
-        bool orphans = false;
-
-        int so_far = 1;
-
-        while (so_far<argc) {
-                std::string arg = next_arg(so_far,argc,argv);
-                if (arg=="-v" || arg=="--verbose") {
-                        d++;
-                } else if (arg=="-q" || arg=="--quiet") {
-                        d--;
-                } else if (arg=="-o" || arg=="--orphans") {
-                        orphans = true;
-                } else if (arg=="-O" || arg=="--no-orphans") {
-                        orphans = false;
-                } else if (arg=="-d" || arg=="--dff") {
-                        std::string file_name = next_arg(so_far,argc,argv);
-                        if (get_ext(file_name,NULL)!=".dff") {
-                                std::cerr << file_name<<": does not end in .dff"
-                                          << std::endl;
-                                exit(EXIT_FAILURE);
-                        }
-                        dffs.push_back(file_name);
-                } else if (arg=="-h" || arg=="--help") {
-                        std::cout<<info<<std::endl;
-                        std::cout<<usage<<std::endl;
-                } else {
-                        std::cerr<<"Unrecognised argument: "<<arg<<std::endl;
-                        std::cerr<<usage<<std::endl;
-                        exit(EXIT_FAILURE);
-                } 
-        }
-
-        for (Strings::iterator i=dffs.begin() ; i!=dffs.end() ; i++) {
-                const char *name = i->c_str();
-                std::ifstream f;
-                f.open(name, std::ios::binary);
-                ASSERT_IO_SUCCESSFUL(f,"opening "+name);
-                VBOS(0,"reading dff: "<<name<<"\n");
-
-                struct dff dff;
-                ios_read_dff(d,f,&dff,(*i+"/").c_str());
-
-                if (orphans)
-                        list_orphans(d,&dff,(*i+"/").c_str());
-                
-        }
-
-        return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 
 #endif
