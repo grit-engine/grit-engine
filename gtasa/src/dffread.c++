@@ -337,6 +337,47 @@ static void ios_read_material (int d,
 
 }}}
 
+
+typedef std::vector<unsigned long> Ixs;
+typedef std::vector<struct vect> Vxs;
+
+static Ixs decode_strip (const Ixs &strip, const Vxs &vertexes)
+{
+    Ixs r;
+    r.reserve((strip.size()-2)*3);
+    unsigned long v1, v2, v3;
+    int vertexes_so_far = 0;
+    int tri_counter = 0;
+    // in a triangle strip, the normal alternates.
+    // we reverse the order of the vertexes if tri_counter is odd
+    for (Ixs::const_iterator i=strip.begin(),i_=strip.end() ; i!=i_ ; i++) {
+        v1=v2;
+        v2=v3;
+        v3 = *i;
+        vertexes_so_far++;
+        if (vertexes_so_far>=3 && v1!=v2 && v2!=v3 && v3!=v1) {
+            if (vect_eq(vertexes[v1],vertexes[v2]) ||
+                vect_eq(vertexes[v2],vertexes[v3]) ||
+                vect_eq(vertexes[v3],vertexes[v1])) {
+                // degenerate due to independent but co-located vertexes
+            } else {
+                if (tri_counter%2 == 0) {
+                    r.push_back(v1);
+                    r.push_back(v2);
+                    r.push_back(v3);
+                } else {
+                    r.push_back(v1);
+                    r.push_back(v3);
+                    r.push_back(v2);
+                }
+            }
+        }
+        if (vertexes_so_far>=3) tri_counter++;
+    }
+
+    return r;
+}
+
 static void ios_read_geometry (int d,
                                std::ifstream &f,
                                unsigned long file_version,
@@ -522,6 +563,8 @@ static void ios_read_geometry (int d,
                     s.indexes2[j] = ios_read_u32(f);
                     VBOS(4,pref<<"index["<<j<<"]: "<<s.indexes2[j]);
                 }
+                if (g.flags & GEO_TRISTRIP)
+                    s.indexes2 = decode_strip(s.indexes2, g.vertexes);
             }
             break;
         case RW_NIGHT:
@@ -1140,30 +1183,9 @@ void export_xml (const StringSet &texs,
     for (MatSplits::iterator s=g.mat_spls.begin(),s_=g.mat_spls.end() ;
          s!=s_ ; s++) {
 
-        int tri_counter = 0;
-        int vertexes_so_far = 0;
-        unsigned long v1,v2=0,v3=0;
-        typedef std::vector<unsigned long> Ixs;
-        for (Ixs::iterator face=s->indexes2.begin(),face_=s->indexes2.end() ;
-             face!=face_ ; face++) {
-            v1=v2;
-            v2=v3;
-            v3 = *face;
-            ASSERT(v1 < g.vertexes.size());
-            ASSERT(v2 < g.vertexes.size());
-            ASSERT(v3 < g.vertexes.size());
-            vertexes_so_far++;
-            if (vertexes_so_far>=3 && v1!=v2 && v2!=v3 && v3!=v1) {
-                if (vect_eq(g.vertexes[v1],g.vertexes[v2]) ||
-                    vect_eq(g.vertexes[v2],g.vertexes[v3]) ||
-                    vect_eq(g.vertexes[v3],g.vertexes[v1])) {
-                } else {
-                    tri_counter++;
-                }
-            }
-        }
+        int tris = s->indexes2.size() / 3;
 
-        if (tri_counter==0) {
+        if (tris==0) {
             //out<<"Empty submesh: \""<<obj.id<<"/"<<s->material<<"\"\n";
             continue;
         }
@@ -1176,71 +1198,23 @@ void export_xml (const StringSet &texs,
         ind(f,2);f<<"<submesh material=\""<<mname<<"\" "
                   <<"usesharedvertices=\"true\" "
                   <<"operationtype=\"triangle_list\">\n";
-        ind(f,3);f<<"<faces count=\""<<tri_counter<<"\">\n";
+        ind(f,3);f<<"<faces count=\""<<tris<<"\">\n";
 
-        // in a triangle strip, the normal alternates.
-        // we reverse the order of the vertexes if tri_counter2 is odd
-        int tri_counter2 = 0;
-        vertexes_so_far = 0;
-        for (std::vector<unsigned long>::iterator face=s->indexes2.begin() ;
-             face!=s->indexes2.end() ; face++) {
-            v1=v2;
-            v2=v3;
-            v3 = *face;
-            vertexes_so_far++;
-            if (vertexes_so_far>=3 && v1!=v2 && v2!=v3 && v3!=v1) {
-                if (vect_eq(g.vertexes[v1],g.vertexes[v2]) ||
-                    vect_eq(g.vertexes[v2],g.vertexes[v3]) ||
-                    vect_eq(g.vertexes[v3],g.vertexes[v1])) {
-                } else {
-                    ind(f,4);
-                    if (tri_counter2%2 == 0) {
-                        f<<"<face v1=\""<<v1<<"\" "
-                                "v2=\""<<v2<<"\" "
-                                "v3=\""<<v3<<"\"/>\n";
-                    } else {
-                        f<<"<face v1=\""<<v1<<"\" "
-                                "v2=\""<<v3<<"\" "
-                                "v3=\""<<v2<<"\"/>\n";
-                    }
-                }
-            }
-            if (vertexes_so_far>=3) tri_counter2++;
+        for (int tri=0 ; tri<tris ; ++tri) {
+            unsigned long v1 = s->indexes2[3*tri + 0];
+            unsigned long v2 = s->indexes2[3*tri + 1];
+            unsigned long v3 = s->indexes2[3*tri + 2];
+            ASSERT(v1 < g.vertexes.size());
+            ASSERT(v2 < g.vertexes.size());
+            ASSERT(v3 < g.vertexes.size());
+            f<<"<face v1=\""<<v1<<"\" "
+                    "v2=\""<<v2<<"\" "
+                    "v3=\""<<v3<<"\"/>\n";
         }
         ind(f,3);f<<"</faces>\n";
 
-        //
         ind(f,2);f<<"</submesh>\n";
 
-#if 0
- //OgreXMLConvertor doesn't like triangle lists very much...
-        ind(f,2);fprintf(f,"<submesh material=\"%s\" "
-                   "usesharedvertices=\"true\" "
-                   "operationtype=\"triangle_strip\">\n",
-                    mat.str().c_str());
-
-        ind(f,3);fprintf(f,"<faces count=\"%d\">\n",
-                    s->indexes2.size()-2);
-        int num_so_far = 0;
-        unsigned long v1,v2=0,v3=0;
-        for (std::vector<unsigned long>::iterator face=s->indexes2.begin() ;
-             face!=s->indexes2.end() ; face++) {
-            v1=v2;
-            v2=v3;
-            v3 = *face;
-            num_so_far++;
-            if (num_so_far==3) {
-                ind(f,4);fprintf(f,"<face v1=\"%d\" v2=\"%d\" "
-                           "v3=\"%d\"/>\n", v1,v2,v3);
-            } else if (num_so_far>3) {
-                ind(f,4);fprintf(f,"<face v1=\"%d\"/>\n", v3);
-            }
-        }
-        ind(f,3);fprintf(f,"</faces>\n");
-
-        //
-        ind(f,2);fprintf(f,"</submesh>\n");
-#endif
     }
     ind(f,1);f<<"</submeshes>\n";
     ind(f,0);f<<"</mesh>\n";
@@ -1401,35 +1375,14 @@ void export_mesh (const StringSet &texs,
     MatSplits &ms = g.mat_spls;
     for (MatSplits::iterator s=ms.begin(),s_=ms.end() ; s!=s_ ; s++) {
 
-        int tri_counter = 0;
-        int vertexes_so_far = 0;
-        unsigned long v1,v2=0,v3=0;
-        typedef std::vector<unsigned long> Ixs;
-        for (Ixs::iterator face=s->indexes2.begin(),face_=s->indexes2.end() ;
-             face!=face_ ; face++) {
-            v1=v2;
-            v2=v3;
-            v3 = *face;
-            ASSERT(v1 < g.vertexes.size());
-            ASSERT(v2 < g.vertexes.size());
-            ASSERT(v3 < g.vertexes.size());
-            vertexes_so_far++;
-            if (vertexes_so_far>=3 && v1!=v2 && v2!=v3 && v3!=v1) {
-                if (vect_eq(g.vertexes[v1],g.vertexes[v2]) ||
-                    vect_eq(g.vertexes[v2],g.vertexes[v3]) ||
-                    vect_eq(g.vertexes[v3],g.vertexes[v1])) {
-                } else {
-                    tri_counter++;
-                }
-            }
-        }
+        int tris = s->indexes2.size() / 3;
 
-        if (tri_counter==0) {
+        if (tris==0) {
             //out<<"Empty submesh: \""<<obj.id<<"/"<<s->material<<"\"\n";
             continue;
         }
 
-        unsigned short *ibuf = new unsigned short[tri_counter*3];
+        unsigned short *ibuf = new unsigned short[tris*3];
         unsigned short *ibuf_next = ibuf;
 
         std::string mname =
@@ -1437,39 +1390,22 @@ void export_mesh (const StringSet &texs,
 
         s->surrogate = mname;
 
-        // in a triangle strip, the normal alternates.
-        // we reverse the order of the vertexes if tri_counter2 is odd
-        int tri_counter2 = 0;
-        vertexes_so_far = 0;
-        for (Ixs::iterator face=s->indexes2.begin(),face_=s->indexes2.end() ;
-             face!=face_ ; face++) {
-            v1=v2;
-            v2=v3;
-            v3 = *face;
-            vertexes_so_far++;
-            if (vertexes_so_far>=3 && v1!=v2 && v2!=v3 && v3!=v1) {
-                if (vect_eq(g.vertexes[v1],g.vertexes[v2]) ||
-                    vect_eq(g.vertexes[v2],g.vertexes[v3]) ||
-                    vect_eq(g.vertexes[v3],g.vertexes[v1])) {
-                } else {
-                    if (tri_counter2%2 == 0) {
-                        *(ibuf_next++) = v1;
-                        *(ibuf_next++) = v2;
-                        *(ibuf_next++) = v3;
-                    } else {
-                        *(ibuf_next++) = v1;
-                        *(ibuf_next++) = v3;
-                        *(ibuf_next++) = v2;
-                    }
-                }
-            }
-            if (vertexes_so_far>=3) tri_counter2++;
+        for (int tri=0 ; tri<tris ; ++tri) {
+            unsigned long v1 = s->indexes2[3*tri + 0];
+            unsigned long v2 = s->indexes2[3*tri + 1];
+            unsigned long v3 = s->indexes2[3*tri + 2];
+            ASSERT(v1 < g.vertexes.size());
+            ASSERT(v2 < g.vertexes.size());
+            ASSERT(v3 < g.vertexes.size());
+            *(ibuf_next++) = v1;
+            *(ibuf_next++) = v2;
+            *(ibuf_next++) = v3;
         }
 
         Ogre::HardwareIndexBufferSharedPtr hwibuf = hwbmgr
                 ->createIndexBuffer(
                         Ogre::HardwareIndexBuffer::IT_16BIT,
-                        tri_counter*3,
+                        tris*3,
                         Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
 
         hwibuf->writeData(0, hwibuf->getSizeInBytes(), ibuf, true);
@@ -1479,7 +1415,7 @@ void export_mesh (const StringSet &texs,
         submesh->setMaterialName(mname);
         submesh->useSharedVertices = true;
         submesh->indexData->indexBuffer = hwibuf;
-        submesh->indexData->indexCount = tri_counter * 3;
+        submesh->indexData->indexCount = tris * 3;
         submesh->indexData->indexStart = 0;
 
         delete [] ibuf;
