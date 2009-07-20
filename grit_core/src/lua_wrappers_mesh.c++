@@ -70,7 +70,7 @@ static int mesh_get_material (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::MeshPtr,self,1,MESH_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
+        unsigned int n = check_t<unsigned int>(L,2);
         Ogre::SubMesh *sm = self->getSubMesh(n);
         std::string name = sm->getMaterialName();
         Ogre::MaterialPtr m = 
@@ -89,7 +89,7 @@ static int mesh_set_material (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::MeshPtr,self,1,MESH_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
+        unsigned int n = check_t<unsigned int>(L,2);
         std::string name = luaL_checkstring(L,3);
         Ogre::SubMesh *sm = self->getSubMesh(n);
         sm->setMaterialName(name);

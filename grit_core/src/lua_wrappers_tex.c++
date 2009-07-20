@@ -117,8 +117,7 @@ TRY_START
         GET_UD_MACRO(Ogre::TexturePtr,self,1,TEX_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key=="numMipmaps") {
-                size_t n = (size_t)check_int(L,3,0,
-                        std::numeric_limits<std::size_t>::max());
+                size_t n = check_t<size_t>(L,3);
                 self->setNumMipmaps(n);
         } else {
                 my_lua_error(L,"Not a valid Texture member: "+key);

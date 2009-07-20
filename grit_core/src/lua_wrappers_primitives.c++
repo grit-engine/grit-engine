@@ -159,7 +159,7 @@ TRY_START
                 if (self.size()==0) {
                         my_lua_error(L,"Empty stringdb");
                 }
-                unsigned short index = check_int(L,2,1,self.size());
+                unsigned short index=check_t<unsigned short>(L,2,1,self.size());
                 lua_pushstring(L,self[index-1].c_str());
         } else {
                 std::string key  = luaL_checkstring(L,2);
@@ -192,7 +192,7 @@ TRY_START
                 if (self.size()==0) {
                         my_lua_error(L,"Empty stringdb");
                 }
-                unsigned short index = check_int(L,2,1,self.size());
+                unsigned short index=check_t<unsigned short>(L,2,1,self.size());
                 std::string v = luaL_checkstring(L,3);
                 self[index-1] = v;
         } else {
@@ -301,7 +301,8 @@ TRY_START
                 if (self.getNumPoints()==0) {
                         my_lua_error(L,"Empty spline");
                 }
-                unsigned short index = check_int(L,2,0,self.getNumPoints()-1);
+                unsigned short index =
+                        check_t<unsigned short>(L,2,0,self.getNumPoints()-1);
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self.updatePoint(index,v);
         } else {

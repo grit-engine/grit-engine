@@ -870,6 +870,99 @@ TRY_START
 TRY_END
 }
 
+static int scnmgr_set_shadow_texture_count_per_light_type (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
+        Ogre::Light::LightTypes type =
+                light_type_from_string(L,luaL_checkstring(L,2));
+        size_t v = check_t<size_t>(L,3);
+        self.setShadowTextureCountPerLightType(type, v);
+        return 0;
+TRY_END
+}
+
+static int scnmgr_set_shadow_camera_setup (lua_State *L)
+{
+TRY_START
+        if (lua_gettop(L)==2) {
+                lua_newtable(L);
+        }
+        check_args(L,3);
+        GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
+        Ogre::String type = luaL_checkstring(L,2);
+        if (!lua_istable(L,3))
+                my_lua_error(L,"Second parameter should be a table");
+
+        bool aggressive = table_fetch_bool(L, "aggressiveFocusRegion", true);
+        Ogre::Real threshold = table_fetch_real(L, "threshold", 35);
+        Ogre::Real opt = table_fetch_real(L, "optimalAdjustFactor", 0.1);
+        bool simple = table_fetch_bool(L, "simpleOptimalAdjust", true);
+
+        int splits = table_fetch_num<int>(L, "splits", 3);
+        Ogre::Real padding = table_fetch_real(L, "padding", 3);
+        
+        std::vector<Ogre::Real> adjustFactors;
+        for (int i=0 ; i<splits ; ++i) {
+                char field[100];
+                snprintf(field, sizeof field, "optimalAdjustFactor%d",i);
+                Ogre::Real f = table_fetch_real(L, field, opt);
+                adjustFactors.push_back(f);
+        }
+
+        Ogre::ShadowCameraSetup *p;
+        if (type=="DEFAULT") {
+                p = new Ogre::DefaultShadowCameraSetup();
+        } else if (type=="FOCUSED") {
+                Ogre::FocusedShadowCameraSetup *p2 =
+                        new Ogre::FocusedShadowCameraSetup();
+                p2->setUseAggressiveFocusRegion(aggressive);
+                p = p2;
+        } else if (type=="LISPSM") {
+                Ogre::LiSPSMShadowCameraSetup *p2 =
+                        new Ogre::LiSPSMShadowCameraSetup();
+                p2->setUseAggressiveFocusRegion(aggressive);
+
+                p2->setCameraLightDirectionThreshold(Ogre::Degree(threshold));
+                p2->setOptimalAdjustFactor(opt);
+                p2->setUseSimpleOptimalAdjust(simple);
+                p = p2;
+        } else if (type=="PSSM") {
+                Ogre::PSSMShadowCameraSetup::SplitPointList boundaries;
+                for (int i=0 ; i<=splits ; ++i) {
+                        char field[100];
+                        snprintf(field, sizeof field, "boundary%d",i);
+                        Ogre::Real f = table_fetch_real(L, field, -1);
+                        if (f<=0) {
+                                my_lua_error(L,"Expected a positive value: "+
+                                               std::string(field)+".");
+                        }
+                        boundaries.push_back(f);
+                }
+                Ogre::PSSMShadowCameraSetup *p2 =
+                        new Ogre::PSSMShadowCameraSetup();
+                p2->setUseAggressiveFocusRegion(aggressive);
+
+                p2->setCameraLightDirectionThreshold(Ogre::Degree(threshold));
+                p2->setUseSimpleOptimalAdjust(simple);
+
+                p2->setSplitPoints(boundaries);
+                p2->setSplitPadding(padding);
+                for (int i=0 ; i<splits ; ++i) {
+                        p2->setOptimalAdjustFactor(i, adjustFactors[i]);
+                }
+                p = p2;
+        } else {
+                my_lua_error(L,"Unrecognised shadow camera setup: "+type);
+        }
+
+        self.setShadowCameraSetup(Ogre::ShadowCameraSetupPtr(p));
+
+        return 0;
+TRY_END
+}
+
 
 static int scnmgr_destroy(lua_State *L)
 {
@@ -920,6 +1013,10 @@ TRY_START
         } else if (key=="shadowTechnique") {
                 lua_pushstring(L,
                         shadow_type_to_string(L,self.getShadowTechnique()));
+        } else if (key=="setShadowCameraSetup") {
+                push_cfunction(L, scnmgr_set_shadow_camera_setup);
+        } else if (key=="setShadowTextureCountPerLightType") {
+               push_cfunction(L,scnmgr_set_shadow_texture_count_per_light_type);
         } else if (key=="shadowDirectionalLightExtrusionDistance") {
                 lua_pushnumber(L,
                         self.getShadowDirectionalLightExtrusionDistance());
@@ -1140,20 +1237,6 @@ TRY_START
                         GET_UD_MACRO(Ogre::MaterialPtr,v,3,MAT_TAG);
                         self.setShadowTextureCasterMaterial(v->getName());
                 }
-        } else if (key=="shadowCameraSetup") {
-                Ogre::String v = luaL_checkstring(L,3);
-                Ogre::ShadowCameraSetup *p;
-                if (v=="DEFAULT") {
-                        p = new Ogre::DefaultShadowCameraSetup();
-                } else if (v=="FOCUSED") {
-                        p = new Ogre::FocusedShadowCameraSetup();
-                } else if (v=="LISPSM") {
-                        p = new Ogre::LiSPSMShadowCameraSetup();
-                } else {
-                        my_lua_error(L,"Unrecognised shadow camera setup: "
-                                        + v);
-                }
-                self.setShadowCameraSetup(Ogre::ShadowCameraSetupPtr(p));
         } else if (key=="shadowUseInfiniteFarPlane") {
                 bool v = 0!=lua_toboolean(L,3);
                 self.setShadowUseInfiniteFarPlane(v);

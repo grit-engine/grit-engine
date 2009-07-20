@@ -74,7 +74,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::MaterialPtr,mat,1,MAT_TAG);
         unsigned short n =
-                (unsigned short)check_int(L,2,0,mat->getNumTechniques()-1);
+                check_t<unsigned short>(L,2,0,mat->getNumTechniques()-1);
         mat->removeTechnique(n);
         return 0;
 TRY_END
@@ -85,7 +85,7 @@ static Ogre::Technique *mat_get_technique_unsafe (lua_State *L)
         GET_UD_MACRO(Ogre::MaterialPtr,mat,1,MAT_TAG);
         Ogre::Technique *t;
         if (lua_type(L,2)==LUA_TNUMBER) {
-                unsigned short index=(unsigned short)check_int(L,2,0,USHRT_MAX);
+                unsigned short index = check_t<unsigned short>(L,2);
                 if (index>=mat->getNumTechniques())
                         my_lua_error(L,"Technique out of range");
                 t = mat->getTechnique(index);
@@ -143,8 +143,7 @@ static int mat_remove_pass (lua_State *L)
 TRY_START
         check_args(L,3);
         Ogre::Technique *t = mat_get_technique(L);
-        unsigned short n =
-                (unsigned short)check_int(L,3,0,t->getNumPasses()-1);
+        unsigned short n = check_t<unsigned short>(L,3,0,t->getNumPasses()-1);
         t->removePass(n);
         return 0;
 TRY_END
@@ -156,7 +155,7 @@ TRY_START
         Ogre::Technique *t = mat_get_technique(L);
         Ogre::Pass *p;
         if (lua_type(L,3)==LUA_TNUMBER) {
-                unsigned short index=(unsigned short)check_int(L,3,0,USHRT_MAX);
+                unsigned short index = check_t<unsigned short>(L,3);
                 if (index>=t->getNumPasses())
                         my_lua_error(L,"Pass out of range");
                 p = t->getPass(index);
@@ -186,7 +185,7 @@ TRY_START
         check_args(L,4);
         Ogre::Pass *p = mat_get_pass(L);
         unsigned short n =
-              (unsigned short)check_int(L,4,0,p->getNumTextureUnitStates()-1);
+              check_t<unsigned short>(L,4,0,p->getNumTextureUnitStates()-1);
         p->removeTextureUnitState(n);
         return 0;
 TRY_END
@@ -568,7 +567,7 @@ TRY_START
         Ogre::Pass *p = mat_get_pass(L);
         Ogre::TextureUnitState *tex;
         if (lua_type(L,4)==LUA_TNUMBER) {
-                unsigned short index=(unsigned short)check_int(L,4,0,USHRT_MAX);
+                unsigned short index = check_t<unsigned short>(L,4);
                 if (index>=p->getNumTextureUnitStates())
                         my_lua_error(L,"Texture unit out of range");
                 tex = p->getTextureUnitState(index);
@@ -699,7 +698,7 @@ static int mat_set_texture_anisotropy (lua_State *L)
 TRY_START
         check_args(L,4+1);
         Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
-        tex->setTextureAnisotropy((unsigned int)check_int(L,5,0,UINT_MAX));
+        tex->setTextureAnisotropy(check_t<unsigned short>(L,5));
         return 0;
 TRY_END
 }
@@ -957,7 +956,7 @@ TRY_START
         Ogre::Pass *p = mat_get_pass(L);
         p->setAlphaRejectFunction
                 (compare_func_from_string(L,luaL_checkstring(L,4)));
-        p->setAlphaRejectValue((unsigned char)check_int(L,5,0,UCHAR_MAX));
+        p->setAlphaRejectValue(check_t<unsigned char>(L,5));
         return 0;
 TRY_END
 }

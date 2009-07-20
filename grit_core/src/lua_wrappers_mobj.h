@@ -20,6 +20,8 @@ Ogre::MovableObject *check_mobj(lua_State *L,int index);
 
 bool push_mobj (lua_State *L, Ogre::MovableObject *mobj);
 
+Ogre::Light::LightTypes light_type_from_string (lua_State *L,
+                                                const std::string &t);
 
 #define MANOBJ_TAG "Grit/ManualObject"
 MT_MACRO_DECLARE(manobj);

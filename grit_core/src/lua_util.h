@@ -47,11 +47,56 @@ lua_Number check_int (lua_State *l, int stack_index,
                       lua_Number min, lua_Number max);
 
 template <typename T>
-T check_t (lua_State *l, int stack_index)
+T check_t (lua_State *l, int stack_index,
+           T min=std::numeric_limits<T>::min(),
+           T max = std::numeric_limits<T>::max())
 {
-        return (T) check_int(l, stack_index,
-                             std::numeric_limits<T>::min(),
-                             std::numeric_limits<T>::max());
+        return (T) check_int(l, stack_index, min, max);
+}
+
+inline bool table_fetch_bool (lua_State *L, const char *f, bool def)
+{
+        bool r;
+        lua_getfield(L,-1,f);
+        if (lua_isnil(L,-1)) {
+                r = def;
+        } else if (lua_type(L,-1)==LUA_TBOOLEAN) {
+                r = lua_toboolean(L,-1);
+        } else {
+                my_lua_error(L, std::string(f)+" should be a boolean.");
+        }
+        lua_pop(L,1);
+        return r;
+}
+
+template<class T> T table_fetch_num (lua_State *L, const char *f, const T &def)
+{
+        T r;
+        lua_getfield(L,-1,f);
+        if (lua_isnil(L,-1)) {
+                r = def;
+        } else if (lua_type(L,-1)==LUA_TNUMBER) {
+                r = check_t<T>(L, -1);
+        } else {
+                my_lua_error(L, std::string(f)+" should be a number.");
+        }
+        lua_pop(L,1);
+        return r;
+}
+
+inline Ogre::Real table_fetch_real (lua_State *L, const char *f, Ogre::Real def)
+{
+        Ogre::Real r;
+        lua_getfield(L,-1,f);
+        if (lua_isnil(L,-1)) {
+                r = def;
+        } else if (lua_type(L,-1)==LUA_TNUMBER) {
+                r = lua_tonumber(L,-1);
+        } else {
+                my_lua_error(L, std::string(f)+" should be a number.");
+        }
+        lua_pop(L,1);
+        return r;
 }
 
 int my_lua_error_handler(lua_State *l, lua_State *coro, int levelhack);

@@ -43,6 +43,8 @@ TRY_START
                 lua_pushstring(L,self.name.c_str());
         } else if (key=="parent") {
                 self.pushParent(L);
+        } else if (key=="dump") {
+                self.dump(L);
         } else {
                 self.get(L,key);
         }
@@ -624,6 +626,8 @@ TRY_START
                         lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
                         c++;                 
                 }       
+        } else if (key=="numClasses") {
+                lua_pushnumber(L,self.numClasses());
         } else if (key=="addObject") {
                 push_cfunction(L,gom_add_object);
         } else if (key=="getObject") {
@@ -632,6 +636,10 @@ TRY_START
                 push_cfunction(L,gom_has_object);
         } else if (key=="removeObject") {
                 push_cfunction(L,gom_remove_object);
+        } else if (key=="numObjects") {
+                lua_pushnumber(L,self.numObjects());
+        } else if (key=="numActivated") {
+                lua_pushnumber(L,self.numActivated());
         } else if (key=="clearObjects") {
                 push_cfunction(L,gom_clear_objects);
         } else if (key=="clearClasses") {
@@ -669,8 +677,7 @@ TRY_START
                 GET_UD_MACRO_OFFSET(Ogre::SceneNode,node,3,NODE_TAG,0);
                 self.setGFX(L,node);
         } else if (key=="stepSize") {
-                size_t v = (size_t)check_int(L,3,0,
-                                            std::numeric_limits<size_t>::max());
+                size_t v = check_t<size_t>(L,3);
                 self.stepSize = v;
         } else if (key=="prepareDistanceFactor") {
                 Ogre::Real v = luaL_checknumber(L,3);

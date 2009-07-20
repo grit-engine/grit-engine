@@ -220,7 +220,7 @@ TRY_START
         check_args(L,7);
         Ogre::RenderTarget& self = *check_rt(L,1);
         GET_UD_MACRO(Ogre::Camera,cam,2,CAM_TAG);
-        int zorder = (int)check_int(L,3,INT_MIN,INT_MAX);
+        int zorder = check_t<int>(L,3);
         lua_Number left = luaL_checknumber(L,4);
         lua_Number top = luaL_checknumber(L,5);
         lua_Number width = luaL_checknumber(L,6);
@@ -312,7 +312,7 @@ static bool rt_newindex(lua_State *L, Ogre::RenderTarget *rt,
 {
 TRY_START
         if (key=="priority") {
-                unsigned char v = (unsigned char)check_int(L,3,0,UCHAR_MAX);
+                unsigned char v = check_t<unsigned char>(L,3);
                 rt->setPriority(v);
         } else if (key=="isActive") {
                 bool v = 0!=lua_toboolean(L,3);
@@ -415,8 +415,8 @@ TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::RenderWindow,self,1,RWIN_TAG);
         bool b = 0!=lua_toboolean(L,2);
-        unsigned int w = (unsigned int)check_int(L,3,0,UINT_MAX);
-        unsigned int h = (unsigned int)check_int(L,4,0,UINT_MAX);
+        unsigned w = check_t<unsigned>(L,3);
+        unsigned h = check_t<unsigned>(L,4);
         self.setFullscreen(b,w,h);
         return 0;
 TRY_END
@@ -427,8 +427,8 @@ static int rwin_resize (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::RenderWindow,self,1,RWIN_TAG);
-        unsigned int w = (unsigned int)check_int(L,2,0,UINT_MAX);
-        unsigned int h = (unsigned int)check_int(L,3,0,UINT_MAX);
+        unsigned w = check_t<unsigned>(L,3);
+        unsigned h = check_t<unsigned>(L,4);
         self.resize(w,h);
         return 0;
 TRY_END
@@ -456,8 +456,8 @@ static int rwin_reposition (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::RenderWindow,self,1,RWIN_TAG);
-        unsigned int x = (unsigned int)check_int(L,2,0,UINT_MAX);
-        unsigned int y = (unsigned int)check_int(L,3,0,UINT_MAX);
+        unsigned x = check_t<unsigned>(L,2);
+        unsigned y = check_t<unsigned>(L,3);
         self.reposition(x,y);
         return 0;
 TRY_END

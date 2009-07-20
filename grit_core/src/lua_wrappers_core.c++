@@ -159,8 +159,8 @@ static int global_set_mouse_pos (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        int x = (int)check_int(L,1,INT_MIN,INT_MAX);
-        int y = (int)check_int(L,2,INT_MIN,INT_MAX);
+        int x = check_t<int>(L,1);
+        int y = check_t<int>(L,2);
         grit->getMouse()->setPos(x,y);
         return 0;
 TRY_END
@@ -234,11 +234,11 @@ TRY_START
         check_args(L,7);
         const char *name = luaL_checkstring(L,1);
         const char *texType = luaL_checkstring(L,2);
-        unsigned int width = (unsigned int)check_int(L,3,1,UINT_MAX);
-        unsigned int height = (unsigned int)check_int(L,4,1,UINT_MAX);
-        unsigned int depth = (unsigned int)check_int(L,5,1,UINT_MAX);
-        unsigned int mipmaps = (unsigned int)check_int(L,6,0,UINT_MAX);
-        unsigned int usage = (unsigned int)check_int(L,7,0,UINT_MAX);
+        unsigned width = check_t<unsigned>(L,3,1);
+        unsigned height = check_t<unsigned>(L,4,1);
+        unsigned depth = check_t<unsigned>(L,5,1);
+        unsigned mipmaps = check_t<unsigned>(L,6);
+        unsigned usage = check_t<unsigned>(L,7);
 
         Ogre::TexturePtr t = Ogre::TextureManager::getSingleton().createManual(
                 name,
@@ -340,8 +340,7 @@ static int global_set_texture_budget (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        size_t n = (size_t) check_int(L,1,0,
-                                      std::numeric_limits<std::size_t>::max());
+        size_t n = check_t<size_t>(L,1);
         Ogre::TextureManager::getSingleton().setMemoryBudget(n);
         return 0;
 TRY_END
@@ -467,8 +466,7 @@ static int global_set_mesh_budget (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        size_t n = (size_t) check_int(L,1,0,
-                                      std::numeric_limits<std::size_t>::max());
+        size_t n = check_t<size_t>(L,1);
         Ogre::MeshManager::getSingleton().setMemoryBudget(n);
         return 0;
 TRY_END
@@ -593,8 +591,7 @@ static int global_set_material_budget (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        size_t n = (size_t) check_int(L,1,0,
-                                      std::numeric_limits<std::size_t>::max());
+        size_t n = check_t<size_t>(L,1);
         Ogre::MaterialManager::getSingleton().setMemoryBudget(n);
         return 0;
 TRY_END
@@ -718,8 +715,7 @@ static int global_set_gpuprog_budget (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        size_t n = (size_t) check_int(L,1,0,
-                                      std::numeric_limits<std::size_t>::max());
+        size_t n = check_t<size_t>(L,1);
         Ogre::GpuProgramManager::getSingleton().setMemoryBudget(n);
         return 0;
 TRY_END
@@ -801,9 +797,9 @@ static int global_set_alloc_stats (lua_State *L)
 {
 TRY_START
         check_args(L,3);
-        size_t mallocs = (size_t)check_int(L,1,0,INT_MAX);
-        size_t reallocs = (size_t)check_int(L,2,0,INT_MAX);
-        size_t frees = (size_t)check_int(L,3,0,INT_MAX);
+        size_t mallocs = check_t<size_t>(L,1);
+        size_t reallocs = check_t<size_t>(L,2); 
+        size_t frees = check_t<size_t>(L,3);
         lua_alloc_stats_set(mallocs,reallocs,frees);
         return 0;
 TRY_END
@@ -1049,12 +1045,10 @@ TRY_START
         check_args(L,9);
         const char *input = luaL_checkstring(L,1);
         lua_Number width = luaL_checknumber(L,2);
-        lua_Number lines_ = check_int(L,3,0,UINT_MAX);
-        unsigned int lines = (unsigned int)lines_;
+        unsigned lines = check_t<unsigned>(L,3);
         bool word_wrap = 0!=lua_toboolean(L,4);
         bool chop_top = 0!=lua_toboolean(L,5);
-        lua_Number tabs_ = check_int(L,6,0,UINT_MAX);
-        unsigned int tabs = (unsigned int)tabs_;
+        unsigned tabs = check_t<unsigned>(L,6);
         bool codes = 0!=lua_toboolean(L,7);
         std::string font_name = luaL_checkstring(L,8);
         lua_Number char_height = luaL_checknumber(L,9);
@@ -1089,7 +1083,7 @@ static int global_sleep (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        long n = (long)check_int(L, 1, LONG_MIN, LONG_MAX);
+        long n = check_t<long>(L, 1);
         mysleep(n);
         return 0;
 TRY_END
@@ -1141,7 +1135,7 @@ TRY_START
         const char *msg = luaL_checkstring(L,1);
         unsigned long level = 1;
         if (lua_gettop(L)==2) {
-                level = (unsigned long)check_int(L,2,0,ULONG_MAX);
+                level = check_t<unsigned long>(L,2);
         }
         my_lua_error(L,msg,level);
 
@@ -1194,8 +1188,8 @@ TRY_START
         check_args(L,5);
         const char *name = luaL_checkstring(L,1);
         const char *file = luaL_checkstring(L,2);
-        lua_Number tex_width = check_int(L,3,0,UINT_MAX);
-        lua_Number tex_height = check_int(L,4,0,UINT_MAX);
+        lua_Number tex_width = check_t<unsigned>(L,3);
+        lua_Number tex_height = check_t<unsigned>(L,4);
         luaL_checktype(L,5,LUA_TTABLE);
 
 
@@ -1209,18 +1203,18 @@ TRY_START
 
         // iterate through codepoints
         for (lua_pushnil(L) ; lua_next(L,5) ; lua_pop(L,1)) {
-                lua_Number codepoint = check_int(L,-2,0,4294967295.0);
+                lua_Number codepoint = check_t<unsigned>(L,-2);
                 lua_rawgeti(L, -1, 1);
-                lua_Number x = check_int(L,-1,0,UINT_MAX);
+                lua_Number x = check_t<unsigned>(L,-1);
                 lua_pop(L,1);
                 lua_rawgeti(L, -1, 2);
-                lua_Number y = check_int(L,-1,0,UINT_MAX);
+                lua_Number y = check_t<unsigned>(L,-1);
                 lua_pop(L,1);
                 lua_rawgeti(L, -1, 3);
-                lua_Number w = check_int(L,-1,0,UINT_MAX);
+                lua_Number w = check_t<unsigned>(L,-1);
                 lua_pop(L,1);
                 lua_rawgeti(L, -1, 4);
-                lua_Number h = check_int(L,-1,0,UINT_MAX);
+                lua_Number h = check_t<unsigned>(L,-1);
                 lua_pop(L,1);
 
                 double u1 = x/tex_width;

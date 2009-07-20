@@ -98,7 +98,7 @@ static bool mobj_newindex (lua_State *L, Ogre::MovableObject &self,
                 lua_Number n = luaL_checknumber(L,3);
                 self.setRenderingDistance(n);
         } else if (key=="renderQueueGroup") {
-                lua_Number n = check_int(L,3,0,255);
+                lua_Number n = check_t<unsigned char>(L,3);
                 self.setRenderQueueGroup(n);
         } else if (key=="castShadows") {
                 bool b = 0!=lua_toboolean(L,3);
@@ -560,7 +560,7 @@ static int manobj_get_polygon_mode_overrideable (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::ManualObject,self,1,MANOBJ_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
+        unsigned n = check_t<unsigned>(L,2);
         Ogre::ManualObject::ManualObjectSection *s = self.getSection(n);
         lua_pushboolean(L,s->getPolygonModeOverrideable());
         return 1;
@@ -572,7 +572,7 @@ static int manobj_set_polygon_mode_overrideable (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::ManualObject,self,1,MANOBJ_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
+        unsigned n = check_t<unsigned>(L,2);
         bool b = 0!=lua_toboolean(L,3);
         Ogre::ManualObject::ManualObjectSection *s = self.getSection(n);
         s->setPolygonModeOverrideable(b);
@@ -586,7 +586,7 @@ static int manobj_get_material (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::ManualObject,self,1,MANOBJ_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
+        unsigned n = check_t<unsigned>(L,2);
         Ogre::ManualObject::ManualObjectSection *s = self.getSection(n);
         push(L,new Ogre::MaterialPtr(s->getMaterial()),MAT_TAG);
         return 1;
@@ -598,7 +598,7 @@ static int manobj_set_material (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::ManualObject,self,1,MANOBJ_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
+        unsigned n = check_t<unsigned>(L,2);
         std::string name = luaL_checkstring(L,3);
         Ogre::ManualObject::ManualObjectSection *s = self.getSection(n);
         s->setMaterialName(name);
@@ -701,7 +701,7 @@ static int entity_get_polygon_mode_overrideable (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
+        unsigned n = check_t<unsigned>(L,2);
         Ogre::SubEntity *se = self.getSubEntity(n);
         lua_pushboolean(L,se->getPolygonModeOverrideable());
         return 1;
@@ -713,7 +713,7 @@ static int entity_set_polygon_mode_overrideable (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
+        unsigned n = check_t<unsigned>(L,2);
         bool b = 0!=lua_toboolean(L,3);
         Ogre::SubEntity *se = self.getSubEntity(n);
         se->setPolygonModeOverrideable(b);
@@ -727,7 +727,7 @@ static int entity_get_material (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
+        unsigned n = check_t<unsigned>(L,2);
         Ogre::SubEntity *se = self.getSubEntity(n);
         push(L,new Ogre::MaterialPtr(se->getMaterial()),MAT_TAG);
         return 1;
@@ -739,7 +739,7 @@ static int entity_get_material_name (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
+        unsigned n = check_t<unsigned>(L,2);
         Ogre::SubEntity *se = self.getSubEntity(n);
         lua_pushstring(L,se->getMaterialName().c_str());
         return 1;
@@ -751,7 +751,7 @@ static int entity_set_material (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
+        unsigned n = check_t<unsigned>(L,2);
         std::string name = luaL_checkstring(L,3);
         Ogre::SubEntity *se = self.getSubEntity(n);
         se->setMaterialName(name);
@@ -765,8 +765,8 @@ static int entity_set_custom_parameter (lua_State *L)
 TRY_START
         check_args(L,7);
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
-        unsigned int varindex = (unsigned int) check_int(L,3,0,UINT_MAX);
+        unsigned n = check_t<unsigned>(L,2);
+        unsigned varindex = check_t<unsigned>(L,3);
         Ogre::Real v1 = luaL_checknumber(L,4);
         Ogre::Real v2 = luaL_checknumber(L,5);
         Ogre::Real v3 = luaL_checknumber(L,6);
@@ -783,8 +783,8 @@ static int entity_set_custom_parameter_all (lua_State *L)
 TRY_START
         if (lua_gettop(L)==4) {
                 GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
-                unsigned int varindex = (unsigned int) check_int(L,2,0,UINT_MAX);
-                unsigned int elindex = (unsigned int) check_int(L,3,0,3);
+                unsigned varindex = check_t<unsigned>(L,2);
+                unsigned elindex = check_t<unsigned>(L,3,0,3);
                 Ogre::Real v = luaL_checknumber(L,4);
                 for (size_t i=0 ; i<self.getNumSubEntities() ; ++i) {
                         Ogre::SubEntity *se = self.getSubEntity(i);
@@ -800,7 +800,7 @@ TRY_START
         } else {
                 check_args(L,6);
                 GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
-                unsigned int varindex = (unsigned int) check_int(L,2,0,UINT_MAX);
+                unsigned varindex = check_t<unsigned>(L,2);
                 Ogre::Real v1 = luaL_checknumber(L,3);
                 Ogre::Real v2 = luaL_checknumber(L,4);
                 Ogre::Real v3 = luaL_checknumber(L,5);
@@ -820,8 +820,8 @@ static int entity_get_custom_parameter (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
-        unsigned int n = (unsigned int) check_int(L,2,0,UINT_MAX);
-        unsigned int varindex = (unsigned int) check_int(L,3,0,UINT_MAX);
+        unsigned n = check_t<unsigned>(L,2);
+        unsigned varindex = check_t<unsigned>(L,3);
         Ogre::SubEntity *se = self.getSubEntity(n);
         const Ogre::Vector4 &cp = se->getCustomParameter(varindex);
         lua_pushnumber(L,cp[0]);

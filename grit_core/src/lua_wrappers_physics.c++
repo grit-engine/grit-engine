@@ -840,7 +840,7 @@ TRY_START
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self->setGravity(v);
         } else if (key=="maxSteps") {
-                int v = (int)check_int(L,3,0,INT_MAX);
+                int v = check_t<int>(L,3);
                 self->setMaxSteps(v);
         } else if (key=="stepSize") {
                 Ogre::Real v = luaL_checknumber(L,3);
@@ -855,7 +855,7 @@ TRY_START
                 Ogre::Real v = luaL_checknumber(L,3);
                 self->setSolverDamping(v);
         } else if (key=="solverIterations") {
-                int v = (int)check_int(L,3,0,INT_MAX);
+                int v = check_t<int>(L,3);
                 self->setSolverIterations(v);
         } else if (key=="solverErp") {
                 Ogre::Real v = luaL_checknumber(L,3);
