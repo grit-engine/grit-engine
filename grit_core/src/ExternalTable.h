@@ -73,9 +73,9 @@ class ExternalTable {
                 fields.erase(key);
         }
 
-                
 
-    protected:
+        void dump (lua_State *L);
+                
 
         struct Value {
                 int type;
@@ -86,6 +86,8 @@ class ExternalTable {
                 bool b;
                 std::vector<Ogre::String> strs;
         };
+
+    protected:
 
         typedef std::map<Ogre::String,Value> ValueMap;
         ValueMap fields;

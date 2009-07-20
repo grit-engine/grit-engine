@@ -90,6 +90,8 @@ class GritObjectManager {
                 end = classes.end();
         }
 
+        virtual int numClasses (void) { return classes.size(); }
+
 
         // OBJECT STUFF
 
@@ -112,6 +114,8 @@ class GritObjectManager {
                 begin = gObjs.begin();
                 end = gObjs.end();
         }
+
+        virtual int numObjects (void) { return gObjs.size(); }
 
         virtual bool hasObject (const Ogre::String &name)
         { return gObjs.find(name)!=gObjs.end(); }
@@ -162,6 +166,8 @@ class GritObjectManager {
                 activated[index] = activated[activated.size()-1];
                 activated.pop_back();
         }
+
+        virtual int numActivated (void) { return activated.size(); }
 
         typedef CacheFriendlyRangeSpace<GritObjectPtr> Space;
 

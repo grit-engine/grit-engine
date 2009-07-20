@@ -59,6 +59,11 @@ class GritClass {
                 if (err) my_lua_error(L,err);
         }
 
+        void dump (lua_State *L)
+        {
+                table.dump(L);
+        }
+
         void acquire ()
         {
                 refCount++;

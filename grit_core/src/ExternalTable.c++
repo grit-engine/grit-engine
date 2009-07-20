@@ -12,37 +12,41 @@ const char *ExternalTable::luaGet (lua_State *L)
         return luaGet(L,key);
 }
 
+static void push (lua_State *L, const ExternalTable::Value &v)
+{
+        switch (v.type) {
+                case 0:
+                lua_pushnumber(L,v.real);
+                break;
+                case 1:
+                lua_pushstring(L,v.str.c_str());
+                break;
+                case 2:
+                push(L,new Ogre::Vector3(v.v3),VECTOR3_TAG);
+                break;
+                case 3:
+                push(L,new Ogre::Quaternion(v.q),QUAT_TAG);
+                break;
+                case 4:
+                lua_pushboolean(L,v.b);
+                break;
+                case 5:
+                lua_createtable(L, v.strs.size(), 0);
+                for (unsigned int i=0 ; i<v.strs.size() ; i++) {
+                        lua_pushnumber(L,i+LUA_ARRAY_BASE);
+                        lua_pushstring(L,v.strs[i].c_str());
+                        lua_settable(L,-3);
+                }
+                break;
+        }
+}
+
 const char *ExternalTable::luaGet (lua_State *L, const Ogre::String &key)
 {
         if (!has(key)) {
                 lua_pushnil(L);
         } else {
-                const Value &v = fields[key];
-                switch (v.type) {
-                        case 0:
-                        lua_pushnumber(L,v.real);
-                        break;
-                        case 1:
-                        lua_pushstring(L,v.str.c_str());
-                        break;
-                        case 2:
-                        push(L,new Ogre::Vector3(v.v3),VECTOR3_TAG);
-                        break;
-                        case 3:
-                        push(L,new Ogre::Quaternion(v.q),QUAT_TAG);
-                        break;
-                        case 4:
-                        lua_pushboolean(L,v.b);
-                        break;
-                        case 5:
-                        lua_createtable(L, v.strs.size(), 0);
-                        for (unsigned int i=0 ; i<v.strs.size() ; i++) {
-                                lua_pushnumber(L,i+LUA_ARRAY_BASE);
-                                lua_pushstring(L,v.strs[i].c_str());
-                                lua_settable(L,-3);
-                        }
-                        break;
-                }
+                push(L, fields[key]);
         }
         return NULL;
 }
@@ -88,6 +92,19 @@ const char *ExternalTable::luaSet (lua_State *L, const Ogre::String &key)
                 return "type not supported";
         }
         return NULL;
+}
+
+void ExternalTable::dump (lua_State *L)
+{
+        lua_newtable(L);
+        typedef ValueMap::const_iterator VMI;
+        for (VMI i=fields.begin(),i_=fields.end() ; i!=i_ ; ++i) {
+                const Ogre::String &name = i->first;
+                const Value &v = i->second;
+                lua_pushstring(L, name.c_str());
+                push(L, v);
+                lua_rawset(L,-3);
+        }
 }
 
 // vim: shiftwidth=8:tabstop=8:expandtab
