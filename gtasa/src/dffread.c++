@@ -1041,20 +1041,48 @@ const std::string &already_seen (MatDB &matdb,
     return existing;
 }}}
 
-static const std::string &export_or_provide_mat (const StringSet &texs,
-                                                 const std::string &img,
-                                                 geometry &g,
-                                                 int mindex,
-                                                 const Obj &obj,
-                                                 MatDB &matdb,
-                                                 std::ostream &matbin,
-                                                 const std::string &mod_name)
+static std::vector<std::string> search_txds(const std::string &txd,
+                                            const ide &ide)
+{
+    std::vector<std::string> r;
+    r.push_back(txd);
+    for (size_t j=0 ; j<ide.txdps.size() ; ++j) {
+        const TXDP &txdp = ide.txdps[j]; 
+        if (txdp.txd1 == txd) {
+            std::vector<std::string> sub = search_txds(txdp.txd2, ide);
+            r.insert(r.end(), sub.begin(), sub.end());
+        }   
+    }   
+    return r;
+}
+
+static std::string to_string(const std::vector<std::string> &strs)
+{
+    std::stringstream ss;
+    ss << "[";
+    for (size_t j=0 ; j<strs.size() ; ++j) {
+        ss << (j>0?", ":"") << strs[j];
+    }
+    ss << "]";
+    return ss.str();
+}
+
+static const std::string &
+export_or_provide_mat (const StringSet &texs,
+                       const ide &ide,
+                       const std::vector<std::string> &imgs,
+                       geometry &g,
+                       int mindex,
+                       const Obj &obj,
+                       MatDB &matdb,
+                       std::ostream &matbin,
+                       const std::string &mod_name)
 {{{
 
     material &m = g.materials[mindex];
 
     bool has_alpha = false; // old method(stupid): obj.flags & OBJ_FLAG_ALPHA1;
-    bool no_alpha_reject = 0 != (obj.flags & OBJ_FLAG_NO_SHADOW);
+    bool decal = (obj.flags & OBJ_FLAG_ALPHA1) && (obj.flags & OBJ_FLAG_NO_SHADOW);
     bool double_sided = 0 != (obj.flags & OBJ_FLAG_DRAW_BACKFACE);
     bool dynamic_lighting = g.normals.size()>0;
 
@@ -1067,12 +1095,26 @@ static const std::string &export_or_provide_mat (const StringSet &texs,
 
     ASSERT(m.num_textures==1  || m.num_textures==0);
     for (unsigned int i=0 ; i<m.num_textures ; i++) {
+        std::vector<std::string> txds = search_txds(obj.txd, ide);
+        bool found = false;
         std::string tex_name;
-        tex_name=get_tex_name(img, obj.txd, m.textures[i].name, mod_name);
-        if (tex_name=="") continue;
-        if (!texs.empty() && texs.find(tex_name)==texs.end()) {
-                std::cerr << "Couldn't find tex: \""<<tex_name<<"\""<<std::endl;
-                tex_name = "";
+        for (size_t j=0 ; j<txds.size() ; ++j) {
+            const std::string &txd = txds[j];
+            for (size_t k=0 ; k<imgs.size() ; ++k) {
+                const std::string &img = imgs[k];
+                tex_name = get_tex_name(img, txd, m.textures[i].name, mod_name);
+                if (texs.find(tex_name)!=texs.end()) {
+                    found = true;
+                    goto done;
+                }
+            }
+        }
+        done:
+        if (!found) {
+            std::cerr<<"For "<<obj.id<<" "<<imgs[0]<<"/"<<obj.dff<<".dff "
+                     <<"couldn't find tex: \""<<m.textures[i].name
+                     <<"\" in "<<to_string(txds)<<std::endl;
+            tex_name = "";
         }
         textures.push_back(tex_name);
         if (m.textures[i].has_alpha) has_alpha = true;
@@ -1087,7 +1129,7 @@ static const std::string &export_or_provide_mat (const StringSet &texs,
     mname<<mod_name<<"/"<<obj.id<<"/"<<mindex;
 
     const std::string &mat = already_seen(matdb, R,G,B,A, textures, has_alpha,
-                                          no_alpha_reject, double_sided,
+                                          decal, double_sided,
                                           dynamic_lighting, mname.str());
 
     if (mat!=mname.str())
@@ -1098,7 +1140,7 @@ static const std::string &export_or_provide_mat (const StringSet &texs,
     if (has_alpha) flags |= 0x1;
     if (double_sided) flags |= 0x2;
     if (dynamic_lighting) flags |= 0x4;
-    if (no_alpha_reject) flags |= 0x8;
+    if (decal) flags |= 0x8;
 
     ios_write_u32(matbin,0x4254414d);
     ios_write_u16(matbin,1); // version
@@ -1113,7 +1155,8 @@ static const std::string &export_or_provide_mat (const StringSet &texs,
 }}}
 
 void export_xml (const StringSet &texs,
-                 const std::string &img,
+                 const ide &ide,
+                 const std::vector<std::string> &imgs,
                  std::ostream &out,
                  const std::string &fname,
                  const Obj &obj,
@@ -1191,7 +1234,7 @@ void export_xml (const StringSet &texs,
         }
 
         std::string mname =
-            export_or_provide_mat(texs,img,g,s->material,obj,matdb,matbin,mod_name);
+            export_or_provide_mat(texs,ide,imgs,g,s->material,obj,matdb,matbin,mod_name);
 
         s->surrogate = mname;
 
@@ -1244,7 +1287,8 @@ void init_ogre (void)
 }
 
 void export_mesh (const StringSet &texs,
-                  const std::string &img,
+                  const ide &ide,
+                  const std::vector<std::string> &imgs,
                   std::ostream &out,
                   const std::string &fname,
                   const Obj &obj,
@@ -1386,7 +1430,7 @@ void export_mesh (const StringSet &texs,
         unsigned short *ibuf_next = ibuf;
 
         std::string mname =
-            export_or_provide_mat(texs,img,g,s->material,obj,matdb,matbin,mod_name);
+            export_or_provide_mat(texs,ide,imgs,g,s->material,obj,matdb,matbin,mod_name);
 
         s->surrogate = mname;
 

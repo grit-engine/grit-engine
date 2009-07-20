@@ -227,7 +227,8 @@ void ios_read_dff(int debug_threshold, std::ifstream &f,
                   struct dff *c, const std::string &p);
 
 void export_xml (const StringSet &texs,
-                 const std::string &img,
+                 const ide &ide,
+                 const std::vector<std::string> &img,
                  std::ostream &out,
                  const std::string &fname,
                  const Obj &obj,
@@ -239,7 +240,8 @@ void export_xml (const StringSet &texs,
 void init_ogre (void);
 
 void export_mesh (const StringSet &texs,
-                  const std::string &img,
+                  const ide &ide,
+                  const std::vector<std::string> &img,
                   std::ostream &out,
                   const std::string &fname,
                   const Obj &obj,

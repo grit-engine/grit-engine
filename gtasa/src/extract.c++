@@ -23,18 +23,18 @@
 #undef far
 #endif
 
-static void open_file (std::ostream &out, std::ifstream &f, const std::string fname)
+static void open_file (std::ostream &out, std::ifstream &f,
+                       const std::string fname)
 {
         (void)out;
-        out << "Opening: \""+fname+"\"" << std::endl;
+        //out << "Opening: \""+fname+"\"" << std::endl;
         f.open(fname.c_str(), std::ios::binary);
         ASSERT_IO_SUCCESSFUL(f,"opening "+fname);
 }
 
 struct ImgHandle {
-        ImgHandle () { }
-        ImgHandle (const ImgHandle &) { } // needed by vector, i think (not used)
-        void init (const std::string &fname, const std::string &name_, std::ostream &out)
+        void init (const std::string &fname, const std::string &name_,
+                   std::ostream &out)
         {
                 open_file(out, f, fname);
                 i.init(f, fname);
@@ -43,7 +43,7 @@ struct ImgHandle {
         void open_file_img (std::ostream &out, const std::string fname)
         {
                 (void)out;
-                out << "Opening (from img): \""+fname+"\"" << std::endl;
+                //out << "Opening (from img): \""+fname+"\"" << std::endl;
                 i.fileOffset(f,fname);
         }
 
@@ -152,7 +152,7 @@ static void addFullIPL (std::ostream &out,
 
         std::string name = gta_dir + "/data/maps/" + text;
         std::ifstream text_f;
-        out << "Opening text IPL: \"" << name << "\"" << std::endl;
+        //out << "Opening text IPL: \"" << name << "\"" << std::endl;
         text_f.open(name.c_str(),std::ios::binary);
         ASSERT_IO_SUCCESSFUL(text_f,"opening text IPL: "+name);
         
@@ -184,9 +184,10 @@ void process_txds (std::ostream &out,
                 if (fname.size()<4) continue;
                 std::string ext = fname.substr(fname.size()-4,4);
                 if (ext!=".txd") continue;
-                out<<"Extracting: "<<img.name<<"/"<<fname<<std::endl;
+                //out<<"Extracting: "<<img.name<<"/"<<fname<<std::endl;
                 img.i.fileOffset(img.f,i);
-                std::string txddir = dest_dir+"/"+modname+"/"+img.name+"/"+fname;
+                std::string txddir =
+                        dest_dir+"/"+modname+"/"+img.name+"/"+fname;
                 ensuredir(txddir);
                 Txd txd(img.f,txddir); // extract dds files
                 const Txd::Names &n = txd.getNames();
@@ -217,7 +218,7 @@ void process_cols (std::ostream &out,
                 if (fname.size()<4) continue;
                 std::string ext = fname.substr(fname.size()-4,4);
                 if (ext!=".col") continue;
-                out<<"Extracting: "<<img.name<<"/"<<fname<<std::endl;
+                //out<<"Extracting: "<<img.name<<"/"<<fname<<std::endl;
                 img.i.fileOffset(img.f,i);
 
                 std::istream::int_type next;
@@ -239,12 +240,12 @@ void process_cols (std::ostream &out,
 
                                 name = dest_dir+"/"+tcolname;
 
-                                std::ofstream out;
-                                out.open(name.c_str(), std::ios::binary);
-                                ASSERT_IO_SUCCESSFUL(out,"opening tcol "
+                                std::ofstream f;
+                                f.open(name.c_str(), std::ios::binary);
+                                ASSERT_IO_SUCCESSFUL(f,"opening tcol "
                                                          "for writing");
 
-                                pretty_print_tcol(out,tcol);
+                                pretty_print_tcol(f,tcol);
                         }
 
                         next = img.f.peek();
@@ -291,26 +292,29 @@ void extract (const Config &cfg, std::ostream &out)
 
         Txd::Names texs;
             
-        ColNames cols, cols_i; // cols_i includes the empty cols, for error checking
+        // cols_i = cols + the empty cols (for error checking)
+        ColNames cols, cols_i;
 
         // imgs
-        std::map<std::string,ImgHandle> imgs;
+        std::map<std::string,ImgHandle*> imgs;
         for (size_t i=0 ; i<cfg.imgs.size() ; ++i) {
                 std::string name = cfg.imgs[i].second;
-                ImgHandle &img = imgs[name];
-                img.init(gta_dir+cfg.imgs[i].first, name, out);
-                process_txds(out, texs, img, dest_dir, cfg.modname);
-                process_cols(out, cols, cols_i, img, dest_dir, cfg.modname);
+                ImgHandle *img = imgs[name] = new ImgHandle();
+                img->init(gta_dir+cfg.imgs[i].first, name, out);
+                process_txds(out, texs, *img, dest_dir, cfg.modname);
+                process_cols(out, cols, cols_i, *img, dest_dir, cfg.modname);
         }
 
         if (getenv("DUMP_TEX_LIST")) {
-                for (Txd::Names::iterator i=texs.begin(),i_=texs.end() ; i!=i_ ; ++i) {
+                for (Txd::Names::iterator i=texs.begin(),
+                                          i_=texs.end() ; i!=i_ ; ++i) {
                         out << *i << std::endl;
                 }
         }
 
         if (getenv("DUMP_COL_LIST")) {
-                for (ColNames::iterator i=cols.begin(),i_=cols.end() ; i!=i_ ; ++i) {
+                for (ColNames::iterator i=cols.begin(),
+                                        i_=cols.end() ; i!=i_ ; ++i) {
                         out << *i << std::endl;
                 }
         }
@@ -327,12 +331,13 @@ void extract (const Config &cfg, std::ostream &out)
                         ss << "ERROR: no such IMG \""<<img<<"\"";
                         IOS_EXCEPT(ss.str());
                 }
-                addFullIPL(out, gta_dir, ipls, base, imgs[img], bin, num);
+                addFullIPL(out, gta_dir, ipls, base, *imgs[img], bin, num);
         }
         
 
         std::ofstream map;
-        map.open((dest_dir+"/"+cfg.modname+"/map.lua").c_str(), std::ios::binary);
+        map.open((dest_dir+"/"+cfg.modname+"/map.lua").c_str(),
+                 std::ios::binary);
         ASSERT_IO_SUCCESSFUL(map, "opening map.lua");
         map.precision(25);
 
@@ -393,13 +398,13 @@ void extract (const Config &cfg, std::ostream &out)
 
         MatDB matdb;
 
-        std::ofstream grit_classes;
-        grit_classes.open((dest_dir+"/"+cfg.modname+"/grit_classes.lua").c_str(),
+        std::ofstream classes;
+        classes.open((dest_dir+"/"+cfg.modname+"/grit_classes.lua").c_str(),
                           std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(grit_classes, "opening grit_classes.lua");
+        ASSERT_IO_SUCCESSFUL(classes, "opening grit_classes.lua");
 
-        grit_classes << "print(\"Loading GTA San Andreas classes\")\n";
-        grit_classes << "local gom = get_gom()\n";
+        classes << "print(\"Loading GTA San Andreas classes\")\n";
+        classes << "local gom = get_gom()\n";
 
         std::ofstream matbin;
         matbin.open((dest_dir+"/"+cfg.modname+"/san_andreas.matbin").c_str(),
@@ -413,16 +418,16 @@ void extract (const Config &cfg, std::ostream &out)
 
                 if (!used_ids[o.id]) continue;
 
-                out << "id: " << o.id << "  "
-                    << "dff: " << o.dff << std::endl;
+                //out << "id: " << o.id << "  "
+                //    << "dff: " << o.dff << std::endl;
 
                 struct dff dff;
                 std::string dff_name = o.dff+".dff";
                 ImgHandle *img = NULL;
                 for (size_t i=0 ; i<cfg.imgs.size() ; ++i) {
-                        ImgHandle &img2 = imgs[cfg.imgs[i].second];
-                        if (img2.i.fileExists(dff_name)) {
-                                img = &img2;
+                        ImgHandle *img2 = imgs[cfg.imgs[i].second];
+                        if (img2->i.fileExists(dff_name)) {
+                                img = img2;
                                 break;
                         }
                 }
@@ -466,8 +471,15 @@ void extract (const Config &cfg, std::ostream &out)
 
                         std::stringstream out_name_ss;
                         out_name_ss<<dest_dir<<"/"<<cfg.modname<<"/"<<o.id<<".mesh";
+                        std::vector<std::string> export_imgs;
+                        export_imgs.push_back(img->name);
+                        for (size_t k=0 ; k<imgs.size() ; ++k) {
+                                ImgHandle *img2 = imgs[cfg.imgs[k].second];
+                                if (img2->name == img->name) continue;
+                                export_imgs.push_back(img2->name);
+                        }
                         std::string out_name = out_name_ss.str();
-                        export_mesh(texs,img->name,
+                        export_mesh(texs,everything,export_imgs,
                                     out,out_name,
                                     o,g,matdb,matbin,cfg.modname);
 
@@ -492,9 +504,9 @@ void extract (const Config &cfg, std::ostream &out)
 
                 // once only
                 if (cols_i.find(tcol_name)==cols_i.end()) {
-                        if (!(o.flags & OBJ_FLAG_NO_COL))
-                                out<<"Couldn't find col \""<<tcol_name<<"\" "
-                                   <<"referenced from "<<o.id<<std::endl;
+                        //if (!(o.flags & OBJ_FLAG_NO_COL))
+                        //        out<<"Couldn't find col \""<<tcol_name<<"\" "
+                        //           <<"referenced from "<<o.id<<std::endl;
                         use_col = false;
                 }
                 if (cols.find(tcol_name)==cols.end()) {
@@ -520,14 +532,14 @@ void extract (const Config &cfg, std::ostream &out)
 
                 bool cast_shadow = o.flags & OBJ_FLAG_POLE_SHADOW;
 
-                grit_classes<<"gom:addClass("
-                            <<"\""<<cfg.modname<<"/"<<o.id<<"\","
-                            <<cls<<",{"
-                                <<"castShadows="<<(cast_shadow?"true":"false")
-                                <<",renderingDistance="<<(o.draw_distance+rad)
-                                <<",textures={"<<background_texs_ss.str()<<"}"
-                                <<col_field.str()
-                            <<"})\n";
+                classes<<"gom:addClass("
+                       <<"\""<<cfg.modname<<"/"<<o.id<<"\","
+                       <<cls<<",{"
+                           <<"castShadows="<<(cast_shadow?"true":"false")
+                           <<",renderingDistance="<<(o.draw_distance+rad)
+                           <<",textures={"<<background_texs_ss.str()<<"}"
+                           <<col_field.str()
+                       <<"})\n";
                 
         }
 
@@ -546,8 +558,9 @@ void extract_gtasa (const std::string &gta_dir, const std::string &dest_dir)
         init_tex_dup_map();
         init_ogre();
 
-        cfg.imgs.push_back(std::pair<std::string,std::string>("/models/gta3.img","gta3.img"));
-        cfg.imgs.push_back(std::pair<std::string,std::string>("/models/gta_int.img","gta_int.img"));
+        typedef std::pair<std::string,std::string> P;
+        cfg.imgs.push_back(P("/models/gta3.img","gta3.img"));
+        cfg.imgs.push_back(P("/models/gta_int.img","gta_int.img"));
 
 
         // ides {{{
@@ -671,8 +684,9 @@ void extract_gostown (const std::string &gta_dir, const std::string &dest_dir)
 
         init_ogre();
 
-        cfg.imgs.push_back(std::pair<std::string,std::string>("/models/gta3.img","gta3.img"));
-        cfg.imgs.push_back(std::pair<std::string,std::string>("/models/gostown6.img","gostown6.img"));
+        typedef std::pair<std::string,std::string> P;
+        cfg.imgs.push_back(P("/models/gta3.img","gta3.img"));
+        cfg.imgs.push_back(P("/models/gostown6.img","gostown6.img"));
 
 
         // {{{ IDES
@@ -744,6 +758,7 @@ void extract_gostown (const std::string &gta_dir, const std::string &dest_dir)
                 "maps/Gostown6/lots/Fredskin.IDE",
                 "maps/Gostown6/lots/Raycen.IDE",
                 "maps/Gostown6/lots/Generics.IDE",
+                "maps/Gostown6/lots/Parent.IDE",
                 "maps/Gostown6/Gp_laguna.IDE",
                 //"vehicles.ide",
                 //"peds.ide",
@@ -774,18 +789,42 @@ void extract_gostown (const std::string &gta_dir, const std::string &dest_dir)
         extract(cfg,std::cout);
 }
 
+static int tolowr (int c)
+{
+    return std::tolower(char(c),std::cout.getloc());
+}
+        
+static std::string& strlower(std::string& s)
+{
+    std::transform(s.begin(),s.end(), s.begin(),tolowr);
+    return s;
+}
 
 int main(int argc, char **argv)
 {
 
-        if (argc!=2 && argc!=3) {
-                std::cerr<<"Usage: "<<argv[ 0]<<" <San Andreas Dir> "
-                         <<" [ <Grit Dir> ]"<<std::endl;
+        if (argc!=3 && argc!=4) {
+                std::cerr<<"Usage: "<<argv[ 0]<<" <mod> <source_dir> "
+                         <<" [ <grit_dir> ]"<<std::endl;
+                std::cerr<<"Where <mod> can be \"gtasa\" "
+                         <<"or \"gostown\""<<std::endl;
                 return EXIT_FAILURE;
         }
 
         try {
-                extract_gostown(argv[1], argc>2?argv[2]:".");
+                std::string mod = argv[1];
+                strlower(mod);
+                const char *src = argv[2];
+                const char *dest = argc>3?argv[3]:".";
+                if (mod=="gostown") {
+                        extract_gostown(src, dest);
+                } else if (mod=="gtasa") {
+                        extract_gtasa(src, dest);
+                } else {
+                        std::cerr<<"Unrecognised mod: \""
+                                 <<argv[1]<<"\""<<std::endl;
+                        return EXIT_FAILURE;
+                }
         } catch (Exception &e) {
                 std::cerr << "ERROR: "
                           << e.getFullDescription() << std::endl;

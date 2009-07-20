@@ -305,13 +305,32 @@ void app_fatal()
         abort();
 }
 
-std::string binu32(unsigned int flags)
+std::string fstr(unsigned int flags)
 {
         std::stringstream ss;
-        for (int i=0 ; i<32 ; i++) {
-                ss << (flags >> 31);
-                flags <<= 1;
-        }
+        if (flags & OBJ_FLAG_WET) ss << "WET ";
+        if (flags & OBJ_FLAG_NIGHT) ss << "NIGHT ";
+        if (flags & OBJ_FLAG_ALPHA1) ss << "ALPHA1 ";
+        if (flags & OBJ_FLAG_ALPHA2) ss << "ALPHA2 ";
+        if (flags & OBJ_FLAG_DAY) ss << "DAY ";
+        if (flags & OBJ_FLAG_INTERIOR) ss << "INTERIOR ";
+        if (flags & OBJ_FLAG_NO_SHADOW) ss << "NO_SHADOW ";
+        if (flags & OBJ_FLAG_NO_COL) ss << "NO_COL ";
+        if (flags & OBJ_FLAG_NO_DRAW_DIST) ss << "NO_DRAW_DIST ";
+        if (flags & OBJ_FLAG_BREAK_GLASS) ss << "BREAK_GLASS ";
+        if (flags & OBJ_FLAG_BREAK_GLASS_CRACK) ss << "BREAK_GLASS_CRACK ";
+        if (flags & OBJ_FLAG_GARAGE_DOOR) ss << "GARAGE_DOOR ";
+        if (flags & OBJ_FLAG_2CLUMP) ss << "2CLUMP ";
+        if (flags & OBJ_FLAG_SWAYS) ss << "SWAYS ";
+        if (flags & OBJ_FLAG_OTHER_VEG) ss << "OTHER_VEG ";
+        if (flags & OBJ_FLAG_POLE_SHADOW) ss << "POLE_SHADOW ";
+        if (flags & OBJ_FLAG_EXPLOSIVE) ss << "EXPLOSIVE ";
+        if (flags & OBJ_FLAG_UNK1) ss << "UNK1 ";
+        if (flags & OBJ_FLAG_UNK2) ss << "UNK2 ";
+        if (flags & OBJ_FLAG_UNK3) ss << "UNK3 ";
+        if (flags & OBJ_FLAG_GRAFITTI) ss << "GRAFITTI ";
+        if (flags & OBJ_FLAG_DRAW_BACKFACE) ss << "DRAW_BACKFACE ";
+        if (flags & OBJ_FLAG_UNK4) ss << "UNK4 ";
         return ss.str();
 }
 
@@ -347,25 +366,25 @@ int main(int argc, char *argv[])
                                              <<"\""<<ide.objs[i].dff<<"\" "
                                              <<"\""<<ide.objs[i].txd<<"\" "
                                              <<ide.objs[i].draw_distance<<" "
-                                             <<binu32(ide.objs[i].flags)<<"\n";
+                                             <<fstr(ide.objs[i].flags)<<"\n";
                 }
                 for (size_t i=0 ; i<ide.tobjs.size() ; i++) {
                         std::cout << "tobj: "<<ide.tobjs[i].id<<" "
                                              <<"\""<<ide.tobjs[i].dff<<"\" "
                                              <<"\""<<ide.tobjs[i].txd<<"\" "
                                              <<ide.tobjs[i].draw_distance<<" "
-                                             <<binu32(ide.tobjs[i].flags)<<"\n";
+                                             <<fstr(ide.tobjs[i].flags)<<"\n";
                 }
                 for (size_t i=0 ; i<ide.anims.size() ; i++) {
                         std::cout << "anims: "<<ide.anims[i].id<<" "
                                              <<"\""<<ide.anims[i].dff<<"\" "
                                              <<"\""<<ide.anims[i].txd<<"\" "
                                              <<ide.anims[i].draw_distance<<" "
-                                             <<binu32(ide.anims[i].flags)<<"\n";
+                                             <<fstr(ide.anims[i].flags)<<"\n";
                 }
 
                 for (size_t i=0 ; i<ide.txdps.size() ; i++) {
-                        std::cout << "txdp: "<<ide.txdps[i].txd1<<"/"
+                        std::cout << "txdp: "<<ide.txdps[i].txd1<<" → "
                                              <<ide.txdps[i].txd2<<std::endl;
                 }
 
