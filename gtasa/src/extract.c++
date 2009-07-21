@@ -530,7 +530,7 @@ void extract (const Config &cfg, std::ostream &out)
                 }
             
 
-                bool cast_shadow = o.flags & OBJ_FLAG_POLE_SHADOW;
+                bool cast_shadow = 0 != (o.flags&OBJ_FLAG_POLE_SHADOW);
 
                 classes<<"gom:addClass("
                        <<"\""<<cfg.modname<<"/"<<o.id<<"\","
