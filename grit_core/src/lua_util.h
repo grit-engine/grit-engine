@@ -61,7 +61,7 @@ inline bool table_fetch_bool (lua_State *L, const char *f, bool def)
         if (lua_isnil(L,-1)) {
                 r = def;
         } else if (lua_type(L,-1)==LUA_TBOOLEAN) {
-                r = lua_toboolean(L,-1);
+                r = 0!=lua_toboolean(L,-1);
         } else {
                 my_lua_error(L, std::string(f)+" should be a boolean.");
         }

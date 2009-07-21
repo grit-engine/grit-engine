@@ -905,9 +905,9 @@ TRY_START
         
         std::vector<Ogre::Real> adjustFactors;
         for (int i=0 ; i<splits ; ++i) {
-                char field[100];
-                snprintf(field, sizeof field, "optimalAdjustFactor%d",i);
-                Ogre::Real f = table_fetch_real(L, field, opt);
+                std::stringstream ss;
+                ss << "optimalAdjustFactor" << i;
+                Ogre::Real f = table_fetch_real(L, ss.str().c_str(), opt);
                 adjustFactors.push_back(f);
         }
 
@@ -931,12 +931,12 @@ TRY_START
         } else if (type=="PSSM") {
                 Ogre::PSSMShadowCameraSetup::SplitPointList boundaries;
                 for (int i=0 ; i<=splits ; ++i) {
-                        char field[100];
-                        snprintf(field, sizeof field, "boundary%d",i);
-                        Ogre::Real f = table_fetch_real(L, field, -1);
+                        std::stringstream ss;
+                        ss << "boundary" << i;
+                        Ogre::Real f = table_fetch_real(L, ss.str().c_str(), -1);
                         if (f<=0) {
                                 my_lua_error(L,"Expected a positive value: "+
-                                               std::string(field)+".");
+                                               ss.str()+".");
                         }
                         boundaries.push_back(f);
                 }

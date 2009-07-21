@@ -1,4 +1,4 @@
-#include <fenv.h>
+//#include <fenv.h>
 #include <errno.h>
 
 #include <Ogre.h>
@@ -48,7 +48,6 @@ void app_fatal()
 
 int main(int argc, const char **argv)
 {
-
 
         try {
 
