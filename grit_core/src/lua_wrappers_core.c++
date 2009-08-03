@@ -1264,7 +1264,8 @@ static int global_mlockall (lua_State *L)
 TRY_START
         check_args(L,0);
         #ifdef WIN32
-                my_lua_error(L,"mlockall not supported on Windows.");
+                // just fail silently
+                //my_lua_error(L,"mlockall not supported on Windows.");
         #else
                 mlockall(MCL_CURRENT | MCL_FUTURE);
         #endif
@@ -1278,7 +1279,8 @@ static int global_munlockall (lua_State *L)
 TRY_START
         check_args(L,0);
         #ifdef WIN32
-                my_lua_error(L,"mlockall not supported on Windows.");
+                // just fail silently
+                //my_lua_error(L,"mlockall not supported on Windows.");
         #else
                 munlockall();
         #endif
