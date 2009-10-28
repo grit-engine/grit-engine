@@ -519,6 +519,9 @@ TRY_START
         } else if (key=="getLocalVelocity") {
                 push_cfunction(L,rbody_local_vel);
 
+        } else if (key=="contactProcessingThreshold") {
+                lua_pushnumber(L,self->getContactProcessingThreshold());
+
         } else if (key=="linearDamping") {
                 lua_pushnumber(L,self->getLinearDamping());
         } else if (key=="angularDamping") {
@@ -569,6 +572,9 @@ TRY_START
         } else if (key=="worldOrientation") {
                 GET_UD_MACRO(Ogre::Quaternion,v,3,QUAT_TAG);
                 self->setOrientation(v);
+        } else if (key=="contactProcessingThreshold") {
+                Ogre::Real v = luaL_checknumber(L,3);
+                self->setContactProcessingThreshold(v);
         } else if (key=="linearDamping") {
                 Ogre::Real v = luaL_checknumber(L,3);
                 self->setLinearDamping(v);
@@ -799,6 +805,8 @@ TRY_START
                 lua_pushnumber(L,self->getContactBreakingThreshold());
         } else if (key=="deactivationTime") {
                 lua_pushnumber(L,self->getDeactivationTime());
+        } else if (key=="useContactAddedHack") {
+                lua_pushboolean(L,self->getUseContactAddedHack());
         } else if (key=="solverDamping") {
                 lua_pushnumber(L,self->getSolverDamping());
         } else if (key=="solverIterations") {
@@ -851,6 +859,9 @@ TRY_START
         } else if (key=="deactivationTime") {
                 Ogre::Real v = luaL_checknumber(L,3);
                 self->setDeactivationTime(v);
+        } else if (key=="useContactAddedHack") {
+                bool v = 0!=lua_toboolean(L,3);
+                self->setUseContactAddedHack(v);
         } else if (key=="solverDamping") {
                 Ogre::Real v = luaL_checknumber(L,3);
                 self->setSolverDamping(v);

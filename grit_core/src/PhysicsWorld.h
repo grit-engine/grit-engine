@@ -96,6 +96,7 @@ class DynamicsWorld : public btDiscreteDynamicsWorld {
 
 };
 
+
 class PhysicsWorld {
 
         friend class CollisionMesh;
@@ -210,6 +211,9 @@ class PhysicsWorld {
         btScalar getMaxSteps (void) const { return maxSteps; }
         void setMaxSteps (btScalar v) { maxSteps = v; }
 
+        bool getUseContactAddedHack (void) const;
+        void setUseContactAddedHack (bool v);
+
     protected:
 
         btDefaultCollisionConfiguration *colConf;
@@ -291,6 +295,9 @@ class RigidBody : public btMotionState {
                       const Ogre::Vector3 &rel_pos);
         void torque (const Ogre::Vector3 &torque);
         void torqueImpulse (const Ogre::Vector3 &torque);
+
+        Ogre::Real getContactProcessingThreshold (void) const;
+        void setContactProcessingThreshold (Ogre::Real v);
 
         Ogre::Real getLinearDamping (void) const;
         void setLinearDamping (Ogre::Real r);

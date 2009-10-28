@@ -117,6 +117,71 @@ btVector3 get_face_normal (const btStridingMeshInterface *mesh, int face) {
 }
 */
 
+#if 1
+void process_contact (btManifoldPoint& cp,
+                      const btCollisionObject* colObj,
+                      int partId, int index, bool gimpact)
+{
+        (void) partId;
+        (void) index;
+        const btCollisionShape *shape = colObj->getCollisionShape();
+
+        if (shape->getShapeType() != TRIANGLE_SHAPE_PROXYTYPE) return;
+        const btTriangleShape *tshape =
+               static_cast<const btTriangleShape*>(colObj->getCollisionShape());
+
+
+        const btCollisionShape *parent = colObj->getRootCollisionShape();
+        if (parent == NULL) return;
+
+
+        btVector3 normal;
+        tshape->calcNormal(normal);
+
+        const btMatrix3x3 &orient =
+                colObj->getWorldTransform().getBasis();
+
+        normal = orient * normal;
+
+        btScalar dot = normal.dot(cp.m_normalWorldOnB);
+
+
+        if (gimpact) {
+                if (parent->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
+                        if (dot > 0) {
+                                cp.m_normalWorldOnB -= 2 * dot * normal;
+                        }       
+                }
+        } else {
+                if (parent->getShapeType()==TRIANGLE_MESH_SHAPE_PROXYTYPE) {
+
+                        btScalar magnitude = cp.m_normalWorldOnB.length();
+                        normal *= dot > 0 ? magnitude : -magnitude;
+
+                        cp.m_normalWorldOnB = normal;
+
+                }
+        }
+
+}
+
+bool contact_added_callback (btManifoldPoint& cp,
+                             const btCollisionObject* colObj0,
+                             int partId0, int index0,
+                             const btCollisionObject* colObj1,
+                             int partId1, int index1)
+{
+        (void) colObj1;
+        (void) partId1;
+        (void) index1;
+        // 0 is always the gimpact?
+        // 1 is always the scenery?
+        process_contact(cp, colObj0, partId0, index0, true);
+        process_contact(cp, colObj1, partId1, index1, false);
+        //std::cout << to_ogre(cp.m_normalWorldOnB) << std::endl;
+        return true;
+}       
+#else
 void contact_added_callback_obj (btManifoldPoint& cp,
                                  const btCollisionObject* colObj,
                                  int partId, int index)
@@ -132,43 +197,25 @@ void contact_added_callback_obj (btManifoldPoint& cp,
 
         const btCollisionShape *parent = colObj->getRootCollisionShape();
         if (parent == NULL) return;
-        switch (parent->getShapeType()) {
-                case TRIANGLE_MESH_SHAPE_PROXYTYPE: {
+        if (parent->getShapeType() != TRIANGLE_MESH_SHAPE_PROXYTYPE) return;
 
-                        btVector3 normal;
-                        tshape->calcNormal(normal);
+        btTransform orient = colObj->getWorldTransform();
+        orient.setOrigin( btVector3(0.0f,0.0f,0.0f ) );
 
-                        const btMatrix3x3 &orient =
-                                colObj->getWorldTransform().getBasis();
+        btVector3 v1 = tshape->m_vertices1[0];
+        btVector3 v2 = tshape->m_vertices1[1];
+        btVector3 v3 = tshape->m_vertices1[2];
 
-                        normal = orient * normal;
+        btVector3 normal = (v2-v1).cross(v3-v1);
 
-                        btScalar dot = normal.dot(cp.m_normalWorldOnB);
-                        btScalar magnitude = cp.m_normalWorldOnB.length();
-                        normal *= dot > 0 ? magnitude : -magnitude;
+        normal = orient * normal;
+        normal.normalize();
 
-                        cp.m_normalWorldOnB = normal;
+        btScalar dot = normal.dot(cp.m_normalWorldOnB);
+        btScalar magnitude = cp.m_normalWorldOnB.length();
+        normal *= dot > 0 ? magnitude : -magnitude;
 
-                } ; break;
-                case GIMPACT_SHAPE_PROXYTYPE: {
-
-                        btVector3 normal;
-                        tshape->calcNormal(normal);
-                        normal *= -1;
-
-                        const btMatrix3x3 &orient =
-                                colObj->getWorldTransform().getBasis();
-
-                        normal = orient * normal;
-
-                        btScalar dot = normal.dot(cp.m_normalWorldOnB);
-                        
-                        if (dot < 0)
-                                cp.m_normalWorldOnB -= 2 * dot * normal;
-
-
-                } ; break;
-        }
+        cp.m_normalWorldOnB = normal;
 }
 
 bool contact_added_callback (btManifoldPoint& cp,
@@ -177,17 +224,17 @@ bool contact_added_callback (btManifoldPoint& cp,
                              const btCollisionObject* colObj1,
                              int partId1, int index1)
 {
-        (void) colObj1;
-        (void) partId1;
-        (void) index1;
         contact_added_callback_obj(cp, colObj0, partId0, index0);
-        //contact_added_callback_obj(cp, colObj1, partId1, index1);
+        contact_added_callback_obj(cp, colObj1, partId1, index1);
         //std::cout << to_ogre(cp.m_normalWorldOnB) << std::endl;
         return true;
-}       
-
+}
+#endif
 
 extern ContactAddedCallback gContactAddedCallback;
+
+bool PhysicsWorld::getUseContactAddedHack (void) const { return gContactAddedCallback!=NULL; }
+void PhysicsWorld::setUseContactAddedHack (bool v) { gContactAddedCallback = v ? contact_added_callback : NULL; }
 
 PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
       : maxSteps(5)
@@ -690,6 +737,18 @@ void RigidBody::torqueImpulse (const Ogre::Vector3 &torque)
         if (body==NULL) return;
         body->applyTorqueImpulse(to_bullet(torque));
         body->activate();
+}
+
+Ogre::Real RigidBody::getContactProcessingThreshold (void) const
+{
+        if (body==NULL) return 0;
+        return body->getContactProcessingThreshold();
+}
+
+void RigidBody::setContactProcessingThreshold (Ogre::Real r)
+{
+        if (body==NULL) return;
+        body->setContactProcessingThreshold(r);
 }
 
 Ogre::Real RigidBody::getLinearDamping (void) const
