@@ -95,6 +95,8 @@ user interface
 
 write windows gdi thingy for stdout ("rich text")
 
+Shadow-Link reported bugs in win32 input (but dinput worked)
+
 
 
 --------------------------------------------------------------------------------
