@@ -231,7 +231,18 @@ Keyboard::Presses KeyboardX11::getPresses (void)
                 add_key(r, last_event, -1);
         }
 
-        if (flushRequested) {
+        for (Presses::iterator i=keysToFlush.begin(),
+                               i_=keysToFlush.end() ; i!=i_ ; ++i) {
+                if (currentlyPressed.find(*i)!=currentlyPressed.end()) {
+                        r.push_back("-"+*i);
+                        currentlyPressed.erase(*i);
+                        if (verbose) {
+                                CLOG << "X keyboard: flushed: " << *i << std::endl;
+                        }
+                }
+        }
+        keysToFlush.clear();
+        if (fullFlushRequested) {
                 // Any key we currently recognise as being held
                 // down is "released" (note a repeating key
                 // will still repeat upon refocus)
@@ -242,7 +253,10 @@ Keyboard::Presses KeyboardX11::getPresses (void)
                         r.push_back("-"+*i);
                 }
                 currentlyPressed.clear();
-                flushRequested = false;
+                fullFlushRequested = false;
+                if (verbose) {
+                        CLOG << "X keyboard: all flushed" << std::endl;
+                }
         }
         return r;
 }

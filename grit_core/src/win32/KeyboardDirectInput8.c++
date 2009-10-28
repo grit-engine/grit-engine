@@ -77,7 +77,8 @@ KeyboardDirectInput8::KeyboardDirectInput8(size_t window)
 
         #define MAP_KEY(kc,k) keysDown.insert(std::make_pair(kc,"+"k)); \
                               keysRep.insert(std::make_pair(kc,"="k)); \
-                              keysUp.insert(std::make_pair(kc,"-"k))
+                              keysUp.insert(std::make_pair(kc,"-"k)); \
+                              keyCode.insert(std::make_pair(k,kc))
 
         MAP_KEY(DIK_1, "1");
         MAP_KEY(DIK_2, "2");
@@ -316,19 +317,45 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
                         if (keystr!=NULL) {
                                 ret.push_back(keystr);
                         } else {
-                                CERR << "dinput unrecognised key: " << kc
+                                CERR << "dinput: unrecognised key: " << kc
                                      << " = " << down << std::endl;
                         }
                 }
         }
+
+        for (Presses::iterator i=keysToFlush.begin(), i_=keysToFlush.end() ; i!=i_ ; ++i) {
+
+                DWORD key = keyCode(*i);
+                if (pressTime.find(key)!=pressTime.end()) {
+                        const char *keystr = keysUp[key];
+                        if (keystr!=NULL) {
+                                ret.push_back(keystr);
+                                if (verbose) {
+                                        CLOG << "dinput: " << keystr
+                                             << " flushed." << std::endl;
+                                }
+                        } else {
+                                CERR << "dinput: unrecognised key: " << key
+                                     << " reverse-mapped from " << *i << std::endl;
+                        }
+                        pressTime.erase(*i);
+                }
+        }
+        keysToFlush.clear();
 
         if (flushRequested) {
                 // generate fake events to stop keys getting "jammed"
                 for (I i=pressTime.begin(), i_=pressTime.end() ; i!=i_ ; ++i) {
                         DWORD key = i->first;
                         const char *keystr = keysUp[key];
-                        if (keystr!=NULL)
+                        if (keystr!=NULL) {
                                 ret.push_back(keystr);
+                        } else {
+                                CERR << "dinput: unrecognised key: " << key << std::endl;
+                        }
+                }
+                if (verbose) {
+                        CLOG << "dinput: flushed all." << std::endl;
                 }
                 pressTime.clear();
                 flushRequested = false;
@@ -340,7 +367,8 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
                 ULONGLONG &press_time = i->second;
                 if (press_time + repeatDelay > this_time) continue; // hasn't been held down long enough yet
                 ULONGLONG repeat_period = 1000 / repeatRate;
-                for (; press_time + repeatDelay + repeat_period <= this_time ; press_time += repeat_period) {
+                for (; press_time + repeatDelay + repeat_period <= this_time ;
+                       press_time += repeat_period) {
                         ret.push_back(keysRep[key]);
                 }
         }

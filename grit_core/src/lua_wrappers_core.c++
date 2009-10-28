@@ -67,8 +67,13 @@ TRY_END
 static int global_keyb_flush (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        grit->getKeyboard()->flush();
+        if (lua_gettop(L)==1) {
+                std::string key = luaL_checkstring(L,1);
+                grit->getKeyboard()->flush(key);
+        } else {
+                check_args(L,0);
+                grit->getKeyboard()->flush();
+        }
         return 0;
 TRY_END
 }

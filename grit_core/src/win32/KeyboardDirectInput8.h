@@ -31,6 +31,7 @@ protected:
         IDirectInputDevice8 *dev;
 
         std::map<DWORD,const char *> keysUp, keysDown, keysRep;
+        std::map<Press,DWORD> keyCode;
         std::map<DWORD, ULONGLONG> pressTime;
 
         ULONGLONG lastTime;

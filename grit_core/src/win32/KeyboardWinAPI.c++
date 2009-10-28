@@ -266,15 +266,29 @@ Keyboard::Presses KeyboardWinAPI::getPresses (void)
                 }
                 ret.push_back(p);
         }
-        
         presses.clear();
+        
+        for (Presses::iterator i=keysToFlush.begin(),
+                               i_=keysToFlush.end() ; i!=i_ ; ++i) {
+                if (down.find(*i)!=down.end()) {
+                        ret.push_back("-"+*i);
+                        down.erase(*i);
+                        if (verbose) {
+                            CLOG << "winapi: key flushed: " << *i << std::endl;
+                        }
+                }
+        }
+        keysToFlush.clear();
 
         if (flushRequested) {
-            for (DownSet::iterator i=down.begin(),i_=down.end() ; i!=i_ ; ++i) {
-                    ret.push_back("-"+*i);
-            }
-            down.clear();
-            flushRequested = false;
+                for (DownSet::iterator i=down.begin(),i_=down.end() ; i!=i_ ; ++i) {
+                        ret.push_back("-"+*i);
+                }
+                down.clear();
+                flushRequested = false;
+                if (verbose) {
+                    CLOG << "winapi: keyboard flushed" << std::endl;
+                }
         }
         return ret;
 }
