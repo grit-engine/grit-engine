@@ -117,7 +117,7 @@ void BackgroundMeshLoader::operator() (void)
                         }
                         pending.clear();
                         if (mAllowance <= 0 || !nearestDemand(mCurrent)) {
-                                OGRE_THREAD_WAIT(mCVar,OGRE_AUTO_MUTEX_NAME)
+                                OGRE_THREAD_WAIT(mCVar,OGRE_AUTO_MUTEX_NAME,ogreAutoMutexLock)
                                 continue;        
                         }       
                         pending = mCurrent->rPtrs;
