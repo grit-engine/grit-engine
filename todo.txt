@@ -18,6 +18,7 @@ general physics:
     - constraints (particlarly cone twist and hinge constraints)
     - explosions (ghost object + ray casts?) (sphere + contact iteration?)
     - callbacks on collisions
+    - max velocities per mesh
 
 vehicles:
     - constraints (particularly hinge constraint for car doors)
@@ -50,10 +51,6 @@ foilage
 skid marks
 
 sparks
-
-shadows need hardware PCF
-
-shadows also need mip levels
 
 
 
@@ -112,4 +109,6 @@ fix the mess that is the vector/quaternion exploded vars support
 fix boolean args so that they are actually checked rather than just coerced
 
 consistently use resource pointers everywhere, not resource names
+
+When overloaded functions are called with the wrong args, list all options.
 
