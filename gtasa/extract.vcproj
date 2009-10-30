@@ -18,10 +18,10 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(OutDir)"
+			IntermediateDirectory="$(OutDir)\int"
 			ConfigurationType="1"
 			CharacterSet="2"
-			BuildLogFile="$(IntDir)\$(ProjectName)_BuildLog.htm"
+			BuildLogFile="$(OutDir)\$(TargetName)_BuildLog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -47,6 +47,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				StructMemberAlignment="0"
+				ProgramDataBaseFileName="$(OutDir)\$(TargetName).pdb"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -92,11 +93,11 @@
 		<Configuration
 			Name="Optimised|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(OutDir)"
+			IntermediateDirectory="$(OutDir)\int"
 			ConfigurationType="1"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
-			BuildLogFile="$(IntDir)\$(ProjectName)_BuildLog.htm"
+			BuildLogFile="$(OutDir)\$(TargetName)_BuildLog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -121,6 +122,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;OGRE_THREAD_PROVIDER=1;OGRE_MEMORY_ALLOCATOR=1;FREEIMAGE_LIB"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
+				ProgramDataBaseFileName="$(OutDir)\$(TargetName).pdb"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -170,11 +172,11 @@
 		<Configuration
 			Name="Normal|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(OutDir)"
+			IntermediateDirectory="$(OutDir)\int"
 			ConfigurationType="1"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
-			BuildLogFile="$(IntDir)\$(ProjectName)_BuildLog.htm"
+			BuildLogFile="$(OutDir)\$(TargetName)_BuildLog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -199,6 +201,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;OGRE_THREAD_PROVIDER=1;OGRE_MEMORY_ALLOCATOR=1;FREEIMAGE_LIB"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
+				ProgramDataBaseFileName="$(OutDir)\$(TargetName).pdb"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>

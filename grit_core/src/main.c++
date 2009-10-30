@@ -106,7 +106,7 @@ int main(int argc, const char **argv)
                         Ogre::RenderSystem *rs =
                                 ogre->getRenderSystemByName("Direct3D9 Rendering Subsystem");
                         rs->setConfigOption("Allow NVPerfHUD","Yes");
-                        rs->setConfigOption("Anti aliasing","None");
+                        //rs->setConfigOption("Anti aliasing","None");
                         rs->setConfigOption("Floating-point mode","Consistent");
                         rs->setConfigOption("Full Screen",use_fullscreen?"Yes":"No");
                         rs->setConfigOption("VSync",use_vsync?"Yes":"No");
