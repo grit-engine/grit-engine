@@ -62,7 +62,7 @@ bool KeyboardWinAPI::hasFocus (void)
         return GetActiveWindow() == win;
 }
 
-static std::string break_horribly (TCHAR *buf, size_t sz)
+static std::string break_horribly (WCHAR *buf, size_t sz)
 {
         std::string r(sz,' ');
         for (size_t i=0 ; i<sz ; ++i) {
@@ -91,7 +91,7 @@ static Keyboard::Press get_string_press (WPARAM wParam, LPARAM scan_code,
                 state[VK_CONTROL] = 0xFF;
                 state[VK_CONTROL] = 0xFF;
         }
-        TCHAR buf[1024] = {0};
+        WCHAR buf[1024] = {0};
         int ret = ToUnicodeEx(wParam, scan_code, state,
                               buf, sizeof(buf)/sizeof(*buf),
                               0, GetKeyboardLayout(0));
@@ -280,12 +280,12 @@ Keyboard::Presses KeyboardWinAPI::getPresses (void)
         }
         keysToFlush.clear();
 
-        if (flushRequested) {
+        if (fullFlushRequested) {
                 for (DownSet::iterator i=down.begin(),i_=down.end() ; i!=i_ ; ++i) {
                         ret.push_back("-"+*i);
                 }
                 down.clear();
-                flushRequested = false;
+                fullFlushRequested = false;
                 if (verbose) {
                     CLOG << "winapi: keyboard flushed" << std::endl;
                 }

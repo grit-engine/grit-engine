@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <locale>
 //#include <cstdarg>
 #include <map>
 #include <string>

@@ -325,7 +325,7 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
 
         for (Presses::iterator i=keysToFlush.begin(), i_=keysToFlush.end() ; i!=i_ ; ++i) {
 
-                DWORD key = keyCode(*i);
+                DWORD key = keyCode[*i];
                 if (pressTime.find(key)!=pressTime.end()) {
                         const char *keystr = keysUp[key];
                         if (keystr!=NULL) {
@@ -338,12 +338,12 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
                                 CERR << "dinput: unrecognised key: " << key
                                      << " reverse-mapped from " << *i << std::endl;
                         }
-                        pressTime.erase(*i);
+                        pressTime.erase(key);
                 }
         }
         keysToFlush.clear();
 
-        if (flushRequested) {
+        if (fullFlushRequested) {
                 // generate fake events to stop keys getting "jammed"
                 for (I i=pressTime.begin(), i_=pressTime.end() ; i!=i_ ; ++i) {
                         DWORD key = i->first;
@@ -358,7 +358,7 @@ Keyboard::Presses KeyboardDirectInput8::getPresses()
                         CLOG << "dinput: flushed all." << std::endl;
                 }
                 pressTime.clear();
-                flushRequested = false;
+                fullFlushRequested = false;
         }
 
         for (I i=pressTime.begin(), i_=pressTime.end() ; i!=i_ ; ++i) {

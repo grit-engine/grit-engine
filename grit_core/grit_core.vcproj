@@ -19,9 +19,9 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(SolutionDir)obj\$(ProjectName)\$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
 			ConfigurationType="1"
-			CharacterSet="1"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;"
-				PreprocessorDefinitions="WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;QUEX_OPTION_ASSERTS_WARNING_MESSAGE_DISABLED"
+				PreprocessorDefinitions="WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;OGRE_THREAD_PROVIDER=1;QUEX_OPTION_ASSERTS_WARNING_MESSAGE_DISABLED;OGRE_MEMORY_ALLOCATOR=1;FREEIMAGE_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -61,10 +61,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="OgreMainStatic_d.lib FreeImaged.lib freetype235_D.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OpenEXR.lib zlibd.lib zziplibd.lib OgreWin32Resources_d.res Plugin_OctreeSceneManagerStatic_d.lib Plugin_ParticleFXStatic_d.lib RenderSystem_Direct3D9Static_d.lib RenderSystem_GLStatic_d.lib libbulletcollision.lib libbulletdynamics.lib libbulletmath.lib"
+				AdditionalDependencies="ogre.lib FreeImaged.lib freetype235_D.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OpenEXR.lib zlibd.lib zziplibd.lib bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib $(InputDir)src\win32\Resources.res"
 				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Debug&quot;;&quot;$(SolutionDir)\dependencies\ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\debug_dll8\build\libbulletmath&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\debug_dll8\build\libbulletcollision&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\debug_dll8\build\libbulletdynamics&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Debug&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -92,11 +92,11 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
+			Name="Optimised|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(SolutionDir)obj\$(ProjectName)\$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
 			ConfigurationType="1"
-			CharacterSet="1"
+			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -119,7 +119,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;OGRE_THREAD_PROVIDER=1;OGRE_MEMORY_ALLOCATOR=1;FREEIMAGE_LIB"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -137,10 +137,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OgreMainStatic.lib Plugin_OctreeSceneManagerStatic.lib Plugin_ParticleFXStatic.lib RenderSystem_Direct3D9Static.lib RenderSystem_GLStatic.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res libbulletcollision.lib libbulletdynamics.lib libbulletmath.lib"
+				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib"
 				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(SolutionDir)\dependencies\ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletmath&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletcollision&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletdynamics&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -171,11 +171,11 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="RelDebug|Win32"
+			Name="Normal|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
 			ConfigurationType="1"
-			CharacterSet="1"
+			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -197,8 +197,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4\src&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;OGRE_THREAD_PROVIDER=1;OGRE_MEMORY_ALLOCATOR=1;FREEIMAGE_LIB"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -216,10 +216,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OgreMainStatic.lib Plugin_OctreeSceneManagerStatic.lib Plugin_ParticleFXStatic.lib RenderSystem_Direct3D9Static.lib RenderSystem_GLStatic.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res libbulletcollision.lib libbulletdynamics.lib libbulletmath.lib"
+				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib"
 				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(SolutionDir)\dependencies\ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletmath&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletcollision&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletdynamics&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"

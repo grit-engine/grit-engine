@@ -214,6 +214,7 @@ static Ogre::Real parse_real (const Ogre::String &name, quex::TColLexer* qlex)
                 return t.number();
         } else {
                 err(name,qlex,t,"float");
+                return 0.0; // suppress msvc warning
         }
 }
 
