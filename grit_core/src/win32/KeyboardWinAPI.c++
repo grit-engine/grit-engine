@@ -96,12 +96,12 @@ static Keyboard::Press get_string_press (WPARAM wParam, LPARAM scan_code,
                               buf, sizeof(buf)/sizeof(*buf),
                               0, GetKeyboardLayout(0));
         // TODO: support unicode properly
-        if (ret==-1) {
-            return "?";
+        if (ret==-1) { // " does this
+            return break_horribly(buf,1);
         } else if (ret<0 || ret>=sizeof(buf)/sizeof(*buf)) {
             CERR << "ToUnicodeEx returned out of range: " << ret << std::endl;
-        } else if (ret != 1) {
-            return "?";
+        } else if (ret > 1) { // ' does this
+            return break_horribly(buf,1);
         } else {
             return break_horribly(buf,ret);
         }
@@ -139,6 +139,11 @@ LRESULT KeyboardWinAPI::wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lP
         }
         bool have_key = false;
         switch (msg) {
+                case WM_INPUTLANGCHANGE:
+                shiftMap.clear();
+                altMap.clear();
+
+                break;
                 case WM_KEYDOWN:
                 case WM_KEYUP:
                 case WM_SYSKEYDOWN:
@@ -237,7 +242,7 @@ LRESULT KeyboardWinAPI::wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lP
                 for (int i=0 ; i<repeat_count ; ++i)
                     presses.push_back(key);
 
-                return 0;
+                //return 0;
         }
 
         return CallWindowProc(old_wndproc, msgwin, msg, wParam, lParam);
