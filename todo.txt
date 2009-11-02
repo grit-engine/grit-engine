@@ -10,6 +10,7 @@ rename GritObjectManager to something more explicit about its function
 
 
 
+
 --------------------------------------------------------------------------------
 gameplay
 --------------------------------------------------------------------------------
@@ -19,12 +20,15 @@ general physics:
     - explosions (ghost object + ray casts?) (sphere + contact iteration?)
     - callbacks on collisions
     - max velocities per mesh
+    - physical materials
 
 vehicles:
     - constraints (particularly hinge constraint for car doors)
     - study handling.cfg
     - extract graphics and collision meshes from gta vehicles
     - make the bike bank properly
+    - add wheels to mesh so that vehicle bottoms out correctly
+    - ensure wheels have no friction (maybe tweak contact added for that)
 
 actors:
     - constraints for ragdoll (particlarly cone twist and hinge constraints)
@@ -33,6 +37,7 @@ actors:
     - lua bindings for hardware animation
     - study bullet character controller
     - play with capsule
+
 
 
 
@@ -51,6 +56,11 @@ foilage
 skid marks
 
 sparks
+
+variable penumbra
+
+smarter choice of bias
+
 
 
 
@@ -96,6 +106,7 @@ unicode support
 
 
 
+
 --------------------------------------------------------------------------------
 lua bindings
 --------------------------------------------------------------------------------
@@ -112,3 +123,52 @@ consistently use resource pointers everywhere, not resource names
 
 When overloaded functions are called with the wrong args, list all options.
 
+
+
+
+--------------------------------------------------------------------------------
+modding
+--------------------------------------------------------------------------------
+
+create a new materials system using lua bindings
+
+integrate with a single ubershader
+
+implement various effects
+-- parallax
+-- steep parallax
+-- texture animation
+-- multitexturing
+-- splatting
+-- normal map
+
+allow modder to choose subset of effects, providing necessary parameters
+
+clean up API for map scripts, make much simpler
+-- instead of error when object already exists, just replace
+
+avoid using tables for vehicle classes
+
+ensure nothing special needed to reload a class / instance as opposed to add a class / instance
+
+group together a large number of environmental options under a common API --
+e.g. camera, shadow, ambient lighting, sun, etc.  Allow clear, and reset of
+this stuff.
+
+arrange it so that just including a map lua file is enough to replace
+everything with with a brand new map
+
+
+
+
+--------------------------------------------------------------------------------
+networking
+--------------------------------------------------------------------------------
+
+separate graphics from game engine + physics.
+
+work out how early in the pipeline to send stuff to the server and back.
+1) keypresses
+2) allow local control of car or whatever, server validates not moving too fast
+
+local and remote console
