@@ -119,6 +119,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
+				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\grit_core\src&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;OGRE_THREAD_PROVIDER=1;OGRE_MEMORY_ALLOCATOR=1;FREEIMAGE_LIB"
 				RuntimeLibrary="2"
@@ -176,7 +177,7 @@
 			IntermediateDirectory="$(OutDir)\int"
 			ConfigurationType="1"
 			CharacterSet="2"
-			WholeProgramOptimization="1"
+			WholeProgramOptimization="0"
 			BuildLogFile="$(OutDir)\$(TargetName)_BuildLog.htm"
 			>
 			<Tool
