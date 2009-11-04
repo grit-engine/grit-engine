@@ -50,6 +50,12 @@ void edit_append (HWND edit, const char *text)
         edit_scroll(edit);
 }
 
+void log_print (const char *text) {
+        std::string time = now();
+        time = "["+time+"] "+text+"\n";
+        edit_append(win_log, time.c_str()); 
+}
+
 bool toggle_menu_check (HWND win, UINT id)
 {
         if (GetMenuState(GetMenu(win),id,MF_BYCOMMAND) & MF_CHECKED) {
@@ -70,11 +76,45 @@ BOOL CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam
         return FALSE;
 } 
 
+char *get_text (HWND rich_edit, size_t &sz)
+{
+        GETTEXTEX text;
+        char *buf = (char*)malloc(LOG_LENGTH);
+        text.cb = LOG_LENGTH;
+        text.flags = GT_USECRLF;
+        text.codepage = CP_ACP;
+        text.lpDefaultChar = NULL;
+        text.lpUsedDefChar = NULL;
+        LRESULT bytes = SendMessage(rich_edit, EM_GETTEXTEX, (WPARAM)&text, (LPARAM)buf);
+        if ((size_t)bytes<=sz) {
+                free(buf);
+                sz *= 2;
+                return get_text(rich_edit, sz);
+        }
+        sz = bytes;
+        return buf;
+}
+
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
         int wmId = LOWORD(wParam), wmEvent = HIWORD(wParam);
 
         switch (message) {
+                case WM_NOTIFY: {
+                        if (((LPNMHDR)lParam)->code==EN_MSGFILTER && ((LPNMHDR)lParam)->hwndFrom==win_prompt) {
+                                MSGFILTER *mf = (MSGFILTER*) lParam;
+                                if (mf->msg==WM_KEYUP && mf->wParam==0xd) {
+                                        SendMessage(win_send, BM_CLICK, 0, 0);
+                                        SetFocus(win_prompt);
+                                        return 1;
+                                } else if (mf->msg==WM_KEYDOWN && mf->wParam==0x9){
+                                        SetFocus(win_send);
+                                        return 1;
+                                }
+                        }
+                } break;
+
                 case WM_COMMAND:
                 if (lParam==0 && wmEvent==0) { // menu
                         switch (wmId) {
@@ -88,17 +128,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                                         fn.nMaxFile = sizeof(name);
                                         fn.lpstrDefExt = "txt";
                                         if(GetSaveFileName(&fn)) {
-                                                GETTEXTEX text;
-                                                char *buf = (char*)malloc(LOG_LENGTH);
-                                                text.cb = LOG_LENGTH;
-                                                text.flags = GT_USECRLF;
-                                                text.codepage = CP_ACP;
-                                                text.lpDefaultChar = NULL;
-                                                text.lpUsedDefChar = NULL;
-                                                LRESULT bytes = SendMessage(win_log, EM_GETTEXTEX, (WPARAM)&text, (LPARAM)buf);
                                                 FILE *f = fopen(name, "w");
-                                                size_t bytes2 = fwrite(buf, 1, bytes, f);
-                                                if (bytes2!=bytes) {
+                                                size_t textsz = 1024;
+                                                char *buf = get_text(win_log, textsz);
+                                                size_t written = fwrite(buf, 1, textsz, f);
+                                                if (written!=textsz) {
                                                         MessageBox(NULL, "Could not write to file.", "Error", MB_ICONEXCLAMATION | MB_OK);
                                                 }
                                                 fclose(f);
@@ -126,21 +160,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                                 DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(103), hWnd, AboutProc);
                                 return 0;
                         }
-                } else if (lParam==0 && wmEvent==1) { //accelerator
-                        edit_append(win_log, "accelerator\n"); 
                 } else if ((HWND)lParam==win_launch) { // launch button
                          switch (wmEvent) {
-                                case BN_CLICKED: {
-                                        std::string time = now();
-                                        time = "["+time+"] I liek cows.\n";
-                                        edit_append(win_log, time.c_str()); 
-                                } return 0;
+                                case BN_CLICKED:
+                                log_print("I liek cows.");
+                                return 0;
                         }
                 } else if ((HWND)lParam==win_send) { // send button
                         switch (wmEvent) {
-                                case BN_CLICKED:
-                                Button_Enable((HWND)lParam,FALSE);
-                                return 0;
+                                case BN_CLICKED: {
+                                        size_t sz = 1024;
+                                        char *buf = get_text(win_prompt, sz);
+                                        log_print(buf);
+                                        free(buf);
+                                } return 0;
                         }
                 }
                 break;
@@ -160,6 +193,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         MoveWindow(win_launch, w-p-bw,      h-p-bh, bw,              bh,       TRUE);
                         edit_scroll(win_log);
                 }
+
         }
         return DefWindowProc(hWnd, message, wParam, lParam);
 }
@@ -171,8 +205,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 {
         UNREFERENCED_PARAMETER(hPrevInstance);
         UNREFERENCED_PARAMETER(lpCmdLine);
-
-        //SetThemeAppProperties(STAP_ALLOW_NONCLIENT | STAP_ALLOW_CONTROLS | STAP_ALLOW_WEBCONTENT);
 
         InitCommonControls();
 
@@ -197,20 +229,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
         win_main = CreateWindow("Grit Launcher", "Grit Launcher", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
         if (!win_main) return FALSE;
 
-        //SetWindowTheme(win_main, L"Explorer", NULL);
-
-
-        win_launch = CreateWindow("BUTTON", "&Launch",
-                                  WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-                                  0, 0, 0, 0, win_main, NULL, hInstance, NULL);
-
-        win_send = CreateWindow("BUTTON", "&Send Lua",
-                                 WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
-                                 0, 0, 0, 0, win_main, NULL, hInstance, NULL);
-        Button_Enable(win_send,FALSE);
 
         win_log = CreateWindow(RICHEDIT_CLASS, TEXT("Type here\n"),
-                               ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_BORDER | WS_VSCROLL | ES_DISABLENOSCROLL | ES_AUTOVSCROLL | ES_SUNKEN | WS_TABSTOP, 
+                               WS_GROUP | ES_MULTILINE | WS_VISIBLE | WS_CHILD | WS_BORDER | WS_VSCROLL | ES_DISABLENOSCROLL | ES_AUTOVSCROLL | ES_SUNKEN, 
                                0, 0, 0, 0, win_main, NULL, hInstance, NULL);
         SendMessage(win_log, EM_LIMITTEXT, 0, LOG_LENGTH); // set char limit
         CHARFORMAT fmt;
@@ -243,19 +264,31 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
         Edit_SetReadOnly(win_log,  TRUE);
  
         win_prompt = CreateWindow(RICHEDIT_CLASS, "I liek fish.",
-                                  WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_SUNKEN | ES_LEFT, 
+                                  WS_TABSTOP | WS_VISIBLE | WS_CHILD | ES_AUTOHSCROLL | ES_SUNKEN | ES_LEFT, 
                                   0, 0, 0, 0, win_main, NULL, hInstance, NULL);
         SendMessage(win_prompt, EM_EXLIMITTEXT, 0, 1024*1024); // set char limit
-        Edit_Enable(win_prompt,FALSE);
-        
+        //Edit_Enable(win_prompt,FALSE);
+
+        win_send = CreateWindow("BUTTON", "&Send Lua",
+                                 WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+                                 0, 0, 0, 0, win_main, NULL, hInstance, NULL);
+        //Button_Enable(win_send,FALSE);
+
+        win_launch = CreateWindow("BUTTON", "&Launch",
+                                  WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+                                  0, 0, 0, 0, win_main, NULL, hInstance, NULL);
+
+        SendMessage(win_prompt, EM_SETEVENTMASK, 0, ENM_KEYEVENTS);
 
         ShowWindow(win_main, nCmdShow);
 
         // Main message loop:
         MSG msg;
         while (GetMessage(&msg, NULL, 0, 0)) {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
+                if (!IsDialogMessage(win_main, &msg)) {
+                        TranslateMessage(&msg);
+                        DispatchMessage(&msg);
+                }
         }
 
         return (int) msg.wParam;
