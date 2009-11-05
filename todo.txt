@@ -142,6 +142,7 @@ implement various effects
 -- multitexturing
 -- splatting
 -- normal map
+-- spec map
 -- reflections (static env map and dynamic env map)
 
 allow modder to choose subset of effects, providing necessary parameters
