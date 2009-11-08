@@ -44,8 +44,8 @@
        
 HWND win_main;
 HWND win_log;
-HWND win_prompt;
-HWND win_send;
+//HWND win_prompt;
+//HWND win_send;
 HWND win_launch;
 
 std::string now (void)
@@ -74,11 +74,11 @@ void scroll_bottom (void)
         SendMessage(win_log, WM_VSCROLL, SB_LINEUP, 0);
 }
 
-void edit_append (HWND edit, const char *text)
+void edit_append (const char *text)
 {
         CHARRANGE range = {-1, -1};
-        SendMessage(edit, EM_EXSETSEL, 0, (LPARAM)&range);
-        SendMessage(edit, EM_REPLACESEL, FALSE, (LPARAM)text);
+        SendMessage(win_log, EM_EXSETSEL, 0, (LPARAM)&range);
+        SendMessage(win_log, EM_REPLACESEL, FALSE, (LPARAM)text);
 }
 
 int current_colour = 7;
@@ -104,6 +104,14 @@ void set_colour (HWND edit, int c, bool b, bool everything=false)
         current_bold = b;
 }
 
+void append_time_stamp (void)
+{
+        int c = current_colour;
+        bool b = current_bold;
+        set_colour(win_log, 7, false, false);
+        edit_append(("["+now()+"] ").c_str());
+        set_colour(win_log, c, b, false);
+}
 char *get_text (HWND rich_edit, size_t &sz)
 {
         GETTEXTEX text;
@@ -161,8 +169,8 @@ void subproc_has_quit (void)
         CloseHandle(subproc_write.hEvent);
 
         Button_Enable(win_launch,TRUE);
-        Button_Enable(win_send,FALSE);
-        Edit_Enable(win_prompt,FALSE);
+        //Button_Enable(win_send,FALSE);
+        //Edit_Enable(win_prompt,FALSE);
         EnableMenuItem(GetMenu(win_main), MENU_GL, MF_ENABLED);
         EnableMenuItem(GetMenu(win_main), MENU_FULLSCREEN, MF_ENABLED);
         EnableMenuItem(GetMenu(win_main), MENU_DINPUT, MF_ENABLED);
@@ -176,7 +184,6 @@ int in_colour = 0;
 void subproc_handle_output (DWORD bytes_read)
 {
         test_scrolled_to_bottom();
-        std::string prefix = "["+now()+"] ";
         SendMessage(win_log, WM_SETREDRAW, false, 0);
         for (DWORD i=0 ; i<bytes_read ; ++i) {
                 char c = raw_buffer[i];
@@ -228,14 +235,14 @@ void subproc_handle_output (DWORD bytes_read)
                 } else {
                         if (c=='\n') {
                                 buffer.append(raw_buffer+i,1);
-                                if (!this_line_started) buffer = prefix+buffer;
-                                edit_append(win_log, buffer.c_str());
+                                if (!this_line_started) append_time_stamp();
+                                edit_append(buffer.c_str());
                                 this_line_started = false;
                                 buffer.clear();
                         } else if (c=='\033') { // enter colour code
                                 in_colour = true;
-                                if (!this_line_started) buffer = prefix+buffer;
-                                edit_append(win_log, buffer.c_str());
+                                if (!this_line_started) append_time_stamp();
+                                edit_append(buffer.c_str());
                                 this_line_started = true;
                                 buffer.clear();                        
                         } else {
@@ -342,13 +349,14 @@ void subproc_spawn (void)
         subproc_initiate_read();
 
         Button_Enable(win_launch,FALSE);
-        Button_Enable(win_send,TRUE);
-        Edit_Enable(win_prompt,TRUE);
+        //Button_Enable(win_send,TRUE);
+        //Edit_Enable(win_prompt,TRUE);
         EnableMenuItem(GetMenu(win_main), MENU_GL, MF_GRAYED);
         EnableMenuItem(GetMenu(win_main), MENU_FULLSCREEN, MF_GRAYED);
         EnableMenuItem(GetMenu(win_main), MENU_DINPUT, MF_GRAYED);
 }
 
+/*
 void subproc_write_line(const char *line, size_t sz)
 {
         WriteFile(subproc_pipe, line, sz, NULL, &subproc_write);
@@ -356,6 +364,7 @@ void subproc_write_line(const char *line, size_t sz)
         BOOL r = GetOverlappedResult(subproc_pipe, &subproc_write, &bytes, TRUE);
         if (!r) got_error("GetOverlappedResult");
 }
+*/
 
 void subproc_process_output (void)
 {
@@ -376,6 +385,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         int wmId = LOWORD(wParam), wmEvent = HIWORD(wParam);
 
         switch (message) {
+/*
                 case WM_NOTIFY: {
                         // intercept keypresses from win_prompt and use this to process tab and enter key
                         if (((LPNMHDR)lParam)->code==EN_MSGFILTER && ((LPNMHDR)lParam)->hwndFrom==win_prompt) {
@@ -390,6 +400,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                 }
                         }
                 } break;
+*/
 
                 case WM_COMMAND:
                 if (lParam==0 && wmEvent==0) { // menu
@@ -448,7 +459,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                 test_scrolled_to_bottom();
                                 break;
                         }
-                } else if ((HWND)lParam==win_send) { // send button
+                } /*else if ((HWND)lParam==win_send) { // send button
                         switch (wmEvent) {
                                 case BN_CLICKED: {
                                         size_t sz = 1024;
@@ -459,7 +470,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                         Edit_SetText(win_prompt, "");
                                 } return 0;
                         }
-                }
+                } */
                 break;
 
                 case WM_DESTROY:
@@ -472,9 +483,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         int bw = 128; // button width
                         int p = 4; // padding
                         MoveWindow(win_log,    p,           p,      w-p-p,           h-bh-p-p-p, TRUE);
-                        MoveWindow(win_prompt, p,           h-p-bh, w-p-p-bw-p-bw-p, bh,       TRUE);
-                        MoveWindow(win_send,   w-p-bw-p-bw, h-p-bh, bw,              bh,       TRUE);
-                        MoveWindow(win_launch, w-p-bw,      h-p-bh, bw,              bh,       TRUE);
+                        MoveWindow(win_launch, p,           h-p-bh, w-p-p,           bh,         TRUE);
+/*
+                        MoveWindow(win_prompt, p,           h-p-bh, w-p-p-bw-p-bw-p, bh,         TRUE);
+                        MoveWindow(win_send,   w-p-bw-p-bw, h-p-bh, bw,              bh,         TRUE);
+                        MoveWindow(win_launch, w-p-bw,      h-p-bh, bw,              bh,         TRUE);
+*/
                         if (scrolled_to_bottom)
                                 scroll_bottom();
                 }
@@ -530,6 +544,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
         set_colour(win_log, 7, false, true);
         Edit_SetReadOnly(win_log,  TRUE);
  
+/*
         win_prompt = CreateWindow(RICHEDIT_CLASS, NULL,
                                   WS_TABSTOP | WS_VISIBLE | WS_CHILD | ES_AUTOHSCROLL | ES_SUNKEN | ES_LEFT, 
                                   0, 0, 0, 0, win_main, NULL, hInstance, NULL);
@@ -545,6 +560,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                                  WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
                                  0, 0, 0, 0, win_main, NULL, hInstance, NULL);
         Button_Enable(win_send,FALSE);
+*/
 
         win_launch = CreateWindow("BUTTON", "&Launch",
                                   WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
