@@ -1549,20 +1549,16 @@ void app_fatal()
         abort();
 }
 
-#define VERSION "1.0"
+#define VERSION "1.1"
 
 const char *info =
 "dffread (c) Dave Cunningham 2007  (version: "VERSION")\n"
-"I can convert renderware dffs into ogre XML, material, and matbin files.\n"
-"I can convert dff files with -d or entire img archives with -I.\n"
-"I need to look up each dff in an ide file to get texture information.\n"
-"I glob together identical materials to save space and increase batching.\n";
+"I print information about dff files.\n";
 
 const char *usage =
 "Usage: dffread { <opt> }\n\n"
 "where <opt> ::= \"-v\" | \"--verbose\"             increase debug level\n"
 "              | \"-q\" | \"--quiet\"               decrease debug level\n"
-"              | \"-t\" | \"--output-dir\"          files are created here\n"
 "              | \"-d\" <file> | \"--dff\" <file>   add to list of dffs\n\n"
 "              | \"-o\" | \"--orphans\"             list orphaned frames\n"
 "              | \"-O\" | \"--no-orphans\"          complement of above\n\n"
