@@ -87,20 +87,15 @@ int main(int argc, const char **argv)
 
                 BackgroundMeshLoader *bml = new BackgroundMeshLoader();
 
-                Ogre::ConfigFile cfg;
-                try {
-                        cfg.loadDirect("grit.cfg");
-                } catch (Ogre::Exception) { }
-
                 #ifdef WIN32
-                bool use_d3d9 = cfg.getSetting("d3d9") == "yes";
-                bool use_dinput = cfg.getSetting("dinput") == "yes";
+                bool use_d3d9 = getenv("GRIT_GL")==NULL;
+                bool use_dinput = getenv("GRIT_DINPUT")!=NULL;
                 #else
                 bool use_d3d9 = false;
                 #endif
 
-                bool use_vsync = cfg.getSetting("vsync") == "yes";
-                bool use_fullscreen = cfg.getSetting("fullscreen") == "yes";
+                bool use_vsync = getenv("GRIT_NOVSYNC")==NULL;
+                bool use_fullscreen = getenv("GRIT_FULLSCREEN")!=NULL;
 
                 if (use_d3d9) {
                         Ogre::RenderSystem *rs =
