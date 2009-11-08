@@ -262,7 +262,13 @@ void subproc_initiate_read (void)
         }
 }
 
-
+void set_env_var_to_menu_checked (const char *var, UINT menu_id)
+{
+        if (!SetEnvironmentVariable(var, "temporary"))
+                got_error("SetEnvironmentVariable(\""<<var<<"\", ...)");
+        if (!SetEnvironmentVariable(var, menu_checked(win_main, menu_id)?"1":NULL))
+                got_error("SetEnvironmentVariable(\""<<var<<"\", ...)");
+}
 void subproc_spawn (void)
 {
         PROCESS_INFORMATION piProcInfo;
@@ -311,10 +317,10 @@ void subproc_spawn (void)
 
         char *cmdline = getenv("GRIT_PROCESS");
         if (cmdline == NULL) cmdline = "Grit.dat";
-        if (menu_checked(win_main, MENU_GL)) if(!SetEnvironmentVariable("GRIT_GL", "1")) got_error("SetEnvironmentVariable(\"GRIT_GL\", \"1\")");
-        if (menu_checked(win_main, MENU_FULLSCREEN)) if (!SetEnvironmentVariable("GRIT_FULLSCREEN", "1")) got_error("SetEnvironmentVariable(\"GRIT_FULLSCREEN\", \"1\")");
-        if (menu_checked(win_main, MENU_DINPUT)) if (!SetEnvironmentVariable("GRIT_DINPUT", "1")) got_error("SetEnvironmentVariable(\"GRIT_DINPUT\", \"1\")");
-        //if (!SetEnvironmentVariable("GRIT_NOVSYNC", "1")) got_error("SetEnvironmentVariable(\"GRIT_NOVSYNC\", \"1\")");
+        set_env_var_to_menu_checked("GRIT_GL", MENU_GL);
+        set_env_var_to_menu_checked("GRIT_FULLSCREEN", MENU_FULLSCREEN);
+        set_env_var_to_menu_checked("GRIT_DINPUT", MENU_DINPUT);
+        //set_env_var_to_menu_checked("GRIT_NOVSYNC", MENU_SOMETHING);
 
         BOOL bFuncRetn = CreateProcess(NULL, cmdline,
                                   NULL,          // process security attributes
