@@ -65,7 +65,7 @@ void test_scrolled_to_bottom (void)
         scrollinfo.cbSize = sizeof(SCROLLINFO);
         scrollinfo.fMask = SIF_ALL;
         GetScrollInfo(win_log, SB_VERT, &scrollinfo);
-        scrolled_to_bottom = scrollinfo.nPos >= scrollinfo.nMax - scrollinfo.nPage - 32;
+        scrolled_to_bottom = scrollinfo.nPos >= scrollinfo.nMax - ((int)scrollinfo.nPage) - 32;
 }
 
 void scroll_bottom (void)
