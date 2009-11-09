@@ -24,11 +24,11 @@ LEXER=TColLexer
 
 imgread: ../src/imgread.c++ 
 	@$(LINKING)
-	@$(COMPILER) -D_IMGREAD_TEST $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+	@$(COMPILER) -D_IMGREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
 
 ifpread: ../src/ifpread.c++
 	@$(LINKING)
-	@$(COMPILER) -D_IFPREAD_TEST $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+	@$(COMPILER) -D_IFPREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
 
 extract: ../src/extract.c++ ColParser.o TColParser.o ideread.o imgread.o dffread.o tex_dups.o iplread.o txdread.o dirutil.o
 	@$(LINKING)
@@ -36,15 +36,19 @@ extract: ../src/extract.c++ ColParser.o TColParser.o ideread.o imgread.o dffread
 
 ideread: ../src/ideread.c++
 	@$(LINKING)
-	@$(COMPILER) -D_IDEREAD_TEST $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+	@$(COMPILER) -D_IDEREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
 
 dffread: ../src/dffread.c++ tex_dups.o 
 	@$(LINKING)
-	@$(COMPILER) -D_DFFREAD_TEST $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+	@$(COMPILER) -D_DFFREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+
+txdread: ../src/txdread.c++
+	@$(LINKING)
+	@$(COMPILER) -D_TXDREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
 
 iplread: ../src/iplread.c++
 	@$(LINKING)
-	@$(COMPILER) -D_IPLREAD_TEST $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+	@$(COMPILER) -D_IPLREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
 
 colread: colread.o ColParser.o TColParser.o $(LEXER).o $(LEXER)-core-engine.o 
 	@$(LINKING)

@@ -272,7 +272,7 @@ void read_ide (std::istream &f, struct ide *ide)
 }
 
 
-#ifdef _IDEREAD_TEST
+#ifdef _IDEREAD_EXEC
 
 #include "console_colour.h"
 

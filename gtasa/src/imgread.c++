@@ -99,7 +99,7 @@ unsigned long Img::fileSize (const std::string &fname) const
 
 
 
-#ifdef _IMGREAD_TEST
+#ifdef _IMGREAD_EXEC
 
 size_t amount_read = 0;
 size_t amount_seeked = 0;

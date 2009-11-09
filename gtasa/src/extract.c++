@@ -469,6 +469,10 @@ void extract (const Config &cfg, std::ostream &out)
                         rad = sqrt(g.b_x*g.b_x + g.b_y*g.b_y + g.b_z*g.b_z)
                               + g.b_r;
 
+                        std::stringstream objname_ss;
+                        objname_ss << o.id;
+                        std::string objname = objname_ss.str();
+
                         std::stringstream out_name_ss;
                         out_name_ss<<dest_dir<<"/"<<cfg.modname<<"/"<<o.id<<".mesh";
                         std::vector<std::string> export_imgs;
@@ -481,7 +485,7 @@ void extract (const Config &cfg, std::ostream &out)
                         std::string out_name = out_name_ss.str();
                         export_mesh(texs,everything,export_imgs,
                                     out,out_name,
-                                    o,g,matdb,matbin,cfg.modname);
+                                    o,objname,g,matdb,matbin,cfg.modname);
 
                         MatSplits &ms = g.mat_spls;
                         for (MatSplits::iterator s=ms.begin(),

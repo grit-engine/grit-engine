@@ -973,21 +973,17 @@ void ind (std::ostream &out, unsigned int level)
 
 #define ARRLEN(a) (sizeof a/sizeof *a)
 
-std::string get_tex_name (const std::string& img,
-                          std::string txd,
+std::string get_tex_name (const std::string &img,
+                          const std::string &txd,
                           std::string tex_name,
                           const std::string &mod_name)
 {{{
     strlower(tex_name);
     tex_name += ".dds";
-    txd  += ".txd";
 
-    // prepend img if given
-    if (img!="") {
-        txd = img+"/"+txd;
-    }
-
-    tex_name = mod_name + "/" + txd + "/" + tex_name;
+    if (txd!="") tex_name = txd + ".txd" + "/" + tex_name;
+    if (img!="") tex_name = img + "/" + tex_name;
+    if (mod_name!="") tex_name = mod_name + "/" + tex_name;
 
     // if it's a duplicate of another texture, use the other texture instead
     tex_name = tex_dup(tex_name);
@@ -1042,6 +1038,7 @@ const std::string &already_seen (MatDB &matdb,
     return existing;
 }}}
 
+// return the given txd and recursively all parents (if any)
 static std::vector<std::string> search_txds(const std::string &txd,
                                             const ide &ide)
 {
@@ -1052,8 +1049,8 @@ static std::vector<std::string> search_txds(const std::string &txd,
         if (txdp.txd1 == txd) {
             std::vector<std::string> sub = search_txds(txdp.txd2, ide);
             r.insert(r.end(), sub.begin(), sub.end());
-        }   
-    }   
+        }
+    }
     return r;
 }
 
@@ -1075,6 +1072,7 @@ export_or_provide_mat (const StringSet &texs,
                        geometry &g,
                        int mindex,
                        const Obj &obj,
+                       const std::string &oname,
                        MatDB &matdb,
                        std::ostream &matbin,
                        const std::string &mod_name)
@@ -1104,7 +1102,7 @@ export_or_provide_mat (const StringSet &texs,
             for (size_t k=0 ; k<imgs.size() ; ++k) {
                 const std::string &img = imgs[k];
                 tex_name = get_tex_name(img, txd, m.textures[i].name, mod_name);
-                if (texs.find(tex_name)!=texs.end()) {
+                if (texs.empty() || texs.find(tex_name)!=texs.end()) {
                     found = true;
                     goto done;
                 }
@@ -1112,7 +1110,7 @@ export_or_provide_mat (const StringSet &texs,
         }
         done:
         if (!found) {
-            std::cerr<<"For "<<obj.id<<" "<<imgs[0]<<"/"<<obj.dff<<".dff "
+            std::cerr<<"For "<<oname<<" "<<imgs[0]<<"/"<<obj.dff<<".dff "
                      <<"couldn't find tex: \""<<m.textures[i].name
                      <<"\" in "<<to_string(txds)<<std::endl;
             tex_name = "";
@@ -1127,7 +1125,10 @@ export_or_provide_mat (const StringSet &texs,
     m.rewrittenTextures = textures;
 
     std::ostringstream mname;
-    mname<<mod_name<<"/"<<obj.id<<"/"<<mindex;
+    if (mod_name!="") {
+        mname<<mod_name<<"/";
+    }
+    mname<<oname<<"/"<<mindex;
 
     const std::string &mat = already_seen(matdb, R,G,B,A, textures, has_alpha,
                                           decal, double_sided,
@@ -1161,6 +1162,7 @@ void export_xml (const StringSet &texs,
                  std::ostream &out,
                  const std::string &fname,
                  const Obj &obj,
+                 const std::string &oname,
                  struct geometry &g,
                  MatDB &matdb,
                  std::ostream &matbin,
@@ -1230,12 +1232,12 @@ void export_xml (const StringSet &texs,
         int tris = s->indexes2.size() / 3;
 
         if (tris==0) {
-            //out<<"Empty submesh: \""<<obj.id<<"/"<<s->material<<"\"\n";
+            //out<<"Empty submesh: \""<<oname<<"/"<<s->material<<"\"\n";
             continue;
         }
 
         std::string mname =
-            export_or_provide_mat(texs,ide,imgs,g,s->material,obj,matdb,matbin,mod_name);
+            export_or_provide_mat(texs,ide,imgs,g,s->material,obj,oname,matdb,matbin,mod_name);
 
         s->surrogate = mname;
 
@@ -1293,6 +1295,7 @@ void export_mesh (const StringSet &texs,
                   std::ostream &out,
                   const std::string &fname,
                   const Obj &obj,
+                 const std::string &oname,
                   struct geometry &g,
                   MatDB &matdb,
                   std::ostream &matbin,
@@ -1423,7 +1426,7 @@ void export_mesh (const StringSet &texs,
         int tris = s->indexes2.size() / 3;
 
         if (tris==0) {
-            //out<<"Empty submesh: \""<<obj.id<<"/"<<s->material<<"\"\n";
+            //out<<"Empty submesh: \""<<oname<<"/"<<s->material<<"\"\n";
             continue;
         }
 
@@ -1431,7 +1434,7 @@ void export_mesh (const StringSet &texs,
         unsigned short *ibuf_next = ibuf;
 
         std::string mname =
-            export_or_provide_mat(texs,ide,imgs,g,s->material,obj,matdb,matbin,mod_name);
+            export_or_provide_mat(texs,ide,imgs,g,s->material,obj,oname,matdb,matbin,mod_name);
 
         s->surrogate = mname;
 
@@ -1484,7 +1487,7 @@ void export_mesh (const StringSet &texs,
 // DFFREAD CMDLINE TOOL STUFF //////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef _DFFREAD_TEST
+#ifdef _DFFREAD_EXEC
 
 #include "console_colour.h"
 
@@ -1557,12 +1560,15 @@ const char *info =
 
 const char *usage =
 "Usage: dffread { <opt> }\n\n"
-"where <opt> ::= \"-v\" | \"--verbose\"             increase debug level\n"
-"              | \"-q\" | \"--quiet\"               decrease debug level\n"
-"              | \"-d\" <file> | \"--dff\" <file>   add to list of dffs\n\n"
-"              | \"-o\" | \"--orphans\"             list orphaned frames\n"
-"              | \"-O\" | \"--no-orphans\"          complement of above\n\n"
-"              | \"-h\" | \"--help\"                this message\n";
+"where <opt> ::= \"-v\" | \"--verbose\"               increase debug level\n"
+"              | \"-q\" | \"--quiet\"                 decrease debug level\n"
+"              | \"-d\" <file> | \"--dff\" <file>     add to list of dffs\n\n"
+"              | \"-e\" <name> | \"--export\" <name>  export to .mesh\n"
+"              | \"-m\" <name> | \"--modname\" <name> for export\n"
+"              | \"-t\" <name> | \"--txd\" <name>     for export\n\n"
+"              | \"-o\" | \"--orphans\"               list orphaned frames\n"
+"              | \"-O\" | \"--no-orphans\"            complement of above\n\n"
+"              | \"-h\" | \"--help\"                  this message\n";
 
 std::string next_arg(int& so_far, int argc, char **argv)
 {
@@ -1599,6 +1605,10 @@ int main(int argc, char **argv)
     // default parameters
     int d= 0;
     bool orphans = false;
+    bool do_export_mesh = false;
+    std::string oname;
+    std::string modname;
+    std::string txdname;
 
     int so_far = 1;
 
@@ -1620,6 +1630,13 @@ int main(int argc, char **argv)
                 exit(EXIT_FAILURE);
             }
             dffs.push_back(file_name);
+        } else if (arg=="-m" || arg=="--modname") {
+            modname = next_arg(so_far,argc,argv);
+        } else if (arg=="-t" || arg=="--txd") {
+            txdname = next_arg(so_far,argc,argv);
+        } else if (arg=="-e" || arg=="--export") {
+            oname = next_arg(so_far,argc,argv);
+            do_export_mesh = true;
         } else if (arg=="-h" || arg=="--help") {
             std::cout<<info<<std::endl;
             std::cout<<usage<<std::endl;
@@ -1630,12 +1647,21 @@ int main(int argc, char **argv)
         } 
     }
 
-    for (Strings::iterator i=dffs.begin() ; i!=dffs.end() ; i++) {
-        try {
+
+    try {
+
+        std::ofstream matbin;
+        if  (do_export_mesh) {
+            init_ogre();
+            matbin.open((oname+".matbin").c_str(), std::ios::binary);
+            ASSERT_IO_SUCCESSFUL(matbin, "opening "+oname+".matbin");
+        }
+
+        for (Strings::iterator i=dffs.begin() ; i!=dffs.end() ; i++) {
             const char *name = i->c_str();
             std::ifstream f;
             f.open(name, std::ios::binary);
-            ASSERT_IO_SUCCESSFUL(f,"opening "+name);
+            ASSERT_IO_SUCCESSFUL(f,"opening "+*i);
             VBOS(0,"reading dff: "<<name<<"\n");
 
             struct dff dff;
@@ -1644,13 +1670,26 @@ int main(int argc, char **argv)
             if (orphans)
                 list_orphans(d,&dff,(*i+"/").c_str());
 
-        } catch (Exception &e) {
-            std::cerr << "ERROR: "
-                      << e.getFullDescription() << std::endl;
+            if (do_export_mesh) {
+                StringSet texs;
+                ide ide;
+                std::vector<std::string> imgs;
+                imgs.push_back("");
+                Obj obj;
+                obj.txd = txdname;
+                MatDB matdb;
+                export_mesh(texs, ide, imgs, std::cout, oname+".mesh", obj,
+                            oname, dff.geometries[0], matdb, matbin, modname);
 
-            return EXIT_FAILURE;
+            }
+
         }
 
+    } catch (Exception &e) {
+        std::cerr << "ERROR: "
+                  << e.getFullDescription() << std::endl;
+
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;

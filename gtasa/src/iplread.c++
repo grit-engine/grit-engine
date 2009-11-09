@@ -225,7 +225,7 @@ void IPL::addMore(std::istream &f)
         }
 }
 
-#ifdef _IPLREAD_TEST
+#ifdef _IPLREAD_EXEC
 
 size_t amount_read = 0;
 size_t amount_seeked = 0;

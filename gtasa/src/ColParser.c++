@@ -24,12 +24,18 @@ bool parse_col (std::string &name,
         fourcc = ios_read_u32(in);
 
         tcol.mass = 0;
+        tcol.inertia_x = 0;
+        tcol.inertia_y = 0;
+        tcol.inertia_z = 0;
         tcol.friction = 0.5;
         tcol.restitution = 0;
         tcol.linearDamping = 0;
         tcol.angularDamping = 0.5;
         tcol.linearSleepThreshold = 1;
         tcol.angularSleepThreshold = 0.8;
+        tcol.ccdMotionThreshold = 0;
+        tcol.ccdSweptSphereRadius = 0;
+
 
         unsigned long size = ios_read_u32(in);
         (void)size;

@@ -75,7 +75,7 @@ void ifpread(std::istream &f, std::string p)
 
 
 
-#ifdef _IFPREAD_TEST
+#ifdef _IFPREAD_EXEC
 
 size_t amount_read = 0;
 size_t amount_seeked = 0;

@@ -49,6 +49,9 @@
 #undef max
 #endif
 
+
+#define VBOS(x,y) if (x<d) { std::cout<<y<<std::endl; } else { }
+
 // these are for writing to memory blocks
 
 static int tolowr (int c)
@@ -332,4 +335,143 @@ Txd::Txd (std::istream &f, const std::string &dest_dir, bool output)
 
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+// TXDREAD CMDLINE TOOL STUFF //////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+#ifdef _TXDREAD_EXEC
+
+#include "console_colour.h"
+
+void app_verbose(char const* file, int line, const std::string& msg)
+{
+        std::cout<<BOLD GREEN"VERBOSE "RESET
+                 <<BOLD<<file<<NOBOLD":"BOLD<<line<<NOBOLD
+                 <<": \""BOLD BLUE<<msg<<RESET"\"";
+        std::cout<<std::endl;
+}
+
+void app_error(char const* file, int line,
+               const std::string& i_was, const std::string& msg)
+{
+        std::cout<<BOLD RED"ERROR "RESET
+                 <<BOLD<<file<<NOBOLD":"BOLD<<line<<NOBOLD
+                 <<": \""BOLD YELLOW<<msg<<RESET"\"";
+        if (i_was!="")
+                std::cout<<" ("BOLD YELLOW<<i_was<<RESET")";
+        std::cout<<std::endl;
+}
+
+void app_line(const std::string &msg)
+{
+        std::cout<<BOLD<<msg<<NOBOLD<<std::endl;
+}
+
+void app_fatal()
+{
+        abort();
+}
+
+#define VERSION "1.0"
+
+const char *info =
+"txdread (c) Dave Cunningham 2007  (version: "VERSION")\n"
+"I dump dds files from txds.\n";
+
+const char *usage =
+"Usage: txdread { <opt> }\n\n"
+"where <opt> ::= \"-v\" | \"--verbose\"               increase debug level\n"
+"              | \"-q\" | \"--quiet\"                 decrease debug level\n"
+"              | \"-i\" <file> | \"--in\" <file>      input txd\n\n"
+"              | \"-d\" <dir> | \"--destdir\" <dir>   export here\n"
+"              | \"-h\" | \"--help\"                  this message\n";
+
+std::string next_arg(int& so_far, int argc, char **argv)
+{
+        if (so_far==argc) {
+                std::cerr<<"Ran out of arguments."<<std::endl;
+                std::cerr<<usage<<std::endl;
+                exit(EXIT_FAILURE);
+        }
+        return argv[so_far++];
+}
+
+
+std::string get_ext(const std::string& name, std::string *base_name)
+{
+        std::string r;
+        std::string::size_type dot = name.find_last_of('.');
+        if (dot!=std::string::npos) {
+                r = name.substr(dot);
+                if (base_name) *base_name = name.substr(0,dot);
+        }
+        return r;
+}
+
+
+int main(int argc, char **argv)
+{
+    if (argc==1) {
+        std::cout<<info<<std::endl;
+        std::cout<<usage<<std::endl;
+    }
+
+    // default parameters
+    int d= 0;
+    std::string txdname;
+    std::string dest_dir = ".";
+
+    int so_far = 1;
+
+    while (so_far<argc) {
+        std::string arg = next_arg(so_far,argc,argv);
+        if (arg=="-v" || arg=="--verbose") {
+            d++;
+        } else if (arg=="-q" || arg=="--quiet") {
+            d--;
+        } else if (arg=="-i" || arg=="--in") {
+            txdname = next_arg(so_far,argc,argv);
+            if (get_ext(txdname,NULL)!=".txd") {
+                std::cerr << txdname<<": does not end in .txd"
+                          << std::endl;
+                exit(EXIT_FAILURE);
+            }
+        } else if (arg=="-d" || arg=="--destdir") {
+            dest_dir = next_arg(so_far,argc,argv);
+        } else if (arg=="-h" || arg=="--help") {
+            std::cout<<info<<std::endl;
+            std::cout<<usage<<std::endl;
+        } else {
+            std::cerr<<"Unrecognised argument: "<<arg<<std::endl;
+            std::cerr<<usage<<std::endl;
+            exit(EXIT_FAILURE);
+        } 
+    }
+
+
+    try {
+
+        if (txdname != "") {
+            std::ifstream f;
+            f.open(txdname.c_str(), std::ios::binary);
+            ASSERT_IO_SUCCESSFUL(f,"opening "+txdname);
+            VBOS(0,"reading txd: "<<txdname<<"\n");
+
+            Txd txd(f, dest_dir, true);
+        }
+
+    } catch (Exception &e) {
+        std::cerr << "ERROR: "
+                  << e.getFullDescription() << std::endl;
+
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+#endif
+
+// vim: shiftwidth=4:tabstop=4:expandtab
 // vim: shiftwidth=8:tabstop=8:expandtab
