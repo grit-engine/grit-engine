@@ -1090,6 +1090,8 @@ TRY_START
         std::string key  = luaL_checkstring(L,2);
         if (key=="reset") {
                 push_cfunction(L,timer_reset);
+        } else if (key=="s") {
+                lua_pushnumber(L,timer.getMilliseconds()/1000.0);
         } else if (key=="ms") {
                 lua_pushnumber(L,timer.getMilliseconds());
         } else if (key=="us") {
