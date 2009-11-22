@@ -179,6 +179,7 @@ class GritObjectManager {
         Space rs;
         GObjPtrs activated;
         GObjPtrs loaded;
+        GObjPtrs fresh; // just been added - skip the queue for activation
 
         Ogre::SceneNode *gfx;
 

@@ -137,6 +137,7 @@ GritObjectPtr GritObjectManager::addObject (
         GritObjectPtr self = GritObjectPtr(new GritObject(name,grit_class));
         gObjs[name] = self;
         rs.add(self);
+        fresh.push_back(self);
 
         return self;
 }
@@ -169,16 +170,28 @@ void GritObjectManager::eraseObject (const Ogre::String &name)
         gObjs.erase(name);
 }
 
+static void remove_if_exists (GObjPtrs &fresh, const GritObjectPtr &o)
+{
+        GObjPtrs::iterator iter = find(fresh.begin(),fresh.end(),o);
+        if (iter!=fresh.end()) {
+                size_t offset = iter - fresh.begin();
+                fresh[offset] = fresh[fresh.size()-1];
+                fresh.pop_back();
+        }
+}
+
 void GritObjectManager::deleteObject (lua_State *L, const GritObjectPtr &o)
 {
         o->destroy(L,o);
         rs.remove(o);
+        remove_if_exists(fresh, o);
         eraseObject(o->name);
 }
 
 void GritObjectManager::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
 {
-        Space::Cargo fnd;
+        Space::Cargo fnd = fresh;
+        fresh.clear();
 
         const Ogre::Real pF = prepareDistanceFactor;
         const Ogre::Real tpF = pF * visibility; // prepare and visibility factors
