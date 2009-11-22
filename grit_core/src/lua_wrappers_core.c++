@@ -1488,9 +1488,19 @@ lua_State *init_lua(const char *filename)
         lua_setfield(L,-2,"cpath");
         lua_pop(L,1);
 
+        push_cfunction(L, my_lua_error_handler);
+        int error_handler = lua_gettop(L);
+
         lua_getglobal(L, "require");
         lua_pushstring(L, "ldb");
-        lua_call(L, 1, 1);  /* If this fails, we can't go on */
+                // error handler should print stacktrace and stuff
+        int status = lua_pcall(L,1,1,error_handler);
+        if (status) {
+                lua_pop(L,1); //message
+                CLOG<<"The most common cause of this is running the executable "
+                      "from the wrong directory."<<std::endl;
+                app_fatal();
+        }
         lua_setfield(L, LUA_REGISTRYINDEX, "ldb");
 
 
@@ -1532,13 +1542,10 @@ lua_State *init_lua(const char *filename)
 
         luaL_register(L, "_G", global);
 
-        lua_pushthread(L);
-        lua_setglobal(L,"MAIN_STATE");
+        lua_pushthread(L); lua_setglobal(L,"MAIN_STATE");
+        push_gom(L, &grit->getGOM()); lua_setglobal(L,"gom");
 
-        push_cfunction(L, my_lua_error_handler);
-        int error_handler = lua_gettop(L);
-
-        int status = luaL_loadfile(L,filename);
+        status = luaL_loadfile(L,filename);
         if (status) {
                 const char *str = lua_tostring(L,-1);
                 CERR << "loading lua file: " << str << std::endl;

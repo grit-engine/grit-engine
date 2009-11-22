@@ -34,8 +34,7 @@ void GritObjectManager::clearObjects (lua_State *L)
 }
 
 
-void GritObjectManager::setGFX (lua_State *L,
-                                Ogre::SceneNode *gfx)
+void GritObjectManager::setGFX (lua_State *L, Ogre::SceneNode *gfx)
 {
         GObjMap gObjs = this->gObjs;
         for (GObjMap::iterator i=gObjs.begin(), i_=gObjs.end() ; i!=i_ ; ++i) {
@@ -44,15 +43,13 @@ void GritObjectManager::setGFX (lua_State *L,
         this->gfx = gfx;
 }
 
-void GritObjectManager::setBounds (lua_State *L,
-                                   const Ogre::AxisAlignedBox &bounds_)
+void GritObjectManager::setBounds (lua_State *L, const Ogre::AxisAlignedBox &bounds_)
 {
         bounds = bounds_;
         setPhysics(L, PhysicsWorldPtr(new PhysicsWorld(bounds)));
 }
 
-void GritObjectManager::setPhysics (lua_State *L,
-                                    const PhysicsWorldPtr &physics)
+void GritObjectManager::setPhysics (lua_State *L, const PhysicsWorldPtr &physics)
 {
         GObjMap gObjs = this->gObjs;
         // don't need to clearPhysics() because it's a smart pointer
@@ -66,13 +63,22 @@ void GritObjectManager::setPhysics (lua_State *L,
 
 GritClass *GritObjectManager::addClass (lua_State *L, const Ogre::String& name)
 {
-        if (classes.find(name)!=classes.end())
-                OGRE_EXCEPT(Ogre::Exception::ERR_DUPLICATE_ITEM,
-                            "GritClass already exists: "+name,
-                            "GritObjectManager::addClass");
-        // add it and return it
-        GritClass *gcp = new GritClass(L,name);
-        classes[name] = gcp;
+        GritClass *gcp;
+        GritClassMap::iterator i = classes.find(name);
+        
+        if (i!=classes.end()) {
+                gcp = i->second;
+                int index = lua_gettop(L);
+                for (lua_pushnil(L) ; lua_next(L,index)!=0 ; lua_pop(L,1)) {
+                        gcp->set(L);
+                }
+                lua_pop(L,1); // the table we just iterated through
+                gcp->setParent(L);
+        } else {
+                // add it and return it
+                gcp = new GritClass(L,name);
+                classes[name] = gcp;
+        }
         return gcp;
 }
 
@@ -122,10 +128,11 @@ GritObjectPtr GritObjectManager::addObject (
                 } while (gObjs.find(name)!=gObjs.end());
         }
                         
-        if (gObjs.find(name)!=gObjs.end())
-                OGRE_EXCEPT(Ogre::Exception::ERR_DUPLICATE_ITEM,
-                            "GritObject already exists: "+name,
-                            "GritObjectManager::addObject");
+        GObjMap::iterator i = gObjs.find(name);
+
+        if (i!=gObjs.end()) {
+                deleteObject(L,i->second);
+        }
 
         GritObjectPtr self = GritObjectPtr(new GritObject(name,grit_class));
         gObjs[name] = self;
@@ -169,15 +176,13 @@ void GritObjectManager::deleteObject (lua_State *L, const GritObjectPtr &o)
         eraseObject(o->name);
 }
 
-void GritObjectManager::centre (lua_State *L,
-                                Ogre::Real x, Ogre::Real y, Ogre::Real z,
-                                Ogre::Real vF)
+void GritObjectManager::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
 {
         Space::Cargo fnd;
 
         const Ogre::Real pF = prepareDistanceFactor;
-        const Ogre::Real tpF = pF * vF; // prepare and visibility factors
-        const Ogre::Real vF2 = vF * vF;
+        const Ogre::Real tpF = pF * visibility; // prepare and visibility factors
+        const Ogre::Real vis2 = visibility * visibility;
 
         typedef GObjPtrs::iterator I;
 
@@ -192,14 +197,14 @@ void GritObjectManager::centre (lua_State *L,
         GObjPtrs victims = activated;
         for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = *i;
-                 //note we use vF2 not vF
-                Ogre::Real range2 = o->range2(x,y,z) / vF2;
+                 //note we use vis2 not visibility
+                Ogre::Real range2 = o->range2(x,y,z) / vis2;
                 o->notifyRange2(L,o,range2);
                 if (!o->getFar().isNull()) {
                         // update the far (perhaps for a second time this frame)
                         // to make sure it has picked up the fade imposed by o
                         const GritObjectPtr &f = o->getFar();
-                        Ogre::Real range2 = f->range2(x,y,z) / vF2;
+                        Ogre::Real range2 = f->range2(x,y,z) / vis2;
                         f->notifyRange2(L,f,range2);
                 }
                 if (range2 > 1) {
@@ -258,7 +263,7 @@ void GritObjectManager::centre (lua_State *L,
 
                 if (!o->backgroundPrepareComplete()) continue;
 
-                Ogre::Real range2 = o->range2(x,y,z) / vF2;
+                Ogre::Real range2 = o->range2(x,y,z) / vis2;
                 // not in range yet
                 if (range2 > 1) continue;
 
@@ -266,7 +271,7 @@ void GritObjectManager::centre (lua_State *L,
                 // a near object in the way
                 GritObjectPtr near = o->getNear();
                 while (!near.isNull()) {
-                        if (near->withinRange(x,y,z,vF * fadeOverlapFactor)) {
+                        if (near->withinRange(x,y,z,visibility * fadeOverlapFactor)) {
                                 if (near->isActivated()) {
                                         o->deactivate(L,o);
                                         // don't activate, near gobj is

@@ -59,6 +59,12 @@ class GritClass {
                 if (err) my_lua_error(L,err);
         }
 
+        void set (lua_State *L)
+        {
+                const char *err = table.luaSet(L);
+                if (err) my_lua_error(L,err);
+        }
+
         void dump (lua_State *L)
         {
                 table.dump(L);

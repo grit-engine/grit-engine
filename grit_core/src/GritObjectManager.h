@@ -32,7 +32,8 @@ class GritObjectManager {
               : prepareDistanceFactor(1.3),
                 fadeOutFactor(.7),
                 fadeOverlapFactor(.7),
-                stepSize(10000),
+                visibility(1),
+                stepSize(20000),
                 gfx(NULL),
                 bounds(-3000,-3000,-3000,3000,3000,3000),
                 nameGenerationCounter(0), shutdown(false)
@@ -129,9 +130,9 @@ class GritObjectManager {
         Ogre::Real fadeOutFactor;
         Ogre::Real fadeOverlapFactor;
 
-        virtual void centre (lua_State *L,
-                             Ogre::Real x, Ogre::Real y, Ogre::Real z,
-                             Ogre::Real factor);
+        Ogre::Real visibility;
+
+        virtual void centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z);
 
         virtual inline void updateSphere (size_t index, Ogre::Real x,
                                           Ogre::Real y, Ogre::Real z,
@@ -144,25 +145,18 @@ class GritObjectManager {
 
         virtual void list (const GritObjectPtr &o)
         {
-                GObjPtrs::iterator begin = activated.begin(),
-                                   end   = activated.end();
+                GObjPtrs::iterator begin = activated.begin(), end = activated.end();
                 GObjPtrs::iterator iter  = find(begin,end,o);
-
                 if (iter!=end) return;
-
                 activated.push_back(o);
         }
 
         virtual void unlist (const GritObjectPtr &o)
         {
-                GObjPtrs::iterator begin = activated.begin(),
-                                   end   = activated.end();
+                GObjPtrs::iterator begin = activated.begin(), end = activated.end();
                 GObjPtrs::iterator iter  = find(begin,end,o);
-
                 if (iter==end) return;
-
                 size_t index = iter - begin;
-
                 activated[index] = activated[activated.size()-1];
                 activated.pop_back();
         }

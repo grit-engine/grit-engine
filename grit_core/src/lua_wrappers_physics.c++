@@ -5,6 +5,7 @@
 
 #include "lua_wrappers_primitives.h"
 #include "lua_wrappers_physics.h"
+#include "lua_wrappers_gritobj.h"
 
 // Sweep Callback {{{
 
@@ -541,6 +542,13 @@ TRY_START
         } else if (key=="world") {
                 push_pworld(L,self->world);
 
+        } else if (key=="owner") {
+                if (self->owner.isNull()) {
+                        lua_pushnil(L);
+                } else {
+                        push_gritobj(L,self->owner);
+                }
+
         } else if (key=="updateCallback") {
                 self->pushUpdateCallback(L);
         } else if (key=="stepCallback") {
@@ -605,6 +613,15 @@ TRY_START
         } else if (key=="inertia") {
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self->setInertia(v);
+
+        } else if (key=="owner") {
+                if (lua_isnil(L,3)) {
+                        self->owner.setNull();
+                } else {
+                        GET_UD_MACRO(GritObjectPtr,v,3,GRITOBJ_TAG);
+                        self->owner = v;
+                }
+
         } else {
                my_lua_error(L,"Not a writeable RigidBody member: "+key);
         }

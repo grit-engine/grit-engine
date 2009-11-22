@@ -84,40 +84,6 @@ void DynamicsWorld::end (btScalar time_left)
         clearForces();
 }
 
-
-/*
-btVector3 get_face_normal (const btStridingMeshInterface *mesh, int face) {
-        PHY_ScalarType vertexes_type, indexes_type;
-        const unsigned char *vertexes;
-        int num_vertexes;
-        int vertexes_stride;
-        const unsigned char *indexes;
-        int num_faces;
-        int face_stride;
-        mesh->getLockedReadOnlyVertexIndexBase
-                (&vertexes, num_vertexes, vertexes_type, vertexes_stride,
-                 &indexes, face_stride, num_faces, indexes_type);
-        APP_ASSERT(vertexes_type == PHY_FLOAT);
-        APP_ASSERT(indexes_type == PHY_INTEGER);
-        const Face *indexes2 =
-                reinterpret_cast<const Face*>(indexes + face_stride*face);
-        int i1=indexes2->v1, i2=indexes2->v2, i3=indexes2->v3;
-        unsigned int flag = indexes2->flag;
-        (void) flag; // TODO: do something useful with this
-        btVector3 v1 = *reinterpret_cast<const btVector3 *>
-                                (vertexes + vertexes_stride * i1);
-        btVector3 v2 = *reinterpret_cast<const btVector3 *>
-                                (vertexes + vertexes_stride * i2);
-        btVector3 v3 = *reinterpret_cast<const btVector3 *>
-                                (vertexes + vertexes_stride * i3);
-        btVector3 r;
-        r = (v2-v1).cross(v3-v1);
-        r.normalize();
-        return r;
-}
-*/
-
-#if 1
 void process_contact (btManifoldPoint& cp,
                       const btCollisionObject* colObj,
                       int partId, int index, bool gimpact)
@@ -171,9 +137,6 @@ bool contact_added_callback (btManifoldPoint& cp,
                              const btCollisionObject* colObj1,
                              int partId1, int index1)
 {
-        (void) colObj1;
-        (void) partId1;
-        (void) index1;
         // 0 is always the gimpact?
         // 1 is always the scenery?
         process_contact(cp, colObj0, partId0, index0, true);
@@ -181,55 +144,6 @@ bool contact_added_callback (btManifoldPoint& cp,
         //std::cout << to_ogre(cp.m_normalWorldOnB) << std::endl;
         return true;
 }       
-#else
-void contact_added_callback_obj (btManifoldPoint& cp,
-                                 const btCollisionObject* colObj,
-                                 int partId, int index)
-{
-        (void) partId;
-        (void) index;
-        const btCollisionShape *shape = colObj->getCollisionShape();
-
-        if (shape->getShapeType() != TRIANGLE_SHAPE_PROXYTYPE) return;
-        const btTriangleShape *tshape =
-               static_cast<const btTriangleShape*>(colObj->getCollisionShape());
-
-
-        const btCollisionShape *parent = colObj->getRootCollisionShape();
-        if (parent == NULL) return;
-        if (parent->getShapeType() != TRIANGLE_MESH_SHAPE_PROXYTYPE) return;
-
-        btTransform orient = colObj->getWorldTransform();
-        orient.setOrigin( btVector3(0.0f,0.0f,0.0f ) );
-
-        btVector3 v1 = tshape->m_vertices1[0];
-        btVector3 v2 = tshape->m_vertices1[1];
-        btVector3 v3 = tshape->m_vertices1[2];
-
-        btVector3 normal = (v2-v1).cross(v3-v1);
-
-        normal = orient * normal;
-        normal.normalize();
-
-        btScalar dot = normal.dot(cp.m_normalWorldOnB);
-        btScalar magnitude = cp.m_normalWorldOnB.length();
-        normal *= dot > 0 ? magnitude : -magnitude;
-
-        cp.m_normalWorldOnB = normal;
-}
-
-bool contact_added_callback (btManifoldPoint& cp,
-                             const btCollisionObject* colObj0,
-                             int partId0, int index0,
-                             const btCollisionObject* colObj1,
-                             int partId1, int index1)
-{
-        contact_added_callback_obj(cp, colObj0, partId0, index0);
-        contact_added_callback_obj(cp, colObj1, partId1, index1);
-        //std::cout << to_ogre(cp.m_normalWorldOnB) << std::endl;
-        return true;
-}
-#endif
 
 extern ContactAddedCallback gContactAddedCallback;
 

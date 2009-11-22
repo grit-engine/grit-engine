@@ -149,20 +149,11 @@ implement various effects
 
 allow modder to choose subset of effects, providing necessary parameters
 
-clean up API for map scripts, make much simpler
--- instead of error when object already exists, just replace
-
 avoid using tables for vehicle classes
-
-ensure nothing special needed to reload a class / instance as opposed to add a class / instance
 
 group together a large number of environmental options under a common API --
 e.g. camera, shadow, ambient lighting, sun, etc.  Allow clear, and reset of
 this stuff.
-
-arrange it so that just including a map lua file is enough to replace
-everything with with a brand new map
-
 
 
 

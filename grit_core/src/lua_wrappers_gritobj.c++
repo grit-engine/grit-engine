@@ -1,4 +1,3 @@
-#include "GritObjectManager.h"
 #include "GritObject.h"
 #include "Grit.h"
 
@@ -369,13 +368,12 @@ TRY_END
 static int gom_centre (lua_State *L)
 {
 TRY_START
-        check_args(L,5);
+        check_args(L,4);
         GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
         Ogre::Real x = luaL_checknumber(L,2);
         Ogre::Real y = luaL_checknumber(L,3);
         Ogre::Real z = luaL_checknumber(L,4);
-        Ogre::Real factor = luaL_checknumber(L,5);
-        self.centre(L,x,y,z,factor);
+        self.centre(L,x,y,z);
         return 0;
 TRY_END
 }
@@ -503,6 +501,29 @@ TRY_START
         Ogre::Real r = lua_tonumber(L,-1);
         o->updateSphere(x,y,z,r);
         lua_pop(L,1);
+
+        lua_getfield(L,table_index,"near");
+        if (!lua_isnil(L,-1)) {
+                if (is_userdata(L,-1,GRITOBJ_TAG)) {
+                        GET_UD_MACRO(GritObjectPtr,near,-1,GRITOBJ_TAG);
+                        o->setNear(o, near);
+                } else {
+                        my_lua_error(L,"Field 'near' must be a grit object.");
+                }
+        }
+        lua_pop(L,1);
+
+        lua_getfield(L,table_index,"far");
+        if (!lua_isnil(L,-1)) {
+                if (is_userdata(L,-1,GRITOBJ_TAG)) {
+                        GET_UD_MACRO(GritObjectPtr,far,-1,GRITOBJ_TAG);
+                        o->setFar(o, far);
+                } else {
+                        my_lua_error(L,"Field 'far' must be a grit object.");
+                }
+        }
+        lua_pop(L,1);
+
         // scan through table adding lua data to o
         for (lua_pushnil(L) ; lua_next(L,table_index)!=0 ; lua_pop(L,1)) {
                 if (lua_type(L,-2)!=LUA_TSTRING) {
@@ -512,6 +533,8 @@ TRY_START
                 Ogre::String key = luaL_checkstring(L,-2);
                 // the name is held in the object anyway
                 if (key=="name") continue;
+                if (key=="near") continue;
+                if (key=="far") continue;
                 const char *err = o->userValues.luaSet(L);
                 if (err) {
                         self.deleteObject(L,o);
@@ -586,6 +609,41 @@ TRY_START
 TRY_END
 }
 
+static int gom_deactivate_all (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GObjMap::iterator i, i_;
+        for (self.getObjects(i,i_) ; i!=i_ ; ++i) {
+                const GritObjectPtr &o = i->second;
+                o->deactivate(L,o);
+        }       
+        return 0;
+TRY_END
+}
+
+static int gom_all_of_class (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        Ogre::String cls = luaL_checkstring(L,2);
+        lua_newtable(L);
+        unsigned int c = 0;
+        GObjMap::iterator i, i_;
+        for (self.getObjects(i,i_) ; i!=i_ ; ++i) {
+                const GritObjectPtr &o = i->second;
+                GritClass *oc = o->getClass();
+                if (oc==NULL) continue; // object destroyed
+                if (oc->name != cls) continue; // wrong class
+                push_gritobj(L,o);
+                lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                c++;                 
+        }       
+        return 1;
+TRY_END
+}
 
 
 TOSTRING_ADDR_MACRO (gom,GritObjectManager,GOM_TAG)
@@ -603,6 +661,8 @@ TRY_START
                 push_pworld(L,self.getPhysics());
         } else if (key=="stepSize") {
                 lua_pushnumber(L,self.stepSize);
+        } else if (key=="visibility") {
+                lua_pushnumber(L,self.visibility);
         } else if (key=="centre") {
                 push_cfunction(L,gom_centre);
         } else if (key=="getBounds") {
@@ -644,6 +704,10 @@ TRY_START
                 push_cfunction(L,gom_clear_objects);
         } else if (key=="clearClasses") {
                 push_cfunction(L,gom_clear_classes);
+        } else if (key=="deactivateAll") {
+                push_cfunction(L,gom_deactivate_all);
+        } else if (key=="allOfClass") {
+                push_cfunction(L,gom_all_of_class);
         } else if (key=="prepareDistanceFactor") {
                 lua_pushnumber(L,self.prepareDistanceFactor);
         } else if (key=="fadeOverlapFactor") {
@@ -656,6 +720,17 @@ TRY_START
                 GObjMap::iterator i, i_;
                 for (self.getObjects(i,i_) ; i!=i_ ; ++i) {
                         const GritObjectPtr &o = i->second;
+                        push_gritobj(L,o);
+                        lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                        c++;                 
+                }       
+        } else if (key=="activated") {
+                lua_newtable(L);
+                unsigned int c = 0;
+                GObjMap::iterator i, i_;
+                for (self.getObjects(i,i_) ; i!=i_ ; ++i) {
+                        const GritObjectPtr &o = i->second;
+                        if (!o->isActivated()) continue;
                         push_gritobj(L,o);
                         lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
                         c++;                 
@@ -679,6 +754,9 @@ TRY_START
         } else if (key=="stepSize") {
                 size_t v = check_t<size_t>(L,3);
                 self.stepSize = v;
+        } else if (key=="visibility") {
+                Ogre::Real v = luaL_checknumber(L,3);
+                self.visibility = v;
         } else if (key=="prepareDistanceFactor") {
                 Ogre::Real v = luaL_checknumber(L,3);
                 self.prepareDistanceFactor = v;

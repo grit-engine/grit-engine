@@ -341,70 +341,21 @@ void extract (const Config &cfg, std::ostream &out)
         ASSERT_IO_SUCCESSFUL(map, "opening map.lua");
         map.precision(25);
 
-        map << "print(\"Loading GTA San Andreas world\")\n";
+        map << "print(\"Loading world\")\n";
+        map << "gom:clearObjects()\n";
 
         map << "local last\n";
 
         std::vector<bool> used_ids;
 
-        for (IPLs::iterator i=ipls.begin(),i_=ipls.end() ; i!=i_ ; ++i) {
-                const IPL &ipl = *i;
-                const Insts &insts = ipl.getInsts();
-                for (Insts::const_iterator j=insts.begin(),j_=insts.end() ;
-                     j!=j_ ; ++j) {
-                        const Inst &inst = *j;
-                        unsigned long id = inst.id;
-                        if (used_ids.size()<id+1) {
-                                used_ids.resize(id+1);
-                        }
-                        used_ids[id] = true;
-                        if (inst.is_low_detail) continue;
-                        std::stringstream cls;
-                        cls << cfg.modname << "/" << inst.id;
-                        if (inst.near_for==-1) {
-                                map<<"tryAdd(\""<<cls.str()<<"\","
-                                   <<inst.x<<","<<inst.y<<","<<inst.z;
-                                if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
-                                        map<<",{rot=Quat("
-                                           <<inst.rw<<","<<inst.rx<<","
-                                           <<inst.ry<<","<<inst.rz<<")}";
-                                }
-                                map<<")\n";
-                        } else {
-                                const Inst &far = insts[inst.near_for];
-                                std::stringstream farcls;
-                                farcls << cfg.modname << "/" << far.id;
-                                map<<"last=tryAdd(\""<<cls.str()<<"\","
-                                   <<inst.x<<","<<inst.y<<","<<inst.z;
-                                if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
-                                        map<<",{rot=Quat("
-                                           <<inst.rw<<","<<inst.rx<<","
-                                           <<inst.ry<<","<<inst.rz<<")}";
-                                }
-                                map<<")\n";
-                                map<<"tryAdd(\""<<farcls.str()<<"\","
-                                   <<far.x<<","<<far.y<<","<<far.z;
-                                map<<",{";
-                                if (far.rx!=0 || far.ry!=0 || far.rz!=0) {
-                                        map<<"rot=Quat("
-                                           <<far.rw<<","<<far.rx<<","
-                                           <<far.ry<<","<<far.rz<<"),";
-                                }
-                                map<<"near=last}";
-                                map<<")\n";
-                        }
-                }
-        }
-
         MatDB matdb;
 
         std::ofstream classes;
-        classes.open((dest_dir+"/"+cfg.modname+"/grit_classes.lua").c_str(),
+        classes.open((dest_dir+"/"+cfg.modname+"/classes.lua").c_str(),
                           std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(classes, "opening grit_classes.lua");
+        ASSERT_IO_SUCCESSFUL(classes, "opening classes.lua");
 
-        classes << "print(\"Loading GTA San Andreas classes\")\n";
-        classes << "local gom = get_gom()\n";
+        classes << "print(\"Loading classes\")\n";
 
         std::ofstream matbin;
         matbin.open((dest_dir+"/"+cfg.modname+"/san_andreas.matbin").c_str(),
@@ -416,7 +367,11 @@ void extract (const Config &cfg, std::ostream &out)
         for (Objs::iterator i=objs.begin(),i_=objs.end() ; i!=i_ ; ++i) {
                 Obj &o = *i;
 
-                if (!used_ids[o.id]) continue;
+                unsigned long id = o.id;
+                if (used_ids.size()<id+1) {
+                        used_ids.resize(id+1);
+                }
+                used_ids[id] = true;
 
                 //out << "id: " << o.id << "  "
                 //    << "dff: " << o.dff << std::endl;
@@ -545,6 +500,51 @@ void extract (const Config &cfg, std::ostream &out)
                            <<col_field.str()
                        <<"})\n";
                 
+        }
+
+        for (IPLs::iterator i=ipls.begin(),i_=ipls.end() ; i!=i_ ; ++i) {
+                const IPL &ipl = *i;
+                const Insts &insts = ipl.getInsts();
+                for (Insts::const_iterator j=insts.begin(),j_=insts.end() ;
+                     j!=j_ ; ++j) {
+                        const Inst &inst = *j;
+                        if (inst.is_low_detail) continue;
+                        if (!used_ids[inst.id]) continue;
+                        std::stringstream cls;
+                        cls << cfg.modname << "/" << inst.id;
+                        if (inst.near_for==-1) {
+                                map<<"gom:addObject(\""<<cls.str()<<"\","
+                                   <<inst.x<<","<<inst.y<<","<<inst.z;
+                                if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
+                                        map<<",{rot=Quat("
+                                           <<inst.rw<<","<<inst.rx<<","
+                                           <<inst.ry<<","<<inst.rz<<")}";
+                                }
+                                map<<")\n";
+                        } else {
+                                const Inst &far = insts[inst.near_for];
+                                std::stringstream farcls;
+                                farcls << cfg.modname << "/" << far.id;
+                                map<<"last=gom:addObject(\""<<cls.str()<<"\","
+                                   <<inst.x<<","<<inst.y<<","<<inst.z;
+                                if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
+                                        map<<",{rot=Quat("
+                                           <<inst.rw<<","<<inst.rx<<","
+                                           <<inst.ry<<","<<inst.rz<<")}";
+                                }
+                                map<<")\n";
+                                map<<"gom:addObject(\""<<farcls.str()<<"\","
+                                   <<far.x<<","<<far.y<<","<<far.z;
+                                map<<",{";
+                                if (far.rx!=0 || far.ry!=0 || far.rz!=0) {
+                                        map<<"rot=Quat("
+                                           <<far.rw<<","<<far.rx<<","
+                                           <<far.ry<<","<<far.rz<<"),";
+                                }
+                                map<<"near=last}";
+                                map<<")\n";
+                        }
+                }
         }
 
 }

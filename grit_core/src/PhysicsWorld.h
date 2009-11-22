@@ -121,13 +121,11 @@ class PhysicsWorld {
                 return colMeshes.find(name) != colMeshes.end();
         }
 
-        CollisionMeshPtr getMesh (const Ogre::String &name) const
+        CollisionMeshPtr getMesh (const Ogre::String &name)
         {
                 CollisionMeshMap::iterator i = colMeshes.find(name);
                 if (i==colMeshes.end())
-                        OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
-                                    "CollisionMesh does not exist: "+name,
-                                    "PhysicsWorld::getMesh");
+                        return createFromFile(name);
                 return i->second;
         }
 
@@ -375,6 +373,8 @@ class RigidBody : public btMotionState {
                 luaL_unref(L,LUA_REGISTRYINDEX,stabiliseCallbackIndex);
                 stabiliseCallbackIndex = luaL_ref(L,LUA_REGISTRYINDEX);
         }
+
+        GritObjectPtr owner;
 
     protected:
 

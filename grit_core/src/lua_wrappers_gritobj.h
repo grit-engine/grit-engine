@@ -1,5 +1,7 @@
 #include "lua_wrappers_common.h"
 
+#include "GritObjectManager.h"
+
 #define GOM_TAG "Grit/ObjectManager"
 MT_MACRO_DECLARE(gom);
 void push_gom (lua_State *L, GritObjectManager *self);
