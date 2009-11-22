@@ -346,8 +346,6 @@ void extract (const Config &cfg, std::ostream &out)
 
         map << "local last\n";
 
-        std::vector<bool> used_ids;
-
         MatDB matdb;
 
         std::ofstream classes;
@@ -362,16 +360,29 @@ void extract (const Config &cfg, std::ostream &out)
                     std::ios::binary);
         ASSERT_IO_SUCCESSFUL(matbin, "opening san_andreas.matbin");
 
+
+        // don't bother generating classes for things that aren't instantiated
+        std::map<unsigned long,bool> ids_used_in_ipl;
+        for (IPLs::iterator i=ipls.begin(),i_=ipls.end() ; i!=i_ ; ++i) {
+                const Insts &insts = i->getInsts();
+                for (Insts::const_iterator j=insts.begin(),j_=insts.end() ; j!=j_ ; ++j) {
+                        const Inst &inst = *j;
+                        ids_used_in_ipl[inst.id] = true;
+                }
+        }
+
+
+        std::map<unsigned long,bool> ids_written_out;
+
         Objs &objs = everything.objs;
 
         for (Objs::iterator i=objs.begin(),i_=objs.end() ; i!=i_ ; ++i) {
                 Obj &o = *i;
 
-                unsigned long id = o.id;
-                if (used_ids.size()<id+1) {
-                        used_ids.resize(id+1);
-                }
-                used_ids[id] = true;
+                // id never used
+                if (!ids_used_in_ipl[o.id]) continue;
+
+                ids_written_out[o.id] = true;
 
                 //out << "id: " << o.id << "  "
                 //    << "dff: " << o.dff << std::endl;
@@ -509,7 +520,7 @@ void extract (const Config &cfg, std::ostream &out)
                      j!=j_ ; ++j) {
                         const Inst &inst = *j;
                         if (inst.is_low_detail) continue;
-                        if (!used_ids[inst.id]) continue;
+                        if (!ids_written_out[inst.id]) continue;
                         std::stringstream cls;
                         cls << cfg.modname << "/" << inst.id;
                         if (inst.near_for==-1) {
