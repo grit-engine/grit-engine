@@ -298,7 +298,10 @@ void GritObjectManager::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::
                 // ok there wasn't so activate
                 o->activate(L,o,gfx,physics);
 
-                o->notifyRange2(L,o,range2);
+                // activation can result in a lua error which triggers the destruction of the
+                // object 'o' so we test for that here before calling notifyRange2
+                if (o->getClass()!=NULL) 
+                        o->notifyRange2(L,o,range2);
 
                 skip:;
         }

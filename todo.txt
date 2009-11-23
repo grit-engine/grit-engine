@@ -74,13 +74,6 @@ set up a timeDemo simulation for quantative performance measurements
 binary collision file format
 binary contains precomputed data for bvh-based collision meshes
 
-Collision meshes to be considered a resource like graphical meshes
-
-rigid body creation triggers creation of CollisionMesh instance if not already
-existing
-
-rigid body creation triggers loading of CollisionMesh instance if not already loaded
-
 background resource loading includes collision meshes
 
 display the occl zones, find out if i can use them for occlusion culling
@@ -132,8 +125,6 @@ When overloaded functions are called with the wrong args, list all options.
 --------------------------------------------------------------------------------
 modding
 --------------------------------------------------------------------------------
-
-create a new materials system using lua bindings
 
 integrate with a single ubershader
 

@@ -80,6 +80,16 @@ TRY_START
 TRY_END
 }
 
+static int mat_remove_all_techniques (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::MaterialPtr,mat,1,MAT_TAG);
+        mat->removeAllTechniques();
+        return 0;
+TRY_END
+}
+
 static Ogre::Technique *mat_get_technique_unsafe (lua_State *L)
 {
         GET_UD_MACRO(Ogre::MaterialPtr,mat,1,MAT_TAG);
@@ -111,9 +121,31 @@ TRY_END
 static int mat_is_technique_supported (lua_State *L)
 {
 TRY_START
+        check_args(L,2);
         Ogre::Technique *t = mat_get_technique_unsafe(L);
         lua_pushboolean(L,t->isSupported());
         return 1;
+TRY_END
+}
+
+static int mat_get_shadow_caster_material (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        Ogre::Technique *t = mat_get_technique_unsafe(L);
+        push(L,new Ogre::MaterialPtr(t->getShadowCasterMaterial()),MAT_TAG);
+        return 1;
+TRY_END
+}
+
+static int mat_set_shadow_caster_material (lua_State *L)
+{
+TRY_START
+        check_args(L,2+1);
+        Ogre::Technique *t = mat_get_technique_unsafe(L);
+        GET_UD_MACRO(Ogre::MaterialPtr,mat,3,MAT_TAG);
+        t->setShadowCasterMaterial(mat);
+        return 0;
 TRY_END
 }
 
@@ -241,6 +273,26 @@ TRY_START
         Ogre::Pass *p = mat_get_pass(L);
         lua_pushstring(L,p->getFragmentProgramName().c_str());
         return 1;
+TRY_END
+}
+
+static int mat_set_vertex_program (lua_State *L)
+{
+TRY_START
+        check_args(L,3+1);
+        Ogre::Pass *p = mat_get_pass(L);
+        p->setVertexProgram(luaL_checkstring(L,4));
+        return 0;
+TRY_END
+}
+
+static int mat_set_fragment_program (lua_State *L)
+{
+TRY_START
+        check_args(L,3+1);
+        Ogre::Pass *p = mat_get_pass(L);
+        p->setFragmentProgram(luaL_checkstring(L,4));
+        return 0;
 TRY_END
 }
 
@@ -784,6 +836,27 @@ TRY_START
                 std::string arr[] = {str1,str2,str3,str4,str5,str6};
                 tex->setCubicTextureName(arr,b);
         }
+        return 0;
+TRY_END
+}
+
+static int mat_get_is_shadow (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
+        lua_pushboolean(L,tex->getContentType()==Ogre::TextureUnitState::CONTENT_SHADOW);
+        return 1;
+TRY_END
+}
+static int mat_set_is_shadow (lua_State *L)
+{
+TRY_START
+        check_args(L,4+1);
+        Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
+        bool b = 0!=lua_toboolean(L,5);
+        tex->setContentType(b ?  Ogre::TextureUnitState::CONTENT_SHADOW :
+                                 Ogre::TextureUnitState::CONTENT_NAMED);
         return 0;
 TRY_END
 }
@@ -1579,9 +1652,15 @@ static int mat_index(lua_State *L) {
                 push_cfunction(L,mat_create_texture_unit_state);
         } else if (key=="isTechniqueSupported") {
                 push_cfunction(L,mat_is_technique_supported);
+        } else if (key=="getShadowCasterMaterial") {
+                push_cfunction(L,mat_get_shadow_caster_material);
+        } else if (key=="setShadowCasterMaterial") {
+                push_cfunction(L,mat_set_shadow_caster_material);
 
         } else if (key=="removeTechnique") {
                 push_cfunction(L,mat_remove_technique);
+        } else if (key=="removeAllTechniques") {
+                push_cfunction(L,mat_remove_all_techniques);
         } else if (key=="removePass") {
                 push_cfunction(L,mat_remove_pass);
         } else if (key=="removeTextureUnitState") {
@@ -1602,6 +1681,10 @@ static int mat_index(lua_State *L) {
                 push_cfunction(L,mat_get_vertex_program_name);
         } else if (key=="getFragmentProgramName") {
                 push_cfunction(L,mat_get_fragment_program_name);
+        } else if (key=="setVertexProgram") {
+                push_cfunction(L,mat_set_vertex_program);
+        } else if (key=="setFragmentProgram") {
+                push_cfunction(L,mat_set_fragment_program);
         } else if (key=="getEmissiveVertex") {
                 push_cfunction(L,mat_get_emissive_vertex);
         } else if (key=="getAmbientVertex") {
@@ -1703,6 +1786,10 @@ static int mat_index(lua_State *L) {
                 push_cfunction(L,mat_get_texture_name);
         } else if (key=="setTextureName") {
                 push_cfunction(L,mat_set_texture_name);
+        } else if (key=="getIsShadow") {
+                push_cfunction(L,mat_get_is_shadow);
+        } else if (key=="setIsShadow") {
+                push_cfunction(L,mat_set_is_shadow);
         } else if (key=="setCubicTextureName") {
                 push_cfunction(L,mat_set_cubic_texture_name);
         } else if (key=="getEnvMap") {
