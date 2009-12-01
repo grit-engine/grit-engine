@@ -124,7 +124,6 @@ implement various effects
 -- texture animation
 -- multitexturing
 -- splatting
--- normal map
 -- spec map
 -- reflections (static env map and dynamic env map)
 
