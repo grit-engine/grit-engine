@@ -342,7 +342,7 @@ void extract (const Config &cfg, std::ostream &out)
         map.precision(25);
 
         map << "print(\"Loading world\")\n";
-        map << "gom:clearObjects()\n";
+        map << "streamer:clearObjects()\n";
 
         map << "local last\n";
 
@@ -355,10 +355,9 @@ void extract (const Config &cfg, std::ostream &out)
 
         classes << "print(\"Loading classes\")\n";
 
-        std::ofstream matbin;
-        matbin.open((dest_dir+"/"+cfg.modname+"/san_andreas.matbin").c_str(),
-                    std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(matbin, "opening san_andreas.matbin");
+        std::ofstream materials_lua;
+        materials_lua.open((dest_dir+"/"+cfg.modname+"/materials.lua").c_str(), std::ios::binary);
+        ASSERT_IO_SUCCESSFUL(materials_lua, "opening materials.lua");
 
 
         // don't bother generating classes for things that aren't instantiated
@@ -451,7 +450,7 @@ void extract (const Config &cfg, std::ostream &out)
                         std::string out_name = out_name_ss.str();
                         export_mesh(texs,everything,export_imgs,
                                     out,out_name,
-                                    o,objname,g,matdb,matbin,cfg.modname);
+                                    o,objname,g,matdb,materials_lua,cfg.modname);
 
                         MatSplits &ms = g.mat_spls;
                         for (MatSplits::iterator s=ms.begin(),
@@ -502,7 +501,7 @@ void extract (const Config &cfg, std::ostream &out)
 
                 bool cast_shadow = 0 != (o.flags&OBJ_FLAG_POLE_SHADOW);
 
-                classes<<"gom:addClass("
+                classes<<"streamer:addClass("
                        <<"\""<<cfg.modname<<"/"<<o.id<<"\","
                        <<cls<<",{"
                            <<"castShadows="<<(cast_shadow?"true":"false")
@@ -524,7 +523,7 @@ void extract (const Config &cfg, std::ostream &out)
                         std::stringstream cls;
                         cls << cfg.modname << "/" << inst.id;
                         if (inst.near_for==-1) {
-                                map<<"gom:addObject(\""<<cls.str()<<"\","
+                                map<<"streamer:addObject(\""<<cls.str()<<"\","
                                    <<inst.x<<","<<inst.y<<","<<inst.z;
                                 if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
                                         map<<",{rot=Quat("
@@ -536,7 +535,7 @@ void extract (const Config &cfg, std::ostream &out)
                                 const Inst &far = insts[inst.near_for];
                                 std::stringstream farcls;
                                 farcls << cfg.modname << "/" << far.id;
-                                map<<"last=gom:addObject(\""<<cls.str()<<"\","
+                                map<<"last=streamer:addObject(\""<<cls.str()<<"\","
                                    <<inst.x<<","<<inst.y<<","<<inst.z;
                                 if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
                                         map<<",{rot=Quat("
@@ -544,7 +543,7 @@ void extract (const Config &cfg, std::ostream &out)
                                            <<inst.ry<<","<<inst.rz<<")}";
                                 }
                                 map<<")\n";
-                                map<<"gom:addObject(\""<<farcls.str()<<"\","
+                                map<<"streamer:addObject(\""<<farcls.str()<<"\","
                                    <<far.x<<","<<far.y<<","<<far.z;
                                 map<<",{";
                                 if (far.rx!=0 || far.ry!=0 || far.rz!=0) {

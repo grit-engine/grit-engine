@@ -1,23 +1,23 @@
 #include <OgreSceneManager.h>
 #include <OgreException.h>
 
-#include "GritObjectManager.h"
+#include "Streamer.h"
 #include "Grit.h"
 
-GritObjectManager::~GritObjectManager (void)
+Streamer::~Streamer (void)
 {
         if (!shutdown)
-                CERR<<"GritObjectManager: not shutdown cleanly"<<std::endl;
+                CERR<<"Streamer: not shutdown cleanly"<<std::endl;
 }
 
-void GritObjectManager::doShutdown (lua_State *L)
+void Streamer::doShutdown (lua_State *L)
 {
         clearClasses(L);
         clearObjects(L);
         shutdown = true;
 }
 
-void GritObjectManager::clearClasses (lua_State *L)
+void Streamer::clearClasses (lua_State *L)
 {
         GritClassMap m = classes;
         for (GritClassMap::iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
@@ -25,7 +25,7 @@ void GritObjectManager::clearClasses (lua_State *L)
         }
 }
 
-void GritObjectManager::clearObjects (lua_State *L)
+void Streamer::clearObjects (lua_State *L)
 {
         GObjMap m = gObjs;
         for (GObjMap::iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
@@ -34,7 +34,7 @@ void GritObjectManager::clearObjects (lua_State *L)
 }
 
 
-void GritObjectManager::setGFX (lua_State *L, Ogre::SceneNode *gfx)
+void Streamer::setGFX (lua_State *L, Ogre::SceneNode *gfx)
 {
         GObjMap gObjs = this->gObjs;
         for (GObjMap::iterator i=gObjs.begin(), i_=gObjs.end() ; i!=i_ ; ++i) {
@@ -43,13 +43,13 @@ void GritObjectManager::setGFX (lua_State *L, Ogre::SceneNode *gfx)
         this->gfx = gfx;
 }
 
-void GritObjectManager::setBounds (lua_State *L, const Ogre::AxisAlignedBox &bounds_)
+void Streamer::setBounds (lua_State *L, const Ogre::AxisAlignedBox &bounds_)
 {
         bounds = bounds_;
         setPhysics(L, PhysicsWorldPtr(new PhysicsWorld(bounds)));
 }
 
-void GritObjectManager::setPhysics (lua_State *L, const PhysicsWorldPtr &physics)
+void Streamer::setPhysics (lua_State *L, const PhysicsWorldPtr &physics)
 {
         GObjMap gObjs = this->gObjs;
         // don't need to clearPhysics() because it's a smart pointer
@@ -61,7 +61,7 @@ void GritObjectManager::setPhysics (lua_State *L, const PhysicsWorldPtr &physics
 
 
 
-GritClass *GritObjectManager::addClass (lua_State *L, const Ogre::String& name)
+GritClass *Streamer::addClass (lua_State *L, const Ogre::String& name)
 {
         GritClass *gcp;
         GritClassMap::iterator i = classes.find(name);
@@ -82,18 +82,18 @@ GritClass *GritObjectManager::addClass (lua_State *L, const Ogre::String& name)
         return gcp;
 }
 
-GritClass *GritObjectManager::getClass (const Ogre::String &name)
+GritClass *Streamer::getClass (const Ogre::String &name)
 {
         GritClassMap::iterator i = classes.find(name);
         if (i==classes.end())
                 OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
                             "GritClass does not exist: "+name,
-                            "GritObjectManager::getClass");
+                            "Streamer::getClass");
         return i->second;
 }
 
 
-void GritObjectManager::eraseClass (const Ogre::String &name)
+void Streamer::eraseClass (const Ogre::String &name)
 {
         // anything using this class keeps using it
         classes.erase(name);
@@ -104,7 +104,7 @@ void GritObjectManager::eraseClass (const Ogre::String &name)
 
 
 
-GritObjectPtr GritObjectManager::addObject (
+GritObjectPtr Streamer::addObject (
         lua_State *L,
         Ogre::String name,
         GritClass *grit_class)
@@ -113,12 +113,12 @@ GritObjectPtr GritObjectManager::addObject (
         if (gfx==NULL) {
                 OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
                             "No graphics engine set up, call setGFX()",
-                            "GritObjectManager::addObject");
+                            "Streamer::addObject");
         }
         if (physics.isNull()) {
                 OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
                             "No physics engine set up, call setPhysics()",
-                            "GritObjectManager::addObject");
+                            "Streamer::addObject");
         }
         if (name=="") {
                 do {
@@ -144,13 +144,13 @@ GritObjectPtr GritObjectManager::addObject (
 
 
 
-const GritObjectPtr &GritObjectManager::getObject (const Ogre::String &name)
+const GritObjectPtr &Streamer::getObject (const Ogre::String &name)
 {
         GObjMap::iterator i = gObjs.find(name);
         if (i==gObjs.end())
                 OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
                             "GritObject does not exist: "+name,
-                            "GritObjectManager::getObject");
+                            "Streamer::getObject");
 
         return i->second;
 }
@@ -159,13 +159,13 @@ const GritObjectPtr &GritObjectManager::getObject (const Ogre::String &name)
 
 // don't call this function directly since the object won't be deactivated
 // call deleteObject instead
-void GritObjectManager::eraseObject (const Ogre::String &name)
+void Streamer::eraseObject (const Ogre::String &name)
 {
         GObjMap::iterator i = gObjs.find(name);
         if (i==gObjs.end()) 
                 OGRE_EXCEPT(Ogre::Exception::ERR_DUPLICATE_ITEM,
                             "GritObject does not exist: "+name,
-                            "GritObjectManager::eraseObject");
+                            "Streamer::eraseObject");
 
         gObjs.erase(name);
 }
@@ -180,7 +180,7 @@ static void remove_if_exists (GObjPtrs &fresh, const GritObjectPtr &o)
         }
 }
 
-void GritObjectManager::deleteObject (lua_State *L, const GritObjectPtr &o)
+void Streamer::deleteObject (lua_State *L, const GritObjectPtr &o)
 {
         o->destroy(L,o);
         rs.remove(o);
@@ -188,7 +188,7 @@ void GritObjectManager::deleteObject (lua_State *L, const GritObjectPtr &o)
         eraseObject(o->name);
 }
 
-void GritObjectManager::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
+void Streamer::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
 {
         Space::Cargo fnd = fresh;
         fresh.clear();

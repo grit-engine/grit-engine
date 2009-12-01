@@ -2,6 +2,7 @@
 
 #include <OgreFont.h>
 #include <OgreFontManager.h>
+#include <OgreHighLevelGpuProgramManager.h>
 
 #ifdef USE_GOOGLE_PERF_TOOLS
         #include <google/profiler.h>
@@ -643,14 +644,13 @@ TRY_END
 
 // make
 
-static int global_load_gpuprog (lua_State *L)
+static int global_make_gpuprog (lua_State *L)
 {
 TRY_START
-        check_args(L,4);
+        check_args(L,3);
         const char *name = luaL_checkstring(L,1);
-        const char *filename = luaL_checkstring(L,2);
+        const char *language = luaL_checkstring(L,2);
         std::string typestr = luaL_checkstring(L,3);
-        const char *syntax = luaL_checkstring(L,4);
         Ogre::GpuProgramType type;
         if (typestr=="FRAGMENT") {
                 type = Ogre::GPT_FRAGMENT_PROGRAM;
@@ -661,9 +661,9 @@ TRY_START
         } else {
                 my_lua_error(L,"Unrecognised GPU Program type: "+typestr);
         }
-        Ogre::GpuProgramPtr t = Ogre::GpuProgramManager::getSingleton()
-                                .load(name,"GRIT", filename, type, syntax);
-        push(L, new Ogre::GpuProgramPtr(t),GPUPROG_TAG);
+        Ogre::HighLevelGpuProgramPtr t = Ogre::HighLevelGpuProgramManager::getSingleton()
+                                .createProgram(name,"GRIT", language, type);
+        push(L, new Ogre::HighLevelGpuProgramPtr(t),GPUPROG_TAG);
         return 1;
 TRY_END
 }
@@ -672,16 +672,16 @@ static int global_get_all_gpuprogs (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        Ogre::GpuProgramManager::ResourceMapIterator rmi =
-                Ogre::GpuProgramManager::getSingleton().getResourceIterator();
+        Ogre::HighLevelGpuProgramManager::ResourceMapIterator rmi =
+                Ogre::HighLevelGpuProgramManager::getSingleton().getResourceIterator();
 
         // doesn't seem to be possible to find out how many there are in advance
         lua_createtable(L, 0, 0);
         int counter = 0;
         while (rmi.hasMoreElements()) {
-                const Ogre::GpuProgramPtr &self = rmi.getNext();
+                const Ogre::HighLevelGpuProgramPtr &self = rmi.getNext();
                 lua_pushnumber(L,counter+LUA_ARRAY_BASE);
-                push(L, new Ogre::GpuProgramPtr(self), GPUPROG_TAG);
+                push(L, new Ogre::HighLevelGpuProgramPtr(self), GPUPROG_TAG);
                 lua_settable(L,-3);
                 counter++;
         }
@@ -696,13 +696,13 @@ static int global_get_gpuprog (lua_State *L)
 TRY_START
         check_args(L,1);
         const char *name = luaL_checkstring(L,1);
-        Ogre::GpuProgramPtr m =
-                Ogre::GpuProgramManager::getSingleton().getByName(name);
+        Ogre::HighLevelGpuProgramPtr m =
+                Ogre::HighLevelGpuProgramManager::getSingleton().getByName(name);
         if (m.isNull()) {
                 lua_pushnil(L);
                 return 1;
         }
-        push(L,new Ogre::GpuProgramPtr(m),GPUPROG_TAG);
+        push(L,new Ogre::HighLevelGpuProgramPtr(m),GPUPROG_TAG);
         return 1;
 TRY_END
 }
@@ -711,7 +711,7 @@ static int global_get_gpuprog_budget (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-      lua_pushnumber(L,Ogre::GpuProgramManager::getSingleton().getMemoryBudget());
+        lua_pushnumber(L,Ogre::GpuProgramManager::getSingleton().getMemoryBudget());
         return 1;
 TRY_END
 }
@@ -730,7 +730,7 @@ static int global_get_gpuprog_usage (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-       lua_pushnumber(L,Ogre::GpuProgramManager::getSingleton().getMemoryUsage());
+        lua_pushnumber(L,Ogre::GpuProgramManager::getSingleton().getMemoryUsage());
         return 1;
 TRY_END
 }
@@ -927,11 +927,11 @@ TRY_END
 }
 
 
-static int global_get_gom (lua_State *L)
+static int global_get_streamer (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        push_gom(L,&grit->getGOM());
+        push_streamer(L,&grit->getStreamer());
         return 1;
 TRY_END
 }
@@ -1294,6 +1294,16 @@ TRY_END
 }
 
 
+static int global_get_rendersystem (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushstring(L,grit->getOgre()->getRenderSystem()->getName().c_str());
+        return 1;
+TRY_END
+}
+
+
 static int global_include (lua_State *L)
 {
 TRY_START
@@ -1353,6 +1363,7 @@ static const luaL_reg global[] = {
         {"set_mouse_grab",global_set_mouse_grab},
 
         {"render",global_render},
+        {"get_rendersystem",global_get_rendersystem},
         {"set_vsync",global_rendersystem_set_vsync},
         {"get_vsync",global_rendersystem_get_vsync},
         {"reinitialise",global_rendersystem_reinitialise},
@@ -1398,7 +1409,7 @@ static const luaL_reg global[] = {
         {"unload_unused_meshes" ,global_unload_unused_meshes},
         {"remove_mesh" ,global_remove_mesh},
 
-        {"load_gpuprog" ,global_load_gpuprog},
+        {"make_gpuprog" ,global_make_gpuprog},
         {"get_all_gpuprogs" ,global_get_all_gpuprogs},
         {"get_gpuprog" ,global_get_gpuprog},
         {"get_gpuprog_verbose" ,global_get_gpuprog_verbose},
@@ -1432,7 +1443,7 @@ static const luaL_reg global[] = {
 
         {"PhysicsWorld",pworld_make},
 
-        {"get_gom",global_get_gom},
+        {"get_streamer",global_get_streamer},
 
         {"Timer",timer_make},
         {"Vector3",vector3_make},
@@ -1512,7 +1523,7 @@ lua_State *init_lua(const char *filename)
         ADD_MT_MACRO(pworld,PWORLD_TAG);
         ADD_MT_MACRO(rbody,RBODY_TAG);
         ADD_MT_MACRO(colmesh,COLMESH_TAG);
-        ADD_MT_MACRO(gom,GOM_TAG);
+        ADD_MT_MACRO(streamer,STREAMER_TAG);
         ADD_MT_MACRO(gritcls,GRITCLS_TAG);
         ADD_MT_MACRO(gritobj,GRITOBJ_TAG);
         ADD_MT_MACRO(timer,TIMER_TAG);
@@ -1543,7 +1554,7 @@ lua_State *init_lua(const char *filename)
         luaL_register(L, "_G", global);
 
         lua_pushthread(L); lua_setglobal(L,"MAIN_STATE");
-        push_gom(L, &grit->getGOM()); lua_setglobal(L,"gom");
+        push_streamer(L, &grit->getStreamer()); lua_setglobal(L,"streamer");
 
         status = luaL_loadfile(L,filename);
         if (status) {

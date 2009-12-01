@@ -181,6 +181,16 @@ TRY_START
 TRY_END
 }
 
+static int mat_remove_all_passes (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        Ogre::Technique *t = mat_get_technique(L);
+        t->removeAllPasses();
+        return 0;
+TRY_END
+}
+
 static Ogre::Pass *mat_get_pass (lua_State *L)
 {
 TRY_START
@@ -1624,221 +1634,223 @@ GC_MACRO(Ogre::MaterialPtr,mat,MAT_TAG)
 static int mat_index(lua_State *L) {
         check_args(L,2);
         GET_UD_MACRO(Ogre::MaterialPtr,self,1,MAT_TAG);
-        std::string key  = luaL_checkstring(L,2);
-        if (key=="clone") {
+        const char *key  = luaL_checkstring(L,2);
+        if (!::strcmp(key,"clone")) {
                 push_cfunction(L,mat_clone);
 
-        } else if (key=="load") {
+        } else if (!::strcmp(key,"load")) {
                 push_cfunction(L,mat_load);
-        } else if (key=="unload") {
+        } else if (!::strcmp(key,"unload")) {
                 push_cfunction(L,mat_unload);
-        } else if (key=="reload") {
+        } else if (!::strcmp(key,"reload")) {
                 push_cfunction(L,mat_reload);
-        } else if (key=="isLoaded") {
+        } else if (!::strcmp(key,"isLoaded")) {
                 lua_pushboolean(L,self->isLoaded());
-        } else if (key=="isPrepared") {
+        } else if (!::strcmp(key,"isPrepared")) {
                 lua_pushboolean(L,self->isPrepared());
 
-        } else if (key=="receiveShadows") {
+        } else if (!::strcmp(key,"receiveShadows")) {
                 lua_pushboolean(L,self->getReceiveShadows());
-        } else if (key=="transparencyCastsShadows") {
+        } else if (!::strcmp(key,"transparencyCastsShadows")) {
                 lua_pushboolean(L,self->getTransparencyCastsShadows());
 
-        } else if (key=="createTechnique") {
+        } else if (!::strcmp(key,"createTechnique")) {
                 push_cfunction(L,mat_create_technique);
-        } else if (key=="createPass") {
+        } else if (!::strcmp(key,"createPass")) {
                 push_cfunction(L,mat_create_pass);
-        } else if (key=="createTextureUnitState") {
+        } else if (!::strcmp(key,"createTextureUnitState")) {
                 push_cfunction(L,mat_create_texture_unit_state);
-        } else if (key=="isTechniqueSupported") {
+        } else if (!::strcmp(key,"isTechniqueSupported")) {
                 push_cfunction(L,mat_is_technique_supported);
-        } else if (key=="getShadowCasterMaterial") {
+        } else if (!::strcmp(key,"getShadowCasterMaterial")) {
                 push_cfunction(L,mat_get_shadow_caster_material);
-        } else if (key=="setShadowCasterMaterial") {
+        } else if (!::strcmp(key,"setShadowCasterMaterial")) {
                 push_cfunction(L,mat_set_shadow_caster_material);
 
-        } else if (key=="removeTechnique") {
+        } else if (!::strcmp(key,"removeTechnique")) {
                 push_cfunction(L,mat_remove_technique);
-        } else if (key=="removeAllTechniques") {
+        } else if (!::strcmp(key,"removeAllTechniques")) {
                 push_cfunction(L,mat_remove_all_techniques);
-        } else if (key=="removePass") {
+        } else if (!::strcmp(key,"removePass")) {
                 push_cfunction(L,mat_remove_pass);
-        } else if (key=="removeTextureUnitState") {
+        } else if (!::strcmp(key,"removeAllPasses")) {
+                push_cfunction(L,mat_remove_all_passes);
+        } else if (!::strcmp(key,"removeTextureUnitState")) {
                 push_cfunction(L,mat_remove_texture_unit_state);
 
-        } else if (key=="getNumTechniques") {
+        } else if (!::strcmp(key,"getNumTechniques")) {
                 push_cfunction(L,mat_get_num_techniques);
-        } else if (key=="getNumPasses") {
+        } else if (!::strcmp(key,"getNumPasses")) {
                 push_cfunction(L,mat_get_num_passes);
-        } else if (key=="getNumTextureUnits") {
+        } else if (!::strcmp(key,"getNumTextureUnits")) {
                 push_cfunction(L,mat_get_num_texture_unit_states);
 
-        } else if (key=="hasVertexProgram") {
+        } else if (!::strcmp(key,"hasVertexProgram")) {
                 push_cfunction(L,mat_has_vertex_program);
-        } else if (key=="hasFragmentProgram") {
+        } else if (!::strcmp(key,"hasFragmentProgram")) {
                 push_cfunction(L,mat_has_fragment_program);
-        } else if (key=="getVertexProgramName") {
+        } else if (!::strcmp(key,"getVertexProgramName")) {
                 push_cfunction(L,mat_get_vertex_program_name);
-        } else if (key=="getFragmentProgramName") {
+        } else if (!::strcmp(key,"getFragmentProgramName")) {
                 push_cfunction(L,mat_get_fragment_program_name);
-        } else if (key=="setVertexProgram") {
+        } else if (!::strcmp(key,"setVertexProgram")) {
                 push_cfunction(L,mat_set_vertex_program);
-        } else if (key=="setFragmentProgram") {
+        } else if (!::strcmp(key,"setFragmentProgram")) {
                 push_cfunction(L,mat_set_fragment_program);
-        } else if (key=="getEmissiveVertex") {
+        } else if (!::strcmp(key,"getEmissiveVertex")) {
                 push_cfunction(L,mat_get_emissive_vertex);
-        } else if (key=="getAmbientVertex") {
+        } else if (!::strcmp(key,"getAmbientVertex")) {
                 push_cfunction(L,mat_get_ambient_vertex);
-        } else if (key=="getDiffuseVertex") {
+        } else if (!::strcmp(key,"getDiffuseVertex")) {
                 push_cfunction(L,mat_get_diffuse_vertex);
-        } else if (key=="getSpecularVertex") {
+        } else if (!::strcmp(key,"getSpecularVertex")) {
                 push_cfunction(L,mat_get_specular_vertex);
-        } else if (key=="getEmissive") {
+        } else if (!::strcmp(key,"getEmissive")) {
                 push_cfunction(L,mat_get_emissive);
-        } else if (key=="getAmbient") {
+        } else if (!::strcmp(key,"getAmbient")) {
                 push_cfunction(L,mat_get_ambient);
-        } else if (key=="getDiffuse") {
+        } else if (!::strcmp(key,"getDiffuse")) {
                 push_cfunction(L,mat_get_diffuse);
-        } else if (key=="getSpecular") {
+        } else if (!::strcmp(key,"getSpecular")) {
                 push_cfunction(L,mat_get_specular);
-        } else if (key=="setEmissiveVertex") {
+        } else if (!::strcmp(key,"setEmissiveVertex")) {
                 push_cfunction(L,mat_set_emissive_vertex);
-        } else if (key=="setAmbientVertex") {
+        } else if (!::strcmp(key,"setAmbientVertex")) {
                 push_cfunction(L,mat_set_ambient_vertex);
-        } else if (key=="setDiffuseVertex") {
+        } else if (!::strcmp(key,"setDiffuseVertex")) {
                 push_cfunction(L,mat_set_diffuse_vertex);
-        } else if (key=="setSpecularVertex") {
+        } else if (!::strcmp(key,"setSpecularVertex")) {
                 push_cfunction(L,mat_set_specular_vertex);
-        } else if (key=="setEmissive") {
+        } else if (!::strcmp(key,"setEmissive")) {
                 push_cfunction(L,mat_set_emissive);
-        } else if (key=="setAmbient") {
+        } else if (!::strcmp(key,"setAmbient")) {
                 push_cfunction(L,mat_set_ambient);
-        } else if (key=="setDiffuse") {
+        } else if (!::strcmp(key,"setDiffuse")) {
                 push_cfunction(L,mat_set_diffuse);
-        } else if (key=="setSpecular") {
+        } else if (!::strcmp(key,"setSpecular")) {
                 push_cfunction(L,mat_set_specular);
-        } else if (key=="getSceneBlending") {
+        } else if (!::strcmp(key,"getSceneBlending")) {
                 push_cfunction(L,mat_get_scene_blending);
-        } else if (key=="setSceneBlending") {
+        } else if (!::strcmp(key,"setSceneBlending")) {
                 push_cfunction(L,mat_set_scene_blending);
-        } else if (key=="getCull") {
+        } else if (!::strcmp(key,"getCull")) {
                 push_cfunction(L,mat_get_cull);
-        } else if (key=="setCull") {
+        } else if (!::strcmp(key,"setCull")) {
                 push_cfunction(L,mat_set_cull);
-        } else if (key=="getManualCull") {
+        } else if (!::strcmp(key,"getManualCull")) {
                 push_cfunction(L,mat_get_manual_cull);
-        } else if (key=="setManualCull") {
+        } else if (!::strcmp(key,"setManualCull")) {
                 push_cfunction(L,mat_set_manual_cull);
-        } else if (key=="getAlphaRejection") {
+        } else if (!::strcmp(key,"getAlphaRejection")) {
                 push_cfunction(L,mat_get_alpha_rejection);
-        } else if (key=="setAlphaRejection") {
+        } else if (!::strcmp(key,"setAlphaRejection")) {
                 push_cfunction(L,mat_set_alpha_rejection);
-        } else if (key=="getAlphaToCoverage") {
+        } else if (!::strcmp(key,"getAlphaToCoverage")) {
                 push_cfunction(L,mat_get_alpha_to_coverage);
-        } else if (key=="setAlphaToCoverage") {
+        } else if (!::strcmp(key,"setAlphaToCoverage")) {
                 push_cfunction(L,mat_set_alpha_to_coverage);
-        } else if (key=="getDepthFunction") {
+        } else if (!::strcmp(key,"getDepthFunction")) {
                 push_cfunction(L,mat_get_depth_function);
-        } else if (key=="setDepthFunction") {
+        } else if (!::strcmp(key,"setDepthFunction")) {
                 push_cfunction(L,mat_set_depth_function);
-        } else if (key=="getDepthCheckEnabled") {
+        } else if (!::strcmp(key,"getDepthCheckEnabled")) {
                 push_cfunction(L,mat_get_depth_check_enabled);
-        } else if (key=="setDepthCheckEnabled") {
+        } else if (!::strcmp(key,"setDepthCheckEnabled")) {
                 push_cfunction(L,mat_set_depth_check_enabled);
-        } else if (key=="getDepthWriteEnabled") {
+        } else if (!::strcmp(key,"getDepthWriteEnabled")) {
                 push_cfunction(L,mat_get_depth_write_enabled);
-        } else if (key=="setDepthWriteEnabled") {
+        } else if (!::strcmp(key,"setDepthWriteEnabled")) {
                 push_cfunction(L,mat_set_depth_write_enabled);
-        } else if (key=="getLightingEnabled") {
+        } else if (!::strcmp(key,"getLightingEnabled")) {
                 push_cfunction(L,mat_get_lighting);
-        } else if (key=="setLightingEnabled") {
+        } else if (!::strcmp(key,"setLightingEnabled")) {
                 push_cfunction(L,mat_set_lighting);
-        } else if (key=="getShadingMode") {
+        } else if (!::strcmp(key,"getShadingMode")) {
                 push_cfunction(L,mat_get_shading_mode);
-        } else if (key=="setShadingMode") {
+        } else if (!::strcmp(key,"setShadingMode")) {
                 push_cfunction(L,mat_set_shading_mode);
-        } else if (key=="getPolygonMode") {
+        } else if (!::strcmp(key,"getPolygonMode")) {
                 push_cfunction(L,mat_get_polygon_mode);
-        } else if (key=="setPolygonMode") {
+        } else if (!::strcmp(key,"setPolygonMode")) {
                 push_cfunction(L,mat_set_polygon_mode);
-        } else if (key=="getDepthBias") {
+        } else if (!::strcmp(key,"getDepthBias")) {
                 push_cfunction(L,mat_get_depth_bias);
-        } else if (key=="setDepthBias") {
+        } else if (!::strcmp(key,"setDepthBias")) {
                 push_cfunction(L,mat_set_depth_bias);
-        } else if (key=="getFog") {
+        } else if (!::strcmp(key,"getFog")) {
                 push_cfunction(L,mat_get_fog);
-        } else if (key=="setFog") {
+        } else if (!::strcmp(key,"setFog")) {
                 push_cfunction(L,mat_set_fog);
-        } else if (key=="getTransparentSortingEnabled") {
+        } else if (!::strcmp(key,"getTransparentSortingEnabled")) {
                 push_cfunction(L,mat_get_transparent_sorting);
-        } else if (key=="setTransparentSortingEnabled") {
+        } else if (!::strcmp(key,"setTransparentSortingEnabled")) {
                 push_cfunction(L,mat_set_transparent_sorting);
-        } else if (key=="getTransparentSortingForced") {
+        } else if (!::strcmp(key,"getTransparentSortingForced")) {
                 push_cfunction(L,mat_get_transparent_sorting_forced);
-        } else if (key=="setTransparentSortingForced") {
+        } else if (!::strcmp(key,"setTransparentSortingForced")) {
                 push_cfunction(L,mat_set_transparent_sorting_forced);
-        } else if (key=="setVertexConstantFloat") {
+        } else if (!::strcmp(key,"setVertexConstantFloat")) {
                 push_cfunction(L,mat_set_vertex_constant_float);
-        } else if (key=="setFragmentConstantFloat") {
+        } else if (!::strcmp(key,"setFragmentConstantFloat")) {
                 push_cfunction(L,mat_set_fragment_constant_float);
 
-        } else if (key=="getTextureName") {
+        } else if (!::strcmp(key,"getTextureName")) {
                 push_cfunction(L,mat_get_texture_name);
-        } else if (key=="setTextureName") {
+        } else if (!::strcmp(key,"setTextureName")) {
                 push_cfunction(L,mat_set_texture_name);
-        } else if (key=="getIsShadow") {
+        } else if (!::strcmp(key,"getIsShadow")) {
                 push_cfunction(L,mat_get_is_shadow);
-        } else if (key=="setIsShadow") {
+        } else if (!::strcmp(key,"setIsShadow")) {
                 push_cfunction(L,mat_set_is_shadow);
-        } else if (key=="setCubicTextureName") {
+        } else if (!::strcmp(key,"setCubicTextureName")) {
                 push_cfunction(L,mat_set_cubic_texture_name);
-        } else if (key=="getEnvMap") {
+        } else if (!::strcmp(key,"getEnvMap")) {
                 push_cfunction(L,mat_get_env_map);
-        } else if (key=="setEnvMap") {
+        } else if (!::strcmp(key,"setEnvMap")) {
                 push_cfunction(L,mat_set_env_map);
-        } else if (key=="getTextureFiltering") {
+        } else if (!::strcmp(key,"getTextureFiltering")) {
                 push_cfunction(L,mat_get_texture_filtering);
-        } else if (key=="setTextureFiltering") {
+        } else if (!::strcmp(key,"setTextureFiltering")) {
                 push_cfunction(L,mat_set_texture_filtering);
-        } else if (key=="getTextureAnisotropy") {
+        } else if (!::strcmp(key,"getTextureAnisotropy")) {
                 push_cfunction(L,mat_get_texture_anisotropy);
-        } else if (key=="setTextureAnisotropy") {
+        } else if (!::strcmp(key,"setTextureAnisotropy")) {
                 push_cfunction(L,mat_set_texture_anisotropy);
-        } else if (key=="getMipmapBias") {
+        } else if (!::strcmp(key,"getMipmapBias")) {
                 push_cfunction(L,mat_get_mipmap_bias);
-        } else if (key=="setMipmapBias") {
+        } else if (!::strcmp(key,"setMipmapBias")) {
                 push_cfunction(L,mat_set_mipmap_bias);
-        } else if (key=="getColourOperationMultipassFallback") {
+        } else if (!::strcmp(key,"getColourOperationMultipassFallback")) {
                push_cfunction(L,mat_get_colour_operation_multipass_fallback);
-        } else if (key=="setColourOperationMultipassFallback") {
+        } else if (!::strcmp(key,"setColourOperationMultipassFallback")) {
                push_cfunction(L,mat_set_colour_operation_multipass_fallback);
-        } else if (key=="getColourOperation") {
+        } else if (!::strcmp(key,"getColourOperation")) {
                 push_cfunction(L,mat_get_colour_operation);
-        } else if (key=="setColourOperation") {
+        } else if (!::strcmp(key,"setColourOperation")) {
                 push_cfunction(L,mat_set_colour_operation);
-        } else if (key=="getAlphaOperation") {
+        } else if (!::strcmp(key,"getAlphaOperation")) {
                 push_cfunction(L,mat_get_alpha_operation);
-        } else if (key=="setAlphaOperation") {
+        } else if (!::strcmp(key,"setAlphaOperation")) {
                 push_cfunction(L,mat_set_alpha_operation);
-        } else if (key=="getTextureScale") {
+        } else if (!::strcmp(key,"getTextureScale")) {
                 push_cfunction(L,mat_get_texture_scale);
-        } else if (key=="setTextureScale") {
+        } else if (!::strcmp(key,"setTextureScale")) {
                 push_cfunction(L,mat_set_texture_scale);
-        } else if (key=="getTextureScroll") {
+        } else if (!::strcmp(key,"getTextureScroll")) {
                 push_cfunction(L,mat_get_texture_scroll);
-        } else if (key=="setTextureScroll") {
+        } else if (!::strcmp(key,"setTextureScroll")) {
                 push_cfunction(L,mat_set_texture_scroll);
-        } else if (key=="getTextureRotate") {
+        } else if (!::strcmp(key,"getTextureRotate")) {
                 push_cfunction(L,mat_get_texture_rotate);
-        } else if (key=="setTextureRotate") {
+        } else if (!::strcmp(key,"setTextureRotate")) {
                 push_cfunction(L,mat_set_texture_rotate);
 
-        } else if (key=="name") {
+        } else if (!::strcmp(key,"name")) {
                 lua_pushstring(L,self->getName().c_str());
-        } else if (key=="num_techniques") {
+        } else if (!::strcmp(key,"num_techniques")) {
                 lua_pushnumber(L,self->getNumTechniques());
         } else {
-                my_lua_error(L,"Not a valid Material member: " + key);
+                my_lua_error(L,"Not a valid Material member: " + std::string(key));
         }
         return 1;
 

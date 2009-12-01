@@ -18,7 +18,7 @@
 #include "Keyboard.h"
 #include "lua_wrappers_core.h"
 #include "GritObject.h"
-#include "GritObjectManager.h"
+#include "Streamer.h"
 
 #include "HUD.h"
 
@@ -47,7 +47,7 @@ Grit::Grit (Ogre::Root *ogre, Mouse *mouse, Keyboard *keyboard, Grit *& grit) :
         clickedClose(false),
         hasTerminated(false),
         L(NULL),
-        gom(new GritObjectManager())
+        streamer(new Streamer())
 {
 
         Ogre::OverlayManager::getSingleton()
@@ -68,8 +68,8 @@ Grit::Grit (Ogre::Root *ogre, Mouse *mouse, Keyboard *keyboard, Grit *& grit) :
 Grit::~Grit ()
 {
         hasTerminated = true;
-        gom->doShutdown(L);
-        delete gom;
+        streamer->doShutdown(L);
+        delete streamer;
         if (hud) delete hud;
         if (L) lua_close(L);
         if (mouse) delete mouse;

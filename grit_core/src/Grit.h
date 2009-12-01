@@ -18,7 +18,7 @@ namespace HUD {
         class Root;
         typedef Ogre::SharedPtr<Root> RootPtr;
 }
-class GritObjectManager;
+class Streamer;
 
 #include "lua_userdata_dependency_tracker.h"
 
@@ -54,7 +54,7 @@ public:
 
         virtual UserDataTables& getUserDataTables (void);
 
-        virtual GritObjectManager &getGOM() { return *gom; }
+        virtual Streamer &getStreamer() { return *streamer; }
 
         virtual lua_State *getLuaState (void) const { return L; }
 
@@ -76,7 +76,7 @@ protected:
 
         UserDataTables userDataTables;
 
-        GritObjectManager *gom;
+        Streamer *streamer;
 
 };
 

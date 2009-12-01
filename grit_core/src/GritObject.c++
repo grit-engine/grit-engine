@@ -170,7 +170,7 @@ void GritObject::notifyFade (lua_State *L,
                 // pop the error message since the error handler will
                 // have already printed it out
                 lua_pop(L,1);
-                grit->getGOM().deleteObject(L,self);
+                grit->getStreamer().deleteObject(L,self);
                 //stack: err,class
         }
         //stack: err,class
@@ -217,7 +217,7 @@ void GritObject::activate (lua_State *L,
                 CERR << "activating object: \""<<name<<"\": "
                      << "class \""<<gritClass->name<<"\" "
                      << "does not have activate function" << std::endl;
-                grit->getGOM().deleteObject(L,self);
+                grit->getStreamer().deleteObject(L,self);
                 STACK_CHECK;
                 return;
         }
@@ -244,12 +244,12 @@ void GritObject::activate (lua_State *L,
                 // pop the error message since the error handler will
                 // have already printed it out
                 lua_pop(L,1);
-                grit->getGOM().deleteObject(L,self);
+                grit->getStreamer().deleteObject(L,self);
                 //stack: err,class
                 STACK_CHECK_N(2);
         } else {
                 //stack: err,class,object
-                grit->getGOM().list(self);
+                grit->getStreamer().list(self);
                 // pop and store the new object returned       
                 lua = luaL_ref(L,LUA_REGISTRYINDEX);
                 lastFade = -1;
@@ -266,14 +266,14 @@ void GritObject::activate (lua_State *L,
 
 Ogre::Real GritObject::calcFade (const Ogre::Real range2, bool &overlap)
 {
-        const GritObjectManager &gom = grit->getGOM();
+        const Streamer &streamer = grit->getStreamer();
 
         const GritObjectPtr &near = getNear();
         const GritObjectPtr &far = getFar();
 
-        const Ogre::Real out = gom.fadeOutFactor;
+        const Ogre::Real out = streamer.fadeOutFactor;
 
-        const Ogre::Real over = gom.fadeOverlapFactor;
+        const Ogre::Real over = streamer.fadeOverlapFactor;
 
 
         Ogre::Real range = ::sqrt(range2);
@@ -326,7 +326,7 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
 
         bool killme = false;
 
-        grit->getGOM().unlist(self);
+        grit->getStreamer().unlist(self);
 
         STACK_BASE;
         //stack is empty
@@ -449,7 +449,7 @@ void GritObject::updateSphere (Ogre::Real x_, Ogre::Real y_,
         y = y_;
         z = z_;
         r = r_;
-        grit->getGOM().updateSphere(index,x_,y_,z_,r_);
+        grit->getStreamer().updateSphere(index,x_,y_,z_,r_);
 }
 
 

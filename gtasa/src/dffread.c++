@@ -1074,7 +1074,7 @@ export_or_provide_mat (const StringSet &texs,
                        const Obj &obj,
                        const std::string &oname,
                        MatDB &matdb,
-                       std::ostream &matbin,
+                       std::ostream &materials_lua,
                        const std::string &mod_name)
 {{{
 
@@ -1137,6 +1137,9 @@ export_or_provide_mat (const StringSet &texs,
     if (mat!=mname.str())
         return mat;
 
+    
+#if 0
+    // matbin is out of fashion
     unsigned char flags = 0;
 
     if (has_alpha) flags |= 0x1;
@@ -1152,6 +1155,16 @@ export_or_provide_mat (const StringSet &texs,
     ios_write_u32(matbin,m.colour);
     //fwrite_fixedstr(d,f,tname,88);
     ios_write_str(matbin,textures[0].c_str());
+#endif
+
+    // matbin is out of fashion
+    materials_lua << "material \"" << mname.str() << "\" { ";
+    if (has_alpha || decal) materials_lua << "alpha=true, ";
+    if (double_sided) materials_lua << "backfaces=true, ";
+    if (!dynamic_lighting) materials_lua << "normals=false, ";
+    if (m.colour!=0xFFFFFFFF) materials_lua<<"diffuseColour=0x"<<std::hex<<m.colour<<std::dec<<", ";
+    if (textures[0]!="") materials_lua << "diffuseMap=\""<<textures[0]<<"\", ";
+    materials_lua << "}\n";
 
     return mat;
 }}}
@@ -1165,7 +1178,7 @@ void export_xml (const StringSet &texs,
                  const std::string &oname,
                  struct geometry &g,
                  MatDB &matdb,
-                 std::ostream &matbin,
+                 std::ostream &materials_lua,
                  const std::string &mod_name)
 {{{
     out << "xml filename: " << fname << std::endl;
@@ -1236,8 +1249,8 @@ void export_xml (const StringSet &texs,
             continue;
         }
 
-        std::string mname =
-            export_or_provide_mat(texs,ide,imgs,g,s->material,obj,oname,matdb,matbin,mod_name);
+        std::string mname = export_or_provide_mat(texs,ide,imgs,g,s->material,
+                                                  obj,oname,matdb,materials_lua,mod_name);
 
         s->surrogate = mname;
 
@@ -1298,7 +1311,7 @@ void export_mesh (const StringSet &texs,
                  const std::string &oname,
                   struct geometry &g,
                   MatDB &matdb,
-                  std::ostream &matbin,
+                  std::ostream &materials_lua,
                   const std::string &mod_name)
 {{{
     (void) out;
@@ -1433,8 +1446,8 @@ void export_mesh (const StringSet &texs,
         unsigned short *ibuf = new unsigned short[tris*3];
         unsigned short *ibuf_next = ibuf;
 
-        std::string mname =
-            export_or_provide_mat(texs,ide,imgs,g,s->material,obj,oname,matdb,matbin,mod_name);
+        std::string mname = export_or_provide_mat(texs,ide,imgs,g,s->material,
+                                                  obj,oname,matdb,materials_lua,mod_name);
 
         s->surrogate = mname;
 
@@ -1650,11 +1663,12 @@ int main(int argc, char **argv)
 
     try {
 
-        std::ofstream matbin;
+        std::ofstream materials_lua;
         if  (do_export_mesh) {
             init_ogre();
-            matbin.open((oname+".matbin").c_str(), std::ios::binary);
-            ASSERT_IO_SUCCESSFUL(matbin, "opening "+oname+".matbin");
+            std::string s = oname+"_materials.lua";
+            materials_lua.open(s.c_str(), std::ios::binary);
+            ASSERT_IO_SUCCESSFUL(materials_lua, "opening "+s);
         }
 
         for (Strings::iterator i=dffs.begin() ; i!=dffs.end() ; i++) {
@@ -1679,7 +1693,7 @@ int main(int argc, char **argv)
                 obj.txd = txdname;
                 MatDB matdb;
                 export_mesh(texs, ide, imgs, std::cout, oname+".mesh", obj,
-                            oname, dff.geometries[0], matdb, matbin, modname);
+                            oname, dff.geometries[0], matdb, materials_lua, modname);
 
             }
 

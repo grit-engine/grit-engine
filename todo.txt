@@ -3,15 +3,6 @@ todo:
 ================================================================================
 
 --------------------------------------------------------------------------------
-code tidy
---------------------------------------------------------------------------------
-
-rename GritObjectManager to something more explicit about its function
-
-
-
-
---------------------------------------------------------------------------------
 gameplay
 --------------------------------------------------------------------------------
 
@@ -62,6 +53,7 @@ variable penumbra
 smarter choice of bias
 
 reflections on cars
+
 
 
 
@@ -126,8 +118,6 @@ When overloaded functions are called with the wrong args, list all options.
 modding
 --------------------------------------------------------------------------------
 
-integrate with a single ubershader
-
 implement various effects
 -- parallax
 -- steep parallax
@@ -139,8 +129,6 @@ implement various effects
 -- reflections (static env map and dynamic env map)
 
 allow modder to choose subset of effects, providing necessary parameters
-
-avoid using tables for vehicle classes
 
 group together a large number of environmental options under a common API --
 e.g. camera, shadow, ambient lighting, sun, etc.  Allow clear, and reset of

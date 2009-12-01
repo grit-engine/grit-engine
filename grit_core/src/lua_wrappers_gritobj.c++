@@ -104,7 +104,7 @@ static int gritobj_destroy (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        grit->getGOM().deleteObject(L,self);
+        grit->getStreamer().deleteObject(L,self);
         return 0;
 TRY_END
 }
@@ -115,8 +115,8 @@ TRY_START
         check_args(L,1);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
         self->activate(L, self,
-                       grit->getGOM().getGFX(),
-                       grit->getGOM().getPhysics());
+                       grit->getStreamer().getGFX(),
+                       grit->getStreamer().getPhysics());
         return 0;
 TRY_END
 }
@@ -319,32 +319,32 @@ MT_MACRO_NEWINDEX(gritobj);
 
 
 
-// GRIT_OBJECT_MANAGER ===================================================== {{{
+// STREAMER ================================================================ {{{
 
-void push_gom (lua_State *L, GritObjectManager *self)
+void push_streamer (lua_State *L, Streamer *self)
 {
         void **ud = static_cast<void**>(lua_newuserdata(L, sizeof(*ud)));
         ud[0] = static_cast<void*> (self);
-        luaL_getmetatable(L, GOM_TAG);
+        luaL_getmetatable(L, STREAMER_TAG);
         lua_setmetatable(L, -2);
 }
 
-static int gom_gc (lua_State *L)
+static int streamer_gc (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        GET_UD_MACRO_OFFSET(GritObjectManager,self,1,GOM_TAG,0);
+        GET_UD_MACRO_OFFSET(Streamer,self,1,STREAMER_TAG,0);
         if (self==NULL) return 0;
         return 0;
 TRY_END
 }
 
 
-static int gom_get_bounds (lua_State *L)
+static int streamer_get_bounds (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         const Ogre::AxisAlignedBox &aabb = self.getBounds();
         push(L,new Ogre::Vector3(aabb.getMinimum()),VECTOR3_TAG);
         push(L,new Ogre::Vector3(aabb.getMaximum()),VECTOR3_TAG);
@@ -353,11 +353,11 @@ TRY_END
 }
 
 
-static int gom_set_bounds (lua_State *L)
+static int streamer_set_bounds (lua_State *L)
 {
 TRY_START
         check_args(L,3);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         GET_UD_MACRO(Ogre::Vector3,min,2,VECTOR3_TAG);
         GET_UD_MACRO(Ogre::Vector3,max,3,VECTOR3_TAG);
         self.setBounds(L,Ogre::AxisAlignedBox(min,max));
@@ -365,11 +365,11 @@ TRY_START
 TRY_END
 }
 
-static int gom_centre (lua_State *L)
+static int streamer_centre (lua_State *L)
 {
 TRY_START
         check_args(L,4);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         Ogre::Real x = luaL_checknumber(L,2);
         Ogre::Real y = luaL_checknumber(L,3);
         Ogre::Real z = luaL_checknumber(L,4);
@@ -379,11 +379,11 @@ TRY_END
 }
 
 /*
-static int gom_add_class (lua_State *L)
+static int streamer_add_class (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         if (!lua_istable(L,2))
                 my_lua_error(L,"Second parameter should be a table");
         lua_getfield(L,2,"name");
@@ -401,11 +401,11 @@ TRY_END
 }
 */
 
-static int gom_add_class (lua_State *L)
+static int streamer_add_class (lua_State *L)
 {
 TRY_START
         check_args(L,4);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         Ogre::String name = lua_tostring(L,2);
         if (!lua_istable(L,3))
                 my_lua_error(L,"Second parameter should be a table");
@@ -416,47 +416,47 @@ TRY_START
 TRY_END
 }
 
-static int gom_get_class (lua_State *L)
+static int streamer_get_class (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         Ogre::String name = luaL_checkstring(L,2);
         push_gritcls(L,self.getClass(name));
         return 1;
 TRY_END
 }
 
-static int gom_has_class (lua_State *L)
+static int streamer_has_class (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         Ogre::String name = luaL_checkstring(L,2);
         lua_pushboolean(L,self.hasClass(name));
         return 1;
 TRY_END
 }
 
-static int gom_remove_class (lua_State *L)
+static int streamer_remove_class (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         Ogre::String name = luaL_checkstring(L,2);
         self.deleteClass(L,self.getClass(name));
         return 0;
 TRY_END
 }
 
-static int gom_add_object (lua_State *L)
+static int streamer_add_object (lua_State *L)
 {
 TRY_START
         if (lua_gettop(L)==3 || lua_gettop(L)==5)
                 lua_newtable(L);
         if (lua_gettop(L)!=4)
                 check_args(L,6);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         Ogre::String className = luaL_checkstring(L,2);
         Ogre::Real x,y,z;
         if (lua_gettop(L)==4) {
@@ -547,11 +547,11 @@ TRY_START
 TRY_END
 }
 
-static int gom_get_object (lua_State *L)
+static int streamer_get_object (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         Ogre::String name = luaL_checkstring(L,2);
         GritObjectPtr o = self.getObject(name);
         if (o.isNull()) {
@@ -563,22 +563,22 @@ TRY_START
 TRY_END
 }
 
-static int gom_has_object (lua_State *L)
+static int streamer_has_object (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         Ogre::String name = luaL_checkstring(L,2);
         lua_pushboolean(L,self.hasObject(name));
         return 1;
 TRY_END
 }
 
-static int gom_remove_object (lua_State *L)
+static int streamer_remove_object (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         Ogre::String name = luaL_checkstring(L,2);
         self.deleteObject(L,self.getObject(name));
         return 0;
@@ -587,11 +587,11 @@ TRY_END
 
 
 
-static int gom_clear_objects (lua_State *L)
+static int streamer_clear_objects (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         self.clearObjects(L);
         return 0;
 TRY_END
@@ -599,21 +599,21 @@ TRY_END
 
 
 
-static int gom_clear_classes (lua_State *L)
+static int streamer_clear_classes (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         self.clearClasses(L);
         return 0;
 TRY_END
 }
 
-static int gom_deactivate_all (lua_State *L)
+static int streamer_deactivate_all (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         GObjMap::iterator i, i_;
         for (self.getObjects(i,i_) ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = i->second;
@@ -623,11 +623,11 @@ TRY_START
 TRY_END
 }
 
-static int gom_all_of_class (lua_State *L)
+static int streamer_all_of_class (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         Ogre::String cls = luaL_checkstring(L,2);
         lua_newtable(L);
         unsigned int c = 0;
@@ -646,38 +646,38 @@ TRY_END
 }
 
 
-TOSTRING_ADDR_MACRO (gom,GritObjectManager,GOM_TAG)
+TOSTRING_ADDR_MACRO (streamer,Streamer,STREAMER_TAG)
 
 
-static int gom_index (lua_State *L)
+static int streamer_index (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
-        std::string key = luaL_checkstring(L,2);
-        if (key=="gfx") {
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
+        const char *key = luaL_checkstring(L,2);
+        if (!::strcmp(key,"gfx")) {
                 push_node(L,self.getGFX());
-        } else if (key=="physics") {
+        } else if (!::strcmp(key,"physics")) {
                 push_pworld(L,self.getPhysics());
-        } else if (key=="stepSize") {
+        } else if (!::strcmp(key,"stepSize")) {
                 lua_pushnumber(L,self.stepSize);
-        } else if (key=="visibility") {
+        } else if (!::strcmp(key,"visibility")) {
                 lua_pushnumber(L,self.visibility);
-        } else if (key=="centre") {
-                push_cfunction(L,gom_centre);
-        } else if (key=="getBounds") {
-                push_cfunction(L,gom_get_bounds);
-        } else if (key=="setBounds") {
-                push_cfunction(L,gom_set_bounds);
-        } else if (key=="addClass") {
-                push_cfunction(L,gom_add_class);
-        } else if (key=="getClass") {
-                push_cfunction(L,gom_get_class);
-        } else if (key=="hasClass") {
-                push_cfunction(L,gom_has_class);
-        } else if (key=="removeClass") {
-                push_cfunction(L,gom_remove_class);
-        } else if (key=="classes") {
+        } else if (!::strcmp(key,"centre")) {
+                push_cfunction(L,streamer_centre);
+        } else if (!::strcmp(key,"getBounds")) {
+                push_cfunction(L,streamer_get_bounds);
+        } else if (!::strcmp(key,"setBounds")) {
+                push_cfunction(L,streamer_set_bounds);
+        } else if (!::strcmp(key,"addClass")) {
+                push_cfunction(L,streamer_add_class);
+        } else if (!::strcmp(key,"getClass")) {
+                push_cfunction(L,streamer_get_class);
+        } else if (!::strcmp(key,"hasClass")) {
+                push_cfunction(L,streamer_has_class);
+        } else if (!::strcmp(key,"removeClass")) {
+                push_cfunction(L,streamer_remove_class);
+        } else if (!::strcmp(key,"classes")) {
                 lua_newtable(L);
                 unsigned int c = 0;
                 GritClassMap::iterator i, i_;
@@ -686,35 +686,35 @@ TRY_START
                         lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
                         c++;                 
                 }       
-        } else if (key=="numClasses") {
+        } else if (!::strcmp(key,"numClasses")) {
                 lua_pushnumber(L,self.numClasses());
-        } else if (key=="addObject") {
-                push_cfunction(L,gom_add_object);
-        } else if (key=="getObject") {
-                push_cfunction(L,gom_get_object);
-        } else if (key=="hasObject") {
-                push_cfunction(L,gom_has_object);
-        } else if (key=="removeObject") {
-                push_cfunction(L,gom_remove_object);
-        } else if (key=="numObjects") {
+        } else if (!::strcmp(key,"addObject")) {
+                push_cfunction(L,streamer_add_object);
+        } else if (!::strcmp(key,"getObject")) {
+                push_cfunction(L,streamer_get_object);
+        } else if (!::strcmp(key,"hasObject")) {
+                push_cfunction(L,streamer_has_object);
+        } else if (!::strcmp(key,"removeObject")) {
+                push_cfunction(L,streamer_remove_object);
+        } else if (!::strcmp(key,"numObjects")) {
                 lua_pushnumber(L,self.numObjects());
-        } else if (key=="numActivated") {
+        } else if (!::strcmp(key,"numActivated")) {
                 lua_pushnumber(L,self.numActivated());
-        } else if (key=="clearObjects") {
-                push_cfunction(L,gom_clear_objects);
-        } else if (key=="clearClasses") {
-                push_cfunction(L,gom_clear_classes);
-        } else if (key=="deactivateAll") {
-                push_cfunction(L,gom_deactivate_all);
-        } else if (key=="allOfClass") {
-                push_cfunction(L,gom_all_of_class);
-        } else if (key=="prepareDistanceFactor") {
+        } else if (!::strcmp(key,"clearObjects")) {
+                push_cfunction(L,streamer_clear_objects);
+        } else if (!::strcmp(key,"clearClasses")) {
+                push_cfunction(L,streamer_clear_classes);
+        } else if (!::strcmp(key,"deactivateAll")) {
+                push_cfunction(L,streamer_deactivate_all);
+        } else if (!::strcmp(key,"allOfClass")) {
+                push_cfunction(L,streamer_all_of_class);
+        } else if (!::strcmp(key,"prepareDistanceFactor")) {
                 lua_pushnumber(L,self.prepareDistanceFactor);
-        } else if (key=="fadeOverlapFactor") {
+        } else if (!::strcmp(key,"fadeOverlapFactor")) {
                 lua_pushnumber(L,self.fadeOverlapFactor);
-        } else if (key=="fadeOutFactor") {
+        } else if (!::strcmp(key,"fadeOutFactor")) {
                 lua_pushnumber(L,self.fadeOutFactor);
-        } else if (key=="objects") {
+        } else if (!::strcmp(key,"objects")) {
                 lua_newtable(L);
                 unsigned int c = 0;
                 GObjMap::iterator i, i_;
@@ -724,7 +724,7 @@ TRY_START
                         lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
                         c++;                 
                 }       
-        } else if (key=="activated") {
+        } else if (!::strcmp(key,"activated")) {
                 lua_newtable(L);
                 unsigned int c = 0;
                 GObjMap::iterator i, i_;
@@ -736,17 +736,17 @@ TRY_START
                         c++;                 
                 }       
         } else {
-                my_lua_error(L,"Not a readable ObjectManager member: "+key);
+                my_lua_error(L,"Not a readable ObjectManager member: "+std::string(key));
         }
         return 1;
 TRY_END
 }
 
-static int gom_newindex (lua_State *L)
+static int streamer_newindex (lua_State *L)
 {
 TRY_START
         check_args(L,3);
-        GET_UD_MACRO(GritObjectManager,self,1,GOM_TAG);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key=="gfx") {
                 GET_UD_MACRO_OFFSET(Ogre::SceneNode,node,3,NODE_TAG,0);
@@ -773,9 +773,9 @@ TRY_START
 TRY_END
 }
 
-EQ_PTR_MACRO(GritObjectManager,gom,GOM_TAG)
+EQ_PTR_MACRO(Streamer,streamer,STREAMER_TAG)
 
-MT_MACRO_NEWINDEX(gom);
+MT_MACRO_NEWINDEX(streamer);
 
 //}}}
 

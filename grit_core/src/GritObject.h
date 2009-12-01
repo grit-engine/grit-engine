@@ -19,7 +19,7 @@ typedef std::set<GritObjectPtr> GObjSet;
 #include <OgreSceneNode.h>
 
 #include "PhysicsWorld.h"
-#include "GritObjectManager.h"
+#include "Streamer.h"
 #include "BackgroundMeshLoader.h"
 #include "ExternalTable.h"
 

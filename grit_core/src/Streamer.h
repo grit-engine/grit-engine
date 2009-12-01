@@ -1,8 +1,8 @@
-class GritObjectManager;
+class Streamer;
 
 
-#ifndef GritObjectManager_h
-#define GritObjectManager_h
+#ifndef Streamer_h
+#define Streamer_h
 
 #include <map>
 
@@ -24,11 +24,11 @@ extern "C" {
 
 typedef std::map<Ogre::String,GritClass*> GritClassMap;
 
-class GritObjectManager {
+class Streamer {
 
     public:
 
-        GritObjectManager (void)
+        Streamer (void)
               : prepareDistanceFactor(1.3),
                 fadeOutFactor(.7),
                 fadeOverlapFactor(.7),
@@ -40,7 +40,7 @@ class GritObjectManager {
         {
         }
 
-        virtual ~GritObjectManager (void);
+        virtual ~Streamer (void);
 
         virtual void doShutdown (lua_State *L);
 

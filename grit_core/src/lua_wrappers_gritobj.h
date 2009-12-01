@@ -1,10 +1,10 @@
 #include "lua_wrappers_common.h"
 
-#include "GritObjectManager.h"
+#include "Streamer.h"
 
-#define GOM_TAG "Grit/ObjectManager"
-MT_MACRO_DECLARE(gom);
-void push_gom (lua_State *L, GritObjectManager *self);
+#define STREAMER_TAG "Grit/Streamer"
+MT_MACRO_DECLARE(streamer);
+void push_streamer (lua_State *L, Streamer *self);
 
 
 #define GRITCLS_TAG "Grit/Class"
