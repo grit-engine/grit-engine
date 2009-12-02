@@ -294,10 +294,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\GritObjectManager.c++"
-				>
-			</File>
-			<File
 				RelativePath=".\src\HUD.c++"
 				>
 			</File>
@@ -383,6 +379,10 @@
 			</File>
 			<File
 				RelativePath=".\src\ray.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Streamer.c++"
 				>
 			</File>
 			<File
