@@ -27,8 +27,6 @@ bool parse_col (std::string &name,
         tcol.inertia_x = 0;
         tcol.inertia_y = 0;
         tcol.inertia_z = 0;
-        tcol.friction = 0.5;
-        tcol.restitution = 0;
         tcol.linearDamping = 0;
         tcol.angularDamping = 0.5;
         tcol.linearSleepThreshold = 1;
@@ -134,6 +132,7 @@ bool parse_col (std::string &name,
                         sphere.radius = ios_read_float(in);
                         unsigned long surface = ios_read_u32(in);
                         (void) surface; // not used yet
+                        sphere.material = 7;
                         tcol.compound.spheres.push_back(sphere);
                 }
 
@@ -158,6 +157,7 @@ bool parse_col (std::string &name,
                         box.margin = 0.04;
                         unsigned long surface = ios_read_u32(in);
                         (void) surface; // not used yet
+                        box.material = 7;
                         tcol.compound.boxes.push_back(box);
                 }
 
@@ -191,7 +191,7 @@ bool parse_col (std::string &name,
                         (void) mat; // not used yet
                         unsigned char light = ios_read_u8(in);
                         (void) light; // not used yet
-                        tcol.triMesh.faces.push_back(Face(a,b,c,0));
+                        tcol.triMesh.faces.push_back(Face(a,b,c,7));
                 }
 
                 if (num_faces > 0) {

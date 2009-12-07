@@ -10,8 +10,6 @@ general physics:
     - constraints (particlarly cone twist and hinge constraints)
     - explosions (ghost object + ray casts?) (sphere + contact iteration?)
     - callbacks on collisions
-    - max velocities per mesh
-    - physical materials
 
 vehicles:
     - constraints (particularly hinge constraint for car doors)
@@ -124,7 +122,6 @@ implement various effects
 -- texture animation
 -- multitexturing
 -- splatting
--- spec map
 -- reflections (static env map and dynamic env map)
 
 allow modder to choose subset of effects, providing necessary parameters

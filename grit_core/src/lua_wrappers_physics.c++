@@ -9,7 +9,7 @@
 
 // Sweep Callback {{{
 
-struct SweepResult { RigidBody *rb; Ogre::Real dist; Ogre::Vector3 n; };
+struct SweepResult { RigidBody *rb; float dist; Ogre::Vector3 n; };
 typedef std::vector<SweepResult> SweepResults;
 
 class LuaSweepCallback : public PhysicsWorld::SweepCallback {
@@ -17,7 +17,7 @@ class LuaSweepCallback : public PhysicsWorld::SweepCallback {
         LuaSweepCallback (bool ignore_dynamic)
               : ignoreDynamic(ignore_dynamic)
         { }
-        virtual void result (RigidBody &rb, Ogre::Real dist, Ogre::Vector3 &n) {
+        virtual void result (RigidBody &rb, float dist, Ogre::Vector3 &n) {
                 if (ignoreDynamic && rb.getMass()>0) return;
                 if (blacklist.find(&rb)!=blacklist.end()) return;
                 SweepResult r;
@@ -43,6 +43,16 @@ static void push_colmesh (lua_State *L, const CollisionMeshPtr &self)
                 lua_pushnil(L);
         else
                 push(L,new CollisionMeshPtr(self),COLMESH_TAG);
+}
+
+static int colmesh_reload (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(CollisionMeshPtr,self,1,COLMESH_TAG);
+        self->reload();
+        return 0;
+TRY_END
 }
 
 static int colmesh_gc (lua_State *L)
@@ -79,6 +89,8 @@ TRY_START
         std::string key = luaL_checkstring(L,2);
         if (key=="mass") {
                 lua_pushnumber(L,self->getMass());
+        } else if (key=="reload") {
+                push_cfunction(L,colmesh_reload);
         } else if (key=="ccdMotionThreshold") {
                 lua_pushnumber(L,self->getCCDMotionThreshold());
         } else if (key=="ccdSweptSphereRadius") {
@@ -91,10 +103,6 @@ TRY_START
                 lua_pushnumber(L,self->getLinearSleepThreshold());
         } else if (key=="angularSleepThreshold") {
                 lua_pushnumber(L,self->getAngularSleepThreshold());
-        } else if (key=="friction") {
-                lua_pushnumber(L,self->getFriction());
-        } else if (key=="restitution") {
-                lua_pushnumber(L,self->getRestitution());
         } else if (key=="name") {
                 lua_pushstring(L,self->getName().c_str());
         } else {
@@ -111,32 +119,26 @@ TRY_START
         GET_UD_MACRO(CollisionMeshPtr,self,1,COLMESH_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key=="mass") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setMass(v);
         } else if (key=="ccdMotionThreshold") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setCCDMotionThreshold(v);
         } else if (key=="ccdSweptSphereRadius") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setCCDSweptSphereRadius(v);
         } else if (key=="linearDamping") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setLinearDamping(v);
         } else if (key=="angularDamping") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setAngularDamping(v);
         } else if (key=="linearSleepThreshold") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setLinearSleepThreshold(v);
         } else if (key=="angularSleepThreshold") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setAngularSleepThreshold(v);
-        } else if (key=="friction") {
-                Ogre::Real v = luaL_checknumber(L,3);
-                self->setFriction(v);
-        } else if (key=="restitution") {
-                Ogre::Real v = luaL_checknumber(L,3);
-                self->setRestitution(v);
         } else {
                my_lua_error(L,"Not a writeable CollisionMesh member: "+key);
         }
@@ -256,7 +258,7 @@ TRY_END
 }
 
 static void push_sweep_result (lua_State *L,
-                               const SweepResult &r, Ogre::Real len)
+                               const SweepResult &r, float len)
 {
         lua_pushnumber(L,r.dist * len);
         push_rbody(L,r.rb->getPtr());
@@ -281,7 +283,7 @@ TRY_START
         }
         // one or other of col_mesh or radius will be used
         CollisionMeshPtr *col_mesh = NULL;
-        Ogre::Real radius = 0;
+        float radius = 0;
         if (lua_type(L,2) == LUA_TNUMBER) {
                 radius = lua_tonumber(L,2);
         } else {
@@ -296,7 +298,7 @@ TRY_START
                 start = start_;
                 end = end_;
         }
-        Ogre::Real len = luaL_checknumber(L,5);
+        float len = luaL_checknumber(L,5);
 
         if (len>0) {
                 // 'end' is actually a direction
@@ -528,10 +530,6 @@ TRY_START
         } else if (key=="angularDamping") {
                 lua_pushnumber(L,self->getAngularDamping());
 
-        } else if (key=="friction") {
-                lua_pushnumber(L,self->getFriction());
-        } else if (key=="restitution") {
-                lua_pushnumber(L,self->getRestitution());
         } else if (key=="mass") {
                 lua_pushnumber(L,self->getMass());
         } else if (key=="inertia") {
@@ -581,28 +579,22 @@ TRY_START
                 GET_UD_MACRO(Ogre::Quaternion,v,3,QUAT_TAG);
                 self->setOrientation(v);
         } else if (key=="contactProcessingThreshold") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setContactProcessingThreshold(v);
         } else if (key=="linearDamping") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setLinearDamping(v);
         } else if (key=="angularDamping") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setAngularDamping(v);
         } else if (key=="linearSleepThreshold") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setLinearSleepThreshold(v);
         } else if (key=="angularSleepThreshold") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setAngularSleepThreshold(v);
-        } else if (key=="friction") {
-                Ogre::Real v = luaL_checknumber(L,3);
-                self->setFriction(v);
-        } else if (key=="restitution") {
-                Ogre::Real v = luaL_checknumber(L,3);
-                self->setRestitution(v);
         } else if (key=="mass") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setMass(v);
         } else if (key=="updateCallback") {
                 self->setUpdateCallback(L);
@@ -772,6 +764,47 @@ TRY_START
 TRY_END
 }
 
+static int pworld_set_material_interaction (lua_State *L)
+{
+TRY_START
+        check_args(L,5);
+        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
+        if (!lua_istable(L,2))
+                my_lua_error(L,"Second parameter should be a table");
+        if (!lua_istable(L,3))
+                my_lua_error(L,"Third parameter should be a table");
+        float friction = luaL_checknumber(L,4);
+        float restitution = luaL_checknumber(L,5);
+
+        // scan through table adding lua data to o
+        for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
+                physics_mat m1 = check_t<physics_mat>(L,-1);
+                for (lua_pushnil(L) ; lua_next(L,3)!=0 ; lua_pop(L,1)) {
+                        physics_mat m2 = check_t<physics_mat>(L,-1);
+                        self->setInteraction(m1, m2, friction, restitution);
+                }
+        }
+
+        return 0;
+TRY_END
+}
+
+static int pworld_get_material_interaction (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
+        physics_mat m1 = check_t<physics_mat>(L,2);
+        physics_mat m2 = check_t<physics_mat>(L,3);
+        float friction;
+        float restitution;
+        self->getInteraction(m1, m2, friction, restitution);
+        lua_pushnumber(L, friction);
+        lua_pushnumber(L, restitution);
+        return 2;
+TRY_END
+}
+
 
 
 TOSTRING_SMART_PTR_MACRO(pworld,PhysicsWorldPtr,PWORLD_TAG)
@@ -824,6 +857,14 @@ TRY_START
                 lua_pushnumber(L,self->getDeactivationTime());
         } else if (key=="useContactAddedHack") {
                 lua_pushboolean(L,self->getUseContactAddedHack());
+        } else if (key=="verboseContacts") {
+                lua_pushboolean(L,self->verboseContacts);
+        } else if (key=="errorContacts") {
+                lua_pushboolean(L,self->errorContacts);
+        } else if (key=="setMaterialInteraction") {
+                push_cfunction(L,pworld_set_material_interaction);
+        } else if (key=="getMaterialInteraction") {
+                push_cfunction(L,pworld_get_material_interaction);
         } else if (key=="solverDamping") {
                 lua_pushnumber(L,self->getSolverDamping());
         } else if (key=="solverIterations") {
@@ -868,37 +909,43 @@ TRY_START
                 int v = check_t<int>(L,3);
                 self->setMaxSteps(v);
         } else if (key=="stepSize") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setStepSize(v);
         } else if (key=="contactBreakingThreshold") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setContactBreakingThreshold(v);
         } else if (key=="deactivationTime") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setDeactivationTime(v);
         } else if (key=="useContactAddedHack") {
                 bool v = 0!=lua_toboolean(L,3);
                 self->setUseContactAddedHack(v);
+        } else if (key=="verboseContacts") {
+                bool v = 0!=lua_toboolean(L,3);
+                self->verboseContacts = v;
+        } else if (key=="errorContacts") {
+                bool v = 0!=lua_toboolean(L,3);
+                self->errorContacts = v;
         } else if (key=="solverDamping") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setSolverDamping(v);
         } else if (key=="solverIterations") {
                 int v = check_t<int>(L,3);
                 self->setSolverIterations(v);
         } else if (key=="solverErp") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setSolverErp(v);
         } else if (key=="solverErp2") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setSolverErp2(v);
         } else if (key=="solverSplitImpulseThreshold") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setSolverSplitImpulseThreshold(v);
         } else if (key=="solverLinearSlop") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setSolverLinearSlop(v);
         } else if (key=="solverWarmStartingFactor") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self->setSolverWarmStartingFactor(v);
         } else if (key=="solverSplitImpulse") {
                 bool v = 0!=lua_toboolean(L,3);

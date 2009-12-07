@@ -21,6 +21,7 @@ token {
     
 
     MARGIN
+    MATERIAL
     SHRINK
     CENTRE
     NORMAL
@@ -84,6 +85,7 @@ mode MAIN : END_OF_FILE
     "ccd_swept_sphere_radius"          => QUEX_TKN_CCD_SWEPT_SPHERE_RADIUS;
 
     "margin"                           => QUEX_TKN_MARGIN;
+    "material"                         => QUEX_TKN_MATERIAL;
     "shrink"                           => QUEX_TKN_SHRINK;
     "center"|"centre"                  => QUEX_TKN_CENTRE;
     "normal"                           => QUEX_TKN_NORMAL;

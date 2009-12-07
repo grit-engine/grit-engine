@@ -6,11 +6,11 @@
 // NOTE: This file has been created automatically by a
 //       quex program.
 //
-// DATE: Sun Dec 21 05:48:58 2008
+// DATE: Sun Dec  6 21:26:10 2009
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-#ifndef __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2008y12m21d_5h48m58s__
-#define __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2008y12m21d_5h48m58s__
+#ifndef __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2009y12m6d_21h26m10s__
+#define __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2009y12m6d_21h26m10s__
 
 #include<cstdio> // for: 'std::sprintf'
 #include<map>    // for: 'token-id' <-> 'name map'
@@ -52,24 +52,25 @@
 #define QUEX_TKN_LINEAR_SLEEP_THRESHOLD  ((QUEX_TOKEN_ID_TYPE)10022)
 #define QUEX_TKN_MARGIN                  ((QUEX_TOKEN_ID_TYPE)10023)
 #define QUEX_TKN_MASS                    ((QUEX_TOKEN_ID_TYPE)10024)
-#define QUEX_TKN_MULTISPHERE             ((QUEX_TOKEN_ID_TYPE)10025)
-#define QUEX_TKN_NATURAL                 ((QUEX_TOKEN_ID_TYPE)10026)
-#define QUEX_TKN_NORMAL                  ((QUEX_TOKEN_ID_TYPE)10027)
-#define QUEX_TKN_ORIENTATION             ((QUEX_TOKEN_ID_TYPE)10028)
-#define QUEX_TKN_PLANE                   ((QUEX_TOKEN_ID_TYPE)10029)
-#define QUEX_TKN_RADIUS                  ((QUEX_TOKEN_ID_TYPE)10030)
-#define QUEX_TKN_RBRACE                  ((QUEX_TOKEN_ID_TYPE)10031)
-#define QUEX_TKN_RESTITUTION             ((QUEX_TOKEN_ID_TYPE)10032)
-#define QUEX_TKN_SEMI                    ((QUEX_TOKEN_ID_TYPE)10033)
-#define QUEX_TKN_SHRINK                  ((QUEX_TOKEN_ID_TYPE)10034)
-#define QUEX_TKN_SPHERE                  ((QUEX_TOKEN_ID_TYPE)10035)
-#define QUEX_TKN_STATIC                  ((QUEX_TOKEN_ID_TYPE)10036)
-#define QUEX_TKN_TCOL                    ((QUEX_TOKEN_ID_TYPE)10037)
+#define QUEX_TKN_MATERIAL                ((QUEX_TOKEN_ID_TYPE)10025)
+#define QUEX_TKN_MULTISPHERE             ((QUEX_TOKEN_ID_TYPE)10026)
+#define QUEX_TKN_NATURAL                 ((QUEX_TOKEN_ID_TYPE)10027)
+#define QUEX_TKN_NORMAL                  ((QUEX_TOKEN_ID_TYPE)10028)
+#define QUEX_TKN_ORIENTATION             ((QUEX_TOKEN_ID_TYPE)10029)
+#define QUEX_TKN_PLANE                   ((QUEX_TOKEN_ID_TYPE)10030)
+#define QUEX_TKN_RADIUS                  ((QUEX_TOKEN_ID_TYPE)10031)
+#define QUEX_TKN_RBRACE                  ((QUEX_TOKEN_ID_TYPE)10032)
+#define QUEX_TKN_RESTITUTION             ((QUEX_TOKEN_ID_TYPE)10033)
+#define QUEX_TKN_SEMI                    ((QUEX_TOKEN_ID_TYPE)10034)
+#define QUEX_TKN_SHRINK                  ((QUEX_TOKEN_ID_TYPE)10035)
+#define QUEX_TKN_SPHERE                  ((QUEX_TOKEN_ID_TYPE)10036)
+#define QUEX_TKN_STATIC                  ((QUEX_TOKEN_ID_TYPE)10037)
+#define QUEX_TKN_TCOL                    ((QUEX_TOKEN_ID_TYPE)10038)
 #define QUEX_TKN_TERMINATION             ((QUEX_TOKEN_ID_TYPE)0)
-#define QUEX_TKN_TRIMESH                 ((QUEX_TOKEN_ID_TYPE)10038)
+#define QUEX_TKN_TRIMESH                 ((QUEX_TOKEN_ID_TYPE)10039)
 #define QUEX_TKN_UNINITIALIZED           ((QUEX_TOKEN_ID_TYPE)1)
-#define QUEX_TKN_UNKNOWN                 ((QUEX_TOKEN_ID_TYPE)10039)
-#define QUEX_TKN_VERTEXES                ((QUEX_TOKEN_ID_TYPE)10040)
+#define QUEX_TKN_UNKNOWN                 ((QUEX_TOKEN_ID_TYPE)10040)
+#define QUEX_TKN_VERTEXES                ((QUEX_TOKEN_ID_TYPE)10041)
 
 
 namespace quex {
@@ -95,7 +96,7 @@ namespace quex {
            db[QUEX_TKN_NORMAL]                  = std::string("NORMAL");
            db[QUEX_TKN_HULL]                    = std::string("HULL");
            db[QUEX_TKN_VERTEXES]                = std::string("VERTEXES");
-           db[QUEX_TKN_COMPOUND]                = std::string("COMPOUND");
+           db[QUEX_TKN_MATERIAL]                = std::string("MATERIAL");
            db[QUEX_TKN_FRICTION]                = std::string("FRICTION");
            db[QUEX_TKN_ANGULAR_DAMPING]         = std::string("ANGULAR_DAMPING");
            db[QUEX_TKN_MULTISPHERE]             = std::string("MULTISPHERE");
@@ -114,6 +115,7 @@ namespace quex {
            db[QUEX_TKN_LINEAR_SLEEP_THRESHOLD]  = std::string("LINEAR_SLEEP_THRESHOLD");
            db[QUEX_TKN_CENTRE]                  = std::string("CENTRE");
            db[QUEX_TKN_HEX]                     = std::string("HEX");
+           db[QUEX_TKN_COMPOUND]                = std::string("COMPOUND");
            db[QUEX_TKN_HEIGHT]                  = std::string("HEIGHT");
            db[QUEX_TKN_SPHERE]                  = std::string("SPHERE");
            db[QUEX_TKN_RADIUS]                  = std::string("RADIUS");

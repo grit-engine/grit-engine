@@ -14,55 +14,61 @@ void pretty_print_tcol (std::ostream &o, TColFile &f);
 
 typedef btAlignedObjectArray<btVector3> Vertexes;
 
+typedef unsigned int physics_mat;
+
 #ifndef TColParser_h
 #define TColParser_h
 
+struct HasMargin {
+        float margin;
+};
 
+struct HasMaterial {
+        HasMaterial () { }
+        HasMaterial (physics_mat material_) : material(material_) { }
+        physics_mat material;
+};
 
-struct Hull {
-        Ogre::Real margin;
+struct Hull : public HasMargin, public HasMaterial {
         Vertexes vertexes;
 };
 typedef std::vector<Hull> Hulls;
 
 
-struct Box {
-        Ogre::Real margin;
-        Ogre::Real px, py, pz;
-        Ogre::Real qw, qx, qy, qz;
-        Ogre::Real dx, dy, dz;
+struct Box : public HasMargin, public HasMaterial {
+        float px, py, pz;
+        float qw, qx, qy, qz;
+        float dx, dy, dz;
 };
 typedef std::vector<Box> Boxes;
 
 
-struct Cylinder {
-        Ogre::Real margin;
-        Ogre::Real px, py, pz;
-        Ogre::Real qw, qx, qy, qz;
-        Ogre::Real dx, dy, dz;
+struct Cylinder : public HasMargin, public HasMaterial {
+        float px, py, pz;
+        float qw, qx, qy, qz;
+        float dx, dy, dz;
 };
 typedef std::vector<Cylinder> Cylinders;
 
 
-struct Cone {
-        Ogre::Real margin;
-        Ogre::Real px, py, pz;
-        Ogre::Real qw, qx, qy, qz;
-        Ogre::Real radius;
-        Ogre::Real height;
+struct Cone : public HasMargin, public HasMaterial {
+        float px, py, pz;
+        float qw, qx, qy, qz;
+        float radius;
+        float height;
 };
 typedef std::vector<Cone> Cones;
 
 
-struct Plane {
-        Ogre::Real nx, ny, nz, d;
+struct Plane : public HasMaterial {
+        float nx, ny, nz, d;
 };
 typedef std::vector<Plane> Planes;
 
 
-struct Sphere {
-        Ogre::Real px, py, pz;
-        Ogre::Real radius;
+struct Sphere : public HasMaterial {
+        float px, py, pz;
+        float radius;
 };
 typedef std::vector<Sphere> Spheres;
 
@@ -74,39 +80,36 @@ struct Compound {
         Cones cones;
         Planes planes;
         Spheres spheres;
-        std::vector<Compound> compounds;
 };
 
 
 struct Face {
-        Face (int v1_, int v2_, int v3_, unsigned int flag_)
-              : v1(v1_), v2(v2_), v3(v3_), flag(flag_) { }
+        Face (int v1_, int v2_, int v3_, physics_mat material_)
+              : v1(v1_), v2(v2_), v3(v3_), material(material_) { }
         int v1, v2, v3;
-        unsigned long flag;
+        physics_mat material;
 };
 typedef std::vector<Face> Faces;
 
 
 struct TriMesh {
-        Ogre::Real margin;
+        float margin;
         Vertexes vertexes;
         Faces faces;
 };
 
 
 struct TColFile {
-        Ogre::Real mass;
-        Ogre::Real inertia_x;
-        Ogre::Real inertia_y;
-        Ogre::Real inertia_z;
-        Ogre::Real friction;
-        Ogre::Real restitution;
-        Ogre::Real linearDamping;
-        Ogre::Real angularDamping;
-        Ogre::Real linearSleepThreshold;
-        Ogre::Real angularSleepThreshold;
-        Ogre::Real ccdMotionThreshold;
-        Ogre::Real ccdSweptSphereRadius;
+        float mass;
+        float inertia_x;
+        float inertia_y;
+        float inertia_z;
+        float linearDamping;
+        float angularDamping;
+        float linearSleepThreshold;
+        float angularSleepThreshold;
+        float ccdMotionThreshold;
+        float ccdSweptSphereRadius;
         bool usingCompound;
         bool usingTriMesh;
         Compound compound;

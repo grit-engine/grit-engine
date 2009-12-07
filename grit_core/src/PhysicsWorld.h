@@ -3,6 +3,8 @@
 #define isnan _isnan
 #endif
 
+#include <map>
+
 #include <OgreSharedPtr.h>
 #include <OgreException.h>
 
@@ -93,7 +95,6 @@ class DynamicsWorld : public btDiscreteDynamicsWorld {
 
         btScalar stepSize;
         bool dirty;
-
 };
 
 
@@ -143,14 +144,14 @@ class PhysicsWorld {
         class SweepCallback {
             public:
                 virtual void result (RigidBody &body,
-                                     Ogre::Real d,
+                                     float d,
                                      Ogre::Vector3 &normal) = 0;
         };
 
         void ray (const Ogre::Vector3 &start,
                   const Ogre::Vector3 &end,
                   SweepCallback &rcb,
-                  Ogre::Real radius=0) const;
+                  float radius=0) const;
 
 
         void sweep (const CollisionMeshPtr &col_mesh,
@@ -161,29 +162,29 @@ class PhysicsWorld {
                     SweepCallback &scb) const;
 
 
-        Ogre::Real getDeactivationTime (void) const;
-        void setDeactivationTime (Ogre::Real);
+        float getDeactivationTime (void) const;
+        void setDeactivationTime (float);
 
-        Ogre::Real getContactBreakingThreshold (void) const;
-        void setContactBreakingThreshold (Ogre::Real);
+        float getContactBreakingThreshold (void) const;
+        void setContactBreakingThreshold (float);
 
-        Ogre::Real getSolverDamping (void) const;
-        void setSolverDamping (Ogre::Real);
+        float getSolverDamping (void) const;
+        void setSolverDamping (float);
 
         int getSolverIterations (void) const;
         void setSolverIterations (int);
 
-        Ogre::Real getSolverErp (void) const;
-        void setSolverErp (Ogre::Real);
+        float getSolverErp (void) const;
+        void setSolverErp (float);
 
-        Ogre::Real getSolverErp2 (void) const;
-        void setSolverErp2 (Ogre::Real);
+        float getSolverErp2 (void) const;
+        void setSolverErp2 (float);
 
-        Ogre::Real getSolverLinearSlop (void) const;
-        void setSolverLinearSlop (Ogre::Real);
+        float getSolverLinearSlop (void) const;
+        void setSolverLinearSlop (float);
 
-        Ogre::Real getSolverWarmStartingFactor (void) const;
-        void setSolverWarmStartingFactor (Ogre::Real);
+        float getSolverWarmStartingFactor (void) const;
+        void setSolverWarmStartingFactor (float);
 
         bool getSolverRandomiseOrder (void) const;
         void setSolverRandomiseOrder (bool);
@@ -200,8 +201,8 @@ class PhysicsWorld {
         bool getSolverSplitImpulse (void) const;
         void setSolverSplitImpulse (bool);
 
-        Ogre::Real getSolverSplitImpulseThreshold (void) const;
-        void setSolverSplitImpulseThreshold (Ogre::Real);
+        float getSolverSplitImpulseThreshold (void) const;
+        void setSolverSplitImpulseThreshold (float);
 
         btScalar getStepSize (void) const { return world->getStepSize(); }
         void setStepSize (btScalar v) { world->setStepSize(v); }
@@ -211,6 +212,21 @@ class PhysicsWorld {
 
         bool getUseContactAddedHack (void) const;
         void setUseContactAddedHack (bool v);
+
+        void setInteraction (physics_mat m1, physics_mat m2, float friction, float restitution)
+        {
+                db[std::pair<physics_mat,physics_mat>(m1,m2)] = MaterialInteraction(friction, restitution);
+                db[std::pair<physics_mat,physics_mat>(m2,m1)] = MaterialInteraction(friction, restitution);
+        }
+        void getInteraction (physics_mat m1, physics_mat m2, float &friction, float &restitution)
+        {
+                MaterialInteraction m = db[std::pair<physics_mat,physics_mat>(m1,m2)];
+                friction = m.friction;
+                restitution = m.restitution;
+        }
+
+        bool verboseContacts;
+        bool errorContacts;
 
     protected:
 
@@ -228,6 +244,15 @@ class PhysicsWorld {
         static CollisionMeshMap colMeshes;
 
         lua_State *last_L;
+
+        struct MaterialInteraction {
+                MaterialInteraction () : friction(0), restitution(0) { }
+                MaterialInteraction (float f, float r) : friction(f), restitution(r) { }
+                float friction;
+                float restitution;
+        };
+        typedef std::map<std::pair<physics_mat,physics_mat>, MaterialInteraction> InteractionDB;
+        InteractionDB db;
 };
 
 class RigidBody : public btMotionState {
@@ -294,20 +319,20 @@ class RigidBody : public btMotionState {
         void torque (const Ogre::Vector3 &torque);
         void torqueImpulse (const Ogre::Vector3 &torque);
 
-        Ogre::Real getContactProcessingThreshold (void) const;
-        void setContactProcessingThreshold (Ogre::Real v);
+        float getContactProcessingThreshold (void) const;
+        void setContactProcessingThreshold (float v);
 
-        Ogre::Real getLinearDamping (void) const;
-        void setLinearDamping (Ogre::Real r);
+        float getLinearDamping (void) const;
+        void setLinearDamping (float r);
 
-        Ogre::Real getAngularDamping (void) const;
-        void setAngularDamping (Ogre::Real r);
+        float getAngularDamping (void) const;
+        void setAngularDamping (float r);
 
-        Ogre::Real getLinearSleepThreshold (void) const;
-        void setLinearSleepThreshold (Ogre::Real r);
+        float getLinearSleepThreshold (void) const;
+        void setLinearSleepThreshold (float r);
 
-        Ogre::Real getAngularSleepThreshold (void) const;
-        void setAngularSleepThreshold (Ogre::Real r);
+        float getAngularSleepThreshold (void) const;
+        void setAngularSleepThreshold (float r);
 
         Ogre::Vector3 getLinearVelocity (void) const;
         void setLinearVelocity (const Ogre::Vector3 &v);
@@ -317,14 +342,8 @@ class RigidBody : public btMotionState {
 
         Ogre::Vector3 getLocalVelocity (const Ogre::Vector3 &) const;
 
-        Ogre::Real getFriction (void) const;
-        void setFriction (Ogre::Real r);
-
-        Ogre::Real getRestitution (void) const;
-        void setRestitution (Ogre::Real r);
-
-        Ogre::Real getMass (void) const;
-        void setMass (Ogre::Real r);
+        float getMass (void) const;
+        void setMass (float r);
 
         Ogre::Vector3 getInertia (void) const;
         void setInertia (const Ogre::Vector3 &v);

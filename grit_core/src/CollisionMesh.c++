@@ -2,6 +2,7 @@
 #include <cstdlib>
 
 #include <OgreException.h>
+#include <OgreResourceGroupManager.h>
 
 #include "CollisionMesh.h"
 #include "TColParser.h"
@@ -14,11 +15,11 @@
 
 
 btCompoundShape *import_compound (const Compound &c,
-                                  CollisionMesh *cm,
-                                  LooseEnds &les)
+                                  LooseEnds &les,
+                                  CollisionMesh::Materials &partMaterials)
 {
 
-        btCompoundShape *s =  new btCompoundShape();
+        btCompoundShape *s = new btCompoundShape();
         les.push_back(new LooseEndImpl<btCollisionShape>(s));
 
         const btVector3 ZV(0,0,0);
@@ -34,6 +35,7 @@ btCompoundShape *import_compound (const Compound &c,
                         s2->addPoint(v);
                 }
                 s->addChildShape(btTransform(ZQ,ZV), s2);
+                partMaterials.push_back(h.material);
         }
 
         for (size_t i=0 ; i<c.boxes.size() ; ++i) {
@@ -43,6 +45,7 @@ btCompoundShape *import_compound (const Compound &c,
                 s2->setMargin(b.margin);
                 s->addChildShape(btTransform(btQuaternion(b.qx,b.qy,b.qz,b.qw),
                                              btVector3(b.px,b.py,b.pz)), s2);
+                partMaterials.push_back(b.material);
         }
 
         for (size_t i=0 ; i<c.cylinders.size() ; ++i) {
@@ -54,6 +57,7 @@ btCompoundShape *import_compound (const Compound &c,
                 s->addChildShape(
                         btTransform(btQuaternion(cyl.qx,cyl.qy,cyl.qz,cyl.qw),
                                     btVector3(cyl.px,cyl.py,cyl.pz)), s2);
+                partMaterials.push_back(cyl.material);
         }
 
         for (size_t i=0 ; i<c.cones.size() ; ++i) {
@@ -64,6 +68,7 @@ btCompoundShape *import_compound (const Compound &c,
                 s->addChildShape(
                       btTransform(btQuaternion(cone.qx,cone.qy,cone.qz,cone.qw),
                                   btVector3(cone.px,cone.py,cone.pz)), s2);
+                partMaterials.push_back(cone.material);
         }
 
         for (size_t i=0 ; i<c.planes.size() ; ++i) {
@@ -72,6 +77,7 @@ btCompoundShape *import_compound (const Compound &c,
                         new btStaticPlaneShape(btVector3(p.nx,p.ny,p.nz),p.d);
                 les.push_back(new LooseEndImpl<btCollisionShape>(s2));
                 s->addChildShape(btTransform(ZQ,ZV), s2);
+                partMaterials.push_back(p.material);
         }
 
         for (size_t i=0 ; i<c.spheres.size() ; ++i) {
@@ -80,21 +86,15 @@ btCompoundShape *import_compound (const Compound &c,
                 les.push_back(new LooseEndImpl<btCollisionShape>(s2));
                 s->addChildShape(btTransform(ZQ,
                                              btVector3(sp.px,sp.py,sp.pz)), s2);
-        }
-
-        for (size_t i=0 ; i<c.compounds.size() ; ++i) {
-                const Compound &c2 = c.compounds[i];
-                btCompoundShape *s2 = import_compound(c2,cm,les);
-                s->addChildShape(btTransform(ZQ,ZV), s2);
+                partMaterials.push_back(sp.material);
         }
 
         return s;
 }
 
 
-btCollisionShape *import_trimesh (const TriMesh &f,
-                                  CollisionMesh *cm,
-                                  LooseEnds &les)
+btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &les,
+                                  CollisionMesh::Materials &faceMaterials)
 {
         Vertexes *vertexes = new Vertexes();
         les.push_back(new LooseEndImpl<Vertexes>(vertexes));
@@ -107,6 +107,11 @@ btCollisionShape *import_trimesh (const TriMesh &f,
         Faces *faces = new Faces(f.faces);
         les.push_back(new LooseEndImpl<Faces>(faces));
 
+        faceMaterials.reserve(f.faces.size());
+        for (Faces::const_iterator i=f.faces.begin(), i_=f.faces.end() ; i!=i_ ; ++i) {
+                faceMaterials.push_back(i->material);
+        }
+
         btTriangleIndexVertexArray *v = new btTriangleIndexVertexArray(
                 faces->size(), &((*faces)[0].v1), sizeof(Face),
                 vertexes->size(), &((*vertexes)[0][0]), sizeof(btVector3));
@@ -114,7 +119,7 @@ btCollisionShape *import_trimesh (const TriMesh &f,
 
         btCollisionShape *s;
 
-        if (cm->getMass()==0) {
+        if (is_static) {
                 s = new btBvhTriangleMeshShape(v,true,true);
                 s->setMargin(0);
                 les.push_back(new LooseEndImpl<btCollisionShape>(s));
@@ -137,12 +142,29 @@ btCollisionShape *import_trimesh (const TriMesh &f,
 }
 
 
-btCollisionShape *import (const TColFile &f, CollisionMesh *cm, LooseEnds &les)
+btCollisionShape *import (const TColFile &f,
+                          CollisionMesh *cm,
+                          LooseEnds &les,
+                          CollisionMesh::Materials &partMaterials,
+                          CollisionMesh::Materials &faceMaterials)
 {
+
+        bool stat = f.mass == 0.0f; // static
+        btCollisionShape *s;
+
+        if (f.usingCompound) {
+                btCompoundShape *cs = import_compound (f.compound, les, partMaterials);
+                if (f.usingTriMesh) {
+                        btCollisionShape *s2 = import_trimesh (f.triMesh, stat, les, faceMaterials);
+                        cs->addChildShape(btTransform(btQuaternion(0,0,0,1),btVector3(0,0,0)), s2);
+                }
+                s = cs;
+        } else {
+                s = import_trimesh (f.triMesh, stat, les, faceMaterials);
+        }
+
         cm->setMass(f.mass);
         cm->setInertia(Ogre::Vector3(f.inertia_x,f.inertia_y,f.inertia_z));
-        cm->setFriction(f.friction);
-        cm->setRestitution(f.restitution);
         cm->setLinearDamping(f.linearDamping);
         cm->setAngularDamping(f.angularDamping);
         cm->setLinearSleepThreshold(f.linearSleepThreshold);
@@ -150,19 +172,7 @@ btCollisionShape *import (const TColFile &f, CollisionMesh *cm, LooseEnds &les)
         cm->setCCDMotionThreshold(f.ccdMotionThreshold);
         cm->setCCDSweptSphereRadius(f.ccdSweptSphereRadius);
 
-        if (f.usingCompound) {
-                btCompoundShape *s = import_compound (f.compound, cm, les);
-                if (f.usingTriMesh) {
-                        btCollisionShape *s2 =
-                                import_trimesh (f.triMesh, cm, les);
-                        const btVector3 ZV(0,0,0);
-                        const btQuaternion ZQ(0,0,0,1);
-                        s->addChildShape(btTransform(ZQ,ZV), s2);
-                }
-                return s;
-        } else {
-                return import_trimesh (f.triMesh, cm, les);
-        }
+        return s;
 }
 
 
@@ -273,8 +283,44 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file)
                 quex::TColLexer qlex(&stream);
                 TColFile tcol;
                 parse_tcol_1_0(file->getName(),&qlex,tcol);
-                shape = import(tcol,this,looseEnds);
+
+                Materials m1, m2;
+                LooseEnds ls;
+                btCollisionShape *loaded_shape;
+
+                try {
+                        loaded_shape = import(tcol,this,ls,m1,m2);
+                } catch( Ogre::Exception& e ) {
+                        for (LooseEnds::iterator i=ls.begin(), i_=ls.end() ; i!=i_ ; ++i) {
+                                delete *i;
+                        }
+                        throw e;
+                }
+
+                for (LooseEnds::iterator i=looseEnds.begin(),
+                                         i_=looseEnds.end() ; i!=i_ ; ++i) {
+                        delete *i;
+                }
+                shape = loaded_shape;
+                looseEnds = ls;
+                partMaterials = m1;
+                faceMaterials = m2;
         }
+}
+
+void CollisionMesh::reload (void)
+{
+        importFromFile(Ogre::ResourceGroupManager::getSingleton().openResource(name,"GRIT"));
+}
+
+physics_mat CollisionMesh::getMaterialFromPart (unsigned int id)
+{
+        return partMaterials[id];
+}
+
+physics_mat CollisionMesh::getMaterialFromFace (unsigned int id)
+{
+        return faceMaterials[id];
 }
 
 

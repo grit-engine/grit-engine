@@ -4,6 +4,7 @@
 #include <OgreDataStream.h>
 #include <OgreVector3.h>
 
+#include "TColParser.h"
 #include "LooseEnd.h"
 
 class CollisionMesh;
@@ -37,45 +38,54 @@ class CollisionMesh {
         virtual const Ogre::String &getName (void) const
         { return name; }
 
-        virtual Ogre::Real getMass (void) const { return mass; }
-        virtual void setMass (Ogre::Real v) { mass = v; }
+        virtual float getMass (void) const { return mass; }
+        virtual void setMass (float v) { mass = v; }
 
         virtual Ogre::Vector3 getInertia (void) const { return inertia; }
         virtual void setInertia (Ogre::Vector3 v) { inertia = v; }
 
-        virtual Ogre::Real getCCDMotionThreshold (void) const
+        virtual float getCCDMotionThreshold (void) const
         { return ccdMotionThreshold; }
-        virtual void setCCDMotionThreshold (Ogre::Real v)
+        virtual void setCCDMotionThreshold (float v)
         { ccdMotionThreshold = v; }
 
-        virtual Ogre::Real getCCDSweptSphereRadius (void) const
+        virtual float getCCDSweptSphereRadius (void) const
         { return ccdSweptSphereRadius; }
-        virtual void setCCDSweptSphereRadius (Ogre::Real v)
+        virtual void setCCDSweptSphereRadius (float v)
         { ccdSweptSphereRadius = v; }
 
-        virtual Ogre::Real getLinearDamping (void) const
+        virtual float getLinearDamping (void) const
         { return linearDamping; }
-        virtual void setLinearDamping (Ogre::Real r)
+        virtual void setLinearDamping (float r)
         { linearDamping = r; }
-        virtual Ogre::Real getAngularDamping (void) const
+        virtual float getAngularDamping (void) const
         { return angularDamping; }
-        virtual void setAngularDamping (Ogre::Real r)
+        virtual void setAngularDamping (float r)
         { angularDamping = r; }
 
-        virtual Ogre::Real getLinearSleepThreshold (void) const
+        virtual float getLinearSleepThreshold (void) const
         { return linearSleepThreshold; }
-        virtual void setLinearSleepThreshold (Ogre::Real r)
+        virtual void setLinearSleepThreshold (float r)
         { linearSleepThreshold = r; }
-        virtual Ogre::Real getAngularSleepThreshold (void) const
+        virtual float getAngularSleepThreshold (void) const
         { return angularSleepThreshold; }
-        virtual void setAngularSleepThreshold (Ogre::Real r)
+        virtual void setAngularSleepThreshold (float r)
         { angularSleepThreshold = r; }
 
-        virtual Ogre::Real getFriction (void) { return friction; }
-        virtual void setFriction (Ogre::Real r) { friction = r; }
+        virtual unsigned int getMaterialFromPart (unsigned int id);
+        virtual unsigned int getMaterialFromFace (unsigned int id);
 
-        virtual Ogre::Real getRestitution (void) { return restitution; }
-        virtual void setRestitution (Ogre::Real r) { restitution = r; }
+/*
+        virtual float getFriction (void) { return friction; }
+        virtual void setFriction (float r) { friction = r; }
+
+        virtual float getRestitution (void) { return restitution; }
+        virtual void setRestitution (float r) { restitution = r; }
+*/
+
+        typedef std::vector<physics_mat> Materials;
+
+        void reload (void);
 
     protected:
 
@@ -95,16 +105,19 @@ class CollisionMesh {
         LooseEnds looseEnds;
 
         Ogre::Vector3 inertia;
-        Ogre::Real mass;
-        Ogre::Real ccdMotionThreshold;
-        Ogre::Real ccdSweptSphereRadius;
-        Ogre::Real linearDamping;
-        Ogre::Real angularDamping;
-        Ogre::Real linearSleepThreshold;
-        Ogre::Real angularSleepThreshold;
-        Ogre::Real friction;
-        Ogre::Real restitution;
+        float mass;
+        float ccdMotionThreshold;
+        float ccdSweptSphereRadius;
+        float linearDamping;
+        float angularDamping;
+        float linearSleepThreshold;
+        float angularSleepThreshold;
+        float friction;
+        float restitution;
 
+    public: // make these protected again when bullet works
+        Materials faceMaterials;
+        Materials partMaterials;
 };
 
 

@@ -28,13 +28,12 @@ Attribute ::= <STATIC> <SEMICOLON>
 
 CompoundShape ::= <COMPOUND> <LBRACE> { InternalShape } <RBRACE>
 
-InternalShape ::= CompoundShape
-                | <HULL> <LBRACE> [ Margin ] [Shrink] Vertexes <RBRACE>
-                | <BOX> <LBRACE> [ Margin ] Centre [ Orientation ] Dimensions <RBRACE>
-                | <CYLINDER> <LBRACE> [ Margin ] Centre [ Orientation ] Dimensions <RBRACE>
-                | <CONE> <LBRACE> [ Margin ] Centre [ Orientation ] Radius Height <RBRACE>
-                | <PLANE> <LBRACE> Normal Distance <RBRACE>
-                | <SPHERE> <LBRACE> Centre Radius <SEMICOLON> <RBRACE>
+InternalShape ::= <HULL> <LBRACE> [ Margin ] [Shrink] [ Material ] Vertexes <RBRACE>
+                | <BOX> <LBRACE> [ Margin ] [ Material ] Centre [ Orientation ] Dimensions <RBRACE>
+                | <CYLINDER> <LBRACE> [ Margin ] [ Material ] Centre [ Orientation ] Dimensions <RBRACE>
+                | <CONE> <LBRACE> [ Margin ] [ Material ] Centre [ Orientation ] Radius Height <RBRACE>
+                | <PLANE> <LBRACE> [ Material ] Normal Distance <RBRACE>
+                | <SPHERE> <LBRACE> [ Material ] Centre Radius <SEMICOLON> <RBRACE>
 
 Margin ::= <MARGIN> <FLOAT> <SEMICOLON>
 
@@ -55,7 +54,9 @@ Height ::= <HEIGHT> <FLOAT> <SEMICOLON>
 
 Normal ::= <NORMAL> <FLOAT> <FLOAT> <FLOAT> <SEMICOLON>
 
-Distance ::= <MARGIN> <FLOAT> <SEMICOLON>
+Distance ::= <DISTANCE> <FLOAT> <SEMICOLON>
+
+Material ::= <MATERIAL> <HEX> <SEMICOLON>
 
 
 TriMesh ::= <TRIMESH> <LBRACE> [ Margin ] Vertexes Faces <RBRACE>

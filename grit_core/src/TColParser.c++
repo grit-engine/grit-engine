@@ -9,6 +9,14 @@
 
 #include "TColParser.h"
 
+#define DEFAULT_MARGIN 0.04f
+#define DEFAULT_LINEAR_DAMPING 0.5f
+#define DEFAULT_ANGULAR_DAMPING 0.5f
+#define DEFAULT_LINEAR_SLEEP_THRESHOLD 1.0f
+#define DEFAULT_ANGULAR_SLEEP_THRESHOLD 0.8f
+#define DEFAULT_CCD_MOTION_THRESHOLD 0.0f
+#define DEFAULT_CCD_SWEPT_SPHERE_RADIUS 0.0f
+
 static inline bool fnear(const float x, const float y)
 {
         return fabs(x-y) < 1E-6;
@@ -57,8 +65,6 @@ static const char * what2 (QUEX_TOKEN_ID_TYPE tid)
                 case QUEX_TKN_STATIC: return "static";
                 case QUEX_TKN_MASS: return "mass";
                 case QUEX_TKN_INERTIA: return "inertia";
-                case QUEX_TKN_FRICTION: return "friction";
-                case QUEX_TKN_RESTITUTION: return "restitution";
                 case QUEX_TKN_LINEAR_DAMPING: return "linear_damping";
                 case QUEX_TKN_ANGULAR_DAMPING: return "angular_damping";
                 case QUEX_TKN_LINEAR_SLEEP_THRESHOLD:
@@ -199,13 +205,13 @@ static unsigned long parse_hex (const Ogre::String &name,
 }
 
 
-static Ogre::Real get_real_from_token (const quex::Token &t)
+static float get_real_from_token (const quex::Token &t)
 {
         const char *text = utf8(t);
-        return (Ogre::Real) strtod(text,NULL);
+        return (float) strtod(text,NULL);
 }
 
-static Ogre::Real parse_real (const Ogre::String &name, quex::TColLexer* qlex)
+static float parse_real (const Ogre::String &name, quex::TColLexer* qlex)
 {
         quex::Token t; qlex->get_token(&t);
         if (t.type_id()==QUEX_TKN_FLOAT) {
@@ -218,10 +224,10 @@ static Ogre::Real parse_real (const Ogre::String &name, quex::TColLexer* qlex)
         }
 }
 
-static Ogre::Real parse_positive_real (const Ogre::String &name,
+static float parse_positive_real (const Ogre::String &name,
                                        quex::TColLexer* qlex)
 {
-        Ogre::Real v;
+        float v;
         quex::Token t; qlex->get_token(&t);
         if (t.type_id()==QUEX_TKN_FLOAT) {
                 v = get_real_from_token(t);
@@ -281,7 +287,7 @@ static void parse_vertexes (const Ogre::String &name,
         }
 }
 
-static void shrink_vertexes (Vertexes &vertexes, Ogre::Real distance)
+static void shrink_vertexes (Vertexes &vertexes, float distance)
 {
         btAlignedObjectArray<btVector3> planes;
         btGeometryUtil::getPlaneEquationsFromVertices(vertexes, planes);
@@ -307,9 +313,10 @@ static void parse_hull (const Ogre::String &name,
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
-        Ogre::Real shrink = 0;
+        float shrink = 0;
         bool has_vertexes = false;
-        hull.margin = 0.04;
+        hull.margin = DEFAULT_MARGIN;
+        bool have_material = false;
 
         quex::Token t; 
         while (true) {
@@ -317,6 +324,12 @@ static void parse_hull (const Ogre::String &name,
                 switch (t.type_id()) {
                         case QUEX_TKN_MARGIN:
                         hull.margin = parse_positive_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_MATERIAL:
+                        hull.material = parse_hex(name,qlex);
+                        have_material = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
 
@@ -352,6 +365,10 @@ static void parse_hull (const Ogre::String &name,
         if (!has_vertexes) {
                 err(name,qlex,"No vertexes provided for hull.");
         }
+
+        if (!have_material) {
+                err(name,qlex,"No material provided for hull.");
+        }
 }
 
 
@@ -360,45 +377,60 @@ static void parse_box (const Ogre::String &name,
                         Box &box)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
-        box.margin = 0.04;
+        bool have_material = false;
+        box.margin = DEFAULT_MARGIN;
         box.qx = 0;
         box.qy = 0;
         box.qz = 0;
         box.qw = 1;
-        quex::Token t; qlex->get_token(&t);
-        switch (t.type_id()) {
-                case QUEX_TKN_MARGIN:
-                box.margin = parse_positive_real(name,qlex);
-                ensure_token(name,qlex,QUEX_TKN_SEMI);
-                ensure_token(name,qlex,QUEX_TKN_CENTRE);
-                case QUEX_TKN_CENTRE:
-                box.px=parse_real(name,qlex);
-                box.py=parse_real(name,qlex);
-                box.pz=parse_real(name,qlex);
-                ensure_token(name,qlex,QUEX_TKN_SEMI);
+        quex::Token t;
+        while (true) {
+                qlex->get_token(&t);
+                switch (t.type_id()) {
+                        case QUEX_TKN_MARGIN:
+                        box.margin = parse_positive_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_MATERIAL:
+                        box.material = parse_hex(name,qlex);
+                        have_material = true;
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_CENTRE:
+                        box.px = parse_real(name,qlex);
+                        box.py = parse_real(name,qlex);
+                        box.pz = parse_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_ORIENTATION:
+                        box.qw = parse_real(name,qlex);
+                        box.qx = parse_real(name,qlex);
+                        box.qy = parse_real(name,qlex);
+                        box.qz = parse_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_DIMENSIONS:
+                        box.dx = parse_real(name,qlex);
+                        box.dy = parse_real(name,qlex);
+                        box.dz = parse_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_RBRACE:
+                        break;
+
+                        default:
+                        err(name,qlex,t,"margin, material, centre, orientation, or dimensions");
+                }
                 break;
-                default:
-                err(name,qlex,t,"margin or centre");
         }
-        qlex->get_token(&t);
-        switch (t.type_id()) {
-                case QUEX_TKN_ORIENTATION:
-                box.qw=parse_real(name,qlex);
-                box.qx=parse_real(name,qlex);
-                box.qy=parse_real(name,qlex);
-                box.qz=parse_real(name,qlex);
-                ensure_token(name,qlex,QUEX_TKN_SEMI);
-                ensure_token(name,qlex,QUEX_TKN_DIMENSIONS);
-                case QUEX_TKN_DIMENSIONS:
-                box.dx=parse_real(name,qlex);
-                box.dy=parse_real(name,qlex);
-                box.dz=parse_real(name,qlex);
-                break;
-                default:
-                err(name,qlex,t,"orientation or dimensions");
+        if (!have_material) {
+                err(name,qlex,"No material provided for box.");
         }
-        if (more_to_come(name,qlex))
-                ensure_token(name,qlex,QUEX_TKN_RBRACE);
 }
 
 
@@ -407,45 +439,60 @@ static void parse_cylinder (const Ogre::String &name,
                              Cylinder &cylinder)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
-        cylinder.margin = 0.04;
+        bool have_material = false;
+        cylinder.margin = DEFAULT_MARGIN;
         cylinder.qx = 0;
         cylinder.qy = 0;
         cylinder.qz = 0;
         cylinder.qw = 1;
-        quex::Token t; qlex->get_token(&t);
-        switch (t.type_id()) {
-                case QUEX_TKN_MARGIN:
-                cylinder.margin = parse_positive_real(name,qlex);
-                ensure_token(name,qlex,QUEX_TKN_SEMI);
-                ensure_token(name,qlex,QUEX_TKN_CENTRE);
-                case QUEX_TKN_CENTRE:
-                cylinder.px=parse_real(name,qlex);
-                cylinder.py=parse_real(name,qlex);
-                cylinder.pz=parse_real(name,qlex);
-                ensure_token(name,qlex,QUEX_TKN_SEMI);
+        quex::Token t;
+        while (true) {
+                qlex->get_token(&t);
+                switch (t.type_id()) {
+                        case QUEX_TKN_MARGIN:
+                        cylinder.margin = parse_positive_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_MATERIAL:
+                        cylinder.material = parse_hex(name,qlex);
+                        have_material = true;
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_CENTRE:
+                        cylinder.px=parse_real(name,qlex);
+                        cylinder.py=parse_real(name,qlex);
+                        cylinder.pz=parse_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_ORIENTATION:
+                        cylinder.qw=parse_real(name,qlex);
+                        cylinder.qx=parse_real(name,qlex);
+                        cylinder.qy=parse_real(name,qlex);
+                        cylinder.qz=parse_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_DIMENSIONS:
+                        cylinder.dx=parse_real(name,qlex);
+                        cylinder.dy=parse_real(name,qlex);
+                        cylinder.dz=parse_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_RBRACE:
+                        break;
+
+                        default:
+                        err(name,qlex,t,"margin, material, centre, orientation or dimensions");
+                }
                 break;
-                default:
-                err(name,qlex,t,"margin or centre");
         }
-        qlex->get_token(&t);
-        switch (t.type_id()) {
-                case QUEX_TKN_ORIENTATION:
-                cylinder.qw=parse_real(name,qlex);
-                cylinder.qx=parse_real(name,qlex);
-                cylinder.qy=parse_real(name,qlex);
-                cylinder.qz=parse_real(name,qlex);
-                ensure_token(name,qlex,QUEX_TKN_SEMI);
-                ensure_token(name,qlex,QUEX_TKN_DIMENSIONS);
-                case QUEX_TKN_DIMENSIONS:
-                cylinder.dx=parse_real(name,qlex);
-                cylinder.dy=parse_real(name,qlex);
-                cylinder.dz=parse_real(name,qlex);
-                break;
-                default:
-                err(name,qlex,t,"orientation or dimensions");
+        if (!have_material) {
+                err(name,qlex,"No material provided for cylinder.");
         }
-        if (more_to_come(name,qlex))
-                ensure_token(name,qlex,QUEX_TKN_RBRACE);
 }
 
 
@@ -454,46 +501,63 @@ static void parse_cone (const Ogre::String &name,
                          Cone &cone)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
-        cone.margin = 0.04;
+        bool have_material = false;
+        cone.margin = DEFAULT_MARGIN;
         cone.qx = 0;
         cone.qy = 0;
         cone.qz = 0;
         cone.qw = 1;
-        quex::Token t; qlex->get_token(&t);
-        switch (t.type_id()) {
-                case QUEX_TKN_MARGIN:
-                cone.margin = parse_positive_real(name,qlex);
-                ensure_token(name,qlex,QUEX_TKN_SEMI);
-                ensure_token(name,qlex,QUEX_TKN_CENTRE);
-                case QUEX_TKN_CENTRE:
-                cone.px=parse_real(name,qlex);
-                cone.py=parse_real(name,qlex);
-                cone.pz=parse_real(name,qlex);
-                ensure_token(name,qlex,QUEX_TKN_SEMI);
+        quex::Token t;
+        while (true) {
+                qlex->get_token(&t);
+                switch (t.type_id()) {
+                        case QUEX_TKN_MARGIN:
+                        cone.margin = parse_positive_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_MATERIAL:
+                        cone.material = parse_hex(name,qlex);
+                        have_material = true;
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_CENTRE:
+                        cone.px=parse_real(name,qlex);
+                        cone.py=parse_real(name,qlex);
+                        cone.pz=parse_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_ORIENTATION:
+                        cone.qw=parse_real(name,qlex);
+                        cone.qx=parse_real(name,qlex);
+                        cone.qy=parse_real(name,qlex);
+                        cone.qz=parse_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_RADIUS:
+                        cone.radius=parse_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_HEIGHT:
+                        cone.height=parse_real(name,qlex);
+                        if (more_to_come(name, qlex)) continue;
+                        break;
+
+                        case QUEX_TKN_RBRACE:
+                        break;
+
+                        default:
+                        err(name,qlex,t,"margin, material, centre, height, orientation or radius");
+                }
                 break;
-                default:
-                err(name,qlex,t,"margin or centre");
         }
-        qlex->get_token(&t);
-        switch (t.type_id()) {
-                case QUEX_TKN_ORIENTATION:
-                cone.qw=parse_real(name,qlex);
-                cone.qx=parse_real(name,qlex);
-                cone.qy=parse_real(name,qlex);
-                cone.qz=parse_real(name,qlex);
-                ensure_token(name,qlex,QUEX_TKN_SEMI);
-                ensure_token(name,qlex,QUEX_TKN_RADIUS);
-                case QUEX_TKN_RADIUS:
-                cone.radius=parse_real(name,qlex);
-                ensure_token(name,qlex,QUEX_TKN_SEMI);
-                ensure_token(name,qlex,QUEX_TKN_HEIGHT);
-                cone.height=parse_real(name,qlex);
-                break;
-                default:
-                err(name,qlex,t,"orientation or radius");
+        if (!have_material) {
+                err(name,qlex,"No material provided for cone.");
         }
-        if (more_to_come(name,qlex))
-                ensure_token(name,qlex,QUEX_TKN_RBRACE);
 }
 
 
@@ -502,6 +566,9 @@ static void parse_plane (const Ogre::String &name,
                          Plane &plane)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
+        ensure_token(name,qlex,QUEX_TKN_MATERIAL);
+        plane.material = parse_hex(name,qlex);
+        ensure_token(name,qlex,QUEX_TKN_SEMI);
         ensure_token(name,qlex,QUEX_TKN_NORMAL);
         plane.nx = parse_real(name,qlex);
         plane.ny = parse_real(name,qlex);
@@ -519,6 +586,9 @@ static void parse_sphere (const Ogre::String &name,
                           Sphere &sphere)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
+        ensure_token(name,qlex,QUEX_TKN_MATERIAL);
+        sphere.material = parse_hex(name,qlex);
+        ensure_token(name,qlex,QUEX_TKN_SEMI);
         ensure_token(name,qlex,QUEX_TKN_CENTRE);
         sphere.px = parse_real(name,qlex);
         sphere.py = parse_real(name,qlex);
@@ -542,16 +612,8 @@ static void parse_compound_shape (const Ogre::String &name,
                 // define all these upfront since we're using a switch
                 quex::Token t; qlex->get_token(&t);
                 switch (t.type_id()) {
-                        case QUEX_TKN_COMPOUND: ///////////////////////////////
-                        parse_compound_shape(name,
-                                              qlex,
-                                              vecnext(compound.compounds)); 
-                        continue;
-
                         case QUEX_TKN_HULL: ///////////////////////////////////
-                        parse_hull(name,
-                                    qlex,
-                                    vecnext(compound.hulls)); 
+                        parse_hull(name, qlex, vecnext(compound.hulls)); 
                         continue;
 
                         case QUEX_TKN_BOX: ////////////////////////////////////
@@ -593,7 +655,7 @@ static void parse_faces (const Ogre::String &name,
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         int v1, v2, v3;
-        unsigned int flags;
+        physics_mat material;
 
         while (true) {
                 quex::Token t; qlex->get_token(&t);
@@ -602,8 +664,8 @@ static void parse_faces (const Ogre::String &name,
                         v1 = get_int_from_token(name,qlex,t,num_vertexes);
                         v2 = parse_int(name,qlex,num_vertexes);
                         v3 = parse_int(name,qlex,num_vertexes);
-                        flags = parse_hex(name,qlex);
-                        faces.push_back(Face(v1,v2,v3,flags));
+                        material = parse_hex(name,qlex);
+                        faces.push_back(Face(v1,v2,v3,material));
                         if (!more_to_come(name,qlex)) break;
                         continue;
 
@@ -646,7 +708,7 @@ static void parse_dynamic_trimesh_shape (const Ogre::String &name,
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
-        triMesh.margin = 0.04;
+        triMesh.margin = DEFAULT_MARGIN;
 
         quex::Token t; qlex->get_token(&t);
         switch (t.type_id()) {
@@ -691,22 +753,18 @@ void parse_tcol_1_0 (const Ogre::String &name,
         file.inertia_x = 0;
         file.inertia_y = 0;
         file.inertia_z = 0;
-        bool have_friction = false;
-        file.friction = 0.5;
-        bool have_restitution = false;
-        file.restitution = 0;
         bool have_linear_damping = false;
-        file.linearDamping = 0;
+        file.linearDamping = DEFAULT_LINEAR_DAMPING;
         bool have_angular_damping = false;
-        file.angularDamping = 0.5;
+        file.angularDamping = DEFAULT_ANGULAR_DAMPING;
         bool have_linear_sleep_threshold = false;
-        file.linearSleepThreshold = 1;
+        file.linearSleepThreshold = DEFAULT_LINEAR_SLEEP_THRESHOLD;
         bool have_angular_sleep_threshold = false;
-        file.angularSleepThreshold = 0.8;
+        file.angularSleepThreshold = DEFAULT_ANGULAR_SLEEP_THRESHOLD;
         bool have_ccd_motion_threshold = false;
-        file.ccdMotionThreshold = 0.0;
+        file.ccdMotionThreshold = DEFAULT_CCD_MOTION_THRESHOLD;
         bool have_ccd_swept_sphere_radius = false;
-        file.ccdSweptSphereRadius = 0.0;
+        file.ccdSweptSphereRadius = DEFAULT_CCD_SWEPT_SPHERE_RADIUS;
 
         do {
                 quex::Token t; qlex->get_token(&t);
@@ -738,20 +796,6 @@ void parse_tcol_1_0 (const Ogre::String &name,
                         file.inertia_z = parse_real(name,qlex);
                         have_inertia = true;
                         if (more_to_come(name,qlex)) continue; break;
-                
-                        case QUEX_TKN_FRICTION:
-                        if (have_friction)
-                                err(name,qlex,"Already have friction");
-                        file.friction = parse_positive_real(name,qlex);
-                        have_friction = true;
-                        if (more_to_come(name,qlex)) continue; break;
-
-                        case QUEX_TKN_RESTITUTION:
-                        if (have_restitution)
-                                err(name,qlex,"Already have restitution");
-                        file.restitution = parse_positive_real(name,qlex);
-                        have_restitution = true;
-                        if (more_to_come(name,qlex)) continue; break;
 
                         case QUEX_TKN_LINEAR_DAMPING:
                         if (have_linear_damping)
@@ -769,32 +813,28 @@ void parse_tcol_1_0 (const Ogre::String &name,
 
                         case QUEX_TKN_LINEAR_SLEEP_THRESHOLD:
                         if (have_linear_sleep_threshold)
-                                err(name,qlex,
-                                    "Already have linear_sleep_threshold");
+                                err(name,qlex, "Already have linear_sleep_threshold");
                         file.linearSleepThreshold = parse_real(name,qlex);
                         have_linear_sleep_threshold = true;
                         if (more_to_come(name,qlex)) continue; break;
 
                         case QUEX_TKN_ANGULAR_SLEEP_THRESHOLD:
                         if (have_angular_sleep_threshold)
-                               err(name,qlex,
-                                   "Already have angular_sleep_threshold");
+                               err(name,qlex, "Already have angular_sleep_threshold");
                         file.angularSleepThreshold = parse_real(name,qlex);
                         have_angular_sleep_threshold = true;
                         if (more_to_come(name,qlex)) continue; break;
 
                         case QUEX_TKN_CCD_MOTION_THRESHOLD:
                         if (have_ccd_motion_threshold)
-                               err(name,qlex,
-                                   "Already have ccd_motion_threshold");
+                               err(name,qlex, "Already have ccd_motion_threshold");
                         file.ccdMotionThreshold = parse_real(name,qlex);
                         have_ccd_motion_threshold = true;
                         if (more_to_come(name,qlex)) continue; break;
 
                         case QUEX_TKN_CCD_SWEPT_SPHERE_RADIUS:
                         if (have_ccd_swept_sphere_radius)
-                               err(name,qlex,
-                                   "Already have ccd_swept_sphere_radius");
+                               err(name,qlex, "Already have ccd_swept_sphere_radius");
                         file.ccdSweptSphereRadius = parse_real(name,qlex);
                         have_ccd_swept_sphere_radius = true;
                         if (more_to_come(name,qlex)) continue; break;
@@ -802,7 +842,7 @@ void parse_tcol_1_0 (const Ogre::String &name,
                         case QUEX_TKN_RBRACE: break; 
 
                         default:
-                        err(name,qlex,t,"mass, friction, etc or }");
+                        err(name,qlex,t,"mass, linear_damping, angular_damping, etc or }");
 
                 }
 
@@ -850,7 +890,8 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         for (size_t i=0 ; i<c.hulls.size() ; ++i) {
                 Hull &h = c.hulls[i];
                 o<<in<<"\t"<<"hull {\n";
-                if (ffar(h.margin,0.04)) {
+                o<<in<<"\t\t"<<"material 0x"<<std::hex<<h.material<<std::dec<<";\n";
+                if (ffar(h.margin,DEFAULT_MARGIN)) {
                         o<<in<<"\t\t"<<"margin "<<h.margin<<";\n";
                 }
                 o<<in<<"\t\t"<<"vertexes {\n";
@@ -866,7 +907,8 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         for (size_t i=0 ; i<c.boxes.size() ; ++i) {
                 Box &b = c.boxes[i];
                 o<<in<<"\t"<<"box {\n";
-                if (ffar(b.margin,0.04)) {
+                o<<in<<"\t\t"<<"material 0x"<<std::hex<<b.material<<std::dec<<";\n";
+                if (ffar(b.margin,DEFAULT_MARGIN)) {
                         o<<in<<"\t\t"<<"margin "<<b.margin<<";\n";
                 }
                 o<<in<<"\t\t"<<"centre "<<b.px
@@ -884,7 +926,8 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         for (size_t i=0 ; i<c.cylinders.size() ; ++i) {
                 Cylinder &cyl = c.cylinders[i];
                 o<<in<<"\t"<<"cylinder {\n";
-                if (ffar(cyl.margin,0.04)) {
+                o<<in<<"\t\t"<<"material 0x"<<std::hex<<cyl.material<<std::dec<<";\n";
+                if (ffar(cyl.margin,DEFAULT_MARGIN)) {
                         o<<in<<"\t\t"<<"margin "<<cyl.margin<<";\n";
                 }
                 o<<in<<"\t\t"<<"centre "<<cyl.px
@@ -902,7 +945,8 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         for (size_t i=0 ; i<c.cones.size() ; ++i) {
                 Cone &cone = c.cones[i];
                 o<<in<<"\t"<<"cone {\n";
-                if (ffar(cone.margin,0.04)) {
+                o<<in<<"\t\t"<<"material 0x"<<std::hex<<cone.material<<std::dec<<";\n";
+                if (ffar(cone.margin,DEFAULT_MARGIN)) {
                         o<<in<<"\t\t"<<"margin "<<cone.margin<<";\n";
                 }
                 o<<in<<"\t\t"<<"centre "<<cone.px
@@ -920,6 +964,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         for (size_t i=0 ; i<c.planes.size() ; ++i) {
                 Plane &p = c.planes[i];
                 o<<in<<"\t"<<"plane {\n";
+                o<<in<<"\t\t"<<"material 0x"<<std::hex<<p.material<<std::dec<<";\n";
                 o<<in<<"\t\t"<<"normal "<<p.nx<<" "<<p.ny<<" "<<p.nz<<";\n";
                 o<<in<<"\t\t"<<"distance "<<p.d<<";\n";
                 o<<in<<"\t"<<"}\n";
@@ -928,14 +973,10 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         for (size_t i=0 ; i<c.spheres.size() ; ++i) {
                 Sphere &s = c.spheres[i];
                 o<<in<<"\t"<<"sphere {\n";
+                o<<in<<"\t\t"<<"material 0x"<<std::hex<<s.material<<std::dec<<";\n";
                 o<<in<<"\t\t"<<"centre "<<s.px<<" "<<s.py<<" "<<s.pz<<";\n";
                 o<<in<<"\t\t"<<"radius "<<s.radius<<";\n";
                 o<<in<<"\t"<<"}\n";
-        }
-
-        for (size_t i=0 ; i<c.compounds.size() ; ++i) {
-                Compound &c2 = c.compounds[i];
-                pretty_print_compound (o,c2,in+"        ");
         }
 
         o << in << "}\n";
@@ -959,22 +1000,18 @@ void pretty_print_tcol (std::ostream &os, TColFile &f)
                           << f.inertia_y << " "
                           << f.inertia_z << ";\n";
 */
-        if (ffar(f.friction,0.5))
-                o << "\tfriction " << f.friction << ";\n";
-        if (ffar(f.restitution,0))
-                o << "\trestitution " << f.restitution << ";\n";
-        if (ffar(f.linearDamping,0))
+        if (ffar(f.linearDamping,DEFAULT_LINEAR_DAMPING))
                 o << "\tlinear_damping " << f.linearDamping << ";\n";
-        if (ffar(f.angularDamping,0.5))
+        if (ffar(f.angularDamping,DEFAULT_ANGULAR_DAMPING))
                 o << "\tangular_damping " << f.angularDamping << ";\n";
-        if (ffar(f.linearSleepThreshold,1))
-            o << "\tlinear_sleep_threshold " << f.linearSleepThreshold << ";\n";
-        if (ffar(f.angularSleepThreshold,0.8))
-          o << "\tangular_sleep_threshold " << f.angularSleepThreshold << ";\n";
-        if (ffar(f.ccdMotionThreshold,0))
+        if (ffar(f.linearSleepThreshold,DEFAULT_LINEAR_SLEEP_THRESHOLD))
+                o << "\tlinear_sleep_threshold " << f.linearSleepThreshold << ";\n";
+        if (ffar(f.angularSleepThreshold,DEFAULT_ANGULAR_SLEEP_THRESHOLD))
+                o << "\tangular_sleep_threshold " << f.angularSleepThreshold << ";\n";
+        if (ffar(f.ccdMotionThreshold,DEFAULT_CCD_MOTION_THRESHOLD))
                 o << "\tccd_motion_threshold " << f.ccdMotionThreshold << ";\n";
-        if (ffar(f.ccdSweptSphereRadius,0))
-           o << "\tccd_swept_sphere_radius " << f.ccdSweptSphereRadius << ";\n";
+        if (ffar(f.ccdSweptSphereRadius,DEFAULT_CCD_SWEPT_SPHERE_RADIUS))
+                o << "\tccd_swept_sphere_radius " << f.ccdSweptSphereRadius << ";\n";
         o << "}\n\n";
 
         if (f.usingCompound) {
@@ -993,7 +1030,7 @@ void pretty_print_tcol (std::ostream &os, TColFile &f)
                 for (size_t i=0 ; i<f.triMesh.faces.size() ; ++i) {
                         Face &face = f.triMesh.faces[i];
                         o<<"\t\t"<<face.v1<<" "<<face.v2<<" "<<face.v3<<" "
-                         <<std::hex<<"0x"<<face.flag<<std::dec<<";"<<"\n";
+                         <<std::hex<<"0x"<<face.material<<std::dec<<";"<<"\n";
                 }
                 o << "\t}\n";
                 o << "}\n";

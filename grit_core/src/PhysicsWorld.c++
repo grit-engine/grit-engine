@@ -84,6 +84,8 @@ void DynamicsWorld::end (btScalar time_left)
         clearForces();
 }
 
+bool physics_verbose_contacts = false;
+
 void process_contact (btManifoldPoint& cp,
                       const btCollisionObject* colObj,
                       int partId, int index, bool gimpact)
@@ -100,14 +102,10 @@ void process_contact (btManifoldPoint& cp,
         const btCollisionShape *parent = colObj->getRootCollisionShape();
         if (parent == NULL) return;
 
-
         btVector3 normal;
         tshape->calcNormal(normal);
 
-        const btMatrix3x3 &orient =
-                colObj->getWorldTransform().getBasis();
-
-        normal = orient * normal;
+        normal = colObj->getWorldTransform().getBasis() * normal;
 
         btScalar dot = normal.dot(cp.m_normalWorldOnB);
 
@@ -116,7 +114,7 @@ void process_contact (btManifoldPoint& cp,
                 if (parent->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
                         if (dot > 0) {
                                 cp.m_normalWorldOnB -= 2 * dot * normal;
-                        }       
+                        }
                 }
         } else {
                 if (parent->getShapeType()==TRIANGLE_MESH_SHAPE_PROXYTYPE) {
@@ -128,7 +126,33 @@ void process_contact (btManifoldPoint& cp,
 
                 }
         }
+}
 
+static std::ostream &operator << (std::ostream &o, const btVector3 &v)
+{
+        return o << "("<<v.x()<<", "<<v.y()<<", "<<v.z()<<")";
+}
+
+static std::string shape_str (int s)
+{
+        switch (s) {
+                case BOX_SHAPE_PROXYTYPE: return "box";
+                case TRIANGLE_SHAPE_PROXYTYPE: return "tri";
+                case CONVEX_HULL_SHAPE_PROXYTYPE: return "hul";
+                case SPHERE_SHAPE_PROXYTYPE: return "sph";
+                case CAPSULE_SHAPE_PROXYTYPE: return "cap";
+                case CONE_SHAPE_PROXYTYPE: return "con";
+                case CYLINDER_SHAPE_PROXYTYPE: return "cyl";
+                case TRIANGLE_MESH_SHAPE_PROXYTYPE: return "sta";
+                case GIMPACT_SHAPE_PROXYTYPE: return "gim";
+                case STATIC_PLANE_PROXYTYPE: return "pla";
+                case COMPOUND_SHAPE_PROXYTYPE: return "com";
+                default:
+                std::stringstream ss;
+                ss << s;
+                return ss.str();
+        }
+        return "";
 }
 
 bool contact_added_callback (btManifoldPoint& cp,
@@ -137,13 +161,116 @@ bool contact_added_callback (btManifoldPoint& cp,
                              const btCollisionObject* colObj1,
                              int partId1, int index1)
 {
+        const btRigidBody *bbody0 = dynamic_cast<const btRigidBody*>(colObj0);
+        const btRigidBody *bbody1 = dynamic_cast<const btRigidBody*>(colObj1);
+        APP_ASSERT(bbody0!=NULL);
+        APP_ASSERT(bbody1!=NULL);
+
+        const RigidBody *body0 = static_cast<const RigidBody*>(bbody0->getMotionState());
+        const RigidBody *body1 = static_cast<const RigidBody*>(bbody1->getMotionState());
+        APP_ASSERT(body0!=NULL);
+        APP_ASSERT(body1!=NULL);
+
+        const PhysicsWorldPtr &world = body0->world;
+
+        CollisionMeshPtr cmesh0 = body0->colMesh;
+        CollisionMeshPtr cmesh1 = body1->colMesh;
+
+        const btCollisionShape *shape0  = colObj0->getCollisionShape();
+        const btCollisionShape *parent0 = colObj0->getRootCollisionShape();
+        const btCollisionShape *shape1  = colObj1->getCollisionShape();
+        const btCollisionShape *parent1 = colObj1->getRootCollisionShape();
+
+        APP_ASSERT(parent0!=NULL);
+        APP_ASSERT(parent1!=NULL);
+
+        bool shit_has_hit_fan = false;
+
+        physics_mat mat0, mat1;
+
+        if (shape0->getShapeType()==TRIANGLE_SHAPE_PROXYTYPE ||
+            shape0->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
+                int max = cmesh0->faceMaterials.size();
+                int id = index0;
+                if (id < 0 || id >= max) {
+                        if (world->errorContacts) {
+                                CERR << "faceId from bullet was garbage: " << id
+                                     << " >= " << max << std::endl;
+                                shit_has_hit_fan = true;
+                        }
+                        id = 0;
+                }
+                mat0 = cmesh0->getMaterialFromFace(id);
+        } else {
+                int max = cmesh0->partMaterials.size();
+                int id = partId0;
+                if (id < 0 || id >= max) {
+                        if (world->errorContacts) {
+                                CERR << "partId from bullet was garbage: " << id
+                                     << " >= " << max << std::endl;
+                                shit_has_hit_fan = true;
+                        }
+                        id = 0;
+                }
+                mat0 = cmesh0->getMaterialFromPart(id);
+        }
+
+        if (shape1->getShapeType()==TRIANGLE_SHAPE_PROXYTYPE ||
+            shape1->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
+                int max = cmesh1->faceMaterials.size();
+                int id = index1;
+                if (id < 0 || id >= max) {
+                        if (world->errorContacts) {
+                                CERR << "faceId from bullet was garbage: " << id
+                                     << " >= " << max << std::endl;
+                                shit_has_hit_fan = true;
+                        }
+                        id = 0;
+                }
+                mat1 = cmesh1->getMaterialFromFace(id);
+        } else {
+                int max = cmesh1->partMaterials.size();
+                int id = partId1;
+                if (id < 0 || id >= max) {
+                        if (world->errorContacts) {
+                                CERR << "partId from bullet was garbage: " << id
+                                     << " >= " << max << std::endl;
+                                shit_has_hit_fan = true;
+                        }
+                        id = 0;
+                }
+                mat1 = cmesh1->getMaterialFromPart(id);
+        }
+
+        if (shit_has_hit_fan || world->verboseContacts) {
+                CLOG << shape0 << "[" << shape_str(shape0->getShapeType()) << "]"
+                     << "(" << parent0 << "[" << shape_str(parent0->getShapeType()) << "]" << ")"
+                     << " " << partId0 << " " << index0
+                     << "  AGAINST  " << shape1 << "[" << shape_str(shape1->getShapeType()) << "]"
+                     << "(" << parent1 << "[" << shape_str(parent1->getShapeType()) << "]" << ")"
+                     << " " << partId1 << " " << index1 << std::endl;
+                CLOG << cp.m_lifeTime << " " << cp.m_positionWorldOnA
+                                      << " " << cp.m_positionWorldOnB
+                     << " " << cp.m_normalWorldOnB << " " << cp.m_distance1
+                     << " " << cp.m_appliedImpulse << " " << cp.m_combinedFriction
+                     << " " << cp.m_combinedRestitution << std::endl;
+                /*
+                bool    m_lateralFrictionInitialized
+                btScalar        m_appliedImpulseLateral1
+                btScalar        m_appliedImpulseLateral2
+                btVector3       m_lateralFrictionDir1
+                btVector3       m_lateralFrictionDir2
+                */
+        }
+        
+        if (cp.m_lifeTime==0)
+                world->getInteraction(mat0, mat1, cp.m_combinedFriction, cp.m_combinedRestitution);
         // 0 is always the gimpact?
         // 1 is always the scenery?
         process_contact(cp, colObj0, partId0, index0, true);
         process_contact(cp, colObj1, partId1, index1, false);
-        //std::cout << to_ogre(cp.m_normalWorldOnB) << std::endl;
         return true;
-}       
+}
 
 extern ContactAddedCallback gContactAddedCallback;
 
@@ -151,7 +278,7 @@ bool PhysicsWorld::getUseContactAddedHack (void) const { return gContactAddedCal
 void PhysicsWorld::setUseContactAddedHack (bool v) { gContactAddedCallback = v ? contact_added_callback : NULL; }
 
 PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
-      : maxSteps(5)
+      : verboseContacts(false), errorContacts(false), maxSteps(5)
 {
         colConf = new btDefaultCollisionConfiguration();
         colDisp = new btCollisionDispatcher(colConf);
@@ -204,7 +331,7 @@ int PhysicsWorld::pump (lua_State *L,
                          float elapsed)
 {
         last_L = L;
-        Ogre::Real step_size = world->getStepSize();
+        float step_size = world->getStepSize();
         int counter = 0;
         for (; counter<maxSteps ; counter++) {
                 if (elapsed<step_size) break;
@@ -238,14 +365,14 @@ int PhysicsWorld::pump (lua_State *L,
         return counter;
 }
 
-Ogre::Real PhysicsWorld::getDeactivationTime (void) const
+float PhysicsWorld::getDeactivationTime (void) const
 { return gDeactivationTime; }
-void PhysicsWorld::setDeactivationTime (Ogre::Real v)
+void PhysicsWorld::setDeactivationTime (float v)
 { gDeactivationTime = v; }
 
-Ogre::Real PhysicsWorld::getContactBreakingThreshold (void) const
+float PhysicsWorld::getContactBreakingThreshold (void) const
 { return gContactBreakingThreshold; }
-void PhysicsWorld::setContactBreakingThreshold (Ogre::Real v)
+void PhysicsWorld::setContactBreakingThreshold (float v)
 { gContactBreakingThreshold = v; }
 
 Ogre::Vector3 PhysicsWorld::getGravity (void) const
@@ -253,9 +380,9 @@ Ogre::Vector3 PhysicsWorld::getGravity (void) const
 void PhysicsWorld::setGravity (const Ogre::Vector3 &gravity)
 { world->setGravity(to_bullet(gravity)); }
 
-Ogre::Real PhysicsWorld::getSolverDamping (void) const
+float PhysicsWorld::getSolverDamping (void) const
 { return world->getSolverInfo().m_damping; }
-void PhysicsWorld::setSolverDamping (Ogre::Real v)
+void PhysicsWorld::setSolverDamping (float v)
 { world->getSolverInfo().m_damping = v; }
 
 int PhysicsWorld::getSolverIterations (void) const
@@ -263,24 +390,24 @@ int PhysicsWorld::getSolverIterations (void) const
 void PhysicsWorld::setSolverIterations (int v)
 { world->getSolverInfo().m_numIterations = v; }
 
-Ogre::Real PhysicsWorld::getSolverErp (void) const
+float PhysicsWorld::getSolverErp (void) const
 { return world->getSolverInfo().m_erp; } 
-void PhysicsWorld::setSolverErp (Ogre::Real v)
+void PhysicsWorld::setSolverErp (float v)
 { world->getSolverInfo().m_erp = v; } 
 
-Ogre::Real PhysicsWorld::getSolverErp2 (void) const
+float PhysicsWorld::getSolverErp2 (void) const
 { return world->getSolverInfo().m_erp2; } 
-void PhysicsWorld::setSolverErp2 (Ogre::Real v)
+void PhysicsWorld::setSolverErp2 (float v)
 { world->getSolverInfo().m_erp2 = v; } 
 
-Ogre::Real PhysicsWorld::getSolverLinearSlop (void) const
+float PhysicsWorld::getSolverLinearSlop (void) const
 { return world->getSolverInfo().m_linearSlop; } 
-void PhysicsWorld::setSolverLinearSlop (Ogre::Real v)
+void PhysicsWorld::setSolverLinearSlop (float v)
 { world->getSolverInfo().m_linearSlop = v; } 
 
-Ogre::Real PhysicsWorld::getSolverWarmStartingFactor (void) const
+float PhysicsWorld::getSolverWarmStartingFactor (void) const
 { return world->getSolverInfo().m_warmstartingFactor; } 
-void PhysicsWorld::setSolverWarmStartingFactor (Ogre::Real v)
+void PhysicsWorld::setSolverWarmStartingFactor (float v)
 { world->getSolverInfo().m_warmstartingFactor = v; } 
 
 bool PhysicsWorld::getSolverSplitImpulse (void) const
@@ -288,9 +415,9 @@ bool PhysicsWorld::getSolverSplitImpulse (void) const
 void PhysicsWorld::setSolverSplitImpulse (bool v)
 { world->getSolverInfo().m_splitImpulse = v; } 
 
-Ogre::Real PhysicsWorld::getSolverSplitImpulseThreshold (void) const
+float PhysicsWorld::getSolverSplitImpulseThreshold (void) const
 { return world->getSolverInfo().m_splitImpulsePenetrationThreshold; } 
-void PhysicsWorld::setSolverSplitImpulseThreshold (Ogre::Real v)
+void PhysicsWorld::setSolverSplitImpulseThreshold (float v)
 { world->getSolverInfo().m_splitImpulsePenetrationThreshold = v; } 
 
 static inline int set_flag (int &var, int flag, bool val)
@@ -332,7 +459,7 @@ CollisionMeshPtr PhysicsWorld::createFromFile (const Ogre::String &name)
         CollisionMeshPtr cmp = CollisionMeshPtr(new CollisionMesh(name));
         // Note: this only works because both ogre and bullet are using float
         // if this situation changes it will be necessary to convert
-        // from Ogre::Real to btScalar.
+        // from float to btScalar.
         Ogre::DataStreamPtr file =
                 Ogre::ResourceGroupManager::getSingleton()
                         .openResource(name,"GRIT");
@@ -392,7 +519,7 @@ class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
 void PhysicsWorld::ray (const Ogre::Vector3 &start,
                         const Ogre::Vector3 &end,
                         SweepCallback &scb,
-                        Ogre::Real radius) const
+                        float radius) const
 {
         if (radius<0) {
                 BulletRayCallback brcb(scb);
@@ -450,8 +577,8 @@ RigidBody::RigidBody (const PhysicsWorldPtr &world_,
 
         info.m_linearDamping = colMesh->getLinearDamping();
         info.m_angularDamping = colMesh->getAngularDamping();
-        info.m_friction = colMesh->getFriction();
-        info.m_restitution = colMesh->getRestitution();
+        info.m_friction = 1;
+        info.m_restitution = 0;
         info.m_linearSleepingThreshold = colMesh->getLinearSleepThreshold();
         info.m_angularSleepingThreshold = colMesh->getAngularSleepThreshold();
 
@@ -525,8 +652,8 @@ void RigidBody::setWorldTransform (const btTransform& current_xform)
         const btVector3 &pos = current_xform.getOrigin();
         btQuaternion quat;
         current_xform.getBasis().getRotation(quat);
-        Ogre::Real x=pos.x(), y=pos.y(), z=pos.z();
-        Ogre::Real qw=quat.w(), qx=quat.x(), qy=quat.y(), qz=quat.z();
+        float x=pos.x(), y=pos.y(), z=pos.z();
+        float qw=quat.w(), qx=quat.x(), qy=quat.y(), qz=quat.z();
         if (isnan(x) || isnan(y) || isnan(z) || isnan(qw) || isnan(qx) || isnan(qy) || isnan(qz)) {
                 CERR << "NaN from physics engine." << std::endl;
                 x = 0; y = 0; z = 0;
@@ -653,62 +780,62 @@ void RigidBody::torqueImpulse (const Ogre::Vector3 &torque)
         body->activate();
 }
 
-Ogre::Real RigidBody::getContactProcessingThreshold (void) const
+float RigidBody::getContactProcessingThreshold (void) const
 {
         if (body==NULL) return 0;
         return body->getContactProcessingThreshold();
 }
 
-void RigidBody::setContactProcessingThreshold (Ogre::Real r)
+void RigidBody::setContactProcessingThreshold (float r)
 {
         if (body==NULL) return;
         body->setContactProcessingThreshold(r);
 }
 
-Ogre::Real RigidBody::getLinearDamping (void) const
+float RigidBody::getLinearDamping (void) const
 {
         if (body==NULL) return 0;
         return body->getLinearDamping();
 }
 
-void RigidBody::setLinearDamping (Ogre::Real r)
+void RigidBody::setLinearDamping (float r)
 {
         if (body==NULL) return;
         body->setDamping(r,getAngularDamping());
 }
 
-Ogre::Real RigidBody::getAngularDamping (void) const
+float RigidBody::getAngularDamping (void) const
 {
         if (body==NULL) return 0;
         return body->getAngularDamping();
 }
 
-void RigidBody::setAngularDamping (Ogre::Real r)
+void RigidBody::setAngularDamping (float r)
 {
         if (body==NULL) return;
         body->setDamping(getLinearDamping(),r);
 }
 
 
-Ogre::Real RigidBody::getLinearSleepThreshold (void) const
+float RigidBody::getLinearSleepThreshold (void) const
 {
         if (body==NULL) return 0;
         return body->getLinearSleepingThreshold();
 }
 
-void RigidBody::setLinearSleepThreshold (Ogre::Real r)
+void RigidBody::setLinearSleepThreshold (float r)
 {
         if (body==NULL) return;
         body->setSleepingThresholds(r,getAngularSleepThreshold());
 }
 
-Ogre::Real RigidBody::getAngularSleepThreshold (void) const
+float RigidBody::getAngularSleepThreshold (void) const
 {
         if (body==NULL) return 0;
         return body->getAngularSleepingThreshold();
 }
 
-void RigidBody::setAngularSleepThreshold (Ogre::Real r)
+void RigidBody::setAngularSleepThreshold (float r)
 {
         if (body==NULL) return;
         body->setSleepingThresholds(getLinearSleepThreshold(),r);
@@ -758,32 +885,7 @@ void RigidBody::setAngularVelocity (const Ogre::Vector3 &v)
         body->activate();
 }
 
-Ogre::Real RigidBody::getFriction (void) const
-{
-        if (body==NULL) return 0;
-        return body->getFriction();
-}
-
-void RigidBody::setFriction (Ogre::Real r)
-{
-        if (body==NULL) return;
-        body->setFriction(r);
-        body->activate();
-}
-
-Ogre::Real RigidBody::getRestitution (void) const
-{
-        if (body==NULL) return 0;
-        return body->getRestitution();
-}
-
-void RigidBody::setRestitution (Ogre::Real r)
-{
-        if (body==NULL) return;
-        body->setRestitution(r);
-}
-
-static inline Ogre::Real invert0 (Ogre::Real v)
+static inline float invert0 (float v)
 {
         return v==0 ? 0 : 1/v;
 }
@@ -793,13 +895,13 @@ static inline Ogre::Vector3 invert0 (const Ogre::Vector3 &v)
         return Ogre::Vector3(invert0(v.x),invert0(v.y),invert0(v.z));
 }
 
-Ogre::Real RigidBody::getMass (void) const
+float RigidBody::getMass (void) const
 {
         if (body==NULL) return 0;
         return invert0(body->getInvMass());
 }
 
-void RigidBody::setMass (Ogre::Real r)
+void RigidBody::setMass (float r)
 {
         if (body==NULL) return;
         body->setMassProps(r,to_bullet(getInertia()));
