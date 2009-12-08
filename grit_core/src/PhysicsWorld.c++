@@ -204,6 +204,7 @@ bool contact_added_callback (btManifoldPoint& cp,
         } else {
                 int max = cmesh0->partMaterials.size();
                 int id = partId0;
+                if (id==-1) id = 0;
                 if (id < 0 || id >= max) {
                         if (world->errorContacts) {
                                 CERR << "partId from bullet was garbage: " << id
@@ -231,6 +232,7 @@ bool contact_added_callback (btManifoldPoint& cp,
         } else {
                 int max = cmesh1->partMaterials.size();
                 int id = partId1;
+                if (id==-1) id = 0;
                 if (id < 0 || id >= max) {
                         if (world->errorContacts) {
                                 CERR << "partId from bullet was garbage: " << id
@@ -242,18 +244,20 @@ bool contact_added_callback (btManifoldPoint& cp,
                 mat1 = cmesh1->getMaterialFromPart(id);
         }
 
+        world->getInteraction(mat0, mat1, cp.m_combinedFriction, cp.m_combinedRestitution);
+
         if (shit_has_hit_fan || world->verboseContacts) {
-                CLOG << shape0 << "[" << shape_str(shape0->getShapeType()) << "]"
-                     << "(" << parent0 << "[" << shape_str(parent0->getShapeType()) << "]" << ")"
+                CLOG << mat0 << "[" << shape_str(shape0->getShapeType()) << "]"
+                     << "(" << shape_str(parent0->getShapeType()) << ")"
                      << " " << partId0 << " " << index0
-                     << "  AGAINST  " << shape1 << "[" << shape_str(shape1->getShapeType()) << "]"
-                     << "(" << parent1 << "[" << shape_str(parent1->getShapeType()) << "]" << ")"
+                     << "  AGAINST  " << mat1 << "[" << shape_str(shape1->getShapeType()) << "]"
+                     << "(" << shape_str(parent1->getShapeType()) << ")"
                      << " " << partId1 << " " << index1 << std::endl;
                 CLOG << cp.m_lifeTime << " " << cp.m_positionWorldOnA
                                       << " " << cp.m_positionWorldOnB
                      << " " << cp.m_normalWorldOnB << " " << cp.m_distance1
-                     << " " << cp.m_appliedImpulse << " " << cp.m_combinedFriction
-                     << " " << cp.m_combinedRestitution << std::endl;
+                     << " *" << cp.m_appliedImpulse << "* |" << cp.m_combinedFriction
+                     << "| >" << cp.m_combinedRestitution << "<" << std::endl;
                 /*
                 bool    m_lateralFrictionInitialized
                 btScalar        m_appliedImpulseLateral1
@@ -263,8 +267,6 @@ bool contact_added_callback (btManifoldPoint& cp,
                 */
         }
         
-        if (cp.m_lifeTime==0)
-                world->getInteraction(mat0, mat1, cp.m_combinedFriction, cp.m_combinedRestitution);
         // 0 is always the gimpact?
         // 1 is always the scenery?
         process_contact(cp, colObj0, partId0, index0, true);
@@ -278,7 +280,7 @@ bool PhysicsWorld::getUseContactAddedHack (void) const { return gContactAddedCal
 void PhysicsWorld::setUseContactAddedHack (bool v) { gContactAddedCallback = v ? contact_added_callback : NULL; }
 
 PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
-      : verboseContacts(false), errorContacts(false), maxSteps(5)
+      : verboseContacts(false), errorContacts(true), maxSteps(5)
 {
         colConf = new btDefaultCollisionConfiguration();
         colDisp = new btCollisionDispatcher(colConf);
@@ -564,6 +566,27 @@ RigidBody::RigidBody (const PhysicsWorldPtr &world_,
         stepCallbackIndex = LUA_NOREF;
         stabiliseCallbackIndex = LUA_NOREF;
 
+        colMesh->registerUser(this);
+        body = NULL;
+        addToWorld();
+
+        self = RigidBodyPtr(this);
+        // Make the self pointer a weak reference, otherwise
+        // the object will be kept alive until destroy() is called!
+        // We instead want the object to print a warning if it is destructed
+        // without first being destroyed.
+        // RigidBody must only be constructed as follows:
+        // RigidBodyPtr blah = (new RigidBody(...))->getPtr()
+        (*self.useCountPointer())--;
+}
+
+/* The intention is that the object is always in the world.  The exceptions are
+ * when it is created, after it has been destroyed, and in the brief moments
+ * when it is pulled out and put back in again in response to a CollisionMesh
+ * reload. */
+
+void RigidBody::addToWorld (void)
+{
         btCollisionShape *shape = colMesh->getShape();
         float mass = colMesh->getMass();
 
@@ -577,11 +600,12 @@ RigidBody::RigidBody (const PhysicsWorldPtr &world_,
 
         info.m_linearDamping = colMesh->getLinearDamping();
         info.m_angularDamping = colMesh->getAngularDamping();
-        info.m_friction = 1;
+        info.m_friction = 0;
         info.m_restitution = 0;
         info.m_linearSleepingThreshold = colMesh->getLinearSleepThreshold();
         info.m_angularSleepingThreshold = colMesh->getAngularSleepThreshold();
 
+        APP_ASSERT(body==NULL);
         body = new btRigidBody(info);
 
         world->world->addRigidBody(body);
@@ -592,24 +616,21 @@ RigidBody::RigidBody (const PhysicsWorldPtr &world_,
 
         body->setCollisionFlags(body->getCollisionFlags() |
                                 btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+}
 
-
-        self = RigidBodyPtr(this);
-        // Make the self pointer a weak reference, otherwise
-        // the object will be kept alive until destroy() is called!
-        // We instead want the object to print a warning if it is destructed
-        // without first being destroyed.
-        // RigidBody must only be constructed as follows:
-        // RigidBodyPtr blah = (new RigidBody(...))->getPtr()
-        (*self.useCountPointer())--;
+void RigidBody::removeFromWorld (void)
+{
+        lastXform = body->getCenterOfMassTransform();
+        world->world->removeRigidBody(body);
+        delete body;
+        body = NULL;
 }
 
 void RigidBody::destroy (lua_State *L)
 {
+        colMesh->unregisterUser(this);
         if (body==NULL) return;
-        world->world->removeRigidBody(body);
-        delete body;
-        body = NULL;
+        removeFromWorld();
         luaL_unref(L,LUA_REGISTRYINDEX,updateCallbackIndex);
         luaL_unref(L,LUA_REGISTRYINDEX,stepCallbackIndex);
         // the next line prevents the RigidBody being destructed prematurely
@@ -619,11 +640,10 @@ void RigidBody::destroy (lua_State *L)
 
 RigidBody::~RigidBody (void)
 {
+        colMesh->unregisterUser(this);
         if (body==NULL) return;
         CERR << "destructing RigidBody: destroy() was not called" << std::endl;
-        world->world->removeRigidBody(body);
-        delete body;
-        body = NULL;
+        removeFromWorld();
         // the next line will cause the counter to go negative but should cause
         // no problem
         self.setNull();

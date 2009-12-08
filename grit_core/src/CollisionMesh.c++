@@ -4,14 +4,14 @@
 #include <OgreException.h>
 #include <OgreResourceGroupManager.h>
 
-#include "CollisionMesh.h"
-#include "TColParser.h"
-
-#include "CentralisedLog.h"
-
 #include <LinearMath/btGeometryUtil.h>
 #include <BulletCollision/Gimpact/btGImpactShape.h>
 #include <../Extras/GIMPACTUtils/btGImpactConvexDecompositionShape.h>
+
+#include "CollisionMesh.h"
+#include "TColParser.h"
+#include "CentralisedLog.h"
+#include "PhysicsWorld.h"
 
 
 btCompoundShape *import_compound (const Compound &c,
@@ -311,6 +311,9 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file)
 void CollisionMesh::reload (void)
 {
         importFromFile(Ogre::ResourceGroupManager::getSingleton().openResource(name,"GRIT"));
+        for (Users::iterator i=users.begin(),i_=users.end() ; i!=i_ ; ++i) {
+                (*i)->notifyMeshReloaded();
+        }
 }
 
 physics_mat CollisionMesh::getMaterialFromPart (unsigned int id)

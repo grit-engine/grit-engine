@@ -395,6 +395,15 @@ class RigidBody : public btMotionState {
 
         GritObjectPtr owner;
 
+        void notifyMeshReloaded (void)
+        {
+                removeFromWorld();
+                addToWorld();
+        }
+
+        void addToWorld (void);
+        void removeFromWorld (void);
+
     protected:
 
         btTransform lastXform;

@@ -6,6 +6,7 @@
 
 #include "TColParser.h"
 #include "LooseEnd.h"
+#include "CentralisedLog.h"
 
 class CollisionMesh;
 typedef Ogre::SharedPtr<CollisionMesh> CollisionMeshPtr;
@@ -16,6 +17,8 @@ typedef std::map<Ogre::String,CollisionMeshPtr> CollisionMeshMap;
 #define CollisionMesh_h
 
 #include <btBulletCollisionCommon.h>
+
+class RigidBody;
 
 class CollisionMesh {
 
@@ -29,6 +32,7 @@ class CollisionMesh {
                                          i_=looseEnds.end() ; i!=i_ ; ++i) {
                         delete *i;
                 }
+                APP_ASSERT(users.size()==0);
         }
 
         virtual btCollisionShape *getShape (void) const { return shape; }
@@ -87,6 +91,16 @@ class CollisionMesh {
 
         void reload (void);
 
+        void registerUser (RigidBody *u)
+        {
+                users.insert(u);
+        }
+
+        void unregisterUser (RigidBody *u)
+        {
+                users.erase(u);
+        }
+
     protected:
 
         CollisionMesh (const Ogre::String &name_)
@@ -101,6 +115,9 @@ class CollisionMesh {
 
         const Ogre::String name;
         btCollisionShape *shape;
+
+        typedef std::set<RigidBody*> Users;
+        Users users;
 
         LooseEnds looseEnds;
 
