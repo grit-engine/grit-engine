@@ -86,12 +86,9 @@ void DynamicsWorld::end (btScalar time_left)
 
 bool physics_verbose_contacts = false;
 
-void process_contact (btManifoldPoint& cp,
-                      const btCollisionObject* colObj,
-                      int partId, int index, bool gimpact)
+void process_contact (btManifoldPoint& cp, const PhysicsWorldPtr &world,
+                      const btCollisionObject *colObj, bool gimpact)
 {
-        (void) partId;
-        (void) index;
         const btCollisionShape *shape = colObj->getCollisionShape();
 
         if (shape->getShapeType() != TRIANGLE_SHAPE_PROXYTYPE) return;
@@ -111,13 +108,15 @@ void process_contact (btManifoldPoint& cp,
 
 
         if (gimpact) {
-                if (parent->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
+                if (parent->getShapeType()==GIMPACT_SHAPE_PROXYTYPE &&
+                    world->gimpactOneWayMeshHack) {
                         if (dot > 0) {
                                 cp.m_normalWorldOnB -= 2 * dot * normal;
                         }
                 }
         } else {
-                if (parent->getShapeType()==TRIANGLE_MESH_SHAPE_PROXYTYPE) {
+                if (parent->getShapeType()==TRIANGLE_MESH_SHAPE_PROXYTYPE &&
+                    world->bumpyTriangleMeshHack) {
 
                         btScalar magnitude = cp.m_normalWorldOnB.length();
                         normal *= dot > 0 ? magnitude : -magnitude;
@@ -275,18 +274,16 @@ bool contact_added_callback (btManifoldPoint& cp,
         
         // 0 is always the gimpact?
         // 1 is always the scenery?
-        process_contact(cp, colObj0, partId0, index0, true);
-        process_contact(cp, colObj1, partId1, index1, false);
+        process_contact(cp, world, colObj0, true);
+        process_contact(cp, world, colObj1, false);
         return true;
 }
 
 extern ContactAddedCallback gContactAddedCallback;
 
-bool PhysicsWorld::getUseContactAddedHack (void) const { return gContactAddedCallback!=NULL; }
-void PhysicsWorld::setUseContactAddedHack (bool v) { gContactAddedCallback = v ? contact_added_callback : NULL; }
-
 PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
-      : verboseContacts(false), errorContacts(true), maxSteps(5)
+      : verboseContacts(false), errorContacts(true),
+        bumpyTriangleMeshHack(true), gimpactOneWayMeshHack(true), maxSteps(5)
 {
         colConf = new btDefaultCollisionConfiguration();
         colDisp = new btCollisionDispatcher(colConf);

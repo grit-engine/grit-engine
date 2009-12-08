@@ -210,9 +210,6 @@ class PhysicsWorld {
         btScalar getMaxSteps (void) const { return maxSteps; }
         void setMaxSteps (btScalar v) { maxSteps = v; }
 
-        bool getUseContactAddedHack (void) const;
-        void setUseContactAddedHack (bool v);
-
         void setInteraction (physics_mat m1, physics_mat m2, float friction, float restitution)
         {
                 db[std::pair<physics_mat,physics_mat>(m1,m2)] = MaterialInteraction(friction, restitution);
@@ -227,6 +224,8 @@ class PhysicsWorld {
 
         bool verboseContacts;
         bool errorContacts;
+        bool bumpyTriangleMeshHack;
+        bool gimpactOneWayMeshHack;
 
     protected:
 

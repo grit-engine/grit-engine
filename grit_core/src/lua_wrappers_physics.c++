@@ -855,8 +855,10 @@ TRY_START
                 lua_pushnumber(L,self->getContactBreakingThreshold());
         } else if (key=="deactivationTime") {
                 lua_pushnumber(L,self->getDeactivationTime());
-        } else if (key=="useContactAddedHack") {
-                lua_pushboolean(L,self->getUseContactAddedHack());
+        } else if (key=="gimpactOneWayMeshHack") {
+                lua_pushboolean(L,self->gimpactOneWayMeshHack);
+        } else if (key=="bumpyTriangleMeshHack") {
+                lua_pushboolean(L,self->bumpyTriangleMeshHack);
         } else if (key=="verboseContacts") {
                 lua_pushboolean(L,self->verboseContacts);
         } else if (key=="errorContacts") {
@@ -917,9 +919,12 @@ TRY_START
         } else if (key=="deactivationTime") {
                 float v = luaL_checknumber(L,3);
                 self->setDeactivationTime(v);
-        } else if (key=="useContactAddedHack") {
+        } else if (key=="gimpactOneWayMeshHack") {
                 bool v = 0!=lua_toboolean(L,3);
-                self->setUseContactAddedHack(v);
+                self->gimpactOneWayMeshHack = v;
+        } else if (key=="bumpyTriangleMeshHack") {
+                bool v = 0!=lua_toboolean(L,3);
+                self->bumpyTriangleMeshHack = v;
         } else if (key=="verboseContacts") {
                 bool v = 0!=lua_toboolean(L,3);
                 self->verboseContacts = v;
