@@ -124,6 +124,12 @@ void process_contact (btManifoldPoint& cp,
 
                         cp.m_normalWorldOnB = normal;
 
+                        // Reproject collision point along normal.
+                        cp.m_positionWorldOnB =
+                                cp.m_positionWorldOnA - cp.m_normalWorldOnB * cp.m_distance1;
+                        cp.m_localPointB =
+                                colObj->getWorldTransform().invXform(cp.m_positionWorldOnB);
+
                 }
         }
 }
