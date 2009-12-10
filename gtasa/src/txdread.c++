@@ -242,16 +242,19 @@ void Txd::readTx (std::istream &f,
         // unused
         ios_write_u32(ddsf,0);
 
+        unsigned char *dds = NULL;
+        unsigned long dds_sz = 0;
+
         for (unsigned char i=0 ; i<levels ; i++) {
                 if (i>0) {
                         imgsize = ios_read_u32(f);
                 }
 
                 if (imgsize==0 && compressed) {
-                        // sometimes txds do not give a mipmap level
-                        // if it is smaller (width or height) than 4 pixels
-                        // as dxt1-3 are stored in 4x4 pixel chunks
-                        // so we generate black mipmap levels here
+                        // sometimes txds do not give a mipmap level if it is
+                        // smaller (width or height) than 4 pixels as dxt1-3
+                        // are stored in 4x4 pixel chunks so we generate mipmap
+                        // levels here in a cheap crappy way
                         unsigned long mmwidth = width, mmheight=height;
                         for (unsigned char j=0 ; j<i ; ++j) {
                                 mmwidth = std::max(1UL,mmwidth/2);
@@ -261,6 +264,12 @@ void Txd::readTx (std::istream &f,
                         mmwidth = (mmwidth+3)/4;
                         mmheight = (mmheight+3)/4;
                         unsigned long blocks = mmwidth * mmheight;
+                        ASSERT(mmwidth==1 || mmheight==1);
+
+                        // The following code generate black mipmap levels but
+                        // this was not a good idea, it results in far off
+                        // things being black (duh).
+                        /*
                         const unsigned char block8[] = {0,0,0,0,
                                                        0,0,0,0};
                         const unsigned char block16[] = {255,255,0,0,
@@ -277,32 +286,55 @@ void Txd::readTx (std::istream &f,
                                 for (unsigned long j=0 ; j<blocks ; ++j) {
                                         ios_write_byte_array(ddsf,block16,16);
                                 }
+                                break;
+                                default:
+                                fprintf(stderr,"Unrecognised format: 0x%x\n",d3d_tex_format);
+                                abort();
                         }
-                        continue;
-                }
+                        */
 
-                unsigned char *dds = new unsigned char[imgsize];
-                ios_read_byte_array(f, dds, imgsize);
-
-                // convert evil 8bit images to sensible 32bit images
-                if (depth==8) {
-                        unsigned char *new_dds = new unsigned char[imgsize*4];
-                        for (size_t i=0 ; i<imgsize ; i++) {
-                                unsigned char c = dds[i];
-                                new_dds[4*i+0] = palette_b[c];
-                                new_dds[4*i+1] = palette_g[c];
-                                new_dds[4*i+2] = palette_r[c];
-                                new_dds[4*i+3] = palette_a[c];
+                        // The slightly-better-but-still-pretty-shitty approach
+                        // is to re-use the mipmap from the layer above, but
+                        // crop it to the right size.  I am going to hell for this.
+                        unsigned long block_sz = 0;
+                        switch (d3d_tex_format) {
+                                case 0x31545844: block_sz = 8; break; // DXT1
+                                case 0x33545844: block_sz = 16; break; // DXT3
+                                default:
+                                fprintf(stderr,"Unrecognised format: 0x%lx\n",d3d_tex_format);
+                                abort();
                         }
-                        imgsize *= 4;
+                        // crop like this:
+                        dds_sz = blocks * block_sz;
+
+                } else {
+
                         delete [] dds;
-                        dds = new_dds;
+                        dds = new unsigned char[imgsize];
+                        ios_read_byte_array(f, dds, imgsize);
+                        dds_sz = imgsize;
+
+                        // convert evil 8bit images to sensible 32bit images
+                        if (depth==8) {
+                                unsigned char *new_dds = new unsigned char[imgsize*4];
+                                for (size_t i=0 ; i<imgsize ; i++) {
+                                        unsigned char c = dds[i];
+                                        new_dds[4*i+0] = palette_b[c];
+                                        new_dds[4*i+1] = palette_g[c];
+                                        new_dds[4*i+2] = palette_r[c];
+                                        new_dds[4*i+3] = palette_a[c];
+                                }
+                                imgsize *= 4;
+                                delete [] dds;
+                                dds = new_dds;
+                                dds_sz = imgsize;
+                        }
                 }
 
-                ios_write_byte_array(ddsf,dds,imgsize);
-
-                delete [] dds;
+                ios_write_byte_array(ddsf,dds,dds_sz);
         }
+
+        delete [] dds;
 
         // these 3 lines are duplicated at the early return, above
         ios_read_header(f,&type,&size,NULL,&file_ver);
