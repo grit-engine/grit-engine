@@ -138,7 +138,13 @@ struct MatSplit {
 typedef std::vector<MatSplit> MatSplits;
 
 struct face { unsigned short v2, v1, flags, v3; };
-struct vect { float x, y, z; };
+
+struct vect {
+        float x, y, z;
+        vect () : x(0), y(0), z(0) { }
+        vect (float x_, float y_, float z_) : x(x_), y(y_), z(z_) { }
+};
+
 struct texcoord { float u, v; };
 struct light { float unk1, unk2; };
 
@@ -251,6 +257,8 @@ void export_mesh (const StringSet &texs,
                   MatDB &matdb,
                   std::ostream &matbin,
                   const std::string &mod_name);
+
+void generate_normals (struct geometry &g);
 #endif
 
 // vim: shiftwidth=8:tabstop=8:expandtab

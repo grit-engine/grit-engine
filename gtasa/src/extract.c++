@@ -448,6 +448,7 @@ void extract (const Config &cfg, std::ostream &out)
                                 export_imgs.push_back(img2->name);
                         }
                         std::string out_name = out_name_ss.str();
+                        generate_normals(g);
                         export_mesh(texs,everything,export_imgs,
                                     out,out_name,
                                     o,objname,g,matdb,materials_lua,cfg.modname);

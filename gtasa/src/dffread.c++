@@ -1169,6 +1169,54 @@ export_or_provide_mat (const StringSet &texs,
     return mat;
 }}}
 
+vect operator+= (vect &a, const vect &b)
+{ a.x += b.x; a.y += b.y; a.z += b.z; return a; }
+
+vect operator- (const vect &a, const vect &b)
+{ return vect(a.x-b.x, a.y-b.y, a.z-b.z); }
+
+vect operator/ (const vect &a, float b)
+{ return vect(a.x/b, a.y/b, a.z/b); }
+
+float len (const vect &a)
+{ return ::sqrt(a.x*a.x + a.y*a.y + a.z*a.z); }
+
+vect normalise (const vect &a)
+{ return a / len(a); }
+
+vect cross_prod (const vect &a, const vect &b)
+{ return vect(a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x); }
+
+void add_face_normal (vect &N, const vect &v1, const vect &v2, const vect &v3)
+{
+    N += cross_prod (v2-v1, v3-v1);
+}
+
+void generate_normals (struct geometry &g)
+{
+    const std::vector<vect> &positions = g.vertexes;
+    std::vector<vect> &normals = g.normals;
+    if (normals.size() > 0) {
+        ASSERT(positions.size() == normals.size());
+        // already has normals
+        return;
+    }
+    normals.resize(positions.size()); // initialises to zero
+    for (MatSplits::iterator s=g.mat_spls.begin(),s_=g.mat_spls.end() ; s!=s_ ; ++s) {
+        const std::vector<unsigned long> &mindexes = s->indexes2;
+        ASSERT(mindexes.size() % 3 == 0);
+        for (size_t f=0 ; f<mindexes.size() ; f+=3) {
+            unsigned long index1=mindexes[f+0], index2=mindexes[f+1], index3=mindexes[f+2];
+            add_face_normal(normals[index1], positions[index1],positions[index2],positions[index3]);
+            add_face_normal(normals[index2], positions[index1],positions[index2],positions[index3]);
+            add_face_normal(normals[index3], positions[index1],positions[index2],positions[index3]);
+        }
+    }
+    for (size_t i=0 ; i<normals.size() ; ++i) {
+        normals[i] = normalise(normals[i]);
+    }
+}
+
 void export_xml (const StringSet &texs,
                  const ide &ide,
                  const std::vector<std::string> &imgs,
