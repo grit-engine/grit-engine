@@ -17,7 +17,6 @@ vehicles:
     - extract graphics and collision meshes from gta vehicles
     - make the bike bank properly
     - add wheels to mesh so that vehicle bottoms out correctly
-    - ensure wheels have no friction (maybe tweak contact added for that)
 
 actors:
     - constraints for ragdoll (particlarly cone twist and hinge constraints)
