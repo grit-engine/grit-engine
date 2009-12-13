@@ -108,6 +108,14 @@ consistently use resource pointers everywhere, not resource names
 
 When overloaded functions are called with the wrong args, list all options.
 
+Inherit directory from lua files.  (Use stack.)
+
+Inherit directory from material.
+
+Inherit directory from class.
+
+Console has root dir.
+
 
 
 
