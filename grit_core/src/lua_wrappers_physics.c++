@@ -262,7 +262,8 @@ static void push_sweep_result (lua_State *L,
 {
         lua_pushnumber(L,r.dist * len);
         push_rbody(L,r.rb->getPtr());
-        push(L,new Ogre::Vector3(r.rb->getOrientation()*r.n.normalisedCopy()),
+        // normal is documented as being object space but is actually world space
+        push(L,new Ogre::Vector3(/*r.rb->getOrientation()* */r.n.normalisedCopy()),
                                  VECTOR3_TAG);
 }
 

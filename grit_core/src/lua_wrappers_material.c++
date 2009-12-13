@@ -1789,8 +1789,16 @@ static int mat_index(lua_State *L) {
                 push_cfunction(L,mat_get_transparent_sorting_forced);
         } else if (!::strcmp(key,"setTransparentSortingForced")) {
                 push_cfunction(L,mat_set_transparent_sorting_forced);
+/* not supported it seems
+        } else if (!::strcmp(key,"getVertexConstantFloat")) {
+                push_cfunction(L,mat_get_vertex_constant_float);
+*/
         } else if (!::strcmp(key,"setVertexConstantFloat")) {
                 push_cfunction(L,mat_set_vertex_constant_float);
+/* not supported it seems
+        } else if (!::strcmp(key,"getFragmentConstantFloat")) {
+                push_cfunction(L,mat_get_fragment_constant_float);
+*/
         } else if (!::strcmp(key,"setFragmentConstantFloat")) {
                 push_cfunction(L,mat_set_fragment_constant_float);
 
