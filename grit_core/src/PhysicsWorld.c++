@@ -161,10 +161,8 @@ static std::string shape_str (int s)
 }
 
 bool contact_added_callback (btManifoldPoint& cp,
-                             const btCollisionObject* colObj0,
-                             int partId0, int index0,
-                             const btCollisionObject* colObj1,
-                             int partId1, int index1)
+                             const btCollisionObject* colObj0, int, int index0,
+                             const btCollisionObject* colObj1, int, int index1)
 {
         const btRigidBody *bbody0 = dynamic_cast<const btRigidBody*>(colObj0);
         const btRigidBody *bbody1 = dynamic_cast<const btRigidBody*>(colObj1);
@@ -199,7 +197,7 @@ bool contact_added_callback (btManifoldPoint& cp,
                 int id = index0;
                 if (id < 0 || id >= max) {
                         if (world->errorContacts) {
-                                CERR << "faceId from bullet was garbage: " << id
+                                CERR << "index from bullet was garbage: " << id
                                      << " >= " << max << std::endl;
                                 shit_has_hit_fan = true;
                         }
@@ -208,11 +206,11 @@ bool contact_added_callback (btManifoldPoint& cp,
                 mat0 = cmesh0->getMaterialFromFace(id);
         } else {
                 int max = cmesh0->partMaterials.size();
-                int id = partId0;
-                if (id==-1) id = 0;
+                int id = index0;
+                //if (id==-1) id = 0;
                 if (id < 0 || id >= max) {
                         if (world->errorContacts) {
-                                CERR << "partId from bullet was garbage: " << id
+                                CERR << "index from bullet was garbage: " << id
                                      << " >= " << max << std::endl;
                                 shit_has_hit_fan = true;
                         }
@@ -227,7 +225,7 @@ bool contact_added_callback (btManifoldPoint& cp,
                 int id = index1;
                 if (id < 0 || id >= max) {
                         if (world->errorContacts) {
-                                CERR << "faceId from bullet was garbage: " << id
+                                CERR << "index from bullet was garbage: " << id
                                      << " >= " << max << std::endl;
                                 shit_has_hit_fan = true;
                         }
@@ -236,11 +234,11 @@ bool contact_added_callback (btManifoldPoint& cp,
                 mat1 = cmesh1->getMaterialFromFace(id);
         } else {
                 int max = cmesh1->partMaterials.size();
-                int id = partId1;
-                if (id==-1) id = 0;
+                int id = index1;
+                //if (id==-1) id = 0;
                 if (id < 0 || id >= max) {
                         if (world->errorContacts) {
-                                CERR << "partId from bullet was garbage: " << id
+                                CERR << "index from bullet was garbage: " << id
                                      << " >= " << max << std::endl;
                                 shit_has_hit_fan = true;
                         }
@@ -254,10 +252,10 @@ bool contact_added_callback (btManifoldPoint& cp,
         if (shit_has_hit_fan || world->verboseContacts) {
                 CLOG << mat0 << "[" << shape_str(shape0->getShapeType()) << "]"
                      << "(" << shape_str(parent0->getShapeType()) << ")"
-                     << " " << partId0 << " " << index0
+                     << " " << index0 << " " << index0
                      << "  AGAINST  " << mat1 << "[" << shape_str(shape1->getShapeType()) << "]"
                      << "(" << shape_str(parent1->getShapeType()) << ")"
-                     << " " << partId1 << " " << index1 << std::endl;
+                     << " " << index1 << " " << index1 << std::endl;
                 CLOG << cp.m_lifeTime << " " << cp.m_positionWorldOnA
                                       << " " << cp.m_positionWorldOnB
                      << " " << cp.m_normalWorldOnB << " " << cp.m_distance1

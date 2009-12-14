@@ -10,6 +10,8 @@ general physics:
     - constraints (particlarly cone twist and hinge constraints)
     - explosions (ghost object + ray casts?) (sphere + contact iteration?)
     - callbacks on collisions
+    - add physics material to ray test
+    - make tyre model respect road surface properties
 
 vehicles:
     - constraints (particularly hinge constraint for car doors)
