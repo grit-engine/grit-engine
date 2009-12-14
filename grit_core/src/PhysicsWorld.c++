@@ -161,8 +161,8 @@ static std::string shape_str (int s)
 }
 
 bool contact_added_callback (btManifoldPoint& cp,
-                             const btCollisionObject* colObj0, int, int index0,
-                             const btCollisionObject* colObj1, int, int index1)
+                             const btCollisionObject* colObj0, int part0, int index0,
+                             const btCollisionObject* colObj1, int part1, int index1)
 {
         const btRigidBody *bbody0 = dynamic_cast<const btRigidBody*>(colObj0);
         const btRigidBody *bbody1 = dynamic_cast<const btRigidBody*>(colObj1);
@@ -252,10 +252,10 @@ bool contact_added_callback (btManifoldPoint& cp,
         if (shit_has_hit_fan || world->verboseContacts) {
                 CLOG << mat0 << "[" << shape_str(shape0->getShapeType()) << "]"
                      << "(" << shape_str(parent0->getShapeType()) << ")"
-                     << " " << index0 << " " << index0
+                     << " " << part0 << " " << index0
                      << "  AGAINST  " << mat1 << "[" << shape_str(shape1->getShapeType()) << "]"
                      << "(" << shape_str(parent1->getShapeType()) << ")"
-                     << " " << index1 << " " << index1 << std::endl;
+                     << " " << part1 << " " << index1 << std::endl;
                 CLOG << cp.m_lifeTime << " " << cp.m_positionWorldOnA
                                       << " " << cp.m_positionWorldOnB
                      << " " << cp.m_normalWorldOnB << " " << cp.m_distance1
