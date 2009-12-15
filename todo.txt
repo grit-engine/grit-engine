@@ -7,18 +7,19 @@ gameplay
 --------------------------------------------------------------------------------
 
 general physics:
-    - constraints (particlarly cone twist and hinge constraints)
-    - explosions (ghost object + ray casts?) (sphere + contact iteration?)
-    - callbacks on collisions
+    - fix gimpact <-> compound bug
     - add physics material to ray test
-    - make tyre model respect road surface properties
+    - callbacks on collisions
+    - explosions (ghost object + ray casts?) (sphere + contact iteration?)
+    - constraints (particlarly cone twist and hinge constraints)
 
 vehicles:
+    - add wheels to mesh so that vehicle bottoms out correctly
+    - make tyre model respect road surface properties
     - constraints (particularly hinge constraint for car doors)
     - study handling.cfg
     - extract graphics and collision meshes from gta vehicles
     - make the bike bank properly
-    - add wheels to mesh so that vehicle bottoms out correctly
 
 actors:
     - constraints for ragdoll (particlarly cone twist and hinge constraints)
@@ -34,6 +35,10 @@ actors:
 --------------------------------------------------------------------------------
 cosmetic
 --------------------------------------------------------------------------------
+
+discuss art pipeline for alpha (vertex colours? texture? material value?)
+
+finish off optional stipple
 
 weather (caelum? needs cg)
 
