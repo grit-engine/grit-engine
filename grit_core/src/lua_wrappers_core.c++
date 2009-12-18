@@ -1376,6 +1376,27 @@ TRY_START
 TRY_END
 }
 
+static int global_safe_include (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        const char* filename = luaL_checkstring(L,1);
+
+        int status = luaL_loadfile(L,filename);
+        if (status) {
+                if (status!=LUA_ERRFILE) {
+                        const char *str = lua_tostring(L,-1);
+                        my_lua_error(L,str);
+                }
+        } else {
+                // existing error handler should print stacktrace and stuff
+                lua_call(L,0,0);
+        }
+
+        return 0;
+TRY_END
+}
+
 
 static int global_alive (lua_State *L)
 {
@@ -1392,6 +1413,7 @@ TRY_END
 
 static const luaL_reg global[] = {
         {"include",global_include},
+        {"safe_include",global_safe_include},
         {"error",global_error},
         {"error_handler",global_error_handler},
         {"alive",global_alive},
