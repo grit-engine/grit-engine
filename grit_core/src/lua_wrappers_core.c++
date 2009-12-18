@@ -656,6 +656,7 @@ TRY_START
                 my_lua_error(L,"Second parameter should be a table");
 
         ExternalTable &t = mat_map[name];
+        t.clear();
         for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
                 const char *err = t.luaSet(L);
                 if (err) my_lua_error(L, err);
@@ -664,7 +665,7 @@ TRY_START
 TRY_END
 }
 
-static int global_get_registered_material (lua_State *L)
+static int global_dump_registered_material (lua_State *L)
 {
 TRY_START
         check_args(L,1);
@@ -673,6 +674,34 @@ TRY_START
                 my_lua_error(L, "Material does not exist: \""+std::string(name)+"\"");
         ExternalTable &t = mat_map[name];
         t.dump(L);
+        return 1;
+TRY_END
+}
+
+static int global_registered_material_get (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        const char *name = luaL_checkstring(L,1);
+        const char *key = luaL_checkstring(L,2);
+        if (mat_map.find(name) == mat_map.end())
+                my_lua_error(L, "Material does not exist: \""+std::string(name)+"\"");
+        ExternalTable &t = mat_map[name];
+        t.luaGet(L, key);
+        return 1;
+TRY_END
+}
+
+static int global_registered_material_set (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        const char *name = luaL_checkstring(L,1);
+        const char *key = luaL_checkstring(L,2);
+        if (mat_map.find(name) == mat_map.end())
+                my_lua_error(L, "Material does not exist: \""+std::string(name)+"\"");
+        ExternalTable &t = mat_map[name];
+        t.luaSet(L, key);
         return 1;
 TRY_END
 }
@@ -1497,7 +1526,9 @@ static const luaL_reg global[] = {
         {"remove_gpuprog" ,global_remove_gpuprog},
 
         {"register_material" ,global_register_material},
-        {"get_registered_material" ,global_get_registered_material},
+        {"dump_registered_material" ,global_dump_registered_material},
+        {"registered_material_get" ,global_registered_material_get},
+        {"registered_material_set" ,global_registered_material_set},
         {"reprocess_all_registered_materials" ,global_reprocess_all_registered_materials},
 
         {"get_alloc_stats" ,global_get_alloc_stats},

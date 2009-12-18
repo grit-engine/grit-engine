@@ -68,10 +68,9 @@ class ExternalTable {
 
         const char *luaSet (lua_State *L, const Ogre::String &key);
 
-        void unset (const Ogre::String &key)
-        {
-                fields.erase(key);
-        }
+        void unset (const Ogre::String &key) { fields.erase(key); }
+
+        void clear (void) { fields.clear(); }
 
 
         void dump (lua_State *L);
