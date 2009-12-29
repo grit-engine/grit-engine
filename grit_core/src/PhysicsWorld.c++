@@ -160,6 +160,36 @@ static std::string shape_str (int s)
         return "";
 }
 
+/* bullet does not support putting a gimpact triangle mesh in a compound shape so I am hacking the parent in this case to be the triangle mesh instead of the compound shape
+*/
+static void fix_parent (const btCollisionShape *shape, const btCollisionShape *&parent)
+{
+        APP_ASSERT(shape!=NULL);
+        APP_ASSERT(parent!=NULL);
+        if (shape->getShapeType()!=TRIANGLE_SHAPE_PROXYTYPE) return;
+        if (parent->getShapeType()!=COMPOUND_SHAPE_PROXYTYPE) return;
+        // iterate through children of compound shape searching for the gimpact shape
+
+        // assume there is exactly 1 gimpact shape in the compound if the child shape
+        // is a triangle
+
+        const btCompoundShape *compound = static_cast<const btCompoundShape*>(parent);
+        const btCollisionShape *new_parent = NULL;
+
+        for (int i=0,i_=compound->getNumChildShapes() ; i<i_ ; ++i) {
+                const btCollisionShape *child = compound->getChildShape(i);
+                if (child->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
+                        new_parent = child;
+                        break;
+                }
+        }
+
+        // this can happen with static triangle meshes in a compound
+        if (new_parent==NULL) return;
+
+        parent = new_parent;
+}
+
 bool contact_added_callback (btManifoldPoint& cp,
                              const btCollisionObject* colObj0, int part0, int index0,
                              const btCollisionObject* colObj1, int part1, int index1)
@@ -184,6 +214,9 @@ bool contact_added_callback (btManifoldPoint& cp,
         const btCollisionShape *shape1  = colObj1->getCollisionShape();
         const btCollisionShape *parent1 = colObj1->getRootCollisionShape();
 
+        fix_parent(shape0, parent0);
+        fix_parent(shape1, parent1);
+
         APP_ASSERT(parent0!=NULL);
         APP_ASSERT(parent1!=NULL);
 
@@ -191,8 +224,10 @@ bool contact_added_callback (btManifoldPoint& cp,
 
         physics_mat mat0, mat1;
 
-        if (shape0->getShapeType()==TRIANGLE_SHAPE_PROXYTYPE ||
-            shape0->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
+        // when one gimpact shape hits another (not in compounds), we don't get the triangle
+        // we get the whole gimpact shape for some reason
+        if (shape0->getShapeType()==TRIANGLE_SHAPE_PROXYTYPE
+            || shape0->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
                 int max = cmesh0->faceMaterials.size();
                 int id = index0;
                 if (id < 0 || id >= max) {
@@ -219,8 +254,8 @@ bool contact_added_callback (btManifoldPoint& cp,
                 mat0 = cmesh0->getMaterialFromPart(id);
         }
 
-        if (shape1->getShapeType()==TRIANGLE_SHAPE_PROXYTYPE ||
-            shape1->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
+        if (shape1->getShapeType()==TRIANGLE_SHAPE_PROXYTYPE
+            || shape1->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
                 int max = cmesh1->faceMaterials.size();
                 int id = index1;
                 if (id < 0 || id >= max) {
