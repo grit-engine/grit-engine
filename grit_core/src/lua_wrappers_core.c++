@@ -114,7 +114,7 @@ static int global_set_keyb_verbose (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        bool b = 0!=lua_toboolean(L,1);
+        bool b = check_bool(L,1);
         grit->getKeyboard()->setVerbose(b);
         return 0;
 TRY_END
@@ -194,7 +194,7 @@ static int global_set_mouse_hide (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        bool b = 0!=lua_toboolean(L,1);
+        bool b = check_bool(L,1);
         grit->getMouse()->setHide(b);
         return 0;
 TRY_END
@@ -204,7 +204,7 @@ static int global_set_mouse_grab (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        bool b = 0!=lua_toboolean(L,1);
+        bool b = check_bool(L,1);
         grit->getMouse()->setGrab(b);
         return 0;
 TRY_END
@@ -326,7 +326,7 @@ static int global_set_texture_verbose (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        bool b = 0!=lua_toboolean(L,1);
+        bool b = check_bool(L,1);
         Ogre::TextureManager::getSingleton().setVerbose(b);
         return 0;
 TRY_END
@@ -453,7 +453,7 @@ static int global_set_mesh_verbose (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        bool b = 0!=lua_toboolean(L,1);
+        bool b = check_bool(L,1);
         Ogre::MeshManager::getSingleton().setVerbose(b);
         return 0;
 TRY_END
@@ -858,7 +858,7 @@ static int global_set_gpuprog_verbose (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        bool b = 0!=lua_toboolean(L,1);
+        bool b = check_bool(L,1);
         Ogre::GpuProgramManager::getSingleton().setVerbose(b);
         return 0;
 TRY_END
@@ -992,7 +992,7 @@ static int global_rendersystem_set_vsync (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        bool b = 0!=lua_toboolean(L,1);
+        bool b = check_bool(L,1);
         grit->getOgre()->getRenderSystem()->setWaitForVerticalBlank(b);
         return 0;
 TRY_END
@@ -1108,7 +1108,7 @@ TRY_START
         std::string font_name = luaL_checkstring(L,2);
         lua_Number height = luaL_checknumber(L,3);
         lua_Number width = luaL_checknumber(L,4);
-        bool wordwrap = 0!=lua_toboolean(L,5);
+        bool wordwrap = check_bool(L,5);
         Ogre::FontPtr fp =
                 Ogre::FontManager::getSingleton().getByName(font_name);
         if (fp.isNull()) {
@@ -1133,10 +1133,10 @@ TRY_START
         const char *input = luaL_checkstring(L,1);
         lua_Number width = luaL_checknumber(L,2);
         unsigned lines = check_t<unsigned>(L,3);
-        bool word_wrap = 0!=lua_toboolean(L,4);
-        bool chop_top = 0!=lua_toboolean(L,5);
+        bool word_wrap = check_bool(L,4);
+        bool chop_top = check_bool(L,5);
         unsigned tabs = check_t<unsigned>(L,6);
-        bool codes = 0!=lua_toboolean(L,7);
+        bool codes = check_bool(L,7);
         std::string font_name = luaL_checkstring(L,8);
         lua_Number char_height = luaL_checknumber(L,9);
         Ogre::FontPtr fp =
@@ -1194,7 +1194,7 @@ TRY_START
         check_args(L,3);
         const char *resource = luaL_checkstring(L,1);
         const char *ext = luaL_checkstring(L,2);
-        bool recursive = 0!=lua_toboolean(L,3);
+        bool recursive = check_bool(L,3);
         Ogre::ResourceGroupManager::getSingleton().
                 addResourceLocation(resource,ext,"GRIT",recursive);
         return 0;

@@ -101,10 +101,10 @@ static bool mobj_newindex (lua_State *L, Ogre::MovableObject &self,
                 lua_Number n = check_t<unsigned char>(L,3);
                 self.setRenderQueueGroup(n);
         } else if (key=="castShadows") {
-                bool b = 0!=lua_toboolean(L,3);
+                bool b = check_bool(L,3);
                 self.setCastShadows(b);
         } else if (key=="visible") {
-                bool b = 0!=lua_toboolean(L,3);
+                bool b = check_bool(L,3);
                 self.setVisible(b);
         } else {
                 return false;
@@ -337,7 +337,7 @@ TRY_START
                 Ogre::Real v = luaL_checknumber(L,3);
                 self.setPowerScale(v);
         } else if (key=="castShadows") {
-                bool b = 0!=lua_toboolean(L,3);
+                bool b = check_bool(L,3);
                 self.setCastShadows(b);
         } else if (key=="position") {
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
@@ -513,16 +513,16 @@ TRY_START
                 Ogre::Real v = luaL_checknumber(L,3);
                 self.setParticleQuota(v);
         } else if (key=="sortingEnabled") {
-                bool b = 0!=lua_toboolean(L,3);
+                bool b = check_bool(L,3);
                 self.setSortingEnabled(b);
         } else if (key=="accurateFacing") {
-                bool b = 0!=lua_toboolean(L,3);
+                bool b = check_bool(L,3);
                 renderer->setUseAccurateFacing(b);
         } else if (key=="pointRenderingEnabled") {
-                bool b = 0!=lua_toboolean(L,3);
+                bool b = check_bool(L,3);
                 renderer->setPointRenderingEnabled(b);
         } else if (key=="rotateVertexes") {
-                bool b = 0!=lua_toboolean(L,3);
+                bool b = check_bool(L,3);
                 renderer->setBillboardRotationType(b?Ogre::BBR_VERTEX
                                                     :Ogre::BBR_TEXCOORD);
         } else if (key=="materialName") {
@@ -573,7 +573,7 @@ TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::ManualObject,self,1,MANOBJ_TAG);
         unsigned n = check_t<unsigned>(L,2);
-        bool b = 0!=lua_toboolean(L,3);
+        bool b = check_bool(L,3);
         Ogre::ManualObject::ManualObjectSection *s = self.getSection(n);
         s->setPolygonModeOverrideable(b);
         return 0;
@@ -714,7 +714,7 @@ TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
         unsigned n = check_t<unsigned>(L,2);
-        bool b = 0!=lua_toboolean(L,3);
+        bool b = check_bool(L,3);
         Ogre::SubEntity *se = self.getSubEntity(n);
         se->setPolygonModeOverrideable(b);
         return 0;
@@ -909,7 +909,7 @@ TRY_START
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key == "displaySkeleton") {
-                bool b = 0!=lua_toboolean(L,3);
+                bool b = check_bool(L,3);
                 self.setDisplaySkeleton(b);
         } else if (!mobj_newindex(L,self,key)) {
                 my_lua_error(L,"Not a writeable Entity member: " + key);
@@ -1344,7 +1344,7 @@ TRY_START
                 v.y = luaL_checknumber(L,3);
                 self.setFrustumOffset(v);
         } else if (key=="autoAspectRatio") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self.setAutoAspectRatio(v);
         } else if (key=="FOV") {
                 lua_Number n = luaL_checknumber(L,3);
@@ -1361,7 +1361,7 @@ TRY_START
                 lua_Number n = luaL_checknumber(L,3);
                 self.setNearClipDistance(n);
         } else if (key=="useRenderingDistance") {
-                bool b = 0!=lua_toboolean(L,3);
+                bool b = check_bool(L,3);
                 self.setUseRenderingDistance(b);
         } else {
                 my_lua_error(L,"Not a valid Camera member: " + key);

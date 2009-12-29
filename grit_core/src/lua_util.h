@@ -41,6 +41,8 @@ void check_args(lua_State *l, int expected);
 void check_args_min(lua_State *l, int expected);
 void check_args_max(lua_State *l, int expected);
 
+bool check_bool (lua_State *l, int stack_index);
+
 bool has_tag(lua_State *l, int index, const char* tag);
 
 lua_Number check_int (lua_State *l, int stack_index,

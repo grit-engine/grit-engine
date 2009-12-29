@@ -72,7 +72,7 @@ const char *ExternalTable::luaSet (lua_State *L, const Ogre::String &key)
                 Ogre::Real val = luaL_checknumber(L,-1);
                 set(key,val);
         } else if (lua_type(L,-1)==LUA_TBOOLEAN) {
-                bool val = 0!=lua_toboolean(L,-1);
+                bool val = check_bool(L,-1);
                 set(key,val);
         } else if (has_tag(L,-1,VECTOR3_TAG)) {
                 GET_UD_MACRO(Ogre::Vector3,val,-1,VECTOR3_TAG);

@@ -404,7 +404,7 @@ static int mat_set_lighting (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool b = 0!=lua_toboolean(L,4);
+        bool b = check_bool(L,4);
         p->setLightingEnabled(b);
         return 0;
 TRY_END
@@ -519,7 +519,7 @@ static int mat_set_emissive_vertex (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool b = 0!=lua_toboolean(L,4);
+        bool b = check_bool(L,4);
         p->setVertexColourTracking ((p->getVertexColourTracking() &
                                         ~Ogre::TVC_EMISSIVE)
                                     | (b?Ogre::TVC_EMISSIVE:0));
@@ -532,7 +532,7 @@ static int mat_set_ambient_vertex (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool b = 0!=lua_toboolean(L,4);
+        bool b = check_bool(L,4);
         p->setVertexColourTracking ((p->getVertexColourTracking() &
                                         ~Ogre::TVC_AMBIENT)
                                     | (b?Ogre::TVC_AMBIENT:0));
@@ -545,7 +545,7 @@ static int mat_set_diffuse_vertex (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool b = 0!=lua_toboolean(L,4);
+        bool b = check_bool(L,4);
         p->setVertexColourTracking ((p->getVertexColourTracking() &
                                         ~Ogre::TVC_DIFFUSE)
                                     | (b?Ogre::TVC_DIFFUSE:0));
@@ -558,7 +558,7 @@ static int mat_set_specular_vertex (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool b = 0!=lua_toboolean(L,4);
+        bool b = check_bool(L,4);
         p->setVertexColourTracking ((p->getVertexColourTracking() &
                                         ~Ogre::TVC_SPECULAR)
                                     | (b?Ogre::TVC_SPECULAR:0));
@@ -696,7 +696,7 @@ static int mat_set_env_map (lua_State *L)
 TRY_START
         check_args(L,4+2);
         Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
-        bool b = 0!=lua_toboolean(L,5);
+        bool b = check_bool(L,5);
         std::string str = luaL_checkstring(L,6);
         tex->setEnvironmentMap(b, envmap_type_from_string(L,str));
         return 0;
@@ -831,7 +831,7 @@ TRY_START
                 check_args(L,4+2);
                 Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
                 std::string str = luaL_checkstring(L,5);
-                bool b = 0!=lua_toboolean(L,6);
+                bool b = check_bool(L,6);
                 tex->setCubicTextureName(str,b);
         } else {
                 check_args(L,4+7);
@@ -842,7 +842,7 @@ TRY_START
                 std::string str4 = luaL_checkstring(L,8);
                 std::string str5 = luaL_checkstring(L,9);
                 std::string str6 = luaL_checkstring(L,10);
-                bool b = 0!=lua_toboolean(L,11);
+                bool b = check_bool(L,11);
                 std::string arr[] = {str1,str2,str3,str4,str5,str6};
                 tex->setCubicTextureName(arr,b);
         }
@@ -864,7 +864,7 @@ static int mat_set_is_shadow (lua_State *L)
 TRY_START
         check_args(L,4+1);
         Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
-        bool b = 0!=lua_toboolean(L,5);
+        bool b = check_bool(L,5);
         tex->setContentType(b ?  Ogre::TextureUnitState::CONTENT_SHADOW :
                                  Ogre::TextureUnitState::CONTENT_NAMED);
         return 0;
@@ -1059,7 +1059,7 @@ static int mat_set_alpha_to_coverage (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool b = 0!=lua_toboolean(L,4);
+        bool b = check_bool(L,4);
         p->setAlphaToCoverageEnabled(b);
         return 0;
 TRY_END
@@ -1100,7 +1100,7 @@ static int mat_set_depth_check_enabled (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool b = 0!=lua_toboolean(L,4);
+        bool b = check_bool(L,4);
         p->setDepthCheckEnabled(b);
         return 0;
 TRY_END
@@ -1121,7 +1121,7 @@ static int mat_set_depth_write_enabled (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool b = 0!=lua_toboolean(L,4);
+        bool b = check_bool(L,4);
         p->setDepthWriteEnabled(b);
         return 0;
 TRY_END
@@ -1149,7 +1149,7 @@ static int mat_set_cull (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool b = 0!=lua_toboolean(L,4);
+        bool b = check_bool(L,4);
         p->setCullingMode(b?Ogre::CULL_CLOCKWISE:Ogre::CULL_NONE);
         return 0;
 TRY_END
@@ -1177,7 +1177,7 @@ static int mat_set_manual_cull (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool b = 0!=lua_toboolean(L,4);
+        bool b = check_bool(L,4);
         if (b) {
                 p->setManualCullingMode(Ogre::MANUAL_CULL_BACK);
         } else {
@@ -1238,7 +1238,7 @@ static int mat_set_fog (lua_State *L)
 TRY_START
         check_args(L,3+8);
         Ogre::Pass *p = mat_get_pass(L);
-        bool override = 0!=lua_toboolean(L,4);
+        bool override = check_bool(L,4);
         Ogre::FogMode fm = fog_mode_from_string(L,luaL_checkstring(L,5));
         Ogre::Real r = luaL_checknumber(L,6);
         Ogre::Real g = luaL_checknumber(L,7);
@@ -1266,7 +1266,7 @@ static int mat_set_transparent_sorting (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool v = 0!=lua_toboolean(L,4);
+        bool v = check_bool(L,4);
         p->setTransparentSortingEnabled(v);
         return 0;
 TRY_END
@@ -1287,7 +1287,7 @@ static int mat_set_transparent_sorting_forced (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool v = 0!=lua_toboolean(L,4);
+        bool v = check_bool(L,4);
         p->setTransparentSortingForced(v);
         return 0;
 TRY_END
@@ -1873,10 +1873,10 @@ TRY_START
         GET_UD_MACRO(Ogre::MaterialPtr,self,1,MAT_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key=="receiveShadows") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self->setReceiveShadows(v);
         } else if (key=="transparencyCastsShadows") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self->setTransparencyCastsShadows(v);
         } else {
                 my_lua_error(L,"Not a writeable Material member: "+key);

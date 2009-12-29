@@ -312,10 +312,10 @@ TRY_START
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self.setScale(v);
         } else if (key=="inheritOrientation") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self.setInheritOrientation(v);
         } else if (key=="inheritScale") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self.setInheritScale(v);
         } else {
                 my_lua_error(L,"Not a valid SceneNode member: "+key);
@@ -356,7 +356,7 @@ TRY_START
                 my_lua_error(L,"Incorrect number of arguments");
 
         GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
-        bool enable = 0!=lua_toboolean(L,2);
+        bool enable = check_bool(L,2);
         std::string mat_name(luaL_checkstring(L,3));
         Ogre::Real dist = 100;
         bool draw_first = true;
@@ -368,7 +368,7 @@ TRY_START
                         orientation = q;
                 }
                 case 5:
-                draw_first = 0!=lua_toboolean(L,5);
+                draw_first = check_bool(L,5);
                 case 4:
                 dist = luaL_checknumber(L,4);
                 case 3:
@@ -1196,11 +1196,11 @@ TRY_START
         std::string key  = luaL_checkstring(L,2);
 
         if (key=="showSceneNodes") {
-                self.setDisplaySceneNodes(0!=lua_toboolean(L,3));
+                self.setDisplaySceneNodes(check_bool(L,3));
         } else if (key=="showBoundingBoxes") {
-                self.showBoundingBoxes(0!=lua_toboolean(L,3));
+                self.showBoundingBoxes(check_bool(L,3));
         } else if (key=="showDebugShadows") {
-                self.setShowDebugShadows(0!=lua_toboolean(L,3));
+                self.setShowDebugShadows(check_bool(L,3));
 
         } else if (key=="shadowTechnique") {
                 const char* st = luaL_checkstring(L,3);
@@ -1224,10 +1224,10 @@ TRY_START
                 Ogre::Real v = luaL_checknumber(L,3);
                 self.setShadowTextureFadeEnd(v);
         } else if (key=="shadowTextureSelfShadow") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self.setShadowTextureSelfShadow(v);
         } else if (key=="shadowCasterRenderBackFaces") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self.setShadowCasterRenderBackFaces(v);
         } else if (key=="shadowTextureCasterMaterial") {
                 if (lua_type(L,3)==LUA_TSTRING) {
@@ -1238,7 +1238,7 @@ TRY_START
                         self.setShadowTextureCasterMaterial(v->getName());
                 }
         } else if (key=="shadowUseInfiniteFarPlane") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self.setShadowUseInfiniteFarPlane(v);
 
         } else {

@@ -463,7 +463,7 @@ TRY_START
         GET_UD_MACRO(HUD::PanePtr,pane,1,PANE_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key=="visible") {
-                bool val = 0!=lua_toboolean(L,3);
+                bool val = check_bool(L,3);
                 pane->setVisible(val);
         } else if (key=="material") {
                 if (lua_isstring(L,3)) {
@@ -501,7 +501,7 @@ TRY_START
         GET_UD_MACRO(HUD::TextPtr,text,1,TEXT_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key=="visible") {
-                bool val = 0!=lua_toboolean(L,3);
+                bool val = check_bool(L,3);
                 text->setVisible(val);
         } else if (key=="font") {
                 std::string name = luaL_checkstring(L,3);

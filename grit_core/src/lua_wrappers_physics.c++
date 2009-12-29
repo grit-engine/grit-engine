@@ -181,7 +181,7 @@ TRY_START
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
                 GET_UD_MACRO(Ogre::Vector3,force,2,VECTOR3_TAG);
                 GET_UD_MACRO(Ogre::Vector3,rel_pos,3,VECTOR3_TAG);
-                bool world_orientation = 0!=lua_toboolean(L,4);
+                bool world_orientation = check_bool(L,4);
                 if (world_orientation) {
                         self->force(force,rel_pos);
                 } else {
@@ -211,7 +211,7 @@ TRY_START
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
                 GET_UD_MACRO(Ogre::Vector3,impulse,2,VECTOR3_TAG);
                 GET_UD_MACRO(Ogre::Vector3,rel_pos,3,VECTOR3_TAG);
-                bool world_orientation = 0!=lua_toboolean(L,4);
+                bool world_orientation = check_bool(L,4);
                 if (world_orientation) {
                         self->impulse(impulse,rel_pos);
                 } else {
@@ -321,8 +321,8 @@ TRY_START
                 endq = endq_;
         }
 
-        bool nearest_only = 0!=lua_toboolean(L,base_line+1);
-        bool ignore_dynamic = 0!=lua_toboolean(L,base_line+2);
+        bool nearest_only = check_bool(L,base_line+1);
+        bool ignore_dynamic = check_bool(L,base_line+2);
 
         base_line += 2;
 
@@ -422,7 +422,7 @@ TRY_START
         check_args(L,3);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         GET_UD_MACRO(Ogre::Vector3,pos,2,VECTOR3_TAG);
-        bool world_space = 0!=lua_toboolean(L,3);
+        bool world_space = check_bool(L,3);
         Ogre::Vector3 local_pos = pos;
         if (world_space) {
                 local_pos -= self->getPosition();
@@ -921,16 +921,16 @@ TRY_START
                 float v = luaL_checknumber(L,3);
                 self->setDeactivationTime(v);
         } else if (key=="gimpactOneWayMeshHack") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self->gimpactOneWayMeshHack = v;
         } else if (key=="bumpyTriangleMeshHack") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self->bumpyTriangleMeshHack = v;
         } else if (key=="verboseContacts") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self->verboseContacts = v;
         } else if (key=="errorContacts") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self->errorContacts = v;
         } else if (key=="solverDamping") {
                 float v = luaL_checknumber(L,3);
@@ -954,19 +954,19 @@ TRY_START
                 float v = luaL_checknumber(L,3);
                 self->setSolverWarmStartingFactor(v);
         } else if (key=="solverSplitImpulse") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self->setSolverSplitImpulse(v);
         } else if (key=="solverRandomiseOrder") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self->setSolverRandomiseOrder(v);
         } else if (key=="solverFrictionSeparate") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self->setSolverFrictionSeparate(v);
         } else if (key=="solverUseWarmStarting") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self->setSolverUseWarmStarting(v);
         } else if (key=="solverCacheFriendly") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self->setSolverCacheFriendly(v);
         } else {
                 my_lua_error(L,"Not a valid PhysicsWorld member: "+key);

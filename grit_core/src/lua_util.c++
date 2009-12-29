@@ -138,6 +138,16 @@ lua_Number check_int (lua_State *l, int stack_index,
         return n;
 }
 
+
+bool check_bool (lua_State *l, int stack_index)
+{
+        if (!lua_isboolean(l,stack_index)) {
+                std::stringstream msg;
+                msg << "Expected a boolean at parameter " << stack_index;
+                my_lua_error(l, msg.str());
+        }
+        return 0!=lua_toboolean(l,stack_index);
+}
 int my_lua_error_handler(lua_State *l)
 {
         return my_lua_error_handler(l,l,1);

@@ -96,7 +96,7 @@ TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::Viewport,self,1,VIEWPORT_TAG);
         std::string name = luaL_checkstring(L,2);
-        bool v = 0!=lua_toboolean(L,3);
+        bool v = check_bool(L,3);
         Ogre::CompositorManager::getSingleton()
                 .setCompositorEnabled(&self,name,v);
         return 0;
@@ -159,10 +159,10 @@ TRY_START
         if (key=="zOrder") {
                 my_lua_error(L,"Can only set Z order when viewport created.");
         } else if (key=="clearEveryFrame") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self.setClearEveryFrame(v);
         } else if (key=="overlaysEnabled") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 self.setOverlaysEnabled(v);
         } else {
                 my_lua_error(L,"Not a valid Viewport member: "+key);
@@ -315,7 +315,7 @@ TRY_START
                 unsigned char v = check_t<unsigned char>(L,3);
                 rt->setPriority(v);
         } else if (key=="isActive") {
-                bool v = 0!=lua_toboolean(L,3);
+                bool v = check_bool(L,3);
                 rt->setActive(v);
         } else {
                 return false;
@@ -414,7 +414,7 @@ static int rwin_set_fullscreen (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::RenderWindow,self,1,RWIN_TAG);
-        bool b = 0!=lua_toboolean(L,2);
+        bool b = check_bool(L,2);
         unsigned w = check_t<unsigned>(L,3);
         unsigned h = check_t<unsigned>(L,4);
         self.setFullscreen(b,w,h);
@@ -516,10 +516,10 @@ TRY_START
         std::string key = luaL_checkstring(L,2);
         if (rt_index(L,&self,key)) {
         } else if (key=="visible") {
-                bool b = 0!=lua_toboolean(L,3);
+                bool b = check_bool(L,3);
                 self.setVisible(b);
         } else if (key=="autoDeactivate") {
-                bool b = 0!=lua_toboolean(L,3);
+                bool b = check_bool(L,3);
                 self.setDeactivateOnFocusChange(b);
         } else {
                 my_lua_error(L,"Not a valid RenderWindow member: "+key);
