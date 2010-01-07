@@ -1,3 +1,4 @@
+#include <OgreCgProgram.h>
 #include <OgreGLSLProgram.h>
 #include <OgreGLSLGpuProgram.h>
 #ifdef WIN32
@@ -328,13 +329,34 @@ TRY_START
                 #endif
                         lua_pushstring(L,"unknown");
         } else if (key=="entryPoint") {
-                #ifdef WIN32
-                Ogre::D3D9HLSLProgram *hlsl = dynamic_cast<Ogre::D3D9HLSLProgram*>(&*self);
-                if (hlsl) {
-                        lua_pushstring(L,hlsl->getEntryPoint().c_str());
-                } else
-                #endif
-                        lua_pushstring(L,"unknown");
+                Ogre::CgProgram *cg = dynamic_cast<Ogre::CgProgram*>(&*self);
+                if (cg) {
+                        lua_pushstring(L,cg->getEntryPoint().c_str());
+                } else {
+                        #ifdef WIN32
+                        Ogre::D3D9HLSLProgram *hlsl = dynamic_cast<Ogre::D3D9HLSLProgram*>(&*self);
+                        if (hlsl) {
+                                lua_pushstring(L,hlsl->getEntryPoint().c_str());
+                        } else
+                        #endif
+                                lua_pushstring(L,"unknown");
+                }
+        } else if (key=="profiles") {
+                Ogre::CgProgram *cg = dynamic_cast<Ogre::CgProgram*>(&*self);
+                if (cg) {
+                        Ogre::StringVector profs = cg->getProfiles();
+
+                        lua_createtable(L, profs.size(), 0);
+                        for (unsigned int i=0 ; i<profs.size() ; i++) {
+                                const char *key = profs[i].c_str();
+                                lua_pushnumber(L,i+LUA_ARRAY_BASE);
+                                lua_pushstring(L,key);
+                                lua_settable(L,-3);
+                        }
+
+                } else {
+                        lua_createtable(L, 0, 0);
+                }
         } else {
                 my_lua_error(L,"Not a readable GPUProg member: "+key);
         }
@@ -381,12 +403,30 @@ TRY_START
                 #endif
         } else if (key=="entryPoint") {
                 std::string v = luaL_checkstring(L, 3);
-                #ifdef WIN32
-                Ogre::D3D9HLSLProgram *hlsl = dynamic_cast<Ogre::D3D9HLSLProgram*>(&*self);
-                if (hlsl) {
-                        hlsl->setEntryPoint(v);
+                Ogre::CgProgram *cg = dynamic_cast<Ogre::CgProgram*>(&*self);
+                if (cg) {
+                        cg->setEntryPoint(v);
+                } else {
+                        #ifdef WIN32
+                        Ogre::D3D9HLSLProgram *hlsl = dynamic_cast<Ogre::D3D9HLSLProgram*>(&*self);
+                        if (hlsl) {
+                                hlsl->setEntryPoint(v);
+                        }
+                        #endif
                 }
-                #endif
+        } else if (key=="profiles") {
+                if (!lua_istable(L,3))
+                        my_lua_error(L,"New value should be a table");
+                Ogre::CgProgram *cg = dynamic_cast<Ogre::CgProgram*>(&*self);
+                if (cg) {
+                        Ogre::StringVector profs;
+                        for (lua_pushnil(L) ; lua_next(L,3)!=0 ; lua_pop(L,1)) {
+                                if (!lua_isstring(L,-1))
+                                        my_lua_error(L,"Table should only contain strings");
+                                profs.push_back(lua_tostring(L,-1));
+                        }
+                        cg->setProfiles(profs);
+                }
         } else {
                 my_lua_error(L,"Not a writeable GPUProg member: "+key);
         }

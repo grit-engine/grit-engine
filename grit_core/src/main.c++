@@ -8,6 +8,7 @@
 #  include "OgreOctreePlugin.h"
 #  include "OgreGLPlugin.h"
 #  include "OgreParticleFXPlugin.h"
+#  include "OgreCgPlugin.h"
 #  ifdef WIN32
 #    include "OgreD3D9Plugin.h"
 #  endif
@@ -76,6 +77,10 @@ int main(int argc, const char **argv)
                         Ogre::ParticleFXPlugin *pfx =
                                 OGRE_NEW Ogre::ParticleFXPlugin();
                         ogre->installPlugin(pfx);
+
+                        Ogre::CgPlugin *cg =
+                                OGRE_NEW Ogre::CgPlugin();
+                        ogre->installPlugin(cg);
 
                         #ifdef WIN32
                         Ogre::D3D9Plugin *d3d9 = OGRE_NEW Ogre::D3D9Plugin();
@@ -164,6 +169,7 @@ int main(int argc, const char **argv)
                         OGRE_DELETE gl;
                         OGRE_DELETE octree;
                         OGRE_DELETE pfx;
+                        OGRE_DELETE cg;
                         #ifdef WIN32
                                 OGRE_DELETE d3d9;
                         #endif
