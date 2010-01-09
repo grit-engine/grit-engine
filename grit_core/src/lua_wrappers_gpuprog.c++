@@ -341,6 +341,13 @@ TRY_START
                         #endif
                                 lua_pushstring(L,"unknown");
                 }
+        } else if (key=="compileArguments") {
+                Ogre::CgProgram *cg = dynamic_cast<Ogre::CgProgram*>(&*self);
+                if (cg) {
+                        lua_pushstring(L,cg->getCompileArguments().c_str());
+                } else {
+                        lua_pushstring(L,"unknown");
+                }
         } else if (key=="profiles") {
                 Ogre::CgProgram *cg = dynamic_cast<Ogre::CgProgram*>(&*self);
                 if (cg) {
@@ -401,6 +408,12 @@ TRY_START
                         hlsl->setTarget(v);
                 }
                 #endif
+        } else if (key=="compileArguments") {
+                std::string v = luaL_checkstring(L, 3);
+                Ogre::CgProgram *cg = dynamic_cast<Ogre::CgProgram*>(&*self);
+                if (cg) {
+                        cg->setCompileArguments(v);
+                }
         } else if (key=="entryPoint") {
                 std::string v = luaL_checkstring(L, 3);
                 Ogre::CgProgram *cg = dynamic_cast<Ogre::CgProgram*>(&*self);
