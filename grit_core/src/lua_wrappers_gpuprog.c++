@@ -1,3 +1,6 @@
+#include <OgreVector3.h>
+#include <OgreVector4.h>
+
 #include <OgreCgProgram.h>
 #include <OgreGLSLProgram.h>
 #include <OgreGLSLGpuProgram.h>
@@ -50,11 +53,37 @@ TRY_END
 static int gpuprog_set_constant_float (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
-        Ogre::Real v = luaL_checknumber(L,3);
-        self->getDefaultParameters()->setNamedConstant(name,v);
+        int args = lua_gettop(L);
+        switch (args) {
+                case 3: {
+                        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
+                        Ogre::String name = luaL_checkstring(L,2);
+                        Ogre::Real v = luaL_checknumber(L,3);
+                        self->getDefaultParameters()->setNamedConstant(name,v);
+                } break;
+                case 5: {
+                        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
+                        Ogre::String name = luaL_checkstring(L,2);
+                        Ogre::Vector3 v;
+                        v.x = luaL_checknumber(L,3);
+                        v.y = luaL_checknumber(L,4);
+                        v.z = luaL_checknumber(L,5);
+                        self->getDefaultParameters()->setNamedConstant(name,v);
+                } break;
+                case 6: {
+                        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
+                        Ogre::String name = luaL_checkstring(L,2);
+                        Ogre::Vector4 v;
+                        v.x = luaL_checknumber(L,3);
+                        v.y = luaL_checknumber(L,4);
+                        v.z = luaL_checknumber(L,5);
+                        v.w = luaL_checknumber(L,6);
+                        self->getDefaultParameters()->setNamedConstant(name,v);
+                } break;
+                default:
+                check_args(L,3);
+                break;
+        }
         return 0;
 TRY_END
 }

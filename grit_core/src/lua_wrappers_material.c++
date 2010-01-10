@@ -1296,13 +1296,43 @@ TRY_END
 static int mat_set_fragment_constant_float (lua_State *L)
 {
 TRY_START
-        check_args(L,3+2);
-        Ogre::Pass *p = mat_get_pass(L);
-        if (!p->hasFragmentProgram())
-                my_lua_error(L,"This pass does not have a fragment program.");
-        Ogre::String name = luaL_checkstring(L,4);
-        Ogre::Real r = luaL_checknumber(L,5);
-        p->getFragmentProgramParameters()->setNamedConstant(name,r);
+        int args = lua_gettop(L);
+        switch (args) {
+                case 3+1+1: {
+                        Ogre::Pass *p = mat_get_pass(L);
+                        if (!p->hasFragmentProgram())
+                                my_lua_error(L,"This pass does not have a fragment program.");
+                        Ogre::String name = luaL_checkstring(L,4);
+                        Ogre::Real v = luaL_checknumber(L,5);
+                        p->getFragmentProgramParameters()->setNamedConstant(name,v);
+                } break;
+                case 3+1+3: {
+                        Ogre::Pass *p = mat_get_pass(L);
+                        if (!p->hasFragmentProgram())
+                                my_lua_error(L,"This pass does not have a fragment program.");
+                        Ogre::String name = luaL_checkstring(L,4);
+                        Ogre::Vector3 v;
+                        v.x = luaL_checknumber(L,5);
+                        v.y = luaL_checknumber(L,6);
+                        v.z = luaL_checknumber(L,7);
+                        p->getFragmentProgramParameters()->setNamedConstant(name,v);
+                } break;
+                case 3+1+4: {
+                        Ogre::Pass *p = mat_get_pass(L);
+                        if (!p->hasFragmentProgram())
+                                my_lua_error(L,"This pass does not have a fragment program.");
+                        Ogre::String name = luaL_checkstring(L,4);
+                        Ogre::Vector4 v;
+                        v.x = luaL_checknumber(L,5);
+                        v.y = luaL_checknumber(L,6);
+                        v.z = luaL_checknumber(L,7);
+                        v.w = luaL_checknumber(L,8);
+                        p->getFragmentProgramParameters()->setNamedConstant(name,v);
+                } break;
+                default:
+                check_args(L,3+1+1);
+                break;
+        }
         return 0;
 TRY_END
 }
@@ -1310,13 +1340,43 @@ TRY_END
 static int mat_set_vertex_constant_float (lua_State *L)
 {
 TRY_START
-        check_args(L,3+2);
-        Ogre::Pass *p = mat_get_pass(L);
-        if (!p->hasVertexProgram())
-                my_lua_error(L,"This pass does not have a vertex program.");
-        Ogre::String name = luaL_checkstring(L,4);
-        Ogre::Real r = luaL_checknumber(L,5);
-        p->getVertexProgramParameters()->setNamedConstant(name,r);
+        int args = lua_gettop(L);
+        switch (args) {
+                case 3+1+1: {
+                        Ogre::Pass *p = mat_get_pass(L);
+                        if (!p->hasVertexProgram())
+                                my_lua_error(L,"This pass does not have a vertex program.");
+                        Ogre::String name = luaL_checkstring(L,4);
+                        Ogre::Real v = luaL_checknumber(L,5);
+                        p->getVertexProgramParameters()->setNamedConstant(name,v);
+                } break;
+                case 3+1+3: {
+                        Ogre::Pass *p = mat_get_pass(L);
+                        if (!p->hasVertexProgram())
+                                my_lua_error(L,"This pass does not have a vertex program.");
+                        Ogre::String name = luaL_checkstring(L,4);
+                        Ogre::Vector3 v;
+                        v.x = luaL_checknumber(L,5);
+                        v.y = luaL_checknumber(L,6);
+                        v.z = luaL_checknumber(L,7);
+                        p->getVertexProgramParameters()->setNamedConstant(name,v);
+                } break;
+                case 3+1+4: {
+                        Ogre::Pass *p = mat_get_pass(L);
+                        if (!p->hasVertexProgram())
+                                my_lua_error(L,"This pass does not have a vertex program.");
+                        Ogre::String name = luaL_checkstring(L,4);
+                        Ogre::Vector4 v;
+                        v.x = luaL_checknumber(L,5);
+                        v.y = luaL_checknumber(L,6);
+                        v.z = luaL_checknumber(L,7);
+                        v.w = luaL_checknumber(L,8);
+                        p->getVertexProgramParameters()->setNamedConstant(name,v);
+                } break;
+                default:
+                check_args(L,3+1+1);
+                break;
+        }
         return 0;
 TRY_END
 }
