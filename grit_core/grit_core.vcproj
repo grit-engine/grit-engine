@@ -402,6 +402,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\win32\win32_clipboard.c++"
+				>
+			</File>
+			<File
 				RelativePath=".\src\win32\win32_sleep.c++"
 				>
 			</File>
