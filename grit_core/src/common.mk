@@ -55,7 +55,7 @@ COMMON_OBJ=\
         TColParser.o \
         TextListOverlayElement.o \
 
-grit.x11: $(COMMON_OBJ) MouseX11.o KeyboardX11.o posix_sleep.o
+grit.x11: $(COMMON_OBJ) MouseX11.o KeyboardX11.o posix_sleep.o x11_clipboard.o
 	@$(LINKING)
 	@$(COMPILER) $^ -o $@ $(LDFLAGS)
 

@@ -18,6 +18,7 @@
 #include "BackgroundMeshLoader.h"
 #include "matbin.h"
 #include "sleep.h"
+#include "clipboard.h"
 #include "HUD.h"
 #include "CentralisedLog.h"
 
@@ -1045,6 +1046,27 @@ TRY_START
 TRY_END
 }
 
+
+static int global_get_clipboard (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushstring(L,clipboard_get().c_str());
+        return 1;
+TRY_END
+}
+
+static int global_set_clipboard (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        std::string s = luaL_checkstring(L,1);
+        clipboard_set(s);
+        return 0;
+TRY_END
+}
+
+
 static int global_read_matbin (lua_State *L)
 {
 TRY_START
@@ -1476,6 +1498,8 @@ static const luaL_reg global[] = {
         {"get_main_win" ,global_get_main_win},
 
         {"sleep",global_sleep},
+        {"get_clipboard",global_get_clipboard},
+        {"set_clipboard",global_set_clipboard},
 
         {"read_matbin",global_read_matbin},
 
