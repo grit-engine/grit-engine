@@ -318,11 +318,13 @@ void CollisionMesh::reload (void)
 
 physics_mat CollisionMesh::getMaterialFromPart (unsigned int id)
 {
+        if (id >= partMaterials.size()) return 0;
         return partMaterials[id];
 }
 
 physics_mat CollisionMesh::getMaterialFromFace (unsigned int id)
 {
+        if (id >= faceMaterials.size()) return 0;
         return faceMaterials[id];
 }
 

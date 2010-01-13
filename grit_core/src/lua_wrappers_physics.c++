@@ -9,7 +9,7 @@
 
 // Sweep Callback {{{
 
-struct SweepResult { RigidBody *rb; float dist; Ogre::Vector3 n; };
+struct SweepResult { RigidBody *rb; float dist; Ogre::Vector3 n; physics_mat material; };
 typedef std::vector<SweepResult> SweepResults;
 
 class LuaSweepCallback : public PhysicsWorld::SweepCallback {
@@ -17,13 +17,14 @@ class LuaSweepCallback : public PhysicsWorld::SweepCallback {
         LuaSweepCallback (bool ignore_dynamic)
               : ignoreDynamic(ignore_dynamic)
         { }
-        virtual void result (RigidBody &rb, float dist, Ogre::Vector3 &n) {
+        virtual void result (RigidBody &rb, float dist, const Ogre::Vector3 &n, physics_mat m) {
                 if (ignoreDynamic && rb.getMass()>0) return;
-                if (blacklist.find(&rb)!=blacklist.end()) return;
+                if (blacklist.find(&rb) != blacklist.end()) return;
                 SweepResult r;
                 r.rb = &rb;
                 r.dist = dist;
                 r.n = n;
+                r.material = m;
                 results.push_back(r);
         }
         std::set<RigidBody *> blacklist;
@@ -257,14 +258,14 @@ TRY_START
 TRY_END
 }
 
-static void push_sweep_result (lua_State *L,
-                               const SweepResult &r, float len)
+static void push_sweep_result (lua_State *L, const SweepResult &r, float len)
 {
         lua_pushnumber(L,r.dist * len);
         push_rbody(L,r.rb->getPtr());
         // normal is documented as being object space but is actually world space
         push(L,new Ogre::Vector3(/*r.rb->getOrientation()* */r.n.normalisedCopy()),
                                  VECTOR3_TAG);
+        lua_pushnumber(L, r.material);
 }
 
 static int cast (lua_State *L)
@@ -360,9 +361,9 @@ TRY_START
         if (nearest_only) {
                 // push nearest
                 push_sweep_result(L, nearest, len);
-                return 3;
+                return 4;
         }
-        return lcb.results.size() * 3;
+        return lcb.results.size() * 4;
 TRY_END
 }
 
@@ -862,6 +863,8 @@ TRY_START
                 lua_pushboolean(L,self->bumpyTriangleMeshHack);
         } else if (key=="verboseContacts") {
                 lua_pushboolean(L,self->verboseContacts);
+        } else if (key=="verboseCasts") {
+                lua_pushboolean(L,self->verboseCasts);
         } else if (key=="errorContacts") {
                 lua_pushboolean(L,self->errorContacts);
         } else if (key=="setMaterialInteraction") {
@@ -929,6 +932,9 @@ TRY_START
         } else if (key=="verboseContacts") {
                 bool v = check_bool(L,3);
                 self->verboseContacts = v;
+        } else if (key=="verboseCasts") {
+                bool v = check_bool(L,3);
+                self->verboseCasts = v;
         } else if (key=="errorContacts") {
                 bool v = check_bool(L,3);
                 self->errorContacts = v;

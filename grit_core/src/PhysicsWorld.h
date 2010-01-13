@@ -29,8 +29,8 @@ extern "C" {
         #include <lualib.h>
 }
 
-#include "CollisionMesh.h"
 #include "TColParser.h"
+#include "CollisionMesh.h"
 
 #include "GritObject.h"
 
@@ -143,9 +143,8 @@ class PhysicsWorld {
 
         class SweepCallback {
             public:
-                virtual void result (RigidBody &body,
-                                     float d,
-                                     Ogre::Vector3 &normal) = 0;
+                virtual void result (RigidBody &body, float d,
+                                     const Ogre::Vector3 &normal, physics_mat m) = 0;
         };
 
         void ray (const Ogre::Vector3 &start,
@@ -224,6 +223,8 @@ class PhysicsWorld {
 
         bool verboseContacts;
         bool errorContacts;
+        bool verboseCasts;
+        bool errorCasts;
         bool bumpyTriangleMeshHack;
         bool gimpactOneWayMeshHack;
 

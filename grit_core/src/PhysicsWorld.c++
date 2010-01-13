@@ -190,6 +190,50 @@ static void fix_parent (const btCollisionShape *shape, const btCollisionShape *&
         parent = new_parent;
 }
 
+physics_mat get_material (const CollisionMeshPtr &cmesh, const btCollisionShape *shape,
+                          int part, int id, bool *err, bool verb)
+{
+        (void) part;
+        // * when one gimpact shape hits another (not in compounds), we don't get the triangle
+        // we get the whole gimpact shape for some reason
+        // * when casting rays, we get the whole shape in the case of static meshes
+        if (shape->getShapeType()==TRIANGLE_SHAPE_PROXYTYPE
+            || shape->getShapeType()==GIMPACT_SHAPE_PROXYTYPE
+            || shape->getShapeType()==TRIANGLE_MESH_SHAPE_PROXYTYPE) {
+                int max = cmesh->faceMaterials.size();
+                if (id < 0 || id >= max) {
+                        if (verb) {
+                                CERR << "index from bullet was garbage: " << id
+                                     << " >= " << max << std::endl;
+                                if (err) *err = true;
+                        }
+                        id = 0;
+                }
+                return cmesh->getMaterialFromFace(id);
+        } else {
+                int max = cmesh->partMaterials.size();
+                if (id < 0 || id >= max) {
+                        if (verb) {
+                                CERR << "index from bullet was garbage: " << id
+                                     << " >= " << max << std::endl;
+                                if (err) *err = true;
+                        }
+                        id = 0;
+                }
+                return cmesh->getMaterialFromPart(id);
+        }
+}
+
+void get_shape_and_parent(const btCollisionObject* colObj,
+                          const btCollisionShape *&shape, const btCollisionShape *&parent)
+{
+        shape  = colObj->getCollisionShape();
+        parent = colObj->getRootCollisionShape();
+        fix_parent(shape, parent);
+        APP_ASSERT(shape!=NULL);
+        APP_ASSERT(parent!=NULL);
+}
+
 bool contact_added_callback (btManifoldPoint& cp,
                              const btCollisionObject* colObj0, int part0, int index0,
                              const btCollisionObject* colObj1, int part1, int index1)
@@ -206,85 +250,22 @@ bool contact_added_callback (btManifoldPoint& cp,
 
         const PhysicsWorldPtr &world = body0->world;
 
-        CollisionMeshPtr cmesh0 = body0->colMesh;
-        CollisionMeshPtr cmesh1 = body1->colMesh;
+        CollisionMeshPtr cmesh0 = body0->colMesh, cmesh1 = body1->colMesh;
 
-        const btCollisionShape *shape0  = colObj0->getCollisionShape();
-        const btCollisionShape *parent0 = colObj0->getRootCollisionShape();
-        const btCollisionShape *shape1  = colObj1->getCollisionShape();
-        const btCollisionShape *parent1 = colObj1->getRootCollisionShape();
+        const btCollisionShape *shape0, *parent0, *shape1, *parent1;
 
-        fix_parent(shape0, parent0);
-        fix_parent(shape1, parent1);
+        get_shape_and_parent(colObj0, shape0, parent0);
+        get_shape_and_parent(colObj1, shape1, parent1);
 
-        APP_ASSERT(parent0!=NULL);
-        APP_ASSERT(parent1!=NULL);
+        bool err = false;
+        bool verb = world->errorContacts;
 
-        bool shit_has_hit_fan = false;
-
-        physics_mat mat0, mat1;
-
-        // when one gimpact shape hits another (not in compounds), we don't get the triangle
-        // we get the whole gimpact shape for some reason
-        if (shape0->getShapeType()==TRIANGLE_SHAPE_PROXYTYPE
-            || shape0->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
-                int max = cmesh0->faceMaterials.size();
-                int id = index0;
-                if (id < 0 || id >= max) {
-                        if (world->errorContacts) {
-                                CERR << "index from bullet was garbage: " << id
-                                     << " >= " << max << std::endl;
-                                shit_has_hit_fan = true;
-                        }
-                        id = 0;
-                }
-                mat0 = cmesh0->getMaterialFromFace(id);
-        } else {
-                int max = cmesh0->partMaterials.size();
-                int id = index0;
-                //if (id==-1) id = 0;
-                if (id < 0 || id >= max) {
-                        if (world->errorContacts) {
-                                CERR << "index from bullet was garbage: " << id
-                                     << " >= " << max << std::endl;
-                                shit_has_hit_fan = true;
-                        }
-                        id = 0;
-                }
-                mat0 = cmesh0->getMaterialFromPart(id);
-        }
-
-        if (shape1->getShapeType()==TRIANGLE_SHAPE_PROXYTYPE
-            || shape1->getShapeType()==GIMPACT_SHAPE_PROXYTYPE) {
-                int max = cmesh1->faceMaterials.size();
-                int id = index1;
-                if (id < 0 || id >= max) {
-                        if (world->errorContacts) {
-                                CERR << "index from bullet was garbage: " << id
-                                     << " >= " << max << std::endl;
-                                shit_has_hit_fan = true;
-                        }
-                        id = 0;
-                }
-                mat1 = cmesh1->getMaterialFromFace(id);
-        } else {
-                int max = cmesh1->partMaterials.size();
-                int id = index1;
-                //if (id==-1) id = 0;
-                if (id < 0 || id >= max) {
-                        if (world->errorContacts) {
-                                CERR << "index from bullet was garbage: " << id
-                                     << " >= " << max << std::endl;
-                                shit_has_hit_fan = true;
-                        }
-                        id = 0;
-                }
-                mat1 = cmesh1->getMaterialFromPart(id);
-        }
+        physics_mat mat0 = get_material(cmesh0, shape0, part0, index0, &err, verb);
+        physics_mat mat1 = get_material(cmesh1, shape1, part1, index1, &err, verb);
 
         world->getInteraction(mat0, mat1, cp.m_combinedFriction, cp.m_combinedRestitution);
 
-        if (shit_has_hit_fan || world->verboseContacts) {
+        if (err || world->verboseContacts) {
                 CLOG << mat0 << "[" << shape_str(shape0->getShapeType()) << "]"
                      << "(" << shape_str(parent0->getShapeType()) << ")"
                      << " " << part0 << " " << index0
@@ -315,7 +296,7 @@ bool contact_added_callback (btManifoldPoint& cp,
 extern ContactAddedCallback gContactAddedCallback;
 
 PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
-      : verboseContacts(false), errorContacts(true),
+      : verboseContacts(false), errorContacts(true), verboseCasts(false), errorCasts(true),
         bumpyTriangleMeshHack(true), gimpactOneWayMeshHack(true), maxSteps(5)
 {
         colConf = new btDefaultCollisionConfiguration();
@@ -526,9 +507,32 @@ class BulletRayCallback : public btCollisionWorld::RayResultCallback {
                 if (body == NULL) return r.m_hitFraction;
                 RigidBody *rb= dynamic_cast<RigidBody*>(body->getMotionState());
                 if (rb == NULL) return r.m_hitFraction;
-                Ogre::Vector3 normal = to_ogre(r.m_hitNormalLocal);
-                // TODO other data from r
-                scb.result(*rb, r.m_hitFraction, normal);
+                APP_ASSERT(r.m_localShapeInfo!=NULL);
+                int part, index;
+                if (r.m_localShapeInfo) {
+                        part = r.m_localShapeInfo->m_shapePart;
+                        index = r.m_localShapeInfo->m_triangleIndex;
+                } else {
+                        part = 0;
+                        index = 0;
+                }
+                bool err = false;
+
+                const btCollisionShape *shape, *parent;
+                get_shape_and_parent(body, shape, parent);
+
+                bool verb = rb->world->errorCasts;
+                physics_mat m = get_material(rb->colMesh, shape, part, index, &err, verb);
+
+                if (err || rb->world->verboseCasts) {
+                        CLOG << "RAY HIT  " << m << "[" << shape_str(shape->getShapeType()) << "]"
+                             << "(" << shape_str(parent->getShapeType()) << ")"
+                             << " " << part << " " << index << std::endl;
+                        CLOG << r.m_hitFraction << " " << r.m_hitNormalLocal << std::endl;
+                }
+
+
+                scb.result(*rb, r.m_hitFraction, to_ogre(r.m_hitNormalLocal), m);
                 return r.m_hitFraction;
         }
     protected:
@@ -545,9 +549,30 @@ class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
                 if (body == NULL) return r.m_hitFraction;
                 RigidBody *rb= dynamic_cast<RigidBody*>(body->getMotionState());
                 if (rb == NULL) return r.m_hitFraction;
-                Ogre::Vector3 normal = to_ogre(r.m_hitNormalLocal);
-                // TODO other data from r
-                scb.result(*rb, r.m_hitFraction, normal);
+                APP_ASSERT(r.m_localShapeInfo!=NULL);
+                int part, index;
+                if (r.m_localShapeInfo) {
+                        part = r.m_localShapeInfo->m_shapePart;
+                        index = r.m_localShapeInfo->m_triangleIndex;
+                } else {
+                        part = 0;
+                        index = 0;
+                }
+                bool err = false;
+
+                const btCollisionShape *shape, *parent;
+                get_shape_and_parent(body, shape, parent);
+
+                bool verb = rb->world->errorCasts;
+                physics_mat m = get_material(rb->colMesh, shape, part, index, &err, verb);
+
+                if (err || rb->world->verboseCasts) {
+                        CLOG << "SWEEP HIT  " << m << "[" << shape_str(shape->getShapeType()) << "]"
+                             << "(" << shape_str(parent->getShapeType()) << ")"
+                             << " " << part << " " << index << std::endl;
+                        CLOG << r.m_hitFraction << " " << r.m_hitNormalLocal << std::endl;
+                }
+                scb.result(*rb, r.m_hitFraction, to_ogre(r.m_hitNormalLocal), m);
                 return r.m_hitFraction;
         }
     protected:
