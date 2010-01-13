@@ -509,14 +509,15 @@ class BulletRayCallback : public btCollisionWorld::RayResultCallback {
                 if (rb == NULL) return r.m_hitFraction;
                 APP_ASSERT(r.m_localShapeInfo!=NULL);
                 int part, index;
+                bool err = false;
                 if (r.m_localShapeInfo) {
                         part = r.m_localShapeInfo->m_shapePart;
                         index = r.m_localShapeInfo->m_triangleIndex;
                 } else {
+                        err = true;
                         part = 0;
                         index = 0;
                 }
-                bool err = false;
 
                 const btCollisionShape *shape, *parent;
                 get_shape_and_parent(body, shape, parent);
@@ -551,14 +552,15 @@ class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
                 if (rb == NULL) return r.m_hitFraction;
                 APP_ASSERT(r.m_localShapeInfo!=NULL);
                 int part, index;
+                bool err = false;
                 if (r.m_localShapeInfo) {
                         part = r.m_localShapeInfo->m_shapePart;
                         index = r.m_localShapeInfo->m_triangleIndex;
                 } else {
                         part = 0;
                         index = 0;
+                        err = true;
                 }
-                bool err = false;
 
                 const btCollisionShape *shape, *parent;
                 get_shape_and_parent(body, shape, parent);
