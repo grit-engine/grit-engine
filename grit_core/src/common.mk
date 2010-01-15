@@ -24,6 +24,7 @@ LINKING=echo "Linking: [1;32m$@[0m"
 
 COMMON_OBJ=\
         BackgroundMeshLoader.o \
+        BulletDebugDrawer.o \
         CollisionMesh.o \
         ExternalTable.o \
         Grit.o \

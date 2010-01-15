@@ -7,6 +7,7 @@ extern Grit *grit;
 
 #include <Ogre.h>
 #include <OgreSceneQuery.h>
+#include <OgreOctreeSceneManager.h>
 
 extern "C" {
 #include "lua.h"
@@ -19,6 +20,8 @@ namespace HUD {
         typedef Ogre::SharedPtr<Root> RootPtr;
 }
 class Streamer;
+
+#include <BulletDebugDrawer.h>
 
 #include "lua_userdata_dependency_tracker.h"
 
@@ -40,19 +43,21 @@ public:
 
         virtual void render (void);
 
-        virtual bool hasClickedClose (void);
+        virtual bool hasClickedClose (void) { return clickedClose; }
 
-        virtual Ogre::Root *getOgre (void);
+        virtual Ogre::Root *getOgre (void) { return ogre; }
+        virtual Ogre::OctreeSceneManager *getSM (void) { return sm; }
+        virtual BulletDebugDrawer *getDebugDrawer (void) { return debugDrawer; }
         virtual Ogre::RenderWindow *getWin (void);
         virtual HUD::RootPtr getHUD (void);
 
-        virtual Mouse *getMouse (void);
+        virtual Mouse *getMouse (void) { return mouse; }
 
-        virtual Keyboard *getKeyboard (void);
+        virtual Keyboard *getKeyboard (void) { return keyboard; }
 
         virtual std::string toString (void);
 
-        virtual UserDataTables& getUserDataTables (void);
+        virtual UserDataTables& getUserDataTables (void) { return userDataTables; }
 
         virtual Streamer &getStreamer() { return *streamer; }
 
@@ -61,6 +66,8 @@ public:
 protected:
 
         Ogre::Root *ogre;
+
+        Ogre::OctreeSceneManager *sm;
 
         HUD::RootPtr *hud;
 
@@ -78,6 +85,7 @@ protected:
 
         Streamer *streamer;
 
+        BulletDebugDrawer *debugDrawer;
 };
 
 #endif

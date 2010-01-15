@@ -231,6 +231,68 @@ TRY_START
 TRY_END
 }
 
+static int global_get_sm (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        push_scnmgr(L, grit->getSM());
+        return 1;
+TRY_END
+}
+
+BulletDebugDrawer::DebugDrawModes ddm_from_string (lua_State *L, const std::string &str)
+{
+        if (str=="DrawWireframe") return BulletDebugDrawer::DBG_DrawWireframe;
+        else if (str=="DrawAabb") return BulletDebugDrawer::DBG_DrawAabb;
+        else if (str=="DrawFeaturesText") return BulletDebugDrawer::DBG_DrawFeaturesText;
+        else if (str=="DrawContactPoints") return BulletDebugDrawer::DBG_DrawContactPoints;
+        else if (str=="NoDeactivation") return BulletDebugDrawer::DBG_NoDeactivation;
+        else if (str=="NoHelpText") return BulletDebugDrawer::DBG_NoHelpText;
+        else if (str=="DrawText") return BulletDebugDrawer::DBG_DrawText;
+        else if (str=="ProfileTimings") return BulletDebugDrawer::DBG_ProfileTimings;
+        else if (str=="EnableSatComparison") return BulletDebugDrawer::DBG_EnableSatComparison;
+        else if (str=="DisableBulletLCP") return BulletDebugDrawer::DBG_DisableBulletLCP;
+        else if (str=="EnableCCD") return BulletDebugDrawer::DBG_EnableCCD;
+        else if (str=="DrawConstraints") return BulletDebugDrawer::DBG_DrawConstraints;
+        else if (str=="DrawConstraintLimits") return BulletDebugDrawer::DBG_DrawConstraintLimits;
+        else if (str=="FastWireframe") return BulletDebugDrawer::DBG_FastWireframe;
+        else {
+                my_lua_error(L, "Did not recognise Bullet DebugDrawMode: "+str);
+                return BulletDebugDrawer::DBG_NoDebug; // avoid compiler warning
+        }
+}
+
+
+static int global_set_physics_debug (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        push_scnmgr(L, grit->getSM());
+        const char *str = luaL_checkstring(L,1);
+        bool b = check_bool(L,2);
+        BulletDebugDrawer::DebugDrawModes modes = (BulletDebugDrawer::DebugDrawModes)grit->getDebugDrawer()->getDebugMode();
+        BulletDebugDrawer::DebugDrawModes mode = ddm_from_string(L, str);
+        int new_modes = (modes & ~mode) | (b ? mode : BulletDebugDrawer::DBG_NoDebug);
+        grit->getDebugDrawer()->setDebugMode(new_modes);
+        return 0;
+TRY_END
+}
+
+static int global_get_physics_debug (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        push_scnmgr(L, grit->getSM());
+        const char *str = luaL_checkstring(L,1);
+        BulletDebugDrawer::DebugDrawModes modes = (BulletDebugDrawer::DebugDrawModes)grit->getDebugDrawer()->getDebugMode();
+        BulletDebugDrawer::DebugDrawModes mode = ddm_from_string(L, str);
+        lua_pushboolean(L, modes & mode);
+        return 1;
+TRY_END
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 static int global_make_tex (lua_State *L)
@@ -1578,6 +1640,9 @@ static const luaL_reg global[] = {
         {"PhysicsWorld",pworld_make},
 
         {"get_streamer",global_get_streamer},
+        {"get_sm" ,global_get_sm},
+        {"set_physics_debug" ,global_set_physics_debug},
+        {"get_physics_debug" ,global_get_physics_debug},
 
         {"Timer",timer_make},
         {"Vector3",vector3_make},

@@ -58,6 +58,10 @@ Grit::Grit (Ogre::Root *ogre, Mouse *mouse, Keyboard *keyboard, Grit *& grit) :
 
         grit = this;
 
+        sm = static_cast<Ogre::OctreeSceneManager*>(ogre->createSceneManager("OctreeSceneManager"));
+
+        debugDrawer = new BulletDebugDrawer(sm);
+
         L = init_lua("system/init.lua");
 
         //APP_VERBOSE("adding event listener");
@@ -74,11 +78,9 @@ Grit::~Grit ()
         if (L) lua_close(L);
         if (mouse) delete mouse;
         if (keyboard) delete keyboard;
+        if (debugDrawer) delete debugDrawer;
+        if (sm && ogre) ogre->destroySceneManager(sm);
         if (ogre) OGRE_DELETE ogre;
-}
-
-Ogre::Root *Grit::getOgre () {
-        return ogre;
 }
 
 Ogre::RenderWindow *Grit::getWin () {
@@ -87,14 +89,6 @@ Ogre::RenderWindow *Grit::getWin () {
 
 HUD::RootPtr Grit::getHUD () {
         return HUD::RootPtr(*hud);
-}
-
-Keyboard *Grit::getKeyboard () {
-        return keyboard;
-}
-
-Mouse *Grit::getMouse () {
-        return mouse;
 }
 
 std::string Grit::toString () {
@@ -125,12 +119,6 @@ void Grit::render ()
 {
         ogre->renderOneFrame();
 }
-
-bool Grit::hasClickedClose ()
-{
-        return clickedClose;
-}
-
 
 void Grit::doMain (int argc, const char **argv)
 {
@@ -170,12 +158,6 @@ void Grit::doMain (int argc, const char **argv)
         }
 
         lua_pop(L,1); // error_handler
-}
-
-
-UserDataTables& Grit::getUserDataTables ()
-{
-        return userDataTables;
 }
 
 // vim: shiftwidth=8:tabstop=8:expandtab

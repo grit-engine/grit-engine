@@ -221,6 +221,8 @@ class PhysicsWorld {
                 restitution = m.restitution;
         }
 
+        void draw (void) { world->debugDrawWorld(); }
+
         bool verboseContacts;
         bool errorContacts;
         bool verboseCasts;

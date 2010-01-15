@@ -667,6 +667,16 @@ TRY_END
 }
 
 
+static int pworld_draw (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
+        self->draw();
+        return 0;
+TRY_END
+}
+
 static int pworld_pump (lua_State *L)
 {
 TRY_START
@@ -895,6 +905,8 @@ TRY_START
                 lua_pushboolean(L,self->getSolverUseWarmStarting());
         } else if (key=="solverCacheFriendly") {
                 lua_pushboolean(L,self->getSolverCacheFriendly());
+        } else if (key=="draw") {
+                push_cfunction(L,pworld_draw);
         } else {
                 my_lua_error(L,"Not a valid PhysicsWorld member: "+key);
         }

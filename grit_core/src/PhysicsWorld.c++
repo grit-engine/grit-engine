@@ -319,6 +319,8 @@ PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
         gContactAddedCallback = contact_added_callback;
         
         world->setGravity(btVector3(0,0,-9.8));
+
+        world->setDebugDrawer(grit->getDebugDrawer());
 }
 
 PhysicsWorld::~PhysicsWorld ()
