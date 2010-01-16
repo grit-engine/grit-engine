@@ -6,6 +6,7 @@
 
 #include <LinearMath/btGeometryUtil.h>
 #include <BulletCollision/Gimpact/btGImpactShape.h>
+#include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
 #include <../Extras/GIMPACTUtils/btGImpactConvexDecompositionShape.h>
 
 #include "CollisionMesh.h"
@@ -120,8 +121,13 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
         btCollisionShape *s;
 
         if (is_static) {
-                s = new btBvhTriangleMeshShape(v,true,true);
+                btBvhTriangleMeshShape *tm = new btBvhTriangleMeshShape(v,true,true);
+                s = tm;
                 s->setMargin(0);
+                btTriangleInfoMap* tri_info_map = new btTriangleInfoMap();
+                // maybe adjust thresholds in tri_info_map
+
+                btGenerateInternalEdgeInfo(tm,tri_info_map);
                 les.push_back(new LooseEndImpl<btCollisionShape>(s));
         } else {
                 btGImpactShapeInterface *s2 = new btGImpactMeshShape(v);

@@ -1,15 +1,16 @@
 #include <OgreException.h>
 
+//#include <GIMPACT/Bullet/btGImpactShape.h>
+//#include <GIMPACT/Bullet/btGImpactCollisionAlgorithm.h>
+
+#include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
+#include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
+
 #include "PhysicsWorld.h"
 #include "GritObject.h"
 #include "Grit.h"
 #include "lua_wrappers_physics.h"
 #include "CentralisedLog.h"
-
-//#include <GIMPACT/Bullet/btGImpactShape.h>
-//#include <GIMPACT/Bullet/btGImpactCollisionAlgorithm.h>
-
-#include "BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h"
 
 
 void DynamicsWorld::step (void)
@@ -86,53 +87,6 @@ void DynamicsWorld::end (btScalar time_left)
 
 bool physics_verbose_contacts = false;
 
-void process_contact (btManifoldPoint& cp, const PhysicsWorldPtr &world,
-                      const btCollisionObject *colObj, bool gimpact)
-{
-        const btCollisionShape *shape = colObj->getCollisionShape();
-
-        if (shape->getShapeType() != TRIANGLE_SHAPE_PROXYTYPE) return;
-        const btTriangleShape *tshape =
-               static_cast<const btTriangleShape*>(colObj->getCollisionShape());
-
-
-        const btCollisionShape *parent = colObj->getRootCollisionShape();
-        if (parent == NULL) return;
-
-        btVector3 normal;
-        tshape->calcNormal(normal);
-
-        normal = colObj->getWorldTransform().getBasis() * normal;
-
-        btScalar dot = normal.dot(cp.m_normalWorldOnB);
-
-
-        if (gimpact) {
-                if (parent->getShapeType()==GIMPACT_SHAPE_PROXYTYPE &&
-                    world->gimpactOneWayMeshHack) {
-                        if (dot > 0) {
-                                cp.m_normalWorldOnB -= 2 * dot * normal;
-                        }
-                }
-        } else {
-                if (parent->getShapeType()==TRIANGLE_MESH_SHAPE_PROXYTYPE &&
-                    world->bumpyTriangleMeshHack) {
-
-                        btScalar magnitude = cp.m_normalWorldOnB.length();
-                        normal *= dot > 0 ? magnitude : -magnitude;
-
-                        cp.m_normalWorldOnB = normal;
-
-                        // Reproject collision point along normal.
-                        cp.m_positionWorldOnB =
-                                cp.m_positionWorldOnA - cp.m_normalWorldOnB * cp.m_distance1;
-                        cp.m_localPointB =
-                                colObj->getWorldTransform().invXform(cp.m_positionWorldOnB);
-
-                }
-        }
-}
-
 static std::ostream &operator << (std::ostream &o, const btVector3 &v)
 {
         return o << "("<<v.x()<<", "<<v.y()<<", "<<v.z()<<")";
@@ -182,10 +136,15 @@ static void fix_parent (const btCollisionShape *shape, const btCollisionShape *&
                         new_parent = child;
                         break;
                 }
+                if (child->getShapeType()==TRIANGLE_MESH_SHAPE_PROXYTYPE) {
+                        new_parent = child;
+                        break;
+                }
         }
 
         // this can happen with static triangle meshes in a compound
-        if (new_parent==NULL) return;
+        //if (new_parent==NULL) return;
+        APP_ASSERT(new_parent!=NULL);
 
         parent = new_parent;
 }
@@ -286,10 +245,78 @@ bool contact_added_callback (btManifoldPoint& cp,
                 */
         }
         
-        // 0 is always the gimpact?
-        // 1 is always the scenery?
-        process_contact(cp, world, colObj0, true);
-        process_contact(cp, world, colObj1, false);
+        if (parent0->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE ||
+            parent1->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE) {
+
+                const btRigidBody *sta_body;
+                const btRigidBody *dyn_body;
+
+                if (parent0->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE) {
+                        sta_body = bbody0;
+                        dyn_body = bbody1;
+                } else {
+                        dyn_body = bbody0;
+                        sta_body = bbody1;
+                }
+
+
+                if (world->useTriangleEdgeInfo) {
+                        btAdjustInternalEdgeContacts(cp,sta_body, dyn_body, part1,index1);
+                }
+
+                if (world->bumpyTriangleMeshHack) {
+                        const btTriangleShape *tshape =
+                               static_cast<const btTriangleShape*>(sta_body->getCollisionShape());
+
+                        btVector3 normal;
+                        tshape->calcNormal(normal);
+
+                        normal = sta_body->getWorldTransform().getBasis() * normal;
+
+                        btScalar dot = normal.dot(cp.m_normalWorldOnB);
+
+                        btScalar magnitude = cp.m_normalWorldOnB.length();
+                        normal *= dot > 0 ? magnitude : -magnitude;
+
+                        cp.m_normalWorldOnB = normal;
+
+                        // Reproject collision point along normal.
+                        cp.m_positionWorldOnB =
+                                cp.m_positionWorldOnA - cp.m_normalWorldOnB * cp.m_distance1;
+                        cp.m_localPointB =
+                                sta_body->getWorldTransform().invXform(cp.m_positionWorldOnB);
+                }
+
+        }
+
+        if (parent0->getShapeType() == GIMPACT_SHAPE_PROXYTYPE ||
+            parent1->getShapeType() == GIMPACT_SHAPE_PROXYTYPE) {
+
+                const btRigidBody *gim_body;
+
+                if (parent0->getShapeType() == GIMPACT_SHAPE_PROXYTYPE) {
+                        gim_body = bbody0;
+                } else {
+                        gim_body = bbody1;
+                }
+
+                if (world->gimpactOneWayMeshHack) {
+                        const btTriangleShape *tshape =
+                               static_cast<const btTriangleShape*>(gim_body->getCollisionShape());
+
+                        btVector3 normal;
+                        tshape->calcNormal(normal);
+
+                        normal = gim_body->getWorldTransform().getBasis() * normal;
+
+                        btScalar dot = normal.dot(cp.m_normalWorldOnB) * (gim_body == bbody0 ? 1 : -1);
+
+                        if (dot > 0) {
+                                cp.m_normalWorldOnB -= 2 * dot * normal;
+                        }
+                }
+        }
+
         return true;
 }
 
@@ -297,7 +324,8 @@ extern ContactAddedCallback gContactAddedCallback;
 
 PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
       : verboseContacts(false), errorContacts(true), verboseCasts(false), errorCasts(true),
-        bumpyTriangleMeshHack(true), gimpactOneWayMeshHack(true), maxSteps(5)
+        bumpyTriangleMeshHack(false), useTriangleEdgeInfo(true),
+        gimpactOneWayMeshHack(true), maxSteps(5)
 {
         colConf = new btDefaultCollisionConfiguration();
         colDisp = new btCollisionDispatcher(colConf);

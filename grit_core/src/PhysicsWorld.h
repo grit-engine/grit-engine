@@ -228,6 +228,7 @@ class PhysicsWorld {
         bool verboseCasts;
         bool errorCasts;
         bool bumpyTriangleMeshHack;
+        bool useTriangleEdgeInfo;
         bool gimpactOneWayMeshHack;
 
     protected:

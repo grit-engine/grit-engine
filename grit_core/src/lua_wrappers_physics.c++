@@ -871,6 +871,8 @@ TRY_START
                 lua_pushboolean(L,self->gimpactOneWayMeshHack);
         } else if (key=="bumpyTriangleMeshHack") {
                 lua_pushboolean(L,self->bumpyTriangleMeshHack);
+        } else if (key=="useTriangleEdgeInfo") {
+                lua_pushboolean(L,self->useTriangleEdgeInfo);
         } else if (key=="verboseContacts") {
                 lua_pushboolean(L,self->verboseContacts);
         } else if (key=="verboseCasts") {
@@ -941,6 +943,9 @@ TRY_START
         } else if (key=="bumpyTriangleMeshHack") {
                 bool v = check_bool(L,3);
                 self->bumpyTriangleMeshHack = v;
+        } else if (key=="useTriangleEdgeInfo") {
+                bool v = check_bool(L,3);
+                self->useTriangleEdgeInfo = v;
         } else if (key=="verboseContacts") {
                 bool v = check_bool(L,3);
                 self->verboseContacts = v;
