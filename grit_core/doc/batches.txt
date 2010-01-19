@@ -1,5 +1,0 @@
-render 1000 batches at 75fps = 14μs per batch
-same material for everything, no shadows: 27μs
-full materials, no shadows: 71μs
-full materials, everything casting shadows: 107μs
-measurements taken at go_la()

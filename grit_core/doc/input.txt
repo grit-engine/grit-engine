@@ -1,3 +1,5 @@
+Should use doxygen for input libraries
+
 Mouse:
 
 The function getEvents should be called regularly (once per frame drawn is OK).
