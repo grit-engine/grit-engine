@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\CgProgramManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Dependencies\include&quot;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;OGRE_THREAD_PROVIDER=1;QUEX_OPTION_ASSERTS_WARNING_MESSAGE_DISABLED;OGRE_MEMORY_ALLOCATOR=1;FREEIMAGE_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -64,7 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ogre.lib FreeImaged.lib freetype235_D.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OpenEXR.lib zlibd.lib zziplibd.lib bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib $(InputDir)src\win32\Resources.res"
+				AdditionalDependencies="ogre.lib FreeImaged.lib freetype235_D.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OpenEXR.lib zlibd.lib zziplibd.lib bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib $(InputDir)src\win32\Resources.res cg.lib"
 				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Debug&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
@@ -210,7 +210,7 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\CgProgramManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Dependencies\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;OGRE_THREAD_PROVIDER=1;OGRE_MEMORY_ALLOCATOR=1;FREEIMAGE_LIB"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -231,7 +231,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib"
+				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib cg.lib"
 				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
