@@ -21,7 +21,7 @@ namespace HUD {
 }
 class Streamer;
 
-#include <BulletDebugDrawer.h>
+#include "BulletDebugDrawer.h"
 
 #include "lua_userdata_dependency_tracker.h"
 
