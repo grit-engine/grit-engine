@@ -738,8 +738,64 @@ TRY_START
 TRY_END
 }
 
-static Ogre::PixelFormat
-pixel_format_from_string (lua_State *L, const std::string& s)
+const char *pixel_format_to_string (lua_State *L, Ogre::PixelFormat pf)
+{
+        // use if statements because some of these enum values are actually duplicates
+        if (pf == Ogre::PF_UNKNOWN) return "PF_UNKNOWN"; 
+        else if (pf == Ogre::PF_L8) return "PF_L8"; 
+        else if (pf == Ogre::PF_BYTE_L) return "PF_BYTE_L"; 
+        else if (pf == Ogre::PF_L16) return "PF_L16"; 
+        else if (pf == Ogre::PF_SHORT_L) return "PF_SHORT_L"; 
+        else if (pf == Ogre::PF_A8) return "PF_A8"; 
+        else if (pf == Ogre::PF_BYTE_A) return "PF_BYTE_A"; 
+        else if (pf == Ogre::PF_A4L4) return "PF_A4L4"; 
+        else if (pf == Ogre::PF_BYTE_LA) return "PF_BYTE_LA"; 
+        else if (pf == Ogre::PF_R5G6B5) return "PF_R5G6B5"; 
+        else if (pf == Ogre::PF_B5G6R5) return "PF_B5G6R5"; 
+        else if (pf == Ogre::PF_R3G3B2) return "PF_R3G3B2"; 
+        else if (pf == Ogre::PF_A4R4G4B4) return "PF_A4R4G4B4"; 
+        else if (pf == Ogre::PF_A1R5G5B5) return "PF_A1R5G5B5"; 
+        else if (pf == Ogre::PF_R8G8B8) return "PF_R8G8B8"; 
+        else if (pf == Ogre::PF_B8G8R8) return "PF_B8G8R8"; 
+        else if (pf == Ogre::PF_A8R8G8B8) return "PF_A8R8G8B8"; 
+        else if (pf == Ogre::PF_A8B8G8R8) return "PF_A8B8G8R8"; 
+        else if (pf == Ogre::PF_B8G8R8A8) return "PF_B8G8R8A8"; 
+        else if (pf == Ogre::PF_R8G8B8A8) return "PF_R8G8B8A8"; 
+        else if (pf == Ogre::PF_X8R8G8B8) return "PF_X8R8G8B8"; 
+        else if (pf == Ogre::PF_X8B8G8R8) return "PF_X8B8G8R8"; 
+        else if (pf == Ogre::PF_BYTE_RGB) return "PF_BYTE_RGB"; 
+        else if (pf == Ogre::PF_BYTE_BGR) return "PF_BYTE_BGR"; 
+        else if (pf == Ogre::PF_BYTE_BGRA) return "PF_BYTE_BGRA"; 
+        else if (pf == Ogre::PF_BYTE_RGBA) return "PF_BYTE_RGBA"; 
+        else if (pf == Ogre::PF_A2R10G10B10) return "PF_A2R10G10B10"; 
+        else if (pf == Ogre::PF_A2B10G10R10) return "PF_A2B10G10R10"; 
+        else if (pf == Ogre::PF_DXT1) return "PF_DXT1"; 
+        else if (pf == Ogre::PF_DXT2) return "PF_DXT2"; 
+        else if (pf == Ogre::PF_DXT3) return "PF_DXT3"; 
+        else if (pf == Ogre::PF_DXT4) return "PF_DXT4"; 
+        else if (pf == Ogre::PF_DXT5) return "PF_DXT5"; 
+        else if (pf == Ogre::PF_FLOAT16_R) return "PF_FLOAT16_R"; 
+        else if (pf == Ogre::PF_FLOAT16_RGB) return "PF_FLOAT16_RGB"; 
+        else if (pf == Ogre::PF_FLOAT16_RGBA) return "PF_FLOAT16_RGBA"; 
+        else if (pf == Ogre::PF_FLOAT32_R) return "PF_FLOAT32_R"; 
+        else if (pf == Ogre::PF_FLOAT32_RGB) return "PF_FLOAT32_RGB"; 
+        else if (pf == Ogre::PF_FLOAT32_RGBA) return "PF_FLOAT32_RGBA"; 
+        else if (pf == Ogre::PF_FLOAT16_GR) return "PF_FLOAT16_GR"; 
+        else if (pf == Ogre::PF_FLOAT32_GR) return "PF_FLOAT32_GR"; 
+        else if (pf == Ogre::PF_DEPTH) return "PF_DEPTH"; 
+        else if (pf == Ogre::PF_SHORT_RGBA) return "PF_SHORT_RGBA"; 
+        else if (pf == Ogre::PF_SHORT_GR) return "PF_SHORT_GR"; 
+        else if (pf == Ogre::PF_SHORT_RGB) return "PF_SHORT_RGB"; 
+        else if (pf == Ogre::PF_PVRTC_RGB2) return "PF_PVRTC_RGB2"; 
+        else if (pf == Ogre::PF_PVRTC_RGBA2) return "PF_PVRTC_RGBA2"; 
+        else if (pf == Ogre::PF_PVRTC_RGB4) return "PF_PVRTC_RGB4"; 
+        else if (pf == Ogre::PF_PVRTC_RGBA4) return "PF_PVRTC_RGBA4"; 
+        else if (pf == Ogre::PF_COUNT) return "PF_COUNT"; 
+        else my_lua_error(L, "Unrecognised Ogre::PixelFormat");
+        return "Never happens";
+}
+
+Ogre::PixelFormat pixel_format_from_string (lua_State *L, const std::string& s)
 {
         if (s=="PF_UNKNOWN") return Ogre::PF_UNKNOWN; 
         else if (s=="PF_L8") return Ogre::PF_L8; 
@@ -786,6 +842,10 @@ pixel_format_from_string (lua_State *L, const std::string& s)
         else if (s=="PF_SHORT_RGBA") return Ogre::PF_SHORT_RGBA; 
         else if (s=="PF_SHORT_GR") return Ogre::PF_SHORT_GR; 
         else if (s=="PF_SHORT_RGB") return Ogre::PF_SHORT_RGB; 
+        else if (s=="PF_PVRTC_RGB2") return Ogre::PF_PVRTC_RGB2; 
+        else if (s=="PF_PVRTC_RGBA2") return Ogre::PF_PVRTC_RGBA2; 
+        else if (s=="PF_PVRTC_RGB4") return Ogre::PF_PVRTC_RGB4; 
+        else if (s=="PF_PVRTC_RGBA4") return Ogre::PF_PVRTC_RGBA4; 
         else if (s=="PF_COUNT") return Ogre::PF_COUNT; 
         else {
                 my_lua_error(L,"Unrecognised pixel format: "+s);

@@ -3,6 +3,7 @@
 
 #include "lua_wrappers_tex.h"
 #include "lua_wrappers_render.h"
+#include "lua_wrappers_scnmgr.h"
 
 static int tex_load (lua_State *L)
 {
@@ -87,8 +88,13 @@ TRY_START
         } else if (key=="name") {
                 lua_pushstring(L, self->getName().c_str());
         } else if (key=="type") {
-                lua_pushstring(L,
-                              texture_type_to_string(L,self->getTextureType()));
+                lua_pushstring(L, texture_type_to_string(L,self->getTextureType()));
+        } else if (key=="desiredFormat") {
+                lua_pushstring(L, pixel_format_to_string(L,self->getDesiredFormat()));
+        } else if (key=="format") {
+                lua_pushstring(L, pixel_format_to_string(L,self->getFormat()));
+        } else if (key=="srcFormat") {
+                lua_pushstring(L, pixel_format_to_string(L,self->getSrcFormat()));
         } else if (key=="mipmapsHardwareGenerated") {
                 lua_pushboolean(L,self->getMipmapsHardwareGenerated());
         } else if (key=="numMipmaps") {
