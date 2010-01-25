@@ -14,21 +14,26 @@ class KeyboardX11 : public Keyboard {
 public:
 
         KeyboardX11 (size_t window);
-        virtual ~KeyboardX11 ();
+        ~KeyboardX11 ();
 
-        virtual Presses getPresses();
+        Presses getPresses();
 
-        virtual Press getShifted(const Press &);
-        virtual Press getAlted(const Press &);
+        Press getShifted(const Press &);
+        Press getAlted(const Press &);
 
-        virtual bool hasFocus (void);
+        bool hasFocus (void);
 
 protected:
 
-        virtual void add_key (Keyboard::Presses &keys, XEvent event, int kind);
+        std::string key_to_string (XEvent &ev);
+        void add_key (Keyboard::Presses &keys, XEvent event, int kind);
 
         Display *display;
         Window win;
+/*
+        XIM im;
+        XIC ic;
+*/
 
         std::map<KeySym,const char*> myKeyMap;
 

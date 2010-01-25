@@ -79,6 +79,15 @@ KeyboardX11::KeyboardX11 (size_t window)
         display = XOpenDisplay(0);
         APP_ASSERT(display);
 
+/*
+        im = XOpenIM(display, NULL, NULL, NULL);
+        APP_ASSERT(im);
+
+        ic = XCreateIC(im);
+        APP_ASSERT(im);
+*/
+
+
         long event_mask = KeyPressMask | KeyReleaseMask;
         event_mask |= FocusChangeMask;
         if (XSelectInput(display, win, event_mask) == BadWindow) {
@@ -92,26 +101,38 @@ KeyboardX11::~KeyboardX11 (void)
 {
         if(display) {
                 getPresses();
+                //if (ic) XDestroyIC(ic);
+                //if (im) XCloseIM(im);
                 XCloseDisplay(display);
         }
 }
 
-static std::string key_to_string (XEvent &ev, std::map<KeySym,const char*> &my_key_map)
+std::string KeyboardX11::key_to_string (XEvent &ev)
 {
+        std::string converted;
+
         KeySym key = XLookupKeysym(&ev.xkey, 0);
-        if (my_key_map.find(key) != my_key_map.end()) return my_key_map[key];
+        if (myKeyMap.find(key) != myKeyMap.end()) return myKeyMap[key];
      
         char buf[1024];
+        // TODO: advanced input method / context for non-european languages
+        // or use an existing system like what gtk uses 
         int r = XLookupString(&ev.xkey, buf, sizeof buf, NULL, NULL);
-        const char *keystr = r ? buf : XKeysymToString(key);
-
-        // TODO: handle unicode properly
-        for (size_t i=0 ; i<strlen(keystr) ; ++i) {
-                unsigned char c = (unsigned char)keystr[i];
-                if (c<32 || c>127) return "?";
+        if (r) {
+                // returns latin1 so just convert to utf8 and we're done
+                APP_ASSERT(r==1);
+                unsigned char x = (unsigned char) buf[0];
+                if (x>=128) {
+                        converted.append(1, 0xC0 | ((x & 0xC0) >> 6));
+                        converted.append(1, 0x80 | (x & 0x3F));
+                } else {
+                        converted.append(1, x);
+                }
+        } else {
+                converted = XKeysymToString(key);
         }
 
-        return keystr;
+        return converted;
 }
 
 void KeyboardX11::add_key (Keyboard::Presses &keys, XEvent ev, int kind)
@@ -119,11 +140,11 @@ void KeyboardX11::add_key (Keyboard::Presses &keys, XEvent ev, int kind)
         const char *prefix[] = { "-", "=", "+" };
         std::string str = prefix[kind+1];
         ev.xkey.state = 0;
-        std::string keystr = key_to_string(ev, myKeyMap);
+        std::string keystr = key_to_string(ev);
         ev.xkey.state = ShiftMask;
-        std::string keystr2 = key_to_string(ev, myKeyMap);
+        std::string keystr2 = key_to_string(ev);
         ev.xkey.state = Mod5Mask;
-        std::string keystr3 = key_to_string(ev, myKeyMap);
+        std::string keystr3 = key_to_string(ev);
 
         str += keystr;
 
