@@ -80,28 +80,6 @@ TRY_START
 TRY_END
 }
 
-static int global_keyb_shift (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        std::string s = luaL_checkstring(L,1);
-        std::string r = grit->getKeyboard()->getShifted(s);
-        lua_pushstring(L,r.c_str());
-        return 1;
-TRY_END
-}
-
-static int global_keyb_alt (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        std::string s = luaL_checkstring(L,1);
-        std::string r = grit->getKeyboard()->getAlted(s);
-        lua_pushstring(L,r.c_str());
-        return 1;
-TRY_END
-}
-
 static int global_get_keyb_verbose (lua_State *L)
 {
 TRY_START
@@ -1539,8 +1517,6 @@ static const luaL_reg global[] = {
 
         {"get_keyb_presses",global_get_keyb_presses},
         {"keyb_flush",global_keyb_flush},
-        {"keyb_shift",global_keyb_shift},
-        {"keyb_alt",global_keyb_alt},
         {"set_keyb_verbose",global_set_keyb_verbose},
         {"get_keyb_verbose",global_get_keyb_verbose},
         {"get_mouse_events",global_get_mouse_events},

@@ -19,9 +19,6 @@ public:
 
         virtual bool hasFocus (void);
 
-        virtual Press getShifted (const Press&);
-        virtual Press getAlted (const Press&);
-
 protected:
 
         HWND win;
@@ -30,7 +27,7 @@ protected:
 
         IDirectInputDevice8 *dev;
 
-        std::map<DWORD,const char *> keysUp, keysDown, keysRep;
+        std::map<DWORD,const char *> keysUp, keysDown, keysRep, keysText, keysTextShifted;
         std::map<Press,DWORD> keyCode;
         std::map<DWORD, ULONGLONG> pressTime;
 

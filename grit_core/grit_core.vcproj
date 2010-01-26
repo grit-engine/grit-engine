@@ -406,6 +406,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\unicode_util.c++"
+				>
+			</File>
+			<File
 				RelativePath=".\src\win32\win32_clipboard.c++"
 				>
 			</File>

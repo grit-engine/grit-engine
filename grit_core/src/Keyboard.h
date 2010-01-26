@@ -23,9 +23,6 @@ public:
 
         virtual void flush(Press p) { keysToFlush.push_back(p); }
 
-        virtual Press getShifted(const Press &) = 0;
-        virtual Press getAlted(const Press &) = 0;
-
         virtual bool hasFocus() = 0;
 
         virtual void setVerbose (bool v) { verbose = v; }

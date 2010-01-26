@@ -4,6 +4,8 @@
 #include "KeyboardWinAPI.h"
 #include "../CentralisedLog.h"
 
+#include "../unicode_util.h"
+
 typedef std::map<HWND, KeyboardWinAPI*> WindowMap;
 static WindowMap wmap;
 
@@ -62,65 +64,59 @@ bool KeyboardWinAPI::hasFocus (void)
         return GetActiveWindow() == win;
 }
 
-static std::string break_horribly (WCHAR *buf, size_t sz)
-{
-        std::string r(sz,' ');
-        for (size_t i=0 ; i<sz ; ++i) {
-            if (buf[i]<32 || buf[i]>=127)
-                buf[i] = '?';
-            r[i] = (char) buf[i];
-        }
-        return r;
-}
 
-static Keyboard::Press get_string_press (WPARAM wParam, LPARAM scan_code,
-                                         bool shift, bool alt)
+Keyboard::Press KeyboardWinAPI::getPress (WPARAM wParam, LPARAM scan_code)
 {
         Keyboard::Press r;
         BYTE state[256] = {0};
-        if (shift) {
-                state[VK_SHIFT] = 0xFF;
-                state[VK_LSHIFT] = 0xFF;
-                state[VK_RSHIFT] = 0xFF;
-        }
-        if (alt) {
-                state[VK_MENU] = 0xFF;
-                state[VK_LMENU] = 0xFF;
-                state[VK_RMENU] = 0xFF;
-                state[VK_CONTROL] = 0xFF;
-                state[VK_CONTROL] = 0xFF;
-                state[VK_CONTROL] = 0xFF;
-        }
+
         WCHAR buf[1024] = {0};
         int ret = ToUnicodeEx(wParam, scan_code, state,
                               buf, sizeof(buf)/sizeof(*buf),
                               0, GetKeyboardLayout(0));
-        // TODO: support unicode properly
-        if (ret==-1) { // " does this
-            return break_horribly(buf,1);
-        } else if (ret<0 || ret>=sizeof(buf)/sizeof(*buf)) {
-            CERR << "ToUnicodeEx returned out of range: " << ret << std::endl;
-        } else if (ret > 1) { // ' does this
-            return break_horribly(buf,1);
-        } else {
-            return break_horribly(buf,ret);
-        }
-}
 
-Keyboard::Press KeyboardWinAPI::getPress (WPARAM wParam, LPARAM scan_code)
-{
-        Press unshifted = get_string_press(wParam,scan_code,false,false);
-        Press shifted = get_string_press(wParam,scan_code,true,false);
-        Press alted = get_string_press(wParam,scan_code,false,true);
-        if (shiftMap[unshifted] == "") {
-            if (verbose) CLOG << unshifted << " -> " << shifted << std::endl;
-            shiftMap[unshifted] = shifted;
+        bool dead = false;
+        if (ret==-1) {
+                /* The specified virtual key is a dead-key character (accent or diacritic).
+                 * This value is returned regardless of the keyboard layout, even if several
+                 * characters have been typed and are stored in the keyboard state. If possible,
+                 * even with Unicode keyboard layouts, the function has written a spacing
+                 * version of the dead-key character to the buffer specified by pwszBuff.
+                 * For example, the function writes the character SPACING ACUTE (0x00B4),
+                 * rather than the character NON_SPACING ACUTE (0x0301). */
+
+                // We still want to allow this key to be bound to things, so provide the spacing char as the key.
+                ret = 1;
+                dead = true; // for debug output
         }
-        if (altMap[unshifted] == "") {
-            if (verbose) CLOG << unshifted << " => " << alted << std::endl;
-            altMap[unshifted] = alted;
+        if (ret<0 || ret>=sizeof(buf)/sizeof(*buf)) {
+                CERR << "ToUnicodeEx returned out of range: " << ret << std::endl;
+                ret = 0;
         }
-        return unshifted;
+        if (ret>1) {
+                /* Two or more characters were written to the buffer specified by pwszBuff. The
+                 * most common cause for this is that a dead-key character (accent or diacritic)
+                 * stored in the keyboard layout could not be combined with the specified virtual
+                 * key to form a single character. */
+                // No idea what this means but I think I should ignore anything from the 'previous' key
+                // HACK: this may break if buf contains surrogate pairs!
+                buf[0] = buf[ret-1];
+                ret = 1;
+        }
+
+        buf[ret] = 0;
+        if (verbose) {
+                std::stringstream ss;
+                ss << "[";
+                for (int i=0 ; i<ret ; ++i) {
+                        ss << (i==0 ? " " : ", ") << std::hex << "0x" << ((int)buf[i]) << std::dec;
+                }
+                ss << " ]";
+                if (dead) ss << "!";
+                CLOG << ss.str() << std::endl;
+        }
+
+        return utf16_to_utf8(buf);
 }
 
 LRESULT KeyboardWinAPI::wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -139,11 +135,17 @@ LRESULT KeyboardWinAPI::wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lP
         }
         bool have_key = false;
         switch (msg) {
-                case WM_INPUTLANGCHANGE:
-                shiftMap.clear();
-                altMap.clear();
+                case WM_CHAR:
+                case WM_UNICHAR: {
+                        key = ":";
+                        if (wParam < 0x20 || (wParam >= 0x80 && wParam < 0xa0)) break;
+                        encode_utf8(wParam, key);
+                        if (verbose) {
+                            CLOG << (void*)msg << ": \"" << key << "\" from " << wParam << ": " << "x" << repeat_count << std::endl;
+                        }
+                        have_key = true;
+                }; break;
 
-                break;
                 case WM_KEYDOWN:
                 case WM_KEYUP:
                 case WM_SYSKEYDOWN:
@@ -248,15 +250,6 @@ LRESULT KeyboardWinAPI::wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lP
         return CallWindowProc(old_wndproc, msgwin, msg, wParam, lParam);
 }
 
-Keyboard::Press KeyboardWinAPI::getShifted (const Press &press)
-{
-        return shiftMap[press];
-}
-
-Keyboard::Press KeyboardWinAPI::getAlted (const Press &press)
-{
-        return altMap[press];
-}
 
 Keyboard::Presses KeyboardWinAPI::getPresses (void)
 {
