@@ -3,6 +3,7 @@
 
 #include "KeyboardX11.h"
 #include "../CentralisedLog.h"
+#include "../unicode_util.h"
 
 KeyboardX11::KeyboardX11 (size_t window)
       : focussed(true)
@@ -107,83 +108,69 @@ KeyboardX11::~KeyboardX11 (void)
         }
 }
 
-std::string KeyboardX11::key_to_string (XEvent &ev)
-{
-        std::string converted;
-
-        KeySym key = XLookupKeysym(&ev.xkey, 0);
-        if (myKeyMap.find(key) != myKeyMap.end()) return myKeyMap[key];
-     
-        char buf[1024];
-        // TODO: advanced input method / context for non-european languages
-        // or use an existing system like what gtk uses 
-        int r = XLookupString(&ev.xkey, buf, sizeof buf, NULL, NULL);
-        if (r) {
-                // returns latin1 so just convert to utf8 and we're done
-                APP_ASSERT(r==1);
-                unsigned char x = (unsigned char) buf[0];
-                if (x>=128) {
-                        converted.append(1, 0xC0 | ((x & 0xC0) >> 6));
-                        converted.append(1, 0x80 | (x & 0x3F));
-                } else {
-                        converted.append(1, x);
-                }
-        } else {
-                converted = XKeysymToString(key);
-        }
-
-        return converted;
-}
-
 void KeyboardX11::add_key (Keyboard::Presses &keys, XEvent ev, int kind)
 {
         const char *prefix[] = { "-", "=", "+" };
         std::string str = prefix[kind+1];
-        ev.xkey.state = 0;
-        std::string keystr = key_to_string(ev);
-        ev.xkey.state = ShiftMask;
-        std::string keystr2 = key_to_string(ev);
-        ev.xkey.state = Mod5Mask;
-        std::string keystr3 = key_to_string(ev);
 
+        std::string keystr;
+
+        // There is a list of specific keysyms that I want to map to strings myself
+        KeySym key = XLookupKeysym(&ev.xkey, 0);
+        if (myKeyMap.find(key) != myKeyMap.end()) {
+                keystr = myKeyMap[key];
+        } else {
+                keystr = XKeysymToString(key);
+        }
+     
         str += keystr;
 
         bool contains = currentlyPressed.find(keystr)!=currentlyPressed.end();
 
         switch (kind) {
-                case -1:
+                case -1: // release
                 if (!contains) return;
                 currentlyPressed.erase(keystr);
                 break;
-                case 0:
+                case 0: // repeat
                 if (!contains) {
                         add_key(keys, ev, 1);
                         return;
                 } 
                 break;
-                case 1:
+                case 1: // press
                 if (contains) return;
                 currentlyPressed.insert(keystr);
                 break;
-        }
-        if (shiftMap[keystr] == "") {
-                shiftMap[keystr] = keystr2;
-                if (verbose) {
-                        CLOG << "X map: " << keystr
-                             << " -> " << keystr2 << std::endl;
-                }
-        }
-        if (altMap[keystr] == "") {
-                altMap[keystr] = keystr3;
-                if (verbose) {
-                        CLOG << "X map: " << keystr
-                             << " => " << keystr3 << std::endl;
-                }
         }
         if (verbose) {
                 CLOG << "X key: " << str << std::endl;
         }
         keys.push_back(str);
+
+        // TODO: advanced input method / context for non-european languages
+        // use Xutf8LookupString
+        // or use an existing system like gtk
+        char buf[1024];
+        int r = XLookupString(&ev.xkey, buf, sizeof buf, NULL, NULL);
+
+        // don't want text events unless the key is being pressed or repeated
+        if (r && kind >= 0) {
+                APP_ASSERT(r==1);
+                // returns latin1 which is a subset of unicode
+                unsigned long codepoint = (unsigned char)buf[0];
+                // do not want non-printable text coming from keyboard, we have the
+                // above system for those keys
+                if ((codepoint>=0x20 && codepoint<0x7f) || codepoint>=0xa0) {
+                        str = ":";
+                        // just encode into utf8 and we're done
+                        encode_utf8(codepoint, str);
+                        if (verbose) {
+                                CLOG << "X key text: \"" << str << "\"" << std::endl;
+                        }
+                        keys.push_back(str);
+                }
+        }
 }
 
 bool KeyboardX11::hasFocus (void)
@@ -280,17 +267,6 @@ Keyboard::Presses KeyboardX11::getPresses (void)
                 }
         }
         return r;
-}
-
-
-Keyboard::Press KeyboardX11::getShifted (const Press &press)
-{
-        return shiftMap[press];
-}
-
-Keyboard::Press KeyboardX11::getAlted (const Press &press)
-{
-        return altMap[press];
 }
 
 

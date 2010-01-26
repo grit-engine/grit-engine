@@ -55,6 +55,7 @@ COMMON_OBJ=\
         TColLexer-core-engine.o \
         TColParser.o \
         TextListOverlayElement.o \
+        unicode_util.o \
 
 grit.x11: $(COMMON_OBJ) MouseX11.o KeyboardX11.o posix_sleep.o x11_clipboard.o
 	@$(LINKING)

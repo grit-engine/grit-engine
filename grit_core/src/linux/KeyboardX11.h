@@ -18,14 +18,10 @@ public:
 
         Presses getPresses();
 
-        Press getShifted(const Press &);
-        Press getAlted(const Press &);
-
         bool hasFocus (void);
 
 protected:
 
-        std::string key_to_string (XEvent &ev);
         void add_key (Keyboard::Presses &keys, XEvent event, int kind);
 
         Display *display;
@@ -38,9 +34,6 @@ protected:
         std::map<KeySym,const char*> myKeyMap;
 
         std::set<Press> currentlyPressed;
-
-        std::map<Press, Press> shiftMap;
-        std::map<Press, Press> altMap;
 
         bool focussed;
 };

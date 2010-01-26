@@ -138,7 +138,8 @@ LRESULT KeyboardWinAPI::wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lP
                 case WM_CHAR:
                 case WM_UNICHAR: {
                         key = ":";
-                        if (wParam < 0x20 || (wParam >= 0x80 && wParam < 0xa0)) break;
+                        // control chars
+                        if (wParam < 0x20 || (wParam >= 0x7f && wParam < 0xa0)) break;
                         encode_utf8(wParam, key);
                         if (verbose) {
                             CLOG << (void*)msg << ": \"" << key << "\" from " << wParam << ": " << "x" << repeat_count << std::endl;
