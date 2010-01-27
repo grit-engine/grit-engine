@@ -72,13 +72,23 @@ static std::vector<struct stack_frame> traceback(lua_State *L1, int level)
 
 void my_lua_error(lua_State *l, const std::string &msg)
 {
+        my_lua_error(l,msg.c_str());
+}
+
+void my_lua_error(lua_State *l, const std::string &msg, unsigned long level)
+{
+        my_lua_error(l,msg.c_str(),level);
+}
+
+void my_lua_error(lua_State *l, const char *msg)
+{
         // default value of 1 because this function is called from within c
         // code implementing lua functions that just need to strip themselves
         // from the traceback
         my_lua_error(l,msg,1);
 }
 
-void my_lua_error(lua_State *l, const std::string &msg, unsigned long level)
+void my_lua_error(lua_State *l, const char *msg, unsigned long level)
 {
         luaL_where(l,level);
         std::string str = luaL_checkstring(l,-1);

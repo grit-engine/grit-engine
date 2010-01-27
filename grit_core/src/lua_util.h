@@ -34,8 +34,9 @@ extern "C" {
 #define STACK_CHECK STACK_CHECK_N(0)
 
 void my_lua_error(lua_State *l, const std::string &msg) NORETURN;
-void my_lua_error(lua_State *l, const std::string &msg, unsigned long level)
-NORETURN;
+void my_lua_error(lua_State *l, const std::string &msg, unsigned long level) NORETURN;
+void my_lua_error(lua_State *l, const char *) NORETURN;
+void my_lua_error(lua_State *l, const char *, unsigned long level) NORETURN;
 
 void check_args(lua_State *l, int expected);
 void check_args_min(lua_State *l, int expected);

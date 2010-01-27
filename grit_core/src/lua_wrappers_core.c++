@@ -35,6 +35,7 @@
 #include "lua_wrappers_gritobj.h"
 #include "lua_wrappers_hud.h"
 
+#include "lua_utf8.h"
 
 
 // GLOBAL LIBRARY ========================================================== {{{
@@ -1730,6 +1731,8 @@ lua_State *init_lua(const char *filename)
 
         lua_pushthread(L); lua_setglobal(L,"MAIN_STATE");
         push_streamer(L, &grit->getStreamer()); lua_setglobal(L,"streamer");
+
+        lua_utf8_init(L);
 
         status = luaL_loadfile(L,filename);
         if (status) {

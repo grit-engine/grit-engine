@@ -46,6 +46,7 @@ COMMON_OBJ=\
         lua_wrappers_render.o \
         lua_wrappers_scnmgr.o \
         lua_wrappers_tex.o \
+        lua_utf8.o \
         LuaParticleSystem.o \
         main.o \
         matbin.o \
