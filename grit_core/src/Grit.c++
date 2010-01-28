@@ -62,11 +62,12 @@ Grit::Grit (Ogre::Root *ogre, Mouse *mouse, Keyboard *keyboard, Grit *& grit) :
 
         debugDrawer = new BulletDebugDrawer(sm);
 
-        L = init_lua("system/init.lua");
-
         //APP_VERBOSE("adding event listener");
         Ogre::WindowEventUtilities::addWindowEventListener(getWin(), this);
         //APP_VERBOSE("done adding event listener");
+
+        L = init_lua("system/init.lua");
+
 }
 
 Grit::~Grit ()
