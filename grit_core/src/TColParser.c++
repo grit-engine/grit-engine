@@ -377,12 +377,14 @@ static void parse_box (const Ogre::String &name,
                         Box &box)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
-        bool have_material = false;
         box.margin = DEFAULT_MARGIN;
+        bool have_material = false;
+        bool have_centre = false;
         box.qx = 0;
         box.qy = 0;
         box.qz = 0;
         box.qw = 1;
+        bool have_dimensions = false;
         quex::Token t;
         while (true) {
                 qlex->get_token(&t);
@@ -402,6 +404,7 @@ static void parse_box (const Ogre::String &name,
                         box.px = parse_real(name,qlex);
                         box.py = parse_real(name,qlex);
                         box.pz = parse_real(name,qlex);
+                        have_centre = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
 
@@ -417,6 +420,7 @@ static void parse_box (const Ogre::String &name,
                         box.dx = parse_real(name,qlex);
                         box.dy = parse_real(name,qlex);
                         box.dz = parse_real(name,qlex);
+                        have_dimensions = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
 
@@ -431,6 +435,12 @@ static void parse_box (const Ogre::String &name,
         if (!have_material) {
                 err(name,qlex,"No material provided for box.");
         }
+        if (!have_centre) {
+                err(name,qlex,"No centre provided for box.");
+        }
+        if (!have_dimensions) {
+                err(name,qlex,"No dimensions provided for box.");
+        }
 }
 
 
@@ -439,12 +449,14 @@ static void parse_cylinder (const Ogre::String &name,
                              Cylinder &cylinder)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
-        bool have_material = false;
         cylinder.margin = DEFAULT_MARGIN;
+        bool have_material = false;
+        bool have_centre = false;
         cylinder.qx = 0;
         cylinder.qy = 0;
         cylinder.qz = 0;
         cylinder.qw = 1;
+        bool have_dimensions = false;
         quex::Token t;
         while (true) {
                 qlex->get_token(&t);
@@ -464,6 +476,7 @@ static void parse_cylinder (const Ogre::String &name,
                         cylinder.px=parse_real(name,qlex);
                         cylinder.py=parse_real(name,qlex);
                         cylinder.pz=parse_real(name,qlex);
+                        have_centre = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
 
@@ -479,6 +492,7 @@ static void parse_cylinder (const Ogre::String &name,
                         cylinder.dx=parse_real(name,qlex);
                         cylinder.dy=parse_real(name,qlex);
                         cylinder.dz=parse_real(name,qlex);
+                        have_dimensions = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
 
@@ -493,6 +507,12 @@ static void parse_cylinder (const Ogre::String &name,
         if (!have_material) {
                 err(name,qlex,"No material provided for cylinder.");
         }
+        if (!have_dimensions) {
+                err(name,qlex,"No dimensions provided for cylinder.");
+        }
+        if (!have_centre) {
+                err(name,qlex,"No centre provided for cylinder.");
+        }
 }
 
 
@@ -501,12 +521,15 @@ static void parse_cone (const Ogre::String &name,
                          Cone &cone)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
-        bool have_material = false;
         cone.margin = DEFAULT_MARGIN;
+        bool have_material = false;
+        bool have_centre = false;
         cone.qx = 0;
         cone.qy = 0;
         cone.qz = 0;
         cone.qw = 1;
+        bool have_radius = false;
+        bool have_height = false;
         quex::Token t;
         while (true) {
                 qlex->get_token(&t);
@@ -526,6 +549,7 @@ static void parse_cone (const Ogre::String &name,
                         cone.px=parse_real(name,qlex);
                         cone.py=parse_real(name,qlex);
                         cone.pz=parse_real(name,qlex);
+                        have_centre = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
 
@@ -539,11 +563,13 @@ static void parse_cone (const Ogre::String &name,
 
                         case QUEX_TKN_RADIUS:
                         cone.radius=parse_real(name,qlex);
+                        have_radius = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
 
                         case QUEX_TKN_HEIGHT:
                         cone.height=parse_real(name,qlex);
+                        have_height = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
 
@@ -557,6 +583,15 @@ static void parse_cone (const Ogre::String &name,
         }
         if (!have_material) {
                 err(name,qlex,"No material provided for cone.");
+        }
+        if (!have_centre) {
+                err(name,qlex,"No centre provided for cone.");
+        }
+        if (!have_radius) {
+                err(name,qlex,"No radius provided for cone.");
+        }
+        if (!have_height) {
+                err(name,qlex,"No height provided for cone.");
         }
 }
 
@@ -785,6 +820,8 @@ void parse_tcol_1_0 (const Ogre::String &name,
                         if (is_static==NO)
                                 err(name,qlex,"Already have mass");
                         file.mass = parse_positive_real(name,qlex);
+                        if (file.mass == 0)
+                                err(name,qlex,"Mass of 0 is not allowed.  Did you mean to use static?");
                         is_static = NO;
                         if (more_to_come(name,qlex)) continue; break;
 
