@@ -81,6 +81,13 @@ void edit_append (const char *text)
         SendMessage(win_log, EM_REPLACESEL, FALSE, (LPARAM)text);
 }
 
+void edit_clear (void)
+{
+        CHARRANGE range = {0, -1};
+        SendMessage(win_log, EM_EXSETSEL, 0, (LPARAM)&range);
+        SendMessage(win_log, EM_REPLACESEL, FALSE, (LPARAM)"");
+}
+
 int current_colour = 7;
 bool current_bold = false;
 void set_colour (HWND edit, int c, bool b, bool everything=false)
@@ -427,7 +434,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                         }
                                 } return 0;
 
-                                case 102: // exit
+                                case 102: // clear log
+                                edit_clear();
+                                return 0;
+
+                                case 103: // exit
                                 DestroyWindow(hWnd);
                                 return 0;
 
