@@ -386,6 +386,7 @@ int PhysicsWorld::pump (lua_State *L,
                 if (elapsed<step_size) break;
                 elapsed -= step_size;
                 world->step();
+                std::vector<RigidBody*> nan_bodies;
                 for (int i=0 ; i<world->getNumCollisionObjects() ; ++i) {
 
                         btCollisionObject* victim =
@@ -394,7 +395,22 @@ int PhysicsWorld::pump (lua_State *L,
                         if (victim2==NULL) continue;
                         RigidBody *rb =
                              static_cast<RigidBody*>(victim2->getMotionState());
-                        rb->stepCallback(L);
+
+                        const btTransform &current_xform = victim2->getWorldTransform();
+                        const btVector3 &pos = current_xform.getOrigin();
+                        btQuaternion quat;
+                        current_xform.getBasis().getRotation(quat);
+                        float x=pos.x(), y=pos.y(), z=pos.z();
+                        float qw=quat.w(), qx=quat.x(), qy=quat.y(), qz=quat.z();
+                        if (isnan(x) || isnan(y) || isnan(z) || isnan(qw) || isnan(qx) || isnan(qy) || isnan(qz)) {
+                                CERR << "NaN from physics engine position update." << std::endl;
+                                nan_bodies.push_back(rb);
+                        } else {
+                                rb->stepCallback(L);
+                        }
+                }
+                for (unsigned int i=0 ; i<nan_bodies.size() ; ++i) {
+                        nan_bodies[i]->removeFromWorld();
                 }
                 for (int i=0 ; i<world->getNumCollisionObjects() ; ++i) {
 
@@ -749,17 +765,12 @@ void RigidBody::getWorldTransform (btTransform& into_here) const
 
 void RigidBody::setWorldTransform (const btTransform& current_xform)
 {
-        lua_State *L = world->last_L;
-
         if (updateCallbackIndex==LUA_NOREF) return;
         if (updateCallbackIndex==LUA_REFNIL) return;
 
-        int error_handler = lua_gettop(L);
+        lua_State *L = world->last_L;
 
         STACK_BASE;
-
-        // get callback
-        lua_rawgeti(L,LUA_REGISTRYINDEX,updateCallbackIndex);
 
         // args
         const btVector3 &pos = current_xform.getOrigin();
@@ -768,11 +779,17 @@ void RigidBody::setWorldTransform (const btTransform& current_xform)
         float x=pos.x(), y=pos.y(), z=pos.z();
         float qw=quat.w(), qx=quat.x(), qy=quat.y(), qz=quat.z();
         if (isnan(x) || isnan(y) || isnan(z) || isnan(qw) || isnan(qx) || isnan(qy) || isnan(qz)) {
-                CERR << "NaN from physics engine." << std::endl;
+                CERR << "NaN from physics engine graphics update." << std::endl;
                 x = 0; y = 0; z = 0;
-                qw = 1; qx = 0; qy = 0; qz = 0;
-                // TODO: move the object back into the real world
+                qw = 0; qx = 0; qy = 0; qz = 0;
         }
+
+
+        int error_handler = lua_gettop(L);
+
+        // get callback
+        lua_rawgeti(L,LUA_REGISTRYINDEX,updateCallbackIndex);
+
         lua_pushnumber(L,x); // arg 1
         lua_pushnumber(L,y); // arg 2
         lua_pushnumber(L,z); // arg 3
