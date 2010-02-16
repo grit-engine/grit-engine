@@ -158,12 +158,14 @@ bool check_bool (lua_State *l, int stack_index)
         }
         return 0!=lua_toboolean(l,stack_index);
 }
-int my_lua_error_handler(lua_State *l)
+int my_lua_error_handler (lua_State *l)
 {
         return my_lua_error_handler(l,l,1);
 }
 
-int my_lua_error_handler(lua_State *l, lua_State *coro, int levelhack)
+int my_do_nothing_lua_error_handler (lua_State *) { return 0; }
+
+int my_lua_error_handler (lua_State *l, lua_State *coro, int levelhack)
 {
         //check_args(l,1);
         int level = 0;

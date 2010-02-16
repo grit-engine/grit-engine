@@ -5,6 +5,8 @@
 #include "lua_wrappers_physics.h"
 #include "lua_wrappers_scnmgr.h"
 #include "lua_wrappers_primitives.h"
+#include "lua_wrappers_core.h"
+#include "path_util.h"
 
 // GRIT CLASS ============================================================= {{{
 
@@ -406,7 +408,7 @@ static int streamer_add_class (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::String name = lua_tostring(L,2);
+        std::string name = pwd_full(L, lua_tostring(L,2));
         if (!lua_istable(L,3))
                 my_lua_error(L,"Second parameter should be a table");
         if (!lua_istable(L,4))
@@ -421,7 +423,7 @@ static int streamer_get_class (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        Ogre::String name = pwd_full(L, luaL_checkstring(L,2));
         push_gritcls(L,self.getClass(name));
         return 1;
 TRY_END
@@ -443,7 +445,7 @@ static int streamer_remove_class (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        Ogre::String name = pwd_full(L, luaL_checkstring(L,2));
         self.deleteClass(L,self.getClass(name));
         return 0;
 TRY_END
@@ -457,7 +459,7 @@ TRY_START
         if (lua_gettop(L)!=4)
                 check_args(L,6);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::String className = luaL_checkstring(L,2);
+        std::string className = pwd_full(L, luaL_checkstring(L,2));
         Ogre::Real x,y,z;
         if (lua_gettop(L)==4) {
                 GET_UD_MACRO(Ogre::Vector3,val,3,VECTOR3_TAG);
@@ -473,7 +475,7 @@ TRY_START
         if (!lua_istable(L,table_index))
                 my_lua_error(L,"Last parameter should be a table");
         lua_getfield(L,table_index,"name");
-        Ogre::String name;
+        std::string name;
         if (lua_isnil(L,-1)) {
                 name = "";
         } else {

@@ -104,6 +104,7 @@ inline Ogre::Real table_fetch_real (lua_State *L, const char *f, Ogre::Real def)
 
 int my_lua_error_handler(lua_State *l, lua_State *coro, int levelhack);
 int my_lua_error_handler(lua_State *l);
+int my_do_nothing_lua_error_handler(lua_State *l);
 
 void lua_alloc_stats_get (size_t &counter, size_t &mallocs,
                           size_t &reallocs, size_t &frees);

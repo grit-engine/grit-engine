@@ -25,7 +25,7 @@ class Streamer;
 
 #include "lua_userdata_dependency_tracker.h"
 
-class Grit : public Ogre::WindowEventListener {
+class Grit : public Ogre::WindowEventListener, public Ogre::MeshSerializerListener {
 
 public:
 
@@ -62,6 +62,9 @@ public:
         virtual Streamer &getStreamer() { return *streamer; }
 
         virtual lua_State *getLuaState (void) const { return L; }
+
+        virtual void processMaterialName (Ogre::Mesh *mesh, Ogre::String *name);
+        virtual void processSkeletonName (Ogre::Mesh *mesh, Ogre::String *name);
 
 protected:
 

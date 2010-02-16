@@ -196,7 +196,7 @@ void process_txds (std::ostream &out,
                         const std::string &texname = *j;
                         // build a list of all textures we
                         // know about (relative to dest_dir)
-                        texs.insert(modname+"/"+img.name+"/"+
+                        texs.insert(img.name+"/"+
                                     fname+"/"+texname+".dds");
                 }
         }
@@ -229,8 +229,7 @@ void process_cols (std::ostream &out,
                         std::string name;
                         parse_col(name,img.f,tcol);
 
-                        std::string tcolname =
-                                modname+"/"+img.name+"/"+name+".tcol";
+                        std::string tcolname = img.name+"/"+name+".tcol";
 
                         cols_including_empty.insert(tcolname);
 
@@ -238,14 +237,13 @@ void process_cols (std::ostream &out,
 
                                 cols.insert(tcolname);
 
-                                name = dest_dir+"/"+tcolname;
+                                name = dest_dir+"/"+modname+"/"+tcolname;
 
                                 std::ofstream f;
                                 f.open(name.c_str(), std::ios::binary);
-                                ASSERT_IO_SUCCESSFUL(f,"opening tcol "
-                                                         "for writing");
+                                ASSERT_IO_SUCCESSFUL(f,"opening tcol for writing");
 
-                                pretty_print_tcol(f,tcol);
+                                pretty_print_tcol(f, tcol);
                         }
 
                         next = img.f.peek();
@@ -469,7 +467,7 @@ void extract (const Config &cfg, std::ostream &out)
                 std::stringstream col_field;
                 std::string cls = "BaseClass";
 
-                std::string tcol_name = cfg.modname+"/"+img->name+"/"+o.dff+".tcol";
+                std::string tcol_name = img->name+"/"+o.dff+".tcol";
                 bool use_col = true;
 
                 // once only
@@ -503,7 +501,7 @@ void extract (const Config &cfg, std::ostream &out)
                 bool cast_shadow = 0 != (o.flags&OBJ_FLAG_POLE_SHADOW);
 
                 classes<<"streamer:addClass("
-                       <<"\""<<cfg.modname<<"/"<<o.id<<"\","
+                       <<"\""<<o.id<<"\","
                        <<cls<<",{"
                            <<"castShadows="<<(cast_shadow?"true":"false")
                            <<",renderingDistance="<<(o.draw_distance+rad)
@@ -521,10 +519,8 @@ void extract (const Config &cfg, std::ostream &out)
                         const Inst &inst = *j;
                         if (inst.is_low_detail) continue;
                         if (!ids_written_out[inst.id]) continue;
-                        std::stringstream cls;
-                        cls << cfg.modname << "/" << inst.id;
                         if (inst.near_for==-1) {
-                                map<<"streamer:addObject(\""<<cls.str()<<"\","
+                                map<<"streamer:addObject(\""<<inst.id<<"\","
                                    <<inst.x<<","<<inst.y<<","<<inst.z;
                                 if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
                                         map<<",{rot=Quat("
@@ -534,9 +530,7 @@ void extract (const Config &cfg, std::ostream &out)
                                 map<<")\n";
                         } else {
                                 const Inst &far = insts[inst.near_for];
-                                std::stringstream farcls;
-                                farcls << cfg.modname << "/" << far.id;
-                                map<<"last=streamer:addObject(\""<<cls.str()<<"\","
+                                map<<"last=streamer:addObject(\""<<inst.id<<"\","
                                    <<inst.x<<","<<inst.y<<","<<inst.z;
                                 if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
                                         map<<",{rot=Quat("
@@ -544,7 +538,7 @@ void extract (const Config &cfg, std::ostream &out)
                                            <<inst.ry<<","<<inst.rz<<")}";
                                 }
                                 map<<")\n";
-                                map<<"streamer:addObject(\""<<farcls.str()<<"\","
+                                map<<"streamer:addObject(\""<<far.id<<"\","
                                    <<far.x<<","<<far.y<<","<<far.z;
                                 map<<",{";
                                 if (far.rx!=0 || far.ry!=0 || far.rz!=0) {

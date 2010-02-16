@@ -6,6 +6,7 @@
 
 #include <Ogre.h>
 #include <OgreFontManager.h>
+#include <OgreMeshManager.h>
 #include <OgreOverlayElementFactory.h>
 #include <OgreAxisAlignedBox.h>
 
@@ -19,6 +20,7 @@
 #include "lua_wrappers_core.h"
 #include "GritObject.h"
 #include "Streamer.h"
+#include "path_util.h"
 
 #include "HUD.h"
 
@@ -66,7 +68,12 @@ Grit::Grit (Ogre::Root *ogre, Mouse *mouse, Keyboard *keyboard, Grit *& grit) :
         Ogre::WindowEventUtilities::addWindowEventListener(getWin(), this);
         //APP_VERBOSE("done adding event listener");
 
-        L = init_lua("system/init.lua");
+        Ogre::MeshManager::getSingleton().setListener(this);
+
+        Ogre::ResourceGroupManager::getSingleton().
+                addResourceLocation(".","FileSystem","GRIT",true);
+
+        L = init_lua("/system/init.lua");
 
 }
 
@@ -82,6 +89,20 @@ Grit::~Grit ()
         if (debugDrawer) delete debugDrawer;
         if (sm && ogre) ogre->destroySceneManager(sm);
         if (ogre) OGRE_DELETE ogre;
+}
+
+void Grit::processMaterialName (Ogre::Mesh *mesh, Ogre::String *name)
+{
+        std::string filename = mesh->getName();
+        std::string dir(filename, 0, filename.rfind('/')+1);
+        *name = pwd_full_ex(*name, "/"+dir, "BaseWhite");
+}
+
+void Grit::processSkeletonName (Ogre::Mesh *mesh, Ogre::String *name)
+{
+        std::string filename = mesh->getName();
+        std::string dir(filename, 0, filename.rfind('/')+1);
+        *name = pwd_full_ex(*name, "/"+dir, "BaseWhite");
 }
 
 Ogre::RenderWindow *Grit::getWin () {

@@ -92,6 +92,7 @@ void BackgroundMeshLoader::operator() (void)
 {
         //APP_VERBOSE("BackgroundMeshLoader: thread started");
         ResourcePtrs pending;
+        bool failed = false;
         while (!mQuit) {
                 {
                         OGRE_LOCK_AUTO_MUTEX;
@@ -99,7 +100,8 @@ void BackgroundMeshLoader::operator() (void)
                                 // Usual case:
                                 // demand wasn't retracted while we were
                                 // processing it
-                                mCurrent->mProcessed = true;
+                                if (!failed)
+                                        mCurrent->mProcessed = true;
                                 // cache in d to suppress compiler error
                                 Demand *d = mCurrent;
                                 mDemands.erase(d);
@@ -123,13 +125,19 @@ void BackgroundMeshLoader::operator() (void)
                         pending = mCurrent->rPtrs;
                 }
                 //APP_VERBOSE("BackgroundMeshLoader: loading: "+name);
-                for (ResourcePtrs::iterator i=pending.begin(),
-                                            i_=pending.end() ; i!=i_ ; ++i) {
-                        Ogre::ResourcePtr &rp = *i;
-                        if (!rp->isPrepared()) {
-                                rp->prepare();
-                                mAllowance--;
+                try {
+                        for (ResourcePtrs::iterator i=pending.begin(),
+                                                    i_=pending.end() ; i!=i_ ; ++i) {
+                                Ogre::ResourcePtr &rp = *i;
+                                if (!rp->isPrepared()) {
+                                        rp->prepare();
+                                        mAllowance--;
+                                }
                         }
+                        failed = false;
+                } catch (Ogre::Exception &e) {
+                        CERR << e.getFullDescription() << std::endl;
+                        failed = true;
                 }
 
                 //mysleep(100000);

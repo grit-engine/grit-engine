@@ -983,7 +983,7 @@ std::string get_tex_name (const std::string &img,
 
     if (txd!="") tex_name = txd + ".txd" + "/" + tex_name;
     if (img!="") tex_name = img + "/" + tex_name;
-    if (mod_name!="") tex_name = mod_name + "/" + tex_name;
+    //if (mod_name!="") tex_name = mod_name + "/" + tex_name;
 
     // if it's a duplicate of another texture, use the other texture instead
     tex_name = tex_dup(tex_name);
@@ -1125,10 +1125,7 @@ export_or_provide_mat (const StringSet &texs,
     m.rewrittenTextures = textures;
 
     std::ostringstream mname;
-    if (mod_name!="") {
-        mname<<mod_name<<"/";
-    }
-    mname<<oname<<"/"<<mindex;
+    mname<<oname<<":"<<mindex;
 
     const std::string &mat = already_seen(matdb, R,G,B,A, textures, has_alpha,
                                           decal, double_sided,

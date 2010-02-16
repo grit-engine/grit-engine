@@ -84,7 +84,20 @@ TRY_START
 TRY_END
 }
 
-static int mesh_set_material (lua_State *L)
+static int mesh_get_material_name (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::MeshPtr,self,1,MESH_TAG);
+        unsigned int n = check_t<unsigned int>(L,2);
+        Ogre::SubMesh *sm = self->getSubMesh(n);
+        std::string name = sm->getMaterialName();
+        lua_pushstring(L, name.c_str());
+        return 1;
+TRY_END
+}
+
+static int mesh_set_material_name (lua_State *L)
 {
 TRY_START
         check_args(L,3);
@@ -124,12 +137,14 @@ TRY_START
                 lua_pushboolean(L,self->isPrepared());
         } else if (key == "useCount") {
                 lua_pushnumber(L,self.useCount());
-        } else if (key == "numSubEntities") {
+        } else if (key == "numSubMeshes") {
                 lua_pushnumber(L,self->getNumSubMeshes());
+        } else if (key == "getMaterialName") {
+                push_cfunction(L,mesh_get_material_name);
+        } else if (key == "setMaterialName") {
+                push_cfunction(L,mesh_set_material_name);
         } else if (key == "getMaterial") {
                 push_cfunction(L,mesh_get_material);
-        } else if (key == "setMaterial") {
-                push_cfunction(L,mesh_set_material);
         } else {
                 my_lua_error(L,"Not a valid Mesh member: "+key);
         }
