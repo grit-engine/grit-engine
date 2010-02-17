@@ -102,7 +102,7 @@ void Grit::processSkeletonName (Ogre::Mesh *mesh, Ogre::String *name)
 {
         std::string filename = mesh->getName();
         std::string dir(filename, 0, filename.rfind('/')+1);
-        *name = pwd_full_ex(*name, "/"+dir, "BaseWhite");
+        *name = pwd_full_ex(*name, "/"+dir, *name).substr(1); // strip leading '/' from this one
 }
 
 Ogre::RenderWindow *Grit::getWin () {
