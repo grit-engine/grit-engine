@@ -336,6 +336,12 @@ TRY_START
                 lua_pushcfunction(L,gpuprog_set_auto_constant_float);
         } else if (key=="setAutoConstantInt") {
                 lua_pushcfunction(L,gpuprog_set_auto_constant_int);
+        } else if (key=="skeletalAnimationIncluded") {
+                lua_pushboolean(L,self->isSkeletalAnimationIncluded());
+        } else if (key=="morphAnimationIncluded") {
+                lua_pushboolean(L,self->isMorphAnimationIncluded());
+        } else if (key=="poseAnimationIncluded") {
+                lua_pushboolean(L,self->isPoseAnimationIncluded());
         } else if (key=="defines") {
                 Ogre::GLSLProgram *glsl = dynamic_cast<Ogre::GLSLProgram*>(&*self);
                 if (glsl) {
@@ -469,6 +475,12 @@ TRY_START
                         }
                         cg->setProfiles(profs);
                 }
+        } else if (key=="skeletalAnimationIncluded") {
+                self->setSkeletalAnimationIncluded(check_bool(L,3));
+        } else if (key=="morphAnimationIncluded") {
+                self->setMorphAnimationIncluded(check_bool(L,3));
+        } else if (key=="poseAnimationIncluded") {
+                self->setPoseAnimationIncluded(check_bool(L,3));
         } else {
                 my_lua_error(L,"Not a writeable GPUProg member: "+key);
         }
