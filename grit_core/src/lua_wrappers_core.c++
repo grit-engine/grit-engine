@@ -1558,18 +1558,13 @@ static const char *aux_aux_include (lua_State *L, void *ud, size_t *size)
 
 static int aux_include (lua_State *L, const std::string &filename)
 {
-        LuaIncludeState lis;
-        try {
-                std::string fname(filename,1); // strip leading /
-                lis.ds = Ogre::ResourceGroupManager::getSingleton().openResource(fname,"GRIT");
-        } catch (Ogre::Exception &e) {
-                if (e.getNumber()==Ogre::Exception::ERR_FILE_NOT_FOUND) {
-                        lua_pushfstring(L, "File not found: \"%s\"", filename.c_str());
-                        return LUA_ERRFILE;
-                } else {
-                        throw e;
-                }
+        std::string fname(filename,1); // strip leading /
+        if (!Ogre::ResourceGroupManager::getSingleton().resourceExists("GRIT",fname)) {
+                lua_pushfstring(L, "File not found: \"%s\"", filename.c_str());
+                return LUA_ERRFILE;
         }
+        LuaIncludeState lis;
+        lis.ds = Ogre::ResourceGroupManager::getSingleton().openResource(fname,"GRIT");
         return lua_load(L, aux_aux_include, &lis, filename.c_str());
 }
 
