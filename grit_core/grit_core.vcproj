@@ -42,8 +42,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\CgProgramManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Dependencies\include&quot;;&quot;$(SolutionDir)\dependencies\icu\include&quot;"
-				PreprocessorDefinitions="WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;OGRE_THREAD_PROVIDER=1;QUEX_OPTION_ASSERTS_WARNING_MESSAGE_DISABLED;OGRE_MEMORY_ALLOCATOR=1;FREEIMAGE_LIB;U_STATIC_IMPLEMENTATION"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\CgProgramManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Dependencies\include&quot;;&quot;$(SolutionDir)\dependencies\icu\include&quot;;&quot;$(SolutionDir)\dependencies&quot;"
+				PreprocessorDefinitions="WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NO_PLUGINS;QUEX_OPTION_ASSERTS_WARNING_MESSAGE_DISABLED"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -64,95 +64,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ogre.lib FreeImaged.lib freetype235_D.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OpenEXR.lib zlibd.lib zziplibd.lib bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib $(InputDir)src\win32\Resources.res cg.lib"
+				AdditionalDependencies="ogre.lib FreeImaged.lib freetype235_D.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OpenEXR.lib zlibd.lib zziplibd.lib bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib $(InputDir)src\win32\Resources.res cg.lib icudt.lib icuin.lib icuuc.lib"
 				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Debug&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Debug&quot;;&quot;$(SolutionDir)\dependencies\icu\lib&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				SubSystem="1"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Optimised|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(OutDir)\int"
-			ConfigurationType="1"
-			CharacterSet="2"
-			WholeProgramOptimization="1"
-			BuildLogFile="$(OutDir)\$(TargetName)_BuildLog.htm"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				EnableIntrinsicFunctions="true"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\CgProgramManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Dependencies\include&quot;;&quot;$(SolutionDir)\dependencies\icu\source\common&quot;;&quot;$(SolutionDir)\dependencies\icu\source\i18n&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;OGRE_THREAD_PROVIDER=1;OGRE_MEMORY_ALLOCATOR=1;FREEIMAGE_LIB"
-				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="0"
-				ProgramDataBaseFileName="$(OutDir)\$(TargetName).pdb"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-				DisableSpecificWarnings="4355"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib cg.lib icuuc.lib icudt.lib icuin.lib"
-				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(OutDir)&quot;;&quot;$(SolutionDir)\dependencies\icu\source\lib&quot;;$(NOINHERIT)"
-				GenerateDebugInformation="true"
-				SubSystem="1"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -210,8 +127,8 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\CgProgramManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Dependencies\include&quot;;&quot;$(SolutionDir)\dependencies\icu\include&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;OGRE_STATIC_LIB;NO_PLUGINS;OGRE_THREAD_SUPPORT=2;OGRE_THREAD_PROVIDER=1;OGRE_MEMORY_ALLOCATOR=1;FREEIMAGE_LIB;U_STATIC_IMPLEMENTATION"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\RenderSystems\Direct3D9\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Plugins\CgProgramManager\include&quot;;&quot;$(SolutionDir)\dependencies\ogre\Dependencies\include&quot;;&quot;$(SolutionDir)\dependencies\icu\include&quot;;&quot;$(SolutionDir)\dependencies&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NO_PLUGINS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -231,10 +148,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib cg.lib common.lib i18n.lib"
+				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib cg.lib icudt.lib icuin.lib icuuc.lib"
 				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\icu\lib&quot;;&quot;$(SolutionDir)\dependencies\ogre\Dependencies\lib\Release&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -379,6 +296,10 @@
 			</File>
 			<File
 				RelativePath=".\src\win32\MouseDirectInput8.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\path_util.c++"
 				>
 			</File>
 			<File
