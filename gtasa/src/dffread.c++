@@ -996,8 +996,7 @@ void ind (std::ostream &out, unsigned int level)
 
 std::string get_tex_name (const std::string &img,
                           const std::string &txd,
-                          std::string tex_name,
-                          const std::string &mod_name)
+                          std::string tex_name)
 {{{
     strlower(tex_name);
     tex_name += ".dds";
@@ -1095,8 +1094,7 @@ export_or_provide_mat (const StringSet &texs,
                        const Obj &obj,
                        const std::string &oname,
                        MatDB &matdb,
-                       std::ostream &materials_lua,
-                       const std::string &mod_name)
+                       std::ostream &materials_lua)
 {{{
 
     material &m = g.materials[mindex];
@@ -1122,7 +1120,7 @@ export_or_provide_mat (const StringSet &texs,
             const std::string &txd = txds[j];
             for (size_t k=0 ; k<imgs.size() ; ++k) {
                 const std::string &img = imgs[k];
-                tex_name = get_tex_name(img, txd, m.textures[i].name, mod_name);
+                tex_name = get_tex_name(img, txd, m.textures[i].name);
                 if (texs.empty() || texs.find(tex_name)!=texs.end()) {
                     found = true;
                     goto done;
@@ -1244,8 +1242,7 @@ void export_xml (const StringSet &texs,
                  const std::string &oname,
                  struct geometry &g,
                  MatDB &matdb,
-                 std::ostream &materials_lua,
-                 const std::string &mod_name)
+                 std::ostream &materials_lua)
 {{{
     out << "xml filename: " << fname << std::endl;
 
@@ -1316,7 +1313,7 @@ void export_xml (const StringSet &texs,
         }
 
         std::string mname = export_or_provide_mat(texs,ide,imgs,g,s->material,
-                                                  obj,oname,matdb,materials_lua,mod_name);
+                                                  obj,oname,matdb,materials_lua);
 
         s->surrogate = mname;
 
@@ -1377,8 +1374,7 @@ void export_mesh (const StringSet &texs,
                  const std::string &oname,
                   struct geometry &g,
                   MatDB &matdb,
-                  std::ostream &materials_lua,
-                  const std::string &mod_name)
+                  std::ostream &materials_lua)
 {{{
     (void) out;
     //out << "mesh filename: " << fname << std::endl;
@@ -1513,7 +1509,7 @@ void export_mesh (const StringSet &texs,
         unsigned short *ibuf_next = ibuf;
 
         std::string mname = export_or_provide_mat(texs,ide,imgs,g,s->material,
-                                                  obj,oname,matdb,materials_lua,mod_name);
+                                                  obj,oname,matdb,materials_lua);
 
         s->surrogate = mname;
 
@@ -1643,7 +1639,6 @@ const char *usage =
 "              | \"-q\" | \"--quiet\"                 decrease debug level\n"
 "              | \"-d\" <file> | \"--dff\" <file>     add to list of dffs\n\n"
 "              | \"-e\" <name> | \"--export\" <name>  export to .mesh\n"
-"              | \"-m\" <name> | \"--modname\" <name> for export\n"
 "              | \"-t\" <name> | \"--txd\" <name>     for export\n\n"
 "              | \"-o\" | \"--orphans\"               list orphaned frames\n"
 "              | \"-O\" | \"--no-orphans\"            complement of above\n\n"
@@ -1686,7 +1681,6 @@ int main(int argc, char **argv)
     bool orphans = false;
     bool do_export_mesh = false;
     std::string oname;
-    std::string modname;
     std::string txdname;
 
     int so_far = 1;
@@ -1709,8 +1703,6 @@ int main(int argc, char **argv)
                 exit(EXIT_FAILURE);
             }
             dffs.push_back(file_name);
-        } else if (arg=="-m" || arg=="--modname") {
-            modname = next_arg(so_far,argc,argv);
         } else if (arg=="-t" || arg=="--txd") {
             txdname = next_arg(so_far,argc,argv);
         } else if (arg=="-e" || arg=="--export") {
@@ -1759,7 +1751,7 @@ int main(int argc, char **argv)
                 obj.txd = txdname;
                 MatDB matdb;
                 export_mesh(texs, ide, imgs, std::cout, oname+".mesh", obj,
-                            oname, dff.geometries[0], matdb, materials_lua, modname);
+                            oname, dff.geometries[0], matdb, materials_lua);
 
             }
 

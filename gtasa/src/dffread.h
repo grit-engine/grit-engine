@@ -262,8 +262,7 @@ void export_xml (const StringSet &texs,
                  const std::string &oname,
                  struct geometry &g,
                  MatDB &matdb,
-                 std::ostream &matbin,
-                 const std::string &mod_name);
+                 std::ostream &matbin);
 
 void init_ogre (void);
 
@@ -276,8 +275,7 @@ void export_mesh (const StringSet &texs,
                   const std::string &oname,
                   struct geometry &g,
                   MatDB &matdb,
-                  std::ostream &matbin,
-                  const std::string &mod_name);
+                  std::ostream &matbin);
 
 void generate_normals (struct geometry &g);
 #endif
