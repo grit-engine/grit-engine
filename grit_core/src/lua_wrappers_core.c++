@@ -721,10 +721,7 @@ TRY_START
 
         ExternalTable &t = mat_map[name];
         t.clear();
-        for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
-                const char *err = t.luaSet(L);
-                if (err) my_lua_error(L, err);
-        }
+        t.takeTableFromLuaStack(L,2);
         return 0;
 TRY_END
 }

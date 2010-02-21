@@ -40,12 +40,10 @@ class ExternalTable {
 
     public:
 
-        bool has (const Ogre::String &key)
-        {
-                return fields.find(key)!=fields.end();
-        }
+        bool has (const Ogre::String &key) { return fields.find(key)!=fields.end(); }
+        bool has (lua_Number key) { return elements.find(key)!=elements.end(); }
 
-        void set (const Ogre::String &key, const Ogre::Real r)
+        void set (const Ogre::String &key, const lua_Number r)
         {
                 fields[key].type = 0;
                 fields[key].real = r;
@@ -75,42 +73,91 @@ class ExternalTable {
                 fields[key].b = b;
         }
 
-        void set (const Ogre::String &key,const std::vector<Ogre::String> &strs)
+        void set (const Ogre::String &key, ExternalTable *t)
         {
                 fields[key].type = 5;
-                fields[key].strs = strs;
+                fields[key].t = t;
+        }
+
+        void set (lua_Number key, const lua_Number r)
+        {
+                elements[key].type = 0;
+                elements[key].real = r;
+        }
+
+        void set (lua_Number key, const Ogre::String &s)
+        {
+                elements[key].type = 1;
+                elements[key].str = s;
+        }
+
+        void set (lua_Number key, const Ogre::Vector3 &v3)
+        {
+                elements[key].type = 2;
+                elements[key].v3 = v3;
+        }
+
+        void set (lua_Number &key, const Ogre::Quaternion &q)
+        {
+                elements[key].type = 3;
+                elements[key].q = q;
+        }
+
+        void set (lua_Number &key, bool b)
+        {
+                elements[key].type = 4;
+                elements[key].b = b;
+        }
+
+        void set (lua_Number &key, ExternalTable *t)
+        {
+                elements[key].type = 5;
+                elements[key].t = t;
         }
 
         const char *luaGet (lua_State *L);
-
         const char *luaSet (lua_State *L);
 
         const char *luaGet (lua_State *L, const Ogre::String &key);
-
         const char *luaSet (lua_State *L, const Ogre::String &key);
 
+        const char *luaGet (lua_State *L, lua_Number key);
+        const char *luaSet (lua_State *L, lua_Number key);
+
         void unset (const Ogre::String &key) { fields.erase(key); }
+        void unset (lua_Number key) { elements.erase(key); }
 
-        void clear (void) { fields.clear(); }
-
+        void clear (void) { fields.clear(); elements.clear(); }
 
         void dump (lua_State *L);
-                
+        void takeTableFromLuaStack (lua_State *L, int tab);
+
+        template<typename T> class UniquePtr {
+                T *ptr;
+        public:
+                UniquePtr () : ptr(NULL) { }
+                ~UniquePtr (void) { delete ptr; }
+                T *operator-> (void) const { return ptr; }
+                T *operator= (T *ptr_) { delete ptr; return ptr=ptr_; }
+        };
 
         struct Value {
                 int type;
                 Ogre::String str;
-                Ogre::Real real;
+                lua_Number real;
                 Ogre::Vector3 v3;
                 Ogre::Quaternion q;
                 bool b;
-                std::vector<Ogre::String> strs;
+                UniquePtr<ExternalTable> t;
         };
 
     protected:
 
-        typedef std::map<Ogre::String,Value> ValueMap;
-        ValueMap fields;
+        typedef std::map<Ogre::String,Value> StringMap;
+        StringMap fields;
+
+        typedef std::map<lua_Number,Value> NumberMap;
+        NumberMap elements;
 
 };
 
