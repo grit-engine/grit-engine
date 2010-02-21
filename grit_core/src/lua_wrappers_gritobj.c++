@@ -429,12 +429,15 @@ static int streamer_add_class (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        std::string name = pwd_full(L, lua_tostring(L,2));
+        const char *name = lua_tostring(L,2);
+        if (name==NULL)
+                my_lua_error(L,"Could not process the name of the new class");
+        std::string fqname = pwd_full(L, name);
         if (!lua_istable(L,3))
                 my_lua_error(L,"Second parameter should be a table");
         if (!lua_istable(L,4))
                 my_lua_error(L,"Third parameter should be a table");
-        self.addClass(L, name);
+        self.addClass(L, fqname);
         return 1;
 TRY_END
 }
