@@ -470,7 +470,7 @@ void extract (const Config &cfg, std::ostream &out)
                         generate_normals(g);
                         export_mesh(texs,everything,export_imgs,
                                     out,out_name,
-                                    o,objname,g,matdb,materials_lua,cfg.modname);
+                                    o,objname,g,matdb,materials_lua);
 
                         MatSplits &ms = g.mat_spls;
                         for (MatSplits::iterator s=ms.begin(),
