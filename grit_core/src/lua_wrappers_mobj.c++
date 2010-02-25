@@ -871,7 +871,106 @@ TRY_START
         lua_pushnumber(L,quat.x);
         lua_pushnumber(L,quat.y);
         lua_pushnumber(L,quat.z);
+        return 7;
+TRY_END
+}
+
+static int entity_get_bone_position (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Vector3 pos = skel->getBone(n)->getPosition();
+        lua_pushnumber(L,pos.x);
+        lua_pushnumber(L,pos.y);
+        lua_pushnumber(L,pos.z);
+        return 3;
+TRY_END
+}
+
+static int entity_get_bone_initial_position (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Vector3 pos = skel->getBone(n)->getInitialPosition();
+        lua_pushnumber(L,pos.x);
+        lua_pushnumber(L,pos.y);
+        lua_pushnumber(L,pos.z);
+        return 3;
+TRY_END
+}
+
+static int entity_set_bone_position (lua_State *L)
+{
+TRY_START
+        check_args(L,5);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Real x = luaL_checknumber(L,3);
+        Ogre::Real y = luaL_checknumber(L,4);
+        Ogre::Real z = luaL_checknumber(L,5);
+        skel->getBone(n)->setPosition(x,y,z);
+        return 0;
+TRY_END
+}
+
+static int entity_get_bone_orientation (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Quaternion quat = skel->getBone(n)->getOrientation();
+        lua_pushnumber(L,quat.w);
+        lua_pushnumber(L,quat.x);
+        lua_pushnumber(L,quat.y);
+        lua_pushnumber(L,quat.z);
         return 4;
+TRY_END
+}
+
+static int entity_get_bone_initial_orientation (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Quaternion quat = skel->getBone(n)->getInitialOrientation();
+        lua_pushnumber(L,quat.w);
+        lua_pushnumber(L,quat.x);
+        lua_pushnumber(L,quat.y);
+        lua_pushnumber(L,quat.z);
+        return 4;
+TRY_END
+}
+
+static int entity_set_bone_orientation (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Real qw = luaL_checknumber(L,3);
+        Ogre::Real qx = luaL_checknumber(L,4);
+        Ogre::Real qy = luaL_checknumber(L,5);
+        Ogre::Real qz = luaL_checknumber(L,6);
+        skel->getBone(n)->setOrientation(qw,qx,qy,qz);
+        return 0;
 TRY_END
 }
 
@@ -885,6 +984,27 @@ TRY_START
         unsigned n = check_int(L,2,0,skel->getNumBones()-1);
         Ogre::Vector3 pos = skel->getBone(n)->getPosition();
         Ogre::Quaternion quat = skel->getBone(n)->getOrientation();
+        lua_pushnumber(L,pos.x);
+        lua_pushnumber(L,pos.y);
+        lua_pushnumber(L,pos.z);
+        lua_pushnumber(L,quat.w);
+        lua_pushnumber(L,quat.x);
+        lua_pushnumber(L,quat.y);
+        lua_pushnumber(L,quat.z);
+        return 7;
+TRY_END
+}
+
+static int entity_get_bone_initial_position_orientation (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Vector3 pos = skel->getBone(n)->getInitialPosition();
+        Ogre::Quaternion quat = skel->getBone(n)->getInitialOrientation();
         lua_pushnumber(L,pos.x);
         lua_pushnumber(L,pos.y);
         lua_pushnumber(L,pos.z);
@@ -917,6 +1037,21 @@ TRY_START
 TRY_END
 }
 
+static int entity_get_bone_id (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        std::string name = luaL_checkstring(L,2);
+        if (!skel->hasBone(name)) my_lua_error(L, "No such bone: "+name);
+        unsigned n = skel->getBone(name)->getHandle();
+        lua_pushnumber(L,n);
+        return 1;
+TRY_END
+}
+
 static int entity_get_bone_manually_controlled (lua_State *L)
 {
 TRY_START
@@ -940,6 +1075,22 @@ TRY_START
         unsigned n = check_int(L,2,0,skel->getNumBones()-1);
         bool b = check_bool(L,3);
         skel->getBone(n)->setManuallyControlled(b);
+        skel->_notifyManualBonesDirty(); // HACK!
+        return 0;
+TRY_END
+}
+
+static int entity_set_all_bones_manually_controlled (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        bool b = check_bool(L,2);
+        for (int i=0 ; i<skel->getNumBones() ; ++i) {
+                skel->getBone(i)->setManuallyControlled(b);
+        }
         skel->_notifyManualBonesDirty(); // HACK!
         return 0;
 TRY_END
@@ -992,16 +1143,36 @@ TRY_START
                 push_cfunction(L,entity_set_custom_parameter);
         } else if (0==strcmp(key,"getCustomParameter")) {
                 push_cfunction(L,entity_get_custom_parameter);
+        } else if (0==strcmp(key,"setBonePosition")) {
+                push_cfunction(L,entity_set_bone_position);
+        } else if (0==strcmp(key,"setBoneOrientation")) {
+                push_cfunction(L,entity_set_bone_orientation);
         } else if (0==strcmp(key,"setBonePositionOrientation")) {
                 push_cfunction(L,entity_set_bone_position_orientation);
         } else if (0==strcmp(key,"getBoneDerivedPositionOrientation")) {
                 push_cfunction(L,entity_get_bone_derived_position_orientation);
+        } else if (0==strcmp(key,"getBoneInitialPositionOrientation")) {
+                push_cfunction(L,entity_get_bone_initial_position_orientation);
         } else if (0==strcmp(key,"getBonePositionOrientation")) {
                 push_cfunction(L,entity_get_bone_position_orientation);
+        } else if (0==strcmp(key,"getBoneInitialPosition")) {
+                push_cfunction(L,entity_get_bone_initial_position);
+        } else if (0==strcmp(key,"getBoneInitialOrientation")) {
+                push_cfunction(L,entity_get_bone_initial_orientation);
+        } else if (0==strcmp(key,"getBonePosition")) {
+                push_cfunction(L,entity_get_bone_position);
+        } else if (0==strcmp(key,"getBoneOrientation")) {
+                push_cfunction(L,entity_get_bone_orientation);
+        } else if (0==strcmp(key,"setAllBonesManuallyControlled")) {
+                push_cfunction(L,entity_set_all_bones_manually_controlled);
         } else if (0==strcmp(key,"setBoneManuallyControlled")) {
                 push_cfunction(L,entity_set_bone_manually_controlled);
         } else if (0==strcmp(key,"getBoneManuallyControlled")) {
                 push_cfunction(L,entity_get_bone_manually_controlled);
+        } else if (0==strcmp(key,"getBoneId")) {
+                push_cfunction(L,entity_get_bone_id);
+        } else if (0==strcmp(key,"numBones")) {
+                lua_pushnumber(L,self.getSkeleton()->getNumBones());
         } else if (0==strcmp(key,"getMaterial")) {
                 push_cfunction(L,entity_get_material);
         } else if (0==strcmp(key,"getMaterialName")) {
