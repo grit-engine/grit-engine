@@ -866,7 +866,7 @@ TRY_END
 static int quat_xyzw (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
+        check_args(L,1);
         GET_UD_MACRO(Ogre::Quaternion,q,1,QUAT_TAG);
         lua_pushnumber(L,q.w);
         lua_pushnumber(L,q.x);
