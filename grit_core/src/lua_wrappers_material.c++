@@ -746,14 +746,71 @@ TRY_END
 }
 
 static const char *
+addressing_mode_to_string (lua_State *L, Ogre::TextureUnitState::TextureAddressingMode tam)
+{
+        switch (tam) {
+                case Ogre::TextureUnitState::TAM_WRAP: return "WRAP";
+                case Ogre::TextureUnitState::TAM_MIRROR: return "MIRROR";
+                case Ogre::TextureUnitState::TAM_CLAMP: return "CLAMP";
+                case Ogre::TextureUnitState::TAM_BORDER: return "BORDER";
+                default:
+                my_lua_error(L,"Unrecognised texture addressing mode.");
+                return "never happens";
+        }
+}
+static Ogre::TextureUnitState::TextureAddressingMode
+addressing_mode_from_string (lua_State *L, const std::string& t)
+{
+        if (t=="WRAP") {
+                return Ogre::TextureUnitState::TAM_WRAP;
+        } else if (t=="MIRROR") {
+                return Ogre::TextureUnitState::TAM_MIRROR;
+        } else if (t=="CLAMP") {
+                return Ogre::TextureUnitState::TAM_CLAMP;
+        } else if (t=="BORDER") {
+                return Ogre::TextureUnitState::TAM_BORDER;
+        } else {
+                my_lua_error(L,"Unrecognised texture addressing mode: "+t);
+                return Ogre::TextureUnitState::TAM_WRAP; //never happens
+        }
+}
+
+static int mat_get_texture_addressing_mode (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
+        Ogre::TextureUnitState::UVWAddressingMode m = tex->getTextureAddressingMode();
+        lua_pushstring(L,addressing_mode_to_string(L,m.u));
+        lua_pushstring(L,addressing_mode_to_string(L,m.v));
+        lua_pushstring(L,addressing_mode_to_string(L,m.w));
+        return 3;
+TRY_END
+}
+static int mat_set_texture_addressing_mode (lua_State *L)
+{
+TRY_START
+        check_args(L,4+3);
+        Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
+        std::string u = luaL_checkstring(L,5);
+        std::string v = luaL_checkstring(L,6);
+        std::string w = luaL_checkstring(L,7);
+        tex->setTextureAddressingMode(addressing_mode_from_string(L,u),
+                                      addressing_mode_from_string(L,v),
+                                      addressing_mode_from_string(L,w));
+        return 0;
+TRY_END
+}
+
+static const char *
 filter_options_to_string (lua_State *L, Ogre::FilterOptions fo)
 {
-        switch ( fo) {
-        case Ogre::FO_NONE: return "NONE";
-        case Ogre::FO_POINT: return "POINT";
-        case Ogre::FO_LINEAR: return "LINEAR";
-        case Ogre::FO_ANISOTROPIC: return "ANISOTROPIC";
-        default:
+        switch (fo) {
+                case Ogre::FO_NONE: return "NONE";
+                case Ogre::FO_POINT: return "POINT";
+                case Ogre::FO_LINEAR: return "LINEAR";
+                case Ogre::FO_ANISOTROPIC: return "ANISOTROPIC";
+                default:
                 my_lua_error(L,"Unrecognised filter option.");
                 return "never happens";
         }
@@ -1933,6 +1990,10 @@ static int mat_index(lua_State *L) {
                 push_cfunction(L,mat_get_texture_rotate);
         } else if (!::strcmp(key,"setTextureRotate")) {
                 push_cfunction(L,mat_set_texture_rotate);
+        } else if (!::strcmp(key,"getTextureAddressingMode")) {
+                push_cfunction(L,mat_get_texture_addressing_mode);
+        } else if (!::strcmp(key,"setTextureAddressingMode")) {
+                push_cfunction(L,mat_set_texture_addressing_mode);
 
         } else if (!::strcmp(key,"name")) {
                 lua_pushstring(L,self->getName().c_str());
