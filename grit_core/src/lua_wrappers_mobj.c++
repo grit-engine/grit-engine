@@ -1171,6 +1171,8 @@ TRY_START
                 push_cfunction(L,entity_get_bone_manually_controlled);
         } else if (0==strcmp(key,"getBoneId")) {
                 push_cfunction(L,entity_get_bone_id);
+        } else if (0==strcmp(key,"hasSkeleton")) {
+                lua_pushboolean(L,self.getSkeleton()!=NULL);
         } else if (0==strcmp(key,"numBones")) {
                 lua_pushnumber(L,self.getSkeleton()->getNumBones());
         } else if (0==strcmp(key,"getMaterial")) {
