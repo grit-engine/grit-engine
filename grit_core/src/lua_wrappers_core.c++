@@ -1562,7 +1562,7 @@ static int aux_include (lua_State *L, const std::string &filename)
         }
         LuaIncludeState lis;
         lis.ds = Ogre::ResourceGroupManager::getSingleton().openResource(fname,"GRIT");
-        return lua_load(L, aux_aux_include, &lis, filename.c_str());
+        return lua_load(L, aux_aux_include, &lis, ("@"+filename).c_str());
 }
 
 
