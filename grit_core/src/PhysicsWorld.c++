@@ -675,7 +675,7 @@ void PhysicsWorld::sweep (const CollisionMeshPtr &col_mesh,
         BulletSweepCallback bscb(scb);
         btTransform start(to_bullet(startq),to_bullet(startp));
         btTransform end(to_bullet(endq),to_bullet(endp));
-        btConvexShape *conv =dynamic_cast<btConvexShape*>(col_mesh->getShape());
+        btConvexShape *conv =dynamic_cast<btConvexShape*>(col_mesh->getMasterShape());
         if (conv==NULL) return;
         world->convexSweepTest(conv,start,end,bscb);
 }
@@ -710,23 +710,28 @@ RigidBody::RigidBody (const PhysicsWorldPtr &world_,
         (*self.useCountPointer())--;
 }
 
-/* The intention is that the object is always in the world.  The exceptions are
- * when it is created, after it has been destroyed, and in the brief moments
- * when it is pulled out and put back in again in response to a CollisionMesh
- * reload. */
+
+static btCompoundShape *clone_compound (btCompoundShape *master)
+{
+        btCompoundShape *slave = new btCompoundShape();
+        for (int i=0 ; i<master->getNumChildShapes() ; ++i) {
+                btCollisionShape *s = master->getChildShape(i);
+                btTransform &t = master->getChildTransform(i);
+                slave->addChildShape(t,s);
+        }
+        return slave;
+}
+
+/* The intention is that the object is always in the world.  The exceptions are when it is created,
+ * after it has been destroyed, and in the brief moments when it is pulled out and put back in again
+ * in response to a CollisionMesh reload. */
 
 void RigidBody::addToWorld (void)
 {
-        btCollisionShape *shape = colMesh->getShape();
-        float mass = colMesh->getMass();
-
-        // TODO: move this to collision mesh init?
-        btVector3 local_inertia(0,0,0);
-        if (mass != 0)
-                shape->calculateLocalInertia(mass,local_inertia);
+        shape = clone_compound(colMesh->getMasterShape());
 
         btRigidBody::btRigidBodyConstructionInfo
-                info(mass, this, shape, local_inertia);
+                info(colMesh->getMass(), this, shape, colMesh->getInertia());
 
         info.m_linearDamping = colMesh->getLinearDamping();
         info.m_angularDamping = colMesh->getAngularDamping();
@@ -753,6 +758,7 @@ void RigidBody::removeFromWorld (void)
         lastXform = body->getCenterOfMassTransform();
         world->world->removeRigidBody(body);
         delete body;
+        delete shape;
         body = NULL;
 }
 
@@ -1071,4 +1077,4 @@ void RigidBody::setInertia (const Ogre::Vector3 &v)
         body->setMassProps(getMass(),to_bullet(v));
 }
 
-// vim: shiftwidth=8:tabstop=8:expandtab
+// vim: shiftwidth=8:tabstop=8:expandtab:tw=100

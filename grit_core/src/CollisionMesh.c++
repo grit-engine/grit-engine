@@ -36,12 +36,11 @@
 #include "PhysicsWorld.h"
 
 
-btCompoundShape *import_compound (const Compound &c,
+btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
                                   LooseEnds &les,
                                   CollisionMesh::Materials &partMaterials)
 {
 
-        btCompoundShape *s = new btCompoundShape();
         les.push_back(new LooseEndImpl<btCollisionShape>(s));
 
         const btVector3 ZV(0,0,0);
@@ -169,29 +168,27 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
 }
 
 
-btCollisionShape *import (const TColFile &f,
-                          CollisionMesh *cm,
-                          LooseEnds &les,
-                          CollisionMesh::Materials &partMaterials,
-                          CollisionMesh::Materials &faceMaterials)
+btCompoundShape *import (const TColFile &f,
+                         CollisionMesh *cm,
+                         LooseEnds &les,
+                         CollisionMesh::Materials &partMaterials,
+                         CollisionMesh::Materials &faceMaterials)
 {
 
         bool stat = f.mass == 0.0f; // static
-        btCollisionShape *s;
+        btCompoundShape *s = new btCompoundShape();
 
         if (f.usingCompound) {
-                btCompoundShape *cs = import_compound (f.compound, les, partMaterials);
-                if (f.usingTriMesh) {
-                        btCollisionShape *s2 = import_trimesh (f.triMesh, stat, les, faceMaterials);
-                        cs->addChildShape(btTransform(btQuaternion(0,0,0,1),btVector3(0,0,0)), s2);
-                }
-                s = cs;
-        } else {
-                s = import_trimesh (f.triMesh, stat, les, faceMaterials);
+                import_compound(s, f.compound, les, partMaterials);
+        }
+
+        if (f.usingTriMesh) {
+                btCollisionShape *s2 = import_trimesh (f.triMesh, stat, les, faceMaterials);
+                s->addChildShape(btTransform(btQuaternion(0,0,0,1),btVector3(0,0,0)), s2);
         }
 
         cm->setMass(f.mass);
-        cm->setInertia(Ogre::Vector3(f.inertia_x,f.inertia_y,f.inertia_z));
+        cm->setInertia(btVector3(f.inertia_x,f.inertia_y,f.inertia_z));
         cm->setLinearDamping(f.linearDamping);
         cm->setAngularDamping(f.angularDamping);
         cm->setLinearSleepThreshold(f.linearSleepThreshold);
@@ -313,7 +310,7 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file)
 
                 Materials m1, m2;
                 LooseEnds ls;
-                btCollisionShape *loaded_shape;
+                btCompoundShape *loaded_shape;
 
                 try {
                         loaded_shape = import(tcol,this,ls,m1,m2);
@@ -328,7 +325,11 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file)
                                          i_=looseEnds.end() ; i!=i_ ; ++i) {
                         delete *i;
                 }
-                shape = loaded_shape;
+                masterShape = loaded_shape;
+
+                if (mass != 0)
+                        masterShape->calculateLocalInertia(mass,inertia);
+
                 looseEnds = ls;
                 partMaterials = m1;
                 faceMaterials = m2;

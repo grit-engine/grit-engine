@@ -56,7 +56,7 @@ class CollisionMesh {
                 APP_ASSERT(users.size()==0);
         }
 
-        virtual btCollisionShape *getShape (void) const { return shape; }
+        virtual btCompoundShape *getMasterShape (void) const { return masterShape; }
 
         virtual void importFromFile (const Ogre::DataStreamPtr &file);
 
@@ -66,8 +66,8 @@ class CollisionMesh {
         virtual float getMass (void) const { return mass; }
         virtual void setMass (float v) { mass = v; }
 
-        virtual Ogre::Vector3 getInertia (void) const { return inertia; }
-        virtual void setInertia (Ogre::Vector3 v) { inertia = v; }
+        virtual btVector3 getInertia (void) const { return inertia; }
+        virtual void setInertia (btVector3 v) { inertia = v; }
 
         virtual float getCCDMotionThreshold (void) const
         { return ccdMotionThreshold; }
@@ -135,14 +135,14 @@ class CollisionMesh {
         { }
 
         const Ogre::String name;
-        btCollisionShape *shape;
+        btCompoundShape *masterShape;
 
         typedef std::set<RigidBody*> Users;
         Users users;
 
         LooseEnds looseEnds;
 
-        Ogre::Vector3 inertia;
+        btVector3 inertia;
         float mass;
         float ccdMotionThreshold;
         float ccdSweptSphereRadius;

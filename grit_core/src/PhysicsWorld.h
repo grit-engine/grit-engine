@@ -436,7 +436,8 @@ class RigidBody : public btMotionState {
         int stepCallbackIndex;
         int stabiliseCallbackIndex;
 
-        btRigidBody * body;
+        btRigidBody *body;
+        btCompoundShape *shape;
 
         // yes, it's stupid, but it must be done
         RigidBodyPtr self;
