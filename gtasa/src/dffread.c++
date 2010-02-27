@@ -1176,6 +1176,8 @@ export_or_provide_mat (const StringSet &texs,
     // matbin is out of fashion
     materials_lua << "material \"" << mname.str() << "\" { ";
     if (has_alpha || decal) materials_lua << "alpha=true, ";
+    if (has_alpha && !decal) materials_lua << "zsort=true, ";
+    if (decal) materials_lua << "castShadows=false, alphaReject=0, ";
     if (double_sided) materials_lua << "backfaces=true, ";
     if (!dynamic_lighting) materials_lua << "normals=false, ";
     if (m.colour!=0xFFFFFFFF) materials_lua<<"diffuseColour=0x"<<std::hex<<m.colour<<std::dec<<", ";
