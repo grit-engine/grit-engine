@@ -215,7 +215,21 @@ TRY_END
 static int global_render (lua_State *L)
 {
 TRY_START
+        check_args(L,0);
         grit->render();
+        return 0;
+TRY_END
+}
+
+
+static int global_update_elapsed_time (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        Ogre::Real seconds = luaL_checknumber(L,1);
+        Ogre::Real t = Ogre::ControllerManager::getSingleton().getElapsedTime();
+        t += seconds;
+        Ogre::ControllerManager::getSingleton().setElapsedTime(t);
         return 0;
 TRY_END
 }
@@ -1669,6 +1683,7 @@ static const luaL_reg global[] = {
         {"set_mouse_grab",global_set_mouse_grab},
 
         {"render",global_render},
+        {"update_elapsed_time",global_update_elapsed_time},
         {"get_rendersystem",global_get_rendersystem},
         {"set_vsync",global_rendersystem_set_vsync},
         {"get_vsync",global_rendersystem_get_vsync},

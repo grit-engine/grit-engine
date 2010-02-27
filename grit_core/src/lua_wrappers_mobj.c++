@@ -447,6 +447,17 @@ TRY_START
 TRY_END
 }
 
+static int psys_update (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::ParticleSystem,self,1,PSYS_TAG);
+        Ogre::Real t = luaL_checknumber(L,2);
+        self._update(t);
+        return 0;
+TRY_END
+}
+
 static int psys_clear (lua_State *L)
 {
 TRY_START
@@ -515,6 +526,8 @@ TRY_START
                 push_cfunction(L, psys_add_particle);
         } else if (key=="clear") {
                 push_cfunction(L, psys_clear);
+        } else if (key=="update") {
+                push_cfunction(L, psys_update);
         } else if (!mobj_index(L,self,key)) {
                 my_lua_error(L,"Not a readable ParticleSystem member: "+key);
         }

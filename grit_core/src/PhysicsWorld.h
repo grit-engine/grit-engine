@@ -103,14 +103,10 @@ class DynamicsWorld : public btDiscreteDynamicsWorld {
         { }
 
         void step (void);
-        void end (btScalar time_left);
+        void end (void);
 
         btScalar getStepSize (void) const { return stepSize; }
         void setStepSize (btScalar v) { stepSize = v; }
-
-        void synchronizeMotionStates (void);
-
-        void synchronizeMotionStatesNoInterpolation (void);
 
     protected:
 
@@ -252,7 +248,11 @@ class PhysicsWorld {
         bool useTriangleEdgeInfo;
         bool gimpactOneWayMeshHack;
 
+        void updateGraphics (lua_State *L);
+
     protected:
+
+        bool needsGraphicsUpdate;
 
         btDefaultCollisionConfiguration *colConf;
         btCollisionDispatcher *colDisp;
@@ -264,6 +264,8 @@ class PhysicsWorld {
         DynamicsWorld *world;
 
         btScalar maxSteps;
+
+        btScalar extrapolate;
 
         static CollisionMeshMap colMeshes;
 
@@ -330,6 +332,7 @@ class RigidBody : public btMotionState {
 
         void stepCallback (lua_State *L);
         void stabiliseCallback (lua_State *L);
+        void updateGraphicsCallback (lua_State *L);
 
         void activate (void);
         void deactivate (void);

@@ -712,6 +712,18 @@ TRY_END
 
 
 
+static int pworld_update_graphics (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
+        self->updateGraphics(L);
+        return 0;
+TRY_END
+}
+
+
+
 static int pworld_add_mesh (lua_State *L)
 {
 TRY_START
@@ -852,6 +864,8 @@ TRY_START
                 push_cfunction(L,cast);
         } else if (key=="pump") {
                 push_cfunction(L,pworld_pump);
+        } else if (key=="updateGraphics") {
+                push_cfunction(L,pworld_update_graphics);
         } else if (key=="addMesh") {
                 push_cfunction(L,pworld_add_mesh);
         } else if (key=="getMesh") {

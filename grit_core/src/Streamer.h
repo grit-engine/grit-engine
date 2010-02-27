@@ -145,6 +145,12 @@ class Streamer {
         virtual void deleteObject (lua_State *L, const GritObjectPtr &o);
 
 
+        // FRAME CALLBACK
+
+        virtual void frameCallbacks (lua_State *L, Ogre::Real elapsed);
+        virtual void setNeedsFrameCallbacks (const GritObjectPtr &ptr, bool v);
+
+        
         // ACTIVATION STUFF
 
         Ogre::Real prepareDistanceFactor;
@@ -164,23 +170,9 @@ class Streamer {
         
         size_t stepSize;
 
-        virtual void list (const GritObjectPtr &o)
-        {
-                GObjPtrs::iterator begin = activated.begin(), end = activated.end();
-                GObjPtrs::iterator iter  = find(begin,end,o);
-                if (iter!=end) return;
-                activated.push_back(o);
-        }
+        virtual void list (const GritObjectPtr &o);
 
-        virtual void unlist (const GritObjectPtr &o)
-        {
-                GObjPtrs::iterator begin = activated.begin(), end = activated.end();
-                GObjPtrs::iterator iter  = find(begin,end,o);
-                if (iter==end) return;
-                size_t index = iter - begin;
-                activated[index] = activated[activated.size()-1];
-                activated.pop_back();
-        }
+        virtual void unlist (const GritObjectPtr &o);
 
         virtual int numActivated (void) { return activated.size(); }
 
@@ -199,6 +191,7 @@ class Streamer {
         GObjMap gObjs;
         Space rs;
         GObjPtrs activated;
+        GObjPtrs needFrameCallbacks;
         GObjPtrs loaded;
         GObjPtrs fresh; // just been added - skip the queue for activation
 

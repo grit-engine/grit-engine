@@ -44,65 +44,10 @@ void DynamicsWorld::step (void)
         internalSingleStepSimulation(stepSize);
 }
 
-void DynamicsWorld::synchronizeMotionStates (void)
+
+void DynamicsWorld::end ()
 {
-        for (int i=0 ; i<m_collisionObjects.size() ; i++) {
-
-                btCollisionObject* colObj = m_collisionObjects[i];
-                
-                btRigidBody* body = btRigidBody::upcast(colObj);
-
-                if (body==NULL) continue;
-                if (body->isStaticOrKinematicObject()) continue;
-                if (body->getActivationState() == ISLAND_SLEEPING) continue;
-                if (body->getMotionState()==NULL) continue;
-
-                btTransform interpolatedTransform;
-
-                btTransformUtil::integrateTransform(
-                        body->getInterpolationWorldTransform(),
-                        body->getInterpolationLinearVelocity(),
-                        body->getInterpolationAngularVelocity(),
-                        m_localTime*body->getHitFraction(),
-                        interpolatedTransform);
-
-                body->getMotionState()
-                        ->setWorldTransform(interpolatedTransform);
-        }
-}
-
-
-void DynamicsWorld::synchronizeMotionStatesNoInterpolation (void)
-{
-        for (int i=0 ; i<m_collisionObjects.size() ; i++) {
-
-                btCollisionObject* colObj = m_collisionObjects[i];
-                
-                btRigidBody* body = btRigidBody::upcast(colObj);
-
-                if (body==NULL) continue;
-                if (body->isStaticOrKinematicObject()) continue;
-                if (body->getActivationState() == ISLAND_SLEEPING) continue;
-                if (body->getMotionState()==NULL) continue;
-
-                body->getMotionState()->
-                      setWorldTransform(body->getInterpolationWorldTransform());
-        }
-}
-
-
-void DynamicsWorld::end (btScalar time_left)
-{
-        if (dirty) {
-                if (time_left>0) {
-                        m_localTime = time_left;
-                        synchronizeMotionStates();
-                } else {
-                        synchronizeMotionStatesNoInterpolation();
-                }
-                        
-                dirty = false;
-        }
+        dirty = false;
         clearForces();
 }
 
@@ -346,7 +291,7 @@ extern ContactAddedCallback gContactAddedCallback;
 PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
       : verboseContacts(false), errorContacts(true), verboseCasts(false), errorCasts(true),
         bumpyTriangleMeshHack(false), useTriangleEdgeInfo(true),
-        gimpactOneWayMeshHack(true), maxSteps(5)
+        gimpactOneWayMeshHack(true), needsGraphicsUpdate(false), maxSteps(5), extrapolate(0)
 {
         colConf = new btDefaultCollisionConfiguration();
         colDisp = new btCollisionDispatcher(colConf);
@@ -397,8 +342,7 @@ PhysicsWorld::~PhysicsWorld ()
         delete colConf;
 }
 
-int PhysicsWorld::pump (lua_State *L,
-                         float elapsed)
+int PhysicsWorld::pump (lua_State *L, float elapsed)
 {
         last_L = L;
         float step_size = world->getStepSize();
@@ -407,6 +351,8 @@ int PhysicsWorld::pump (lua_State *L,
                 if (elapsed<step_size) break;
                 elapsed -= step_size;
                 world->step();
+                needsGraphicsUpdate = true;
+                extrapolate = elapsed;
                 std::vector<RigidBody*> nan_bodies;
                 for (int i=0 ; i<world->getNumCollisionObjects() ; ++i) {
 
@@ -446,9 +392,25 @@ int PhysicsWorld::pump (lua_State *L,
         }
         // to handle errors raised by the lua callback
         push_cfunction(L, my_lua_error_handler);
-        world->end(elapsed);
+        world->end();
         lua_pop(L,1); // error handler
         return counter;
+}
+
+void PhysicsWorld::updateGraphics (lua_State *L)
+{
+        if (!needsGraphicsUpdate) return;
+        needsGraphicsUpdate = false;
+
+        for (int i=0 ; i<world->getNumCollisionObjects() ; ++i) {
+                btCollisionObject* victim =
+                        world->getCollisionObjectArray()[i];
+                btRigidBody* victim2 = btRigidBody::upcast(victim);
+                if (victim2==NULL) continue;
+                RigidBody *rb =
+                     static_cast<RigidBody*>(victim2->getMotionState());
+                rb->updateGraphicsCallback(L);
+        }
 }
 
 float PhysicsWorld::getDeactivationTime (void) const
@@ -790,12 +752,24 @@ void RigidBody::getWorldTransform (btTransform& into_here) const
         into_here = lastXform;
 }
 
-void RigidBody::setWorldTransform (const btTransform& current_xform)
+void RigidBody::setWorldTransform (const btTransform& )
+{
+}
+
+void RigidBody::updateGraphicsCallback (lua_State *L)
 {
         if (updateCallbackIndex==LUA_NOREF) return;
         if (updateCallbackIndex==LUA_REFNIL) return;
 
-        lua_State *L = world->last_L;
+        btTransform current_xform;
+
+        btTransformUtil::integrateTransform(
+                body->getInterpolationWorldTransform(),
+                body->getInterpolationLinearVelocity(),
+                body->getInterpolationAngularVelocity(),
+                world->extrapolate*body->getHitFraction(),
+                current_xform);
+
 
         STACK_BASE;
 

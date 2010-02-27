@@ -191,13 +191,13 @@ void Streamer::eraseObject (const Ogre::String &name)
         gObjs.erase(name);
 }
 
-static void remove_if_exists (GObjPtrs &fresh, const GritObjectPtr &o)
+static void remove_if_exists (GObjPtrs &list, const GritObjectPtr &o)
 {
-        GObjPtrs::iterator iter = find(fresh.begin(),fresh.end(),o);
-        if (iter!=fresh.end()) {
-                size_t offset = iter - fresh.begin();
-                fresh[offset] = fresh[fresh.size()-1];
-                fresh.pop_back();
+        GObjPtrs::iterator iter = find(list.begin(),list.end(),o);
+        if (iter!=list.end()) {
+                size_t offset = iter - list.begin();
+                list[offset] = list[list.size()-1];
+                list.pop_back();
         }
 }
 
@@ -206,7 +206,29 @@ void Streamer::deleteObject (lua_State *L, const GritObjectPtr &o)
         o->destroy(L,o);
         rs.remove(o);
         remove_if_exists(fresh, o);
+        remove_if_exists(needFrameCallbacks, o);
         eraseObject(o->name);
+}
+
+void Streamer::frameCallbacks (lua_State *L, Ogre::Real elapsed)
+{
+        GObjPtrs victims = needFrameCallbacks;
+        typedef GObjPtrs::iterator I;
+        for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
+                if (!(*i)->getNeedsFrameCallbacks()) continue;
+                if (!(*i)->frameCallback(L, *i, elapsed)) {
+                        (*i)->setNeedsFrameCallbacks(*i, false);
+                }
+        }
+}
+
+void Streamer::setNeedsFrameCallbacks (const GritObjectPtr & ptr, bool v)
+{
+        remove_if_exists(needFrameCallbacks, ptr);
+        if (v) {
+                if (ptr->isActivated())
+                        needFrameCallbacks.push_back(ptr);
+        }
 }
 
 void Streamer::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
@@ -320,15 +342,38 @@ void Streamer::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
                 o->activate(L,o,gfx,physics);
 
                 // activation can result in a lua error which triggers the destruction of the
-                // object 'o' so we test for that here before calling notifyRange2
-                if (o->getClass()!=NULL) 
-                        o->notifyRange2(L,o,range2);
+                // object 'o' so we test for that here before doing more stuff
+                if (o->getClass()==NULL) continue;
+
+                o->notifyRange2(L,o,range2);
 
                 skip:;
         }
 
         BackgroundMeshLoader::getSingleton().handleBastards();
         BackgroundMeshLoader::getSingleton().checkGPUUsage();
+}
+
+void Streamer::list (const GritObjectPtr &o)
+{
+        GObjPtrs::iterator begin = activated.begin(), end = activated.end();
+        GObjPtrs::iterator iter  = find(begin,end,o);
+        if (iter!=end) return;
+        activated.push_back(o);
+        if (o->getNeedsFrameCallbacks())
+                needFrameCallbacks.push_back(o);
+}
+
+void Streamer::unlist (const GritObjectPtr &o)
+{
+        GObjPtrs::iterator begin = activated.begin(), end = activated.end();
+        GObjPtrs::iterator iter  = find(begin,end,o);
+        if (iter==end) return;
+        size_t index = iter - begin;
+        activated[index] = activated[activated.size()-1];
+        activated.pop_back();
+        if (o->getNeedsFrameCallbacks())
+                remove_if_exists(needFrameCallbacks, o);
 }
 
 // vim: shiftwidth=8:tabstop=8:expandtab

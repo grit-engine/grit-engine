@@ -96,6 +96,10 @@ class GritObject {
                 }
         }
 
+        bool frameCallback (lua_State *L,
+                            const GritObjectPtr &self,
+                            const Ogre::Real time);
+
         void notifyFade (lua_State *L,
                          const GritObjectPtr &self,
                          const Ogre::Real fade,
@@ -147,6 +151,9 @@ class GritObject {
 
 
         Ogre::Real getFade (void) const { return lastFade; }
+
+        bool getNeedsFrameCallbacks (void) const { return needsFrameCallbacks; }
+        void setNeedsFrameCallbacks (const GritObjectPtr &self, bool v);
 
 
         const Ogre::String name;
@@ -249,6 +256,8 @@ class GritObject {
         int lua;
 
         int index;
+
+        bool needsFrameCallbacks;
 
         GritObjectPtr near, far;
                 

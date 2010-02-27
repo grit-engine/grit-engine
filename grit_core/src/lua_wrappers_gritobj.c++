@@ -260,6 +260,8 @@ TRY_START
                 lua_pushstring(L,c->name.c_str());
         } else if (key=="name") {
                 lua_pushstring(L,self->name.c_str());
+        } else if (key=="needsFrameCallbacks") {
+                lua_pushboolean(L,self->getNeedsFrameCallbacks());
         } else {
                 GritClass *c = self->getClass();
                 if (c==NULL) my_lua_error(L,"GritObject destroyed");
@@ -323,6 +325,8 @@ TRY_START
                 my_lua_error(L,"Not a writeable GritObject member: "+key);
         } else if (key=="name") {
                 my_lua_error(L,"Not a writeable GritObject member: "+key);
+        } else if (key=="needsFrameCallbacks") {
+                self->setNeedsFrameCallbacks(self, check_bool(L,3));
         } else {
                 GritClass *c = self->getClass();
                 if (c==NULL) my_lua_error(L,"GritObject destroyed");
@@ -397,6 +401,17 @@ TRY_START
         Ogre::Real y = luaL_checknumber(L,3);
         Ogre::Real z = luaL_checknumber(L,4);
         self.centre(L,x,y,z);
+        return 0;
+TRY_END
+}
+
+static int streamer_frame_callbacks (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
+        Ogre::Real t = luaL_checknumber(L,2);
+        self.frameCallbacks(L,t);
         return 0;
 TRY_END
 }
@@ -691,6 +706,8 @@ TRY_START
                 lua_pushnumber(L,self.visibility);
         } else if (!::strcmp(key,"centre")) {
                 push_cfunction(L,streamer_centre);
+        } else if (!::strcmp(key,"frameCallbacks")) {
+                push_cfunction(L,streamer_frame_callbacks);
         } else if (!::strcmp(key,"getBounds")) {
                 push_cfunction(L,streamer_get_bounds);
         } else if (!::strcmp(key,"setBounds")) {

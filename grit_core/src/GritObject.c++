@@ -35,6 +35,7 @@ GritObject::GritObject (const Ogre::String &name_,
       : name(name_), 
         gritClass(gritClass_),
         lua(LUA_NOREF),
+        needsFrameCallbacks(false),
         demandRegistered(false),
         imposedFarFade(1.0),
         lastFade(-1)
@@ -462,6 +463,60 @@ void GritObject::init (lua_State *L, const GritObjectPtr &self)
 
 }
 
+bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, Ogre::Real elapsed)
+{
+        if (gritClass==NULL)
+                OGRE_EXCEPT(Ogre::Exception::ERR_INVALID_STATE,
+                            "Object destroyed",
+                            "GritObject::init");
+
+        STACK_BASE;
+        //stack is empty
+
+        push_cfunction(L, my_lua_error_handler);
+        int error_handler = lua_gettop(L);
+
+        //stack: err
+
+        // could get the init function from the object itself, but
+        // this would only lead to pulling the function from the class
+        // indirectly which is a waste of time, may as well get it straight
+        // from the class
+        push_gritcls(L,gritClass);
+        //stack: err,class
+        gritClass->get(L,"frameCallback");
+        //stack: err,class,callback
+        if (lua_isnil(L,-1)) {
+                lua_pop(L,3);
+                //stack is empty
+                STACK_CHECK;
+                return false;
+        }
+
+        //stack: err,class,callback
+        // we now have the callback to play with
+
+        lua_checkstack(L,2);
+        push_gritobj(L,self); // persistent grit obj
+        lua_pushnumber(L, elapsed); // time since last frame
+        //stack: err,class,callback,instance,class
+        int status = lua_pcall(L,2,0,error_handler);
+        if (status) {
+                //stack: err,class,msg
+                // pop the error message since the error handler will
+                // have already printed it out
+                lua_pop(L,1);
+                //stack: err,class
+        }
+        //stack: err,class
+
+        lua_pop(L,2);
+        //stack is empty
+        STACK_CHECK;
+
+        return status==0;
+}
+
 void GritObject::updateSphere (Ogre::Real x_, Ogre::Real y_,
                                Ogre::Real z_, Ogre::Real r_)
 {
@@ -473,5 +528,10 @@ void GritObject::updateSphere (Ogre::Real x_, Ogre::Real y_,
         grit->getStreamer().updateSphere(index,x_,y_,z_,r_);
 }
 
+void GritObject::setNeedsFrameCallbacks (const GritObjectPtr &self, bool v)
+{
+        needsFrameCallbacks = v;
+        grit->getStreamer().setNeedsFrameCallbacks(self, v);
+}
 
 // vim: shiftwidth=8:tabstop=8:expandtab
