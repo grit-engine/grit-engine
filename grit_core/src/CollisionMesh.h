@@ -67,7 +67,7 @@ class CollisionMesh {
         virtual void setMass (float v) { mass = v; }
 
         virtual btVector3 getInertia (void) const { return inertia; }
-        virtual void setInertia (btVector3 v) { inertia = v; }
+        virtual void setInertia (const btVector3 &v) { inertia = v; }
 
         virtual float getCCDMotionThreshold (void) const
         { return ccdMotionThreshold; }
