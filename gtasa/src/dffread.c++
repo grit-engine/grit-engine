@@ -1154,26 +1154,6 @@ export_or_provide_mat (const StringSet &texs,
         return mat;
 
     
-#if 0
-    // matbin is out of fashion
-    unsigned char flags = 0;
-
-    if (has_alpha) flags |= 0x1;
-    if (double_sided) flags |= 0x2;
-    if (dynamic_lighting) flags |= 0x4;
-    if (decal) flags |= 0x8;
-
-    ios_write_u32(matbin,0x4254414d);
-    ios_write_u16(matbin,1); // version
-    ios_write_u8(matbin,flags);
-    //fwrite_fixedstr(d,f,mname.str(),61);
-    ios_write_str(matbin,mname.str());
-    ios_write_u32(matbin,m.colour);
-    //fwrite_fixedstr(d,f,tname,88);
-    ios_write_str(matbin,textures[0].c_str());
-#endif
-
-    // matbin is out of fashion
     materials_lua << "material \"" << mname.str() << "\" { ";
     if (has_alpha || decal) materials_lua << "alpha=true, ";
     if (has_alpha && !decal) materials_lua << "zsort=true, ";

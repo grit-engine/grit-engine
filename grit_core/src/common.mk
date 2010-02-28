@@ -49,7 +49,6 @@ COMMON_OBJ=\
         lua_utf8.o \
         LuaParticleSystem.o \
         main.o \
-        matbin.o \
         path_util.o \
         PhysicsWorld.o \
         ray.o \
@@ -59,17 +58,16 @@ COMMON_OBJ=\
         TextListOverlayElement.o \
         unicode_util.o \
 
-grit.x11: $(COMMON_OBJ) MouseX11.o KeyboardX11.o posix_sleep.o x11_clipboard.o
-	@$(LINKING)
-	@$(COMPILER) $^ -o $@ $(LDFLAGS)
+LINUX_OBJ=$(COMMON_OBJ) MouseX11.o KeyboardX11.o posix_sleep.o x11_clipboard.o
+WIN32_OBJ=$(COMMON_OBJ) MouseDirectInput8.o KeyboardDirectInput8.o KeyboardWinAPI.o win32_clipboard.o win32_sleep.o
 
-grit.exe: $(COMMON_OBJ) MouseDirectInput8.o KeyboardDirectInput8.o win32_sleep.o
+grit.x11: $(LINUX_OBJ) $(DEPENDENT_LIBS)
 	@$(LINKING)
-	@$(COMPILER) $^ -o $@ $(LDFLAGS)
+	@$(COMPILER) $(LINUX_OBJ) -o $@ $(LDFLAGS)
 
-matbin: ../src/matbin.c++
+grit.exe: $(WIN32_OBJ) $(DEPENDENT_LIBS)
 	@$(LINKING)
-	@$(COMPILER) -D_MATBIN_TEST $^ -o $@ $(CLDFLAGS)
+	@$(COMPILER) $(WIN32_OBJ) -o $@ $(LDFLAGS)
 
 clean:
 	rm -fv $(TARGETS) *.o
@@ -180,8 +178,8 @@ lua_wrappers_core.o: ../src/lua_userdata_dependency_tracker.h
 lua_wrappers_core.o: ../src/Keyboard.h ../src/Mouse.h
 lua_wrappers_core.o: ../src/BackgroundMeshLoader.h
 lua_wrappers_core.o: ../src/CentralisedLog.h ../src/console_colour.h
-lua_wrappers_core.o: ../src/matbin.h ../src/sleep.h ../src/clipboard.h
-lua_wrappers_core.o: ../src/HUD.h ../src/TextListOverlayElement.h
+lua_wrappers_core.o: ../src/sleep.h ../src/clipboard.h ../src/HUD.h
+lua_wrappers_core.o: ../src/TextListOverlayElement.h
 lua_wrappers_core.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_core.o: ../src/lua_wrappers_common.h ../src/lua_util.h
 lua_wrappers_core.o: ../src/lua_wrappers_physics.h
@@ -295,7 +293,6 @@ main.o: ../src/BulletDebugDrawer.h
 main.o: ../src/lua_userdata_dependency_tracker.h
 main.o: ../src/BackgroundMeshLoader.h ../src/CentralisedLog.h
 main.o: ../src/console_colour.h ../src/LuaParticleSystem.h
-matbin.o: ../src/matbin.h ../src/ogre_datastream_util.h
 path_util.o: ../src/CentralisedLog.h ../src/console_colour.h
 path_util.o: ../src/path_util.h ../src/lua_util.h
 ray.o: ../src/ray.h

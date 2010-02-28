@@ -37,7 +37,6 @@
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "BackgroundMeshLoader.h"
-#include "matbin.h"
 #include "sleep.h"
 #include "clipboard.h"
 #include "HUD.h"
@@ -1141,42 +1140,6 @@ TRY_END
 }
 
 
-static int global_read_matbin (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        const char *fname = luaL_checkstring(L,1);
-        Ogre::DataStreamPtr f = Ogre::ResourceGroupManager::getSingleton()
-                .openResource(fname);
-        std::vector<struct mat_bin> ms = read_matbins(f);
-
-        for (size_t i=0 ; i<ms.size() ; i++) {
-                struct mat_bin& m = ms[i];
-
-                lua_pushvalue(L,2);
-                lua_pushstring(L,m.name.c_str());
-                lua_pushnumber(L,((m.colour >> 0) & 0xFF) / 255.0);
-                lua_pushnumber(L,((m.colour >> 8) & 0xFF) / 255.0);
-                lua_pushnumber(L,((m.colour >> 16) & 0xFF) / 255.0);
-                lua_pushnumber(L,((m.colour >> 24) & 0xFF) / 255.0);
-                if (m.tname=="")
-                        lua_pushnil(L);
-                else
-                        lua_pushstring(L,m.tname.c_str());
-                lua_pushboolean(L,m.flags & 0x1);
-                lua_pushboolean(L,m.flags & 0x2);
-                lua_pushboolean(L,m.flags & 0x4);
-                lua_pushboolean(L,m.flags & 0x8);
-                lua_pushboolean(L,m.flags & 0x10);
-                lua_pushboolean(L,m.flags & 0x20);
-                lua_pushboolean(L,m.flags & 0x40);
-                lua_pushboolean(L,m.flags & 0x80);
-                lua_call(L,14,0);
-        }
-        return 0;
-TRY_END
-}
-
 static int global_text_width (lua_State *L)
 {
 TRY_START
@@ -1695,8 +1658,6 @@ static const luaL_reg global[] = {
         {"sleep",global_sleep},
         {"get_clipboard",global_get_clipboard},
         {"set_clipboard",global_set_clipboard},
-
-        {"read_matbin",global_read_matbin},
 
         {"load_material" ,global_load_material},
         {"get_all_materials",global_get_all_materials},
