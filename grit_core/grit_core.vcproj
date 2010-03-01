@@ -291,10 +291,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\matbin.c++"
-				>
-			</File>
-			<File
 				RelativePath=".\src\win32\MouseDirectInput8.c++"
 				>
 			</File>
