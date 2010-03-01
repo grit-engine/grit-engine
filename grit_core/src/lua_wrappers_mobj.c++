@@ -936,6 +936,23 @@ TRY_START
 TRY_END
 }
 
+static int entity_set_bone_position_offset (lua_State *L)
+{
+TRY_START
+        check_args(L,5);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Vector3 ip = skel->getBone(n)->getInitialPosition();
+        Ogre::Real x = luaL_checknumber(L,3);
+        Ogre::Real y = luaL_checknumber(L,4);
+        Ogre::Real z = luaL_checknumber(L,5);
+        skel->getBone(n)->setPosition(ip + Ogre::Vector3(x,y,z));
+        return 0;
+TRY_END
+}
+
 static int entity_get_bone_orientation (lua_State *L)
 {
 TRY_START
@@ -983,6 +1000,43 @@ TRY_START
         Ogre::Real qy = luaL_checknumber(L,5);
         Ogre::Real qz = luaL_checknumber(L,6);
         skel->getBone(n)->setOrientation(qw,qx,qy,qz);
+        return 0;
+TRY_END
+}
+
+static int entity_set_bone_orientation_offset (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Quaternion quat = skel->getBone(n)->getInitialOrientation();
+        Ogre::Real qw = luaL_checknumber(L,3);
+        Ogre::Real qx = luaL_checknumber(L,4);
+        Ogre::Real qy = luaL_checknumber(L,5);
+        Ogre::Real qz = luaL_checknumber(L,6);
+        skel->getBone(n)->setOrientation(quat*Ogre::Quaternion(qw,qx,qy,qz));
+        return 0;
+TRY_END
+}
+
+static int entity_set_bone_orientation_offset_angle (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Quaternion quat = skel->getBone(n)->getInitialOrientation();
+        Ogre::Real qw = luaL_checknumber(L,3);
+        Ogre::Real qx = luaL_checknumber(L,4);
+        Ogre::Real qy = luaL_checknumber(L,5);
+        Ogre::Real qz = luaL_checknumber(L,6);
+        skel->getBone(n)->setOrientation(
+                quat*Ogre::Quaternion(Ogre::Degree(qw),Ogre::Vector3(qx,qy,qz)));
         return 0;
 TRY_END
 }
@@ -1158,8 +1212,14 @@ TRY_START
                 push_cfunction(L,entity_get_custom_parameter);
         } else if (0==strcmp(key,"setBonePosition")) {
                 push_cfunction(L,entity_set_bone_position);
+        } else if (0==strcmp(key,"setBonePositionOffset")) {
+                push_cfunction(L,entity_set_bone_position_offset);
         } else if (0==strcmp(key,"setBoneOrientation")) {
                 push_cfunction(L,entity_set_bone_orientation);
+        } else if (0==strcmp(key,"setBoneOrientationOffset")) {
+                push_cfunction(L,entity_set_bone_orientation_offset);
+        } else if (0==strcmp(key,"setBoneOrientationOffsetAngle")) {
+                push_cfunction(L,entity_set_bone_orientation_offset_angle);
         } else if (0==strcmp(key,"setBonePositionOrientation")) {
                 push_cfunction(L,entity_set_bone_position_orientation);
         } else if (0==strcmp(key,"getBoneDerivedPositionOrientation")) {

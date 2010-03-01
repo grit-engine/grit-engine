@@ -338,6 +338,13 @@ void Streamer::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
                         near = near->getNear();
                 }
 
+                // I am curious if classes ever end up twice in the activation list
+                if (o->getClass()==NULL) {
+                        CERR<<"This was not supposed to happen."<<std::endl;
+                        goto skip;
+                }
+      
+
                 // ok there wasn't so activate
                 o->activate(L,o,gfx,physics);
 

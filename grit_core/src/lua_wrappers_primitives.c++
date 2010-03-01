@@ -65,6 +65,8 @@ GC_MACRO(Plot,plot,PLOT_TAG)
 static int plot_index(lua_State *L)
 {
 TRY_START
+        typedef Plot::Map Map;
+        typedef Plot::MI MI;
         check_args(L,2);
         GET_UD_MACRO(Plot,self,1,PLOT_TAG);
         if (lua_type(L,2)==LUA_TNUMBER) {
@@ -76,6 +78,22 @@ TRY_START
                         lua_pushnumber(L,self.minX());
                 } else if (key=="maxX") {
                         lua_pushnumber(L,self.maxX());
+                } else if (key=="points") {
+                        Map data = self.getPoints();
+                        lua_createtable(L, data.size(), 0);
+                        for (MI i=data.begin(), i_=data.end() ; i!=i_ ; ++i) {
+                                lua_pushnumber(L,i->first);
+                                lua_pushnumber(L,i->second);
+                                lua_settable(L,-3);
+                        }
+                } else if (key=="tangents") {
+                        Map data = self.getTangents();
+                        lua_createtable(L, data.size(), 0);
+                        for (MI i=data.begin(), i_=data.end() ; i!=i_ ; ++i) {
+                                lua_pushnumber(L,i->first);
+                                lua_pushnumber(L,i->second);
+                                lua_settable(L,-3);
+                        }
                 } else {
                         my_lua_error(L,"Not a readable Plot member: "+key);
                 }

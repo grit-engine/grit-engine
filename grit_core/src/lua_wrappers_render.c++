@@ -256,9 +256,21 @@ TRY_END
 static int rt_update (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
+        check_args(L,2);
         Ogre::RenderTarget& self = *check_rt(L,1);
-        self.update();
+        bool b = check_bool(L,2);
+        self.update(b);
+        return 0;
+TRY_END
+}
+
+static int rt_swap_buffers (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        Ogre::RenderTarget& self = *check_rt(L,1);
+        bool b = check_bool(L,2);
+        self.swapBuffers(b);
         return 0;
 TRY_END
 }
@@ -290,6 +302,8 @@ TRY_START
                 push_cfunction(L,rt_destroy);
         } else if (key=="update") {
                 push_cfunction(L,rt_update);
+        } else if (key=="swapBuffers") {
+                push_cfunction(L,rt_swap_buffers);
         } else if (key=="addViewport") {
                 push_cfunction(L,rt_add_viewport);
         } else if (key=="numViewports") {

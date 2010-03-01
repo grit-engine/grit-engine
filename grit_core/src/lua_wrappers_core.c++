@@ -211,6 +211,33 @@ TRY_START
 TRY_END
 }
 
+static int global_fire_frame_started (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushboolean(L,grit->getOgre()->_fireFrameStarted());
+        return 1;
+TRY_END
+}
+
+static int global_fire_frame_rendering_queued (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushboolean(L,grit->getOgre()->_fireFrameRenderingQueued());
+        return 1;
+TRY_END
+}
+
+static int global_fire_frame_ended (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushboolean(L,grit->getOgre()->_fireFrameEnded());
+        return 1;
+TRY_END
+}
+
 static int global_render (lua_State *L)
 {
 TRY_START
@@ -1646,6 +1673,9 @@ static const luaL_reg global[] = {
         {"set_mouse_grab",global_set_mouse_grab},
 
         {"render",global_render},
+        {"fire_frame_started",global_fire_frame_started},
+        {"fire_frame_rendering_queued",global_fire_frame_rendering_queued},
+        {"fire_frame_ended",global_fire_frame_ended},
         {"update_elapsed_time",global_update_elapsed_time},
         {"get_rendersystem",global_get_rendersystem},
         {"set_vsync",global_rendersystem_set_vsync},

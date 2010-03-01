@@ -178,6 +178,7 @@ void GritObject::notifyFade (lua_State *L,
         //stack: err,class,callback
         // we now have the callback to play with
 
+        push_gritobj(L,self); // persistent grit obj
         pushLuaTable(L); // the instance
         lua_pushnumber(L,fade);
         if (transition<0) {
@@ -186,7 +187,7 @@ void GritObject::notifyFade (lua_State *L,
                 lua_pushnumber(L, transition);
         }
         //stack: err,class,callback,object
-        int status = lua_pcall(L,3,0,error_handler);
+        int status = lua_pcall(L,4,0,error_handler);
         if (status) {
                 //stack: err,class,msg
                 // pop the error message since the error handler will
@@ -251,11 +252,11 @@ void GritObject::activate (lua_State *L,
 
         // push 4 args
         lua_checkstack(L,4);
-        push_gritcls(L,gritClass); // the class (again)
         push_gritobj(L,self); // this
+        push_gritcls(L,gritClass); // the class (again)
         push_node(L,root); // the graphics
         push_pworld(L,physics); // the physics
-        //stack: err,class,callback,class,persistent,gfx,physics
+        //stack: err,class,callback,persistent,class,gfx,physics
         STACK_CHECK_N(7);
 
         // call (4 args, returns the new object);
@@ -381,9 +382,10 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
         //stack: err,class,callback
         // we now have the callback to play with
 
+        push_gritobj(L,self); // persistent grit obj
         pushLuaTable(L); // the instance
         //stack: err,class,callback,object
-        int status = lua_pcall(L,1,1,error_handler);
+        int status = lua_pcall(L,2,1,error_handler);
         if (status) {
                 //stack: err,class,msg
                 // pop the error message since the error handler will
@@ -498,9 +500,10 @@ bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, Ogre::R
 
         lua_checkstack(L,2);
         push_gritobj(L,self); // persistent grit obj
+        pushLuaTable(L); // the instance
         lua_pushnumber(L, elapsed); // time since last frame
         //stack: err,class,callback,instance,class
-        int status = lua_pcall(L,2,0,error_handler);
+        int status = lua_pcall(L,3,0,error_handler);
         if (status) {
                 //stack: err,class,msg
                 // pop the error message since the error handler will

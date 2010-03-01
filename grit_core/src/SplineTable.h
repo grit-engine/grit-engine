@@ -133,10 +133,13 @@ template<class T> class SplineTable {
                 return 0.0;  // MSVC doesn't understand abort()
         }
 
-    protected:
-
         typedef std::map<T,T> Map;
         typedef typename Map::iterator MI;
+
+        const Map &getTangents (void) const { return tangents; }
+        const Map &getPoints (void) const { return points; }
+
+    protected:
 
         Map points;
         Map tangents;

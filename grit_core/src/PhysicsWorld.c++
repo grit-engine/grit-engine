@@ -390,10 +390,7 @@ int PhysicsWorld::pump (lua_State *L, float elapsed)
                         rb->stabiliseCallback(L);
                 }
         }
-        // to handle errors raised by the lua callback
-        push_cfunction(L, my_lua_error_handler);
         world->end();
-        lua_pop(L,1); // error handler
         return counter;
 }
 
@@ -401,6 +398,9 @@ void PhysicsWorld::updateGraphics (lua_State *L)
 {
         if (!needsGraphicsUpdate) return;
         needsGraphicsUpdate = false;
+
+        // to handle errors raised by the lua callback
+        push_cfunction(L, my_lua_error_handler);
 
         for (int i=0 ; i<world->getNumCollisionObjects() ; ++i) {
                 btCollisionObject* victim =
@@ -411,6 +411,8 @@ void PhysicsWorld::updateGraphics (lua_State *L)
                      static_cast<RigidBody*>(victim2->getMotionState());
                 rb->updateGraphicsCallback(L);
         }
+
+        lua_pop(L,1); // error handler
 }
 
 float PhysicsWorld::getDeactivationTime (void) const
