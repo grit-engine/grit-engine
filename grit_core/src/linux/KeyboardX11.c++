@@ -94,7 +94,19 @@ KeyboardX11::KeyboardX11 (size_t window)
         MAP_KEY(XK_KP_Insert, "NUMPAD0");
         MAP_KEY(XK_KP_Delete, "NUMPAD.");
 
-
+        //These guys give full names instead of the symbols
+        //but we want to behave the same on windows and linux, so...
+        MAP_KEY(XK_comma, ",");
+        MAP_KEY(XK_period, ".");
+        MAP_KEY(XK_semicolon, ";");
+        MAP_KEY(XK_slash, "/");
+        MAP_KEY(XK_backslash, "\\");
+        MAP_KEY(XK_apostrophe, "'");
+        MAP_KEY(XK_bracketleft, "[");
+        MAP_KEY(XK_bracketright, "]");
+        MAP_KEY(XK_minus, "-");
+        MAP_KEY(XK_equal, "=");
+        MAP_KEY(XK_grave, "`");
 
         win = window;
 
