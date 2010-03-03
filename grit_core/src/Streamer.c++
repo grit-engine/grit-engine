@@ -144,7 +144,8 @@ GritObjectPtr Streamer::addObject (
         if (name=="") {
                 do {
                         std::stringstream ss;
-                        ss << "Unnamed:" << nameGenerationCounter++;
+                        ss << "Unnamed:" << grit_class->name
+                           << ":" << nameGenerationCounter++;
                         name = ss.str();
                 } while (gObjs.find(name)!=gObjs.end());
         }
