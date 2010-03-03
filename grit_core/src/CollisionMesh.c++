@@ -327,7 +327,7 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file)
                 }
                 masterShape = loaded_shape;
 
-                if (mass != 0)
+                if (mass != 0 && inertia == btVector3(0,0,0))
                         masterShape->calculateLocalInertia(mass,inertia);
 
                 looseEnds = ls;
