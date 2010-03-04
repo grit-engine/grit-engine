@@ -279,6 +279,107 @@ TRY_START
 TRY_END
 }
 
+static int rbody_get_part_enabled (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        lua_pushboolean(L, self->getElementEnabled(i));
+        return 1;
+TRY_END
+}
+
+static int rbody_set_part_enabled (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        bool b = check_bool(L, 3);
+        self->setElementEnabled(i, b);
+        return 0;
+TRY_END
+}
+
+static int rbody_get_part_position_initial (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        Ogre::Vector3 v = self->getElementPositionMaster(i);
+        lua_pushnumber(L,v.x); lua_pushnumber(L,v.y); lua_pushnumber(L,v.z);
+        return 3;
+TRY_END
+}
+
+static int rbody_get_part_position_offset (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        Ogre::Vector3 v = self->getElementPositionOffset(i);
+        lua_pushnumber(L,v.x); lua_pushnumber(L,v.y); lua_pushnumber(L,v.z);
+        return 3;
+TRY_END
+}
+
+static int rbody_set_part_position_offset (lua_State *L)
+{
+TRY_START
+        check_args(L,5);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        lua_Number x = luaL_checknumber(L,3);
+        lua_Number y = luaL_checknumber(L,4);
+        lua_Number z = luaL_checknumber(L,5);
+        self->setElementPositionOffset(i, Ogre::Vector3(x,y,z));
+        return 0;
+TRY_END
+}
+
+static int rbody_get_part_orientation_initial (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        Ogre::Quaternion q = self->getElementOrientationMaster(i);
+        lua_pushnumber(L,q.w); lua_pushnumber(L,q.x); lua_pushnumber(L,q.y); lua_pushnumber(L,q.z);
+        return 4;
+TRY_END
+}
+
+static int rbody_get_part_orientation_offset (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        Ogre::Quaternion q = self->getElementOrientationOffset(i);
+        lua_pushnumber(L,q.w); lua_pushnumber(L,q.x); lua_pushnumber(L,q.y); lua_pushnumber(L,q.z);
+        return 4;
+TRY_END
+}
+
+static int rbody_set_part_orientation_offset (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        lua_Number w = luaL_checknumber(L,3);
+        lua_Number x = luaL_checknumber(L,4);
+        lua_Number y = luaL_checknumber(L,5);
+        lua_Number z = luaL_checknumber(L,6);
+        self->setElementOrientationOffset(i, Ogre::Quaternion(w,x,y,z));
+        return 0;
+TRY_END
+}
+
+
 static void push_sweep_result (lua_State *L, const SweepResult &r, float len)
 {
         lua_pushnumber(L,r.dist * len);
@@ -558,6 +659,25 @@ TRY_START
         } else if (key=="inertia") {
                 push(L,new Ogre::Vector3(self->getInertia()),VECTOR3_TAG);
 
+        } else if (key=="numParts") {
+                lua_pushnumber(L, self->getNumElements());
+        } else if (key=="getPartEnabled") {
+                push_cfunction(L,rbody_get_part_enabled);
+        } else if (key=="setPartEnabled") {
+                push_cfunction(L,rbody_set_part_enabled);
+        } else if (key=="getPartPositionInitial") {
+                push_cfunction(L,rbody_get_part_position_initial);
+        } else if (key=="getPartPositionOffset") {
+                push_cfunction(L,rbody_get_part_position_offset);
+        } else if (key=="setPartPositionOffset") {
+                push_cfunction(L,rbody_set_part_position_offset);
+        } else if (key=="getPartOrientationInitial") {
+                push_cfunction(L,rbody_get_part_orientation_initial);
+        } else if (key=="getPartOrientationOffset") {
+                push_cfunction(L,rbody_get_part_orientation_offset);
+        } else if (key=="setPartOrientationOffset") {
+                push_cfunction(L,rbody_set_part_orientation_offset);
+
         } else if (key=="mesh") {
                 push_colmesh(L,self->colMesh);
         } else if (key=="world") {
@@ -628,7 +748,6 @@ TRY_START
         } else if (key=="inertia") {
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self->setInertia(v);
-
         } else if (key=="owner") {
                 if (lua_isnil(L,3)) {
                         self->owner.setNull();

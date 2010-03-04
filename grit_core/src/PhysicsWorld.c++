@@ -693,6 +693,12 @@ static btCompoundShape *clone_compound (btCompoundShape *master)
 void RigidBody::addToWorld (void)
 {
         shape = clone_compound(colMesh->getMasterShape());
+        localChanges.resize(shape->getNumChildShapes());
+        // by default, turn everything on, leave it transformed as found in the master copy
+        for (unsigned i=0 ; i<localChanges.size() ; ++i) {
+                localChanges[i].enabled = true;
+                localChanges[i].offset.setIdentity();
+        }
 
         btRigidBody::btRigidBodyConstructionInfo
                 info(colMesh->getMass(), this, shape, colMesh->getInertia());
@@ -1051,6 +1057,84 @@ void RigidBody::setInertia (const Ogre::Vector3 &v)
 {
         if (body==NULL) return;
         body->setMassProps(getMass(),to_bullet(v));
+}
+
+static int get_child_index(btCompoundShape* c, btCollisionShape* shape)
+{
+        for (int i=0 ; i<c->getNumChildShapes() ; ++i) {
+                if(c->getChildShape(i) == shape)
+                        return i;
+        }
+        CERR << "Could not find child shape in compound." << std::endl;
+        return 0;
+}
+
+
+void RigidBody::setElementEnabled (int i, bool v)
+{
+        if (getElementEnabled(i)==v) return;
+        localChanges[i].enabled = v;
+        if (v) {
+                btCollisionShape *s = colMesh->getMasterShape()->getChildShape(i);
+                btTransform &t = colMesh->getMasterShape()->getChildTransform(i);
+                t = t * localChanges[i].offset;
+                shape->addChildShape(t,s);
+        } else {
+                int i2 = get_child_index(shape, colMesh->getMasterShape()->getChildShape(i));
+                world->world->getBroadphase()->getOverlappingPairCache()
+                        ->cleanProxyFromPairs(body->getBroadphaseHandle(), world->world->getDispatcher());
+                shape->removeChildShapeByIndex(i2);
+        }
+}
+
+bool RigidBody::getElementEnabled (int i)
+{
+        APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
+        return localChanges[i].enabled;
+}
+
+Ogre::Vector3 RigidBody::getElementPositionMaster (int i)
+{
+        APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
+        return to_ogre(colMesh->getMasterShape()->getChildTransform(i).getOrigin());
+}
+
+void RigidBody::setElementPositionOffset (int i, const Ogre::Vector3 &v)
+{
+        APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
+        localChanges[i].offset.setOrigin(to_bullet(v));
+        if (localChanges[i].enabled) {
+                int i2 = get_child_index(shape, colMesh->getMasterShape()->getChildShape(i));
+                shape->updateChildTransform(i2, colMesh->getMasterShape()->getChildTransform(i) * localChanges[i].offset);
+        }
+}
+
+Ogre::Vector3 RigidBody::getElementPositionOffset (int i)
+{
+        APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
+        return to_ogre(localChanges[i].offset.getOrigin());
+}
+
+Ogre::Quaternion RigidBody::getElementOrientationMaster (int i)
+{
+        APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
+        return to_ogre(colMesh->getMasterShape()->getChildTransform(i).getRotation());
+}
+
+void RigidBody::setElementOrientationOffset (int i, const Ogre::Quaternion &q)
+{
+        APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
+        localChanges[i].offset.setRotation(to_bullet(q));
+        if (localChanges[i].enabled) {
+                int i2 = get_child_index(shape, colMesh->getMasterShape()->getChildShape(i));
+                shape->updateChildTransform(i2, colMesh->getMasterShape()->getChildTransform(i) * localChanges[i].offset);
+        }
+}
+
+Ogre::Quaternion RigidBody::getElementOrientationOffset (int i)
+{
+        APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
+        return to_ogre(localChanges[i].offset.getRotation());
 }
 
 // vim: shiftwidth=8:tabstop=8:expandtab:tw=100

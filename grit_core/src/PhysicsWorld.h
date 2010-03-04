@@ -431,6 +431,17 @@ class RigidBody : public btMotionState {
         void addToWorld (void);
         void removeFromWorld (void);
 
+        void setElementEnabled (int i, bool v);
+        bool getElementEnabled (int i);
+
+        Ogre::Vector3 getElementPositionMaster (int i);
+        void setElementPositionOffset (int i, const Ogre::Vector3 &v);
+        Ogre::Vector3 getElementPositionOffset (int i);
+        Ogre::Quaternion getElementOrientationMaster (int i);
+        void setElementOrientationOffset (int i, const Ogre::Quaternion &q);
+        Ogre::Quaternion getElementOrientationOffset (int i);
+        int getNumElements (void) { return localChanges.size(); };
+
     protected:
 
         btTransform lastXform;
@@ -445,6 +456,11 @@ class RigidBody : public btMotionState {
         // yes, it's stupid, but it must be done
         RigidBodyPtr self;
 
+        struct CompElement {
+                bool enabled;
+                btTransform offset;
+        };
+        std::vector<CompElement> localChanges; // to the master compound
 };
 
 
