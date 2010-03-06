@@ -460,7 +460,7 @@ class RigidBody : public btMotionState {
                 bool enabled;
                 btTransform offset;
         };
-        std::vector<CompElement> localChanges; // to the master compound
+        btAlignedObjectArray<CompElement> localChanges; // to the master compound
 };
 
 
