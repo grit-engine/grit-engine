@@ -695,7 +695,7 @@ void RigidBody::addToWorld (void)
         shape = clone_compound(colMesh->getMasterShape());
         localChanges.resize(shape->getNumChildShapes());
         // by default, turn everything on, leave it transformed as found in the master copy
-        for (unsigned i=0 ; i<localChanges.size() ; ++i) {
+        for (int i=0 ; i<localChanges.size() ; ++i) {
                 localChanges[i].enabled = true;
                 localChanges[i].offset.setIdentity();
         }
