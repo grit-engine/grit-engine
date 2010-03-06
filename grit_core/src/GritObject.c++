@@ -251,30 +251,36 @@ void GritObject::activate (lua_State *L,
         // we now have the callback to play with
 
         // push 4 args
-        lua_checkstack(L,4);
+        lua_checkstack(L,5);
         push_gritobj(L,self); // this
+        lua_newtable(L);
+        lua_pushvalue(L,-1);
+        lua = luaL_ref(L,LUA_REGISTRYINDEX);
+        STACK_CHECK_N(5);
         push_gritcls(L,gritClass); // the class (again)
         push_node(L,root); // the graphics
         push_pworld(L,physics); // the physics
         //stack: err,class,callback,persistent,class,gfx,physics
-        STACK_CHECK_N(7);
+        STACK_CHECK_N(8);
 
-        // call (4 args, returns the new object);
-        int status = lua_pcall(L,4,1,error_handler);
-        STACK_CHECK_N(3);
+        // call (5 args), pops function too
+        int status = lua_pcall(L,5,0,error_handler);
         if (status) {
+                STACK_CHECK_N(3);
                 //stack: err,class,error
                 // pop the error message since the error handler will
                 // have already printed it out
                 lua_pop(L,1);
+                CERR << "Object: \"" << name << "\" raised an error on activation, so destroying it." << std::endl;
+                // will deactivate us
                 grit->getStreamer().deleteObject(L,self);
                 //stack: err,class
                 STACK_CHECK_N(2);
         } else {
+                STACK_CHECK_N(2);
                 //stack: err,class,object
                 grit->getStreamer().list(self);
                 // pop and store the new object returned       
-                lua = luaL_ref(L,LUA_REGISTRYINDEX);
                 lastFade = -1;
                 //stack: err,class
                 STACK_CHECK_N(2);

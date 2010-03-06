@@ -305,10 +305,16 @@ void Streamer::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
         // LOAD RESOURCES FOR APPROACHING GRIT OBJECTS /////////////////////////
         // AND... ACTIVATE ARRIVING GRIT OBJECTS ///////////////////////////////
         ////////////////////////////////////////////////////////////////////////
+        // note: since fnd is prepopulated by new objects and the lods of deactivated objects
+        // it may have duplicates after the rangespace has gone through
         rs.getPresent(x,y,z,stepSize,tpF,fnd);
         for (Space::Cargo::iterator i=fnd.begin(),i_=fnd.end() ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = *i;
 
+                // this can happen if there is a duplicate in the list and it gets destroyed
+                // the first time due to an error in the activation function
+                // but is eventually processed a second time after being destroyed
+                if (o->getClass()==NULL) continue;
                 if (o->isActivated()) continue;
 
                 // consider background loading
@@ -337,12 +343,6 @@ void Streamer::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
                                 }
                         }
                         near = near->getNear();
-                }
-
-                // I am curious if classes ever end up twice in the activation list
-                if (o->getClass()==NULL) {
-                        CERR<<"This was not supposed to happen."<<std::endl;
-                        goto skip;
                 }
       
 

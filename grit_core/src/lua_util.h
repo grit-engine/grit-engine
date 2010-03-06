@@ -54,6 +54,26 @@ extern "C" {
 #define STACK_CHECK_(name) STACK_CHECK_N_(name,0)
 #define STACK_CHECK STACK_CHECK_N(0)
 
+#define GET_V3(n,index) \
+Ogre::Vector3 n(luaL_checknumber(L,index+0), \
+luaL_checknumber(L,index+1), \
+luaL_checknumber(L,index+2))
+
+#define GET_QUAT(n,index) \
+Ogre::Quaternion n(luaL_checknumber(L,index+0), \
+luaL_checknumber(L,index+1), \
+luaL_checknumber(L,index+2), \
+luaL_checknumber(L,index+3))
+
+#define PUT_QUAT(n) do { \
+        Ogre::Quaternion q = n; \
+lua_pushnumber(L,q.w); lua_pushnumber(L,q.x); lua_pushnumber(L,q.y); lua_pushnumber(L,q.z); \
+} while (false)
+
+#define PUT_V3(n) do { \
+        Ogre::Vector3 v = n; lua_pushnumber(L,v.x); lua_pushnumber(L,v.y); lua_pushnumber(L,v.z); \
+} while (false)
+
 void my_lua_error(lua_State *l, const std::string &msg) NORETURN;
 void my_lua_error(lua_State *l, const std::string &msg, unsigned long level) NORETURN;
 void my_lua_error(lua_State *l, const char *) NORETURN;

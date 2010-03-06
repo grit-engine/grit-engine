@@ -1640,8 +1640,187 @@ TRY_START
 TRY_END
 }
 
+static int global_mulqq (lua_State *L)
+{
+TRY_START
+        check_args(L,8);
+        GET_QUAT(a,1);
+        GET_QUAT(b,5);
+        PUT_QUAT(a*b);
+        return 4;
+TRY_END
+}
+
+static int global_mulqv (lua_State *L)
+{
+TRY_START
+        check_args(L,7);
+        GET_QUAT(a,1);
+        GET_V3(b,5);
+        PUT_V3(a*b);
+        return 3;
+TRY_END
+}
+
+static int global_mulvv (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_V3(a,1);
+        GET_V3(b,4);
+        PUT_V3(a*b);
+        return 3;
+TRY_END
+}
+
+static int global_mulnv (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        lua_Number a = luaL_checknumber(L,1);
+        GET_V3(b,2);
+        PUT_V3(a*b);
+        return 3;
+TRY_END
+}
+
+static int global_mulnq (lua_State *L)
+{
+TRY_START
+        check_args(L,5);
+        lua_Number a = luaL_checknumber(L,1);
+        GET_QUAT(b,2);
+        PUT_QUAT(a*b);
+        return 4;
+TRY_END
+}
+
+static int global_addvv (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_V3(a,1);
+        GET_V3(b,4);
+        PUT_V3(a+b);
+        return 3;
+TRY_END
+}
+
+static int global_dot (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_V3(a,1);
+        GET_V3(b,4);
+        lua_pushnumber(L,a.dotProduct(b));
+        return 1;
+TRY_END
+}
+
+static int global_cross (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_V3(a,1);
+        GET_V3(b,4);
+        PUT_V3(a.crossProduct(b));
+        return 3;
+TRY_END
+}
+
+static int global_project (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_V3(a,1);
+        GET_V3(b,4);
+        PUT_V3(a - a.dotProduct(b) * b);
+        return 3;
+TRY_END
+}
+
+static int global_lenv (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_V3(a,1);
+        lua_pushnumber(L,a.length());
+        return 1;
+TRY_END
+}
+
+static int global_lenq (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_QUAT(a,1);
+        lua_pushnumber(L,a.w*a.w + a.x*a.x + a.y*a.y + a.z*a.z);
+        return 1;
+TRY_END
+}
+
+static int global_normv (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_V3(a,1);
+        a.normalise();
+        PUT_V3(a);
+        return 3;
+TRY_END
+}
+
+static int global_normq (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_QUAT(a,1);
+        a.normalise();
+        PUT_QUAT(a);
+        return 4;
+TRY_END
+}
+
+static int global_quat_angle (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        lua_Number a = luaL_checknumber(L,1);
+        GET_V3(b,2);
+        PUT_QUAT(Ogre::Quaternion(Ogre::Degree(a), b));
+        return 4;
+TRY_END
+}
+
+static int global_quat_between (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_V3(a,1);
+        GET_V3(b,4);
+        PUT_QUAT(a.getRotationTo(b));
+        return 4;
+TRY_END
+}
+
 
 static const luaL_reg global[] = {
+        {"mulqv",global_mulqv},
+        {"mulvv",global_mulvv},
+        {"mulqq",global_mulqq},
+        {"mulnv",global_mulnv},
+        {"mulnq",global_mulnq},
+        {"addvv",global_addvv},
+        {"dot",global_dot},
+        {"cross",global_cross},
+        {"project",global_project},
+        {"lenv",global_lenv},
+        {"lenq",global_lenq},
+        {"normv",global_normv},
+        {"normq",global_normq},
+        {"quat_angle",global_quat_angle},
+        {"quat_between",global_quat_between},
+
         {"fqn",global_fqn},
         {"fqn_ex",global_fqn_ex},
         {"path_stack",global_path_stack},

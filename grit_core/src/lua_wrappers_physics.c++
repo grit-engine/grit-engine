@@ -108,27 +108,27 @@ static int colmesh_index (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(CollisionMeshPtr,self,1,COLMESH_TAG);
-        std::string key = luaL_checkstring(L,2);
-        if (key=="mass") {
+        const char *key = luaL_checkstring(L,2);
+        if (!::strcmp(key,"mass")) {
                 lua_pushnumber(L,self->getMass());
-        } else if (key=="reload") {
+        } else if (!::strcmp(key,"reload")) {
                 push_cfunction(L,colmesh_reload);
-        } else if (key=="ccdMotionThreshold") {
+        } else if (!::strcmp(key,"ccdMotionThreshold")) {
                 lua_pushnumber(L,self->getCCDMotionThreshold());
-        } else if (key=="ccdSweptSphereRadius") {
+        } else if (!::strcmp(key,"ccdSweptSphereRadius")) {
                 lua_pushnumber(L,self->getCCDSweptSphereRadius());
-        } else if (key=="linearDamping") {
+        } else if (!::strcmp(key,"linearDamping")) {
                 lua_pushnumber(L,self->getLinearDamping());
-        } else if (key=="angularDamping") {
+        } else if (!::strcmp(key,"angularDamping")) {
                 lua_pushnumber(L,self->getAngularDamping());
-        } else if (key=="linearSleepThreshold") {
+        } else if (!::strcmp(key,"linearSleepThreshold")) {
                 lua_pushnumber(L,self->getLinearSleepThreshold());
-        } else if (key=="angularSleepThreshold") {
+        } else if (!::strcmp(key,"angularSleepThreshold")) {
                 lua_pushnumber(L,self->getAngularSleepThreshold());
-        } else if (key=="name") {
+        } else if (!::strcmp(key,"name")) {
                 lua_pushstring(L,self->getName().c_str());
         } else {
-                my_lua_error(L,"Not a readable CollisionMesh member: "+key);
+                my_lua_error(L,"Not a readable CollisionMesh member: "+std::string(key));
         }
         return 1;
 TRY_END
@@ -139,30 +139,30 @@ static int colmesh_newindex (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(CollisionMeshPtr,self,1,COLMESH_TAG);
-        std::string key = luaL_checkstring(L,2);
-        if (key=="mass") {
+        const char *key = luaL_checkstring(L,2);
+        if (!::strcmp(key,"mass")) {
                 float v = luaL_checknumber(L,3);
                 self->setMass(v);
-        } else if (key=="ccdMotionThreshold") {
+        } else if (!::strcmp(key,"ccdMotionThreshold")) {
                 float v = luaL_checknumber(L,3);
                 self->setCCDMotionThreshold(v);
-        } else if (key=="ccdSweptSphereRadius") {
+        } else if (!::strcmp(key,"ccdSweptSphereRadius")) {
                 float v = luaL_checknumber(L,3);
                 self->setCCDSweptSphereRadius(v);
-        } else if (key=="linearDamping") {
+        } else if (!::strcmp(key,"linearDamping")) {
                 float v = luaL_checknumber(L,3);
                 self->setLinearDamping(v);
-        } else if (key=="angularDamping") {
+        } else if (!::strcmp(key,"angularDamping")) {
                 float v = luaL_checknumber(L,3);
                 self->setAngularDamping(v);
-        } else if (key=="linearSleepThreshold") {
+        } else if (!::strcmp(key,"linearSleepThreshold")) {
                 float v = luaL_checknumber(L,3);
                 self->setLinearSleepThreshold(v);
-        } else if (key=="angularSleepThreshold") {
+        } else if (!::strcmp(key,"angularSleepThreshold")) {
                 float v = luaL_checknumber(L,3);
                 self->setAngularSleepThreshold(v);
         } else {
-               my_lua_error(L,"Not a writeable CollisionMesh member: "+key);
+               my_lua_error(L,"Not a writeable CollisionMesh member: "+std::string(key));
         }
         return 0;
 TRY_END
@@ -198,7 +198,13 @@ TRY_END
 static int rbody_force (lua_State *L)
 {
 TRY_START
-        if (lua_gettop(L)==4) {
+        if (lua_gettop(L)==7) {
+                GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+                GET_V3(force,2);
+                GET_V3(rel_pos,5);
+                const Ogre::Vector3 &pos = self->getPosition();
+                self->force(force,rel_pos-pos);
+        } else if (lua_gettop(L)==4) {
                 // local
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
                 GET_UD_MACRO(Ogre::Vector3,force,2,VECTOR3_TAG);
@@ -228,7 +234,12 @@ TRY_END
 static int rbody_impulse (lua_State *L)
 {
 TRY_START
-        if (lua_gettop(L)==4) {
+        if (lua_gettop(L)==7) {
+                GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+                GET_V3(impulse,2);
+                GET_V3(rel_pos,5);
+                self->impulse(impulse,rel_pos);
+        } else if (lua_gettop(L)==4) {
                 // local
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
                 GET_UD_MACRO(Ogre::Vector3,impulse,2,VECTOR3_TAG);
@@ -259,9 +270,9 @@ TRY_END
 static int rbody_torque_impulse (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
+        check_args(L,4);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        GET_UD_MACRO(Ogre::Vector3,torque,2,VECTOR3_TAG);
+        GET_V3(torque,2);
         self->torqueImpulse(torque);
         return 0;
 TRY_END
@@ -271,9 +282,9 @@ TRY_END
 static int rbody_torque (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
+        check_args(L,4);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        GET_UD_MACRO(Ogre::Vector3,torque,2,VECTOR3_TAG);
+        GET_V3(torque,2);
         self->torque(torque);
         return 0;
 TRY_END
@@ -379,14 +390,29 @@ TRY_START
 TRY_END
 }
 
+static int rbody_set_part_orientation_offset_angle (lua_State *L)
+{
+TRY_START
+        check_args(L,6);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        lua_Number a = luaL_checknumber(L,3);
+        lua_Number x = luaL_checknumber(L,4);
+        lua_Number y = luaL_checknumber(L,5);
+        lua_Number z = luaL_checknumber(L,6);
+        self->setElementOrientationOffset(i,Ogre::Quaternion(Ogre::Degree(a),Ogre::Vector3(x,y,z)));
+        return 0;
+TRY_END
+}
+
 
 static void push_sweep_result (lua_State *L, const SweepResult &r, float len)
 {
         lua_pushnumber(L,r.dist * len);
         push_rbody(L,r.rb->getPtr());
         // normal is documented as being object space but is actually world space
-        push(L,new Ogre::Vector3(/*r.rb->getOrientation()* */r.n.normalisedCopy()),
-                                 VECTOR3_TAG);
+        Ogre::Vector3 normal = /*r.rb->getOrientation()* */r.n.normalisedCopy();
+        PUT_V3(normal);
         lua_pushnumber(L, r.material);
 }
 
@@ -483,9 +509,9 @@ TRY_START
         if (nearest_only) {
                 // push nearest
                 push_sweep_result(L, nearest, len);
-                return 4;
+                return 6;
         }
-        return lcb.results.size() * 4;
+        return lcb.results.size() * 6;
 TRY_END
 }
 
@@ -519,16 +545,74 @@ TRY_END
 }
 
 
+static int rbody_rotate_to_world (lua_State *L)
+{
+TRY_START
+        if (lua_gettop(L)==4) {
+                GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+                GET_V3(a,2);
+                Ogre::Vector3 result = self->getOrientation() * a;
+                PUT_V3(result);
+                return 3;
+        } else {
+                check_args(L,5);
+                GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+                GET_QUAT(a,2);
+                Ogre::Quaternion result = self->getOrientation() * a;
+                PUT_QUAT(result);
+                return 4;
+        }
+TRY_END
+}
+
+static int rbody_rotate_from_world (lua_State *L)
+{
+TRY_START
+        if (lua_gettop(L)==4) {
+                GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+                GET_V3(a,2);
+                Ogre::Vector3 result = self->getOrientation().Inverse() * a;
+                PUT_V3(result);
+                return 3;
+        } else {
+                check_args(L,5);
+                GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+                GET_QUAT(a,2);
+                Ogre::Quaternion result = self->getOrientation().Inverse() * a;
+                PUT_QUAT(result);
+                return 4;
+        }
+TRY_END
+}
+
+static int rbody_local_to_world (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        GET_V3(a,2);
+        Ogre::Vector3 result = self->getPosition() + self->getOrientation() * a;
+        PUT_V3(result);
+        return 3;
+TRY_END
+}
+
+static int rbody_world_to_local (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        GET_V3(a,2);
+        Ogre::Vector3 result = self->getOrientation().Inverse() * (a - self->getPosition());
+        PUT_V3(result);
+        return 3;
+TRY_END
+}
+
+
 static int rbody_local_pos (lua_State *L)
 {
 TRY_START
-        if (lua_gettop(L)==3) {
-                GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-                GET_UD_MACRO(Ogre::Vector3,local_pos,2,VECTOR3_TAG);
-                GET_UD_MACRO(Ogre::Vector3,result,3,VECTOR3_TAG);
-                result = self->getPosition() + self->getOrientation() * local_pos;
-                return 0;
-        }
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         GET_UD_MACRO(Ogre::Vector3,local_pos,2,VECTOR3_TAG);
@@ -538,22 +622,62 @@ TRY_START
 TRY_END
 }
 
+static int rbody_get_linear_velocity (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        PUT_V3(self->getLinearVelocity());
+        return 3;
+TRY_END
+}
+
+static int rbody_set_linear_velocity (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        GET_V3(v,2);
+        self->setLinearVelocity(v);
+        return 0;
+TRY_END
+}
+
+static int rbody_get_angular_velocity (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        PUT_V3(self->getAngularVelocity());
+        return 3;
+TRY_END
+}
+
+static int rbody_set_angular_velocity (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        GET_V3(v,2);
+        self->setAngularVelocity(v);
+        return 0;
+TRY_END
+}
+
 
 static int rbody_local_vel (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
+        check_args(L,5);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        GET_UD_MACRO(Ogre::Vector3,pos,2,VECTOR3_TAG);
-        bool world_space = check_bool(L,3);
+        GET_V3(pos,2);
+        bool world_space = check_bool(L,5);
         Ogre::Vector3 local_pos = pos;
         if (world_space) {
                 local_pos -= self->getPosition();
         }
-        const Ogre::Vector3 &local_vel = self->getLocalVelocity(local_pos);
-        lua_pushnumber(L,local_vel.x);
-        lua_pushnumber(L,local_vel.y);
-        lua_pushnumber(L,local_vel.z);
+        Ogre::Vector3 local_vel = self->getLocalVelocity(local_pos);
+        PUT_V3(local_vel);
         return 3;
 TRY_END
 }
@@ -601,103 +725,122 @@ static int rbody_index (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        std::string key = luaL_checkstring(L,2);
-        if (key=="force") {
+        const char *key = luaL_checkstring(L,2);
+        if (!::strcmp(key,"force")) {
                 push_cfunction(L,rbody_force);
-        } else if (key=="impulse") {
+        } else if (!::strcmp(key,"impulse")) {
                 push_cfunction(L,rbody_impulse);
-        } else if (key=="torque") {
+        } else if (!::strcmp(key,"torque")) {
                 push_cfunction(L,rbody_torque);
-        } else if (key=="torqueImpulse") {
+        } else if (!::strcmp(key,"torqueImpulse")) {
                 push_cfunction(L,rbody_torque_impulse);
 
-        } else if (key=="cast") {
+        } else if (!::strcmp(key,"cast")) {
                 push_cfunction(L,cast);
 
-        } else if (key=="activate") {
+        } else if (!::strcmp(key,"activate")) {
                 push_cfunction(L,rbody_activate);
-        } else if (key=="deactivate") {
+        } else if (!::strcmp(key,"deactivate")) {
                 push_cfunction(L,rbody_deactivate);
-        } else if (key=="destroy") {
+        } else if (!::strcmp(key,"destroy")) {
                 push_cfunction(L,rbody_destroy);
 
-        } else if (key=="linearSleepThreshold") {
+        } else if (!::strcmp(key,"linearSleepThreshold")) {
                 lua_pushnumber(L,self->getLinearSleepThreshold());
-        } else if (key=="angularSleepThreshold") {
+        } else if (!::strcmp(key,"angularSleepThreshold")) {
                 lua_pushnumber(L,self->getAngularSleepThreshold());
 
-        } else if (key=="worldPosition") {
+        } else if (!::strcmp(key,"worldPosition")) {
                 push(L, new Ogre::Vector3(self->getPosition()), VECTOR3_TAG);
-        } else if (key=="getWorldPositionXYZ") {
+        } else if (!::strcmp(key,"getWorldPositionXYZ")) {
                 push_cfunction(L,rbody_world_position_xyz);
-        } else if (key=="worldOrientation") {
+        } else if (!::strcmp(key,"worldOrientation")) {
                 push(L, new Ogre::Quaternion(self->getOrientation()), QUAT_TAG);
-        } else if (key=="getWorldOrientationWXYZ") {
+        } else if (!::strcmp(key,"getWorldOrientationWXYZ")) {
                 push_cfunction(L,rbody_world_orientation_wxyz);
 
-        } else if (key=="linearVelocity") {
+        } else if (!::strcmp(key,"rotateToWorld")) {
+                push_cfunction(L,rbody_rotate_to_world);
+        } else if (!::strcmp(key,"rotateFromWorld")) {
+                push_cfunction(L,rbody_rotate_from_world);
+        } else if (!::strcmp(key,"localToWorld")) {
+                push_cfunction(L,rbody_local_to_world);
+        } else if (!::strcmp(key,"worldToLocal")) {
+                push_cfunction(L,rbody_world_to_local);
+
+        } else if (!::strcmp(key,"getAngularVelocity")) {
+                push_cfunction(L,rbody_get_angular_velocity);
+        } else if (!::strcmp(key,"getLinearVelocity")) {
+                push_cfunction(L,rbody_get_linear_velocity);
+        } else if (!::strcmp(key,"setAngularVelocity")) {
+                push_cfunction(L,rbody_set_angular_velocity);
+        } else if (!::strcmp(key,"setLinearVelocity")) {
+                push_cfunction(L,rbody_set_linear_velocity);
+        } else if (!::strcmp(key,"linearVelocity")) {
                 push(L, new Ogre::Vector3(self->getLinearVelocity()),
                         VECTOR3_TAG);
-        } else if (key=="angularVelocity") {
+        } else if (!::strcmp(key,"angularVelocity")) {
                 push(L, new Ogre::Vector3(self->getAngularVelocity()),
                         VECTOR3_TAG);
-        } else if (key=="getLocalPosition") {
+        } else if (!::strcmp(key,"getLocalPosition")) {
                 push_cfunction(L,rbody_local_pos);
-        } else if (key=="getLocalVelocity") {
+        } else if (!::strcmp(key,"getLocalVelocity")) {
                 push_cfunction(L,rbody_local_vel);
 
-        } else if (key=="contactProcessingThreshold") {
+        } else if (!::strcmp(key,"contactProcessingThreshold")) {
                 lua_pushnumber(L,self->getContactProcessingThreshold());
 
-        } else if (key=="linearDamping") {
+        } else if (!::strcmp(key,"linearDamping")) {
                 lua_pushnumber(L,self->getLinearDamping());
-        } else if (key=="angularDamping") {
+        } else if (!::strcmp(key,"angularDamping")) {
                 lua_pushnumber(L,self->getAngularDamping());
 
-        } else if (key=="mass") {
+        } else if (!::strcmp(key,"mass")) {
                 lua_pushnumber(L,self->getMass());
-        } else if (key=="inertia") {
+        } else if (!::strcmp(key,"inertia")) {
                 push(L,new Ogre::Vector3(self->getInertia()),VECTOR3_TAG);
 
-        } else if (key=="numParts") {
+        } else if (!::strcmp(key,"numParts")) {
                 lua_pushnumber(L, self->getNumElements());
-        } else if (key=="getPartEnabled") {
+        } else if (!::strcmp(key,"getPartEnabled")) {
                 push_cfunction(L,rbody_get_part_enabled);
-        } else if (key=="setPartEnabled") {
+        } else if (!::strcmp(key,"setPartEnabled")) {
                 push_cfunction(L,rbody_set_part_enabled);
-        } else if (key=="getPartPositionInitial") {
+        } else if (!::strcmp(key,"getPartPositionInitial")) {
                 push_cfunction(L,rbody_get_part_position_initial);
-        } else if (key=="getPartPositionOffset") {
+        } else if (!::strcmp(key,"getPartPositionOffset")) {
                 push_cfunction(L,rbody_get_part_position_offset);
-        } else if (key=="setPartPositionOffset") {
+        } else if (!::strcmp(key,"setPartPositionOffset")) {
                 push_cfunction(L,rbody_set_part_position_offset);
-        } else if (key=="getPartOrientationInitial") {
+        } else if (!::strcmp(key,"getPartOrientationInitial")) {
                 push_cfunction(L,rbody_get_part_orientation_initial);
-        } else if (key=="getPartOrientationOffset") {
+        } else if (!::strcmp(key,"getPartOrientationOffset")) {
                 push_cfunction(L,rbody_get_part_orientation_offset);
-        } else if (key=="setPartOrientationOffset") {
+        } else if (!::strcmp(key,"setPartOrientationOffset")) {
                 push_cfunction(L,rbody_set_part_orientation_offset);
+        } else if (!::strcmp(key,"setPartOrientationOffsetAngle")) {
+                push_cfunction(L,rbody_set_part_orientation_offset_angle);
 
-        } else if (key=="mesh") {
+        } else if (!::strcmp(key,"mesh")) {
                 push_colmesh(L,self->colMesh);
-        } else if (key=="world") {
+        } else if (!::strcmp(key,"world")) {
                 push_pworld(L,self->world);
 
-        } else if (key=="owner") {
+        } else if (!::strcmp(key,"owner")) {
                 if (self->owner.isNull()) {
                         lua_pushnil(L);
                 } else {
                         push_gritobj(L,self->owner);
                 }
 
-        } else if (key=="updateCallback") {
+        } else if (!::strcmp(key,"updateCallback")) {
                 self->pushUpdateCallback(L);
-        } else if (key=="stepCallback") {
+        } else if (!::strcmp(key,"stepCallback")) {
                 self->pushStepCallback(L);
-        } else if (key=="stabiliseCallback") {
+        } else if (!::strcmp(key,"stabiliseCallback")) {
                 self->pushStabiliseCallback(L);
         } else {
-                my_lua_error(L,"Not a readable RigidBody member: "+key);
+                my_lua_error(L,"Not a readable RigidBody member: "+std::string(key));
         }
         return 1;
 TRY_END
@@ -708,47 +851,47 @@ static int rbody_newindex (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        std::string key = luaL_checkstring(L,2);
-        if (key=="linearVelocity") {
+        const char *key = luaL_checkstring(L,2);
+        if (!::strcmp(key,"linearVelocity")) {
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self->setLinearVelocity(v);
-        } else if (key=="angularVelocity") {
+        } else if (!::strcmp(key,"angularVelocity")) {
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self->setAngularVelocity(v);
-        } else if (key=="worldPosition") {
+        } else if (!::strcmp(key,"worldPosition")) {
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self->setPosition(v);
-        } else if (key=="worldOrientation") {
+        } else if (!::strcmp(key,"worldOrientation")) {
                 GET_UD_MACRO(Ogre::Quaternion,v,3,QUAT_TAG);
                 self->setOrientation(v);
-        } else if (key=="contactProcessingThreshold") {
+        } else if (!::strcmp(key,"contactProcessingThreshold")) {
                 float v = luaL_checknumber(L,3);
                 self->setContactProcessingThreshold(v);
-        } else if (key=="linearDamping") {
+        } else if (!::strcmp(key,"linearDamping")) {
                 float v = luaL_checknumber(L,3);
                 self->setLinearDamping(v);
-        } else if (key=="angularDamping") {
+        } else if (!::strcmp(key,"angularDamping")) {
                 float v = luaL_checknumber(L,3);
                 self->setAngularDamping(v);
-        } else if (key=="linearSleepThreshold") {
+        } else if (!::strcmp(key,"linearSleepThreshold")) {
                 float v = luaL_checknumber(L,3);
                 self->setLinearSleepThreshold(v);
-        } else if (key=="angularSleepThreshold") {
+        } else if (!::strcmp(key,"angularSleepThreshold")) {
                 float v = luaL_checknumber(L,3);
                 self->setAngularSleepThreshold(v);
-        } else if (key=="mass") {
+        } else if (!::strcmp(key,"mass")) {
                 float v = luaL_checknumber(L,3);
                 self->setMass(v);
-        } else if (key=="updateCallback") {
+        } else if (!::strcmp(key,"updateCallback")) {
                 self->setUpdateCallback(L);
-        } else if (key=="stepCallback") {
+        } else if (!::strcmp(key,"stepCallback")) {
                 self->setStepCallback(L);
-        } else if (key=="stabiliseCallback") {
+        } else if (!::strcmp(key,"stabiliseCallback")) {
                 self->setStabiliseCallback(L);
-        } else if (key=="inertia") {
+        } else if (!::strcmp(key,"inertia")) {
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self->setInertia(v);
-        } else if (key=="owner") {
+        } else if (!::strcmp(key,"owner")) {
                 if (lua_isnil(L,3)) {
                         self->owner.setNull();
                 } else {
@@ -757,7 +900,7 @@ TRY_START
                 }
 
         } else {
-               my_lua_error(L,"Not a writeable RigidBody member: "+key);
+               my_lua_error(L,"Not a writeable RigidBody member: "+std::string(key));
         }
         return 0;
 TRY_END
@@ -907,6 +1050,28 @@ TRY_END
 }
 
 
+static int pworld_get_gravity (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
+        PUT_V3(self->getGravity());
+        return 3;
+TRY_END
+}
+
+static int pworld_set_gravity (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
+        GET_V3(gravity, 2);
+        self->setGravity(gravity);
+        return 0;
+TRY_END
+}
+
+
 static int pworld_add_rigid_body (lua_State *L)
 {
 TRY_START
@@ -978,24 +1143,24 @@ static int pworld_index(lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        std::string key = luaL_checkstring(L,2);
-        if (key=="cast") {
+        const char *key = luaL_checkstring(L,2);
+        if (!::strcmp(key,"cast")) {
                 push_cfunction(L,cast);
-        } else if (key=="pump") {
+        } else if (!::strcmp(key,"pump")) {
                 push_cfunction(L,pworld_pump);
-        } else if (key=="updateGraphics") {
+        } else if (!::strcmp(key,"updateGraphics")) {
                 push_cfunction(L,pworld_update_graphics);
-        } else if (key=="addMesh") {
+        } else if (!::strcmp(key,"addMesh")) {
                 push_cfunction(L,pworld_add_mesh);
-        } else if (key=="getMesh") {
+        } else if (!::strcmp(key,"getMesh")) {
                 push_cfunction(L,pworld_get_mesh);
-        } else if (key=="removeMesh") {
+        } else if (!::strcmp(key,"removeMesh")) {
                 push_cfunction(L,pworld_remove_mesh);
-        } else if (key=="hasMesh") {
+        } else if (!::strcmp(key,"hasMesh")) {
                 push_cfunction(L,pworld_has_mesh);
-        } else if (key=="clearMeshes") {
+        } else if (!::strcmp(key,"clearMeshes")) {
                 push_cfunction(L,pworld_clear_meshes);
-        } else if (key=="meshes") {
+        } else if (!::strcmp(key,"meshes")) {
                 // meshes are actually program-wide rather than
                 // per-physics-world but there doesn't seem much point in
                 // reflecting this fact on the lua side
@@ -1009,62 +1174,66 @@ TRY_START
                         lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
                         c++;
                 }
-        } else if (key=="addRigidBody") {
+        } else if (!::strcmp(key,"addRigidBody")) {
                 push_cfunction(L,pworld_add_rigid_body);
-        } else if (key=="gravity") {
+        } else if (!::strcmp(key,"gravity")) {
                 push(L,new Ogre::Vector3(self->getGravity()),VECTOR3_TAG);
-        } else if (key=="stepSize") {
+        } else if (!::strcmp(key,"setGravity")) {
+                push_cfunction(L,pworld_set_gravity);
+        } else if (!::strcmp(key,"getGravity")) {
+                push_cfunction(L,pworld_get_gravity);
+        } else if (!::strcmp(key,"stepSize")) {
                 lua_pushnumber(L,self->getStepSize());
-        } else if (key=="maxSteps") {
+        } else if (!::strcmp(key,"maxSteps")) {
                 lua_pushnumber(L,self->getMaxSteps());
-        } else if (key=="contactBreakingThreshold") {
+        } else if (!::strcmp(key,"contactBreakingThreshold")) {
                 lua_pushnumber(L,self->getContactBreakingThreshold());
-        } else if (key=="deactivationTime") {
+        } else if (!::strcmp(key,"deactivationTime")) {
                 lua_pushnumber(L,self->getDeactivationTime());
-        } else if (key=="gimpactOneWayMeshHack") {
+        } else if (!::strcmp(key,"gimpactOneWayMeshHack")) {
                 lua_pushboolean(L,self->gimpactOneWayMeshHack);
-        } else if (key=="bumpyTriangleMeshHack") {
+        } else if (!::strcmp(key,"bumpyTriangleMeshHack")) {
                 lua_pushboolean(L,self->bumpyTriangleMeshHack);
-        } else if (key=="useTriangleEdgeInfo") {
+        } else if (!::strcmp(key,"useTriangleEdgeInfo")) {
                 lua_pushboolean(L,self->useTriangleEdgeInfo);
-        } else if (key=="verboseContacts") {
+        } else if (!::strcmp(key,"verboseContacts")) {
                 lua_pushboolean(L,self->verboseContacts);
-        } else if (key=="verboseCasts") {
+        } else if (!::strcmp(key,"verboseCasts")) {
                 lua_pushboolean(L,self->verboseCasts);
-        } else if (key=="errorContacts") {
+        } else if (!::strcmp(key,"errorContacts")) {
                 lua_pushboolean(L,self->errorContacts);
-        } else if (key=="setMaterialInteraction") {
+        } else if (!::strcmp(key,"setMaterialInteraction")) {
                 push_cfunction(L,pworld_set_material_interaction);
-        } else if (key=="getMaterialInteraction") {
+        } else if (!::strcmp(key,"getMaterialInteraction")) {
                 push_cfunction(L,pworld_get_material_interaction);
-        } else if (key=="solverDamping") {
+        } else if (!::strcmp(key,"solverDamping")) {
                 lua_pushnumber(L,self->getSolverDamping());
-        } else if (key=="solverIterations") {
+        } else if (!::strcmp(key,"solverIterations")) {
                 lua_pushnumber(L,self->getSolverIterations());
-        } else if (key=="solverErp") {
+        } else if (!::strcmp(key,"solverErp")) {
                 lua_pushnumber(L,self->getSolverErp());
-        } else if (key=="solverErp2") {
+        } else if (!::strcmp(key,"solverErp2")) {
                 lua_pushnumber(L,self->getSolverErp2());
-        } else if (key=="solverSplitImpulseThreshold") {
+        } else if (!::strcmp(key,"solverSplitImpulseThreshold")) {
                 lua_pushnumber(L,self->getSolverSplitImpulseThreshold());
-        } else if (key=="solverLinearSlop") {
+        } else if (!::strcmp(key,"solverLinearSlop")) {
                 lua_pushnumber(L,self->getSolverLinearSlop());
-        } else if (key=="solverWarmStartingFactor") {
+        } else if (!::strcmp(key,"solverWarmStartingFactor")) {
                 lua_pushnumber(L,self->getSolverWarmStartingFactor());
-        } else if (key=="solverSplitImpulse") {
+        } else if (!::strcmp(key,"solverSplitImpulse")) {
                 lua_pushboolean(L,self->getSolverSplitImpulse());
-        } else if (key=="solverRandomiseOrder") {
+        } else if (!::strcmp(key,"solverRandomiseOrder")) {
                 lua_pushboolean(L,self->getSolverRandomiseOrder());
-        } else if (key=="solverFrictionSeparate") {
+        } else if (!::strcmp(key,"solverFrictionSeparate")) {
                 lua_pushboolean(L,self->getSolverFrictionSeparate());
-        } else if (key=="solverUseWarmStarting") {
+        } else if (!::strcmp(key,"solverUseWarmStarting")) {
                 lua_pushboolean(L,self->getSolverUseWarmStarting());
-        } else if (key=="solverCacheFriendly") {
+        } else if (!::strcmp(key,"solverCacheFriendly")) {
                 lua_pushboolean(L,self->getSolverCacheFriendly());
-        } else if (key=="draw") {
+        } else if (!::strcmp(key,"draw")) {
                 push_cfunction(L,pworld_draw);
         } else {
-                my_lua_error(L,"Not a valid PhysicsWorld member: "+key);
+                my_lua_error(L,"Not a valid PhysicsWorld member: "+std::string(key));
         }
         return 1;
 TRY_END
@@ -1075,78 +1244,78 @@ static int pworld_newindex(lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        std::string key = luaL_checkstring(L,2);
-        if (key=="gravity") {
+        const char *key = luaL_checkstring(L,2);
+        if (!::strcmp(key,"gravity")) {
                 GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
                 self->setGravity(v);
-        } else if (key=="maxSteps") {
+        } else if (!::strcmp(key,"maxSteps")) {
                 int v = check_t<int>(L,3);
                 self->setMaxSteps(v);
-        } else if (key=="stepSize") {
+        } else if (!::strcmp(key,"stepSize")) {
                 float v = luaL_checknumber(L,3);
                 self->setStepSize(v);
-        } else if (key=="contactBreakingThreshold") {
+        } else if (!::strcmp(key,"contactBreakingThreshold")) {
                 float v = luaL_checknumber(L,3);
                 self->setContactBreakingThreshold(v);
-        } else if (key=="deactivationTime") {
+        } else if (!::strcmp(key,"deactivationTime")) {
                 float v = luaL_checknumber(L,3);
                 self->setDeactivationTime(v);
-        } else if (key=="gimpactOneWayMeshHack") {
+        } else if (!::strcmp(key,"gimpactOneWayMeshHack")) {
                 bool v = check_bool(L,3);
                 self->gimpactOneWayMeshHack = v;
-        } else if (key=="bumpyTriangleMeshHack") {
+        } else if (!::strcmp(key,"bumpyTriangleMeshHack")) {
                 bool v = check_bool(L,3);
                 self->bumpyTriangleMeshHack = v;
-        } else if (key=="useTriangleEdgeInfo") {
+        } else if (!::strcmp(key,"useTriangleEdgeInfo")) {
                 bool v = check_bool(L,3);
                 self->useTriangleEdgeInfo = v;
-        } else if (key=="verboseContacts") {
+        } else if (!::strcmp(key,"verboseContacts")) {
                 bool v = check_bool(L,3);
                 self->verboseContacts = v;
-        } else if (key=="verboseCasts") {
+        } else if (!::strcmp(key,"verboseCasts")) {
                 bool v = check_bool(L,3);
                 self->verboseCasts = v;
-        } else if (key=="errorContacts") {
+        } else if (!::strcmp(key,"errorContacts")) {
                 bool v = check_bool(L,3);
                 self->errorContacts = v;
-        } else if (key=="solverDamping") {
+        } else if (!::strcmp(key,"solverDamping")) {
                 float v = luaL_checknumber(L,3);
                 self->setSolverDamping(v);
-        } else if (key=="solverIterations") {
+        } else if (!::strcmp(key,"solverIterations")) {
                 int v = check_t<int>(L,3);
                 self->setSolverIterations(v);
-        } else if (key=="solverErp") {
+        } else if (!::strcmp(key,"solverErp")) {
                 float v = luaL_checknumber(L,3);
                 self->setSolverErp(v);
-        } else if (key=="solverErp2") {
+        } else if (!::strcmp(key,"solverErp2")) {
                 float v = luaL_checknumber(L,3);
                 self->setSolverErp2(v);
-        } else if (key=="solverSplitImpulseThreshold") {
+        } else if (!::strcmp(key,"solverSplitImpulseThreshold")) {
                 float v = luaL_checknumber(L,3);
                 self->setSolverSplitImpulseThreshold(v);
-        } else if (key=="solverLinearSlop") {
+        } else if (!::strcmp(key,"solverLinearSlop")) {
                 float v = luaL_checknumber(L,3);
                 self->setSolverLinearSlop(v);
-        } else if (key=="solverWarmStartingFactor") {
+        } else if (!::strcmp(key,"solverWarmStartingFactor")) {
                 float v = luaL_checknumber(L,3);
                 self->setSolverWarmStartingFactor(v);
-        } else if (key=="solverSplitImpulse") {
+        } else if (!::strcmp(key,"solverSplitImpulse")) {
                 bool v = check_bool(L,3);
                 self->setSolverSplitImpulse(v);
-        } else if (key=="solverRandomiseOrder") {
+        } else if (!::strcmp(key,"solverRandomiseOrder")) {
                 bool v = check_bool(L,3);
                 self->setSolverRandomiseOrder(v);
-        } else if (key=="solverFrictionSeparate") {
+        } else if (!::strcmp(key,"solverFrictionSeparate")) {
                 bool v = check_bool(L,3);
                 self->setSolverFrictionSeparate(v);
-        } else if (key=="solverUseWarmStarting") {
+        } else if (!::strcmp(key,"solverUseWarmStarting")) {
                 bool v = check_bool(L,3);
                 self->setSolverUseWarmStarting(v);
-        } else if (key=="solverCacheFriendly") {
+        } else if (!::strcmp(key,"solverCacheFriendly")) {
                 bool v = check_bool(L,3);
                 self->setSolverCacheFriendly(v);
         } else {
-                my_lua_error(L,"Not a valid PhysicsWorld member: "+key);
+                my_lua_error(L,"Not a valid PhysicsWorld member: "+std::string(key));
         }
         return 0;
 TRY_END

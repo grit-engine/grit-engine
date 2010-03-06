@@ -1022,6 +1022,36 @@ TRY_START
 TRY_END
 }
 
+static int entity_get_bone_orientation_offset (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Quaternion parent = skel->getBone(n)->getInitialOrientation();
+        Ogre::Quaternion world = skel->getBone(n)->getOrientation();
+        PUT_QUAT(parent.Inverse() * world);
+        return 4;
+TRY_END
+}
+
+static int entity_get_bone_position_offset (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        Ogre::SkeletonInstance *skel = self.getSkeleton();
+        if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
+        unsigned n = check_int(L,2,0,skel->getNumBones()-1);
+        Ogre::Vector3 parent = skel->getBone(n)->getInitialPosition();
+        Ogre::Vector3 world = skel->getBone(n)->getPosition();
+        PUT_V3(world - parent);
+        return 3;
+TRY_END
+}
+
 static int entity_set_bone_orientation_offset_angle (lua_State *L)
 {
 TRY_START
@@ -1236,6 +1266,10 @@ TRY_START
                 push_cfunction(L,entity_get_bone_position);
         } else if (0==strcmp(key,"getBoneOrientation")) {
                 push_cfunction(L,entity_get_bone_orientation);
+        } else if (0==strcmp(key,"getBonePositionOffset")) {
+                push_cfunction(L,entity_get_bone_position_offset);
+        } else if (0==strcmp(key,"getBoneOrientationOffset")) {
+                push_cfunction(L,entity_get_bone_orientation_offset);
         } else if (0==strcmp(key,"setAllBonesManuallyControlled")) {
                 push_cfunction(L,entity_set_all_bones_manually_controlled);
         } else if (0==strcmp(key,"setBoneManuallyControlled")) {

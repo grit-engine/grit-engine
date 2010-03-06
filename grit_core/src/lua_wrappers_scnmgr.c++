@@ -70,19 +70,73 @@ TRY_END
 static int node_translate (lua_State *L)
 {
 TRY_START
-        if (lua_gettop(L)==4) {
-                GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-                Ogre::Real px = luaL_checknumber(L,2);
-                Ogre::Real py = luaL_checknumber(L,3);
-                Ogre::Real pz = luaL_checknumber(L,4);
-                self.translate(Ogre::Vector3(px,py,pz));
-                return 0;
-        }
-        check_args(L,2);
+        check_args(L,4);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        GET_UD_MACRO(Ogre::Vector3,v,2,VECTOR3_TAG);
-        self.translate(v);
+        GET_V3(p,2);
+        self.translate(p);
         return 0;
+TRY_END
+}
+
+static int node_get_world_position (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
+        PUT_V3(self._getDerivedPosition());
+        return 3;
+TRY_END
+}
+
+static int node_get_world_orientation (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
+        PUT_QUAT(self._getDerivedOrientation());
+        return 4;
+TRY_END
+}
+
+static int node_get_local_position (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
+        PUT_V3(self.getPosition());
+        return 3;
+TRY_END
+}
+
+static int node_get_local_orientation (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
+        PUT_QUAT(self.getOrientation());
+        return 4;
+TRY_END
+}
+
+static int node_rotate_to_parent (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
+        GET_V3(p,2);
+        PUT_V3(self.getOrientation() * p);
+        return 3;
+TRY_END
+}
+
+static int node_rotate_to_world (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
+        GET_V3(p,2);
+        PUT_V3(self._getDerivedOrientation() * p);
+        return 3;
 TRY_END
 }
 
@@ -261,8 +315,20 @@ TRY_START
                 lua_pushboolean(L,self.getInheritOrientation());
         } else if (key=="inheritScale") {
                 lua_pushboolean(L,self.getInheritScale());
+        } else if (key=="getLocalOrientation") {
+                push_cfunction(L,node_get_local_orientation);
+        } else if (key=="getWorldOrientation") {
+                push_cfunction(L,node_get_world_orientation);
+        } else if (key=="getLocalPosition") {
+                push_cfunction(L,node_get_local_position);
+        } else if (key=="getWorldPosition") {
+                push_cfunction(L,node_get_world_position);
         } else if (key=="translate") {
                 push_cfunction(L,node_translate);
+        } else if (key=="rotateToParent") {
+                push_cfunction(L,node_rotate_to_parent);
+        } else if (key=="rotateToWorld") {
+                push_cfunction(L,node_rotate_to_world);
         } else if (key=="setPosition") {
                 push_cfunction(L,node_set_position);
         } else if (key=="setOrientation") {
