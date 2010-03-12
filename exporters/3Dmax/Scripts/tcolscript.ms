@@ -1,6 +1,8 @@
 global nodeArray  -- used to store the nodes (meshes, primitives) created
 global colStream
 
+fn min a b = ( if a > b then b else a )
+
 fn readTrimeshVerts &vArray= 
 	(
 	local inStr
@@ -83,6 +85,24 @@ fn readHull =
 	
 menu = newRolloutFloater "Grit .TCOL script" 320 363
 
+fn get_material obj id = (
+    mat = obj.material
+    if mat != undefined then (
+        if (classof mat) == MULTIMATERIAL then (
+            mat = mat.materialList[mat.materialIDlist[id]]
+        )
+        if (classof mat) == GRIT_PHYSMAT then (
+            mat.physmat
+        ) else (
+            format "ERROR: % has no recognisable material:  Assigning frictionless material!\n" obj.name to:listener
+            0
+        )
+    ) else (
+        format "ERROR: % has no material:  Assigning frictionless material!\n" obj.name to:listener
+        0
+    )
+)
+
 Rollout maain "Main"
 (
 	group "Import/Export" (
@@ -91,78 +111,70 @@ Rollout maain "Main"
 		checkbox zexp "Move to 0.0 0.0 0.0 for export" align:#center
 	)
 	group "Attributes" (
-		checkbox istat "Static" align:#center
-		checkbox cymass "Export" across:2 
-		spinner smass "Mass:" enabled:false
-		checkbox cyinertia "Export" across:2 
-		spinner sinertia "Inertia:" enabled:false
+		checkbox cymass "Export (otherwise static)" across:2 
+		spinner smass "Mass (kg):" enabled:false
+		checkbox cyinertia "Export"
+		spinner sinertiax "Inertia Tensor X (m):" enabled:false
+		spinner sinertiay "Inertia Tensor Y (m):" enabled:false
+		spinner sinertiaz "Inertia Tensor Z (m):" enabled:false
 		checkbox cyldamp "Export" across:2 
 		spinner sldamp "Linear Damping:" enabled:false
 		checkbox cyadamp "Export" across:2 
 		spinner sadamp "Angular Damping:" enabled:false
 		checkbox cylsthrs "Export" across:2 
-		spinner slsthrs "Linear sleep threshold:" enabled:false
+		spinner slsthrs "Lin. sleep thr. (m/s):" enabled:false
 		checkbox cyasthrs "Export" across:2 
-		spinner sasthrs "Angular sleep threshold:" enabled:false
+		spinner sasthrs "Ang. sleep thr. (rad/s):" enabled:false
 		checkbox cycmotthrs "Export" across:2
-		spinner scmotthrs "CCD Motion Threshold:" enabled:false
+		spinner scmotthrs "CCD motion thr. (m/s):" enabled:false
 		checkbox cycsphswrad "Export" across:2
-		spinner scsphswrad "CCD Swept Sphere Radius:" enabled:false
-		button resatb "Reset to default" width:116
+		spinner scsphswrad "CCD sphere rad (m):" enabled:false
+		button resetb "Reset to default" width:116
 	)
-	on resatb pressed do
+
+	on resetb pressed do
 	(
-	smass.value = 0.0 
-	smass.enabled = false 
-	sinertia.value = 0.0
-	sinertia.enabled = false 
-	sldamp.value = 0.5
-	sldamp.enabled = false 
-	sadamp.value = 0.0
-	sadamp.enabled = false 
-	slsthrs.value = 1.0
-	slsthrs.enabled = false 
-	sasthrs.value = 0.8
-	sasthrs.enabled = false 
-	scmotthrs.value = 0.0
-	scmotthrs.enabled = false 
-	scsphswrad.value = 0.0
-	scsphswrad.enabled = false 
-	
-	istat.triState = 0
-	
-	cymass.triState = 0
-	cyinertia.triState = 0
-	cyldamp.triState = 0
-	cyadamp.triState = 0
-	cylsthrs.triState = 0
-	cyasthrs.triState = 0
-	cycmotthrs.triState = 0
-	cycsphswrad.triState = 0
+        smass.value = 100.0 
+        smass.enabled = false 
+        sinertiax.value = 0.0
+        sinertiax.enabled = false 
+        sinertiay.value = 0.0
+        sinertiay.enabled = false 
+        sinertiaz.value = 0.0
+        sinertiaz.enabled = false 
+        sldamp.value = 0.5
+        sldamp.enabled = false 
+        sadamp.value = 0.0
+        sadamp.enabled = false 
+        slsthrs.value = 1.0
+        slsthrs.enabled = false 
+        sasthrs.value = 0.8
+        sasthrs.enabled = false 
+        scmotthrs.value = 0.0
+        scmotthrs.enabled = false 
+        scsphswrad.value = 0.0
+        scsphswrad.enabled = false 
+        
+        cymass.triState = 0
+        cyinertia.triState = 0
+        cyldamp.triState = 0
+        cyadamp.triState = 0
+        cylsthrs.triState = 0
+        cyasthrs.triState = 0
+        cycmotthrs.triState = 0
+        cycsphswrad.triState = 0
 	)
-	
+
 	--This is about enabling or disabling the spinners if 'export' is selected
 	on cymass changed theState do 
 	(
-		if cymass.triState == 0 then
-		(		
-		smass.enabled = false
-		)
-		else if cymass.triState == 1 then
-		(		
-		smass.enabled = true
-		)
+		smass.enabled = cymass.triState == 1
 	)
 	on cyinertia changed theState do 
 	(
-		if cyinertia.triState == 0 then
-		(		
-		sinertia.enabled = false
-		)
-		else if cyinertia.triState == 1 then
-		(		
-		sinertia.enabled = true
-		)
+		sinertiax.enabled = cyinertia.triState == 1
+		sinertiay.enabled = cyinertia.triState == 1
+		sinertiaz.enabled = cyinertia.triState == 1
 	)
 	on cyldamp changed theState do 
 	(
@@ -236,393 +248,352 @@ Rollout maain "Main"
 	on exp pressed do
 	(
 		savetcol = getSaveFileName types:"Grit collision file(*.tcol)|*.tcol|" 
-		if savetcol != undefined then
-		(		
+		if savetcol != undefined then (	
+			
 			savetcol = createFile (savetcol)
 			
 		if $ != undefined then
-		format "TCOL1.0\n\n" to:savetcol
-		--attributes
-		format "attributes {\n" to:savetcol
-		format "\nStarted TCOL export\nTCOL 1.0\nName: %\nStarted exporting attributes...\n" savetcol to:listener
-		if istat.triState == 1 then
-		(
-		format "static;\n" to:savetcol
-		format "static\n" to:listener
-		)
-		if cymass.triState == 1 then
-		(
-		format "mass %;\n" smass.value to:savetcol
-		format "mass: %\n" smass.value to:listener
-		)
-		if cyinertia.triState == 1 then
-		(
-		format "inertia %;\n" sinertia.value to:savetcol
-		format "inertia: %\n" sinertia.value to:listener
-		)
-		if cyldamp.triState == 1 then
-		(
-		format "linear_damping %;\n" sldamp.value to:savetcol
-		format "Linear Damping: %\n" sldamp.value to:listener
-		)
-		if cylsthrs.triState == 1 then
-		(
-		format "angular_damping %;\n" sadamp.value to:savetcol
-		format "Angular Damping: %\n" sadamp.value to:listener
-		)
-		if cylsthrs.triState == 1 then
-		(
-		format "linear_sleep_threshold %;\n" slsthrs.value to:savetcol
-		format "Linear sleep threshold: %\n" slsthrs.value to:listener
-		)
-		if cyasthrs.triState == 1 then
-		(
-		format "angular_sleep_threshold %;\n" sasthrs.value to:savetcol
-		format "Angular sleep threshold: %\n" sasthrs.value to:listener
-		)
-		if cycmotthrs.triState == 1 then
-		(
-		format "ccd_motion_threshold %;\n" scmotthrs.value to:savetcol
-		format "CCD Motion Threshold: %\n" scmotthrs.value to:listener
-		)
-		if cycsphswrad.triState == 1 then
-		(
-		format "ccd_swept_sphere_radius %;\n" scsphswrad.value to:savetcol
-		format "CCD Swept Sphere Radius: %\n" scsphswrad.value to:listener
-		)
-		format "}\n\n" to:savetcol
-		format "Finished exporting attributes\n" to:listener
-		
-		--compounds
-		format "compound {\n" to:savetcol
-		format "Started exporting compounds...\n" to:listener
-		for objs in $ do
-		(
-			OX = objs.pos.x
-			OY = objs.pos.Y
-			OZ = objs.pos.Z
-			if zexp.triState == 1 then
-			(
-			objs.pos.x = 0.0
-			objs.pos.y = 0.0
-			objs.pos.z = 0.0
-			format "Moved % from % % % to %\n" objs.name OX OY OZ objs.pos to:listener
+			format "TCOL1.0\n\n" to:savetcol
+			--attributes
+			format "attributes {\n" to:savetcol
+			format "\nStarted TCOL export\nTCOL 1.0\nName: %\nStarted exporting attributes...\n" savetcol to:listener
+			if cymass.triState == 0 then (
+				format "    static;\n" to:savetcol
+				format "static\n" to:listener
 			)
-			if classof(objs) == Box then
-			(
-				if objs.material != undefined then
-				(
-				if objs.material.physmat != undefined then
-				(
-				matid = objs.material.physmat))
-				else (
-				matid = 0
-				format "% doesn't have a phys mat assigned!!!\n assigning FrictionLess...\n" objs.name to:listener
-				)
-				L = objs.length
-				W = objs.width
-				H = objs.height
-				X = objs.pos.X
-				Y = objs.pos.Y
-				Z = objs.pos.Z + (objs.height/2)
-				format "box {\nmaterial 0x%;\ncentre % % %;\ndimensions % % %;\n" matid X Y Z L W H to:savetcol
-				format "}\n" to:savetcol
-				format "Exported box at % % % length:% width:% height:%\n" X Y Z L W H to:listener
+			if cymass.triState == 1 then (
+				format "    mass %;\n" smass.value to:savetcol
+				format "mass: %\n" smass.value to:listener
 			)
-			if classof(objs) == Cylinder then
-			(
-				if objs.material != undefined then
-				(
-				if objs.material.physmat != undefined then 
-				(
-				matid = objs.material.physmat))
-				else (
-				matid = 0
-				format "% doesn't have a phys mat assigned!!!\n assigning FrictionLess...\n" objs.name to:listener
-				)
-				RX = objs.radius*2
-				RY = objs.scale.Y*objs.radius*2
-				H = objs.height
-				X = objs.pos.X
-				Y = objs.pos.Y
-				Z = objs.pos.Z + (objs.height/2)
-				format "cylinder {\nmaterial 0x%;\ncentre % % %;\ndimensions % % %;\n" matid X Y Z RX RY H to:savetcol
-				format "}\n" to:savetcol
-				format "Exported cylinder at % % % radius X:% radius Y:% Height:%\n" X Y Z RX RY H to:listener
+			if cyinertia.triState == 1 then (
+				format "    inertia %;\n" sinertia.value to:savetcol
+				format "inertia: %\n" sinertia.value to:listener
 			)
-			if classof(objs) == Cone then
-			(
-				if objs.material != undefined then
-				(
-				if objs.material.physmat != undefined then 
-				(
-				matid = objs.material.physmat))
-				else (
-				matid = 0
-				format "% doesn't have a phys mat assigned!!!\n assigning FrictionLess...\n" objs.name to:listener
-				)
-				R = objs.radius1
-				H = objs.height
-				X = objs.pos.X
-				Y = objs.pos.Y
-				Z = objs.pos.Z + (objs.height/2)
-				format "cone {\nmaterial 0x%;\ncentre % % %;\nradius %;\nheight %;\n" matid X Y Z R H to:savetcol
-				format "}\n" to:savetcol
-				format "Exported cone at % % % radius %\n height %;\n" X Y Z R H  to:listener
+			if cyldamp.triState == 1 then (
+				format "    linear_damping %;\n" sldamp.value to:savetcol
+				format "Linear Damping: %\n" sldamp.value to:listener
 			)
-			if classof(objs) == Sphere then
-			(
-				if objs.material != undefined then
-				(
-				if objs.material.physmat != undefined then
-				(
-				matid = objs.material.physmat))
-				else (
-				matid = 0
-				format "% doesn't have a phys mat assigned!!!\n assigning FrictionLess...\n" objs.name to:listener
+			if cylsthrs.triState == 1 then (
+				format "    angular_damping %;\n" sadamp.value to:savetcol
+				format "Angular Damping: %\n" sadamp.value to:listener
+			)
+			if cylsthrs.triState == 1 then (
+				format "    linear_sleep_threshold %;\n" slsthrs.value to:savetcol
+				format "Linear sleep threshold: %\n" slsthrs.value to:listener
+			)
+			if cyasthrs.triState == 1 then (
+				format "    angular_sleep_threshold %;\n" sasthrs.value to:savetcol
+				format "Angular sleep threshold: %\n" sasthrs.value to:listener
+			)
+			if cycmotthrs.triState == 1 then (
+				format "    ccd_motion_threshold %;\n" scmotthrs.value to:savetcol
+				format "CCD Motion Threshold: %\n" scmotthrs.value to:listener
+			)
+			if cycsphswrad.triState == 1 then (
+				format "   ccd_swept_sphere_radius %;\n" scsphswrad.value to:savetcol
+				format "CCD Swept Sphere Radius: %\n" scsphswrad.value to:listener
+			)
+			format "}\n\n" to:savetcol
+			format "Finished exporting attributes\n" to:listener
+			
+			--compounds
+			format "compound {\n" to:savetcol
+			format "Started exporting compounds...\n" to:listener
+			for obj in $ do (
+                pos = obj.pos
+                q = obj.rotation
+				if zexp.triState == 1 then (
+                    pos = point3 0 0 0
+					format "Moved % from % % % to %\n" obj.name pos.x pos.y pos.z obj.pos to:listener
 				)
-				R = objs.radius
-				X = objs.pos.X
-				Y = objs.pos.Y
-				Z = objs.pos.Z
-				format "sphere {\nmaterial 0x%;\ncentre % % %;\nradius %;\n" matid X Y Z R to:savetcol
-				format "}\n" to:savetcol
-				format "Exported sphere at % % % radius:%\n" X Y Z R to:listener
+				if classof(obj) == Box then (
+                    dim = obj.scale * point3 obj.width obj.length obj.height
+                    margin = (min(min dim.x dim.y) dim.z)/4
+                    if margin > 0.04 then ( margin = 0.04 )
+                    pos = pos + point3 0 0 (obj.scale.z*obj.height/2) * inverse q
+					format "    box {\n" to:savetcol
+                    format "        material %;\n" (formattedPrint (get_material obj 1) format:"#x") to:savetcol
+                    format "        margin %;\n" margin to:savetcol
+                    format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
+                    format "        dimensions % % %;\n" dim.x dim.y dim.z to:savetcol
+                    format "        orientation % % % %;\n" q.w q.x q.y q.z to:savetcol
+                    format "    }\n" to:savetcol
+				)
+				if classof(obj) == Cylinder then (
+					if obj.material != undefined then (
+						if obj.material.physmat != undefined then (
+							matid = obj.material.physmat
+						)
+					) else (
+						matid = 0
+						format "% doesn't have a phys mat assigned!!!\n assigning FrictionLess...\n" obj.name to:listener
+					)
+					RX = obj.radius*2
+					RY = obj.scale.Y*obj.radius*2
+					H = obj.height
+					X = OX
+					Y = OY
+					Z = OZ + (obj.height/2)
+					format "    cylinder {\n        material 0x%;\n        centre % % %;\n        dimensions % % %;\n    }\n" matid X Y Z RX RY H to:savetcol
+					format "Exported cylinder at % % % radius X:% radius Y:% Height:%\n" X Y Z RX RY H to:listener
+				)
+				if classof(obj) == Cone then
+				(
+					if obj.material != undefined then (
+						if obj.material.physmat != undefined then (
+							matid = obj.material.physmat
+						)
+					) else (
+						matid = 0
+						format "% doesn't have a phys mat assigned!!!\n assigning FrictionLess...\n" obj.name to:listener
+					)
+					R = obj.radius1
+					H = obj.height
+					X = OX
+					Y = OY
+					Z = OZ + (obj.height/2)
+					format "    cone {\n        material 0x%;\n        centre % % %;\n        radius %;\n        height %;\n    }\n" matid X Y Z R H to:savetcol
+					format "Exported cone at % % % radius %\n height %;\n" X Y Z R H  to:listener
+				)
+				if classof(obj) == Sphere then
+				(
+					if obj.material != undefined then (
+						if obj.material.physmat != undefined then (
+							matid = obj.material.physmat
+						)
+					) else (
+						matid = 0
+						format "% doesn't have a phys mat assigned!!!\n assigning FrictionLess...\n" obj.name to:listener
+					)
+					R = obj.radius
+					X = OX
+					Y = OY
+					Z = OZ
+					format "    sphere {\n        material 0x%;\n        centre % % %;\n        radius %;\n    }\n" matid X Y Z R to:savetcol
+					format "Exported sphere at % % % radius:%\n" X Y Z R to:listener
+				)
 			)
 			format "Finished exporting compounds\n" to:listener
 			format "}\n" to:savetcol
 			
 			--trimesh
-			if classof objs.baseobject == Editable_Poly then
-			(
-			theEP = selection[1].baseobject
-			format "trimesh {\n" to:savetcol
-			format "Started exporting trimesh...\n" to:listener
-			tmesh = snapshotAsMesh objs
-			num_verts = tmesh.numverts 
-			num_faces = tmesh.numfaces
-			format "Verts: %\nTris: %\n" num_verts num_faces to:listener
-			format "vertexes {\n" to:savetcol
-				for v = 1 to num_verts do
-				(
-				 vert = getVert tmesh v
-				 format "% % %;\n" vert.x vert.y vert.z to:savetcol
-				 continue
+			HAVE_TRIMESH=false
+			for obj in $ do (
+				OX = obj.pos.x
+				OY = obj.pos.Y
+				OZ = obj.pos.Z
+				if zexp.triState == 1 then (
+					OX= 0.0
+					OY = 0.0
+					OZ = 0.0
+					format "Moved % from % % % to %\n" obj.name OX OY OZ obj.pos to:listener
 				)
-				format "verts exporting finished!\n" to:listener
-				format "}\nfaces {\n" to:savetcol
-				for f = 1 to num_faces do
-				(
-				face = getFace tmesh f
-				faceord = face-1
-				--format "face: %\n" faceord to:listener
-				matnmb = getFaceMatId tmesh f
-				matname = objs.material
-				mats = matname.materialIDlist[matnmb]
-				mat = matname.materialList[mats]
-				--format "material: %\n" mat.name to:listener
-				materialClass = classof mat
-				if materialClass != GRIT_PHYSMAT then
-				(
-				matid = 0
-				format "Face '%' doesn't have a phys mat assigned!!!\nAssigning FrictionLess...\n" f to:listener
+				
+				--trimesh
+				if classof obj.baseobject == Editable_Poly then (
+					if HAVE_TRIMESH == false then (
+						format "trimesh {\n" to:savetcol
+						format "Started exporting trimesh...\n" to:listener
+						HAVE_TRIMESH = true
+					)
+					theEP = selection[1].baseobject
+					tmesh = snapshotAsMesh obj
+					num_verts = tmesh.numverts 
+					num_faces = tmesh.numfaces
+					format "Verts: %\nTris: %\n" num_verts num_faces to:listener
+					format "    vertexes {\n" to:savetcol
+					for v = 1 to num_verts do (
+						vert = getVert tmesh v
+						format "        % % %;\n" vert.x vert.y vert.z to:savetcol
+						continue
+					)
+					format "verts exporting finished!\n" to:listener
+					format "    }\n    faces {\n" to:savetcol
+					for f = 1 to num_faces do (
+						face = getFace tmesh f
+						faceord = face-1
+						--format "face: %\n" faceord to:listener
+						matnmb = getFaceMatId tmesh f
+						matname = obj.material
+						mats = matname.materialIDlist[matnmb]
+						mat = matname.materialList[mats]
+						--format "material: %\n" mat.name to:listener
+						materialClass = classof mat
+						if materialClass != GRIT_PHYSMAT then (
+							matid = 0
+							format "Face '%' doesn't have a phys mat assigned!!!\nAssigning FrictionLess...\n" f to:listener
+						)
+						else (
+							matid = mat.physmat
+						)
+						format "        % % % 0x%;\n" (faceord[1] as integer) (faceord[2] as integer) (faceord[3] as integer) matid to:savetcol
+					)
+					delete tmesh
+					format "    }\n" to:savetcol
+					format "faces exporting finished!\n" to:listener
 				)
-				else (
-				matid = mat.physmat
-				)
-				format "% % % 0x%;\n" (faceord[1] as integer) (faceord[2] as integer) (faceord[3] as integer) matid to:savetcol
-				)
-				format "faces exporting finished!\n" to:listener
-				delete tmesh
-				format "}\n" to:savetcol
-				format "Finished exporting trimesh\n" to:listener
 			)
-			format "}\n" to:savetcol
-			objs.pos.X = OX
-			objs.pos.Y = OY
-			objs.pos.Z = OZ
-			format "Moved % back to %\n" objs.name objs.pos to:listener
-		)
-		format "finished!\n" to:listener
-		close savetcol
+			if HAVE_TRIMESH == true then (
+				format "}\n" to:savetcol
+				format "Finished exporting trimesh...\n" to:listener
+			)
+			format "finished!\n" to:listener
+			close savetcol
 		)
 	)
 	
 	--Importing
 	on imp pressed do
 	(
-	colopenname = getOpenFileName caption:"Open TCOL" types:"Open Grit collision file (*.tcol)|*.tcol|"
-	colStream = undefined
-	if colopenname != undefined then
-		colStream = openfile colopenname
-	if colStream != undefined do
-		(
-		lc = 1
-		while not eof colStream do
-			(
-			--format "LC = %\n" lc; lc += 1
-			inputline = readLine colStream --We start reading the file
-			lineArgs = filterString inputline "; "
-			
-			if lineArgs.count == 0 then
-				continue
+		colopenname = getOpenFileName caption:"Open TCOL" types:"Open Grit collision file (*.tcol)|*.tcol|"
+		colStream = undefined
+		if colopenname != undefined then
+			colStream = openfile colopenname
+		if colStream != undefined do (
+			lc = 1
+			while not eof colStream do (
+				--format "LC = %\n" lc; lc += 1
+				inputline = readLine colStream --We start reading the file
+				lineArgs = filterString inputline "; "
 				
-			if lineArgs[1] == "/*" then
-				(
-					while (lineArgs[1] != "*/") do
-					(
-					)
-				continue
+				if lineArgs.count == 0 then
+					continue
+				
+				if lineArgs[1] == "/*" then (
+					while (lineArgs[1] != "*/") do ( )
+					continue
 				)
 			
-			if lineArgs[1] == "TCOL1.0" then
-				(
-				format "\nStarted TCOL import\nTCOL 1.0\nName: %\n" colopenname to:listener
-				continue
+				if lineArgs[1] == "TCOL1.0" then (
+					format "\nStarted TCOL import\nTCOL 1.0\nName: %\n" colopenname to:listener
+					continue
 				)
 				
-			if lineArgs[1] == "//" then
-				(
-				commnt = lineArgs[2] 
-				format "Comment: %\n" commnt to:listener
-				continue
+				if lineArgs[1] == "//" then (
+					commnt = lineArgs[2] 
+					format "Comment: %\n" commnt to:listener
+					continue
 				) 
 				
-			if lineArgs[1] == "attributes" then
-				(
-				format "Importing atributes\n" to:listener
-				continue
+				if lineArgs[1] == "attributes" then (
+					format "Importing atributes\n" to:listener
+					continue
 				) 
 				
-			if lineargs[1] == "mass" then 
-				(
-				cymass.triState = 1
-				massv = (lineArgs[2] as float) 
-				smass.value = massv
-				format "Mass: %\n" (lineArgs[2] as float)  to:listener
-				continue
+				if lineargs[1] == "mass" then (
+					cymass.triState = 1
+					massv = (lineArgs[2] as float) 
+					smass.value = massv
+					format "Mass: %\n" (lineArgs[2] as float)  to:listener
+					continue
 				)
 				
-			if lineargs[1] == "static" then 
+				if lineargs[1] == "static" then 
 				(
-				istat.triState = 1
-				format "Static\n" to:listener
-				continue
+					cymass.triState = 0
+					format "Static\n" to:listener
+					continue
 				)
 				
-			if lineargs[1] == "inertia" then
+				if lineargs[1] == "inertia" then
 				(
-				cyinertia.triState = 1
-				inertiav = (lineArgs[2] as float) 
-				sinertia.value = inertiav
-				format "Inertia: %\n" (lineArgs[2] as float)  to:listener
-				continue
+					cyinertia.triState = 1
+					inertiav = (lineArgs[2] as float) 
+					sinertia.value = inertiav
+					format "Inertia: %\n" (lineArgs[2] as float)  to:listener
+					continue
 				)
 
-			if lineargs[1] == "linear_damping" then
-				(
-				cyldamp.triState = 1
-				ldampv = (lineArgs[2] as float) 
-				sldamp.value = ldampv
-				format "Linear Damping: %\n" (lineArgs[2] as integer) to:listener
-				continue
+				if lineargs[1] == "linear_damping" then (
+					cyldamp.triState = 1
+					ldampv = (lineArgs[2] as float) 
+					sldamp.value = ldampv
+					format "Linear Damping: %\n" (lineArgs[2] as integer) to:listener
+					continue
 				)
 				
-			if lineargs[1] == "angular_damping" then
-				(
-				cyadamp.triState = 1
-				adampv = (lineArgs[2] as float) 
-				sadamp.value = adampv
-				format "Angular Damping: %\n" (lineArgs[2] as integer) to:listener
-				continue
+				if lineargs[1] == "angular_damping" then (
+					cyadamp.triState = 1
+					adampv = (lineArgs[2] as float) 
+					sadamp.value = adampv
+					format "Angular Damping: %\n" (lineArgs[2] as integer) to:listener
+					continue
 				)
 				
-			if lineargs[1] == "linear_sleep_threshold" then
-				(
-				cylsthrs.triState = 1
-				lsthrsv = (lineArgs[2] as float) 
-				slsthrs.value = lsthrsv
-				format "Linear sleep threshold: %\n" (lineArgs[2] as integer) to:listener
-				continue
+				if lineargs[1] == "linear_sleep_threshold" then (
+					cylsthrs.triState = 1
+					lsthrsv = (lineArgs[2] as float) 
+					slsthrs.value = lsthrsv
+					format "Linear sleep threshold: %\n" (lineArgs[2] as integer) to:listener
+					continue
 				)
 				
-			if lineargs[1] == "angular_sleep_threshold" then
-				(
-				cyasthrs.triState = 1
-				asthrsv = (lineArgs[2] as float) 
-				sasthrs.value = asthrsv
-				format "Angular sleep threshold: %\n" (lineArgs[2] as integer) to:listener
-				continue
+				if lineargs[1] == "angular_sleep_threshold" then (
+					cyasthrs.triState = 1
+					asthrsv = (lineArgs[2] as float) 
+					sasthrs.value = asthrsv
+					format "Angular sleep threshold: %\n" (lineArgs[2] as integer) to:listener
+					continue
 				)
 				
-			if lineargs[1] == "ccd_motion_threshold" then
-				(
-				cycmotthrs.triState = 1
-				cmotthrsv = (lineArgs[2] as float) 
-				scmotthrs.value = cmotthrsv
-				format "CCD Motion Threshold: %\n" (lineArgs[2] as integer) to:listener
-				continue
+				if lineargs[1] == "ccd_motion_threshold" then (
+					cycmotthrs.triState = 1
+					cmotthrsv = (lineArgs[2] as float) 
+					scmotthrs.value = cmotthrsv
+					format "CCD Motion Threshold: %\n" (lineArgs[2] as integer) to:listener
+					continue
 				)
 				
-			if lineargs[1] == "ccd_swept_sphere_radius" then
-				(
-				cycsphswrad.triState = 1
-				csphswradv = (lineArgs[2] as float) 
-				scsphswrad.value = csphswradv
-				format "CCD Swept Sphere Radius: %\n" (lineArgs[2] as integer) to:listener
-				continue
+				if lineargs[1] == "ccd_swept_sphere_radius" then (
+					cycsphswrad.triState = 1
+					csphswradv = (lineArgs[2] as float) 
+					scsphswrad.value = csphswradv
+					format "CCD Swept Sphere Radius: %\n" (lineArgs[2] as integer) to:listener
+					continue
 				)
  
-			if lineArgs[1] == "}" do 
-				(
-				format "Finished \n" to:listener 
-				continue
+				if lineArgs[1] == "}" do (
+					format "Finished \n" to:listener 
+					continue
 				)
 				
-			-- Trimesh
+				-- Trimesh
 				
-			if lineArgs[1] == "trimesh" then
-				(
-				format "Importing trimesh\n" to:listener
-				readTrimesh()
-				continue
+				if lineArgs[1] == "trimesh" then (
+					format "Importing trimesh\n" to:listener
+					readTrimesh()
+					continue
 				) 
 				
-			if lineArgs[1] == "hull" then
-				(
-				format "Ignoring hull\n" to:listener
-				--readHull()
-				continue
+				if lineArgs[1] == "hull" then (
+					format "Ignoring hull\n" to:listener
+					--readHull()
+					continue
 				) 
 				
-			-- Compounds
-				
-			if lineArgs[1] == "compound" then
-				(
-				format "Importing compounds\n" to:listener
-				continue
+				-- Compounds
+					
+				if lineArgs[1] == "compound" then (
+					format "Importing compounds\n" to:listener
+					continue
 				) 
 				
-			if lineArgs[1] == "box" then
-				(
+				if lineArgs[1] == "box" then (
 					while (lineArgs[1] != "}") do
 					(
 						inStr = readLine colStream
 						lineArgs = filterString (inStr as string) "; "
-						if lineArgs[1] == "material" then
-						(
+						if lineArgs[1] == "material" then (
 							M = lineArgs[2]
 							continue
 						)
-						if lineArgs[1] == "centre" then
-						(
+						if lineArgs[1] == "centre" then (
 							X = lineArgs[2] as float
 							Y = lineArgs[3] as float
 							ZG = lineArgs[4] as float
 							continue
 						)
-						if lineArgs[1] == "dimensions" then
-						(
+						if lineArgs[1] == "dimensions" then (
 							L = lineArgs[2] as float
 							W = lineArgs[3] as float
 							H = lineArgs[4] as float
@@ -632,29 +603,24 @@ Rollout maain "Main"
 						b = box length:L width:W height:H pos:[X,Y,Z]
 						format "Imported % at % % % length:% width:% height:% material:%\n" b.name X Y Z b.width b.length b.height M to:listener
 					) -- end while
-				continue
+					continue
 				)
 				
-			if lineArgs[1] == "cylinder" then
-				(
-					while (lineArgs[1] != "}") do
-					(
+				if lineArgs[1] == "cylinder" then (
+					while (lineArgs[1] != "}") do (
 						inStr = readLine colStream
 						lineArgs = filterString (inStr as string) "; "
-						if lineArgs[1] == "material" then
-						(
+						if lineArgs[1] == "material" then (
 							M = lineArgs[2]
 							continue
 						)
-						if lineArgs[1] == "centre" then
-						(
+						if lineArgs[1] == "centre" then (
 							X = lineArgs[2] as float
 							Y = lineArgs[3] as float
 							ZG = lineArgs[4] as float
 							continue
 						)
-						if lineArgs[1] == "dimensions" then
-						(
+						if lineArgs[1] == "dimensions" then (
 							RX = lineArgs[2] as float
 							RY = lineArgs[3] as float
 							H = lineArgs[4] as float
@@ -665,34 +631,28 @@ Rollout maain "Main"
 						scale c [1,RY/RX,1]
 						format "Imported % at % % % Dimension X:% Dimension Y:% height:%\n material:%\n" c.name X Y Z (RX/2) RY c.height M to:listener
 					) -- end while
-				continue
+					continue
 				)
 				
-			if lineArgs[1] == "cone" then
-				(
-					while (lineArgs[1] != "}") do
-					(
+				if lineArgs[1] == "cone" then (
+					while (lineArgs[1] != "}") do (
 						inStr = readLine colStream
 						lineArgs = filterString (inStr as string) "; "
-						if lineArgs[1] == "material" then
-						(
+						if lineArgs[1] == "material" then (
 							M = lineArgs[2] as float
 							continue
 						)
-						if lineArgs[1] == "centre" then
-						(
+						if lineArgs[1] == "centre" then (
 							X = lineArgs[2] as float
 							Y = lineArgs[3] as float
 							ZG = lineArgs[4] as float
 							continue
 						)
-						if lineArgs[1] == "radius" then
-						(
+						if lineArgs[1] == "radius" then (
 							R = lineArgs[2] as float
 							continue
 						)
-						if lineArgs[1] == "height" then
-						(
+						if lineArgs[1] == "height" then (
 							H = lineArgs[2] as float
 							continue
 						)
@@ -700,13 +660,11 @@ Rollout maain "Main"
 						c = cone radius1:R radius2:0 height:H pos:[X,Y,Z]
 						format "Imported % at % % % radius:% height:% material:%\n" c.name X Y Z c.radius1 c.height M to:listener
 					) -- end while
-				continue
+					continue
 				)
 
-			if lineArgs[1] == "sphere" then
-				(
-					while (lineArgs[1] != "}") do
-					(
+				if lineArgs[1] == "sphere" then (
+					while (lineArgs[1] != "}") do (
 						inStr = readLine colStream
 						lineArgs = filterString (inStr as string) "; "
 						if lineArgs[1] == "material" then
@@ -729,11 +687,11 @@ Rollout maain "Main"
 						s = sphere radius:R pos:[X,Y,Z]
 						format "Imported % at % radius:% material:%\n" s.name s.pos s.radius M to:listener
 					) -- end while
-				continue
+					continue
 				)					
 			) -- this ends the While loop
 			
-		close colStream
+			close colStream
 		) -- this ends the "if colstream" test
 		
 	) -- this ends the function
@@ -764,3 +722,6 @@ Rollout help "Help"
 )
 addRollout maain menu
 addRollout help menu
+
+maain.resetb.pressed()
+
