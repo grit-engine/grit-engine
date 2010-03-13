@@ -230,36 +230,28 @@ Rollout grit_tcol_import_export "Main"
         if $ == undefined then return()
 
         format "TCOL1.0\n\n" to:savetcol
+
         --attributes
         format "attributes {\n" to:savetcol
         format "Started TCOL export\nTCOL 1.0\nName: %\nStarted exporting attributes...\n" savetcol to:listener
-        if cymass.triState == 0 then (
+        if cymass.triState == 0 then
             format "    static;\n" to:savetcol
-        )
-        if cymass.triState == 1 then (
+        else
             format "    mass %;\n" smass.value to:savetcol
-        )
-        if cyinertia.triState == 1 then (
+        if cyinertia.triState == 1 then
             format "    inertia % % %;\n" sinertiax.value sinertiay.value sinertiaz.value to:savetcol
-        )
-        if cyldamp.triState == 1 then (
+        if cyldamp.triState == 1 then
             format "    linear_damping %;\n" sldamp.value to:savetcol
-        )
-        if cylsthrs.triState == 1 then (
+        if cylsthrs.triState == 1 then
             format "    angular_damping %;\n" sadamp.value to:savetcol
-        )
-        if cylsthrs.triState == 1 then (
+        if cylsthrs.triState == 1 then
             format "    linear_sleep_threshold %;\n" slsthrs.value to:savetcol
-        )
-        if cyasthrs.triState == 1 then (
+        if cyasthrs.triState == 1 then
             format "    angular_sleep_threshold %;\n" sasthrs.value to:savetcol
-        )
-        if cycmotthrs.triState == 1 then (
+        if cycmotthrs.triState == 1 then
             format "    ccd_motion_threshold %;\n" scmotthrs.value to:savetcol
-        )
-        if cycsphswrad.triState == 1 then (
+        if cycsphswrad.triState == 1 then
             format "   ccd_swept_sphere_radius %;\n" scsphswrad.value to:savetcol
-        )
         format "}\n\n" to:savetcol
         format "Finished exporting attributes\n" to:listener
         
@@ -335,7 +327,6 @@ Rollout grit_tcol_import_export "Main"
                 format "    hull {\n" to:savetcol
                 format "        material %;\n" (get_mat_hex mat) to:savetcol
                 format "        margin %;\n" margin to:savetcol
-                format "        shrink %;\n" margin to:savetcol
                 format "        vertexes {\n" to:savetcol
                 for v = 1 to num_verts do (
                     local vert = getVert tmesh v
