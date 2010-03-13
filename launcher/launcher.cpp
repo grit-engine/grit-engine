@@ -41,7 +41,9 @@
         MessageBox(NULL, ss.str().c_str(), "Error", MB_ICONEXCLAMATION | MB_OK); \
         ExitProcess(1); \
 } while (0)
-       
+
+char *cmdline;
+
 HWND win_main;
 HWND win_log;
 //HWND win_prompt;
@@ -329,8 +331,6 @@ void subproc_spawn (void)
         // sub_proc need not inherit our end of the pipe
         //SetHandleInformation(subproc_pipe, HANDLE_FLAG_INHERIT, 0);
 
-        char *cmdline = getenv("GRIT_PROCESS");
-        if (cmdline == NULL) cmdline = "Grit.dat";
         set_env_var_to_menu_checked("GRIT_GL", MENU_GL);
         set_env_var_to_menu_checked("GRIT_FULLSCREEN", MENU_FULLSCREEN);
         set_env_var_to_menu_checked("GRIT_DINPUT", MENU_DINPUT);
@@ -514,7 +514,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                        int       nCmdShow)
 {
         UNREFERENCED_PARAMETER(hPrevInstance);
-        UNREFERENCED_PARAMETER(lpCmdLine);
+
+        cmdline = getenv("GRIT_PROCESS");
+        if (lpCmdLine) {
+                cmdline = lpCmdLine;
+        }
+        if (cmdline == NULL) cmdline = "Grit.dat";
 
         InitCommonControls();
 
