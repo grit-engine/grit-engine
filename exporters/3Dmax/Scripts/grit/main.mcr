@@ -1,8 +1,8 @@
-fileIn (ogre_exporter_dir+"ogre/lib/ogreSkeletonLib_usefulfns.ms")
-fileIn (ogre_exporter_dir+"ogre/lib/ogreSkeletonLib_meshfns.ms")
-fileIn (ogre_exporter_dir+"ogre/lib/ogreSkeletonLib_skelfns.ms")
-fileIn (ogre_exporter_dir+"ogre/lib/ogreBipedLib.ms")
-fileIn (ogre_exporter_dir+"ogre/lib/addMissingKeys.ms")
+fileIn (ogre_exporter_dir+"ogre/util.ms")
+fileIn (ogre_exporter_dir+"ogre/mesh.ms")
+fileIn (ogre_exporter_dir+"ogre/skeleton.ms")
+fileIn (ogre_exporter_dir+"ogre/biped.ms")
+fileIn (ogre_exporter_dir+"ogre/add_missing_keys.ms")
 
 macroScript showOgreExportTools
 	category:"Grit Tools"
@@ -12,7 +12,7 @@ macroScript showOgreExportTools
 	Icon:#("Maintoolbar",49)
 (
 
-	rollout OgreExportObject "MAIN" width:272 height:235 -- {{{
+	rollout Object "Object" width:272 height:235 -- {{{
 	(
 		button selectMesh "Select Model..." pos:[8,8] width:248 height:32
 		GroupBox grp1 "Output File Name (without extension)" pos:[8,80] width:254 height:75
@@ -34,33 +34,33 @@ macroScript showOgreExportTools
 			lastlastFrame = getINISetting ((getDir #scripts) + "\\ogre\\ogreScript.ini") "Settings" "lastFrameEnd"
 			lastAnimLength = getINISetting ((getDir #scripts) + "\\ogre\\ogreScript.ini") "Settings" "lastAnimLength"
 			
-			editFilename.text = lastFile ;
-			OgreExportMesh.CBexportUV.checked = true ;
+			editFilename.text = lastFile
+			OgreExportMesh.CBexportUV.checked = true
 
-			select = getCurrentSelection() ;
+			select = getCurrentSelection()
 			if ((select[1]!=undefined) and (iskindof select[1] GeometryClass)) then
 			(
-				selectMesh.text = select[1].name ;
+				selectMesh.text = select[1].name
 				OgreExportMesh.CBexportMesh.enabled = true;
 				OgreExportMesh.update_enabled()
 
 				OgreExportMesh.CBexportMesh.checked = true;
-				OgreExportAnimation.CBexportSkeleton.enabled = (getSkin(select[1]) != undefined) or (getPhysique(select[1]) != undefined) ;
+				OgreExportAnimation.CBexportSkeleton.enabled = (getSkin(select[1]) != undefined) or (getPhysique(select[1]) != undefined)
 			)
 		)
 		on selectMesh pressed do
 		(
-			max tool hlist ;
-			select = getCurrentSelection() ;
+			max tool hlist
+			select = getCurrentSelection()
 			if ((select[1]!=undefined) and (iskindof select[1] GeometryClass)) then
 			(
-				selectMesh.text = select[1].name ;
+				selectMesh.text = select[1].name
 			
 				-- options accessible ou non
 				OgreExportMesh.CBexportMesh.enabled = true;
 				OgreExportMesh.update_enabled()
 				OgreExportMesh.CBexportMesh.checked = true;
-				OgreExportAnimation.CBexportSkeleton.enabled = (getSkin(select[1]) != undefined) or (getPhysique(select[1]) != undefined) ;
+				OgreExportAnimation.CBexportSkeleton.enabled = (getSkin(select[1]) != undefined) or (getPhysique(select[1]) != undefined)
 			)
 		)
 		on chooseFilename pressed do
@@ -68,33 +68,33 @@ macroScript showOgreExportTools
 			filename = getSaveFileName types:"All Files(*.*)|*.*|" ;			
 			if (filename != undefined) then
 			(
-				editFilename.text = filename ;
+				editFilename.text = filename
 			)
 		)
 		on Export pressed do
 		(
-			sliderTime = 0 ;
-			m = getNodeByName selectMesh.text ;
+			sliderTime = 0
+			m = getNodeByName selectMesh.text
 			if (editFilename.text == "" or m == undefined ) then
 			(
-				messageBox "You have to choose a filename and a valid object." ;
+				messageBox "You have to choose a filename and a valid object."
 			)
 			else
 			(
-				clearlistener() ;
+				clearlistener()
 				
 				
-				Options = exportOptions flipNormal:false exportColours:false exportAlpha:false exportUV:false ;
-				exportingMeshDone = false ;
-				exportingSkelDone = false ;
+				Options = exportOptions flipNormal:false exportColours:false exportAlpha:false exportUV:false
+				exportingMeshDone = false
+				exportingSkelDone = false
 				-- sets options
 				---------------
 				if (OgreExportMesh.CBflipnormals.checked and OgreExportMesh.CBflipnormals.enabled) then
-					Options.flipNormal = true ;
+					Options.flipNormal = true
 				if (OgreExportMesh.CBexportColor.checked and OgreExportMesh.CBexportColor.enabled) then
-					Options.exportColours = true ;
+					Options.exportColours = true
 				if (OgreExportMesh.CBexportAlpha.checked and OgreExportMesh.CBexportAlpha.enabled) then
-					Options.exportAlpha = true ;
+					Options.exportAlpha = true
 				if (OgreExportMesh.CBexportUV.checked and OgreExportMesh.CBexportUV.enabled) then
 				(
 					Options.exportUV = true ;	
@@ -108,19 +108,19 @@ macroScript showOgreExportTools
 				if (OgreExportMesh.CBexportMesh.enabled and OgreExportMesh.CBexportMesh.checked) then
 				(
                     setINISetting ((getDir #scripts) + "\\ogre\\ogreScript.ini") "Settings" "lastFile" editFilename.text	
-					--progressStart "Mesh Export" ;
-					exportingMeshDone = writeMesh m Options (editFilename.text) ;
-					--progressStop ;
+					--progressStart "Mesh Export"
+					exportingMeshDone = writeMesh m Options (editFilename.text)
+					--progressStop
 				)
 			
 				-- exports skeleton
 				-------------------
 				if (OgreExportAnimation.CBexportSkeleton.enabled and OgreExportAnimation.CBexportSkeleton.checked) then
 				(
-					Options.sampleRate = OgreExportAnimation.SPsamplerate.value ;
-					Options.ikSampleRate = OgreExportAnimation.SPiksamplerate.value ;
+					Options.sampleRate = OgreExportAnimation.SPsamplerate.value
+					Options.ikSampleRate = OgreExportAnimation.SPiksamplerate.value
 				
-					exportingSkelDone =	writeSkeleton m Options Anims editFilename.text ;
+					exportingSkelDone =	writeSkeleton m Options Anims editFilename.text
 				)
 				
 				-- post traitement
@@ -141,28 +141,28 @@ macroScript showOgreExportTools
                                 if (OgreExportMesh.CBexportUV.enabled and OgreExportMesh.CBexportUV.checked and (OgreExportMesh.SPchannels.value>0)) then
                                     OptionConv = OptionConv + " -t";
                                 else
-                                    messageBox "Tangent vectors cannot be generated without UV sets. Generation will be deactivated." ;
+                                    messageBox "Tangent vectors cannot be generated without UV sets. Generation will be deactivated."
                             )
                             if (OgreExportOptions.CBgeneratelod.enabled and OgreExportOptions.CBgeneratelod.checked) then
                                 OptionConv = OptionConv + " -l " + (OgreExportOptions.SPlodlevels.value as string) + " -d " + (OgreExportOptions.SPloddistance.value as string) + " -p " + (OgreExportOptions.SPlodreduction.value as string);
                             
-                            DOSCommand (OgreExportOptions.editXMLconverter.text + OptionConv + " \"" + editFilename.text + ".mesh.xml\" \"" + editFilename.text + ".mesh\"") ;
-                            DOSCommand ("copy \"" + editFilename.text + ".mesh\" \"" + mediaPath + "\"") ;
+                            DOSCommand (OgreExportOptions.editXMLconverter.text + OptionConv + " \"" + editFilename.text + ".mesh.xml\" \"" + editFilename.text + ".mesh\"")
+                            DOSCommand ("copy \"" + editFilename.text + ".mesh\" \"" + mediaPath + "\"")
                         )
                         if (exportingSkelDone) then 
                         (
-                            DOSCommand (OgreExportOptions.editXMLconverter.text + " \"" + editFilename.text + ".skeleton.xml\" \"" + editFilename.text + ".skeleton\"") ;
+                            DOSCommand (OgreExportOptions.editXMLconverter.text + " \"" + editFilename.text + ".skeleton.xml\" \"" + editFilename.text + ".skeleton\"")
                             DOSCommand ("copy \"" + editFilename.text + ".skeleton\" \"" + mediaPath + "\"") ;						
                         )
                         --messageBox "OgreXMLConverter has been run and files copied to the media directory."
-                        print (OgreExportOptions.editXMLconverter.text + OptionConv + " \"" + editFilename.text + ".mesh.xml\" \"" + editFilename.text + ".mesh\"") ;
+                        print (OgreExportOptions.editXMLconverter.text + OptionConv + " \"" + editFilename.text + ".mesh.xml\" \"" + editFilename.text + ".mesh\"")
 					)
 				)
 			)
 		)
 	) -- }}}
 	
-	rollout OgreExportMesh "Mesh" width:272 height:148 rolledUp:false --{{{
+	rollout Mesh "Mesh" width:272 height:148 rolledUp:false --{{{
 	(
 		checkbox CBexportMesh "Export Mesh" checked:true
 		checkbox CBflipnormals "Flip normals"
@@ -182,7 +182,7 @@ macroScript showOgreExportTools
 		(
 			CBexportMesh.enabled = false;
 
-			select = getCurrentSelection() ;
+			select = getCurrentSelection()
 			if ((select[1]!=undefined) and (iskindof select[1] GeometryClass)) then
 			(
 				CBexportMesh.enabled = true;
@@ -196,7 +196,7 @@ macroScript showOgreExportTools
 		(
 			name = OgreExportObject.selectMesh.text;
 			replaceSpaces name;
-			d = getNodeByName name ;
+			d = getNodeByName name
 			if (classof d) == EDITABLE_POLY then
 				num_channels = (polyOp.getNumMaps d) - 1;
 			else
@@ -206,7 +206,7 @@ macroScript showOgreExportTools
 		)
 	) --}}}
 	
-	rollout OgreExportAnimation "Animation" width:272 height:348 rolledUp:true -- {{{
+	rollout Animation "Animation" width:272 height:348 rolledUp:true -- {{{
 	(
 		checkbox CBexportSkeleton "Export Skeleton" pos:[5,4] width:150 height:19 enabled:false
 		GroupBox grp3 "Export settings" pos:[4,26] width:262 height:76
@@ -240,10 +240,10 @@ macroScript showOgreExportTools
 			OgreExportAnimation.SPframeend.enabled = false;
 			OgreExportAnimation.SPanimlength.enabled = false;
 
-			select = getCurrentSelection() ;
+			select = getCurrentSelection()
 			if ((select[1]!=undefined) and (iskindof select[1] GeometryClass)) then
 			(
-				OgreExportAnimation.CBexportSkeleton.enabled = (getSkin(select[1]) != undefined) or (getPhysique(select[1]) != undefined) ;
+				OgreExportAnimation.CBexportSkeleton.enabled = (getSkin(select[1]) != undefined) or (getPhysique(select[1]) != undefined)
 				if (OgreExportAnimation.CBexportSkeleton.enabled and OgreExportAnimation.CBexportSkeleton.checked) then
 				(
 					--OgreExportAnimation.CBbiped.enabled = true;
@@ -264,7 +264,7 @@ macroScript showOgreExportTools
 		)
 		on CBexportSkeleton changed state do
 		(
-			select = getCurrentSelection() ;
+			select = getCurrentSelection()
 			if ((select[1]!=undefined) and (iskindof select[1] GeometryClass)) then
 			(
 				--OgreExportAnimation.CBbiped.enabled = state;
@@ -347,7 +347,7 @@ macroScript showOgreExportTools
 		)
 	) -- }}}
 	
-	rollout OgreExportOptions "Options" width:272 height:140 rolledUp:false -- {{{
+	rollout Options "Options" width:272 height:140 rolledUp:false -- {{{
 	(
 		button openScript "open OgreScript.ini" pos:[7,8] width:116 height:26 toolTip:"open the script to edit your settings"
 		checkbox CBconvertXML "convert XML file after export" pos:[8,42] width:255 height:22 checked:true
@@ -373,7 +373,7 @@ macroScript showOgreExportTools
 		)
 		on openScript pressed  do
 		(
-			shellLaunch ((getDir #scripts) + "\\ogre\\ogreScript.ini") "" ;
+			shellLaunch ((getDir #scripts) + "\\ogre\\ogreScript.ini") ""
 		)
 		on CBconvertXML changed state do
 		(
@@ -391,7 +391,7 @@ macroScript showOgreExportTools
 			filename = getOpenFileName types:"Executables(*.exe)|*.exe|" ;			
 			if (filename != undefined) then
 			(
-				editXMLconverter.text = filename ;
+				editXMLconverter.text = filename
 				CBconvertXML.checked = true;
 				if (not (doesFileExist editXMLconverter.text)) then
 				(
@@ -442,28 +442,10 @@ macroScript showOgreExportTools
 		)
 	) -- }}}
 
-	rollout OgreExportAbout "About" width:272 height:48 rolledUp:true -- {{{
-	(
-		label labelmy1 "[ ORIGINALS ]" align:#center;
-		label label11 "For use with the Ogre graphics engine." align:#left;
-		label label12 "Website: http://ogre.sourceforge.net" align:#left;
-		label label13 "Distributed under the terms of the LGPL." align:#left ;
-		label label16 "Based on the exporter realised by" align:#left ;
-		label label14 "EarthquakeProof-mallard@iie.cnam.fr(summer 2003)" align:#left ;
-		label label15 "by Banania - November 2004" align:#left ;
-		label labelmy2 "[ EDITING ]" align:#center;
-		label labelmy3 "Further editing by Jitin Sameer" align:#left;
-		label labelmy4 "- edit 1 (Jan 2010): restructured UI, UI events" align:#left;
-		label labelmy5 "- edit 2 (Jan 2010): enabled texture image copy" align:#left;
-		label labelmy6 "- edit 3 (Jan 2010): better MeshTools usage" align:#left;
-		label labelmy7 "Heavily simplified/reworked for Grit by Dave Cunningham" align:#left;
-	) -- }}}
-	
 	-- create the floater
-	OgreExportFloater = newRolloutFloater "Grit Mesh Exporter" 280 600 ;
-	addRollout OgreExportObject OgreExportFloater ;
-	addRollout OgreExportMesh OgreExportFloater ;
-	addRollout OgreExportAnimation OgreExportFloater ;
-	addRollout OgreExportOptions OgreExportFloater ;
-	addRollout OgreExportAbout OgreExportFloater ;
+	floater = newRolloutFloater "Grit Mesh Exporter" 280 600
+	addRollout Object floater
+	addRollout Mesh floater
+	addRollout Animation float
+	addRollout Options float
 )
