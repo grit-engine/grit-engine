@@ -735,7 +735,7 @@ macroScript showGritTCOLExporter
     tooltip:"Grit tcol Exporter"
     Icon:#("Maintoolbar",49)
 (
-    local menu = newRolloutFloater "Grit TCOL exporter" 320 500
+    local menu = newRolloutFloater "Grit tcol Exporter" 320 500
 
     addRollout grit_tcol_import_export menu
     addRollout grit_tcol_help menu
