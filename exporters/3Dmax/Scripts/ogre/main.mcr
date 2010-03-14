@@ -1,6 +1,8 @@
 fileIn (ogre_exporter_dir+"ogre/lib/ogreSkeletonLib_usefulfns.ms")
 fileIn (ogre_exporter_dir+"ogre/lib/ogreSkeletonLib_meshfns.ms")
+fileIn (ogre_exporter_dir+"ogre/lib/ogreSkeletonLib_skelfns.ms")
 fileIn (ogre_exporter_dir+"ogre/lib/ogreBipedLib.ms")
+fileIn (ogre_exporter_dir+"ogre/lib/addMissingKeys.ms")
 
 macroScript showOgreExportTools
 	category:"Grit Tools"

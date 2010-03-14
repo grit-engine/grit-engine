@@ -1,5 +1,3 @@
-fileIn (ogre_exporter_dir+"ogre/lib/ogreSkeletonLib_usefulfns.ms")
-
 -----------------------------------------------------------------------------
 -- gets  keyframes from the controllers animation
 -----------------------------------------------------------------------------
