@@ -46,7 +46,7 @@ function getTimeList obj firstframe lastframe =
 --   (e.g. first key has time 0.)
 -----------------------------------------------------------------------------
 
-function writeTrack sk boneId firstframe lastframe length scale flipYZ outFile=
+function writeTrack sk boneId firstframe lastframe length outFile=
 (
 	local angle,timef,i,bname,d,mref,mparent ;
 	
@@ -72,10 +72,6 @@ function writeTrack sk boneId firstframe lastframe length scale flipYZ outFile=
 			mparent = d.parent.transform ;
 			initTform = initTform*inverse(mparent) ;
 		)
-		else if (flipYZ) then (
-			format " - flipping root bone track..." ;
-			initTform = flipYZTransform initTform ;
-		)
 	)
 		
 	-- for each frame in the list
@@ -90,9 +86,6 @@ function writeTrack sk boneId firstframe lastframe length scale flipYZ outFile=
 			-- if this is the root bone
 			if (isRoot d) then (
 				mparent = matrix3 1 ;
-				-- if flipYZ == true
-				if (flipYZ) then
-					Tform = flipYZTransform Tform ;
 			)			
 			else
 				mparent = d.parent.transform ; 
@@ -109,14 +102,8 @@ function writeTrack sk boneId firstframe lastframe length scale flipYZ outFile=
 			Tform=d.transform ;
 			Tform=Tform*inverse(mparent) ;
 			
-			-- if this is the root bone and flipYZ == true
-			if (isRoot d and flipYZ) then (
-				Tform = flipYZTransform Tform ;
-			)
-			
 			-- substracts position of the initial transform
 			Tform.pos -= initTform.pos ;
-			Tform.pos = Tform.pos * scale ;
 			
 			pos = Tform.pos ;
 
@@ -149,7 +136,7 @@ function writeTrack sk boneId firstframe lastframe length scale flipYZ outFile=
 -- write <bones />
 ------------------
 
-function writeB sk id scale flipYZ outFile =
+function writeB sk id outFile =
 (
 	-- gets bone acording to the parameter boneId
 	bname= skinOps.GetBoneName sk id 1 ;
@@ -166,13 +153,7 @@ function writeB sk id scale flipYZ outFile =
 		Tform = Tform*inverse(mparent) ;
 	)
 	
-	Tform.pos = Tform.pos * scale ;
 		
-	if ((isRoot d) and flipYZ) then (
-		format "- Flipping root bone... \n" ;
-		Tform = flipYZTransform Tform ;
-	)
-	
 	pos = Tform.pos ;
 	rot = Tform.rotation as angleaxis ;
 	angle = - degToRad (rot.angle) ; -- don't know why there must be this minus :((((((
@@ -187,7 +168,7 @@ function writeB sk id scale flipYZ outFile =
 -- write Bones (using writeB)
 -----------------------------
 
-function writeBones sk scale flipYZ outFile =
+function writeBones sk outFile =
 (
 	local i ;
 	
@@ -203,7 +184,7 @@ function writeBones sk scale flipYZ outFile =
 	i = 0 ;
 	for i=1 to (skinOps.GetNumberBones sk) do
 	(
-		writeB sk i scale flipYZ outFile ;
+		writeB sk i outFile ;
 	)
 	format("\t</bones>\n") to:outFile;
 )
@@ -249,7 +230,7 @@ function writeHierarchy sk outFile =
 -----------------------
 -- write <animations />
 -----------------------
-function writeAnim sk firstFrame lastFrame length scale flipYZ name outFile =
+function writeAnim sk firstFrame lastFrame length name outFile =
 (
 	local i,n ;
 	
@@ -272,7 +253,7 @@ function writeAnim sk firstFrame lastFrame length scale flipYZ name outFile =
 	n = skinOps.GetNumberBones sk ;
 	liste = #(0,20,30,40) ;
 	for i = 1 to n do
-		writeTrack sk i firstframe lastframe length scale flipYZ outFile ;
+		writeTrack sk i firstframe lastframe length outFile ;
 
 	format("\t\t\t</tracks>\n") to:outFile					
 	format("\t\t</animation>\n") to: outFile ;
@@ -314,11 +295,11 @@ function writeSkeleton pmesh exportOptions out_name =
 				format("<skeleton>\n") to:outFile ;	
 	
 				format "Writing bones :\n" ;
-				writeBones sk exportOptions.scale exportOptions.flipYZ outFile ;
+				writeBones sk outFile ;
 				format "Writing bone hierarchy.\n" ;
 				writeHierarchy sk outFile ;
 				format "Writing bone tracks.\n" ;
-				writeAnim sk exportOptions.firstFrame exportOptions.lastFrame exportOptions.length exportOptions.scale exportOptions.flipYZ exportOptions.animName outFile ;
+				writeAnim sk exportOptions.firstFrame exportOptions.lastFrame exportOptions.length exportOptions.animName outFile ;
 
 				-- ecriture, fin des balises
 				format("</skeleton>\n") to: outFile ;

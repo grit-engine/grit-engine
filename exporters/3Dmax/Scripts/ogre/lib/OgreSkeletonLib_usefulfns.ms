@@ -3,35 +3,14 @@
 ----------------------------------------------------------------------------------------
 
 -- global structures
-struct exportOptions (sampleRate, ikSampleRate, scale, flipNormal, exportColours, exportAlpha, exportUV, UVchannels, exportHelpers);
+struct exportOptions (sampleRate, ikSampleRate, flipNormal, exportColours, exportAlpha, exportUV, UVchannels, exportHelpers);
 struct exportAnims (names, startframes, endframes, lengths) ;
 
 global Anims;
 global Options;
 
 global OgreExportFloater;
-global OgreExportOptions, OgreExportObject, OgreExportMesh, OgreExportAnimation, OgreExportMaterial, OgreExportAbout;
-
---------------------------------------------------------------------
--- compute the transform, if you want to flip Y and Z axis,
--- because the axis which 'defines height' in OGRE is the Y axis,
--- whereas 3dsmax uses the Z one.
---------------------------------------------------------------------
-function flipYZTransform Tform = (
-	local axis1,axis2,axis3,t,m
-	
-	-- computes the matrix
-	axis1 = point3 1 0 0 ;
-	axis2 = point3 0 0 1 ;
-	axis3 = point3 0 -1 0 ;
-	t = point3 0 0 0 ;
-	m=matrix3 axis1 axis2 axis3 t ;
-	
-	-- multiplies by the inverse
-	Tform = Tform*inverse(m) ;
-
-	return Tform ;
-)
+global OgreExportOptions, OgreExportObject, OgreExportMesh, OgreExportAnimation, OgreExportAbout;
 
 -----------------------------------------------------------------------------
 -- check if the bone is the root object of the biped

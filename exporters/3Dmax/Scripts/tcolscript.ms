@@ -731,8 +731,8 @@ plugin Material GRIT_PHYSMAT
 macroScript showGritTCOLExporter
     category:"Grit Tools"
     internalCategory:"Grit Tools"
-    buttonText:"Grit TCOL Exporter"
-    tooltip:"Grit Exporter"
+    buttonText:"Grit tcol Exporter"
+    tooltip:"Grit tcol Exporter"
     Icon:#("Maintoolbar",49)
 (
     local menu = newRolloutFloater "Grit TCOL exporter" 320 500

@@ -109,7 +109,7 @@ function getTimeList obj firstframe lastframe samplerate IKsamplerate =
 -- time = (key.time - firstFrame)*length/(lastFrame-firstFrame)
 --   (e.g. first key has time 0.)
 -----------------------------------------------------------------------------
-function writeTrack bone_name boneId firstframe lastframe samplerate IKsamplerate length scale flipYZ outFile=
+function writeTrack bone_name boneId firstframe lastframe samplerate IKsamplerate length outFile=
 (
 	local angle,timef,i,bname,d,mref,mparent ;
 	
@@ -135,12 +135,6 @@ function writeTrack bone_name boneId firstframe lastframe samplerate IKsamplerat
 			mparent = d.parent.transform ;
 			initTform = initTform*inverse(mparent) ;
 		)
-		else if (flipYZ) then (
-            format " - flipping root track..." ;
-			-- we add the bip Transform
-			--initTform = initTform * d.controller.rootNode.transform ;
-			initTform = flipYZTransform initTform ;
-		)
 	)
 		
 	-- for each frame in the list
@@ -155,9 +149,6 @@ function writeTrack bone_name boneId firstframe lastframe samplerate IKsamplerat
 			-- if this is the pelvis
 			if (isRootUniversal2 d) then (
 				mparent = matrix3 1 ;
-				-- if flipYZ == true
-				if (flipYZ) then
-					Tform = flipYZTransform Tform ;
 			)			
 			else
 				mparent = d.parent.transform ; 
@@ -177,14 +168,9 @@ function writeTrack bone_name boneId firstframe lastframe samplerate IKsamplerat
 			Tform=d.transform ;
 			Tform=Tform*inverse(mparent) ;
 			
-			-- if this is the root bone and flipYZ == true
-			if (isRootUniversal2 d and flipYZ) then (
-				Tform = flipYZTransform Tform ;
-			)
 			
 			-- substracts position of the initial transform
 			Tform.pos -= initTform.pos ;
-			Tform.pos = Tform.pos * scale ;
 			
 			pos = Tform.pos ;
 
@@ -362,7 +348,7 @@ function computeBonesList phy sk exportHelpers =
 ------------------
 -- write <bones />
 ------------------
-function writeB bone_name id scale flipYZ outFile =
+function writeB bone_name id outFile =
 (
 	-- gets bone acording to the parameter boneId
 	bname = bone_name ;
@@ -377,13 +363,6 @@ function writeB bone_name id scale flipYZ outFile =
 	if (not isRootUniversal2 d) then (
 		mparent = d.parent.transform ;
 		Tform = Tform*inverse(mparent) ;
-	)
-	
-	Tform.pos = Tform.pos * scale ;
-		
-	if ((isRootUniversal2 d) and flipYZ) then (
-        format "- Flipping root... \n" ;
-		Tform = flipYZTransform Tform ;
 	)
 	
 	pos = Tform.pos ;
@@ -412,7 +391,7 @@ function writeB bone_name id scale flipYZ outFile =
 -----------------------------
 -- write Bones (using writeB)
 -----------------------------
-function writeBones phy sk scale flipYZ exportHelpers outFile =
+function writeBones phy sk exportHelpers outFile =
 (
 	local i ;
 	
@@ -429,7 +408,7 @@ function writeBones phy sk scale flipYZ exportHelpers outFile =
 	(
 		OgreExportObject.exportProgress.value = (100.0*i/BonesList.count);
 
-		writeB BonesList[i] i scale flipYZ outFile ;
+		writeB BonesList[i] i outFile ;
 	)	
 	
 	format("\t</bones>\n") to:outFile;
@@ -472,7 +451,7 @@ function writeHierarchy outFile =
 -----------------------
 -- write <animations />
 -----------------------
-function writeAnim Anims samplerate IKsamplerate scale flipYZ outFile =
+function writeAnim Anims samplerate IKsamplerate outFile =
 (
 	local i,n ;
 	
@@ -490,7 +469,7 @@ function writeAnim Anims samplerate IKsamplerate scale flipYZ outFile =
 		(
 			OgreExportObject.exportProgress.value = (100.0*i/BonesList.count)/Anims.names.count;
 
-			writeTrack BonesList[i] i Anims.startframes[anm] Anims.endframes[anm] samplerate IKsamplerate Anims.lengths[anm] scale flipYZ outFile ;
+			writeTrack BonesList[i] i Anims.startframes[anm] Anims.endframes[anm] samplerate IKsamplerate Anims.lengths[anm] outFile ;
 		)
 	
 		format("\t\t\t</tracks>\n") to:outFile					
@@ -544,13 +523,13 @@ function writeSkeleton pmesh exportOptions Anims out_name =
 		format("<skeleton>\n") to:outFile ;	
 	
         format "Writing bones :\n" ;
-		writeBones phy sk exportOptions.scale exportOptions.flipYZ exportOptions.exportHelpers outFile ;
+		writeBones phy sk exportOptions.exportHelpers outFile ;
 
         format "Writing bone hierarchy.\n" ;
 		writeHierarchy outFile ;
 
         format "Writing bone tracks.\n" ;
-		writeAnim Anims exportOptions.sampleRate exportOptions.ikSampleRate exportOptions.scale exportOptions.flipYZ outFile ;
+		writeAnim Anims exportOptions.sampleRate exportOptions.ikSampleRate outFile ;
 
 		-- ecriture, fin des balises
 		format("</skeleton>\n") to: outFile ;

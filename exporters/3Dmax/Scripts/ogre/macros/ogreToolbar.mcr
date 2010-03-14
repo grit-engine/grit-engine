@@ -1,14 +1,6 @@
--- ogreToolbar.mcr
---
--- Banania - 2004
---
--- Macroscript for the Ogre Toolbar 2.0
---
--- Thanks to John Martin and Etienne Mallard for the work they did in the previous versions
---
-
--- library functions
-fileIn (ogre_exporter_dir+"ogre/lib/ogreSkeletonLib.ms")
+fileIn (ogre_exporter_dir+"ogre/lib/ogreSkeletonLib_usefulfns.ms")
+fileIn (ogre_exporter_dir+"ogre/lib/ogreSkeletonLib_meshfns.ms")
+fileIn (ogre_exporter_dir+"ogre/lib/ogreBipedLib.ms")
 
 macroScript showOgreExportTools
 	category:"Grit Tools"
@@ -21,7 +13,6 @@ macroScript showOgreExportTools
 	rollout OgreExportObject "MAIN" width:272 height:235 -- {{{
 	(
 		button selectMesh "Select Model..." pos:[8,8] width:248 height:32
-		spinner SPscale "Scale" pos:[40,48] width:114 height:16 range:[0,1000,1] type:#float scale:0.1
 		GroupBox grp1 "Output File Name (without extension)" pos:[8,80] width:254 height:75
 		edittext editFilename "" pos:[16,96] width:232 height:22
 		button chooseFilename "Browse" pos:[96,128] width:82 height:20 toolTip:"chooose the name of your output files"
@@ -40,13 +31,9 @@ macroScript showOgreExportTools
 			lastfirstFrame = getINISetting ((getDir #scripts) + "\\ogre\\ogreScript.ini") "Settings" "lastFrameStart"
 			lastlastFrame = getINISetting ((getDir #scripts) + "\\ogre\\ogreScript.ini") "Settings" "lastFrameEnd"
 			lastAnimLength = getINISetting ((getDir #scripts) + "\\ogre\\ogreScript.ini") "Settings" "lastAnimLength"
-			lastScale = getINISetting ((getDir #scripts) + "\\ogre\\ogreScript.ini") "Settings" "lastScale"
 			
 			editFilename.text = lastFile ;
 			OgreExportMesh.CBexportUV.checked = true ;
-			SPscale.value = lastScale as Float;
-			if (SPscale.value == 0.0) then
-				SPscale.value = 1.0;
 
 			select = getCurrentSelection() ;
 			if ((select[1]!=undefined) and (iskindof select[1] GeometryClass)) then
@@ -94,10 +81,8 @@ macroScript showOgreExportTools
 			(
 				clearlistener() ;
 				
-				if (SPscale.value == 0.0) then
-					SPscale.value = 1.0;
 				
-				Options = exportOptions scale:SPscale.value flipNormal:false exportColours:false exportAlpha:false exportUV:false ;
+				Options = exportOptions flipNormal:false exportColours:false exportAlpha:false exportUV:false ;
 				exportingMeshDone = false ;
 				exportingSkelDone = false ;
 				-- sets options
@@ -115,7 +100,6 @@ macroScript showOgreExportTools
 				)
 				Options.exportHelpers = (OgreExportAnimation.CBexporthelpers.enabled and OgreExportAnimation.CBexporthelpers.checked);
 				
-                setINISetting ((getDir #scripts) + "\\ogre\\ogreScript.ini") "Settings" "lastScale" (SPscale.value as string)
 
 				-- exports mesh
 				---------------
@@ -470,6 +454,7 @@ macroScript showOgreExportTools
 		label labelmy4 "- edit 1 (Jan 2010): restructured UI, UI events" align:#left;
 		label labelmy5 "- edit 2 (Jan 2010): enabled texture image copy" align:#left;
 		label labelmy6 "- edit 3 (Jan 2010): better MeshTools usage" align:#left;
+		label labelmy7 "Heavily simplified/reworked for Grit by Dave Cunningham" align:#left;
 	) -- }}}
 	
 	-- create the floater
