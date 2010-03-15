@@ -12,12 +12,11 @@ verticesArrays=#()
 facesArrays=#()
 boneAssignments=#()
 submeshesId=#()
-materialName = ""
 
 -- verticesArrays[i] will describe the subMesh number i and its elements will be ogreVertices where
 --    ogreVert = #(x,y,z,nx,ny,nz,r,g,b,a,u1,v1,u2,v2....)
---                ----- -------- ------- ---------------
---               Pos     Nmal    RGBA       UVs sets
+--                 ----- -------- ------- ---------------
+   --                  Pos     Nmal    RGBA       UVs sets
 -- RGBA being the  vertex color when relevant     (Optional)
 -- A vertex can contain multiple UVs sets        (Optional)
 
@@ -60,79 +59,45 @@ function calc_normal m face faceVertexIndex = -- {{{
     )     
 ) -- }}}
 
+/*
 ----------------------------------------------------------------------------
 -- Retrieves al the datas which wil be used
 -- tmesh is the mesh object
--- flipNormal = true if you want to flip normals
--- exportUV = true if you want to export texture
--- numUVsets : number of texture coordinates to export (if exportUV is true, the minimum is 1. if exportUV is false, this parameter is irrelevant)
+-- blened : number of blended textures
 -- exportColor = true if you want to export vertices colors
 -- sk : the skin modifier (may be undefined)
 -- phy : the physique modifier (may be undefined)
 -- stores datas in verticesArrays and facesArrays.
 ----------------------------------------------------------------------------
-function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha exportHelpers sk phy =
+function getDatas tmesh blended exportAmbient exportAlpha exportHelpers sk phy =
 ( -- {{{
-    local face;                        --index of the current face
-    local localVertexIndex;         --index of the current vertex (relative to the current face) ie : 1, 2 or 3
-    local vertexNormal;                --normal of the current vertex (Point3)
-    local vertexPosition;            --position of the current vertex (Point3)
-    local faceVerticesIndices;        --indices of the vertex for the current face (Point3)
-    local vertexIndex;                --index of the current vertex (in the mesh)
-    local matId;                    --material Id of the current face
-    local numFaces;                    --number of faces in the mesh
-    
-    local faceVertexColorIndices;    --indices of the vertices for the current face in the vertex color table of the mesh (Point3)
-    local vertexColorIndex;            --index of the current vertex in the vertex color table of the mesh
-    local vertexColor;                --vertex color for the current vertex (color)
-    local faceVertexAlphaIndices;    --indices of the vertices for the current face in the vertex alpha table of the mesh (Point3)
-    local vertexAlpha;                --vertex alpha of the current alpha
-    local vertexAlphaIndex;            --index of the current vertex in the vertex alpha map channel (-2)
-    
-    local ogreFace;                    --indices of the vertices for the current face (references the list of vertices that is gonna be exported, not the vertices of the original mesh)
-    
-    local vertexWeightCount;        --number of bones influencing the current vertex
-    local vertexWeight;                --current weight
-    
-    local searchTable
-    local k
-    local rootId
-    
-    local UVcoords;                    -- will contain the texture coordinates for the current vertex. its size will be numUVsets*2 if exportUV is true.
-    
-    -- searchTables will contain a searchTable for every subMesh.
-    -- searchTable will be the current table for the current subMesh.
-    -- Every vertex will be stored here to check for duplicates.
-    searchTable=#()
-    searchTables=#()
     
     -- initialisation of the current ogre face as a vector
-    ogreFace=Point3 12 12 12
+    local ogreFace=Point3 12 12 12
     
     -- Data arrays init.    
     verticesArrays=#()
     facesArrays=#()
     boneAssignments = #()
     submeshesId = #()
-    UVcoords=#()
 
     -- compute bones list for the model.
     BonesList=#()
     computeBonesList phy sk exportHelpers
 
-    numFaces = (getNumFaces tmesh)
+    local numFaces = (getNumFaces tmesh)
 
     -- For each face
     for face = 1 to numFaces do         -- LOOP on FACES --
     (        
-        OgreExportObject.exportProgress.value = (100.0*face/numFaces)
+        GritRolloutOgreMain.exportProgress.value = (100.0*face/numFaces)
     
-        faceVerticesIndices = getFace tmesh face
-        matId = getFaceMatId tmesh face ;        
+        local faceVerticesIndices = getFace tmesh face
+        local matId = getFaceMatId tmesh face ;        
         
         -- Vertex Color Face
         local faceVertexColorIndices = Point3 1 1 1
-        if (exportColours) then
+        if (exportAmbient) then
             faceVertexColorIndices = meshOp.getMapFace tmesh 0 face ;    -- 0 is the vertex color channel
 
         local faceVertexAlphaIndices = Point3 1 1 1
@@ -143,16 +108,14 @@ function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha 
         -- For each vertex whose face is made up of.
         for localVertexIndex=1 to 3 do                 -- LOOP on VERTICES --
         (            
-            vertexIndex = (int) (faceVerticesIndices[localVertexIndex])
-            vertexColorIndex = (int) (faceVertexColorIndices[localVertexIndex])
-            vertexAlphaIndex = (int) (faceVertexAlphaIndices[localVertexIndex])
+            local vertexIndex = (int) (faceVerticesIndices[localVertexIndex])
+            local vertexColorIndex = (int) (faceVertexColorIndices[localVertexIndex])
+            local vertexAlphaIndex = (int) (faceVertexAlphaIndices[localVertexIndex])
             local vertexNormal = calc_normal tmesh face localVertexIndex
 
-            if (flipNormal) then vertexNormal = vertexNormal * -1
-            
             -- we retrieve datas. it depends on options.
             -- UV face
-            UVcoords=#()
+            local UVcoords=#()
             if (exportUV) then
             (
                 for ch=1 to numUVsets do
@@ -165,12 +128,6 @@ function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha 
                 )
             )
         
-            -- we try to find the corresponding searchtable.                                            
-            if (searchTables[matId] == undefined ) then
-                searchTables[matId]=#() ;            -- we found a new subMesh, create the searchTable for it
-            
-            searchTable = searchTables[matId] ;        -- set the searchTable to the current subMesh
-            
             ogreVertNum = 1
 
             -- Maybe the material found defines a new submesh...
@@ -186,16 +143,11 @@ function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha 
             -- vertex number is increased
             ogreVertNum = verticesArrays[matId].count + 1;
             
-            -- it is added to the searchTable
-            if (searchTable[vertexIndex]==undefined) then
-            (
-                searchTable[vertexIndex] = #()
-            )
             local data = #()
             append data ogreVertNum
             n = copy vertexNormal
             append data n
-            if (exportColours) then
+            if (exportAmbient) then
             (
                 append data VertexColorIndex
             )
@@ -211,14 +163,13 @@ function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha 
                         append data UVcoords[uv]
                 )
             )
-            append searchTable[vertexIndex] data
                 
             -- we retrieve data
-            vertexPosition = getVert tmesh faceVerticesIndices[localVertexIndex]
+            local vertexPosition = getVert tmesh faceVerticesIndices[localVertexIndex]
             
-            vertexColor = Point3 0 0 0
-            vertexAlpha = 255
-            if (exportColours) then
+            local vertexColor = Point3 0 0 0
+            local vertexAlpha = 255
+            if (exportAmbient) then
             (
                 vertexColor = (meshOp.getMapVert tmesh 0 vertexColorIndex)
             )
@@ -245,7 +196,7 @@ function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha 
             -- So there is at least the root assignment.
             if (sk != undefined) then
             (
-                vertexWeightCount = skinOps.getVertexWeightCount sk vertexIndex ;
+                local vertexWeightCount = skinOps.getVertexWeightCount sk vertexIndex ;
 
                 if (vertexWeightCount > 4) then
                 (
@@ -257,7 +208,7 @@ function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha 
                     bid = skinOps.getVertexWeightBoneID sk vertexIndex k
                     bname = skinOps.getBoneName sk bid 1
                     bname = replaceSpaces bname
-                    vertexWeight = skinOps.getVertexWeight sk vertexIndex k
+                    local vertexWeight = skinOps.getVertexWeight sk vertexIndex k
                     
                     id_bone = findItem BonesList bname
                     if (id_bone != 0) then
@@ -267,7 +218,7 @@ function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha 
                 if (vertexWeightCount==0) then
                 (
                     -- gets the root Id:
-                    rootId=getRootsId sk
+                    local rootId=getRootsId sk
                     rootname = skinOps.getBoneName sk rootId[1] 1
                     id_bone = findItem BonesList rootname
                     if (id_bone != 0) then
@@ -277,7 +228,7 @@ function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha 
             -- same thing with physique modifier if defined
             if (phy != undefined) then
             (
-                vertexWeightCount = physiqueOps.getVertexBoneCount $ vertexIndex
+                local vertexWeightCount = physiqueOps.getVertexBoneCount $ vertexIndex
                 
                 if (vertexWeightCount > 4) then
                 (
@@ -287,7 +238,7 @@ function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha 
                 for k=1 to vertexWeightCount do
                 (
                     bone = physiqueOps.getVertexBone $ vertexIndex k
-                    vertexWeight = physiqueOps.getVertexWeight $ vertexIndex k
+                    local vertexWeight = physiqueOps.getVertexWeight $ vertexIndex k
                     
                     -- search the bone number
                     bname = replaceSpaces bone.name
@@ -307,14 +258,6 @@ function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha 
             ogreFace[localVertexIndex] = ogreVertNum - 1;        
         )
         
-        -- flip normal capability
-        if (flipNormal) then
-        (
-            faceTmp = copy ogreFace
-            ogreFace[2] = faceTmp[3]
-            ogreFace[3] = faceTmp[2]
-        )
-
         if (facesArrays[matId] == undefined) then
             facesArrays[matId] = #() ;        
         append facesArrays[matId] #(ogreFace[1],ogreFace[2],ogreFace[3]) ;   -- Face is added to datas        
@@ -330,12 +273,10 @@ function getDatas tmesh flipNormal exportUV numUVsets exportColours exportAlpha 
 -- material : material used by the mesh
 -- Uses the arrays verticesArrays and facesArrays
 -------------------------------------------------
-function WriteM exportUV numUVsets exportColours exportAlpha material outName = -- {{{
+function WriteM blended exportAmbient exportAlpha material outName = -- {{{
 (
-    local a,v,f,submatname,hasSkeleton,outFile,hasColours,matId
-    
-    hasSkeleton = false
-    texCoordString = ""
+    local hasSkeleton = false
+    local texCoordString = ""
     if (exportUV) then
     (
         texCoordString = "texture_coords=\"" + (numUVsets as string) + "\" "
@@ -344,16 +285,10 @@ function WriteM exportUV numUVsets exportColours exportAlpha material outName = 
             texCoordString =  texCoordString + "texture_coords_dimensions_" + ((num-1) as string) + "=\"2\" "; -- I really don't care about the W coordinates
         )
     )
-    hasColours = "false" ;    
-    if (exportColours) then
+    local hasColours = "false" ;    
+    if (exportAmbient) then
         hasColours = "true" ;        
     
-
-    -- the final file is created
-    outFile = createfile (outName + ".mesh.xml")
-
-    -- writes the header
-    format("<mesh>\n") to:outFile
 
     -- submeshes start
     format("\t<submeshes>\n") to:outFile
@@ -367,7 +302,7 @@ function WriteM exportUV numUVsets exportColours exportAlpha material outName = 
             use32bitindexes = "true"
         
         -- get the name of the sub material if needed.
-        submatname = replacespaces material.name
+        local submatname = replacespaces material.name
         
         if (classof material == MultiMaterial) then
         (
@@ -404,7 +339,7 @@ function WriteM exportUV numUVsets exportColours exportAlpha material outName = 
 
         format "- writing vertices...\n"    
         format("\t\t\t<geometry vertexcount=\"%\">\n") (arrayLength verticesArrays[matId] ) to:outFile
-        format("\t\t\t\t<vertexbuffer positions=\"true\" normals=\"true\" colours_diffuse=\"%\" %>\n") hasColours TexCoordString to:outFile ;        
+        format("\t\t\t\t<vertexbuffer positions=\"true\" normals=\"true\" colours_diffuse=\"%\" %>\n") hasColours texCoordString to:outFile ;        
         
         -- for each vertex
         for v in verticesArrays[matId] do
@@ -417,7 +352,7 @@ function WriteM exportUV numUVsets exportColours exportAlpha material outName = 
                 for ch=1 to numUVsets do
                     format("\t\t\t\t\t\t<texcoord u=\"%\" v=\"%\" />\n") v[11+((ch-1)*2)] (1 - v[12+((ch-1)*2)]) to:outFile ;        
             )
-            if (exportColours) then
+            if (exportAmbient) then
             (
                 color_string = (v[7] as string) + " " + (v[8] as string) + " " + (v[9] as string) + " " +(v[10] as string)
                 format("\t\t\t\t\t\t<colour_diffuse value=\"%\" />\n") color_string to:outFile
@@ -456,69 +391,190 @@ function WriteM exportUV numUVsets exportColours exportAlpha material outName = 
         format ("\t<skeletonlink name=\"%\"/>\n") (t[arrayLength t] + ".skeleton") to:outFile ;                
     )
                 
-    format("</mesh>\n") to: outFile
     
-    close outFile
 ) -- }}}
+*/
 
+function get_map_vert mesh channel face fv = (
+    meshop.getMapVert mesh channel ((meshop.getMapFace mesh channel face)[fv])
+)
 
----------------------------------
--- writes the mesh: main function
----------------------------------
-
-function writeMesh pmesh exportOptions out_name = -- {{{
+function write_mesh_xml selected options out_name = -- {{{
 (
-    local m = snapshotAsMesh pmesh
-        
-    format "\n\n"
-    format "------------------------------------------\n"
-    format "-------   OGRE Mesh Exporter Log   -------\n"
-    format "-----                                -----\n"
-
-    -- get the skin modifier ( may be undefined )
-    local sk = getSkin pmesh
-    if (sk != undefined) then
+    local skin = getSkin selected
+    if (skin != undefined) then
+    (
         format "Skin modifier detected.\n"
-
-    -- if not undefined, skin modifier is selected in modifier tab. Or there will be an error.
-    if (sk != undefined) then
-    (
         -- in order to perform, skin should be opened
         max modify mode
-        modPanel.setCurrentObject pmesh.modifiers[#Skin] ;        
+        modPanel.setCurrentObject selected.modifiers[#Skin] ;        
     )
 
-    -- physique
-    local phy = getPhysique pmesh
-    if (phy != undefined) then
+    local physique = getPhysique selected
+    if (physique != undefined) then
+    (
         format "Physique modifier detected.\n"
-
-    if (phy != undefined) then
-    (
-        -- in order to perform, skin should be opened
+        -- in order to perform, physique should be opened
         max modify mode
-        modPanel.setCurrentObject pmesh.modifiers[#Physique]
-        --physiqueOps.setInitialPose pmesh true
+        modPanel.setCurrentObject selected.modifiers[#Physique]
+        --physiqueOps.setInitialPose selected true
     )
 
+    local texture = options.blended > 0
+    local blend = options.blended > 1
+    local num_blend = options.blended - 1
+    local num_blend_coords = (int)(ceil (num_blend/4.0))
+    local texcoords = (if texture then 1 else 0) + (if blend then 1 else 0) + num_blend_coords
 
-    OgreExportObject.exportProgress.value = 0
+     -- ranges from 1 to 4, all the others are 4
+    local last_texcoord_dim = 4 - (num_blend_coords*4 - num_blend)
+    
+    local m = snapshotAsMesh selected
+        
+    if options.exportAmbient and not (meshop.getMapSupport m 0) then
+        options.exportAmbient = false
+    if options.exportAlpha and not (meshop.getMapSupport m -2) then
+        options.exportAlpha = false
 
+    format "Calculating normals from smoothing groups...\n "
 
-    materialName = if pmesh.material == undefined then "/BaseWhite" else pmesh.material.name
-    format "Material name exported : \n- %/*** \n" materialName
+    -- We're going to have to split vertexes as max won't do this for us.
+    -- Consequently we will end up with a 1:many ratio between max vertexes and ogre
+    -- vertexes.  The ogre vertexes that represent a given max vertex will each have a different normal, as defined by     -- the needs of a particular face.
 
-    format "Retrieving vertices and faces data : \n"
-    getDatas m exportOptions.flipNormal exportOptions.exportUV exportOptions.UVchannels exportOptions.exportColours exportOptions.exportAlpha exportOptions.exportHelpers sk phy
+    struct OgreVert (pos, normal, ambient, alpha, texcoord, sharpness, weights)
+
+    local num_ogre_vertexes = 0
+    local ogre_vert_db = #()
+
+    local face_to_ogre_vert = #()
+
+    local num_max_faces = getNumFaces m
+    local mat_ids = #()
+
+    for face = 1 to num_max_faces do (
+        GritRolloutOgreMain.exportProgress.value = (33.333*face)/num_max_faces
+        local max_indexes = getFace m face
+        local mat_id = getFaceMatId m face
+        appendIfUnique mat_ids mat_id
+        local ogre_face = [1,1,1]
+        for fv=1 to 3 do (
+            -- sorry but maxscript won't let me break this onto multiple lines
+            local ov = OgreVert pos:(meshop.getVert m (max_indexes[fv])) normal:(calc_normal m face fv) ambient:(if options.exportAmbient then get_map_vert m 0 face fv else [1,1,1]) alpha:(if options.exportAlpha then (get_map_vert m -2 face fv)[1] else 1) texcoord:(if texture then get_map_vert m 1 face fv else [0,0]) sharpness:(if blend then (get_map_vert m 2 face fv)[1] else 0) weights:#()
+            for i=0 to num_blend-1 do (
+                local max_map_channel = 2+(int)(ceil (1 + i)/3)
+                local max_col_channel = (int)(mod (1 + i) 3) + 1
+                local weight = (get_map_vert m max_map_channel face fv)[max_col_channel]
+                ov.weights[i+1] = weight
+            )
+            append ogre_vert_db ov
+            num_ogre_vertexes = num_ogre_vertexes + 1
+            ogre_face[fv] = num_ogre_vertexes
+        )
+        append face_to_ogre_vert ogre_face
+    )
+
 
     format "Writing in file %.mesh.xml : \n" out_name
-    WriteM exportOptions.exportUV exportOptions.UVchannels exportOptions.exportColours exportOptions.exportAlpha pmesh.material out_name
+    local out_file = createfile (out_name + ".mesh.xml")
 
-    OgreExportObject.exportProgress.value = 0
+    format "<mesh>\n" to:out_file
 
-    format "-----                                -----\n"
-    format "----------          END          ---------\n"
-    format "------------------------------------------\n"
+    format "    <sharedgeometry>\n" m.numverts to:out_file
+    format "        <vertexbuffer " to:out_file
+    format "positions=\"true\" " to:out_file
+    format "normals=\"true\" " to:out_file
+    format "colours_diffuse=\"%\" " (options.exportAmbient or options.exportAlpha) to:out_file
+    format "texture_coords=\"%\" " texcoords to:out_file
+    if texture then
+        format "texture_coords_dimensions_0=\"2\" " to:out_file
+    if blend then (
+        format "texture_coords_dimensions_1=\"1\" " to:out_file
+        for i = 1 to num_blend_coords-1 do (
+            format "texture_coords_dimensions_%=\"4\" " (i+1) to:out_file
+        )
+        format "texture_coords_dimensions_%=\"%\" " (num_blend_coords+1) last_texcoord_dim to:out_file
+    )
+    format ">\n" to:out_file
+    for ov = 1 to num_ogre_vertexes do (
+        GritRolloutOgreMain.exportProgress.value = 33.333 + (33.333*ov)/num_ogre_vertexes
+        format "            <vertex>\n" to:out_file
+        local p = ogre_vert_db[ov].pos
+        format "                <position x=\"%\" y=\"%\" z=\"%\" />\n" p.x p.y p.z to:out_file
+        local n = ogre_vert_db[ov].normal
+        format "                <normal x=\"%\" y=\"%\" z=\"%\" />\n" n.x n.y n.z to:out_file
+        if options.exportAmbient or options.exportAlpha then (
+            local c = ogre_vert_db[ov].ambient
+            local alpha = ogre_vert_db[ov].alpha
+            format "                <colour_diffuse value=\"% % % %\" />\n" c.x c.y c.z alpha to:out_file
+        )
+        if texture then (
+            local uv = ogre_vert_db[ov].texcoord
+            format "                <texcoord u=\"%\" v=\"%\" />\n" uv.x (1-uv.y) to:out_file
+        )
+        if blend then (
+            local sharpness = ogre_vert_db[ov].sharpness
+            format "                <texcoord u=\"%\" />\n" sharpness to:out_file
+            for i = 0 to num_blend-1 do (
+                local weight = ogre_vert_db[ov].weights[i+1]
+                if (mod i 4) == 0 then (
+                    if i > 0 then
+                        format "\"/>\n" to:out_file
+                    format "                <texcoord u=\"%\" " weight to:out_file
+                )
+                if (mod i 4) == 1 then 
+                    format "v=\"%\" " weight to:out_file
+                if (mod i 4) == 2 then 
+                    format "w=\"%\" " weight to:out_file
+                if (mod i 4) == 3 then 
+                    format "x=\"%\" " weight to:out_file
+            )
+            format "/>\n" to:out_file
+        )
+        format "            </vertex>\n" to:out_file
+    )
+
+    format "        </vertexbuffer>\n" to:out_file
+    format "    </sharedgeometry>\n" to:out_file
+
+    format "    <submeshes>\n" to:out_file
+    local counter = 0
+    for submesh_mat_id in mat_ids do (
+        local mat = selected.material
+        if (classof mat) == MultiMaterial then (
+            mat = mat.materialList[submest_mat_id]
+        )
+        local matname = if mat == undefined then "BaseWhite" else mat.name
+        format "        <submesh material=\"%\" use32bitindexes=\"%\">\n" matname (num_ogre_vertexes > 65535) to:out_file
+        format "            <faces>\n" to:out_file
+        for face = 1 to num_max_faces do (
+            if (getFaceMatId m face) == submesh_mat_id then (
+                GritRolloutOgreMain.exportProgress.value = 66.666 + (33.333*counter)/num_max_faces
+                local fv = face_to_ogre_vert[face] - 1 -- ogre is zero-based
+                format "                <face v1=\"%\" v2=\"%\" v3=\"%\" />\n" ((int)fv.x) ((int)fv.y) ((int)fv.z) to:out_file
+                counter = counter + 1
+            )
+        )
+        format "            </faces>\n" to:out_file
+        format "        </submesh>\n" to:out_file
+    )
+    format "    </submeshes>\n" to:out_file
+
+    format "    <vertexboneassignment>\n" to:out_file
+    format "    </vertexboneassignment>\n" to:out_file
+
+    --getDatas m options.exportUV options.UVchannels options.exportAmbient options.exportAlpha options.exportHelpers skin physique
+
+    --WriteM options.exportUV options.UVchannels options.exportAmbient options.exportAlpha selected.material out_file
+
+    local has_skeleton = false
+    if (has_skeleton) then
+        format "    <skeletonlink name=\"%\"/>\n" (out_name+".skeleton") to:out_file
+
+    format "</mesh>\n" to:out_file
+
+    format "Closing %.mesh.xml : \n" out_name
+    close out_file;
 
     delete m ;        
 

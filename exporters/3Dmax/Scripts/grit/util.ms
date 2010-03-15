@@ -2,16 +2,6 @@
 -- ------------------------------ SOME USEFUL FUNCTIONS ----------------------------- --
 ----------------------------------------------------------------------------------------
 
--- global structures
-struct exportOptions (sampleRate, ikSampleRate, flipNormal, exportColours, exportAlpha, exportUV, UVchannels, exportHelpers);
-struct exportAnims (names, startframes, endframes, lengths) ;
-
-global Anims;
-global Options;
-
-global OgreExportFloater;
-global OgreExportOptions, OgreExportObject, OgreExportMesh, OgreExportAnimation, OgreExportAbout;
-
 -----------------------------------------------------------------------------
 -- check if the bone is the root object of the biped
 -----------------------------------------------------------------------------

@@ -3,36 +3,31 @@ global colStream
 
 fn min a b = ( if a > b then b else a )
 
-fn readTrimeshVerts &vArray= 
-    (
+fn readTrimeshVerts &vArray = ( -- {{{
     local inStr
         
     inStr = readLine colStream
     lineArgs = filterString (inStr as string) "; "
-    while (lineArgs[1] != "}") do
-        (
+    while (lineArgs[1] != "}") do (
         append vArray [lineArgs[1] as float, lineArgs[2] as float, lineArgs[3] as float] 
         inStr = readLine colStream
         lineArgs = filterString (inStr as string) "; "
-        ) -- end while
-    ) -- end fn
+    ) -- end while
+) -- }}}
     
-fn readTrimeshfaces &fArray= 
-    (
+fn readTrimeshfaces &fArray = ( -- {{{
     local inStr
         
     inStr = readLine colStream
     lineArgs = filterString (inStr as string) "; "
-    while (lineArgs[1] != "}") do
-        (
+    while (lineArgs[1] != "}") do (
         append fArray [(lineArgs[1] as integer)+1, (lineArgs[2] as integer)+1, (lineArgs[3] as integer)+1] 
         inStr = readLine colStream
         lineArgs = filterString (inStr as string) "; "
-        ) -- end while
-    ) -- end fn
+    ) -- end while
+) -- }}}
     
-fn readTrimesh =
-    (
+fn readTrimesh = ( -- {{{
     local inStr, vertArray, faceArray
 
     inStr = readLine colStream -- "  vertexes {"
@@ -50,24 +45,21 @@ fn readTrimesh =
     newMesh = mesh vertices:vertArray faces:faceArray
     newMesh.Name = uniquename "Trimesh"
     newMesh -- return value
-    ) -- end fn
+) -- }}}
 
-fn readHullVerts &vArray= 
-    (
+fn readHullVerts &vArray= ( -- {{{
     local inStr
         
     inStr = readLine colStream
     lineArgs = filterString (inStr as string) "; "
-    while (lineArgs[1] != "}") do
-        (
+    while (lineArgs[1] != "}") do (
         append vArray [lineArgs[1] as float, lineArgs[2] as float, lineArgs[3] as float] 
         inStr = readLine colStream
         lineArgs = filterString (inStr as string) "; "
-        ) -- end while
-    ) -- end fn
+    ) -- end while
+) -- }}}
     
-fn readHull =
-    (
+fn readHull = ( -- {{{
     local inStr, vertArray, faceArray
 
     inStr = readLine colStream -- "  vertexes {"
@@ -81,12 +73,13 @@ fn readHull =
     newMesh = mesh vertices:vertArray --faces:faceArray
     newMesh.Name = uniquename "Hull"
     newMesh -- return value
-    ) -- end fn
+) -- }}}
     
-fn get_phys_mat obj id = (
+fn get_phys_mat obj id suppress:false = ( -- {{{
     local mat = obj.material
     if mat == undefined then (
-        messageBox (obj.name+" has no material:  Assigning frictionless material!\n") title:"ERROR!"
+        if not suppress then
+            messageBox (obj.name+" has no material:  Assigning frictionless material!\n") title:"ERROR!"
         return undefined
     )
 
@@ -97,34 +90,39 @@ fn get_phys_mat obj id = (
     if (classof mat) == GRIT_PHYSMAT then (
         mat
     ) else (
-        messageBox (obj.name+" has no recognisable material (Grit Physmat or multimaterial of physmats):  Assigning frictionless material!\n") title:"ERROR!"
+        if not suppress then
+            messageBox (obj.name+" has no recognisable material (Grit Physmat or multimaterial of physmats):  Assigning frictionless material!\n") title:"ERROR!"
         undefined
     )
-)
+) -- }}}
 
-fn is_obj_convex obj = (
+
+
+fn is_obj_convex obj = ( -- {{{
     local mat = obj.material
     if mat == undefined then return false
     if (classof mat) == MULTIMATERIAL then return false
     if (classof mat) != GRIT_PHYSMAT then return false
     mat.convex
-)
+) -- }}}
 
-fn get_mat_margin mat = (
+fn get_mat_margin mat = ( -- {{{
     if mat == undefined then return 0.04
     if (classof mat) == MULTIMATERIAL then return 0.04
     if (classof mat) != GRIT_PHYSMAT then return 0.04
     mat.margin
-)
+) -- }}}
 
-fn get_mat_hex mat = (
+fn get_mat_hex mat = ( -- {{{
     if mat == undefined then return "0x0"
     if (classof mat) == MULTIMATERIAL then return "0x0"
     if (classof mat) != GRIT_PHYSMAT then return "0x0"
     return formattedPrint mat.physmat format:"#x"
-)
+) -- }}}
 
-Rollout grit_tcol_import_export "Main"
+
+
+Rollout GritRolloutTcolMain "Main" -- {{{
 (
     group "Import/Export" (
         button imp "Import *.TCOL" width:146
@@ -377,14 +375,20 @@ Rollout grit_tcol_import_export "Main"
                 format "verts exporting finished!\n" to:listener
 
                 format "    faces {\n" to:savetcol
+                local errors = 0
                 for f = 1 to num_faces do (
                     -- tcol indexes are zero-based so subtract 1
                     local face = (getFace tmesh f) - 1
-                    local mat = get_phys_mat obj (getFaceMatId tmesh f)
+                    local mat = get_phys_mat obj (getFaceMatId tmesh f) suppress:(errors>0)
+                    if mat == undefined then
+                        errors = errors + 1
                     -- 'as integer' suppresses the trailing .0 on the output numbers
                     -- (as that would not be correct tcol syntax)
-                    format "        % % % 0x%;\n" (faceord[1] as integer) (faceord[2] as integer) (faceord[3] as integer) (get_mat_hex mat) to:savetcol
+                    format "        % % % %;\n" (face[1] as integer) (face[2] as integer) (face[3] as integer) (get_mat_hex mat) to:savetcol
                 )
+                local errmsg = stringstream ""
+                format "There were % errors in \"%\"" errors obj.name to:errmsg
+                messageBox (errmsg as string) title:"ERROR!"
                 delete tmesh
                 format "    }\n" to:savetcol
                 format "faces exporting finished!\n" to:listener
@@ -652,9 +656,11 @@ Rollout grit_tcol_import_export "Main"
         
     ) -- this ends the function }}}
     
-)
+) -- }}}
 
-Rollout grit_tcol_help "Help"
+
+
+Rollout GritRolloutTcolHelp "Help" -- {{{
 (
     group "Help" (
         label lab1 "*.tcol Script by JostVice for Grit"
@@ -675,18 +681,15 @@ Rollout grit_tcol_help "Help"
         label lab11 "Cylinder is weird, you can probably do a cylinder"
         label lab12 "manually by using a box and copying by hand coords."
     )
-)
+) -- }}}
 
 
 
-plugin Material GRIT_PHYSMAT
-    name:"GRIT Phys Mat"
-    classID:#(0x25d32aa6, 0x2d8ae265)
-    extends:Standard replaceUI:true 
+plugin Material GRIT_PHYSMAT name:"GRIT Phys Mat" classID:#(0x25d32aa6, 0x2d8ae265) extends:Standard replaceUI:true  -- {{{
 (
-    local SurfAry = #( "Frictionless", "Rubber", "Metal",
-                       "Plastic", "PolishedWood", "PolishedStone", "Wood",
-                       "Stone", "Mud", "Gravel", "Sand" )
+    local SurfAry = #( "Frictionless", "Rubber", "Metal", "Plastic",
+                       "PolishedWood", "PolishedStone", "Wood", "Stone",
+                       "Mud", "Gravel", "Sand" )
 
     parameters main rollout:params
     (
@@ -726,20 +729,22 @@ plugin Material GRIT_PHYSMAT
         delegate.specular = color 15 15 15
     )
     
-)
+) -- }}}
+
+
 
 macroScript showGritTCOLExporter
     category:"Grit Tools"
     internalCategory:"Grit Tools"
-    buttonText:"Grit tcol Exporter"
-    tooltip:"Grit tcol Exporter"
+    buttonText:"Grit .tcol Exporter"
+    tooltip:"Grit .tcol Exporter"
     Icon:#("Maintoolbar",49)
 (
-    local menu = newRolloutFloater "Grit tcol Exporter" 320 500
+    local menu = newRolloutFloater "Grit .tcol Exporter" 320 500
 
-    addRollout grit_tcol_import_export menu
-    addRollout grit_tcol_help menu
+    addRollout GritRolloutTcolMain menu
+    addRollout GritRolloutTcolHelp menu
 
-    grit_tcol_import_export.resetb.pressed()
+    GritRolloutTcolMain.resetb.pressed()
 )
 
