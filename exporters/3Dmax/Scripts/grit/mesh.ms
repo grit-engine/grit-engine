@@ -445,34 +445,75 @@ function write_mesh_xml selected options out_name = -- {{{
     struct OgreVert (pos, normal, ambient, alpha, texcoord, sharpness, weights)
 
     local num_ogre_vertexes = 0
-    local ogre_vert_db = #()
+    local ogre_vert_pos = #()
+    local ogre_vert_normal = #()
+    local ogre_vert_ambient = #()
+    local ogre_vert_alpha = #()
+    local ogre_vert_texcoord = #()
+    local ogre_vert_sharpness = #()
+    local ogre_vert_weights = #()
+    for i=1 to num_blend do (
+        append ogre_vert_weights #()
+    )
+    local max_vert_ogre_verts = #() -- a list of ogre vertexes generated for a single max vert
 
     local face_to_ogre_vert = #()
 
     local num_max_faces = getNumFaces m
     local mat_ids = #()
 
+    local next_ogre_vertex = 1
     for face = 1 to num_max_faces do (
-        GritRolloutOgreMain.exportProgress.value = (33.333*face)/num_max_faces
+        GritRolloutOgreMain.exportProgress.value = (50.0*face)/num_max_faces
         local max_indexes = getFace m face
         local mat_id = getFaceMatId m face
         appendIfUnique mat_ids mat_id
         local ogre_face = [1,1,1]
         for fv=1 to 3 do (
-            -- sorry but maxscript won't let me break this onto multiple lines
-            local ov = OgreVert pos:(meshop.getVert m (max_indexes[fv])) normal:(calc_normal m face fv) ambient:(if options.exportAmbient then get_map_vert m 0 face fv else [1,1,1]) alpha:(if options.exportAlpha then (get_map_vert m -2 face fv)[1] else 1) texcoord:(if texture then get_map_vert m 1 face fv else [0,0]) sharpness:(if blend then (get_map_vert m 2 face fv)[1] else 0) weights:#()
+            local v = (max_indexes[fv])
+            if max_vert_ogre_verts[v] == undefined then max_vert_ogre_verts[v] = #()
+            ogre_vert_pos[next_ogre_vertex] = (meshop.getVert m v)
+            ogre_vert_normal[next_ogre_vertex] = (calc_normal m face fv)
+            ogre_vert_ambient[next_ogre_vertex] = (if options.exportAmbient then get_map_vert m 0 face fv else [1,1,1])
+            ogre_vert_alpha[next_ogre_vertex] = (if options.exportAlpha then (get_map_vert m -2 face fv)[1] else 1)
+            ogre_vert_texcoord[next_ogre_vertex] = (if texture then get_map_vert m 1 face fv else [0,0])
+            ogre_vert_sharpness[next_ogre_vertex] = (if blend then (get_map_vert m 2 face fv)[1] else 0)
             for i=0 to num_blend-1 do (
                 local max_map_channel = 2+(int)(ceil (1 + i)/3)
                 local max_col_channel = (int)(mod (1 + i) 3) + 1
                 local weight = (get_map_vert m max_map_channel face fv)[max_col_channel]
-                ov.weights[i+1] = weight
+                ogre_vert_weights[i+1][next_ogre_vertex] = weight
             )
-            append ogre_vert_db ov
-            num_ogre_vertexes = num_ogre_vertexes + 1
-            ogre_face[fv] = num_ogre_vertexes
+            -- search for existing face the same as this new face
+            local existing = undefined
+            for i=1 to max_vert_ogre_verts[v].count do (
+                local ov1 = next_ogre_vertex
+                local ov2 = max_vert_ogre_verts[v][i]
+                if ogre_vert_normal[ov1] == ogre_vert_normal[ov2] and
+                   ogre_vert_ambient[ov1] == ogre_vert_ambient[ov2] and
+                   ogre_vert_alpha[ov1] == ogre_vert_alpha[ov2] and
+                   ogre_vert_texcoord[ov1] == ogre_vert_texcoord[ov2] and
+                   ogre_vert_sharpness[ov1] == ogre_vert_sharpness[ov2] and
+                   ogre_vert_weights[ov1] == ogre_vert_weights[ov2] then (
+                    for i=1 to num_blend do (
+                        if ogre_vert_weights[i][ov1] != ogre_vert_weights[i][ov2] then (
+                            continue
+                        )
+                    )
+                    existing = ov2
+                )
+            )
+            if existing == undefined then (
+                ogre_face[fv] = next_ogre_vertex
+                append (max_vert_ogre_verts[v]) next_ogre_vertex
+                next_ogre_vertex = next_ogre_vertex + 1
+            ) else (
+                ogre_face[fv] = existing
+            )
         )
         append face_to_ogre_vert ogre_face
     )
+    num_ogre_vertexes = next_ogre_vertex-1
 
 
     format "Writing in file %.mesh.xml : \n" out_name
@@ -497,26 +538,26 @@ function write_mesh_xml selected options out_name = -- {{{
     )
     format ">\n" to:out_file
     for ov = 1 to num_ogre_vertexes do (
-        GritRolloutOgreMain.exportProgress.value = 33.333 + (33.333*ov)/num_ogre_vertexes
+        GritRolloutOgreMain.exportProgress.value = 50.0 + (25.0*ov)/num_ogre_vertexes
         format "            <vertex>\n" to:out_file
-        local p = ogre_vert_db[ov].pos
+        local p = ogre_vert_pos[ov]
         format "                <position x=\"%\" y=\"%\" z=\"%\" />\n" p.x p.y p.z to:out_file
-        local n = ogre_vert_db[ov].normal
+        local n = ogre_vert_normal[ov]
         format "                <normal x=\"%\" y=\"%\" z=\"%\" />\n" n.x n.y n.z to:out_file
         if options.exportAmbient or options.exportAlpha then (
-            local c = ogre_vert_db[ov].ambient
-            local alpha = ogre_vert_db[ov].alpha
+            local c = ogre_vert_ambient[ov]
+            local alpha = ogre_vert_alpha[ov]
             format "                <colour_diffuse value=\"% % % %\" />\n" c.x c.y c.z alpha to:out_file
         )
         if texture then (
-            local uv = ogre_vert_db[ov].texcoord
+            local uv = ogre_vert_texcoord[ov]
             format "                <texcoord u=\"%\" v=\"%\" />\n" uv.x (1-uv.y) to:out_file
         )
         if blend then (
-            local sharpness = ogre_vert_db[ov].sharpness
-            format "                <texcoord u=\"%\" />\n" sharpness to:out_file
+            local sharpness = ogre_vert_sharpness[ov]
+            format "                <texcoord u=\"%\" v=\"0\" />\n" sharpness to:out_file
             for i = 0 to num_blend-1 do (
-                local weight = ogre_vert_db[ov].weights[i+1]
+                local weight = ogre_vert_weights[i+1][ov]
                 if (mod i 4) == 0 then (
                     if i > 0 then
                         format "\"/>\n" to:out_file
@@ -549,7 +590,7 @@ function write_mesh_xml selected options out_name = -- {{{
         format "            <faces>\n" to:out_file
         for face = 1 to num_max_faces do (
             if (getFaceMatId m face) == submesh_mat_id then (
-                GritRolloutOgreMain.exportProgress.value = 66.666 + (33.333*counter)/num_max_faces
+                GritRolloutOgreMain.exportProgress.value = 75.0 + (25.0*counter)/num_max_faces
                 local fv = face_to_ogre_vert[face] - 1 -- ogre is zero-based
                 format "                <face v1=\"%\" v2=\"%\" v3=\"%\" />\n" ((int)fv.x) ((int)fv.y) ((int)fv.z) to:out_file
                 counter = counter + 1
@@ -580,6 +621,4 @@ function write_mesh_xml selected options out_name = -- {{{
 
     return true
 ) -- }}}
-
-
 
