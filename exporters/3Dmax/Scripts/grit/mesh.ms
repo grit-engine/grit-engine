@@ -282,7 +282,7 @@ function WriteM blended exportAmbient exportAlpha material outName = -- {{{
         texCoordString = "texture_coords=\"" + (numUVsets as string) + "\" "
         for num=1 to numUVsets do
         (
-            texCoordString =  texCoordString + "texture_coords_dimensions_" + ((num-1) as string) + "=\"2\" "; -- I really don't care about the W coordinates
+            texCoordString =  texCoordString + "texture_coord_dimensions_" + ((num-1) as string) + "=\"2\" "; -- I really don't care about the W coordinates
         )
     )
     local hasColours = "false" ;    
@@ -479,8 +479,8 @@ function write_mesh_xml selected options out_name = -- {{{
             ogre_vert_texcoord[next_ogre_vertex] = (if texture then get_map_vert m 1 face fv else [0,0])
             ogre_vert_sharpness[next_ogre_vertex] = (if blend then (get_map_vert m 2 face fv)[1] else 0)
             for i=0 to num_blend-1 do (
-                local max_map_channel = 2+(int)(ceil (1 + i)/3)
-                local max_col_channel = (int)(mod (1 + i) 3) + 1
+                local max_map_channel = 3+(int)(floor ((i)/3.0))
+                local max_col_channel = (int)(mod i 3) + 1
                 local weight = (get_map_vert m max_map_channel face fv)[max_col_channel]
                 ogre_vert_weights[i+1][next_ogre_vertex] = weight
             )
@@ -528,13 +528,13 @@ function write_mesh_xml selected options out_name = -- {{{
     format "colours_diffuse=\"%\" " (options.exportAmbient or options.exportAlpha) to:out_file
     format "texture_coords=\"%\" " texcoords to:out_file
     if texture then
-        format "texture_coords_dimensions_0=\"2\" " to:out_file
+        format "texture_coord_dimensions_0=\"2\" " to:out_file
     if blend then (
-        format "texture_coords_dimensions_1=\"1\" " to:out_file
+        format "texture_coord_dimensions_1=\"1\" " to:out_file
         for i = 1 to num_blend_coords-1 do (
-            format "texture_coords_dimensions_%=\"4\" " (i+1) to:out_file
+            format "texture_coord_dimensions_%=\"4\" " (i+1) to:out_file
         )
-        format "texture_coords_dimensions_%=\"%\" " (num_blend_coords+1) last_texcoord_dim to:out_file
+        format "texture_coord_dimensions_%=\"%\" " (num_blend_coords+1) last_texcoord_dim to:out_file
     )
     format ">\n" to:out_file
     for ov = 1 to num_ogre_vertexes do (
@@ -555,7 +555,7 @@ function write_mesh_xml selected options out_name = -- {{{
         )
         if blend then (
             local sharpness = ogre_vert_sharpness[ov]
-            format "                <texcoord u=\"%\" v=\"0\" />\n" sharpness to:out_file
+            format "                <texcoord u=\"%\" />\n" sharpness to:out_file
             for i = 0 to num_blend-1 do (
                 local weight = ogre_vert_weights[i+1][ov]
                 if (mod i 4) == 0 then (
