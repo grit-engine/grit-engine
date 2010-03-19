@@ -583,7 +583,7 @@ function write_mesh_xml selected options out_name = -- {{{
     for submesh_mat_id in mat_ids do (
         local mat = selected.material
         if (classof mat) == MultiMaterial then (
-            mat = mat.materialList[submest_mat_id]
+            mat = mat.materialList[submesh_mat_id]
         )
         local matname = if mat == undefined then "BaseWhite" else mat.name
         format "        <submesh material=\"%\" use32bitindexes=\"%\">\n" matname (num_ogre_vertexes > 65535) to:out_file
