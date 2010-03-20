@@ -495,6 +495,130 @@ TRY_END
 
 ////////////////////////////////////////////////////////////////////////////////
 
+static int global_load_skel (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        const char *name = luaL_checkstring(L,1);
+        Ogre::SkeletonPtr m = Ogre::SkeletonManager::getSingleton()
+                                .load(name,"GRIT");
+        push_skel(L,m);
+        return 1;
+TRY_END
+}
+
+static int global_get_all_skels (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        Ogre::SkeletonManager::ResourceMapIterator rmi =
+                Ogre::SkeletonManager::getSingleton().getResourceIterator();
+
+        // doesn't seem to be possible to find out how many there are in advance
+        lua_createtable(L, 0, 0);
+        int counter = 0;
+        while (rmi.hasMoreElements()) {
+                const Ogre::SkeletonPtr &r = rmi.getNext();
+                lua_pushnumber(L,counter+LUA_ARRAY_BASE);
+                push(L, new Ogre::SkeletonPtr(r), SKEL_TAG);
+                lua_settable(L,-3);
+                counter++;
+        }
+
+        return 1;
+TRY_END
+}
+
+
+static int global_get_skel (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        const char *name = luaL_checkstring(L,1);
+        Ogre::SkeletonPtr m =
+                Ogre::SkeletonManager::getSingleton().getByName(name);
+        push_skel(L,m);
+        return 1;
+TRY_END
+}
+
+static int global_get_skel_verbose (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushboolean(L,Ogre::SkeletonManager::getSingleton().getVerbose());
+        return 1;
+TRY_END
+}
+
+static int global_set_skel_verbose (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        bool b = check_bool(L,1);
+        Ogre::SkeletonManager::getSingleton().setVerbose(b);
+        return 0;
+TRY_END
+}
+
+static int global_get_skel_budget (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushnumber(L,Ogre::SkeletonManager::getSingleton().getMemoryBudget());
+        return 1;
+TRY_END
+}
+
+static int global_set_skel_budget (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        size_t n = check_t<size_t>(L,1);
+        Ogre::SkeletonManager::getSingleton().setMemoryBudget(n);
+        return 0;
+TRY_END
+}
+
+static int global_get_skel_usage (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushnumber(L,Ogre::SkeletonManager::getSingleton().getMemoryUsage());
+        return 1;
+TRY_END
+}
+
+static int global_unload_all_skels (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        Ogre::SkeletonManager::getSingleton().unloadAll();
+        return 0;
+TRY_END
+}
+
+static int global_unload_unused_skels (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        Ogre::SkeletonManager::getSingleton().unloadUnreferencedResources();
+        return 0;
+TRY_END
+}
+
+static int global_remove_skel (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        const char *name = luaL_checkstring(L,1);
+        Ogre::SkeletonManager::getSingleton().remove(name);
+        return 0;
+TRY_END
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 // make
 
 static int global_load_mesh (lua_State *L)
@@ -1902,6 +2026,18 @@ static const luaL_reg global[] = {
         {"unload_unused_meshes" ,global_unload_unused_meshes},
         {"remove_mesh" ,global_remove_mesh},
 
+        {"load_skeleton" ,global_load_skel},
+        {"get_all_skeletons" ,global_get_all_skels},
+        {"get_skeleton" ,global_get_skel},
+        {"get_skeleton_verbose" ,global_get_skel_verbose},
+        {"set_skeleton_verbose" ,global_set_skel_verbose},
+        {"get_skeleton_budget" ,global_get_skel_budget},
+        {"set_skeleton_budget" ,global_set_skel_budget},
+        {"get_skeleton_usage" ,global_get_skel_usage},
+        {"unload_all_skeletons" ,global_unload_all_skels},
+        {"unload_unused_skeletones" ,global_unload_unused_skels},
+        {"remove_skeleton" ,global_remove_skel},
+
         {"make_gpuprog" ,global_make_gpuprog},
         {"get_all_gpuprogs" ,global_get_all_gpuprogs},
         {"get_gpuprog" ,global_get_gpuprog},
@@ -2052,6 +2188,7 @@ lua_State *init_lua(const char *filename)
         ADD_MT_MACRO(mat,MAT_TAG);
         ADD_MT_MACRO(tex,TEX_TAG);
         ADD_MT_MACRO(mesh,MESH_TAG);
+        ADD_MT_MACRO(skel,SKEL_TAG);
         ADD_MT_MACRO(gpuprog,GPUPROG_TAG);
         ADD_MT_MACRO(rtex,RTEX_TAG);
         ADD_MT_MACRO(rwin,RWIN_TAG);

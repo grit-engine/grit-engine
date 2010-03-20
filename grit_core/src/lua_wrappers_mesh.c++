@@ -25,6 +25,108 @@
 #include "lua_wrappers_mesh.h"
 #include "lua_wrappers_material.h"
 
+// SKELETON ================================================================ {{{
+
+void push_skel (lua_State *L, const Ogre::SkeletonPtr &self)
+{
+        if (self.isNull())
+                lua_pushnil(L);
+        else
+                push(L,new Ogre::SkeletonPtr(self),SKEL_TAG);
+}
+
+static int skel_gc (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO_OFFSET(Ogre::SkeletonPtr,self,1,SKEL_TAG,0);
+        if (self==NULL) return 0;
+        delete self;
+        return 0;
+TRY_END
+}
+
+static int skel_load (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::SkeletonPtr,self,1,SKEL_TAG);
+        self->load();
+        return 0;
+TRY_END
+}
+
+static int skel_unload (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::SkeletonPtr,self,1,SKEL_TAG);
+        self->unload();
+        return 0;
+TRY_END
+}
+
+static int skel_reload (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::SkeletonPtr,self,1,SKEL_TAG);
+        self->reload();
+        return 0;
+TRY_END
+}
+
+TOSTRING_GETNAME_MACRO(skel,Ogre::SkeletonPtr,->getName(),SKEL_TAG)
+
+
+static int skel_index (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Ogre::SkeletonPtr,self,1,SKEL_TAG);
+        std::string key = luaL_checkstring(L,2);
+        if (key=="load") {
+                push_cfunction(L,skel_load);
+        } else if (key=="unload") {
+                push_cfunction(L,skel_unload);
+        } else if (key=="reload") {
+                push_cfunction(L,skel_reload);
+        } else if (key=="isLoaded") {
+                lua_pushboolean(L,self->isLoaded());
+        } else if (key=="isPrepared") {
+                lua_pushboolean(L,self->isPrepared());
+        } else if (key == "useCount") {
+                lua_pushnumber(L,self.useCount());
+        } else {
+                my_lua_error(L,"Not a valid Skeleton member: "+key);
+        }
+        return 1;
+TRY_END
+}
+
+static int skel_newindex (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(Ogre::SkeletonPtr,self,1,SKEL_TAG);
+        std::string key = luaL_checkstring(L,2);
+        if (false) {
+                (void) self;
+        } else {
+                my_lua_error(L,"Not a valid Skeleton member: "+key);
+        }
+        return 0;
+TRY_END
+}
+
+EQ_PTR_MACRO(Ogre::SkeletonPtr,skel,SKEL_TAG)
+
+MT_MACRO_NEWINDEX(skel);
+
+// }}}
+
+
+
 // MESH ==================================================================== {{{
 
 void push_mesh (lua_State *L, const Ogre::MeshPtr &self)
@@ -71,20 +173,10 @@ TRY_START
         check_args(L,1);
         GET_UD_MACRO_OFFSET(Ogre::MeshPtr,self,1,MESH_TAG,0);
         if (self==NULL) return 0;
+        delete self;
         return 0;
 TRY_END
 }
-
-static int mesh_destroy (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(Ogre::MeshPtr,self,1,MESH_TAG);
-        delete &self;
-        return 0;
-TRY_END
-}
-
 
 static int mesh_get_material (lua_State *L)
 {
@@ -144,9 +236,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::MeshPtr,self,1,MESH_TAG);
         std::string key = luaL_checkstring(L,2);
-        if (key=="destroy") {
-                push_cfunction(L,mesh_destroy);
-        } else if (key=="load") {
+        if (key=="load") {
                 push_cfunction(L,mesh_load);
         } else if (key=="unload") {
                 push_cfunction(L,mesh_unload);
@@ -160,6 +250,12 @@ TRY_START
                 lua_pushnumber(L,self.useCount());
         } else if (key == "numSubMeshes") {
                 lua_pushnumber(L,self->getNumSubMeshes());
+        } else if (key == "hasSkeleton") {
+                lua_pushboolean(L,self->hasSkeleton());
+        } else if (key == "skeleton") {
+                push_skel(L,self->getSkeleton());
+        } else if (key == "skeletonName") {
+                lua_pushstring(L,self->getSkeletonName().c_str());
         } else if (key == "getMaterialName") {
                 push_cfunction(L,mesh_get_material_name);
         } else if (key == "setMaterialName") {

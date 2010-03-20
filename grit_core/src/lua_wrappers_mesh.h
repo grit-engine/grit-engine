@@ -30,4 +30,10 @@ MT_MACRO_DECLARE(mesh);
 void push_mesh (lua_State *L, const Ogre::MeshPtr &self);
 
 
+#define SKEL_TAG "Grit/Skeleton"
+MT_MACRO_DECLARE(skel);
+
+void push_skel (lua_State *L, const Ogre::SkeletonPtr &self);
+
+
 // vim: shiftwidth=8:tabstop=8:expandtab

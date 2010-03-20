@@ -811,6 +811,15 @@ TRY_START
 TRY_END
 }
 
+struct Hack : public Ogre::SubEntity {
+        bool hasCustomParameter (size_t index);
+};
+
+inline bool Hack::hasCustomParameter (size_t index)
+{
+        CustomParameterMap::const_iterator i = mCustomParameters.find(index);
+        return i != mCustomParameters.end();
+}
 
 static int entity_set_custom_parameter_all (lua_State *L)
 {
@@ -822,7 +831,8 @@ TRY_START
                 Ogre::Real v = luaL_checknumber(L,4);
                 for (size_t i=0 ; i<self.getNumSubEntities() ; ++i) {
                         Ogre::SubEntity *se = self.getSubEntity(i);
-                        Ogre::Vector4 cp = se->getCustomParameter(varindex);
+                        // Undefined behaviour here
+                        Ogre::Vector4 cp = static_cast<Hack*>(se)->hasCustomParameter(varindex) ? se->getCustomParameter(varindex) : Ogre::Vector4(0,0,0,0);
                         switch (elindex) {
                                 case 0: cp.x = v; break;
                                 case 1: cp.y = v; break;
