@@ -252,7 +252,7 @@ function getDatas tmesh blended exportAmbient exportAlpha exportHelpers sk phy =
                     -- gets the root Id:
                     append boneAssignments[matId] #(ogreVertNum-1,0,1)
                 )
-            )                
+            )
 
     
             ogreFace[localVertexIndex] = ogreVertNum - 1;        
@@ -429,7 +429,13 @@ function write_mesh_xml selected options out_name = -- {{{
      -- ranges from 1 to 4, all the others are 4
     local last_texcoord_dim = 4 - (num_blend_coords*4 - num_blend)
     
-    local m = snapshotAsMesh selected
+    local cloned
+    maxops.clonenodes selected newNodes:&cloned
+    local m = cloned[1]
+    m.position = [0, 0, 0]
+    m.scale = [1, 1, 1]
+    m.rotation = Quat 0 0 0 1
+    m = convertToMesh m
         
     if options.exportAmbient and not (meshop.getMapSupport m 0) then
         options.exportAmbient = false
@@ -472,7 +478,7 @@ function write_mesh_xml selected options out_name = -- {{{
         for fv=1 to 3 do (
             local v = (max_indexes[fv])
             if max_vert_ogre_verts[v] == undefined then max_vert_ogre_verts[v] = #()
-            ogre_vert_pos[next_ogre_vertex] = (meshop.getVert m v)
+            ogre_vert_pos[next_ogre_vertex] = (meshop.getVert m v node:m)
             ogre_vert_normal[next_ogre_vertex] = (calc_normal m face fv)
             ogre_vert_ambient[next_ogre_vertex] = (if options.exportAmbient then get_map_vert m 0 face fv else [1,1,1])
             ogre_vert_alpha[next_ogre_vertex] = (if options.exportAlpha then (get_map_vert m -2 face fv)[1] else 1)
