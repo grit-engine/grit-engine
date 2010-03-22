@@ -190,7 +190,8 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
         lastfirstFrame = getINISetting ((getDir #scripts) + ini_file_name) "Settings" "lastFrameStart"
         lastlastFrame = getINISetting ((getDir #scripts) + ini_file_name) "Settings" "lastFrameEnd"
         lastAnimLength = getINISetting ((getDir #scripts) + ini_file_name) "Settings" "lastAnimLength"
-        editDir.text = lastDir
+        if lastDir != undefined then
+            editDir.text = lastDir
 
         editXMLconverter.text = getINISetting ((getDir #scripts) + ini_file_name) "Directories" "XMLConverter"
         print editXMLconverter.text;
@@ -203,7 +204,10 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
     on chooseDir pressed do
     (
         local filename = getSavePath caption:"Output directory" initialDir: editDir.text 
-        if (filename != undefined) then editDir.text = filename
+        if (filename != undefined) then (
+            editDir.text = filename
+            setINISetting ((getDir #scripts) + ini_file_name) "Settings" "lastDir" editDir.text	
+        )
     )
     on browseXMLconverter pressed  do
     (
@@ -251,7 +255,6 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
             ---------------
             if (GritRolloutOgreMesh.CBexportMesh.enabled and GritRolloutOgreMesh.CBexportMesh.checked) then
             (
-                setINISetting ((getDir #scripts) + ini_file_name) "Settings" "lastDir" editDir.text	
                 --progressStart "Mesh Export"
                 exportProgress.value = 0
                 exportingMeshDone = write_mesh_xml m options out_file
