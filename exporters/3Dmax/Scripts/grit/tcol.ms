@@ -3,6 +3,12 @@ global colStream
 
 fn min a b = ( if a > b then b else a )
 
+fn dft a b = ( if a == undefined then b else a )
+
+global ini_file_name = "grit.ini"
+
+-- {{{ import stuff
+
 fn readTrimeshVerts &vArray = ( -- {{{
     local inStr
         
@@ -74,6 +80,9 @@ fn readHull = ( -- {{{
     newMesh.Name = uniquename "Hull"
     newMesh -- return value
 ) -- }}}
+
+-- }}}
+
     
 fn get_phys_mat obj id suppress:false = ( -- {{{
     local mat = obj.material
@@ -95,8 +104,6 @@ fn get_phys_mat obj id suppress:false = ( -- {{{
         undefined
     )
 ) -- }}}
-
-
 
 fn is_obj_convex obj = ( -- {{{
     local mat = obj.material
@@ -120,19 +127,215 @@ fn get_mat_hex mat = ( -- {{{
     return formattedPrint mat.physmat format:"#x"
 ) -- }}}
 
+fn grit_tcol_export out_file propobj objs = ( -- {{{
+
+    format "Creating file: %\n" out_file to:listener
+    local savetcol = createFile (out_file)
+
+    local dummy = if propobj==objs[1] then undefined else propobj
+        
+    format "TCOL1.0\n\n" to:savetcol
+
+    --attributes
+    format "attributes {\n" to:savetcol
+    format "Started TCOL export\nTCOL 1.0\nName: %\nStarted exporting attributes...\n" savetcol to:listener
+    if getUserProp propobj "gritDynamic" == true then
+        format "    mass %;\n" (dft (getUserProp propobj "gritMassValue") 100) to:savetcol
+    else
+        format "    static;\n" to:savetcol
+    if getUserProp propobj "gritInertiaExported"==true then
+        format "    inertia % % %;\n" (dft (getUserProp propobj "gritInertiaXValue") 100) (dft (getUserProp propobj "gritInertiaYValue") 100) (dft (getUserProp propobj "gritInertiaZValue") 100) to:savetcol
+    if getUserProp propobj "gritLinearDampingExported"==true and getUserProp propobj "gritLinearDampingValue" != undefined then
+        format "    linear_damping %;\n" (getUserProp propobj "gritLinearDampingValue") to:savetcol
+    if getUserProp propobj "gritAngularDampingExported"==true and getUserProp propobj "gritAngularDampingValue" != undefined then
+        format "    angular_damping %;\n" (getUserProp propobj "gritAngularDampingValue") to:savetcol
+    if getUserProp propobj "gritLinearSleepThresholdExported"==true and getUserProp propobj "gritLinearSleepThresholdValue" != undefined then
+        format "    linear_sleep_threshold %;\n" (getUserProp propobj "gritLinearSleepThresholdValue") to:savetcol
+    if getUserProp propobj "gritAngularSleepThresholdExported"==true and getUserProp propobj "gritAngularSleepThresholdValue" != undefined then
+        format "    angular_sleep_threshold %;\n" (getUserProp propobj "gritAngularSleepThresholdValue") to:savetcol
+    if getUserProp propobj "gritCCDMotionThresholdExported"==true and getUserProp propobj "gritCCDMotionThresholdValue" != undefined then
+        format "    ccd_motion_threshold %;\n" (getUserProp propobj "gritCCDMotionThresholdValue") to:savetcol
+    if getUserProp propobj "gritCCDSweptSphereRadiusExported"==true and getUserProp propobj "gritCCDSweptSphereRadiusValue" != undefined then
+        format "    ccd_swept_sphere_radius %;\n" (getUserProp propobj "gritCCDSweptSphereRadiusValue") to:savetcol
+    format "}\n\n" to:savetcol
+    format "Finished exporting attributes\n" to:listener
+    
+    --compounds
+    format "compound {\n" to:savetcol
+    format "Started exporting compounds...\n" to:listener
+    for obj in objs do (
+        local sca
+        local pos
+        local q
+        if dummy == undefined then (
+            sca = obj.scale
+            pos = obj.pos
+            q = obj.rotation
+        ) else (
+            sca = in coordsys dummy obj.scale
+            pos = in coordsys dummy obj.pos
+            q = in coordsys dummy obj.rotation
+        )
+        if classof(obj) == Box then (
+            local dim = sca * point3 obj.width obj.length obj.height
+            local mat = get_phys_mat obj 1
+            local margin = min (get_mat_margin mat) ((min(min dim.x dim.y) dim.z)/4)
+            pos = pos + point3 0 0 (dim.z/2) * inverse q
+            format "    box {\n" to:savetcol
+            format "        material %;\n" (get_mat_hex mat) to:savetcol
+            format "        margin %;\n" margin to:savetcol
+            format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
+            format "        dimensions % % %;\n" dim.x dim.y dim.z to:savetcol
+            format "        orientation % % % %;\n" q.w q.x q.y q.z to:savetcol
+            format "    }\n" to:savetcol
+        )
+        if classof(obj) == Cylinder then (
+            local dim = sca * point3 (obj.radius*2) (obj.radius*2) obj.height
+            local mat = get_phys_mat obj 1
+            local margin = min (get_mat_margin mat) ((min(min dim.x dim.y) dim.z)/4)
+            pos = pos + point3 0 0 (dim.z/2) * inverse q
+            format "    cylinder {\n" to:savetcol
+            format "        material %;\n" (get_mat_hex mat) to:savetcol
+            format "        margin %;\n" margin to:savetcol
+            format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
+            format "        dimensions % % %;\n" dim.x dim.y dim.z to:savetcol
+            format "        orientation % % % %;\n" q.w q.x q.y q.z to:savetcol
+            format "    }\n" to:savetcol
+        )
+        if classof(obj) == Cone then (
+            -- take average of scale, we cannot actually compress the cone in grit
+            local r = (sca.x+sca.y)/2 * obj.radius1
+            local h = sca.z * obj.height
+            local mat = get_phys_mat obj 1
+            local margin = get_mat_margin mat
+            pos = pos + point3 0 0 (h/2) * inverse q
+            format "    cone {\n" to:savetcol
+            format "        material %;\n" (get_mat_hex mat) to:savetcol
+            format "        margin %;\n" margin to:savetcol
+            format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
+            format "        radius %;\n" r to:savetcol
+            format "        height %;\n" h to:savetcol
+            format "        orientation % % % %;\n" q.w q.x q.y q.z to:savetcol
+            format "    }\n" to:savetcol
+        )
+        if classof(obj) == Sphere then (
+            -- take average of scale, we cannot actually compress the cone in grit
+            local r = (sca.x+sca.y+sca.z)/3 * obj.radius
+            local mat = get_phys_mat obj 1
+            format "    cone {\n" to:savetcol
+            format "        material %;\n" (get_mat_hex mat) to:savetcol
+            format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
+            format "        radius %;\n" r to:savetcol
+            format "    }\n" to:savetcol
+        )
+        if classof obj.baseobject == Editable_Poly then (
+            if not is_obj_convex obj then continue
+            local mat = get_phys_mat obj 1
+            local margin = get_mat_margin mat
+            local tmesh
+            if dummy == undefined then (
+                tmesh = snapshotAsMesh obj
+            ) else (
+                local old_pos = dummy.pos
+                local old_q = dummy.rotation
+                local old_sca = dummy.scale
+                dummy.pos = [0,0,0]
+                dummy.rotation = Quat 0 0 0 1
+                dummy.scale = [1,1,1]
+                tmesh = snapshotAsMesh obj
+                dummy.rotation = old_q
+                dummy.scale = old_sca
+                dummy.pos = old_pos
+            )
+            local num_verts = tmesh.numverts 
+            format "Verts: %\n" num_verts to:listener
+            format "    hull {\n" to:savetcol
+            format "        material %;\n" (get_mat_hex mat) to:savetcol
+            format "        margin %;\n" margin to:savetcol
+            format "        vertexes {\n" to:savetcol
+            for v = 1 to num_verts do (
+                local vert = getVert tmesh v
+                format "            % % %;\n" vert.x vert.y vert.z to:savetcol
+            )
+            format "        }\n" to:savetcol
+            delete tmesh
+            format "    }\n" to:savetcol
+        )
+    )
+    format "Finished exporting compounds\n" to:listener
+    format "}\n" to:savetcol
+    
+    --trimesh
+    local HAVE_TRIMESH=false
+    for obj in $ do (
+        if classof obj.baseobject == Editable_Poly then (
+            if is_obj_convex obj then continue
+            if HAVE_TRIMESH == false then (
+                format "trimesh {\n" to:savetcol
+                format "Started exporting trimesh...\n" to:listener
+                HAVE_TRIMESH = true
+            ) else (
+                messageBox "Currently only one trimesh is supported.  Please join them before export." title:"ERROR!"
+                continue
+            )
+            local tmesh = snapshotAsMesh obj
+            local num_verts = tmesh.numverts 
+            local num_faces = tmesh.numfaces
+            format "Verts: %\nTris: %\n" num_verts num_faces to:listener
+
+            format "    vertexes {\n" to:savetcol
+            for v = 1 to num_verts do (
+                local vert = getVert tmesh v
+                format "        % % %;\n" vert.x vert.y vert.z to:savetcol
+            )
+            format "    }\n" to:savetcol
+            format "verts exporting finished!\n" to:listener
+
+            format "    faces {\n" to:savetcol
+            local errors = 0
+            for f = 1 to num_faces do (
+                -- tcol indexes are zero-based so subtract 1
+                local face = (getFace tmesh f) - 1
+                local mat = get_phys_mat obj (getFaceMatId tmesh f) suppress:(errors>0)
+                if mat == undefined then
+                    errors = errors + 1
+                -- 'as integer' suppresses the trailing .0 on the output numbers
+                -- (as that would not be correct tcol syntax)
+                format "        % % % %;\n" (face[1] as integer) (face[2] as integer) (face[3] as integer) (get_mat_hex mat) to:savetcol
+            )
+            local errmsg = stringstream ""
+            format "There were % errors in \"%\"" errors obj.name to:errmsg
+            messageBox (errmsg as string) title:"ERROR!"
+            delete tmesh
+            format "    }\n" to:savetcol
+            format "faces exporting finished!\n" to:listener
+        )
+    )
+    if HAVE_TRIMESH == true then (
+        format "}\n" to:savetcol
+        format "Finished exporting trimesh...\n" to:listener
+    )
+    format "finished!\n" to:listener
+    close savetcol
+) -- }}}
+
+global grit_current_tcol_floater = undefined
+
+global GritRolloutTcolMain
 
 
 Rollout GritRolloutTcolMain "Main" -- {{{
 (
     group "Import/Export" (
-        button imp "Import *.TCOL" width:146
-        button exp "Export *.TCOL" width:146
-        checkbox zexp "Move to 0.0 0.0 0.0 for export" align:#center
-        button setfilename "Filename" width:146
-        edittext displayfilename text:"No file selected..."
+        button chooseDir "Browse Dir" toolTip:"Choose dir where files are written" across:2
+        --button imp "Import tcol"
+        button exp "Export Selection" toolTip:"Write TCOL file"
+        edittext editDir ""
     )
-    group "Attributes" (
-        checkbox cymass "Dynamic" across:2 
+
+    -- attributes {{{
+    group "Attributes (select a single object to modify)" (
+        checkbox dynamic "Dynamic"
         spinner smass "Mass (kg):"
         checkbox cyinertia "Export"
         spinner sinertiax "Inertia Tensor X (m):"
@@ -150,258 +353,156 @@ Rollout GritRolloutTcolMain "Main" -- {{{
         spinner scmotthrs "CCD motion thr. (m/s):"
         checkbox cycsphswrad "Export" across:2
         spinner scsphswrad "CCD sphere rad (m):"
-        button resetb "Reset to default" width:116
     )
 
-    on resetb pressed do
-    (
-        smass.value = 100.0 
-        smass.enabled = false 
-        sinertiax.value = 0.0
-        sinertiax.enabled = false 
-        sinertiay.value = 0.0
-        sinertiay.enabled = false 
-        sinertiaz.value = 0.0
-        sinertiaz.enabled = false 
-        sldamp.value = 0.5
-        sldamp.enabled = false 
-        sadamp.value = 0.0
-        sadamp.enabled = false 
-        slsthrs.value = 1.0
-        slsthrs.enabled = false 
-        sasthrs.value = 0.8
-        sasthrs.enabled = false 
-        scmotthrs.value = 0.0
-        scmotthrs.enabled = false 
-        scsphswrad.value = 0.0
-        scsphswrad.enabled = false 
-        
-        cymass.triState = 0
-        cyinertia.triState = 0
-        cyldamp.triState = 0
-        cyadamp.triState = 0
-        cylsthrs.triState = 0
-        cyasthrs.triState = 0
-        cycmotthrs.triState = 0
-        cycsphswrad.triState = 0
+
+    fn update = (
+        -- we might get called when the floater does not exist
+        if grit_current_tcol_floater == undefined then return()
+
+        if (getCurrentSelection()).count != 1 then (
+            smass.enabled = false 
+            sinertiax.enabled = false 
+            sinertiay.enabled = false 
+            sinertiaz.enabled = false 
+            sldamp.enabled = false 
+            sadamp.enabled = false 
+            slsthrs.enabled = false 
+            sasthrs.enabled = false 
+            scmotthrs.enabled = false 
+            scsphswrad.enabled = false 
+
+            dynamic.triState = 0
+            cyinertia.triState = 0
+            cyldamp.triState = 0
+            cyadamp.triState = 0
+            cylsthrs.triState = 0
+            cyasthrs.triState = 0
+            cycmotthrs.triState = 0
+            cycsphswrad.triState = 0
+
+            dynamic.enabled = false
+            cyinertia.enabled = false
+            cyldamp.enabled = false
+            cyadamp.enabled = false
+            cylsthrs.enabled = false
+            cyasthrs.enabled = false
+            cycmotthrs.enabled = false
+            cycsphswrad.enabled = false
+        ) else (
+            local obj = (getCurrentSelection())[1]
+
+            smass.value = dft (getUserProp obj "gritMassValue") 100
+            sinertiax.value = dft (getUserProp obj "gritInertiaXValue") 0
+            sinertiay.value =  dft (getUserProp obj "gritInertiaYValue") 0
+            sinertiaz.value =  dft (getUserProp obj "gritInertiaZValue") 0
+            sldamp.value = dft (getUserProp obj "gritLinearDampingValue") 0.5
+            sadamp.value = dft (getUserProp obj "gritAngularDampingValue") 0.5
+            slsthrs.value = dft (getUserProp obj "gritLinearSleepThresholdValue") 1.0
+            sasthrs.value = dft (getUserProp obj "gritAngularSleepThresholdValue") 0.8
+            scmotthrs.value = dft (getUserProp obj "gritCCDMotionThresholdValue") 0
+            scsphswrad.value = dft (getUserProp obj "gritCCDSweptSphereRadiusValue") 0
+            
+            local dyn = dft (getUserProp obj "gritDynamic") false
+            dynamic.triState = if dyn then 1 else 0
+            cyinertia.triState = if dft (getUserProp obj "gritInertiaExported") false then 1 else 0
+            cyldamp.triState = if dft (getUserProp obj "gritLinearDampingExported") false then 1 else 0
+            cyadamp.triState = if dft (getUserProp obj "gritAngularDampingExported") false then 1 else 0
+            cylsthrs.triState = if dft (getUserProp obj "gritLinearSleepThresholdExported") false then 1 else 0
+            cyasthrs.triState = if dft (getUserProp obj "gritAngularSleepThresholdExported") false then 1 else 0
+            cycmotthrs.triState = if dft (getUserProp obj "gritCCDMotionThresholdExported") false then 1 else 0
+            cycsphswrad.triState = if dft (getUserProp obj "gritCCDSweptSphereRadiusExported") false then 1 else 0
+
+            smass.enabled = dynamic.triState == 1
+            sinertiax.enabled = cyinertia.triState == 1
+            sinertiay.enabled = cyinertia.triState == 1
+            sinertiaz.enabled = cyinertia.triState == 1
+            sldamp.enabled = cyldamp.triState == 1
+            sadamp.enabled = cyadamp.triState == 1
+            slsthrs.enabled = cylsthrs.triState == 1
+            sasthrs.enabled = cyasthrs.triState == 1
+            scmotthrs.enabled = cycmotthrs.triState == 1
+            scsphswrad.enabled = cycsphswrad.triState == 1
+
+
+            dynamic.enabled = true
+            cyinertia.enabled = dyn
+            cyldamp.enabled = dyn
+            cyadamp.enabled = dyn
+            cylsthrs.enabled = dyn
+            cyasthrs.enabled = dyn
+            cycmotthrs.enabled = dyn
+            cycsphswrad.enabled = dyn
+        )
     )
 
     --This is about enabling or disabling the spinners if 'export' is selected
-    on cymass changed theState do smass.enabled = cymass.triState == 1
-    on cyinertia changed theState do 
+    fn update_from_value name v = (
+        setUserProp ((getCurrentSelection())[1]) name v
+        update()
+    )
+    fn update_from_tristate name v = (
+        update_from_value name (v.triState==1)
+    )
+    on dynamic changed v do update_from_value "gritDynamic" v
+    on cyinertia changed v do update_from_value "gritInertiaExported" v
+    on cyldamp changed v do update_from_value "gritLinearDampingExported" v
+    on cyadamp changed v do update_from_value "gritAngularDampingExported" v
+    on cylsthrs changed v do update_from_value "gritLinearSleepThresholdExported" v
+    on cyasthrs changed v do update_from_value "gritAngularSleepThresholdExported" v
+    on cycmotthrs changed v do update_from_value "gritCCDMotionThresholdExported" v
+    on cycsphswrad changed v do update_from_value "gritCCDSweptSphereRadiusExported" v
+
+    on smass changed v do update_from_value "gritMassValue" v
+    on sinertiax changed v do update_from_value "gritInertiaXValue" v
+    on sinertiay changed v do update_from_value "gritInertiaYValue" v
+    on sinertiaz changed v do update_from_value "gritInertiZXValue" v
+    on sldamp changed v do update_from_value "gritLinearDampingValue" v
+    on sadamp changed v do update_from_value "gritAngularDampingValue" v
+    on slsthrs changed v do update_from_value "gritLinearSleepThresholdValue" v
+    on sasthrs changed v do update_from_value "gritAngularSleepThresholdValue" v
+    on scmotthrs changed v do update_from_value "gritCCDMotionThresholdValue" v
+    on scsphswrad changed v do update_from_value "gritCCDSweptSphereRadiusValue" v
+
+    -- }}}
+
+    on GritRolloutTcolMain open do
     (
-        sinertiax.enabled = cyinertia.triState == 1
-        sinertiay.enabled = cyinertia.triState == 1
-        sinertiaz.enabled = cyinertia.triState == 1
+        local lastDir = getINISetting ((getDir #scripts) + ini_file_name) "Settings" "lastDir"
+        if lastDir != undefined then (
+            editDir.text = lastDir
+            setINISetting ((getDir #scripts) + ini_file_name) "Settings" "lastDir" editDir.text	
+        )
     )
-    on cyldamp changed theState do sldamp.enabled = cyldamp.triState == 1
-    on cyadamp changed theState do sadamp.enabled = cyadamp.triState == 1
-    on cylsthrs changed theState do slsthrs.enabled = cylsthrs.triState == 1
-    on cyasthrs changed theState do sasthrs.enabled = cyasthrs.triState == 1
-    on cycmotthrs changed theState do scmotthrs.enabled = cycmotthrs.triState == 1
-    on cycsphswrad changed theState do scsphswrad.enabled = cycsphswrad.triState == 1
+    on chooseDir pressed do
+    (           
+        local filename = getSavePath caption:"Output directory" initialDir: editDir.text
+        if (filename != undefined) then editDir.text = filename
+    )                   
 
-    local filename = undefined
-
-    on setfilename pressed do (
-        filename = getSaveFileName types:"Grit collision file(*.tcol)|*.tcol|"
-        if filename == undefined then
-            displayfilename.text = "No file selected."
-        else
-            displayfilename.text = filename
-    )
-
-    on displayfilename changed text do (
-        format "New filename: %\n" text to:listener
-        filename = text
-    )
-
-    
     -- {{{ Exporting
     on exp pressed do (
 
-        if filename == undefined then return()
-            
-        format "Creating file: %\n" filename to:listener
-        local savetcol = createFile (filename)
-            
-        if $ == undefined then return()
+        if (editDir.text == "") then (
+            messageBox "You have to choose an output directory."
+            return()
+        ) else if (getCurrentSelection()).count == 0 then (
+            messageBox "You have to select something for export."
+            return()
+        )
 
-        format "TCOL1.0\n\n" to:savetcol
-
-        --attributes
-        format "attributes {\n" to:savetcol
-        format "Started TCOL export\nTCOL 1.0\nName: %\nStarted exporting attributes...\n" savetcol to:listener
-        if cymass.triState == 0 then
-            format "    static;\n" to:savetcol
-        else
-            format "    mass %;\n" smass.value to:savetcol
-        if cyinertia.triState == 1 then
-            format "    inertia % % %;\n" sinertiax.value sinertiay.value sinertiaz.value to:savetcol
-        if cyldamp.triState == 1 then
-            format "    linear_damping %;\n" sldamp.value to:savetcol
-        if cylsthrs.triState == 1 then
-            format "    angular_damping %;\n" sadamp.value to:savetcol
-        if cylsthrs.triState == 1 then
-            format "    linear_sleep_threshold %;\n" slsthrs.value to:savetcol
-        if cyasthrs.triState == 1 then
-            format "    angular_sleep_threshold %;\n" sasthrs.value to:savetcol
-        if cycmotthrs.triState == 1 then
-            format "    ccd_motion_threshold %;\n" scmotthrs.value to:savetcol
-        if cycsphswrad.triState == 1 then
-            format "   ccd_swept_sphere_radius %;\n" scsphswrad.value to:savetcol
-        format "}\n\n" to:savetcol
-        format "Finished exporting attributes\n" to:listener
-        
-        --compounds
-        format "compound {\n" to:savetcol
-        format "Started exporting compounds...\n" to:listener
-        for obj in $ do (
-            local pos = obj.pos
-            local q = obj.rotation
-            if zexp.triState == 1 then (
-                pos = point3 0 0 0
-                format "Moved % from % % % to %\n" obj.name pos.x pos.y pos.z obj.pos to:listener
-            )
-            if classof(obj) == Box then (
-                local dim = obj.scale * point3 obj.width obj.length obj.height
-                local mat = get_phys_mat obj 1
-                local margin = min (get_mat_margin mat) ((min(min dim.x dim.y) dim.z)/4)
-                pos = pos + point3 0 0 (dim.z/2) * inverse q
-                format "    box {\n" to:savetcol
-                format "        material %;\n" (get_mat_hex mat) to:savetcol
-                format "        margin %;\n" margin to:savetcol
-                format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
-                format "        dimensions % % %;\n" dim.x dim.y dim.z to:savetcol
-                format "        orientation % % % %;\n" q.w q.x q.y q.z to:savetcol
-                format "    }\n" to:savetcol
-            )
-            if classof(obj) == Cylinder then (
-                local dim = obj.scale * point3 (obj.radius*2) (obj.radius*2) obj.height
-                local mat = get_phys_mat obj 1
-                local margin = min (get_mat_margin mat) ((min(min dim.x dim.y) dim.z)/4)
-                pos = pos + point3 0 0 (dim.z/2) * inverse q
-                format "    cylinder {\n" to:savetcol
-                format "        material %;\n" (get_mat_hex mat) to:savetcol
-                format "        margin %;\n" margin to:savetcol
-                format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
-                format "        dimensions % % %;\n" dim.x dim.y dim.z to:savetcol
-                format "        orientation % % % %;\n" q.w q.x q.y q.z to:savetcol
-                format "    }\n" to:savetcol
-            )
-            if classof(obj) == Cone then (
-                -- take average of scale, we cannot actually compress the cone in grit
-                local r = (obj.scale.x+obj.scale.y)/2 * obj.radius1
-                local h = obj.scale.z * obj.height
-                local mat = get_phys_mat obj 1
-                local margin = get_mat_margin mat
-                pos = pos + point3 0 0 (h/2) * inverse q
-                format "    cone {\n" to:savetcol
-                format "        material %;\n" (get_mat_hex mat) to:savetcol
-                format "        margin %;\n" margin to:savetcol
-                format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
-                format "        radius %;\n" r to:savetcol
-                format "        height %;\n" h to:savetcol
-                format "        orientation % % % %;\n" q.w q.x q.y q.z to:savetcol
-                format "    }\n" to:savetcol
-            )
-            if classof(obj) == Sphere then (
-                -- take average of scale, we cannot actually compress the cone in grit
-                local r = (obj.scale.x+obj.scale.y+obj.scale.z)/3 * obj.radius
-                local mat = get_phys_mat obj 1
-                format "    cone {\n" to:savetcol
-                format "        material %;\n" (get_mat_hex mat) to:savetcol
-                format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
-                format "        radius %;\n" r to:savetcol
-                format "    }\n" to:savetcol
-            )
-            if classof obj.baseobject == Editable_Poly then (
-                if not is_obj_convex obj then continue
-                local mat = get_phys_mat obj 1
-                local margin = get_mat_margin mat
-                local tmesh = snapshotAsMesh obj
-                local num_verts = tmesh.numverts 
-                format "Verts: %\n" num_verts to:listener
-                format "    hull {\n" to:savetcol
-                format "        material %;\n" (get_mat_hex mat) to:savetcol
-                format "        margin %;\n" margin to:savetcol
-                format "        vertexes {\n" to:savetcol
-                for v = 1 to num_verts do (
-                    local vert = getVert tmesh v
-                    format "            % % %;\n" vert.x vert.y vert.z to:savetcol
-                )
-                format "        }\n" to:savetcol
-                delete tmesh
-                format "    }\n" to:savetcol
+        for obj in getCurrentSelection() do (
+            local out_file = editDir.text + "\\" + obj.name + ".tcol"
+            if obj.children.count == 0 then (
+                local children = #(obj)
+                grit_tcol_export out_file obj children
+            ) else (
+                grit_tcol_export out_file obj obj.children
             )
         )
-        format "Finished exporting compounds\n" to:listener
-        format "}\n" to:savetcol
-        
-        --trimesh
-        local HAVE_TRIMESH=false
-        for obj in $ do (
-            local OX = obj.pos.x
-            local OY = obj.pos.Y
-            local OZ = obj.pos.Z
-            if zexp.triState == 1 then (
-                OX= 0.0
-                OY = 0.0
-                OZ = 0.0
-                format "Moved % from % % % to %\n" obj.name OX OY OZ obj.pos to:listener
-            )
+    )
+    -- }}}
             
-            if classof obj.baseobject == Editable_Poly then (
-                if is_obj_convex obj then continue
-                if HAVE_TRIMESH == false then (
-                    format "trimesh {\n" to:savetcol
-                    format "Started exporting trimesh...\n" to:listener
-                    HAVE_TRIMESH = true
-                ) else (
-                    messageBox "Currently only one trimesh is supported.  Please join them before export." title:"ERROR!"
-                    continue
-                )
-                local tmesh = snapshotAsMesh obj
-                local num_verts = tmesh.numverts 
-                local num_faces = tmesh.numfaces
-                format "Verts: %\nTris: %\n" num_verts num_faces to:listener
-
-                format "    vertexes {\n" to:savetcol
-                for v = 1 to num_verts do (
-                    local vert = getVert tmesh v
-                    format "        % % %;\n" vert.x vert.y vert.z to:savetcol
-                )
-                format "    }\n" to:savetcol
-                format "verts exporting finished!\n" to:listener
-
-                format "    faces {\n" to:savetcol
-                local errors = 0
-                for f = 1 to num_faces do (
-                    -- tcol indexes are zero-based so subtract 1
-                    local face = (getFace tmesh f) - 1
-                    local mat = get_phys_mat obj (getFaceMatId tmesh f) suppress:(errors>0)
-                    if mat == undefined then
-                        errors = errors + 1
-                    -- 'as integer' suppresses the trailing .0 on the output numbers
-                    -- (as that would not be correct tcol syntax)
-                    format "        % % % %;\n" (face[1] as integer) (face[2] as integer) (face[3] as integer) (get_mat_hex mat) to:savetcol
-                )
-                local errmsg = stringstream ""
-                format "There were % errors in \"%\"" errors obj.name to:errmsg
-                messageBox (errmsg as string) title:"ERROR!"
-                delete tmesh
-                format "    }\n" to:savetcol
-                format "faces exporting finished!\n" to:listener
-            )
-        )
-        if HAVE_TRIMESH == true then (
-            format "}\n" to:savetcol
-            format "Finished exporting trimesh...\n" to:listener
-        )
-        format "finished!\n" to:listener
-        close savetcol
-    ) -- }}}
-    
     -- {{{ Importing
     on imp pressed do
     (
@@ -732,6 +833,8 @@ plugin Material GRIT_PHYSMAT name:"GRIT Phys Mat" classID:#(0x25d32aa6, 0x2d8ae2
 ) -- }}}
 
 
+callbacks.removescripts id:#GritTcolSelection
+callbacks.addScript #selectionSetChanged "GritRolloutTcolMain.update()" id:#GritTcolSelection
 
 macroScript showGritTCOLExporter
     category:"Grit Tools"
@@ -740,11 +843,15 @@ macroScript showGritTCOLExporter
     tooltip:"Grit .tcol Exporter"
     Icon:#("Maintoolbar",49)
 (
-    local menu = newRolloutFloater "Grit .tcol Exporter" 320 500
+    if grit_current_tcol_floater != undefined then (
+        closeRolloutFloater grit_current_tcol_floater
+    )
+    grit_current_tcol_floater = newRolloutFloater "Grit .tcol Exporter" 320 500
 
-    addRollout GritRolloutTcolMain menu
-    addRollout GritRolloutTcolHelp menu
+    addRollout GritRolloutTcolMain grit_current_tcol_floater
+    addRollout GritRolloutTcolHelp grit_current_tcol_floater
 
-    GritRolloutTcolMain.resetb.pressed()
+    GritRolloutTcolMain.update()
 )
+
 
