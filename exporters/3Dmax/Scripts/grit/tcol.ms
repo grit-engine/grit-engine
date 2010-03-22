@@ -163,6 +163,7 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
     --compounds
     format "compound {\n" to:savetcol
     format "Started exporting compounds...\n" to:listener
+    local num_trimeshes = 0
     for obj in objs do (
         local sca
         local pos
@@ -229,7 +230,10 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
             format "    }\n" to:savetcol
         )
         if classof obj.baseobject == Editable_Poly then (
-            if not is_obj_convex obj then continue
+            if not is_obj_convex obj then (
+                num_trimeshes = num_trimeshes + 1
+                continue
+            )
             local mat = get_phys_mat obj 1
             local margin = get_mat_margin mat
             local tmesh
@@ -266,52 +270,69 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
     format "}\n" to:savetcol
     
     --trimesh
-    local HAVE_TRIMESH=false
-    for obj in $ do (
-        if classof obj.baseobject == Editable_Poly then (
-            if is_obj_convex obj then continue
-            if HAVE_TRIMESH == false then (
-                format "trimesh {\n" to:savetcol
-                format "Started exporting trimesh...\n" to:listener
-                HAVE_TRIMESH = true
-            ) else (
-                messageBox "Currently only one trimesh is supported.  Please join them before export." title:"ERROR!"
-                continue
-            )
-            local tmesh = snapshotAsMesh obj
-            local num_verts = tmesh.numverts 
-            local num_faces = tmesh.numfaces
-            format "Verts: %\nTris: %\n" num_verts num_faces to:listener
+    if num_trimeshes > 0 then (
+        format "trimesh {\n" to:savetcol
+        format "    vertexes {\n" to:savetcol
+        format "Started exporting trimesh...\n" to:listener
+        for obj in objs do (
+            if classof obj.baseobject == Editable_Poly then (
+                if is_obj_convex obj then continue
+                local tmesh
+                if dummy == undefined then (
+                    tmesh = snapshotAsMesh obj
+                ) else (
+                    local old_pos = dummy.pos
+                    local old_q = dummy.rotation
+                    local old_sca = dummy.scale
+                    dummy.pos = [0,0,0]
+                    dummy.rotation = Quat 0 0 0 1
+                    dummy.scale = [1,1,1]
+                    tmesh = snapshotAsMesh obj
+                    dummy.rotation = old_q
+                    dummy.scale = old_sca
+                    dummy.pos = old_pos
+                )
 
-            format "    vertexes {\n" to:savetcol
-            for v = 1 to num_verts do (
-                local vert = getVert tmesh v
-                format "        % % %;\n" vert.x vert.y vert.z to:savetcol
-            )
-            format "    }\n" to:savetcol
-            format "verts exporting finished!\n" to:listener
+                for v = 1 to tmesh.numverts do (
+                    local vert = getVert tmesh v
+                    format "        % % %;\n" vert.x vert.y vert.z to:savetcol
+                )
 
-            format "    faces {\n" to:savetcol
-            local errors = 0
-            for f = 1 to num_faces do (
-                -- tcol indexes are zero-based so subtract 1
-                local face = (getFace tmesh f) - 1
-                local mat = get_phys_mat obj (getFaceMatId tmesh f) suppress:(errors>0)
-                if mat == undefined then
-                    errors = errors + 1
-                -- 'as integer' suppresses the trailing .0 on the output numbers
-                -- (as that would not be correct tcol syntax)
-                format "        % % % %;\n" (face[1] as integer) (face[2] as integer) (face[3] as integer) (get_mat_hex mat) to:savetcol
+                delete tmesh
             )
-            local errmsg = stringstream ""
-            format "There were % errors in \"%\"" errors obj.name to:errmsg
-            messageBox (errmsg as string) title:"ERROR!"
-            delete tmesh
-            format "    }\n" to:savetcol
-            format "faces exporting finished!\n" to:listener
         )
-    )
-    if HAVE_TRIMESH == true then (
+        format "    }\n" to:savetcol
+        format "verts exporting finished!\n" to:listener
+
+        format "    faces {\n" to:savetcol
+        local initial_vertex_offset = 0
+        for obj in objs do (
+            if classof obj.baseobject == Editable_Poly then (
+                if is_obj_convex obj then continue
+                local tmesh = snapshotAsMesh obj
+
+                local errors = 0
+                for f = 1 to tmesh.numfaces do (
+                    -- tcol indexes are zero-based so subtract 1
+                    local face = (getFace tmesh f) - 1 + initial_vertex_offset
+                    local mat = get_phys_mat obj (getFaceMatId tmesh f) suppress:(errors>0)
+                    if mat == undefined then
+                        errors = errors + 1
+                    -- 'as integer' suppresses the trailing .0 on the output numbers
+                    -- (as that would not be correct tcol syntax)
+                    format "        % % % %;\n" (face[1] as integer) (face[2] as integer) (face[3] as integer) (get_mat_hex mat) to:savetcol
+                )
+                initial_vertex_offset = initial_vertex_offset + tmesh.numverts
+                if errors > 0 then (
+                    local errmsg = stringstream ""
+                    format "There were % errors in \"%\"" errors obj.name to:errmsg
+                    messageBox (errmsg AS string) title:"ERROR!"
+                )
+                delete tmesh
+            )
+        )
+        format "    }\n" to:savetcol
+        format "faces exporting finished!\n" to:listener
         format "}\n" to:savetcol
         format "Finished exporting trimesh...\n" to:listener
     )
