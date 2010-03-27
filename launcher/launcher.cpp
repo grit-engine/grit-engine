@@ -516,11 +516,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
         UNREFERENCED_PARAMETER(hPrevInstance);
 
         cmdline = getenv("GRIT_PROCESS");
-        if (lpCmdLine) {
+        if (lpCmdLine && ::strcmp(lpCmdLine,"")) {
                 cmdline = lpCmdLine;
         }
         if (cmdline == NULL) cmdline = "Grit.dat";
-
+        
         InitCommonControls();
 
         WNDCLASSEX wcex;

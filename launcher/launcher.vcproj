@@ -138,8 +138,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="launcher.res comctl32.lib UxTheme.lib"
+				OutputFile="$(SolutionDir)\grit_core\media\Grit.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(OutDir)\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
