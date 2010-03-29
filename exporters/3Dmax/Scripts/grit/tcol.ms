@@ -94,13 +94,21 @@ fn get_phys_mat obj id suppress:false = ( -- {{{
 
     if (classof mat) == MULTIMATERIAL then (
         mat = mat.materialList[mat.materialIDlist[id]]
-    )
 
-    if (classof mat) == GRIT_PHYSMAT then (
+        if (classof mat) == GRIT_PHYSMAT then (
+            mat
+        ) else (
+            if not suppress then (
+                local errmsg = stringstream ""
+                format "\"%\" had a multimaterial but index % was not a Grit physmat, was actually \"%\":  Assigning frictionless material!\n" obj.name id (classof mat) to:errmsg
+                messageBox (errmsg AS string) title:"ERROR!"
+            )
+            undefined
+        )
+    ) else if (classof mat) == GRIT_PHYSMAT then (
         mat
     ) else (
-        if not suppress then
-            messageBox (obj.name+" has no recognisable material (Grit Physmat or multimaterial of physmats):  Assigning frictionless material!\n") title:"ERROR!"
+        messageBox (obj.name+" has no recognisable material (Grit Physmat or multimaterial):  Assigning frictionless material!\n") title:"ERROR!"
         undefined
     )
 ) -- }}}
