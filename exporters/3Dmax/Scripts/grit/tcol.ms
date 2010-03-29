@@ -108,7 +108,11 @@ fn get_phys_mat obj id suppress:false = ( -- {{{
     ) else if (classof mat) == GRIT_PHYSMAT then (
         mat
     ) else (
-        messageBox (obj.name+" has no recognisable material (Grit Physmat or multimaterial):  Assigning frictionless material!\n") title:"ERROR!"
+        if not suppress then (
+            local errmsg = stringstream ""
+            format "\"%\" had no recognisable material (Grit Physmat or multimaterial), material was actually \"%\":  Assigning frictionless material!\n" obj.name (classof mat) to:errmsg
+            messageBox (errmsg AS string) title:"ERROR!"
+        )
         undefined
     )
 ) -- }}}
