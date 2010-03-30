@@ -285,13 +285,13 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
                         OptionConv = OptionConv + " -t";
                     )
                     
-                    local cmd = GritRolloutOgreMain.editXMLconverter.text + OptionConv + " \"" + out_file + ".mesh.xml\" \"" + out_file + ".mesh\""
+                    local cmd = "\"" + GritRolloutOgreMain.editXMLconverter.text + "\"" + OptionConv + " \"" + out_file + ".mesh.xml\" \"" + out_file + ".mesh\""
                     DOSCommand cmd
                     print cmd
                 )
                 if (exportingSkelDone) then 
                 (
-                    cmd = GritRolloutOgreMain.editXMLconverter.text + " \"" + out_file + ".skeleton.xml\" \"" + out_file + ".skeleton\""
+                    cmd = "\"" + GritRolloutOgreMain.editXMLconverter.text + "\" \"" + out_file + ".skeleton.xml\" \"" + out_file + ".skeleton\""
                     DOSCommand cmd
                     print cmd
                 )
