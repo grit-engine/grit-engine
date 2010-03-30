@@ -18,7 +18,7 @@ fileIn (grit_exporter_dir+"biped.ms")
 rollout GritRolloutOgreMesh "Mesh" width:272 rolledUp:false --{{{
 (
     checkbox CBexportMesh "Export Mesh" checked:true
-    spinner SPblended "Textures" range:[0,8,1] type:#integer scale:1
+    spinner SPblended "Blended Textures" range:[0,8,1] type:#integer scale:1
     checkbox CBexportColor "Export Vertex Ambient Lighting"
     checkbox CBexportAlpha "Export Vertex Alpha"
     checkbox CBgeneratetangents "Will have normal map" checked:false
