@@ -229,7 +229,10 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
     (
         sliderTime = 0
         m = (getCurrentSelection())[1]
-        if (editDir.text == "") then (
+        local xmlc = GritRolloutOgreMain.editXMLconverter.text
+        if (not (doesFileExist xmlc)) then (
+            MessageBox ("Could not find OgreXMLConverter at: \""+xmlc+"\"") title:"ERROR!"
+        ) else if (editDir.text == "") then (
             messageBox "You have to choose an output directory."
         ) else if (m == undefined or not (iskindof m GeometryClass)) then (
             messageBox "You have to select some geometry for export."
@@ -237,12 +240,10 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
             local out_file = editDir.text + "\\" + m.name
             clearlistener()
             
-            
             local options = exportOptions exportAmbient:false exportAlpha:false blended:0
             exportingMeshDone = false
             exportingSkelDone = false
-            -- sets options
-            ---------------
+
             if (GritRolloutOgreMesh.CBexportColor.checked and GritRolloutOgreMesh.CBexportColor.enabled) then
                 options.exportAmbient = true
             if (GritRolloutOgreMesh.CBexportAlpha.checked and GritRolloutOgreMesh.CBexportAlpha.enabled) then
@@ -250,16 +251,11 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
             options.blended = GritRolloutOgreMesh.SPblended.value
             options.exportHelpers = (GritRolloutOgreAnimation.CBexporthelpers.enabled and GritRolloutOgreAnimation.CBexporthelpers.checked);
             
-
-            -- exports mesh
-            ---------------
             if (GritRolloutOgreMesh.CBexportMesh.enabled and GritRolloutOgreMesh.CBexportMesh.checked) then
             (
-                --progressStart "Mesh Export"
                 exportProgress.value = 0
                 exportingMeshDone = write_mesh_xml m options out_file
                 exportProgress.value = 0
-                --progressStop
             )
         
             -- exports skeleton
@@ -272,28 +268,44 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
                 exportingSkelDone =	writeSkeleton m options Anims out_file
             )
             
-            -- post traitement
-            ------------------
-            if (exportingMeshDone or exportingSkelDone) then 
-            (					
-                OptionConv = " -e";
-        
-                if (exportingMeshDone) then 
-                (
-                    if (GritRolloutOgreMesh.CBgeneratetangents.enabled and GritRolloutOgreMesh.CBgeneratetangents.checked) then
-                    (
-                        OptionConv = OptionConv + " -t";
+            fn exec cmd params = (
+                    -- write a batch file and execute that
+                    -- this is a workaround for the commandline length restrictions in max
+                    local bat_file = sysInfo.tempdir + "max_grit_export.bat"
+                    local batchfile = createFile (bat_file)
+                    format "\"%\" %\n" cmd params to:batchfile
+                    format "@IF ERRORLEVEL 1 GOTO BROKEN\n" to:batchfile
+                    format "@exit\n" to:batchfile
+                    format ":BROKEN\n" to:batchfile
+                    format "@echo ------------------------------------------------------------------------\n" to:batchfile
+                    format "@echo OgreXMLConverter has returned an error.  See above for more information.\n" to:batchfile
+                    format "@echo ------------------------------------------------------------------------\n" to:batchfile
+                    format "@pause\n" to:batchfile
+                    close batchfile
+                    local r = ShellLaunch "cmd.exe" ("/C "+bat_file)
+                    if not r then (
+                        MessageBox "The external utility failed.  I will now show you the executed command in notepad." title:"ERROR!"
+                        ShellLaunch "notepad" bat_file
                     )
-                    
-                    local cmd = "\"" + GritRolloutOgreMain.editXMLconverter.text + "\"" + OptionConv + " \"" + out_file + ".mesh.xml\" \"" + out_file + ".mesh\""
-                    DOSCommand cmd
-                    print cmd
+                    HiddenDOSCommand ("del "+bat_file)
+            )
+
+            if (exportingMeshDone or exportingSkelDone) then (					
+
+                OptionConv = "-e";
+        
+                if (exportingMeshDone) then (
+
+                    OptionConv = OptionConv + " -log \""+out_file+".mesh.log\""
+
+                    if (GritRolloutOgreMesh.CBgeneratetangents.enabled and GritRolloutOgreMesh.CBgeneratetangents.checked) then
+                        OptionConv = OptionConv + " -t";
+
+                    exec xmlc (OptionConv + " \"" + out_file + ".mesh.xml\" \"" + out_file + ".mesh\"")
                 )
-                if (exportingSkelDone) then 
-                (
-                    cmd = "\"" + GritRolloutOgreMain.editXMLconverter.text + "\" \"" + out_file + ".skeleton.xml\" \"" + out_file + ".skeleton\""
-                    DOSCommand cmd
-                    print cmd
+                if (exportingSkelDone) then (
+                    OptionConv = OptionConv + " -log \""+out_file+".skeleton.log\""
+                    exec xmlc ("\"" + out_file + ".skeleton.xml\" \"" + out_file + ".skeleton\"")
                 )
             )
         )
