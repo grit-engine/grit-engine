@@ -7,10 +7,13 @@ include $(ROOT)/common.mk
 
 TARGETS=grit.x11 matbin
 
-grit: grit.x11 grit.x11.stripped
+grit: ../media/Grit.x11 grit.x11.stripped
 
 %.stripped: %
 	strip -s $< -o $@
+
+../media/Grit.x11: grit.x11.stripped
+	cp $< $@
 
 all: $(TARGETS)
 
