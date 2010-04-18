@@ -33,7 +33,7 @@ const char *ExternalTable::luaGet (lua_State *L)
                 lua_Number key = luaL_checknumber(L,-1);
                 return luaGet(L,key);
         }
-        return "key was not a string";
+        return "key was not a string or number";
 }
 
 static void push (lua_State *L, const ExternalTable::Value &v)
@@ -89,13 +89,12 @@ const char *ExternalTable::luaSet (lua_State *L)
                 lua_Number key = luaL_checknumber(L,-2);
                 return luaSet(L,key);
         }
-        return "key was not a string";
+        return "key was not a string or number";
 }
 
 const char *ExternalTable::luaSet (lua_State *L, const Ogre::String &key)
 {
-        // the name is held in the object anyway
-        if (lua_type(L,3)==LUA_TNIL) {
+        if (lua_type(L,-1)==LUA_TNIL) {
                 unset(key);
         } else if (lua_type(L,-1)==LUA_TSTRING) {
                 Ogre::String val = luaL_checkstring(L,-1);
@@ -124,8 +123,7 @@ const char *ExternalTable::luaSet (lua_State *L, const Ogre::String &key)
 
 const char *ExternalTable::luaSet (lua_State *L, lua_Number key)
 {
-        // the name is held in the object anyway
-        if (lua_type(L,3)==LUA_TNIL) {
+        if (lua_type(L,-1)==LUA_TNIL) {
                 unset(key);
         } else if (lua_type(L,-1)==LUA_TSTRING) {
                 Ogre::String val = luaL_checkstring(L,-1);
@@ -173,6 +171,8 @@ void ExternalTable::dump (lua_State *L)
 
 void ExternalTable::takeTableFromLuaStack (lua_State *L, int tab)
 {
+        if (tab<0) tab += 1 + lua_gettop(L);
+        lua_checkstack(L,2);
         for (lua_pushnil(L) ; lua_next(L,tab)!=0 ; lua_pop(L,1)) {
                 const char *err = luaSet(L);
                 if (err) my_lua_error(L, err);
