@@ -1728,22 +1728,29 @@ TRY_START
         std::string filename = pwd_full(L, luaL_checkstring(L,1));
 
         lua_pushcfunction(L, my_lua_error_handler);
+        // stack: [error_handler]
         int error_handler = lua_gettop(L);
 
         int status = aux_include(L,filename);
         if (status) {
-                if (status!=LUA_ERRFILE) {
+                // stack: [error_handler, error_string]
+                if (status==LUA_ERRFILE) {
                         const char *str = lua_tostring(L,-1);
                         my_lua_error(L,str);
                 }
+                // stack: [error_handler, error_string]
+                lua_pop(L,1);
+                // stack: [error_handler]
         } else {
+                // stack: [error_handler, function]
                 pwd_push_file(filename);
+                // stack: [error_handler, function]
                 status = lua_pcall(L,0,0,error_handler);
                 pwd_pop();
                 if (status) {
+                        // stack: [error_handler, error string]
                         lua_pop(L,1); //message
                 }
-                lua_pop(L,2);
         }
 
         lua_pop(L,1); // error handler
