@@ -141,7 +141,7 @@
 				OutputFile="$(SolutionDir)\grit_core\media\Grit.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)\$(TargetName).pdb"
+				ProgramDatabaseFile="$(OutDir)\launcher.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

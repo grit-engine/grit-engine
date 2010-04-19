@@ -535,7 +535,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
         wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW);
         wcex.lpszMenuName  = MAKEINTRESOURCE(110);
         wcex.lpszClassName = "Grit Launcher";
-        wcex.hIconSm       = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(111));
+        wcex.hIconSm       = (HICON)LoadImage(wcex.hInstance, MAKEINTRESOURCE(111), IMAGE_ICON, 16, 16, LR_DEFAULTSIZE|LR_SHARED);
         RegisterClassEx(&wcex);
 
 

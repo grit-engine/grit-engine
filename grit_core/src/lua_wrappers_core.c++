@@ -1706,6 +1706,7 @@ TRY_START
         int status = aux_include(L,filename);
         if (status) {
                 const char *str = lua_tostring(L,-1);
+                // call error function manually, lua will not do this for us in lua_load
                 my_lua_error(L,str);
         } else {
                 pwd_push_file(filename);
@@ -1734,7 +1735,9 @@ TRY_START
         int status = aux_include(L,filename);
         if (status) {
                 // stack: [error_handler, error_string]
-                if (status==LUA_ERRFILE) {
+                // call error function manually, lua will not do this for us in lua_load
+                // (but we want to fail silently if it's a file not found)
+                if (status!=LUA_ERRFILE) {
                         const char *str = lua_tostring(L,-1);
                         my_lua_error(L,str);
                 }

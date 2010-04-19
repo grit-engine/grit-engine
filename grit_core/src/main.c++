@@ -156,9 +156,10 @@ int main(int argc, const char **argv)
                 Keyboard *keyb = use_dinput ? (Keyboard *)new KeyboardDirectInput8(winid)
                                             : (Keyboard *)new KeyboardWinAPI(winid);
                 HMODULE mod = GetModuleHandle(NULL);
-                HICON icon = LoadIcon(mod,MAKEINTRESOURCE(111));
-                SendMessage((HWND)winid, (UINT)WM_SETICON, (WPARAM) ICON_BIG, (LPARAM) icon);
-                SendMessage((HWND)winid, (UINT)WM_SETICON, (WPARAM) ICON_SMALL, (LPARAM) icon);
+                HICON icon_big = (HICON)LoadImage(mod,MAKEINTRESOURCE(118),IMAGE_ICON,0,0,LR_DEFAULTSIZE|LR_SHARED);
+                HICON icon_small = (HICON)LoadImage(mod,MAKEINTRESOURCE(118),IMAGE_ICON,16,16,LR_DEFAULTSIZE|LR_SHARED);
+                SendMessage((HWND)winid, (UINT)WM_SETICON, (WPARAM) ICON_BIG, (LPARAM) icon_big);
+                SendMessage((HWND)winid, (UINT)WM_SETICON, (WPARAM) ICON_SMALL, (LPARAM) icon_small);
                 #else
                 Mouse *mouse = new MouseX11(winid);
                 Keyboard *keyb = new KeyboardX11(winid);
