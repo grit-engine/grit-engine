@@ -874,7 +874,7 @@ macroScript showGritTCOLExporter
     internalCategory:"Grit Tools"
     buttonText:"Grit .tcol Exporter"
     tooltip:"Grit .tcol Exporter"
-    Icon:#("Maintoolbar",49)
+    Icon:#("Grit",2)
 (
     if grit_current_tcol_floater != undefined then (
         closeRolloutFloater grit_current_tcol_floater

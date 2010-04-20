@@ -317,7 +317,7 @@ macroScript showGritOgreWindow
 	internalCategory:"Grit Tools"
 	buttonText:"Grit .mesh/.skeleton Exporter"
 	tooltip:"Grit .mesh/.skeleton Exporter"
-	Icon:#("Maintoolbar",49)
+	Icon:#("Grit",1)
 (
 	
 	-- create the floater
