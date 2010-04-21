@@ -110,6 +110,8 @@ protected:
         Streamer *streamer;
 
         BulletDebugDrawer *debugDrawer;
+
+        int initialisationFailed;
 };
 
 #endif

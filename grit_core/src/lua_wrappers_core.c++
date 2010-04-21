@@ -1713,6 +1713,7 @@ TRY_START
                 status = lua_pcall(L,0,0,error_handler);
                 pwd_pop();
                 if (status) {
+                        my_lua_error(L, "Failed to include file.");
                         lua_pop(L,1); //message
                 }
         }
@@ -2215,14 +2216,16 @@ lua_State *init_lua(const char *filename)
                 const char *str = lua_tostring(L,-1);
                 CERR << "loading lua file: " << str << std::endl;
                 lua_pop(L,1); // message
+                app_fatal();
         } else {
                 pwd_push_file(filename);
                 // error handler should print stacktrace and stuff
                 status = lua_pcall(L,0,0,error_handler);
+                pwd_pop();
                 if (status) {
                         lua_pop(L,1); //message
+                        app_fatal();
                 }
-                pwd_pop();
         }
         lua_pop(L,1); //error handler
 
