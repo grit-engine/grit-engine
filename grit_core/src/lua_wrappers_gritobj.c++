@@ -779,7 +779,7 @@ TRY_START
                         c++;                 
                 }       
         } else {
-                my_lua_error(L,"Not a readable ObjectManager member: "+std::string(key));
+                my_lua_error(L,"Not a readable Streamer member: "+std::string(key));
         }
         return 1;
 TRY_END
@@ -810,7 +810,7 @@ TRY_START
                 Ogre::Real v = luaL_checknumber(L,3);
                 self.fadeOutFactor = v;
         } else {
-               my_lua_error(L,"Not a writeable ObjectManager member: "+key);
+               my_lua_error(L,"Not a writeable Streamer member: "+key);
         }
         return 0;
 TRY_END
