@@ -338,7 +338,16 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
                 if is_obj_convex obj then continue
                 local tmesh
                 if dummy == undefined then (
+                    local old_pos = obj.pos
+                    local old_q = obj.rotation
+                    local old_sca = obj.scale
+                    obj.pos = [0,0,0]
+                    obj.rotation = Quat 0 0 0 1
+                    obj.scale = [1,1,1]
                     tmesh = snapshotAsMesh obj
+                    obj.rotation = old_q
+                    obj.scale = old_sca
+                    obj.pos = old_pos
                 ) else (
                     local old_pos = dummy.pos
                     local old_q = dummy.rotation
