@@ -245,7 +245,7 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
             format "        material %;\n" (get_mat_hex mat) to:savetcol
             format "        margin %;\n" margin to:savetcol
             format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
-            format "        dimensions % % %;\n" dim.x dim.y dim.z to:savetcol
+            format "        dimensions % % %;\n" (abs dim.x) (abs dim.y) (abs dim.z) to:savetcol
             format "        orientation % % % %;\n" q.w q.x q.y q.z to:savetcol
             format "    }\n" to:savetcol
         )
@@ -258,14 +258,14 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
             format "        material %;\n" (get_mat_hex mat) to:savetcol
             format "        margin %;\n" margin to:savetcol
             format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
-            format "        dimensions % % %;\n" dim.x dim.y dim.z to:savetcol
+            format "        dimensions % % %;\n" (abs dim.x) (abs dim.y) (abs dim.z) to:savetcol
             format "        orientation % % % %;\n" q.w q.x q.y q.z to:savetcol
             format "    }\n" to:savetcol
         )
         if classof(obj) == Cone then (
             -- take average of scale, we cannot actually compress the cone in grit
-            local r = (sca.x+sca.y)/2 * obj.radius1
-            local h = sca.z * obj.height
+            local r = abs ((sca.x+sca.y)/2 * obj.radius1)
+            local h = abs (sca.z * obj.height)
             local mat = get_phys_mat obj 1
             local margin = get_mat_margin mat
             pos = pos + point3 0 0 (h/2) * inverse q
@@ -280,7 +280,7 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
         )
         if classof(obj) == Sphere then (
             -- take average of scale, we cannot actually compress the cone in grit
-            local r = (sca.x+sca.y+sca.z)/3 * obj.radius
+            local r = abs ((sca.x+sca.y+sca.z)/3 * obj.radius)
             local mat = get_phys_mat obj 1
             format "    cone {\n" to:savetcol
             format "        material %;\n" (get_mat_hex mat) to:savetcol
