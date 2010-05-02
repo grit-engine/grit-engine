@@ -419,6 +419,14 @@ function write_mesh_xml selected options out_name = -- {{{
         modPanel.setCurrentObject selected.modifiers[#Physique]
         --physiqueOps.setInitialPose selected true
     )
+    
+    local cloned
+    maxops.clonenodes selected newNodes:&cloned
+    local m = cloned[1]
+    m.position = [0, 0, 0]
+    m.scale = [1, 1, 1]
+    m.rotation = Quat 0 0 0 1
+    m = convertToMesh m
 
     local texture = options.blended > 0 and meshop.getMapSupport m 1
     local blend = options.blended > 1
@@ -428,14 +436,6 @@ function write_mesh_xml selected options out_name = -- {{{
 
      -- ranges from 1 to 4, all the others are 4
     local last_texcoord_dim = 4 - (num_blend_coords*4 - num_blend)
-    
-    local cloned
-    maxops.clonenodes selected newNodes:&cloned
-    local m = cloned[1]
-    m.position = [0, 0, 0]
-    m.scale = [1, 1, 1]
-    m.rotation = Quat 0 0 0 1
-    m = convertToMesh m
         
     if options.exportAmbient and not (meshop.getMapSupport m 0) then
         options.exportAmbient = false
