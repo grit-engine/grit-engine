@@ -420,7 +420,7 @@ function write_mesh_xml selected options out_name = -- {{{
         --physiqueOps.setInitialPose selected true
     )
 
-    local texture = options.blended > 0
+    local texture = options.blended > 0 and meshop.getMapSupport m 1
     local blend = options.blended > 1
     local num_blend = options.blended - 1
     local num_blend_coords = (int)(ceil (num_blend/4.0))

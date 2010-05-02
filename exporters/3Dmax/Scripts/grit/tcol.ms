@@ -841,30 +841,6 @@ Rollout GritRolloutTcolMain "Main" -- {{{
 
 
 
-Rollout GritRolloutTcolHelp "Help" -- {{{
-(
-    group "Help" (
-        label lab1 "*.tcol Script by JostVice for Grit"
-        label bspc " "
-        label lab2 "Usage: "
-        label lab3 "Export and import your phys meshes compounds and trimeshes"
-        label lab4 "with his selected attributes."
-        label lab5 "Use the Grit Phys Mat material to set up the materials."
-        label lab6 "If a physmat isn't found, it will default to Frictionless."
-        label lab7 "Don't let this happen!"
-        label bspc2 " "
-    )
-    group "Known bugs" (
-        label lab8 "Importing is very buggy. Trimeshes with attributes"
-        label lab9 "like margin will output a error. simply edit your tcol"
-        label lab10 "and delete those lines. Hull and Plane isn't supported."
-        label bspc3 " "
-        label lab11 "Cylinder is weird, you can probably do a cylinder"
-        label lab12 "manually by using a box and copying by hand coords."
-    )
-) -- }}}
-
-
 
 callbacks.removescripts id:#GritTcolSelection
 callbacks.addScript #selectionSetChanged "GritRolloutTcolMain.update()" id:#GritTcolSelection
@@ -882,7 +858,6 @@ macroScript showGritTCOLExporter
     grit_current_tcol_floater = newRolloutFloater "Grit .tcol Exporter" 320 500
 
     addRollout GritRolloutTcolMain grit_current_tcol_floater
-    addRollout GritRolloutTcolHelp grit_current_tcol_floater
 
     GritRolloutTcolMain.update()
 )
