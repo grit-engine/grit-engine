@@ -33,8 +33,11 @@ Streamer::~Streamer (void)
 
 void Streamer::doShutdown (lua_State *L)
 {
-        clearClasses(L);
-        clearObjects(L);
+        // if lua has not been initialised yet then nothing to do
+        if (L) {
+                clearClasses(L);
+                clearObjects(L);
+        }
         shutdown = true;
 }
 
