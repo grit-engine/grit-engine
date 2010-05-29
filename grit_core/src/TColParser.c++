@@ -29,6 +29,9 @@
 #include "TColLexer"
 
 #include "TColParser.h"
+#include "PhysicsWorld.h"
+
+#include "path_util.h"
 
 #define DEFAULT_MARGIN 0.04f
 #define DEFAULT_LINEAR_DAMPING 0.5f
@@ -56,7 +59,6 @@ static std::string str (const quex::Token &t)
         for (S::iterator i=tmp2.begin(),i_=tmp2.end() ; i!=i_ ; ++i) {
                 uint8_t utf8[7];
                 int utf8_length = quex::Quex_unicode_to_utf8(*i, utf8);
-                if (utf8_length<0 || utf8_length>6) continue;
                 utf8[utf8_length] = '\0';
                 tmp += std::string((const char*)utf8);
         }
@@ -208,7 +210,7 @@ static int parse_int (const Ogre::String &name,
         return get_int_from_token(name,qlex,t,num_vertexes);
 }
 
-
+/*
 static unsigned long get_ulong_from_hex_token (const quex::Token &t)
 {
         const char *text = utf8(t);
@@ -223,6 +225,42 @@ static unsigned long parse_hex (const Ogre::String &name,
                 err(name,qlex,t,"hexadecimal flags");
         }
         return get_ulong_from_hex_token(t);
+}
+*/
+
+static void get_string_from_string_token (const quex::Token &t, std::string &material)
+{
+         // cast away unsignedness -- don't care
+        const char *text = reinterpret_cast<const char *>(&t.text()[0]);
+        // strip leading and trailing quotes
+        material.append(text+1, t.text().length()-2);
+}
+
+static int parse_material (const Ogre::String &name,
+                           quex::TColLexer* qlex,
+                           const PhysicsWorld &world)
+{
+        quex::Token t; qlex->get_token(&t);
+        if (t.type_id()!=QUEX_TKN_STRING) {
+                err(name,qlex,t,"quoted string");
+        }
+        std::string m;
+        get_string_from_string_token(t, m);
+        int id;
+        try {
+                id = world.getMaterial(pwd_full(m,"/common/Frictionless")).id;
+        } catch (Ogre::Exception &e) {
+                CERR << e.getFullDescription()
+                     << " (while parsing \"" << name << "\")" << std::endl;
+                try {
+                        id = world.getMaterial("/common/Frictionless").id;
+                } catch (Ogre::Exception &e) {
+                        CERR << e.getFullDescription()
+                             << " (while handling the above error!)" << std::endl;
+                        app_fatal();
+                }
+        }
+        return id;
 }
 
 
@@ -329,8 +367,9 @@ static inline T &vecnext (std::vector<T> &vec)
 }
 
 static void parse_hull (const Ogre::String &name,
-                         quex::TColLexer* qlex,
-                         Hull &hull)
+                        quex::TColLexer* qlex,
+                        Hull &hull,
+                        const PhysicsWorld &world)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
@@ -349,7 +388,7 @@ static void parse_hull (const Ogre::String &name,
                         break;
 
                         case QUEX_TKN_MATERIAL:
-                        hull.material = parse_hex(name,qlex);
+                        hull.material = parse_material(name, qlex, world);
                         have_material = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
@@ -394,8 +433,9 @@ static void parse_hull (const Ogre::String &name,
 
 
 static void parse_box (const Ogre::String &name,
-                        quex::TColLexer* qlex,
-                        Box &box)
+                       quex::TColLexer* qlex,
+                       Box &box,
+                       const PhysicsWorld &world)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         box.margin = DEFAULT_MARGIN;
@@ -416,7 +456,7 @@ static void parse_box (const Ogre::String &name,
                         break;
 
                         case QUEX_TKN_MATERIAL:
-                        box.material = parse_hex(name,qlex);
+                        box.material = parse_material(name, qlex, world);
                         have_material = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
@@ -466,8 +506,9 @@ static void parse_box (const Ogre::String &name,
 
 
 static void parse_cylinder (const Ogre::String &name,
-                             quex::TColLexer* qlex,
-                             Cylinder &cylinder)
+                            quex::TColLexer* qlex,
+                            Cylinder &cylinder,
+                            const PhysicsWorld &world)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         cylinder.margin = DEFAULT_MARGIN;
@@ -488,7 +529,7 @@ static void parse_cylinder (const Ogre::String &name,
                         break;
 
                         case QUEX_TKN_MATERIAL:
-                        cylinder.material = parse_hex(name,qlex);
+                        cylinder.material = parse_material(name, qlex, world);
                         have_material = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
@@ -538,8 +579,9 @@ static void parse_cylinder (const Ogre::String &name,
 
 
 static void parse_cone (const Ogre::String &name,
-                         quex::TColLexer* qlex,
-                         Cone &cone)
+                        quex::TColLexer* qlex,
+                        Cone &cone,
+                        const PhysicsWorld &world)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         cone.margin = DEFAULT_MARGIN;
@@ -561,7 +603,7 @@ static void parse_cone (const Ogre::String &name,
                         break;
 
                         case QUEX_TKN_MATERIAL:
-                        cone.material = parse_hex(name,qlex);
+                        cone.material = parse_material(name, qlex, world);
                         have_material = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
@@ -619,11 +661,12 @@ static void parse_cone (const Ogre::String &name,
 
 static void parse_plane (const Ogre::String &name,
                          quex::TColLexer* qlex,
-                         Plane &plane)
+                         Plane &plane,
+                         const PhysicsWorld &world)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         ensure_token(name,qlex,QUEX_TKN_MATERIAL);
-        plane.material = parse_hex(name,qlex);
+        plane.material = parse_material(name, qlex, world);
         ensure_token(name,qlex,QUEX_TKN_SEMI);
         ensure_token(name,qlex,QUEX_TKN_NORMAL);
         plane.nx = parse_real(name,qlex);
@@ -639,11 +682,12 @@ static void parse_plane (const Ogre::String &name,
 
 static void parse_sphere (const Ogre::String &name,
                           quex::TColLexer* qlex,
-                          Sphere &sphere)
+                          Sphere &sphere,
+                          const PhysicsWorld &world)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         ensure_token(name,qlex,QUEX_TKN_MATERIAL);
-        sphere.material = parse_hex(name,qlex);
+        sphere.material = parse_material(name, qlex, world);
         ensure_token(name,qlex,QUEX_TKN_SEMI);
         ensure_token(name,qlex,QUEX_TKN_CENTRE);
         sphere.px = parse_real(name,qlex);
@@ -658,8 +702,9 @@ static void parse_sphere (const Ogre::String &name,
 
 
 static void parse_compound_shape (const Ogre::String &name,
-                           quex::TColLexer* qlex,
-                           Compound &compound)
+                                  quex::TColLexer* qlex,
+                                  Compound &compound,
+                                  const PhysicsWorld &world)
 {
 
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
@@ -669,27 +714,27 @@ static void parse_compound_shape (const Ogre::String &name,
                 quex::Token t; qlex->get_token(&t);
                 switch (t.type_id()) {
                         case QUEX_TKN_HULL: ///////////////////////////////////
-                        parse_hull(name, qlex, vecnext(compound.hulls)); 
+                        parse_hull(name, qlex, vecnext(compound.hulls), world); 
                         continue;
 
                         case QUEX_TKN_BOX: ////////////////////////////////////
-                        parse_box(name,qlex,vecnext(compound.boxes));
+                        parse_box(name,qlex,vecnext(compound.boxes), world);
                         continue;
 
                         case QUEX_TKN_CYLINDER: //////////////////////////////
-                        parse_cylinder(name,qlex,vecnext(compound.cylinders));
+                        parse_cylinder(name,qlex,vecnext(compound.cylinders), world);
                         continue;
 
                         case QUEX_TKN_CONE: ///////////////////////////////////
-                        parse_cone(name,qlex,vecnext(compound.cones));
+                        parse_cone(name,qlex,vecnext(compound.cones), world);
                         continue;
 
                         case QUEX_TKN_PLANE: //////////////////////////////////
-                        parse_plane(name,qlex,vecnext(compound.planes));
+                        parse_plane(name,qlex,vecnext(compound.planes), world);
                         continue;
 
                         case QUEX_TKN_SPHERE: /////////////////////////////////
-                        parse_sphere(name,qlex,vecnext(compound.spheres));
+                        parse_sphere(name,qlex,vecnext(compound.spheres), world);
                         continue;
 
                         case QUEX_TKN_RBRACE: /////////////////////////////////
@@ -707,11 +752,12 @@ static void parse_compound_shape (const Ogre::String &name,
 static void parse_faces (const Ogre::String &name,
                          quex::TColLexer* qlex,
                          size_t num_vertexes,
-                         Faces &faces)
+                         Faces &faces,
+                         const PhysicsWorld &world)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         int v1, v2, v3;
-        physics_mat material;
+        int material;
 
         while (true) {
                 quex::Token t; qlex->get_token(&t);
@@ -720,7 +766,7 @@ static void parse_faces (const Ogre::String &name,
                         v1 = get_int_from_token(name,qlex,t,num_vertexes);
                         v2 = parse_int(name,qlex,num_vertexes);
                         v3 = parse_int(name,qlex,num_vertexes);
-                        material = parse_hex(name,qlex);
+                        material = parse_material(name, qlex, world);
                         faces.push_back(Face(v1,v2,v3,material));
                         if (!more_to_come(name,qlex)) break;
                         continue;
@@ -739,7 +785,8 @@ static void parse_faces (const Ogre::String &name,
 
 static void parse_static_trimesh_shape (const Ogre::String &name,
                                         quex::TColLexer* qlex,
-                                        TriMesh &triMesh)
+                                        TriMesh &triMesh,
+                                        const PhysicsWorld &world)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
@@ -751,7 +798,7 @@ static void parse_static_trimesh_shape (const Ogre::String &name,
 
         ensure_token(name,qlex,QUEX_TKN_FACES);
 
-        parse_faces(name,qlex,triMesh.vertexes.size(),triMesh.faces);
+        parse_faces(name, qlex, triMesh.vertexes.size(), triMesh.faces, world);
 
         ensure_token(name,qlex,QUEX_TKN_RBRACE);
 
@@ -760,7 +807,8 @@ static void parse_static_trimesh_shape (const Ogre::String &name,
 
 static void parse_dynamic_trimesh_shape (const Ogre::String &name,
                                          quex::TColLexer* qlex,
-                                         TriMesh &triMesh)
+                                         TriMesh &triMesh,
+                                         const PhysicsWorld &world)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
@@ -786,7 +834,7 @@ static void parse_dynamic_trimesh_shape (const Ogre::String &name,
 
         ensure_token(name,qlex,QUEX_TKN_FACES);
 
-        parse_faces(name,qlex,triMesh.vertexes.size(),triMesh.faces);
+        parse_faces(name,qlex,triMesh.vertexes.size(),triMesh.faces, world);
 
         ensure_token(name,qlex,QUEX_TKN_RBRACE);
 
@@ -795,7 +843,8 @@ static void parse_dynamic_trimesh_shape (const Ogre::String &name,
 
 void parse_tcol_1_0 (const Ogre::String &name,
                      quex::TColLexer* qlex,
-                     TColFile &file)
+                     TColFile &file,
+                     const PhysicsWorld &world)
 {
         ensure_token(name,qlex,QUEX_TKN_TCOL);
 
@@ -918,7 +967,7 @@ void parse_tcol_1_0 (const Ogre::String &name,
         switch (t.type_id()) {
                 case QUEX_TKN_COMPOUND:
                 file.usingCompound = true;
-                parse_compound_shape(name,qlex,file.compound);
+                parse_compound_shape(name,qlex,file.compound, world);
                 qlex->get_token(&t);
                 if (t.type_id()==QUEX_TKN_TERMINATION) break;
                 if (t.type_id()!=QUEX_TKN_TRIMESH)
@@ -927,10 +976,10 @@ void parse_tcol_1_0 (const Ogre::String &name,
                 case QUEX_TKN_TRIMESH:
                 if (is_static==YES) {
                         file.usingTriMesh = true;
-                        parse_static_trimesh_shape(name,qlex,file.triMesh);
+                        parse_static_trimesh_shape(name,qlex,file.triMesh,world);
                 } else {
                         file.usingTriMesh = true;
-                        parse_dynamic_trimesh_shape(name,qlex,file.triMesh);
+                        parse_dynamic_trimesh_shape(name,qlex,file.triMesh,world);
                 }
                 ensure_token(name,qlex,QUEX_TKN_TERMINATION);
                 break;

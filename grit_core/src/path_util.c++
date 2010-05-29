@@ -102,8 +102,13 @@ std::string pwd_full_ex (std::string rel, const std::string &path, const std::st
         return r;
 }
 
-std::string pwd_full (lua_State *L, std::string rel)
+std::string pwd_full (lua_State *L, const std::string &rel)
 {
         return pwd_full_ex(L, rel, pwd_get());
+}
+
+std::string pwd_full (const std::string &rel, const std::string &def)
+{
+        return pwd_full_ex(rel, pwd_get(), def);
 }
 

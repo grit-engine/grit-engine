@@ -66,5 +66,10 @@ std::string pwd_full_ex (std::string rel, const std::string &path, const std::st
 
 /** Translates a relative path to an absolute path using the top of the path stack.
 */
-std::string pwd_full (lua_State *L, std::string rel);
+std::string pwd_full (lua_State *L, const std::string &rel);
+
+/** Version of pwd_full that does not need a lua state.  Errors are reported via CERR and the
+provided string is substituted.
+*/
+std::string pwd_full (const std::string &rel, const std::string &def);
 

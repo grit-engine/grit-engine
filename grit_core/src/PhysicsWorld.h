@@ -114,6 +114,12 @@ class DynamicsWorld : public btDiscreteDynamicsWorld {
         bool dirty;
 };
 
+struct PhysicsMaterial {
+        std::string name;
+        float restitution;
+        float friction;
+        int id;
+};
 
 class PhysicsWorld {
 
@@ -161,7 +167,7 @@ class PhysicsWorld {
         class SweepCallback {
             public:
                 virtual void result (RigidBody &body, float d,
-                                     const Ogre::Vector3 &normal, physics_mat m) = 0;
+                                     const Ogre::Vector3 &normal, int m) = 0;
         };
 
         void ray (const Ogre::Vector3 &start,
@@ -226,16 +232,26 @@ class PhysicsWorld {
         btScalar getMaxSteps (void) const { return maxSteps; }
         void setMaxSteps (btScalar v) { maxSteps = v; }
 
-        void setInteraction (physics_mat m1, physics_mat m2, float friction, float restitution)
-        {
-                db[std::pair<physics_mat,physics_mat>(m1,m2)] = MaterialInteraction(friction, restitution);
-                db[std::pair<physics_mat,physics_mat>(m2,m1)] = MaterialInteraction(friction, restitution);
+        const PhysicsMaterial &getMaterial (const std::string &name) const {
+                MaterialDB::const_iterator i = mdb.find(name);
+                if (i==mdb.end()) 
+                        OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
+                                    "Physical Material \""+name+"\" does not exist.",
+                                    "PhysicsWorld::getMaterial");
+                return i->second;
         }
-        void getInteraction (physics_mat m1, physics_mat m2, float &friction, float &restitution)
-        {
-                MaterialInteraction m = db[std::pair<physics_mat,physics_mat>(m1,m2)];
-                friction = m.friction;
-                restitution = m.restitution;
+
+        const PhysicsMaterial &getMaterial (int material) const {
+                return *mdb2[material];
+        }
+
+        void setMaterial (const std::string &name, float friction, float restitution) {
+                PhysicsMaterial &m = mdb[name];
+                m.name = name;
+                m.friction = friction;
+                m.restitution = restitution;
+                m.id = mdb2.size();
+                mdb2.push_back(&m);
         }
 
         void draw (void) { world->debugDrawWorld(); }
@@ -271,14 +287,10 @@ class PhysicsWorld {
 
         lua_State *last_L;
 
-        struct MaterialInteraction {
-                MaterialInteraction () : friction(0), restitution(0) { }
-                MaterialInteraction (float f, float r) : friction(f), restitution(r) { }
-                float friction;
-                float restitution;
-        };
-        typedef std::map<std::pair<physics_mat,physics_mat>, MaterialInteraction> InteractionDB;
-        InteractionDB db;
+        typedef std::map<std::string, PhysicsMaterial> MaterialDB; // map string to material
+        MaterialDB mdb;
+        typedef std::vector<PhysicsMaterial*> MaterialDB2; // map id to material
+        MaterialDB2 mdb2;
 };
 
 class RigidBody : public btMotionState {

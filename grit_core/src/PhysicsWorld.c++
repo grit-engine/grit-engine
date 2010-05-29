@@ -115,7 +115,7 @@ static void fix_parent (const btCollisionShape *shape, const btCollisionShape *&
         parent = new_parent;
 }
 
-physics_mat get_material (const CollisionMeshPtr &cmesh, const btCollisionShape *shape,
+int get_material (const CollisionMeshPtr &cmesh, const btCollisionShape *shape,
                           int part, int id, bool *err, bool verb)
 {
         (void) part;
@@ -185,10 +185,13 @@ bool contact_added_callback (btManifoldPoint& cp,
         bool err = false;
         bool verb = world->errorContacts;
 
-        physics_mat mat0 = get_material(cmesh0, shape0, part0, index0, &err, verb);
-        physics_mat mat1 = get_material(cmesh1, shape1, part1, index1, &err, verb);
+        int mat0 = get_material(cmesh0, shape0, part0, index0, &err, verb);
+        int mat1 = get_material(cmesh1, shape1, part1, index1, &err, verb);
 
-        world->getInteraction(mat0, mat1, cp.m_combinedFriction, cp.m_combinedRestitution);
+        cp.m_combinedFriction = world->getMaterial(mat0).friction
+                              * world->getMaterial(mat1).friction;
+        cp.m_combinedRestitution = world->getMaterial(mat0).restitution
+                                 * world->getMaterial(mat1).restitution;
 
         if (err || world->verboseContacts) {
                 CLOG << mat0 << "[" << shape_str(shape0->getShapeType()) << "]"
@@ -513,7 +516,7 @@ CollisionMeshPtr PhysicsWorld::createFromFile (const Ogre::String &name)
         Ogre::DataStreamPtr file =
                 Ogre::ResourceGroupManager::getSingleton()
                         .openResource(name,"GRIT");
-        cmp->importFromFile(file);
+        cmp->importFromFile(file, *this);
         colMeshes[name] = cmp;
         return cmp;
 }
@@ -554,7 +557,7 @@ class BulletRayCallback : public btCollisionWorld::RayResultCallback {
                 get_shape_and_parent(body, shape, parent);
 
                 bool verb = rb->world->errorCasts;
-                physics_mat m = get_material(rb->colMesh, shape, part, index, &err, verb);
+                int m = get_material(rb->colMesh, shape, part, index, &err, verb);
 
                 if (err || rb->world->verboseCasts) {
                         CLOG << "RAY HIT  " << m << "[" << shape_str(shape->getShapeType()) << "]"
@@ -597,7 +600,7 @@ class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
                 get_shape_and_parent(body, shape, parent);
 
                 bool verb = rb->world->errorCasts;
-                physics_mat m = get_material(rb->colMesh, shape, part, index, &err, verb);
+                int m = get_material(rb->colMesh, shape, part, index, &err, verb);
 
                 if (err || rb->world->verboseCasts) {
                         CLOG << "SWEEP HIT  " << m << "[" << shape_str(shape->getShapeType()) << "]"

@@ -39,6 +39,7 @@ typedef std::map<Ogre::String,CollisionMeshPtr> CollisionMeshMap;
 
 #include <btBulletCollisionCommon.h>
 
+class PhysicsWorld;
 class RigidBody;
 
 class CollisionMesh {
@@ -58,7 +59,7 @@ class CollisionMesh {
 
         virtual btCompoundShape *getMasterShape (void) const { return masterShape; }
 
-        virtual void importFromFile (const Ogre::DataStreamPtr &file);
+        virtual void importFromFile (const Ogre::DataStreamPtr &file, const PhysicsWorld &world);
 
         virtual const Ogre::String &getName (void) const
         { return name; }
@@ -97,20 +98,12 @@ class CollisionMesh {
         virtual void setAngularSleepThreshold (float r)
         { angularSleepThreshold = r; }
 
-        virtual unsigned int getMaterialFromPart (unsigned int id);
-        virtual unsigned int getMaterialFromFace (unsigned int id);
+        virtual int getMaterialFromPart (unsigned int id);
+        virtual int getMaterialFromFace (unsigned int id);
 
-/*
-        virtual float getFriction (void) { return friction; }
-        virtual void setFriction (float r) { friction = r; }
+        typedef std::vector<int> Materials;
 
-        virtual float getRestitution (void) { return restitution; }
-        virtual void setRestitution (float r) { restitution = r; }
-*/
-
-        typedef std::vector<physics_mat> Materials;
-
-        void reload (void);
+        void reload (const PhysicsWorld &world);
 
         void registerUser (RigidBody *u)
         {
@@ -121,6 +114,30 @@ class CollisionMesh {
         {
                 users.erase(u);
         }
+
+        struct ScatterOptions {
+                btTransform worldTrans;
+                float density[3];
+                float maxElevation[3];
+                float minElevation[3];
+                bool noZ[3];
+                bool noCeiling[3];
+                bool noFloor[3];
+                bool rotate[3];
+                ScatterOptions () 
+                {
+                        for (int i=0 ; i<3; ++i) {
+                                maxElevation[i] = FLT_MAX;
+                                minElevation[i] = FLT_MIN;
+                                density[i] = 1;
+                                noZ[i] = false;
+                                noCeiling[i] = true;
+                                noFloor[i] = false;
+                                rotate[i] = true;
+                        }
+                }
+        };
+        void scatter (const ScatterOptions &opts, std::vector<btTransform> (&r)[3]);
 
     protected:
 

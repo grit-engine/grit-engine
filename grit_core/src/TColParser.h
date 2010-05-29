@@ -26,16 +26,16 @@
 #include "TColLexer"
 
 struct TColFile;
+class PhysicsWorld;
 
 void parse_tcol_1_0 (const Ogre::String &name,
                      quex::TColLexer* qlex,
-                     TColFile &file);
+                     TColFile &file,
+                     const PhysicsWorld &world);
 
 void pretty_print_tcol (std::ostream &o, TColFile &f);
 
 typedef btAlignedObjectArray<btVector3> Vertexes;
-
-typedef unsigned int physics_mat;
 
 #ifndef TColParser_h
 #define TColParser_h
@@ -46,8 +46,8 @@ struct HasMargin {
 
 struct HasMaterial {
         HasMaterial () { }
-        HasMaterial (physics_mat material_) : material(material_) { }
-        physics_mat material;
+        HasMaterial (int material_) : material(material_) { }
+        int material;
 };
 
 struct Hull : public HasMargin, public HasMaterial {
@@ -105,10 +105,10 @@ struct Compound {
 
 
 struct Face {
-        Face (int v1_, int v2_, int v3_, physics_mat material_)
+        Face (int v1_, int v2_, int v3_, int material_)
               : v1(v1_), v2(v2_), v3(v3_), material(material_) { }
         int v1, v2, v3;
-        physics_mat material;
+        int material;
 };
 typedef std::vector<Face> Faces;
 

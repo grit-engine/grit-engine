@@ -30,7 +30,7 @@
 
 // Sweep Callback {{{
 
-struct SweepResult { RigidBody *rb; float dist; Ogre::Vector3 n; physics_mat material; };
+struct SweepResult { RigidBody *rb; float dist; Ogre::Vector3 n; int material; };
 typedef std::vector<SweepResult> SweepResults;
 
 class LuaSweepCallback : public PhysicsWorld::SweepCallback {
@@ -38,7 +38,7 @@ class LuaSweepCallback : public PhysicsWorld::SweepCallback {
         LuaSweepCallback (bool ignore_dynamic)
               : ignoreDynamic(ignore_dynamic)
         { }
-        virtual void result (RigidBody &rb, float dist, const Ogre::Vector3 &n, physics_mat m) {
+        virtual void result (RigidBody &rb, float dist, const Ogre::Vector3 &n, int m) {
                 if (ignoreDynamic && rb.getMass()>0) return;
                 if (blacklist.find(&rb) != blacklist.end()) return;
                 SweepResult r;
@@ -67,13 +67,50 @@ static void push_colmesh (lua_State *L, const CollisionMeshPtr &self)
                 push(L,new CollisionMeshPtr(self),COLMESH_TAG);
 }
 
-static int colmesh_reload (lua_State *L)
+static int colmesh_scatter (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
+        int NUM_TYPE_ARGS=7;
+        check_args(L,3+3*NUM_TYPE_ARGS);
         GET_UD_MACRO(CollisionMeshPtr,self,1,COLMESH_TAG);
-        self->reload();
-        return 0;
+        CollisionMesh::ScatterOptions o;
+        GET_UD_MACRO(Ogre::Vector3,v,2,VECTOR3_TAG);
+        GET_UD_MACRO(Ogre::Quaternion,q,3,QUAT_TAG);
+        o.worldTrans.setOrigin(to_bullet(v));
+        o.worldTrans.setRotation(to_bullet(q));
+        for (int i=0 ; i<3; ++i) {
+                o.density[i]      = luaL_checknumber(L,4+i*NUM_TYPE_ARGS+0);
+                o.minElevation[i] = luaL_checknumber(L,4+i*NUM_TYPE_ARGS+1);
+                o.maxElevation[i] = luaL_checknumber(L,4+i*NUM_TYPE_ARGS+2);
+                o.noZ[i]          = check_bool(L,4+i*NUM_TYPE_ARGS+3);
+                o.noCeiling[i]    = check_bool(L,4+i*NUM_TYPE_ARGS+4);
+                o.noFloor[i]      = check_bool(L,4+i*NUM_TYPE_ARGS+5);
+                o.rotate[i]       = check_bool(L,4+i*NUM_TYPE_ARGS+6);
+        }
+        std::vector<btTransform> r[3];
+        self->scatter(o, r);
+        for (int i=0 ; i<3 ; ++i) {
+                lua_newtable(L);
+                for (size_t j=0 ; j<r[i].size(); ++j) {
+                        btQuaternion q = r[i][j].getRotation();
+                        btVector3 p = r[i][j].getOrigin();
+                        lua_pushnumber(L, p.x());
+                        lua_rawseti(L,-2,7*j+0+LUA_ARRAY_BASE);
+                        lua_pushnumber(L, p.y());
+                        lua_rawseti(L,-2,7*j+1+LUA_ARRAY_BASE);
+                        lua_pushnumber(L, p.z());
+                        lua_rawseti(L,-2,7*j+2+LUA_ARRAY_BASE);
+                        lua_pushnumber(L, q.w());
+                        lua_rawseti(L,-2,7*j+3+LUA_ARRAY_BASE);
+                        lua_pushnumber(L, q.x());
+                        lua_rawseti(L,-2,7*j+4+LUA_ARRAY_BASE);
+                        lua_pushnumber(L, q.y());
+                        lua_rawseti(L,-2,7*j+5+LUA_ARRAY_BASE);
+                        lua_pushnumber(L, q.z());
+                        lua_rawseti(L,-2,7*j+6+LUA_ARRAY_BASE);
+                }
+        }
+        return 3;
 TRY_END
 }
 
@@ -111,8 +148,8 @@ TRY_START
         const char *key = luaL_checkstring(L,2);
         if (!::strcmp(key,"mass")) {
                 lua_pushnumber(L,self->getMass());
-        } else if (!::strcmp(key,"reload")) {
-                push_cfunction(L,colmesh_reload);
+        } else if (!::strcmp(key,"scatter")) {
+                push_cfunction(L,colmesh_scatter);
         } else if (!::strcmp(key,"ccdMotionThreshold")) {
                 lua_pushnumber(L,self->getCCDMotionThreshold());
         } else if (!::strcmp(key,"ccdSweptSphereRadius")) {
@@ -406,14 +443,15 @@ TRY_END
 }
 
 
-static void push_sweep_result (lua_State *L, const SweepResult &r, float len)
+static void push_sweep_result (lua_State *L, const SweepResult &r, float len,
+                               const PhysicsWorld &world)
 {
         lua_pushnumber(L,r.dist * len);
         push_rbody(L,r.rb->getPtr());
         // normal is documented as being object space but is actually world space
         Ogre::Vector3 normal = /*r.rb->getOrientation()* */r.n.normalisedCopy();
         PUT_V3(normal);
-        lua_pushnumber(L, r.material);
+        lua_pushstring(L, world.getMaterial(r.material).name.c_str());
 }
 
 static int cast (lua_State *L)
@@ -503,12 +541,12 @@ TRY_START
                 if (nearest_only) {
                         if (r.dist<nearest.dist) nearest = r;
                 } else {
-                        push_sweep_result(L, r, len);
+                        push_sweep_result(L, r, len, *world);
                 }
         }
         if (nearest_only) {
                 // push nearest
-                push_sweep_result(L, nearest, len);
+                push_sweep_result(L, nearest, len, *world);
                 return 6;
         }
         return lcb.results.size() * 6;
@@ -1028,6 +1066,29 @@ TRY_END
 
 
 
+static int pworld_reload_mesh_by_name (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
+        Ogre::String name = luaL_checkstring(L,2);
+        CollisionMeshPtr cmp = self->getMesh(name);
+        cmp->reload(*self);
+        return 0;
+TRY_END
+}
+
+static int pworld_reload_mesh (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
+        GET_UD_MACRO(CollisionMeshPtr,cmp,2,COLMESH_TAG);
+        cmp->reload(*self);
+        return 0;
+TRY_END
+}
+
 static int pworld_has_mesh (lua_State *L)
 {
 TRY_START
@@ -1093,43 +1154,28 @@ TRY_START
 TRY_END
 }
 
-static int pworld_set_material_interaction (lua_State *L)
+static int pworld_set_material (lua_State *L)
 {
 TRY_START
-        check_args(L,5);
+        check_args(L,4);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        if (!lua_istable(L,2))
-                my_lua_error(L,"Second parameter should be a table");
-        if (!lua_istable(L,3))
-                my_lua_error(L,"Third parameter should be a table");
-        float friction = luaL_checknumber(L,4);
-        float restitution = luaL_checknumber(L,5);
-
-        // scan through table adding lua data to o
-        for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
-                physics_mat m1 = check_t<physics_mat>(L,-1);
-                for (lua_pushnil(L) ; lua_next(L,3)!=0 ; lua_pop(L,1)) {
-                        physics_mat m2 = check_t<physics_mat>(L,-1);
-                        self->setInteraction(m1, m2, friction, restitution);
-                }
-        }
-
+        Ogre::String name = luaL_checkstring(L,2);
+        float friction = (float)luaL_checknumber(L,3);
+        float restitution = (float)luaL_checknumber(L,4);
+        self->setMaterial(name, friction, restitution);
         return 0;
 TRY_END
 }
 
-static int pworld_get_material_interaction (lua_State *L)
+static int pworld_get_material (lua_State *L)
 {
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        physics_mat m1 = check_t<physics_mat>(L,2);
-        physics_mat m2 = check_t<physics_mat>(L,3);
-        float friction;
-        float restitution;
-        self->getInteraction(m1, m2, friction, restitution);
-        lua_pushnumber(L, friction);
-        lua_pushnumber(L, restitution);
+        Ogre::String name = luaL_checkstring(L,2);
+        const PhysicsMaterial &m = self->getMaterial(name);
+        lua_pushnumber(L, m.friction);
+        lua_pushnumber(L, m.restitution);
         return 2;
 TRY_END
 }
@@ -1158,6 +1204,10 @@ TRY_START
                 push_cfunction(L,pworld_remove_mesh);
         } else if (!::strcmp(key,"hasMesh")) {
                 push_cfunction(L,pworld_has_mesh);
+        } else if (!::strcmp(key,"reloadMeshByName")) {
+                push_cfunction(L,pworld_reload_mesh_by_name);
+        } else if (!::strcmp(key,"reloadMesh")) {
+                push_cfunction(L,pworld_reload_mesh);
         } else if (!::strcmp(key,"clearMeshes")) {
                 push_cfunction(L,pworld_clear_meshes);
         } else if (!::strcmp(key,"meshes")) {
@@ -1202,10 +1252,10 @@ TRY_START
                 lua_pushboolean(L,self->verboseCasts);
         } else if (!::strcmp(key,"errorContacts")) {
                 lua_pushboolean(L,self->errorContacts);
-        } else if (!::strcmp(key,"setMaterialInteraction")) {
-                push_cfunction(L,pworld_set_material_interaction);
-        } else if (!::strcmp(key,"getMaterialInteraction")) {
-                push_cfunction(L,pworld_get_material_interaction);
+        } else if (!::strcmp(key,"setMaterial")) {
+                push_cfunction(L,pworld_set_material);
+        } else if (!::strcmp(key,"getMaterial")) {
+                push_cfunction(L,pworld_get_material);
         } else if (!::strcmp(key,"solverDamping")) {
                 lua_pushnumber(L,self->getSolverDamping());
         } else if (!::strcmp(key,"solverIterations")) {

@@ -6,11 +6,11 @@
 // NOTE: This file has been created automatically by a
 //       quex program.
 //
-// DATE: Tue Dec  8 20:27:44 2009
+// DATE: Sat May 29 17:16:13 2010
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-#ifndef __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2009y12m8d_20h27m44s__
-#define __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2009y12m8d_20h27m44s__
+#ifndef __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2010y5m29d_17h16m13s__
+#define __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2010y5m29d_17h16m13s__
 
 #include<cstdio> // for: 'std::sprintf'
 #include<map>    // for: 'token-id' <-> 'name map'
@@ -65,12 +65,13 @@
 #define QUEX_TKN_SHRINK                  ((QUEX_TOKEN_ID_TYPE)10035)
 #define QUEX_TKN_SPHERE                  ((QUEX_TOKEN_ID_TYPE)10036)
 #define QUEX_TKN_STATIC                  ((QUEX_TOKEN_ID_TYPE)10037)
-#define QUEX_TKN_TCOL                    ((QUEX_TOKEN_ID_TYPE)10038)
+#define QUEX_TKN_STRING                  ((QUEX_TOKEN_ID_TYPE)10038)
+#define QUEX_TKN_TCOL                    ((QUEX_TOKEN_ID_TYPE)10039)
 #define QUEX_TKN_TERMINATION             ((QUEX_TOKEN_ID_TYPE)0)
-#define QUEX_TKN_TRIMESH                 ((QUEX_TOKEN_ID_TYPE)10039)
+#define QUEX_TKN_TRIMESH                 ((QUEX_TOKEN_ID_TYPE)10040)
 #define QUEX_TKN_UNINITIALIZED           ((QUEX_TOKEN_ID_TYPE)1)
-#define QUEX_TKN_UNKNOWN                 ((QUEX_TOKEN_ID_TYPE)10040)
-#define QUEX_TKN_VERTEXES                ((QUEX_TOKEN_ID_TYPE)10041)
+#define QUEX_TKN_UNKNOWN                 ((QUEX_TOKEN_ID_TYPE)10041)
+#define QUEX_TKN_VERTEXES                ((QUEX_TOKEN_ID_TYPE)10042)
 
 
 namespace quex {
@@ -109,6 +110,7 @@ namespace quex {
            db[QUEX_TKN_CCD_MOTION_THRESHOLD]    = std::string("CCD_MOTION_THRESHOLD");
            db[QUEX_TKN_MASS]                    = std::string("MASS");
            db[QUEX_TKN_UNKNOWN]                 = std::string("UNKNOWN");
+           db[QUEX_TKN_STRING]                  = std::string("STRING");
            db[QUEX_TKN_INERTIA]                 = std::string("INERTIA");
            db[QUEX_TKN_RESTITUTION]             = std::string("RESTITUTION");
            db[QUEX_TKN_NATURAL]                 = std::string("NATURAL");

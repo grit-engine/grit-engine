@@ -162,7 +162,14 @@ Streamer.o: ../src/CacheFriendlyRangeSpaceSIMD.h ../src/SSEAllocator.h
 Streamer.o: ../src/Grit.h ../src/BulletDebugDrawer.h
 Streamer.o: ../src/lua_userdata_dependency_tracker.h
 TColParser.o: ../src/TColLexer ../src/TColLexer-token_ids
-TColParser.o: ../src/TColParser.h
+TColParser.o: ../src/TColParser.h ../src/PhysicsWorld.h
+TColParser.o: ../src/CentralisedLog.h ../src/console_colour.h
+TColParser.o: ../src/CollisionMesh.h ../src/LooseEnd.h
+TColParser.o: ../src/GritObject.h ../src/Streamer.h ../src/GritClass.h
+TColParser.o: ../src/ExternalTable.h ../src/lua_util.h
+TColParser.o: ../src/CacheFriendlyRangeSpaceSIMD.h
+TColParser.o: ../src/SSEAllocator.h ../src/BackgroundMeshLoader.h
+TColParser.o: ../src/path_util.h
 TextListOverlayElement.o: ../src/TextListOverlayElement.h
 TextListOverlayElement.o: ../src/CentralisedLog.h
 TextListOverlayElement.o: ../src/console_colour.h ../src/Grit.h
