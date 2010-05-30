@@ -13,13 +13,13 @@ all: $(TARGETS)
 
 ../../grit_core/linux/TColLexer.o:
 	@echo "Run make in grit_core/linux first!" >&2
-	false
+	@false
 ../../grit_core/linux/TColParser.o:
 	@echo "Run make in grit_core/linux first!" >&2
-	false
+	@false
 ../../grit_core/linux/TColLexer-core-engine.o:
 	@echo "Run make in grit_core/linux first!" >&2
-	false
+	@false
 
 TColLexer.o: ../../grit_core/linux/TColLexer.o
 	ln -sf "$^" "$@"

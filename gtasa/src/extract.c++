@@ -48,7 +48,7 @@ CentralisedLog clog;
 void app_fatal (void) { abort(); }
 
 // I think we never actually call this as we never read a tcol
-std::string pwd_full (const std::string &rel, const std::string &def)
+std::string pwd_full (const std::string &, const std::string &)
 { abort(); return std::string(); }
 
 static void open_file (std::ostream &out, std::ifstream &f,
@@ -241,6 +241,7 @@ void process_cols (std::ostream &out,
                    const std::string &modname)
 {
         (void) out;
+        init_col_db("../");
         for (unsigned int i=0 ; i<img.i.size(); ++i) {
                 const std::string &fname = img.i.fileName(i);
                 if (fname.size()<4) continue;
@@ -271,7 +272,7 @@ void process_cols (std::ostream &out,
                                 f.open(name.c_str(), std::ios::binary);
                                 ASSERT_IO_SUCCESSFUL(f,"opening tcol for writing");
 
-                                pretty_print_tcol(f, tcol);
+                                pretty_print_tcol(f, tcol, db);
                         }
 
                         next = img.f.peek();

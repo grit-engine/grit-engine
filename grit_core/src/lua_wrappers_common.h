@@ -193,6 +193,9 @@ const luaL_reg name##_meta_table[] = { \
         std::string msg = e.getFullDescription(); \
         my_lua_error(L,msg); \
         return 0; \
+} catch (GritException &e) { \
+        my_lua_error(L,e.longMessage()); \
+        return 0; \
 }
 
 

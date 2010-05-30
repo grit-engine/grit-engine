@@ -25,6 +25,193 @@
 #include "ios_util.h"
 
 
+MaterialDB db;
+
+void init_col_db (const std::string &prefix)
+{
+        // they are numbered internally from zero
+        db.setMaterial(prefix+"DEFAULT", 0);
+        db.setMaterial(prefix+"TARMAC", 0);
+        db.setMaterial(prefix+"TARMAC_FUCKED", 0);
+        db.setMaterial(prefix+"TARMAC_REALLYFUCKED", 0);
+        db.setMaterial(prefix+"PAVEMENT", 0);
+        db.setMaterial(prefix+"PAVEMENT_FUCKED", 0);
+        db.setMaterial(prefix+"GRAVEL", 0);
+        db.setMaterial(prefix+"FUCKED_CONCRETE", 0);
+        db.setMaterial(prefix+"PAINTED_GROUND", 0);
+        db.setMaterial(prefix+"GRASS_SHORT_LUSH", 0);
+        db.setMaterial(prefix+"GRASS_MEDIUM_LUSH", 0);
+        db.setMaterial(prefix+"GRASS_LONG_LUSH", 0);
+        db.setMaterial(prefix+"GRASS_SHORT_DRY", 0);
+        db.setMaterial(prefix+"GRASS_MEDIUM_DRY", 0);
+        db.setMaterial(prefix+"GRASS_LONG_DRY", 0);
+        db.setMaterial(prefix+"GOLFGRASS_ROUGH", 0);
+        db.setMaterial(prefix+"GOLFGRASS_SMOOTH", 0);
+        db.setMaterial(prefix+"STEEP_SLIDYGRASS", 0);
+        db.setMaterial(prefix+"STEEP_CLIFF", 0);
+        db.setMaterial(prefix+"FLOWERBED", 0);
+        db.setMaterial(prefix+"MEADOW", 0);
+        db.setMaterial(prefix+"WASTEGROUND", 0);
+        db.setMaterial(prefix+"WOODLANDGROUND", 0);
+        db.setMaterial(prefix+"VEGETATION", 0);
+        db.setMaterial(prefix+"MUD_WET", 0);
+        db.setMaterial(prefix+"MUD_DRY", 0);
+        db.setMaterial(prefix+"DIRT", 0);
+        db.setMaterial(prefix+"DIRTTRACK", 0);
+        db.setMaterial(prefix+"SAND_DEEP", 0);
+        db.setMaterial(prefix+"SAND_MEDIUM", 0);
+        db.setMaterial(prefix+"SAND_COMPACT", 0);
+        db.setMaterial(prefix+"SAND_ARID", 0);
+        db.setMaterial(prefix+"SAND_MORE", 0);
+        db.setMaterial(prefix+"SAND_BEACH", 0);
+        db.setMaterial(prefix+"CONCRETE_BEACH", 0);
+        db.setMaterial(prefix+"ROCK_DRY", 0);
+        db.setMaterial(prefix+"ROCK_WET", 0);
+        db.setMaterial(prefix+"ROCK_CLIFF", 0);
+        db.setMaterial(prefix+"WATER_RIVERBED", 0);
+        db.setMaterial(prefix+"WATER_SHALLOW", 0);
+        db.setMaterial(prefix+"CORNFIELD", 0);
+        db.setMaterial(prefix+"HEDGE", 0);
+        db.setMaterial(prefix+"WOOD_CRATES", 0);
+        db.setMaterial(prefix+"WOOD_SOLID", 0);
+        db.setMaterial(prefix+"WOOD_THIN", 0);
+        db.setMaterial(prefix+"GLASS", 0);
+        db.setMaterial(prefix+"GLASS_WINDOWS_LARGE", 0);
+        db.setMaterial(prefix+"GLASS_WINDOWS_SMALL", 0);
+        db.setMaterial(prefix+"EMPTY1", 0);
+        db.setMaterial(prefix+"EMPTY2", 0);
+        db.setMaterial(prefix+"GARAGE_DOOR", 0);
+        db.setMaterial(prefix+"THICK_METAL_PLATE", 0);
+        db.setMaterial(prefix+"SCAFFOLD_POLE", 0);
+        db.setMaterial(prefix+"LAMP_POST", 0);
+        db.setMaterial(prefix+"METAL_GATE", 0);
+        db.setMaterial(prefix+"METAL_CHAIN_FENCE", 0);
+        db.setMaterial(prefix+"GIRDER", 0);
+        db.setMaterial(prefix+"FIRE_HYDRANT", 0);
+        db.setMaterial(prefix+"CONTAINER", 0);
+        db.setMaterial(prefix+"NEWS_VENDOR", 0);
+        db.setMaterial(prefix+"WHEELBASE", 0);
+        db.setMaterial(prefix+"CARDBOARDBOX", 0);
+        db.setMaterial(prefix+"PED", 0);
+        db.setMaterial(prefix+"CAR", 0);
+        db.setMaterial(prefix+"CAR_PANEL", 0);
+        db.setMaterial(prefix+"CAR_MOVINGCOMPONENT", 0);
+        db.setMaterial(prefix+"TRANSPARENT_CLOTH", 0);
+        db.setMaterial(prefix+"RUBBER", 0);
+        db.setMaterial(prefix+"PLASTIC", 0);
+        db.setMaterial(prefix+"TRANSPARENT_STONE", 0);
+        db.setMaterial(prefix+"WOOD_BENCH", 0);
+        db.setMaterial(prefix+"CARPET", 0);
+        db.setMaterial(prefix+"FLOORBOARD", 0);
+        db.setMaterial(prefix+"STAIRSWOOD", 0);
+        db.setMaterial(prefix+"P_SAND", 0);
+        db.setMaterial(prefix+"P_SAND_DENSE", 0);
+        db.setMaterial(prefix+"P_SAND_ARID", 0);
+        db.setMaterial(prefix+"P_SAND_COMPACT", 0);
+        db.setMaterial(prefix+"P_SAND_ROCKY", 0);
+        db.setMaterial(prefix+"P_SANDBEACH", 0);
+        db.setMaterial(prefix+"P_GRASS_SHORT", 0);
+        db.setMaterial(prefix+"P_GRASS_MEADOW", 0);
+        db.setMaterial(prefix+"P_GRASS_DRY", 0);
+        db.setMaterial(prefix+"P_WOODLAND", 0);
+        db.setMaterial(prefix+"P_WOODDENSE", 0);
+        db.setMaterial(prefix+"P_ROADSIDE", 0);
+        db.setMaterial(prefix+"P_ROADSIDEDES", 0);
+        db.setMaterial(prefix+"P_FLOWERBED", 0);
+        db.setMaterial(prefix+"P_WASTEGROUND", 0);
+        db.setMaterial(prefix+"P_CONCRETE", 0);
+        db.setMaterial(prefix+"P_OFFICEDESK", 0);
+        db.setMaterial(prefix+"P_711SHELF1", 0);
+        db.setMaterial(prefix+"P_711SHELF2", 0);
+        db.setMaterial(prefix+"P_711SHELF3", 0);
+        db.setMaterial(prefix+"P_RESTUARANTTABLE", 0);
+        db.setMaterial(prefix+"P_BARTABLE", 0);
+        db.setMaterial(prefix+"P_UNDERWATERLUSH", 0);
+        db.setMaterial(prefix+"P_UNDERWATERBARREN", 0);
+        db.setMaterial(prefix+"P_UNDERWATERCORAL", 0);
+        db.setMaterial(prefix+"P_UNDERWATERDEEP", 0);
+        db.setMaterial(prefix+"P_RIVERBED", 0);
+        db.setMaterial(prefix+"P_RUBBLE", 0);
+        db.setMaterial(prefix+"P_BEDROOMFLOOR", 0);
+        db.setMaterial(prefix+"P_KIRCHENFLOOR", 0);
+        db.setMaterial(prefix+"P_LIVINGRMFLOOR", 0);
+        db.setMaterial(prefix+"P_CORRIDORFLOOR", 0);
+        db.setMaterial(prefix+"P_711FLOOR", 0);
+        db.setMaterial(prefix+"P_FASTFOODFLOOR", 0);
+        db.setMaterial(prefix+"P_SKANKYFLOOR", 0);
+        db.setMaterial(prefix+"P_MOUNTAIN", 0);
+        db.setMaterial(prefix+"P_MARSH", 0);
+        db.setMaterial(prefix+"P_BUSHY", 0);
+        db.setMaterial(prefix+"P_BUSHYMIX", 0);
+        db.setMaterial(prefix+"P_BUSHYDRY", 0);
+        db.setMaterial(prefix+"P_BUSHYMID", 0);
+        db.setMaterial(prefix+"P_GRASSWEEFLOWERS", 0);
+        db.setMaterial(prefix+"P_GRASSDRYTALL", 0);
+        db.setMaterial(prefix+"P_GRASSLUSHTALL", 0);
+        db.setMaterial(prefix+"P_GRASSGRNMIX", 0);
+        db.setMaterial(prefix+"P_GRASSBRNMIX", 0);
+        db.setMaterial(prefix+"P_GRASSLOW", 0);
+        db.setMaterial(prefix+"P_GRASSROCKY", 0);
+        db.setMaterial(prefix+"P_GRASSSMALLTREES", 0);
+        db.setMaterial(prefix+"P_DIRTROCKY", 0);
+        db.setMaterial(prefix+"P_DIRTWEEDS", 0);
+        db.setMaterial(prefix+"P_GRASSWEEDS", 0);
+        db.setMaterial(prefix+"P_RIVEREDGE", 0);
+        db.setMaterial(prefix+"P_POOLSIDE", 0);
+        db.setMaterial(prefix+"P_FORESTSTUMPS", 0);
+        db.setMaterial(prefix+"P_FORESTSTICKS", 0);
+        db.setMaterial(prefix+"P_FORRESTLEAVES", 0);
+        db.setMaterial(prefix+"P_DESERTROCKS", 0);
+        db.setMaterial(prefix+"P_FORRESTDRY", 0);
+        db.setMaterial(prefix+"P_SPARSEFLOWERS", 0);
+        db.setMaterial(prefix+"P_BUILDINGSITE", 0);
+        db.setMaterial(prefix+"P_DOCKLANDS", 0);
+        db.setMaterial(prefix+"P_INDUSTRIAL", 0);
+        db.setMaterial(prefix+"P_INDUSTJETTY", 0);
+        db.setMaterial(prefix+"P_CONCRETELITTER", 0);
+        db.setMaterial(prefix+"P_ALLEYRUBISH", 0);
+        db.setMaterial(prefix+"P_JUNKYARDPILES", 0);
+        db.setMaterial(prefix+"P_JUNKYARDGRND", 0);
+        db.setMaterial(prefix+"P_DUMP", 0);
+        db.setMaterial(prefix+"P_CACTUSDENSE", 0);
+        db.setMaterial(prefix+"P_AIRPORTGRND", 0);
+        db.setMaterial(prefix+"P_CORNFIELD", 0);
+        db.setMaterial(prefix+"P_GRASSLIGHT", 0);
+        db.setMaterial(prefix+"P_GRASSLIGHTER", 0);
+        db.setMaterial(prefix+"P_GRASSLIGHTER2", 0);
+        db.setMaterial(prefix+"P_GRASSMID1", 0);
+        db.setMaterial(prefix+"P_GRASSMID2", 0);
+        db.setMaterial(prefix+"P_GRASSDARK", 0);
+        db.setMaterial(prefix+"P_GRASSDARK2", 0);
+        db.setMaterial(prefix+"P_GRASSDIRTMIX", 0);
+        db.setMaterial(prefix+"P_RIVERBEDSTONE", 0);
+        db.setMaterial(prefix+"P_RIVERBEDSHALLOW", 0);
+        db.setMaterial(prefix+"P_RIVERBEDWEEDS", 0);
+        db.setMaterial(prefix+"P_SEAWEED", 0);
+        db.setMaterial(prefix+"DOOR", 0);
+        db.setMaterial(prefix+"PLASTICBARRIER", 0);
+        db.setMaterial(prefix+"PARKGRASS", 0);
+        db.setMaterial(prefix+"STAIRSSTONE", 0);
+        db.setMaterial(prefix+"STAIRSMETAL", 0);
+        db.setMaterial(prefix+"STAIRSCARPET", 0);
+        db.setMaterial(prefix+"FLOORMETAL", 0);
+        db.setMaterial(prefix+"FLOORCONCRETE", 0);
+        db.setMaterial(prefix+"BIN_BAG", 0);
+        db.setMaterial(prefix+"THIN_METAL_SHEET", 0);
+        db.setMaterial(prefix+"METAL_BARREL", 0);
+        db.setMaterial(prefix+"PLASTIC_CONE", 0);
+        db.setMaterial(prefix+"PLASTIC_DUMPSTER", 0);
+        db.setMaterial(prefix+"METAL_DUMPSTER", 0);
+        db.setMaterial(prefix+"WOOD_PICKET_FENCE", 0);
+        db.setMaterial(prefix+"WOOD_SLATTED_FENCE", 0);
+        db.setMaterial(prefix+"WOOD_RANCH_FENCE", 0);
+        db.setMaterial(prefix+"UNBREAKABLE_GLASS", 0);
+        db.setMaterial(prefix+"HAY_BALE", 0);
+        db.setMaterial(prefix+"GORE", 0);
+        db.setMaterial(prefix+"RAILTRACK", 0);
+}
+
+
 static inline int tolowr (int c)
 {
     return std::tolower(char(c),std::cout.getloc());
@@ -151,9 +338,17 @@ bool parse_col (std::string &name,
                         sphere.py = ios_read_float(in);
                         sphere.pz = ios_read_float(in);
                         sphere.radius = ios_read_float(in);
-                        unsigned long surface = ios_read_u32(in);
-                        (void) surface; // not used yet
-                        sphere.material = 7;
+                        sphere.material = ios_read_u8(in) & 0xFF;
+                        unsigned char flag = ios_read_u8(in);
+                        unsigned char unk = ios_read_u8(in);
+                        unsigned char light = ios_read_u8(in);
+                        //std::cout<<"sphere mat: "<<sphere.material<<std::endl;
+                        //std::cout<<"sphere flag: "<<(int)flag<<std::endl;
+                        //std::cout<<"sphere unk: "<<(int)unk<<std::endl;
+                        //std::cout<<"sphere light: "<<(int)light<<std::endl;
+                        (void) flag; // not used yet
+                        (void) unk; // not used yet
+                        (void) light; // not used yet
                         tcol.compound.spheres.push_back(sphere);
                 }
 
@@ -176,9 +371,17 @@ bool parse_col (std::string &name,
                         box.qy = 0;
                         box.qz = 0;
                         box.margin = 0.04;
-                        unsigned long surface = ios_read_u32(in);
-                        (void) surface; // not used yet
-                        box.material = 7;
+                        box.material = ios_read_u8(in);
+                        unsigned char flag = ios_read_u8(in);
+                        unsigned char unk = ios_read_u8(in);
+                        unsigned char light = ios_read_u8(in);
+                        //std::cout<<"box mat: "<<box.material<<std::endl;
+                        //std::cout<<"box flag: "<<(int)flag<<std::endl;
+                        //std::cout<<"box unk: "<<(int)unk<<std::endl;
+                        //std::cout<<"box light: "<<(int)light<<std::endl;
+                        (void) flag; // not used yet
+                        (void) unk; // not used yet
+                        (void) light; // not used yet
                         tcol.compound.boxes.push_back(box);
                 }
 
@@ -209,10 +412,11 @@ bool parse_col (std::string &name,
                         max_vertex =
                                 std::max(a,std::max(b,std::max(c,max_vertex)));
                         unsigned char mat = ios_read_u8(in);
-                        (void) mat; // not used yet
                         unsigned char light = ios_read_u8(in);
+                        //std::cout<<"face mat: "<<(int)mat<<std::endl;
+                        //std::cout<<"face light: "<<(int)light<<std::endl;
                         (void) light; // not used yet
-                        tcol.triMesh.faces.push_back(Face(a,b,c,7));
+                        tcol.triMesh.faces.push_back(Face(a,b,c,mat));
                 }
 
                 if (num_faces > 0) {
@@ -269,7 +473,7 @@ void dump_all_cols (std::istream &in, bool binary, int debug_level)
                         out.open(name.c_str(), std::ios::binary);
                         ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
 
-                        pretty_print_tcol(out,tcol);
+                        pretty_print_tcol(out,tcol,db);
                 }
                 
                 std::istream::int_type next = in.peek();

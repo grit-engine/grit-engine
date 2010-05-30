@@ -58,6 +58,13 @@ std::string next_arg(int& so_far, int argc, char **argv)
         return argv[so_far++];
 }
 
+CentralisedLog clog;
+void app_fatal (void) { abort(); }
+
+// I think we never actually call this as we never read a tcol
+std::string pwd_full (const std::string &, const std::string &)
+{ abort(); return std::string(); }
+
 int main(int argc, char **argv)
 {
         if (argc==1) {
@@ -71,6 +78,7 @@ int main(int argc, char **argv)
         bool output_binary = false;
         std::string input_filename;
         std::string output_filename;
+        std::string mat_prefix;
 
         int so_far = 1;
 
@@ -88,6 +96,8 @@ int main(int argc, char **argv)
                         output_binary = true;
                 } else if (arg=="-T" || arg=="--output-tcol") {
                         output_binary = false;
+                } else if (arg=="-m" || arg=="--material-prefix") {
+                        mat_prefix = next_arg(so_far,argc,argv);
                 } else if (arg=="-h" || arg=="--help") {
                         std::cout<<info<<std::endl;
                         std::cout<<usage<<std::endl;
@@ -100,6 +110,8 @@ int main(int argc, char **argv)
 
         std::istream *in = NULL;
         std::ostream *out = NULL;
+
+        init_col_db(mat_prefix);
 
         try {
 
@@ -122,7 +134,7 @@ int main(int argc, char **argv)
 
                         quex::TColLexer* qlex =
                                 new quex::TColLexer(in);
-                        parse_tcol_1_0(input_filename,qlex,tcol);
+                        parse_tcol_1_0(input_filename,qlex,tcol,db);
                         delete qlex;
 
                         if (output_filename==""||output_filename=="-") {
@@ -135,7 +147,7 @@ int main(int argc, char **argv)
                                 ASSERT_IO_SUCCESSFUL(*out_,
                                                     "opening "+output_filename);
                         }
-                        pretty_print_tcol(*out,tcol);
+                        pretty_print_tcol(*out,tcol,db);
 
                 } else if (fourcc==0x4c4f4342) { //BCOL
                         IOS_EXCEPT("Reading bcol not implemented.");

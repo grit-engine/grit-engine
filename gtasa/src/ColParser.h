@@ -22,6 +22,9 @@
 #include <iostream>
 #include "TColParser.h"
 
+void init_col_db (const std::string &prefix);
+extern MaterialDB db;
+
 bool parse_col (std::string &name,
                 std::istream &in,
                 TColFile &tcol,
