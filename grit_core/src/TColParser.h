@@ -21,21 +21,20 @@
 
 #include <OgreString.h>
 
-#include <LinearMath/btGeometryUtil.h>
-
 #include "TColLexer"
+#include "math_util.h"
 
 struct TColFile;
 class PhysicsWorld;
 
-void parse_tcol_1_0 (const Ogre::String &name,
+void parse_tcol_1_0 (const std::string &name,
                      quex::TColLexer* qlex,
                      TColFile &file,
                      const PhysicsWorld &world);
 
 void pretty_print_tcol (std::ostream &o, TColFile &f);
 
-typedef btAlignedObjectArray<btVector3> Vertexes;
+typedef std::vector<Vector3> Vertexes;
 
 #ifndef TColParser_h
 #define TColParser_h

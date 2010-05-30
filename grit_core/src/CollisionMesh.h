@@ -32,7 +32,7 @@
 class CollisionMesh;
 typedef Ogre::SharedPtr<CollisionMesh> CollisionMeshPtr;
 
-typedef std::map<Ogre::String,CollisionMeshPtr> CollisionMeshMap;
+typedef std::map<std::string,CollisionMeshPtr> CollisionMeshMap;
 
 #ifndef CollisionMesh_h
 #define CollisionMesh_h
@@ -61,14 +61,14 @@ class CollisionMesh {
 
         virtual void importFromFile (const Ogre::DataStreamPtr &file, const PhysicsWorld &world);
 
-        virtual const Ogre::String &getName (void) const
+        virtual const std::string &getName (void) const
         { return name; }
 
         virtual float getMass (void) const { return mass; }
         virtual void setMass (float v) { mass = v; }
 
-        virtual btVector3 getInertia (void) const { return inertia; }
-        virtual void setInertia (const btVector3 &v) { inertia = v; }
+        virtual Vector3 getInertia (void) const { return inertia; }
+        virtual void setInertia (const Vector3 &v) { inertia = v; }
 
         virtual float getCCDMotionThreshold (void) const
         { return ccdMotionThreshold; }
@@ -116,7 +116,7 @@ class CollisionMesh {
         }
 
         struct ScatterOptions {
-                btTransform worldTrans;
+                Transform worldTrans;
                 float density[3];
                 float maxElevation[3];
                 float minElevation[3];
@@ -137,11 +137,11 @@ class CollisionMesh {
                         }
                 }
         };
-        void scatter (const ScatterOptions &opts, std::vector<btTransform> (&r)[3]);
+        void scatter (const ScatterOptions &opts, std::vector<Transform> (&r)[3]);
 
     protected:
 
-        CollisionMesh (const Ogre::String &name_)
+        CollisionMesh (const std::string &name_)
               : name(name_),
                 linearDamping(0),
                 angularDamping(0.5),
@@ -151,7 +151,7 @@ class CollisionMesh {
                 restitution(0)
         { }
 
-        const Ogre::String name;
+        const std::string name;
         btCompoundShape *masterShape;
 
         typedef std::set<RigidBody*> Users;
@@ -159,7 +159,7 @@ class CollisionMesh {
 
         LooseEnds looseEnds;
 
-        btVector3 inertia;
+        Vector3 inertia;
         float mass;
         float ccdMotionThreshold;
         float ccdSweptSphereRadius;

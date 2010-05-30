@@ -80,9 +80,9 @@ static int viewport_set_background_colour (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::Viewport,self,1,VIEWPORT_TAG);
-        Ogre::Real r = luaL_checknumber(L,2);
-        Ogre::Real g = luaL_checknumber(L,3);
-        Ogre::Real b = luaL_checknumber(L,4);
+        float r = luaL_checknumber(L,2);
+        float g = luaL_checknumber(L,3);
+        float b = luaL_checknumber(L,4);
         self.setBackgroundColour(Ogre::ColourValue(r,g,b));
         return 0;
 TRY_END

@@ -84,8 +84,8 @@ public:
 
         virtual lua_State *getLuaState (void) const { return L; }
 
-        virtual void processMaterialName (Ogre::Mesh *mesh, Ogre::String *name);
-        virtual void processSkeletonName (Ogre::Mesh *mesh, Ogre::String *name);
+        virtual void processMaterialName (Ogre::Mesh *mesh, std::string *name);
+        virtual void processSkeletonName (Ogre::Mesh *mesh, std::string *name);
 
 protected:
 

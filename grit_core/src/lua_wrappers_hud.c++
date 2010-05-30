@@ -170,10 +170,10 @@ static int pane_get_uv (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(HUD::PanePtr,pane,1,PANE_TAG);
-        Ogre::Real u1;
-        Ogre::Real v1;
-        Ogre::Real u2;
-        Ogre::Real v2;
+        float u1;
+        float v1;
+        float u2;
+        float v2;
         pane->getUV(u1,v1,u2,v2);
         lua_pushnumber(L,u1);
         lua_pushnumber(L,v1);
@@ -188,10 +188,10 @@ static int pane_set_uv (lua_State *L)
 TRY_START
         check_args(L,5);
         GET_UD_MACRO(HUD::PanePtr,pane,1,PANE_TAG);
-        Ogre::Real u1 = luaL_checknumber(L,2);
-        Ogre::Real v1 = luaL_checknumber(L,3);
-        Ogre::Real u2 = luaL_checknumber(L,4);
-        Ogre::Real v2 = luaL_checknumber(L,5);
+        float u1 = luaL_checknumber(L,2);
+        float v1 = luaL_checknumber(L,3);
+        float u2 = luaL_checknumber(L,4);
+        float v2 = luaL_checknumber(L,5);
         pane->setUV(u1,v1,u2,v2);
         return 0;
 TRY_END
@@ -389,10 +389,10 @@ static int text_set_colour_top(lua_State *L)
 TRY_START
         check_args(L,5);
         GET_UD_MACRO(HUD::TextPtr,text,1,TEXT_TAG);
-        Ogre::Real r = luaL_checknumber(L,2);
-        Ogre::Real g = luaL_checknumber(L,3);
-        Ogre::Real b = luaL_checknumber(L,4);
-        Ogre::Real a = luaL_checknumber(L,5);
+        float r = luaL_checknumber(L,2);
+        float g = luaL_checknumber(L,3);
+        float b = luaL_checknumber(L,4);
+        float a = luaL_checknumber(L,5);
         text->setColourTop(Ogre::ColourValue(r,g,b,a));
         return 0;
 TRY_END
@@ -417,10 +417,10 @@ static int text_set_colour_bottom(lua_State *L)
 TRY_START
         check_args(L,5);
         GET_UD_MACRO(HUD::TextPtr,text,1,TEXT_TAG);
-        Ogre::Real r = luaL_checknumber(L,2);
-        Ogre::Real g = luaL_checknumber(L,3);
-        Ogre::Real b = luaL_checknumber(L,4);
-        Ogre::Real a = luaL_checknumber(L,5);
+        float r = luaL_checknumber(L,2);
+        float g = luaL_checknumber(L,3);
+        float b = luaL_checknumber(L,4);
+        float a = luaL_checknumber(L,5);
         text->setColourBottom(Ogre::ColourValue(r,g,b,a));
         return 0;
 TRY_END

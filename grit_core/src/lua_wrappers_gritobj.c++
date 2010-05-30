@@ -149,10 +149,10 @@ static int gritobj_update_sphere (lua_State *L)
 TRY_START
         check_args(L,5);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        Ogre::Real x = luaL_checknumber(L,2);
-        Ogre::Real y = luaL_checknumber(L,3);
-        Ogre::Real z = luaL_checknumber(L,4);
-        Ogre::Real r = luaL_checknumber(L,5);
+        float x = luaL_checknumber(L,2);
+        float y = luaL_checknumber(L,3);
+        float z = luaL_checknumber(L,4);
+        float r = luaL_checknumber(L,5);
         self->updateSphere(x,y,z,r);
         return 0;
 TRY_END
@@ -176,8 +176,8 @@ static int gritobj_hint_advance_prepare (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        Ogre::String type = luaL_checkstring(L,2);
-        Ogre::String name = luaL_checkstring(L,3);
+        std::string type = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,3);
         self->hintPrepareInAdvance(type,name);
         return 0;
 TRY_END
@@ -192,8 +192,8 @@ TRY_START
         typedef GritObject::StringPairs::const_iterator I;
         int counter = 0;
         for (I i=hints.begin(),i_=hints.end() ; i!=i_ ; ++i) {
-                const Ogre::String &type = i->first;
-                const Ogre::String &name = i->second;
+                const std::string &type = i->first;
+                const std::string &name = i->second;
                 lua_pushstring(L,type.c_str());
                 lua_pushstring(L,name.c_str());
                 counter += 2;
@@ -397,9 +397,9 @@ static int streamer_centre (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::Real x = luaL_checknumber(L,2);
-        Ogre::Real y = luaL_checknumber(L,3);
-        Ogre::Real z = luaL_checknumber(L,4);
+        float x = luaL_checknumber(L,2);
+        float y = luaL_checknumber(L,3);
+        float z = luaL_checknumber(L,4);
         self.centre(L,x,y,z);
         return 0;
 TRY_END
@@ -410,7 +410,7 @@ static int streamer_frame_callbacks (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::Real t = luaL_checknumber(L,2);
+        float t = luaL_checknumber(L,2);
         self.frameCallbacks(L,t);
         return 0;
 TRY_END
@@ -429,7 +429,7 @@ TRY_START
                 my_lua_error(L,"Expected a \"name\" field.");
         if (lua_type(L,-1)!=LUA_TSTRING)
                 my_lua_error(L,"The \"name\" field should be a string.");
-        Ogre::String name = lua_tostring(L,-1);
+        std::string name = lua_tostring(L,-1);
         lua_pushnil(L);
         lua_setfield(L,2,"name");
         lua_pop(L,1);
@@ -462,7 +462,7 @@ static int streamer_get_class (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::String name = pwd_full(L, luaL_checkstring(L,2));
+        std::string name = pwd_full(L, luaL_checkstring(L,2));
         push_gritcls(L,self.getClass(name));
         return 1;
 TRY_END
@@ -473,7 +473,7 @@ static int streamer_has_class (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,2);
         lua_pushboolean(L,self.hasClass(name));
         return 1;
 TRY_END
@@ -484,7 +484,7 @@ static int streamer_remove_class (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::String name = pwd_full(L, luaL_checkstring(L,2));
+        std::string name = pwd_full(L, luaL_checkstring(L,2));
         self.deleteClass(L,self.getClass(name));
         return 0;
 TRY_END
@@ -499,7 +499,7 @@ TRY_START
                 check_args(L,6);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         std::string className = pwd_full(L, luaL_checkstring(L,2));
-        Ogre::Real x,y,z;
+        float x,y,z;
         if (lua_gettop(L)==4) {
                 GET_UD_MACRO(Ogre::Vector3,val,3,VECTOR3_TAG);
                 x = val.x;
@@ -539,7 +539,7 @@ TRY_START
                 my_lua_error(L,"renderingDistance not a number in class \""
                                +className+"\"");
         }
-        Ogre::Real r = lua_tonumber(L,-1);
+        float r = lua_tonumber(L,-1);
         o->updateSphere(x,y,z,r);
         lua_pop(L,1);
 
@@ -571,7 +571,7 @@ TRY_START
                         self.deleteObject(L,o);
                         my_lua_error(L,"user value key was not a string");
                 }
-                Ogre::String key = luaL_checkstring(L,-2);
+                std::string key = luaL_checkstring(L,-2);
                 // the name is held in the object anyway
                 if (key=="name") continue;
                 if (key=="near") continue;
@@ -593,7 +593,7 @@ static int streamer_get_object (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,2);
         GritObjectPtr o = self.getObject(name);
         if (o.isNull()) {
                 lua_pushnil(L);
@@ -609,7 +609,7 @@ static int streamer_has_object (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,2);
         lua_pushboolean(L,self.hasObject(name));
         return 1;
 TRY_END
@@ -620,7 +620,7 @@ static int streamer_remove_object (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,2);
         self.deleteObject(L,self.getObject(name));
         return 0;
 TRY_END
@@ -669,7 +669,7 @@ static int streamer_all_of_class (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Ogre::String cls = luaL_checkstring(L,2);
+        std::string cls = luaL_checkstring(L,2);
         lua_newtable(L);
         unsigned int c = 0;
         GObjMap::iterator i, i_;
@@ -798,16 +798,16 @@ TRY_START
                 size_t v = check_t<size_t>(L,3);
                 self.stepSize = v;
         } else if (key=="visibility") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self.visibility = v;
         } else if (key=="prepareDistanceFactor") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self.prepareDistanceFactor = v;
         } else if (key=="fadeOverlapFactor") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self.fadeOverlapFactor = v;
         } else if (key=="fadeOutFactor") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self.fadeOutFactor = v;
         } else {
                my_lua_error(L,"Not a writeable Streamer member: "+key);

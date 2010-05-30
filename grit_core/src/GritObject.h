@@ -28,7 +28,7 @@
 
 class GritObject;
 typedef Ogre::SharedPtr<GritObject> GritObjectPtr;
-typedef std::map<Ogre::String,GritObjectPtr> GObjMap;
+typedef std::map<std::string,GritObjectPtr> GObjMap;
 typedef std::vector<GritObjectPtr> GObjPtrs;
 typedef std::set<GritObjectPtr> GObjSet;
 
@@ -55,10 +55,10 @@ class GritObject {
 
     public:
 
-        typedef std::pair<Ogre::String,Ogre::String> StringPair;
+        typedef std::pair<std::string,std::string> StringPair;
         typedef std::vector<StringPair> StringPairs;
 
-        GritObject (const Ogre::String &name_, GritClass *gritClass_);
+        GritObject (const std::string &name_, GritClass *gritClass_);
 
         virtual ~GritObject (void) { }
 
@@ -73,13 +73,13 @@ class GritObject {
                        Ogre::SceneNode *gfxNode,
                        const PhysicsWorldPtr &physics);
 
-        Ogre::Real calcFade (const Ogre::Real range2, bool &overlap);
+        float calcFade (const float range2, bool &overlap);
 
         void notifyRange2 (lua_State *L, const GritObjectPtr &self,
-                           const Ogre::Real range2)
+                           const float range2)
         {
                 bool overlap = false;
-                volatile Ogre::Real fade = calcFade(range2, overlap);
+                volatile float fade = calcFade(range2, overlap);
                 // if fade is sufficiently different
                 if (fade!=lastFade) {
                         int transition;
@@ -98,11 +98,11 @@ class GritObject {
 
         bool frameCallback (lua_State *L,
                             const GritObjectPtr &self,
-                            const Ogre::Real time);
+                            const float time);
 
         void notifyFade (lua_State *L,
                          const GritObjectPtr &self,
-                         const Ogre::Real fade,
+                         const float fade,
                          const int transition);
 
         bool isActivated (void) const { return lua!=LUA_NOREF; }
@@ -112,8 +112,8 @@ class GritObject {
                  lua_rawgeti(L,LUA_REGISTRYINDEX,lua);
         }
 
-        void hintPrepareInAdvance (const Ogre::String &type,
-                                           const Ogre::String &name)
+        void hintPrepareInAdvance (const std::string &type,
+                                           const std::string &name)
         { advanceResources.push_back(StringPair(type,name)); }
 
         void clearAdvanceHints (void)
@@ -122,7 +122,7 @@ class GritObject {
         const StringPairs &getAdvanceHints (void) const
         { return advanceResources; }
 
-        bool queueBGPrepare (Ogre::Real x, Ogre::Real y, Ogre::Real z)
+        bool queueBGPrepare (float x, float y, float z)
         {
                 if (!demandRegistered) {
                         doQueueBGPrepare(x,y,z);
@@ -133,12 +133,12 @@ class GritObject {
                 }
         }
 
-        void updateDemand(Ogre::Real x_, Ogre::Real y_, Ogre::Real z_) {
-                const Ogre::Real dx=x-x_, dy=y-y_, dz=z-z_;
+        void updateDemand(float x_, float y_, float z_) {
+                const float dx=x-x_, dy=y-y_, dz=z-z_;
                 demand.mDist = dx*dx + dy*dy + dz*dz;
         }
 
-        void doQueueBGPrepare (Ogre::Real, Ogre::Real, Ogre::Real);
+        void doQueueBGPrepare (float, float, float);
 
         void tryUnloadResources (void);
 
@@ -150,26 +150,26 @@ class GritObject {
         GritClass *getClass (void) { return gritClass; }
 
 
-        Ogre::Real getFade (void) const { return lastFade; }
+        float getFade (void) const { return lastFade; }
 
         bool getNeedsFrameCallbacks (void) const { return needsFrameCallbacks; }
         void setNeedsFrameCallbacks (const GritObjectPtr &self, bool v);
 
 
-        const Ogre::String name;
+        const std::string name;
 
         inline void updateIndex (int index_)
         {
                 index = index_;
         }
 
-        void updateSphere (Ogre::Real x_, Ogre::Real y_, Ogre::Real z_,
-                                   Ogre::Real r_);
+        void updateSphere (float x_, float y_, float z_,
+                                   float r_);
 
-        Ogre::Real getX() const { return x; }
-        Ogre::Real getY() const { return y; }
-        Ogre::Real getZ() const { return z; }
-        Ogre::Real getR() const { return r; }
+        float getX() const { return x; }
+        float getY() const { return y; }
+        float getZ() const { return z; }
+        float getR() const { return r; }
                 
         const GritObjectPtr &getNear (void) const { return near; }
         void setNear (const GritObjectPtr &self, const GritObjectPtr &v)
@@ -228,28 +228,28 @@ class GritObject {
                 }
         }
 
-        Ogre::Real range2 (Ogre::Real x_, Ogre::Real y_, Ogre::Real z_) const
+        float range2 (float x_, float y_, float z_) const
         {
-                const Ogre::Real dx=x-x_, dy=y-y_, dz=z-z_;
+                const float dx=x-x_, dy=y-y_, dz=z-z_;
                 return (dx*dx + dy*dy + dz*dz) / (r*r);
         }
 
-        bool withinRange (Ogre::Real x_, Ogre::Real y_,
-                          Ogre::Real z_, Ogre::Real factor) const
+        bool withinRange (float x_, float y_,
+                          float z_, float factor) const
         {
-                const Ogre::Real dx=x-x_, dy=y-y_, dz=z-z_;
-                const Ogre::Real rad = r*factor;
+                const float dx=x-x_, dy=y-y_, dz=z-z_;
+                const float rad = r*factor;
                 return dx*dx + dy*dy + dz*dz < rad*rad;
         }
 
-        Ogre::Real getImposedFarFade (void) const { return imposedFarFade; }
+        float getImposedFarFade (void) const { return imposedFarFade; }
 
         ExternalTable userValues;
 
 
     protected:
 
-        Ogre::Real x, y, z, r;
+        float x, y, z, r;
                 
         GritClass *gritClass;
 
@@ -267,8 +267,8 @@ class GritObject {
         Demand demand;
 
 
-        Ogre::Real imposedFarFade;
-        Ogre::Real lastFade;
+        float imposedFarFade;
+        float lastFade;
 };
 
 #endif

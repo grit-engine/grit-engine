@@ -24,13 +24,12 @@
 
 #include <OgreException.h>
 
-#include <LinearMath/btGeometryUtil.h>
-
 #include "TColLexer"
 
 #include "TColParser.h"
 #include "PhysicsWorld.h"
 
+#include "math_util.h"
 #include "path_util.h"
 
 #define DEFAULT_MARGIN 0.04f
@@ -152,11 +151,11 @@ static std::string what (const quex::Token &t)
 #endif
 
 
-static void err (const Ogre::String &, quex::TColLexer *,
+static void err (const std::string &, quex::TColLexer *,
                  const quex::Token &, const std::string &)
 NORETURN;
 
-static void err (const Ogre::String &name, quex::TColLexer *qlex,
+static void err (const std::string &name, quex::TColLexer *qlex,
                  const quex::Token &t, const std::string &expected)
 {
         std::stringstream msg;
@@ -167,7 +166,7 @@ static void err (const Ogre::String &name, quex::TColLexer *qlex,
 }
 
 
-static void err (const Ogre::String &name, quex::TColLexer *qlex,
+static void err (const std::string &name, quex::TColLexer *qlex,
                  const std::string &msg)
 {
         std::stringstream ss;
@@ -176,7 +175,7 @@ static void err (const Ogre::String &name, quex::TColLexer *qlex,
 }
 
 
-static void ensure_token (const Ogre::String &name, quex::TColLexer* qlex,
+static void ensure_token (const std::string &name, quex::TColLexer* qlex,
                           QUEX_TOKEN_ID_TYPE tid)
 {
         quex::Token t;
@@ -188,7 +187,7 @@ static void ensure_token (const Ogre::String &name, quex::TColLexer* qlex,
 
 
 //quex::Token is not const because number() is not const (a bug in quex)
-static int get_int_from_token (const Ogre::String &name,
+static int get_int_from_token (const std::string &name,
                                quex::TColLexer* qlex,
                                quex::Token &t,
                                int num_vertexes)
@@ -199,7 +198,7 @@ static int get_int_from_token (const Ogre::String &name,
         return v;
 }
 
-static int parse_int (const Ogre::String &name,
+static int parse_int (const std::string &name,
                       quex::TColLexer* qlex,
                       int num_vertexes)
 {
@@ -217,7 +216,7 @@ static unsigned long get_ulong_from_hex_token (const quex::Token &t)
         return strtoul(text,NULL,16);
 }
 
-static unsigned long parse_hex (const Ogre::String &name,
+static unsigned long parse_hex (const std::string &name,
                                 quex::TColLexer* qlex)
 {
         quex::Token t; qlex->get_token(&t);
@@ -236,7 +235,7 @@ static void get_string_from_string_token (const quex::Token &t, std::string &mat
         material.append(text+1, t.text().length()-2);
 }
 
-static int parse_material (const Ogre::String &name,
+static int parse_material (const std::string &name,
                            quex::TColLexer* qlex,
                            const PhysicsWorld &world)
 {
@@ -270,7 +269,7 @@ static float get_real_from_token (const quex::Token &t)
         return (float) strtod(text,NULL);
 }
 
-static float parse_real (const Ogre::String &name, quex::TColLexer* qlex)
+static float parse_real (const std::string &name, quex::TColLexer* qlex)
 {
         quex::Token t; qlex->get_token(&t);
         if (t.type_id()==QUEX_TKN_FLOAT) {
@@ -283,7 +282,7 @@ static float parse_real (const Ogre::String &name, quex::TColLexer* qlex)
         }
 }
 
-static float parse_positive_real (const Ogre::String &name,
+static float parse_positive_real (const std::string &name,
                                        quex::TColLexer* qlex)
 {
         float v;
@@ -301,7 +300,7 @@ static float parse_positive_real (const Ogre::String &name,
 }
 
 // pops ; or }, returning true or false respectively
-bool more_to_come (const Ogre::String &name, quex::TColLexer* qlex)
+bool more_to_come (const std::string &name, quex::TColLexer* qlex)
 {
         quex::Token t; qlex->get_token(&t);
         switch (t.type_id()) {
@@ -316,7 +315,7 @@ bool more_to_come (const Ogre::String &name, quex::TColLexer* qlex)
 
 
 
-static void parse_vertexes (const Ogre::String &name,
+static void parse_vertexes (const std::string &name,
                             quex::TColLexer* qlex,
                             Vertexes &vertexes)
 {
@@ -331,7 +330,7 @@ static void parse_vertexes (const Ogre::String &name,
                         x=get_real_from_token(t);
                         y=parse_real(name,qlex);
                         z=parse_real(name,qlex);
-                        vertexes.push_back(btVector3(x,y,z));
+                        vertexes.push_back(Vector3(x,y,z));
                         if (!more_to_come(name,qlex)) break;
                         continue;
 
@@ -346,16 +345,160 @@ static void parse_vertexes (const Ogre::String &name,
         }
 }
 
+struct PlaneEquation {
+        Vector3 normal;
+        float d;
+        PlaneEquation (void) { }
+        PlaneEquation (const Vector3 &n, float d_) : normal(n), d(d_) { }
+};
+
+static bool isPointInsidePlanes (const std::vector<PlaneEquation>& planeEquations,
+                                 const Vector3& point,
+                                 float margin)
+{
+    int numbrushes = planeEquations.size();
+    for (int i=0;i<numbrushes;i++)
+    {
+        const PlaneEquation &N1 = planeEquations[i];
+        float dist = N1.normal.dot(point) + N1.d - margin;
+        if (dist>0.0f) return false;
+    }
+    return true;
+
+}
+
+static bool areVerticesBehindPlane (const PlaneEquation& plane,
+                                    const std::vector<Vector3>& vertices,
+                                    float margin)
+{
+        int numvertices = vertices.size();
+        for (int i=0;i<numvertices;i++) {
+                const Vector3 &N1 = vertices[i];
+                float dist = plane.normal.dot(N1) + plane.d - margin;
+                if (dist>0.0f) return false;
+        }
+        return true;
+}
+
+static bool notExist (const Vector3& planeNormal,
+                      const std::vector<PlaneEquation>& planeEquations)
+{
+        int numbrushes = planeEquations.size();
+        for (int i=0;i<numbrushes;i++) {
+                const PlaneEquation &N1 = planeEquations[i];
+                if (planeNormal.dot(N1.normal) > 0.999f) return false;
+        }
+        return true;
+}
+
+static void getPlaneEquationsFromVertices (std::vector<Vector3>& vertices,
+                                           std::vector<PlaneEquation>& planeEquationsOut )
+{
+    const int numvertices = vertices.size();
+    // brute force:
+    for (int i=0;i<numvertices;i++) {
+
+        const Vector3& N1 = vertices[i];
+
+        for (int j=i+1;j<numvertices;j++) {
+
+            const Vector3& N2 = vertices[j];
+
+            for (int k=j+1;k<numvertices;k++) {
+
+                const Vector3& N3 = vertices[k];
+
+                Vector3 edge0 = N2-N1;
+                Vector3 edge1 = N3-N1;
+                float normalSign = 1.0f;
+                for (int ww=0;ww<2;ww++) {
+                    Vector3 planeNormal = normalSign * edge0.cross(edge1);
+                    if (planeNormal.length2() > 0.0001f) {
+                        planeNormal.normalise();
+                        if (notExist(planeNormal,planeEquationsOut)) {
+                            PlaneEquation p(planeNormal, -planeNormal.dot(N1));
+
+                            //check if inside, and replace supportingVertexOut if needed
+                            if (areVerticesBehindPlane(p,vertices,0.01f)) {
+                                planeEquationsOut.push_back(p);
+                            }
+                        }
+                    }
+                    normalSign = -1.0f;
+                }
+
+            }
+        }
+    }
+
+}
+
+void getVerticesFromPlaneEquations(const std::vector<PlaneEquation>& planeEquations,
+                                   std::vector<Vector3>& verticesOut )
+{
+    const int numbrushes = planeEquations.size();
+    // brute force:
+    for (int i=0;i<numbrushes;i++) {
+
+        const PlaneEquation& N1 = planeEquations[i];
+
+        for (int j=i+1;j<numbrushes;j++) {
+
+            const PlaneEquation& N2 = planeEquations[j];
+
+            for (int k=j+1;k<numbrushes;k++) {
+
+                const PlaneEquation& N3 = planeEquations[k];
+
+                Vector3 n2n3; n2n3 = N2.normal.cross(N3.normal);
+                Vector3 n3n1; n3n1 = N3.normal.cross(N1.normal);
+                Vector3 n1n2; n1n2 = N1.normal.cross(N2.normal);
+
+                if ( ( n2n3.length2() > 0.0001f ) &&
+                     ( n3n1.length2() > 0.0001f ) &&
+                     ( n1n2.length2() > 0.0001f ) ) {
+
+                    //point P out of 3 plane equations:
+
+                    //  d1 ( N2 * N3 ) + d2 ( N3 * N1 ) + d3 ( N1 * N2 )  
+                    //P =  -------------------------------------------------------------------------  
+                    //   N1 . ( N2 * N3 )  
+
+
+                    float quotient = (N1.normal.dot(n2n3));
+                    if (fabs(quotient) > 0.000001f) {
+                        quotient = -1.0f / quotient;
+                        n2n3 *= N1.d;
+                        n3n1 *= N2.d;
+                        n1n2 *= N3.d;
+                        Vector3 potentialVertex = n2n3;
+                        potentialVertex += n3n1;
+                        potentialVertex += n1n2;
+                        potentialVertex *= quotient;
+
+                        //check if inside, and replace supportingVertexOut if needed
+                        if (isPointInsidePlanes(planeEquations,potentialVertex,0.01f))
+                        {
+                            verticesOut.push_back(potentialVertex);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 static void shrink_vertexes (Vertexes &vertexes, float distance)
 {
-        btAlignedObjectArray<btVector3> planes;
-        btGeometryUtil::getPlaneEquationsFromVertices(vertexes, planes);
+        std::vector<PlaneEquation> planes;
+        getPlaneEquationsFromVertices(vertexes, planes);
         int sz = planes.size();
         for (int i=0 ; i<sz ; ++i) {
-                planes[i][3] += distance;
+                planes[i].d += distance;
         }
         vertexes.clear();
-        btGeometryUtil::getVerticesFromPlaneEquations(planes, vertexes);
+        getVerticesFromPlaneEquations(planes, vertexes);
 }
 
 template <typename T>
@@ -366,7 +509,7 @@ static inline T &vecnext (std::vector<T> &vec)
         return vec[sz]; // and return reference to it
 }
 
-static void parse_hull (const Ogre::String &name,
+static void parse_hull (const std::string &name,
                         quex::TColLexer* qlex,
                         Hull &hull,
                         const PhysicsWorld &world)
@@ -432,7 +575,7 @@ static void parse_hull (const Ogre::String &name,
 }
 
 
-static void parse_box (const Ogre::String &name,
+static void parse_box (const std::string &name,
                        quex::TColLexer* qlex,
                        Box &box,
                        const PhysicsWorld &world)
@@ -505,7 +648,7 @@ static void parse_box (const Ogre::String &name,
 }
 
 
-static void parse_cylinder (const Ogre::String &name,
+static void parse_cylinder (const std::string &name,
                             quex::TColLexer* qlex,
                             Cylinder &cylinder,
                             const PhysicsWorld &world)
@@ -578,7 +721,7 @@ static void parse_cylinder (const Ogre::String &name,
 }
 
 
-static void parse_cone (const Ogre::String &name,
+static void parse_cone (const std::string &name,
                         quex::TColLexer* qlex,
                         Cone &cone,
                         const PhysicsWorld &world)
@@ -659,7 +802,7 @@ static void parse_cone (const Ogre::String &name,
 }
 
 
-static void parse_plane (const Ogre::String &name,
+static void parse_plane (const std::string &name,
                          quex::TColLexer* qlex,
                          Plane &plane,
                          const PhysicsWorld &world)
@@ -680,7 +823,7 @@ static void parse_plane (const Ogre::String &name,
 }
 
 
-static void parse_sphere (const Ogre::String &name,
+static void parse_sphere (const std::string &name,
                           quex::TColLexer* qlex,
                           Sphere &sphere,
                           const PhysicsWorld &world)
@@ -701,7 +844,7 @@ static void parse_sphere (const Ogre::String &name,
 }
 
 
-static void parse_compound_shape (const Ogre::String &name,
+static void parse_compound_shape (const std::string &name,
                                   quex::TColLexer* qlex,
                                   Compound &compound,
                                   const PhysicsWorld &world)
@@ -749,7 +892,7 @@ static void parse_compound_shape (const Ogre::String &name,
 }
 
 
-static void parse_faces (const Ogre::String &name,
+static void parse_faces (const std::string &name,
                          quex::TColLexer* qlex,
                          size_t num_vertexes,
                          Faces &faces,
@@ -783,7 +926,7 @@ static void parse_faces (const Ogre::String &name,
 
 }
 
-static void parse_static_trimesh_shape (const Ogre::String &name,
+static void parse_static_trimesh_shape (const std::string &name,
                                         quex::TColLexer* qlex,
                                         TriMesh &triMesh,
                                         const PhysicsWorld &world)
@@ -805,7 +948,7 @@ static void parse_static_trimesh_shape (const Ogre::String &name,
 }
 
 
-static void parse_dynamic_trimesh_shape (const Ogre::String &name,
+static void parse_dynamic_trimesh_shape (const std::string &name,
                                          quex::TColLexer* qlex,
                                          TriMesh &triMesh,
                                          const PhysicsWorld &world)
@@ -841,7 +984,7 @@ static void parse_dynamic_trimesh_shape (const Ogre::String &name,
 }
 
 
-void parse_tcol_1_0 (const Ogre::String &name,
+void parse_tcol_1_0 (const std::string &name,
                      quex::TColLexer* qlex,
                      TColFile &file,
                      const PhysicsWorld &world)
@@ -1002,10 +1145,9 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
                         o<<in<<"\t\t"<<"margin "<<h.margin<<";\n";
                 }
                 o<<in<<"\t\t"<<"vertexes {\n";
-                for (int j=0 ; j<h.vertexes.size() ; ++j) {
-                        btVector3 &v = h.vertexes[j];
-                        o<<in<<"\t\t\t"<<v.x()<<" "<<v.y()
-                                       <<" "<<v.z()<<";"<<"\n";
+                for (unsigned j=0 ; j<h.vertexes.size() ; ++j) {
+                        Vector3 &v = h.vertexes[j];
+                        o<<in<<"\t\t\t"<<v.x<<" "<<v.y<<" "<<v.z<<";"<<"\n";
                 }
                 o<<in<<"\t\t"<<"}\n";
                 o<<in<<"\t"<<"}\n";
@@ -1128,13 +1270,13 @@ void pretty_print_tcol (std::ostream &os, TColFile &f)
         if (f.usingTriMesh) {
                 o << "trimesh {\n";
                 o << "\tvertexes {\n";
-                for (int i=0 ; i<f.triMesh.vertexes.size() ; ++i) {
-                        btVector3 &v = f.triMesh.vertexes[i];
-                        o<<"\t\t"<<v.x()<<" "<<v.y()<<" "<<v.z()<<";"<<"\n";
+                for (unsigned i=0 ; i<f.triMesh.vertexes.size() ; ++i) {
+                        Vector3 &v = f.triMesh.vertexes[i];
+                        o<<"\t\t"<<v.x<<" "<<v.y<<" "<<v.z<<";"<<"\n";
                 }
                 o << "\t}\n";
                 o << "\tfaces {\n";
-                for (size_t i=0 ; i<f.triMesh.faces.size() ; ++i) {
+                for (unsigned i=0 ; i<f.triMesh.faces.size() ; ++i) {
                         Face &face = f.triMesh.faces[i];
                         o<<"\t\t"<<face.v1<<" "<<face.v2<<" "<<face.v3<<" "
                          <<std::hex<<"0x"<<face.material<<std::dec<<";"<<"\n";

@@ -167,9 +167,9 @@ class CacheFriendlyRangeSpace {
                 o->updateIndex(index);
         }
 
-        inline void updateSphere (size_t index, Ogre::Real x,
-                                  Ogre::Real y, Ogre::Real z,
-                                  Ogre::Real d)
+        inline void updateSphere (size_t index, float x,
+                                  float y, float z,
+                                  float d)
         {
                 positions[index].updateAll(x,y,z,d);
         }
@@ -188,11 +188,11 @@ class CacheFriendlyRangeSpace {
                         < diff.d() * factor2;
         }
 
-        void getPresent (const Ogre::Real x,
-                         const Ogre::Real y,
-                         const Ogre::Real z,
+        void getPresent (const float x,
+                         const float y,
+                         const float z,
                          size_t num,
-                         const Ogre::Real factor,
+                         const float factor,
                          Cargo &found)
         {
                 if (num==0) return;

@@ -70,7 +70,7 @@ void BackgroundMeshLoader::add (Demand *d)
 /*
         std::stringstream ss;
         ss << "adding demand: \""<<d->mMeshName<<"\" {";
-        typedef std::set<Ogre::String>::const_iterator I;
+        typedef std::set<std::string>::const_iterator I;
         I begin = d->mMatNames.begin();
         I end = d->mMatNames.end();
         for (I i=begin ; i!=end ; ++i) {
@@ -170,14 +170,14 @@ void BackgroundMeshLoader::operator() (void)
 bool BackgroundMeshLoader::nearestDemand (Demand * volatile &return_demand)
 {
 
-        Ogre::Real closest_dist = 0;
+        float closest_dist = 0;
         bool found = false;
 
         for (Demands::const_iterator i=mDemands.begin(),
                                      i_=mDemands.end()  ; i!=i_ ; ++i) {
                 Demand *d = *i;      
                 
-                Ogre::Real this_dist = (*i)->mDist;
+                float this_dist = (*i)->mDist;
                 
                 if (!found || this_dist<closest_dist) {
                         found = true;
@@ -191,7 +191,7 @@ bool BackgroundMeshLoader::nearestDemand (Demand * volatile &return_demand)
 
 }
 
-void BackgroundMeshLoader::setAllowance (Ogre::Real m)
+void BackgroundMeshLoader::setAllowance (float m)
 {
         OGRE_LOCK_AUTO_MUTEX
         mAllowance = std::max(mAllowance+m, m);

@@ -85,7 +85,7 @@ void Streamer::setPhysics (lua_State *L, const PhysicsWorldPtr &physics)
 
 
 
-GritClass *Streamer::addClass (lua_State *L, const Ogre::String& name)
+GritClass *Streamer::addClass (lua_State *L, const std::string& name)
 {
         GritClass *gcp;
         GritClassMap::iterator i = classes.find(name);
@@ -106,7 +106,7 @@ GritClass *Streamer::addClass (lua_State *L, const Ogre::String& name)
         return gcp;
 }
 
-GritClass *Streamer::getClass (const Ogre::String &name)
+GritClass *Streamer::getClass (const std::string &name)
 {
         GritClassMap::iterator i = classes.find(name);
         if (i==classes.end())
@@ -117,7 +117,7 @@ GritClass *Streamer::getClass (const Ogre::String &name)
 }
 
 
-void Streamer::eraseClass (const Ogre::String &name)
+void Streamer::eraseClass (const std::string &name)
 {
         // anything using this class keeps using it
         classes.erase(name);
@@ -130,7 +130,7 @@ void Streamer::eraseClass (const Ogre::String &name)
 
 GritObjectPtr Streamer::addObject (
         lua_State *L,
-        Ogre::String name,
+        std::string name,
         GritClass *grit_class)
 {
         (void) L; // may need this again some day
@@ -169,7 +169,7 @@ GritObjectPtr Streamer::addObject (
 
 
 
-const GritObjectPtr &Streamer::getObject (const Ogre::String &name)
+const GritObjectPtr &Streamer::getObject (const std::string &name)
 {
         GObjMap::iterator i = gObjs.find(name);
         if (i==gObjs.end())
@@ -184,7 +184,7 @@ const GritObjectPtr &Streamer::getObject (const Ogre::String &name)
 
 // don't call this function directly since the object won't be deactivated
 // call deleteObject instead
-void Streamer::eraseObject (const Ogre::String &name)
+void Streamer::eraseObject (const std::string &name)
 {
         GObjMap::iterator i = gObjs.find(name);
         if (i==gObjs.end()) 
@@ -214,7 +214,7 @@ void Streamer::deleteObject (lua_State *L, const GritObjectPtr &o)
         eraseObject(o->name);
 }
 
-void Streamer::frameCallbacks (lua_State *L, Ogre::Real elapsed)
+void Streamer::frameCallbacks (lua_State *L, float elapsed)
 {
         GObjPtrs victims = needFrameCallbacks;
         typedef GObjPtrs::iterator I;
@@ -235,14 +235,14 @@ void Streamer::setNeedsFrameCallbacks (const GritObjectPtr & ptr, bool v)
         }
 }
 
-void Streamer::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
+void Streamer::centre (lua_State *L, float x, float y, float z)
 {
         Space::Cargo fnd = fresh;
         fresh.clear();
 
-        const Ogre::Real pF = prepareDistanceFactor;
-        const Ogre::Real tpF = pF * visibility; // prepare and visibility factors
-        const Ogre::Real vis2 = visibility * visibility;
+        const float pF = prepareDistanceFactor;
+        const float tpF = pF * visibility; // prepare and visibility factors
+        const float vis2 = visibility * visibility;
 
         typedef GObjPtrs::iterator I;
 
@@ -258,13 +258,13 @@ void Streamer::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
         for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = *i;
                  //note we use vis2 not visibility
-                Ogre::Real range2 = o->range2(x,y,z) / vis2;
+                float range2 = o->range2(x,y,z) / vis2;
                 o->notifyRange2(L,o,range2);
                 if (!o->getFar().isNull()) {
                         // update the far (perhaps for a second time this frame)
                         // to make sure it has picked up the fade imposed by o
                         const GritObjectPtr &f = o->getFar();
-                        Ogre::Real range2 = f->range2(x,y,z) / vis2;
+                        float range2 = f->range2(x,y,z) / vis2;
                         f->notifyRange2(L,f,range2);
                 }
                 if (range2 > 1) {
@@ -329,7 +329,7 @@ void Streamer::centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z)
 
                 if (!o->backgroundPrepareComplete()) continue;
 
-                Ogre::Real range2 = o->range2(x,y,z) / vis2;
+                float range2 = o->range2(x,y,z) / vis2;
                 // not in range yet
                 if (range2 > 1) continue;
 

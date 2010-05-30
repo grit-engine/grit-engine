@@ -1318,12 +1318,12 @@ TRY_START
         Ogre::Pass *p = mat_get_pass(L);
         bool override = check_bool(L,4);
         Ogre::FogMode fm = fog_mode_from_string(L,luaL_checkstring(L,5));
-        Ogre::Real r = luaL_checknumber(L,6);
-        Ogre::Real g = luaL_checknumber(L,7);
-        Ogre::Real b = luaL_checknumber(L,8);
-        Ogre::Real density = luaL_checknumber(L,9);
-        Ogre::Real start = luaL_checknumber(L,10);
-        Ogre::Real end = luaL_checknumber(L,11);
+        float r = luaL_checknumber(L,6);
+        float g = luaL_checknumber(L,7);
+        float b = luaL_checknumber(L,8);
+        float density = luaL_checknumber(L,9);
+        float start = luaL_checknumber(L,10);
+        float end = luaL_checknumber(L,11);
         p->setFog(override,fm,Ogre::ColourValue(r,g,b),density,start,end);
         return 0;
 TRY_END
@@ -1380,15 +1380,15 @@ TRY_START
                         Ogre::Pass *p = mat_get_pass(L);
                         if (!p->hasFragmentProgram())
                                 my_lua_error(L,"This pass does not have a fragment program.");
-                        Ogre::String name = luaL_checkstring(L,4);
-                        Ogre::Real v = luaL_checknumber(L,5);
+                        std::string name = luaL_checkstring(L,4);
+                        float v = luaL_checknumber(L,5);
                         p->getFragmentProgramParameters()->setNamedConstant(name,v);
                 } break;
                 case 3+1+3: {
                         Ogre::Pass *p = mat_get_pass(L);
                         if (!p->hasFragmentProgram())
                                 my_lua_error(L,"This pass does not have a fragment program.");
-                        Ogre::String name = luaL_checkstring(L,4);
+                        std::string name = luaL_checkstring(L,4);
                         Ogre::Vector3 v;
                         v.x = luaL_checknumber(L,5);
                         v.y = luaL_checknumber(L,6);
@@ -1399,7 +1399,7 @@ TRY_START
                         Ogre::Pass *p = mat_get_pass(L);
                         if (!p->hasFragmentProgram())
                                 my_lua_error(L,"This pass does not have a fragment program.");
-                        Ogre::String name = luaL_checkstring(L,4);
+                        std::string name = luaL_checkstring(L,4);
                         Ogre::Vector4 v;
                         v.x = luaL_checknumber(L,5);
                         v.y = luaL_checknumber(L,6);
@@ -1424,15 +1424,15 @@ TRY_START
                         Ogre::Pass *p = mat_get_pass(L);
                         if (!p->hasVertexProgram())
                                 my_lua_error(L,"This pass does not have a vertex program.");
-                        Ogre::String name = luaL_checkstring(L,4);
-                        Ogre::Real v = luaL_checknumber(L,5);
+                        std::string name = luaL_checkstring(L,4);
+                        float v = luaL_checknumber(L,5);
                         p->getVertexProgramParameters()->setNamedConstant(name,v);
                 } break;
                 case 3+1+3: {
                         Ogre::Pass *p = mat_get_pass(L);
                         if (!p->hasVertexProgram())
                                 my_lua_error(L,"This pass does not have a vertex program.");
-                        Ogre::String name = luaL_checkstring(L,4);
+                        std::string name = luaL_checkstring(L,4);
                         Ogre::Vector3 v;
                         v.x = luaL_checknumber(L,5);
                         v.y = luaL_checknumber(L,6);
@@ -1443,7 +1443,7 @@ TRY_START
                         Ogre::Pass *p = mat_get_pass(L);
                         if (!p->hasVertexProgram())
                                 my_lua_error(L,"This pass does not have a vertex program.");
-                        Ogre::String name = luaL_checkstring(L,4);
+                        std::string name = luaL_checkstring(L,4);
                         Ogre::Vector4 v;
                         v.x = luaL_checknumber(L,5);
                         v.y = luaL_checknumber(L,6);
@@ -1666,8 +1666,8 @@ TRY_START
         Ogre::LayerBlendOperationEx op=lbo_from_string(L,luaL_checkstring(L,5));
         Ogre::LayerBlendSource s1 = lbs_from_string(L,luaL_checkstring(L,6));
         Ogre::LayerBlendSource s2 = lbs_from_string(L,luaL_checkstring(L,7));
-        Ogre::Real a1 = luaL_checknumber(L,9);
-        Ogre::Real a2 = luaL_checknumber(L,10);
+        float a1 = luaL_checknumber(L,9);
+        float a2 = luaL_checknumber(L,10);
         tex->setAlphaOperation(op,s1,s2,a1,a2,luaL_checknumber(L,8));
         return 0;
 TRY_END
@@ -1714,8 +1714,8 @@ static int mat_set_texture_scroll (lua_State *L)
 TRY_START
         check_args(L,4+2);
         Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
-        Ogre::Real u = luaL_checknumber(L,5);
-        Ogre::Real v = luaL_checknumber(L,6);
+        float u = luaL_checknumber(L,5);
+        float v = luaL_checknumber(L,6);
         tex->setTextureScroll(u,v);
         return 0;
 TRY_END
@@ -1737,8 +1737,8 @@ static int mat_set_texture_scale (lua_State *L)
 TRY_START
         check_args(L,4+2);
         Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
-        Ogre::Real u = luaL_checknumber(L,5);
-        Ogre::Real v = luaL_checknumber(L,6);
+        float u = luaL_checknumber(L,5);
+        float v = luaL_checknumber(L,6);
         tex->setTextureScale(u,v);
         return 0;
 TRY_END

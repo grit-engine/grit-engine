@@ -30,7 +30,7 @@
 
 // Sweep Callback {{{
 
-struct SweepResult { RigidBody *rb; float dist; Ogre::Vector3 n; int material; };
+struct SweepResult { RigidBody *rb; float dist; Vector3 n; int material; };
 typedef std::vector<SweepResult> SweepResults;
 
 class LuaSweepCallback : public PhysicsWorld::SweepCallback {
@@ -38,7 +38,7 @@ class LuaSweepCallback : public PhysicsWorld::SweepCallback {
         LuaSweepCallback (bool ignore_dynamic)
               : ignoreDynamic(ignore_dynamic)
         { }
-        virtual void result (RigidBody &rb, float dist, const Ogre::Vector3 &n, int m) {
+        virtual void result (RigidBody &rb, float dist, const Vector3 &n, int m) {
                 if (ignoreDynamic && rb.getMass()>0) return;
                 if (blacklist.find(&rb) != blacklist.end()) return;
                 SweepResult r;
@@ -74,10 +74,10 @@ TRY_START
         check_args(L,3+3*NUM_TYPE_ARGS);
         GET_UD_MACRO(CollisionMeshPtr,self,1,COLMESH_TAG);
         CollisionMesh::ScatterOptions o;
-        GET_UD_MACRO(Ogre::Vector3,v,2,VECTOR3_TAG);
-        GET_UD_MACRO(Ogre::Quaternion,q,3,QUAT_TAG);
-        o.worldTrans.setOrigin(to_bullet(v));
-        o.worldTrans.setRotation(to_bullet(q));
+        GET_UD_MACRO(Vector3,v,2,VECTOR3_TAG);
+        GET_UD_MACRO(Quaternion,q,3,QUAT_TAG);
+        o.worldTrans.p = v;
+        o.worldTrans.r = q;
         for (int i=0 ; i<3; ++i) {
                 o.density[i]      = luaL_checknumber(L,4+i*NUM_TYPE_ARGS+0);
                 o.minElevation[i] = luaL_checknumber(L,4+i*NUM_TYPE_ARGS+1);
@@ -87,26 +87,26 @@ TRY_START
                 o.noFloor[i]      = check_bool(L,4+i*NUM_TYPE_ARGS+5);
                 o.rotate[i]       = check_bool(L,4+i*NUM_TYPE_ARGS+6);
         }
-        std::vector<btTransform> r[3];
+        std::vector<Transform> r[3];
         self->scatter(o, r);
         for (int i=0 ; i<3 ; ++i) {
                 lua_newtable(L);
                 for (size_t j=0 ; j<r[i].size(); ++j) {
-                        btQuaternion q = r[i][j].getRotation();
-                        btVector3 p = r[i][j].getOrigin();
-                        lua_pushnumber(L, p.x());
+                        const Quaternion &q = r[i][j].r;
+                        const Vector3 &p = r[i][j].p;
+                        lua_pushnumber(L, p.x);
                         lua_rawseti(L,-2,7*j+0+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, p.y());
+                        lua_pushnumber(L, p.y);
                         lua_rawseti(L,-2,7*j+1+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, p.z());
+                        lua_pushnumber(L, p.z);
                         lua_rawseti(L,-2,7*j+2+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, q.w());
+                        lua_pushnumber(L, q.w);
                         lua_rawseti(L,-2,7*j+3+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, q.x());
+                        lua_pushnumber(L, q.x);
                         lua_rawseti(L,-2,7*j+4+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, q.y());
+                        lua_pushnumber(L, q.y);
                         lua_rawseti(L,-2,7*j+5+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, q.z());
+                        lua_pushnumber(L, q.z);
                         lua_rawseti(L,-2,7*j+6+LUA_ARRAY_BASE);
                 }
         }
@@ -239,13 +239,13 @@ TRY_START
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
                 GET_V3(force,2);
                 GET_V3(rel_pos,5);
-                const Ogre::Vector3 &pos = self->getPosition();
+                const Vector3 &pos = self->getPosition();
                 self->force(force,rel_pos-pos);
         } else if (lua_gettop(L)==4) {
                 // local
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-                GET_UD_MACRO(Ogre::Vector3,force,2,VECTOR3_TAG);
-                GET_UD_MACRO(Ogre::Vector3,rel_pos,3,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,force,2,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,rel_pos,3,VECTOR3_TAG);
                 bool world_orientation = check_bool(L,4);
                 if (world_orientation) {
                         self->force(force,rel_pos);
@@ -254,14 +254,14 @@ TRY_START
                 }
         } else if (lua_gettop(L)==3) {
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-                GET_UD_MACRO(Ogre::Vector3,force,2,VECTOR3_TAG);
-                GET_UD_MACRO(Ogre::Vector3,wpos,3,VECTOR3_TAG);
-                const Ogre::Vector3 &pos = self->getPosition();
+                GET_UD_MACRO(Vector3,force,2,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,wpos,3,VECTOR3_TAG);
+                const Vector3 &pos = self->getPosition();
                 self->force(force,wpos-pos);
         } else {
                 check_args(L,2);
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-                GET_UD_MACRO(Ogre::Vector3,force,2,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,force,2,VECTOR3_TAG);
                 self->force(force);
         }
         return 0;
@@ -279,8 +279,8 @@ TRY_START
         } else if (lua_gettop(L)==4) {
                 // local
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-                GET_UD_MACRO(Ogre::Vector3,impulse,2,VECTOR3_TAG);
-                GET_UD_MACRO(Ogre::Vector3,rel_pos,3,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,impulse,2,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,rel_pos,3,VECTOR3_TAG);
                 bool world_orientation = check_bool(L,4);
                 if (world_orientation) {
                         self->impulse(impulse,rel_pos);
@@ -289,14 +289,14 @@ TRY_START
                 }
         } else if (lua_gettop(L)==3) {
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-                GET_UD_MACRO(Ogre::Vector3,impulse,2,VECTOR3_TAG);
-                GET_UD_MACRO(Ogre::Vector3,wpos,3,VECTOR3_TAG);
-                const Ogre::Vector3 &pos = self->getPosition();
+                GET_UD_MACRO(Vector3,impulse,2,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,wpos,3,VECTOR3_TAG);
+                const Vector3 &pos = self->getPosition();
                 self->impulse(impulse,wpos - pos);
         } else {
                 check_args(L,2);
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-                GET_UD_MACRO(Ogre::Vector3,impulse,2,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,impulse,2,VECTOR3_TAG);
                 self->impulse(impulse);
         }
         return 0;
@@ -356,7 +356,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         int i = check_int(L, 2, 0, self->getNumElements()-1);
-        Ogre::Vector3 v = self->getElementPositionMaster(i);
+        Vector3 v = self->getElementPositionMaster(i);
         lua_pushnumber(L,v.x); lua_pushnumber(L,v.y); lua_pushnumber(L,v.z);
         return 3;
 TRY_END
@@ -368,7 +368,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         int i = check_int(L, 2, 0, self->getNumElements()-1);
-        Ogre::Vector3 v = self->getElementPositionOffset(i);
+        Vector3 v = self->getElementPositionOffset(i);
         lua_pushnumber(L,v.x); lua_pushnumber(L,v.y); lua_pushnumber(L,v.z);
         return 3;
 TRY_END
@@ -383,7 +383,7 @@ TRY_START
         lua_Number x = luaL_checknumber(L,3);
         lua_Number y = luaL_checknumber(L,4);
         lua_Number z = luaL_checknumber(L,5);
-        self->setElementPositionOffset(i, Ogre::Vector3(x,y,z));
+        self->setElementPositionOffset(i, Vector3(x,y,z));
         return 0;
 TRY_END
 }
@@ -394,7 +394,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         int i = check_int(L, 2, 0, self->getNumElements()-1);
-        Ogre::Quaternion q = self->getElementOrientationMaster(i);
+        Quaternion q = self->getElementOrientationMaster(i);
         lua_pushnumber(L,q.w); lua_pushnumber(L,q.x); lua_pushnumber(L,q.y); lua_pushnumber(L,q.z);
         return 4;
 TRY_END
@@ -406,7 +406,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         int i = check_int(L, 2, 0, self->getNumElements()-1);
-        Ogre::Quaternion q = self->getElementOrientationOffset(i);
+        Quaternion q = self->getElementOrientationOffset(i);
         lua_pushnumber(L,q.w); lua_pushnumber(L,q.x); lua_pushnumber(L,q.y); lua_pushnumber(L,q.z);
         return 4;
 TRY_END
@@ -422,7 +422,7 @@ TRY_START
         lua_Number x = luaL_checknumber(L,4);
         lua_Number y = luaL_checknumber(L,5);
         lua_Number z = luaL_checknumber(L,6);
-        self->setElementOrientationOffset(i, Ogre::Quaternion(w,x,y,z));
+        self->setElementOrientationOffset(i, Quaternion(w,x,y,z));
         return 0;
 TRY_END
 }
@@ -437,7 +437,7 @@ TRY_START
         lua_Number x = luaL_checknumber(L,4);
         lua_Number y = luaL_checknumber(L,5);
         lua_Number z = luaL_checknumber(L,6);
-        self->setElementOrientationOffset(i,Ogre::Quaternion(Ogre::Degree(a),Ogre::Vector3(x,y,z)));
+        self->setElementOrientationOffset(i,Quaternion(Degree(a),Vector3(x,y,z)));
         return 0;
 TRY_END
 }
@@ -449,7 +449,7 @@ static void push_sweep_result (lua_State *L, const SweepResult &r, float len,
         lua_pushnumber(L,r.dist * len);
         push_rbody(L,r.rb->getPtr());
         // normal is documented as being object space but is actually world space
-        Ogre::Vector3 normal = /*r.rb->getOrientation()* */r.n.normalisedCopy();
+        Vector3 normal = /*r.rb->getOrientation()* */r.n.normalisedCopy();
         PUT_V3(normal);
         lua_pushstring(L, world.getMaterial(r.material).name.c_str());
 }
@@ -479,10 +479,10 @@ TRY_START
                 col_mesh = &col_mesh_;
         }
 
-        Ogre::Vector3 start, end;
+        Vector3 start, end;
         {
-                GET_UD_MACRO(Ogre::Vector3,start_,3,VECTOR3_TAG);
-                GET_UD_MACRO(Ogre::Vector3,end_,4,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,start_,3,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,end_,4,VECTOR3_TAG);
                 start = start_;
                 end = end_;
         }
@@ -496,14 +496,14 @@ TRY_START
         }
 
         int base_line = 5;
-        Ogre::Quaternion startq(1,0,0,0);
-        Ogre::Quaternion endq(1,0,0,0);
+        Quaternion startq(1,0,0,0);
+        Quaternion endq(1,0,0,0);
 
         if (col_mesh) {
                 check_args_min(L,9);
                 base_line += 2;
-                GET_UD_MACRO(Ogre::Quaternion,startq_,6,QUAT_TAG);
-                GET_UD_MACRO(Ogre::Quaternion,endq_,7,QUAT_TAG);
+                GET_UD_MACRO(Quaternion,startq_,6,QUAT_TAG);
+                GET_UD_MACRO(Quaternion,endq_,7,QUAT_TAG);
                 startq = startq_;
                 endq = endq_;
         }
@@ -559,7 +559,7 @@ static int rbody_world_position_xyz (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        const Ogre::Vector3 &v = self->getPosition();
+        const Vector3 &v = self->getPosition();
         lua_pushnumber(L,v.x);
         lua_pushnumber(L,v.y);
         lua_pushnumber(L,v.z);
@@ -573,7 +573,7 @@ static int rbody_world_orientation_wxyz (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        const Ogre::Quaternion &q = self->getOrientation();
+        const Quaternion &q = self->getOrientation();
         lua_pushnumber(L,q.w);
         lua_pushnumber(L,q.x);
         lua_pushnumber(L,q.y);
@@ -589,14 +589,14 @@ TRY_START
         if (lua_gettop(L)==4) {
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
                 GET_V3(a,2);
-                Ogre::Vector3 result = self->getOrientation() * a;
+                Vector3 result = self->getOrientation() * a;
                 PUT_V3(result);
                 return 3;
         } else {
                 check_args(L,5);
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
                 GET_QUAT(a,2);
-                Ogre::Quaternion result = self->getOrientation() * a;
+                Quaternion result = self->getOrientation() * a;
                 PUT_QUAT(result);
                 return 4;
         }
@@ -609,14 +609,14 @@ TRY_START
         if (lua_gettop(L)==4) {
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
                 GET_V3(a,2);
-                Ogre::Vector3 result = self->getOrientation().Inverse() * a;
+                Vector3 result = self->getOrientation().inverse() * a;
                 PUT_V3(result);
                 return 3;
         } else {
                 check_args(L,5);
                 GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
                 GET_QUAT(a,2);
-                Ogre::Quaternion result = self->getOrientation().Inverse() * a;
+                Quaternion result = self->getOrientation().inverse() * a;
                 PUT_QUAT(result);
                 return 4;
         }
@@ -629,7 +629,7 @@ TRY_START
         check_args(L,4);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         GET_V3(a,2);
-        Ogre::Vector3 result = self->getPosition() + self->getOrientation() * a;
+        Vector3 result = self->getPosition() + self->getOrientation() * a;
         PUT_V3(result);
         return 3;
 TRY_END
@@ -641,7 +641,7 @@ TRY_START
         check_args(L,4);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         GET_V3(a,2);
-        Ogre::Vector3 result = self->getOrientation().Inverse() * (a - self->getPosition());
+        Vector3 result = self->getOrientation().inverse() * (a - self->getPosition());
         PUT_V3(result);
         return 3;
 TRY_END
@@ -653,9 +653,9 @@ static int rbody_local_pos (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        GET_UD_MACRO(Ogre::Vector3,local_pos,2,VECTOR3_TAG);
-        Ogre::Vector3 result = self->getPosition() + self->getOrientation() * local_pos;
-        push(L, new Ogre::Vector3(result), VECTOR3_TAG);
+        GET_UD_MACRO(Vector3,local_pos,2,VECTOR3_TAG);
+        Vector3 result = self->getPosition() + self->getOrientation() * local_pos;
+        push(L, new Vector3(result), VECTOR3_TAG);
         return 1;
 TRY_END
 }
@@ -710,11 +710,11 @@ TRY_START
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         GET_V3(pos,2);
         bool world_space = check_bool(L,5);
-        Ogre::Vector3 local_pos = pos;
+        Vector3 local_pos = pos;
         if (world_space) {
                 local_pos -= self->getPosition();
         }
-        Ogre::Vector3 local_vel = self->getLocalVelocity(local_pos);
+        Vector3 local_vel = self->getLocalVelocity(local_pos);
         PUT_V3(local_vel);
         return 3;
 TRY_END
@@ -789,11 +789,11 @@ TRY_START
                 lua_pushnumber(L,self->getAngularSleepThreshold());
 
         } else if (!::strcmp(key,"worldPosition")) {
-                push(L, new Ogre::Vector3(self->getPosition()), VECTOR3_TAG);
+                push(L, new Vector3(self->getPosition()), VECTOR3_TAG);
         } else if (!::strcmp(key,"getWorldPositionXYZ")) {
                 push_cfunction(L,rbody_world_position_xyz);
         } else if (!::strcmp(key,"worldOrientation")) {
-                push(L, new Ogre::Quaternion(self->getOrientation()), QUAT_TAG);
+                push(L, new Quaternion(self->getOrientation()), QUAT_TAG);
         } else if (!::strcmp(key,"getWorldOrientationWXYZ")) {
                 push_cfunction(L,rbody_world_orientation_wxyz);
 
@@ -815,10 +815,10 @@ TRY_START
         } else if (!::strcmp(key,"setLinearVelocity")) {
                 push_cfunction(L,rbody_set_linear_velocity);
         } else if (!::strcmp(key,"linearVelocity")) {
-                push(L, new Ogre::Vector3(self->getLinearVelocity()),
+                push(L, new Vector3(self->getLinearVelocity()),
                         VECTOR3_TAG);
         } else if (!::strcmp(key,"angularVelocity")) {
-                push(L, new Ogre::Vector3(self->getAngularVelocity()),
+                push(L, new Vector3(self->getAngularVelocity()),
                         VECTOR3_TAG);
         } else if (!::strcmp(key,"getLocalPosition")) {
                 push_cfunction(L,rbody_local_pos);
@@ -836,7 +836,7 @@ TRY_START
         } else if (!::strcmp(key,"mass")) {
                 lua_pushnumber(L,self->getMass());
         } else if (!::strcmp(key,"inertia")) {
-                push(L,new Ogre::Vector3(self->getInertia()),VECTOR3_TAG);
+                push(L,new Vector3(self->getInertia()),VECTOR3_TAG);
 
         } else if (!::strcmp(key,"numParts")) {
                 lua_pushnumber(L, self->getNumElements());
@@ -891,16 +891,16 @@ TRY_START
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         const char *key = luaL_checkstring(L,2);
         if (!::strcmp(key,"linearVelocity")) {
-                GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
                 self->setLinearVelocity(v);
         } else if (!::strcmp(key,"angularVelocity")) {
-                GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
                 self->setAngularVelocity(v);
         } else if (!::strcmp(key,"worldPosition")) {
-                GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
                 self->setPosition(v);
         } else if (!::strcmp(key,"worldOrientation")) {
-                GET_UD_MACRO(Ogre::Quaternion,v,3,QUAT_TAG);
+                GET_UD_MACRO(Quaternion,v,3,QUAT_TAG);
                 self->setOrientation(v);
         } else if (!::strcmp(key,"contactProcessingThreshold")) {
                 float v = luaL_checknumber(L,3);
@@ -927,7 +927,7 @@ TRY_START
         } else if (!::strcmp(key,"stabiliseCallback")) {
                 self->setStabiliseCallback(L);
         } else if (!::strcmp(key,"inertia")) {
-                GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
                 self->setInertia(v);
         } else if (!::strcmp(key,"owner")) {
                 if (lua_isnil(L,3)) {
@@ -1030,7 +1030,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
         CollisionMeshPtr cmp;
-        Ogre::String name = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,2);
         cmp = self->createFromFile(name);
         push_colmesh(L,cmp);
         return 1;
@@ -1044,7 +1044,7 @@ static int pworld_get_mesh (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,2);
         CollisionMeshPtr cmp = self->getMesh(name);
         push_colmesh(L,cmp);
         return 1;
@@ -1058,7 +1058,7 @@ static int pworld_remove_mesh (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,2);
         self->deleteMesh(name);
         return 0;
 TRY_END
@@ -1071,7 +1071,7 @@ static int pworld_reload_mesh_by_name (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,2);
         CollisionMeshPtr cmp = self->getMesh(name);
         cmp->reload(*self);
         return 0;
@@ -1094,7 +1094,7 @@ static int pworld_has_mesh (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,2);
         lua_pushboolean(L,self->hasMesh(name));
         return 1;
 TRY_END
@@ -1140,14 +1140,14 @@ TRY_START
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
         CollisionMeshPtr cmp;
         if (lua_type(L,2) == LUA_TSTRING) {
-                Ogre::String n = luaL_checkstring(L,2);
+                std::string n = luaL_checkstring(L,2);
                 cmp = self->getMesh(n);
         } else {
                 GET_UD_MACRO(CollisionMeshPtr,cmp2,2,COLMESH_TAG);
                 cmp = cmp2;
         }
-        GET_UD_MACRO(Ogre::Vector3,pos,3,VECTOR3_TAG);
-        GET_UD_MACRO(Ogre::Quaternion,quat,4,QUAT_TAG);
+        GET_UD_MACRO(Vector3,pos,3,VECTOR3_TAG);
+        GET_UD_MACRO(Quaternion,quat,4,QUAT_TAG);
         RigidBodyPtr rbp = (new RigidBody(self,cmp,pos,quat))->getPtr();
         push_rbody(L,rbp);
         return 1;
@@ -1159,7 +1159,7 @@ static int pworld_set_material (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,2);
         float friction = (float)luaL_checknumber(L,3);
         float restitution = (float)luaL_checknumber(L,4);
         self->setMaterial(name, friction, restitution);
@@ -1172,7 +1172,7 @@ static int pworld_get_material (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        Ogre::String name = luaL_checkstring(L,2);
+        std::string name = luaL_checkstring(L,2);
         const PhysicsMaterial &m = self->getMaterial(name);
         lua_pushnumber(L, m.friction);
         lua_pushnumber(L, m.restitution);
@@ -1227,7 +1227,7 @@ TRY_START
         } else if (!::strcmp(key,"addRigidBody")) {
                 push_cfunction(L,pworld_add_rigid_body);
         } else if (!::strcmp(key,"gravity")) {
-                push(L,new Ogre::Vector3(self->getGravity()),VECTOR3_TAG);
+                push(L,new Vector3(self->getGravity()),VECTOR3_TAG);
         } else if (!::strcmp(key,"setGravity")) {
                 push_cfunction(L,pworld_set_gravity);
         } else if (!::strcmp(key,"getGravity")) {
@@ -1296,7 +1296,7 @@ TRY_START
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
         const char *key = luaL_checkstring(L,2);
         if (!::strcmp(key,"gravity")) {
-                GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
                 self->setGravity(v);
         } else if (!::strcmp(key,"maxSteps")) {
                 int v = check_t<int>(L,3);

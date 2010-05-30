@@ -112,7 +112,7 @@ namespace HUD {
                 return getMe()->isVisible();
         }
 
-        Ogre::String Tree::nextName() {
+        std::string Tree::nextName() {
                 std::stringstream ss;
                 ss << counter++;
                 return ss.str();
@@ -179,7 +179,7 @@ namespace HUD {
                 return children;
         }
 
-        TreePtr Pane::createChild (Ogre::String type)
+        TreePtr Pane::createChild (std::string type)
         {
                 Tree *tree = NULL;
                 if (type=="Pane") {
@@ -211,7 +211,7 @@ namespace HUD {
         {
                 return me->getMaterial();
         }
-        void Pane::setMaterial (const Ogre::String& name)
+        void Pane::setMaterial (const std::string& name)
         {
                 return me->setMaterialName(name);
         }
@@ -219,13 +219,13 @@ namespace HUD {
         {
                 return me->setMaterialName(mat->getName());
         }
-        void Pane::getUV (Ogre::Real &u1, Ogre::Real &v1,
-                          Ogre::Real &u2, Ogre::Real &v2) const
+        void Pane::getUV (float &u1, float &v1,
+                          float &u2, float &v2) const
         {
                 me->getUV(u1,v1,u2,v2);
         }
-        void Pane::setUV (Ogre::Real u1, Ogre::Real v1,
-                          Ogre::Real u2, Ogre::Real v2)
+        void Pane::setUV (float u1, float v1,
+                          float u2, float v2)
         {
                 me->setUV(u1,v1,u2,v2);
         }
@@ -287,26 +287,26 @@ namespace HUD {
                 return me->getCaption();
         }
 
-        void Text::setCharHeight(const Ogre::Real h)
+        void Text::setCharHeight(const float h)
         {
                 me->setCharHeight(h);
                 _recalculate();
         }
-        Ogre::Real Text::getCharHeight() const
+        float Text::getCharHeight() const
         {
                 return me->getCharHeight();
         }
 
-        void Text::setFont(const Ogre::String& font)
+        void Text::setFont(const std::string& font)
         {
                 me->setFontName(font);
                 hasFont = true;
                 _recalculate();
         }
-        const Ogre::String& Text::getFont() const
+        const std::string& Text::getFont() const
         {
                 if (!hasFont) {
-                        static Ogre::String nothing = "";
+                        static std::string nothing = "";
                         return nothing;
                 }
                 return me->getFontName();
@@ -345,10 +345,10 @@ namespace HUD {
                 return me;
         }
 
-        Ogre::Real text_width(const DStr& str, Ogre::FontPtr fp,
-                              Ogre::Real height)
+        float text_width(const DStr& str, Ogre::FontPtr fp,
+                              float height)
         {
-                Ogre::Real counter = 0;
+                float counter = 0;
                 for (DStr::const_iterator i=str.begin() ;
                      i!=str.end() ; i++) {
                         Ogre::Font::CodePoint character = GET_CHAR(i);
@@ -357,12 +357,12 @@ namespace HUD {
                 return counter;
         }
 
-        DStr pixel_substr(const DStr& str, Ogre::FontPtr fp, Ogre::Real height,
-                          Ogre::Real width, DStr *rest, bool wordwrap)
+        DStr pixel_substr(const DStr& str, Ogre::FontPtr fp, float height,
+                          float width, DStr *rest, bool wordwrap)
         {
                 if (rest!=NULL) rest->clear();
                 size_t break_point = 0;
-                Ogre::Real counter = 0;
+                float counter = 0;
                 for (DStr::const_iterator i=str.begin() ;
                      i!=str.end() ; i++) {
                         Ogre::Font::CodePoint character = GET_CHAR(i);
@@ -443,17 +443,17 @@ namespace HUD {
                 }
         }
 
-        void wrap (const DStr& input, const Ogre::Real width, dim_t lines,
+        void wrap (const DStr& input, const float width, dim_t lines,
                    const bool word_wrap, const bool chop_top,
                    const bool ignore_codes,
-                   const Ogre::FontPtr fp, const Ogre::Real char_height,
+                   const Ogre::FontPtr fp, const float char_height,
                    DStr& output, DStr *offcut)
         {
 
                 std::vector<DStr> vec;
                 DStr::const_iterator break_from = input.begin();
                 DStr::const_iterator break_to = break_from;
-                Ogre::Real counter = 0;
+                float counter = 0;
                 for (DStr::const_iterator i=break_from ;
                      i!=input.end() ; i++) {
                         if (ignore_codes) {

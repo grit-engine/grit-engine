@@ -73,7 +73,7 @@ TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
         GET_V3(p,2);
-        self.translate(p);
+        self.translate(p.ogre());
         return 0;
 TRY_END
 }
@@ -145,9 +145,9 @@ static int node_set_position (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        Ogre::Real px = luaL_checknumber(L,2);
-        Ogre::Real py = luaL_checknumber(L,3);
-        Ogre::Real pz = luaL_checknumber(L,4);
+        float px = luaL_checknumber(L,2);
+        float py = luaL_checknumber(L,3);
+        float pz = luaL_checknumber(L,4);
         self.setPosition(px,py,pz);
         return 0;
 TRY_END
@@ -158,10 +158,10 @@ static int node_set_orientation (lua_State *L)
 TRY_START
         check_args(L,5);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        Ogre::Real qw = luaL_checknumber(L,2);
-        Ogre::Real qx = luaL_checknumber(L,3);
-        Ogre::Real qy = luaL_checknumber(L,4);
-        Ogre::Real qz = luaL_checknumber(L,5);
+        float qw = luaL_checknumber(L,2);
+        float qx = luaL_checknumber(L,3);
+        float qy = luaL_checknumber(L,4);
+        float qz = luaL_checknumber(L,5);
         self.setOrientation(qw,qx,qy,qz);
         return 0;
 TRY_END
@@ -172,10 +172,10 @@ static int node_set_orientation_angle (lua_State *L)
 TRY_START
         check_args(L,5);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        Ogre::Real angle = luaL_checknumber(L,2);
-        Ogre::Real qx = luaL_checknumber(L,3);
-        Ogre::Real qy = luaL_checknumber(L,4);
-        Ogre::Real qz = luaL_checknumber(L,5);
+        float angle = luaL_checknumber(L,2);
+        float qx = luaL_checknumber(L,3);
+        float qy = luaL_checknumber(L,4);
+        float qz = luaL_checknumber(L,5);
         self.setOrientation(Ogre::Quaternion(Ogre::Degree(angle),
                             Ogre::Vector3(qx,qy,qz).normalisedCopy()));
         return 0;
@@ -445,7 +445,7 @@ TRY_START
         GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
         bool enable = check_bool(L,2);
         std::string mat_name(luaL_checkstring(L,3));
-        Ogre::Real dist = 100;
+        float dist = 100;
         bool draw_first = true;
         Ogre::Quaternion orientation=Ogre::Quaternion::IDENTITY;
 
@@ -727,8 +727,8 @@ TRY_START
         Ogre::NameValuePairList params;
         // scan through table adding k/v pairs to params
         for (lua_pushnil(L) ; lua_next(L,4)!=0 ; lua_pop(L,1)) {
-                Ogre::String value = luaL_checkstring(L,-1);
-                Ogre::String key = luaL_checkstring(L,-2);
+                std::string value = luaL_checkstring(L,-1);
+                std::string key = luaL_checkstring(L,-2);
                 params[key] = value;
         }
 
@@ -762,12 +762,12 @@ TRY_START
         check_args(L,8);
         GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
         Ogre::FogMode fm = fog_mode_from_string(L,luaL_checkstring(L,2));
-        Ogre::Real r = luaL_checknumber(L,3);
-        Ogre::Real g = luaL_checknumber(L,4);
-        Ogre::Real b = luaL_checknumber(L,5);
-        Ogre::Real density = luaL_checknumber(L,6);
-        Ogre::Real start = luaL_checknumber(L,7);
-        Ogre::Real end = luaL_checknumber(L,8);
+        float r = luaL_checknumber(L,3);
+        float g = luaL_checknumber(L,4);
+        float b = luaL_checknumber(L,5);
+        float density = luaL_checknumber(L,6);
+        float start = luaL_checknumber(L,7);
+        float end = luaL_checknumber(L,8);
         self.setFog(fm,Ogre::ColourValue(r,g,b),density,start,end);
         return 0;
 TRY_END
@@ -791,9 +791,9 @@ static int scnmgr_set_ambient (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
-        Ogre::Real r = luaL_checknumber(L,2);
-        Ogre::Real g = luaL_checknumber(L,3);
-        Ogre::Real b = luaL_checknumber(L,4);
+        float r = luaL_checknumber(L,2);
+        float g = luaL_checknumber(L,3);
+        float b = luaL_checknumber(L,4);
         self.setAmbientLight(Ogre::ColourValue(r,g,b));
         return 0;
 TRY_END
@@ -817,9 +817,9 @@ static int scnmgr_set_shadow_colour (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
-        Ogre::Real r = luaL_checknumber(L,2);
-        Ogre::Real g = luaL_checknumber(L,3);
-        Ogre::Real b = luaL_checknumber(L,4);
+        float r = luaL_checknumber(L,2);
+        float g = luaL_checknumber(L,3);
+        float b = luaL_checknumber(L,4);
         self.setShadowColour(Ogre::ColourValue(r,g,b));
         return 0;
 TRY_END
@@ -1038,23 +1038,23 @@ TRY_START
         }
         check_args(L,3);
         GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
-        Ogre::String type = luaL_checkstring(L,2);
+        std::string type = luaL_checkstring(L,2);
         if (!lua_istable(L,3))
                 my_lua_error(L,"Second parameter should be a table");
 
         bool aggressive = table_fetch_bool(L, "aggressiveFocusRegion", true);
-        Ogre::Real threshold = table_fetch_real(L, "threshold", 35);
-        Ogre::Real opt = table_fetch_real(L, "optimalAdjustFactor", 0.1);
+        float threshold = table_fetch_real(L, "threshold", 35);
+        float opt = table_fetch_real(L, "optimalAdjustFactor", 0.1);
         bool simple = table_fetch_bool(L, "simpleOptimalAdjust", true);
 
         int splits = table_fetch_num<int>(L, "splits", 3);
-        Ogre::Real padding = table_fetch_real(L, "padding", 3);
+        float padding = table_fetch_real(L, "padding", 3);
         
-        std::vector<Ogre::Real> adjustFactors;
+        std::vector<float> adjustFactors;
         for (int i=0 ; i<splits ; ++i) {
                 std::stringstream ss;
                 ss << "optimalAdjustFactor" << i;
-                Ogre::Real f = table_fetch_real(L, ss.str().c_str(), opt);
+                float f = table_fetch_real(L, ss.str().c_str(), opt);
                 adjustFactors.push_back(f);
         }
 
@@ -1080,7 +1080,7 @@ TRY_START
                 for (int i=0 ; i<=splits ; ++i) {
                         std::stringstream ss;
                         ss << "boundary" << i;
-                        Ogre::Real f = table_fetch_real(L, ss.str().c_str(), -1);
+                        float f = table_fetch_real(L, ss.str().c_str(), -1);
                         if (f<=0) {
                                 my_lua_error(L,"Expected a positive value: "+
                                                ss.str()+".");
@@ -1353,22 +1353,22 @@ TRY_START
                 const char* st = luaL_checkstring(L,3);
                 self.setShadowTechnique(shadow_type_from_string(L,st));
         } else if (key=="shadowDirectionalLightExtrusionDistance") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self.setShadowDirectionalLightExtrusionDistance(v);
         } else if (key=="shadowFarDistance") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self.setShadowFarDistance(v);
         } else if (key=="shadowIndexBufferSize") {
                 size_t v = check_t<size_t>(L,3);
                 self.setShadowIndexBufferSize(v);
         } else if (key=="shadowDirLightTextureOffset") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self.setShadowDirLightTextureOffset(v);
         } else if (key=="shadowTextureFadeStart") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self.setShadowTextureFadeStart(v);
         } else if (key=="shadowTextureFadeEnd") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self.setShadowTextureFadeEnd(v);
         } else if (key=="shadowTextureSelfShadow") {
                 bool v = check_bool(L,3);
@@ -1378,7 +1378,7 @@ TRY_START
                 self.setShadowCasterRenderBackFaces(v);
         } else if (key=="shadowTextureCasterMaterial") {
                 if (lua_type(L,3)==LUA_TSTRING) {
-                        Ogre::String v = luaL_checkstring(L,3);
+                        std::string v = luaL_checkstring(L,3);
                         self.setShadowTextureCasterMaterial(v);
                 } else {
                         GET_UD_MACRO(Ogre::MaterialPtr,v,3,MAT_TAG);

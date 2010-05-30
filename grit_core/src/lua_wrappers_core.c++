@@ -252,8 +252,8 @@ static int global_update_elapsed_time (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        Ogre::Real seconds = luaL_checknumber(L,1);
-        Ogre::Real t = Ogre::ControllerManager::getSingleton().getElapsedTime();
+        float seconds = luaL_checknumber(L,1);
+        float t = Ogre::ControllerManager::getSingleton().getElapsedTime();
         t += seconds;
         Ogre::ControllerManager::getSingleton().setElapsedTime(t);
         return 0;
@@ -1151,7 +1151,7 @@ static int global_give_queue_allowance (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        Ogre::Real amount = luaL_checknumber(L,1);
+        float amount = luaL_checknumber(L,1);
         BackgroundMeshLoader::getSingleton().setAllowance(amount);
         return 0;
 TRY_END
@@ -1847,7 +1847,7 @@ TRY_START
         check_args(L,6);
         GET_V3(a,1);
         GET_V3(b,4);
-        lua_pushnumber(L,a.dotProduct(b));
+        lua_pushnumber(L,a.dot(b));
         return 1;
 TRY_END
 }
@@ -1858,7 +1858,7 @@ TRY_START
         check_args(L,6);
         GET_V3(a,1);
         GET_V3(b,4);
-        PUT_V3(a.crossProduct(b));
+        PUT_V3(a.cross(b));
         return 3;
 TRY_END
 }
@@ -1869,7 +1869,7 @@ TRY_START
         check_args(L,6);
         GET_V3(a,1);
         GET_V3(b,4);
-        PUT_V3(a - a.dotProduct(b) * b);
+        PUT_V3(a - a.dot(b) * b);
         return 3;
 TRY_END
 }
@@ -1922,7 +1922,7 @@ TRY_START
         check_args(L,4);
         lua_Number a = luaL_checknumber(L,1);
         GET_V3(b,2);
-        PUT_QUAT(Ogre::Quaternion(Ogre::Degree(a), b));
+        PUT_QUAT(Quaternion(Degree(a), b));
         return 4;
 TRY_END
 }

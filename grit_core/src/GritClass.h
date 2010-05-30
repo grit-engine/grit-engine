@@ -39,7 +39,7 @@ class GritClass {
 
     public:
 
-        GritClass (lua_State *L, const Ogre::String &name_)
+        GritClass (lua_State *L, const std::string &name_)
               : name(name_), refCount(1)
         {
                 int index = lua_gettop(L);
@@ -62,7 +62,7 @@ class GritClass {
                 lua_rawgeti(L,LUA_REGISTRYINDEX,parentClass);
         }
 
-        void get (lua_State *L, const Ogre::String &key)
+        void get (lua_State *L, const std::string &key)
         {
                 const char *err = table.luaGet(L, key);
                 if (err) my_lua_error(L,err);
@@ -74,7 +74,7 @@ class GritClass {
                 }
         }
 
-        void set (lua_State *L, const Ogre::String &key)
+        void set (lua_State *L, const std::string &key)
         {
                 const char *err = table.luaSet(L, key);
                 if (err) my_lua_error(L,err);
@@ -104,7 +104,7 @@ class GritClass {
                 delete this;
         }
 
-        const Ogre::String name;
+        const std::string name;
 
     protected:
 

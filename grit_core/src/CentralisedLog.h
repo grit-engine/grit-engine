@@ -34,10 +34,10 @@ class CentralisedLog : public Ogre::LogListener {
 
     public:
 
-        virtual void messageLogged (const Ogre::String &message,
+        virtual void messageLogged (const std::string &message,
                                     Ogre::LogMessageLevel lml,
                                     bool maskDebug,
-                                    const Ogre::String &logName)
+                                    const std::string &logName)
         {
                 (void)lml;
                 (void)maskDebug;
@@ -45,15 +45,15 @@ class CentralisedLog : public Ogre::LogListener {
                 echo(message);
         }
 
-        virtual void echo (const Ogre::String &line)
+        virtual void echo (const std::string &line)
         {
                 std::cout << line << RESET << std::endl;
                 buffer << line << RESET << std::endl;
         }
 
-        virtual Ogre::String consolePoll (void) 
+        virtual std::string consolePoll (void) 
         {
-                Ogre::String r = buffer.str();
+                std::string r = buffer.str();
                 buffer.str("");
                 return r;
         }

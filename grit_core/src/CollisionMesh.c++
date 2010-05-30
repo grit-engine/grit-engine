@@ -54,9 +54,9 @@ btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
                 btConvexHullShape *s2 = new btConvexHullShape();
                 les.push_back(new LooseEndImpl<btCollisionShape>(s2));
                 s2->setMargin(h.margin);
-                for (int j=0 ; j<h.vertexes.size() ; ++j) {
-                        const btVector3 &v = h.vertexes[j];
-                        s2->addPoint(v);
+                for (unsigned j=0 ; j<h.vertexes.size() ; ++j) {
+                        const Vector3 &v = h.vertexes[j];
+                        s2->addPoint(v.bullet());
                 }
                 s->addChildShape(btTransform(ZQ,ZV), s2);
                 partMaterials.push_back(h.material);
@@ -139,7 +139,7 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
 
         btTriangleIndexVertexArray *v = new btTriangleIndexVertexArray(
                 faces->size(), &((*faces)[0].v1), sizeof(Face),
-                vertexes->size(), &((*vertexes)[0][0]), sizeof(btVector3));
+                vertexes->size(), &((*vertexes)[0].x), sizeof(Vector3));
         les.push_back(new LooseEndImpl<btTriangleIndexVertexArray>(v));
 
         btCollisionShape *s;
@@ -160,7 +160,7 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
                 /* this is hopelessly awful in comparison (but faster)
                 btGImpactShapeInterface *s2 =
                         new btGImpactConvexDecompositionShape(v,
-                                                              btVector3(1,1,1),
+                                                              Vector3(1,1,1),
                                                               0.01);
                 */
                 s2->updateBound();
@@ -192,7 +192,7 @@ btCompoundShape *import (const TColFile &f,
         }
 
         cm->setMass(f.mass);
-        cm->setInertia(btVector3(f.inertia_x,f.inertia_y,f.inertia_z));
+        cm->setInertia(Vector3(f.inertia_x,f.inertia_y,f.inertia_z));
         cm->setLinearDamping(f.linearDamping);
         cm->setAngularDamping(f.angularDamping);
         cm->setLinearSleepThreshold(f.linearSleepThreshold);
@@ -333,8 +333,11 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file, const Physi
                 }
                 masterShape = loaded_shape;
 
-                if (mass != 0 && inertia == btVector3(0,0,0))
-                        masterShape->calculateLocalInertia(mass,inertia);
+                if (mass != 0 && inertia == Vector3(0,0,0)) {
+                        btVector3 i;
+                        masterShape->calculateLocalInertia(mass,i);
+                        inertia = i;
+                }
 
                 looseEnds = ls;
                 partMaterials = m1;
@@ -362,29 +365,32 @@ int CollisionMesh::getMaterialFromFace (unsigned int id)
         return faceMaterials[id];
 }
 
-void CollisionMesh::scatter (const ScatterOptions &opts, std::vector<btTransform> (&r)[3])
+void CollisionMesh::scatter (const ScatterOptions &opts, std::vector<Transform> (&r)[3])
 {
         struct ScatterTriangleCallback : public btTriangleCallback {
                 const ScatterOptions &opts;
                 CollisionMesh *cm;
-                std::vector<btTransform> (&r)[3];
+                std::vector<Transform> (&r)[3];
                 int tris;
                 float leftOvers[3];
                 ScatterTriangleCallback (const ScatterOptions &opts_, CollisionMesh *cm_,
-                                         std::vector<btTransform> (&r_)[3])
+                                         std::vector<Transform> (&r_)[3])
                       : opts(opts_), cm(cm_), r(r_), tris(0)
                 {
                         for (int i=0 ; i<3 ; ++i) leftOvers[i] = 0;
                 }
-                void processTriangle (btVector3 *triangle, int partId, int triangleIndex) {
+                void processTriangle (btVector3 *triangle_, int partId, int triangleIndex) {
+                        Vector3 triangle[] = { Vector3(triangle_[0]),
+                                               Vector3(triangle_[1]),
+                                               Vector3(triangle_[2]) };
                         tris++;
                         assert(partId == 0); (void) partId;
-                        btVector3 t1 = opts.worldTrans*triangle[0];
-                        btVector3 t2 = opts.worldTrans*triangle[1];
-                        btVector3 t3 = opts.worldTrans*triangle[2];
-                        btVector3 *v1_p;
-                        btVector3 *v2_p;
-                        btVector3 *v3_p;
+                        Vector3 t1 = opts.worldTrans*triangle[0];
+                        Vector3 t2 = opts.worldTrans*triangle[1];
+                        Vector3 t3 = opts.worldTrans*triangle[2];
+                        Vector3 *v1_p;
+                        Vector3 *v2_p;
+                        Vector3 *v3_p;
                         {
                                 // find longest length edge
                                 float l1 = (t2-t3).length2();
@@ -412,9 +418,9 @@ void CollisionMesh::scatter (const ScatterOptions &opts, std::vector<btTransform
                                         v3_p = &t3;
                                 }
                         }
-                        btVector3 &v1 = *v1_p;
-                        btVector3 &v2 = *v2_p;
-                        btVector3 &v3 = *v3_p;
+                        Vector3 &v1 = *v1_p;
+                        Vector3 &v2 = *v2_p;
+                        Vector3 &v3 = *v3_p;
                                 
                         // now we have the triangle as follows, where v4 is guaranteed to lie between v1 and v2
                         /*
@@ -426,38 +432,38 @@ void CollisionMesh::scatter (const ScatterOptions &opts, std::vector<btTransform
                              --b1--
                              ----base-->
                         */
-                        btVector3 base = v2-v1;
-                        btVector3 n = base.cross(v3-v1);
+                        Vector3 base = v2-v1;
+                        Vector3 n = base.cross(v3-v1);
                         float n_l = n.length();
                         float birds_eye_area;
                         {
-                                btVector3 v1_=v1, v2_=v2, v3_=v3;
-                                v1_.setZ(0);
-                                v2_.setZ(0);
-                                v3_.setZ(0);
+                                Vector3 v1_=v1, v2_=v2, v3_=v3;
+                                v1_.z = 0;
+                                v2_.z = 0;
+                                v3_.z = 0;
                                 birds_eye_area = (v2_-v1_).cross(v3_-v1_).length()/2;
                         }
                         float true_area = n_l/2;
                         n /= n_l; // normalise
-                        btQuaternion base_q;
-                        if (n.dot(btVector3(0,0,1)) > 0.98) {
-                                 base_q = btQuaternion(0,0,0,1);
+                        Quaternion base_q;
+                        if (n.dot(Vector3(0,0,1)) > 0.98) {
+                                 base_q = Quaternion(1,0,0,0);
                         } else {
-                                 base_q = btQuaternion(btVector3(0,0,1).cross(n), btVector3(0,0,1).angle(n));
+                                 base_q = Quaternion(Vector3(0,0,1).angleBetween(n), Vector3(0,0,1).cross(n));
                         }
                         
                         
                         float u = base.dot(v3-v1) / base.length2();
                         //APP_ASSERT(u>=0 && u <=1);
                         //APP_ASSERT(!isnan(u));
-                        btVector3 v4 = v1 + u * base;
+                        Vector3 v4 = v1 + u * base;
 
-                        btVector3 h = v3-v4;
+                        Vector3 h = v3-v4;
 
                         // handle the objects independently
                         for (int t=0 ; t<3 ; ++t) {
-                                if (opts.noCeiling[t] && n.z() < 0) continue;
-                                if (opts.noFloor[t] && n.z() > 0) continue;
+                                if (opts.noCeiling[t] && n.z < 0) continue;
+                                if (opts.noFloor[t] && n.z > 0) continue;
                                 r[t].reserve(3000);
                                 float density = float(rand())/RAND_MAX * opts.density[t];
                                 //density *= cm->faceProcObjDensities[3*triangleIndex + t];
@@ -493,29 +499,29 @@ void CollisionMesh::scatter (const ScatterOptions &opts, std::vector<btTransform
                                         }
                                         
                                         // scale up
-                                        btVector3 p = v1 + x*base + y*h;
+                                        Vector3 p = v1 + x*base + y*h;
 
 /*
                                         // a whole bunch of sanity checks for debugging purposes
-                                        btVector3 max(std::max(v1.x(),std::max(v2.x(),v3.x())),std::max(v1.y(),std::max(v2.y(),v3.y())),std::max(v1.z(),std::max(v2.z(),v3.z())));
-                                        btVector3 min(std::min(v1.x(),std::min(v2.x(),v3.x())),std::min(v1.y(),std::min(v2.y(),v3.y())),std::min(v1.z(),std::min(v2.z(),v3.z())));
-                                        if (p.x() < min.x()) abort();
-                                        if (p.y() < min.y()) abort();
-                                        if (p.z() < min.z()) abort();
-                                        if (p.x() > max.x()) abort();
-                                        if (p.y() > max.y()) abort();
-                                        if (p.z() > max.z()) abort();
-                                        APP_ASSERT(!isnan(p.x()));
-                                        APP_ASSERT(!isnan(p.y()));
-                                        APP_ASSERT(!isnan(p.z()));
-                                        APP_ASSERT(!isnan(base_q.w()));
-                                        APP_ASSERT(!isnan(base_q.x()));
-                                        APP_ASSERT(!isnan(base_q.y()));
-                                        APP_ASSERT(!isnan(base_q.z()));
+                                        Vector3 max(std::max(v1.x,std::max(v2.x,v3.x)),std::max(v1.y,std::max(v2.y,v3.y)),std::max(v1.z,std::max(v2.z,v3.z)));
+                                        Vector3 min(std::min(v1.x,std::min(v2.x,v3.x)),std::min(v1.y,std::min(v2.y,v3.y)),std::min(v1.z,std::min(v2.z,v3.z)));
+                                        if (p.x() < min.x) abort();
+                                        if (p.y() < min.y) abort();
+                                        if (p.z() < min.z) abort();
+                                        if (p.x() > max.x) abort();
+                                        if (p.y() > max.y) abort();
+                                        if (p.z() > max.z) abort();
+                                        APP_ASSERT(!isnan(p.x));
+                                        APP_ASSERT(!isnan(p.y));
+                                        APP_ASSERT(!isnan(p.z));
+                                        APP_ASSERT(!isnan(base_q.w));
+                                        APP_ASSERT(!isnan(base_q.x));
+                                        APP_ASSERT(!isnan(base_q.y));
+                                        APP_ASSERT(!isnan(base_q.z));
 */
 
-                                        if (p.z() >= opts.minElevation[t] && p.z() <= opts.maxElevation[t]) {
-                                                btTransform trans(opts.rotate ? base_q * btQuaternion(btVector3(0,0,1), float(rand())/RAND_MAX * 2*M_PI) : base_q, p);
+                                        if (p.z >= opts.minElevation[t] && p.z <= opts.maxElevation[t]) {
+                                                Transform trans(opts.rotate ? base_q * Quaternion(Radian(float(rand())/RAND_MAX * 2*M_PI), Vector3(0,0,1)) : base_q, p);
                                                 r[t].push_back(trans);
                                         }
                                 }

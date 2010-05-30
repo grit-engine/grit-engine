@@ -27,7 +27,7 @@
 const char *ExternalTable::luaGet (lua_State *L)
 {
         if (lua_type(L,-1)==LUA_TSTRING) {
-                Ogre::String key = luaL_checkstring(L,-1);
+                std::string key = luaL_checkstring(L,-1);
                 return luaGet(L,key);
         } else if (lua_type(L,-1)==LUA_TNUMBER) {
                 lua_Number key = luaL_checknumber(L,-1);
@@ -46,10 +46,10 @@ static void push (lua_State *L, const ExternalTable::Value &v)
                 lua_pushstring(L,v.str.c_str());
                 break;
                 case 2:
-                push(L,new Ogre::Vector3(v.v3),VECTOR3_TAG);
+                push(L,new Vector3(v.v3),VECTOR3_TAG);
                 break;
                 case 3:
-                push(L,new Ogre::Quaternion(v.q),QUAT_TAG);
+                push(L,new Quaternion(v.q),QUAT_TAG);
                 break;
                 case 4:
                 lua_pushboolean(L,v.b);
@@ -60,7 +60,7 @@ static void push (lua_State *L, const ExternalTable::Value &v)
         }
 }
 
-const char *ExternalTable::luaGet (lua_State *L, const Ogre::String &key)
+const char *ExternalTable::luaGet (lua_State *L, const std::string &key)
 {
         if (!has(key)) {
                 lua_pushnil(L);
@@ -83,7 +83,7 @@ const char *ExternalTable::luaGet (lua_State *L, lua_Number key)
 const char *ExternalTable::luaSet (lua_State *L)
 {
         if (lua_type(L,-2)==LUA_TSTRING) {
-                Ogre::String key = luaL_checkstring(L,-2);
+                std::string key = luaL_checkstring(L,-2);
                 return luaSet(L,key);
         } else if (lua_type(L,-2)==LUA_TNUMBER) {
                 lua_Number key = luaL_checknumber(L,-2);
@@ -92,12 +92,12 @@ const char *ExternalTable::luaSet (lua_State *L)
         return "key was not a string or number";
 }
 
-const char *ExternalTable::luaSet (lua_State *L, const Ogre::String &key)
+const char *ExternalTable::luaSet (lua_State *L, const std::string &key)
 {
         if (lua_type(L,-1)==LUA_TNIL) {
                 unset(key);
         } else if (lua_type(L,-1)==LUA_TSTRING) {
-                Ogre::String val = luaL_checkstring(L,-1);
+                std::string val = luaL_checkstring(L,-1);
                 set(key,val);
         } else if (lua_type(L,-1)==LUA_TNUMBER) {
                 lua_Number val = luaL_checknumber(L,-1);
@@ -106,10 +106,10 @@ const char *ExternalTable::luaSet (lua_State *L, const Ogre::String &key)
                 bool val = check_bool(L,-1);
                 set(key,val);
         } else if (has_tag(L,-1,VECTOR3_TAG)) {
-                GET_UD_MACRO(Ogre::Vector3,val,-1,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,val,-1,VECTOR3_TAG);
                 set(key,val);
         } else if (has_tag(L,-1,QUAT_TAG)) {
-                GET_UD_MACRO(Ogre::Quaternion,val,-1,QUAT_TAG);
+                GET_UD_MACRO(Quaternion,val,-1,QUAT_TAG);
                 set(key,val);
         } else if (lua_type(L,-1)==LUA_TTABLE) {
                 ExternalTable *self = new ExternalTable();
@@ -126,7 +126,7 @@ const char *ExternalTable::luaSet (lua_State *L, lua_Number key)
         if (lua_type(L,-1)==LUA_TNIL) {
                 unset(key);
         } else if (lua_type(L,-1)==LUA_TSTRING) {
-                Ogre::String val = luaL_checkstring(L,-1);
+                std::string val = luaL_checkstring(L,-1);
                 set(key,val);
         } else if (lua_type(L,-1)==LUA_TNUMBER) {
                 lua_Number val = luaL_checknumber(L,-1);
@@ -135,10 +135,10 @@ const char *ExternalTable::luaSet (lua_State *L, lua_Number key)
                 bool val = check_bool(L,-1);
                 set(key,val);
         } else if (has_tag(L,-1,VECTOR3_TAG)) {
-                GET_UD_MACRO(Ogre::Vector3,val,-1,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,val,-1,VECTOR3_TAG);
                 set(key,val);
         } else if (has_tag(L,-1,QUAT_TAG)) {
-                GET_UD_MACRO(Ogre::Quaternion,val,-1,QUAT_TAG);
+                GET_UD_MACRO(Quaternion,val,-1,QUAT_TAG);
                 set(key,val);
         } else if (lua_type(L,-1)==LUA_TTABLE) {
                 ExternalTable *self = new ExternalTable();
@@ -154,7 +154,7 @@ void ExternalTable::dump (lua_State *L)
 {
         lua_createtable(L, elements.size(), fields.size());
         for (StringMap::const_iterator i=fields.begin(),i_=fields.end() ; i!=i_ ; ++i) {
-                const Ogre::String &key = i->first;
+                const std::string &key = i->first;
                 const Value &v = i->second;
                 lua_pushstring(L, key.c_str());
                 push(L, v);

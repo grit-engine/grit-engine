@@ -192,9 +192,9 @@ static int light_set_diffuse_colour (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::Light,self,1,LIGHT_TAG);
-        Ogre::Real r = luaL_checknumber(L,2);
-        Ogre::Real g = luaL_checknumber(L,3);
-        Ogre::Real b = luaL_checknumber(L,4);
+        float r = luaL_checknumber(L,2);
+        float g = luaL_checknumber(L,3);
+        float b = luaL_checknumber(L,4);
         self.setDiffuseColour(r,g,b);
         return 0;
 TRY_END
@@ -219,9 +219,9 @@ static int light_set_specular_colour (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::Light,self,1,LIGHT_TAG);
-        Ogre::Real r = luaL_checknumber(L,2);
-        Ogre::Real g = luaL_checknumber(L,3);
-        Ogre::Real b = luaL_checknumber(L,4);
+        float r = luaL_checknumber(L,2);
+        float g = luaL_checknumber(L,3);
+        float b = luaL_checknumber(L,4);
         self.setSpecularColour(r,g,b);
         return 0;
 TRY_END
@@ -245,9 +245,9 @@ static int light_set_spotlight_range (lua_State *L)
 TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::Light,self,1,LIGHT_TAG);
-        Ogre::Real i = luaL_checknumber(L,2);
-        Ogre::Real o = luaL_checknumber(L,3);
-        Ogre::Real f = luaL_checknumber(L,4);
+        float i = luaL_checknumber(L,2);
+        float o = luaL_checknumber(L,3);
+        float f = luaL_checknumber(L,4);
         self.setSpotlightRange(Ogre::Degree(i),Ogre::Degree(o),f);
         return 0;
 TRY_END
@@ -272,10 +272,10 @@ static int light_set_attenuation (lua_State *L)
 TRY_START
         check_args(L,5);
         GET_UD_MACRO(Ogre::Light,self,1,LIGHT_TAG);
-        Ogre::Real r = luaL_checknumber(L,2);
-        Ogre::Real c = luaL_checknumber(L,3);
-        Ogre::Real l = luaL_checknumber(L,4);
-        Ogre::Real q = luaL_checknumber(L,5);
+        float r = luaL_checknumber(L,2);
+        float c = luaL_checknumber(L,3);
+        float l = luaL_checknumber(L,4);
+        float q = luaL_checknumber(L,5);
         self.setAttenuation(r,c,l,q);
         return 0;
 TRY_END
@@ -355,7 +355,7 @@ TRY_START
         GET_UD_MACRO(Ogre::Light,self,1,LIGHT_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key=="powerScale") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self.setPowerScale(v);
         } else if (key=="castShadows") {
                 bool b = check_bool(L,3);
@@ -386,7 +386,7 @@ MT_MACRO_NEWINDEX(light);
 // PSYS =================================================================== {{{
 
 Ogre::ParticleSystem *make_psys (Ogre::SceneManager *sm,
-                                 const Ogre::String &name)
+                                 const std::string &name)
 {
         Ogre::ParticleSystem *psys = sm->createParticleSystem(name);
         psys->setRenderer("LuaParticleRenderer");
@@ -411,23 +411,23 @@ static int psys_add_particle (lua_State *L)
 TRY_START
         check_args(L,17);
         GET_UD_MACRO(Ogre::ParticleSystem,self,1,PSYS_TAG);
-        Ogre::Real x = luaL_checknumber(L,2);
-        Ogre::Real y = luaL_checknumber(L,3);
-        Ogre::Real z = luaL_checknumber(L,4);
-        Ogre::Real rot = luaL_checknumber(L,5);
-        Ogre::Real w = luaL_checknumber(L,6);
-        Ogre::Real h = luaL_checknumber(L,7);
-        Ogre::Real r = luaL_checknumber(L,8);
-        Ogre::Real g = luaL_checknumber(L,9);
-        Ogre::Real b = luaL_checknumber(L,10);
-        Ogre::Real a = luaL_checknumber(L,11);
-        Ogre::Real dx = luaL_checknumber(L,12);
-        Ogre::Real dy = luaL_checknumber(L,13);
-        Ogre::Real dz = luaL_checknumber(L,14);
+        float x = luaL_checknumber(L,2);
+        float y = luaL_checknumber(L,3);
+        float z = luaL_checknumber(L,4);
+        float rot = luaL_checknumber(L,5);
+        float w = luaL_checknumber(L,6);
+        float h = luaL_checknumber(L,7);
+        float r = luaL_checknumber(L,8);
+        float g = luaL_checknumber(L,9);
+        float b = luaL_checknumber(L,10);
+        float a = luaL_checknumber(L,11);
+        float dx = luaL_checknumber(L,12);
+        float dy = luaL_checknumber(L,13);
+        float dz = luaL_checknumber(L,14);
         luaL_checktype(L,15,LUA_TFUNCTION);
         lua_pushvalue(L,15); //func
         lua_pushvalue(L,16); //arg
-        Ogre::Real advance = luaL_checknumber(L,17);
+        float advance = luaL_checknumber(L,17);
         Ogre::Particle *p = self.createParticle();
         if (p==NULL) {
                 my_lua_error(L, "No more particles");
@@ -452,7 +452,7 @@ static int psys_update (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::ParticleSystem,self,1,PSYS_TAG);
-        Ogre::Real t = luaL_checknumber(L,2);
+        float t = luaL_checknumber(L,2);
         self._update(t);
         return 0;
 TRY_END
@@ -544,7 +544,7 @@ TRY_START
                 static_cast<LuaParticleRenderer*>(self.getRenderer());
         std::string key = luaL_checkstring(L,2);
         if (key=="quota") {
-                Ogre::Real v = luaL_checknumber(L,3);
+                float v = luaL_checknumber(L,3);
                 self.setParticleQuota(v);
         } else if (key=="sortingEnabled") {
                 bool b = check_bool(L,3);
@@ -801,10 +801,10 @@ TRY_START
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
         unsigned n = check_t<unsigned>(L,2);
         unsigned varindex = check_t<unsigned>(L,3);
-        Ogre::Real v1 = luaL_checknumber(L,4);
-        Ogre::Real v2 = luaL_checknumber(L,5);
-        Ogre::Real v3 = luaL_checknumber(L,6);
-        Ogre::Real v4 = luaL_checknumber(L,7);
+        float v1 = luaL_checknumber(L,4);
+        float v2 = luaL_checknumber(L,5);
+        float v3 = luaL_checknumber(L,6);
+        float v4 = luaL_checknumber(L,7);
         Ogre::SubEntity *se = self.getSubEntity(n);
         se->setCustomParameter(varindex,Ogre::Vector4(v1,v2,v3,v4));
         return 0;
@@ -828,7 +828,7 @@ TRY_START
                 GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
                 unsigned varindex = check_t<unsigned>(L,2);
                 unsigned elindex = check_t<unsigned>(L,3,0,3);
-                Ogre::Real v = luaL_checknumber(L,4);
+                float v = luaL_checknumber(L,4);
                 for (size_t i=0 ; i<self.getNumSubEntities() ; ++i) {
                         Ogre::SubEntity *se = self.getSubEntity(i);
                         // Undefined behaviour here
@@ -845,10 +845,10 @@ TRY_START
                 check_args(L,6);
                 GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
                 unsigned varindex = check_t<unsigned>(L,2);
-                Ogre::Real v1 = luaL_checknumber(L,3);
-                Ogre::Real v2 = luaL_checknumber(L,4);
-                Ogre::Real v3 = luaL_checknumber(L,5);
-                Ogre::Real v4 = luaL_checknumber(L,6);
+                float v1 = luaL_checknumber(L,3);
+                float v2 = luaL_checknumber(L,4);
+                float v3 = luaL_checknumber(L,5);
+                float v4 = luaL_checknumber(L,6);
                 for (size_t i=0 ; i<self.getNumSubEntities() ; ++i) {
                         Ogre::SubEntity *se = self.getSubEntity(i);
                         se->setCustomParameter(varindex,Ogre::Vector4(v1,v2,v3,v4));
@@ -938,9 +938,9 @@ TRY_START
         Ogre::SkeletonInstance *skel = self.getSkeleton();
         if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
         unsigned n = check_int(L,2,0,skel->getNumBones()-1);
-        Ogre::Real x = luaL_checknumber(L,3);
-        Ogre::Real y = luaL_checknumber(L,4);
-        Ogre::Real z = luaL_checknumber(L,5);
+        float x = luaL_checknumber(L,3);
+        float y = luaL_checknumber(L,4);
+        float z = luaL_checknumber(L,5);
         skel->getBone(n)->setPosition(x,y,z);
         return 0;
 TRY_END
@@ -955,9 +955,9 @@ TRY_START
         if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
         unsigned n = check_int(L,2,0,skel->getNumBones()-1);
         Ogre::Vector3 ip = skel->getBone(n)->getInitialPosition();
-        Ogre::Real x = luaL_checknumber(L,3);
-        Ogre::Real y = luaL_checknumber(L,4);
-        Ogre::Real z = luaL_checknumber(L,5);
+        float x = luaL_checknumber(L,3);
+        float y = luaL_checknumber(L,4);
+        float z = luaL_checknumber(L,5);
         skel->getBone(n)->setPosition(ip + Ogre::Vector3(x,y,z));
         return 0;
 TRY_END
@@ -1005,10 +1005,10 @@ TRY_START
         Ogre::SkeletonInstance *skel = self.getSkeleton();
         if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
         unsigned n = check_int(L,2,0,skel->getNumBones()-1);
-        Ogre::Real qw = luaL_checknumber(L,3);
-        Ogre::Real qx = luaL_checknumber(L,4);
-        Ogre::Real qy = luaL_checknumber(L,5);
-        Ogre::Real qz = luaL_checknumber(L,6);
+        float qw = luaL_checknumber(L,3);
+        float qx = luaL_checknumber(L,4);
+        float qy = luaL_checknumber(L,5);
+        float qz = luaL_checknumber(L,6);
         skel->getBone(n)->setOrientation(qw,qx,qy,qz);
         return 0;
 TRY_END
@@ -1023,10 +1023,10 @@ TRY_START
         if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
         unsigned n = check_int(L,2,0,skel->getNumBones()-1);
         Ogre::Quaternion quat = skel->getBone(n)->getInitialOrientation();
-        Ogre::Real qw = luaL_checknumber(L,3);
-        Ogre::Real qx = luaL_checknumber(L,4);
-        Ogre::Real qy = luaL_checknumber(L,5);
-        Ogre::Real qz = luaL_checknumber(L,6);
+        float qw = luaL_checknumber(L,3);
+        float qx = luaL_checknumber(L,4);
+        float qy = luaL_checknumber(L,5);
+        float qz = luaL_checknumber(L,6);
         skel->getBone(n)->setOrientation(quat*Ogre::Quaternion(qw,qx,qy,qz));
         return 0;
 TRY_END
@@ -1071,10 +1071,10 @@ TRY_START
         if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
         unsigned n = check_int(L,2,0,skel->getNumBones()-1);
         Ogre::Quaternion quat = skel->getBone(n)->getInitialOrientation();
-        Ogre::Real qw = luaL_checknumber(L,3);
-        Ogre::Real qx = luaL_checknumber(L,4);
-        Ogre::Real qy = luaL_checknumber(L,5);
-        Ogre::Real qz = luaL_checknumber(L,6);
+        float qw = luaL_checknumber(L,3);
+        float qx = luaL_checknumber(L,4);
+        float qy = luaL_checknumber(L,5);
+        float qz = luaL_checknumber(L,6);
         skel->getBone(n)->setOrientation(
                 quat*Ogre::Quaternion(Ogre::Degree(qw),Ogre::Vector3(qx,qy,qz)));
         return 0;
@@ -1131,13 +1131,13 @@ TRY_START
         Ogre::SkeletonInstance *skel = self.getSkeleton();
         if (skel==NULL) my_lua_error(L, "This mesh does not have a skeleton.");
         unsigned n = check_int(L,2,0,skel->getNumBones()-1);
-        Ogre::Real x = luaL_checknumber(L,3);
-        Ogre::Real y = luaL_checknumber(L,4);
-        Ogre::Real z = luaL_checknumber(L,5);
-        Ogre::Real qw = luaL_checknumber(L,6);
-        Ogre::Real qx = luaL_checknumber(L,7);
-        Ogre::Real qy = luaL_checknumber(L,8);
-        Ogre::Real qz = luaL_checknumber(L,9);
+        float x = luaL_checknumber(L,3);
+        float y = luaL_checknumber(L,4);
+        float z = luaL_checknumber(L,5);
+        float qw = luaL_checknumber(L,6);
+        float qx = luaL_checknumber(L,7);
+        float qy = luaL_checknumber(L,8);
+        float qz = luaL_checknumber(L,9);
         skel->getBone(n)->setPosition(x,y,z);
         skel->getBone(n)->setOrientation(qw,qx,qy,qz);
         return 0;

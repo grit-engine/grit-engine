@@ -30,7 +30,7 @@
 #include "lua_wrappers_scnmgr.h"
 #include "Grit.h"
 
-GritObject::GritObject (const Ogre::String &name_,
+GritObject::GritObject (const std::string &name_,
                         GritClass *gritClass_)
       : name(name_), 
         gritClass(gritClass_),
@@ -55,7 +55,7 @@ void GritObject::destroy (lua_State *L, const GritObjectPtr &self)
 }       
 
 
-void GritObject::doQueueBGPrepare (Ogre::Real x, Ogre::Real y, Ogre::Real z)
+void GritObject::doQueueBGPrepare (float x, float y, float z)
 {
         std::vector<Ogre::ResourcePtr> &rs = demand.rPtrs;
         rs.reserve(advanceResources.size());
@@ -63,8 +63,8 @@ void GritObject::doQueueBGPrepare (Ogre::Real x, Ogre::Real y, Ogre::Real z)
         for (StringPairs::iterator i=advanceResources.begin(),
                                    i_=advanceResources.end() ;
              i!=i_ ; ++i) {
-                const Ogre::String &type = i->first;
-                const Ogre::String &name = i->second;
+                const std::string &type = i->first;
+                const std::string &name = i->second;
                 if (type=="Mesh") {
                         Ogre::HardwareBuffer::Usage u =
                                 Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
@@ -110,7 +110,7 @@ void finished_with_mesh(Ogre::Mesh *m)
         while (i.hasMoreElements()) {
                 Ogre::SubMesh *sm = i.getNext();
 
-                Ogre::String matname = sm->getMaterialName();
+                std::string matname = sm->getMaterialName();
 
                 Ogre::MaterialPtr mat;
 
@@ -144,7 +144,7 @@ void GritObject::tryUnloadResources(void)
 
 void GritObject::notifyFade (lua_State *L,
                              const GritObjectPtr &self,
-                             const Ogre::Real fade,
+                             const float fade,
                              const int transition)
 {
         if (gritClass==NULL)
@@ -293,21 +293,21 @@ void GritObject::activate (lua_State *L,
         STACK_CHECK;
 }
 
-Ogre::Real GritObject::calcFade (const Ogre::Real range2, bool &overlap)
+float GritObject::calcFade (const float range2, bool &overlap)
 {
         const Streamer &streamer = grit->getStreamer();
 
         const GritObjectPtr &near = getNear();
         const GritObjectPtr &far = getFar();
 
-        const Ogre::Real out = streamer.fadeOutFactor;
+        const float out = streamer.fadeOutFactor;
 
-        const Ogre::Real over = streamer.fadeOverlapFactor;
+        const float over = streamer.fadeOverlapFactor;
 
 
-        Ogre::Real range = ::sqrt(range2);
+        float range = ::sqrt(range2);
 
-        Ogre::Real fade = 1.0;
+        float fade = 1.0;
         // if near is not activated, farfade will be out of date
         if (!near.isNull() && near->isActivated()) {
                 fade = near->getImposedFarFade();
@@ -321,7 +321,7 @@ Ogre::Real GritObject::calcFade (const Ogre::Real range2, bool &overlap)
                 imposedFarFade = 1.0;
         } else {
                 //TODO: generalise hte following 2 options together
-                const Ogre::Real overmid = (over+1)/2;
+                const float overmid = (over+1)/2;
                 if (range > overmid) {
                         fade = (1-range) / (1-overmid);
                         imposedFarFade = 1;
@@ -471,7 +471,7 @@ void GritObject::init (lua_State *L, const GritObjectPtr &self)
 
 }
 
-bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, Ogre::Real elapsed)
+bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, float elapsed)
 {
         if (gritClass==NULL)
                 OGRE_EXCEPT(Ogre::Exception::ERR_INVALID_STATE,
@@ -526,8 +526,8 @@ bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, Ogre::R
         return status==0;
 }
 
-void GritObject::updateSphere (Ogre::Real x_, Ogre::Real y_,
-                               Ogre::Real z_, Ogre::Real r_)
+void GritObject::updateSphere (float x_, float y_,
+                               float z_, float r_)
 {
         if (index==-1) return;
         x = x_;

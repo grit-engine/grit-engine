@@ -88,13 +88,13 @@ void LuaParticleData::callCleanup (lua_State *L)
 }
 
 bool LuaParticleData::call (lua_State *L,
-                            Ogre::Real &x, Ogre::Real &y, Ogre::Real &z,
-                            Ogre::Real &rot,
-                            Ogre::Real &w, Ogre::Real &h,
-                            Ogre::Real &r, Ogre::Real &g, Ogre::Real &b,
-                            Ogre::Real &a,
-                            Ogre::Real &dx, Ogre::Real &dy, Ogre::Real &dz,
-                            Ogre::Real elapsed)
+                            float &x, float &y, float &z,
+                            float &rot,
+                            float &w, float &h,
+                            float &r, float &g, float &b,
+                            float &a,
+                            float &dx, float &dy, float &dz,
+                            float elapsed)
 {
         age += elapsed;
 
@@ -210,10 +210,10 @@ bool LuaParticleData::call (lua_State *L,
 
 
 void LuaParticleAffector::_affectParticles (Ogre::ParticleSystem *ps,
-                                            Ogre::Real)
+                                            float)
 {
         Ogre::ParticleIterator pi = ps->_getIterator();
-        Ogre::Real elapsed = timer.getMicroseconds() / 1E6;
+        float elapsed = timer.getMicroseconds() / 1E6;
         timer.reset();
         while (!pi.end()) {
                 Ogre::Particle *p = pi.getNext();
@@ -224,21 +224,21 @@ void LuaParticleAffector::_affectParticles (Ogre::ParticleSystem *ps,
 }
 
 void LuaParticleData::affect (lua_State *L,
-                              Ogre::Particle *p, Ogre::Real elapsed)
+                              Ogre::Particle *p, float elapsed)
 {
-        Ogre::Real x = p->position.x;
-        Ogre::Real y = p->position.y;
-        Ogre::Real z = p->position.z;
-        Ogre::Real rot = p->rotation.valueDegrees();
-        Ogre::Real w = p->mWidth;
-        Ogre::Real h = p->mHeight;
-        Ogre::Real r = p->colour.r;
-        Ogre::Real g = p->colour.g;
-        Ogre::Real b = p->colour.b;
-        Ogre::Real a = p->colour.a;
-        Ogre::Real dx = p->direction.x;
-        Ogre::Real dy = p->direction.y;
-        Ogre::Real dz = p->direction.z;
+        float x = p->position.x;
+        float y = p->position.y;
+        float z = p->position.z;
+        float rot = p->rotation.valueDegrees();
+        float w = p->mWidth;
+        float h = p->mHeight;
+        float r = p->colour.r;
+        float g = p->colour.g;
+        float b = p->colour.b;
+        float a = p->colour.a;
+        float dx = p->direction.x;
+        float dy = p->direction.y;
+        float dz = p->direction.z;
 
         bool destroy = call(L, x,y,z, rot, w,h, r,g,b,a, dx,dx,dz, elapsed);
 

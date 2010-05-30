@@ -51,7 +51,7 @@ class IncrementalRangeSpace {
         }
 
         virtual const CargoMap& getPresent (const Ogre::Vector3 &cam,
-                                            const Ogre::Real factor,
+                                            const float factor,
                                             const unsigned int num,
                                             CargoSet &killed)
         {
@@ -114,12 +114,12 @@ class IncrementalRangeSpace {
     protected:
 
         virtual bool process (T* o, const Ogre::Vector3 &cam,
-                              const Ogre::Real factor)
+                              const float factor)
         {
                 if (!o->isInScene()) return false;
                 if (!o->getVisible() ) return false;
 
-                Ogre::Real rd = o->getRenderingDistance();
+                float rd = o->getRenderingDistance();
 
                 if (rd==0) return true;
 
@@ -128,12 +128,12 @@ class IncrementalRangeSpace {
                 if (n==NULL) return false;
                 const Ogre::Vector3 &o_pos = n->_getDerivedPosition();
 
-                Ogre::Real sqd = (o_pos - cam).squaredLength();
+                float sqd = (o_pos - cam).squaredLength();
                 if (sqd > Ogre::Math::Sqr(factor*rd))
                         return false;
 
 /* this in general won't work because o may not be loaded yet
-                Ogre::Real sqd = (o_pos - cam).squaredLength();
+                float sqd = (o_pos - cam).squaredLength();
                 if (sqd > Ogre::Math::Sqr(factor*(rd+o->getBoundingRadius())))
                         return false;
 */

@@ -43,7 +43,7 @@ extern "C" {
 #include "PhysicsWorld.h"
 #include "CacheFriendlyRangeSpaceSIMD.h"
 
-typedef std::map<Ogre::String,GritClass*> GritClassMap;
+typedef std::map<std::string,GritClass*> GritClassMap;
 
 class Streamer {
 
@@ -84,12 +84,12 @@ class Streamer {
 
         // CLASS STUFF
 
-        virtual GritClass *addClass (lua_State *L, const Ogre::String& name);
+        virtual GritClass *addClass (lua_State *L, const std::string& name);
 
-        virtual GritClass *getClass (const Ogre::String &name);
+        virtual GritClass *getClass (const std::string &name);
 
 
-        virtual bool hasClass (const Ogre::String &name)
+        virtual bool hasClass (const std::string &name)
         { return classes.find(name)!=classes.end(); }
 
         virtual void deleteClass (lua_State *L, GritClass *c)
@@ -118,10 +118,10 @@ class Streamer {
         // OBJECT STUFF
 
         virtual GritObjectPtr addObject (lua_State *L,
-                                         Ogre::String name,
+                                         std::string name,
                                          GritClass *grit_class);
 
-        virtual const GritObjectPtr &getObject (const Ogre::String &name);
+        virtual const GritObjectPtr &getObject (const std::string &name);
 
         virtual void getObjects (GObjMap::iterator &begin,
                                  GObjMap::iterator &end)
@@ -139,7 +139,7 @@ class Streamer {
 
         virtual int numObjects (void) { return gObjs.size(); }
 
-        virtual bool hasObject (const Ogre::String &name)
+        virtual bool hasObject (const std::string &name)
         { return gObjs.find(name)!=gObjs.end(); }
 
         virtual void deleteObject (lua_State *L, const GritObjectPtr &o);
@@ -147,23 +147,23 @@ class Streamer {
 
         // FRAME CALLBACK
 
-        virtual void frameCallbacks (lua_State *L, Ogre::Real elapsed);
+        virtual void frameCallbacks (lua_State *L, float elapsed);
         virtual void setNeedsFrameCallbacks (const GritObjectPtr &ptr, bool v);
 
         
         // ACTIVATION STUFF
 
-        Ogre::Real prepareDistanceFactor;
-        Ogre::Real fadeOutFactor;
-        Ogre::Real fadeOverlapFactor;
+        float prepareDistanceFactor;
+        float fadeOutFactor;
+        float fadeOverlapFactor;
 
-        Ogre::Real visibility;
+        float visibility;
 
-        virtual void centre (lua_State *L, Ogre::Real x, Ogre::Real y, Ogre::Real z);
+        virtual void centre (lua_State *L, float x, float y, float z);
 
-        virtual inline void updateSphere (size_t index, Ogre::Real x,
-                                          Ogre::Real y, Ogre::Real z,
-                                          Ogre::Real d)
+        virtual inline void updateSphere (size_t index, float x,
+                                          float y, float z,
+                                          float d)
         {
                 rs.updateSphere(index,x,y,z,d);
         }
@@ -180,9 +180,9 @@ class Streamer {
 
     protected:
 
-        virtual void eraseClass (const Ogre::String &name);
+        virtual void eraseClass (const std::string &name);
 
-        virtual void eraseObject (const Ogre::String &);
+        virtual void eraseObject (const std::string &);
 
         virtual void setPhysics (lua_State *L, const PhysicsWorldPtr &physics);
 

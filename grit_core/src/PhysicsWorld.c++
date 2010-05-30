@@ -428,9 +428,9 @@ float PhysicsWorld::getContactBreakingThreshold (void) const
 void PhysicsWorld::setContactBreakingThreshold (float v)
 { gContactBreakingThreshold = v; }
 
-Ogre::Vector3 PhysicsWorld::getGravity (void) const
-{ return to_ogre(world->getGravity()); }
-void PhysicsWorld::setGravity (const Ogre::Vector3 &gravity)
+Vector3 PhysicsWorld::getGravity (void) const
+{ return to_grit(world->getGravity()); }
+void PhysicsWorld::setGravity (const Vector3 &gravity)
 { world->setGravity(to_bullet(gravity)); }
 
 float PhysicsWorld::getSolverDamping (void) const
@@ -497,7 +497,7 @@ void PhysicsWorld::setSolverCacheFriendly (bool v)
 { set_flag(world->getSolverInfo().m_solverMode,SOLVER_CACHE_FRIENDLY,v); } 
 
 
-static inline void check_name(const PhysicsWorld &pw, const Ogre::String &name,
+static inline void check_name(const PhysicsWorld &pw, const std::string &name,
                               const char *func_name)
 {
         if (pw.hasMesh(name))
@@ -506,7 +506,7 @@ static inline void check_name(const PhysicsWorld &pw, const Ogre::String &name,
                             func_name);
 }
 
-CollisionMeshPtr PhysicsWorld::createFromFile (const Ogre::String &name)
+CollisionMeshPtr PhysicsWorld::createFromFile (const std::string &name)
 {
         check_name(*this,name,"PhysicsWorld::createFromFile");
         CollisionMeshPtr cmp = CollisionMeshPtr(new CollisionMesh(name));
@@ -521,7 +521,7 @@ CollisionMeshPtr PhysicsWorld::createFromFile (const Ogre::String &name)
         return cmp;
 }
 
-void PhysicsWorld::deleteMesh (const Ogre::String &name)
+void PhysicsWorld::deleteMesh (const std::string &name)
 {
         CollisionMeshMap::iterator i = colMeshes.find(name);
         if (i==colMeshes.end())
@@ -567,7 +567,7 @@ class BulletRayCallback : public btCollisionWorld::RayResultCallback {
                 }
 
 
-                scb.result(*rb, r.m_hitFraction, to_ogre(r.m_hitNormalLocal), m);
+                scb.result(*rb, r.m_hitFraction, to_grit(r.m_hitNormalLocal), m);
                 return r.m_hitFraction;
         }
     protected:
@@ -608,15 +608,15 @@ class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
                              << " " << part << " " << index << std::endl;
                         CLOG << r.m_hitFraction << " " << r.m_hitNormalLocal << std::endl;
                 }
-                scb.result(*rb, r.m_hitFraction, to_ogre(r.m_hitNormalLocal), m);
+                scb.result(*rb, r.m_hitFraction, to_grit(r.m_hitNormalLocal), m);
                 return r.m_hitFraction;
         }
     protected:
         PhysicsWorld::SweepCallback &scb;
 };
 
-void PhysicsWorld::ray (const Ogre::Vector3 &start,
-                        const Ogre::Vector3 &end,
+void PhysicsWorld::ray (const Vector3 &start,
+                        const Vector3 &end,
                         SweepCallback &scb,
                         float radius) const
 {
@@ -633,10 +633,10 @@ void PhysicsWorld::ray (const Ogre::Vector3 &start,
 }
 
 void PhysicsWorld::sweep (const CollisionMeshPtr &col_mesh,
-                          const Ogre::Vector3 &startp,
-                          const Ogre::Quaternion &startq,
-                          const Ogre::Vector3 &endp,
-                          const Ogre::Quaternion &endq,
+                          const Vector3 &startp,
+                          const Quaternion &startq,
+                          const Vector3 &endp,
+                          const Quaternion &endq,
                           SweepCallback &scb) const
 {
         BulletSweepCallback bscb(scb);
@@ -653,8 +653,8 @@ CollisionMeshMap PhysicsWorld::colMeshes;
 
 RigidBody::RigidBody (const PhysicsWorldPtr &world_,
                       const CollisionMeshPtr &col_mesh,
-                      const Ogre::Vector3 &pos,
-                      const Ogre::Quaternion &quat)
+                      const Vector3 &pos,
+                      const Quaternion &quat)
       : world(world_), colMesh(col_mesh),
         lastXform(to_bullet(quat),to_bullet(pos))
 {
@@ -704,7 +704,7 @@ void RigidBody::addToWorld (void)
         }
 
         btRigidBody::btRigidBodyConstructionInfo
-                info(colMesh->getMass(), this, shape, colMesh->getInertia());
+                info(colMesh->getMass(), this, shape, colMesh->getInertia().bullet());
 
         info.m_linearDamping = colMesh->getLinearDamping();
         info.m_angularDamping = colMesh->getAngularDamping();
@@ -877,15 +877,15 @@ void RigidBody::stabiliseCallback (lua_State *L)
         STACK_CHECK;
 }
 
-void RigidBody::force (const Ogre::Vector3 &force)
+void RigidBody::force (const Vector3 &force)
 {
         if (body==NULL) return;
         body->applyCentralImpulse(to_bullet(force*world->getStepSize()));
         body->activate();
 }
 
-void RigidBody::force (const Ogre::Vector3 &force,
-                       const Ogre::Vector3 &rel_pos)
+void RigidBody::force (const Vector3 &force,
+                       const Vector3 &rel_pos)
 {
         if (body==NULL) return;
         body->applyImpulse(to_bullet(force*world->getStepSize()),
@@ -893,29 +893,29 @@ void RigidBody::force (const Ogre::Vector3 &force,
         body->activate();
 }
 
-void RigidBody::impulse (const Ogre::Vector3 &impulse)
+void RigidBody::impulse (const Vector3 &impulse)
 {
         if (body==NULL) return;
         body->applyCentralImpulse(to_bullet(impulse));
         body->activate();
 }
 
-void RigidBody::impulse (const Ogre::Vector3 &impulse,
-                         const Ogre::Vector3 &rel_pos)
+void RigidBody::impulse (const Vector3 &impulse,
+                         const Vector3 &rel_pos)
 {
         if (body==NULL) return;
         body->applyImpulse(to_bullet(impulse),to_bullet(rel_pos));
         body->activate();
 }
 
-void RigidBody::torque (const Ogre::Vector3 &torque)
+void RigidBody::torque (const Vector3 &torque)
 {
         if (body==NULL) return;
         body->applyTorqueImpulse(to_bullet(torque*world->getStepSize()));
         body->activate();
 }
 
-void RigidBody::torqueImpulse (const Ogre::Vector3 &torque)
+void RigidBody::torqueImpulse (const Vector3 &torque)
 {
         if (body==NULL) return;
         body->applyTorqueImpulse(to_bullet(torque));
@@ -995,32 +995,32 @@ void RigidBody::deactivate (void)
         body->setActivationState( WANTS_DEACTIVATION );
 }
 
-Ogre::Vector3 RigidBody::getLinearVelocity (void) const
+Vector3 RigidBody::getLinearVelocity (void) const
 {
-        if (body==NULL) return Ogre::Vector3(0,0,0);
-        return to_ogre(body->getLinearVelocity());
+        if (body==NULL) return Vector3(0,0,0);
+        return to_grit(body->getLinearVelocity());
 }
 
-void RigidBody::setLinearVelocity (const Ogre::Vector3 &v)
+void RigidBody::setLinearVelocity (const Vector3 &v)
 {
         if (body==NULL) return;
         body->setLinearVelocity(to_bullet(v));
         body->activate();
 }
 
-Ogre::Vector3 RigidBody::getAngularVelocity (void) const
+Vector3 RigidBody::getAngularVelocity (void) const
 {
-        if (body==NULL) return Ogre::Vector3(0,0,0);
-        return to_ogre(body->getAngularVelocity());
+        if (body==NULL) return Vector3(0,0,0);
+        return to_grit(body->getAngularVelocity());
 }
 
-Ogre::Vector3 RigidBody::getLocalVelocity (const Ogre::Vector3 &v) const
+Vector3 RigidBody::getLocalVelocity (const Vector3 &v) const
 {
-        if (body==NULL) return Ogre::Vector3(0,0,0);
-        return to_ogre(body->getVelocityInLocalPoint(to_bullet(v)));
+        if (body==NULL) return Vector3(0,0,0);
+        return to_grit(body->getVelocityInLocalPoint(to_bullet(v)));
 }
 
-void RigidBody::setAngularVelocity (const Ogre::Vector3 &v)
+void RigidBody::setAngularVelocity (const Vector3 &v)
 {
         if (body==NULL) return;
         body->setAngularVelocity(to_bullet(v));
@@ -1032,9 +1032,9 @@ static inline float invert0 (float v)
         return v==0 ? 0 : 1/v;
 }
 
-static inline Ogre::Vector3 invert0 (const Ogre::Vector3 &v)
+static inline Vector3 invert0 (const Vector3 &v)
 {
-        return Ogre::Vector3(invert0(v.x),invert0(v.y),invert0(v.z));
+        return Vector3(invert0(v.x),invert0(v.y),invert0(v.z));
 }
 
 float RigidBody::getMass (void) const
@@ -1050,13 +1050,13 @@ void RigidBody::setMass (float r)
 }
 
 
-Ogre::Vector3 RigidBody::getInertia (void) const
+Vector3 RigidBody::getInertia (void) const
 {
-        if (body==NULL) return Ogre::Vector3(0,0,0);
-        return invert0(to_ogre(body->getInvInertiaDiagLocal()));
+        if (body==NULL) return Vector3(0,0,0);
+        return invert0(to_grit(body->getInvInertiaDiagLocal()));
 }
 
-void RigidBody::setInertia (const Ogre::Vector3 &v)
+void RigidBody::setInertia (const Vector3 &v)
 {
         if (body==NULL) return;
         body->setMassProps(getMass(),to_bullet(v));
@@ -1096,13 +1096,13 @@ bool RigidBody::getElementEnabled (int i)
         return localChanges[i].enabled;
 }
 
-Ogre::Vector3 RigidBody::getElementPositionMaster (int i)
+Vector3 RigidBody::getElementPositionMaster (int i)
 {
         APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
-        return to_ogre(colMesh->getMasterShape()->getChildTransform(i).getOrigin());
+        return to_grit(colMesh->getMasterShape()->getChildTransform(i).getOrigin());
 }
 
-void RigidBody::setElementPositionOffset (int i, const Ogre::Vector3 &v)
+void RigidBody::setElementPositionOffset (int i, const Vector3 &v)
 {
         APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
         localChanges[i].offset.setOrigin(to_bullet(v));
@@ -1112,19 +1112,19 @@ void RigidBody::setElementPositionOffset (int i, const Ogre::Vector3 &v)
         }
 }
 
-Ogre::Vector3 RigidBody::getElementPositionOffset (int i)
+Vector3 RigidBody::getElementPositionOffset (int i)
 {
         APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
-        return to_ogre(localChanges[i].offset.getOrigin());
+        return to_grit(localChanges[i].offset.getOrigin());
 }
 
-Ogre::Quaternion RigidBody::getElementOrientationMaster (int i)
+Quaternion RigidBody::getElementOrientationMaster (int i)
 {
         APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
-        return to_ogre(colMesh->getMasterShape()->getChildTransform(i).getRotation());
+        return to_grit(colMesh->getMasterShape()->getChildTransform(i).getRotation());
 }
 
-void RigidBody::setElementOrientationOffset (int i, const Ogre::Quaternion &q)
+void RigidBody::setElementOrientationOffset (int i, const Quaternion &q)
 {
         APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
         localChanges[i].offset.setRotation(to_bullet(q));
@@ -1134,10 +1134,10 @@ void RigidBody::setElementOrientationOffset (int i, const Ogre::Quaternion &q)
         }
 }
 
-Ogre::Quaternion RigidBody::getElementOrientationOffset (int i)
+Quaternion RigidBody::getElementOrientationOffset (int i)
 {
         APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
-        return to_ogre(localChanges[i].offset.getRotation());
+        return to_grit(localChanges[i].offset.getRotation());
 }
 
 // vim: shiftwidth=8:tabstop=8:expandtab:tw=100

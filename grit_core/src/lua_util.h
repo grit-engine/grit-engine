@@ -33,6 +33,7 @@ extern "C" {
 }
 
 #include "CentralisedLog.h"
+#include "math_util.h"
 
 
 #ifdef __GNUC__
@@ -55,23 +56,23 @@ extern "C" {
 #define STACK_CHECK STACK_CHECK_N(0)
 
 #define GET_V3(n,index) \
-Ogre::Vector3 n(luaL_checknumber(L,index+0), \
+Vector3 n(luaL_checknumber(L,index+0), \
 luaL_checknumber(L,index+1), \
 luaL_checknumber(L,index+2))
 
 #define GET_QUAT(n,index) \
-Ogre::Quaternion n(luaL_checknumber(L,index+0), \
+Quaternion n(luaL_checknumber(L,index+0), \
 luaL_checknumber(L,index+1), \
 luaL_checknumber(L,index+2), \
 luaL_checknumber(L,index+3))
 
 #define PUT_QUAT(n) do { \
-        Ogre::Quaternion q = n; \
+        Quaternion q = n; \
 lua_pushnumber(L,q.w); lua_pushnumber(L,q.x); lua_pushnumber(L,q.y); lua_pushnumber(L,q.z); \
 } while (false)
 
 #define PUT_V3(n) do { \
-        Ogre::Vector3 v = n; lua_pushnumber(L,v.x); lua_pushnumber(L,v.y); lua_pushnumber(L,v.z); \
+        Vector3 v = n; lua_pushnumber(L,v.x); lua_pushnumber(L,v.y); lua_pushnumber(L,v.z); \
 } while (false)
 
 void my_lua_error(lua_State *l, const std::string &msg) NORETURN;
@@ -128,14 +129,14 @@ template<class T> T table_fetch_num (lua_State *L, const char *f, const T &def)
         return r;
 }
 
-inline Ogre::Real table_fetch_real (lua_State *L, const char *f, Ogre::Real def)
+inline float table_fetch_real (lua_State *L, const char *f, float def)
 {
-        Ogre::Real r;
+        float r;
         lua_getfield(L,-1,f);
         if (lua_isnil(L,-1)) {
                 r = def;
         } else if (lua_type(L,-1)==LUA_TNUMBER) {
-                r = (Ogre::Real)lua_tonumber(L,-1);
+                r = (float)lua_tonumber(L,-1);
         } else {
                 my_lua_error(L, std::string(f)+" should be a number.");
         }

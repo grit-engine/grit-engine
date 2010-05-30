@@ -72,7 +72,7 @@ void push_light (lua_State *, Ogre::Light *);
 #define PSYS_TAG "Grit/ParticleSystem"
 MT_MACRO_DECLARE(psys);
 void push_psys (lua_State *, Ogre::ParticleSystem *);
-Ogre::ParticleSystem *make_psys (Ogre::SceneManager *, const Ogre::String &);
+Ogre::ParticleSystem *make_psys (Ogre::SceneManager *, const std::string &);
 
 
 

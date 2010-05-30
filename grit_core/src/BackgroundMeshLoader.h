@@ -105,7 +105,7 @@ typedef std::set<Ogre::ResourcePtr> ResourcePtrSet;
 struct Demand {
         Demand() : mProcessed(false) { }
         ResourcePtrs rPtrs;
-        volatile Ogre::Real mDist;
+        volatile float mDist;
         volatile bool mProcessed;
 };
 
@@ -131,7 +131,7 @@ class BackgroundMeshLoader : public Ogre::Singleton<BackgroundMeshLoader> {
 
         virtual size_t size () { return mDemands.size(); }
 
-        virtual void setAllowance (Ogre::Real m);
+        virtual void setAllowance (float m);
 
 
         // background thread entry point
@@ -154,7 +154,7 @@ class BackgroundMeshLoader : public Ogre::Singleton<BackgroundMeshLoader> {
         Demand * volatile mCurrent;
         volatile bool mQuit;
 
-        Ogre::Real mAllowance;
+        float mAllowance;
 
 
     public:

@@ -86,7 +86,7 @@ namespace HUD {
 
                 virtual void setCalculator (CalculatorPtr calculator);
 
-                static Ogre::String nextName();
+                static std::string nextName();
 
                 virtual Ogre::OverlayElement *getMe() const = 0;
 
@@ -120,12 +120,12 @@ namespace HUD {
 
                 virtual void removeChild (TreePtr);
                 virtual void removeAllChildren ();
-                virtual TreePtr createChild (Ogre::String type);
+                virtual TreePtr createChild (std::string type);
 
                 virtual TreePtrs getChildren ();
 
                 template <typename T>
-                void createChild (const Ogre::String& name,
+                void createChild (const std::string& name,
                                   Ogre::SharedPtr<T>& ptr)
                 {
                         TreePtr t = createChild(name);
@@ -138,13 +138,13 @@ namespace HUD {
 
                 // default is null (transparent)
                 virtual Ogre::MaterialPtr getMaterial ();
-                virtual void setMaterial (const Ogre::String& name);
+                virtual void setMaterial (const std::string& name);
                 virtual void setMaterial (const Ogre::MaterialPtr& mat);
 
-                virtual void getUV (Ogre::Real &u1, Ogre::Real &v1,
-                                    Ogre::Real &u2, Ogre::Real &v2) const;
-                virtual void setUV (Ogre::Real u1, Ogre::Real v1,
-                                    Ogre::Real u2, Ogre::Real v2);
+                virtual void getUV (float &u1, float &v1,
+                                    float &u2, float &v2) const;
+                virtual void setUV (float u1, float v1,
+                                    float u2, float v2);
 
                 virtual Ogre::PanelOverlayElement *getMe () const;
 
@@ -186,11 +186,11 @@ namespace HUD {
                 virtual void commitText();
                 virtual const DStr& getText() const;
 
-                virtual void setFont(const Ogre::String& font);
-                virtual const Ogre::String& getFont() const;
+                virtual void setFont(const std::string& font);
+                virtual const std::string& getFont() const;
 
-                virtual void setCharHeight(Ogre::Real h);
-                virtual Ogre::Real getCharHeight() const;
+                virtual void setCharHeight(float h);
+                virtual float getCharHeight() const;
 
                 virtual dim_t getWidth() const;
                 virtual dim_t getHeight() const;
@@ -213,19 +213,19 @@ namespace HUD {
 
         typedef Ogre::SharedPtr<Text> TextPtr;
 
-        Ogre::Real text_width(const DStr& str, Ogre::FontPtr fp,
-                              Ogre::Real height);
+        float text_width(const DStr& str, Ogre::FontPtr fp,
+                              float height);
 
-        DStr pixel_substr(const DStr& str, Ogre::FontPtr fp, Ogre::Real height,
-                          Ogre::Real width, DStr *rest, bool wordwrap);
+        DStr pixel_substr(const DStr& str, Ogre::FontPtr fp, float height,
+                          float width, DStr *rest, bool wordwrap);
 
         void expand_tabs(const DStr& input, const unsigned int expand_tabs,
                          const bool ignore_codes, DStr& output);
 
-        void wrap (const DStr& input, const Ogre::Real width, const dim_t lines,
+        void wrap (const DStr& input, const float width, const dim_t lines,
                    const bool word_wrap, const bool chop_top,
                    const bool ignore_codes, const Ogre::FontPtr fp,
-                   const Ogre::Real char_height, DStr& output, DStr *offcut);
+                   const float char_height, DStr& output, DStr *offcut);
 
 }
 

@@ -71,9 +71,9 @@ class CacheFriendlyRangeSpace {
                 o->updateIndex(index);
         }
 
-        virtual inline void updateSphere (size_t index, Ogre::Real x,
-                                          Ogre::Real y, Ogre::Real z,
-                                          Ogre::Real d)
+        virtual inline void updateSphere (size_t index, float x,
+                                          float y, float z,
+                                          float d)
         {
                 positions[index].x = (short)x;
                 positions[index].y = (short)y;
@@ -92,7 +92,7 @@ class CacheFriendlyRangeSpace {
         }
 
 
-        virtual void getPresent (Ogre::Real x, Ogre::Real y, Ogre::Real z,
+        virtual void getPresent (float x, float y, float z,
                                  size_t num, std::vector<T*> &found)
         {
                 if (num==0) return;

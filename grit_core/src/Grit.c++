@@ -50,12 +50,12 @@ class TextListOverlayElementFactory : public Ogre::OverlayElementFactory {
         public:
 
         virtual Ogre::OverlayElement*
-        createOverlayElement (const Ogre::String& instanceName)
+        createOverlayElement (const std::string& instanceName)
         {
             return new HUD::TextListOverlayElement(instanceName);
         }
 
-        virtual const Ogre::String& getTypeName () const
+        virtual const std::string& getTypeName () const
         {
             return HUD::TextListOverlayElement::msTypeName;
         }
@@ -112,14 +112,14 @@ Grit::~Grit ()
         if (ogre) OGRE_DELETE ogre;
 }
 
-void Grit::processMaterialName (Ogre::Mesh *mesh, Ogre::String *name)
+void Grit::processMaterialName (Ogre::Mesh *mesh, std::string *name)
 {
         std::string filename = mesh->getName();
         std::string dir(filename, 0, filename.rfind('/')+1);
         *name = pwd_full_ex(*name, "/"+dir, "BaseWhite");
 }
 
-void Grit::processSkeletonName (Ogre::Mesh *mesh, Ogre::String *name)
+void Grit::processSkeletonName (Ogre::Mesh *mesh, std::string *name)
 {
         std::string filename = mesh->getName();
         std::string dir(filename, 0, filename.rfind('/')+1);

@@ -37,13 +37,13 @@ class LuaParticleData : public Ogre::ParticleVisualData {
         void clearFunctionArg (lua_State *L);
         void callCleanup (lua_State *L);
         bool call (lua_State *L,
-                   Ogre::Real &x, Ogre::Real &y, Ogre::Real &z, Ogre::Real &rot,
-                   Ogre::Real &w, Ogre::Real &h,
-                   Ogre::Real &r, Ogre::Real &g, Ogre::Real &b, Ogre::Real &a,
-                   Ogre::Real &dx, Ogre::Real &dy, Ogre::Real &dz,
-                   Ogre::Real elapsed);
-        void affect (lua_State *L, Ogre::Particle *p, Ogre::Real elapsed);
-        Ogre::Real age;
+                   float &x, float &y, float &z, float &rot,
+                   float &w, float &h,
+                   float &r, float &g, float &b, float &a,
+                   float &dx, float &dy, float &dz,
+                   float elapsed);
+        void affect (lua_State *L, Ogre::Particle *p, float elapsed);
+        float age;
     protected:
         int function; // pointer into lua space
         int arg; // pointer into lua space
@@ -70,12 +70,12 @@ class LuaParticleRenderer : public Ogre::BillboardParticleRenderer {
 // use this to call the lua callback in order to affect a particle
 class LuaParticleAffector : public Ogre::ParticleAffector {
     public:
-        const Ogre::String &getType () const { return mType; }
+        const std::string &getType () const { return mType; }
         LuaParticleAffector (Ogre::ParticleSystem *ps)
               : Ogre::ParticleAffector(ps) {
                 mType = "LuaParticleAffector";
         }
-        void _affectParticles (Ogre::ParticleSystem *ps, Ogre::Real elapsed);
+        void _affectParticles (Ogre::ParticleSystem *ps, float elapsed);
     protected:
         Ogre::Timer timer;
 };
@@ -83,8 +83,8 @@ class LuaParticleAffector : public Ogre::ParticleAffector {
 class LuaParticleRendererFactory:public Ogre::BillboardParticleRendererFactory {
     public:
         LuaParticleRendererFactory () : name("LuaParticleRenderer") { }
-        const Ogre::String &getType () const { return name; }
-        Ogre::ParticleSystemRenderer *createInstance (const Ogre::String &name){
+        const std::string &getType () const { return name; }
+        Ogre::ParticleSystemRenderer *createInstance (const std::string &name){
                 (void) name; // This is what the superclass does
                 LuaParticleRenderer *r = new LuaParticleRenderer();
                 r->setPointRenderingEnabled(false);
@@ -95,12 +95,12 @@ class LuaParticleRendererFactory:public Ogre::BillboardParticleRendererFactory {
                 delete psr;
         }
     protected:
-        Ogre::String name;
+        std::string name;
 };
 
 class LuaParticleAffectorFactory : public Ogre::ParticleAffectorFactory {
     public:
-        Ogre::String getName () const { return "LuaParticleAffector"; }
+        std::string getName () const { return "LuaParticleAffector"; }
         Ogre::ParticleAffector *createAffector (Ogre::ParticleSystem *ps) {
                 return new LuaParticleAffector(ps);
         }

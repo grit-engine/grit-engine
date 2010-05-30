@@ -54,6 +54,43 @@ extern "C" {
 #include "CollisionMesh.h"
 
 #include "GritObject.h"
+#include "math_util.h"
+
+static inline Vector3 to_grit(const btVector3 &from)
+{
+        if (isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
+                CERR << "NaN from bullet." << std::endl;
+                return Vector3(0,0,0);
+        }
+        return Vector3 (from.x(), from.y(), from.z());
+}
+
+static inline Quaternion to_grit(const btQuaternion &from)
+{
+        if (isnan(from.w()) || isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
+                CERR << "NaN from bullet." << std::endl;
+                return Quaternion(1,0,0,0);
+        }
+        return Quaternion (from.w(), from.x(), from.y(), from.z());
+}
+
+static inline btVector3 to_bullet (const Vector3 &from)
+{
+        if (isnan(from.x) || isnan(from.y) || isnan(from.z)) {
+                CERR << "NaN from OGRE." << std::endl;
+                return btVector3(0,0,0);
+        }
+        return btVector3(from.x,from.y,from.z);
+}
+
+static inline btQuaternion to_bullet (const Quaternion &from)
+{
+        if (isnan(from.w) || isnan(from.x) || isnan(from.y) || isnan(from.z)) {
+                CERR << "NaN from OGRE." << std::endl;
+                return btQuaternion(0,0,0,1);
+        }
+        return btQuaternion(from.x, from.y, from.z, from.w);
+}
 
 static inline Ogre::Vector3 to_ogre(const btVector3 &from)
 {
@@ -134,18 +171,18 @@ class PhysicsWorld {
 
         int pump (lua_State *L, float time_step);
 
-        void setGravity (const Ogre::Vector3 &);
-        Ogre::Vector3 getGravity (void) const;
+        void setGravity (const Vector3 &);
+        Vector3 getGravity (void) const;
 
         CollisionMeshPtr createFromFile (
-                const Ogre::String &fileName);
+                const std::string &fileName);
 
-        bool hasMesh (const Ogre::String &name) const
+        bool hasMesh (const std::string &name) const
         {
                 return colMeshes.find(name) != colMeshes.end();
         }
 
-        CollisionMeshPtr getMesh (const Ogre::String &name)
+        CollisionMeshPtr getMesh (const std::string &name)
         {
                 CollisionMeshMap::iterator i = colMeshes.find(name);
                 if (i==colMeshes.end())
@@ -153,7 +190,7 @@ class PhysicsWorld {
                 return i->second;
         }
 
-        void deleteMesh (const Ogre::String &name);
+        void deleteMesh (const std::string &name);
 
         void clearMeshes (void)
         {
@@ -167,20 +204,20 @@ class PhysicsWorld {
         class SweepCallback {
             public:
                 virtual void result (RigidBody &body, float d,
-                                     const Ogre::Vector3 &normal, int m) = 0;
+                                     const Vector3 &normal, int m) = 0;
         };
 
-        void ray (const Ogre::Vector3 &start,
-                  const Ogre::Vector3 &end,
+        void ray (const Vector3 &start,
+                  const Vector3 &end,
                   SweepCallback &rcb,
                   float radius=0) const;
 
 
         void sweep (const CollisionMeshPtr &col_mesh,
-                    const Ogre::Vector3 &startp,
-                    const Ogre::Quaternion &startq,
-                    const Ogre::Vector3 &endp,
-                    const Ogre::Quaternion &endq,
+                    const Vector3 &startp,
+                    const Quaternion &startq,
+                    const Vector3 &endp,
+                    const Quaternion &endq,
                     SweepCallback &scb) const;
 
 
@@ -302,8 +339,8 @@ class RigidBody : public btMotionState {
 
         RigidBody (const PhysicsWorldPtr &world,
                    const CollisionMeshPtr &col_mesh,
-                   const Ogre::Vector3 &pos,
-                   const Ogre::Quaternion &quat);
+                   const Vector3 &pos,
+                   const Quaternion &quat);
 
 
         ~RigidBody (void);
@@ -314,19 +351,19 @@ class RigidBody : public btMotionState {
 
         void setWorldTransform (const btTransform& current_xform);
 
-        Ogre::Vector3 getPosition (void) const
+        Vector3 getPosition (void) const
         {
-                if (body==NULL) return Ogre::Vector3(0,0,0); // deactivated
-                return to_ogre(body->getCenterOfMassPosition());
+                if (body==NULL) return Vector3(0,0,0); // deactivated
+                return to_grit(body->getCenterOfMassPosition());
         }
 
-        Ogre::Quaternion getOrientation (void) const
+        Quaternion getOrientation (void) const
         {
-                if (body==NULL) return Ogre::Quaternion(0,1,0,0); // deactivated
-                return to_ogre(body->getOrientation());
+                if (body==NULL) return Quaternion(0,1,0,0); // deactivated
+                return to_grit(body->getOrientation());
         }
 
-        void setPosition (const Ogre::Vector3 &v)
+        void setPosition (const Vector3 &v)
         {
                 if (body==NULL) return; // deactivated
                 body->setCenterOfMassTransform(
@@ -334,7 +371,7 @@ class RigidBody : public btMotionState {
                 body->activate();
         }
 
-        void setOrientation (const Ogre::Quaternion &q)
+        void setOrientation (const Quaternion &q)
         {
                 if (body==NULL) return; // deactivated
                 body->setCenterOfMassTransform(
@@ -349,14 +386,14 @@ class RigidBody : public btMotionState {
         void activate (void);
         void deactivate (void);
 
-        void force (const Ogre::Vector3 &force);
-        void force (const Ogre::Vector3 &force,
-                    const Ogre::Vector3 &rel_pos);
-        void impulse (const Ogre::Vector3 &impulse);
-        void impulse (const Ogre::Vector3 &impulse,
-                      const Ogre::Vector3 &rel_pos);
-        void torque (const Ogre::Vector3 &torque);
-        void torqueImpulse (const Ogre::Vector3 &torque);
+        void force (const Vector3 &force);
+        void force (const Vector3 &force,
+                    const Vector3 &rel_pos);
+        void impulse (const Vector3 &impulse);
+        void impulse (const Vector3 &impulse,
+                      const Vector3 &rel_pos);
+        void torque (const Vector3 &torque);
+        void torqueImpulse (const Vector3 &torque);
 
         float getContactProcessingThreshold (void) const;
         void setContactProcessingThreshold (float v);
@@ -373,19 +410,19 @@ class RigidBody : public btMotionState {
         float getAngularSleepThreshold (void) const;
         void setAngularSleepThreshold (float r);
 
-        Ogre::Vector3 getLinearVelocity (void) const;
-        void setLinearVelocity (const Ogre::Vector3 &v);
+        Vector3 getLinearVelocity (void) const;
+        void setLinearVelocity (const Vector3 &v);
 
-        Ogre::Vector3 getAngularVelocity (void) const;
-        void setAngularVelocity (const Ogre::Vector3 &v);
+        Vector3 getAngularVelocity (void) const;
+        void setAngularVelocity (const Vector3 &v);
 
-        Ogre::Vector3 getLocalVelocity (const Ogre::Vector3 &) const;
+        Vector3 getLocalVelocity (const Vector3 &) const;
 
         float getMass (void) const;
         void setMass (float r);
 
-        Ogre::Vector3 getInertia (void) const;
-        void setInertia (const Ogre::Vector3 &v);
+        Vector3 getInertia (void) const;
+        void setInertia (const Vector3 &v);
 
         RigidBodyPtr getPtr (void) const { return self; }
 
@@ -446,12 +483,12 @@ class RigidBody : public btMotionState {
         void setElementEnabled (int i, bool v);
         bool getElementEnabled (int i);
 
-        Ogre::Vector3 getElementPositionMaster (int i);
-        void setElementPositionOffset (int i, const Ogre::Vector3 &v);
-        Ogre::Vector3 getElementPositionOffset (int i);
-        Ogre::Quaternion getElementOrientationMaster (int i);
-        void setElementOrientationOffset (int i, const Ogre::Quaternion &q);
-        Ogre::Quaternion getElementOrientationOffset (int i);
+        Vector3 getElementPositionMaster (int i);
+        void setElementPositionOffset (int i, const Vector3 &v);
+        Vector3 getElementPositionOffset (int i);
+        Quaternion getElementOrientationMaster (int i);
+        void setElementOrientationOffset (int i, const Quaternion &q);
+        Quaternion getElementOrientationOffset (int i);
         int getNumElements (void) { return localChanges.size(); };
 
     protected:
