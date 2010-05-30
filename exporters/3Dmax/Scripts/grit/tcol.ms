@@ -141,49 +141,27 @@ fn get_phys_mat obj id suppress:false = ( -- {{{
 
     if (classof mat) == MULTIMATERIAL then (
         mat = mat.materialList[mat.materialIDlist[id]]
-
-        if (classof mat) == GRIT_PHYSMAT then (
-            mat
-        ) else (
-            if not suppress then (
-                local errmsg = stringstream ""
-                format "\"%\" had a multimaterial but index % was not a Grit physmat, was actually \"%\":  Assigning frictionless material!\n" obj.name id (classof mat) to:errmsg
-                messageBox (errmsg AS string) title:"ERROR!"
-            )
-            undefined
-        )
-    ) else if (classof mat) == GRIT_PHYSMAT then (
         mat
     ) else (
-        if not suppress then (
-            local errmsg = stringstream ""
-            format "\"%\" had no recognisable material (Grit Physmat or multimaterial), material was actually \"%\":  Assigning frictionless material!\n" obj.name (classof mat) to:errmsg
-            messageBox (errmsg AS string) title:"ERROR!"
-        )
-        undefined
+        mat
     )
 ) -- }}}
 
 fn is_obj_convex obj = ( -- {{{
-    local mat = obj.material
-    if mat == undefined then return false
-    if (classof mat) == MULTIMATERIAL then return false
-    if (classof mat) != GRIT_PHYSMAT then return false
-    mat.convex
+    dft (getUserProp obj "gritConvexPolys") false
+
 ) -- }}}
 
-fn get_mat_margin mat = ( -- {{{
-    if mat == undefined then return 0.04
-    if (classof mat) == MULTIMATERIAL then return 0.04
-    if (classof mat) != GRIT_PHYSMAT then return 0.04
-    mat.margin
+fn get_obj_margin obj = ( -- {{{
+    if dft (getUserProp obj "gritCustomMargin") false then (
+        dft (getUserProp obj "gritMargin") 0.04
+    ) else (
+        0.04
+    )
 ) -- }}}
 
-fn get_mat_hex mat = ( -- {{{
-    if mat == undefined then return "0x0"
-    if (classof mat) == MULTIMATERIAL then return "0x0"
-    if (classof mat) != GRIT_PHYSMAT then return "0x0"
-    return formattedPrint mat.physmat format:"#x"
+fn get_mat_name mat = ( -- {{{
+    if mat == undefined then "/common/Frictionless" else mat.name
 ) -- }}}
 
 fn grit_tcol_export out_file propobj objs = ( -- {{{
@@ -239,10 +217,10 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
         if classof(obj) == Box then (
             local dim = sca * point3 obj.width obj.length obj.height
             local mat = get_phys_mat obj 1
-            local margin = min (get_mat_margin mat) ((min(min dim.x dim.y) dim.z)/4)
+            local margin = min (get_obj_margin obj) ((min(min dim.x dim.y) dim.z)/4)
             pos = pos + point3 0 0 (dim.z/2) * inverse q
             format "    box {\n" to:savetcol
-            format "        material %;\n" (get_mat_hex mat) to:savetcol
+            format "        material \"%\";\n" (get_mat_name mat) to:savetcol
             format "        margin %;\n" margin to:savetcol
             format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
             format "        dimensions % % %;\n" (abs dim.x) (abs dim.y) (abs dim.z) to:savetcol
@@ -252,10 +230,10 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
         if classof(obj) == Cylinder then (
             local dim = sca * point3 (obj.radius*2) (obj.radius*2) obj.height
             local mat = get_phys_mat obj 1
-            local margin = min (get_mat_margin mat) ((min(min dim.x dim.y) dim.z)/4)
+            local margin = min (get_obj_margin obj) ((min(min dim.x dim.y) dim.z)/4)
             pos = pos + point3 0 0 (dim.z/2) * inverse q
             format "    cylinder {\n" to:savetcol
-            format "        material %;\n" (get_mat_hex mat) to:savetcol
+            format "        material \"%\";\n" (get_mat_name mat) to:savetcol
             format "        margin %;\n" margin to:savetcol
             format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
             format "        dimensions % % %;\n" (abs dim.x) (abs dim.y) (abs dim.z) to:savetcol
@@ -267,10 +245,10 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
             local r = abs ((sca.x+sca.y)/2 * obj.radius1)
             local h = abs (sca.z * obj.height)
             local mat = get_phys_mat obj 1
-            local margin = get_mat_margin mat
+            local margin = get_obj_margin obj
             pos = pos + point3 0 0 (h/2) * inverse q
             format "    cone {\n" to:savetcol
-            format "        material %;\n" (get_mat_hex mat) to:savetcol
+            format "        material \"%\";\n" (get_mat_name mat) to:savetcol
             format "        margin %;\n" margin to:savetcol
             format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
             format "        radius %;\n" r to:savetcol
@@ -283,7 +261,7 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
             local r = abs ((sca.x+sca.y+sca.z)/3 * obj.radius)
             local mat = get_phys_mat obj 1
             format "    cone {\n" to:savetcol
-            format "        material %;\n" (get_mat_hex mat) to:savetcol
+            format "        material \"%\";\n" (get_mat_name mat) to:savetcol
             format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
             format "        radius %;\n" r to:savetcol
             format "    }\n" to:savetcol
@@ -294,7 +272,7 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
                 continue
             )
             local mat = get_phys_mat obj 1
-            local margin = get_mat_margin mat
+            local margin = get_obj_margin obj
             local tmesh
             if dummy == undefined then (
                 tmesh = snapshotAsMesh obj
@@ -313,7 +291,7 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
             local num_verts = tmesh.numverts 
             format "Verts: %\n" num_verts to:listener
             format "    hull {\n" to:savetcol
-            format "        material %;\n" (get_mat_hex mat) to:savetcol
+            format "        material \"%\";\n" (get_mat_name mat) to:savetcol
             format "        margin %;\n" margin to:savetcol
             format "        vertexes {\n" to:savetcol
             for v = 1 to num_verts do (
@@ -388,7 +366,7 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
                         errors = errors + 1
                     -- 'as integer' suppresses the trailing .0 on the output numbers
                     -- (as that would not be correct tcol syntax)
-                    format "        % % % %;\n" (face[1] as integer) (face[2] as integer) (face[3] as integer) (get_mat_hex mat) to:savetcol
+                    format "        % % % \"%\";\n" (face[1] as integer) (face[2] as integer) (face[3] as integer) (get_mat_name mat) to:savetcol
                 )
                 initial_vertex_offset = initial_vertex_offset + tmesh.numverts
                 if errors > 0 then (
@@ -423,7 +401,7 @@ Rollout GritRolloutTcolMain "Main" -- {{{
     )
 
     -- attributes {{{
-    group "Attributes (select a single object to modify)" (
+    group "Tcol Attributes (these apply to the whole body)" (
         checkbox dynamic "Dynamic"
         spinner smass "Mass (kg):"
         checkbox cyinertia "Export"
@@ -444,6 +422,13 @@ Rollout GritRolloutTcolMain "Main" -- {{{
         spinner scsphswrad "CCD sphere rad (m):"
     )
 
+    -- attributes {{{
+    group "Part Attributes (these apply to a single box/hull/etc)" (
+        checkbox margin "Custom margin" across:2 
+        spinner slmargin "Margin:" scale: 0.001 range:[0,0.1,0.04]
+        checkbox convex "Polys are convex hull"
+    )
+
 
     fn update = (
         -- we might get called when the floater does not exist
@@ -460,6 +445,7 @@ Rollout GritRolloutTcolMain "Main" -- {{{
             sasthrs.enabled = false 
             scmotthrs.enabled = false 
             scsphswrad.enabled = false 
+            slmargin.enabled = false 
 
             dynamic.triState = 0
             cyinertia.triState = 0
@@ -469,6 +455,8 @@ Rollout GritRolloutTcolMain "Main" -- {{{
             cyasthrs.triState = 0
             cycmotthrs.triState = 0
             cycsphswrad.triState = 0
+            margin.triState = 0
+            convex.triState = 0
 
             dynamic.enabled = false
             cyinertia.enabled = false
@@ -478,6 +466,8 @@ Rollout GritRolloutTcolMain "Main" -- {{{
             cyasthrs.enabled = false
             cycmotthrs.enabled = false
             cycsphswrad.enabled = false
+            margin.enabled = false 
+            convex.enabled = false 
         ) else (
             local obj = (getCurrentSelection())[1]
 
@@ -491,6 +481,7 @@ Rollout GritRolloutTcolMain "Main" -- {{{
             sasthrs.value = dft (getUserProp obj "gritAngularSleepThresholdValue") 0.8
             scmotthrs.value = dft (getUserProp obj "gritCCDMotionThresholdValue") 0
             scsphswrad.value = dft (getUserProp obj "gritCCDSweptSphereRadiusValue") 0
+            slmargin.value = dft (getUserProp obj "gritMargin") 0.04
             
             local dyn = dft (getUserProp obj "gritDynamic") false
             dynamic.triState = if dyn then 1 else 0
@@ -501,6 +492,8 @@ Rollout GritRolloutTcolMain "Main" -- {{{
             cyasthrs.triState = if dft (getUserProp obj "gritAngularSleepThresholdExported") false then 1 else 0
             cycmotthrs.triState = if dft (getUserProp obj "gritCCDMotionThresholdExported") false then 1 else 0
             cycsphswrad.triState = if dft (getUserProp obj "gritCCDSweptSphereRadiusExported") false then 1 else 0
+            margin.triState = if dft (getUserProp obj "gritCustomMargin") false then 1 else 0
+            convex.triState = if dft (getUserProp obj "gritConvexPolys") false then 1 else 0
 
             smass.enabled = dynamic.triState == 1
             sinertiax.enabled = cyinertia.triState == 1
@@ -512,6 +505,7 @@ Rollout GritRolloutTcolMain "Main" -- {{{
             sasthrs.enabled = cyasthrs.triState == 1
             scmotthrs.enabled = cycmotthrs.triState == 1
             scsphswrad.enabled = cycsphswrad.triState == 1
+            slmargin.enabled = margin.triState == 1
 
 
             dynamic.enabled = true
@@ -522,6 +516,9 @@ Rollout GritRolloutTcolMain "Main" -- {{{
             cyasthrs.enabled = dyn
             cycmotthrs.enabled = dyn
             cycsphswrad.enabled = dyn
+
+            margin.enabled = true
+            convex.enabled = true
         )
     )
 
@@ -541,6 +538,8 @@ Rollout GritRolloutTcolMain "Main" -- {{{
     on cyasthrs changed v do update_from_value "gritAngularSleepThresholdExported" v
     on cycmotthrs changed v do update_from_value "gritCCDMotionThresholdExported" v
     on cycsphswrad changed v do update_from_value "gritCCDSweptSphereRadiusExported" v
+    on convex changed v do update_from_value "gritConvexPolys" v
+    on margin changed v do update_from_value "gritCustomMargin" v
 
     on smass changed v do update_from_value "gritMassValue" v
     on sinertiax changed v do update_from_value "gritInertiaXValue" v
@@ -552,6 +551,7 @@ Rollout GritRolloutTcolMain "Main" -- {{{
     on sasthrs changed v do update_from_value "gritAngularSleepThresholdValue" v
     on scmotthrs changed v do update_from_value "gritCCDMotionThresholdValue" v
     on scsphswrad changed v do update_from_value "gritCCDSweptSphereRadiusValue" v
+    on slmargin changed v do update_from_value "gritMargin" v
 
     -- }}}
 
