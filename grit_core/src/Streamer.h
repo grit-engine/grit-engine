@@ -50,13 +50,13 @@ class Streamer {
     public:
 
         Streamer (void)
-              : prepareDistanceFactor(1.3),
-                fadeOutFactor(.7),
-                fadeOverlapFactor(.7),
-                visibility(1),
+              : prepareDistanceFactor(1.3f),
+                fadeOutFactor(.7f),
+                fadeOverlapFactor(.7f),
+                visibility(1.0f),
                 stepSize(20000),
                 gfx(NULL),
-                bounds(-3000,-3000,-3000,3000,3000,3000),
+                bounds(-3000.0f,-3000.0f,-3000.0f,3000.0f,3000.0f,3000.0f),
                 nameGenerationCounter(0), shutdown(false)
         {
         }

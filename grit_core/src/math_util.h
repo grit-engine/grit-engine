@@ -27,11 +27,19 @@ struct Vector3;
 #ifndef MATH_UTIL_H
 #define MATH_UTIL_H
 
+#include <cmath>
+#include <cfloat>
+
 #include <OgreVector3.h>
 #include <LinearMath/btVector3.h>
 
-#include <CentralisedLog.h>
+#include "CentralisedLog.h"
 
+#ifdef WIN32
+#define my_isnan _isnan
+#else
+#define my_isnan isnan
+#endif
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932385f
@@ -120,7 +128,7 @@ struct Quaternion {
     Quaternion inverse (void) const
     { return this->normalisedCopy().unitInverse(); }
 
-    bool isNaN() const { return isnan(w) || isnan(x) || isnan(y) || isnan(z); }
+    bool isNaN() const { return my_isnan(w) || my_isnan(x) || my_isnan(y) || my_isnan(z); }
 
     friend std::ostream& operator << (std::ostream& o, const Quaternion& q)
     {
@@ -299,7 +307,7 @@ struct Vector3 {
 
     /// Check whether this vector contains valid values
     bool isNaN (void) const
-    { return isnan(x) || isnan(y) || isnan(z); }
+    { return my_isnan(x) || my_isnan(y) || my_isnan(z); }
 
     friend std::ostream& operator << (std::ostream& o, const Vector3& v)
     {
@@ -322,7 +330,7 @@ inline Vector3 operator * (const Quaternion &q, const Vector3& v)
 
 inline Quaternion::Quaternion(const Radian& a, const Vector3& axis)
 {
-    float ha ( 0.5*a.f );
+    float ha ( 0.5f*a.f );
     float s = sinf(ha);
     w = cosf(ha);
     x = s*axis.x;

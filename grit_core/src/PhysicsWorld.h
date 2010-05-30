@@ -45,7 +45,7 @@ typedef Ogre::SharedPtr<RigidBody> RigidBodyPtr;
 #include <btBulletDynamicsCommon.h>
 
 extern "C" {
-        #include "lua.h"
+        #include <lua.h>
         #include <lauxlib.h>
         #include <lualib.h>
 }
@@ -135,7 +135,7 @@ class DynamicsWorld : public btDiscreteDynamicsWorld {
                        btConstraintSolver *conSolver,
                        btCollisionConfiguration *colConf)
               : btDiscreteDynamicsWorld(colDisp,broadphase,conSolver,colConf),
-                stepSize(1.0/60),
+                stepSize(1.0f/60.0f),
                 dirty(false)
         { }
 

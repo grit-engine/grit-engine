@@ -143,12 +143,12 @@ class CollisionMesh {
 
         CollisionMesh (const std::string &name_)
               : name(name_),
-                linearDamping(0),
-                angularDamping(0.5),
-                linearSleepThreshold(1),
-                angularSleepThreshold(0.8),
-                friction(0.5),
-                restitution(0)
+                linearDamping(0.0f),
+                angularDamping(0.5f),
+                linearSleepThreshold(1.0f),
+                angularSleepThreshold(0.8f),
+                friction(0.5f),
+                restitution(0.0f)
         { }
 
         const std::string name;

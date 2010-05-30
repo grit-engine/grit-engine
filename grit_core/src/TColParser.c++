@@ -275,7 +275,7 @@ static float parse_real (const std::string &name, quex::TColLexer* qlex)
         if (t.type_id()==QUEX_TKN_FLOAT) {
                 return get_real_from_token(t);
         } else if (t.type_id()==QUEX_TKN_NATURAL) {
-                return t.number();
+                return (float)t.number();
         } else {
                 err(name,qlex,t,"float");
                 return 0.0; // suppress msvc warning
@@ -290,7 +290,7 @@ static float parse_positive_real (const std::string &name,
         if (t.type_id()==QUEX_TKN_FLOAT) {
                 v = get_real_from_token(t);
         } else if (t.type_id()==QUEX_TKN_NATURAL) {
-                v = t.number();
+                v = (float)t.number();
         } else {
                 err(name,qlex,t,"float");
         }
