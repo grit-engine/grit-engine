@@ -44,6 +44,13 @@
 #undef far
 #endif
 
+CentralisedLog clog;
+void app_fatal (void) { abort(); }
+
+// I think we never actually call this as we never read a tcol
+std::string pwd_full (const std::string &rel, const std::string &def)
+{ abort(); return std::string(); }
+
 static void open_file (std::ostream &out, std::ifstream &f,
                        const std::string fname)
 {
