@@ -306,7 +306,7 @@ class ProxyStreamBuf : public std::streambuf
 };
 
 
-void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file, const PhysicsWorld &world)
+void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file, const MaterialDB &db)
 {
         ProxyStreamBuf proxy(file);
         {
@@ -314,7 +314,7 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file, const Physi
                 quex::TColLexer qlex(&stream);
                 TColFile tcol;
                 pwd_push_file("/"+file->getName());
-                parse_tcol_1_0(file->getName(),&qlex,tcol,world);
+                parse_tcol_1_0(file->getName(),&qlex,tcol,db);
                 pwd_pop();
 
                 Materials m1, m2;
@@ -348,9 +348,9 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file, const Physi
         }
 }
 
-void CollisionMesh::reload (const PhysicsWorld &world)
+void CollisionMesh::reload (const MaterialDB &db)
 {
-        importFromFile(Ogre::ResourceGroupManager::getSingleton().openResource(name,"GRIT"), world);
+        importFromFile(Ogre::ResourceGroupManager::getSingleton().openResource(name,"GRIT"), db);
         for (Users::iterator i=users.begin(),i_=users.end() ; i!=i_ ; ++i) {
                 (*i)->notifyMeshReloaded();
         }

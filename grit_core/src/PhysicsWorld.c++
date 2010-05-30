@@ -188,10 +188,7 @@ bool contact_added_callback (btManifoldPoint& cp,
         int mat0 = get_material(cmesh0, shape0, part0, index0, &err, verb);
         int mat1 = get_material(cmesh1, shape1, part1, index1, &err, verb);
 
-        cp.m_combinedFriction = world->getMaterial(mat0).friction
-                              * world->getMaterial(mat1).friction;
-        cp.m_combinedRestitution = world->getMaterial(mat0).restitution
-                                 * world->getMaterial(mat1).restitution;
+        world->getFrictionRestitution(mat0, mat1, cp.m_combinedFriction, cp.m_combinedRestitution);
 
         if (err || world->verboseContacts) {
                 CLOG << mat0 << "[" << shape_str(shape0->getShapeType()) << "]"
@@ -516,7 +513,7 @@ CollisionMeshPtr PhysicsWorld::createFromFile (const std::string &name)
         Ogre::DataStreamPtr file =
                 Ogre::ResourceGroupManager::getSingleton()
                         .openResource(name,"GRIT");
-        cmp->importFromFile(file, *this);
+        cmp->importFromFile(file, mdb);
         colMeshes[name] = cmp;
         return cmp;
 }

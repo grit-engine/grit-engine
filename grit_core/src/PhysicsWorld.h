@@ -151,13 +151,6 @@ class DynamicsWorld : public btDiscreteDynamicsWorld {
         bool dirty;
 };
 
-struct PhysicsMaterial {
-        std::string name;
-        float restitution;
-        float friction;
-        int id;
-};
-
 class PhysicsWorld {
 
         friend class CollisionMesh;
@@ -178,9 +171,7 @@ class PhysicsWorld {
                 const std::string &fileName);
 
         bool hasMesh (const std::string &name) const
-        {
-                return colMeshes.find(name) != colMeshes.end();
-        }
+        { return colMeshes.find(name) != colMeshes.end(); }
 
         CollisionMeshPtr getMesh (const std::string &name)
         {
@@ -193,14 +184,47 @@ class PhysicsWorld {
         void deleteMesh (const std::string &name);
 
         void clearMeshes (void)
-        {
-                colMeshes.clear();
-        }
+        { colMeshes.clear(); }
 
         static const CollisionMeshMap &getMeshes (void) { return colMeshes; }
 
-        // to be extended by lua wrapper or whatever
+        const PhysicsMaterial &getMaterial (const std::string &name) const
+        { return mdb.getMaterial(name); }
 
+        const PhysicsMaterial &getMaterial (int material) const
+        { return mdb.getMaterial(material); }
+
+        void setMaterial (const std::string &name, int interaction_group)
+        { mdb.setMaterial(name, interaction_group); }
+
+        void setInteractionGroups (unsigned groups,
+                                   const std::vector<std::pair<float,float> > &interactions_)
+        {
+                APP_ASSERT(groups * groups == interactions_.size());
+                numInteractions = groups;
+                interactions = interactions_;
+        }
+
+        void getFrictionRestitution (int mat0, int mat1, float &f, float &r)
+        {
+                unsigned char ig0 = getMaterial(mat0).interactionGroup;
+                unsigned char ig1 = getMaterial(mat1).interactionGroup;
+                if (ig0 > numInteractions) {
+                        CERR<<"Invalid interaction group "<<ig0<<" in material \""
+                            <<getMaterial(mat0).name<<"\""<<std::endl;
+                        f = 0; r = 0; return;
+                }
+                if (ig1 > numInteractions) {
+                        CERR<<"Invalid interaction group "<<ig1<<" in material \""
+                            <<getMaterial(mat1).name<<"\""<<std::endl;
+                        f = 0; r = 0; return;
+                }
+                int code = ig0*numInteractions + ig1;
+                f = interactions[code].first;
+                r = interactions[code].second;
+        }
+
+        // to be extended by lua wrapper or whatever
         class SweepCallback {
             public:
                 virtual void result (RigidBody &body, float d,
@@ -269,28 +293,6 @@ class PhysicsWorld {
         btScalar getMaxSteps (void) const { return maxSteps; }
         void setMaxSteps (btScalar v) { maxSteps = v; }
 
-        const PhysicsMaterial &getMaterial (const std::string &name) const {
-                MaterialDB::const_iterator i = mdb.find(name);
-                if (i==mdb.end()) 
-                        OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
-                                    "Physical Material \""+name+"\" does not exist.",
-                                    "PhysicsWorld::getMaterial");
-                return i->second;
-        }
-
-        const PhysicsMaterial &getMaterial (int material) const {
-                return *mdb2[material];
-        }
-
-        void setMaterial (const std::string &name, float friction, float restitution) {
-                PhysicsMaterial &m = mdb[name];
-                m.name = name;
-                m.friction = friction;
-                m.restitution = restitution;
-                m.id = mdb2.size();
-                mdb2.push_back(&m);
-        }
-
         void draw (void) { world->debugDrawWorld(); }
 
         bool verboseContacts;
@@ -302,6 +304,8 @@ class PhysicsWorld {
         bool gimpactOneWayMeshHack;
 
         void updateGraphics (lua_State *L);
+
+        const MaterialDB &getMaterialDB (void) { return mdb; }
 
     protected:
 
@@ -324,10 +328,10 @@ class PhysicsWorld {
 
         lua_State *last_L;
 
-        typedef std::map<std::string, PhysicsMaterial> MaterialDB; // map string to material
         MaterialDB mdb;
-        typedef std::vector<PhysicsMaterial*> MaterialDB2; // map id to material
-        MaterialDB2 mdb2;
+
+        std::vector<std::pair<float, float> > interactions;
+        unsigned numInteractions;
 };
 
 class RigidBody : public btMotionState {

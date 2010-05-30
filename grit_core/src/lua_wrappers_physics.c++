@@ -1073,7 +1073,7 @@ TRY_START
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
         std::string name = luaL_checkstring(L,2);
         CollisionMeshPtr cmp = self->getMesh(name);
-        cmp->reload(*self);
+        cmp->reload(self->getMaterialDB());
         return 0;
 TRY_END
 }
@@ -1084,7 +1084,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
         GET_UD_MACRO(CollisionMeshPtr,cmp,2,COLMESH_TAG);
-        cmp->reload(*self);
+        cmp->reload(self->getMaterialDB());
         return 0;
 TRY_END
 }
@@ -1157,12 +1157,11 @@ TRY_END
 static int pworld_set_material (lua_State *L)
 {
 TRY_START
-        check_args(L,4);
+        check_args(L,3);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
         std::string name = luaL_checkstring(L,2);
-        float friction = (float)luaL_checknumber(L,3);
-        float restitution = (float)luaL_checknumber(L,4);
-        self->setMaterial(name, friction, restitution);
+        unsigned char interaction_group = check_t<unsigned char>(L,3);
+        self->setMaterial(name, interaction_group);
         return 0;
 TRY_END
 }
@@ -1174,11 +1173,72 @@ TRY_START
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
         std::string name = luaL_checkstring(L,2);
         const PhysicsMaterial &m = self->getMaterial(name);
-        lua_pushnumber(L, m.friction);
-        lua_pushnumber(L, m.restitution);
-        return 2;
+        lua_pushnumber(L, m.interactionGroup);
+        return 1;
 TRY_END
 }
+
+static int pworld_set_interaction_groups (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
+        if (!lua_istable(L,2))
+                my_lua_error(L,"Second parameter should be a table");
+        if (!lua_istable(L,3))
+                my_lua_error(L,"Third parameter should be a table");
+
+        int counter1 = 0;
+        for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
+                counter1++;
+        }
+        int counter2 = 0;
+        for (lua_pushnil(L) ; lua_next(L,3)!=0 ; lua_pop(L,1)) {
+                counter2++;
+        }
+
+        if (counter1 != counter2) {
+                my_lua_error(L,"Tables were of different sizes");
+        }
+
+        int counter = counter1;
+
+        int num = int(sqrtf(counter)+0.5f);
+        if (num*num != counter) {
+                my_lua_error(L,"Table was not a square (e.g. 4, 16, 25, etc, elements)");
+        }
+        
+        std::vector<std::pair<float,float> > v;
+        v.resize(counter);
+        counter = 0;
+        for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
+                float f = (float)luaL_checknumber(L,-1);
+                v[counter].first = f;
+                counter++;
+        }
+        counter = 0;
+        for (lua_pushnil(L) ; lua_next(L,3)!=0 ; lua_pop(L,1)) {
+                float f = (float)luaL_checknumber(L,-1);
+                v[counter].second = f;
+                counter++;
+        }
+
+        // reflect the other half of the square into place
+        for (int ig0=0 ; ig0<num ; ++ig0) {
+                for (int ig1=ig0+1 ; ig1<num ; ++ig1) {
+                        int code_from = ig1*num + ig0;
+                        int code_to = ig0*num + ig1;
+                        v[code_to].first = v[code_from].first;
+                        v[code_to].second = v[code_from].second;
+                }
+        }
+
+        self->setInteractionGroups(num, v);
+
+        return 0;
+TRY_END
+}
+
 
 
 
@@ -1256,6 +1316,8 @@ TRY_START
                 push_cfunction(L,pworld_set_material);
         } else if (!::strcmp(key,"getMaterial")) {
                 push_cfunction(L,pworld_get_material);
+        } else if (!::strcmp(key,"setInteractionGroups")) {
+                push_cfunction(L,pworld_set_interaction_groups);
         } else if (!::strcmp(key,"solverDamping")) {
                 lua_pushnumber(L,self->getSolverDamping());
         } else if (!::strcmp(key,"solverIterations")) {

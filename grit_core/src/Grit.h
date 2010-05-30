@@ -52,40 +52,40 @@ public:
 
         Grit (Ogre::Root *root, Mouse *mouse, Keyboard *keyboard, Grit *& grit);
 
-        virtual ~Grit ();
+        ~Grit ();
 
-        virtual void windowResized(Ogre::RenderWindow *rw);
+        void windowResized(Ogre::RenderWindow *rw);
 
-        virtual bool windowHasFocus (void);
+        bool windowHasFocus (void);
 
-        virtual void windowClosed (Ogre::RenderWindow *rw);
+        void windowClosed (Ogre::RenderWindow *rw);
 
-        virtual void doMain (int argc, const char** argv);
+        void doMain (int argc, const char** argv);
 
-        virtual void render (void);
+        void render (void);
 
-        virtual bool hasClickedClose (void) { return clickedClose; }
+        bool hasClickedClose (void) { return clickedClose; }
 
-        virtual Ogre::Root *getOgre (void) { return ogre; }
-        virtual Ogre::OctreeSceneManager *getSM (void) { return sm; }
-        virtual BulletDebugDrawer *getDebugDrawer (void) { return debugDrawer; }
-        virtual Ogre::RenderWindow *getWin (void);
-        virtual HUD::RootPtr getHUD (void);
+        Ogre::Root *getOgre (void) { return ogre; }
+        Ogre::OctreeSceneManager *getSM (void) { return sm; }
+        BulletDebugDrawer *getDebugDrawer (void) { return debugDrawer; }
+        Ogre::RenderWindow *getWin (void);
+        HUD::RootPtr getHUD (void);
 
-        virtual Mouse *getMouse (void) { return mouse; }
+        Mouse *getMouse (void) { return mouse; }
 
-        virtual Keyboard *getKeyboard (void) { return keyboard; }
+        Keyboard *getKeyboard (void) { return keyboard; }
 
-        virtual std::string toString (void);
+        std::string toString (void);
 
-        virtual UserDataTables& getUserDataTables (void) { return userDataTables; }
+        UserDataTables& getUserDataTables (void) { return userDataTables; }
 
-        virtual Streamer &getStreamer() { return *streamer; }
+        Streamer &getStreamer() { return *streamer; }
 
-        virtual lua_State *getLuaState (void) const { return L; }
+        lua_State *getLuaState (void) const { return L; }
 
-        virtual void processMaterialName (Ogre::Mesh *mesh, std::string *name);
-        virtual void processSkeletonName (Ogre::Mesh *mesh, std::string *name);
+        void processMaterialName (Ogre::Mesh *mesh, std::string *name);
+        void processSkeletonName (Ogre::Mesh *mesh, std::string *name);
 
 protected:
 

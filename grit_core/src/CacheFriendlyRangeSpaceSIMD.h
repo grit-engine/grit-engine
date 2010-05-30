@@ -223,7 +223,7 @@ class CacheFriendlyRangeSpace {
                 hence = iter;
         }
 
-        virtual void remove (const T &o)
+        void remove (const T &o)
         {
                 typename Cargo::iterator begin = cargo.begin(),
                                            end = cargo.end();
@@ -243,7 +243,7 @@ class CacheFriendlyRangeSpace {
                 o->updateIndex(-1);
         }
 
-        virtual void clear (void)
+        void clear (void)
         {
                 cargo.clear();
                 positions.clear();

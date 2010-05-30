@@ -56,9 +56,9 @@ class CacheFriendlyRangeSpace {
 
         CacheFriendlyRangeSpace() : hence(0) { }
 
-        virtual ~CacheFriendlyRangeSpace() { }
+        ~CacheFriendlyRangeSpace() { }
 
-        virtual void add (const T &o)
+        void add (const T &o)
         {
                 typename Cargoes::iterator begin = cargoes.begin(),
                                              end = cargoes.end();
@@ -71,7 +71,7 @@ class CacheFriendlyRangeSpace {
                 o->updateIndex(index);
         }
 
-        virtual inline void updateSphere (size_t index, float x,
+        inline void updateSphere (size_t index, float x,
                                           float y, float z,
                                           float d)
         {
@@ -82,7 +82,7 @@ class CacheFriendlyRangeSpace {
         }
 
         // conservative approximation - x/y bounding box
-        virtual inline bool broadPhase (const Position &pos,
+        inline bool broadPhase (const Position &pos,
                                         const short x2, const short y2)
         {
 
@@ -92,7 +92,7 @@ class CacheFriendlyRangeSpace {
         }
 
 
-        virtual void getPresent (float x, float y, float z,
+        void getPresent (float x, float y, float z,
                                  size_t num, std::vector<T*> &found)
         {
                 if (num==0) return;
@@ -131,7 +131,7 @@ class CacheFriendlyRangeSpace {
                 hence = iter - positions.begin();
         }
 
-        virtual void remove (const T &o)
+        void remove (const T &o)
         {
                 typename Cargoes::iterator begin = cargoes.begin(),
                                              end = cargoes.end();
@@ -151,7 +151,7 @@ class CacheFriendlyRangeSpace {
                 o->updateIndex(-1);
         }
 
-        virtual void clear (void)
+        void clear (void)
         {
                 cargoes.clear();
                 positions.clear();

@@ -42,15 +42,15 @@ class IncrementalRangeSpace {
 
         IncrementalRangeSpace() : mLast(NULL) { }
 
-        virtual ~IncrementalRangeSpace() { }
+        ~IncrementalRangeSpace() { }
 
-        virtual void add (T *o)
+        void add (T *o)
         {
                 // if it's already in there, this is a no-op
                 mEverything.insert(o);
         }
 
-        virtual const CargoMap& getPresent (const Ogre::Vector3 &cam,
+        const CargoMap& getPresent (const Ogre::Vector3 &cam,
                                             const float factor,
                                             const unsigned int num,
                                             CargoSet &killed)
@@ -88,7 +88,7 @@ class IncrementalRangeSpace {
         }
 
         // no-op if o was not in the rangespace somewhere
-        virtual void remove (T *o)
+        void remove (T *o)
         {
                 // if it's not in there, these are no-ops
                 mWorkingSet.erase(o);
@@ -98,7 +98,7 @@ class IncrementalRangeSpace {
                 }
         }
 
-        virtual void clear (void)
+        void clear (void)
         {
                 // if it's not in there, these are no-ops
                 mWorkingSet.clear();
@@ -113,7 +113,7 @@ class IncrementalRangeSpace {
 
     protected:
 
-        virtual bool process (T* o, const Ogre::Vector3 &cam,
+        bool process (T* o, const Ogre::Vector3 &cam,
                               const float factor)
         {
                 if (!o->isInScene()) return false;

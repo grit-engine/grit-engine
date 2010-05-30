@@ -39,7 +39,6 @@ typedef std::map<std::string,CollisionMeshPtr> CollisionMeshMap;
 
 #include <btBulletCollisionCommon.h>
 
-class PhysicsWorld;
 class RigidBody;
 
 class CollisionMesh {
@@ -48,7 +47,7 @@ class CollisionMesh {
 
     public:
 
-        virtual ~CollisionMesh (void)
+        ~CollisionMesh (void)
         {
                 for (LooseEnds::iterator i=looseEnds.begin(),
                                          i_=looseEnds.end() ; i!=i_ ; ++i) {
@@ -57,53 +56,53 @@ class CollisionMesh {
                 APP_ASSERT(users.size()==0);
         }
 
-        virtual btCompoundShape *getMasterShape (void) const { return masterShape; }
+        btCompoundShape *getMasterShape (void) const { return masterShape; }
 
-        virtual void importFromFile (const Ogre::DataStreamPtr &file, const PhysicsWorld &world);
+        void importFromFile (const Ogre::DataStreamPtr &file, const MaterialDB &db);
 
-        virtual const std::string &getName (void) const
+        const std::string &getName (void) const
         { return name; }
 
-        virtual float getMass (void) const { return mass; }
-        virtual void setMass (float v) { mass = v; }
+        float getMass (void) const { return mass; }
+        void setMass (float v) { mass = v; }
 
-        virtual Vector3 getInertia (void) const { return inertia; }
-        virtual void setInertia (const Vector3 &v) { inertia = v; }
+        Vector3 getInertia (void) const { return inertia; }
+        void setInertia (const Vector3 &v) { inertia = v; }
 
-        virtual float getCCDMotionThreshold (void) const
+        float getCCDMotionThreshold (void) const
         { return ccdMotionThreshold; }
-        virtual void setCCDMotionThreshold (float v)
+        void setCCDMotionThreshold (float v)
         { ccdMotionThreshold = v; }
 
-        virtual float getCCDSweptSphereRadius (void) const
+        float getCCDSweptSphereRadius (void) const
         { return ccdSweptSphereRadius; }
-        virtual void setCCDSweptSphereRadius (float v)
+        void setCCDSweptSphereRadius (float v)
         { ccdSweptSphereRadius = v; }
 
-        virtual float getLinearDamping (void) const
+        float getLinearDamping (void) const
         { return linearDamping; }
-        virtual void setLinearDamping (float r)
+        void setLinearDamping (float r)
         { linearDamping = r; }
-        virtual float getAngularDamping (void) const
+        float getAngularDamping (void) const
         { return angularDamping; }
-        virtual void setAngularDamping (float r)
+        void setAngularDamping (float r)
         { angularDamping = r; }
 
-        virtual float getLinearSleepThreshold (void) const
+        float getLinearSleepThreshold (void) const
         { return linearSleepThreshold; }
-        virtual void setLinearSleepThreshold (float r)
+        void setLinearSleepThreshold (float r)
         { linearSleepThreshold = r; }
-        virtual float getAngularSleepThreshold (void) const
+        float getAngularSleepThreshold (void) const
         { return angularSleepThreshold; }
-        virtual void setAngularSleepThreshold (float r)
+        void setAngularSleepThreshold (float r)
         { angularSleepThreshold = r; }
 
-        virtual int getMaterialFromPart (unsigned int id);
-        virtual int getMaterialFromFace (unsigned int id);
+        int getMaterialFromPart (unsigned int id);
+        int getMaterialFromFace (unsigned int id);
 
         typedef std::vector<int> Materials;
 
-        void reload (const PhysicsWorld &world);
+        void reload (const MaterialDB &db);
 
         void registerUser (RigidBody *u)
         {

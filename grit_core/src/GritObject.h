@@ -60,7 +60,7 @@ class GritObject {
 
         GritObject (const std::string &name_, GritClass *gritClass_);
 
-        virtual ~GritObject (void) { }
+        ~GritObject (void) { }
 
         void destroy (lua_State *L, const GritObjectPtr &self);
 

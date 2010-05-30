@@ -61,94 +61,94 @@ class Streamer {
         {
         }
 
-        virtual ~Streamer (void);
+        ~Streamer (void);
 
-        virtual void doShutdown (lua_State *L);
+        void doShutdown (lua_State *L);
 
-        virtual void clearClasses (lua_State *L);
+        void clearClasses (lua_State *L);
 
-        virtual void clearObjects (lua_State *L);
+        void clearObjects (lua_State *L);
 
 
         // GLOBAL STUFF
 
-        virtual void setGFX (lua_State *L, Ogre::SceneNode *gfx);
-        virtual Ogre::SceneNode *getGFX (void) { return gfx; }
+        void setGFX (lua_State *L, Ogre::SceneNode *gfx);
+        Ogre::SceneNode *getGFX (void) { return gfx; }
 
-        virtual PhysicsWorldPtr getPhysics (void) { return physics; }
+        PhysicsWorldPtr getPhysics (void) { return physics; }
 
-        virtual void setBounds (lua_State *L,
+        void setBounds (lua_State *L,
                                 const Ogre::AxisAlignedBox &bounds_);
 
-        virtual const Ogre::AxisAlignedBox &getBounds () { return bounds; }
+        const Ogre::AxisAlignedBox &getBounds () { return bounds; }
 
         // CLASS STUFF
 
-        virtual GritClass *addClass (lua_State *L, const std::string& name);
+        GritClass *addClass (lua_State *L, const std::string& name);
 
-        virtual GritClass *getClass (const std::string &name);
+        GritClass *getClass (const std::string &name);
 
 
-        virtual bool hasClass (const std::string &name)
+        bool hasClass (const std::string &name)
         { return classes.find(name)!=classes.end(); }
 
-        virtual void deleteClass (lua_State *L, GritClass *c)
+        void deleteClass (lua_State *L, GritClass *c)
         {
                 eraseClass(c->name);
                 c->release(L);
         }
 
-        virtual void getClasses (GritClassMap::iterator &begin,
+        void getClasses (GritClassMap::iterator &begin,
                                  GritClassMap::iterator &end)
         {
                 begin = classes.begin();
                 end = classes.end();
         }
 
-        virtual void getClasses (GritClassMap::const_iterator &begin,
+        void getClasses (GritClassMap::const_iterator &begin,
                                  GritClassMap::const_iterator &end) const
         {
                 begin = classes.begin();
                 end = classes.end();
         }
 
-        virtual int numClasses (void) { return classes.size(); }
+        int numClasses (void) { return classes.size(); }
 
 
         // OBJECT STUFF
 
-        virtual GritObjectPtr addObject (lua_State *L,
+        GritObjectPtr addObject (lua_State *L,
                                          std::string name,
                                          GritClass *grit_class);
 
-        virtual const GritObjectPtr &getObject (const std::string &name);
+        const GritObjectPtr &getObject (const std::string &name);
 
-        virtual void getObjects (GObjMap::iterator &begin,
+        void getObjects (GObjMap::iterator &begin,
                                  GObjMap::iterator &end)
         {
                 begin = gObjs.begin();
                 end = gObjs.end();
         }
 
-        virtual void getObjects (GObjMap::const_iterator &begin,
+        void getObjects (GObjMap::const_iterator &begin,
                                  GObjMap::const_iterator &end) const
         {
                 begin = gObjs.begin();
                 end = gObjs.end();
         }
 
-        virtual int numObjects (void) { return gObjs.size(); }
+        int numObjects (void) { return gObjs.size(); }
 
-        virtual bool hasObject (const std::string &name)
+        bool hasObject (const std::string &name)
         { return gObjs.find(name)!=gObjs.end(); }
 
-        virtual void deleteObject (lua_State *L, const GritObjectPtr &o);
+        void deleteObject (lua_State *L, const GritObjectPtr &o);
 
 
         // FRAME CALLBACK
 
-        virtual void frameCallbacks (lua_State *L, float elapsed);
-        virtual void setNeedsFrameCallbacks (const GritObjectPtr &ptr, bool v);
+        void frameCallbacks (lua_State *L, float elapsed);
+        void setNeedsFrameCallbacks (const GritObjectPtr &ptr, bool v);
 
         
         // ACTIVATION STUFF
@@ -159,9 +159,9 @@ class Streamer {
 
         float visibility;
 
-        virtual void centre (lua_State *L, float x, float y, float z);
+        void centre (lua_State *L, float x, float y, float z);
 
-        virtual inline void updateSphere (size_t index, float x,
+        inline void updateSphere (size_t index, float x,
                                           float y, float z,
                                           float d)
         {
@@ -170,21 +170,21 @@ class Streamer {
         
         size_t stepSize;
 
-        virtual void list (const GritObjectPtr &o);
+        void list (const GritObjectPtr &o);
 
-        virtual void unlist (const GritObjectPtr &o);
+        void unlist (const GritObjectPtr &o);
 
-        virtual int numActivated (void) { return activated.size(); }
+        int numActivated (void) { return activated.size(); }
 
         typedef CacheFriendlyRangeSpace<GritObjectPtr> Space;
 
     protected:
 
-        virtual void eraseClass (const std::string &name);
+        void eraseClass (const std::string &name);
 
-        virtual void eraseObject (const std::string &);
+        void eraseObject (const std::string &);
 
-        virtual void setPhysics (lua_State *L, const PhysicsWorldPtr &physics);
+        void setPhysics (lua_State *L, const PhysicsWorldPtr &physics);
 
         GritClassMap classes;
 

@@ -27,7 +27,6 @@
 #include "TColLexer"
 
 #include "TColParser.h"
-#include "PhysicsWorld.h"
 
 #include "math_util.h"
 #include "path_util.h"
@@ -237,7 +236,7 @@ static void get_string_from_string_token (const quex::Token &t, std::string &mat
 
 static int parse_material (const std::string &name,
                            quex::TColLexer* qlex,
-                           const PhysicsWorld &world)
+                           const MaterialDB &db)
 {
         quex::Token t; qlex->get_token(&t);
         if (t.type_id()!=QUEX_TKN_STRING) {
@@ -247,12 +246,12 @@ static int parse_material (const std::string &name,
         get_string_from_string_token(t, m);
         int id;
         try {
-                id = world.getMaterial(pwd_full(m,"/common/Frictionless")).id;
+                id = db.getMaterial(pwd_full(m,"/common/Frictionless")).id;
         } catch (Ogre::Exception &e) {
                 CERR << e.getFullDescription()
                      << " (while parsing \"" << name << "\")" << std::endl;
                 try {
-                        id = world.getMaterial("/common/Frictionless").id;
+                        id = db.getMaterial("/common/Frictionless").id;
                 } catch (Ogre::Exception &e) {
                         CERR << e.getFullDescription()
                              << " (while handling the above error!)" << std::endl;
@@ -512,7 +511,7 @@ static inline T &vecnext (std::vector<T> &vec)
 static void parse_hull (const std::string &name,
                         quex::TColLexer* qlex,
                         Hull &hull,
-                        const PhysicsWorld &world)
+                        const MaterialDB &db)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
@@ -531,7 +530,7 @@ static void parse_hull (const std::string &name,
                         break;
 
                         case QUEX_TKN_MATERIAL:
-                        hull.material = parse_material(name, qlex, world);
+                        hull.material = parse_material(name, qlex, db);
                         have_material = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
@@ -578,7 +577,7 @@ static void parse_hull (const std::string &name,
 static void parse_box (const std::string &name,
                        quex::TColLexer* qlex,
                        Box &box,
-                       const PhysicsWorld &world)
+                       const MaterialDB &db)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         box.margin = DEFAULT_MARGIN;
@@ -599,7 +598,7 @@ static void parse_box (const std::string &name,
                         break;
 
                         case QUEX_TKN_MATERIAL:
-                        box.material = parse_material(name, qlex, world);
+                        box.material = parse_material(name, qlex, db);
                         have_material = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
@@ -651,7 +650,7 @@ static void parse_box (const std::string &name,
 static void parse_cylinder (const std::string &name,
                             quex::TColLexer* qlex,
                             Cylinder &cylinder,
-                            const PhysicsWorld &world)
+                            const MaterialDB &db)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         cylinder.margin = DEFAULT_MARGIN;
@@ -672,7 +671,7 @@ static void parse_cylinder (const std::string &name,
                         break;
 
                         case QUEX_TKN_MATERIAL:
-                        cylinder.material = parse_material(name, qlex, world);
+                        cylinder.material = parse_material(name, qlex, db);
                         have_material = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
@@ -724,7 +723,7 @@ static void parse_cylinder (const std::string &name,
 static void parse_cone (const std::string &name,
                         quex::TColLexer* qlex,
                         Cone &cone,
-                        const PhysicsWorld &world)
+                        const MaterialDB &db)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         cone.margin = DEFAULT_MARGIN;
@@ -746,7 +745,7 @@ static void parse_cone (const std::string &name,
                         break;
 
                         case QUEX_TKN_MATERIAL:
-                        cone.material = parse_material(name, qlex, world);
+                        cone.material = parse_material(name, qlex, db);
                         have_material = true;
                         if (more_to_come(name, qlex)) continue;
                         break;
@@ -805,11 +804,11 @@ static void parse_cone (const std::string &name,
 static void parse_plane (const std::string &name,
                          quex::TColLexer* qlex,
                          Plane &plane,
-                         const PhysicsWorld &world)
+                         const MaterialDB &db)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         ensure_token(name,qlex,QUEX_TKN_MATERIAL);
-        plane.material = parse_material(name, qlex, world);
+        plane.material = parse_material(name, qlex, db);
         ensure_token(name,qlex,QUEX_TKN_SEMI);
         ensure_token(name,qlex,QUEX_TKN_NORMAL);
         plane.nx = parse_real(name,qlex);
@@ -826,11 +825,11 @@ static void parse_plane (const std::string &name,
 static void parse_sphere (const std::string &name,
                           quex::TColLexer* qlex,
                           Sphere &sphere,
-                          const PhysicsWorld &world)
+                          const MaterialDB &db)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         ensure_token(name,qlex,QUEX_TKN_MATERIAL);
-        sphere.material = parse_material(name, qlex, world);
+        sphere.material = parse_material(name, qlex, db);
         ensure_token(name,qlex,QUEX_TKN_SEMI);
         ensure_token(name,qlex,QUEX_TKN_CENTRE);
         sphere.px = parse_real(name,qlex);
@@ -847,7 +846,7 @@ static void parse_sphere (const std::string &name,
 static void parse_compound_shape (const std::string &name,
                                   quex::TColLexer* qlex,
                                   Compound &compound,
-                                  const PhysicsWorld &world)
+                                  const MaterialDB &db)
 {
 
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
@@ -857,27 +856,27 @@ static void parse_compound_shape (const std::string &name,
                 quex::Token t; qlex->get_token(&t);
                 switch (t.type_id()) {
                         case QUEX_TKN_HULL: ///////////////////////////////////
-                        parse_hull(name, qlex, vecnext(compound.hulls), world); 
+                        parse_hull(name, qlex, vecnext(compound.hulls), db); 
                         continue;
 
                         case QUEX_TKN_BOX: ////////////////////////////////////
-                        parse_box(name,qlex,vecnext(compound.boxes), world);
+                        parse_box(name,qlex,vecnext(compound.boxes), db);
                         continue;
 
                         case QUEX_TKN_CYLINDER: //////////////////////////////
-                        parse_cylinder(name,qlex,vecnext(compound.cylinders), world);
+                        parse_cylinder(name,qlex,vecnext(compound.cylinders), db);
                         continue;
 
                         case QUEX_TKN_CONE: ///////////////////////////////////
-                        parse_cone(name,qlex,vecnext(compound.cones), world);
+                        parse_cone(name,qlex,vecnext(compound.cones), db);
                         continue;
 
                         case QUEX_TKN_PLANE: //////////////////////////////////
-                        parse_plane(name,qlex,vecnext(compound.planes), world);
+                        parse_plane(name,qlex,vecnext(compound.planes), db);
                         continue;
 
                         case QUEX_TKN_SPHERE: /////////////////////////////////
-                        parse_sphere(name,qlex,vecnext(compound.spheres), world);
+                        parse_sphere(name,qlex,vecnext(compound.spheres), db);
                         continue;
 
                         case QUEX_TKN_RBRACE: /////////////////////////////////
@@ -896,7 +895,7 @@ static void parse_faces (const std::string &name,
                          quex::TColLexer* qlex,
                          size_t num_vertexes,
                          Faces &faces,
-                         const PhysicsWorld &world)
+                         const MaterialDB &db)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         int v1, v2, v3;
@@ -909,7 +908,7 @@ static void parse_faces (const std::string &name,
                         v1 = get_int_from_token(name,qlex,t,num_vertexes);
                         v2 = parse_int(name,qlex,num_vertexes);
                         v3 = parse_int(name,qlex,num_vertexes);
-                        material = parse_material(name, qlex, world);
+                        material = parse_material(name, qlex, db);
                         faces.push_back(Face(v1,v2,v3,material));
                         if (!more_to_come(name,qlex)) break;
                         continue;
@@ -929,7 +928,7 @@ static void parse_faces (const std::string &name,
 static void parse_static_trimesh_shape (const std::string &name,
                                         quex::TColLexer* qlex,
                                         TriMesh &triMesh,
-                                        const PhysicsWorld &world)
+                                        const MaterialDB &db)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
@@ -941,7 +940,7 @@ static void parse_static_trimesh_shape (const std::string &name,
 
         ensure_token(name,qlex,QUEX_TKN_FACES);
 
-        parse_faces(name, qlex, triMesh.vertexes.size(), triMesh.faces, world);
+        parse_faces(name, qlex, triMesh.vertexes.size(), triMesh.faces, db);
 
         ensure_token(name,qlex,QUEX_TKN_RBRACE);
 
@@ -951,7 +950,7 @@ static void parse_static_trimesh_shape (const std::string &name,
 static void parse_dynamic_trimesh_shape (const std::string &name,
                                          quex::TColLexer* qlex,
                                          TriMesh &triMesh,
-                                         const PhysicsWorld &world)
+                                         const MaterialDB &db)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
@@ -977,7 +976,7 @@ static void parse_dynamic_trimesh_shape (const std::string &name,
 
         ensure_token(name,qlex,QUEX_TKN_FACES);
 
-        parse_faces(name,qlex,triMesh.vertexes.size(),triMesh.faces, world);
+        parse_faces(name,qlex,triMesh.vertexes.size(),triMesh.faces, db);
 
         ensure_token(name,qlex,QUEX_TKN_RBRACE);
 
@@ -987,7 +986,7 @@ static void parse_dynamic_trimesh_shape (const std::string &name,
 void parse_tcol_1_0 (const std::string &name,
                      quex::TColLexer* qlex,
                      TColFile &file,
-                     const PhysicsWorld &world)
+                     const MaterialDB &db)
 {
         ensure_token(name,qlex,QUEX_TKN_TCOL);
 
@@ -1110,7 +1109,7 @@ void parse_tcol_1_0 (const std::string &name,
         switch (t.type_id()) {
                 case QUEX_TKN_COMPOUND:
                 file.usingCompound = true;
-                parse_compound_shape(name,qlex,file.compound, world);
+                parse_compound_shape(name,qlex,file.compound, db);
                 qlex->get_token(&t);
                 if (t.type_id()==QUEX_TKN_TERMINATION) break;
                 if (t.type_id()!=QUEX_TKN_TRIMESH)
@@ -1119,10 +1118,10 @@ void parse_tcol_1_0 (const std::string &name,
                 case QUEX_TKN_TRIMESH:
                 if (is_static==YES) {
                         file.usingTriMesh = true;
-                        parse_static_trimesh_shape(name,qlex,file.triMesh,world);
+                        parse_static_trimesh_shape(name,qlex,file.triMesh,db);
                 } else {
                         file.usingTriMesh = true;
-                        parse_dynamic_trimesh_shape(name,qlex,file.triMesh,world);
+                        parse_dynamic_trimesh_shape(name,qlex,file.triMesh,db);
                 }
                 ensure_token(name,qlex,QUEX_TKN_TERMINATION);
                 break;
@@ -1133,14 +1132,19 @@ void parse_tcol_1_0 (const std::string &name,
 
 }
 
-void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
+void pretty_print_material (std::ostream &o, const MaterialDB &db, int material)
+{
+        o << "\"" << db.getMaterialSafe(material).name << "\"";
+}
+
+void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in, const MaterialDB &db)
 {
         o << in << "compound {\n";
 
         for (size_t i=0 ; i<c.hulls.size() ; ++i) {
                 Hull &h = c.hulls[i];
                 o<<in<<"\t"<<"hull {\n";
-                o<<in<<"\t\t"<<"material 0x"<<std::hex<<h.material<<std::dec<<";\n";
+                o<<in<<"\t\t"<<"material "; pretty_print_material(o, db, h.material); o<<";\n";
                 if (ffar(h.margin,DEFAULT_MARGIN)) {
                         o<<in<<"\t\t"<<"margin "<<h.margin<<";\n";
                 }
@@ -1156,7 +1160,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         for (size_t i=0 ; i<c.boxes.size() ; ++i) {
                 Box &b = c.boxes[i];
                 o<<in<<"\t"<<"box {\n";
-                o<<in<<"\t\t"<<"material 0x"<<std::hex<<b.material<<std::dec<<";\n";
+                o<<in<<"\t\t"<<"material "; pretty_print_material(o, db, b.material); o<<";\n";
                 if (ffar(b.margin,DEFAULT_MARGIN)) {
                         o<<in<<"\t\t"<<"margin "<<b.margin<<";\n";
                 }
@@ -1175,7 +1179,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         for (size_t i=0 ; i<c.cylinders.size() ; ++i) {
                 Cylinder &cyl = c.cylinders[i];
                 o<<in<<"\t"<<"cylinder {\n";
-                o<<in<<"\t\t"<<"material 0x"<<std::hex<<cyl.material<<std::dec<<";\n";
+                o<<in<<"\t\t"<<"material "; pretty_print_material(o, db, cyl.material); o<<";\n";
                 if (ffar(cyl.margin,DEFAULT_MARGIN)) {
                         o<<in<<"\t\t"<<"margin "<<cyl.margin<<";\n";
                 }
@@ -1194,7 +1198,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         for (size_t i=0 ; i<c.cones.size() ; ++i) {
                 Cone &cone = c.cones[i];
                 o<<in<<"\t"<<"cone {\n";
-                o<<in<<"\t\t"<<"material 0x"<<std::hex<<cone.material<<std::dec<<";\n";
+                o<<in<<"\t\t"<<"material "; pretty_print_material(o, db, cone.material); o<<";\n";
                 if (ffar(cone.margin,DEFAULT_MARGIN)) {
                         o<<in<<"\t\t"<<"margin "<<cone.margin<<";\n";
                 }
@@ -1213,7 +1217,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         for (size_t i=0 ; i<c.planes.size() ; ++i) {
                 Plane &p = c.planes[i];
                 o<<in<<"\t"<<"plane {\n";
-                o<<in<<"\t\t"<<"material 0x"<<std::hex<<p.material<<std::dec<<";\n";
+                o<<in<<"\t\t"<<"material "; pretty_print_material(o, db, p.material); o<<";\n";
                 o<<in<<"\t\t"<<"normal "<<p.nx<<" "<<p.ny<<" "<<p.nz<<";\n";
                 o<<in<<"\t\t"<<"distance "<<p.d<<";\n";
                 o<<in<<"\t"<<"}\n";
@@ -1222,7 +1226,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         for (size_t i=0 ; i<c.spheres.size() ; ++i) {
                 Sphere &s = c.spheres[i];
                 o<<in<<"\t"<<"sphere {\n";
-                o<<in<<"\t\t"<<"material 0x"<<std::hex<<s.material<<std::dec<<";\n";
+                o<<in<<"\t\t"<<"material "; pretty_print_material(o, db, s.material); o<<";\n";
                 o<<in<<"\t\t"<<"centre "<<s.px<<" "<<s.py<<" "<<s.pz<<";\n";
                 o<<in<<"\t\t"<<"radius "<<s.radius<<";\n";
                 o<<in<<"\t"<<"}\n";
@@ -1232,7 +1236,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
 }
 
 
-void pretty_print_tcol (std::ostream &os, TColFile &f)
+void pretty_print_tcol (std::ostream &os, TColFile &f, const MaterialDB &db)
 {
         std::stringstream o;
         o << std::fixed; // use fixed point (no exponents)
@@ -1264,7 +1268,7 @@ void pretty_print_tcol (std::ostream &os, TColFile &f)
         o << "}\n\n";
 
         if (f.usingCompound) {
-                pretty_print_compound(o,f.compound,"");
+                pretty_print_compound(o,f.compound,"",db);
         }
 
         if (f.usingTriMesh) {
@@ -1278,8 +1282,9 @@ void pretty_print_tcol (std::ostream &os, TColFile &f)
                 o << "\tfaces {\n";
                 for (unsigned i=0 ; i<f.triMesh.faces.size() ; ++i) {
                         Face &face = f.triMesh.faces[i];
-                        o<<"\t\t"<<face.v1<<" "<<face.v2<<" "<<face.v3<<" "
-                         <<std::hex<<"0x"<<face.material<<std::dec<<";"<<"\n";
+                        o<<"\t\t"<<face.v1<<" "<<face.v2<<" "<<face.v3<<" ";
+                        pretty_print_material(o, db, face.material);
+                        o<<";"<<"\n";
                 }
                 o << "\t}\n";
                 o << "}\n";

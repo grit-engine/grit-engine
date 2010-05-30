@@ -119,27 +119,27 @@ class BackgroundMeshLoader : public Ogre::Singleton<BackgroundMeshLoader> {
 
         BackgroundMeshLoader (void);
 
-        virtual ~BackgroundMeshLoader ();
+        ~BackgroundMeshLoader ();
 
-        virtual void shutdown (void);
+        void shutdown (void);
 
-        virtual void add (Demand *d);
+        void add (Demand *d);
 
-        virtual void remove (Demand *d);
+        void remove (Demand *d);
 
-        virtual void handleBastards (void);
+        void handleBastards (void);
 
-        virtual size_t size () { return mDemands.size(); }
+        size_t size () { return mDemands.size(); }
 
-        virtual void setAllowance (float m);
+        void setAllowance (float m);
 
 
         // background thread entry point
-        virtual void operator() (void);
+        void operator() (void);
 
     protected:
 
-        virtual bool nearestDemand (Demand * volatile &return_demand);
+        bool nearestDemand (Demand * volatile &return_demand);
 
         OGRE_AUTO_MUTEX
         OGRE_THREAD_SYNCHRONISER(mCVar)
@@ -167,15 +167,15 @@ class BackgroundMeshLoader : public Ogre::Singleton<BackgroundMeshLoader> {
         }
                 
 
-        virtual size_t getLRUQueueSize (void) const
+        size_t getLRUQueueSize (void) const
         { return mDeathRow.size(); }
 
-        virtual void finishedWith (const ResourcePtrSet &);
-        virtual void finishedWith (const Ogre::MaterialPtr &);
-        virtual void finishedWith (const Ogre::ResourcePtr &);
+        void finishedWith (const ResourcePtrSet &);
+        void finishedWith (const Ogre::MaterialPtr &);
+        void finishedWith (const Ogre::ResourcePtr &);
 
-        virtual bool isGPUOversubscribed () const;
-        virtual void checkGPUUsage ();
+        bool isGPUOversubscribed () const;
+        void checkGPUUsage ();
 
     protected:
 

@@ -129,6 +129,36 @@ CVERB << "hello world" << std::endl;
         } \
 } while (0)
 
+struct GritException {
+        GritException (const std::string &msg_, const char *func_, const char *file_, int line_)
+              : msg(msg_), func(func_), file(file_), line(line_) { }
+        
+        std::string longMessage (void)
+        {
+                std::stringstream ss;
+                ss << msg << " (" << func << " at " << file << ":" << line << ")";
+                return ss.str();
+        }
+
+        std::string msg;
+        const char *func;
+        const char *file;
+        int line;
+};
+
+inline std::ostream &operator << (std::ostream &o, GritException &e)
+{ o << e.msg; return o; }
+
+#if defined(_MSC_VER)
+#define GRIT_FUNC_NAME __FUNCDNAME__ 
+#elif defined (__GNUC__)
+#define GRIT_FUNC_NAME __PRETTY_FUNCTION__
+#else
+#define GRIT_FUNC_NAME "<unknown func>"
+#endif
+
+#define GRIT_EXCEPT(msg) throw GritException(msg, GRIT_FUNC_NAME, __FILE__, __LINE__)
+
 #endif
 
 // vim: tabstop=8:shiftwidth=8:expandtab
