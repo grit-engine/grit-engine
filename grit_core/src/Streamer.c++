@@ -110,9 +110,7 @@ GritClass *Streamer::getClass (const std::string &name)
 {
         GritClassMap::iterator i = classes.find(name);
         if (i==classes.end())
-                OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
-                            "GritClass does not exist: "+name,
-                            "Streamer::getClass");
+                GRIT_EXCEPT("GritClass does not exist: "+name);
         return i->second;
 }
 
@@ -135,14 +133,10 @@ GritObjectPtr Streamer::addObject (
 {
         (void) L; // may need this again some day
         if (gfx==NULL) {
-                OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
-                            "No graphics engine set up, call setGFX()",
-                            "Streamer::addObject");
+                GRIT_EXCEPT("No graphics engine set up, call setGFX()");
         }
         if (physics.isNull()) {
-                OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
-                            "No physics engine set up, call setPhysics()",
-                            "Streamer::addObject");
+                GRIT_EXCEPT("No physics engine set up, call setPhysics()");
         }
         if (name=="") {
                 do {
@@ -173,9 +167,7 @@ const GritObjectPtr &Streamer::getObject (const std::string &name)
 {
         GObjMap::iterator i = gObjs.find(name);
         if (i==gObjs.end())
-                OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
-                            "GritObject does not exist: "+name,
-                            "Streamer::getObject");
+                GRIT_EXCEPT("GritObject does not exist: "+name);
 
         return i->second;
 }
@@ -188,9 +180,7 @@ void Streamer::eraseObject (const std::string &name)
 {
         GObjMap::iterator i = gObjs.find(name);
         if (i==gObjs.end()) 
-                OGRE_EXCEPT(Ogre::Exception::ERR_DUPLICATE_ITEM,
-                            "GritObject does not exist: "+name,
-                            "Streamer::eraseObject");
+                GRIT_EXCEPT("GritObject does not exist: "+name);
 
         gObjs.erase(name);
 }

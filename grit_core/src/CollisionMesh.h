@@ -116,27 +116,41 @@ class CollisionMesh {
 
         struct ScatterOptions {
                 Transform worldTrans;
-                float density[3];
-                float maxElevation[3];
-                float minElevation[3];
-                bool noZ[3];
-                bool noCeiling[3];
-                bool noFloor[3];
-                bool rotate[3];
+                float density;
+                float minElevation;
+                float maxElevation;
+                float minSlope;
+                float maxSlope;
+                bool noZ;
+                bool rotate;
+                bool alignSlope;
                 ScatterOptions () 
                 {
-                        for (int i=0 ; i<3; ++i) {
-                                maxElevation[i] = FLT_MAX;
-                                minElevation[i] = FLT_MIN;
-                                density[i] = 1;
-                                noZ[i] = false;
-                                noCeiling[i] = true;
-                                noFloor[i] = false;
-                                rotate[i] = true;
-                        }
+                        minElevation = FLT_MIN;
+                        maxElevation = FLT_MAX;
+                        maxSlope = 90;
+                        minSlope = 0;
+                        density = 1;
+                        noZ = false;
+                        rotate = true;
+                        alignSlope = true;
                 }
         };
-        void scatter (const ScatterOptions &opts, std::vector<Transform> (&r)[3]);
+        void scatter (int mat,const ScatterOptions &opts,std::vector<Transform> &r);
+
+        struct ProcObjFace {
+                Vector3 A;
+                Vector3 AB;
+                Vector3 AC;
+        };
+
+        typedef std::map<int,std::vector<ProcObjFace> > ProcObjFaceDB;
+
+        void getProcObjMaterials (std::vector<int> &r) {
+                typedef ProcObjFaceDB::iterator I;
+                for (I i=procObjFaceDB.begin(),i_=procObjFaceDB.end() ; i!=i_ ; ++i)
+                        r.push_back(i->first);
+        }
 
     protected:
 
@@ -168,6 +182,8 @@ class CollisionMesh {
         float angularSleepThreshold;
         float friction;
         float restitution;
+
+        ProcObjFaceDB procObjFaceDB;
 
     public: // make these protected again when bullet works
         Materials faceMaterials;

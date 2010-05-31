@@ -61,6 +61,11 @@ struct Degree {
 
 inline Radian::Radian (const Degree &d) : f(d.f*M_PI/180) { }
 
+inline float gritcos (Radian r) { return cosf(r.f); }
+inline float gritsin (Radian r) { return sinf(r.f); }
+inline Radian gritacos (float x) { return Radian(acosf(x)); }
+inline Radian gritasin (float x) { return Radian(asinf(x)); }
+
 // }}}
 
 

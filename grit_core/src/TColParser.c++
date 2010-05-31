@@ -161,7 +161,7 @@ static void err (const std::string &name, quex::TColLexer *qlex,
         msg << "Parse error at " << where(qlex)
             << " - got \"" << what(t) << "\" "
             << "but expected " << expected << ".";
-        OGRE_EXCEPT(Ogre::Exception::ERR_INVALID_STATE, msg.str(), name);
+        GRIT_EXCEPT2(msg.str(), name);
 }
 
 
@@ -170,7 +170,7 @@ static void err (const std::string &name, quex::TColLexer *qlex,
 {
         std::stringstream ss;
         ss << "Error at " << where(qlex) << ":  " << msg;
-        OGRE_EXCEPT(Ogre::Exception::ERR_INVALID_STATE, ss.str(), name);
+        GRIT_EXCEPT2(ss.str(), name);
 }
 
 

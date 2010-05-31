@@ -67,53 +67,6 @@ static void push_colmesh (lua_State *L, const CollisionMeshPtr &self)
                 push(L,new CollisionMeshPtr(self),COLMESH_TAG);
 }
 
-static int colmesh_scatter (lua_State *L)
-{
-TRY_START
-        int NUM_TYPE_ARGS=7;
-        check_args(L,3+3*NUM_TYPE_ARGS);
-        GET_UD_MACRO(CollisionMeshPtr,self,1,COLMESH_TAG);
-        CollisionMesh::ScatterOptions o;
-        GET_UD_MACRO(Vector3,v,2,VECTOR3_TAG);
-        GET_UD_MACRO(Quaternion,q,3,QUAT_TAG);
-        o.worldTrans.p = v;
-        o.worldTrans.r = q;
-        for (int i=0 ; i<3; ++i) {
-                o.density[i]      = luaL_checknumber(L,4+i*NUM_TYPE_ARGS+0);
-                o.minElevation[i] = luaL_checknumber(L,4+i*NUM_TYPE_ARGS+1);
-                o.maxElevation[i] = luaL_checknumber(L,4+i*NUM_TYPE_ARGS+2);
-                o.noZ[i]          = check_bool(L,4+i*NUM_TYPE_ARGS+3);
-                o.noCeiling[i]    = check_bool(L,4+i*NUM_TYPE_ARGS+4);
-                o.noFloor[i]      = check_bool(L,4+i*NUM_TYPE_ARGS+5);
-                o.rotate[i]       = check_bool(L,4+i*NUM_TYPE_ARGS+6);
-        }
-        std::vector<Transform> r[3];
-        self->scatter(o, r);
-        for (int i=0 ; i<3 ; ++i) {
-                lua_newtable(L);
-                for (size_t j=0 ; j<r[i].size(); ++j) {
-                        const Quaternion &q = r[i][j].r;
-                        const Vector3 &p = r[i][j].p;
-                        lua_pushnumber(L, p.x);
-                        lua_rawseti(L,-2,7*j+0+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, p.y);
-                        lua_rawseti(L,-2,7*j+1+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, p.z);
-                        lua_rawseti(L,-2,7*j+2+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, q.w);
-                        lua_rawseti(L,-2,7*j+3+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, q.x);
-                        lua_rawseti(L,-2,7*j+4+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, q.y);
-                        lua_rawseti(L,-2,7*j+5+LUA_ARRAY_BASE);
-                        lua_pushnumber(L, q.z);
-                        lua_rawseti(L,-2,7*j+6+LUA_ARRAY_BASE);
-                }
-        }
-        return 3;
-TRY_END
-}
-
 static int colmesh_gc (lua_State *L)
 {
 TRY_START
@@ -148,8 +101,6 @@ TRY_START
         const char *key = luaL_checkstring(L,2);
         if (!::strcmp(key,"mass")) {
                 lua_pushnumber(L,self->getMass());
-        } else if (!::strcmp(key,"scatter")) {
-                push_cfunction(L,colmesh_scatter);
         } else if (!::strcmp(key,"ccdMotionThreshold")) {
                 lua_pushnumber(L,self->getCCDMotionThreshold());
         } else if (!::strcmp(key,"ccdSweptSphereRadius")) {
@@ -229,6 +180,51 @@ TRY_START
         GET_UD_MACRO_OFFSET(RigidBodyPtr,self,1,RBODY_TAG,0);
         delete self;
         return 0;
+TRY_END
+}
+
+static int rbody_scatter (lua_State *L)
+{
+TRY_START
+        check_args(L,10);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        const char *mat = luaL_checkstring(L,2);
+        CollisionMesh::ScatterOptions o;
+        o.worldTrans.p = self->getPosition();
+        o.worldTrans.r = self->getOrientation();
+        o.density      = luaL_checknumber(L,3);
+        o.minSlope     = luaL_checknumber(L,4);
+        o.maxSlope     = luaL_checknumber(L,5);
+        o.minElevation = luaL_checknumber(L,6);
+        o.maxElevation = luaL_checknumber(L,7);
+        o.noZ          = check_bool(L,8);
+        o.rotate       = check_bool(L,9);
+        o.alignSlope   = check_bool(L,10);
+
+        std::vector<Transform> r;
+        self->colMesh->scatter(self->world->getMaterial(mat).id, o, r);
+
+        lua_newtable(L);
+        for (size_t j=0 ; j<r.size(); ++j) {
+                const Quaternion &q = r[j].r;
+                const Vector3 &p = r[j].p;
+                lua_pushnumber(L, p.x);
+                lua_rawseti(L,-2,7*j+0+LUA_ARRAY_BASE);
+                lua_pushnumber(L, p.y);
+                lua_rawseti(L,-2,7*j+1+LUA_ARRAY_BASE);
+                lua_pushnumber(L, p.z);
+                lua_rawseti(L,-2,7*j+2+LUA_ARRAY_BASE);
+                lua_pushnumber(L, q.w);
+                lua_rawseti(L,-2,7*j+3+LUA_ARRAY_BASE);
+                lua_pushnumber(L, q.x);
+                lua_rawseti(L,-2,7*j+4+LUA_ARRAY_BASE);
+                lua_pushnumber(L, q.y);
+                lua_rawseti(L,-2,7*j+5+LUA_ARRAY_BASE);
+                lua_pushnumber(L, q.z);
+                lua_rawseti(L,-2,7*j+6+LUA_ARRAY_BASE);
+        }
+
+        return 1;
 TRY_END
 }
 
@@ -772,6 +768,17 @@ TRY_START
                 push_cfunction(L,rbody_torque);
         } else if (!::strcmp(key,"torqueImpulse")) {
                 push_cfunction(L,rbody_torque_impulse);
+
+        } else if (!::strcmp(key,"procObjMaterials")) {
+                std::vector<int> mats;
+                self->colMesh->getProcObjMaterials(mats);
+                lua_createtable(L, mats.size(), 0);
+                for (size_t j=0 ; j<mats.size(); ++j) {
+                        lua_pushstring(L, self->world->getMaterial(mats[j]).name.c_str());
+                        lua_rawseti(L, -2, j+LUA_ARRAY_BASE);
+                }
+        } else if (!::strcmp(key,"scatter")) {
+                push_cfunction(L,rbody_scatter);
 
         } else if (!::strcmp(key,"cast")) {
                 push_cfunction(L,cast);

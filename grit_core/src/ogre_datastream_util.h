@@ -31,11 +31,9 @@
 
 #define ASSERT_IO_SUCCESSFUL(x,doing)if (!(x)) { \
         if (f->eof()) { \
-                OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,\
-                            "EOF",doing); \
+                GRIT_EXCEPT2("EOF", doing); \
         } else { \
-                OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,\
-                            std::string(strerror(errno)),doing); \
+                GRIT_EXCEPT2(std::string(strerror(errno)), doing); \
         } \
 }
 

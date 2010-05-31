@@ -121,7 +121,8 @@ btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
 
 
 btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &les,
-                                  CollisionMesh::Materials &faceMaterials)
+                                  CollisionMesh::Materials &faceMaterials,
+                                  CollisionMesh::ProcObjFaceDB &faceDB)
 {
         Vertexes *vertexes = new Vertexes();
         les.push_back(new LooseEndImpl<Vertexes>(vertexes));
@@ -138,6 +139,11 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
         for (Faces::const_iterator i=f.faces.begin(), i_=f.faces.end() ; i!=i_ ; ++i) {
                 int m = i->material;
                 faceMaterials.push_back(m);
+                CollisionMesh::ProcObjFace f;
+                f.A =  (*vertexes)[i->v1];
+                f.AB = (*vertexes)[i->v2] - f.A;
+                f.AC = (*vertexes)[i->v3] - f.A;
+                faceDB[m].push_back(f);
         }
 
         btTriangleIndexVertexArray *v = new btTriangleIndexVertexArray(
@@ -179,7 +185,8 @@ btCompoundShape *import (const TColFile &f,
                          CollisionMesh *cm,
                          LooseEnds &les,
                          CollisionMesh::Materials &partMaterials,
-                         CollisionMesh::Materials &faceMaterials)
+                         CollisionMesh::Materials &faceMaterials,
+                         CollisionMesh::ProcObjFaceDB &faceDB)
 {
 
         bool stat = f.mass == 0.0f; // static
@@ -190,7 +197,7 @@ btCompoundShape *import (const TColFile &f,
         }
 
         if (f.usingTriMesh) {
-                btCollisionShape *s2 = import_trimesh (f.triMesh, stat, les, faceMaterials);
+                btCollisionShape *s2 = import_trimesh (f.triMesh, stat, les, faceMaterials, faceDB);
                 s->addChildShape(btTransform(btQuaternion(0,0,0,1),btVector3(0,0,0)), s2);
         }
 
@@ -250,9 +257,7 @@ class ProxyStreamBuf : public std::streambuf
         pos_type seekpos (pos_type sp, std::ios_base::openmode which)
         {
                 if (which == std::ios_base::out) {
-                        OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
-                                    "Cannot write to an Ogre::DataStream",
-                                    "ProxyStreamBuf::seekpos");
+                        GRIT_EXCEPT("Cannot write to an Ogre::DataStream");
                 }
                 file->seek(sp);
                 return file->tell();
@@ -263,17 +268,13 @@ class ProxyStreamBuf : public std::streambuf
                           std::ios_base::openmode which)
         {
                 if (which == std::ios_base::out) {
-                        OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
-                                    "Cannot write to an Ogre::DataStream",
-                                    "ProxyStreamBuf::seekoff");
+                        GRIT_EXCEPT("Cannot write to an Ogre::DataStream");
                 }
                 switch (way) {
                         case std::ios_base::beg: file->seek(off); break;
                         case std::ios_base::cur: file->skip(off); break;
                         case std::ios_base::end:
-                        OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
-                                    "Cannot seek to end of an Ogre::DataStream",
-                                    "ProxyStreamBuf::seekoff");
+                        GRIT_EXCEPT("Cannot seek to end of an Ogre::DataStream");
 
                         default: // compiler is whining at me
                         return -1;
@@ -297,9 +298,7 @@ class ProxyStreamBuf : public std::streambuf
 
         std::streamsize xsputn (const char_type*, std::streamsize)
         {
-                OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
-                            "Cannot write to an Ogre::DataStream",
-                            "ProxyStreamBuf::xsputn");
+                GRIT_EXCEPT("Cannot write to an Ogre::DataStream");
         }
 
         Ogre::DataStreamPtr file;
@@ -318,20 +317,20 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file, const Mater
                 pwd_pop();
 
                 Materials m1, m2;
+                ProcObjFaceDB fdb;
                 LooseEnds ls;
                 btCompoundShape *loaded_shape;
 
                 try {
-                        loaded_shape = import(tcol,this,ls,m1,m2);
-                } catch( Ogre::Exception& e ) {
+                        loaded_shape = import(tcol,this,ls,m1,m2,fdb);
+                } catch (GritException& e) {
                         for (LooseEnds::iterator i=ls.begin(), i_=ls.end() ; i!=i_ ; ++i) {
                                 delete *i;
                         }
                         throw e;
                 }
 
-                for (LooseEnds::iterator i=looseEnds.begin(),
-                                         i_=looseEnds.end() ; i!=i_ ; ++i) {
+                for (LooseEnds::iterator i=looseEnds.begin(), i_=looseEnds.end() ; i!=i_ ; ++i) {
                         delete *i;
                 }
                 masterShape = loaded_shape;
@@ -345,6 +344,7 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file, const Mater
                 looseEnds = ls;
                 partMaterials = m1;
                 faceMaterials = m2;
+                procObjFaceDB = fdb;
         }
 }
 
@@ -368,181 +368,82 @@ int CollisionMesh::getMaterialFromFace (unsigned int id)
         return faceMaterials[id];
 }
 
-void CollisionMesh::scatter (const ScatterOptions &opts, std::vector<Transform> (&r)[3])
+void CollisionMesh::scatter (int mat, const ScatterOptions &opts,
+                             std::vector<Transform> (&r))
 {
-        struct ScatterTriangleCallback : public btTriangleCallback {
-                const ScatterOptions &opts;
-                CollisionMesh *cm;
-                std::vector<Transform> (&r)[3];
-                int tris;
-                float leftOvers[3];
-                ScatterTriangleCallback (const ScatterOptions &opts_, CollisionMesh *cm_,
-                                         std::vector<Transform> (&r_)[3])
-                      : opts(opts_), cm(cm_), r(r_), tris(0)
-                {
-                        for (int i=0 ; i<3 ; ++i) leftOvers[i] = 0;
-                }
-                void processTriangle (btVector3 *triangle_, int partId, int triangleIndex) {
-                        Vector3 triangle[] = { Vector3(triangle_[0]),
-                                               Vector3(triangle_[1]),
-                                               Vector3(triangle_[2]) };
-                        tris++;
-                        assert(partId == 0); (void) partId;
-                        Vector3 t1 = opts.worldTrans*triangle[0];
-                        Vector3 t2 = opts.worldTrans*triangle[1];
-                        Vector3 t3 = opts.worldTrans*triangle[2];
-                        Vector3 *v1_p;
-                        Vector3 *v2_p;
-                        Vector3 *v3_p;
-                        {
-                                // find longest length edge
-                                float l1 = (t2-t3).length2();
-                                float l2 = (t1-t3).length2();
-                                float l3 = (t2-t1).length2();
-                                // note that order is important in these
-                                // reassignments because we want to preserve
-                                // the same winding, otherwise the normal is inverted
-                                if (l1>=l2 && l1>=l3) { // base is opposite t1
-                                        v1_p = &t2;
-                                        v2_p = &t3;
-                                        v3_p = &t1;
-                                } else if (l2>=l1 && l2>=l3) { // base is opposite t2
-                                        v1_p = &t3;
-                                        v2_p = &t1;
-                                        v3_p = &t2;
-                                } else if (l3>=l2 && l3>=l1) { // base is opposite t3
-                                        v1_p = &t1;
-                                        v2_p = &t2;
-                                        v3_p = &t3;
-                                } else {
-                                        CERR << "No triangle side is the longest." << std::endl;;
-                                        v1_p = &t1;
-                                        v2_p = &t2;
-                                        v3_p = &t3;
-                                }
-                        }
-                        Vector3 &v1 = *v1_p;
-                        Vector3 &v2 = *v2_p;
-                        Vector3 &v3 = *v3_p;
-                                
-                        // now we have the triangle as follows, where v4 is guaranteed to lie between v1 and v2
-                        /*
-                                   v3     ^
-                             A    /|\  C  |
-                                /  | \    h
-                              /  B |D \   |
-                            v1----v4---v2 |
-                             --b1--
-                             ----base-->
-                        */
-                        Vector3 base = v2-v1;
-                        Vector3 n = base.cross(v3-v1);
-                        float n_l = n.length();
-                        float birds_eye_area;
-                        {
-                                Vector3 v1_=v1, v2_=v2, v3_=v3;
-                                v1_.z = 0;
-                                v2_.z = 0;
-                                v3_.z = 0;
-                                birds_eye_area = (v2_-v1_).cross(v3_-v1_).length()/2;
-                        }
-                        float true_area = n_l/2;
-                        n /= n_l; // normalise
-                        Quaternion base_q;
-                        if (n.dot(Vector3(0,0,1)) > 0.98) {
-                                 base_q = Quaternion(1,0,0,0);
+        float leftOvers = 0; // fractional samples carried over to the next triangle
+        float minSlopeSin = gritsin(Degree(90-opts.maxSlope));
+        float maxSlopeSin = gritsin(Degree(90-opts.minSlope));
+
+        std::vector<ProcObjFace> matfaces = procObjFaceDB[mat];
+
+        Ogre::Timer t;
+        for (unsigned i=0 ; i<matfaces.size() ; ++i) {
+
+                ProcObjFace &f = matfaces[i];
+
+                Vector3 A  = opts.worldTrans * f.A;
+                Vector3 AB = opts.worldTrans.r * f.AB;
+                Vector3 AC = opts.worldTrans.r * f.AC;
+
+                Vector3 n = AB.cross(AC);
+                float n_l = n.normalise();
+                if (n.z < minSlopeSin) continue;
+                if (n.z > maxSlopeSin) continue;
+                float area = n_l/2 * (opts.noZ ? fabs(n.z) : 1);
+                // base_q may be multiplied by a random rotation for each sample later
+                Quaternion base_q = opts.alignSlope ?
+                                    Vector3(0,0,1).getRotationTo(n) : Quaternion(1,0,0,0);
+                
+                //float density = float(rand())/RAND_MAX * opts.density;
+                float samples_f = area * opts.density + leftOvers;
+                int samples = samples_f;
+                leftOvers = samples_f - samples;
+
+                for (int i=0 ; i<samples ; ++i) {
+                        float x = float(rand())/RAND_MAX;
+                        float y = float(rand())/RAND_MAX;
+                        if (x+y > 1) { x=1-x; y=1-y; }
+                        
+                        // scale up
+                        Vector3 p = A + x*AB + y*AC;
+
+                        if (p.z < opts.minElevation && p.z > opts.maxElevation) continue;
+
+                        // a whole bunch of sanity checks for debugging purposes
+                        #if 0
+                        Vector3 max(std::max(A.x,std::max(B.x,C.x)),
+                                    std::max(A.y,std::max(B.y,C.y)),
+                                    std::max(A.z,std::max(B.z,C.z)));
+                        Vector3 min(std::min(A.x,std::min(B.x,C.x)),
+                                    std::min(A.y,std::min(B.y,C.y)),
+                                    std::min(A.z,std::min(B.z,C.z)));
+                        if (p.x < min.x) abort();
+                        if (p.y < min.y) abort();
+                        if (p.z < min.z) abort();
+                        if (p.x > max.x) abort();
+                        if (p.y > max.y) abort();
+                        if (p.z > max.z) abort();
+                        APP_ASSERT(!isnan(p.x));
+                        APP_ASSERT(!isnan(p.y));
+                        APP_ASSERT(!isnan(p.z));
+                        APP_ASSERT(!isnan(base_q.w));
+                        APP_ASSERT(!isnan(base_q.x));
+                        APP_ASSERT(!isnan(base_q.y));
+                        APP_ASSERT(!isnan(base_q.z));
+                        #endif
+
+                        if (opts.rotate) {
+                                Quaternion rnd(Radian(float(rand())/RAND_MAX * 2*M_PI),
+                                                       Vector3(0,0,1));
+                                r.push_back(Transform(base_q * rnd, p));
                         } else {
-                                 base_q = Quaternion(Vector3(0,0,1).angleBetween(n), Vector3(0,0,1).cross(n));
-                        }
-                        
-                        
-                        float u = base.dot(v3-v1) / base.length2();
-                        //APP_ASSERT(u>=0 && u <=1);
-                        //APP_ASSERT(!isnan(u));
-                        Vector3 v4 = v1 + u * base;
-
-                        Vector3 h = v3-v4;
-
-                        // handle the objects independently
-                        for (int t=0 ; t<3 ; ++t) {
-                                if (opts.noCeiling[t] && n.z < 0) continue;
-                                if (opts.noFloor[t] && n.z > 0) continue;
-                                r[t].reserve(3000);
-                                float density = float(rand())/RAND_MAX * opts.density[t];
-                                //density *= cm->faceProcObjDensities[3*triangleIndex + t];
-                                float samples_f = (opts.noZ[t] ? birds_eye_area : true_area) * density + leftOvers[t];
-                                int samples = samples_f;
-                                leftOvers[t] = samples_f - samples;
-                                for (int i=0 ; i<samples ; ++i) {
-                                        // random along base
-                                        float x = float(rand())/RAND_MAX;
-
-                                        // random along height
-                                        float y = float(rand())/RAND_MAX;
-                                        
-                                        // mirror image stuff
-                                        if (x<u) {
-                                                if (y > x/u) {
-                                                        // A
-                                                        x = u - x;
-                                                        y = 1 - y;
-                                                } else {
-                                                        // B
-                                                }
-                                        } else {
-                                                float u1 = 1-u;
-                                                float x1 = 1-x;
-                                                if (y > x1/u1) {
-                                                        // C
-                                                        x = 1 - (u1 - x1);
-                                                        y = 1 - y;
-                                                } else {
-                                                        // D
-                                                }
-                                        }
-                                        
-                                        // scale up
-                                        Vector3 p = v1 + x*base + y*h;
-
-/*
-                                        // a whole bunch of sanity checks for debugging purposes
-                                        Vector3 max(std::max(v1.x,std::max(v2.x,v3.x)),std::max(v1.y,std::max(v2.y,v3.y)),std::max(v1.z,std::max(v2.z,v3.z)));
-                                        Vector3 min(std::min(v1.x,std::min(v2.x,v3.x)),std::min(v1.y,std::min(v2.y,v3.y)),std::min(v1.z,std::min(v2.z,v3.z)));
-                                        if (p.x() < min.x) abort();
-                                        if (p.y() < min.y) abort();
-                                        if (p.z() < min.z) abort();
-                                        if (p.x() > max.x) abort();
-                                        if (p.y() > max.y) abort();
-                                        if (p.z() > max.z) abort();
-                                        APP_ASSERT(!isnan(p.x));
-                                        APP_ASSERT(!isnan(p.y));
-                                        APP_ASSERT(!isnan(p.z));
-                                        APP_ASSERT(!isnan(base_q.w));
-                                        APP_ASSERT(!isnan(base_q.x));
-                                        APP_ASSERT(!isnan(base_q.y));
-                                        APP_ASSERT(!isnan(base_q.z));
-*/
-
-                                        if (p.z >= opts.minElevation[t] && p.z <= opts.maxElevation[t]) {
-                                                Transform trans(opts.rotate ? base_q * Quaternion(Radian(float(rand())/RAND_MAX * 2*M_PI), Vector3(0,0,1)) : base_q, p);
-                                                r[t].push_back(trans);
-                                        }
-                                }
+                                r.push_back(Transform(base_q, p));
                         }
                 }
-        };
-
-        ScatterTriangleCallback stc(opts, this, r);
-
-        for (int i=0 ; i<masterShape->getNumChildShapes() ; ++i) {
-                btCollisionShape *child = masterShape->getChildShape(i);
-                if (child->getShapeType()!=TRIANGLE_MESH_SHAPE_PROXYTYPE) return;
-                btTriangleMeshShape *mesh = static_cast<btTriangleMeshShape*>(child);
-                // HACK: use a massive aabb to capture the whole mesh
-                Ogre::Timer t;
-                mesh->processAllTriangles(&stc, btVector3(-10000,-10000,-10000), btVector3(10000,10000,10000));
-                CLOG << "scatter time (s): " << t.getMicroseconds()/1E6 << "  samples: " << r[0].size() << "  tris: " << stc.tris << std::endl;;
-
         }
+        CLOG << "scatter time (s): " << t.getMicroseconds()/1E6
+             << "  samples: " << r.size() << "  tris: " << matfaces.size() << std::endl;;
 }
 
+// vim: ts=8:sw=8:et

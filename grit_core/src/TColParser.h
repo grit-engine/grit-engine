@@ -75,11 +75,16 @@ class MaterialDB {
 
         void setMaterial (const std::string &name, int interaction_group)
         {
-                PhysicsMaterial &m = mdb[name];
-                m.name = name;
-                m.interactionGroup = interaction_group;
-                m.id = mdb2.size();
-                mdb2.push_back(&m);
+                if (mdb.find(name) == mdb.end()) {
+                        PhysicsMaterial &m = mdb[name];
+                        m.name = name;
+                        m.interactionGroup = interaction_group;
+                        m.id = mdb2.size();
+                        mdb2.push_back(&m);
+                } else {
+                        PhysicsMaterial &m = mdb[name];
+                        m.interactionGroup = interaction_group;
+                }
         }
 
     protected:

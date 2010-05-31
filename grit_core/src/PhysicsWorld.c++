@@ -494,25 +494,16 @@ void PhysicsWorld::setSolverCacheFriendly (bool v)
 { set_flag(world->getSolverInfo().m_solverMode,SOLVER_CACHE_FRIENDLY,v); } 
 
 
-static inline void check_name(const PhysicsWorld &pw, const std::string &name,
-                              const char *func_name)
-{
-        if (pw.hasMesh(name))
-                OGRE_EXCEPT(Ogre::Exception::ERR_DUPLICATE_ITEM,
-                            "Collision mesh \""+name+"\" already exists.",
-                            func_name);
-}
-
 CollisionMeshPtr PhysicsWorld::createFromFile (const std::string &name)
 {
-        check_name(*this,name,"PhysicsWorld::createFromFile");
+        if (hasMesh(name))
+                GRIT_EXCEPT("Collision mesh \""+name+"\" already exists.");
         CollisionMeshPtr cmp = CollisionMeshPtr(new CollisionMesh(name));
         // Note: this only works because both ogre and bullet are using float
         // if this situation changes it will be necessary to convert
         // from float to btScalar.
         Ogre::DataStreamPtr file =
-                Ogre::ResourceGroupManager::getSingleton()
-                        .openResource(name,"GRIT");
+                Ogre::ResourceGroupManager::getSingleton().openResource(name,"GRIT");
         cmp->importFromFile(file, mdb);
         colMeshes[name] = cmp;
         return cmp;
@@ -522,9 +513,7 @@ void PhysicsWorld::deleteMesh (const std::string &name)
 {
         CollisionMeshMap::iterator i = colMeshes.find(name);
         if (i==colMeshes.end())
-                OGRE_EXCEPT(Ogre::Exception::ERR_DUPLICATE_ITEM,
-                            "Collision mesh \""+name+"\" doesn't exist.",
-                            "PhysicsWorld::deleteByName");
+                GRIT_EXCEPT("Collision mesh \""+name+"\" doesn't exist.");
         colMeshes.erase(i);
 }
 

@@ -132,6 +132,13 @@ CVERB << "hello world" << std::endl;
 struct GritException {
         GritException (const std::string &msg_, const char *func_, const char *file_, int line_)
               : msg(msg_), func(func_), file(file_), line(line_) { }
+
+        GritException (const std::string &msg_, const std::string &doing,
+                       const char *func_, const char *file_, int line_)
+              : msg(msg_), func(func_), file(file_), line(line_)
+        {
+                msg += " while " + doing;
+        }
         
         std::string longMessage (void)
         {
@@ -158,6 +165,7 @@ inline std::ostream &operator << (std::ostream &o, GritException &e)
 #endif
 
 #define GRIT_EXCEPT(msg) throw GritException(msg, GRIT_FUNC_NAME, __FILE__, __LINE__)
+#define GRIT_EXCEPT2(msg,doing) throw GritException(msg, doing, GRIT_FUNC_NAME, __FILE__, __LINE__)
 
 #endif
 

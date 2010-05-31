@@ -147,10 +147,7 @@ void GritObject::notifyFade (lua_State *L,
                              const float fade,
                              const int transition)
 {
-        if (gritClass==NULL)
-                OGRE_EXCEPT(Ogre::Exception::ERR_INVALID_STATE,
-                            "Object destroyed",
-                            "GritObject::notifyFade");
+        if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
 
         if (!isActivated()) return;
 
@@ -212,10 +209,7 @@ void GritObject::activate (lua_State *L,
         if (isActivated()) return;
 
         // can call in from lua after destroyed by deleteObject
-        if (gritClass==NULL)
-                OGRE_EXCEPT(Ogre::Exception::ERR_INVALID_STATE,
-                            "Object destroyed",
-                            "GritObject::activate");
+        if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
 
         STACK_BASE;
         //stack is empty
@@ -346,10 +340,7 @@ float GritObject::calcFade (const float range2, bool &overlap)
 
 bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
 {
-        if (gritClass==NULL)
-                OGRE_EXCEPT(Ogre::Exception::ERR_INVALID_STATE,
-                            "Object destroyed",
-                            "GritObject::deactivate");
+        if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
 
         if (!isActivated()) return false;
 
@@ -420,10 +411,7 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
 
 void GritObject::init (lua_State *L, const GritObjectPtr &self)
 {
-        if (gritClass==NULL)
-                OGRE_EXCEPT(Ogre::Exception::ERR_INVALID_STATE,
-                            "Object destroyed",
-                            "GritObject::init");
+        if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
 
         STACK_BASE;
         //stack is empty
@@ -473,10 +461,7 @@ void GritObject::init (lua_State *L, const GritObjectPtr &self)
 
 bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, float elapsed)
 {
-        if (gritClass==NULL)
-                OGRE_EXCEPT(Ogre::Exception::ERR_INVALID_STATE,
-                            "Object destroyed",
-                            "GritObject::init");
+        if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
 
         STACK_BASE;
         //stack is empty
