@@ -182,8 +182,6 @@ class Streamer {
 
         void eraseClass (const std::string &name);
 
-        void eraseObject (const std::string &);
-
         void setPhysics (lua_State *L, const PhysicsWorldPtr &physics);
 
         GritClassMap classes;

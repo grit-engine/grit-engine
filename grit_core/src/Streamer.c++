@@ -173,18 +173,6 @@ const GritObjectPtr &Streamer::getObject (const std::string &name)
 }
 
 
-
-// don't call this function directly since the object won't be deactivated
-// call deleteObject instead
-void Streamer::eraseObject (const std::string &name)
-{
-        GObjMap::iterator i = gObjs.find(name);
-        if (i==gObjs.end()) 
-                GRIT_EXCEPT("GritObject does not exist: "+name);
-
-        gObjs.erase(name);
-}
-
 static void remove_if_exists (GObjPtrs &list, const GritObjectPtr &o)
 {
         GObjPtrs::iterator iter = find(list.begin(),list.end(),o);
@@ -201,7 +189,12 @@ void Streamer::deleteObject (lua_State *L, const GritObjectPtr &o)
         rs.remove(o);
         remove_if_exists(fresh, o);
         remove_if_exists(needFrameCallbacks, o);
-        eraseObject(o->name);
+
+        GObjMap::iterator i = gObjs.find(o->name);
+        // Since object deactivation can trigger other objects to be destroyed,
+        // sometimes when quitting, due to the order in which the objects are destroyed,
+        // we destroy an object that is already dead...
+        if (i!=gObjs.end()) gObjs.erase(o->name);
 }
 
 void Streamer::frameCallbacks (lua_State *L, float elapsed)

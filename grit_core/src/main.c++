@@ -198,6 +198,9 @@ int main(int argc, const char **argv)
                 #endif
 
 
+        } catch( GritException& e ) {
+                std::cerr << "An exception has occured: "
+                          << e.longMessage() << std::endl;
         } catch( Ogre::Exception& e ) {
                 std::cerr << "An exception has occured: "
                           << e.getFullDescription() << std::endl;
