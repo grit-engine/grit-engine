@@ -57,6 +57,14 @@ void Streamer::clearObjects (lua_State *L)
         }
 }
 
+void Streamer::clearAnonymousObjects (lua_State *L)
+{
+        GObjMap m = gObjs;
+        for (GObjMap::iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
+                if (i->second->anonymous) deleteObject(L,i->second);
+        }
+}
+
 
 void Streamer::setGFX (lua_State *L, Ogre::SceneNode *gfx)
 {
@@ -138,7 +146,9 @@ GritObjectPtr Streamer::addObject (
         if (physics.isNull()) {
                 GRIT_EXCEPT("No physics engine set up, call setPhysics()");
         }
+        bool anonymous = false;
         if (name=="") {
+                anonymous = true;
                 do {
                         std::stringstream ss;
                         ss << "Unnamed:" << grit_class->name
@@ -154,6 +164,7 @@ GritObjectPtr Streamer::addObject (
         }
 
         GritObjectPtr self = GritObjectPtr(new GritObject(name,grit_class));
+        self->anonymous = anonymous;
         gObjs[name] = self;
         rs.add(self);
         fresh.push_back(self);

@@ -246,6 +246,7 @@ class GritObject {
 
         ExternalTable userValues;
 
+        bool anonymous;
 
     protected:
 

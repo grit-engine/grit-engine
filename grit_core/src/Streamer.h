@@ -68,6 +68,7 @@ class Streamer {
         void clearClasses (lua_State *L);
 
         void clearObjects (lua_State *L);
+        void clearAnonymousObjects (lua_State *L);
 
 
         // GLOBAL STUFF
@@ -118,8 +119,8 @@ class Streamer {
         // OBJECT STUFF
 
         GritObjectPtr addObject (lua_State *L,
-                                         std::string name,
-                                         GritClass *grit_class);
+                                 std::string name,
+                                 GritClass *grit_class);
 
         const GritObjectPtr &getObject (const std::string &name);
 

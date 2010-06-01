@@ -638,6 +638,16 @@ TRY_START
 TRY_END
 }
 
+static int streamer_clear_anonymous_objects (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
+        self.clearAnonymousObjects(L);
+        return 0;
+TRY_END
+}
+
 
 
 static int streamer_clear_classes (lua_State *L)
@@ -745,6 +755,8 @@ TRY_START
                 lua_pushnumber(L,self.numActivated());
         } else if (!::strcmp(key,"clearObjects")) {
                 push_cfunction(L,streamer_clear_objects);
+        } else if (!::strcmp(key,"clearAnonymousObjects")) {
+                push_cfunction(L,streamer_clear_anonymous_objects);
         } else if (!::strcmp(key,"clearClasses")) {
                 push_cfunction(L,streamer_clear_classes);
         } else if (!::strcmp(key,"deactivateAll")) {
