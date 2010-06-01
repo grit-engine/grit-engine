@@ -377,6 +377,8 @@ void CollisionMesh::scatter (int mat, const ScatterOptions &opts,
 
         std::vector<ProcObjFace> matfaces = procObjFaceDB[mat];
 
+        if (opts.seed) srand(0);
+
         Ogre::Timer t;
         for (unsigned i=0 ; i<matfaces.size() ; ++i) {
 

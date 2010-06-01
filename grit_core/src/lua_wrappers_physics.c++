@@ -186,7 +186,7 @@ TRY_END
 static int rbody_scatter (lua_State *L)
 {
 TRY_START
-        check_args(L,10);
+        check_args(L,11);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         const char *mat = luaL_checkstring(L,2);
         CollisionMesh::ScatterOptions o;
@@ -200,6 +200,7 @@ TRY_START
         o.noZ          = check_bool(L,8);
         o.rotate       = check_bool(L,9);
         o.alignSlope   = check_bool(L,10);
+        o.seed         = check_bool(L,11);
 
         std::vector<Transform> r;
         self->colMesh->scatter(self->world->getMaterial(mat).id, o, r);

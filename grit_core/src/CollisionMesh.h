@@ -124,6 +124,7 @@ class CollisionMesh {
                 bool noZ;
                 bool rotate;
                 bool alignSlope;
+                bool seed;
                 ScatterOptions () 
                 {
                         minElevation = FLT_MIN;
@@ -134,6 +135,7 @@ class CollisionMesh {
                         noZ = false;
                         rotate = true;
                         alignSlope = true;
+                        seed = false;
                 }
         };
         void scatter (int mat,const ScatterOptions &opts,std::vector<Transform> &r);
