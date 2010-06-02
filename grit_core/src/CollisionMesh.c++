@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <ctime>
 
 #include <OgreException.h>
 #include <OgreTimer.h>
@@ -377,7 +378,7 @@ void CollisionMesh::scatter (int mat, const ScatterOptions &opts,
 
         std::vector<ProcObjFace> matfaces = procObjFaceDB[mat];
 
-        if (opts.seed) srand(0);
+        srand(opts.seed ? 0 : time(NULL));
 
         Ogre::Timer t;
         for (unsigned i=0 ; i<matfaces.size() ; ++i) {

@@ -21,7 +21,6 @@
 
 //#include <fenv.h>
 #include <cerrno>
-#include <ctime>
 
 #include <Ogre.h>
 #include <OgreArchiveFactory.h>
@@ -71,8 +70,6 @@ void app_fatal()
 
 int main(int argc, const char **argv)
 {
-
-        srand(time(NULL));
 
         try {
 
