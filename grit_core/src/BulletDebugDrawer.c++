@@ -30,22 +30,21 @@
 #include "CentralisedLog.h"
 #include "PhysicsWorld.h"
 
-BulletDebugDrawer::BulletDebugDrawer (Ogre::SceneManager *scm)
+BulletDebugDrawer::BulletDebugDrawer (Ogre::SceneManager *sm)
 {
     mContactPoints = &mContactPoints1;
+
     mLines = new Ogre::ManualObject("physics lines");
     APP_ASSERT(mLines);
-    mTriangles = new Ogre::ManualObject("physics triangles");
-    APP_ASSERT(mTriangles);
     mLines->setDynamic(true);
     mLines->setCastShadows(false);
+    sm->getRootSceneNode()->attachObject(mLines);
+
+    mTriangles = new Ogre::ManualObject("physics triangles");
+    APP_ASSERT(mTriangles);
     mTriangles->setDynamic(true);
     mTriangles->setCastShadows(false);
-    //mLines->estimateVertexCount(100000);
-    //mLines->estimateIndexCount(0);
-
-    scm->getRootSceneNode()->attachObject(mLines);
-    scm->getRootSceneNode()->attachObject(mTriangles);
+    sm->getRootSceneNode()->attachObject(mTriangles);
     
     const char *matName = "OgreBulletCollisionsDebugDefault";
     Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getDefaultSettings()->clone(matName);
@@ -74,6 +73,7 @@ BulletDebugDrawer::BulletDebugDrawer (Ogre::SceneManager *scm)
     mTriangles->colour(Ogre::ColourValue::Blue);
 
     mDebugModes = (DebugDrawModes) DBG_NoDebug;
+
     Ogre::Root::getSingleton().addFrameListener(this);
 }
 
