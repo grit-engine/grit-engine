@@ -145,8 +145,10 @@ class CollisionMesh {
                 Vector3 AB;
                 Vector3 AC;
         };
+        typedef std::vector<ProcObjFace> ProcObjFaces;
+        typedef std::vector<float> ProcObjFaceAreas;
 
-        typedef std::map<int,std::vector<ProcObjFace> > ProcObjFaceDB;
+        typedef std::map<int,std::pair<ProcObjFaceAreas, ProcObjFaces> > ProcObjFaceDB;
 
         void getProcObjMaterials (std::vector<int> &r) {
                 typedef ProcObjFaceDB::iterator I;

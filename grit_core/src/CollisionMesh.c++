@@ -144,7 +144,8 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
                 f.A =  (*vertexes)[i->v1];
                 f.AB = (*vertexes)[i->v2] - f.A;
                 f.AC = (*vertexes)[i->v3] - f.A;
-                faceDB[m].push_back(f);
+                faceDB[m].first.push_back((f.AB.cross(f.AC)).length());
+                faceDB[m].second.push_back(f);
         }
 
         btTriangleIndexVertexArray *v = new btTriangleIndexVertexArray(
@@ -372,37 +373,49 @@ int CollisionMesh::getMaterialFromFace (unsigned int id)
 void CollisionMesh::scatter (int mat, const ScatterOptions &opts,
                              std::vector<Transform> (&r))
 {
-        float leftOvers = 0; // fractional samples carried over to the next triangle
-        float minSlopeSin = gritsin(Degree(90-opts.maxSlope));
-        float maxSlopeSin = gritsin(Degree(90-opts.minSlope));
+        float left_overs = 0; // fractional samples carried over to the next triangle
+        float min_slope_sin = gritsin(Degree(90-opts.maxSlope));
+        float max_slope_sin = gritsin(Degree(90-opts.minSlope));
+        float half_slope_sin = (max_slope_sin-min_slope_sin)/2;
+        float mid_slope_sin = min_slope_sin + half_slope_sin;
+        float total_area = 0;
 
-        std::vector<ProcObjFace> matfaces = procObjFaceDB[mat];
+        std::pair<ProcObjFaceAreas, ProcObjFaces> pair = procObjFaceDB[mat];
+        ProcObjFaceAreas &mat_face_areas = pair.first;
+        ProcObjFaces &mat_faces = pair.second;
 
         srand(opts.seed ? 0 : time(NULL));
 
         Ogre::Timer t;
-        for (unsigned i=0 ; i<matfaces.size() ; ++i) {
+        for (unsigned i=0 ; i<mat_face_areas.size() ; ++i) {
 
-                ProcObjFace &f = matfaces[i];
+                float area = mat_face_areas[i];
+                total_area += area;
+                float samples_f = area * opts.density + left_overs;
+                int samples = samples_f;
+                left_overs = samples_f - samples;
+                if (samples==0) continue;
+
+                ProcObjFace &f = mat_faces[i];
 
                 Vector3 A  = opts.worldTrans * f.A;
                 Vector3 AB = opts.worldTrans.r * f.AB;
                 Vector3 AC = opts.worldTrans.r * f.AC;
 
-                Vector3 n = AB.cross(AC);
-                float n_l = n.normalise();
-                if (n.z < minSlopeSin) continue;
-                if (n.z > maxSlopeSin) continue;
-                float area = n_l/2 * (opts.noZ ? fabs(n.z) : 1);
+                Vector3 n = AB.cross(AC).normalisedCopy();
+                if (n.z < min_slope_sin) continue;
+                if (n.z > max_slope_sin) continue;
+                if (opts.noZ) {
+                        samples_f *= 1 - fabs(n.z-mid_slope_sin)/half_slope_sin;
+                        samples = samples_f;
+                        if (samples == 0) continue;
+                }
+                //float density = float(rand())/RAND_MAX * opts.density;
+
                 // base_q may be multiplied by a random rotation for each sample later
                 Quaternion base_q = opts.alignSlope ?
                                     Vector3(0,0,1).getRotationTo(n) : Quaternion(1,0,0,0);
                 
-                //float density = float(rand())/RAND_MAX * opts.density;
-                float samples_f = area * opts.density + leftOvers;
-                int samples = samples_f;
-                leftOvers = samples_f - samples;
-
                 for (int i=0 ; i<samples ; ++i) {
                         float x = float(rand())/RAND_MAX;
                         float y = float(rand())/RAND_MAX;
@@ -446,7 +459,9 @@ void CollisionMesh::scatter (int mat, const ScatterOptions &opts,
                 }
         }
         CLOG << "scatter time (s): " << t.getMicroseconds()/1E6
-             << "  samples: " << r.size() << "  tris: " << matfaces.size() << std::endl;;
+             << "  samples: " << r.size() << "  tris: " << mat_faces.size()
+             << "  area: " << total_area
+             << std::endl;;
 }
 
 // vim: ts=8:sw=8:et
