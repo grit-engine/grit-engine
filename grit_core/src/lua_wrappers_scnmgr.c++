@@ -699,7 +699,7 @@ TRY_END
 static int scnmgr_get_mobj (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
+        check_args(L,3);
         GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
         const char *name = luaL_checkstring(L,2);
         const char *type = luaL_checkstring(L,3);
