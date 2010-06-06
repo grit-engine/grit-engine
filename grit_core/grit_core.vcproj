@@ -200,6 +200,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\Clutter.c++"
+				>
+			</File>
+			<File
 				RelativePath=".\src\CollisionMesh.c++"
 				>
 			</File>

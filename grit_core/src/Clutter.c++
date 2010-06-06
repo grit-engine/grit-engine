@@ -19,8 +19,6 @@
  * THE SOFTWARE.
  */
 
-#include <OgreMaterialManager.h>
-#include <OgreMaterial.h>
 #include <OgreHardwareBufferManager.h>
 
 #include "Clutter.h"
@@ -126,7 +124,7 @@ void Clutter::updateQuad (const QTicket &t,
 // Clutter::Section ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Clutter::Section::Section (Clutter *parent, uint32_t triangles, const Ogre::MaterialPtr &m)
+Clutter::Section::Section (Clutter *parent, unsigned triangles, const Ogre::MaterialPtr &m)
 {
     mParent = parent;
     mMaterial = m;
@@ -164,11 +162,11 @@ Clutter::Section::~Section (void)
 {
 }
 
-void Clutter::Section::reserveTriangles (uint32_t triangles, uint32_t &off, uint32_t &len)
+void Clutter::Section::reserveTriangles (unsigned triangles, unsigned &off, unsigned &len)
 {
     // do a linear search to find a free block of size 'triangles'
-    uint32_t found = 0;
-    for (uint32_t i=0 ; i<usage.size() ; ++i) {
+    unsigned found = 0;
+    for (unsigned i=0 ; i<usage.size() ; ++i) {
         if (marker == usage.size()) {
             found = 0;
             marker = 0;
@@ -185,9 +183,9 @@ void Clutter::Section::reserveTriangles (uint32_t triangles, uint32_t &off, uint
     off = marker-found;
 }
 
-Clutter::Section::MTicket Clutter::Section::reserveGeometry (uint32_t triangles)
+Clutter::Section::MTicket Clutter::Section::reserveGeometry (unsigned triangles)
 {
-    uint32_t off, len;
+    unsigned off, len;
     reserveTriangles(triangles, off, len);
     return MTicket (off, len);
 }
@@ -215,7 +213,7 @@ void Clutter::Section::updateGeometry (const MTicket &t,
 
 Clutter::Section::QTicket Clutter::Section::reserveQuad (void)
 {
-    uint32_t off, len;
+    unsigned off, len;
     reserveTriangles(2, off, len);
     if (len==0) return QTicket(0xFFFFFFFF);
     return QTicket(off);
@@ -233,8 +231,8 @@ void Clutter::Section::updateQuad (const QTicket &t,
 {
     const int idxs[6] = { 0, 3, 1, 0, 2, 3 };
     APP_ASSERT(mDeclSize == 8*sizeof(float));
-    for (uint32_t i=0 ; i<6 ; ++i) {
-        uint32_t vi = (i + t.offset*3) * mDeclSize;
+    for (unsigned i=0 ; i<6 ; ++i) {
+        unsigned vi = (i + t.offset*3) * mDeclSize;
         //std::cout << t.offset << " " << vi << std::endl;
         memcpy(&data[vi + 0*sizeof(float)],  &pos[idxs[i]].x, sizeof(float));
         memcpy(&data[vi + 1*sizeof(float)],  &pos[idxs[i]].y, sizeof(float));

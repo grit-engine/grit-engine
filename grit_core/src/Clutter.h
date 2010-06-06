@@ -29,6 +29,8 @@ class ClutterFactory;
 
 #include <OgreMovableObject.h>
 #include <OgreVertexIndexData.h>
+#include <OgreMaterial.h>
+#include <OgreMesh.h>
 
 
 class Clutter : public Ogre::MovableObject {
@@ -45,12 +47,12 @@ class Clutter : public Ogre::MovableObject {
 
             std::vector<unsigned char> data;
             std::vector<bool> usage;
-            uint32_t marker;
-            uint32_t mDeclSize;
+            unsigned marker;
+            unsigned mDeclSize;
      
             struct BTicket {
-                const uint32_t offset;
-                BTicket(uint32_t offset_) : offset(offset_) { }
+                const unsigned offset;
+                BTicket(unsigned offset_) : offset(offset_) { }
                 BTicket(const BTicket &o) : offset(o.offset) { }
                 bool failed (void) { return offset == 0xFFFFFFFF; }
             };
@@ -58,17 +60,17 @@ class Clutter : public Ogre::MovableObject {
         public:
 
             struct QTicket : public BTicket {
-                QTicket(uint32_t offset_) : BTicket(offset_) { }
+                QTicket(unsigned offset_) : BTicket(offset_) { }
                 QTicket(const QTicket &o) : BTicket(o.offset) { }
             };
 
             struct MTicket : public BTicket {
-                const uint32_t length;
-                MTicket(uint32_t offset_, uint32_t length_) : BTicket(offset_), length(length_) { }
+                const unsigned length;
+                MTicket(unsigned offset_, unsigned length_) : BTicket(offset_), length(length_) { }
                 MTicket(const MTicket &o) : BTicket(o.offset), length(o.length) { }
             };
 
-            Section (Clutter *parent, uint32_t triangles, const Ogre::MaterialPtr &m);
+            Section (Clutter *parent, unsigned triangles, const Ogre::MaterialPtr &m);
             ~Section (void);
      
             Ogre::RenderOperation *getRenderOperation (void) { return &mRenderOperation; }
@@ -82,7 +84,7 @@ class Clutter : public Ogre::MovableObject {
             const Ogre::LightList &getLights (void) const { return mParent->queryLights(); }
             
             
-            MTicket reserveGeometry (uint32_t triangles);
+            MTicket reserveGeometry (unsigned triangles);
 
             void releaseGeometry (const MTicket &t);
 
@@ -102,7 +104,7 @@ class Clutter : public Ogre::MovableObject {
 
             protected:
 
-            void reserveTriangles (uint32_t triangles, uint32_t &off, uint32_t &len);
+            void reserveTriangles (unsigned triangles, unsigned &off, unsigned &len);
                     
         };      
 
@@ -114,7 +116,7 @@ class Clutter : public Ogre::MovableObject {
         };
         typedef Section::MTicket MTicket;
 
-        Clutter (const Ogre::String &name, uint32_t triangles);
+        Clutter (const Ogre::String &name, unsigned triangles);
 
         virtual ~Clutter (void);
 
@@ -151,7 +153,7 @@ class Clutter : public Ogre::MovableObject {
 
     protected:
 
-        uint32_t mTriangles;
+        unsigned mTriangles;
 
         typedef std::map<Ogre::MaterialPtr, Section*> SectionMap;
         SectionMap sects;
