@@ -33,6 +33,7 @@
 GritObject::GritObject (const std::string &name_,
                         GritClass *gritClass_)
       : name(name_), 
+        anonymous(false),
         gritClass(gritClass_),
         lua(LUA_NOREF),
         needsFrameCallbacks(false),
