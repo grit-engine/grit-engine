@@ -26,6 +26,7 @@
 #define MENU_GL 151
 #define MENU_FULLSCREEN 152
 #define MENU_DINPUT 153
+#define MENU_NOVSYNC 154
 
 // Formats a message string using the specified message and variable
 // list of arguments.
@@ -183,6 +184,7 @@ void subproc_has_quit (void)
         EnableMenuItem(GetMenu(win_main), MENU_GL, MF_ENABLED);
         EnableMenuItem(GetMenu(win_main), MENU_FULLSCREEN, MF_ENABLED);
         EnableMenuItem(GetMenu(win_main), MENU_DINPUT, MF_ENABLED);
+        EnableMenuItem(GetMenu(win_main), MENU_NOVSYNC, MF_ENABLED);
 }
 
 std::string buffer;
@@ -334,7 +336,7 @@ void subproc_spawn (void)
         set_env_var_to_menu_checked("GRIT_GL", MENU_GL);
         set_env_var_to_menu_checked("GRIT_FULLSCREEN", MENU_FULLSCREEN);
         set_env_var_to_menu_checked("GRIT_DINPUT", MENU_DINPUT);
-        //set_env_var_to_menu_checked("GRIT_NOVSYNC", MENU_SOMETHING);
+        set_env_var_to_menu_checked("GRIT_NOVSYNC", MENU_NOVSYNC);
 
         BOOL bFuncRetn = CreateProcess(NULL, cmdline,
                                   NULL,          // process security attributes
@@ -361,6 +363,7 @@ void subproc_spawn (void)
         EnableMenuItem(GetMenu(win_main), MENU_GL, MF_GRAYED);
         EnableMenuItem(GetMenu(win_main), MENU_FULLSCREEN, MF_GRAYED);
         EnableMenuItem(GetMenu(win_main), MENU_DINPUT, MF_GRAYED);
+        EnableMenuItem(GetMenu(win_main), MENU_NOVSYNC, MF_GRAYED);
 }
 
 /*
@@ -452,6 +455,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 
                                 case MENU_DINPUT: // dinput
                                 toggle_menu_check(hWnd, 153);
+                                return 0;
+
+                                case MENU_NOVSYNC: // vsync
+                                toggle_menu_check(hWnd, 154);
                                 return 0;
 
                                 case 201: // about
