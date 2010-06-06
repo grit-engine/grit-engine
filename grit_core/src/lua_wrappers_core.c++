@@ -2190,6 +2190,7 @@ lua_State *init_lua(const char *filename)
         ADD_MT_MACRO(entity,ENTITY_TAG);
         ADD_MT_MACRO(manobj,MANOBJ_TAG);
         ADD_MT_MACRO(light,LIGHT_TAG);
+        ADD_MT_MACRO(clutter,CLUTTER_TAG);
         ADD_MT_MACRO(psys,PSYS_TAG);
         ADD_MT_MACRO(viewport,VIEWPORT_TAG);
         ADD_MT_MACRO(statgeo,STATGEO_TAG);

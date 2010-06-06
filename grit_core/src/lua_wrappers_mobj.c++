@@ -26,7 +26,9 @@
 #include <OgreInstancedGeometry.h>
 #include <OgreStaticGeometry.h>
 #include <OgreCamera.h>
+#include <OgreMaterialManager.h>
 
+#include "Clutter.h"
 #include "Grit.h"
 #include "LuaParticleSystem.h"
 
@@ -45,23 +47,28 @@
 Ogre::MovableObject *check_mobj(lua_State *L,int index)
 {
         Ogre::MovableObject *ptr = NULL;
-        if (has_tag(L,index,CAM_TAG)) {
-                ptr = *static_cast<Ogre::Camera**>(lua_touserdata(L,index));
-        } else if (has_tag(L,index,ENTITY_TAG)) {
+        if (has_tag(L,index,ENTITY_TAG)) {
                 ptr = *static_cast<Ogre::Entity**>(lua_touserdata(L,index));
+        } else if (has_tag(L,index,CAM_TAG)) {
+                ptr = *static_cast<Ogre::Camera**>(lua_touserdata(L,index));
         } else if (has_tag(L,index,LIGHT_TAG)) {
                 ptr = *static_cast<Ogre::Light**>(lua_touserdata(L,index));
+        } else if (has_tag(L,index,CLUTTER_TAG)) {
+                ptr = *static_cast<Clutter**>(lua_touserdata(L,index));
+        } else if (has_tag(L,index,MANOBJ_TAG)) {
+                ptr = *static_cast<Ogre::ManualObject**>(lua_touserdata(L,index));
         } else if (has_tag(L,index,PSYS_TAG)) {
-                ptr = *static_cast<Ogre::ParticleSystem**>
-                                                (lua_touserdata(L,index));
+                ptr = *static_cast<Ogre::ParticleSystem**>(lua_touserdata(L,index));
         }
 
         if (!ptr) {
                 std::string acceptable_types;
+                acceptable_types += ENTITY_TAG ", or ";
                 acceptable_types += CAM_TAG ", or ";
                 acceptable_types += LIGHT_TAG ", or ";
-                acceptable_types += PSYS_TAG ", or ";
-                acceptable_types += ENTITY_TAG;
+                acceptable_types += CLUTTER_TAG ", or ";
+                acceptable_types += MANOBJ_TAG ", or ";
+                acceptable_types += PSYS_TAG;
                 luaL_typerror(L,index,acceptable_types.c_str());
         }
         return ptr;
@@ -82,8 +89,14 @@ bool push_mobj (lua_State *L, Ogre::MovableObject *mobj)
         } else if (dynamic_cast<Ogre::Light*>(mobj)) {
                 push_light(L,static_cast<Ogre::Light*>(mobj));
                 return true;
+        } else if (dynamic_cast<Clutter*>(mobj)) {
+                push_clutter(L,static_cast<Clutter*>(mobj));
+                return true;
         } else if (dynamic_cast<Ogre::ManualObject*>(mobj)) {
                 push_manobj(L,static_cast<Ogre::ManualObject*>(mobj));
+                return true;
+        } else if (dynamic_cast<Ogre::ParticleSystem*>(mobj)) {
+                push_psys(L,static_cast<Ogre::ParticleSystem*>(mobj));
                 return true;
         }
         return false;
@@ -132,6 +145,127 @@ static bool mobj_newindex (lua_State *L, Ogre::MovableObject &self,
         }
         return true;
 }
+
+//}}}
+
+
+// CLUTTER =================================================================== {{{
+
+void push_clutter (lua_State *L, Clutter *self)
+{
+        void **ud = static_cast<void**>(lua_newuserdata(L, sizeof(*ud)));
+        ud[0] = static_cast<void*> (self);
+        luaL_getmetatable(L, CLUTTER_TAG);
+        lua_setmetatable(L, -2);
+        Ogre::SceneManager *sm = self->_getManager();
+        scnmgr_maps& maps = grit->getUserDataTables().scnmgrs[sm];
+        maps.clutters[self].push_back(ud);
+}
+
+static int clutter_gc(lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO_OFFSET(Clutter,self,1,CLUTTER_TAG,0);
+        if (self==NULL) return 0;
+        Ogre::SceneManager *sm = self->_getManager();
+        vec_nullify_remove(grit->getUserDataTables().scnmgrs[sm].clutters[self],&self);
+        return 0;
+TRY_END
+}
+
+static int clutter_destroy (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Clutter,self,1,CLUTTER_TAG);
+        Ogre::SceneManager *sm = self._getManager();
+        sm->destroyMovableObject(&self);
+        map_nullify_remove(grit->getUserDataTables().scnmgrs[sm].clutters,&self);
+        return 0;
+TRY_END
+}
+
+float randf (void) { return float(rand())/RAND_MAX*2 - 1; }
+float prandf (void) { return float(rand())/RAND_MAX; }
+float prandf2 (void) { float x = prandf(); return 0.5*tan(x * 3.142f/2) + sqrtf(x); }
+
+static int clutter_fuck_with (lua_State *L)
+{
+TRY_START
+        check_args(L,5);
+        GET_UD_MACRO(Clutter,self,1,CLUTTER_TAG);
+        std::string matname = luaL_checkstring(L,2);
+        float radius = luaL_checknumber(L,3);
+        float angle = luaL_checknumber(L,4);
+        float sz = luaL_checknumber(L,5);
+        Ogre::MaterialPtr m = Ogre::MaterialManager::getSingleton().getByName(matname, "GRIT");
+        if (m.isNull()) {
+                my_lua_error(L, "Could not find material \""+matname+"\"");
+        }
+        for (int i=0 ; i<100 ; ++i) {
+                Ogre::Vector3 centre(randf(), randf(), 0);
+                centre = radius * prandf2() * centre.normalisedCopy();
+                Ogre::Quaternion rot(Ogre::Degree(180*randf()),Ogre::Vector3(0,0,1));
+                rot = rot * Ogre::Quaternion(Ogre::Degree(angle*randf()),Ogre::Vector3(1,0,0));
+
+                Clutter::QTicket t = self.reserveQuad(m);
+                Ogre::Vector3 pos[4] = { centre + rot * Ogre::Vector3(-sz/2, 0, sz),
+                                         centre + rot * Ogre::Vector3( sz/2, 0, sz),
+                                         centre + rot * Ogre::Vector3(-sz/2, 0, 0),
+                                         centre + rot * Ogre::Vector3( sz/2, 0, 0) };
+                Ogre::Vector3 norm[4] = { rot * Ogre::Vector3(0, -1, 0),
+                                          rot * Ogre::Vector3(0, -1, 0),
+                                          rot * Ogre::Vector3(0, -1, 0),
+                                          rot * Ogre::Vector3(0, -1, 0) };
+                Ogre::Vector2 uv[4] = { Ogre::Vector2(.13,0),
+                                        Ogre::Vector2(.79,0),
+                                        Ogre::Vector2(.13,1),
+                                        Ogre::Vector2(.79,1) };
+                self.updateQuad(t, pos, norm, uv);
+        }
+        return 0;
+TRY_END
+}
+
+TOSTRING_ADDR_MACRO(clutter,Clutter,CLUTTER_TAG)
+
+static int clutter_index(lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(Clutter,self,1,CLUTTER_TAG);
+        std::string key = luaL_checkstring(L,2);
+        if (key=="destroy") {
+                push_cfunction(L,clutter_destroy);
+        } else if (key=="fuckWith") {
+                push_cfunction(L,clutter_fuck_with);
+        } else if (!mobj_index(L,self,key)) {
+                my_lua_error(L,"Not a valid Clutter member: "+key);
+        }
+        return 1;
+TRY_END
+}
+
+static int clutter_newindex(lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(Clutter,self,1,CLUTTER_TAG);
+        std::string key = luaL_checkstring(L,2);
+        if (key=="donothing") {
+                float v = luaL_checknumber(L,3);
+                (void) v;
+        } else if (!mobj_newindex(L,self,key)) {
+                my_lua_error(L,"Not a writeable Clutter member: "+key);
+        }
+        return 0;
+TRY_END
+}
+
+EQ_PTR_MACRO(Clutter,clutter,CLUTTER_TAG)
+
+MT_MACRO_NEWINDEX(clutter);
 
 //}}}
 

@@ -22,6 +22,8 @@
 #ifndef lua_userdata_dependency_tracker_h
 #define lua_userdata_dependency_tracker_h
 
+#include "Clutter.h"
+
 struct scnmgr_maps {
         std::vector<void**> userData;
         std::map<Ogre::SceneNode*,std::vector<void**> > sceneNodes;
@@ -29,6 +31,7 @@ struct scnmgr_maps {
         std::map<Ogre::Entity*,std::vector<void**> > entities;
         std::map<Ogre::ManualObject*,std::vector<void**> > manobjs;
         std::map<Ogre::Light*,std::vector<void**> > lights;
+        std::map<Clutter*,std::vector<void**> > clutters;
         std::map<Ogre::ParticleSystem*,std::vector<void**> > psyss;
         std::map<Ogre::StaticGeometry*,std::vector<void**> > statgeoms;
         std::map<Ogre::InstancedGeometry*,std::vector<void**> > instgeoms;

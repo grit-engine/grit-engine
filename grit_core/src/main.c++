@@ -48,6 +48,7 @@
 #include "BackgroundMeshLoader.h"
 #include "CentralisedLog.h"
 #include "LuaParticleSystem.h"
+#include "Clutter.h"
 
 CentralisedLog clog;
 
@@ -145,6 +146,8 @@ int main(int argc, const char **argv)
                         rs->setConfigOption("sRGB Gamma Conversion","No");
                         ogre->setRenderSystem(rs);
                 }
+
+                ogre->addMovableObjectFactory(new ClutterFactory());
 
                 Ogre::RenderWindow *win = ogre->initialise(true,"Grit Game Window");
 

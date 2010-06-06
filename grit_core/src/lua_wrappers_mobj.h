@@ -37,6 +37,8 @@ namespace Ogre {
         class ParticleSystem;
 }
 
+class Clutter;
+
 Ogre::MovableObject *check_mobj(lua_State *L,int index);
 
 bool push_mobj (lua_State *L, Ogre::MovableObject *mobj);
@@ -74,6 +76,9 @@ MT_MACRO_DECLARE(psys);
 void push_psys (lua_State *, Ogre::ParticleSystem *);
 Ogre::ParticleSystem *make_psys (Ogre::SceneManager *, const std::string &);
 
+#define CLUTTER_TAG "Grit/Clutter"
+MT_MACRO_DECLARE(clutter);
+void push_clutter (lua_State *, Clutter *);
 
 
 
