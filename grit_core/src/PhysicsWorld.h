@@ -56,77 +56,81 @@ extern "C" {
 #include "GritObject.h"
 #include "math_util.h"
 
-static inline Vector3 to_grit(const btVector3 &from)
+static inline Vector3 to_grit_ (const btVector3 &from, const char *file, int line)
 {
         if (isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
-                CERR << "NaN from bullet." << std::endl;
+                CLog(file,line,true) << "Vect3 NaN from bullet." << std::endl;
                 return Vector3(0,0,0);
         }
         return Vector3 (from.x(), from.y(), from.z());
 }
 
-static inline Quaternion to_grit(const btQuaternion &from)
+static inline Quaternion to_grit_ (const btQuaternion &from, const char *file, int line)
 {
         if (isnan(from.w()) || isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
-                CERR << "NaN from bullet." << std::endl;
+                CLog(file,line,true) << "Quat NaN from bullet." << std::endl;
                 return Quaternion(1,0,0,0);
         }
         return Quaternion (from.w(), from.x(), from.y(), from.z());
 }
 
-static inline btVector3 to_bullet (const Vector3 &from)
+static inline btVector3 to_bullet_ (const Vector3 &from, const char *file, int line)
 {
         if (isnan(from.x) || isnan(from.y) || isnan(from.z)) {
-                CERR << "NaN from OGRE." << std::endl;
+                CLog(file,line,true) << "Vect3:: NaN from OGRE." << std::endl;
                 return btVector3(0,0,0);
         }
         return btVector3(from.x,from.y,from.z);
 }
 
-static inline btQuaternion to_bullet (const Quaternion &from)
+static inline btQuaternion to_bullet_ (const Quaternion &from, const char *file, int line)
 {
         if (isnan(from.w) || isnan(from.x) || isnan(from.y) || isnan(from.z)) {
-                CERR << "NaN from OGRE." << std::endl;
+                CLog(file,line,true) << "Quat:: NaN from OGRE." << std::endl;
                 return btQuaternion(0,0,0,1);
         }
         return btQuaternion(from.x, from.y, from.z, from.w);
 }
 
-static inline Ogre::Vector3 to_ogre(const btVector3 &from)
+static inline Ogre::Vector3 to_ogre_ (const btVector3 &from, const char *file, int line)
 {
         if (isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
-                CERR << "NaN from bullet." << std::endl;
+                CLog(file,line,true) << "Vect3: NaN from bullet." << std::endl;
                 return Ogre::Vector3(0,0,0);
         }
         return Ogre::Vector3 (from.x(), from.y(), from.z());
 }
 
-static inline Ogre::Quaternion to_ogre(const btQuaternion &from)
+static inline Ogre::Quaternion to_ogre_ (const btQuaternion &from, const char *file, int line)
 {
         if (isnan(from.w()) || isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
-                CERR << "NaN from bullet." << std::endl;
+                CLog(file,line,true) << "Quat: NaN from bullet." << std::endl;
                 return Ogre::Quaternion(1,0,0,0);
         }
         return Ogre::Quaternion (from.w(), from.x(), from.y(), from.z());
 }
 
-static inline btVector3 to_bullet (const Ogre::Vector3 &from)
+static inline btVector3 to_bullet_ (const Ogre::Vector3 &from, const char *file, int line)
 {
         if (isnan(from.x) || isnan(from.y) || isnan(from.z)) {
-                CERR << "NaN from OGRE." << std::endl;
+                CLog(file,line,true) << "Vect3:: NaN from OGRE." << std::endl;
                 return btVector3(0,0,0);
         }
         return btVector3(from.x,from.y,from.z);
 }
 
-static inline btQuaternion to_bullet (const Ogre::Quaternion &from)
+static inline btQuaternion to_bullet_ (const Ogre::Quaternion &from, const char *file, int line)
 {
         if (isnan(from.w) || isnan(from.x) || isnan(from.y) || isnan(from.z)) {
-                CERR << "NaN from OGRE." << std::endl;
+                CLog(file,line,true) << "Vect3:: NaN from OGRE." << std::endl;
                 return btQuaternion(0,0,0,1);
         }
         return btQuaternion(from.x, from.y, from.z, from.w);
 }
+
+#define to_grit(x) to_grit_(x,__FILE__,__LINE__)
+#define to_ogre(x) to_ogre_(x,__FILE__,__LINE__)
+#define to_bullet(x) to_bullet_(x,__FILE__,__LINE__)
 
 class DynamicsWorld : public btDiscreteDynamicsWorld {
     public:

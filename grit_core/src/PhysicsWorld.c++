@@ -811,6 +811,15 @@ void RigidBody::updateGraphicsCallback (lua_State *L)
 
 void RigidBody::stepCallback (lua_State *L)
 {
+        if (body->getInvMass()==0) {
+                btTransform after;
+                btTransformUtil::integrateTransform(body->getCenterOfMassTransform(),
+                                                    body->getLinearVelocity(),
+                                                    body->getInterpolationAngularVelocity(),
+                                                    world->getStepSize(),
+                                                    after);
+                body->proceedToTransform(after);
+        }
         if (stepCallbackIndex==LUA_NOREF) return;
         if (stepCallbackIndex==LUA_REFNIL) return;
 
