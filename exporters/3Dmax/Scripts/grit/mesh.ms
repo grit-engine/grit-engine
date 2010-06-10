@@ -56,6 +56,8 @@ function calc_normal m face faceVertexIndex = -- {{{
             )
 
             normalize n
+
+            getNormal m v
     )     
 ) -- }}}
 
@@ -450,6 +452,11 @@ function write_mesh_xml selected options out_name = -- {{{
 
     struct OgreVert (pos, normal, ambient, alpha, texcoord, sharpness, weights)
 
+    -- create and apply Edit_Normals modifier in order to be able to access explicit normal data
+    enm = edit_Normals()
+    addModifier selected enm
+    setCommandPanelTaskMode #modify
+
     local num_ogre_vertexes = 0
     local ogre_vert_pos = #()
     local ogre_vert_normal = #()
@@ -479,7 +486,7 @@ function write_mesh_xml selected options out_name = -- {{{
             local v = (max_indexes[fv])
             if max_vert_ogre_verts[v] == undefined then max_vert_ogre_verts[v] = #()
             ogre_vert_pos[next_ogre_vertex] = (meshop.getVert m v node:m)
-            ogre_vert_normal[next_ogre_vertex] = (calc_normal m face fv)
+            ogre_vert_normal[next_ogre_vertex] = enm.getNormal(enm.getNormalID face fv)
             ogre_vert_ambient[next_ogre_vertex] = (if options.exportAmbient then get_map_vert m 0 face fv else [1,1,1])
             ogre_vert_alpha[next_ogre_vertex] = (if options.exportAlpha then (get_map_vert m -2 face fv)[1] else 1)
             ogre_vert_texcoord[next_ogre_vertex] = (if texture then get_map_vert m 1 face fv else [0,0])
@@ -520,6 +527,8 @@ function write_mesh_xml selected options out_name = -- {{{
         append face_to_ogre_vert ogre_face
     )
     num_ogre_vertexes = next_ogre_vertex-1
+
+    deleteModifier selected enm
 
 
     format "Writing in file %.mesh.xml : \n" out_name
