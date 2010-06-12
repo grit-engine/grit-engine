@@ -454,7 +454,7 @@ function write_mesh_xml selected options out_name = -- {{{
 
     -- create and apply Edit_Normals modifier in order to be able to access explicit normal data
     enm = edit_Normals()
-    addModifier selected enm
+    addModifier m enm
     setCommandPanelTaskMode #modify
 
     local num_ogre_vertexes = 0
@@ -528,7 +528,7 @@ function write_mesh_xml selected options out_name = -- {{{
     )
     num_ogre_vertexes = next_ogre_vertex-1
 
-    deleteModifier selected enm
+    deleteModifier m enm
 
 
     format "Writing in file %.mesh.xml : \n" out_name
