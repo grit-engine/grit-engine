@@ -28,6 +28,8 @@ rollout GritRolloutOgreMesh "Mesh" width:272 rolledUp:false --{{{
     checkbox CBexportColor "Export Vertex Ambient Lighting"
     checkbox CBexportAlpha "Export Vertex Alpha"
     checkbox CBgeneratetangents "Will have normal map" checked:false
+    checkbox CBtangentsmirrored "Tangents mirrored" checked:false
+    checkbox CBtangentsrotated "Tangents rotated" checked:false
 
     fn update = (
         -- we might get called when the floater does not exist
@@ -40,6 +42,8 @@ rollout GritRolloutOgreMesh "Mesh" width:272 rolledUp:false --{{{
             CBexportColor.triState = if dft (getUserProp obj "gritMeshExportColour") false then 1 else 0
             CBexportAlpha.triState = if dft (getUserProp obj "gritMeshExportAlpha") false then 1 else 0
             CBgeneratetangents.triState = if dft (getUserProp obj "gritMeshGenerateTangents") false then 1 else 0
+            CBtangentsmirrored.triState = if dft (getUserProp obj "gritMeshTangentsMirrored") false then 1 else 0
+            CBtangentsrotated.triState = if dft (getUserProp obj "gritMeshTangentsRotated") false then 1 else 0
         )   
 
         local v = CBexportMesh.enabled and CBexportMesh.checked and ((getCurrentSelection()).count == 1)
@@ -47,6 +51,8 @@ rollout GritRolloutOgreMesh "Mesh" width:272 rolledUp:false --{{{
         CBexportColor.enabled = v
         CBexportAlpha.enabled = v
         CBgeneratetangents.enabled = v
+        CBtangentsmirrored.enabled = v
+        CBtangentsrotated.enabled = v
     )       
     on GritRolloutOgreMesh open do update()
     on CBexportMesh changed state do update()
@@ -60,6 +66,8 @@ rollout GritRolloutOgreMesh "Mesh" width:272 rolledUp:false --{{{
     on CBexportColor changed v do update_from_value "gritMeshExportColour" v
     on CBexportAlpha changed v do update_from_value "gritMeshExportAlpha" v
     on CBgeneratetangents changed v do update_from_value "gritMeshGenerateTangents" v
+    on CBtangentsMirrored changed v do update_from_value "gritMeshTangentsMirrored" v
+    on CBtangentsRotated changed v do update_from_value "gritMeshTangentsRotated" v
 
 ) --}}}
 
@@ -284,6 +292,8 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
                 options.exportAmbient = dft (getUserProp m "gritMeshExportColour") false
                 options.exportAlpha = dft (getUserProp m "gritMeshExportAlpha") false
                 local tangents = dft (getUserProp m "gritMeshGenerateTangents") false
+                local mirrored = dft (getUserProp m "gritMeshTangentsMirrored") false
+                local rotated = dft (getUserProp m "gritMeshTangentsRotated") false
 
                 options.exportHelpers = (GritRolloutOgreAnimation.CBexporthelpers.enabled and GritRolloutOgreAnimation.CBexporthelpers.checked);
                 
@@ -335,6 +345,8 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
                         OptionConv = OptionConv + " -log \""+out_file+".mesh.log\""
 
                         if tangents then OptionConv = OptionConv + " -t";
+                        if mirrored then OptionConv = OptionConv + " -tm";
+                        if rotated then OptionConv = OptionConv + " -tr";
 
                         exec xmlc (OptionConv + " \"" + out_file + ".mesh.xml\" \"" + out_file + ".mesh\"")
                     )
