@@ -59,15 +59,15 @@ class Clutter : public Ogre::MovableObject {
 
         public:
 
+            // get a bit more type safety
             struct QTicket : public BTicket {
                 QTicket(unsigned offset_) : BTicket(offset_) { }
                 QTicket(const QTicket &o) : BTicket(o.offset) { }
             };
 
             struct MTicket : public BTicket {
-                const unsigned length;
-                MTicket(unsigned offset_, unsigned length_) : BTicket(offset_), length(length_) { }
-                MTicket(const MTicket &o) : BTicket(o.offset), length(o.length) { }
+                MTicket(unsigned offset_) : BTicket(offset_) { }
+                MTicket(const MTicket &o) : BTicket(o.offset) { }
             };
 
             Section (Clutter *parent, unsigned triangles, const Ogre::MaterialPtr &m);
@@ -84,39 +84,46 @@ class Clutter : public Ogre::MovableObject {
             const Ogre::LightList &getLights (void) const { return mParent->queryLights(); }
             
             
-            MTicket reserveGeometry (unsigned triangles);
-
-            void releaseGeometry (const MTicket &t);
-
+            MTicket reserveGeometry (Ogre::SubMesh *sm);
+            void releaseGeometry (const MTicket &t, Ogre::SubMesh *sm);
             void updateGeometry (const MTicket &t,
+                                 const Ogre::SubMesh *sm,
                                  const Ogre::Vector3 &position,
                                  const Ogre::Quaternion &orientation);
 
 
             QTicket reserveQuad (void);
-
             void releaseQuad (const QTicket &t);
-
             void updateQuad (const QTicket &t,
                              const Ogre::Vector3 (&pos)[4],
                              const Ogre::Vector3 (&norm)[4],
-                             const Ogre::Vector2 (&uv)[4]);
+                             const Ogre::Vector2 (&uv)[4],
+                             const Ogre::Vector3 (*tang)[4]);
 
             protected:
 
             void reserveTriangles (unsigned triangles, unsigned &off, unsigned &len);
+            void releaseTriangles (unsigned off, unsigned len);
                     
         };      
 
         struct QTicket {
-            const Ogre::MaterialPtr &m;
+            Ogre::MaterialPtr m; // used as key to get the right Section
             const Section::QTicket t;
-            QTicket(const Ogre::MaterialPtr &m_, const Section::QTicket &t_) : m(m_), t(t_) { }
-            QTicket(const QTicket &o) : m(o.m), t(o.t) { }
+            QTicket (const Ogre::MaterialPtr &m_, const Section::QTicket &t_) : m(m_), t(t_) { }
+            QTicket (const QTicket &o) : m(o.m), t(o.t) { }
         };
-        typedef Section::MTicket MTicket;
+        struct MTicket {
+            Ogre::MaterialPtr m;
+            Ogre::MeshPtr mesh; // need to look at the mesh each time it is updated
+            const Section::MTicket t;
+            MTicket (const Ogre::MaterialPtr &m_,
+                     const Ogre::MeshPtr &mesh_,
+                     const Section::MTicket &t_) : m(m_), mesh(mesh_), t(t_) { }
+            MTicket (const MTicket &o) : m(o.m), mesh(o.mesh), t(o.t) { }
+        };
 
-        Clutter (const Ogre::String &name, unsigned triangles);
+        Clutter (const Ogre::String &name, unsigned triangles, bool tangents);
 
         virtual ~Clutter (void);
 
@@ -139,7 +146,6 @@ class Clutter : public Ogre::MovableObject {
         MTicket reserveGeometry (const Ogre::MeshPtr &mesh);
         void releaseGeometry (const MTicket &t);
         void updateGeometry (const MTicket &t,
-                             const Ogre::MeshPtr &mesh,
                              const Ogre::Vector3 &position,
                              const Ogre::Quaternion &orientation);
 
@@ -148,12 +154,14 @@ class Clutter : public Ogre::MovableObject {
         void updateQuad (const QTicket &t,
                          const Ogre::Vector3 (&pos)[4],
                          const Ogre::Vector3 (&norm)[4],
-                         const Ogre::Vector2 (&uv)[4]);
+                         const Ogre::Vector2 (&uv)[4],
+                         const Ogre::Vector3 (*tang)[4]);
 
 
     protected:
 
         unsigned mTriangles;
+        bool mTangents;
 
         typedef std::map<Ogre::MaterialPtr, Section*> SectionMap;
         SectionMap sects;

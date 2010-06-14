@@ -20,6 +20,9 @@
  */
 
 #include <OgreHardwareBufferManager.h>
+#include <OgreMaterialManager.h>
+#include <OgreSubMesh.h>
+#include <OgreMesh.h>
 
 #include "Clutter.h"
 #include "CentralisedLog.h"
@@ -31,8 +34,8 @@
 // Clutter /////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Clutter::Clutter (const Ogre::String &name, unsigned triangles)
-      : Ogre::MovableObject(name), mTriangles(triangles)
+Clutter::Clutter (const Ogre::String &name, unsigned triangles, bool tangents)
+      : Ogre::MovableObject(name), mTriangles(triangles), mTangents(tangents)
 {
 }
 
@@ -76,8 +79,17 @@ void Clutter::_updateRenderQueue (Ogre::RenderQueue *queue)
 
 Clutter::MTicket Clutter::reserveGeometry (const Ogre::MeshPtr &mesh)
 {
-    (void) mesh;
-    return MTicket(42,42);
+    int i=0;
+    mesh->load();
+    //for (int i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
+        Ogre::SubMesh *sm = mesh->getSubMesh(i);
+        APP_ASSERT(sm->operationType == Ogre::RenderOperation::OT_TRIANGLE_LIST);
+        Ogre::MaterialPtr m = Ogre::MaterialManager::getSingleton().getByName(sm->getMaterialName(), "GRIT");
+        Section &s = getOrCreateSection(m);
+        Section::MTicket stkt = s.reserveGeometry(sm);
+    //}
+    //FIXME:  need some way of having an arbitrary number of Section::MTicket inside our own MTicket
+    return MTicket(m, mesh, stkt);
 }
 
 void Clutter::releaseGeometry (const MTicket &t)
@@ -86,14 +98,16 @@ void Clutter::releaseGeometry (const MTicket &t)
 }
 
 void Clutter::updateGeometry (const MTicket &t,
-                              const Ogre::MeshPtr &mesh,
                               const Ogre::Vector3 &position,
                               const Ogre::Quaternion &orientation)
 {
-    (void) t;
-    (void) mesh;
-    (void) position;
-    (void) orientation;
+    int i=0;
+    //for (int i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
+        Ogre::SubMesh *sm = t.mesh->getSubMesh(i);
+        Ogre::MaterialPtr m = Ogre::MaterialManager::getSingleton().getByName(sm->getMaterialName(), "GRIT");
+        Section &s = getOrCreateSection(t.m);
+        s.updateGeometry(t.t, sm, position, orientation);
+    //}
 }
 
 Clutter::QTicket Clutter::reserveQuad (const Ogre::MaterialPtr &m)
@@ -111,10 +125,12 @@ void Clutter::releaseQuad (const QTicket &t)
 void Clutter::updateQuad (const QTicket &t,
                           const Ogre::Vector3 (&pos)[4],
                           const Ogre::Vector3 (&norm)[4],
-                          const Ogre::Vector2 (&uv)[4])
+                          const Ogre::Vector2 (&uv)[4],
+                          const Ogre::Vector3 (*tang)[4])
+
 {
     Section &s = getOrCreateSection(t.m);
-    s.updateQuad(t.t, pos, norm, uv);
+    s.updateQuad(t.t, pos, norm, uv, tang);
 }
 
 
@@ -143,6 +159,10 @@ Clutter::Section::Section (Clutter *parent, unsigned triangles, const Ogre::Mate
     mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT2,
                                                             Ogre::VES_TEXTURE_COORDINATES);
     mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
+    if (mParent->mTangents) {
+        mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,Ogre::VES_TANGENT);
+        mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+    }
 
     // Make the vertex buffer larger if estimated vertex count higher
     // to allow for user-configured growth area
@@ -183,33 +203,112 @@ void Clutter::Section::reserveTriangles (unsigned triangles, unsigned &off, unsi
     off = marker-found;
 }
 
-Clutter::Section::MTicket Clutter::Section::reserveGeometry (unsigned triangles)
+void Clutter::Section::releaseTriangles (unsigned off, unsigned len)
 {
-    unsigned off, len;
-    reserveTriangles(triangles, off, len);
-    return MTicket (off, len);
-}
-
-void Clutter::Section::releaseGeometry (const MTicket &t)
-{
-    for (unsigned o=t.offset ; o<t.offset+t.length ; ++o) {
+    for (unsigned o=off ; o<off+len ; ++o) {
         usage[o] = false;
     }
-
-    float data[3*8] = { 0 };
-
+    memset(&data[3*mDeclSize*off], 0, 3*mDeclSize*len);
     mVertexData.vertexBufferBinding->getBuffer(0)
-        ->writeData(t.offset*3*mDeclSize, t.length*3*mDeclSize, data);
+        ->writeData(off*3*mDeclSize, len*3*mDeclSize, &data[0]);
+}
+
+
+
+Clutter::Section::MTicket Clutter::Section::reserveGeometry (Ogre::SubMesh *sm)
+{
+
+    Ogre::IndexData* idata = sm->indexData;
+    unsigned triangles = idata->indexCount / 3u;
+    unsigned off, len;
+    reserveTriangles(triangles, off, len);
+    APP_ASSERT(len == triangles);
+    return MTicket (off);
+}
+
+void Clutter::Section::releaseGeometry (const MTicket &t, Ogre::SubMesh *sm)
+{
+    Ogre::IndexData* idata = sm->indexData;
+    int triangles = idata->indexCount / 3;
+    releaseTriangles(t.offset, triangles);
 }
 
 void Clutter::Section::updateGeometry (const MTicket &t,
+                                       const Ogre::SubMesh *sm,
                                        const Ogre::Vector3 &position,
                                        const Ogre::Quaternion &orientation)
 {
-    (void) t;
-    (void) position;
-    (void) orientation;
+    Ogre::IndexData* idata = sm->indexData;
+    unsigned triangles = idata->indexCount / 3;
+    Ogre::VertexData* vdata = sm->useSharedVertices ? sm->parent->sharedVertexData
+                                                    : sm->vertexData;
+    Ogre::VertexDeclaration *vdecl = vdata->vertexDeclaration;
+
+    const Ogre::VertexElement *vel_pos = vdecl->findElementBySemantic (Ogre::VES_POSITION);
+    APP_ASSERT(vel_pos->getType() == Ogre::VET_FLOAT3);
+    const Ogre::VertexElement *vel_norm = vdecl->findElementBySemantic (Ogre::VES_NORMAL);
+    APP_ASSERT(vel_norm->getType() == Ogre::VET_FLOAT3);
+    const Ogre::VertexElement *vel_uv= vdecl->findElementBySemantic (Ogre::VES_TEXTURE_COORDINATES);
+    APP_ASSERT(vel_uv->getType() == Ogre::VET_FLOAT2);
+    const Ogre::VertexElement *vel_tang;
+    if (mParent->mTangents) {
+        vel_tang = vdecl->findElementBySemantic (Ogre::VES_TANGENT);
+        APP_ASSERT(vel_tang->getType() == Ogre::VET_FLOAT3);
+    }
+
+
+    Ogre::VertexBufferBinding *vbind = vdata->vertexBufferBinding;
+
+    APP_ASSERT(1==vbind->getBufferCount());
+
+    const Ogre::HardwareIndexBufferSharedPtr &ibuf = idata->indexBuffer;
+    const Ogre::HardwareVertexBufferSharedPtr &vbuf = vbind->getBuffer(0);
+
+    APP_ASSERT(ibuf->getType() == Ogre::HardwareIndexBuffer::IT_16BIT);
+
+    const char *the_vbuf = (const char*)vbuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY);
+    const unsigned short *the_ibuf =
+        (const unsigned short*)ibuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY);
+
+
+    for (unsigned i=0 ; i<3*triangles ; ++i) {
+        unsigned index = the_ibuf[idata->indexStart + i];
+        unsigned vo = (index + vdata->vertexStart) * vdecl->getVertexSize(0);
+
+        Ogre::Vector3 pos;
+        memcpy(&pos.x, &the_vbuf[vo + vel_pos->getOffset()], vel_pos->getSize());
+        pos = orientation * pos + position;
+
+        Ogre::Vector3 norm;
+        memcpy(&norm.x, &the_vbuf[vo + vel_norm->getOffset()], vel_norm->getSize());
+        norm = orientation * norm;
+
+        Ogre::Vector3 tang;
+        if (mParent->mTangents) {
+            memcpy(&tang.x, &the_vbuf[vo + vel_tang->getOffset()], vel_tang->getSize());
+            tang = orientation * tang;
+        }
+
+        Ogre::Vector2 uv;
+        memcpy(&uv.x, &the_vbuf[vo + vel_uv->getOffset()], vel_uv->getSize());
+
+        unsigned vi = (i + t.offset*3) * mDeclSize;
+        memcpy(&data[vi + 0*sizeof(float)],  &pos.x, 3*sizeof(float));
+        memcpy(&data[vi + 3*sizeof(float)], &norm.x, 3*sizeof(float));
+        memcpy(&data[vi + 6*sizeof(float)],   &uv.x, 2*sizeof(float));
+        if (mParent->mTangents) {
+            memcpy(&data[vi + 8*sizeof(float)], &tang.x, 3*sizeof(float));
+        }
+    }
+
+    vbuf->unlock();
+    ibuf->unlock();
+
+    mVertexData.vertexBufferBinding->getBuffer(0)
+        ->writeData(t.offset*3*mDeclSize, triangles*3*mDeclSize, &data[t.offset*3*mDeclSize]);
 }
+
+
 
 Clutter::Section::QTicket Clutter::Section::reserveQuad (void)
 {
@@ -221,27 +320,30 @@ Clutter::Section::QTicket Clutter::Section::reserveQuad (void)
 
 void Clutter::Section::releaseQuad (const QTicket &t)
 {
-    releaseGeometry(MTicket(t.offset,2));
+    releaseTriangles(t.offset,2);
 }
 
 void Clutter::Section::updateQuad (const QTicket &t,
                                    const Ogre::Vector3 (&pos)[4],
                                    const Ogre::Vector3 (&norm)[4],
-                                   const Ogre::Vector2 (&uv)[4])
+                                   const Ogre::Vector2 (&uv)[4],
+                                   const Ogre::Vector3 (*tang)[4])
 {
     const int idxs[6] = { 0, 3, 1, 0, 2, 3 };
-    APP_ASSERT(mDeclSize == 8*sizeof(float));
+    if (mParent->mTangents) {
+        APP_ASSERT(mDeclSize == 11*sizeof(float));
+    } else {
+        APP_ASSERT(mDeclSize == 8*sizeof(float));
+    }
     for (unsigned i=0 ; i<6 ; ++i) {
         unsigned vi = (i + t.offset*3) * mDeclSize;
         //std::cout << t.offset << " " << vi << std::endl;
-        memcpy(&data[vi + 0*sizeof(float)],  &pos[idxs[i]].x, sizeof(float));
-        memcpy(&data[vi + 1*sizeof(float)],  &pos[idxs[i]].y, sizeof(float));
-        memcpy(&data[vi + 2*sizeof(float)],  &pos[idxs[i]].z, sizeof(float));
-        memcpy(&data[vi + 3*sizeof(float)], &norm[idxs[i]].x, sizeof(float));
-        memcpy(&data[vi + 4*sizeof(float)], &norm[idxs[i]].y, sizeof(float));
-        memcpy(&data[vi + 5*sizeof(float)], &norm[idxs[i]].z, sizeof(float));
-        memcpy(&data[vi + 6*sizeof(float)],   &uv[idxs[i]].x, sizeof(float));
-        memcpy(&data[vi + 7*sizeof(float)],   &uv[idxs[i]].y, sizeof(float));
+        memcpy(&data[vi + 0*sizeof(float)],  &pos[idxs[i]].x, 3*sizeof(float));
+        memcpy(&data[vi + 3*sizeof(float)], &norm[idxs[i]].x, 3*sizeof(float));
+        memcpy(&data[vi + 6*sizeof(float)],   &uv[idxs[i]].x, 2*sizeof(float));
+        if (mParent->mTangents) {
+            memcpy(&data[vi + 8*sizeof(float)], &(*tang)[idxs[i]].x, 3*sizeof(float));
+        }
     }
 
     mVertexData.vertexBufferBinding->getBuffer(0)
@@ -262,9 +364,15 @@ Ogre::MovableObject* ClutterFactory::createInstanceImpl (
 
     if (params==0 || (ni = params->find("triangles"))==params->end())
         GRIT_EXCEPT("Must give triangles when creating Clutter object");
+    unsigned triangles = atoi(ni->second.c_str());
+
+    bool tangents = false; // optional
+    if (params>0 && (ni = params->find("triangles"))!=params->end()) {
+        tangents = ni->second != "false";
+    }
 
     // must have mesh parameter
-    return OGRE_NEW Clutter(name, atoi(ni->second.c_str()));
+    return OGRE_NEW Clutter(name, triangles, tangents);
 }
 
 

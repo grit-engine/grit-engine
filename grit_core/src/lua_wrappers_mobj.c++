@@ -222,7 +222,36 @@ TRY_START
                                         Ogre::Vector2(.79,0),
                                         Ogre::Vector2(.13,1),
                                         Ogre::Vector2(.79,1) };
-                self.updateQuad(t, pos, norm, uv);
+                Ogre::Vector3 tang[4] = { rot * Ogre::Vector3(1, 0, 0),
+                                          rot * Ogre::Vector3(1, 0, 0),
+                                          rot * Ogre::Vector3(1, 0, 0),
+                                          rot * Ogre::Vector3(1, 0, 0) };
+                self.updateQuad(t, pos, norm, uv, &tang);
+        }
+        return 0;
+TRY_END
+}
+
+static int clutter_fuck_with2 (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(Clutter,self,1,CLUTTER_TAG);
+        std::string meshname = luaL_checkstring(L,2);
+        float radius = luaL_checknumber(L,3);
+        float angle = luaL_checknumber(L,4);
+        Ogre::MeshPtr m = Ogre::MeshManager::getSingleton().load(meshname, "GRIT");
+        if (m.isNull()) {
+                my_lua_error(L, "Could not find mesh \""+meshname+"\"");
+        }
+        for (int i=0 ; i<1 ; ++i) {
+                Ogre::Vector3 centre(randf(), randf(), 0);
+                centre = radius * prandf2() * centre.normalisedCopy();
+                Ogre::Quaternion rot(Ogre::Degree(180*randf()),Ogre::Vector3(0,0,1));
+                rot = rot * Ogre::Quaternion(Ogre::Degree(angle*randf()),Ogre::Vector3(1,0,0));
+
+                Clutter::MTicket t = self.reserveGeometry(m);
+                self.updateGeometry(t, centre, rot);
         }
         return 0;
 TRY_END
@@ -238,6 +267,8 @@ TRY_START
         std::string key = luaL_checkstring(L,2);
         if (key=="destroy") {
                 push_cfunction(L,clutter_destroy);
+        } else if (key=="fuckWith2") {
+                push_cfunction(L,clutter_fuck_with2);
         } else if (key=="fuckWith") {
                 push_cfunction(L,clutter_fuck_with);
         } else if (!mobj_index(L,self,key)) {
