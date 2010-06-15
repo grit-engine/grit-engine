@@ -231,7 +231,7 @@ int my_lua_error_handler (lua_State *l, lua_State *coro, int levelhack)
                         CLOG << "\t..." << std::endl;
                 } else {
                         CLOG << RED << "\t" << tb[i].file;
-                        int line = tb[0].line;
+                        int line = tb[i].line;
                         if (line > 0) {
                                 CLOG << ":" << line;
                         }
