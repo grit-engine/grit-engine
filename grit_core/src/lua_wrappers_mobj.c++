@@ -54,7 +54,7 @@ Ogre::MovableObject *check_mobj(lua_State *L,int index)
         } else if (has_tag(L,index,LIGHT_TAG)) {
                 ptr = *static_cast<Ogre::Light**>(lua_touserdata(L,index));
         } else if (has_tag(L,index,CLUTTER_TAG)) {
-                ptr = *static_cast<Clutter**>(lua_touserdata(L,index));
+                ptr = *static_cast<MovableClutter**>(lua_touserdata(L,index));
         } else if (has_tag(L,index,MANOBJ_TAG)) {
                 ptr = *static_cast<Ogre::ManualObject**>(lua_touserdata(L,index));
         } else if (has_tag(L,index,PSYS_TAG)) {
@@ -89,8 +89,8 @@ bool push_mobj (lua_State *L, Ogre::MovableObject *mobj)
         } else if (dynamic_cast<Ogre::Light*>(mobj)) {
                 push_light(L,static_cast<Ogre::Light*>(mobj));
                 return true;
-        } else if (dynamic_cast<Clutter*>(mobj)) {
-                push_clutter(L,static_cast<Clutter*>(mobj));
+        } else if (dynamic_cast<MovableClutter*>(mobj)) {
+                push_clutter(L,static_cast<MovableClutter*>(mobj));
                 return true;
         } else if (dynamic_cast<Ogre::ManualObject*>(mobj)) {
                 push_manobj(L,static_cast<Ogre::ManualObject*>(mobj));
@@ -151,7 +151,7 @@ static bool mobj_newindex (lua_State *L, Ogre::MovableObject &self,
 
 // CLUTTER =================================================================== {{{
 
-void push_clutter (lua_State *L, Clutter *self)
+void push_clutter (lua_State *L, MovableClutter *self)
 {
         void **ud = static_cast<void**>(lua_newuserdata(L, sizeof(*ud)));
         ud[0] = static_cast<void*> (self);
@@ -159,17 +159,17 @@ void push_clutter (lua_State *L, Clutter *self)
         lua_setmetatable(L, -2);
         Ogre::SceneManager *sm = self->_getManager();
         scnmgr_maps& maps = grit->getUserDataTables().scnmgrs[sm];
-        maps.clutters[self].push_back(ud);
+        maps.movableClutters[self].push_back(ud);
 }
 
 static int clutter_gc(lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        GET_UD_MACRO_OFFSET(Clutter,self,1,CLUTTER_TAG,0);
+        GET_UD_MACRO_OFFSET(MovableClutter,self,1,CLUTTER_TAG,0);
         if (self==NULL) return 0;
         Ogre::SceneManager *sm = self->_getManager();
-        vec_nullify_remove(grit->getUserDataTables().scnmgrs[sm].clutters[self],&self);
+        vec_nullify_remove(grit->getUserDataTables().scnmgrs[sm].movableClutters[self],&self);
         return 0;
 TRY_END
 }
@@ -178,10 +178,10 @@ static int clutter_destroy (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        GET_UD_MACRO(Clutter,self,1,CLUTTER_TAG);
+        GET_UD_MACRO(MovableClutter,self,1,CLUTTER_TAG);
         Ogre::SceneManager *sm = self._getManager();
         sm->destroyMovableObject(&self);
-        map_nullify_remove(grit->getUserDataTables().scnmgrs[sm].clutters,&self);
+        map_nullify_remove(grit->getUserDataTables().scnmgrs[sm].movableClutters,&self);
         return 0;
 TRY_END
 }
@@ -194,7 +194,7 @@ static int clutter_fuck_with (lua_State *L)
 {
 TRY_START
         check_args(L,5);
-        GET_UD_MACRO(Clutter,self,1,CLUTTER_TAG);
+        GET_UD_MACRO(MovableClutter,self,1,CLUTTER_TAG);
         std::string matname = luaL_checkstring(L,2);
         float radius = luaL_checknumber(L,3);
         float angle = luaL_checknumber(L,4);
@@ -209,7 +209,7 @@ TRY_START
                 Ogre::Quaternion rot(Ogre::Degree(180*randf()),Ogre::Vector3(0,0,1));
                 rot = rot * Ogre::Quaternion(Ogre::Degree(angle*randf()),Ogre::Vector3(1,0,0));
 
-                Clutter::QTicket t = self.reserveQuad(m);
+                ClutterBuffer::QTicket t = self.reserveQuad(m);
                 Ogre::Vector3 pos[4] = { centre + rot * Ogre::Vector3(-sz/2, 0, sz),
                                          centre + rot * Ogre::Vector3( sz/2, 0, sz),
                                          centre + rot * Ogre::Vector3(-sz/2, 0, 0),
@@ -236,7 +236,7 @@ static int clutter_fuck_with2 (lua_State *L)
 {
 TRY_START
         check_args(L,4);
-        GET_UD_MACRO(Clutter,self,1,CLUTTER_TAG);
+        GET_UD_MACRO(MovableClutter,self,1,CLUTTER_TAG);
         std::string meshname = luaL_checkstring(L,2);
         float radius = luaL_checknumber(L,3);
         float angle = luaL_checknumber(L,4);
@@ -250,20 +250,20 @@ TRY_START
                 Ogre::Quaternion rot(Ogre::Degree(180*randf()),Ogre::Vector3(0,0,1));
                 rot = rot * Ogre::Quaternion(Ogre::Degree(angle*randf()),Ogre::Vector3(1,0,0));
 
-                Clutter::MTicket t = self.reserveGeometry(m);
+                ClutterBuffer::MTicket t = self.reserveGeometry(m);
                 self.updateGeometry(t, centre, rot);
         }
         return 0;
 TRY_END
 }
 
-TOSTRING_ADDR_MACRO(clutter,Clutter,CLUTTER_TAG)
+TOSTRING_ADDR_MACRO(clutter,MovableClutter,CLUTTER_TAG)
 
 static int clutter_index(lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(Clutter,self,1,CLUTTER_TAG);
+        GET_UD_MACRO(MovableClutter,self,1,CLUTTER_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key=="destroy") {
                 push_cfunction(L,clutter_destroy);
@@ -272,7 +272,7 @@ TRY_START
         } else if (key=="fuckWith") {
                 push_cfunction(L,clutter_fuck_with);
         } else if (!mobj_index(L,self,key)) {
-                my_lua_error(L,"Not a valid Clutter member: "+key);
+                my_lua_error(L,"Not a valid MovableClutter member: "+key);
         }
         return 1;
 TRY_END
@@ -282,19 +282,19 @@ static int clutter_newindex(lua_State *L)
 {
 TRY_START
         check_args(L,3);
-        GET_UD_MACRO(Clutter,self,1,CLUTTER_TAG);
+        GET_UD_MACRO(MovableClutter,self,1,CLUTTER_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key=="donothing") {
                 float v = luaL_checknumber(L,3);
                 (void) v;
         } else if (!mobj_newindex(L,self,key)) {
-                my_lua_error(L,"Not a writeable Clutter member: "+key);
+                my_lua_error(L,"Not a writeable MovableClutter member: "+key);
         }
         return 0;
 TRY_END
 }
 
-EQ_PTR_MACRO(Clutter,clutter,CLUTTER_TAG)
+EQ_PTR_MACRO(MovableClutter,clutter,CLUTTER_TAG)
 
 MT_MACRO_NEWINDEX(clutter);
 

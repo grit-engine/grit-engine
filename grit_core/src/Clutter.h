@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-class Clutter;
+class ClutterBuffer;
 class ClutterFactory;
 
 #ifndef CLUTTER_H
@@ -33,14 +33,14 @@ class ClutterFactory;
 #include <OgreMesh.h>
 
 
-class Clutter : public Ogre::MovableObject {
+class ClutterBuffer {
 
     public:
 
-        class Section : public Ogre::Renderable, public Ogre::MovableAlloc
+        class Section : public Ogre::Renderable
         {
         protected:
-            Clutter *mParent;
+            ClutterBuffer *mParent;
             Ogre::MaterialPtr mMaterial;
             Ogre::RenderOperation mRenderOperation;
             Ogre::VertexData mVertexData;
@@ -70,7 +70,7 @@ class Clutter : public Ogre::MovableObject {
                 MTicket(const MTicket &o) : BTicket(o.offset) { }
             };
 
-            Section (Clutter *parent, unsigned triangles, const Ogre::MaterialPtr &m);
+            Section (ClutterBuffer *parent, unsigned triangles, const Ogre::MaterialPtr &m);
             ~Section (void);
      
             Ogre::RenderOperation *getRenderOperation (void) { return &mRenderOperation; }
@@ -81,7 +81,7 @@ class Clutter : public Ogre::MovableObject {
             void getWorldTransforms (Ogre::Matrix4* xform) const
             { xform[0] = Ogre::Matrix4::IDENTITY; }
             Ogre::Real getSquaredViewDepth (const Ogre::Camera *) const { return 0; }
-            const Ogre::LightList &getLights (void) const { return mParent->queryLights(); }
+            const Ogre::LightList &getLights (void) const { return mParent->mMovableObject->queryLights(); }
             
             
             MTicket reserveGeometry (Ogre::SubMesh *sm);
@@ -123,25 +123,9 @@ class Clutter : public Ogre::MovableObject {
             MTicket (const MTicket &o) : m(o.m), mesh(o.mesh), t(o.t) { }
         };
 
-        Clutter (const Ogre::String &name, unsigned triangles, bool tangents);
+        ClutterBuffer (Ogre::MovableObject *mobj, unsigned triangles, bool tangents);
 
-        virtual ~Clutter (void);
-
-        virtual const Ogre::String& getMovableType (void) const
-        {
-            static const Ogre::String type = "Clutter";
-            return type;
-        }
-
-        virtual const Ogre::AxisAlignedBox& getBoundingBox (void) const
-        { return Ogre::AxisAlignedBox::BOX_INFINITE; }
-
-        virtual Ogre::Real getBoundingRadius (void) const
-        { return FLT_MAX; }
-
-        virtual void visitRenderables(Ogre::Renderable::Visitor*, bool);
-        virtual void _updateRenderQueue(Ogre::RenderQueue*);
-
+        virtual ~ClutterBuffer (void);
 
         MTicket reserveGeometry (const Ogre::MeshPtr &mesh);
         void releaseGeometry (const MTicket &t);
@@ -158,12 +142,16 @@ class Clutter : public Ogre::MovableObject {
                          const Ogre::Vector3 (*tang)[4]);
 
 
+        typedef std::map<Ogre::MaterialPtr, Section*> SectionMap;
+
+        const SectionMap &getSections (void) { return sects; } 
     protected:
+
+        Ogre::MovableObject *mMovableObject;
 
         unsigned mTriangles;
         bool mTangents;
 
-        typedef std::map<Ogre::MaterialPtr, Section*> SectionMap;
         SectionMap sects;
 
         Section &getOrCreateSection (const Ogre::MaterialPtr &m) {
@@ -184,13 +172,68 @@ class Clutter : public Ogre::MovableObject {
 
 
 
-class ClutterFactory : public Ogre::MovableObjectFactory {
+class MovableClutter : public Ogre::MovableObject {
+
+    public:
+
+        MovableClutter (const Ogre::String &name, unsigned triangles, bool tangents)
+            : Ogre::MovableObject(name), clutter(this,triangles,tangents) { }
+
+        virtual ~MovableClutter (void) { }
+
+        virtual const Ogre::String& getMovableType (void) const
+        {
+            static const Ogre::String type = "MovableClutter";
+            return type;
+        }
+
+        virtual const Ogre::AxisAlignedBox& getBoundingBox (void) const
+        { return Ogre::AxisAlignedBox::BOX_INFINITE; }
+
+        virtual Ogre::Real getBoundingRadius (void) const
+        { return FLT_MAX; }
+
+        virtual void visitRenderables(Ogre::Renderable::Visitor *v, bool b);
+        virtual void _updateRenderQueue(Ogre::RenderQueue *q);
+
+
+        ClutterBuffer::MTicket reserveGeometry (const Ogre::MeshPtr &mesh)
+        { return clutter.reserveGeometry(mesh); }
+        void releaseGeometry (const ClutterBuffer::MTicket &t)
+        { return clutter.releaseGeometry(t); }
+        void updateGeometry (const ClutterBuffer::MTicket &t,
+                             const Ogre::Vector3 &position,
+                             const Ogre::Quaternion &orientation)
+        { return clutter.updateGeometry(t,position,orientation); }
+
+        ClutterBuffer::QTicket reserveQuad (const Ogre::MaterialPtr &m)
+        { return clutter.reserveQuad(m); }
+        void releaseQuad (const ClutterBuffer::QTicket &t)
+        { return clutter.releaseQuad(t); }
+        void updateQuad (const ClutterBuffer::QTicket &t,
+                         const Ogre::Vector3 (&pos)[4],
+                         const Ogre::Vector3 (&norm)[4],
+                         const Ogre::Vector2 (&uv)[4],
+                         const Ogre::Vector3 (*tang)[4])
+        { return clutter.updateQuad(t,pos,norm,uv,tang); }
+
+
+    protected:
+
+        ClutterBuffer clutter;
+
+};
+
+
+
+
+class MovableClutterFactory : public Ogre::MovableObjectFactory {
 
     public:
 
         virtual const Ogre::String& getType (void) const
         {
-                static const Ogre::String typeName = "Clutter";
+                static const Ogre::String typeName = "MovableClutter";
                 return typeName;
         }
 

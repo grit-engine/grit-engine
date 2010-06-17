@@ -147,7 +147,7 @@ int main(int argc, const char **argv)
                         ogre->setRenderSystem(rs);
                 }
 
-                ogre->addMovableObjectFactory(new ClutterFactory());
+                ogre->addMovableObjectFactory(new MovableClutterFactory());
 
                 Ogre::RenderWindow *win = ogre->initialise(true,"Grit Game Window");
 
