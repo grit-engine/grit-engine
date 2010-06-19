@@ -244,7 +244,7 @@ static int parse_material (const std::string &name,
         }
         std::string m;
         get_string_from_string_token(t, m);
-        int id;
+        int id = 0; // initialise to avoid warning
         try {
                 id = db.getMaterial(pwd_full(m,"/common/Frictionless")).id;
         } catch (Ogre::Exception &e) {
