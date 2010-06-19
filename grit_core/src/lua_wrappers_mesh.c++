@@ -223,6 +223,19 @@ TRY_START
 TRY_END
 }
 
+static int mesh_set_bounds (lua_State *L)
+{
+TRY_START
+        check_args(L,7);
+        GET_UD_MACRO(Ogre::MeshPtr,self,1,MESH_TAG);
+        GET_V3(min,2);
+        GET_V3(max,5);
+        Ogre::AxisAlignedBox box(min.x, min.y, min.z, max.x, max.y, max.z);
+        self->_setBounds(box);
+        return 0;
+TRY_END
+}
+
 
 
 
@@ -260,6 +273,8 @@ TRY_START
                 push_cfunction(L,mesh_get_material_name);
         } else if (key == "setMaterialName") {
                 push_cfunction(L,mesh_set_material_name);
+        } else if (key == "setBounds") {
+                push_cfunction(L,mesh_set_bounds);
         } else if (key == "getMaterial") {
                 push_cfunction(L,mesh_get_material);
         } else {
