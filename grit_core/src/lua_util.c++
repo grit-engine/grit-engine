@@ -169,6 +169,11 @@ lua_Number check_int (lua_State *l, int stack_index,
         return n;
 }
 
+float check_float (lua_State *l, int stack_index)
+{
+        return (float) luaL_checknumber(l, stack_index);
+}
+
 
 bool check_bool (lua_State *l, int stack_index)
 {

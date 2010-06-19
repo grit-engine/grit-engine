@@ -56,15 +56,15 @@ extern "C" {
 #define STACK_CHECK STACK_CHECK_N(0)
 
 #define GET_V3(n,index) \
-Vector3 n(luaL_checknumber(L,index+0), \
-luaL_checknumber(L,index+1), \
-luaL_checknumber(L,index+2))
+Vector3 n(check_float(L,index+0), \
+check_float(L,index+1), \
+check_float(L,index+2))
 
 #define GET_QUAT(n,index) \
-Quaternion n(luaL_checknumber(L,index+0), \
-luaL_checknumber(L,index+1), \
-luaL_checknumber(L,index+2), \
-luaL_checknumber(L,index+3))
+Quaternion n(check_float(L,index+0), \
+check_float(L,index+1), \
+check_float(L,index+2), \
+check_float(L,index+3))
 
 #define PUT_QUAT(n) do { \
         Quaternion q = n; \
@@ -90,6 +90,8 @@ bool has_tag(lua_State *l, int index, const char* tag);
 
 lua_Number check_int (lua_State *l, int stack_index,
                       lua_Number min, lua_Number max);
+
+float check_float (lua_State *l, int stack_index);
 
 template <typename T>
 T check_t (lua_State *l, int stack_index,
