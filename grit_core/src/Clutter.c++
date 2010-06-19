@@ -220,7 +220,7 @@ void ClutterBuffer::Section::updateGeometry (const MTicket &t,
     APP_ASSERT(vel_norm->getType() == Ogre::VET_FLOAT3);
     const Ogre::VertexElement *vel_uv= vdecl->findElementBySemantic (Ogre::VES_TEXTURE_COORDINATES);
     APP_ASSERT(vel_uv->getType() == Ogre::VET_FLOAT2);
-    const Ogre::VertexElement *vel_tang;
+    const Ogre::VertexElement *vel_tang = NULL; //initialise to avoid warning
     if (mParent->mTangents) {
         vel_tang = vdecl->findElementBySemantic (Ogre::VES_TANGENT);
         APP_ASSERT(vel_tang->getType() == Ogre::VET_FLOAT3);

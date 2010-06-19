@@ -145,6 +145,8 @@ class ClutterBuffer {
         typedef std::map<Ogre::MaterialPtr, Section*> SectionMap;
 
         const SectionMap &getSections (void) { return sects; } 
+
+
     protected:
 
         Ogre::MovableObject *mMovableObject;
@@ -165,7 +167,6 @@ class ClutterBuffer {
             }
         
         }
-    
 
 };
 
