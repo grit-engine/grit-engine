@@ -1324,6 +1324,8 @@ TRY_START
                 push_node(L,self.getSkyBoxNode());
         } else if (key=="root") {
                 push_node(L,self.getRootSceneNode());
+        } else if (key=="skyCustomNode") {
+                push_node(L,self.getSkyCustomNode());
 
         } else if (key=="updateSceneGraph") {
                 push_cfunction(L, scnmgr_update_scene_graph);
