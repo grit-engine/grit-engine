@@ -346,7 +346,10 @@ TRY_START
         } else if (key=="source") {
                 lua_pushstring(L,self->getSource().c_str());
         } else if (key=="asm") {
-                lua_pushstring(L,self->_getBindingDelegate()->getSource().c_str());
+                if (self->_getBindingDelegate() == NULL)
+                        lua_pushstring(L,"// Not compiled yet.");
+                else
+                        lua_pushstring(L,self->_getBindingDelegate()->getSource().c_str());
         } else if (key=="syntaxCode") {
                 lua_pushstring(L,self->getSyntaxCode().c_str());
         } else if (key=="language") {
