@@ -278,7 +278,9 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
 
         clearlistener()
 
-        for m in getCurrentSelection() do (
+        local selected_objs = selection as array
+
+        for m in selected_objs do (
             if (not (iskindof m GeometryClass)) then (
                 messageBox "You have to select some geometry for export.  Skipping an object."
             ) else (
@@ -357,6 +359,7 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
                 )
             )
         )
+        select selected_objs -- have to alter selection whilst exporting mesh
     )
 ) -- }}}
 

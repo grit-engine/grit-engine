@@ -455,6 +455,7 @@ function write_mesh_xml selected options out_name = -- {{{
     -- create and apply Edit_Normals modifier in order to be able to access explicit normal data
     enm = edit_Normals()
     addModifier m enm
+    select m
     setCommandPanelTaskMode #modify
 
     local num_ogre_vertexes = 0
