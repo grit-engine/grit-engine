@@ -486,7 +486,12 @@ function write_mesh_xml selected options out_name = -- {{{
             local v = (max_indexes[fv])
             if max_vert_ogre_verts[v] == undefined then max_vert_ogre_verts[v] = #()
             ogre_vert_pos[next_ogre_vertex] = (meshop.getVert m v node:m)
-            ogre_vert_normal[next_ogre_vertex] = enm.getNormal(enm.getNormalID face fv)
+            local n = enm.getNormal(enm.getNormalID face fv)
+            if n == undefined then (
+                n = [0,0,1]
+                format "ERROR: Undefined normal at % %\n" face fv
+            )
+            ogre_vert_normal[next_ogre_vertex] = n
             ogre_vert_ambient[next_ogre_vertex] = (if options.exportAmbient then get_map_vert m 0 face fv else [1,1,1])
             ogre_vert_alpha[next_ogre_vertex] = (if options.exportAlpha then (get_map_vert m -2 face fv)[1] else 1)
             ogre_vert_texcoord[next_ogre_vertex] = (if texture then get_map_vert m 1 face fv else [0,0])
