@@ -117,20 +117,20 @@ class CollisionMesh {
         struct ScatterOptions {
                 Transform worldTrans;
                 float density;
-                float minElevation;
-                float maxElevation;
                 float minSlope;
                 float maxSlope;
+                float minElevation;
+                float maxElevation;
                 bool noZ;
                 bool rotate;
                 bool alignSlope;
                 bool seed;
                 ScatterOptions () 
                 {
+                        minSlope = 0;
+                        maxSlope = 90;
                         minElevation = FLT_MIN;
                         maxElevation = FLT_MAX;
-                        maxSlope = 90;
-                        minSlope = 0;
                         density = 1;
                         noZ = false;
                         rotate = true;
