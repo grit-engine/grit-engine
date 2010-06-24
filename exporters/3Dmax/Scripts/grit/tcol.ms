@@ -346,15 +346,18 @@ global GritRolloutTcolMain
 
 Rollout GritRolloutTcolMain "Main" -- {{{
 (
-    group "Import/Export" (
-        button chooseDir "Browse Dir" toolTip:"Choose dir where files are written" across:2
+    group "" (
+		bitmap IMGEXP fileName:"ui/export.bmp"
+        button chooseDir "Browse Dir" toolTip:"Choose directory where files are written" across:2
         --button imp "Import tcol"
         button exp "Export Selection" toolTip:"Write TCOL file"
         edittext editDir ""
     )
 
     -- attributes {{{
-    group "Tcol Attributes (these apply to the whole body)" (
+    group "" (
+		bitmap IMGTATB fileName:"ui/tcolatb.bmp"
+		label tip1 "Attributes applied to the whole body"
         checkbox dynamic "Dynamic"
         spinner smass "Mass (kg):"
         checkbox cyinertia "Export"
@@ -376,12 +379,26 @@ Rollout GritRolloutTcolMain "Main" -- {{{
     )
 
     -- attributes {{{
-    group "Part Attributes (these apply to a single box/hull/etc)" (
+    group "" (
+		bitmap IMGTPTB fileName:"ui/parttb.bmp"
+		label tip2 "Attributes applied only to a single box/hull/etc..."
         checkbox margin "Custom margin" across:2 
         spinner slmargin "Margin:" scale: 0.001 range:[0,0.1,0.04]
         checkbox convex "Polys are convex hull"
     )
 
+		group "" (
+		bitmap IMGABO fileName:"ui/about.bmp"
+		label lab1 "Grit TCOL Exporter"
+		label bspc "Coded by Spark"
+		label bspc2 "Export your TCOL Collision objects, "
+		label bspc3 "use normal materials for now. "
+		label bspc4 "Remember materials paths."
+		label VERSION "2.0.0"
+		hyperlink LBLOG "Grit Blog" url:"http://gritengine.com/" color:orange across:3
+		hyperlink LFORM "Grit Forum" url:"http://gritengine.com/game-engine-forum/" color:orange
+		hyperlink LWIKI "Grit Wiki" url:"http://gritengine.com/game-engine-wiki/" color:orange
+	)
 
     fn update = (
         -- we might get called when the floater does not exist

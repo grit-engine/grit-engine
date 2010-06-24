@@ -183,6 +183,7 @@ Rollout help "Help"
 		label bspc2 "Use this to speed up your workflow in "
 		label bspc3 "large scenes with lots of instances. "
 		label bspc4 "Set classes and export pos and rot fast."
+		label VERSION "1.0.0"
 		hyperlink LBLOG "Grit Blog" url:"http://gritengine.com/" color:orange across:3
 		hyperlink LFORM "Grit Forum" url:"http://gritengine.com/game-engine-forum/" color:orange
 		hyperlink LWIKI "Grit Wiki" url:"http://gritengine.com/game-engine-wiki/" color:orange
