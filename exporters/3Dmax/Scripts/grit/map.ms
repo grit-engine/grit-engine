@@ -3,14 +3,14 @@ cool = newRolloutFloater "Grit Mapping Helper" 250 600
 Rollout clasz "Classes"
 (
 	group "" (
-		bitmap IMGCLASS fileName:"Classes.bmp"
+		bitmap IMGCLASS fileName:"ui/Classes.bmp"
 		button SCLASS "Set Class" width:146
 		button RCLASS "Retrieve class" width:146
 		button ECLASS "Export selected classes" width:146
 		button ELCLASS "Export this class to listener" width:146
 	)
 	group "" (
-		bitmap IMGPROP fileName:"Properties.bmp"
+		bitmap IMGPROP fileName:"ui/Properties.bmp"
 		edittext mpath "Path" fieldWidth:160
 		edittext mnpath "Mesh name" fieldWidth:140
 		spinner sdrawd "Rendering distance" range:[0,5000,10] type:#integer fieldWidth:100
@@ -53,14 +53,14 @@ Rollout clasz "Classes"
 Rollout placz "Placement"
 (
 	group "" (
-		bitmap IMGFEXP fileName:"FastExp.bmp"
+		bitmap IMGFEXP fileName:"ui/FastExp.bmp"
 		button expl "Export to listener" width:146
 		checkbox namexp "Export name" across:2
 		checkbox rotexp "Export rot" align:#right   
 		edittext tdir "Directory with / " fieldWidth:150 labelOnTop:true
 	)
 	group "" (
-		bitmap IMGOEXP fileName:"ObjExp.bmp"
+		bitmap IMGOEXP fileName:"ui/ObjExp.bmp"
 		button oexpl "Export to listener" width:146
 		button oexp "Export to file" width:146
 		checkbox onamexp "Export name" across:2
@@ -177,7 +177,7 @@ Rollout placz "Placement"
 Rollout help "Help"
 (
 	group "" (
-		bitmap IMGABO fileName:"about.bmp"
+		bitmap IMGABO fileName:"ui/about.bmp"
 		label lab1 "Grit Map Helper"
 		label bspc "Coded by JostVice and help from many others."
 		label bspc2 "Use this to speed up your workflow in "
