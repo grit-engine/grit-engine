@@ -348,7 +348,7 @@ Rollout GritRolloutTcolMain "Main" -- {{{
 (
     group "" (
 		bitmap IMGEXP fileName:"ui/export.bmp"
-        button chooseDir "Browse Dir" toolTip:"Choose directory where files are written" across:2
+        button chooseDir "Browse save Dir" toolTip:"Choose directory where files are written" across:2
         --button imp "Import tcol"
         button exp "Export Selection" toolTip:"Write TCOL file"
         edittext editDir ""

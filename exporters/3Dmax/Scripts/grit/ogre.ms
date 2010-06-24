@@ -23,11 +23,14 @@ global GritRolloutOgreMesh
 
 rollout GritRolloutOgreMesh "Mesh" width:272 rolledUp:false --{{{
 (
+	bitmap IMGMPRO fileName:"ui/meshpro.bmp"
     checkbox CBexportMesh "Export Mesh" checked:true
-    spinner SPblended "Blended Textures" range:[0,8,1] type:#integer scale:1
+    spinner SPblended "Textures to blend:" range:[0,8,1] type:#integer scale:1
+	label btex "Number of textures blended with vertex colors"
+	label btex2 "If you dont use blend materials, leave this to 1"
     checkbox CBexportColor "Export Vertex Ambient Lighting"
     checkbox CBexportAlpha "Export Vertex Alpha"
-    checkbox CBgeneratetangents "Will have normal map" checked:false
+    checkbox CBgeneratetangents "Normal Map" checked:false
     checkbox CBtangentsmirrored "Tangents mirrored" checked:false
     checkbox CBtangentsrotated "Tangents rotated" checked:false
 
@@ -73,6 +76,7 @@ rollout GritRolloutOgreMesh "Mesh" width:272 rolledUp:false --{{{
 
 rollout GritRolloutOgreAnimation "Animation" width:272 rolledUp:true -- {{{
 (
+	bitmap IMGAPRO fileName:"ui/animpro.bmp"
     checkbox CBexportSkeleton "Export Skeleton" enabled:false
     --checkbox CBbiped "Biped Export" pos:[13,44] width:246 height:19 enabled:false
     spinner SPsamplerate "Sample Rate" enabled:false range:[0,10000,0] type:#float scale:0.5 
@@ -212,10 +216,12 @@ rollout GritRolloutOgreAnimation "Animation" width:272 rolledUp:true -- {{{
 
 rollout GritRolloutOgreMain "Main" width:272 -- {{{
 (
-    button chooseDir "Browse Dir" toolTip:"Choose dir where files are written" across:2
+	bitmap IMGEXP fileName:"ui/export.bmp"
+    button chooseDir "Browse save Dir" toolTip:"Choose dir where files are written" across:2
     button Export "Export Selection" toolTip:"Write OGRE files"
     edittext editDir ""
     progressBar exportProgress ""
+	bitmap IMGXML fileName:"ui/xmlcon.bmp"
     label lbl01 "XML Converter Program"
     editText editXMLConverter ""
     button browseXMLconverter "Browse" toolTip:"choose your XML converter"
