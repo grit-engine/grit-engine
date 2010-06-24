@@ -220,7 +220,7 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
     button chooseDir "Browse save Dir" toolTip:"Choose dir where files are written" across:2
     button Export "Export Selection" toolTip:"Write OGRE files"
     edittext editDir ""
-    progressBar exportProgress ""
+    progressBar exportProgress "" color:orange
 	bitmap IMGXML fileName:"ui/xmlcon.bmp"
     label lbl01 "XML Converter Program"
     editText editXMLConverter ""
