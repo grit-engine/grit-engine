@@ -1,18 +1,18 @@
-cool = newRolloutFloater "Grit Helper" 250 500
+cool = newRolloutFloater "Grit Mapping Helper" 250 600
 
 Rollout clasz "Classes"
 (
-	group "Get/Set/Export" (
+	group "" (
+		bitmap IMGCLASS fileName:"Classes.bmp"
 		button SCLASS "Set Class" width:146
 		button RCLASS "Retrieve class" width:146
-		button ECLASS "Export selected classes" width:130
-		button ELCLASS "Export this class to listener" width:130
+		button ECLASS "Export selected classes" width:146
+		button ELCLASS "Export this class to listener" width:146
 	)
-	group "Path/Name" (
+	group "" (
+		bitmap IMGPROP fileName:"Properties.bmp"
 		edittext mpath "Path" fieldWidth:160
 		edittext mnpath "Mesh name" fieldWidth:140
-	)
-	group "Attributes" (
 		spinner sdrawd "Rendering distance" range:[0,5000,10] type:#integer fieldWidth:100
 	)
 	-- Exports to listener!!
@@ -52,19 +52,54 @@ Rollout clasz "Classes"
 
 Rollout placz "Placement"
 (
-	group "Fast Export" (
+	group "" (
+		bitmap IMGFEXP fileName:"FastExp.bmp"
 		button expl "Export to listener" width:146
 		checkbox namexp "Export name" across:2
 		checkbox rotexp "Export rot" align:#right   
 		edittext tdir "Directory with / " fieldWidth:150 labelOnTop:true
 	)
-	group "Export Object placement" (
+	group "" (
+		bitmap IMGOEXP fileName:"ObjExp.bmp"
 		button oexpl "Export to listener" width:146
 		button oexp "Export to file" width:146
 		checkbox onamexp "Export name" across:2
 		checkbox orotexp "Export rot" align:#right   
 	)
 	--Exports to file
+	on expl pressed do
+	(
+	format "\nStarting exporting coords\n" to:listener
+	if $ != undefined then
+	for objs in $ do
+		(
+			X = objs.pos.X 
+			Y = objs.pos.Y 
+			Z = objs.pos.Z
+			RX = (in coordsys world objs.rotation.x_rotation )
+			RY = (in coordsys world objs.rotation.y_rotation )
+			RZ = (in coordsys world objs.rotation.z_rotation )
+			mdir = tdir.text
+			mname = objs.name 
+			
+			format "object \"%%\" (%, %, %) {" mdir mname X Y Z to:listener
+			if onamexp.triState == 1 then
+			(
+				format "name=\"%\"" objs.name to:listener
+			)
+			if orotexp.triState == 1 then
+			(
+				if onamexp.triState == 1 then
+				(
+					format ", rot=Vector3(%,%,%)" RX RY RZ to:listener
+				)
+				else
+				format "rot=Vector3(%,%,%)" RX RY RZ to:listener
+			)
+			format "}\n" to:listener
+		)
+		format "Finished!\n" to:listener
+	)
 	on oexp pressed do
 	(
 	format "\nStarting exporting coords\n" to:listener
@@ -119,7 +154,7 @@ Rollout placz "Placement"
 			mdir = getUserProp objs "obmpath"
 			mname = getUserProp objs "obmnpath" 
 			
-			format "Object \"%%\" (%, %, %) {" mdir mname X Y Z to:listener
+			format "object \"%%\" (%, %, %) {" mdir mname X Y Z to:listener
 			if onamexp.triState == 1 then
 			(
 				format "name=\"%\"" objs.name to:listener
@@ -141,9 +176,16 @@ Rollout placz "Placement"
 
 Rollout help "Help"
 (
-	group "Help" (
-		label lab1 "*Grit utility tool"
-		label bspc " "
+	group "" (
+		bitmap IMGABO fileName:"about.bmp"
+		label lab1 "Grit Map Helper"
+		label bspc "Coded by JostVice and help from many others."
+		label bspc2 "Use this to speed up your workflow in "
+		label bspc3 "large scenes with lots of instances. "
+		label bspc4 "Set classes and export pos and rot fast."
+		hyperlink LBLOG "Grit Blog" url:"http://gritengine.com/" color:orange across:3
+		hyperlink LFORM "Grit Forum" url:"http://gritengine.com/game-engine-forum/" color:orange
+		hyperlink LWIKI "Grit Wiki" url:"http://gritengine.com/game-engine-wiki/" color:orange
 	)
 )
 	
