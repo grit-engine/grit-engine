@@ -1,6 +1,12 @@
-cool = newRolloutFloater "Grit Mapping Helper" 250 600
+global grit_current_map_floater = undefined
 
-Rollout clasz "Classes"
+global GritRolloutClass
+global GritRolloutPlace
+global GritRolloutAbout
+
+--cool = newRolloutFloater "Grit Mapping Helper" 250 600
+
+Rollout GritRolloutClass "Classes" -- {{{
 (
 	group "" (
 		bitmap IMGCLASS fileName:"ui/Classes.bmp"
@@ -14,8 +20,7 @@ Rollout clasz "Classes"
 		label CE22 "to listener"
 		button EOCLASS "Export selected classes to a file" width:156 align:#center
 		label CE3 "Exports selected classes to a *.lua file"
-	)
-	group "" (
+		label BLN1 " "
 		bitmap IMGPROP fileName:"ui/Properties.bmp"
 		edittext mpath "Folder Path" fieldWidth:139 align:#center
 		edittext mnpath "Mesh name" fieldWidth:140 align:#center
@@ -115,28 +120,28 @@ Rollout clasz "Classes"
 		ctype.selected = getUserProp objs "obctype"
 		)
 	)
-)
+) --}}}
 
---
--- SEPARATE ME!!
---
-
-Rollout placz "Placement"
+Rollout GritRolloutPlace "Placement" -- {{{
 (
 	group "" (
 		bitmap IMGFEXP fileName:"ui/FastExp.bmp"
+		label FE1 "Export only the selected object"
+		label FE2 "using the properties below, ignoring"
+		label FE3 "any class properties you may have Set"
 		button expl "Export to listener" width:146  align:#center
 		checkbox namexp "Export name" across:2 align:#center
 		checkbox rotexp "Export rotation" align:#center   
 		edittext tdir "Folder path" fieldWidth:165 labelOnTop:true align:#center
 		label OE1 "Directory where the object is."
 		label OE2 "Remember to put / at the end."
-	)
-	group "" (
+		label BLN2 " "
 		bitmap IMGOEXP fileName:"ui/ObjExp.bmp"
+		label EE1 "Export the selected object with the"
+		label EE2 "Class properties that you've Set"
+		progressbar PBOEXP "Progressbar:" value:0 color:orange
 		button oexpl "Export to listener" width:146 align:#center
 		button oexp "Export to file" width:146 align:#center
-		progressbar PBOEXP "Progressbar:" value:0 color:orange
 		checkbox onamexp "Export name" across:2 align:#center
 		checkbox orotexp "Export rotation" align:#center  
 	)
@@ -255,9 +260,9 @@ Rollout placz "Placement"
 		PBOEXP.value = 0
 		format "Finished!\n" to:listener
 	)
-)
+) -- }}}
 
-Rollout help "Help"
+Rollout GritRolloutAbout "Help" -- {{{
 (
 	group "" (
 		bitmap IMGABO fileName:"ui/about.bmp"
@@ -267,12 +272,34 @@ Rollout help "Help"
 		label bspc3 "large scenes with lots of instances. "
 		label bspc4 "Set classes and export pos and rot fast."
 		label VERSION "1.0.0"
-		hyperlink LBLOG "Grit Blog" url:"http://gritengine.com" color:orange across:3 align:#center
-		hyperlink LFORM "Grit Forum" url:"http://gritengine.com/game-engine-forum" color:orange align:#center
-		hyperlink LWIKI "Grit Wiki" url:"http://gritengine.com/game-engine-wiki" color:orange align:#center
+		hyperlink LBLOG "Grit Blog" address:"http://gritengine.com" color:orange across:3 align:#center
+		hyperlink LFORM "Grit Forum" address:"http://gritengine.com/game-engine-forum" color:orange align:#center
+		hyperlink LWIKI "Grit Wiki" address:"http://gritengine.com/game-engine-wiki" color:orange align:#center
 	)
-)
+) -- }}}
 	
-addRollout clasz cool
-addRollout placz cool
-addRollout help cool
+--addRollout clasz cool
+--addRollout placz cool
+--addRollout help cool
+
+--callbacks.removescripts id:#GritTcolSelection
+--callbacks.addScript #selectionSetChanged "GritRolloutTcolMain.update()" id:#GritTcolSelection
+
+macroScript showGritMapHelper
+    category:"Grit Tools"
+    internalCategory:"Grit Tools"
+    buttonText:"Grit Mapping Helper"
+    tooltip:"Grit Mapping helper (Class & Placement assist)"
+    Icon:#("Grit",3)
+(
+    if grit_current_map_floater != undefined then (
+        closeRolloutFloater grit_current_map_floater
+    )
+    grit_current_map_floater = newRolloutFloater "Grit Mapping Helper" 250 600
+
+    addRollout GritRolloutClass grit_current_map_floater
+	addRollout GritRolloutPlace grit_current_map_floater
+	addRollout GritRolloutAbout grit_current_map_floater
+
+    --GritRolloutTcolMain.update()
+)

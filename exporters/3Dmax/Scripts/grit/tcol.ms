@@ -395,9 +395,9 @@ Rollout GritRolloutTcolMain "Main" -- {{{
 		label bspc3 "use normal materials for now. "
 		label bspc4 "Remember materials paths."
 		label VERSION "2.0.0"
-		hyperlink LBLOG "Grit Blog" url:"http://gritengine.com/" color:orange across:3
-		hyperlink LFORM "Grit Forum" url:"http://gritengine.com/game-engine-forum/" color:orange
-		hyperlink LWIKI "Grit Wiki" url:"http://gritengine.com/game-engine-wiki/" color:orange
+		hyperlink LBLOG "Grit Blog" address:"http://gritengine.com/" color:orange across:3
+		hyperlink LFORM "Grit Forum" address:"http://gritengine.com/game-engine-forum/" color:orange
+		hyperlink LWIKI "Grit Wiki" address:"http://gritengine.com/game-engine-wiki/" color:orange
 	)
 
     fn update = (

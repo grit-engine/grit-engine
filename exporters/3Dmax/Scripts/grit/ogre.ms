@@ -21,7 +21,7 @@ global grit_current_mesh_floater = undefined
 
 global GritRolloutOgreMesh
 
-rollout GritRolloutOgreMesh "Mesh" width:272 rolledUp:false --{{{
+rollout GritRolloutOgreMesh "Mesh" width:272 rolledUp:false -- {{{
 (
 	bitmap IMGMPRO fileName:"ui/meshpro.bmp"
     checkbox CBexportMesh "Export Mesh" checked:true
@@ -214,6 +214,22 @@ rollout GritRolloutOgreAnimation "Animation" width:272 rolledUp:true -- {{{
     )
 ) -- }}}
 
+Rollout GritRolloutAbout "Help" -- {{{
+(
+	group "" (
+		bitmap IMGABO fileName:"ui/about.bmp"
+		label lab1 "Grit Mesh/.skeleton exporter"
+		label bspc "Coded by someone, fixed and improved for Grit"
+		label bspc2 "by Spark"
+		label bspc3 "Export .mesh.xml and .mesh (Use XMLConverter)"
+		label bspc4 "Materials are defined by the name"
+		label VERSION "1.0.0"
+		hyperlink LBLOG "Grit Blog" address:"http://gritengine.com" color:orange across:3 align:#center
+		hyperlink LFORM "Grit Forum" address:"http://gritengine.com/game-engine-forum" color:orange align:#center
+		hyperlink LWIKI "Grit Wiki" address:"http://gritengine.com/game-engine-wiki" color:orange align:#center
+	)
+) -- }}}
+
 rollout GritRolloutOgreMain "Main" width:272 -- {{{
 (
 	bitmap IMGEXP fileName:"ui/export.bmp"
@@ -387,4 +403,5 @@ macroScript showGritOgreWindow
 	addRollout GritRolloutOgreMain grit_current_mesh_floater
 	addRollout GritRolloutOgreMesh grit_current_mesh_floater
 	addRollout GritRolloutOgreAnimation grit_current_mesh_floater
+	addRollout GritRolloutAbout grit_current_mesh_floater
 )
