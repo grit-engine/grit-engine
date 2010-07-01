@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-template <typename T> class CacheFriendlyRangeSpace;
+template <typename T> class CacheFriendlyRangeSpaceSIMD;
 
 #ifndef CACHEFRIENDLYRANGESPACESIMD_H
 #define CACHEFRIENDLYRANGESPACESIMD_H
@@ -69,35 +69,27 @@ class SIMDVector4 {
         inline float z(void) const { return u.raw.z; }
         inline float d(void) const { return u.raw.d; }
 
-#ifdef WIN32
         SIMDVector4 operator- (const SIMDVector4 &b) const
         {
                 SIMDVector4 r;
+                #ifdef WIN32
                 r.u.simd = _mm_sub_ps(u.simd, b.u.simd);
-                return r;
-        }
-
-        SIMDVector4 operator* (const SIMDVector4 &b) const
-        {
-                SIMDVector4 r;
-                r.u.simd = _mm_mul_ps(u.simd, b.u.simd);
-                return r;
-        }
-#else
-        SIMDVector4 operator- (const SIMDVector4 &b) const
-        {
-                SIMDVector4 r;
+                #else
                 r.u.simd = u.simd - b.u.simd;
+                #endif
                 return r;
         }
 
         SIMDVector4 operator* (const SIMDVector4 &b) const
         {
                 SIMDVector4 r;
+                #ifdef WIN32
+                r.u.simd = _mm_mul_ps(u.simd, b.u.simd);
+                #else
                 r.u.simd = u.simd * b.u.simd;
+                #endif
                 return r;
         }
-#endif
         SIMDVector4 &operator*= (SIMDVector4 &b)
         {
                 *this = *this * b;
