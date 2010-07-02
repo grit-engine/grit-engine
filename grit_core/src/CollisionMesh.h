@@ -124,7 +124,7 @@ class CollisionMesh {
                 bool noZ;
                 bool rotate;
                 bool alignSlope;
-                bool seed;
+                unsigned seed;
                 ScatterOptions () 
                 {
                         minSlope = 0;
@@ -135,7 +135,7 @@ class CollisionMesh {
                         noZ = false;
                         rotate = true;
                         alignSlope = true;
-                        seed = false;
+                        seed = time(NULL);
                 }
         };
         void scatter (int mat,const ScatterOptions &opts,std::vector<Transform> &r);

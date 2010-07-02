@@ -32,6 +32,7 @@ class ClutterFactory;
 #include <OgreMaterial.h>
 #include <OgreMesh.h>
 
+#include "CacheFriendlyRangeSpaceSIMD.h"
 
 class ClutterBuffer {
 
@@ -225,9 +226,6 @@ class MovableClutter : public Ogre::MovableObject {
 
 };
 
-
-
-
 class MovableClutterFactory : public Ogre::MovableObjectFactory {
 
     public:
@@ -235,6 +233,92 @@ class MovableClutterFactory : public Ogre::MovableObjectFactory {
         virtual const Ogre::String& getType (void) const
         {
                 static const Ogre::String typeName = "MovableClutter";
+                return typeName;
+        }
+
+        virtual Ogre::MovableObject* createInstanceImpl (
+               const Ogre::String& name, const Ogre::NameValuePairList* params);
+
+        virtual void destroyInstance (Ogre::MovableObject* obj);
+
+};
+
+
+
+// Object streams in
+// RangedClutter mobj created, initialised using scatter query
+// attached to same node as object entity
+// added to a table in streamer that updates it every frame
+class RangedClutter : public Ogre::MovableObject {
+
+    public:
+
+        RangedClutter (const Ogre::String &name, unsigned triangles, bool tangents)
+            : Ogre::MovableObject(name),
+              mBoundingBox(Ogre::AxisAlignedBox::BOX_INFINITE), mBoundingRadius(FLT_MAX),
+              mClutter(this,triangles,tangents)
+        { }
+
+        virtual ~RangedClutter (void) { }
+
+        virtual const Ogre::String& getMovableType (void) const
+        {
+            static const Ogre::String type = "RangedClutter";
+            return type;
+        }
+
+        virtual const Ogre::AxisAlignedBox& getBoundingBox (void) const
+        { return mBoundingBox; }
+
+        virtual Ogre::Real getBoundingRadius (void) const
+        { return mBoundingRadius; }
+
+        virtual void setBoundingBox (const Ogre::AxisAlignedBox &b)
+        { mBoundingBox = b; }
+
+        virtual void setBoundingRadius (Ogre::Real v)
+        { mBoundingRadius = v; }
+
+        virtual void visitRenderables(Ogre::Renderable::Visitor *v, bool b);
+        virtual void _updateRenderQueue(Ogre::RenderQueue *q);
+
+
+        void update (Ogre::Vector3);
+
+
+    protected:
+
+        struct Item {
+            RangedClutter *parent;
+            int index;
+            Ogre::Vector3 pos;
+            Ogre::Quaternion quat;
+            void updateSphere (float x_, float y_, float z_, float r_)
+            {
+                parent->mSpace.updateSphere(index, x_, y_, z_, r_);
+            }
+            void updateIndex (int index_)
+            {
+                index = index_;
+            }
+        };
+
+        Ogre::AxisAlignedBox mBoundingBox;
+        Ogre::Real mBoundingRadius;
+        ClutterBuffer mClutter;
+        CacheFriendlyRangeSpace<Item> mSpace;
+};
+
+
+
+
+class RangedClutterFactory : public Ogre::MovableObjectFactory {
+
+    public:
+
+        virtual const Ogre::String& getType (void) const
+        {
+                static const Ogre::String typeName = "RangedClutter";
                 return typeName;
         }
 

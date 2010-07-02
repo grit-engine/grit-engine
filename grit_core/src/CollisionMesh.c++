@@ -376,15 +376,14 @@ void CollisionMesh::scatter (int mat, const ScatterOptions &opts,
         float left_overs = 0; // fractional samples carried over to the next triangle
         float min_slope_sin = gritsin(Degree(90-opts.maxSlope));
         float max_slope_sin = gritsin(Degree(90-opts.minSlope));
-        float half_slope_sin = (max_slope_sin-min_slope_sin)/2;
-        float mid_slope_sin = min_slope_sin + half_slope_sin;
+        float range_slope_sin = (max_slope_sin-min_slope_sin);
         float total_area = 0;
 
-        std::pair<ProcObjFaceAreas, ProcObjFaces> pair = procObjFaceDB[mat];
-        ProcObjFaceAreas &mat_face_areas = pair.first;
-        ProcObjFaces &mat_faces = pair.second;
+        const std::pair<ProcObjFaceAreas, ProcObjFaces> &pair = procObjFaceDB[mat];
+        const ProcObjFaceAreas &mat_face_areas = pair.first;
+        const ProcObjFaces &mat_faces = pair.second;
 
-        srand(opts.seed ? 0 : time(NULL));
+        srand(opts.seed);
 
         Ogre::Timer t;
         for (unsigned i=0 ; i<mat_face_areas.size() ; ++i) {
@@ -396,7 +395,7 @@ void CollisionMesh::scatter (int mat, const ScatterOptions &opts,
                 left_overs = samples_f - samples;
                 if (samples==0) continue;
 
-                ProcObjFace &f = mat_faces[i];
+                const ProcObjFace &f = mat_faces[i];
 
                 Vector3 A  = opts.worldTrans * f.A;
                 Vector3 AB = opts.worldTrans.r * f.AB;
@@ -406,7 +405,7 @@ void CollisionMesh::scatter (int mat, const ScatterOptions &opts,
                 if (n.z < min_slope_sin) continue;
                 if (n.z > max_slope_sin) continue;
                 if (opts.noZ) {
-                        samples_f *= 1 - fabs(n.z-mid_slope_sin)/half_slope_sin;
+                        samples_f *= 1 - (max_slope_sin-n.z)/range_slope_sin;
                         samples = samples_f;
                         if (samples == 0) continue;
                 }

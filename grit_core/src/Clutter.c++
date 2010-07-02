@@ -376,7 +376,7 @@ Ogre::MovableObject* MovableClutterFactory::createInstanceImpl (
 
     bool tangents = false; // optional
     if (params>0 && (ni = params->find("triangles"))!=params->end()) {
-        tangents = ni->second != "false";
+        tangents = ni->second == "true";
     }
 
     // must have mesh parameter
@@ -385,6 +385,73 @@ Ogre::MovableObject* MovableClutterFactory::createInstanceImpl (
 
 
 void MovableClutterFactory::destroyInstance (Ogre::MovableObject* obj)
+{
+    OGRE_DELETE obj;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// RangedClutter ///////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef ClutterBuffer::SectionMap::const_iterator I;
+
+void RangedClutter::visitRenderables (Ogre::Renderable::Visitor *visitor, bool debug)
+{
+    (void) debug;
+    for (I i=mClutter.getSections().begin(),i_=mClutter.getSections().end() ; i!=i_ ; ++i) {
+        visitor->visit(i->second, 0, false);
+    }
+}
+
+
+void RangedClutter::_updateRenderQueue (Ogre::RenderQueue *queue)
+{
+    for (I i=mClutter.getSections().begin(),i_=mClutter.getSections().end() ; i!=i_ ; ++i) {
+        ClutterBuffer::Section &s = *i->second;
+        if (s.getRenderOperation()->vertexData->vertexCount == 0) return;
+
+        if (mRenderQueuePrioritySet) {
+            assert(mRenderQueueIDSet == true);
+            queue->addRenderable(&s, mRenderQueueID,
+                                     mRenderQueuePriority);
+        } else if (mRenderQueueIDSet) {
+            queue->addRenderable(&s, mRenderQueueID,
+                                     queue->getDefaultRenderablePriority());
+        } else {
+            queue->addRenderable(&s, queue->getDefaultQueueGroup(),
+                                     queue->getDefaultRenderablePriority());
+        }
+    }
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// RangedClutterFactory ///////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Ogre::MovableObject* RangedClutterFactory::createInstanceImpl (
+        const Ogre::String& name, const Ogre::NameValuePairList* params)
+{
+    Ogre::NameValuePairList::const_iterator ni;
+
+    if (params==0 || (ni = params->find("triangles"))==params->end())
+        GRIT_EXCEPT("Must give triangles when creating RangedClutter object");
+    unsigned triangles = atoi(ni->second.c_str());
+
+    bool tangents = false; // optional
+    if (params>0 && (ni = params->find("triangles"))!=params->end()) {
+        tangents = ni->second == "true";
+    }
+
+    // must have mesh parameter
+    return OGRE_NEW RangedClutter(name, triangles, tangents);
+}
+
+
+void RangedClutterFactory::destroyInstance (Ogre::MovableObject* obj)
 {
     OGRE_DELETE obj;
 }

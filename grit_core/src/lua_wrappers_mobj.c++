@@ -210,18 +210,18 @@ TRY_START
                 rot = rot * Ogre::Quaternion(Ogre::Degree(angle*randf()),Ogre::Vector3(1,0,0));
 
                 ClutterBuffer::QTicket t = self.reserveQuad(m);
-                Ogre::Vector3 pos[4] = { centre + rot * Ogre::Vector3(-sz/2, 0, sz),
-                                         centre + rot * Ogre::Vector3( sz/2, 0, sz),
-                                         centre + rot * Ogre::Vector3(-sz/2, 0, 0),
-                                         centre + rot * Ogre::Vector3( sz/2, 0, 0) };
+                Ogre::Vector3 pos[4] = { centre + rot * Ogre::Vector3(-sz, 0, sz),
+                                         centre + rot * Ogre::Vector3( sz, 0, sz),
+                                         centre + rot * Ogre::Vector3(-sz, 0, 0),
+                                         centre + rot * Ogre::Vector3( sz, 0, 0) };
                 Ogre::Vector3 norm[4] = { rot * Ogre::Vector3(0, -1, 0),
                                           rot * Ogre::Vector3(0, -1, 0),
                                           rot * Ogre::Vector3(0, -1, 0),
                                           rot * Ogre::Vector3(0, -1, 0) };
-                Ogre::Vector2 uv[4] = { Ogre::Vector2(.13,0),
-                                        Ogre::Vector2(.79,0),
-                                        Ogre::Vector2(.13,1),
-                                        Ogre::Vector2(.79,1) };
+                Ogre::Vector2 uv[4] = { Ogre::Vector2(.0,0),
+                                        Ogre::Vector2(.5,0),
+                                        Ogre::Vector2(.0,.32),
+                                        Ogre::Vector2(.5,.32) };
                 Ogre::Vector3 tang[4] = { rot * Ogre::Vector3(1, 0, 0),
                                           rot * Ogre::Vector3(1, 0, 0),
                                           rot * Ogre::Vector3(1, 0, 0),

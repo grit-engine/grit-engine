@@ -200,7 +200,7 @@ TRY_START
         o.noZ          = check_bool(L,8);
         o.rotate       = check_bool(L,9);
         o.alignSlope   = check_bool(L,10);
-        o.seed         = check_bool(L,11);
+        o.seed         = check_t<unsigned>(L,11);
 
         std::vector<Transform> r;
         self->colMesh->scatter(self->world->getMaterial(mat).id, o, r);
