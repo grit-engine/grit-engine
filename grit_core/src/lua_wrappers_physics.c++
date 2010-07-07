@@ -189,21 +189,24 @@ TRY_START
         check_args(L,11);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         const char *mat = luaL_checkstring(L,2);
-        CollisionMesh::ScatterOptions o;
-        o.worldTrans.p = self->getPosition();
-        o.worldTrans.r = self->getOrientation();
-        o.density      = luaL_checknumber(L,3);
-        o.minSlope     = luaL_checknumber(L,4);
-        o.maxSlope     = luaL_checknumber(L,5);
-        o.minElevation = luaL_checknumber(L,6);
-        o.maxElevation = luaL_checknumber(L,7);
-        o.noZ          = check_bool(L,8);
-        o.rotate       = check_bool(L,9);
-        o.alignSlope   = check_bool(L,10);
-        o.seed         = check_t<unsigned>(L,11);
+        Transform world_trans;
+        world_trans.p = self->getPosition();
+        world_trans.r = self->getOrientation();
+        float density       = check_float(L,3);
+        float min_slope     = check_float(L,4);
+        float max_slope     = check_float(L,5);
+        float min_elevation = check_float(L,6);
+        float max_elevation = check_float(L,7);
+        bool no_z           = check_bool(L,8);
+        bool rotate         = check_bool(L,9);
+        bool align_slope    = check_bool(L,10);
+        unsigned seed       = check_t<unsigned>(L,11);
 
         std::vector<Transform> r;
-        self->colMesh->scatter(self->world->getMaterial(mat).id, o, r);
+        self->colMesh->scatter(self->world->getMaterial(mat).id,
+                               world_trans, density, min_slope, max_slope, min_elevation,
+                               max_elevation, no_z, rotate, align_slope, seed,
+                               r);
 
         lua_newtable(L);
         for (size_t j=0 ; j<r.size(); ++j) {

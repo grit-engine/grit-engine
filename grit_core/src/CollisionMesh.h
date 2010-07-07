@@ -24,6 +24,7 @@
 #include <OgreSharedPtr.h>
 #include <OgreDataStream.h>
 #include <OgreVector3.h>
+#include <OgreTimer.h>
 
 #include "TColParser.h"
 #include "LooseEnd.h"
@@ -114,32 +115,6 @@ class CollisionMesh {
                 users.erase(u);
         }
 
-        struct ScatterOptions {
-                Transform worldTrans;
-                float density;
-                float minSlope;
-                float maxSlope;
-                float minElevation;
-                float maxElevation;
-                bool noZ;
-                bool rotate;
-                bool alignSlope;
-                unsigned seed;
-                ScatterOptions () 
-                {
-                        minSlope = 0;
-                        maxSlope = 90;
-                        minElevation = FLT_MIN;
-                        maxElevation = FLT_MAX;
-                        density = 1;
-                        noZ = false;
-                        rotate = true;
-                        alignSlope = true;
-                        seed = time(NULL);
-                }
-        };
-        void scatter (int mat,const ScatterOptions &opts,std::vector<Transform> &r);
-
         struct ProcObjFace {
                 Vector3 A;
                 Vector3 AB;
@@ -156,6 +131,106 @@ class CollisionMesh {
                         r.push_back(i->first);
         }
 
+        // Required in T:
+        // member function void T::push_back(const WorldTransform &)
+        // member function size_t T::size()
+        template<class T>
+        void scatter (int mat, const Transform &world_trans, float density,
+                      float min_slope, float max_slope,
+                      float min_elevation, float max_elevation,
+                      bool no_z, bool rotate, bool align_slope,
+                      unsigned seed,
+                      T &r)
+        {
+                float left_overs = 0; // fractional samples carried over to the next triangle
+                float min_slope_sin = gritsin(Degree(90-max_slope));
+                float max_slope_sin = gritsin(Degree(90-min_slope));
+                float range_slope_sin = (max_slope_sin-min_slope_sin);
+                float total_area = 0;
+
+                const std::pair<ProcObjFaceAreas, ProcObjFaces> &pair = procObjFaceDB[mat];
+                const ProcObjFaceAreas &mat_face_areas = pair.first;
+                const ProcObjFaces &mat_faces = pair.second;
+
+                srand(seed);
+
+                Ogre::Timer t;
+                for (unsigned i=0 ; i<mat_face_areas.size() ; ++i) {
+
+                        float area = mat_face_areas[i];
+                        total_area += area;
+                        float samples_f = area * density + left_overs;
+                        int samples = samples_f;
+                        left_overs = samples_f - samples;
+                        if (samples==0) continue;
+
+                        const ProcObjFace &f = mat_faces[i];
+
+                        Vector3 A  = world_trans * f.A;
+                        Vector3 AB = world_trans.r * f.AB;
+                        Vector3 AC = world_trans.r * f.AC;
+
+                        Vector3 n = AB.cross(AC).normalisedCopy();
+                        if (n.z < min_slope_sin) continue;
+                        if (n.z > max_slope_sin) continue;
+                        if (no_z) {
+                                samples_f *= 1 - (max_slope_sin-n.z)/range_slope_sin;
+                                samples = samples_f;
+                                if (samples == 0) continue;
+                        }
+                        //float density = float(rand())/RAND_MAX * density;
+
+                        // base_q may be multiplied by a random rotation for each sample later
+                        Quaternion base_q = align_slope ?
+                                            Vector3(0,0,1).getRotationTo(n) : Quaternion(1,0,0,0);
+                        
+                        for (int i=0 ; i<samples ; ++i) {
+                                float x = float(rand())/RAND_MAX;
+                                float y = float(rand())/RAND_MAX;
+                                if (x+y > 1) { x=1-x; y=1-y; }
+                                
+                                // scale up
+                                Vector3 p = A + x*AB + y*AC;
+
+                                if (p.z < min_elevation && p.z > max_elevation) continue;
+
+                                // a whole bunch of sanity checks for debugging purposes
+                                #if 0
+                                Vector3 max(std::max(A.x,std::max(B.x,C.x)),
+                                            std::max(A.y,std::max(B.y,C.y)),
+                                            std::max(A.z,std::max(B.z,C.z)));
+                                Vector3 min(std::min(A.x,std::min(B.x,C.x)),
+                                            std::min(A.y,std::min(B.y,C.y)),
+                                            std::min(A.z,std::min(B.z,C.z)));
+                                if (p.x < min.x) abort();
+                                if (p.y < min.y) abort();
+                                if (p.z < min.z) abort();
+                                if (p.x > max.x) abort();
+                                if (p.y > max.y) abort();
+                                if (p.z > max.z) abort();
+                                APP_ASSERT(!isnan(p.x));
+                                APP_ASSERT(!isnan(p.y));
+                                APP_ASSERT(!isnan(p.z));
+                                APP_ASSERT(!isnan(base_q.w));
+                                APP_ASSERT(!isnan(base_q.x));
+                                APP_ASSERT(!isnan(base_q.y));
+                                APP_ASSERT(!isnan(base_q.z));
+                                #endif
+
+                                if (rotate) {
+                                        Quaternion rnd(Radian(float(rand())/RAND_MAX * 2*M_PI),
+                                                               Vector3(0,0,1));
+                                        r.push_back(Transform(base_q * rnd, p));
+                                } else {
+                                        r.push_back(Transform(base_q, p));
+                                }
+                        }
+                }
+                CLOG << "scatter time: " << t.getMicroseconds() << "us"
+                     << "  samples: " << r.size() << "  tris: " << mat_faces.size()
+                     << "  area: " << total_area
+                     << std::endl;;
+        }
     protected:
 
         CollisionMesh (const std::string &name_)
@@ -193,7 +268,6 @@ class CollisionMesh {
         Materials faceMaterials;
         Materials partMaterials;
 };
-
 
 #endif
 
