@@ -495,6 +495,10 @@ static void shrink_vertexes (Vertexes &vertexes, float distance)
         int sz = planes.size();
         for (int i=0 ; i<sz ; ++i) {
                 planes[i].d += distance;
+                if (planes[i].d >= 0) {
+                        CERR << "Failed to shrink hull: ["<<i<<"]" << planes[i].d << std::endl;
+                        return;
+                }
         }
         vertexes.clear();
         getVerticesFromPlaneEquations(planes, vertexes);
