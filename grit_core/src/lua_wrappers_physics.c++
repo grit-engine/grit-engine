@@ -23,10 +23,12 @@
 
 #include "PhysicsWorld.h"
 #include "CollisionMesh.h"
+#include "Clutter.h"
 
 #include "lua_wrappers_primitives.h"
 #include "lua_wrappers_physics.h"
 #include "lua_wrappers_gritobj.h"
+#include "lua_wrappers_mobj.h"
 
 // Sweep Callback {{{
 
@@ -228,6 +230,36 @@ TRY_START
                 lua_rawseti(L,-2,7*j+6+LUA_ARRAY_BASE);
         }
 
+        return 1;
+TRY_END
+}
+
+static int rbody_ranged_scatter (lua_State *L)
+{
+TRY_START
+        check_args(L,11);
+        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
+        const char *mat = luaL_checkstring(L,2);
+        Transform world_trans;
+        world_trans.p = self->getPosition();
+        world_trans.r = self->getOrientation();
+        float density       = check_float(L,3);
+        float min_slope     = check_float(L,4);
+        float max_slope     = check_float(L,5);
+        float min_elevation = check_float(L,6);
+        float max_elevation = check_float(L,7);
+        bool no_z           = check_bool(L,8);
+        bool rotate         = check_bool(L,9);
+        bool align_slope    = check_bool(L,10);
+        unsigned seed       = check_t<unsigned>(L,11);
+
+        RangedClutter *ranged_r = OGRE_NEW RangedClutter("fish", 1000, true);
+        self->colMesh->scatter(self->world->getMaterial(mat).id,
+                               world_trans, density, min_slope, max_slope, min_elevation,
+                               max_elevation, no_z, rotate, align_slope, seed,
+                               *ranged_r);
+
+        push_rclutter(L, ranged_r);
         return 1;
 TRY_END
 }
@@ -783,6 +815,8 @@ TRY_START
                 }
         } else if (!::strcmp(key,"scatter")) {
                 push_cfunction(L,rbody_scatter);
+        } else if (!::strcmp(key,"rangedScatter")) {
+                push_cfunction(L,rbody_ranged_scatter);
 
         } else if (!::strcmp(key,"cast")) {
                 push_cfunction(L,cast);

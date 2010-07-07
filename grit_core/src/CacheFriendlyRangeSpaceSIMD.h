@@ -242,6 +242,8 @@ class CacheFriendlyRangeSpace {
                 hence = 0;
         }
 
+        size_t size (void) const { return cargo.size(); }
+
 
     protected:
 

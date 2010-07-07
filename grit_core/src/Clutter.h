@@ -32,6 +32,8 @@ class ClutterFactory;
 #include <OgreMaterial.h>
 #include <OgreMesh.h>
 
+#include "math_util.h"
+
 #include "CacheFriendlyRangeSpaceSIMD.h"
 
 class ClutterBuffer {
@@ -283,8 +285,11 @@ class RangedClutter : public Ogre::MovableObject {
         virtual void _updateRenderQueue(Ogre::RenderQueue *q);
 
 
-        void update (Ogre::Vector3);
+        void update (const Ogre::Vector3 &);
 
+        void push_back (const Transform &t);
+
+        size_t size (void) { return mSpace.size(); }
 
     protected:
 

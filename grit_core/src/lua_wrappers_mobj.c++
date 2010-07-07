@@ -20,7 +20,6 @@
  */
 
 #include <OgreMovableObject.h>
-#include <OgreLight.h>
 #include <OgreManualObject.h>
 #include <OgreEntity.h>
 #include <OgreInstancedGeometry.h>
@@ -145,6 +144,83 @@ static bool mobj_newindex (lua_State *L, Ogre::MovableObject &self,
         }
         return true;
 }
+
+//}}}
+
+
+// RCLUTTER =================================================================== {{{
+
+void push_rclutter (lua_State *L, RangedClutter *self)
+{
+        void **ud = static_cast<void**>(lua_newuserdata(L, sizeof(*ud)));
+        ud[0] = static_cast<void*> (self);
+        luaL_getmetatable(L, RCLUTTER_TAG);
+        lua_setmetatable(L, -2);
+        Ogre::SceneManager *sm = self->_getManager();
+        scnmgr_maps& maps = grit->getUserDataTables().scnmgrs[sm];
+        maps.rangedClutters[self].push_back(ud);
+}
+
+static int rclutter_gc(lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO_OFFSET(RangedClutter,self,1,RCLUTTER_TAG,0);
+        if (self==NULL) return 0;
+        Ogre::SceneManager *sm = self->_getManager();
+        vec_nullify_remove(grit->getUserDataTables().scnmgrs[sm].rangedClutters[self],&self);
+        return 0;
+TRY_END
+}
+
+static int rclutter_destroy (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(RangedClutter,self,1,RCLUTTER_TAG);
+        Ogre::SceneManager *sm = self._getManager();
+        sm->destroyMovableObject(&self);
+        map_nullify_remove(grit->getUserDataTables().scnmgrs[sm].rangedClutters,&self);
+        return 0;
+TRY_END
+}
+
+TOSTRING_ADDR_MACRO(rclutter,RangedClutter,RCLUTTER_TAG)
+
+static int rclutter_index(lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(RangedClutter,self,1,RCLUTTER_TAG);
+        std::string key = luaL_checkstring(L,2);
+        if (key=="destroy") {
+                push_cfunction(L,rclutter_destroy);
+        } else if (!mobj_index(L,self,key)) {
+                my_lua_error(L,"Not a valid RangedClutter member: "+key);
+        }
+        return 1;
+TRY_END
+}
+
+static int rclutter_newindex(lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(RangedClutter,self,1,RCLUTTER_TAG);
+        std::string key = luaL_checkstring(L,2);
+        if (key=="donothing") {
+                float v = luaL_checknumber(L,3);
+                (void) v;
+        } else if (!mobj_newindex(L,self,key)) {
+                my_lua_error(L,"Not a writeable RangedClutter member: "+key);
+        }
+        return 0;
+TRY_END
+}
+
+EQ_PTR_MACRO(RangedClutter,rclutter,RCLUTTER_TAG)
+
+MT_MACRO_NEWINDEX(rclutter);
 
 //}}}
 

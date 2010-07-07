@@ -425,7 +425,16 @@ void RangedClutter::_updateRenderQueue (Ogre::RenderQueue *queue)
     }
 }
 
+void RangedClutter::update (const Ogre::Vector3 &pos)
+{
+    std::vector<Item> cargo;
+    mSpace.getPresent(pos.x, pos.y, pos.z, 100, 1.0, cargo);
+}
 
+void RangedClutter::push_back (const Transform &t)
+{
+    (void) t;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

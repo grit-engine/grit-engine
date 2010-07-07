@@ -21,6 +21,7 @@
 
 #include "lua_wrappers_common.h"
 
+#include <OgreLight.h>
 
 extern "C" {
 #include "lua.h"
@@ -79,6 +80,10 @@ Ogre::ParticleSystem *make_psys (Ogre::SceneManager *, const std::string &);
 #define CLUTTER_TAG "Grit/MovableClutter"
 MT_MACRO_DECLARE(clutter);
 void push_clutter (lua_State *, MovableClutter *);
+
+#define RCLUTTER_TAG "Grit/RangedClutter"
+MT_MACRO_DECLARE(rclutter);
+void push_rclutter (lua_State *, RangedClutter *);
 
 
 
