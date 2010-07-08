@@ -213,7 +213,7 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
             -- take average of scale, we cannot actually compress the cone in grit
             local r = abs ((sca.x+sca.y+sca.z)/3 * obj.radius)
             local mat = get_phys_mat obj 1
-            format "    cone {\n" to:savetcol
+            format "    sphere {\n" to:savetcol
             format "        material \"%\";\n" (get_mat_name mat) to:savetcol
             format "        centre % % %;\n" pos.x pos.y pos.z to:savetcol
             format "        radius %;\n" r to:savetcol
