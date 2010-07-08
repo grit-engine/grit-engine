@@ -219,7 +219,7 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
             format "        radius %;\n" r to:savetcol
             format "    }\n" to:savetcol
         )
-        if classof obj.baseobject == Editable_Poly then (
+        if (classof obj.baseobject == Editable_Poly) or (classof obj.baseobject == Editable_Mesh) then (
             if not is_obj_convex obj then (
                 num_trimeshes = num_trimeshes + 1
                 continue
@@ -265,7 +265,7 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
         format "    vertexes {\n" to:savetcol
         format "Started exporting trimesh...\n" to:listener
         for obj in objs do (
-            if classof obj.baseobject == Editable_Poly then (
+            if (classof obj.baseobject == Editable_Poly) or (classof obj.baseobject == Editable_Mesh) then (
                 if is_obj_convex obj then continue
                 local tmesh
                 if dummy == undefined then (
@@ -306,7 +306,7 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
         format "    faces {\n" to:savetcol
         local initial_vertex_offset = 0
         for obj in objs do (
-            if classof obj.baseobject == Editable_Poly then (
+            if (classof obj.baseobject == Editable_Poly) or (classof obj.baseobject == Editable_Mesh) then (
                 if is_obj_convex obj then continue
                 local tmesh = snapshotAsMesh obj
 
