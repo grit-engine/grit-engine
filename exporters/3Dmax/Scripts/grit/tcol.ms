@@ -551,7 +551,12 @@ Rollout GritRolloutTcolMain "Main" -- {{{
         )
 
         for obj in getCurrentSelection() do (
-            local out_file = editDir.text + "\\" + obj.name + ".tcol"
+            local name = obj.name
+            local index = findString name "tcol_"
+            if index == 1 then (
+                name = substring name 6 -1
+            )
+            local out_file = editDir.text + "\\" + name + ".tcol"
             if obj.children.count == 0 then (
                 local children = #(obj)
                 grit_tcol_export out_file obj children
