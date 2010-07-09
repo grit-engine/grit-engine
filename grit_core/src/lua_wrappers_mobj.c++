@@ -54,6 +54,8 @@ Ogre::MovableObject *check_mobj(lua_State *L,int index)
                 ptr = *static_cast<Ogre::Light**>(lua_touserdata(L,index));
         } else if (has_tag(L,index,CLUTTER_TAG)) {
                 ptr = *static_cast<MovableClutter**>(lua_touserdata(L,index));
+        } else if (has_tag(L,index,RCLUTTER_TAG)) {
+                ptr = *static_cast<RangedClutter**>(lua_touserdata(L,index));
         } else if (has_tag(L,index,MANOBJ_TAG)) {
                 ptr = *static_cast<Ogre::ManualObject**>(lua_touserdata(L,index));
         } else if (has_tag(L,index,PSYS_TAG)) {
@@ -66,6 +68,7 @@ Ogre::MovableObject *check_mobj(lua_State *L,int index)
                 acceptable_types += CAM_TAG ", or ";
                 acceptable_types += LIGHT_TAG ", or ";
                 acceptable_types += CLUTTER_TAG ", or ";
+                acceptable_types += RCLUTTER_TAG ", or ";
                 acceptable_types += MANOBJ_TAG ", or ";
                 acceptable_types += PSYS_TAG;
                 luaL_typerror(L,index,acceptable_types.c_str());
@@ -90,6 +93,9 @@ bool push_mobj (lua_State *L, Ogre::MovableObject *mobj)
                 return true;
         } else if (dynamic_cast<MovableClutter*>(mobj)) {
                 push_clutter(L,static_cast<MovableClutter*>(mobj));
+                return true;
+        } else if (dynamic_cast<RangedClutter*>(mobj)) {
+                push_rclutter(L,static_cast<RangedClutter*>(mobj));
                 return true;
         } else if (dynamic_cast<Ogre::ManualObject*>(mobj)) {
                 push_manobj(L,static_cast<Ogre::ManualObject*>(mobj));

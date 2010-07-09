@@ -237,7 +237,7 @@ TRY_END
 static int rbody_ranged_scatter (lua_State *L)
 {
 TRY_START
-        check_args(L,11);
+        check_args(L,14);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         const char *mat = luaL_checkstring(L,2);
         Transform world_trans;
@@ -252,8 +252,11 @@ TRY_START
         bool rotate         = check_bool(L,9);
         bool align_slope    = check_bool(L,10);
         unsigned seed       = check_t<unsigned>(L,11);
+        const char *mesh    = luaL_checkstring(L,12);
+        unsigned triangles  = check_int(L,13,0,65536);
+        bool tangents       = check_bool(L,14);
 
-        RangedClutter *ranged_r = OGRE_NEW RangedClutter("fish", 1000, true);
+        RangedClutter *ranged_r = OGRE_NEW RangedClutter(mesh, triangles, tangents);
         self->colMesh->scatter(self->world->getMaterial(mat).id,
                                world_trans, density, min_slope, max_slope, min_elevation,
                                max_elevation, no_z, rotate, align_slope, seed,
