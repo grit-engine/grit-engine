@@ -1155,7 +1155,8 @@ export_or_provide_mat (const StringSet &texs,
 
     
     materials_lua << "material \"" << mname.str() << "\" { ";
-    materials_lua << "vertexColours=4, ";
+    materials_lua << "vertexAmbient=true, ";
+    materials_lua << "vertexAlpha=true, ";
     if (has_alpha || decal) materials_lua << "alpha=true, ";
     if (has_alpha && !decal) materials_lua << "depthWrite=true, ";
     if (decal) materials_lua << "castShadows=false, alphaReject=0, ";
