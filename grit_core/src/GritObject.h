@@ -78,6 +78,7 @@ class GritObject {
         void notifyRange2 (lua_State *L, const GritObjectPtr &self,
                            const float range2)
         {
+                if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
                 bool overlap = false;
                 volatile float fade = calcFade(range2, overlap);
                 // if fade is sufficiently different

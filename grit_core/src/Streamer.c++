@@ -253,6 +253,10 @@ void Streamer::centre (lua_State *L, float x, float y, float z)
                 const GritObjectPtr &o = *i;
                  //note we use vis2 not visibility
                 float range2 = o->range2(x,y,z) / vis2;
+                // sometimes deactivation of an object can cause the deletion of other objects
+                // if those objects are also in the victims list, this can become a problem
+                // so just skip them
+                if (o->getClass()==NULL) continue;
                 o->notifyRange2(L,o,range2);
                 if (!o->getFar().isNull()) {
                         // update the far (perhaps for a second time this frame)
