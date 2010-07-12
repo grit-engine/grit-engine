@@ -425,15 +425,45 @@ void RangedClutter::_updateRenderQueue (Ogre::RenderQueue *queue)
     }
 }
 
-void RangedClutter::update (const Ogre::Vector3 &pos)
+void RangedClutter::update (float x, float y, float z)
 {
-    std::vector<Item> cargo;
-    mSpace.getPresent(pos.x, pos.y, pos.z, 100, 1.0, cargo);
+
+    const float vis2 = mVisibility * mVisibility;
+
+    typedef Cargo::iterator I;
+
+    Cargo cargo;
+    mSpace.getPresent(x, y, z, mStepSize, mVisibility, cargo);
+
+    // iterate through all activated guys to see who is too far to stay activated
+
+    // iterate through the cargo to see who needs to become activated
+    Cargo victims = activated;
+    for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
+            const Item *o = *i;
+             //note we use vis2 not visibility
+            float range2 = o->range2(x,y,z) / vis2;
+
+            //o->notifyRange2(L,o,range2);
+
+            if (range2 > 1) {
+                    // now out of range
+            }
+    }
+
 }
 
 void RangedClutter::push_back (const Transform &t)
 {
-    (void) t;
+    // it is very important that the number of samples does not increase over time, or
+    // the vector will resize and these pointers will become invalid
+    items.push_back(Item());
+    Item &item = items[items.size()-1];
+    item.parent = this;
+    item.activated = false;
+    item.pos = Ogre::Vector3(t.p.x, t.p.y, t.p.z);
+    item.quat = Ogre::Quaternion(t.r.w, t.r.x, t.r.y, t.r.z);
+    mSpace.add(&item);
 }
 
 
@@ -465,4 +495,4 @@ void RangedClutterFactory::destroyInstance (Ogre::MovableObject* obj)
     OGRE_DELETE obj;
 }
 
-// vim: ts=4:sw=4:expandtab
+// pim: ts=4:sw=4:expandtab

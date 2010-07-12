@@ -123,7 +123,12 @@ class CollisionMesh {
         typedef std::vector<ProcObjFace> ProcObjFaces;
         typedef std::vector<float> ProcObjFaceAreas;
 
-        typedef std::map<int,std::pair<ProcObjFaceAreas, ProcObjFaces> > ProcObjFaceDB;
+        struct ProcObjFaceDBEntry {
+                ProcObjFaces faces;
+                ProcObjFaceAreas areas;
+                float totalArea;
+        };
+        typedef std::map<int,ProcObjFaceDBEntry> ProcObjFaceDB;
 
         void getProcObjMaterials (std::vector<int> &r) {
                 typedef ProcObjFaceDB::iterator I;
@@ -146,11 +151,14 @@ class CollisionMesh {
                 float min_slope_sin = gritsin(Degree(90-max_slope));
                 float max_slope_sin = gritsin(Degree(90-min_slope));
                 float range_slope_sin = (max_slope_sin-min_slope_sin);
-                float total_area = 0;
 
-                const std::pair<ProcObjFaceAreas, ProcObjFaces> &pair = procObjFaceDB[mat];
-                const ProcObjFaceAreas &mat_face_areas = pair.first;
-                const ProcObjFaces &mat_faces = pair.second;
+                const ProcObjFaceDBEntry &ent = procObjFaceDB[mat];
+                const ProcObjFaces &mat_faces = ent.faces;
+                const ProcObjFaceAreas &mat_face_areas = ent.areas;
+                float total_area = ent.totalArea;
+                int max_samples = total_area * density;
+
+                r.reserve(r.size() + max_samples);
 
                 srand(seed);
 
@@ -158,7 +166,6 @@ class CollisionMesh {
                 for (unsigned i=0 ; i<mat_face_areas.size() ; ++i) {
 
                         float area = mat_face_areas[i];
-                        total_area += area;
                         float samples_f = area * density + left_overs;
                         int samples = samples_f;
                         left_overs = samples_f - samples;
@@ -227,6 +234,7 @@ class CollisionMesh {
                         }
                 }
                 CLOG << "scatter time: " << t.getMicroseconds() << "us"
+                     << "  max_samples: " << max_samples
                      << "  samples: " << r.size() << "  tris: " << mat_faces.size()
                      << "  area: " << total_area
                      << std::endl;;

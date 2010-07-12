@@ -127,6 +127,8 @@ class SIMDVector4s {
 
         Wrapped::size_type size (void) const { return wrapped.size(); }
 
+        void reserve (size_t s) { wrapped.reserve(s); }
+
 
     protected:
         Wrapped wrapped;
@@ -146,6 +148,12 @@ class CacheFriendlyRangeSpace {
 
         ~CacheFriendlyRangeSpace() { }
 
+        void reserve (size_t s)
+        {
+                cargo.reserve(s);
+                positions.reserve(s);
+        }
+
         void add (const T &o)
         {
                 typename Cargo::iterator begin = cargo.begin(),
@@ -159,9 +167,7 @@ class CacheFriendlyRangeSpace {
                 o->updateIndex(index);
         }
 
-        inline void updateSphere (size_t index, float x,
-                                  float y, float z,
-                                  float d)
+        inline void updateSphere (size_t index, float x, float y, float z, float d)
         {
                 positions[index].updateAll(x,y,z,d);
         }

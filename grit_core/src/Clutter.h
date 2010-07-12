@@ -257,6 +257,9 @@ class RangedClutter : public Ogre::MovableObject {
 
         RangedClutter (const Ogre::String &name, unsigned triangles, bool tangents)
             : Ogre::MovableObject(name),
+              mItemRenderingDistance(10),
+              mVisibility(1),
+              mStepSize(100),
               mBoundingBox(Ogre::AxisAlignedBox::BOX_INFINITE), mBoundingRadius(FLT_MAX),
               mClutter(this,triangles,tangents)
         { }
@@ -285,9 +288,18 @@ class RangedClutter : public Ogre::MovableObject {
         virtual void _updateRenderQueue(Ogre::RenderQueue *q);
 
 
-        void update (const Ogre::Vector3 &);
+        void update (float x, float y, float z);
 
         void push_back (const Transform &t);
+
+        void reserve (size_t s) {
+            items.reserve(s);
+            mSpace.reserve(s);
+        };
+
+        float mItemRenderingDistance;
+        float mVisibility;
+        float mStepSize;
 
         size_t size (void) { return mSpace.size(); }
 
@@ -295,23 +307,36 @@ class RangedClutter : public Ogre::MovableObject {
 
         struct Item {
             RangedClutter *parent;
-            int index;
+            int index; // maintained by the RangeSpace class
             Ogre::Vector3 pos;
             Ogre::Quaternion quat;
+            bool activated;
+            float renderingDistance;
             void updateSphere (float x_, float y_, float z_, float r_)
             {
+                renderingDistance = r_;
+                pos = Ogre::Vector3(x_,y_,z_);
                 parent->mSpace.updateSphere(index, x_, y_, z_, r_);
             }
             void updateIndex (int index_)
             {
                 index = index_;
             }
+            float range2 (float x, float y, float z) const
+            {
+                return (Ogre::Vector3(x,y,z)-pos).squaredLength();
+            }
         };
+        typedef std::vector<Item> Items;
 
         Ogre::AxisAlignedBox mBoundingBox;
         Ogre::Real mBoundingRadius;
         ClutterBuffer mClutter;
-        CacheFriendlyRangeSpace<Item> mSpace;
+        typedef CacheFriendlyRangeSpace<Item*> RS;
+        typedef RS::Cargo Cargo;
+        RS mSpace;
+        Items items;
+        Cargo activated;
 };
 
 

@@ -144,8 +144,10 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
                 f.A =  (*vertexes)[i->v1];
                 f.AB = (*vertexes)[i->v2] - f.A;
                 f.AC = (*vertexes)[i->v3] - f.A;
-                faceDB[m].first.push_back((f.AB.cross(f.AC)).length());
-                faceDB[m].second.push_back(f);
+                float area = (f.AB.cross(f.AC)).length();
+                faceDB[m].faces.push_back(f);
+                faceDB[m].areas.push_back(area);
+                faceDB[m].totalArea += area;
         }
 
         btTriangleIndexVertexArray *v = new btTriangleIndexVertexArray(
