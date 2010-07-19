@@ -369,7 +369,7 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
                         OptionConv = OptionConv + " -log \""+out_file+".mesh.log\""
 
                         if tangents then OptionConv = OptionConv + " -t";
-                        if mirrored then OptionConv = OptionConv + " -tm";
+                        if mirrored then OptionConv = OptionConv + " -tm -ts 4";
                         if rotated then OptionConv = OptionConv + " -tr";
 
                         exec xmlc (OptionConv + " \"" + out_file + ".mesh.xml\" \"" + out_file + ".mesh\"")
