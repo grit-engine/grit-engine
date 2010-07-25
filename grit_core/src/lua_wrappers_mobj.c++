@@ -179,6 +179,19 @@ TRY_START
 TRY_END
 }
 
+static int rclutter_update (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        GET_UD_MACRO(RangedClutter,self,1,RCLUTTER_TAG);
+        float x = check_float(L,2);
+        float y = check_float(L,3);
+        float z = check_float(L,4);
+        self.update(x,y,z);
+        return 0;
+TRY_END
+}
+
 static int rclutter_destroy (lua_State *L)
 {
 TRY_START
@@ -201,6 +214,8 @@ TRY_START
         std::string key = luaL_checkstring(L,2);
         if (key=="destroy") {
                 push_cfunction(L,rclutter_destroy);
+        } else if (key=="update") {
+                push_cfunction(L,rclutter_update);
         } else if (!mobj_index(L,self,key)) {
                 my_lua_error(L,"Not a valid RangedClutter member: "+key);
         }

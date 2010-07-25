@@ -179,6 +179,16 @@ class Streamer {
 
         typedef CacheFriendlyRangeSpace<GritObjectPtr> Space;
 
+        // ACTIVATION UPDATE CALLBACK
+
+        struct UpdateHook {
+                virtual void update(float x, float y, float z) = 0;
+        };
+
+        void registerUpdateHook (UpdateHook *rc);
+
+        void unregisterUpdateHook (UpdateHook *rc);
+
     protected:
 
         void eraseClass (const std::string &name);
@@ -204,6 +214,8 @@ class Streamer {
 
         bool shutdown;
 
+        typedef std::vector<UpdateHook*> UpdateHooks;
+        UpdateHooks updateHooks;
 
 };
 

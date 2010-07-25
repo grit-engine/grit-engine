@@ -35,6 +35,7 @@ class ClutterFactory;
 #include "math_util.h"
 
 #include "CacheFriendlyRangeSpaceSIMD.h"
+#include "Streamer.h"
 
 class ClutterBuffer {
 
@@ -54,23 +55,26 @@ class ClutterBuffer {
             unsigned mDeclSize;
      
             struct BTicket {
-                const unsigned offset;
-                BTicket(unsigned offset_) : offset(offset_) { }
-                BTicket(const BTicket &o) : offset(o.offset) { }
-                bool failed (void) { return offset == 0xFFFFFFFF; }
+                unsigned long offset;
+                BTicket (void) : offset(0xFFFFFFFF) { }
+                BTicket (unsigned offset_) : offset(offset_) { }
+                BTicket (const BTicket &o) : offset(o.offset) { }
+                bool valid (void) { return offset != 0xFFFFFFFF; }
             };
 
         public:
 
             // get a bit more type safety
             struct QTicket : public BTicket {
-                QTicket(unsigned offset_) : BTicket(offset_) { }
-                QTicket(const QTicket &o) : BTicket(o.offset) { }
+                QTicket (void)  : BTicket() { }
+                QTicket (unsigned offset_) : BTicket(offset_) { }
+                QTicket (const QTicket &o) : BTicket(o.offset) { }
             };
 
             struct MTicket : public BTicket {
-                MTicket(unsigned offset_) : BTicket(offset_) { }
-                MTicket(const MTicket &o) : BTicket(o.offset) { }
+                MTicket (void)  : BTicket() { }
+                MTicket (unsigned offset_) : BTicket(offset_) { }
+                MTicket (const MTicket &o) : BTicket(o.offset) { }
             };
 
             Section (ClutterBuffer *parent, unsigned triangles, const Ogre::MaterialPtr &m);
@@ -112,19 +116,24 @@ class ClutterBuffer {
 
         struct QTicket {
             Ogre::MaterialPtr m; // used as key to get the right Section
-            const Section::QTicket t;
+            Section::QTicket t;
+            QTicket (void) { }
             QTicket (const Ogre::MaterialPtr &m_, const Section::QTicket &t_) : m(m_), t(t_) { }
-            QTicket (const QTicket &o) : m(o.m), t(o.t) { }
+            QTicket &operator= (const QTicket &o) { m=o.m; t=o.t; return *this; }
+            bool valid (void) { return t.valid(); }
         };
         struct MTicket {
             Ogre::MaterialPtr m;
             Ogre::MeshPtr mesh; // need to look at the mesh each time it is updated
-            const Section::MTicket t;
+            Section::MTicket t;
+            MTicket (void) { }
             MTicket (const Ogre::MaterialPtr &m_,
                      const Ogre::MeshPtr &mesh_,
                      const Section::MTicket &t_) : m(m_), mesh(mesh_), t(t_) { }
-            MTicket (const MTicket &o) : m(o.m), mesh(o.mesh), t(o.t) { }
+            MTicket &operator= (const MTicket &o) { m=o.m; mesh=o.mesh; t=o.t; return *this; }
+            bool valid (void) { return t.valid(); }
         };
+
 
         ClutterBuffer (Ogre::MovableObject *mobj, unsigned triangles, bool tangents);
 
@@ -251,20 +260,23 @@ class MovableClutterFactory : public Ogre::MovableObjectFactory {
 // RangedClutter mobj created, initialised using scatter query
 // attached to same node as object entity
 // added to a table in streamer that updates it every frame
-class RangedClutter : public Ogre::MovableObject {
+class RangedClutter : public Ogre::MovableObject, public Streamer::UpdateHook {
 
     public:
 
         RangedClutter (const Ogre::String &name, unsigned triangles, bool tangents)
             : Ogre::MovableObject(name),
-              mItemRenderingDistance(10),
+              mItemRenderingDistance(40),
               mVisibility(1),
-              mStepSize(100),
+              mStepSize(100000),
               mBoundingBox(Ogre::AxisAlignedBox::BOX_INFINITE), mBoundingRadius(FLT_MAX),
               mClutter(this,triangles,tangents)
-        { }
+        { registerMe(); }
 
-        virtual ~RangedClutter (void) { }
+        virtual ~RangedClutter (void) { unregisterMe(); }
+
+        void registerMe (void);
+        void unregisterMe (void);
 
         virtual const Ogre::String& getMovableType (void) const
         {
@@ -290,12 +302,15 @@ class RangedClutter : public Ogre::MovableObject {
 
         void update (float x, float y, float z);
 
+        // be compatible with std::vector
         void push_back (const Transform &t);
-
         void reserve (size_t s) {
             items.reserve(s);
             mSpace.reserve(s);
         };
+
+        void setNextMesh (const Ogre::MeshPtr &m) { mNextMesh = m; }
+        Ogre::MeshPtr getNextMesh (void) { return mNextMesh; }
 
         float mItemRenderingDistance;
         float mVisibility;
@@ -308,9 +323,12 @@ class RangedClutter : public Ogre::MovableObject {
         struct Item {
             RangedClutter *parent;
             int index; // maintained by the RangeSpace class
+            Ogre::MeshPtr mesh;
             Ogre::Vector3 pos;
             Ogre::Quaternion quat;
             bool activated;
+            int activatedIndex;
+            ClutterBuffer::MTicket ticket;
             float renderingDistance;
             void updateSphere (float x_, float y_, float z_, float r_)
             {
@@ -318,17 +336,15 @@ class RangedClutter : public Ogre::MovableObject {
                 pos = Ogre::Vector3(x_,y_,z_);
                 parent->mSpace.updateSphere(index, x_, y_, z_, r_);
             }
-            void updateIndex (int index_)
-            {
-                index = index_;
-            }
+            void updateIndex (int index_) { index = index_; }
             float range2 (float x, float y, float z) const
             {
-                return (Ogre::Vector3(x,y,z)-pos).squaredLength();
+                return (Ogre::Vector3(x,y,z)-pos).squaredLength() / renderingDistance / renderingDistance;
             }
         };
         typedef std::vector<Item> Items;
 
+        Ogre::MeshPtr mNextMesh;
         Ogre::AxisAlignedBox mBoundingBox;
         Ogre::Real mBoundingRadius;
         ClutterBuffer mClutter;

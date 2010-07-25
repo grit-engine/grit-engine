@@ -21,6 +21,8 @@
 
 #include <limits>
 
+#include <OgreSceneManager.h>
+
 #include "PhysicsWorld.h"
 #include "CollisionMesh.h"
 #include "Clutter.h"
@@ -29,6 +31,8 @@
 #include "lua_wrappers_physics.h"
 #include "lua_wrappers_gritobj.h"
 #include "lua_wrappers_mobj.h"
+#include "lua_wrappers_mesh.h"
+#include "lua_wrappers_scnmgr.h"
 
 // Sweep Callback {{{
 
@@ -237,26 +241,38 @@ TRY_END
 static int rbody_ranged_scatter (lua_State *L)
 {
 TRY_START
-        check_args(L,14);
+        check_args(L,16);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        const char *mat = luaL_checkstring(L,2);
+        GET_UD_MACRO(Ogre::SceneManager,sm,2,SCNMGR_TAG);
+        const char *mat    = luaL_checkstring(L,3);
+        const char *name    = luaL_checkstring(L,4);
+        GET_UD_MACRO(Ogre::MeshPtr,mesh,5,MESH_TAG);
+        float density       = check_float(L,6);
+        float min_slope     = check_float(L,7);
+        float max_slope     = check_float(L,8);
+        float min_elevation = check_float(L,9);
+        float max_elevation = check_float(L,10);
+        bool no_z           = check_bool(L,11);
+        bool rotate         = check_bool(L,12);
+        bool align_slope    = check_bool(L,13);
+        unsigned seed       = check_t<unsigned>(L,14);
+        unsigned triangles  = check_int(L,15,0,65535);
+        bool tangents       = check_bool(L,16);
+
         Transform world_trans;
         world_trans.p = self->getPosition();
         world_trans.r = self->getOrientation();
-        float density       = check_float(L,3);
-        float min_slope     = check_float(L,4);
-        float max_slope     = check_float(L,5);
-        float min_elevation = check_float(L,6);
-        float max_elevation = check_float(L,7);
-        bool no_z           = check_bool(L,8);
-        bool rotate         = check_bool(L,9);
-        bool align_slope    = check_bool(L,10);
-        unsigned seed       = check_t<unsigned>(L,11);
-        const char *mesh    = luaL_checkstring(L,12);
-        unsigned triangles  = check_int(L,13,0,65536);
-        bool tangents       = check_bool(L,14);
 
-        RangedClutter *ranged_r = OGRE_NEW RangedClutter(mesh, triangles, tangents);
+        std::stringstream triangles_;
+        triangles_ << triangles;
+        std::stringstream tangents_;
+        tangents_ << tangents;
+
+        Ogre::NameValuePairList ps;
+        ps["triangles"] = triangles_.str();
+        ps["tangents"] = tangents_.str();
+        RangedClutter *ranged_r = static_cast<RangedClutter*>(sm.createMovableObject(name, "RangedClutter", &ps));
+        ranged_r->setNextMesh(mesh);
         self->colMesh->scatter(self->world->getMaterial(mat).id,
                                world_trans, density, min_slope, max_slope, min_elevation,
                                max_elevation, no_z, rotate, align_slope, seed,

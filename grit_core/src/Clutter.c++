@@ -26,7 +26,7 @@
 
 #include "Clutter.h"
 #include "CentralisedLog.h"
-
+#include "Grit.h"
 
 
 
@@ -64,7 +64,12 @@ ClutterBuffer::MTicket ClutterBuffer::reserveGeometry (const Ogre::MeshPtr &mesh
 
 void ClutterBuffer::releaseGeometry (const MTicket &t)
 {
-    (void) t;
+    int i=0;
+    //for (int i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
+        Ogre::SubMesh *sm = t.mesh->getSubMesh(i);
+        Section &s = getOrCreateSection(t.m);
+        s.releaseGeometry(t.t, sm);
+    //}
 }
 
 void ClutterBuffer::updateGeometry (const MTicket &t,
@@ -223,7 +228,7 @@ void ClutterBuffer::Section::updateGeometry (const MTicket &t,
     const Ogre::VertexElement *vel_tang = NULL; //initialise to avoid warning
     if (mParent->mTangents) {
         vel_tang = vdecl->findElementBySemantic (Ogre::VES_TANGENT);
-        APP_ASSERT(vel_tang->getType() == Ogre::VET_FLOAT3);
+        APP_ASSERT(vel_tang==NULL || vel_tang->getType()==Ogre::VET_FLOAT3);
     }
 
 
@@ -253,8 +258,8 @@ void ClutterBuffer::Section::updateGeometry (const MTicket &t,
         memcpy(&norm.x, &the_vbuf[vo + vel_norm->getOffset()], vel_norm->getSize());
         norm = orientation * norm;
 
-        Ogre::Vector3 tang;
-        if (mParent->mTangents) {
+        Ogre::Vector3 tang = Ogre::Vector3(0,0,0);
+        if (mParent->mTangents && vel_tang!=NULL) {
             memcpy(&tang.x, &the_vbuf[vo + vel_tang->getOffset()], vel_tang->getSize());
             tang = orientation * tang;
         }
@@ -404,6 +409,15 @@ void RangedClutter::visitRenderables (Ogre::Renderable::Visitor *visitor, bool d
     }
 }
 
+void RangedClutter::registerMe (void)
+{
+    grit->getStreamer().registerUpdateHook(this);
+}
+
+void RangedClutter::unregisterMe (void)
+{
+    grit->getStreamer().unregisterUpdateHook(this);
+}
 
 void RangedClutter::_updateRenderQueue (Ogre::RenderQueue *queue)
 {
@@ -427,30 +441,54 @@ void RangedClutter::_updateRenderQueue (Ogre::RenderQueue *queue)
 
 void RangedClutter::update (float x, float y, float z)
 {
-
     const float vis2 = mVisibility * mVisibility;
 
     typedef Cargo::iterator I;
 
-    Cargo cargo;
-    mSpace.getPresent(x, y, z, mStepSize, mVisibility, cargo);
-
     // iterate through all activated guys to see who is too far to stay activated
-
-    // iterate through the cargo to see who needs to become activated
     Cargo victims = activated;
     for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
-            const Item *o = *i;
-             //note we use vis2 not visibility
-            float range2 = o->range2(x,y,z) / vis2;
+        Item *o = *i;
+         //note we use vis2 not visibility
+        float range2 = o->range2(x,y,z) / vis2;
 
-            //o->notifyRange2(L,o,range2);
+        //o->notifyRange2(range2);
 
-            if (range2 > 1) {
-                    // now out of range
-            }
+        if (range2 > 1) {
+                // now out of range
+            mClutter.releaseGeometry(o->ticket);
+            o->activated = false;
+            Item *filler = activated[activated.size()-1];
+            activated[o->activatedIndex] = filler;
+            filler->activatedIndex = o->activatedIndex;
+            activated.pop_back();
+        }
     }
 
+    Cargo cargo;
+    mSpace.getPresent(x, y, z, mStepSize, mVisibility, cargo);
+    // iterate through the cargo to see who needs to become activated
+    for (Cargo::iterator i=cargo.begin(),i_=cargo.end() ; i!=i_ ; ++i) {
+            Item *o = *i;
+
+            if (o->activated) continue;
+
+            float range2 = o->range2(x,y,z) / vis2;
+
+            // not in range yet
+            if (range2 > 1) continue;
+
+            //activate o
+            o->ticket = mClutter.reserveGeometry(o->mesh);
+            if (!o->ticket.valid()) continue;
+            mClutter.updateGeometry(o->ticket, o->pos, o->quat);
+            o->activatedIndex = activated.size();
+            activated.push_back(o);
+
+
+            //o->notifyRange2(range2);
+            o->activated = true;
+    }
 }
 
 void RangedClutter::push_back (const Transform &t)
@@ -461,9 +499,10 @@ void RangedClutter::push_back (const Transform &t)
     Item &item = items[items.size()-1];
     item.parent = this;
     item.activated = false;
-    item.pos = Ogre::Vector3(t.p.x, t.p.y, t.p.z);
+    item.mesh = mNextMesh;
     item.quat = Ogre::Quaternion(t.r.w, t.r.x, t.r.y, t.r.z);
     mSpace.add(&item);
+    item.updateSphere(t.p.x, t.p.y, t.p.z, mItemRenderingDistance);
 }
 
 
@@ -481,7 +520,7 @@ Ogre::MovableObject* RangedClutterFactory::createInstanceImpl (
     unsigned triangles = atoi(ni->second.c_str());
 
     bool tangents = false; // optional
-    if (params>0 && (ni = params->find("triangles"))!=params->end()) {
+    if (params>0 && (ni = params->find("tangents"))!=params->end()) {
         tangents = ni->second == "true";
     }
 

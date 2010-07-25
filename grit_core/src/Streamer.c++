@@ -337,6 +337,8 @@ void Streamer::centre (lua_State *L, float x, float y, float z)
                 while (!near.isNull()) {
                         if (near->withinRange(x,y,z,visibility * fadeOverlapFactor)) {
                                 if (near->isActivated()) {
+                                        // why deactivate?
+                                        // we already ensured it is not activated above...
                                         o->deactivate(L,o);
                                         // don't activate, near gobj is
                                         // in the way
@@ -361,6 +363,10 @@ void Streamer::centre (lua_State *L, float x, float y, float z)
 
         BackgroundMeshLoader::getSingleton().handleBastards();
         BackgroundMeshLoader::getSingleton().checkGPUUsage();
+
+        for (UpdateHooks::iterator i=updateHooks.begin(),i_=updateHooks.end() ; i!=i_ ; ++i) {
+                (*i)->update(x,y,z);
+        }
 }
 
 void Streamer::list (const GritObjectPtr &o)
@@ -383,6 +389,24 @@ void Streamer::unlist (const GritObjectPtr &o)
         activated.pop_back();
         if (o->getNeedsFrameCallbacks())
                 remove_if_exists(needFrameCallbacks, o);
+}
+
+void Streamer::registerUpdateHook (UpdateHook *o)
+{
+        UpdateHooks::iterator begin = updateHooks.begin(), end = updateHooks.end();
+        UpdateHooks::iterator iter  = find(begin,end,o);
+        if (iter!=end) return;
+        updateHooks.push_back(o);
+}
+
+void Streamer::unregisterUpdateHook (UpdateHook *o)
+{
+        UpdateHooks::iterator begin = updateHooks.begin(), end = updateHooks.end();
+        UpdateHooks::iterator iter  = find(begin,end,o);
+        if (iter==end) return;
+        size_t index = iter - begin;
+        updateHooks[index] = updateHooks[updateHooks.size()-1];
+        updateHooks.pop_back();
 }
 
 // vim: shiftwidth=8:tabstop=8:expandtab
