@@ -528,6 +528,8 @@ void extract (const Config &cfg, std::ostream &out)
             
 
                 bool cast_shadow = 0 != (o.flags&OBJ_FLAG_POLE_SHADOW);
+                cast_shadow = true;
+                if ((o.flags & OBJ_FLAG_ALPHA1) && (o.flags & OBJ_FLAG_NO_SHADOW)) cast_shadow = false;
 
                 classes<<"streamer:addClass("
                        <<"\""<<o.id<<"\","
