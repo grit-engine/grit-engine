@@ -1164,7 +1164,7 @@ export_or_provide_mat (const StringSet &texs,
     if (decal) {
         materials_lua << "castShadows=false, alphaReject=0, ";
     } else {
-        materials_lua << "alphaReject=0.25";
+        materials_lua << "alphaReject=0.25, ";
     }
     if (double_sided) materials_lua << "backfaces=true, ";
     if (!dynamic_lighting) materials_lua << "normals=false, ";
