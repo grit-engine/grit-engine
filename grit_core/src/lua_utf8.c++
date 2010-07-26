@@ -455,7 +455,7 @@ static int lua_utf8_gsub (lua_State *L)
         switch (lua_gettop(L)) {
                 case 4:
                 if (!lua_isnil(L,4))
-                        n = check_t<int32_t>(L,3);
+                        n = check_t<int32_t>(L,4);
                 break;
 
                 default:
