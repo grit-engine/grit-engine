@@ -55,6 +55,11 @@ ClutterBuffer::MTicket ClutterBuffer::reserveGeometry (const Ogre::MeshPtr &mesh
         Ogre::SubMesh *sm = mesh->getSubMesh(i);
         APP_ASSERT(sm->operationType == Ogre::RenderOperation::OT_TRIANGLE_LIST);
         Ogre::MaterialPtr m = Ogre::MaterialManager::getSingleton().getByName(sm->getMaterialName(), "GRIT");
+        if (m.isNull()) {
+            CERR << "Material not found: \"" << sm->getMaterialName() << "\" "
+                 << "in mesh \"" << mesh->getName() << "\"" << std::endl;
+            m = Ogre::MaterialManager::getSingleton().getByName("/BaseWhite", "GRIT");
+        }
         Section &s = getOrCreateSection(m);
         Section::MTicket stkt = s.reserveGeometry(sm);
     //}
@@ -119,6 +124,7 @@ ClutterBuffer::Section::Section (ClutterBuffer *parent, unsigned triangles, cons
 {
     mParent = parent;
     mMaterial = m;
+    APP_ASSERT(!m.isNull());
     marker = 0;
 
     mRenderOperation.useIndexes = false;
@@ -259,7 +265,7 @@ void ClutterBuffer::Section::updateGeometry (const MTicket &t,
         norm = orientation * norm;
 
         Ogre::Vector3 tang = Ogre::Vector3(0,0,0);
-        if (mParent->mTangents && vel_tang!=NULL) {
+        if (vel_tang!=NULL) {
             memcpy(&tang.x, &the_vbuf[vo + vel_tang->getOffset()], vel_tang->getSize());
             tang = orientation * tang;
         }
@@ -380,7 +386,7 @@ Ogre::MovableObject* MovableClutterFactory::createInstanceImpl (
     unsigned triangles = atoi(ni->second.c_str());
 
     bool tangents = false; // optional
-    if (params>0 && (ni = params->find("triangles"))!=params->end()) {
+    if (params>0 && (ni = params->find("tangents"))!=params->end()) {
         tangents = ni->second == "true";
     }
 

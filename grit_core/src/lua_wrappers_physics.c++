@@ -266,7 +266,7 @@ TRY_START
         std::stringstream triangles_;
         triangles_ << triangles;
         std::stringstream tangents_;
-        tangents_ << tangents;
+        tangents_ << (tangents?"true":"false");
 
         Ogre::NameValuePairList ps;
         ps["triangles"] = triangles_.str();
