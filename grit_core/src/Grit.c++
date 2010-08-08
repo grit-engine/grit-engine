@@ -25,6 +25,15 @@
 
 #include <vector>
 
+#ifdef WIN32
+#  include "win32/MouseDirectInput8.h"
+#  include "win32/KeyboardDirectInput8.h"
+#  include "win32/KeyboardWinAPI.h"
+#else
+#  include "linux/KeyboardX11.h"
+#  include "linux/MouseX11.h"
+#endif
+
 #include <Ogre.h>
 #include <OgreFontManager.h>
 #include <OgreMeshManager.h>
@@ -43,16 +52,6 @@
 #include "path_util.h"
 
 #include "HUD.h"
-
-#ifdef WIN32
-#  include "win32/MouseDirectInput8.h"
-#  include "win32/KeyboardDirectInput8.h"
-#  include "win32/KeyboardWinAPI.h"
-#else
-#  include "linux/KeyboardX11.h"
-#  include "linux/MouseX11.h"
-#endif
-
 
 Grit::Grit (Ogre::Root *ogre, Grit *& grit) :
         ogre(ogre),
