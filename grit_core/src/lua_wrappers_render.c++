@@ -48,6 +48,16 @@ void push_viewport (lua_State *L, Ogre::Viewport *vp)
         maps.viewports[vp].push_back(ud);
 }
 
+static int viewport_update (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::Viewport,self,1,VIEWPORT_TAG);
+        self._updateDimensions();
+        return 0;
+TRY_END
+}
+
 static int viewport_destroy (lua_State *L)
 {
 TRY_START
@@ -164,6 +174,8 @@ TRY_START
                 lua_pushboolean(L,self.getClearEveryFrame());
         } else if (key=="overlaysEnabled") {
                 lua_pushboolean(L,self.getOverlaysEnabled());
+        } else if (key=="update") {
+                push_cfunction(L,viewport_update);
         } else {
                 my_lua_error(L,"Not a valid Viewport member: "+key);
         }
