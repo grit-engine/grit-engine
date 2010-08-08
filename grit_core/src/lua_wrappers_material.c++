@@ -802,6 +802,27 @@ TRY_START
 TRY_END
 }
 
+static int mat_get_texture_hw_gamma (lua_State *L)
+{
+TRY_START
+        check_args(L,4);
+        Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
+        bool b = tex->isHardwareGammaEnabled();
+        lua_pushboolean(L,b);
+        return 1;
+TRY_END
+}
+static int mat_set_texture_hw_gamma (lua_State *L)
+{
+TRY_START
+        check_args(L,4+1);
+        Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
+        bool b = check_bool(L,5); 
+        tex->setHardwareGammaEnabled(b);
+        return 0;
+TRY_END
+}
+
 static const char *
 filter_options_to_string (lua_State *L, Ogre::FilterOptions fo)
 {
@@ -1994,6 +2015,10 @@ static int mat_index(lua_State *L) {
                 push_cfunction(L,mat_get_texture_addressing_mode);
         } else if (!::strcmp(key,"setTextureAddressingMode")) {
                 push_cfunction(L,mat_set_texture_addressing_mode);
+        } else if (!::strcmp(key,"getTextureHWGamma")) {
+                push_cfunction(L,mat_get_texture_hw_gamma);
+        } else if (!::strcmp(key,"setTextureHWGamma")) {
+                push_cfunction(L,mat_set_texture_hw_gamma);
 
         } else if (!::strcmp(key,"name")) {
                 lua_pushstring(L,self->getName().c_str());
