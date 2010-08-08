@@ -24,6 +24,7 @@
 
 #include <Ogre.h>
 #include <OgreArchiveFactory.h>
+#include <OgreOverlayElementFactory.h>
 
 #ifdef NO_PLUGINS
 #  include "OgreOctreePlugin.h"
@@ -35,20 +36,12 @@
 #  endif
 #endif
 
-#ifdef WIN32
-#  include "win32/MouseDirectInput8.h"
-#  include "win32/KeyboardDirectInput8.h"
-#  include "win32/KeyboardWinAPI.h"
-#else
-#  include "linux/KeyboardX11.h"
-#  include "linux/MouseX11.h"
-#endif
-
 #include "Grit.h"
 #include "BackgroundMeshLoader.h"
 #include "CentralisedLog.h"
 #include "LuaParticleSystem.h"
 #include "Clutter.h"
+#include "HUD.h"
 
 CentralisedLog clog;
 
@@ -68,6 +61,23 @@ void app_fatal()
         abort();
 }
 
+// TODO: move this somewhere sensible
+class TextListOverlayElementFactory : public Ogre::OverlayElementFactory {
+
+        public:
+
+        virtual Ogre::OverlayElement*
+        createOverlayElement (const std::string& instanceName)
+        {
+            return new HUD::TextListOverlayElement(instanceName);
+        }
+
+        virtual const std::string& getTypeName () const
+        {
+            return HUD::TextListOverlayElement::msTypeName;
+        }
+
+};
 
 int main(int argc, const char **argv)
 {
@@ -116,66 +126,46 @@ int main(int argc, const char **argv)
 
                 #ifdef WIN32
                 bool use_d3d9 = getenv("GRIT_GL")==NULL;
-                bool use_dinput = getenv("GRIT_DINPUT")!=NULL;
                 #else
                 bool use_d3d9 = false;
                 #endif
 
-                bool use_vsync = getenv("GRIT_NOVSYNC")==NULL;
-                bool use_fullscreen = getenv("GRIT_FULLSCREEN")!=NULL;
-
+                Ogre::RenderSystem *rs;
                 if (use_d3d9) {
-                        Ogre::RenderSystem *rs =
-                                ogre->getRenderSystemByName("Direct3D9 Rendering Subsystem");
+                        rs = ogre->getRenderSystemByName("Direct3D9 Rendering Subsystem");
                         rs->setConfigOption("Allow NVPerfHUD","Yes");
-                        rs->setConfigOption("FSAA","None");
                         rs->setConfigOption("Floating-point mode","Consistent");
-                        rs->setConfigOption("Full Screen",use_fullscreen?"Yes":"No");
-                        rs->setConfigOption("VSync",use_vsync?"Yes":"No");
                         rs->setConfigOption("Video Mode","800 x 600 @ 32-bit colour");
-                        rs->setConfigOption("sRGB Gamma Conversion","No");
-                        ogre->setRenderSystem(rs);
+                        rs->setConfigOption("sRGB Gamma Conversion","Yes");
                 } else {
-                        Ogre::RenderSystem *rs =
-                                ogre->getRenderSystemByName("OpenGL Rendering Subsystem");
-                        rs->setConfigOption("FSAA","0");
-                        rs->setConfigOption("Full Screen",use_fullscreen?"Yes":"No");
+                        rs = ogre->getRenderSystemByName("OpenGL Rendering Subsystem");
                         rs->setConfigOption("RTT Preferred Mode","FBO");
-                        rs->setConfigOption("VSync",use_vsync?"Yes":"No");
                         rs->setConfigOption("Video Mode","800 x 600");
-                        rs->setConfigOption("sRGB Gamma Conversion","No");
-                        ogre->setRenderSystem(rs);
+                        rs->setConfigOption("sRGB Gamma Conversion","Yes");
                 }
+                rs->setConfigOption("Full Screen","No");
+                rs->setConfigOption("VSync",getenv("GRIT_NOVSYNC")?"No":"Yes");
+                ogre->setRenderSystem(rs);
 
-                ogre->addMovableObjectFactory(new MovableClutterFactory());
-                ogre->addMovableObjectFactory(new RangedClutterFactory());
+                ogre->initialise(true,"Grit Game Window");
 
-                Ogre::RenderWindow *win = ogre->initialise(true,"Grit Game Window");
-
-                size_t winid;
-                win->getCustomAttribute("WINDOW", &winid);
-
-                #ifdef WIN32
-                Mouse *mouse = new MouseDirectInput8(winid);
-                Keyboard *keyb = use_dinput ? (Keyboard *)new KeyboardDirectInput8(winid)
-                                            : (Keyboard *)new KeyboardWinAPI(winid);
-                HMODULE mod = GetModuleHandle(NULL);
-                HICON icon_big = (HICON)LoadImage(mod,MAKEINTRESOURCE(118),IMAGE_ICON,0,0,LR_DEFAULTSIZE|LR_SHARED);
-                HICON icon_small = (HICON)LoadImage(mod,MAKEINTRESOURCE(118),IMAGE_ICON,16,16,LR_DEFAULTSIZE|LR_SHARED);
-                SendMessage((HWND)winid, (UINT)WM_SETICON, (WPARAM) ICON_BIG, (LPARAM) icon_big);
-                SendMessage((HWND)winid, (UINT)WM_SETICON, (WPARAM) ICON_SMALL, (LPARAM) icon_small);
-                #else
-                Mouse *mouse = new MouseX11(winid);
-                Keyboard *keyb = new KeyboardX11(winid);
+                #if 0
+                ogre->getAutoCreatedWindow()->setHidden(true);
+                Ogre::WindowEventUtilities::messagePump(); // make sure setHidden comes into effect as soon as possible
                 #endif
+
 
                 Ogre::ParticleSystemManager::getSingleton()
                         .addAffectorFactory(new LuaParticleAffectorFactory());
-
                 Ogre::ParticleSystemManager::getSingleton()
                         .addRendererFactory(new LuaParticleRendererFactory());
+                Ogre::OverlayManager::getSingleton()
+                        .addOverlayElementFactory(new TextListOverlayElementFactory());
+                ogre->addMovableObjectFactory(new MovableClutterFactory());
+                ogre->addMovableObjectFactory(new RangedClutterFactory());
 
-                new Grit(ogre,mouse,keyb,grit); // writes itself back to grit
+
+                new Grit(ogre,grit); // writes itself back to grit
 
                 // now call out to lua
 

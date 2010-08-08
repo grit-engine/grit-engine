@@ -50,9 +50,13 @@ class Grit : public Ogre::WindowEventListener, public Ogre::MeshSerializerListen
 
 public:
 
-        Grit (Ogre::Root *root, Mouse *mouse, Keyboard *keyboard, Grit *& grit);
+        Grit (Ogre::Root *root, Grit *& grit);
 
         ~Grit ();
+
+        void onWindowUpdate (void);
+
+        void updateWindow (bool vsync);
 
         void windowResized(Ogre::RenderWindow *rw);
 
@@ -90,6 +94,8 @@ public:
 protected:
 
         Ogre::Root *ogre;
+
+        Ogre::RenderWindow *win;
 
         Ogre::OctreeSceneManager *sm;
 

@@ -1202,33 +1202,12 @@ TRY_END
 }
 
 
-static int global_rendersystem_get_vsync (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        bool b = grit->getOgre()->getRenderSystem()->getWaitForVerticalBlank();
-        lua_pushboolean(L,b);
-        return 1;
-TRY_END
-}
-
-
-static int global_rendersystem_set_vsync (lua_State *L)
+static int global_update_window (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        bool b = check_bool(L,1);
-        grit->getOgre()->getRenderSystem()->setWaitForVerticalBlank(b);
-        return 0;
-TRY_END
-}
-
-
-static int global_rendersystem_reinitialise (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        grit->getOgre()->getRenderSystem()->reinitialise();
+        bool vsync = check_bool(L,1);
+        grit->updateWindow(vsync);
         return 0;
 TRY_END
 }
@@ -1992,9 +1971,7 @@ static const luaL_reg global[] = {
         {"fire_frame_ended",global_fire_frame_ended},
         {"update_elapsed_time",global_update_elapsed_time},
         {"get_rendersystem",global_get_rendersystem},
-        {"set_vsync",global_rendersystem_set_vsync},
-        {"get_vsync",global_rendersystem_get_vsync},
-        {"reinitialise",global_rendersystem_reinitialise},
+        {"update_window",global_update_window},
 
         {"get_hud_root",global_get_hud_root},
         {"get_main_win" ,global_get_main_win},
