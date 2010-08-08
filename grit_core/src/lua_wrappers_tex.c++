@@ -128,6 +128,8 @@ TRY_START
                 lua_pushnumber(L,self->getDepth());
         } else if (key=="hasAlpha") {
                 lua_pushboolean(L,self->hasAlpha());
+        } else if (key=="hardwareGammaEnabled") {
+                lua_pushboolean(L,self->isHardwareGammaEnabled());
         } else if (key=="size") {
                 lua_pushnumber(L,self->getSize());
         } else {
