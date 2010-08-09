@@ -182,6 +182,9 @@ void ClutterBuffer::Section::reserveTriangles (unsigned triangles, unsigned &off
     }
     len = found;
     off = marker-found;
+    for (unsigned j=off ; j<marker ; ++j) {
+        usage[j] = true;
+    }
 }
 
 void ClutterBuffer::Section::releaseTriangles (unsigned off, unsigned len)
@@ -203,6 +206,7 @@ ClutterBuffer::Section::MTicket ClutterBuffer::Section::reserveGeometry (Ogre::S
     unsigned triangles = idata->indexCount / 3u;
     unsigned off, len;
     reserveTriangles(triangles, off, len);
+    if (len==0) return MTicket();
     APP_ASSERT(len == triangles);
     return MTicket (off);
 }
@@ -295,7 +299,7 @@ ClutterBuffer::Section::QTicket ClutterBuffer::Section::reserveQuad (void)
 {
     unsigned off, len;
     reserveTriangles(2, off, len);
-    if (len==0) return QTicket(0xFFFFFFFF);
+    if (len==0) return QTicket();
     return QTicket(off);
 }
 

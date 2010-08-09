@@ -23,6 +23,7 @@
 
 #define Keyboard_h
 
+#include <string>
 #include <vector>
 
 
