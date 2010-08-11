@@ -1,0 +1,82 @@
+Utility Objects
+---------------
+spline
+plot
+stringdb
+
+
+Physics
+-------
+PsxBody (rbody)
+PsxMesh (colmesh)
+
+
+Graphics
+--------
+You get one window at program start
+There is a concept of a scene in which objects can be added:
+* GfxBody
+* GfxCam
+* GfxLight
+* the two kinds of clutter
+Objects can be attached relative to other objects
+
+
+cam (tied to viewport)
+entity (also plays role as scene node)
+light (will be deferred shading light)
+clutter
+rclutter
+psys
+HUD
+*pane
+*text
+Resources
+*tex
+*mesh
+*skel
+Need some way to debug physics
+
+
+
+Object System
+-------------
+gritcls
+gritobj
+
+
+Death Row
+---------
+pworld
+streamer
+timer
+scnmgr
+node
+manobj
+viewport
+statgeo
+instgeo
+rwin
+
+Long Term Death Row
+-------------------
+mat
+gpuprog
+rtex
+vector3
+quat
+
+
+
+TASK: integrate vector3 and quat into lua
+TASK: de-selfify streamer
+TASK: change timer to single function (return microseconds since boot or program start or something)
+TASK: de-ogrify spline code
+TASK: retire static/instance geometry, rwin, manobj
+TASK: de-selfify pworld
+TASK: hide camera with GfxCam and bind it to some concept of a viewport
+TASK: reimplement HUD system underneath GfxCam
+TASK: implement GfxBody that does away with ogre entities, scene node and scene manager
+
+
+Do we need our own io system that fundamentally understands relative paths?

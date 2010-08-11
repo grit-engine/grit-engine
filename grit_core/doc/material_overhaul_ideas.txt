@@ -1,0 +1,103 @@
+diffuseMap
+normalMap
+specularMap
+translucencyMap
+
+
+
+
+-----
+alpha
+-----
+alpha colour
+alpha from texture
+alpha from vertex
+alpha reject
+
+
+-------
+ambient
+-------
+
+ambient colour
+ambient vertex
+tex
+
+-------
+diffuse
+-------
+
+diffuse colour
+tex
+
+--------
+specular
+--------
+
+specular colour
+specularity
+specular from diffuse
+
+
+----------------
+for each texture
+----------------
+
+name
+scale
+input channel
+animation
+clamp
+
+
+------------------
+pass configuration
+------------------
+blendedBones
+backfaces
+alphaToCoverage
+depthWrite
+depthSort
+scene blending
+shadowBias
+castShadows
+stipple
+shadowAlphaReject
+shadowObliqueCutOff
+
+
+diffuse_exp
+specular_exp
+shadowyness
+
+
+pixel = emissive + ambient + diffuse
+
+
+
+material "blah" {
+    uv0Anim = {1,1}
+
+    diffuseMask=0xFFFFFFF;
+    diffuse = "vertex_col.rgb * diffuseMask * map('diffuse.dds', uv0, noclamp).rgb"
+
+    alphaMask=0.5;
+    alpha = "vertex_col.a * alphaMask * map('diffuse.dds', uv0, noclamp).a"
+
+    normal = "vertex_normal * map('diffuse.dds', uv0, noclamp).rgb"
+
+}
+
+
+
+
+material "blah" {
+    blend = {
+        { diffuse = "lol.dds"; normal = "lol.dds"; specular = "lol.dds"; },
+        { diffuse = "lol.dds"; normal = "lol.dds"; specularFromDiffuse = {-4,4}; },
+        { normal = "lol.dds"; uvScale = 1; },
+        { diffuse = "lol.dds"; }
+    }
+}
+
+

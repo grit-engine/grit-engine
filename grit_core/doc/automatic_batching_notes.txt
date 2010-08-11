@@ -1,0 +1,65 @@
+    * ManualObject::ManualObject::ManualObjectSection
+    * MovableObject
+          o InstancedGeometry::InstancedGeometry::BatchInstance
+          o ManualObject
+          o SimpleRenderable
+                + InstancedGeometry::InstancedGeometry::GeometryBucket
+          o StaticGeometry::StaticGeometry::Region
+
+=====================
+Billboards && Ribbons
+=====================
+
+    * Billboard -- allow the user to set particulars of an individual billboard contained in a set
+    * MovableObject
+          o BillboardChain -- same as BillBoardSet
+                + RibbonTrail  -- A BillboardChain that is attached to a node and updates for you.
+          o BillboardSet -- workhorse VertexData VertexDeclaration, direct HardwareBuffer manipulation
+
+anything involving billboards will update every frame
+
+this means locking the buffer and doing a dma
+
+You're either in world space, in which case you have a world space orientation and therefore do not always face the camera, or you're in screen space in which case the polygons are fixed WRT the screen unless updated (e.g. HUD, etc).
+
+
+===============
+Static Geometry
+===============
+
+==================
+Instanced Geometry
+==================
+
+=============
+Manual Object
+=============
+
+    * ManualObject::ManualObject::ManualObjectSection
+
+================
+Simple Renderable
+================
+
+
+    mTriangles = new Ogre::ManualObject("physics triangles");
+    mTriangles->setDynamic(true);
+    mTriangles->setCastShadows(false);
+
+    mTriangles->begin(matName, Ogre::RenderOperation::OT_TRIANGLE_LIST);
+    mTriangles->position(Ogre::Vector3::ZERO);
+    mTriangles->colour(Ogre::ColourValue::Blue);
+    mTriangles->position(Ogre::Vector3::ZERO);
+    mTriangles->colour(Ogre::ColourValue::Blue);
+    mTriangles->position(Ogre::Vector3::ZERO);
+    mTriangles->colour(Ogre::ColourValue::Blue);
+    mTriangles->end();
+
+    mTriangles->beginUpdate(0);
+    mTriangles->end();
+
+
+skidmarks -- quads with custom uv
+dense vegetation (maybe not grass) -- existing meshes, replicated again and again
+bulletholes -- quads but wrapped around existing geometry so potentially arbitrary number of procedural triangles
+
