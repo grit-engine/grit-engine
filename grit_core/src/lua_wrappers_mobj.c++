@@ -192,6 +192,22 @@ TRY_START
 TRY_END
 }
 
+static int rclutter_get_utilisation (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(RangedClutter,self,1,RCLUTTER_TAG);
+        size_t used = 0;
+        size_t rendered = 0;
+        size_t total = 0;
+        self.getUtilisation(used,rendered,total);
+        lua_pushnumber(L, used);
+        lua_pushnumber(L, rendered);
+        lua_pushnumber(L, total);
+        return 3;
+TRY_END
+}
+
 static int rclutter_destroy (lua_State *L)
 {
 TRY_START
@@ -216,6 +232,8 @@ TRY_START
                 push_cfunction(L,rclutter_destroy);
         } else if (key=="update") {
                 push_cfunction(L,rclutter_update);
+        } else if (key=="getUtilisation") {
+                push_cfunction(L,rclutter_get_utilisation);
         } else if (!mobj_index(L,self,key)) {
                 my_lua_error(L,"Not a valid RangedClutter member: "+key);
         }
@@ -229,9 +247,12 @@ TRY_START
         check_args(L,3);
         GET_UD_MACRO(RangedClutter,self,1,RCLUTTER_TAG);
         std::string key = luaL_checkstring(L,2);
-        if (key=="donothing") {
-                float v = luaL_checknumber(L,3);
-                (void) v;
+        if (key=="autoUpdate") {
+                if (check_bool(L,3)) {
+                        self.registerMe();
+                } else {
+                        self.unregisterMe();
+                }
         } else if (!mobj_newindex(L,self,key)) {
                 my_lua_error(L,"Not a writeable RangedClutter member: "+key);
         }
@@ -290,12 +311,13 @@ float prandf2 (void) { float x = prandf(); return 0.5*tan(x * 3.142f/2) + sqrtf(
 static int clutter_fuck_with (lua_State *L)
 {
 TRY_START
-        check_args(L,5);
+        check_args(L,6);
         GET_UD_MACRO(MovableClutter,self,1,CLUTTER_TAG);
         std::string matname = luaL_checkstring(L,2);
         float radius = luaL_checknumber(L,3);
         float angle = luaL_checknumber(L,4);
         float sz = luaL_checknumber(L,5);
+        float vis = luaL_checknumber(L,6);
         Ogre::MaterialPtr m = Ogre::MaterialManager::getSingleton().getByName(matname, "GRIT");
         if (m.isNull()) {
                 my_lua_error(L, "Could not find material \""+matname+"\"");
@@ -323,7 +345,7 @@ TRY_START
                                           rot * Ogre::Vector3(1, 0, 0),
                                           rot * Ogre::Vector3(1, 0, 0),
                                           rot * Ogre::Vector3(1, 0, 0) };
-                self.updateQuad(t, pos, norm, uv, &tang);
+                self.updateQuad(t, pos, norm, uv, &tang, vis);
         }
         return 0;
 TRY_END
@@ -332,11 +354,12 @@ TRY_END
 static int clutter_fuck_with2 (lua_State *L)
 {
 TRY_START
-        check_args(L,4);
+        check_args(L,6);
         GET_UD_MACRO(MovableClutter,self,1,CLUTTER_TAG);
         std::string meshname = luaL_checkstring(L,2);
         float radius = luaL_checknumber(L,3);
         float angle = luaL_checknumber(L,4);
+        float vis = luaL_checknumber(L,5);
         Ogre::MeshPtr m = Ogre::MeshManager::getSingleton().load(meshname, "GRIT");
         if (m.isNull()) {
                 my_lua_error(L, "Could not find mesh \""+meshname+"\"");
@@ -348,7 +371,7 @@ TRY_START
                 rot = rot * Ogre::Quaternion(Ogre::Degree(angle*randf()),Ogre::Vector3(1,0,0));
 
                 ClutterBuffer::MTicket t = self.reserveGeometry(m);
-                self.updateGeometry(t, centre, rot);
+                self.updateGeometry(t, centre, rot, vis);
         }
         return 0;
 TRY_END

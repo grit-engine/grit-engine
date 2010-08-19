@@ -44,6 +44,7 @@ class ClutterBuffer {
         class Section : public Ogre::Renderable
         {
         protected:
+
             ClutterBuffer *mParent;
             Ogre::MaterialPtr mMaterial;
             Ogre::RenderOperation mRenderOperation;
@@ -53,6 +54,11 @@ class ClutterBuffer {
             std::vector<bool> usage;
             unsigned marker;
             unsigned mDeclSize;
+            unsigned first;
+            unsigned last;
+            unsigned usedTriangles;
+
+            void updateFirstLast (void);
      
             struct BTicket {
                 unsigned long offset;
@@ -92,20 +98,24 @@ class ClutterBuffer {
             
             
             MTicket reserveGeometry (Ogre::SubMesh *sm);
-            void releaseGeometry (const MTicket &t, Ogre::SubMesh *sm);
+            void releaseGeometry (MTicket &t, Ogre::SubMesh *sm);
             void updateGeometry (const MTicket &t,
                                  const Ogre::SubMesh *sm,
                                  const Ogre::Vector3 &position,
-                                 const Ogre::Quaternion &orientation);
+                                 const Ogre::Quaternion &orientation,
+                                 float vis);
 
 
             QTicket reserveQuad (void);
-            void releaseQuad (const QTicket &t);
+            void releaseQuad (QTicket &t);
             void updateQuad (const QTicket &t,
                              const Ogre::Vector3 (&pos)[4],
                              const Ogre::Vector3 (&norm)[4],
                              const Ogre::Vector2 (&uv)[4],
-                             const Ogre::Vector3 (*tang)[4]);
+                             const Ogre::Vector3 (*tang)[4],
+                             float vis);
+
+            void accumulateUtilisation (size_t &used, size_t &rendered, size_t &total);
 
             protected:
 
@@ -123,15 +133,13 @@ class ClutterBuffer {
             bool valid (void) { return t.valid(); }
         };
         struct MTicket {
-            Ogre::MaterialPtr m;
             Ogre::MeshPtr mesh; // need to look at the mesh each time it is updated
-            Section::MTicket t;
-            MTicket (void) { }
-            MTicket (const Ogre::MaterialPtr &m_,
-                     const Ogre::MeshPtr &mesh_,
-                     const Section::MTicket &t_) : m(m_), mesh(mesh_), t(t_) { }
-            MTicket &operator= (const MTicket &o) { m=o.m; mesh=o.mesh; t=o.t; return *this; }
-            bool valid (void) { return t.valid(); }
+            Section::MTicket *ts;
+            MTicket (void) : ts(NULL) { }
+            MTicket (const Ogre::MeshPtr &mesh_,
+                     Section::MTicket *ts_) : mesh(mesh_), ts(ts_) { }
+            MTicket &operator= (const MTicket &o) { mesh=o.mesh; ts=o.ts; return *this; }
+            bool valid (void) { return ts != NULL; }
         };
 
 
@@ -140,24 +148,28 @@ class ClutterBuffer {
         virtual ~ClutterBuffer (void);
 
         MTicket reserveGeometry (const Ogre::MeshPtr &mesh);
-        void releaseGeometry (const MTicket &t);
+        void releaseGeometry (Section::MTicket *stkts, const Ogre::MeshPtr &mesh);
+        void releaseGeometry (MTicket &t);
         void updateGeometry (const MTicket &t,
                              const Ogre::Vector3 &position,
-                             const Ogre::Quaternion &orientation);
+                             const Ogre::Quaternion &orientation,
+                             float vis);
 
         QTicket reserveQuad (const Ogre::MaterialPtr &m);
-        void releaseQuad (const QTicket &t);
+        void releaseQuad (QTicket &t);
         void updateQuad (const QTicket &t,
                          const Ogre::Vector3 (&pos)[4],
                          const Ogre::Vector3 (&norm)[4],
                          const Ogre::Vector2 (&uv)[4],
-                         const Ogre::Vector3 (*tang)[4]);
+                         const Ogre::Vector3 (*tang)[4],
+                         float vis);
 
 
         typedef std::map<Ogre::MaterialPtr, Section*> SectionMap;
 
         const SectionMap &getSections (void) { return sects; } 
 
+        void getUtilisation (size_t &used, size_t &rendered, size_t &total);
 
     protected:
 
@@ -212,23 +224,25 @@ class MovableClutter : public Ogre::MovableObject {
 
         ClutterBuffer::MTicket reserveGeometry (const Ogre::MeshPtr &mesh)
         { return clutter.reserveGeometry(mesh); }
-        void releaseGeometry (const ClutterBuffer::MTicket &t)
+        void releaseGeometry (ClutterBuffer::MTicket &t)
         { return clutter.releaseGeometry(t); }
         void updateGeometry (const ClutterBuffer::MTicket &t,
                              const Ogre::Vector3 &position,
-                             const Ogre::Quaternion &orientation)
-        { return clutter.updateGeometry(t,position,orientation); }
+                             const Ogre::Quaternion &orientation,
+                             float vis)
+        { return clutter.updateGeometry(t,position,orientation,vis); }
 
         ClutterBuffer::QTicket reserveQuad (const Ogre::MaterialPtr &m)
         { return clutter.reserveQuad(m); }
-        void releaseQuad (const ClutterBuffer::QTicket &t)
+        void releaseQuad (ClutterBuffer::QTicket &t)
         { return clutter.releaseQuad(t); }
         void updateQuad (const ClutterBuffer::QTicket &t,
                          const Ogre::Vector3 (&pos)[4],
                          const Ogre::Vector3 (&norm)[4],
                          const Ogre::Vector2 (&uv)[4],
-                         const Ogre::Vector3 (*tang)[4])
-        { return clutter.updateQuad(t,pos,norm,uv,tang); }
+                         const Ogre::Vector3 (*tang)[4],
+                         float vis)
+        { return clutter.updateQuad(t,pos,norm,uv,tang,vis); }
 
 
     protected:
@@ -318,6 +332,8 @@ class RangedClutter : public Ogre::MovableObject, public Streamer::UpdateHook {
 
         size_t size (void) { return mSpace.size(); }
 
+        void getUtilisation (size_t &used, size_t &rendered, size_t &total);
+
     protected:
 
         struct Item {
@@ -330,6 +346,7 @@ class RangedClutter : public Ogre::MovableObject, public Streamer::UpdateHook {
             int activatedIndex;
             ClutterBuffer::MTicket ticket;
             float renderingDistance;
+            float lastFade;
             void updateSphere (float x_, float y_, float z_, float r_)
             {
                 renderingDistance = r_;
@@ -341,6 +358,7 @@ class RangedClutter : public Ogre::MovableObject, public Streamer::UpdateHook {
             {
                 return (Ogre::Vector3(x,y,z)-pos).squaredLength() / renderingDistance / renderingDistance;
             }
+            float calcFade (float range2);
         };
         typedef std::vector<Item> Items;
 
