@@ -300,7 +300,7 @@ float GritObject::calcFade (const float range2, bool &overlap)
         const float over = streamer.fadeOverlapFactor;
 
 
-        float range = ::sqrt(range2);
+        float range = ::sqrtf(range2);
 
         float fade = 1.0;
         // if near is not activated, farfade will be out of date
