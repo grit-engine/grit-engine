@@ -77,9 +77,12 @@ Grit::Grit (Ogre::Root *ogre, Grit *& grit) :
         Ogre::ResourceGroupManager::getSingleton().
                 addResourceLocation(".","FileSystem","GRIT",true);
 
+        #if 1
         win = ogre->getAutoCreatedWindow();
         onWindowUpdate();
-        //grit->updateWindow(true);
+        #else
+        grit->updateWindow(true);
+        #endif
 
         L = init_lua("/system/init.lua");
 
