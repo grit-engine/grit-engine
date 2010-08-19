@@ -96,7 +96,7 @@ void ClutterBuffer::releaseGeometry (Section::MTicket *stkts, const Ogre::MeshPt
             s.releaseGeometry(t2, sm);
         }
     }
-    delete stkts;
+    delete [] stkts;
 }
 
 void ClutterBuffer::releaseGeometry (MTicket &t)
