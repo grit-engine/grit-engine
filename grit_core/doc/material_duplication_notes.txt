@@ -1,0 +1,40 @@
+Things that should be autodetected from mesh:
+
+        "vertexAlpha"
+        "vertexAmbient" 
+        "vertexColour"
+        "blendedBones" 0 1 2 3 4
+
+I think it is not possible to autodetect these, as we do not know e.g. whether
+a set of vertex colours in the mesh is meant to be used for ambient lighting or
+as a colour mask, or even at all.  We can however warn if the material is expecting something from the mesh which is not present.
+
+Things that we need due to batching
+        "worldGeometry"
+
+uniform masks:
+
+        "diffuseColour"
+        "ambientColour"
+        "specularColour"
+        "specularity"
+
+render operation tweaks:
+        "backfaces"
+        "alpha"
+        "depthSort"
+        "depthWrite"
+        "alphaToCoverage"
+
+misc uniforms for receiver pass
+        "alphaReject"
+        "shadowReceive"
+        "shadowObliqueCutOff"
+        "stipple"
+        "grassLighting"
+        "uvScale"
+
+misc uniforms for caster pass
+        "castShadows"
+        "shadowAlphaReject"
+        "shadowBias"
