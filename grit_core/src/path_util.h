@@ -20,7 +20,7 @@
  */
 
 #include <string>
-#include "lua_util.h"
+struct lua_State;
 
 /** A stack of directories.  The top of the stack is the current working directory */
 extern std::vector<std::string> pwd;
