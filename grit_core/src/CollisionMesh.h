@@ -127,6 +127,7 @@ class CollisionMesh {
                 ProcObjFaces faces;
                 ProcObjFaceAreas areas;
                 float totalArea;
+                ProcObjFaceDBEntry (void) : totalArea(0) { }
         };
         typedef std::map<int,ProcObjFaceDBEntry> ProcObjFaceDB;
 

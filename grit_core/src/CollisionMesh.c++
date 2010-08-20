@@ -145,6 +145,7 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
                 f.AB = (*vertexes)[i->v2] - f.A;
                 f.AC = (*vertexes)[i->v3] - f.A;
                 float area = (f.AB.cross(f.AC)).length();
+                APP_ASSERT(area>=0);
                 faceDB[m].faces.push_back(f);
                 faceDB[m].areas.push_back(area);
                 faceDB[m].totalArea += area;
