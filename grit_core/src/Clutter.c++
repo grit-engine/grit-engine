@@ -248,8 +248,8 @@ void ClutterBuffer::Section::reserveTriangles (unsigned triangles, unsigned &off
     if (off<first) {
         first = off;
     }
-    if (marker>last) {
-        last = marker;
+    if (marker-1>last) {
+        last = marker-1;
     }
     updateFirstLast();
     usedTriangles += len;
