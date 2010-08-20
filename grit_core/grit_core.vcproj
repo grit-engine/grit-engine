@@ -358,11 +358,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\BulletDebugDrawer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\CacheFriendlyRangeSpace.h"
 				>
 			</File>
 			<File
+				RelativePath=".\src\CacheFriendlyRangeSpaceSIMD.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\CentralisedLog.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\clipboard.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Clutter.h"
 				>
 			</File>
 			<File
@@ -371,6 +387,10 @@
 			</File>
 			<File
 				RelativePath=".\src\console_colour.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ExternalTable.h"
 				>
 			</File>
 			<File
@@ -387,6 +407,10 @@
 			</File>
 			<File
 				RelativePath=".\src\Grit.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\GritClass.h"
 				>
 			</File>
 			<File
@@ -430,6 +454,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\lua_utf8.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\lua_util.h"
 				>
 			</File>
@@ -439,6 +467,10 @@
 			</File>
 			<File
 				RelativePath=".\src\lua_wrappers_core.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\lua_wrappers_gpuprog.h"
 				>
 			</File>
 			<File
@@ -482,7 +514,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\LuaParticleSystem.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\matbin.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\math_util.h"
 				>
 			</File>
 			<File
@@ -495,6 +535,10 @@
 			</File>
 			<File
 				RelativePath=".\src\ogre_datastream_util.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\path_util.h"
 				>
 			</File>
 			<File
@@ -514,6 +558,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\SplineTable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\SSEAllocator.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\Streamer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\TColLexer"
 				>
 			</File>
@@ -527,6 +583,10 @@
 			</File>
 			<File
 				RelativePath=".\src\TextListOverlayElement.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\unicode_util.h"
 				>
 			</File>
 		</Filter>
