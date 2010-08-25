@@ -546,6 +546,10 @@ TRY_START
                 lua_pushboolean(L,self.isActive());
         } else if (key=="autoDeactivate") {
                 lua_pushboolean(L,self.isDeactivatedOnFocusChange());
+        } else if (key=="vsync") {
+                lua_pushboolean(L,self.isVSyncEnabled());
+        } else if (key=="vsyncInterval") {
+                lua_pushnumber(L,self.getVSyncInterval());
         } else if (key=="visible") {
                 lua_pushboolean(L,self.isVisible());
         } else {
@@ -568,6 +572,12 @@ TRY_START
         } else if (key=="autoDeactivate") {
                 bool b = check_bool(L,3);
                 self.setDeactivateOnFocusChange(b);
+        } else if (key=="vsync") {
+                bool b = check_bool(L,3);
+                self.setVSyncEnabled(b);
+        } else if (key=="vsyncInterval") {
+                bool v = check_t<unsigned int>(L,3);
+                self.setVSyncInterval(v);
         } else {
                 my_lua_error(L,"Not a valid RenderWindow member: "+key);
         }
