@@ -474,8 +474,8 @@ static int rwin_resize (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(Ogre::RenderWindow,self,1,RWIN_TAG);
-        unsigned w = check_t<unsigned>(L,3);
-        unsigned h = check_t<unsigned>(L,4);
+        unsigned w = check_t<unsigned>(L,2);
+        unsigned h = check_t<unsigned>(L,3);
         self.resize(w,h);
         return 0;
 TRY_END
