@@ -77,16 +77,10 @@ Grit::Grit (Ogre::Root *ogre, Grit *& grit) :
         Ogre::ResourceGroupManager::getSingleton().
                 addResourceLocation(".","FileSystem","GRIT",true);
 
-        #if 1
         win = ogre->getAutoCreatedWindow();
         onWindowUpdate();
-        #else
-        grit->updateWindow(true);
-        #endif
 
         L = init_lua("/system/init.lua");
-
-
 }
 
 Grit::~Grit ()
@@ -129,28 +123,6 @@ void Grit::onWindowUpdate (void)
         //APP_VERBOSE("adding event listener");
         Ogre::WindowEventUtilities::addWindowEventListener(getWin(), this);
         //APP_VERBOSE("done adding event listener");
-}
-
-void Grit::updateWindow (bool vsync)
-{
-        Ogre::NameValuePairList params;
-        params["FSAA"] = "0";
-        params["FSAAHint"] = "";
-        params["vsyncInterval"] = "";
-        params["vsync"] = vsync?"true":"false";
-        params["gamma"] = "true";
-        params["useNVPerfHUD"] = "true";
-        int width = 800, height = 600;
-        bool use_fullscreen = false;
-        if (win) {
-                width = win->getWidth();
-                height = win->getHeight();
-                use_fullscreen = win->isFullScreen();
-                ogre->getRenderSystem()->destroyRenderWindow("Grit Game Window");
-        }
-        win = ogre->getRenderSystem()->_createRenderWindow("Grit Game Window", width, height, use_fullscreen, &params);
-
-        onWindowUpdate();
 }
 
 void Grit::processMaterialName (Ogre::Mesh *mesh, std::string *name)

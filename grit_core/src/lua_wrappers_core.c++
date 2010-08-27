@@ -1202,17 +1202,6 @@ TRY_END
 }
 
 
-static int global_update_window (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        bool vsync = check_bool(L,1);
-        grit->updateWindow(vsync);
-        return 0;
-TRY_END
-}
-
-
 static int global_get_streamer (lua_State *L)
 {
 TRY_START
@@ -1971,7 +1960,6 @@ static const luaL_reg global[] = {
         {"fire_frame_ended",global_fire_frame_ended},
         {"update_elapsed_time",global_update_elapsed_time},
         {"get_rendersystem",global_get_rendersystem},
-        {"update_window",global_update_window},
 
         {"get_hud_root",global_get_hud_root},
         {"get_main_win" ,global_get_main_win},

@@ -56,8 +56,6 @@ public:
 
         void onWindowUpdate (void);
 
-        void updateWindow (bool vsync);
-
         void windowResized(Ogre::RenderWindow *rw);
 
         bool windowHasFocus (void);

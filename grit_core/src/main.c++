@@ -144,17 +144,10 @@ int main(int argc, const char **argv)
                         rs->setConfigOption("sRGB Gamma Conversion","Yes");
                 }
                 rs->setConfigOption("Full Screen","No");
-                rs->setConfigOption("VSync",getenv("GRIT_NOVSYNC")?"No":"Yes");
+                rs->setConfigOption("VSync","Yes");
                 ogre->setRenderSystem(rs);
 
                 ogre->initialise(true,"Grit Game AutoWindow");
-
-                #if 1
-                #else
-                ogre->getAutoCreatedWindow()->setHidden(true);
-                Ogre::WindowEventUtilities::messagePump(); // make sure setHidden comes into effect as soon as possible
-                #endif
-
 
                 Ogre::ParticleSystemManager::getSingleton()
                         .addAffectorFactory(new LuaParticleAffectorFactory());
