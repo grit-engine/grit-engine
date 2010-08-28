@@ -552,6 +552,8 @@ TRY_START
                 lua_pushnumber(L,self.getVSyncInterval());
         } else if (key=="visible") {
                 lua_pushboolean(L,self.isVisible());
+        } else if (key=="hidden") {
+                lua_pushboolean(L,self.isHidden());
         } else {
                 my_lua_error(L,"Not a valid RenderWindow member: "+key);
         }
@@ -569,6 +571,9 @@ TRY_START
         } else if (key=="visible") {
                 bool b = check_bool(L,3);
                 self.setVisible(b);
+        } else if (key=="hidden") {
+                bool b = check_bool(L,3);
+                self.setHidden(b);
         } else if (key=="autoDeactivate") {
                 bool b = check_bool(L,3);
                 self.setDeactivateOnFocusChange(b);
