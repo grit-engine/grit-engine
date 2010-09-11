@@ -121,6 +121,16 @@ TRY_START
 TRY_END
 }
 
+static int viewport_remove_compositor_chain (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::Viewport,self,1,VIEWPORT_TAG);
+        Ogre::CompositorManager::getSingleton().removeCompositorChain(&self);
+        return 0;
+TRY_END
+}
+
 static int viewport_set_compositor_enabled (lua_State *L)
 {
 TRY_START
@@ -148,6 +158,8 @@ TRY_START
                 push_cfunction(L,viewport_add_compositor);
         } else if (key=="removeCompositor") {
                 push_cfunction(L,viewport_remove_compositor);
+        } else if (key=="removeCompositorChain") {
+                push_cfunction(L,viewport_remove_compositor_chain);
         } else if (key=="setCompositorEnabled") {
                 push_cfunction(L,viewport_set_compositor_enabled);
         } else if (key=="destroy") {
@@ -176,6 +188,8 @@ TRY_START
                 lua_pushboolean(L,self.getOverlaysEnabled());
         } else if (key=="update") {
                 push_cfunction(L,viewport_update);
+        } else if (key=="autoUpdated") {
+                lua_pushboolean(L,self.isAutoUpdated());
         } else {
                 my_lua_error(L,"Not a valid Viewport member: "+key);
         }
@@ -197,6 +211,9 @@ TRY_START
         } else if (key=="overlaysEnabled") {
                 bool v = check_bool(L,3);
                 self.setOverlaysEnabled(v);
+        } else if (key=="autoUpdated") {
+                bool v = check_bool(L,3);
+                self.setAutoUpdated(v);
         } else {
                 my_lua_error(L,"Not a valid Viewport member: "+key);
         }
@@ -328,7 +345,7 @@ TRY_START
                 }
         } else if (key=="priority") {
                 lua_pushnumber(L,rt->getPriority());
-        } else if (key=="isActive") {
+        } else if (key=="active") {
                 lua_pushboolean(L,rt->isActive());
         } else if (key=="writeContentsToFile") {
                 push_cfunction(L,rt_write_contents_to_file);
@@ -336,8 +353,12 @@ TRY_START
                 lua_pushnumber(L,rt->getTriangleCount());
         } else if (key=="batches") {
                 lua_pushnumber(L,rt->getBatchCount());
-        } else if (key=="isPrimary") {
+        } else if (key=="primary") {
                 lua_pushboolean(L,rt->isPrimary());
+        } else if (key=="autoUpdated") {
+                lua_pushboolean(L,rt->isAutoUpdated());
+        } else if (key=="requiresTextureFlipping") {
+                lua_pushboolean(L,rt->requiresTextureFlipping());
         } else if (key=="type") {
                 if (dynamic_cast<Ogre::RenderWindow*>(rt)) {
                         lua_pushstring(L,"RenderWindow");
@@ -361,9 +382,12 @@ TRY_START
         if (key=="priority") {
                 unsigned char v = check_t<unsigned char>(L,3);
                 rt->setPriority(v);
-        } else if (key=="isActive") {
+        } else if (key=="active") {
                 bool v = check_bool(L,3);
                 rt->setActive(v);
+        } else if (key=="autoUpdated") {
+                bool v = check_bool(L,3);
+                rt->setAutoUpdated(v);
         } else {
                 return false;
         }

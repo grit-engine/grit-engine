@@ -147,7 +147,7 @@ int main(int argc, const char **argv)
                 rs->setConfigOption("VSync","Yes");
                 ogre->setRenderSystem(rs);
 
-                ogre->initialise(true,"Grit Game AutoWindow");
+                ogre->initialise(true,"Grit Game Window");
 
                 Ogre::ParticleSystemManager::getSingleton()
                         .addAffectorFactory(new LuaParticleAffectorFactory());

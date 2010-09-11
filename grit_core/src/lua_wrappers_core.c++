@@ -339,9 +339,11 @@ TRY_END
 static int global_make_tex (lua_State *L)
 {
 TRY_START
-        if (lua_gettop(L)==4) lua_pushnumber(L,Ogre::MIP_DEFAULT);
-        if (lua_gettop(L)==5) lua_pushnumber(L,Ogre::TU_DEFAULT);
-        check_args(L,7);
+        if (lua_gettop(L)==4) lua_pushnumber(L,1);
+        if (lua_gettop(L)==5) lua_pushnumber(L,Ogre::MIP_DEFAULT);
+        if (lua_gettop(L)==6) lua_pushnumber(L,Ogre::TU_DEFAULT);
+        if (lua_gettop(L)==7) lua_pushboolean(L,false);
+        check_args(L,8);
         const char *name = luaL_checkstring(L,1);
         const char *texType = luaL_checkstring(L,2);
         unsigned width = check_t<unsigned>(L,3,1);
@@ -349,6 +351,7 @@ TRY_START
         unsigned depth = check_t<unsigned>(L,5,1);
         unsigned mipmaps = check_t<unsigned>(L,6);
         unsigned usage = check_t<unsigned>(L,7);
+        bool hwgamma = check_bool(L,8);
 
         Ogre::TexturePtr t = Ogre::TextureManager::getSingleton().createManual(
                 name,
@@ -359,7 +362,9 @@ TRY_START
                 depth,
                 mipmaps,
                 Ogre::PF_R8G8B8,
-                usage);
+                usage,
+                0,
+                hwgamma);
         push(L, new Ogre::TexturePtr(t),TEX_TAG);
         return 1;
 TRY_END
