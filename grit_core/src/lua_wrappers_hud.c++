@@ -491,7 +491,7 @@ TRY_START
                         std::string name = luaL_checkstring(L,3);
                         pane->setMaterial(name);
                 } else {
-                        GET_UD_MACRO(Ogre::MaterialPtr,mat,1,MAT_TAG);
+                        GET_UD_MACRO(Ogre::MaterialPtr,mat,3,MAT_TAG);
                         pane->setMaterial(mat);
                 }
         } else if (key=="resize") {
