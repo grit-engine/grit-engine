@@ -46,16 +46,7 @@ BulletDebugDrawer::BulletDebugDrawer (Ogre::SceneManager *sm)
     mTriangles->setCastShadows(false);
     sm->getRootSceneNode()->attachObject(mTriangles);
     
-    const char *matName = "OgreBulletCollisionsDebugDefault";
-    Ogre::MaterialPtr mtl = Ogre::MaterialManager::getSingleton().getDefaultSettings()->clone(matName);
-    mtl->setReceiveShadows(false);
-    mtl->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
-    mtl->setDepthBias(0.1, 0);
-    Ogre::TextureUnitState *tu = mtl->getTechnique(0)->getPass(0)->createTextureUnitState();
-    APP_ASSERT(tu);
-    tu->setColourOperationEx(Ogre::LBX_SOURCE1, Ogre::LBS_DIFFUSE);
-    mtl->getTechnique(0)->setLightingEnabled(false);
-    //mtl->getTechnique(0)->setSelfIllumination( ColourValue::White ); 
+    const char *matName = "system/PhysicsDebug";
 
     mLines->begin(matName, Ogre::RenderOperation::OT_LINE_LIST);
     mLines->position(Ogre::Vector3::ZERO);
