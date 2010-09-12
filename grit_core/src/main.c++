@@ -130,19 +130,20 @@ int main(int argc, const char **argv)
                 bool use_d3d9 = false;
                 #endif
 
+                bool use_hwgamma = getenv("GRIT_NOHWGAMMA")==NULL;
+
                 Ogre::RenderSystem *rs;
                 if (use_d3d9) {
                         rs = ogre->getRenderSystemByName("Direct3D9 Rendering Subsystem");
                         rs->setConfigOption("Allow NVPerfHUD","Yes");
                         rs->setConfigOption("Floating-point mode","Consistent");
                         rs->setConfigOption("Video Mode","800 x 600 @ 32-bit colour");
-                        rs->setConfigOption("sRGB Gamma Conversion","Yes");
                 } else {
                         rs = ogre->getRenderSystemByName("OpenGL Rendering Subsystem");
                         rs->setConfigOption("RTT Preferred Mode","FBO");
                         rs->setConfigOption("Video Mode","800 x 600");
-                        rs->setConfigOption("sRGB Gamma Conversion","Yes");
                 }
+                rs->setConfigOption("sRGB Gamma Conversion",use_hwgamma?"Yes":"No");
                 rs->setConfigOption("Full Screen","No");
                 rs->setConfigOption("VSync","Yes");
                 ogre->setRenderSystem(rs);
