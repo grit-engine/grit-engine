@@ -91,6 +91,16 @@ static inline unsigned long ios_read_u32(std::istream &in)
         return raw[3]<<24ul | raw[2]<<16ul | raw[1]<<8ul | raw[0];
 }}}
 
+static inline unsigned long ios_read_s32(std::istream &in)
+{{{
+        unsigned char raw[4];
+        in.read((char*)raw,sizeof raw);
+        ASSERT_IO_SUCCESSFUL(in,"reading int32");
+        long r = (raw[3]&0x7f)<<24ul | raw[2]<<16ul | raw[1]<<8ul | raw[0];
+        if (raw[3]&0x80) r -= 0x80000000;
+        return r;
+}}}
+
 static inline unsigned long ios_peek_u32(std::istream &in)
 {{{
         char raw[4];
