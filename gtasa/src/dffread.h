@@ -207,13 +207,13 @@ struct geometry {
         std::vector<unsigned short> meshext_face_fragment;
         std::vector<struct fragment> meshext_fragments;
 
-        unsigned long frame;
+        long frame;
 };
 
 struct frame {
         float rot[9];
         float x, y, z;
-        unsigned long parent_frame;
+        long parent_frame;
         std::vector<unsigned long> children;
         unsigned long unk;
         unsigned long bone_unk_flags;
@@ -224,11 +224,12 @@ struct frame {
         std::vector<unsigned long> bone_nums;
         std::vector<unsigned long> bone_types;
         std::string name;
-        unsigned long geometry;
+        long geometry;
 };
 
 struct object {
-        unsigned long frame_index, geometry_index;
+        unsigned long frame_index;
+        long geometry_index;
         unsigned long unk1, unk2, rtr_unk1, rtr_unk2, eff;
 };
 

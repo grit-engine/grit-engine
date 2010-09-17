@@ -130,7 +130,7 @@ static void ios_read_texture (int d, std::ifstream &f,
     ASSERT(type==RW_STRING);
     std::string alpha_str = ios_read_fixedstr(f,size);
     t->has_alpha = alpha_str!="";
-    VBOS(3,p<<"has_alpha: \""<<t->has_alpha<<"\"");
+    VBOS(3,p<<"has_alpha: "<<t->has_alpha);
 
     unsigned long totalsize;
     ios_read_header(f,&type,&totalsize,NULL,&file_version);
@@ -333,7 +333,7 @@ static void ios_read_material (int d,
             m->spec_level = ios_read_float(f);
             VBOS(3,p<<"spec_level: "<<m->spec_level);
             m->spec_texture = ios_read_fixedstr(f,size-4);
-            VBOS(3,p<<"spec_texture: "<<m->spec_texture.c_str());
+            VBOS(3,p<<"spec_texture: "<<m->spec_texture);
             break;
         case RW_UV_ANIMATION:
             unsigned long anim_size;
@@ -406,7 +406,7 @@ static void ios_read_geometry (int d,
                                struct geometry &g,
                                const std::string &p)
 {{{
-    g.frame = 0xFFFFFFFF;
+    g.frame = -1;
 
     unsigned long type, geometry_size;
     ios_read_header(f,&type,&geometry_size,NULL,&file_version);
@@ -768,10 +768,10 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
         VBOS(3,pref<<"y: "<<c->frames[i].y);
         c->frames[i].z = ios_read_float(f);
         VBOS(3,pref<<"z: "<<c->frames[i].z);
-        unsigned long parent = ios_read_u32(f);
+        long parent = ios_read_s32(f);
         c->frames[i].parent_frame = parent;
         VBOS(3,pref<<"parent_frame: "<<parent);
-        if (parent==0xFFFFFFFF) {
+        if (parent==-1) {
             c->root_frame = i;
         } else {
             c->frames[parent].children.push_back(i);
@@ -784,7 +784,7 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
         std::stringstream prefss;
         prefss<<p<<"frame["<<i<<"].";
         std::string pref = prefss.str();
-        c->frames[i].geometry = 0xFFFFFFFF;
+        c->frames[i].geometry = -1;
         unsigned long total_size;
         ios_read_header(f,&type,&total_size,NULL,&file_version);
         ASSERT(type==RW_EXT);
@@ -861,7 +861,7 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
         unsigned long frame_index = ios_read_u32(f);
         c->objects[i].frame_index = frame_index;
         VBOS(3,pref<<"frame_index: "<<frame_index);
-        unsigned long geometry_index = ios_read_u32(f);
+        long geometry_index = ios_read_s32(f);
         c->objects[i].geometry_index = geometry_index;
         VBOS(3,pref<<"geometry_index: "<<geometry_index);
         unsigned long five = ios_read_u32(f);
@@ -869,11 +869,11 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
         unsigned long zero = ios_read_u32(f);
         ASSERT(zero==0);
 
-        ASSERT(c->frames[frame_index].geometry==0xFFFFFFFF);
+        ASSERT(c->frames[frame_index].geometry==-1);
         c->frames[frame_index].geometry = geometry_index;
 
-        ASSERT(c->geometries[geometry_index].frame==0xFFFFFFFF);
-        c->geometries[geometry_index].frame = frame_index;
+        ASSERT(c->geometries[geometry_index].frame==-1);
+        c->geometries[geometry_index].frame = (long)frame_index;
 
         unsigned long total_size;
         ios_read_header(f,&type,&total_size,NULL,&file_version);
@@ -1094,7 +1094,7 @@ export_or_provide_mat (const StringSet &texs,
                        const Obj &obj,
                        const std::string &oname,
                        MatDB &matdb,
-                       std::ostream &materials_lua)
+                       std::ostream &lua_file)
 {{{
 
     material &m = g.materials[mindex];
@@ -1154,23 +1154,23 @@ export_or_provide_mat (const StringSet &texs,
         return mat;
 
     
-    materials_lua << "material \"" << mname.str() << "\" { ";
+    lua_file << "material \"" << mname.str() << "\" { ";
     if (g.vertex_cols.size() > 0) {
-            materials_lua << "vertexAmbient=true, ";
-            materials_lua << "vertexAlpha=true, ";
+            lua_file << "vertexAmbient=true, ";
+            lua_file << "vertexAlpha=true, ";
     }
-    if (has_alpha || decal) materials_lua << "alpha=true, ";
-    if (has_alpha && !decal) materials_lua << "depthWrite=true, ";
+    if (has_alpha || decal) lua_file << "alpha=true, ";
+    if (has_alpha && !decal) lua_file << "depthWrite=true, ";
     if (decal) {
-        materials_lua << "castShadows=false, alphaReject=0, ";
+        lua_file << "castShadows=false, alphaReject=0, ";
     } else {
-        materials_lua << "alphaReject=0.25, ";
+        lua_file << "alphaReject=0.25, ";
     }
-    if (double_sided) materials_lua << "backfaces=true, ";
-    if (!dynamic_lighting) materials_lua << "normals=false, ";
-    if (m.colour!=0xFFFFFFFF) materials_lua<<"diffuseColour=0x"<<std::hex<<m.colour<<std::dec<<", ";
-    if (textures[0]!="") materials_lua << "diffuseMap=\""<<textures[0]<<"\", ";
-    materials_lua << "}\n";
+    if (double_sided) lua_file << "backfaces=true, ";
+    if (!dynamic_lighting) lua_file << "normals=false, ";
+    if (m.colour!=0xFFFFFFFF) lua_file<<"diffuseColour=0x"<<std::hex<<m.colour<<std::dec<<", ";
+    if (textures[0]!="") lua_file << "diffuseMap=\""<<textures[0]<<"\", ";
+    lua_file << "}\n";
 
     return mat;
 }}}
@@ -1232,7 +1232,7 @@ void export_xml (const StringSet &texs,
                  const std::string &oname,
                  struct geometry &g,
                  MatDB &matdb,
-                 std::ostream &materials_lua)
+                 std::ostream &lua_file)
 {{{
     out << "xml filename: " << fname << std::endl;
 
@@ -1303,7 +1303,7 @@ void export_xml (const StringSet &texs,
         }
 
         std::string mname = export_or_provide_mat(texs,ide,imgs,g,s->material,
-                                                  obj,oname,matdb,materials_lua);
+                                                  obj,oname,matdb,lua_file);
 
         s->surrogate = mname;
 
@@ -1364,7 +1364,7 @@ void export_mesh (const StringSet &texs,
                  const std::string &oname,
                   struct geometry &g,
                   MatDB &matdb,
-                  std::ostream &materials_lua)
+                  std::ostream &lua_file)
 {{{
     (void) out;
     //out << "mesh filename: " << fname << std::endl;
@@ -1499,7 +1499,7 @@ void export_mesh (const StringSet &texs,
         unsigned short *ibuf_next = ibuf;
 
         std::string mname = export_or_provide_mat(texs,ide,imgs,g,s->material,
-                                                  obj,oname,matdb,materials_lua);
+                                                  obj,oname,matdb,lua_file);
 
         s->surrogate = mname;
 
@@ -1562,27 +1562,30 @@ void print_frame_tree (int d, struct dff *c, const std::string &p,
         const char *thing = more ? "├" : "└";
         unsigned long num_children = c->frames[node].children.size();
         const char *thing2 = num_children > 0 ? "┬" : "─";
-        VBOS(3,p<<thing<<"─"<<thing2<<"─\""<<c->frames[node].name<<"\"");
-        VBOS(3,"(frame:"<<node<<") ");
-        if (c->frames[node].geometry==0xFFFFFFFF) {
-                VBOS(3,"([0;31mDUMMY![0m) ");
+        std::stringstream output;
+        output<<p<<thing<<"─"<<thing2<<"─\""<<c->frames[node].name<<"\" ";
+        output<<"(frame:"<<node<<") ";
+        if (c->frames[node].geometry==-1) {
+                output<<"([0;31mDUMMY![0m) ";
         } else {
-                VBOS(3,"([0;1;37mgeometry:"<<c->frames[node].geometry<<"[0m) ");
+                output<<"([0;1;37mgeometry:"<<c->frames[node].geometry<<"[0m) ";
         }
-        VBOS(3,"("<<c->frames[node].x<<","<<c->frames[node].y<<","<<c->frames[node].z<<")\n");
+        output<<"("<<c->frames[node].x<<","<<c->frames[node].y<<","<<c->frames[node].z<<")";
+        VBOS(3,output.str());
 
         for (unsigned long i=0 ; i<num_children ; i++) {
                 unsigned long child = c->frames[node].children[i];
                 std::string pref = p+(more?"│":" ");
+                pref += " ";
                 print_frame_tree(d,c,pref,i<num_children-1,child);
         }
 }
 
-void list_orphans(int d,struct dff *c, const char *p)
+void list_orphans(int d,struct dff *c, const std::string &p)
 {
         print_frame_tree(d,c,p,0,c->root_frame);
         for (unsigned long i=0 ; i<c->geometries.size() ; i++) {
-                if (c->geometries[i].frame==0xFFFFFFFF) {
+                if (c->geometries[i].frame==-1) {
                         VBOS(-1000,p<<"orphaned_geometry: "<<i<<"\n");
                 }
         }
@@ -1624,10 +1627,9 @@ const char *info =
 "I print information about dff files.\n";
 
 const char *usage =
-"Usage: dffread { <opt> }\n\n"
+"Usage: dffread { <opt> } filename.dff\n\n"
 "where <opt> ::= \"-v\" | \"--verbose\"               increase debug level\n"
 "              | \"-q\" | \"--quiet\"                 decrease debug level\n"
-"              | \"-d\" <file> | \"--dff\" <file>     add to list of dffs\n\n"
 "              | \"-e\" <name> | \"--export\" <name>  export to .mesh\n"
 "              | \"-t\" <name> | \"--txd\" <name>     for export\n\n"
 "              | \"-o\" | \"--orphans\"               list orphaned frames\n"
@@ -1664,16 +1666,18 @@ int main(int argc, char **argv)
         std::cout<<usage<<std::endl;
     }
 
-    Strings dffs;
-
     // default parameters
     int d= 0;
     bool orphans = false;
     bool do_export_mesh = false;
+    bool car = false;
     std::string oname;
     std::string txdname;
 
     int so_far = 1;
+    int extras = 0; // number of args that weren't options
+    std::string file_name;
+    bool filename_given = false;
 
     while (so_far<argc) {
         std::string arg = next_arg(so_far,argc,argv);
@@ -1685,66 +1689,126 @@ int main(int argc, char **argv)
             orphans = true;
         } else if (arg=="-O" || arg=="--no-orphans") {
             orphans = false;
-        } else if (arg=="-d" || arg=="--dff") {
-            std::string file_name = next_arg(so_far,argc,argv);
-            if (get_ext(file_name,NULL)!=".dff") {
-                std::cerr << file_name<<": does not end in .dff"
-                          << std::endl;
-                exit(EXIT_FAILURE);
-            }
-            dffs.push_back(file_name);
         } else if (arg=="-t" || arg=="--txd") {
             txdname = next_arg(so_far,argc,argv);
         } else if (arg=="-e" || arg=="--export") {
             oname = next_arg(so_far,argc,argv);
             do_export_mesh = true;
+        } else if (arg=="-c" || arg=="--car") {
+            car = true;
+        } else if (arg=="-C" || arg=="--nocar") {
+            car = false;
         } else if (arg=="-h" || arg=="--help") {
             std::cout<<info<<std::endl;
             std::cout<<usage<<std::endl;
+        } else if (extras==0) {
+            extras++;
+            filename_given = true;
+            file_name = arg;
+            if (get_ext(file_name,NULL)!=".dff") {
+                std::cerr << file_name<<": does not end in .dff"
+                          << std::endl;
+                exit(EXIT_FAILURE);
+            }
         } else {
             std::cerr<<"Unrecognised argument: "<<arg<<std::endl;
             std::cerr<<usage<<std::endl;
             exit(EXIT_FAILURE);
-        } 
+        }
     }
 
+    if (!filename_given) {
+        std::cerr<<"No filename given."<<std::endl;
+        std::cerr<<usage<<std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     try {
 
-        std::ofstream materials_lua;
+        std::ofstream lua_file;
         if  (do_export_mesh) {
             init_ogre();
-            std::string s = oname+"_materials.lua";
-            materials_lua.open(s.c_str(), std::ios::binary);
-            ASSERT_IO_SUCCESSFUL(materials_lua, "opening "+s);
+            std::string s = oname+".lua";
+            lua_file.open(s.c_str(), std::ios::binary);
+            ASSERT_IO_SUCCESSFUL(lua_file, "opening "+s);
         }
 
-        for (Strings::iterator i=dffs.begin() ; i!=dffs.end() ; i++) {
-            const char *name = i->c_str();
-            std::ifstream f;
-            f.open(name, std::ios::binary);
-            ASSERT_IO_SUCCESSFUL(f,"opening "+*i);
-            VBOS(0,"reading dff: "<<name<<"\n");
+        std::ifstream f;
+        f.open(file_name.c_str(), std::ios::binary);
+        ASSERT_IO_SUCCESSFUL(f,"opening "+file_name);
+        VBOS(0,"reading dff: "<<file_name<<"\n");
 
-            struct dff dff;
-            ios_read_dff(d,f,&dff,(*i+"/").c_str());
+        struct dff dff;
+        ios_read_dff(d,f,&dff,file_name+"/");
 
-            if (orphans)
-                list_orphans(d,&dff,(*i+"/").c_str());
+        if (orphans)
+            list_orphans(d,&dff,file_name+"/");
 
-            if (do_export_mesh) {
+        if (do_export_mesh) {
+            if (car) {
                 StringSet texs;
                 ide ide;
-                std::vector<std::string> imgs;
+                Strings imgs;
                 imgs.push_back("");
-                Obj obj;
+                Obj obj; // currently obj only needs a few things set
+                obj.dff = file_name;
                 obj.txd = txdname;
+                obj.flags = 0;
+                MatDB matdb;
+                for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
+                    frame &fr = dff.frames[j];
+
+                    // ignore dummies for now
+                    if (fr.geometry == -1) continue;
+
+                    geometry &g = dff.geometries[fr.geometry];
+
+                    generate_normals(g);
+
+                    export_mesh(texs,ide,imgs,
+                                std::cout, oname+"."+fr.name+".mesh",
+                                obj,oname+"."+fr.name,g,matdb,lua_file);
+                }
+
+                lua_file << std::endl;
+
+                for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
+                    frame &fr = dff.frames[j];
+
+                    std::string parent = "sm.root";
+                    if (fr.parent_frame >= 0) {
+                        frame &parent_frame = dff.frames[fr.parent_frame];
+                        parent = oname + "_" + parent_frame.name;
+                    }
+                    lua_file<<oname<<"_"<<fr.name<<" = "<<parent<<":createChild()"<<std::endl;
+                    lua_file<<oname<<"_"<<fr.name<<".position = "
+                            <<"Vector3("<<fr.x<<","<<fr.y<<","<<fr.z<<")"<<std::endl;
+
+                    // ignore dummies for now
+                    if (fr.geometry == -1) continue;
+
+                    std::string name = oname+"."+fr.name;
+                    std::string mesh = name+".mesh";
+                    lua_file<<"safe_destroy(sm:getEntity(\""<<name<<"\"))"<<std::endl;
+                    lua_file<<oname<<"_"<<fr.name<<":attachObject("
+                            <<"sm:createEntity(\""<<name<<"\",\"cheetah/"<<mesh<<"\"))"<<std::endl;
+                    lua_file<<"sm:getEntity(\""<<name<<"\"):setCustomParameterAll(0,1,1,1,1)"
+                            <<std::endl;
+                }
+
+            } else {
+                StringSet texs;
+                ide ide;
+                Strings imgs;
+                imgs.push_back("");
+                Obj obj; // currently obj only needs a few things set
+                obj.dff = file_name;
+                obj.txd = txdname;
+                obj.flags = 0;
                 MatDB matdb;
                 export_mesh(texs, ide, imgs, std::cout, oname+".mesh", obj,
-                            oname, dff.geometries[0], matdb, materials_lua);
-
+                            oname, dff.geometries[0], matdb, lua_file);
             }
-
         }
 
     } catch (Exception &e) {

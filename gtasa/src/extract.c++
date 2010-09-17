@@ -200,6 +200,27 @@ static void addFullIPL (std::ostream &out,
 
 typedef std::map<std::string,Txd> TxdDir;
 
+void process_txd (std::ostream &out,
+                  Txd::Names &texs,
+                  const std::string &fname,
+                  const std::string &dest_dir,
+                  const std::string &modprefix,
+                  std::istream &in)
+{
+        (void) out;
+        std::string txddir = dest_dir+"/"+modprefix+fname;
+        ensuredir(txddir);
+        Txd txd(in,txddir); // extract dds files
+        const Txd::Names &n = txd.getNames();
+        typedef Txd::Names::const_iterator TI;
+        for (TI j=n.begin(),j_=n.end();j!=j_;++j) {
+                const std::string &texname = *j;
+                // build a list of all textures we
+                // know about (relative to dest_dir)
+                texs.insert(fname+"/"+texname+".dds");
+        }
+}
+
 void process_txds (std::ostream &out,
                    Txd::Names &texs,
                    ImgHandle &img,
@@ -214,19 +235,7 @@ void process_txds (std::ostream &out,
                 if (ext!=".txd") continue;
                 //out<<"Extracting: "<<img.name<<"/"<<fname<<std::endl;
                 img.i.fileOffset(img.f,i);
-                std::string txddir =
-                        dest_dir+"/"+modname+"/"+img.name+"/"+fname;
-                ensuredir(txddir);
-                Txd txd(img.f,txddir); // extract dds files
-                const Txd::Names &n = txd.getNames();
-                typedef Txd::Names::const_iterator TI;
-                for (TI j=n.begin(),j_=n.end();j!=j_;++j) {
-                        const std::string &texname = *j;
-                        // build a list of all textures we
-                        // know about (relative to dest_dir)
-                        texs.insert(img.name+"/"+
-                                    fname+"/"+texname+".dds");
-                }
+                process_txd(out, texs, img.name+"/"+fname, dest_dir, modname+"/", img.f);
         }
 }
 
@@ -302,6 +311,7 @@ struct Config {
         const char **idesv;
         size_t idesc;
         std::vector<std::pair<std::string,std::string> > imgs;
+        std::vector<std::pair<std::string,std::string> > txds;
         std::vector<IPLConfig> ipls;
 };
 
@@ -310,6 +320,7 @@ void extract (const Config &cfg, std::ostream &out)
         const std::string &gta_dir = cfg.gta_dir;
         const std::string &dest_dir = cfg.dest_dir;
 
+        out << "Reading IDE files..." << std::endl;
         ide everything;
         for (size_t i=0 ; i<cfg.idesc ; ++i) {
                 std::ifstream f;
@@ -322,14 +333,34 @@ void extract (const Config &cfg, std::ostream &out)
         // cols_i = cols + the empty cols (for error checking)
         ColNames cols, cols_i;
 
-        // imgs
+        out << "Extracting standalone txd files..." << std::endl;
+        for (size_t i=0 ; i<cfg.txds.size() ; ++i) {
+                std::string fname = gta_dir+cfg.txds[i].first;
+                std::string name = cfg.txds[i].second;
+                std::ifstream txd_f;
+                txd_f.open(fname.c_str(), std::ios::binary);
+                ASSERT_IO_SUCCESSFUL(txd_f,"opening "+fname);
+                //out<<"Extracting: "<<fname<<std::endl;
+                process_txd (out, texs, name, dest_dir, cfg.modname+"/", txd_f);
+
+        }
+
+        out << "Reading img files..." << std::endl;
         std::map<std::string,ImgHandle*> imgs;
         for (size_t i=0 ; i<cfg.imgs.size() ; ++i) {
                 std::string name = cfg.imgs[i].second;
-                ImgHandle *img = imgs[name] = new ImgHandle();
-                img->init(gta_dir+cfg.imgs[i].first, name, out);
-                process_txds(out, texs, *img, dest_dir, cfg.modname);
-                process_cols(out, cols, cols_i, *img, dest_dir, cfg.modname);
+                imgs[name] = new ImgHandle();
+                imgs[name]->init(gta_dir+cfg.imgs[i].first, name, out);
+        }
+
+        out << "Extracting txds from imgs..." << std::endl;
+        for (size_t i=0 ; i<cfg.imgs.size() ; ++i) {
+                process_txds(out, texs, *imgs[cfg.imgs[i].second], dest_dir, cfg.modname);
+        }
+
+        out << "Extracting cols from imgs..." << std::endl;
+        for (size_t i=0 ; i<cfg.imgs.size() ; ++i) {
+                process_cols(out, cols, cols_i, *imgs[cfg.imgs[i].second], dest_dir, cfg.modname);
         }
 
         if (getenv("DUMP_TEX_LIST")) {
@@ -441,7 +472,7 @@ void extract (const Config &cfg, std::ostream &out)
                 for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
                         frame &fr = dff.frames[j];
                         // ignore dummies for now
-                        if (fr.geometry == 0xFFFFFFFF)
+                        if (fr.geometry == -1)
                                 continue;
 
                         if (o.flags & OBJ_FLAG_2CLUMP) {
@@ -601,6 +632,69 @@ void extract_gtasa (const std::string &gta_dir, const std::string &dest_dir)
         typedef std::pair<std::string,std::string> P;
         cfg.imgs.push_back(P("/models/gta3.img","gta3.img"));
         cfg.imgs.push_back(P("/models/gta_int.img","gta_int.img"));
+        cfg.txds.push_back(P("/models/effectsPC.txd","effectsPC.txd"));
+        cfg.txds.push_back(P("/models/fonts.txd","fonts.txd"));
+        cfg.txds.push_back(P("/models/fronten1.txd","fronten1.txd"));
+        cfg.txds.push_back(P("/models/fronten2.txd","fronten2.txd"));
+        cfg.txds.push_back(P("/models/fronten3.txd","fronten3.txd"));
+        cfg.txds.push_back(P("/models/fronten_pc.txd","fronten_pc.txd"));
+        cfg.txds.push_back(P("/models/generic/vehicle.txd","generic/vehicle.txd"));
+        cfg.txds.push_back(P("/models/generic/wheels.txd","generic/wheels.txd"));
+        cfg.txds.push_back(P("/models/grass/plant1.txd","grass/plant1.txd"));
+        cfg.txds.push_back(P("/models/hud.txd","hud.txd"));
+        cfg.txds.push_back(P("/models/misc.txd","misc.txd"));
+        cfg.txds.push_back(P("/models/particle.txd","particle.txd"));
+        cfg.txds.push_back(P("/models/pcbtns.txd","pcbtns.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_RCE2.txd","txd/LD_RCE2.txd"));
+        cfg.txds.push_back(P("/models/txd/intro1.txd","txd/intro1.txd"));
+        cfg.txds.push_back(P("/models/txd/intro2.txd","txd/intro2.txd"));
+        cfg.txds.push_back(P("/models/txd/intro4.txd","txd/intro4.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_BEAT.txd","txd/LD_BEAT.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_BUM.txd","txd/LD_BUM.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_CARD.txd","txd/LD_CARD.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_CHAT.txd","txd/LD_CHAT.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_DRV.txd","txd/LD_DRV.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_DUAL.txd","txd/LD_DUAL.txd"));
+        cfg.txds.push_back(P("/models/txd/ld_grav.txd","txd/ld_grav.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_NONE.txd","txd/LD_NONE.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_OTB.txd","txd/LD_OTB.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_OTB2.txd","txd/LD_OTB2.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_PLAN.txd","txd/LD_PLAN.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_POKE.txd","txd/LD_POKE.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_POOL.txd","txd/LD_POOL.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_RACE.txd","txd/LD_RACE.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_RCE1.txd","txd/LD_RCE1.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_RCE3.txd","txd/LD_RCE3.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_RCE4.txd","txd/LD_RCE4.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_RCE5.txd","txd/LD_RCE5.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_ROUL.txd","txd/LD_ROUL.txd"));
+        cfg.txds.push_back(P("/models/txd/ld_shtr.txd","txd/ld_shtr.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_SLOT.txd","txd/LD_SLOT.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_SPAC.txd","txd/LD_SPAC.txd"));
+        cfg.txds.push_back(P("/models/txd/LD_TATT.txd","txd/LD_TATT.txd"));
+        cfg.txds.push_back(P("/models/txd/load0uk.txd","txd/load0uk.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc0.txd","txd/loadsc0.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc1.txd","txd/loadsc1.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc10.txd","txd/loadsc10.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc11.txd","txd/loadsc11.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc12.txd","txd/loadsc12.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc13.txd","txd/loadsc13.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc14.txd","txd/loadsc14.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc2.txd","txd/loadsc2.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc3.txd","txd/loadsc3.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc4.txd","txd/loadsc4.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc5.txd","txd/loadsc5.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc6.txd","txd/loadsc6.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc7.txd","txd/loadsc7.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc8.txd","txd/loadsc8.txd"));
+        cfg.txds.push_back(P("/models/txd/loadsc9.txd","txd/loadsc9.txd"));
+        cfg.txds.push_back(P("/models/txd/LOADSCS.txd","txd/LOADSCS.txd"));
+        cfg.txds.push_back(P("/models/txd/LOADSUK.txd","txd/LOADSUK.txd"));
+        //cfg.txds.push_back(P("/models/txd/outro.txd","txd/outro.txd"));
+        cfg.txds.push_back(P("/models/txd/splash1.txd","txd/splash1.txd"));
+        cfg.txds.push_back(P("/models/txd/splash2.txd","txd/splash2.txd"));
+        cfg.txds.push_back(P("/models/txd/splash3.txd","txd/splash3.txd"));
+
 
 
         // ides {{{
@@ -661,6 +755,7 @@ void extract_gtasa (const std::string &gta_dir, const std::string &dest_dir)
                 "maps/veh_mods/veh_mods.ide",
                 "vehicles.ide",
                 "peds.ide",
+                "txdcut.ide",
                 "default.ide"
         }; //}}}
 
