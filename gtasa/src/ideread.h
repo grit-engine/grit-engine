@@ -58,6 +58,7 @@ public:
         std::string txd;
         float draw_distance;
         unsigned long flags;
+        bool useMagicColour;
 };
 typedef std::vector<Obj> Objs;
 

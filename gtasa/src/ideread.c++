@@ -177,6 +177,7 @@ void read_ide (std::istream &f, struct ide *ide)
                         obj.txd = str_lcase_crop(strs[2]);
                         obj.draw_distance = (float)strtod(strs[3].c_str(),NULL);
                         obj.flags = get_ulong(strs[4],"Flags");
+                        obj.useMagicColour = false;
                         ASSERT((obj.flags|0x77feef) == 0x77feef);
                         ide->objs.push_back(obj);
                 } else if (section=="objs" && strs.size()==6) {

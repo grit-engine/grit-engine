@@ -471,7 +471,7 @@ static void ios_read_geometry (int d,
             g.tex_coords[i].u = ios_read_float(f);
             g.tex_coords[i].v = ios_read_float(f);
             VBOS(4,p<<"texture_coords["<<i<<"]: "
-                    <<g.tex_coords[i].u<<g.tex_coords[i].v);
+                    <<g.tex_coords[i].u<<" "<<g.tex_coords[i].v);
         }
     }
     if (g.flags&GEO_UNKNOWN2) {
@@ -480,14 +480,14 @@ static void ios_read_geometry (int d,
             g.tex_coords2[i].u = ios_read_float(f);
             g.tex_coords2[i].v = ios_read_float(f);
             VBOS(4,p<<"texture_coords2["<<i<<"]: "
-                    <<g.tex_coords2[i].u<<g.tex_coords2[i].v);
+                    <<g.tex_coords2[i].u<<" "<<g.tex_coords2[i].v);
         }
         g.lights.resize(g.num_vertexes);
         for (unsigned long i=0 ; i<g.num_vertexes ; i++) {
             g.lights[i].unk1 = ios_read_float(f);
             g.lights[i].unk2 = ios_read_float(f);
             VBOS(4,p<<"lights["<<i<<"]: "
-                   <<g.lights[i].unk1<<g.lights[i].unk2);
+                   <<g.lights[i].unk1<<" "<<g.lights[i].unk2);
         }
     }
     for (unsigned long i=0 ; i<g.num_faces ; i++) {
@@ -1168,7 +1168,27 @@ export_or_provide_mat (const StringSet &texs,
     }
     if (double_sided) lua_file << "backfaces=true, ";
     if (!dynamic_lighting) lua_file << "normals=false, ";
-    if (m.colour!=0xFFFFFFFF) lua_file<<"diffuseColour=0x"<<std::hex<<m.colour<<std::dec<<", ";
+
+    if (m.colour!=0xFFFFFFFF) {
+        if (m.colour==0xff00ff3c && obj.useMagicColour) {
+            m.colour=0xFFFFFFFF;
+            lua_file<<"coloured=true, ";
+        } else if (m.colour==0xff00afff && obj.useMagicColour) {
+            // left headlight
+            m.colour=0xFFFFFFFF;
+        } else if (m.colour==0xffc8ff00 && obj.useMagicColour) {
+            // right headlight
+            m.colour=0xFFFFFFFF;
+        } else if (m.colour==0xff00ffb9 && obj.useMagicColour) {
+            // left rearlight
+            m.colour=0xFFFFFFFF;
+        } else if (m.colour==0xff003cff && obj.useMagicColour) {
+            // right rearlight
+            m.colour=0xFFFFFFFF;
+        } else {
+            lua_file<<"diffuseColour=0x"<<std::hex<<m.colour<<std::dec<<", ";
+        }
+    }
     if (textures[0]!="") lua_file << "diffuseMap=\""<<textures[0]<<"\", ";
     lua_file << "}\n";
 
@@ -1381,6 +1401,7 @@ void export_mesh (const StringSet &texs,
     int day_colours = g.vertex_cols.size();
     int night_colours = g.vertex_night_cols.size();
     int texture_coords = g.tex_coords.size();
+    int texture_coords2 = g.tex_coords2.size();
 
     if (!day_colours) night_colours = 0;
 
@@ -1407,6 +1428,11 @@ void export_mesh (const StringSet &texs,
     }
 
     if (texture_coords) {
+        decl->addElement(0,offset,Ogre::VET_FLOAT2,Ogre::VES_TEXTURE_COORDINATES,0);
+        offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
+    }
+
+    if (texture_coords2) {
         decl->addElement(0,offset,Ogre::VET_FLOAT2,Ogre::VES_TEXTURE_COORDINATES,0);
         offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
     }
@@ -1457,6 +1483,12 @@ void export_mesh (const StringSet &texs,
         }
         if (texture_coords) {
             struct texcoord &uv = g.tex_coords[i];
+            float u = uv.u, v = uv.v;
+            (*vbuf_next++) = u;
+            (*vbuf_next++) = v;
+        }
+        if (texture_coords2) {
+            struct texcoord &uv = g.tex_coords2[i];
             float u = uv.u, v = uv.v;
             (*vbuf_next++) = u;
             (*vbuf_next++) = v;
@@ -1754,6 +1786,7 @@ int main(int argc, char **argv)
                 obj.dff = file_name;
                 obj.txd = txdname;
                 obj.flags = 0;
+                obj.useMagicColour = true;
                 MatDB matdb;
                 for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
                     frame &fr = dff.frames[j];
@@ -1774,6 +1807,9 @@ int main(int argc, char **argv)
 
                 for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
                     frame &fr = dff.frames[j];
+
+                    if (fr.name.substr(fr.name.size()-4,4)=="_dam") continue;
+                    if (fr.name.substr(fr.name.size()-4,4)=="_vlo") continue;
 
                     std::string parent = "sm.root";
                     if (fr.parent_frame >= 0) {
@@ -1805,6 +1841,7 @@ int main(int argc, char **argv)
                 obj.dff = file_name;
                 obj.txd = txdname;
                 obj.flags = 0;
+                obj.useMagicColour = false;
                 MatDB matdb;
                 export_mesh(texs, ide, imgs, std::cout, oname+".mesh", obj,
                             oname, dff.geometries[0], matdb, lua_file);
