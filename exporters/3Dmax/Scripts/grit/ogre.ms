@@ -74,6 +74,68 @@ rollout GritRolloutOgreMesh "Mesh" width:272 rolledUp:false -- {{{
 
 ) --}}}
 
+rollout GritRolloutMaterial "Materials" width:272 rolledUp:true -- {{{
+(
+button ExpMats "Export materials" toolTip:"Exports selected object's materials"
+-- this script was made by shadow link but he doesn't own any rights about this. really. <3
+
+fn splitMatFile fileName = (
+	matSplitSlash = filterString fileName "\\"
+	return matSplitSlash[matSplitSlash.count]
+)	
+
+fn exportmatToListener mat = (
+	materialName = mat.name
+	if mat.diffuseMap != undefined then
+	(
+		diffMap = mat.diffuseMap.bitmap.fileName
+	)
+	if mat.bumpMap != undefined then
+	(
+		normMap = mat.bumpMap.bitmap.fileName
+	)
+	if mat.specularMap != undefined then
+	(
+		specMap = mat.specularMap.bitmap.fileName
+	)
+	if diffMap == undefined then (
+		diffMap = ""
+	)else(
+		diffMap = splitMatFile diffMap as String
+		diffMap = "diffuseMap=\"" + diffMap + "\""
+	)
+	if normMap == undefined then (
+		normMap = ""
+	)else(
+		normMap = splitMatFile normMap as String
+		normMap = ", normalMap=\"" + normMap + "\""
+	)
+	if specMap == undefined then (
+		specMap = ""
+	)else(
+		specMap = splitMatFile diffMap as String
+		specMap = ", specularMap=\"" + specMap + "\""
+	)
+	format "material \"%\" { %%% }\n" materialName diffMap normMap specMap to:listener
+)
+
+    on ExpMats pressed do
+    (
+	if (classof selection[1].material) == MultiMaterial then 
+		(
+		for mats = 1 to selection[1].material.numsubs do
+			(
+			exportmatToListener selection[1].material[mats]
+			)
+		)
+	else(
+		exportmatToListener selection[1].material
+		)
+	)
+	
+)
+-- }}}
+
 rollout GritRolloutOgreAnimation "Animation" width:272 rolledUp:true -- {{{
 (
 	bitmap IMGAPRO fileName:"ui/animpro.bmp"
@@ -402,6 +464,7 @@ macroScript showGritOgreWindow
     grit_current_mesh_floater = newRolloutFloater "Grit .mesh/.skeleton Exporter" 280 500
 	addRollout GritRolloutOgreMain grit_current_mesh_floater
 	addRollout GritRolloutOgreMesh grit_current_mesh_floater
+	addRollout GritRolloutMaterial grit_current_mesh_floater
 	addRollout GritRolloutOgreAnimation grit_current_mesh_floater
 	addRollout GritRolloutAbout grit_current_mesh_floater
 )
