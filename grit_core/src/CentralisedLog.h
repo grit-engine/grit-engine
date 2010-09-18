@@ -157,7 +157,9 @@ inline std::ostream &operator << (std::ostream &o, GritException &e)
 { o << e.msg; return o; }
 
 #if defined(_MSC_VER)
-#define GRIT_FUNC_NAME __FUNCDNAME__ 
+//#define GRIT_FUNC_NAME __FUNCDNAME__ 
+#define GRIT_FUNC_NAME __FUNCSIG__ 
+//#define GRIT_FUNC_NAME __FUNCTION__ 
 #elif defined (__GNUC__)
 #define GRIT_FUNC_NAME __PRETTY_FUNCTION__
 #else
