@@ -113,7 +113,7 @@ fn exportmatToListener mat = (
 	if specMap == undefined then (
 		specMap = ""
 	)else(
-		specMap = splitMatFile diffMap as String
+		specMap = splitMatFile specMap as String
 		specMap = ", specularMap=\"" + specMap + "\""
 	)
 	format "material \"%\" { %%% }\n" materialName diffMap normMap specMap to:listener
