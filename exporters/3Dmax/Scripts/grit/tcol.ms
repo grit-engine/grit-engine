@@ -359,7 +359,7 @@ Rollout GritRolloutTcolMain "Main" -- {{{
 		bitmap IMGTATB fileName:"ui/tcolatb.bmp"
 		label tip1 "Attributes applied to the whole body"
         checkbox dynamic "Dynamic"
-        spinner smass "Mass (kg):"
+        spinner smass "Mass (kg):" range:(point3 0 20000 100)
         checkbox cyinertia "Export"
         spinner sinertiax "Inertia Tensor X (m):"
         spinner sinertiay "Inertia Tensor Y (m):"
