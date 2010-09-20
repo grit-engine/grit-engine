@@ -31,6 +31,7 @@
 
 #include "iplread.h"
 #include "ios_util.h"
+#include "csvread.h"
 
 #include "console_colour.h"
 
@@ -131,6 +132,90 @@ void IPL::addBinary (std::istream &f)
 }
 
 
+void IPL::addText (std::istream &f)
+{
+
+        Csv csv;
+        csv.filename = name;
+        read_csv(f,csv);
+
+        for (Csv::iterator i=csv.begin(), i_=csv.end() ; i!=i_ ; ++i) {
+                const std::string section = i->first;
+
+                const CsvSection &lines = i->second;
+
+                for (unsigned j=0 ; j<lines.size() ; ++j) {
+
+                        CsvLine line = lines[j];
+
+                        if (section=="inst" && line.size()==11) {
+                                Inst inst;
+                                inst.is_low_detail = false;
+                                double id = strtod(line[0].c_str(),NULL);
+                                if (id!=floor(id)) {
+                                        std::cerr<<"Id not an integer "<<id<<"\n";
+                                        exit(EXIT_FAILURE);
+                                }
+                                inst.id = (long unsigned int) id;
+                                inst.dff = str_lcase_crop(line[1]);
+                                double interior = strtod(line[2].c_str(),NULL);
+                                if (interior!=floor(interior)) {
+                                        std::cerr<<"Interior not an integer "
+                                                 <<interior<<"\n";
+                                        exit(EXIT_FAILURE);
+                                }
+                                inst.interior = (long unsigned int) interior;
+                                inst.x = strtod(line[3].c_str(),NULL);
+                                inst.y = strtod(line[4].c_str(),NULL);
+                                inst.z = strtod(line[5].c_str(),NULL);
+                                inst.rx = strtod(line[6].c_str(),NULL);
+                                inst.ry = strtod(line[7].c_str(),NULL);
+                                inst.rz = strtod(line[8].c_str(),NULL);
+                                inst.rw = -strtod(line[9].c_str(),NULL);
+                                double lod = strtod(line[10].c_str(),NULL);
+                                if (lod!=floor(lod)) {
+                                        std::cerr<<"LOD not an integer "<<lod<<"\n";
+                                        exit(EXIT_FAILURE);
+                                }
+                                inst.near_for = (long unsigned int) lod;
+                                insts.push_back(inst);
+
+                        } else if (section=="occl" && line.size()==10) {
+                        } else if (section=="occl" && line.size()==7) {
+                        } else if (section=="auzo" && line.size()==7) {
+                        } else if (section=="auzo" && line.size()==9) {
+                        } else if (section=="grge" && line.size()==11) {
+                        } else if (section=="tcyc" && line.size()==11) {
+                        } else if (section=="pick" && line.size()==4) {
+                        } else if (section=="cull" && line.size()==14) {
+                        } else if (section=="cull" && line.size()==11) {
+                        } else if (section=="enex" && line.size()==18) {
+                        } else if (section=="path") {
+                        } else if (section=="between sections" && line.size()==0 ) {
+                        } else {
+                                std::cerr<<"In "<<name<<":"<<line.orig_line<<" "
+                                         <<"section "<<section<<", row "<<line.section_line<<", "
+                                         <<"did not have the right number of values: "
+                                         <<line.size()<<std::endl;
+
+                        }
+                }
+        }
+
+
+        for (size_t i=0 ; i<insts.size() ; i++) {
+                Inst& inst = insts[i];
+                if (inst.near_for==-1) continue;
+                if (inst.near_for<0 ||
+                    (size_t)inst.near_for >=insts.size()) {
+                        std::cerr<<"Invalid lod index at instance "<<i
+                                 <<": "<<inst.near_for<<"\n";
+                        continue;
+                }
+                insts[inst.near_for].is_low_detail = true;
+        }
+}
+#if 0
 void IPL::addText (std::istream &f)
 {
         std::string section = "no section";
@@ -234,7 +319,7 @@ void IPL::addText (std::istream &f)
                 insts[inst.near_for].is_low_detail = true;
         }
 }
-
+#endif
 void IPL::addMore(std::istream &f)
 {
         unsigned long fourcc = ios_read_u32(f);
@@ -269,6 +354,7 @@ int main(int argc, char *argv[])
                         f.open(name.c_str(),std::ios::binary);
                         ASSERT_IO_SUCCESSFUL(f,"opening IPL: "+name);
 
+                        ipl.setName(name);
                         ipl.addMore(f);
                 }
 

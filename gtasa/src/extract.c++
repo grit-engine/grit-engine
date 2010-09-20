@@ -36,6 +36,10 @@
 
 #include "ios_util.h"
 #include "dirutil.h"
+#include "csvread.h"
+#include "handling.h"
+#include "surfinfo.h"
+#include "procobj.h"
 
 #ifdef near
 #undef near
@@ -207,6 +211,7 @@ void process_txd (std::ostream &out,
                   const std::string &modprefix,
                   std::istream &in)
 {
+        if (getenv("SKIP_TEXTURES")!=NULL) return;
         (void) out;
         std::string txddir = dest_dir+"/"+modprefix+fname;
         ensuredir(txddir);
@@ -249,6 +254,7 @@ void process_cols (std::ostream &out,
                    const std::string &dest_dir,
                    const std::string &modname)
 {
+        if (getenv("SKIP_COLS")!=NULL) return;
         (void) out;
         init_col_db("../");
         for (unsigned int i=0 ; i<img.i.size(); ++i) {
@@ -320,12 +326,69 @@ void extract (const Config &cfg, std::ostream &out)
         const std::string &gta_dir = cfg.gta_dir;
         const std::string &dest_dir = cfg.dest_dir;
 
+        out << "Extracting car colours..." << std::endl;
+        Csv carcols;
+        {
+                std::ofstream carcols_lua;
+                carcols_lua.open((dest_dir+"/"+cfg.modname+"/carcols.lua").c_str(),
+                                  std::ios::binary);
+                ASSERT_IO_SUCCESSFUL(carcols_lua, "opening carcols.lua");
+
+                carcols_lua << "print(\"Loading carcols\")\n";
+                carcols.filename = gta_dir+"/data/carcols.dat";
+                std::ifstream carcols_f;
+                carcols_f.open(carcols.filename.c_str(), std::ios::binary);
+                read_csv(carcols_f, carcols);
+                const CsvSection &coldefs = carcols["col"];
+                for (unsigned i=0 ; i<coldefs.size() ; ++i) {
+                        const CsvLine &line = coldefs[i];
+                        float r = strtod(line[0].c_str(), NULL)/255;
+                        float g = strtod(line[1].c_str(), NULL)/255;
+                        float b = strtod(line[2].c_str(), NULL)/255;
+                        carcols_lua<<"carcols.gtasa"<<i<<" = { { "<<r<<", "<<g<<", "<<b<<" } }"
+                                   <<std::endl;
+                }
+        }
+
+        out << "Reading car handling file..." << std::endl;
+        HandlingData handling;
+        {
+                Csv handling_csv;
+                handling_csv.filename = gta_dir+"/data/handling.cfg";
+                std::ifstream handling_f;
+                handling_f.open(handling_csv.filename.c_str(), std::ios::binary);
+                read_csv(handling_f, handling_csv);
+                read_handling(handling_csv, handling);
+        }
+
+        out << "Reading surface info file..." << std::endl;
+        SurfInfoData surfinfo;
+        {
+                Csv surfinfo_csv;
+                surfinfo_csv.filename = gta_dir+"/data/surfinfo.dat";
+                std::ifstream surfinfo_f;
+                surfinfo_f.open(surfinfo_csv.filename.c_str(), std::ios::binary);
+                read_csv(surfinfo_f, surfinfo_csv);
+                read_surfinfo(surfinfo_csv, surfinfo);
+        }
+
+        out << "Reading procedural objects file..." << std::endl;
+        ProcObjData procobj;
+        {
+                Csv procobj_csv;
+                procobj_csv.filename = gta_dir+"/data/procobj.dat";
+                std::ifstream procobj_f;
+                procobj_f.open(procobj_csv.filename.c_str(), std::ios::binary);
+                read_csv(procobj_f, procobj_csv);
+                read_procobj(procobj_csv, procobj);
+        }
+
         out << "Reading IDE files..." << std::endl;
         ide everything;
         for (size_t i=0 ; i<cfg.idesc ; ++i) {
                 std::ifstream f;
                 open_file(out, f, gta_dir+"/data/"+cfg.idesv[i]);
-                read_ide(f, &everything);
+                read_ide(cfg.idesv[i], f, &everything);
         }
 
         Txd::Names texs;
@@ -377,32 +440,22 @@ void extract (const Config &cfg, std::ostream &out)
                 }
         }
 
-        // ipls
         std::vector<IPL> ipls;
-        for (size_t i=0 ; i<cfg.ipls.size() ; ++i) {
-                const std::string &base = cfg.ipls[i].base;
-                const std::string &img = cfg.ipls[i].img;
-                const std::string &bin = cfg.ipls[i].bin;
-                size_t num = cfg.ipls[i].num;
-                if (imgs.find(img)==imgs.end()) {
-                        std::stringstream ss;
-                        ss << "ERROR: no such IMG \""<<img<<"\"";
-                        IOS_EXCEPT(ss.str());
+        if (getenv("SKIP_IPLS")==NULL) {
+                out << "Reading IPLs..." << std::endl;
+                for (size_t i=0 ; i<cfg.ipls.size() ; ++i) {
+                        const std::string &base = cfg.ipls[i].base;
+                        const std::string &img = cfg.ipls[i].img;
+                        const std::string &bin = cfg.ipls[i].bin;
+                        size_t num = cfg.ipls[i].num;
+                        if (imgs.find(img)==imgs.end()) {
+                                std::stringstream ss;
+                                ss << "ERROR: no such IMG \""<<img<<"\"";
+                                IOS_EXCEPT(ss.str());
+                        }
+                        addFullIPL(out, gta_dir, ipls, base, *imgs[img], bin, num);
                 }
-                addFullIPL(out, gta_dir, ipls, base, *imgs[img], bin, num);
         }
-        
-
-        std::ofstream map;
-        map.open((dest_dir+"/"+cfg.modname+"/map.lua").c_str(),
-                 std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(map, "opening map.lua");
-        map.precision(25);
-
-        map << "print(\"Loading world\")\n";
-        map << "streamer:clearObjects()\n";
-
-        map << "local last\n";
 
         MatDB matdb;
 
@@ -573,46 +626,62 @@ void extract (const Config &cfg, std::ostream &out)
                 
         }
 
-        for (IPLs::iterator i=ipls.begin(),i_=ipls.end() ; i!=i_ ; ++i) {
-                const IPL &ipl = *i;
-                const Insts &insts = ipl.getInsts();
-                for (Insts::const_iterator j=insts.begin(),j_=insts.end() ;
-                     j!=j_ ; ++j) {
-                        const Inst &inst = *j;
-                        if (inst.is_low_detail) continue;
-                        if (!ids_written_out[inst.id]) continue;
-                        if (inst.near_for==-1) {
-                                map<<"streamer:addObject(\""<<inst.id<<"\","
-                                   <<inst.x<<","<<inst.y<<","<<inst.z;
-                                if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
-                                        map<<",{rot=Quat("
-                                           <<inst.rw<<","<<inst.rx<<","
-                                           <<inst.ry<<","<<inst.rz<<")}";
+        if (getenv("SKIP_MAP")==NULL) {
+                out << "Exporting map..." << std::endl;
+                std::ofstream map;
+                map.open((dest_dir+"/"+cfg.modname+"/map.lua").c_str(),
+                         std::ios::binary);
+                ASSERT_IO_SUCCESSFUL(map, "opening map.lua");
+                map.precision(25);
+
+                map << "print(\"Loading world\")\n";
+                map << "streamer:clearObjects()\n";
+
+                map << "local last\n";
+
+                for (IPLs::iterator i=ipls.begin(),i_=ipls.end() ; i!=i_ ; ++i) {
+                        const IPL &ipl = *i;
+                        const Insts &insts = ipl.getInsts();
+                        for (Insts::const_iterator j=insts.begin(),j_=insts.end() ;
+                             j!=j_ ; ++j) {
+                                const Inst &inst = *j;
+                                if (inst.is_low_detail) continue;
+                                if (!ids_written_out[inst.id]) continue;
+                                if (inst.near_for==-1) {
+                                        map<<"streamer:addObject(\""<<inst.id<<"\","
+                                           <<inst.x<<","<<inst.y<<","<<inst.z;
+                                        if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
+                                                map<<",{rot=Quat("
+                                                   <<inst.rw<<","<<inst.rx<<","
+                                                   <<inst.ry<<","<<inst.rz<<")}";
+                                        }
+                                        map<<")\n";
+                                } else {
+                                        const Inst &far = insts[inst.near_for];
+                                        map<<"last=streamer:addObject(\""<<inst.id<<"\","
+                                           <<inst.x<<","<<inst.y<<","<<inst.z;
+                                        if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
+                                                map<<",{rot=Quat("
+                                                   <<inst.rw<<","<<inst.rx<<","
+                                                   <<inst.ry<<","<<inst.rz<<")}";
+                                        }
+                                        map<<")\n";
+                                        map<<"streamer:addObject(\""<<far.id<<"\","
+                                           <<far.x<<","<<far.y<<","<<far.z;
+                                        map<<",{";
+                                        if (far.rx!=0 || far.ry!=0 || far.rz!=0) {
+                                                map<<"rot=Quat("
+                                                   <<far.rw<<","<<far.rx<<","
+                                                   <<far.ry<<","<<far.rz<<"),";
+                                        }
+                                        map<<"near=last}";
+                                        map<<")\n";
                                 }
-                                map<<")\n";
-                        } else {
-                                const Inst &far = insts[inst.near_for];
-                                map<<"last=streamer:addObject(\""<<inst.id<<"\","
-                                   <<inst.x<<","<<inst.y<<","<<inst.z;
-                                if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
-                                        map<<",{rot=Quat("
-                                           <<inst.rw<<","<<inst.rx<<","
-                                           <<inst.ry<<","<<inst.rz<<")}";
-                                }
-                                map<<")\n";
-                                map<<"streamer:addObject(\""<<far.id<<"\","
-                                   <<far.x<<","<<far.y<<","<<far.z;
-                                map<<",{";
-                                if (far.rx!=0 || far.ry!=0 || far.rz!=0) {
-                                        map<<"rot=Quat("
-                                           <<far.rw<<","<<far.rx<<","
-                                           <<far.ry<<","<<far.rz<<"),";
-                                }
-                                map<<"near=last}";
-                                map<<")\n";
                         }
                 }
         }
+
+        out << "Export complete." << std::endl;
 
 }
 

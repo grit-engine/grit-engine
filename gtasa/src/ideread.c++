@@ -35,6 +35,7 @@
 
 #include "ideread.h"
 #include "ios_util.h"
+#include "csvread.h"
 
 static int tolowr (int c)
 {
@@ -115,6 +116,149 @@ unsigned long get_hex(const std::string& val_, const char* name)
         return val;
 }
 
+void read_ide (const std::string &filename, std::istream &f, struct ide *ide)
+{
+        Csv csv;
+        csv.filename = filename;
+        read_csv(f,csv);
+
+        for (Csv::iterator i=csv.begin(), i_=csv.end() ; i!=i_ ; ++i) {
+                const std::string section = i->first;
+
+                const CsvSection &lines = i->second;
+
+                for (unsigned j=0 ; j<lines.size() ; ++j) {
+
+                        CsvLine line = lines[j];
+
+                        // airtrain_vlo in default.ide has 6 for some reason
+                        if (section=="objs" && line.size()==5) {
+                                Obj obj;
+                                obj.id = get_ulong(line[0],"Id");
+                                obj.dff = str_lcase_crop(line[1]);
+                                obj.txd = str_lcase_crop(line[2]);
+                                obj.draw_distance = (float)strtod(line[3].c_str(),NULL);
+                                obj.flags = get_ulong(line[4],"Flags");
+                                obj.is_car = false;
+                                ASSERT((obj.flags|0x77feef) == 0x77feef);
+                                ide->objs.push_back(obj);
+                        } else if (section=="objs" && line.size()==6) {
+                                // mysterious airtrain_vlo thing
+                        } else if (section=="tobj" && line.size()==7) {
+                                TObj tobj;
+                                tobj.id = get_ulong(line[0],"Id");
+                                tobj.dff = str_lcase_crop(line[1]);
+                                tobj.txd = str_lcase_crop(line[2]);
+                                tobj.draw_distance =(float)strtod(line[3].c_str(),NULL);
+                                tobj.flags = get_ulong(line[4],"Flags");
+                                ASSERT((tobj.flags|0x77feef) == 0x77feef);
+                                tobj.hour_on = get_uchar(line[5],"Hour on");
+                                tobj.hour_off = get_uchar(line[6],"Hour off");
+                                ide->tobjs.push_back(tobj);
+                        } else if (section=="2dfx" && line.size()==38) {
+                                //std::cout<<"In "<<section<<" ["<<line.size()<<"] "
+                                //         <<str<<"\n";
+                        } else if (section=="anim" && line.size()==6) {
+                                Anim anim;
+                                anim.id = get_ulong(line[0],"Id");
+                                anim.dff = str_lcase_crop(line[1]);
+                                anim.txd = str_lcase_crop(line[2]);
+                                anim.ifp_file = str_lcase_crop(line[3]);
+                                anim.draw_distance =(float)strtod(line[4].c_str(),NULL);
+                                anim.flags = get_ulong(line[5],"Flags");
+                                ASSERT((anim.flags|0x77feef) == 0x77feef);
+                                ide->anims.push_back(anim);
+                        } else if (section=="txdp" && line.size()==2) {
+                                TXDP txdp;
+                                txdp.txd1 = str_lcase_crop(line[0]);
+                                txdp.txd2 = str_lcase_crop(line[1]);
+                                ide->txdps.push_back(txdp);
+                        } else if (section=="weap" && line.size()==7) {
+                                Weap weap;
+                                weap.id = get_ulong(line[0],"Id");
+                                weap.dff = str_lcase_crop(line[1]);
+                                weap.txd = str_lcase_crop(line[2]);
+                                weap.type = str_lcase_crop(line[3]);
+                                weap.unk_one = get_ulong(line[4],"Unknown");
+                                ASSERT(weap.unk_one==1);
+                                weap.unk_num = get_ulong(line[5],"Unknown");
+                                weap.unk_zero = get_ulong(line[6],"Unknown");
+                                ASSERT(weap.unk_zero==0);
+                                ide->weaps.push_back(weap);
+                        } else if (section=="hier" && line.size()==5) {
+                        } else if (section=="peds" && line.size()==14) {
+                                Ped ped;
+                                ped.id = get_ulong(line[0],"Id");
+                                ped.dff = str_lcase_crop(line[1]);
+                                ped.txd = str_lcase_crop(line[2]);
+                                ped.type = str_lcase_crop(line[3]);
+                                ped.stat_type = str_lcase_crop(line[4]);
+                                ped.anim_group = str_lcase_crop(line[5]);
+                                ped.can_drive = get_ulong(line[6],"can_drive");
+                                ped.buys_drugs = get_bool(line[7],"buys drugs");
+                                ped.anim_file = str_lcase_crop(line[8]);
+                                ped.radio1 = get_ulong(line[9],"radio1");
+                                ped.radio2 = get_ulong(line[10],"radio2");
+                                ped.unk1 = str_lcase_crop(line[11]);
+                                ped.unk2 = str_lcase_crop(line[12]);
+                                ped.unk3 = str_lcase_crop(line[13]);
+                                ide->peds.push_back(ped);
+                        } else if (section=="cars"&&(line.size()>=11||line.size()<=15)) {
+                                Vehicle vehicle;
+                                vehicle.id = get_ulong(line[0],"Id");
+                                vehicle.dff = str_lcase_crop(line[1]);
+                                vehicle.txd = str_lcase_crop(line[2]);
+                                //bike bmx boat car heli mtruck plane quad trailer train
+                                vehicle.type = str_lcase_crop(line[3]);
+                                vehicle.handling_id = str_lcase_crop(line[4]);
+                                vehicle.game_name = str_lcase_crop(line[5]);
+                                // BF_injection biked bikeh bikes bikev bmx bus choppa
+                                // coach dozer KART mtb nevada null quad rustler shamal
+                                // tank truck van vortex wayfarer
+                                vehicle.anims = str_lcase_crop(line[6]);
+                                // bicycle big executive ignore leisureboat moped
+                                // motorbike normal poorfamily richfamily taxi worker
+                                // workerboat
+                                vehicle.class_ = str_lcase_crop(line[7]);
+                                vehicle.freq = get_ulong(line[8],"Frequency");
+                                vehicle.flags = get_ulong(line[9],"Flags");
+                                // 0 1012 1f10 1f341210 2ff0 3012 30123345
+                                // 3210 3f01 3f10 3f341210 4fff
+                                vehicle.comp_rules = get_hex(line[10],"CompRules");
+                                // boats do not have the following:
+                                if (line.size()>=15) {
+                                        ASSERT(vehicle.type!="boat");
+                                        // on bikes, 16 or 23, otherwise -1
+                                        vehicle.unk1 = get_long(line[11],"Unknown1");
+                                        ASSERT(vehicle.type=="bike" ||
+                                                   vehicle.type=="bmx" ||
+                                                   vehicle.unk1==-1);
+                                        ASSERT(vehicle.type!="bmx" ||
+                                                   vehicle.unk1==16||vehicle.unk1==23);
+                                        ASSERT(vehicle.type!="bike" ||
+                                                   vehicle.unk1==16||vehicle.unk1==23);
+                                        vehicle.front_wheel_size =
+                                                (float)strtod(line[12].c_str(),NULL);
+                                        vehicle.rear_wheel_size =
+                                                (float)strtod(line[13].c_str(),NULL);
+                                        // -1 0 1 2 (on non-cars always -1)
+                                        vehicle.unk2 = get_long(line[14],"Unknown2");
+                                        ASSERT(vehicle.unk2>=-1 && vehicle.unk2<=2);
+                                        ASSERT(vehicle.type=="car" ||
+                                                   vehicle.unk2==-1);
+                                }
+                                ide->vehicles.push_back(vehicle);
+                        } else {
+                                std::cerr<<"In "<<filename<<":"<<line.orig_line<<" "
+                                         <<"section "<<section<<", row "<<line.section_line<<", "
+                                         <<"did not have the right number of values: "
+                                         <<line.size()<<std::endl;
+                        }
+                }
+        }
+
+}
+#if 0
 void read_ide (std::istream &f, struct ide *ide)
 {
         std::string section("no section");
@@ -177,7 +321,7 @@ void read_ide (std::istream &f, struct ide *ide)
                         obj.txd = str_lcase_crop(strs[2]);
                         obj.draw_distance = (float)strtod(strs[3].c_str(),NULL);
                         obj.flags = get_ulong(strs[4],"Flags");
-                        obj.useMagicColour = false;
+                        obj.is_car = false;
                         ASSERT((obj.flags|0x77feef) == 0x77feef);
                         ide->objs.push_back(obj);
                 } else if (section=="objs" && strs.size()==6) {
@@ -292,7 +436,7 @@ void read_ide (std::istream &f, struct ide *ide)
                 }
         }
 }
-
+#endif
 
 #ifdef _IDEREAD_EXEC
 
@@ -367,21 +511,25 @@ int main(int argc, char *argv[])
 
                 std::ifstream idefstream;
                 std::istream *idestream = &idefstream;
+                std::string filename;
 
                 if (strcmp(argv[1],"-")==0) {
                         idestream = &std::cin;
+                        filename = "<stdin>";
                 } else {
-                        idefstream.open (argv[1]);
+                        filename = argv[1];
+                        idefstream.open (filename.c_str());
                         ASSERT_IO_SUCCESSFUL(idefstream,
-                                          "Opening ide: "+std::string(argv[1]));
+                                          "Opening ide: "+filename);
                         if (idefstream.fail() || idefstream.bad()) {
-                                std::cout << argv[1] << ": IO Error: "
-                                          << strerror(errno) << "\n";
+                                std::stringstream ss;
+                                ss << filename << ": IO Error: " << strerror(errno) << "\n";
+                                IOS_EXCEPT(ss.str());
                         }
                 }
 
                 struct ide ide;
-                read_ide(*idestream,&ide);
+                read_ide(filename, *idestream,&ide);
 
                 for (size_t i=0 ; i<ide.objs.size() ; i++) {
                         std::cout << "obj: "<<ide.objs[i].id<<" "

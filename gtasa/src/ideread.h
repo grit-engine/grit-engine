@@ -58,7 +58,7 @@ public:
         std::string txd;
         float draw_distance;
         unsigned long flags;
-        bool useMagicColour;
+        bool is_car; // not from ide file
 };
 typedef std::vector<Obj> Objs;
 
@@ -150,7 +150,7 @@ struct ide {
         Peds peds;
 };
 
-void read_ide(std::istream &f, struct ide *ide);
+void read_ide(const std::string &filename, std::istream &f, struct ide *ide);
 
 #endif
 

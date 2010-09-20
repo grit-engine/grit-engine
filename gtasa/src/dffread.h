@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "ideread.h"
+#include "TColParser.h"
 
 #define GEO_TRISTRIP 0x1
 #define GEO_POSITIONS 0x2
@@ -249,6 +250,9 @@ struct dff {
         std::vector<struct object> objects;
         std::vector<struct light2> lights;
         unsigned long unk;
+        TColFile tcol;
+        bool has_tcol;
+        std::string col_name;
 };
 
 void ios_read_dff(int debug_threshold, std::ifstream &f,

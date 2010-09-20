@@ -25,7 +25,7 @@
 void init_col_db (const std::string &prefix);
 extern MaterialDB db;
 
-bool parse_col (std::string &name,
+void parse_col (std::string &name,
                 std::istream &in,
                 TColFile &tcol,
                 int debug_level=0);

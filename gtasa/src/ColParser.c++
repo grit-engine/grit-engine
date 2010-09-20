@@ -209,6 +209,7 @@ void init_col_db (const std::string &prefix)
         db.setMaterial(prefix+"HAY_BALE", 0);
         db.setMaterial(prefix+"GORE", 0);
         db.setMaterial(prefix+"RAILTRACK", 0);
+        db.setMaterial("/common/Metal", 0);
 }
 
 
@@ -223,7 +224,7 @@ static inline std::string& strlower(std::string& s)
     return s;
 }
 
-bool parse_col (std::string &name,
+void parse_col (std::string &name,
                 std::istream &in,
                 TColFile &tcol,
                 int debug_level)
@@ -448,8 +449,6 @@ bool parse_col (std::string &name,
 */
 
         }
-
-        return true;
 }
 
 void dump_all_cols (std::istream &in, bool binary, int debug_level)

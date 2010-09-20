@@ -39,14 +39,14 @@ const char *info =
 
 const char *usage =
 "Usage: colread { <opt> }\n\n"
-"where <opt> ::= \"-v\" | \"--verbose\"             increase debug level\n"
-"              | \"-q\" | \"--quiet\"               decrease debug level\n"
-"              | \"-h\" | \"--help\"                this message\n\n"
-"              | \"-i\" | \"--input\" <name>        input file\n"
-"              | \"-o\" | \"--output\" <name>       output file\n"
-"                                               (if tcol/bcol input)\n\n"
-"              | \"-B\" | \"--output-bcol\"         output binary\n"
-"              | \"-T\" | \"--output-tcol\"         output text (default)\n";
+"where <opt> ::= \"-v\" | \"--verbose\"         increase debug level\n"
+"              | \"-q\" | \"--quiet\"           decrease debug level\n"
+"              | \"-h\" | \"--help\"            this message\n\n"
+"              | \"-i\" | \"--input\" <name>    input file\n"
+"              | \"-o\" | \"--output\" <name>   output file\n"
+"                                                 (ignored if binary col found)\n\n"
+"              | \"-B\" | \"--output-bcol\"     output binary\n"
+"              | \"-T\" | \"--output-tcol\"     output text (default)\n";
 
 std::string next_arg(int& so_far, int argc, char **argv)
 {

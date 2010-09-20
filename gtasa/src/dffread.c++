@@ -45,6 +45,7 @@
 #include "dffread.h"
 #include "ideread.h"
 #include "tex_dups.h"
+#include "ColParser.h"
 
 #ifdef rad2
 #undef rad2
@@ -957,15 +958,26 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
         counter++;
     }
 
+    c->has_tcol = false;
+
     while (totalsize>0) {
         unsigned long size;
         ios_read_header(f,&type,&size,NULL,&file_version);
         totalsize -= size + 12;
         switch (type) {
-        case RW_COLLISION:
-            VBOS(0,p<<"SKIPPING_OVER_COL_DATA: "<<DECHEX(size));
-            ios_read_byte_array(f,NULL,size); //TODO
-            break;
+        case RW_COLLISION: {
+            VBOS(0,p<<"Reading col data... "<<DECHEX(size));
+            /*
+            unsigned char *data = new unsigned char[size];
+            ios_read_byte_array(f,data,size); //TODO
+            std::ofstream f;
+            f.open("tmp.bin", std::ios::binary);
+            f.write((char*)data, size);
+            delete [] data;
+            */
+            parse_col(c->col_name, f, c->tcol, d);
+            c->has_tcol = true;
+        } break;
         default:
             unrec(p,type,size,"MODEL");
         }
@@ -1166,23 +1178,23 @@ export_or_provide_mat (const StringSet &texs,
     } else {
         lua_file << "alphaReject=0.25, ";
     }
-    if (double_sided) lua_file << "backfaces=true, ";
+    if (double_sided || obj.is_car) lua_file << "backfaces=true, ";
     if (!dynamic_lighting) lua_file << "normals=false, ";
 
     if (m.colour!=0xFFFFFFFF) {
-        if (m.colour==0xff00ff3c && obj.useMagicColour) {
+        if (m.colour==0xff00ff3c && obj.is_car) {
             m.colour=0xFFFFFFFF;
             lua_file<<"coloured=true, ";
-        } else if (m.colour==0xff00afff && obj.useMagicColour) {
+        } else if (m.colour==0xff00afff && obj.is_car) {
             // left headlight
             m.colour=0xFFFFFFFF;
-        } else if (m.colour==0xffc8ff00 && obj.useMagicColour) {
+        } else if (m.colour==0xffc8ff00 && obj.is_car) {
             // right headlight
             m.colour=0xFFFFFFFF;
-        } else if (m.colour==0xff00ffb9 && obj.useMagicColour) {
+        } else if (m.colour==0xff00ffb9 && obj.is_car) {
             // left rearlight
             m.colour=0xFFFFFFFF;
-        } else if (m.colour==0xff003cff && obj.useMagicColour) {
+        } else if (m.colour==0xff003cff && obj.is_car) {
             // right rearlight
             m.colour=0xFFFFFFFF;
         } else {
@@ -1690,7 +1702,10 @@ std::string get_ext(const std::string& name, std::string *base_name)
         return r;
 }
 
-
+// I think we never actually call this as we never read a tcol
+std::string pwd_full (const std::string &, const std::string &)
+{ abort(); return std::string(); } 
+                 
 int main(int argc, char **argv)
 {
     if (argc==1) {
@@ -1710,6 +1725,9 @@ int main(int argc, char **argv)
     int extras = 0; // number of args that weren't options
     std::string file_name;
     bool filename_given = false;
+
+    //init_col_db_same("/common/Metal");
+    init_col_db("/gtasa/");
 
     while (so_far<argc) {
         std::string arg = next_arg(so_far,argc,argv);
@@ -1786,7 +1804,7 @@ int main(int argc, char **argv)
                 obj.dff = file_name;
                 obj.txd = txdname;
                 obj.flags = 0;
-                obj.useMagicColour = true;
+                obj.is_car = true;
                 MatDB matdb;
                 for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
                     frame &fr = dff.frames[j];
@@ -1832,6 +1850,50 @@ int main(int argc, char **argv)
                             <<std::endl;
                 }
 
+                if (dff.has_tcol) {
+                    std::string col_name = oname;
+
+                    for (unsigned i=0 ; i<dff.tcol.compound.hulls.size() ; ++i)
+                        dff.tcol.compound.hulls[i].material = 179;
+                    for (unsigned i=0 ; i<dff.tcol.compound.boxes.size() ; ++i)
+                        dff.tcol.compound.boxes[i].material = 179;
+                    for (unsigned i=0 ; i<dff.tcol.compound.cylinders.size() ; ++i)
+                        dff.tcol.compound.cylinders[i].material = 179;
+                    for (unsigned i=0 ; i<dff.tcol.compound.cones.size() ; ++i)
+                        dff.tcol.compound.cones[i].material = 179;
+                    for (unsigned i=0 ; i<dff.tcol.compound.planes.size() ; ++i)
+                        dff.tcol.compound.planes[i].material = 179;
+                    for (unsigned i=0 ; i<dff.tcol.compound.spheres.size() ; ++i)
+                        dff.tcol.compound.spheres[i].material = 179;
+                    for (unsigned i=0 ; i<dff.tcol.triMesh.faces.size() ; ++i)
+                        dff.tcol.triMesh.faces[i].material = 179;
+
+                    dff.tcol.mass = 1000;
+
+                    if (!dff.tcol.usingCompound && !dff.tcol.usingTriMesh) {
+                            IOS_EXCEPT("Collision data had no compound or trimesh");
+                    /*
+                    } else if (binary) {
+                            col_name += ".bcol";
+                            IOS_EXCEPT("Writing bcol not implemented.");
+                    */
+                    } else {
+                            col_name += ".tcol";
+
+                            std::ofstream out;
+                            out.open(col_name.c_str(), std::ios::binary);
+                            ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
+
+                            pretty_print_tcol(out,dff.tcol,db);
+                    }
+
+                    lua_file << std::endl;
+                    lua_file << "class \""<<oname<<"\" (ColClass) {" << std::endl;
+                    lua_file << "    gfxMesh=\""<<oname<<".chassis.mesh\";" << std::endl;
+                    lua_file << "    colMesh=\""<<col_name<<"\";" << std::endl;
+                    lua_file << "}" << std::endl;
+                }
+
             } else {
                 StringSet texs;
                 ide ide;
@@ -1841,7 +1903,7 @@ int main(int argc, char **argv)
                 obj.dff = file_name;
                 obj.txd = txdname;
                 obj.flags = 0;
-                obj.useMagicColour = false;
+                obj.is_car = false;
                 MatDB matdb;
                 export_mesh(texs, ide, imgs, std::cout, oname+".mesh", obj,
                             oname, dff.geometries[0], matdb, lua_file);
