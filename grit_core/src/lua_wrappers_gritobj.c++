@@ -473,7 +473,7 @@ static int streamer_has_class (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        std::string name = luaL_checkstring(L,2);
+        std::string name = pwd_full(L, luaL_checkstring(L,2));
         lua_pushboolean(L,self.hasClass(name));
         return 1;
 TRY_END
