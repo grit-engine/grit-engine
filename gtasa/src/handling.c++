@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 
@@ -6,7 +7,7 @@
 
 static float f (const std::string &s) { return (float)strtod(s.c_str(), NULL); }
 static int dec (const std::string &s) { return (int)strtod(s.c_str(), NULL); }
-static unsigned long long hex (const std::string &s) { return strtoull(s.c_str(), NULL, 16); }
+static unsigned long hex (const std::string &s) { return strtoul(s.c_str(), NULL, 16); }
 
 void read_handling (Csv &csv, HandlingData &data)
 {
@@ -66,7 +67,7 @@ void read_handling (Csv &csv, HandlingData &data)
                 v.damage_mult = f(line[29]);
                 v.value = dec(line[30]); // in dollars
 
-                unsigned long long mflags = hex(line[31]);
+                unsigned long mflags = hex(line[31]);
                 v.is_van = mflags & 0x1;
                 v.is_bus = mflags & 0x2;
                 v.is_low = mflags & 0x4;
@@ -100,7 +101,7 @@ void read_handling (Csv &csv, HandlingData &data)
                 v.force_ground_clearance = mflags & 0x40000000;
                 v.is_hatchback = mflags & 0x80000000;
 
-                unsigned long long hflags = hex(line[32]);
+                unsigned long hflags = hex(line[32]);
                 v.one_g_boost = hflags & 0x1;
                 v.two_g_boost = hflags & 0x2;
                 v.npc_anti_roll = hflags & 0x4;

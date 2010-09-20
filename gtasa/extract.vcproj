@@ -191,6 +191,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\csvread.c++"
+				>
+			</File>
+			<File
 				RelativePath=".\src\dffread.c++"
 				>
 			</File>
@@ -200,6 +204,10 @@
 			</File>
 			<File
 				RelativePath=".\src\extract.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\handling.c++"
 				>
 			</File>
 			<File
@@ -216,6 +224,14 @@
 			</File>
 			<File
 				RelativePath=".\src\iplread.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\procobj.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\surfinfo.c++"
 				>
 			</File>
 			<File
