@@ -1,6 +1,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+
 
 #include "handling.h"
 #include "ios_util.h"
@@ -9,18 +11,33 @@ static float f (const std::string &s) { return (float)strtod(s.c_str(), NULL); }
 static int dec (const std::string &s) { return (int)strtod(s.c_str(), NULL); }
 static unsigned long hex (const std::string &s) { return strtoul(s.c_str(), NULL, 16); }
 
+static int tolowr (int c)
+{
+        return std::tolower(char(c),std::cout.getloc());
+}
+
+static std::string strlower (std::string s)
+{
+        std::transform(s.begin(),s.end(), s.begin(),tolowr);
+        return s;
+}
+
 void read_handling (Csv &csv, HandlingData &data)
 {
         const CsvSection &s = csv["nosection"];
         for (unsigned i=0 ; i<s.size() ; ++i) {
                 const CsvLine &line = s[i];
+                ASSERT(line.size()>0);
+
                 if (line[0] == "%") continue;
                 if (line[0] == "!") continue;
                 if (line[0] == "$") continue;
                 if (line[0] == "^") continue;
 
+                ASSERT(line.size()==36);
+
                 VehicleData v;
-                v.name = line[0];
+                v.name = strlower(line[0]);
                 v.mass = f(line[1]);
                 v.turn_mass = f(line[2]);
                 v.drag = f(line[3]);
@@ -148,8 +165,11 @@ void read_handling (Csv &csv, HandlingData &data)
         }
         for (unsigned i=0 ; i<s.size() ; ++i) {
                 const CsvLine &line = s[i];
+                ASSERT(line.size()>0);
                 if (line[0] == "%") {
-                        const std::string &name = line[1];
+                        ASSERT(line.size()==16);
+                        const std::string &name = strlower(line[1]);
+                        ASSERT(data[name]!=NULL);
                         VehicleData &v = *data[name];
                         v.has_boat_data = true;
                         // boat
@@ -168,7 +188,9 @@ void read_handling (Csv &csv, HandlingData &data)
                         v.boat_turn_res_z = f(line[14]);
                         v.boat_look_l_r_behind_cam_height = f(line[15]);
                 } else if (line[0] == "!") {
-                        const std::string &name = line[1];
+                        ASSERT(line.size()==17);
+                        const std::string &name = strlower(line[1]);
+                        ASSERT(data[name]!=NULL);
                         VehicleData &v = *data[name];
                         v.has_bike_data = true;
                         // bike
@@ -176,18 +198,21 @@ void read_handling (Csv &csv, HandlingData &data)
                         v.bike_lean_fwd_force = f(line[3]);
                         v.bike_lean_back_com = f(line[4]);
                         v.bike_lean_back_force = f(line[5]);
-                        v.bike_full_anim_lean = f(line[6]);
-                        v.bike_des_lean = f(line[7]);
-                        v.bike_speed_steer = f(line[8]);
-                        v.bike_slip_steer = f(line[9]);
-                        v.bike_no_player_com_z = f(line[10]);
-                        v.bike_wheelie_ang = f(line[11]);
-                        v.bike_stoppie_ang = f(line[12]);
-                        v.bike_wheelie_steer = f(line[13]);
-                        v.bike_wheelie_stab_mult = f(line[14]);
-                        v.bike_stoppie_stab_mult = f(line[15]);
+                        v.bike_max_lean = f(line[6]);
+                        v.bike_full_anim_lean = f(line[7]);
+                        v.bike_des_lean = f(line[8]);
+                        v.bike_speed_steer = f(line[9]);
+                        v.bike_slip_steer = f(line[10]);
+                        v.bike_no_player_com_z = f(line[11]);
+                        v.bike_wheelie_ang = f(line[12]);
+                        v.bike_stoppie_ang = f(line[13]);
+                        v.bike_wheelie_steer = f(line[14]);
+                        v.bike_wheelie_stab_mult = f(line[15]);
+                        v.bike_stoppie_stab_mult = f(line[16]);
                 } else if (line[0] == "$") {
-                        const std::string &name = line[1];
+                        ASSERT(line.size()==23);
+                        const std::string &name = strlower(line[1]);
+                        ASSERT(data[name]!=NULL);
                         VehicleData &v = *data[name];
                         v.has_plane_data = true;
                         // plane

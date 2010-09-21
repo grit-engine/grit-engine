@@ -255,8 +255,14 @@ struct dff {
         std::string col_name;
 };
 
-void ios_read_dff(int debug_threshold, std::ifstream &f,
-                  struct dff *c, const std::string &p);
+// read from f, write into c, use p as a prefix on debug messages
+void ios_read_dff (int debug_threshold, std::ifstream &f,
+                   dff *c, const std::string &p);
+
+void offset_dff (dff &dff, float x, float y, float z);
+
+// apply transformation to geometry, set transformation to identity
+void reset_dff_frame (dff &dff, unsigned frame);
 
 void export_xml (const StringSet &texs,
                  const ide &ide,

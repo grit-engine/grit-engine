@@ -90,7 +90,8 @@ struct VehicleData {
     // bike
     bool has_bike_data;
     float bike_lean_fwd_com, bike_lean_fwd_force;
-    float bike_lean_back_com, bike_lean_back_force, bike_full_anim_lean, bike_des_lean;
+    float bike_lean_back_com, bike_lean_back_force;
+    float bike_max_lean, bike_full_anim_lean, bike_des_lean;
     float bike_speed_steer, bike_slip_steer, bike_no_player_com_z;
     float bike_wheelie_ang, bike_stoppie_ang, bike_wheelie_steer;
     float bike_wheelie_stab_mult, bike_stoppie_stab_mult;

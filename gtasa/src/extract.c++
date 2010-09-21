@@ -326,6 +326,8 @@ void extract (const Config &cfg, std::ostream &out)
         const std::string &gta_dir = cfg.gta_dir;
         const std::string &dest_dir = cfg.dest_dir;
 
+        ensuredir(dest_dir+"/"+cfg.modname);
+
         out << "Extracting car colours..." << std::endl;
         Csv carcols;
         {
@@ -342,9 +344,23 @@ void extract (const Config &cfg, std::ostream &out)
                 const CsvSection &coldefs = carcols["col"];
                 for (unsigned i=0 ; i<coldefs.size() ; ++i) {
                         const CsvLine &line = coldefs[i];
-                        float r = strtod(line[0].c_str(), NULL)/255;
-                        float g = strtod(line[1].c_str(), NULL)/255;
-                        float b = strtod(line[2].c_str(), NULL)/255;
+                        float r,g,b;
+                        if (line.size()==2) {
+                                // there is one case where a decimal point
+                                //is used instead of a comma
+                                size_t n = line[0].find(".");
+                                ASSERT(n<line[0].npos-1);
+                                std::string p1 = line[0].substr(0,n);
+                                std::string p2 = line[0].substr(n+1,line[0].npos);
+                                r = strtod(p1.c_str(), NULL)/255;
+                                g = strtod(p2.c_str(), NULL)/255;
+                                b = strtod(line[1].c_str(), NULL)/255;
+                        } else {
+                                ASSERT(line.size()==3);
+                                r = strtod(line[0].c_str(), NULL)/255;
+                                g = strtod(line[1].c_str(), NULL)/255;
+                                b = strtod(line[2].c_str(), NULL)/255;
+                        }
                         carcols_lua<<"carcols.gtasa"<<i<<" = { { "<<r<<", "<<g<<", "<<b<<" } }"
                                    <<std::endl;
                 }
@@ -364,12 +380,54 @@ void extract (const Config &cfg, std::ostream &out)
         out << "Reading surface info file..." << std::endl;
         SurfInfoData surfinfo;
         {
+                std::ofstream physmats_lua;
+                physmats_lua.open((dest_dir+"/"+cfg.modname+"/phys_mats.lua").c_str(),
+                                  std::ios::binary);
+                ASSERT_IO_SUCCESSFUL(physmats_lua, "opening physmats.lua");
+
                 Csv surfinfo_csv;
                 surfinfo_csv.filename = gta_dir+"/data/surfinfo.dat";
                 std::ifstream surfinfo_f;
                 surfinfo_f.open(surfinfo_csv.filename.c_str(), std::ios::binary);
                 read_csv(surfinfo_f, surfinfo_csv);
                 read_surfinfo(surfinfo_csv, surfinfo);
+                for (unsigned i=0 ; i<surfinfo.surfaces.size() ; ++i) {
+                        SurfInfo &surf = surfinfo.surfaces[i];
+                        db.setMaterial("/"+cfg.modname+"/"+surf.name, 0);
+                        physmats_lua<<"physical_material \""<<surf.name<<"\" {"<<std::endl;
+                        float rtf, ortf;
+                        if (surf.adhesion_group=="RUBBER") {
+                                physmats_lua<<"    interactionGroup=StickyGroup;"<<std::endl;
+                                rtf = 2;
+                                ortf = 1.5;
+                        } else if (surf.adhesion_group=="HARD") {
+                                physmats_lua<<"    interactionGroup=SmoothHardGroup;"<<std::endl;
+                                rtf = 1.3;
+                                ortf = 0.9;
+                        } else if (surf.adhesion_group=="ROAD") {
+                                physmats_lua<<"    interactionGroup=RoughGroup;"<<std::endl;
+                                rtf = 1.5;
+                                ortf = 1.3;
+                        } else if (surf.adhesion_group=="LOOSE") {
+                                physmats_lua<<"    interactionGroup=DeformGroup;"<<std::endl;
+                                rtf = 1.1;
+                                ortf = 1.5;
+                        } else if (surf.adhesion_group=="SAND") {
+                                physmats_lua<<"    interactionGroup=DeformGroup;"<<std::endl;
+                                rtf = 0.8;
+                                ortf = 1.5;
+                        } else if (surf.adhesion_group=="WET") {
+                                physmats_lua<<"    interactionGroup=SlipperyGroup;"<<std::endl;
+                                rtf = 0.4;
+                                ortf = 0.9;
+                        } else {
+                                IOS_EXCEPT("Unrecognised adhesion group: "+surf.adhesion_group);
+                        }
+                        physmats_lua<<"    roadTyreFriction="<<rtf<<";"<<std::endl;
+                        physmats_lua<<"    offRoadTyreFriction="<<ortf<<";"<<std::endl;
+                        physmats_lua<<"}"<<std::endl<<std::endl;;
+                }
+
         }
 
         out << "Reading procedural objects file..." << std::endl;
@@ -427,21 +485,19 @@ void extract (const Config &cfg, std::ostream &out)
         }
 
         if (getenv("DUMP_TEX_LIST")) {
-                for (Txd::Names::iterator i=texs.begin(),
-                                          i_=texs.end() ; i!=i_ ; ++i) {
+                for (Txd::Names::iterator i=texs.begin(), i_=texs.end() ; i!=i_ ; ++i) {
                         out << *i << std::endl;
                 }
         }
 
         if (getenv("DUMP_COL_LIST")) {
-                for (ColNames::iterator i=cols.begin(),
-                                        i_=cols.end() ; i!=i_ ; ++i) {
+                for (ColNames::iterator i=cols.begin(), i_=cols.end() ; i!=i_ ; ++i) {
                         out << *i << std::endl;
                 }
         }
 
         std::vector<IPL> ipls;
-        if (getenv("SKIP_IPLS")==NULL) {
+        {
                 out << "Reading IPLs..." << std::endl;
                 for (size_t i=0 ; i<cfg.ipls.size() ; ++i) {
                         const std::string &base = cfg.ipls[i].base;
@@ -459,20 +515,12 @@ void extract (const Config &cfg, std::ostream &out)
 
         MatDB matdb;
 
-        std::ofstream classes;
-        classes.open((dest_dir+"/"+cfg.modname+"/classes.lua").c_str(),
-                          std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(classes, "opening classes.lua");
-
-        classes << "print(\"Loading classes\")\n";
-
-        std::ofstream materials_lua;
-        materials_lua.open((dest_dir+"/"+cfg.modname+"/materials.lua").c_str(), std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(materials_lua, "opening materials.lua");
-
 
         // don't bother generating classes for things that aren't instantiated
+        out << "Working out what to export..." << std::endl;
         std::map<unsigned long,bool> ids_used_in_ipl;
+        std::map<unsigned long,bool> ids_written_out;
+
         for (IPLs::iterator i=ipls.begin(),i_=ipls.end() ; i!=i_ ; ++i) {
                 const Insts &insts = i->getInsts();
                 for (Insts::const_iterator j=insts.begin(),j_=insts.end() ; j!=j_ ; ++j) {
@@ -481,11 +529,7 @@ void extract (const Config &cfg, std::ostream &out)
                 }
         }
 
-
-        std::map<unsigned long,bool> ids_written_out;
-
         Objs &objs = everything.objs;
-
         for (Objs::iterator i=objs.begin(),i_=objs.end() ; i!=i_ ; ++i) {
                 Obj &o = *i;
 
@@ -493,12 +537,193 @@ void extract (const Config &cfg, std::ostream &out)
                 if (!ids_used_in_ipl[o.id]) continue;
 
                 ids_written_out[o.id] = true;
+        }
 
-                //out << "id: " << o.id << "  "
-                //    << "dff: " << o.dff << std::endl;
+        if (getenv("SKIP_CLASSES")==NULL) {
+                std::ofstream classes;
+                std::ofstream materials_lua;
 
+                out << "Exporting classes..." << std::endl;
+
+                classes.open((dest_dir+"/"+cfg.modname+"/classes.lua").c_str(),
+                             std::ios::binary);
+                ASSERT_IO_SUCCESSFUL(classes, "opening classes.lua");
+
+                classes << "print(\"Loading classes\")\n";
+
+                materials_lua.open((dest_dir+"/"+cfg.modname+"/materials.lua").c_str(),
+                                   std::ios::binary);
+                ASSERT_IO_SUCCESSFUL(materials_lua, "opening materials.lua");
+
+                for (Objs::iterator i=objs.begin(),i_=objs.end() ; i!=i_ ; ++i) {
+                        Obj &o = *i;
+
+                        if (!ids_written_out[o.id]) continue;
+
+                        //out << "id: " << o.id << "  "
+                        //    << "dff: " << o.dff << std::endl;
+
+                        struct dff dff;
+                        std::string dff_name = o.dff+".dff";
+                        ImgHandle *img = NULL;
+                        for (size_t i=0 ; i<cfg.imgs.size() ; ++i) {
+                                ImgHandle *img2 = imgs[cfg.imgs[i].second];
+                                if (img2->i.fileExists(dff_name)) {
+                                        img = img2;
+                                        break;
+                                }
+                        }
+                        if (img == NULL) {
+                                out << "Not found in any IMG file: "
+                                    << "\"" << dff_name << "\"" << std::endl;
+                                continue;
+                        }
+
+                        img->open_file_img(out,dff_name);
+                        ios_read_dff(1,img->f,&dff,img->name+"/"+dff_name+"/");
+                
+                        ASSERT(dff.geometries.size()==1 || dff.geometries.size()==2);
+
+                        typedef std::vector<std::string> Strs;
+                        Strs background_texs;
+
+                        float rad = 0;
+                        for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
+                                frame &fr = dff.frames[j];
+                                // ignore dummies for now
+                                if (fr.geometry == -1)
+                                        continue;
+
+                                if (o.flags & OBJ_FLAG_2CLUMP) {
+                                        ASSERT(dff.geometries.size()==2);
+                                        ASSERT(j==1 || j==2);
+                                        // j==1 is the damaged version
+                                        // j==2 is the undamaged version
+                                        if (j==1) continue;
+                                        ASSERT(fr.geometry==1);
+                                } else {
+                                        ASSERT(fr.geometry==0);
+                                        ASSERT(dff.geometries.size()==1);
+                                }
+
+                                geometry &g = dff.geometries[fr.geometry];
+
+                                rad = sqrt(g.b_x*g.b_x + g.b_y*g.b_y + g.b_z*g.b_z)
+                                      + g.b_r;
+
+                                std::stringstream objname_ss;
+                                objname_ss << o.id;
+                                std::string objname = objname_ss.str();
+
+                                std::stringstream out_name_ss;
+                                out_name_ss<<dest_dir<<"/"<<cfg.modname<<"/"<<o.id<<".mesh";
+                                std::vector<std::string> export_imgs;
+                                export_imgs.push_back(img->name);
+                                for (size_t k=0 ; k<imgs.size() ; ++k) {
+                                        ImgHandle *img2 = imgs[cfg.imgs[k].second];
+                                        if (img2->name == img->name) continue;
+                                        export_imgs.push_back(img2->name);
+                                }
+                                std::string out_name = out_name_ss.str();
+                                generate_normals(g);
+                                export_mesh(texs,everything,export_imgs,
+                                            out,out_name,
+                                            o,objname,g,matdb,materials_lua);
+
+                                MatSplits &ms = g.mat_spls;
+                                for (MatSplits::iterator s=ms.begin(),
+                                                         s_=ms.end() ; s!=s_ ; s++) {
+                                    const material &m = g.materials[s->material];
+                                    const Strings &texs = m.rewrittenTextures;
+                                    if (texs.size()==0) continue;
+                                    ASSERT(texs.size()==1);
+                                    background_texs.push_back(texs[0]);
+                                }
+
+                                
+                        }
+
+                        std::stringstream col_field;
+                        std::string cls = "BaseClass";
+
+                        std::string tcol_name = img->name+"/"+o.dff+".tcol";
+                        bool use_col = true;
+
+                        // once only
+                        if (cols_i.find(tcol_name)==cols_i.end()) {
+                                //if (!(o.flags & OBJ_FLAG_NO_COL))
+                                //        out<<"Couldn't find col \""<<tcol_name<<"\" "
+                                //           <<"referenced from "<<o.id<<std::endl;
+                                use_col = false;
+                        }
+                        if (cols.find(tcol_name)==cols.end()) {
+                                //out<<"Skipping empty col \""<<tcol_name<<"\" "
+                                //   <<"referenced from "<<o.id<<std::endl;
+                                use_col = false;
+                        }
+                        if (use_col) {
+                                //out<<"col: \""<<tcol_name<<"\" "<<std::endl;
+                                // add col to grit class
+                                col_field << ",colMesh=\""<<tcol_name<<"\"";
+                                cls = "ColClass";
+                        }
+
+                        //preloads -- the mesh(s) and textures fr
+                        std::stringstream background_texs_ss;
+                        for (Strs::iterator i=background_texs.begin(),
+                                            i_=background_texs.end() ; i!=i_ ; ++i) {
+                                if (*i=="") continue;
+                                background_texs_ss<<"\""<<*i<<"\",";
+                        }
+                    
+
+                        bool cast_shadow = 0 != (o.flags&OBJ_FLAG_POLE_SHADOW);
+                        cast_shadow = true;
+                        if ((o.flags & OBJ_FLAG_ALPHA1) && (o.flags & OBJ_FLAG_NO_SHADOW))
+                                cast_shadow = false;
+
+                        classes<<"streamer:addClass("
+                               <<"\""<<o.id<<"\","
+                               <<cls<<",{"
+                                   <<"castShadows="<<(cast_shadow?"true":"false")
+                                   <<",renderingDistance="<<(o.draw_distance+rad)
+                                   <<",textures={"<<background_texs_ss.str()<<"}"
+                                   <<col_field.str()
+                               <<"})\n";
+                        
+                }
+        }
+
+        Vehicles &vehicles = everything.vehicles;
+
+        Txd::Names vehicle_texs;
+        for (Txd::Names::iterator i=texs.begin(),i_=texs.end() ; i!=i_ ; ++i) {
+                vehicle_texs.insert("../"+*i);
+        }
+
+        out << "Exporting vehicles..." << std::endl;
+        std::ofstream vehicles_lua;
+        std::string s = dest_dir+"/"+cfg.modname+"/vehicles.lua";
+        vehicles_lua.open(s.c_str(), std::ios::binary);
+        ASSERT_IO_SUCCESSFUL(vehicles_lua, "opening "+s);
+        for (Vehicles::iterator i=vehicles.begin(),i_=vehicles.end() ; i!=i_ ; ++i) {
+                Vehicle &v = *i;
+                out << "Exporting vehicle:  " << v.dff << std::endl;
+                //if (v.id!=415) continue;
+
+                std::string vname = v.dff; // assuming that each dff is only used by one id
+                std::string vehicle_dir = dest_dir+"/"+cfg.modname+"/"+vname;
+                ensuredir(vehicle_dir);
+
+                std::ofstream lua_file;
+                std::string s = vehicle_dir+"/init.lua";
+                lua_file.open(s.c_str(), std::ios::binary);
+                ASSERT_IO_SUCCESSFUL(lua_file, "opening "+s);
+
+                vehicles_lua << "include \""<<vname<<"/init.lua\"" << std::endl;
+                        
                 struct dff dff;
-                std::string dff_name = o.dff+".dff";
+                std::string dff_name = v.dff+".dff";
                 ImgHandle *img = NULL;
                 for (size_t i=0 ; i<cfg.imgs.size() ; ++i) {
                         ImgHandle *img2 = imgs[cfg.imgs[i].second];
@@ -515,116 +740,120 @@ void extract (const Config &cfg, std::ostream &out)
 
                 img->open_file_img(out,dff_name);
                 ios_read_dff(1,img->f,&dff,img->name+"/"+dff_name+"/");
-        
-                ASSERT(dff.geometries.size()==1 || dff.geometries.size()==2);
 
-                typedef std::vector<std::string> Strs;
-                Strs background_texs;
+                VehicleData *vdata = handling[v.handling_id];
+                ASSERT(vdata!=NULL);
+                
+                // account for centre of gravity by adjusting entire mesh
+                offset_dff(dff, -vdata->com_x, -vdata->com_y, -vdata->com_z);
 
-                float rad = 0;
+                Obj obj; // currently obj only needs a few things set
+                obj.dff = v.dff;
+                obj.txd = v.txd;
+                obj.flags = 0;
+                obj.is_car = true;
+
+                std::vector<std::string> export_imgs;
+                export_imgs.push_back("../"+img->name);
+                for (size_t k=0 ; k<imgs.size() ; ++k) {
+                        ImgHandle *img2 = imgs[cfg.imgs[k].second];
+                        if (img2->name == img->name) continue;
+                        export_imgs.push_back("../"+img2->name);
+                }
+
+                // since it's in a different directory, use a new matdb
+                // this means that there could be duplicates of materials
+                // but otherwise we'd have to refactor export_mesh to use different
+                // strings in the mesh file than in the file defining the materials
+                MatDB car_matdb;
+
                 for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
                         frame &fr = dff.frames[j];
-                        // ignore dummies for now
-                        if (fr.geometry == -1)
-                                continue;
 
-                        if (o.flags & OBJ_FLAG_2CLUMP) {
-                                ASSERT(dff.geometries.size()==2);
-                                ASSERT(j==1 || j==2);
-                                // j==1 is the damaged version
-                                // j==2 is the undamaged version
-                                if (j==1) continue;
-                                ASSERT(fr.geometry==1);
-                        } else {
-                                ASSERT(fr.geometry==0);
-                                ASSERT(dff.geometries.size()==1);
-                        }
+                        // ignore dummies for now
+                        if (fr.geometry == -1) continue;
+
+                        if (fr.name=="chassis") reset_dff_frame(dff, j);
+                }
+
+                for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
+                        frame &fr = dff.frames[j];
+
+                        // ignore dummies for now
+                        if (fr.geometry == -1) continue;
 
                         geometry &g = dff.geometries[fr.geometry];
 
-                        rad = sqrt(g.b_x*g.b_x + g.b_y*g.b_y + g.b_z*g.b_z)
-                              + g.b_r;
-
-                        std::stringstream objname_ss;
-                        objname_ss << o.id;
-                        std::string objname = objname_ss.str();
-
-                        std::stringstream out_name_ss;
-                        out_name_ss<<dest_dir<<"/"<<cfg.modname<<"/"<<o.id<<".mesh";
-                        std::vector<std::string> export_imgs;
-                        export_imgs.push_back(img->name);
-                        for (size_t k=0 ; k<imgs.size() ; ++k) {
-                                ImgHandle *img2 = imgs[cfg.imgs[k].second];
-                                if (img2->name == img->name) continue;
-                                export_imgs.push_back(img2->name);
-                        }
-                        std::string out_name = out_name_ss.str();
                         generate_normals(g);
-                        export_mesh(texs,everything,export_imgs,
-                                    out,out_name,
-                                    o,objname,g,matdb,materials_lua);
 
-                        MatSplits &ms = g.mat_spls;
-                        for (MatSplits::iterator s=ms.begin(),
-                                                 s_=ms.end() ; s!=s_ ; s++) {
-                            const material &m = g.materials[s->material];
-                            const Strings &texs = m.rewrittenTextures;
-                            if (texs.size()==0) continue;
-                            ASSERT(texs.size()==1);
-                            background_texs.push_back(texs[0]);
+                        std::string oname = vehicle_dir+"/";
+
+                        // ides are to chase txdps
+                        export_mesh(vehicle_texs,everything,export_imgs,out,
+                                    vehicle_dir+"/"+fr.name+".mesh",
+                                    obj,fr.name,g,car_matdb,lua_file);
+                }
+
+                lua_file << std::endl;
+
+
+                if (dff.has_tcol) {
+
+/*
+                        for (unsigned i=0 ; i<dff.tcol.compound.hulls.size() ; ++i)
+                                dff.tcol.compound.hulls[i].material = 179;
+                        for (unsigned i=0 ; i<dff.tcol.compound.boxes.size() ; ++i)
+                                dff.tcol.compound.boxes[i].material = 179;
+                        for (unsigned i=0 ; i<dff.tcol.compound.cylinders.size() ; ++i)
+                                dff.tcol.compound.cylinders[i].material = 179;
+                        for (unsigned i=0 ; i<dff.tcol.compound.cones.size() ; ++i)
+                                dff.tcol.compound.cones[i].material = 179;
+                        for (unsigned i=0 ; i<dff.tcol.compound.planes.size() ; ++i)
+                                dff.tcol.compound.planes[i].material = 179;
+                        for (unsigned i=0 ; i<dff.tcol.compound.spheres.size() ; ++i)
+                                dff.tcol.compound.spheres[i].material = 179;
+                        for (unsigned i=0 ; i<dff.tcol.triMesh.faces.size() ; ++i)
+                                dff.tcol.triMesh.faces[i].material = 179;
+*/
+
+                        dff.tcol.mass = vdata->mass;
+
+                        tcol_triangles_to_hulls(dff.tcol, 0.1, 0.04);
+
+                        if (!dff.tcol.usingCompound && !dff.tcol.usingTriMesh) {
+                                IOS_EXCEPT("Collision data had no compound or trimesh");
+                                /*
+                                } else if (binary) {
+                                        col_name += ".bcol";
+                                        IOS_EXCEPT("Writing bcol not implemented.");
+                                */
+                        } else {
+
+                                std::ofstream out;
+                                out.open((vehicle_dir+"/chassis.tcol").c_str(), std::ios::binary);
+                                ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
+
+                                pretty_print_tcol(out,dff.tcol,db);
                         }
 
-                        
+                        lua_file << std::endl;
+                        lua_file << "class \"../"<<vname<<"\" (ColClass) {" << std::endl;
+                        lua_file << "    gfxMesh=\""<<vname<<"/chassis.mesh\";" << std::endl;
+                        lua_file << "    colMesh=\""<<vname<<"/chassis.tcol\";" << std::endl;
+                        lua_file << "    castShadows = true;" << std::endl;
+                        lua_file << "}" << std::endl;
                 }
 
-                std::stringstream col_field;
-                std::string cls = "BaseClass";
 
-                std::string tcol_name = img->name+"/"+o.dff+".tcol";
-                bool use_col = true;
-
-                // once only
-                if (cols_i.find(tcol_name)==cols_i.end()) {
-                        //if (!(o.flags & OBJ_FLAG_NO_COL))
-                        //        out<<"Couldn't find col \""<<tcol_name<<"\" "
-                        //           <<"referenced from "<<o.id<<std::endl;
-                        use_col = false;
-                }
-                if (cols.find(tcol_name)==cols.end()) {
-                        //out<<"Skipping empty col \""<<tcol_name<<"\" "
-                        //   <<"referenced from "<<o.id<<std::endl;
-                        use_col = false;
-                }
-                if (use_col) {
-                        //out<<"col: \""<<tcol_name<<"\" "<<std::endl;
-                        // add col to grit class
-                        col_field << ",colMesh=\""<<tcol_name<<"\"";
-                        cls = "ColClass";
-                }
-
-                //preloads -- the mesh(s) and textures fr
-                std::stringstream background_texs_ss;
-                for (Strs::iterator i=background_texs.begin(),
-                                    i_=background_texs.end() ; i!=i_ ; ++i) {
-                        if (*i=="") continue;
-                        background_texs_ss<<"\""<<*i<<"\",";
-                }
-            
-
-                bool cast_shadow = 0 != (o.flags&OBJ_FLAG_POLE_SHADOW);
-                cast_shadow = true;
-                if ((o.flags & OBJ_FLAG_ALPHA1) && (o.flags & OBJ_FLAG_NO_SHADOW)) cast_shadow = false;
-
-                classes<<"streamer:addClass("
-                       <<"\""<<o.id<<"\","
-                       <<cls<<",{"
-                           <<"castShadows="<<(cast_shadow?"true":"false")
-                           <<",renderingDistance="<<(o.draw_distance+rad)
-                           <<",textures={"<<background_texs_ss.str()<<"}"
-                           <<col_field.str()
-                       <<"})\n";
-                
         }
+
+        vehicles_lua << std::endl;
+        vehicles_lua << "all_vehicles = { ";
+
+        for (Vehicles::iterator i=vehicles.begin(),i_=vehicles.end() ; i!=i_ ; ++i) {
+                vehicles_lua << "\""<<i->dff<<"\", ";
+        }
+        vehicles_lua << "}" << std::endl;
 
         if (getenv("SKIP_MAP")==NULL) {
                 out << "Exporting map..." << std::endl;

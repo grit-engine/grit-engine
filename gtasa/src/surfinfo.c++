@@ -13,13 +13,14 @@ void read_surfinfo (Csv &csv, SurfInfoData &data)
         const CsvSection &s = csv["nosection"];
         for (unsigned i=0 ; i<s.size() ; ++i) {
                 const CsvLine &line = s[i];
+                ASSERT(line.size()>=36);
 
                 SurfInfo v;
                 v.name = line[0];
 
                 v.adhesion_group = line[1];
                 v.tyre_grip = f(line[2]);;
-                v.wet_grit = f(line[3]);;
+                v.wet_grip = f(line[3]);;
                 v.skidmark = line[4];
                 v.friction_effect = line[5];
                 v.soft_landing = b(line[6]);

@@ -12,6 +12,7 @@ void read_procobj (Csv &csv, ProcObjData &data)
         const CsvSection &s = csv["nosection"];
         for (unsigned i=0 ; i<s.size() ; ++i) {
                 const CsvLine &line = s[i];
+                ASSERT(line.size()==14);
 
                 ProcObj v;
                 v.name = line[0];

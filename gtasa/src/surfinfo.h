@@ -34,7 +34,7 @@ struct SurfInfo {
 
     std::string adhesion_group;
     float tyre_grip;
-    float wet_grit;
+    float wet_grip;
     std::string skidmark;
     std::string friction_effect;
     bool soft_landing;

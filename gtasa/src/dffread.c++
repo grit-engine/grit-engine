@@ -966,17 +966,19 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
         totalsize -= size + 12;
         switch (type) {
         case RW_COLLISION: {
-            VBOS(0,p<<"Reading col data... "<<DECHEX(size));
-            /*
-            unsigned char *data = new unsigned char[size];
-            ios_read_byte_array(f,data,size); //TODO
-            std::ofstream f;
-            f.open("tmp.bin", std::ios::binary);
-            f.write((char*)data, size);
-            delete [] data;
-            */
-            parse_col(c->col_name, f, c->tcol, d);
-            c->has_tcol = true;
+            VBOS(1,p<<"Reading col data... "<<DECHEX(size));
+            // rccam seems to have broken col, this is a crude heuristic to catch it
+            if (size==160) { 
+                unsigned char *data = new unsigned char[size];
+                ios_read_byte_array(f,data,size); //TODO
+                //std::ofstream f;
+                //f.open("tmp.bin", std::ios::binary);
+                //f.write((char*)data, size);
+                delete [] data;
+            } else {
+                parse_col(c->col_name, f, c->tcol, d-1);
+                c->has_tcol = true;
+            }
         } break;
         default:
             unrec(p,type,size,"MODEL");
@@ -991,7 +993,73 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
 
 }}}
 
+void offset_dff (dff &dff, float x, float y, float z)
+{{{
+    for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
+        frame &fr = dff.frames[j];
+        fr.x += x;
+        fr.y += y;
+        fr.z += z;
+    }
+/* offsetting the frames is obviously enough
+    for (unsigned long i=0 ; i<dff.geometries.size() ; i++) {
+        geometry &g = dff.geometries[i];
+        std::vector<vect> &vs = g.vertexes;
+        for (unsigned long j=0 ; j<vs.size() ; ++j) {
+            vect &v = vs[j];
+            v.x += x;
+            v.y += y;
+            v.z += z;
+        }
+    }
+*/
+    if (dff.has_tcol) {
+        tcol_offset(dff.tcol, x, y, z);
+    }
+}}}
 
+static float &lu(float (&rot)[9], int x, int y)
+{
+    return rot[x*3+y];
+}
+void reset_dff_frame (dff &dff, unsigned frame_id)
+{
+    ASSERT(frame_id<dff.frames.size());
+    frame &fr = dff.frames[frame_id];
+
+    geometry &g = dff.geometries[fr.geometry];
+    std::vector<vect> &vs = g.vertexes;
+    for (unsigned long j=0 ; j<vs.size() ; ++j) {
+        vect &v = vs[j];
+        float x_ = lu(fr.rot,0,0)*v.x + lu(fr.rot,1,0)*v.y + lu(fr.rot,2,0)*v.z;
+        float y_ = lu(fr.rot,0,1)*v.x + lu(fr.rot,1,1)*v.y + lu(fr.rot,2,1)*v.z;
+        float z_ = lu(fr.rot,0,2)*v.x + lu(fr.rot,1,2)*v.y + lu(fr.rot,2,2)*v.z;
+        v.x = x_ + fr.x;
+        v.y = y_ + fr.y;
+        v.z = z_ + fr.z;
+    }
+
+    for (unsigned long j=0 ; j<fr.children.size() ; ++j) {
+        ASSERT(j<dff.frames.size());
+        frame &frc = dff.frames[frame_id];
+        float x_ = lu(fr.rot,0,0)*frc.x + lu(fr.rot,1,0)*frc.y + lu(fr.rot,2,0)*frc.x;
+        float y_ = lu(fr.rot,0,1)*frc.x + lu(fr.rot,1,1)*frc.y + lu(fr.rot,2,1)*frc.z;
+        float z_ = lu(fr.rot,0,2)*frc.x + lu(fr.rot,1,2)*frc.y + lu(fr.rot,2,2)*frc.z;
+        frc.x = x_ + fr.x;
+        frc.y = y_ + fr.y;
+        frc.z = z_ + fr.z;
+        // TODO: matrix multiplication
+        float rot_[9] = {0};
+        for (int i=0 ; i<9 ; ++i) {
+            frc.rot[i] = rot_[i];
+        }
+    }
+    
+    fr.x = 0;
+    fr.y = 0;
+    fr.z = 0;
+    for (int i=0 ; i<9 ; ++i) fr.rot[i] = 0;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // OUTPUT OF MESH AND MATERIALS ////////////////////////////////////////////////
@@ -1071,7 +1139,8 @@ const std::string &already_seen (MatDB &matdb,
 }}}
 
 // return the given txd and recursively all parents (if any)
-static std::vector<std::string> search_txds(const std::string &txd,
+static std::vector<std::string> search_txds(bool is_car,
+                                            const std::string &txd,
                                             const ide &ide)
 {
     std::vector<std::string> r;
@@ -1079,7 +1148,7 @@ static std::vector<std::string> search_txds(const std::string &txd,
     for (size_t j=0 ; j<ide.txdps.size() ; ++j) {
         const TXDP &txdp = ide.txdps[j]; 
         if (txdp.txd1 == txd) {
-            std::vector<std::string> sub = search_txds(txdp.txd2, ide);
+            std::vector<std::string> sub = search_txds(is_car, txdp.txd2, ide);
             r.insert(r.end(), sub.begin(), sub.end());
         }
     }
@@ -1125,7 +1194,7 @@ export_or_provide_mat (const StringSet &texs,
 
     ASSERT(m.num_textures==1  || m.num_textures==0);
     for (unsigned int i=0 ; i<m.num_textures ; i++) {
-        std::vector<std::string> txds = search_txds(obj.txd, ide);
+        std::vector<std::string> txds = search_txds(obj.is_car, obj.txd, ide);
         bool found = false;
         std::string tex_name;
         for (size_t j=0 ; j<txds.size() ; ++j) {
@@ -1137,6 +1206,13 @@ export_or_provide_mat (const StringSet &texs,
                     found = true;
                     goto done;
                 }
+            }
+        }
+        if (obj.is_car) {
+            tex_name = get_tex_name("", "../generic/vehicle", m.textures[i].name);
+            if (texs.empty() || texs.find(tex_name)!=texs.end()) {
+                found = true;
+                goto done;
             }
         }
         done:
@@ -1182,19 +1258,32 @@ export_or_provide_mat (const StringSet &texs,
     if (!dynamic_lighting) lua_file << "normals=false, ";
 
     if (m.colour!=0xFFFFFFFF) {
-        if (m.colour==0xff00ff3c && obj.is_car) {
+        if ((m.colour|0xff000000)==0xff00ff3c && obj.is_car) {
+            // colour 1
             m.colour=0xFFFFFFFF;
             lua_file<<"coloured=true, ";
-        } else if (m.colour==0xff00afff && obj.is_car) {
+        } else if ((m.colour|0xff000000)==0xffaf00ff && obj.is_car) {
+            // colour 2
+            m.colour=0xFFFFFFFF;
+            lua_file<<"coloured=true, ";
+        } else if ((m.colour|0xff000000)==0xffffff00 && obj.is_car) {
+            // colour 3
+            m.colour=0xFFFFFFFF;
+            lua_file<<"coloured=true, ";
+        } else if ((m.colour|0xff000000)==0xffff00ff && obj.is_car) {
+            // colour 4
+            m.colour=0xFFFFFFFF;
+            lua_file<<"coloured=true, ";
+        } else if ((m.colour|0xff000000)==0xff00afff && obj.is_car) {
             // left headlight
             m.colour=0xFFFFFFFF;
-        } else if (m.colour==0xffc8ff00 && obj.is_car) {
+        } else if ((m.colour|0xff000000)==0xffc8ff00 && obj.is_car) {
             // right headlight
             m.colour=0xFFFFFFFF;
-        } else if (m.colour==0xff00ffb9 && obj.is_car) {
+        } else if ((m.colour|0xff000000)==0xff00ffb9 && obj.is_car) {
             // left rearlight
             m.colour=0xFFFFFFFF;
-        } else if (m.colour==0xff003cff && obj.is_car) {
+        } else if ((m.colour|0xff000000)==0xff003cff && obj.is_car) {
             // right rearlight
             m.colour=0xFFFFFFFF;
         } else {
@@ -1615,6 +1704,13 @@ void print_frame_tree (int d, struct dff *c, const std::string &p,
                 output<<"([0;1;37mgeometry:"<<c->frames[node].geometry<<"[0m) ";
         }
         output<<"("<<c->frames[node].x<<","<<c->frames[node].y<<","<<c->frames[node].z<<")";
+        output<<" [ ";
+        for (int i=0 ; i<9 ; ++i) {
+            if (i%3==0 && i!=0) output << ", ";
+            else if (i!=0) output << ",";
+            output<<c->frames[node].rot[i];
+        }
+        output<<" ]";
         VBOS(3,output.str());
 
         for (unsigned long i=0 ; i<num_children ; i++) {
