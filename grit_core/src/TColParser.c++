@@ -1296,4 +1296,92 @@ void pretty_print_tcol (std::ostream &os, TColFile &f, const MaterialDB &db)
         os << o.str();
 }
 
+void tcol_offset (TColFile &f, float x, float y, float z)
+{
+        if (f.usingCompound) {
+                Compound c = f.compound;
+                for (size_t i=0 ; i<c.hulls.size() ; ++i) {
+                        Hull &h = c.hulls[i];
+                        for (unsigned i=0 ; i<h.vertexes.size() ; ++i) {
+                                Vector3 &v = h.vertexes[i];
+                                v.x += x;
+                                v.y += y;
+                                v.z += z;
+                        }
+                }
+
+                for (size_t i=0 ; i<c.boxes.size() ; ++i) {
+                        Box &b = c.boxes[i];
+                        b.px += x;
+                        b.py += y;
+                        b.pz += z;
+                }
+
+                for (size_t i=0 ; i<c.cylinders.size() ; ++i) {
+                        Cylinder &cyl = c.cylinders[i];
+                        cyl.px += x;
+                        cyl.py += y;
+                        cyl.pz += z;
+                }
+
+                for (size_t i=0 ; i<c.cones.size() ; ++i) {
+                        Cone &cone = c.cones[i];
+                        cone.px += x;
+                        cone.py += y;
+                        cone.pz += z;
+                }
+
+                for (size_t i=0 ; i<c.planes.size() ; ++i) {
+                        Plane &p = c.planes[i];
+                        // The maths here may not actually be accurate
+                        p.d += p.nx*x + p.ny*y + p.nz*z;
+                }
+
+                for (size_t i=0 ; i<c.spheres.size() ; ++i) {
+                        Sphere &s = c.spheres[i];
+                        s.px += x;
+                        s.py += y;
+                        s.pz += z;
+                }
+        }
+
+        if (f.usingTriMesh) {
+                for (unsigned i=0 ; i<f.triMesh.vertexes.size() ; ++i) {
+                        Vector3 &v = f.triMesh.vertexes[i];
+                        v.x += x;
+                        v.y += y;
+                        v.z += z;
+                }
+        }
+}
+
+void tcol_triangles_to_hulls (TColFile &tcol, float extrude_by, float margin)
+{
+        if (tcol.usingTriMesh) {
+                for (unsigned i=0 ; i<tcol.triMesh.faces.size() ; ++i) {
+                        Face &f = tcol.triMesh.faces[i];
+                        Vector3 v1 = tcol.triMesh.vertexes[f.v1];
+                        Vector3 v2 = tcol.triMesh.vertexes[f.v2];
+                        Vector3 v3 = tcol.triMesh.vertexes[f.v3];
+                        Vector3 n = ((v2-v1).cross(v3-v2)).normalisedCopy();
+                        Vector3 v1_ex = v1 + extrude_by*n;
+                        Vector3 v2_ex = v2 + extrude_by*n;
+                        Vector3 v3_ex = v3 + extrude_by*n;
+
+                        Hull &hull = vecnext(tcol.compound.hulls);
+                        hull.vertexes.push_back(v1);
+                        hull.vertexes.push_back(v2);
+                        hull.vertexes.push_back(v3);
+                        hull.vertexes.push_back(v1_ex);
+                        hull.vertexes.push_back(v2_ex);
+                        hull.vertexes.push_back(v3_ex);
+                        hull.material = f.material;
+                        hull.margin = margin;
+                        tcol.usingCompound = true; // in case the original tcol was only trimesh
+                }
+                tcol.triMesh.faces.clear();
+                tcol.triMesh.vertexes.clear();
+                tcol.usingTriMesh = false;
+        }
+}
 // vim: shiftwidth=8:tabstop=8:expandtab

@@ -193,6 +193,13 @@ struct TColFile {
         TriMesh triMesh;
 };
 
+// useful help with using a different centre of mass
+void tcol_offset (TColFile &tcol, float x, float y, float z);
+
+// If someone is using polys in a non-meshy fashion then they might be better off
+// extruded into individual hulls
+void tcol_triangles_to_hulls (TColFile &tcol, float extrude_by, float margin);
+
 #endif
 
 // vim: shiftwidth=8:tabstop=8:expandtab
