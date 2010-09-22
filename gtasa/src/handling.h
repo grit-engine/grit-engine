@@ -29,6 +29,7 @@
 
 #include "csvread.h"
 
+// http://projectcerbera.com/gta/sa/tutorials/handling
 struct VehicleData {
     std::string name;
     float mass, turn_mass, drag;
@@ -65,7 +66,7 @@ struct VehicleData {
     bool bounce_panels, double_rwheels, force_ground_clearance, is_hatchback;
     
     bool one_g_boost, two_g_boost, npc_anti_roll, npc_neutral_handl;
-    bool no_handrake, steer_rearwheels, hb_rearwheel_steer, alt_steer_opt;
+    bool no_handbrake, steer_rearwheels, hb_rearwheel_steer, alt_steer_opt;
     bool wheel_f_narrow2, wheel_f_narrow, wheel_f_wide, wheel_f_wide2;
     bool wheel_r_narrow2, wheel_r_narrow, wheel_r_wide, wheel_r_wide2;
     bool hydraulic_geom, hydraulic_inst, hydraulic_none, nos_inst;

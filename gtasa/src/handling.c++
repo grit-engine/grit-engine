@@ -123,7 +123,7 @@ void read_handling (Csv &csv, HandlingData &data)
                 v.two_g_boost = hflags & 0x2;
                 v.npc_anti_roll = hflags & 0x4;
                 v.npc_neutral_handl = hflags & 0x8;
-                v.no_handrake = hflags & 0x10;
+                v.no_handbrake = hflags & 0x10;
                 v.steer_rearwheels = hflags & 0x20;
                 v.hb_rearwheel_steer = hflags & 0x40;
                 v.alt_steer_opt = hflags & 0x80;

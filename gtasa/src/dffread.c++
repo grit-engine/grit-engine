@@ -20,6 +20,7 @@
  */
 
 #include <cstdlib>
+#include <climits>
 #include <locale>
 //#include <cstdarg>
 #include <map>
