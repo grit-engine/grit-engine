@@ -23,6 +23,7 @@
 #define HUD_h
 
 #include <vector>
+#include <stdint.h>
 
 #include <Ogre.h>
 #include <OgrePanelOverlayElement.h>
