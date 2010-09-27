@@ -417,28 +417,28 @@ void extract (const Config &cfg, std::ostream &out)
             float rtf, ortf;
             if (surf.adhesion_group=="RUBBER") {
                 physmats_lua<<"    interactionGroup=StickyGroup;"<<std::endl;
-                rtf = 2;
-                ortf = 1.5;
+                rtf = 1;
+                ortf = 1;
             } else if (surf.adhesion_group=="HARD") {
                 physmats_lua<<"    interactionGroup=SmoothHardGroup;"<<std::endl;
-                rtf = 1.3;
-                ortf = 0.9;
+                rtf = 0.9;
+                ortf = 0.7;
             } else if (surf.adhesion_group=="ROAD") {
                 physmats_lua<<"    interactionGroup=RoughGroup;"<<std::endl;
-                rtf = 1.5;
-                ortf = 1.3;
+                rtf = 1;
+                ortf = 0.8;
             } else if (surf.adhesion_group=="LOOSE") {
                 physmats_lua<<"    interactionGroup=DeformGroup;"<<std::endl;
-                rtf = 1.1;
-                ortf = 1.5;
+                rtf = 0.7;
+                ortf = 1;
             } else if (surf.adhesion_group=="SAND") {
                 physmats_lua<<"    interactionGroup=DeformGroup;"<<std::endl;
-                rtf = 0.8;
-                ortf = 1.5;
+                rtf = 0.4;
+                ortf = 1;
             } else if (surf.adhesion_group=="WET") {
                 physmats_lua<<"    interactionGroup=SlipperyGroup;"<<std::endl;
-                rtf = 0.4;
-                ortf = 0.9;
+                rtf = 0.3;
+                ortf = 0.6;
             } else {
                 IOS_EXCEPT("Unrecognised adhesion group: "+surf.adhesion_group);
             }
@@ -878,9 +878,9 @@ void extract (const Config &cfg, std::ostream &out)
                 lua_file << "    colMesh = \""<<vname<<"/chassis.tcol\";\n";
                 lua_file << "    placementZOffset=0.4;\n";
                 lua_file << "    powerPlots = {\n";
-                lua_file << "        [-1] = { [0] = -3000; [10] = -3000; [25] = -3000; [40] = 0; };\n";
+                lua_file << "        [-1] = { [0] = -400; [10] = -400; [25] = -400; [40] = 0; };\n";
                 lua_file << "        [0] = {};\n";
-                lua_file << "        [1] = { [0] = 10000; [10] = 10000; [25] = 10000; [60] = 10000; [100] = 10000; [120] = 10000; };\n";
+                lua_file << "        [1] = { [0] = 400; [10] = 400; [25] = 400; [60] = 400; [100] = 400; [120] = 400; };\n";
                 lua_file << "    };\n";
                 lua_file << "    meshWheelInfo = {\n";
 
@@ -891,13 +891,13 @@ void extract (const Config &cfg, std::ostream &out)
                 front_wheels << (vdata->front_wheel_drive?"drive=1;":"")
                              << "rad="<<v.front_wheel_size/2<<";"
                              << (vdata->steer_rearwheels?"":"steer=1;")
-                             << "mu = 1;";
+                             << "mu = 200;";
                 std::stringstream rear_wheels;
                 rear_wheels << (vdata->back_wheel_drive?"drive=1;":"")
                             << "rad="<<v.rear_wheel_size/2<<";"
                             << (vdata->steer_rearwheels?"steer=1;":"")
                             << (vdata->no_handbrake?"":"handbrake = true;")
-                            << "mu = 1;";
+                            << "mu = 200;";
                 
                 ASSERT(fr_wheel_lf!=NULL);
                 ASSERT(fr_wheel_lb!=NULL);
@@ -955,7 +955,24 @@ void extract (const Config &cfg, std::ostream &out)
                 lua_file << "    gfxMesh=\""<<vname<<"/chassis.mesh\";\n";
                 lua_file << "    colMesh=\""<<vname<<"/chassis.tcol\";\n";
                 lua_file << "    castShadows = true;\n";
-                lua_file << "}\n";
+                lua_file << "    colourSpec = {\n";
+                std::vector<int> cols2 = carcols_2[vname];
+                std::vector<int> cols4 = carcols_4[vname];
+                ASSERT(cols2.size()%2==0);
+                ASSERT(cols4.size()%4==0);
+                for (unsigned i=0 ; i<cols2.size() ; i+=2) {
+                    int c1 = cols2[i], c2 = cols2[i+1];
+                    lua_file << "            {  {\"gtasa"<<c1<<"\"}, {\"gtasa"<<c2<<"\"} },\n";
+                }
+                for (unsigned i=0 ; i<cols4.size() ; i+=2) {
+                    int c1 = cols4[i], c2 = cols4[i+1];
+                    int c3 = cols4[i+2], c4 = cols4[i+3];
+                    lua_file << "            {  {\"gtasa"<<c1<<"\"}, {\"gtasa"<<c2<<"\"}, "
+                             << "{\"gtasa"<<c3<<"\"}, {\"gtasa"<<c4<<"\"} },\n";
+                }
+                lua_file << "    };\n";
+
+                lua_file << "}" << std::endl;
             }
 
         }
