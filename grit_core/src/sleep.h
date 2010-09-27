@@ -20,6 +20,9 @@
  */
 
 
-void mysleep(long nanos);
+void mysleep (long nanos);
+
+unsigned long long micros (void);
+
 
 // vim: shiftwidth=8:tabstop=8:expandtab

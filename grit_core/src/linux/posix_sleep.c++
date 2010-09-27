@@ -34,4 +34,16 @@ void mysleep(long nanos)
         }
 }
 
+unsigned long long micros (void) {
+#ifdef USE_GETTIMEOFDAY
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    return ((unsigned long long)t.tv_sec)*1000000ULL + ((unsigned long long)t.tv_usec);
+#else
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return ((unsigned long long)t.tv_sec)*1000000ULL + ((unsigned long long)t.tv_nsec/1000ULL);
+#endif
+}
+
 // vim: shiftwidth=8:tabstop=8:expandtab

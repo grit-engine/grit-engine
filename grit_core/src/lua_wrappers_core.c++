@@ -1359,6 +1359,24 @@ TRY_START
 TRY_END
 }
 
+static int global_micros (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushnumber(L,micros());
+        return 1;
+TRY_END
+}
+
+static int global_seconds (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushnumber(L,micros()/1000000.0);
+        return 1;
+TRY_END
+}
+
 static int global_resource_exists (lua_State *L)
 {
 TRY_START
@@ -1969,6 +1987,8 @@ static const luaL_reg global[] = {
         {"get_hud_root",global_get_hud_root},
         {"get_main_win" ,global_get_main_win},
 
+        {"micros" ,global_micros},
+        {"seconds" ,global_seconds},
         {"sleep",global_sleep},
         {"get_clipboard",global_get_clipboard},
         {"set_clipboard",global_set_clipboard},
