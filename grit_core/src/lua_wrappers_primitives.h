@@ -41,9 +41,4 @@ int vector3_make(lua_State *L);
 MT_MACRO_DECLARE(quat);
 int quat_make(lua_State *L);
 
-#define TIMER_TAG "Grit/Timer"
-MT_MACRO_DECLARE(timer);
-int timer_make(lua_State *L);
-
-
 // vim: shiftwidth=8:tabstop=8:expandtab

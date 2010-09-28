@@ -21,8 +21,6 @@
 
 #include <algorithm>
 
-#include <OgreQuaternion.h>
-#include <OgreTimer.h>
 #include <OgreSimpleSpline.h>
 
 
@@ -1077,63 +1075,6 @@ MT_MACRO_ARITH_NEWINDEX(quat);
 
 
 // }}}
-
-
-// TIMER =================================================================== {{{
-
-int timer_make(lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        push(L,new Ogre::Timer(),TIMER_TAG);
-        return 1;
-TRY_END
-}
-
-
-static int timer_reset (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(Ogre::Timer,timer,1,TIMER_TAG);
-        timer.reset();
-        return 0;
-TRY_END
-}
-
-
-TOSTRING_ADDR_MACRO(timer,Ogre::Timer,TIMER_TAG)
-
-GC_MACRO(Ogre::Timer,timer,TIMER_TAG)
-
-static int timer_index(lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Ogre::Timer,timer,1,TIMER_TAG);
-        std::string key  = luaL_checkstring(L,2);
-        if (key=="reset") {
-                push_cfunction(L,timer_reset);
-        } else if (key=="s") {
-                lua_pushnumber(L,timer.getMilliseconds()/1000.0);
-        } else if (key=="ms") {
-                lua_pushnumber(L,timer.getMilliseconds());
-        } else if (key=="us") {
-                lua_pushnumber(L,timer.getMicroseconds());
-        } else {
-                std::string s("Not a valid Timer member: ");
-                s = s + key;
-                my_lua_error(L,s.c_str());
-        }
-        return 1;
-TRY_END
-}
-
-EQ_PTR_MACRO(Ogre::Timer,timer,TIMER_TAG)
-
-MT_MACRO(timer);
-
-//}}}
 
 
 // vim: shiftwidth=8:tabstop=8:expandtab

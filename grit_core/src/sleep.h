@@ -20,7 +20,7 @@
  */
 
 
-void mysleep (long nanos);
+void mysleep (long micros);
 
 unsigned long long micros (void);
 

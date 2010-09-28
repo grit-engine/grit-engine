@@ -24,13 +24,13 @@
 #include <assert.h>
 #include <stdio.h>
 
-void mysleep(long nanos)
+void mysleep(long micros)
 {
-        if (nanos<=0) return;
-        struct timespec t = {0,nanos};
+        if (micros<=0) return;
+        struct timespec t = {0,micros*1000};
         int r = nanosleep(&t, NULL);
         if (r) {
-                perror("sleeping between frames");
+                perror("sleep");
         }
 }
 

@@ -21,10 +21,10 @@
 
 #include <windows.h>
 
-void mysleep (long nanos)
+void mysleep (long micros)
 {
-        long millis = nanos/1000000;
-        if (millis<=0) return;
+        if (micros<=0) return;
+        long millis = micros/1000;
         Sleep(millis);
 }
 

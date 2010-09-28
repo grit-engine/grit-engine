@@ -2084,7 +2084,6 @@ static const luaL_reg global[] = {
         {"set_physics_debug" ,global_set_physics_debug},
         {"get_physics_debug" ,global_get_physics_debug},
 
-        {"Timer",timer_make},
         {"Vector3",vector3_make},
         {"Quat",quat_make},
         {"Plot",plot_make},
@@ -2162,18 +2161,19 @@ lua_State *init_lua(const char *filename)
         luaL_register(L, NULL, name##_meta_table); \
         lua_pop(L,1); } while(0)
 
-        ADD_MT_MACRO(pworld,PWORLD_TAG);
-        ADD_MT_MACRO(rbody,RBODY_TAG);
-        ADD_MT_MACRO(colmesh,COLMESH_TAG);
         ADD_MT_MACRO(streamer,STREAMER_TAG);
         ADD_MT_MACRO(gritcls,GRITCLS_TAG);
         ADD_MT_MACRO(gritobj,GRITOBJ_TAG);
-        ADD_MT_MACRO(timer,TIMER_TAG);
         ADD_MT_MACRO(vector3,VECTOR3_TAG);
         ADD_MT_MACRO(quat,QUAT_TAG);
         ADD_MT_MACRO(spline,SPLINE_TAG);
         ADD_MT_MACRO(plot,PLOT_TAG);
         ADD_MT_MACRO(stringdb,STRINGDB_TAG);
+
+        ADD_MT_MACRO(pworld,PWORLD_TAG);
+        ADD_MT_MACRO(rbody,RBODY_TAG);
+        ADD_MT_MACRO(colmesh,COLMESH_TAG);
+
         ADD_MT_MACRO(scnmgr,SCNMGR_TAG);
         ADD_MT_MACRO(node,NODE_TAG);
         ADD_MT_MACRO(cam,CAM_TAG);
