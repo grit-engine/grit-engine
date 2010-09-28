@@ -28,7 +28,6 @@
 #include <OgreParticleAffector.h>
 #include <OgreParticleAffectorFactory.h>
 #include <OgreBillboardParticleRenderer.h>
-#include <OgreTimer.h>
 
 class LuaParticleData : public Ogre::ParticleVisualData {
     public:
@@ -72,12 +71,12 @@ class LuaParticleAffector : public Ogre::ParticleAffector {
     public:
         const std::string &getType () const { return mType; }
         LuaParticleAffector (Ogre::ParticleSystem *ps)
-              : Ogre::ParticleAffector(ps) {
+              : Ogre::ParticleAffector(ps), lastTime(micros()) {
                 mType = "LuaParticleAffector";
         }
         void _affectParticles (Ogre::ParticleSystem *ps, float elapsed);
     protected:
-        Ogre::Timer timer;
+        unsigned long long lastTime;
 };
 
 class LuaParticleRendererFactory:public Ogre::BillboardParticleRendererFactory {

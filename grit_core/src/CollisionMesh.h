@@ -23,12 +23,11 @@
 
 #include <OgreSharedPtr.h>
 #include <OgreDataStream.h>
-#include <OgreVector3.h>
-#include <OgreTimer.h>
 
 #include "TColParser.h"
 #include "LooseEnd.h"
 #include "CentralisedLog.h"
+#include "sleep.h"
 
 class CollisionMesh;
 typedef Ogre::SharedPtr<CollisionMesh> CollisionMeshPtr;
@@ -163,7 +162,7 @@ class CollisionMesh {
 
                 srand(seed);
 
-                Ogre::Timer t;
+                unsigned long long before = micros();
                 for (unsigned i=0 ; i<mat_face_areas.size() ; ++i) {
 
                         float area = mat_face_areas[i];
@@ -234,7 +233,7 @@ class CollisionMesh {
                                 }
                         }
                 }
-                CLOG << "scatter time: " << t.getMicroseconds() << "us"
+                CLOG << "scatter time: " << micros()-before << "us"
                      << "  max_samples: " << max_samples
                      << "  samples: " << r.size() << "  tris: " << mat_faces.size()
                      << "  area: " << total_area
