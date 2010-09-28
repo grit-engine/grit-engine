@@ -41,7 +41,7 @@ unsigned long long micros (void)
         static unsigned long long last_perf_us;
         static unsigned long long adjust_ticks = 0;
 
-        unsigned long long perf_ticks = curTime.QuadPart;
+        unsigned long long perf_ticks;
         {
                 LARGE_INTEGER perf_counter;
                 HANDLE curr_thread = GetCurrentThread();
