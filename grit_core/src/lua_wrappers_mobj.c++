@@ -691,7 +691,7 @@ void push_psys (lua_State *L, Ogre::ParticleSystem *self)
         maps.psyss[self].push_back(ud);
 }
 
-static int psys_add_particle (lua_State *L)
+static int psys_add_particle_ex (lua_State *L, bool err)
 {
 TRY_START
         check_args(L,17);
@@ -715,7 +715,11 @@ TRY_START
         float advance = luaL_checknumber(L,17);
         Ogre::Particle *p = self.createParticle();
         if (p==NULL) {
-                my_lua_error(L, "No more particles");
+                if (err) {
+                        my_lua_error(L, "No more particles");
+                } else {
+                        return 0;
+                }
         }
         p->position = Ogre::Vector3(x,y,z);
         p->direction = Ogre::Vector3(dx,dy,dz);
@@ -729,6 +733,20 @@ TRY_START
         pd->setFunctionArg(L);
         (void) advance;
         return 0;
+TRY_END
+}
+
+static int psys_add_particle (lua_State *L)
+{
+TRY_START
+        return psys_add_particle_ex(L, true);
+TRY_END
+}
+
+static int psys_try_add_particle (lua_State *L)
+{
+TRY_START
+        return psys_add_particle_ex(L, false);
 TRY_END
 }
 
@@ -809,6 +827,8 @@ TRY_START
                 lua_pushstring(L, self.getMaterialName().c_str());
         } else if (key=="addParticle") {
                 push_cfunction(L, psys_add_particle);
+        } else if (key=="tryAddParticle") {
+                push_cfunction(L, psys_try_add_particle);
         } else if (key=="clear") {
                 push_cfunction(L, psys_clear);
         } else if (key=="update") {
