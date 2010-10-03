@@ -214,7 +214,7 @@ void LuaParticleAffector::_affectParticles (Ogre::ParticleSystem *ps,
 {
         Ogre::ParticleIterator pi = ps->_getIterator();
         unsigned long long time = micros();
-        float elapsed = (lastTime - time)/1E6;
+        float elapsed = (time - lastTime)/1E6;
         lastTime = time;
         while (!pi.end()) {
                 Ogre::Particle *p = pi.getNext();
