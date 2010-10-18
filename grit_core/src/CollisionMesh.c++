@@ -68,6 +68,17 @@ btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
 
         for (size_t i=0 ; i<c.boxes.size() ; ++i) {
                 const Box &b = c.boxes[i];
+                /* implement with hulls
+                btConvexHullShape *s2 = new btConvexHullShape();
+                s2->addPoint(btVector3(-b.dx/2+b.margin, -b.dy/2+b.margin, -b.dz/2+b.margin));
+                s2->addPoint(btVector3(-b.dx/2+b.margin, -b.dy/2+b.margin,  b.dz/2-b.margin));
+                s2->addPoint(btVector3(-b.dx/2+b.margin,  b.dy/2-b.margin, -b.dz/2+b.margin));
+                s2->addPoint(btVector3(-b.dx/2+b.margin,  b.dy/2-b.margin,  b.dz/2-b.margin));
+                s2->addPoint(btVector3( b.dx/2-b.margin, -b.dy/2+b.margin, -b.dz/2+b.margin));
+                s2->addPoint(btVector3( b.dx/2-b.margin, -b.dy/2+b.margin,  b.dz/2-b.margin));
+                s2->addPoint(btVector3( b.dx/2-b.margin,  b.dy/2-b.margin, -b.dz/2+b.margin));
+                s2->addPoint(btVector3( b.dx/2-b.margin,  b.dy/2-b.margin,  b.dz/2-b.margin));
+                */
                 btBoxShape *s2 =new btBoxShape(btVector3(b.dx/2,b.dy/2,b.dz/2));
                 les.push_back(new LooseEndImpl<btCollisionShape>(s2));
                 s2->setMargin(b.margin);
@@ -163,7 +174,7 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
                 s = tm;
                 s->setMargin(0);
                 btTriangleInfoMap* tri_info_map = new btTriangleInfoMap();
-                // maybe adjust thresholds in tri_info_map
+                tri_info_map->m_edgeDistanceThreshold = 0.01f;
 
                 btGenerateInternalEdgeInfo(tm,tri_info_map);
                 les.push_back(new LooseEndImpl<btCollisionShape>(s));
