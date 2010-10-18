@@ -1972,6 +1972,96 @@ TRY_START
 TRY_END
 }
 
+static int cam_view_matrix (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::Camera,self,1,CAM_TAG);
+        const Ogre::Matrix4 &mat = self.getViewMatrix();
+        for (int row=0 ; row<4 ; ++row) {
+                for (int col=0 ; col<4 ; ++col) {
+                        lua_pushnumber(L,mat[row][col]);
+                }
+        }
+        return 16;
+TRY_END
+}
+
+static int cam_projection_matrix (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::Camera,self,1,CAM_TAG);
+        const Ogre::Matrix4 &mat = self.getProjectionMatrix();
+        for (int row=0 ; row<4 ; ++row) {
+                for (int col=0 ; col<4 ; ++col) {
+                        lua_pushnumber(L,mat[row][col]);
+                }
+        }
+        return 16;
+TRY_END
+}
+
+static int cam_view_projection_matrix (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::Camera,self,1,CAM_TAG);
+        const Ogre::Matrix4 &mat = self.getProjectionMatrix() * self.getViewMatrix();
+        for (int row=0 ; row<4 ; ++row) {
+                for (int col=0 ; col<4 ; ++col) {
+                        lua_pushnumber(L,mat[row][col]);
+                }
+        }
+        return 16;
+TRY_END
+}
+
+static int cam_inverse_view_matrix (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::Camera,self,1,CAM_TAG);
+        const Ogre::Matrix4 mat = self.getViewMatrix().inverse();
+        for (int row=0 ; row<4 ; ++row) {
+                for (int col=0 ; col<4 ; ++col) {
+                        lua_pushnumber(L,mat[row][col]);
+                }
+        }
+        return 16;
+TRY_END
+}
+
+static int cam_inverse_projection_matrix (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::Camera,self,1,CAM_TAG);
+        const Ogre::Matrix4 mat = self.getProjectionMatrix().inverse();
+        for (int row=0 ; row<4 ; ++row) {
+                for (int col=0 ; col<4 ; ++col) {
+                        lua_pushnumber(L,mat[row][col]);
+                }
+        }
+        return 16;
+TRY_END
+}
+
+static int cam_inverse_view_projection_matrix (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::Camera,self,1,CAM_TAG);
+        const Ogre::Matrix4 mat = (self.getProjectionMatrix() * self.getViewMatrix()).inverse();
+        for (int row=0 ; row<4 ; ++row) {
+                for (int col=0 ; col<4 ; ++col) {
+                        lua_pushnumber(L,mat[row][col]);
+                }
+        }
+        return 16;
+TRY_END
+}
+
 
 
 TOSTRING_MACRO(cam,Ogre::Camera,CAM_TAG)
@@ -2026,6 +2116,18 @@ TRY_START
                 lua_pushnumber(L,self.getNearClipDistance());
         } else if (key=="useRenderingDistance") {
                 lua_pushboolean(L,self.getUseRenderingDistance());
+        } else if (key=="viewMatrix") {
+                push_cfunction(L,cam_view_matrix);
+        } else if (key=="projectionMatrix") {
+                push_cfunction(L,cam_projection_matrix);
+        } else if (key=="viewProjectionMatrix") {
+                push_cfunction(L,cam_view_projection_matrix);
+        } else if (key=="inverseViewMatrix") {
+                push_cfunction(L,cam_inverse_view_matrix);
+        } else if (key=="inverseProjectionMatrix") {
+                push_cfunction(L,cam_inverse_projection_matrix);
+        } else if (key=="inverseViewProjectionMatrix") {
+                push_cfunction(L,cam_inverse_view_projection_matrix);
         } else if (key=="destroy") {
                 push_cfunction(L,cam_destroy);
         } else if (!mobj_index(L,self,key)) {
