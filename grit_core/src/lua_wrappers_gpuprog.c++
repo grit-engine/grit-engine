@@ -74,36 +74,44 @@ TRY_END
 static int gpuprog_set_constant_float (lua_State *L)
 {
 TRY_START
-        int args = lua_gettop(L);
-        switch (args) {
-                case 3: {
-                        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
-                        std::string name = luaL_checkstring(L,2);
-                        float v = luaL_checknumber(L,3);
-                        self->getDefaultParameters()->setNamedConstant(name,v);
-                } break;
-                case 5: {
-                        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
-                        std::string name = luaL_checkstring(L,2);
-                        Ogre::Vector3 v;
-                        v.x = luaL_checknumber(L,3);
-                        v.y = luaL_checknumber(L,4);
-                        v.z = luaL_checknumber(L,5);
-                        self->getDefaultParameters()->setNamedConstant(name,v);
-                } break;
-                case 6: {
-                        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
-                        std::string name = luaL_checkstring(L,2);
-                        Ogre::Vector4 v;
-                        v.x = luaL_checknumber(L,3);
-                        v.y = luaL_checknumber(L,4);
-                        v.z = luaL_checknumber(L,5);
-                        v.w = luaL_checknumber(L,6);
-                        self->getDefaultParameters()->setNamedConstant(name,v);
-                } break;
-                default:
-                check_args(L,3);
-                break;
+        try {
+                int args = lua_gettop(L);
+                switch (args) {
+                        case 3: {
+                                GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
+                                std::string name = luaL_checkstring(L,2);
+                                float v = luaL_checknumber(L,3);
+                                self->getDefaultParameters()->setNamedConstant(name,v);
+                        } break;
+                        case 5: {
+                                GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
+                                std::string name = luaL_checkstring(L,2);
+                                Ogre::Vector3 v;
+                                v.x = luaL_checknumber(L,3);
+                                v.y = luaL_checknumber(L,4);
+                                v.z = luaL_checknumber(L,5);
+                                self->getDefaultParameters()->setNamedConstant(name,v);
+                        } break;
+                        case 6: {
+                                GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
+                                std::string name = luaL_checkstring(L,2);
+                                Ogre::Vector4 v;
+                                v.x = luaL_checknumber(L,3);
+                                v.y = luaL_checknumber(L,4);
+                                v.z = luaL_checknumber(L,5);
+                                v.w = luaL_checknumber(L,6);
+                                self->getDefaultParameters()->setNamedConstant(name,v);
+                        } break;
+                        default:
+                        check_args(L,3);
+                        break;
+                }
+        } catch (const Ogre::Exception &e) {
+                if (e.getNumber() == Ogre::Exception::ERR_INVALIDPARAMS) {
+                        CLOG << "WARNING: " << e.getDescription() << std::endl;
+                } else {
+                        throw e;
+                }
         }
         return 0;
 TRY_END
@@ -112,11 +120,19 @@ TRY_END
 static int gpuprog_set_constant_int (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
-        std::string name = luaL_checkstring(L,2);
-        int v = check_t<int>(L,3);
-        self->getDefaultParameters()->setNamedConstant(name,v);
+        try {
+                check_args(L,3);
+                GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
+                std::string name = luaL_checkstring(L,2);
+                int v = check_t<int>(L,3);
+                self->getDefaultParameters()->setNamedConstant(name,v);
+        } catch (const Ogre::Exception &e) {
+                if (e.getNumber() == Ogre::Exception::ERR_INVALIDPARAMS) {
+                        CLOG << "WARNING: " << e.getDescription() << std::endl;
+                } else {
+                        throw e;
+                }
+        }
         return 0;
 TRY_END
 }
@@ -258,25 +274,36 @@ static ACT act_from_str (lua_State *L, const std::string& str)
 static int gpuprog_set_auto_constant_int (lua_State *L)
 {
 TRY_START
-        if (lua_gettop(L)==5) {
-                GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
-                std::string name = luaL_checkstring(L,2);
-                std::string t = luaL_checkstring(L,3);
-                Ogre::uint16 v1 = check_t<Ogre::uint16>(L,4);
-                Ogre::uint16 v2 = check_t<Ogre::uint16>(L,5);
-                self->getDefaultParameters()->setNamedAutoConstant(name, act_from_str(L,t), v1, v2);
-        } else if (lua_gettop(L)==4) {
-                GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
-                std::string name = luaL_checkstring(L,2);
-                std::string t = luaL_checkstring(L,3);
-                size_t v = check_t<size_t>(L,4);
-                self->getDefaultParameters()->setNamedAutoConstant(name, act_from_str(L,t), v);
-        } else {
-                check_args(L,3);
-                GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
-                std::string name = luaL_checkstring(L,2);
-                std::string t = luaL_checkstring(L,3);
-                self->getDefaultParameters()->setNamedAutoConstant(name, act_from_str(L,t), 0);
+        try {
+                if (lua_gettop(L)==5) {
+                        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
+                        std::string name = luaL_checkstring(L,2);
+                        std::string t = luaL_checkstring(L,3);
+                        Ogre::uint16 v1 = check_t<Ogre::uint16>(L,4);
+                        Ogre::uint16 v2 = check_t<Ogre::uint16>(L,5);
+                        self->getDefaultParameters()
+                                ->setNamedAutoConstant(name, act_from_str(L,t), v1, v2);
+                } else if (lua_gettop(L)==4) {
+                        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
+                        std::string name = luaL_checkstring(L,2);
+                        std::string t = luaL_checkstring(L,3);
+                        size_t v = check_t<size_t>(L,4);
+                        self->getDefaultParameters()
+                                ->setNamedAutoConstant(name, act_from_str(L,t), v);
+                } else {
+                        check_args(L,3);
+                        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
+                        std::string name = luaL_checkstring(L,2);
+                        std::string t = luaL_checkstring(L,3);
+                        self->getDefaultParameters()
+                                ->setNamedAutoConstant(name, act_from_str(L,t), 0);
+                }
+        } catch (const Ogre::Exception &e) {
+                if (e.getNumber() == Ogre::Exception::ERR_INVALIDPARAMS) {
+                        CLOG << "WARNING: " << e.getDescription() << std::endl;
+                } else {
+                        throw e;
+                }
         }
         return 0;
 TRY_END
@@ -285,12 +312,20 @@ TRY_END
 static int gpuprog_set_auto_constant_float (lua_State *L)
 {
 TRY_START
-        check_args(L,4);
-        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
-        std::string name = luaL_checkstring(L,2);
-        std::string t = luaL_checkstring(L,3);
-        float v = luaL_checknumber(L,4);
-        self->getDefaultParameters()->setNamedAutoConstantReal(name, act_from_str(L,t), v);
+        try {
+                check_args(L,4);
+                GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
+                std::string name = luaL_checkstring(L,2);
+                std::string t = luaL_checkstring(L,3);
+                float v = luaL_checknumber(L,4);
+                self->getDefaultParameters()->setNamedAutoConstantReal(name, act_from_str(L,t), v);
+        } catch (const Ogre::Exception &e) {
+                if (e.getNumber() == Ogre::Exception::ERR_INVALIDPARAMS) {
+                        CLOG << "WARNING: " << e.getDescription() << std::endl;
+                } else {
+                        throw e;
+                }
+        }
         return 0;
 TRY_END
 }
