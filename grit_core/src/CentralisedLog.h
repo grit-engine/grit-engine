@@ -40,9 +40,9 @@ class CentralisedLog : public Ogre::LogListener {
                                     const std::string &logName)
         {
                 (void)lml;
-                (void)maskDebug;
                 (void)logName;
-                echo(message);
+                if (!maskDebug)
+                        echo(message);
         }
 
         virtual void echo (const std::string &line)
