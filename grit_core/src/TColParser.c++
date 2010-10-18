@@ -1364,6 +1364,9 @@ void tcol_triangles_to_hulls (TColFile &tcol, float extrude_by, float margin)
                         Vector3 v2 = tcol.triMesh.vertexes[f.v2];
                         Vector3 v3 = tcol.triMesh.vertexes[f.v3];
                         Vector3 n = ((v2-v1).cross(v3-v2)).normalisedCopy();
+                        v1 = v1 + margin*n;
+                        v2 = v2 + margin*n;
+                        v3 = v3 + margin*n;
                         Vector3 v1_ex = v1 + extrude_by*n;
                         Vector3 v2_ex = v2 + extrude_by*n;
                         Vector3 v3_ex = v3 + extrude_by*n;
