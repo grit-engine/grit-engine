@@ -853,7 +853,7 @@ void extract (const Config &cfg, std::ostream &out)
             dff.tcol.mass = vdata->mass;
             dff.tcol.linearDamping = 0.15;
 
-            tcol_triangles_to_hulls(dff.tcol, 0.1, 0.04);
+            tcol_triangles_to_hulls(dff.tcol, 0.04, 0.04);
 
             if (!dff.tcol.usingCompound && !dff.tcol.usingTriMesh) {
                 IOS_EXCEPT("Collision data had no compound or trimesh");
@@ -878,26 +878,29 @@ void extract (const Config &cfg, std::ostream &out)
                 lua_file << "    colMesh = \""<<vname<<"/chassis.tcol\";\n";
                 lua_file << "    placementZOffset=0.4;\n";
                 lua_file << "    powerPlots = {\n";
-                lua_file << "        [-1] = { [0] = -400; [10] = -400; [25] = -400; [40] = 0; };\n";
+                float torque = vdata->mass * vdata->engine_accel * v.rear_wheel_size/2 * 0.5; // 0.75 is a fudge factor
+                lua_file << "        [-1] = { [0] = -"<<torque<<"; [10] = -"<<torque<<"; [25] = -"<<torque<<"; [40] = 0; };\n";
                 lua_file << "        [0] = {};\n";
-                lua_file << "        [1] = { [0] = 400; [10] = 400; [25] = 400; [60] = 400; [100] = 400; [120] = 400; };\n";
+                lua_file << "        [1] = { [0] = "<<torque<<"; [10] = "<<torque<<"; [25] = "<<torque<<"; [60] = "<<torque<<"; };\n";
                 lua_file << "    };\n";
                 lua_file << "    meshWheelInfo = {\n";
 
                 std::stringstream all_wheels;
                 all_wheels << "castRadius=0.05;" << "mesh=\""<<vname<<"/wheel.mesh\";"
-                           << "len="<<(vdata->susp_upper - vdata->susp_lower)<<";";
+                           << "slack="<<(vdata->susp_upper)<<";"
+                           << "len="<<(- vdata->susp_lower)<<";"
+                           << "hookeFactor=1.0;";
                 std::stringstream front_wheels;
                 front_wheels << (vdata->front_wheel_drive?"drive=1;":"")
                              << "rad="<<v.front_wheel_size/2<<";"
                              << (vdata->steer_rearwheels?"":"steer=1;")
-                             << "mu = 200;";
+                             << "mu = "<<3*vdata->traction_mult<<";";
                 std::stringstream rear_wheels;
                 rear_wheels << (vdata->back_wheel_drive?"drive=1;":"")
                             << "rad="<<v.rear_wheel_size/2<<";"
                             << (vdata->steer_rearwheels?"steer=1;":"")
                             << (vdata->no_handbrake?"":"handbrake = true;")
-                            << "mu = 200;";
+                            << "mu = "<<3*vdata->traction_mult<<";";
                 
                 ASSERT(fr_wheel_lf!=NULL);
                 ASSERT(fr_wheel_lb!=NULL);
