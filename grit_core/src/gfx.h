@@ -88,6 +88,7 @@ enum GfxBoolOption {
     GFX_FOG,
     GFX_WIREFRAME,
     GFX_ANAGLYPH,
+    GFX_CROSSEYE,
     GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST,
     GFX_SHADOW_AGGRESSIVE_FOCUS_REGION
 };
@@ -103,11 +104,11 @@ enum GfxFloatOption {
     GFX_FOV,
     GFX_NEAR_CLIP,
     GFX_FAR_CLIP,
-    GFX_EYE_SEPARATION,
-    GFX_MONITOR_HEIGHT,
-    GFX_MONITOR_EYE_DISTANCE,
-    GFX_MIN_PERCEIVED_DEPTH,
-    GFX_MAX_PERCEIVED_DEPTH,
+    GFX_EYE_SEPARATION, // FOR 'real' 3d
+    GFX_MONITOR_HEIGHT, // FOR 'real' 3d
+    GFX_MONITOR_EYE_DISTANCE, // FOR 'real' 3d
+    GFX_MIN_PERCEIVED_DEPTH, // FOR 'real' 3d -- distance from eyes of the front clip plane
+    GFX_MAX_PERCEIVED_DEPTH, // FOR 'real' 3d -- distance from eyes of the rear clip plane
     GFX_SHADOW_START,
     GFX_SHADOW_END0,
     GFX_SHADOW_END1,

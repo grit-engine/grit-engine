@@ -56,6 +56,7 @@ Ogre::Root *ogre_root;
 Ogre::OctreeSceneManager *ogre_sm;
 Ogre::Camera *left_eye;
 Ogre::Camera *right_eye;
+Ogre::Viewport *overlay_vp;
 Ogre::Viewport *left_vp;
 Ogre::Viewport *right_vp;
 Ogre::TexturePtr anaglyph_fb;
@@ -82,7 +83,8 @@ void do_reset_compositors (void)
             Ogre::CompositorManager::getSingleton().removeCompositorChain(left_vp);
         }
 
-        if (gfx_get_option(GFX_ANAGLYPH)) {
+        if (gfx_get_option(GFX_CROSSEYE)) {
+        } else if (gfx_get_option(GFX_ANAGLYPH)) {
             Ogre::CompositorManager::getSingleton()
                 .addCompositor(left_vp,"system/AnaglyphCompositor");
             Ogre::CompositorManager::getSingleton()
@@ -92,6 +94,12 @@ void do_reset_compositors (void)
 
 void do_reset_framebuffer (void)
 {
+        if (gfx_get_option(GFX_CROSSEYE)) {
+            left_vp->setDimensions(0,0,0.5,1);
+        } else {
+            left_vp->setDimensions(0,0,1,1);
+        }
+
         unsigned width = left_vp->getActualWidth();
         unsigned height = left_vp->getActualHeight();
 
@@ -107,7 +115,10 @@ void do_reset_framebuffer (void)
         }
 
 
-        if (gfx_get_option(GFX_ANAGLYPH)) {
+        if (gfx_get_option(GFX_CROSSEYE)) {
+            right_vp = ogre_win->addViewport(right_eye, 2, 0.5,0,0.5,1);
+            right_vp->setOverlaysEnabled(false);
+        } else if (gfx_get_option(GFX_ANAGLYPH)) {
             // ok if we're using anaglyph rendering we'll need a separate rtt for the right eye
             anaglyph_fb = Ogre::TextureManager::getSingleton().createManual(
                 "system/AnaglyphFB", "GRIT", Ogre::TEX_TYPE_2D,
@@ -120,7 +131,7 @@ void do_reset_framebuffer (void)
 
             // and a viewport for it, linked to the right eye camera
             right_vp = anaglyph_fb->getBuffer()->getRenderTarget()
-                ->addViewport(right_eye,1,0,0,1,1);
+                ->addViewport(right_eye,2,0,0,1,1);
             right_vp->setOverlaysEnabled(false);
 
             // since we've recreated the texture, need to update the material
@@ -129,7 +140,6 @@ void do_reset_framebuffer (void)
             rtt_mat->load();
             rtt_mat->getTechnique(0)->getPass(0)->getTextureUnitState(1)
                    ->setTextureName("system/AnaglyphFB");
-
         }
 
         do_reset_compositors();
@@ -195,6 +205,7 @@ GfxBoolOption gfx_bool_options[] = {
     GFX_FOG,
     GFX_WIREFRAME,
     GFX_ANAGLYPH,
+    GFX_CROSSEYE,
     GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST,
     GFX_SHADOW_AGGRESSIVE_FOCUS_REGION,
 };
@@ -306,6 +317,7 @@ std::string gfx_option_to_string (GfxBoolOption o)
         case GFX_FOG: return "GFX_FOG";
         case GFX_WIREFRAME: return "GFX_WIREFRAME";
         case GFX_ANAGLYPH: return "GFX_ANAGLYPH";
+        case GFX_CROSSEYE: return "GFX_CROSSEYE";
         case GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST: return "SHADOW_SIMPLE_OPTIMAL_ADJUST";
         case GFX_SHADOW_AGGRESSIVE_FOCUS_REGION: return "SHADOW_AGGRESSIVE_FOCUS_REGION";
     }
@@ -367,6 +379,7 @@ void gfx_option_from_string (const std::string &s,
     else if (s=="FOG") { t = 0; o0 = GFX_FOG; }
     else if (s=="WIREFRAME") { t = 0; o0 = GFX_WIREFRAME; }
     else if (s=="ANAGLYPH") { t = 0; o0 = GFX_ANAGLYPH; }
+    else if (s=="CROSSEYE") { t = 0; o0 = GFX_CROSSEYE; }
     else if (s=="SHADOW_SIMPLE_OPTIMAL_ADJUST") { t = 0; o0 = GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST; }
     else if (s=="SHADOW_AGGRESSIVE_FOCUS_REGION") { t = 0; o0 = GFX_SHADOW_AGGRESSIVE_FOCUS_REGION; }
     else if (s=="FULLSCREEN_WIDTH") { t = 1; o1 = GFX_FULLSCREEN_WIDTH; }
@@ -417,6 +430,7 @@ static void options_update (bool flush)
         if (v_old == v_new) continue;
         switch (o) {
             case GFX_AUTOUPDATE: break;
+            case GFX_CROSSEYE:
             case GFX_ANAGLYPH:
             reset_framebuffer = true;
             reset_vr = true;
@@ -582,7 +596,7 @@ static void options_update (bool flush)
     }
 
     if (reset_vr) {
-        if (gfx_get_option(GFX_ANAGLYPH)) {
+        if (gfx_get_option(GFX_CROSSEYE) || gfx_get_option(GFX_ANAGLYPH)) {
             float FOV = gfx_get_option(GFX_FOV);
             float monitor_height = gfx_get_option(GFX_MONITOR_HEIGHT);
             float distance = gfx_get_option(GFX_MONITOR_EYE_DISTANCE);
@@ -642,6 +656,7 @@ static void init_options (void)
     valid_option(GFX_FOG, truefalse);
     valid_option(GFX_WIREFRAME, truefalse);
     valid_option(GFX_ANAGLYPH, truefalse);
+    valid_option(GFX_CROSSEYE, truefalse);
     valid_option(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST, truefalse);
     valid_option(GFX_SHADOW_AGGRESSIVE_FOCUS_REGION, truefalse);
 
@@ -689,6 +704,7 @@ static void init_options (void)
     gfx_set_option(GFX_FOG, true);
     gfx_set_option(GFX_WIREFRAME, false);
     gfx_set_option(GFX_ANAGLYPH, false);
+    gfx_set_option(GFX_CROSSEYE, false);
 
     gfx_set_option(GFX_FULLSCREEN_WIDTH, 800);
     gfx_set_option(GFX_FULLSCREEN_HEIGHT, 600);
@@ -702,7 +718,7 @@ static void init_options (void)
     gfx_set_option(GFX_MONITOR_HEIGHT, 0.27);
     gfx_set_option(GFX_MONITOR_EYE_DISTANCE, 0.6);
     gfx_set_option(GFX_MIN_PERCEIVED_DEPTH, 0.3);
-    gfx_set_option(GFX_MAX_PERCEIVED_DEPTH, 3);
+    gfx_set_option(GFX_MAX_PERCEIVED_DEPTH, 2);
     gfx_set_option(GFX_SHADOW_START, 0.2);
     gfx_set_option(GFX_SHADOW_END0, 20);
     gfx_set_option(GFX_SHADOW_END1, 50);
@@ -897,9 +913,7 @@ static Ogre::Quaternion to_ogre_ (const Quaternion &v) { return Ogre::Quaternion
 static void position_camera (bool left, const Vector3 &cam_pos, const Quaternion &cam_dir,
                              float cam_chase)
 {
-    Ogre::Camera *cam;
-    if (left) cam = left_eye;
-    else cam=right_eye;
+    Ogre::Camera *cam = left ? left_eye : right_eye;
     float sep = cam_separation/2;
     Vector3 p = cam_pos + cam_dir * Vector3((left?-1:1) * sep,-cam_chase,0);
     cam->setPosition(to_ogre_(p));
@@ -910,7 +924,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 {
     try {
         position_camera(true, cam_pos, cam_dir, cam_chase);
-        if (gfx_get_option(GFX_ANAGLYPH))
+        if (gfx_get_option(GFX_ANAGLYPH) || gfx_get_option(GFX_CROSSEYE))
             position_camera(false, cam_pos, cam_dir, cam_chase);
         ogre_root->renderOneFrame(elapsed);
 
