@@ -21,33 +21,58 @@
 
 //#include <fenv.h>
 #include <cerrno>
+#include <sstream>
 
-#include <Ogre.h>
-#include <OgreArchiveFactory.h>
-#include <OgreOverlayElementFactory.h>
+#include "main.h"
+#include "gfx.h"
 
-#ifdef NO_PLUGINS
-#  include "OgreOctreePlugin.h"
-#  include "OgreGLPlugin.h"
-#  include "OgreParticleFXPlugin.h"
-#  include "OgreCgPlugin.h"
-#  ifdef WIN32
-#    include "OgreD3D9Plugin.h"
-#  endif
-#endif
-
-#include "Grit.h"
-#include "BackgroundMeshLoader.h"
-#include "CentralisedLog.h"
-#include "LuaParticleSystem.h"
-#include "Clutter.h"
-#include "HUD.h"
-
-CentralisedLog clog;
-
-Grit *grit = NULL;
 
 #include "console_colour.h"
+
+#include "lua_util.h"
+#include "lua_wrappers_core.h"
+
+CentralisedLog clog;
+bool clicked_close = false;
+Mouse *mouse = NULL;
+Keyboard *keyboard = NULL;
+lua_State *core_L = NULL;
+UserDataTables user_data_tables;
+Streamer *streamer = NULL;
+BulletDebugDrawer *debug_drawer = NULL;
+std::stringstream gfx_msg_buffer;
+HUD::RootPtr hud;
+
+struct TheGfxCallback : GfxCallback {
+
+        virtual void clickedClose (void)
+        {
+                clicked_close = true;
+        }
+
+        virtual void windowResized (int width, int height)
+        {
+                hud->parentResized(width, height);
+        }
+        
+        virtual void messageLogged (const std::string &line)
+        {
+                std::cout << line << RESET << std::endl;
+                gfx_msg_buffer << line << RESET << std::endl;
+        }
+
+    protected:
+
+
+} cb;
+
+std::string poll_gfx_msg_buffer (void)
+{
+        std::string r = gfx_msg_buffer.str();
+        gfx_msg_buffer.str("");
+        return r;
+}
+
 
 int already_fatal = 0;
 
@@ -55,144 +80,103 @@ void app_fatal()
 {
         if (!already_fatal) {
                 already_fatal = 1;
-                delete grit;
+                gfx_shutdown();
         }
 
         abort();
 }
-
-// TODO: move this somewhere sensible
-class TextListOverlayElementFactory : public Ogre::OverlayElementFactory {
-
-        public:
-
-        virtual Ogre::OverlayElement*
-        createOverlayElement (const std::string& instanceName)
-        {
-            return new HUD::TextListOverlayElement(instanceName);
-        }
-
-        virtual const std::string& getTypeName () const
-        {
-            return HUD::TextListOverlayElement::msTypeName;
-        }
-
-};
 
 int main(int argc, const char **argv)
 {
 
         try {
 
-
-                Ogre::LogManager *lmgr = OGRE_NEW Ogre::LogManager();
-                Ogre::Log *ogre_log = OGRE_NEW Ogre::Log("",false,true);
-                ogre_log->addListener(&clog);
-                lmgr->setDefaultLog(ogre_log);
-                lmgr->setLogDetail(Ogre::LL_NORMAL);
-
                 #ifdef FE_NOMASK_ENV
                 //feenableexcept(FE_INVALID);
                 //feenableexcept(FE_DIVBYZERO | FE_INVALID);
                 #endif
 
-                #ifdef NO_PLUGINS
-                        Ogre::Root* ogre = OGRE_NEW Ogre::Root("","","");
-
-                        Ogre::GLPlugin *gl = OGRE_NEW Ogre::GLPlugin();
-                        ogre->installPlugin(gl);
-
-                        Ogre::OctreePlugin *octree =
-                                OGRE_NEW Ogre::OctreePlugin();
-                        ogre->installPlugin(octree);
-
-                        Ogre::ParticleFXPlugin *pfx =
-                                OGRE_NEW Ogre::ParticleFXPlugin();
-                        ogre->installPlugin(pfx);
-
-                        Ogre::CgPlugin *cg =
-                                OGRE_NEW Ogre::CgPlugin();
-                        ogre->installPlugin(cg);
-
-                        #ifdef WIN32
-                        Ogre::D3D9Plugin *d3d9 = OGRE_NEW Ogre::D3D9Plugin();
-                        ogre->installPlugin(d3d9);
-                        #endif
-                #else
-                        Ogre::Root* ogre = OGRE_NEW Ogre::Root("plugins.cfg","","");
-                #endif
-
                 BackgroundMeshLoader *bml = new BackgroundMeshLoader();
 
+                size_t winid = gfx_init(cb);
+
+                hud = gfx_init_hud();
+
+                debug_drawer = new BulletDebugDrawer(ogre_sm); // FIXME: hack
+
                 #ifdef WIN32
-                bool use_d3d9 = getenv("GRIT_GL")==NULL;
+                mouse = new MouseDirectInput8(winid);
+                bool use_dinput = getenv("GRIT_DINPUT")!=NULL;
+                keyboard = use_dinput ? (Keyboard *)new KeyboardDirectInput8(winid)
+                                            : (Keyboard *)new KeyboardWinAPI(winid);
                 #else
-                bool use_d3d9 = false;
+                mouse = new MouseX11(winid);
+                keyboard = new KeyboardX11(winid);
                 #endif
 
-                bool use_hwgamma = getenv("GRIT_NOHWGAMMA")==NULL;
+                streamer = new Streamer();
 
-                Ogre::RenderSystem *rs;
-                if (use_d3d9) {
-                        rs = ogre->getRenderSystemByName("Direct3D9 Rendering Subsystem");
-                        rs->setConfigOption("Allow NVPerfHUD","Yes");
-                        rs->setConfigOption("Floating-point mode","Consistent");
-                        rs->setConfigOption("Video Mode","800 x 600 @ 32-bit colour");
-                } else {
-                        rs = ogre->getRenderSystemByName("OpenGL Rendering Subsystem");
-                        rs->setConfigOption("RTT Preferred Mode","FBO");
-                        rs->setConfigOption("Video Mode","800 x 600");
-                }
-                rs->setConfigOption("sRGB Gamma Conversion",use_hwgamma?"Yes":"No");
-                rs->setConfigOption("Full Screen","No");
-                rs->setConfigOption("VSync","Yes");
-                ogre->setRenderSystem(rs);
-
-                ogre->initialise(true,"Grit Game Window");
-
-                Ogre::ParticleSystemManager::getSingleton()
-                        .addAffectorFactory(new LuaParticleAffectorFactory());
-                Ogre::ParticleSystemManager::getSingleton()
-                        .addRendererFactory(new LuaParticleRendererFactory());
-                Ogre::OverlayManager::getSingleton()
-                        .addOverlayElementFactory(new TextListOverlayElementFactory());
-                ogre->addMovableObjectFactory(new MovableClutterFactory());
-                ogre->addMovableObjectFactory(new RangedClutterFactory());
-
-
-                new Grit(ogre,grit); // writes itself back to grit
+                core_L = init_lua("/system/init.lua");
 
                 // now call out to lua
+                {
+                        int error_handler;
+                        lua_State *L = core_L;
 
-                grit->doMain(argc,argv);
+                        push_cfunction(L, my_lua_error_handler);
+                        error_handler = lua_gettop(L);
+
+                        lua_getglobal(L, "main");
+                        if (lua_isnil(L,-1)) {
+                                lua_pop(L,1); // nil 'main object'
+                                lua_pop(L,1); //handler
+                                CERR << "invoking main:run(...): object \"main\" not found";
+                                app_fatal();
+                        }
+
+                        lua_getfield(L, -1, "run");
+                        if (lua_isnil(L,-1)) {
+                                lua_pop(L,1); // nil 'run function'
+                                lua_pop(L,1); //handler
+                                CERR << "invoking main:run(...): function \"run\" not found";
+                                app_fatal();
+                        }
+
+                        // arguments
+                        lua_getglobal(L, "main");
+                        for (int i=0 ; i<argc ; i++) {
+                                check_stack(L,1);
+                                lua_pushstring(L,argv[i]);
+                        }
+
+                        int status = lua_pcall(L, argc+1, 0, error_handler);
+                        if (status) {
+                                lua_pop(L,1); // error message
+                        }
+
+                        lua_pop(L,1); // error_handler
+                }
 
                 // lua returns - we quit
 
                 bml->shutdown();
 
-                delete grit;
+                hud->removeAllChildren(); // will avoid any lua callbacks during destruction
 
-                // ogre was deleted inside the grit destructor above
+                streamer->doShutdown(core_L);
+                delete streamer;
+                if (debug_drawer) delete debug_drawer;
+                if (mouse) delete mouse;
+                if (keyboard) delete keyboard;
+                if (core_L) lua_close(core_L);
+                hud.setNull();
+                gfx_shutdown();
 
                 delete bml;
-
-                #ifdef NO_PLUGINS
-                        OGRE_DELETE gl;
-                        OGRE_DELETE octree;
-                        OGRE_DELETE pfx;
-                        OGRE_DELETE cg;
-                        #ifdef WIN32
-                                OGRE_DELETE d3d9;
-                        #endif
-                #endif
-
 
         } catch( GritException& e ) {
                 std::cerr << "An exception has occured: "
                           << e.longMessage() << std::endl;
-        } catch( Ogre::Exception& e ) {
-                std::cerr << "An exception has occured: "
-                          << e.getFullDescription() << std::endl;
         }
         return EXIT_SUCCESS;
 }

@@ -24,9 +24,7 @@
 #include <OgreSubMesh.h>
 #include <OgreMesh.h>
 
-#include "Clutter.h"
-#include "CentralisedLog.h"
-#include "Grit.h"
+#include "main.h"
 
 
 
@@ -518,8 +516,7 @@ typedef ClutterBuffer::SectionMap::const_iterator I;
 
 float RangedClutter::Item::calcFade (float range2)
 {
-    const Streamer &streamer = grit->getStreamer();
-    const float out = streamer.fadeOutFactor;
+    const float out = streamer->fadeOutFactor;
     float range = ::sqrtf(range2);
                     
     float fade = 1.0;       
@@ -541,12 +538,12 @@ void RangedClutter::visitRenderables (Ogre::Renderable::Visitor *visitor, bool d
 
 void RangedClutter::registerMe (void)
 {
-    grit->getStreamer().registerUpdateHook(this);
+    streamer->registerUpdateHook(this);
 }
 
 void RangedClutter::unregisterMe (void)
 {
-    grit->getStreamer().unregisterUpdateHook(this);
+    streamer->unregisterUpdateHook(this);
 }
 
 void RangedClutter::_updateRenderQueue (Ogre::RenderQueue *queue)

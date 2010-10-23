@@ -21,6 +21,13 @@
 
 #include <cmath>
 
+#include <OgreMeshManager.h>
+#include <OgreTextureManager.h>
+#include <OgreMaterialManager.h>
+#include <OgreTexture.h>
+#include <OgreSubMesh.h>
+
+#include "main.h"
 #include "PhysicsWorld.h"
 #include "GritObject.h"
 
@@ -28,7 +35,6 @@
 #include "lua_wrappers_gritobj.h"
 #include "lua_wrappers_physics.h"
 #include "lua_wrappers_scnmgr.h"
-#include "Grit.h"
 
 GritObject::GritObject (const std::string &name_,
                         GritClass *gritClass_)
@@ -191,7 +197,7 @@ void GritObject::notifyFade (lua_State *L,
                 // pop the error message since the error handler will
                 // have already printed it out
                 lua_pop(L,1);
-                grit->getStreamer().deleteObject(L,self);
+                streamer->deleteObject(L,self);
                 //stack: err,class
         }
         //stack: err,class
@@ -235,7 +241,7 @@ void GritObject::activate (lua_State *L,
                 CERR << "activating object: \""<<name<<"\": "
                      << "class \""<<gritClass->name<<"\" "
                      << "does not have activate function" << std::endl;
-                grit->getStreamer().deleteObject(L,self);
+                streamer->deleteObject(L,self);
                 STACK_CHECK;
                 return;
         }
@@ -268,13 +274,13 @@ void GritObject::activate (lua_State *L,
                 lua_pop(L,1);
                 CERR << "Object: \"" << name << "\" raised an error on activation, so destroying it." << std::endl;
                 // will deactivate us
-                grit->getStreamer().deleteObject(L,self);
+                streamer->deleteObject(L,self);
                 //stack: err,class
                 STACK_CHECK_N(2);
         } else {
                 STACK_CHECK_N(2);
                 //stack: err,class,object
-                grit->getStreamer().list(self);
+                streamer->list(self);
                 // pop and store the new object returned       
                 lastFade = -1;
                 //stack: err,class
@@ -290,14 +296,13 @@ void GritObject::activate (lua_State *L,
 
 float GritObject::calcFade (const float range2, bool &overlap)
 {
-        const Streamer &streamer = grit->getStreamer();
 
         const GritObjectPtr &near = getNear();
         const GritObjectPtr &far = getFar();
 
-        const float out = streamer.fadeOutFactor;
+        const float out = streamer->fadeOutFactor;
 
-        const float over = streamer.fadeOverlapFactor;
+        const float over = streamer->fadeOverlapFactor;
 
 
         float range = ::sqrtf(range2);
@@ -347,7 +352,7 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
 
         bool killme = false;
 
-        grit->getStreamer().unlist(self);
+        streamer->unlist(self);
 
         STACK_BASE;
         //stack is empty
@@ -520,13 +525,13 @@ void GritObject::updateSphere (float x_, float y_,
         y = y_;
         z = z_;
         r = r_;
-        grit->getStreamer().updateSphere(index,x_,y_,z_,r_);
+        streamer->updateSphere(index,x_,y_,z_,r_);
 }
 
 void GritObject::setNeedsFrameCallbacks (const GritObjectPtr &self, bool v)
 {
         needsFrameCallbacks = v;
-        grit->getStreamer().setNeedsFrameCallbacks(self, v);
+        streamer->setNeedsFrameCallbacks(self, v);
 }
 
 // vim: shiftwidth=8:tabstop=8:expandtab

@@ -29,6 +29,9 @@
 #include <OgreParticleAffectorFactory.h>
 #include <OgreBillboardParticleRenderer.h>
 
+#include "lua_util.h"
+#include "sleep.h"
+
 class LuaParticleData : public Ogre::ParticleVisualData {
     public:
         LuaParticleData (void);

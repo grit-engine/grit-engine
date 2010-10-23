@@ -24,6 +24,11 @@
 #include <OgreFont.h>
 #include <OgreFontManager.h>
 #include <OgreHighLevelGpuProgramManager.h>
+#include <OgreTextureManager.h>
+#include <OgreSkeletonManager.h>
+#include <OgreControllerManager.h>
+#include <OgreMeshManager.h>
+#include <OgreGpuProgramManager.h>
 
 #ifdef USE_GOOGLE_PERF_TOOLS
         #include <google/profiler.h>
@@ -33,14 +38,14 @@
         #include <sys/mman.h>
 #endif
 
-#include "Grit.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "BackgroundMeshLoader.h"
 #include "sleep.h"
 #include "clipboard.h"
-#include "HUD.h"
+#include "gfx.h"
 #include "CentralisedLog.h"
+#include "main.h"
 
 
 #include "lua_wrappers_primitives.h"
@@ -65,7 +70,7 @@ static int global_have_focus (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        lua_pushboolean(L,grit->windowHasFocus());
+        lua_pushboolean(L,keyboard->hasFocus());
         return 1;
 TRY_END
 }
@@ -74,7 +79,7 @@ static int global_get_keyb_presses (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        Keyboard::Presses presses = grit->getKeyboard()->getPresses();
+        Keyboard::Presses presses = keyboard->getPresses();
 
         lua_createtable(L, presses.size(), 0);
         for (unsigned int i=0 ; i<presses.size() ; i++) {
@@ -93,10 +98,10 @@ static int global_keyb_flush (lua_State *L)
 TRY_START
         if (lua_gettop(L)==1) {
                 std::string key = luaL_checkstring(L,1);
-                grit->getKeyboard()->flush(key);
+                keyboard->flush(key);
         } else {
                 check_args(L,0);
-                grit->getKeyboard()->flush();
+                keyboard->flush();
         }
         return 0;
 TRY_END
@@ -106,7 +111,7 @@ static int global_get_keyb_verbose (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        lua_pushboolean(L,grit->getKeyboard()->getVerbose());
+        lua_pushboolean(L,keyboard->getVerbose());
         return 1;
 TRY_END
 }
@@ -116,7 +121,7 @@ static int global_set_keyb_verbose (lua_State *L)
 TRY_START
         check_args(L,1);
         bool b = check_bool(L,1);
-        grit->getKeyboard()->setVerbose(b);
+        keyboard->setVerbose(b);
         return 0;
 TRY_END
 }
@@ -128,7 +133,7 @@ TRY_START
 
         int rel_x, rel_y, x, y;
         std::vector<int> clicks;
-        bool moved = grit->getMouse()->getEvents(&clicks,&x,&y,&rel_x,&rel_y);
+        bool moved = mouse->getEvents(&clicks,&x,&y,&rel_x,&rel_y);
 
         lua_pushboolean(L,moved);
 
@@ -168,7 +173,7 @@ TRY_START
         check_args(L,2);
         int x = check_t<int>(L,1);
         int y = check_t<int>(L,2);
-        grit->getMouse()->setPos(x,y);
+        mouse->setPos(x,y);
         return 0;
 TRY_END
 }
@@ -177,7 +182,7 @@ static int global_get_mouse_hide (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        lua_pushboolean(L,grit->getMouse()->getHide());
+        lua_pushboolean(L,mouse->getHide());
         return 1;
 TRY_END
 }
@@ -186,7 +191,7 @@ static int global_get_mouse_grab (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        lua_pushboolean(L,grit->getMouse()->getGrab());
+        lua_pushboolean(L,mouse->getGrab());
         return 1;
 TRY_END
 }
@@ -196,7 +201,7 @@ static int global_set_mouse_hide (lua_State *L)
 TRY_START
         check_args(L,1);
         bool b = check_bool(L,1);
-        grit->getMouse()->setHide(b);
+        mouse->setHide(b);
         return 0;
 TRY_END
 }
@@ -206,77 +211,73 @@ static int global_set_mouse_grab (lua_State *L)
 TRY_START
         check_args(L,1);
         bool b = check_bool(L,1);
-        grit->getMouse()->setGrab(b);
+        mouse->setGrab(b);
         return 0;
 TRY_END
 }
 
-static int global_fire_frame_started (lua_State *L)
+static int global_gfx_render (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        lua_pushboolean(L,grit->getOgre()->_fireFrameStarted());
-        return 1;
-TRY_END
-}
-
-static int global_fire_frame_rendering_queued (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_pushboolean(L,grit->getOgre()->_fireFrameRenderingQueued());
-        return 1;
-TRY_END
-}
-
-static int global_fire_frame_ended (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_pushboolean(L,grit->getOgre()->_fireFrameEnded());
-        return 1;
-TRY_END
-}
-
-static int global_render (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        grit->render();
+        check_args(L,1+3+4+1);
+        float elapsed = luaL_checknumber(L,1);
+        GET_V3(cam_pos,2);
+        GET_QUAT(cam_dir,5);
+        float cam_chase = luaL_checknumber(L,9);
+        gfx_render(elapsed, cam_pos, cam_dir, cam_chase);
         return 0;
 TRY_END
 }
 
-
-static int global_update_elapsed_time (lua_State *L)
+static int global_gfx_get_option (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        float seconds = luaL_checknumber(L,1);
-        float t = Ogre::ControllerManager::getSingleton().getElapsedTime();
-        t += seconds;
-        Ogre::ControllerManager::getSingleton().setElapsedTime(t);
+        std::string opt = luaL_checkstring(L,1);
+        int t;
+        GfxBoolOption o0;
+        GfxIntOption o1;
+        GfxFloatOption o2;
+        gfx_option_from_string(opt, t, o0, o1, o2);
+        switch (t) {
+                case -1: my_lua_error(L,"Unrecognised graphics option: \""+opt+"\"");
+                case 0: lua_pushboolean(L,gfx_get_option(o0)); break;
+                case 1: lua_pushnumber(L,gfx_get_option(o1)); break;
+                case 2: lua_pushnumber(L,gfx_get_option(o2)); break;
+                default: my_lua_error(L,"Unrecognised type from gfx_option_from_string");
+        }
+        return 1;
+TRY_END
+}
+
+static int global_gfx_set_option (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        std::string opt = luaL_checkstring(L,1);
+        int t;
+        GfxBoolOption o0;
+        GfxIntOption o1;
+        GfxFloatOption o2;
+        gfx_option_from_string(opt, t, o0, o1, o2);
+        switch (t) {
+                case -1: my_lua_error(L,"Unrecognised graphics option: \""+opt+"\"");
+                case 0: gfx_set_option(o0, check_bool(L,2)); break;
+                case 1: gfx_set_option(o1, check_t<int>(L,2)); break;
+                case 2: gfx_set_option(o2, luaL_checknumber(L,2)); break;
+                default: my_lua_error(L,"Unrecognised type from gfx_option_from_string");
+        }
         return 0;
 TRY_END
 }
 
 
-static int global_make_scnmgr (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        const char *type = luaL_checkstring(L,1);
-        const char *name = luaL_checkstring(L,2);
-        push_scnmgr(L, grit->getOgre()->createSceneManager(type,name));
-        return 1;
-TRY_END
-}
 
 static int global_get_sm (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        push_scnmgr(L, grit->getSM());
+        push_scnmgr(L, ogre_sm);
         return 1;
 TRY_END
 }
@@ -308,13 +309,13 @@ static int global_set_physics_debug (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        push_scnmgr(L, grit->getSM());
+        push_scnmgr(L, ogre_sm);
         const char *str = luaL_checkstring(L,1);
         bool b = check_bool(L,2);
-        BulletDebugDrawer::DebugDrawModes modes = (BulletDebugDrawer::DebugDrawModes)grit->getDebugDrawer()->getDebugMode();
+        BulletDebugDrawer::DebugDrawModes modes = (BulletDebugDrawer::DebugDrawModes)debug_drawer->getDebugMode();
         BulletDebugDrawer::DebugDrawModes mode = ddm_from_string(L, str);
         int new_modes = (modes & ~mode) | (b ? mode : BulletDebugDrawer::DBG_NoDebug);
-        grit->getDebugDrawer()->setDebugMode(new_modes);
+        debug_drawer->setDebugMode(new_modes);
         return 0;
 TRY_END
 }
@@ -323,9 +324,9 @@ static int global_get_physics_debug (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        push_scnmgr(L, grit->getSM());
+        push_scnmgr(L, ogre_sm);
         const char *str = luaL_checkstring(L,1);
-        BulletDebugDrawer::DebugDrawModes modes = (BulletDebugDrawer::DebugDrawModes)grit->getDebugDrawer()->getDebugMode();
+        BulletDebugDrawer::DebugDrawModes modes = (BulletDebugDrawer::DebugDrawModes)debug_drawer->getDebugMode();
         BulletDebugDrawer::DebugDrawModes mode = ddm_from_string(L, str);
         lua_pushboolean(L, modes & mode);
         return 1;
@@ -1179,7 +1180,7 @@ TRY_START
         check_args(L,1);
         const char *name = luaL_checkstring(L,1);
         Ogre::RenderTarget *rt =
-                grit->getOgre()->getRenderSystem()->getRenderTarget(name);
+                ogre_root->getRenderSystem()->getRenderTarget(name);
         if (rt==NULL) {
                 lua_pushnil(L);
                 return 1;
@@ -1201,7 +1202,7 @@ static int global_get_scnmgr (lua_State *L)
 TRY_START
         check_args(L,1);
         const char *name = luaL_checkstring(L,1);
-        push_scnmgr(L, grit->getOgre()->getSceneManager(name));
+        push_scnmgr(L, ogre_root->getSceneManager(name));
         return 1;
 TRY_END
 }
@@ -1211,7 +1212,7 @@ static int global_get_streamer (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        push_streamer(L,&grit->getStreamer());
+        push_streamer(L,streamer);
         return 1;
 TRY_END
 }
@@ -1220,7 +1221,7 @@ static int global_get_main_win (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        push_rwin(L,grit->getWin());
+        push_rwin(L,ogre_win);
         return 1;
 TRY_END
 }
@@ -1229,7 +1230,7 @@ static int global_get_hud_root (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        push(L,new HUD::RootPtr(grit->getHUD()),PANE_TAG);
+        push(L,new HUD::RootPtr(hud),PANE_TAG);
         return 1;
 TRY_END
 }
@@ -1238,7 +1239,7 @@ static int global_clicked_close (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        lua_pushboolean(L,grit->hasClickedClose());
+        lua_pushboolean(L,clicked_close);
         return 1;
 TRY_END
 }
@@ -1344,7 +1345,7 @@ static int global_pump (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        Ogre::WindowEventUtilities::messagePump();
+        gfx_pump();
         return 0;
 TRY_END
 }
@@ -1581,7 +1582,7 @@ static int global_get_rendersystem (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        lua_pushstring(L,grit->getOgre()->getRenderSystem()->getName().c_str());
+        lua_pushstring(L,ogre_root->getRenderSystem()->getName().c_str());
         return 1;
 TRY_END
 }
@@ -1977,11 +1978,9 @@ static const luaL_reg global[] = {
         {"get_mouse_grab",global_get_mouse_grab},
         {"set_mouse_grab",global_set_mouse_grab},
 
-        {"render",global_render},
-        {"fire_frame_started",global_fire_frame_started},
-        {"fire_frame_rendering_queued",global_fire_frame_rendering_queued},
-        {"fire_frame_ended",global_fire_frame_ended},
-        {"update_elapsed_time",global_update_elapsed_time},
+        {"gfx_render",global_gfx_render},
+        {"gfx_get_option",global_gfx_get_option},
+        {"gfx_set_option",global_gfx_set_option},
         {"get_rendersystem",global_get_rendersystem},
 
         {"get_hud_root",global_get_hud_root},
@@ -2089,7 +2088,6 @@ static const luaL_reg global[] = {
         {"Plot",plot_make},
         {"Spline",spline_make},
         {"StringDB",stringdb_make},
-        {"SceneManager" ,global_make_scnmgr},
         {"Material" ,global_make_material},
         {"Texture" ,global_make_tex},
 
@@ -2199,7 +2197,7 @@ lua_State *init_lua(const char *filename)
         luaL_register(L, "_G", global);
 
         lua_pushthread(L); lua_setglobal(L,"MAIN_STATE");
-        push_streamer(L, &grit->getStreamer()); lua_setglobal(L,"streamer");
+        push_streamer(L, streamer); lua_setglobal(L,"streamer");
 
         lua_utf8_init(L);
 

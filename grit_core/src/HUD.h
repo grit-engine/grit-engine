@@ -25,8 +25,10 @@
 #include <vector>
 #include <climits>
 
-#include <Ogre.h>
 #include <OgrePanelOverlayElement.h>
+#include <OgreOverlayElementFactory.h>
+#include <OgreOverlay.h>
+#include <OgreOverlayManager.h>
 
 #include "TextListOverlayElement.h"
 
@@ -227,6 +229,22 @@ namespace HUD {
                    const bool word_wrap, const bool chop_top,
                    const bool ignore_codes, const Ogre::FontPtr fp,
                    const float char_height, DStr& output, DStr *offcut);
+
+        class TextListOverlayElementFactory : public Ogre::OverlayElementFactory {
+                
+                public: 
+                
+                virtual Ogre::OverlayElement* createOverlayElement (const std::string& instanceName)
+                {   
+                    return new TextListOverlayElement(instanceName);
+                }
+                
+                virtual const std::string& getTypeName () const
+                {   
+                    return TextListOverlayElement::msTypeName;
+                }
+
+        };
 
 }
 

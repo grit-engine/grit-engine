@@ -58,8 +58,8 @@ http://www.gnu.org/copyleft/lesser.txt
 #include <OgreFontManager.h>
 
 #include "TextListOverlayElement.h"
-#include "CentralisedLog.h"
-#include "Grit.h"
+#include "main.h"
+#include "gfx.h"
 
 namespace HUD {
 
@@ -426,9 +426,9 @@ namespace HUD {
 
                 if (mMetricsMode == Ogre::GMM_PIXELS) {
                         // Derive pixel version of dimensions
-                        Ogre::Real vpWidth = grit->getWin()->getWidth();
+                        Ogre::Real vpWidth = ogre_win->getWidth();
                         largestWidth *= vpWidth;
-                        Ogre::Real vpHeight = grit->getWin()->getHeight();
+                        Ogre::Real vpHeight = ogre_win->getHeight();
                         textHeight *= vpHeight;
 /*
                         std::cout << "vpWidth: " << vpWidth << std::endl
@@ -545,8 +545,8 @@ namespace HUD {
         {
                 Ogre::Real vpWidth, vpHeight;
 
-                vpWidth = grit->getWin()->getWidth();
-                vpHeight = grit->getWin()->getHeight();
+                vpWidth = ogre_win->getWidth();
+                vpHeight = ogre_win->getHeight();
 
                 mViewportAspectCoef = vpHeight / vpWidth;
 
@@ -564,8 +564,8 @@ namespace HUD {
         {
                 Ogre::Real vpWidth, vpHeight;
 
-                vpWidth = grit->getWin()->getWidth();
-                vpHeight = grit->getWin()->getHeight();
+                vpWidth = ogre_win->getWidth();
+                vpHeight = ogre_win->getHeight();
 
                 mViewportAspectCoef = vpHeight/vpWidth;
 
@@ -590,7 +590,7 @@ namespace HUD {
 
                 if (mMetricsMode!=Ogre::GMM_RELATIVE) {
                         Ogre::Real vpHeight;
-                        vpHeight = grit->getWin()->getHeight();
+                        vpHeight = ogre_win->getHeight();
                         mCharHeight = (Ogre::Real) mPixelCharHeight / vpHeight;
                 }
 
@@ -606,7 +606,7 @@ namespace HUD {
 
                 if (mMetricsMode!=Ogre::GMM_RELATIVE) {
                         Ogre::Real vpHeight;
-                        vpHeight = grit->getWin()->getHeight();
+                        vpHeight = ogre_win->getHeight();
                         mCharHeight = (Ogre::Real) mPixelCharHeight / vpHeight;
                 }
 

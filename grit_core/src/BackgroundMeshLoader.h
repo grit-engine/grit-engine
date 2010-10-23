@@ -35,6 +35,7 @@ struct Demand;
 #include <OgrePrerequisites.h>
 #include <OgreSingleton.h>
 #include <OgreAtomicWrappers.h>
+#include <OgreResource.h>
 
 
 #include "CentralisedLog.h"

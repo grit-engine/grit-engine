@@ -21,8 +21,12 @@
 
 #include <OgreViewport.h>
 #include <OgreRenderTarget.h>
+#include <OgreRenderWindow.h>
+#include <OgreRenderTexture.h>
+#include <OgreCompositorManager.h>
 
-#include "Grit.h"
+#include "main.h"
+#include "gfx.h"
 
 #include "lua_wrappers_render.h"
 #include "lua_wrappers_tex.h"
@@ -44,7 +48,7 @@ void push_viewport (lua_State *L, Ogre::Viewport *vp)
         luaL_getmetatable(L, VIEWPORT_TAG);
         lua_setmetatable(L, -2);
         Ogre::RenderTarget *rt = vp->getTarget();
-        render_target_maps& maps = grit->getUserDataTables().rts[rt];
+        render_target_maps& maps = user_data_tables.rts[rt];
         maps.viewports[vp].push_back(ud);
 }
 
@@ -65,7 +69,7 @@ TRY_START
         GET_UD_MACRO(Ogre::Viewport,self,1,VIEWPORT_TAG);
         Ogre::RenderTarget *rt = self.getTarget();
         rt->removeViewport(self.getZOrder());
-        map_nullify_remove(grit->getUserDataTables().rts[rt].viewports,&self);
+        map_nullify_remove(user_data_tables.rts[rt].viewports,&self);
         return 0;
 TRY_END
 }
@@ -77,7 +81,7 @@ TRY_START
         GET_UD_MACRO_OFFSET(Ogre::Viewport,self,1,VIEWPORT_TAG,0);
         if (self==NULL) return 0;
         Ogre::RenderTarget *rt = self->getTarget();
-        vec_nullify_remove(grit->getUserDataTables().rts[rt].viewports[self],
+        vec_nullify_remove(user_data_tables.rts[rt].viewports[self],
                            &self);
         return 0;
 TRY_END
@@ -255,11 +259,11 @@ static int rt_destroy(lua_State *L)
 TRY_START
         check_args(L,1);
         Ogre::RenderTarget *rt = check_rt(L, 1);
-        grit->getOgre()->getRenderSystem()->destroyRenderTarget(rt->getName());
-        struct render_target_maps& maps = grit->getUserDataTables().rts[rt];
+        ogre_root->getRenderSystem()->destroyRenderTarget(rt->getName());
+        struct render_target_maps& maps = user_data_tables.rts[rt];
         vec_nullify_remove_all(maps.userData);
         map_nullify_remove_all(maps.viewports);
-        map_remove_only(grit->getUserDataTables().rts,rt);
+        map_remove_only(user_data_tables.rts,rt);
         return 0;
 TRY_END
 }
@@ -410,7 +414,7 @@ void push_rtex (lua_State *L, Ogre::RenderTexture *self)
         ud[0] = static_cast<void*> (self);
         luaL_getmetatable(L, RTEX_TAG);
         lua_setmetatable(L, -2);
-        render_target_maps& maps = grit->getUserDataTables().rts[self];
+        render_target_maps& maps = user_data_tables.rts[self];
         maps.userData.push_back(ud);
 }
 
@@ -420,7 +424,7 @@ TRY_START
         check_args(L,1);
         GET_UD_MACRO_OFFSET(Ogre::RenderTexture,self,1,RTEX_TAG,0);
         if (self==NULL) return 0;
-        vec_nullify_remove(grit->getUserDataTables().rts[self].userData,&self);
+        vec_nullify_remove(user_data_tables.rts[self].userData,&self);
         return 0;
 TRY_END
 }
@@ -476,7 +480,7 @@ void push_rwin (lua_State *L, Ogre::RenderWindow *self)
         ud[0] = static_cast<void*> (self);
         luaL_getmetatable(L, RWIN_TAG);
         lua_setmetatable(L, -2);
-        render_target_maps& maps = grit->getUserDataTables().rts[self];
+        render_target_maps& maps = user_data_tables.rts[self];
         maps.userData.push_back(ud);
 }
 
@@ -540,7 +544,7 @@ TRY_START
         check_args(L,1);
         GET_UD_MACRO_OFFSET(Ogre::RenderWindow,self,1,RWIN_TAG,0);
         if (self==NULL) return 0;
-        vec_nullify_remove(grit->getUserDataTables().rts[self].userData,&self);
+        vec_nullify_remove(user_data_tables.rts[self].userData,&self);
         return 0;
 TRY_END
 }

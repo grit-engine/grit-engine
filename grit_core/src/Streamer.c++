@@ -23,7 +23,7 @@
 #include <OgreException.h>
 
 #include "Streamer.h"
-#include "Grit.h"
+#include "main.h"
 
 Streamer::~Streamer (void)
 {

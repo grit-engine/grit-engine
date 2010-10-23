@@ -27,7 +27,8 @@ extern "C" {
         #include <lualib.h>
 }
 
-#include "Grit.h"
+#include "main.h"
+#include "gfx.h"
 #include "CentralisedLog.h"
 #include "LuaParticleSystem.h"
 #include "lua_util.h"
@@ -220,7 +221,7 @@ void LuaParticleAffector::_affectParticles (Ogre::ParticleSystem *ps,
                 Ogre::Particle *p = pi.getNext();
                 LuaParticleData *pd =
                         static_cast<LuaParticleData*>(p->getVisualData());
-                pd->affect(grit->getLuaState(), p, elapsed);
+                pd->affect(core_L, p, elapsed);
         }        
 }
 

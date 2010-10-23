@@ -29,7 +29,7 @@
 
 #include "PhysicsWorld.h"
 #include "GritObject.h"
-#include "Grit.h"
+#include "main.h"
 #include "lua_wrappers_physics.h"
 #include "CentralisedLog.h"
 
@@ -314,7 +314,7 @@ PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
         
         world->setGravity(btVector3(0.0f,0.0f,-9.8f));
 
-        world->setDebugDrawer(grit->getDebugDrawer());
+        world->setDebugDrawer(debug_drawer);
 }
 
 PhysicsWorld::~PhysicsWorld ()
@@ -403,12 +403,10 @@ void PhysicsWorld::updateGraphics (lua_State *L)
         push_cfunction(L, my_lua_error_handler);
 
         for (int i=0 ; i<world->getNumCollisionObjects() ; ++i) {
-                btCollisionObject* victim =
-                        world->getCollisionObjectArray()[i];
+                btCollisionObject* victim = world->getCollisionObjectArray()[i];
                 btRigidBody* victim2 = btRigidBody::upcast(victim);
                 if (victim2==NULL) continue;
-                RigidBody *rb =
-                     static_cast<RigidBody*>(victim2->getMotionState());
+                RigidBody *rb = static_cast<RigidBody*>(victim2->getMotionState());
                 rb->updateGraphicsCallback(L);
         }
 

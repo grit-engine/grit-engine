@@ -22,6 +22,9 @@
 #ifndef lua_userdata_dependency_tracker_h
 #define lua_userdata_dependency_tracker_h
 
+#include <OgreStaticGeometry.h>
+#include <OgreInstancedGeometry.h>
+
 #include "Clutter.h"
 
 struct scnmgr_maps {

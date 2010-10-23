@@ -20,7 +20,7 @@
  */
 
 #include "GritObject.h"
-#include "Grit.h"
+#include "main.h"
 
 #include "lua_wrappers_gritobj.h"
 #include "lua_wrappers_physics.h"
@@ -127,7 +127,7 @@ static int gritobj_destroy (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        grit->getStreamer().deleteObject(L,self);
+        streamer->deleteObject(L,self);
         return 0;
 TRY_END
 }
@@ -138,8 +138,8 @@ TRY_START
         check_args(L,1);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
         self->activate(L, self,
-                       grit->getStreamer().getGFX(),
-                       grit->getStreamer().getPhysics());
+                       streamer->getGFX(),
+                       streamer->getPhysics());
         return 0;
 TRY_END
 }

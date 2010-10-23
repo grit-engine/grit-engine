@@ -21,8 +21,15 @@
 
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
+#include <OgreEntity.h>
+#include <OgreManualObject.h>
+#include <OgreShadowCameraSetup.h>
+#include <OgreShadowCameraSetupFocused.h>
+#include <OgreShadowCameraSetupLiSPSM.h>
+#include <OgreShadowCameraSetupPSSM.h>
 
-#include "Grit.h"
+#include "main.h"
+#include "gfx.h"
 #include "lua_wrappers_scnmgr.h"
 #include "lua_wrappers_mobj.h"
 #include "lua_wrappers_primitives.h"
@@ -47,7 +54,7 @@ void push_node (lua_State *L, Ogre::SceneNode *n)
         APP_ASSERT(scnmgr!=NULL);
         APP_ASSERT(n!=NULL);
         APP_ASSERT(ud!=NULL);
-        grit->getUserDataTables().scnmgrs[scnmgr].sceneNodes[n].push_back(ud);
+        user_data_tables.scnmgrs[scnmgr].sceneNodes[n].push_back(ud);
 }
 
 static int node_child_node (lua_State *L)
@@ -264,7 +271,7 @@ TRY_START
         Ogre::SceneManager *scnmgr = self.getCreator();
         scnmgr->destroySceneNode(self.getName());
         map_nullify_remove(
-                          grit->getUserDataTables().scnmgrs[scnmgr].sceneNodes,
+                          user_data_tables.scnmgrs[scnmgr].sceneNodes,
                            &self);
         return 0;
 TRY_END
@@ -282,7 +289,7 @@ TRY_START
         if (self==NULL) return 0;
         Ogre::SceneManager *scnmgr = self->getCreator();
         vec_nullify_remove(
-                grit->getUserDataTables().scnmgrs[scnmgr].sceneNodes[self],
+                user_data_tables.scnmgrs[scnmgr].sceneNodes[self],
                 &self);
         return 0;
 TRY_END
@@ -431,7 +438,7 @@ void push_scnmgr (lua_State *L, Ogre::SceneManager *scnmgr)
         ud[0] = static_cast<void*> (scnmgr);
         luaL_getmetatable(L, SCNMGR_TAG);
         lua_setmetatable(L, -2);
-        grit->getUserDataTables().scnmgrs[scnmgr].userData.push_back(ud);
+        user_data_tables.scnmgrs[scnmgr].userData.push_back(ud);
 }
 
 static int scnmgr_set_skybox (lua_State *L)
@@ -1116,8 +1123,8 @@ static int scnmgr_destroy(lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(Ogre::SceneManager,self,1,SCNMGR_TAG);
-        grit->getOgre()->destroySceneManager(&self);
-        struct scnmgr_maps& maps = grit->getUserDataTables().scnmgrs[&self];
+        ogre_root->destroySceneManager(&self);
+        struct scnmgr_maps& maps = user_data_tables.scnmgrs[&self];
         vec_nullify_remove_all(maps.userData);
         map_nullify_remove_all(maps.sceneNodes);
         map_nullify_remove_all(maps.cameras);
@@ -1126,7 +1133,7 @@ TRY_START
         map_nullify_remove_all(maps.manobjs);
         map_nullify_remove_all(maps.statgeoms);
         map_nullify_remove_all(maps.instgeoms);
-        map_remove_only(grit->getUserDataTables().scnmgrs,&self);
+        map_remove_only(user_data_tables.scnmgrs,&self);
         return 0;
 TRY_END
 }
@@ -1141,7 +1148,7 @@ TRY_START
         check_args(L,1);
         GET_UD_MACRO_OFFSET(Ogre::SceneManager,self,1,SCNMGR_TAG,0);
         if (self==NULL) return 0;
-        vec_nullify_remove(grit->getUserDataTables().scnmgrs[self].userData,
+        vec_nullify_remove(user_data_tables.scnmgrs[self].userData,
                            &self);
         return 0;
 TRY_END

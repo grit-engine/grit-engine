@@ -871,6 +871,18 @@ TRY_END
 static int quat_xyzw (lua_State *L)
 {
 TRY_START
+        if (lua_gettop(L)==5) {
+                GET_UD_MACRO(Quaternion,q,1,QUAT_TAG);
+                float w = luaL_checknumber(L,2);
+                float x = luaL_checknumber(L,3);
+                float y = luaL_checknumber(L,4);
+                float z = luaL_checknumber(L,5);
+                q.w = w;
+                q.x = x;
+                q.y = y;
+                q.z = z;
+                return 0;
+        }
         check_args(L,1);
         GET_UD_MACRO(Quaternion,q,1,QUAT_TAG);
         lua_pushnumber(L,q.w);

@@ -26,9 +26,12 @@
 #include <OgreStaticGeometry.h>
 #include <OgreCamera.h>
 #include <OgreMaterialManager.h>
+#include <OgreSubEntity.h>
+#include <OgreMeshManager.h>
 
 #include "Clutter.h"
-#include "Grit.h"
+#include "main.h"
+#include "gfx.h"
 #include "LuaParticleSystem.h"
 
 #include "lua_wrappers_mobj.h"
@@ -38,6 +41,7 @@
 #include "lua_wrappers_mesh.h"
 
 
+#include "lua_userdata_dependency_tracker.h"
 #include "lua_userdata_dependency_tracker_funcs.h"
 
 // MOVABLE OBJECT ========================================================== {{{
@@ -163,7 +167,7 @@ void push_rclutter (lua_State *L, RangedClutter *self)
         luaL_getmetatable(L, RCLUTTER_TAG);
         lua_setmetatable(L, -2);
         Ogre::SceneManager *sm = self->_getManager();
-        scnmgr_maps& maps = grit->getUserDataTables().scnmgrs[sm];
+        scnmgr_maps& maps = user_data_tables.scnmgrs[sm];
         maps.rangedClutters[self].push_back(ud);
 }
 
@@ -174,7 +178,7 @@ TRY_START
         GET_UD_MACRO_OFFSET(RangedClutter,self,1,RCLUTTER_TAG,0);
         if (self==NULL) return 0;
         Ogre::SceneManager *sm = self->_getManager();
-        vec_nullify_remove(grit->getUserDataTables().scnmgrs[sm].rangedClutters[self],&self);
+        vec_nullify_remove(user_data_tables.scnmgrs[sm].rangedClutters[self],&self);
         return 0;
 TRY_END
 }
@@ -215,7 +219,7 @@ TRY_START
         GET_UD_MACRO(RangedClutter,self,1,RCLUTTER_TAG);
         Ogre::SceneManager *sm = self._getManager();
         sm->destroyMovableObject(&self);
-        map_nullify_remove(grit->getUserDataTables().scnmgrs[sm].rangedClutters,&self);
+        map_nullify_remove(user_data_tables.scnmgrs[sm].rangedClutters,&self);
         return 0;
 TRY_END
 }
@@ -276,7 +280,7 @@ void push_clutter (lua_State *L, MovableClutter *self)
         luaL_getmetatable(L, CLUTTER_TAG);
         lua_setmetatable(L, -2);
         Ogre::SceneManager *sm = self->_getManager();
-        scnmgr_maps& maps = grit->getUserDataTables().scnmgrs[sm];
+        scnmgr_maps& maps = user_data_tables.scnmgrs[sm];
         maps.movableClutters[self].push_back(ud);
 }
 
@@ -287,7 +291,7 @@ TRY_START
         GET_UD_MACRO_OFFSET(MovableClutter,self,1,CLUTTER_TAG,0);
         if (self==NULL) return 0;
         Ogre::SceneManager *sm = self->_getManager();
-        vec_nullify_remove(grit->getUserDataTables().scnmgrs[sm].movableClutters[self],&self);
+        vec_nullify_remove(user_data_tables.scnmgrs[sm].movableClutters[self],&self);
         return 0;
 TRY_END
 }
@@ -299,7 +303,7 @@ TRY_START
         GET_UD_MACRO(MovableClutter,self,1,CLUTTER_TAG);
         Ogre::SceneManager *sm = self._getManager();
         sm->destroyMovableObject(&self);
-        map_nullify_remove(grit->getUserDataTables().scnmgrs[sm].movableClutters,&self);
+        map_nullify_remove(user_data_tables.scnmgrs[sm].movableClutters,&self);
         return 0;
 TRY_END
 }
@@ -430,7 +434,7 @@ void push_light (lua_State *L, Ogre::Light *self)
         luaL_getmetatable(L, LIGHT_TAG);
         lua_setmetatable(L, -2);
         Ogre::SceneManager *sm = self->_getManager();
-        scnmgr_maps& maps = grit->getUserDataTables().scnmgrs[sm];
+        scnmgr_maps& maps = user_data_tables.scnmgrs[sm];
         maps.lights[self].push_back(ud);
 }
 
@@ -441,7 +445,7 @@ TRY_START
         GET_UD_MACRO_OFFSET(Ogre::Light,self,1,LIGHT_TAG,0);
         if (self==NULL) return 0;
         Ogre::SceneManager *sm = self->_getManager();
-        vec_nullify_remove(grit->getUserDataTables().scnmgrs[sm].lights[self],&self);
+        vec_nullify_remove(user_data_tables.scnmgrs[sm].lights[self],&self);
         return 0;
 TRY_END
 }
@@ -453,7 +457,7 @@ TRY_START
         GET_UD_MACRO(Ogre::Light,self,1,LIGHT_TAG);
         Ogre::SceneManager *sm = self._getManager();
         sm->destroyLight(&self);
-        map_nullify_remove(grit->getUserDataTables().scnmgrs[sm].lights,&self);
+        map_nullify_remove(user_data_tables.scnmgrs[sm].lights,&self);
         return 0;
 TRY_END
 }
@@ -687,7 +691,7 @@ void push_psys (lua_State *L, Ogre::ParticleSystem *self)
         luaL_getmetatable(L, PSYS_TAG);
         lua_setmetatable(L, -2);
         Ogre::SceneManager *sm = self->_getManager();
-        scnmgr_maps& maps = grit->getUserDataTables().scnmgrs[sm];
+        scnmgr_maps& maps = user_data_tables.scnmgrs[sm];
         maps.psyss[self].push_back(ud);
 }
 
@@ -778,7 +782,7 @@ TRY_START
         GET_UD_MACRO_OFFSET(Ogre::ParticleSystem,self,1,PSYS_TAG,0);
         if (self==NULL) return 0;
         Ogre::SceneManager *sm = self->_getManager();
-        vec_nullify_remove(grit->getUserDataTables().scnmgrs[sm].psyss[self],&self);
+        vec_nullify_remove(user_data_tables.scnmgrs[sm].psyss[self],&self);
         return 0;
 TRY_END
 }
@@ -790,7 +794,7 @@ TRY_START
         GET_UD_MACRO(Ogre::ParticleSystem,self,1,PSYS_TAG);
         Ogre::SceneManager *sm = self._getManager();
         sm->destroyParticleSystem(&self);
-        map_nullify_remove(grit->getUserDataTables().scnmgrs[sm].psyss,&self);
+        map_nullify_remove(user_data_tables.scnmgrs[sm].psyss,&self);
         return 0;
 TRY_END
 }
@@ -890,7 +894,7 @@ void push_manobj(lua_State *L, Ogre::ManualObject *man)
         Ogre::SceneManager *scnmgr = man->_getManager();
         luaL_getmetatable(L, MANOBJ_TAG);
         lua_setmetatable(L, -2);
-        grit->getUserDataTables().scnmgrs[scnmgr].manobjs[man].push_back(ud);
+        user_data_tables.scnmgrs[scnmgr].manobjs[man].push_back(ud);
 }
 
 
@@ -953,7 +957,7 @@ TRY_START
         GET_UD_MACRO(Ogre::ManualObject,self,1,MANOBJ_TAG);
         Ogre::SceneManager *scnmgr = self._getManager();
         scnmgr->destroyManualObject(&self);
-        map_nullify_remove(grit->getUserDataTables().scnmgrs[scnmgr].manobjs,
+        map_nullify_remove(user_data_tables.scnmgrs[scnmgr].manobjs,
                            &self);
         return 0;
 TRY_END
@@ -970,7 +974,7 @@ TRY_START
         if (ent==NULL) return 0;
         Ogre::SceneManager *scnmgr = ent->_getManager();
         vec_nullify_remove(
-                       grit->getUserDataTables().scnmgrs[scnmgr].manobjs[ent],
+                       user_data_tables.scnmgrs[scnmgr].manobjs[ent],
                            &ent);
         return 0;
 TRY_END
@@ -1031,7 +1035,7 @@ void push_entity(lua_State *L, Ogre::Entity *ent)
         Ogre::SceneManager *scnmgr = ent->_getManager();
         luaL_getmetatable(L, ENTITY_TAG);
         lua_setmetatable(L, -2);
-        grit->getUserDataTables().scnmgrs[scnmgr].entities[ent].push_back(ud);
+        user_data_tables.scnmgrs[scnmgr].entities[ent].push_back(ud);
 }
 
 
@@ -1516,7 +1520,7 @@ TRY_START
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
         Ogre::SceneManager *scnmgr = self._getManager();
         scnmgr->destroyEntity(&self);
-        map_nullify_remove(grit->getUserDataTables().scnmgrs[scnmgr].entities,
+        map_nullify_remove(user_data_tables.scnmgrs[scnmgr].entities,
                            &self);
         return 0;
 TRY_END
@@ -1533,7 +1537,7 @@ TRY_START
         if (ent==NULL) return 0;
         Ogre::SceneManager *scnmgr = ent->_getManager();
         vec_nullify_remove(
-                       grit->getUserDataTables().scnmgrs[scnmgr].entities[ent],
+                       user_data_tables.scnmgrs[scnmgr].entities[ent],
                            &ent);
         return 0;
 TRY_END
@@ -1661,7 +1665,7 @@ void push_instgeo (lua_State *L, Ogre::SceneManager *scnmgr,
         APP_ASSERT(scnmgr!=NULL);
         APP_ASSERT(g!=NULL);
         APP_ASSERT(ud!=NULL);
-        grit->getUserDataTables().scnmgrs[scnmgr].instgeoms[g].push_back(ud);
+        user_data_tables.scnmgrs[scnmgr].instgeoms[g].push_back(ud);
 }
 
 
@@ -1707,7 +1711,7 @@ TRY_START
         GET_UD_MACRO(Ogre::InstancedGeometry,self,1,INSTGEO_TAG);
         GET_UD_MACRO_OFFSET(Ogre::SceneManager,scnmgr,1,INSTGEO_TAG,1);
         scnmgr->destroyInstancedGeometry(&self);
-        map_nullify_remove(grit->getUserDataTables().scnmgrs[scnmgr].instgeoms,
+        map_nullify_remove(user_data_tables.scnmgrs[scnmgr].instgeoms,
                            &self);
 
         return 0;
@@ -1726,7 +1730,7 @@ TRY_START
         if (self==NULL) return 0;
         GET_UD_MACRO_OFFSET(Ogre::SceneManager,scnmgr,1,INSTGEO_TAG,1);
         vec_nullify_remove(
-                     grit->getUserDataTables().scnmgrs[scnmgr].instgeoms[self],
+                     user_data_tables.scnmgrs[scnmgr].instgeoms[self],
                            &self);
         return 0;
 TRY_END
@@ -1810,7 +1814,7 @@ void push_statgeo (lua_State *L, Ogre::SceneManager *scnmgr,
         APP_ASSERT(scnmgr!=NULL);
         APP_ASSERT(g!=NULL);
         APP_ASSERT(ud!=NULL);
-        grit->getUserDataTables().scnmgrs[scnmgr].statgeoms[g].push_back(ud);
+        user_data_tables.scnmgrs[scnmgr].statgeoms[g].push_back(ud);
 }
 
 
@@ -1856,7 +1860,7 @@ TRY_START
         GET_UD_MACRO(Ogre::StaticGeometry,self,1,STATGEO_TAG);
         GET_UD_MACRO_OFFSET(Ogre::SceneManager,scnmgr,1,STATGEO_TAG,1);
         scnmgr->destroyStaticGeometry(&self);
-        map_nullify_remove(grit->getUserDataTables().scnmgrs[scnmgr].statgeoms,
+        map_nullify_remove(user_data_tables.scnmgrs[scnmgr].statgeoms,
                            &self);
 
         return 0;
@@ -1875,7 +1879,7 @@ TRY_START
         if (self==NULL) return 0;
         GET_UD_MACRO_OFFSET(Ogre::SceneManager,scnmgr,1,STATGEO_TAG,1);
         vec_nullify_remove(
-                     grit->getUserDataTables().scnmgrs[scnmgr].statgeoms[self],
+                     user_data_tables.scnmgrs[scnmgr].statgeoms[self],
                            &self);
         return 0;
 TRY_END
@@ -1956,7 +1960,7 @@ void push_cam (lua_State *L, Ogre::Camera *cam)
         Ogre::SceneManager *scnmgr = cam->getSceneManager();
         luaL_getmetatable(L, CAM_TAG);
         lua_setmetatable(L, -2);
-        grit->getUserDataTables().scnmgrs[scnmgr].cameras[cam].push_back(ud);
+        user_data_tables.scnmgrs[scnmgr].cameras[cam].push_back(ud);
 }
 
 static int cam_destroy (lua_State *L)
@@ -1966,7 +1970,7 @@ TRY_START
         GET_UD_MACRO(Ogre::Camera,self,1,CAM_TAG);
         Ogre::SceneManager *scnmgr = self.getSceneManager();
         scnmgr->destroyCamera(&self);
-        map_nullify_remove(grit->getUserDataTables().scnmgrs[scnmgr].cameras,
+        map_nullify_remove(user_data_tables.scnmgrs[scnmgr].cameras,
                            &self);
         return 0;
 TRY_END
@@ -2075,7 +2079,7 @@ TRY_START
         if (self==NULL) return 0;
         Ogre::SceneManager *scnmgr = self->getSceneManager();
         vec_nullify_remove(
-                       grit->getUserDataTables().scnmgrs[scnmgr].cameras[self],
+                       user_data_tables.scnmgrs[scnmgr].cameras[self],
                            &self);
         return 0;
 TRY_END
