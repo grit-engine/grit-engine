@@ -212,7 +212,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\Grit.c++"
+				RelativePath=".\src\gfx.c++"
 				>
 			</File>
 			<File

@@ -23,6 +23,16 @@
 #include <cerrno>
 #include <sstream>
 
+#ifdef WIN32
+#  include "windows.h"
+#  include "win32/MouseDirectInput8.h"
+#  include "win32/KeyboardDirectInput8.h"
+#  include "win32/KeyboardWinAPI.h"
+#else
+#  include "linux/KeyboardX11.h"
+#  include "linux/MouseX11.h"
+#endif
+
 #include "main.h"
 #include "gfx.h"
 

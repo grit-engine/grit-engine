@@ -23,16 +23,10 @@ extern "C" {
         #include "lua.h"
 }
 
+#include "Mouse.h"
+#include "Keyboard.h"
 #include "BackgroundMeshLoader.h"
 #include "CentralisedLog.h"
-#ifdef WIN32
-#  include "win32/MouseDirectInput8.h"
-#  include "win32/KeyboardDirectInput8.h"
-#  include "win32/KeyboardWinAPI.h"
-#else
-#  include "linux/KeyboardX11.h"
-#  include "linux/MouseX11.h"
-#endif
 #include "BulletDebugDrawer.h"
 #include "lua_userdata_dependency_tracker.h"
 #include "HUD.h"
