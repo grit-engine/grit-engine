@@ -20,13 +20,9 @@
  */
 
 #if 0
-shadow configuration
 some way of distinguishing sky from everything else
-shadowCast
 
 scnmgr
-node
-cam
 entity
 manobj
 light
@@ -48,7 +44,7 @@ Script or user customisable graphical elements within a typical grit game:
 
 Entities, Entity hierarchy, Bone hierarchy
 Clutter
-Lights (coronas etc)
+Lights (high level lights with coronas etc)
 Particles
 Material definitions
 Sky attributes
@@ -56,6 +52,8 @@ Ambient lighting
 Shadow config
 Shaders?
 screenshot
+
+no need to touch meshes/textures except to reload -- probably will have reload_mesh(string) or similar
 
 #endif
 
@@ -66,6 +64,7 @@ screenshot
 
 #include "HUD.h"
 #include "math_util.h"
+#include "SharedPtr.h"
 
 struct GfxCallback {
     virtual ~GfxCallback (void) { }
@@ -86,9 +85,10 @@ enum GfxBoolOption {
     GFX_VSYNC,
     GFX_FULLSCREEN,
     GFX_FOG,
+    GFX_DEFERRED,
     GFX_WIREFRAME,
     GFX_ANAGLYPH,
-    GFX_CROSSEYE,
+    GFX_CROSS_EYE,
     GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST,
     GFX_SHADOW_AGGRESSIVE_FOCUS_REGION
 };
@@ -138,12 +138,92 @@ void gfx_option_from_string (const std::string &s,
                              GfxIntOption &o1,
                              GfxFloatOption &o2);
 
-void gfx_set_option (GfxBoolOption o, bool v);
-bool gfx_get_option (GfxBoolOption o);
-void gfx_set_option (GfxIntOption o, int v);
-int gfx_get_option (GfxIntOption o);
-void gfx_set_option (GfxFloatOption o, float v);
-float gfx_get_option (GfxFloatOption o);
+void gfx_option (GfxBoolOption o, bool v);
+bool gfx_option (GfxBoolOption o);
+void gfx_option (GfxIntOption o, int v);
+int gfx_option (GfxIntOption o);
+void gfx_option (GfxFloatOption o, float v);
+float gfx_option (GfxFloatOption o);
+
+class GfxBody {
+    protected:
+    Vector3 pos; Quaternion quat; Vector3 scl;
+    GfxBody *par;
+    Ogre::Entity *ent;
+    Ogre::SceneNode *node;
+
+    GfxBody (const std::string &mesh_name);
+
+    GfxBody *getParent (void) const { return par; }
+    void setParent(GfxBody *par_);
+
+    Vector3 transformPosition (const Vector3 &v)
+    {
+        if (par==NULL) return v;
+        return getWorldPosition() + getWorldScale()*(getWorldOrientation()*v);
+    }
+    Quaternion transformOrientation (const Quaternion &v)
+    {
+        if (par==NULL) return v;
+        return getWorldOrientation()*v;
+    }
+    Vector3 transformScale (const Vector3 &v)
+    {
+        if (par==NULL) return v;
+        return getWorldScale()*v;
+    }
+
+    const Vector3 &getLocalPosition (void) { return pos; }
+    void setLocalPosition (const Vector3 &p);
+    const Vector3 getWorldPosition (void)
+    { return par==NULL ? pos : par->transformPosition(pos); }
+
+    const Quaternion &getLocalOrientation (void) { return quat; }
+    void setLocalOrientation (const Quaternion &q);
+    const Quaternion getWorldOrientation (void)
+    {return par==NULL ? quat : par->transformOrientation(quat); }
+
+    const Vector3 &getLocalScale (void) { return scl; }
+    void setLocalScale (const Vector3 &s);
+    const Vector3 getWorldScale (void)
+    { return  par==NULL? scl : par->transformScale(scl); }
+};
+
+typedef SharedPtr<GfxBody> GfxBodyPtr;
+
+void gfx_screenshot (const std::string &filename);
+
+struct GfxLastRenderStats {
+    float batches;
+    float triangles;
+    float micros;
+    GfxLastRenderStats (const GfxLastRenderStats &o)
+        : batches(o.batches), triangles(o.triangles), micros(o.micros) { }
+    GfxLastRenderStats (void) : batches(0), triangles(0), micros(0) { }
+    GfxLastRenderStats &operator+= (const GfxLastRenderStats &o) {
+        batches += o.batches; triangles += o.triangles; micros += o.micros;
+        return *this;
+    }
+    GfxLastRenderStats &operator/= (float time) {
+        batches /= time; triangles /= time; micros /= time;
+        return *this;
+    }
+};
+
+struct GfxLastFrameStats {
+    GfxLastRenderStats shadow[3];
+    GfxLastRenderStats left;
+    GfxLastRenderStats right;
+};
+
+struct GfxRunningFrameStats {
+    GfxLastFrameStats min;
+    GfxLastFrameStats avg;
+    GfxLastFrameStats max;
+};
+
+GfxLastFrameStats gfx_last_frame_stats (void);
+GfxRunningFrameStats gfx_running_frame_stats (void);
 
 void gfx_reload_resources (void);
 
@@ -158,5 +238,16 @@ void gfx_shutdown (void);
 extern Ogre::Root *ogre_root; // FIXME: hack
 extern Ogre::OctreeSceneManager *ogre_sm; // FIXME: hack
 extern Ogre::RenderWindow *ogre_win; // FIXME: hack
+
+
+static inline Ogre::Vector3 to_ogre (const Vector3 &v)
+{ return Ogre::Vector3(v.x,v.y,v.z); }
+static inline Ogre::Quaternion to_ogre (const Quaternion &v)
+{ return Ogre::Quaternion(v.w,v.x,v.y,v.z); }
+
+static inline Vector3 from_ogre (const Ogre::Vector3 &v)
+{ return Vector3(v.x,v.y,v.z); }
+static inline Quaternion from_ogre (const Ogre::Quaternion &v)
+{ return Quaternion(v.w,v.x,v.y,v.z); }
 
 #endif 

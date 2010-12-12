@@ -229,45 +229,51 @@ TRY_START
 TRY_END
 }
 
-static int global_gfx_get_option (lua_State *L)
+static int global_gfx_screenshot (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        std::string opt = luaL_checkstring(L,1);
-        int t;
-        GfxBoolOption o0;
-        GfxIntOption o1;
-        GfxFloatOption o2;
-        gfx_option_from_string(opt, t, o0, o1, o2);
-        switch (t) {
-                case -1: my_lua_error(L,"Unrecognised graphics option: \""+opt+"\"");
-                case 0: lua_pushboolean(L,gfx_get_option(o0)); break;
-                case 1: lua_pushnumber(L,gfx_get_option(o1)); break;
-                case 2: lua_pushnumber(L,gfx_get_option(o2)); break;
-                default: my_lua_error(L,"Unrecognised type from gfx_option_from_string");
-        }
-        return 1;
+        const char *filename = luaL_checkstring(L,1);
+        gfx_screenshot(filename);
+        return 0;
 TRY_END
 }
 
-static int global_gfx_set_option (lua_State *L)
+static int global_gfx_option (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        std::string opt = luaL_checkstring(L,1);
-        int t;
-        GfxBoolOption o0;
-        GfxIntOption o1;
-        GfxFloatOption o2;
-        gfx_option_from_string(opt, t, o0, o1, o2);
-        switch (t) {
-                case -1: my_lua_error(L,"Unrecognised graphics option: \""+opt+"\"");
-                case 0: gfx_set_option(o0, check_bool(L,2)); break;
-                case 1: gfx_set_option(o1, check_t<int>(L,2)); break;
-                case 2: gfx_set_option(o2, luaL_checknumber(L,2)); break;
-                default: my_lua_error(L,"Unrecognised type from gfx_option_from_string");
+        if (lua_gettop(L)==2) {
+                std::string opt = luaL_checkstring(L,1);
+                int t;
+                GfxBoolOption o0;
+                GfxIntOption o1;
+                GfxFloatOption o2;
+                gfx_option_from_string(opt, t, o0, o1, o2);
+                switch (t) {
+                        case -1: my_lua_error(L,"Unrecognised graphics option: \""+opt+"\"");
+                        case 0: gfx_option(o0, check_bool(L,2)); break;
+                        case 1: gfx_option(o1, check_t<int>(L,2)); break;
+                        case 2: gfx_option(o2, luaL_checknumber(L,2)); break;
+                        default: my_lua_error(L,"Unrecognised type from gfx_option_from_string");
+                }
+                return 0;
+        } else {
+                check_args(L,1);
+                std::string opt = luaL_checkstring(L,1);
+                int t;
+                GfxBoolOption o0;
+                GfxIntOption o1;
+                GfxFloatOption o2;
+                gfx_option_from_string(opt, t, o0, o1, o2);
+                switch (t) {
+                        case -1: my_lua_error(L,"Unrecognised graphics option: \""+opt+"\"");
+                        case 0: lua_pushboolean(L,gfx_option(o0)); break;
+                        case 1: lua_pushnumber(L,gfx_option(o1)); break;
+                        case 2: lua_pushnumber(L,gfx_option(o2)); break;
+                        default: my_lua_error(L,"Unrecognised type from gfx_option_from_string");
+                }
+                return 1;
         }
-        return 0;
 TRY_END
 }
 
@@ -1979,8 +1985,8 @@ static const luaL_reg global[] = {
         {"set_mouse_grab",global_set_mouse_grab},
 
         {"gfx_render",global_gfx_render},
-        {"gfx_get_option",global_gfx_get_option},
-        {"gfx_set_option",global_gfx_set_option},
+        {"gfx_screenshot",global_gfx_screenshot},
+        {"gfx_option",global_gfx_option},
         {"get_rendersystem",global_get_rendersystem},
 
         {"get_hud_root",global_get_hud_root},

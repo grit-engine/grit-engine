@@ -30,9 +30,6 @@ struct Vector3;
 #include <cmath>
 #include <cfloat>
 
-#include <OgreVector3.h>
-#include <LinearMath/btVector3.h>
-
 #include "CentralisedLog.h"
 
 #ifdef WIN32
@@ -80,7 +77,6 @@ struct Quaternion {
     Quaternion () { }
     Quaternion (float w_, float x_, float y_, float z_) : w(w_), x(x_), y(y_), z(z_) { }
     Quaternion (const Radian& a, const Vector3& axis);
-    Quaternion (const Ogre::Quaternion &q) : w(q.w), x(q.x), y(q.y), z(q.z) { }
 
     Quaternion& operator= (const Quaternion& o)
     { w = o.w; x = o.x; y = o.y; z = o.z; return *this; }
@@ -153,11 +149,6 @@ struct Vector3 {
 
     Vector3 () { }
     Vector3 (float x_, float y_, float z_) : x(x_), y(y_), z(z_) { }
-    Vector3 (const Ogre::Vector3 &v) : x(v.x), y(v.y), z(v.z) { }
-    Vector3 (const btVector3 &v) : x(v.x()), y(v.y()), z(v.z()) { }
-
-    Ogre::Vector3 ogre (void) const { return Ogre::Vector3(x, y, z); }
-    btVector3 bullet (void) const { return btVector3(x, y, z); }
 
     Vector3& operator = (const Vector3& o)
     {

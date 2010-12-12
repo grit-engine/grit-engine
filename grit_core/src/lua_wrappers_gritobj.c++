@@ -21,6 +21,7 @@
 
 #include "GritObject.h"
 #include "main.h"
+#include "gfx.h"
 
 #include "lua_wrappers_gritobj.h"
 #include "lua_wrappers_physics.h"
@@ -372,9 +373,8 @@ static int streamer_get_bounds (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        const Ogre::AxisAlignedBox &aabb = self.getBounds();
-        push(L,new Ogre::Vector3(aabb.getMinimum()),VECTOR3_TAG);
-        push(L,new Ogre::Vector3(aabb.getMaximum()),VECTOR3_TAG);
+        push(L,new Vector3(self.getBoundsMin()),VECTOR3_TAG);
+        push(L,new Vector3(self.getBoundsMax()),VECTOR3_TAG);
         return 2;
 TRY_END
 }
@@ -385,9 +385,9 @@ static int streamer_set_bounds (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        GET_UD_MACRO(Ogre::Vector3,min,2,VECTOR3_TAG);
-        GET_UD_MACRO(Ogre::Vector3,max,3,VECTOR3_TAG);
-        self.setBounds(L,Ogre::AxisAlignedBox(min,max));
+        GET_UD_MACRO(Vector3,min,2,VECTOR3_TAG);
+        GET_UD_MACRO(Vector3,max,3,VECTOR3_TAG);
+        self.setBounds(L, min, max);
         return 0;
 TRY_END
 }
@@ -501,7 +501,7 @@ TRY_START
         std::string className = pwd_full(L, luaL_checkstring(L,2));
         float x,y,z;
         if (lua_gettop(L)==4) {
-                GET_UD_MACRO(Ogre::Vector3,val,3,VECTOR3_TAG);
+                GET_UD_MACRO(Vector3,val,3,VECTOR3_TAG);
                 x = val.x;
                 y = val.y;
                 z = val.z;
@@ -527,7 +527,7 @@ TRY_START
         lua_pop(L,1);
 
         GritObjectPtr o = self.addObject(L,name,self.getClass(className));
-        o->userValues.set("spawnPos", Ogre::Vector3(x,y,z));
+        o->userValues.set("spawnPos", Vector3(x,y,z));
         o->getClass()->get(L,"renderingDistance");
         if (lua_isnil(L,-1)) {
                 self.deleteObject(L,o);

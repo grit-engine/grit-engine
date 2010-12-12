@@ -80,7 +80,7 @@ TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
         GET_V3(p,2);
-        self.translate(p.ogre());
+        self.translate(to_ogre(p));
         return 0;
 TRY_END
 }
@@ -90,7 +90,7 @@ static int node_get_world_position (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        PUT_V3(self._getDerivedPosition());
+        PUT_V3(from_ogre(self._getDerivedPosition()));
         return 3;
 TRY_END
 }
@@ -100,7 +100,7 @@ static int node_get_world_orientation (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        PUT_QUAT(self._getDerivedOrientation());
+        PUT_QUAT(from_ogre(self._getDerivedOrientation()));
         return 4;
 TRY_END
 }
@@ -110,7 +110,7 @@ static int node_get_local_position (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        PUT_V3(self.getPosition());
+        PUT_V3(from_ogre(self.getPosition()));
         return 3;
 TRY_END
 }
@@ -120,7 +120,7 @@ static int node_get_local_orientation (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        PUT_QUAT(self.getOrientation());
+        PUT_QUAT(from_ogre(self.getOrientation()));
         return 4;
 TRY_END
 }
@@ -131,7 +131,7 @@ TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
         GET_V3(p,2);
-        PUT_V3(self.getOrientation() * p);
+        PUT_V3(from_ogre(self.getOrientation()) * p);
         return 3;
 TRY_END
 }
@@ -142,7 +142,7 @@ TRY_START
         check_args(L,4);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
         GET_V3(p,2);
-        PUT_V3(self._getDerivedOrientation() * p);
+        PUT_V3(from_ogre(self._getDerivedOrientation()) * p);
         return 3;
 TRY_END
 }

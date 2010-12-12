@@ -22,12 +22,12 @@
 #include <map>
 #include <vector>
 #include <set>
+#include <string>
 
-#include <OgreString.h>
-#include <OgreSharedPtr.h>
+#include "SharedPtr.h"
 
 class GritObject;
-typedef Ogre::SharedPtr<GritObject> GritObjectPtr;
+typedef SharedPtr<GritObject> GritObjectPtr;
 typedef std::map<std::string,GritObjectPtr> GObjMap;
 typedef std::vector<GritObjectPtr> GObjPtrs;
 typedef std::set<GritObjectPtr> GObjSet;

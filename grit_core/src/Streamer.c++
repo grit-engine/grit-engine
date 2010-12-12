@@ -74,10 +74,11 @@ void Streamer::setGFX (lua_State *L, Ogre::SceneNode *gfx)
         this->gfx = gfx;
 }
 
-void Streamer::setBounds (lua_State *L, const Ogre::AxisAlignedBox &bounds_)
+void Streamer::setBounds (lua_State *L, const Vector3 &bounds_min, const Vector3 &bounds_max)
 {
-        bounds = bounds_;
-        setPhysics(L, PhysicsWorldPtr(new PhysicsWorld(bounds)));
+        boundsMin = bounds_min;
+        boundsMax = bounds_max;
+        setPhysics(L, PhysicsWorldPtr(new PhysicsWorld(bounds_min, bounds_max)));
 }
 
 void Streamer::setPhysics (lua_State *L, const PhysicsWorldPtr &physics)

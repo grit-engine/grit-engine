@@ -26,21 +26,17 @@
 
 #include <map>
 
-#include <OgreSharedPtr.h>
-#include <OgreException.h>
-
 #include "CentralisedLog.h"
+#include "SharedPtr.h"
 
 class PhysicsWorld;
-typedef Ogre::SharedPtr<PhysicsWorld> PhysicsWorldPtr;
+typedef SharedPtr<PhysicsWorld> PhysicsWorldPtr;
 
 class RigidBody;
-typedef Ogre::SharedPtr<RigidBody> RigidBodyPtr;
+typedef SharedPtr<RigidBody> RigidBodyPtr;
 
 #ifndef PhysicsWorld_h
 #define PhysicsWorld_h
-
-#include <OgreAxisAlignedBox.h>
 
 #include <btBulletDynamicsCommon.h>
 
@@ -56,81 +52,55 @@ extern "C" {
 #include "GritObject.h"
 #include "math_util.h"
 
-static inline Vector3 to_grit_ (const btVector3 &from, const char *file, int line)
+static inline btVector3 check_nan_ (const btVector3 &v, const char *file, int line)
 {
-        if (isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
-                CLog(file,line,true) << "Vect3 NaN from bullet." << std::endl;
+        if (isnan(v.x()) || isnan(v.y()) || isnan(v.z())) {
+                CLog(file,line,true) << "Vect3 NaN from Bullet." << std::endl;
+                return btVector3(0,0,0);
+        }
+        return v;
+}
+
+static inline Vector3 check_nan_ (const Vector3 &v, const char *file, int line)
+{
+        if (isnan(v.x) || isnan(v.y) || isnan(v.z)) {
+                CLog(file,line,true) << "Vect3 NaN from Grit." << std::endl;
                 return Vector3(0,0,0);
         }
-        return Vector3 (from.x(), from.y(), from.z());
+        return v;
 }
 
-static inline Quaternion to_grit_ (const btQuaternion &from, const char *file, int line)
+static inline btQuaternion check_nan_ (const btQuaternion &v, const char *file, int line)
 {
-        if (isnan(from.w()) || isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
-                CLog(file,line,true) << "Quat NaN from bullet." << std::endl;
+        if (isnan(v.w()) || isnan(v.x()) || isnan(v.y()) || isnan(v.z())) {
+                CLog(file,line,true) << "Quat NaN from Bullet." << std::endl;
+                return btQuaternion(0,0,0,1);
+        }
+        return v;
+}
+
+static inline Quaternion check_nan_ (const Quaternion &v, const char *file, int line)
+{
+        if (isnan(v.w) || isnan(v.x) || isnan(v.y) || isnan(v.z)) {
+                CLog(file,line,true) << "Quat NaN from Grit." << std::endl;
                 return Quaternion(1,0,0,0);
         }
-        return Quaternion (from.w(), from.x(), from.y(), from.z());
+        return v;
 }
 
-static inline btVector3 to_bullet_ (const Vector3 &from, const char *file, int line)
-{
-        if (isnan(from.x) || isnan(from.y) || isnan(from.z)) {
-                CLog(file,line,true) << "Vect3:: NaN from OGRE." << std::endl;
-                return btVector3(0,0,0);
-        }
-        return btVector3(from.x,from.y,from.z);
-}
+static inline Vector3 from_bullet (const btVector3 &from)
+{ return Vector3 (from.x(), from.y(), from.z()); }
 
-static inline btQuaternion to_bullet_ (const Quaternion &from, const char *file, int line)
-{
-        if (isnan(from.w) || isnan(from.x) || isnan(from.y) || isnan(from.z)) {
-                CLog(file,line,true) << "Quat:: NaN from OGRE." << std::endl;
-                return btQuaternion(0,0,0,1);
-        }
-        return btQuaternion(from.x, from.y, from.z, from.w);
-}
+static inline Quaternion from_bullet (const btQuaternion &from)
+{ return Quaternion (from.w(), from.x(), from.y(), from.z()); }
 
-static inline Ogre::Vector3 to_ogre_ (const btVector3 &from, const char *file, int line)
-{
-        if (isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
-                CLog(file,line,true) << "Vect3: NaN from bullet." << std::endl;
-                return Ogre::Vector3(0,0,0);
-        }
-        return Ogre::Vector3 (from.x(), from.y(), from.z());
-}
+static inline btVector3 to_bullet (const Vector3 &from)
+{ return btVector3(from.x,from.y,from.z); }
 
-static inline Ogre::Quaternion to_ogre_ (const btQuaternion &from, const char *file, int line)
-{
-        if (isnan(from.w()) || isnan(from.x()) || isnan(from.y()) || isnan(from.z())) {
-                CLog(file,line,true) << "Quat: NaN from bullet." << std::endl;
-                return Ogre::Quaternion(1,0,0,0);
-        }
-        return Ogre::Quaternion (from.w(), from.x(), from.y(), from.z());
-}
+static inline btQuaternion to_bullet (const Quaternion &from)
+{ return btQuaternion(from.x, from.y, from.z, from.w); }
 
-static inline btVector3 to_bullet_ (const Ogre::Vector3 &from, const char *file, int line)
-{
-        if (isnan(from.x) || isnan(from.y) || isnan(from.z)) {
-                CLog(file,line,true) << "Vect3:: NaN from OGRE." << std::endl;
-                return btVector3(0,0,0);
-        }
-        return btVector3(from.x,from.y,from.z);
-}
-
-static inline btQuaternion to_bullet_ (const Ogre::Quaternion &from, const char *file, int line)
-{
-        if (isnan(from.w) || isnan(from.x) || isnan(from.y) || isnan(from.z)) {
-                CLog(file,line,true) << "Vect3:: NaN from OGRE." << std::endl;
-                return btQuaternion(0,0,0,1);
-        }
-        return btQuaternion(from.x, from.y, from.z, from.w);
-}
-
-#define to_grit(x) to_grit_(x,__FILE__,__LINE__)
-#define to_ogre(x) to_ogre_(x,__FILE__,__LINE__)
-#define to_bullet(x) to_bullet_(x,__FILE__,__LINE__)
+#define check_nan(x) check_nan_(x,__FILE__,__LINE__)
 
 class DynamicsWorld : public btDiscreteDynamicsWorld {
     public:
@@ -162,7 +132,7 @@ class PhysicsWorld {
 
     public:
 
-        PhysicsWorld (const Ogre::AxisAlignedBox &bounds);
+        PhysicsWorld (const Vector3 &bounds_min, const Vector3 &bounds_max);
 
         ~PhysicsWorld ();
 
@@ -362,20 +332,20 @@ class RigidBody : public btMotionState {
         Vector3 getPosition (void) const
         {
                 if (body==NULL) return Vector3(0,0,0); // deactivated
-                return to_grit(body->getCenterOfMassPosition());
+                return from_bullet(body->getCenterOfMassPosition());
         }
 
         Quaternion getOrientation (void) const
         {
                 if (body==NULL) return Quaternion(0,1,0,0); // deactivated
-                return to_grit(body->getOrientation());
+                return from_bullet(body->getOrientation());
         }
 
         void setPosition (const Vector3 &v)
         {
                 if (body==NULL) return; // deactivated
                 body->setCenterOfMassTransform(
-                        btTransform(body->getOrientation(), to_bullet(v)));
+                    btTransform(body->getOrientation(), to_bullet(v)));
                 body->activate();
         }
 

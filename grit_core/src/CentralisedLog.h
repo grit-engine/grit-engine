@@ -30,20 +30,9 @@
 
 void app_fatal();
 
-class CentralisedLog : public Ogre::LogListener {
+class CentralisedLog {
 
     public:
-
-        virtual void messageLogged (const std::string &message,
-                                    Ogre::LogMessageLevel lml,
-                                    bool maskDebug,
-                                    const std::string &logName)
-        {
-                (void)lml;
-                (void)logName;
-                if (!maskDebug)
-                        echo(message);
-        }
 
         virtual void echo (const std::string &line)
         {

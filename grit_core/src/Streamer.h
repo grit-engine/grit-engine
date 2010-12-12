@@ -27,9 +27,7 @@ class Streamer;
 
 #include <map>
 
-#include <OgreString.h>
-#include <OgreVector3.h>
-#include <OgreQuaternion.h>
+#include <OgreSceneNode.h>
 
 extern "C" {
         #include "lua.h"
@@ -56,7 +54,8 @@ class Streamer {
                 visibility(1.0f),
                 stepSize(20000),
                 gfx(NULL),
-                bounds(-3000.0f,-3000.0f,-3000.0f,3000.0f,3000.0f,3000.0f),
+                boundsMin(-3000.0f,-3000.0f,-3000.0f),
+                boundsMax(3000.0f,3000.0f,3000.0f),
                 nameGenerationCounter(0), shutdown(false)
         {
         }
@@ -78,10 +77,10 @@ class Streamer {
 
         PhysicsWorldPtr getPhysics (void) { return physics; }
 
-        void setBounds (lua_State *L,
-                                const Ogre::AxisAlignedBox &bounds_);
+        void setBounds (lua_State *L, const Vector3 &bounds_min, const Vector3 &bounds_max);
 
-        const Ogre::AxisAlignedBox &getBounds () { return bounds; }
+        const Vector3 &getBoundsMin () { return boundsMin; }
+        const Vector3 &getBoundsMax () { return boundsMax; }
 
         // CLASS STUFF
 
@@ -90,8 +89,7 @@ class Streamer {
         GritClass *getClass (const std::string &name);
 
 
-        bool hasClass (const std::string &name)
-        { return classes.find(name)!=classes.end(); }
+        bool hasClass (const std::string &name) { return classes.find(name)!=classes.end(); }
 
         void deleteClass (lua_State *L, GritClass *c)
         {
@@ -100,14 +98,14 @@ class Streamer {
         }
 
         void getClasses (GritClassMap::iterator &begin,
-                                 GritClassMap::iterator &end)
+                         GritClassMap::iterator &end)
         {
                 begin = classes.begin();
                 end = classes.end();
         }
 
         void getClasses (GritClassMap::const_iterator &begin,
-                                 GritClassMap::const_iterator &end) const
+                         GritClassMap::const_iterator &end) const
         {
                 begin = classes.begin();
                 end = classes.end();
@@ -208,7 +206,7 @@ class Streamer {
 
         PhysicsWorldPtr physics;
 
-        Ogre::AxisAlignedBox bounds;
+        Vector3 boundsMin, boundsMax;
 
         size_t nameGenerationCounter;
 

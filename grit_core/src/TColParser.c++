@@ -22,8 +22,6 @@
 #include <iostream>
 #include <cstdlib>
 
-#include <OgreException.h>
-
 #include "TColLexer"
 
 #include "TColParser.h"
@@ -247,13 +245,13 @@ static int parse_material (const std::string &name,
         int id = 0; // initialise to avoid warning
         try {
                 id = db.getMaterial(pwd_full(m,"/common/Frictionless")).id;
-        } catch (Ogre::Exception &e) {
-                CERR << e.getFullDescription()
+        } catch (GritException &e) {
+                CERR << e.longMessage()
                      << " (while parsing \"" << name << "\")" << std::endl;
                 try {
                         id = db.getMaterial("/common/Frictionless").id;
-                } catch (Ogre::Exception &e) {
-                        CERR << e.getFullDescription()
+                } catch (GritException &e) {
+                        CERR << e.longMessage()
                              << " (while handling the above error!)" << std::endl;
                         app_fatal();
                 }

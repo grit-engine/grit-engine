@@ -1036,7 +1036,7 @@ TRY_START
         float MY = luaL_checknumber(L,5);
         float MZ = luaL_checknumber(L,6);
         push_pworld (L, PhysicsWorldPtr(new PhysicsWorld
-                (Ogre::AxisAlignedBox(mX,mY,mZ,MX,MY,MZ))));
+                (Vector3(mX,mY,mZ),Vector3(MX,MY,MZ))));
         return 1;
 TRY_END
 }

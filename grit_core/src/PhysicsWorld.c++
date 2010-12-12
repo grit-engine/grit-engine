@@ -19,8 +19,6 @@
  * THE SOFTWARE.
  */
 
-#include <OgreException.h>
-
 //#include <GIMPACT/Bullet/btGImpactShape.h>
 //#include <GIMPACT/Bullet/btGImpactCollisionAlgorithm.h>
 
@@ -288,7 +286,7 @@ bool contact_added_callback (btManifoldPoint& cp,
 
 extern ContactAddedCallback gContactAddedCallback;
 
-PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
+PhysicsWorld::PhysicsWorld (const Vector3 &bounds_min, const Vector3 &bounds_max)
       : verboseContacts(false), errorContacts(true), verboseCasts(false), errorCasts(true),
         bumpyTriangleMeshHack(false), useTriangleEdgeInfo(true),
         gimpactOneWayMeshHack(true), needsGraphicsUpdate(false), maxSteps(5), extrapolate(0)
@@ -298,8 +296,8 @@ PhysicsWorld::PhysicsWorld (const Ogre::AxisAlignedBox &bounds)
 
         // first 2 params specify the world AABB
         // last param is the max number of "proxies"
-        broadphase = new btAxisSweep3(to_bullet(bounds.getMinimum()),
-                                      to_bullet(bounds.getMaximum()),
+        broadphase = new btAxisSweep3(to_bullet(bounds_min),
+                                      to_bullet(bounds_max),
                                       32766);
 
         conSolver = new btSequentialImpulseConstraintSolver();
@@ -424,7 +422,7 @@ void PhysicsWorld::setContactBreakingThreshold (float v)
 { gContactBreakingThreshold = v; }
 
 Vector3 PhysicsWorld::getGravity (void) const
-{ return to_grit(world->getGravity()); }
+{ return from_bullet(world->getGravity()); }
 void PhysicsWorld::setGravity (const Vector3 &gravity)
 { world->setGravity(to_bullet(gravity)); }
 
@@ -551,7 +549,7 @@ class BulletRayCallback : public btCollisionWorld::RayResultCallback {
                 }
 
 
-                scb.result(*rb, r.m_hitFraction, to_grit(r.m_hitNormalLocal), m);
+                scb.result(*rb, r.m_hitFraction, from_bullet(r.m_hitNormalLocal), m);
                 return r.m_hitFraction;
         }
     protected:
@@ -592,7 +590,7 @@ class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
                              << " " << part << " " << index << std::endl;
                         CLOG << r.m_hitFraction << " " << r.m_hitNormalLocal << std::endl;
                 }
-                scb.result(*rb, r.m_hitFraction, to_grit(r.m_hitNormalLocal), m);
+                scb.result(*rb, r.m_hitFraction, from_bullet(r.m_hitNormalLocal), m);
                 return r.m_hitFraction;
         }
     protected:
@@ -653,12 +651,12 @@ RigidBody::RigidBody (const PhysicsWorldPtr &world_,
 
         self = RigidBodyPtr(this);
         // Make the self pointer a weak reference, otherwise
-        // the object will be kept alive until destroy() is called!
+        // the object will not be destructed until after its own destructor...
         // We instead want the object to print a warning if it is destructed
-        // without first being destroyed.
+        // without first being destroy()ed.
         // RigidBody must only be constructed as follows:
         // RigidBodyPtr blah = (new RigidBody(...))->getPtr()
-        (*self.useCountPointer())--;
+        self.useCount()--;
 }
 
 
@@ -688,7 +686,7 @@ void RigidBody::addToWorld (void)
         }
 
         btRigidBody::btRigidBodyConstructionInfo
-                info(colMesh->getMass(), this, shape, colMesh->getInertia().bullet());
+                info(colMesh->getMass(), this, shape, to_bullet(colMesh->getInertia()));
 
         info.m_linearDamping = colMesh->getLinearDamping();
         info.m_angularDamping = colMesh->getAngularDamping();
@@ -727,7 +725,7 @@ void RigidBody::destroy (lua_State *L)
         luaL_unref(L,LUA_REGISTRYINDEX,updateCallbackIndex);
         luaL_unref(L,LUA_REGISTRYINDEX,stepCallbackIndex);
         // the next line prevents the RigidBody being destructed prematurely
-        (*self.useCountPointer())++;
+        self.useCount()++;
         self.setNull();
 }
 
@@ -769,17 +767,12 @@ void RigidBody::updateGraphicsCallback (lua_State *L)
         STACK_BASE;
 
         // args
-        const btVector3 &pos = current_xform.getOrigin();
+        const btVector3 &pos = check_nan(current_xform.getOrigin());
         btQuaternion quat;
         current_xform.getBasis().getRotation(quat);
+        quat = check_nan(quat);
         float x=pos.x(), y=pos.y(), z=pos.z();
         float qw=quat.w(), qx=quat.x(), qy=quat.y(), qz=quat.z();
-        if (isnan(x) || isnan(y) || isnan(z) || isnan(qw) || isnan(qx) || isnan(qy) || isnan(qz)) {
-                CERR << "NaN from physics engine graphics update." << std::endl;
-                x = 0; y = 0; z = 0;
-                qw = 0; qx = 0; qy = 0; qz = 0;
-        }
-
 
         int error_handler = lua_gettop(L);
 
@@ -991,7 +984,7 @@ void RigidBody::deactivate (void)
 Vector3 RigidBody::getLinearVelocity (void) const
 {
         if (body==NULL) return Vector3(0,0,0);
-        return to_grit(body->getLinearVelocity());
+        return from_bullet(body->getLinearVelocity());
 }
 
 void RigidBody::setLinearVelocity (const Vector3 &v)
@@ -1004,13 +997,13 @@ void RigidBody::setLinearVelocity (const Vector3 &v)
 Vector3 RigidBody::getAngularVelocity (void) const
 {
         if (body==NULL) return Vector3(0,0,0);
-        return to_grit(body->getAngularVelocity());
+        return from_bullet(body->getAngularVelocity());
 }
 
 Vector3 RigidBody::getLocalVelocity (const Vector3 &v) const
 {
         if (body==NULL) return Vector3(0,0,0);
-        return to_grit(body->getVelocityInLocalPoint(to_bullet(v)));
+        return from_bullet(body->getVelocityInLocalPoint(to_bullet(v)));
 }
 
 void RigidBody::setAngularVelocity (const Vector3 &v)
@@ -1046,7 +1039,7 @@ void RigidBody::setMass (float r)
 Vector3 RigidBody::getInertia (void) const
 {
         if (body==NULL) return Vector3(0,0,0);
-        return invert0(to_grit(body->getInvInertiaDiagLocal()));
+        return invert0(from_bullet(body->getInvInertiaDiagLocal()));
 }
 
 void RigidBody::setInertia (const Vector3 &v)
@@ -1092,7 +1085,7 @@ bool RigidBody::getElementEnabled (int i)
 Vector3 RigidBody::getElementPositionMaster (int i)
 {
         APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
-        return to_grit(colMesh->getMasterShape()->getChildTransform(i).getOrigin());
+        return from_bullet(colMesh->getMasterShape()->getChildTransform(i).getOrigin());
 }
 
 void RigidBody::setElementPositionOffset (int i, const Vector3 &v)
@@ -1108,13 +1101,13 @@ void RigidBody::setElementPositionOffset (int i, const Vector3 &v)
 Vector3 RigidBody::getElementPositionOffset (int i)
 {
         APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
-        return to_grit(localChanges[i].offset.getOrigin());
+        return from_bullet(localChanges[i].offset.getOrigin());
 }
 
 Quaternion RigidBody::getElementOrientationMaster (int i)
 {
         APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
-        return to_grit(colMesh->getMasterShape()->getChildTransform(i).getRotation());
+        return from_bullet(colMesh->getMasterShape()->getChildTransform(i).getRotation());
 }
 
 void RigidBody::setElementOrientationOffset (int i, const Quaternion &q)
@@ -1130,7 +1123,7 @@ void RigidBody::setElementOrientationOffset (int i, const Quaternion &q)
 Quaternion RigidBody::getElementOrientationOffset (int i)
 {
         APP_ASSERT(i>=0); APP_ASSERT(i<(int)localChanges.size());
-        return to_grit(localChanges[i].offset.getRotation());
+        return from_bullet(localChanges[i].offset.getRotation());
 }
 
 // vim: shiftwidth=8:tabstop=8:expandtab:tw=100

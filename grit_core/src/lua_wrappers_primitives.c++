@@ -25,6 +25,7 @@
 
 
 #include "lua_wrappers_primitives.h"
+#include "gfx.h"
 #include "SplineTable.h"
 #include "math_util.h"
 
@@ -279,7 +280,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::SimpleSpline,self,1,SPLINE_TAG);
         GET_UD_MACRO(Vector3,v,2,VECTOR3_TAG);
-        self.addPoint(v.ogre());
+        self.addPoint(to_ogre(v));
         return 0;
 TRY_END
 }
@@ -312,7 +313,7 @@ TRY_START
                 float index = lua_tonumber(L,2);
                 index = std::max(index,float(0));
                 index = std::min(index,self.getNumPoints()-float(1));
-                push(L,new Vector3(self.interpolate(index)),VECTOR3_TAG);
+                push(L,new Vector3(from_ogre(self.interpolate(index))),VECTOR3_TAG);
         } else {
                 std::string key  = luaL_checkstring(L,2);
                 if (key=="add") {
@@ -340,7 +341,7 @@ TRY_START
                 unsigned short index =
                         check_t<unsigned short>(L,2,0,self.getNumPoints()-1);
                 GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
-                self.updatePoint(index,v.ogre());
+                self.updatePoint(index,to_ogre(v));
         } else {
                 if (key=="value") {
                         GET_UD_MACRO(Ogre::SimpleSpline,v,3,SPLINE_TAG);

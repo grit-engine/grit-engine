@@ -21,16 +21,16 @@
 
 #include <map>
 
-#include <OgreSharedPtr.h>
 #include <OgreDataStream.h>
 
 #include "TColParser.h"
 #include "LooseEnd.h"
 #include "CentralisedLog.h"
 #include "sleep.h"
+#include "SharedPtr.h"
 
 class CollisionMesh;
-typedef Ogre::SharedPtr<CollisionMesh> CollisionMeshPtr;
+typedef SharedPtr<CollisionMesh> CollisionMeshPtr;
 
 typedef std::map<std::string,CollisionMeshPtr> CollisionMeshMap;
 

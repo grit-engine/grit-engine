@@ -26,6 +26,7 @@
 #include <OgreMaterialManager.h>
 #include <OgreRoot.h>
 
+#include "gfx.h"
 #include "BulletDebugDrawer.h"
 #include "CentralisedLog.h"
 #include "PhysicsWorld.h"
@@ -79,9 +80,9 @@ void BulletDebugDrawer::drawLine (const btVector3 &from, const btVector3 &to, co
 {
     Ogre::ColourValue c(color.getX(), color.getY(), color.getZ());  
     c.saturate();
-    mLines->position(to_ogre(from));
+    mLines->position(to_ogre(from_bullet(from)));
     mLines->colour(c);
-    mLines->position(to_ogre(to));
+    mLines->position(to_ogre(from_bullet(to)));
     mLines->colour(c);
 }
 
@@ -90,11 +91,11 @@ void BulletDebugDrawer::drawTriangle (const btVector3 &v0, const btVector3 &v1, 
 {
     Ogre::ColourValue c(color.getX(), color.getY(), color.getZ(), alpha);
     c.saturate();
-    mTriangles->position(to_ogre(v0));
+    mTriangles->position(to_ogre(from_bullet(v0)));
     mTriangles->colour(c);
-    mTriangles->position(to_ogre(v1));
+    mTriangles->position(to_ogre(from_bullet(v1)));
     mTriangles->colour(c);
-    mTriangles->position(to_ogre(v2));
+    mTriangles->position(to_ogre(from_bullet(v2)));
     mTriangles->colour(c);
 }
 
@@ -103,8 +104,8 @@ void BulletDebugDrawer::drawContactPoint (const btVector3 &PointOnB, const btVec
 {
     mContactPoints->resize(mContactPoints->size() + 1);
     ContactPoint p = mContactPoints->back();
-    p.from = to_ogre(PointOnB);
-    p.to = p.from + to_ogre(normalOnB) * distance;
+    p.from = to_ogre(from_bullet(PointOnB));
+    p.to = p.from + to_ogre(from_bullet(normalOnB)) * distance;
     p.dieTime = Ogre::Root::getSingleton().getTimer()->getMilliseconds() + lifeTime;
     p.color.r = color.x();
     p.color.g = color.y();

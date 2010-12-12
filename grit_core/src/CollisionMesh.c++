@@ -60,7 +60,7 @@ btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
                 s2->setMargin(h.margin);
                 for (unsigned j=0 ; j<h.vertexes.size() ; ++j) {
                         const Vector3 &v = h.vertexes[j];
-                        s2->addPoint(v.bullet());
+                        s2->addPoint(to_bullet(v));
                 }
                 s->addChildShape(btTransform(ZQ,ZV), s2);
                 partMaterials.push_back(h.material);
@@ -354,7 +354,7 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file, const Mater
                 if (mass != 0 && inertia == Vector3(0,0,0)) {
                         btVector3 i;
                         masterShape->calculateLocalInertia(mass,i);
-                        inertia = i;
+                        inertia = from_bullet(i);
                 }
 
                 looseEnds = ls;
