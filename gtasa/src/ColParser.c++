@@ -397,7 +397,7 @@ void parse_col (std::string &name,
                         float x = ios_read_s16(in)/128.0;
                         float y = ios_read_s16(in)/128.0;
                         float z = ios_read_s16(in)/128.0;
-                        tcol.triMesh.vertexes.push_back(btVector3(x,y,z));
+                        tcol.triMesh.vertexes.push_back(Vector3(x,y,z));
                 }
 
                 // seek all the way up to offset_faces-4
