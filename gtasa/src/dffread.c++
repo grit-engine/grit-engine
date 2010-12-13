@@ -369,7 +369,7 @@ static Ixs decode_strip (const Ixs &strip, const Vxs &vertexes)
 {
     Ixs r;
     r.reserve((strip.size()-2)*3);
-    unsigned long v1, v2, v3;
+    unsigned long v1=0, v2=0, v3=0;
     int vertexes_so_far = 0;
     int tri_counter = 0;
     // in a triangle strip, the normal alternates.
@@ -1638,9 +1638,9 @@ void export_mesh (const StringSet &texs,
         s->surrogate = mname;
 
         for (int tri=0 ; tri<tris ; ++tri) {
-            unsigned long v1 = s->indexes2[3*tri + 0];
-            unsigned long v2 = s->indexes2[3*tri + 1];
-            unsigned long v3 = s->indexes2[3*tri + 2];
+            unsigned short v1 = s->indexes2[3*tri + 0];
+            unsigned short v2 = s->indexes2[3*tri + 1];
+            unsigned short v3 = s->indexes2[3*tri + 2];
             ASSERT(v1 < g.vertexes.size());
             ASSERT(v2 < g.vertexes.size());
             ASSERT(v3 < g.vertexes.size());

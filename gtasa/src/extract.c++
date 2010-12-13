@@ -967,7 +967,7 @@ void extract (const Config &cfg, std::ostream &out)
                     int c1 = cols2[i], c2 = cols2[i+1];
                     lua_file << "            {  {\"gtasa"<<c1<<"\"}, {\"gtasa"<<c2<<"\"} },\n";
                 }
-                for (unsigned i=0 ; i<cols4.size() ; i+=2) {
+                for (unsigned i=0 ; i<cols4.size() ; i+=4) {
                     int c1 = cols4[i], c2 = cols4[i+1];
                     int c3 = cols4[i+2], c4 = cols4[i+3];
                     lua_file << "            {  {\"gtasa"<<c1<<"\"}, {\"gtasa"<<c2<<"\"}, "
