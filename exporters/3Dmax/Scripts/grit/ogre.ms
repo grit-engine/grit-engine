@@ -419,7 +419,7 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
                             MessageBox "The external utility failed.  I will now show you the executed command in notepad." title:"ERROR!"
                             ShellLaunch "notepad" bat_file
                         )
-                        HiddenDOSCommand ("del "+bat_file)
+                        --HiddenDOSCommand ("del "+bat_file)
                 )
 
                 if (exportingMeshDone or exportingSkelDone) then (					
