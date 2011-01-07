@@ -77,9 +77,9 @@ TRY_END
 static int node_translate (lua_State *L)
 {
 TRY_START
-        check_args(L,4);
+        check_args(L,2);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        GET_V3(p,2);
+        Vector3 p = check_v3(L, 2);
         self.translate(to_ogre(p));
         return 0;
 TRY_END
@@ -90,8 +90,8 @@ static int node_get_world_position (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        PUT_V3(from_ogre(self._getDerivedPosition()));
-        return 3;
+        push_v3(L, from_ogre(self._getDerivedPosition()));
+        return 1;
 TRY_END
 }
 
@@ -100,8 +100,8 @@ static int node_get_world_orientation (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        PUT_QUAT(from_ogre(self._getDerivedOrientation()));
-        return 4;
+        push_quat(L, from_ogre(self._getDerivedOrientation()));
+        return 1;
 TRY_END
 }
 
@@ -110,8 +110,8 @@ static int node_get_local_position (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        PUT_V3(from_ogre(self.getPosition()));
-        return 3;
+        push_v3(L,from_ogre(self.getPosition()));
+        return 1;
 TRY_END
 }
 
@@ -120,30 +120,30 @@ static int node_get_local_orientation (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        PUT_QUAT(from_ogre(self.getOrientation()));
-        return 4;
+        push_quat(L, from_ogre(self.getOrientation()));
+        return 1;
 TRY_END
 }
 
 static int node_rotate_to_parent (lua_State *L)
 {
 TRY_START
-        check_args(L,4);
+        check_args(L,2);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        GET_V3(p,2);
-        PUT_V3(from_ogre(self.getOrientation()) * p);
-        return 3;
+        Vector3 p = check_v3(L, 2);
+        push_v3(L,from_ogre(self.getOrientation()) * p);
+        return 1;
 TRY_END
 }
 
 static int node_rotate_to_world (lua_State *L)
 {
 TRY_START
-        check_args(L,4);
+        check_args(L,2);
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
-        GET_V3(p,2);
-        PUT_V3(from_ogre(self._getDerivedOrientation()) * p);
-        return 3;
+        Vector3 p = check_v3(L, 2);
+        push_v3(L,from_ogre(self._getDerivedOrientation()) * p);
+        return 1;
 TRY_END
 }
 
@@ -304,20 +304,17 @@ TRY_START
         if (key=="createChild") {
                 push_cfunction(L,node_child_node);
         } else if (key=="position") {
-                push(L,new Ogre::Vector3(self.getPosition()),VECTOR3_TAG);
+                push_v3(L, from_ogre(self.getPosition()));
         } else if (key=="orientation") {
-                push(L,new Ogre::Quaternion(self.getOrientation()),QUAT_TAG);
+                push_quat(L, from_ogre(self.getOrientation()));
         } else if (key=="scale") {
-                push(L,new Ogre::Vector3(self.getScale()),VECTOR3_TAG);
+                push_v3(L, from_ogre(self.getScale()));
         } else if (key=="derivedPosition") {
-                push(L,new Ogre::Vector3(self._getDerivedPosition()),
-                     VECTOR3_TAG);
+                push_v3(L, from_ogre(self._getDerivedPosition()));
         } else if (key=="derivedScale") {
-                push(L,new Ogre::Vector3(self._getDerivedScale()),
-                     VECTOR3_TAG);
+                push_v3(L, from_ogre(self._getDerivedScale()));
         } else if (key=="derivedOrientation") {
-                push(L,new Ogre::Quaternion(self._getDerivedOrientation()),
-                       QUAT_TAG);
+                push_quat(L, from_ogre(self._getDerivedOrientation()));
         } else if (key=="inheritOrientation") {
                 lua_pushboolean(L,self.getInheritOrientation());
         } else if (key=="inheritScale") {
@@ -397,14 +394,14 @@ TRY_START
         GET_UD_MACRO(Ogre::SceneNode,self,1,NODE_TAG);
         std::string key  = luaL_checkstring(L,2);
         if (key=="position") {
-                GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
-                self.setPosition(v);
+                Vector3 v = check_v3(L,3);
+                self.setPosition(to_ogre(v));
         } else if (key=="orientation") {
-                GET_UD_MACRO(Ogre::Quaternion,q,3,QUAT_TAG);
-                self.setOrientation(q);
+                Quaternion q = check_quat(L,3);
+                self.setOrientation(to_ogre(q));
         } else if (key=="scale") {
-                GET_UD_MACRO(Ogre::Vector3,v,3,VECTOR3_TAG);
-                self.setScale(v);
+                Vector3 v = check_v3(L,3);
+                self.setScale(to_ogre(v));
         } else if (key=="inheritOrientation") {
                 bool v = check_bool(L,3);
                 self.setInheritOrientation(v);

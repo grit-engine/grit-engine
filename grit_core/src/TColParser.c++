@@ -70,7 +70,7 @@ const char *utf8 (const quex::Token &t)
 static std::string where (quex::TColLexer* qlex)
 {
         std::stringstream ss;
-        ss << qlex->line_number() << "," << qlex->column_number();
+        ss << "(line " << qlex->line_number() << ", column " << qlex->column_number() << ")";
         return ss.str();
 }
 
@@ -106,6 +106,8 @@ static const char * what2 (QUEX_TOKEN_ID_TYPE tid)
                 case QUEX_TKN_DISTANCE: return "distance";
                 case QUEX_TKN_VERTEXES: return "vertexes";
                 case QUEX_TKN_FACES: return "faces";
+                case QUEX_TKN_EDGE_DISTANCE_THRESHOLD: return "edge_distance_threshold";
+                case QUEX_TKN_MAX_EDGE_ANGLE_THRESHOLD: return "max_edge_angle_threshold";
 
                 case QUEX_TKN_COMPOUND: return "compound";
                 case QUEX_TKN_HULL: return "hull";
@@ -141,46 +143,32 @@ static std::string what (const quex::Token &t)
 }
 
 
-#ifdef __GNUC__
-#define NORETURN __attribute__ ((noreturn))
-#else
-#define NORETURN
-#endif
+#define err4(name, qlex, t, expected) \
+        do { \
+                std::stringstream ss; \
+                ss << "While parsing " << name << " at " << where(qlex) \
+                    << " - got \"" << what(t) << "\" " \
+                    << "but expected \"" << expected << "\"."; \
+                GRIT_EXCEPT(ss.str()); \
+        } while (false)
 
 
-static void err (const std::string &, quex::TColLexer *,
-                 const quex::Token &, const std::string &)
-NORETURN;
-
-static void err (const std::string &name, quex::TColLexer *qlex,
-                 const quex::Token &t, const std::string &expected)
-{
-        std::stringstream msg;
-        msg << "Parse error at " << where(qlex)
-            << " - got \"" << what(t) << "\" "
-            << "but expected " << expected << ".";
-        GRIT_EXCEPT2(msg.str(), name);
-}
+#define err3(name, qlex, msg) \
+        do { \
+                std::stringstream ss; \
+                ss << "While parsing " << name << " at " << where(qlex) << "  ERROR:  " << msg; \
+                GRIT_EXCEPT(ss.str()); \
+        } while (false)
 
 
-static void err (const std::string &name, quex::TColLexer *qlex,
-                 const std::string &msg)
-{
-        std::stringstream ss;
-        ss << "Error at " << where(qlex) << ":  " << msg;
-        GRIT_EXCEPT2(ss.str(), name);
-}
-
-
-static void ensure_token (const std::string &name, quex::TColLexer* qlex,
-                          QUEX_TOKEN_ID_TYPE tid)
-{
-        quex::Token t;
-        qlex->get_token(&t);
-        if (t.type_id() != tid) {
-                err(name,qlex,t,what2(tid));
-        }
-}
+#define ensure_token(name, qlex, tid) \
+        do { \
+                quex::Token t; \
+                qlex->get_token(&t); \
+                if (t.type_id() != tid) { \
+                        err4(name,qlex,t,what2(tid)); \
+                } \
+        } while (false)
 
 
 //quex::Token is not const because number() is not const (a bug in quex)
@@ -191,7 +179,7 @@ static int get_int_from_token (const std::string &name,
 {
         int v = t.number();
         if (v>=num_vertexes)
-                err(name,qlex,t,"index of a vertex");
+                err4(name,qlex,t,"index of a vertex");
         return v;
 }
 
@@ -201,7 +189,7 @@ static int parse_int (const std::string &name,
 {
         quex::Token t; qlex->get_token(&t);
         if (t.type_id()!=QUEX_TKN_NATURAL) {
-                err(name,qlex,t,"positive integer");
+                err4(name,qlex,t,"positive integer");
         }
         return get_int_from_token(name,qlex,t,num_vertexes);
 }
@@ -218,7 +206,7 @@ static unsigned long parse_hex (const std::string &name,
 {
         quex::Token t; qlex->get_token(&t);
         if (t.type_id()!=QUEX_TKN_HEX) {
-                err(name,qlex,t,"hexadecimal flags");
+                err4(name,qlex,t,"hexadecimal flags");
         }
         return get_ulong_from_hex_token(t);
 }
@@ -238,7 +226,7 @@ static int parse_material (const std::string &name,
 {
         quex::Token t; qlex->get_token(&t);
         if (t.type_id()!=QUEX_TKN_STRING) {
-                err(name,qlex,t,"quoted string");
+                err4(name,qlex,t,"quoted string");
         }
         std::string m;
         get_string_from_string_token(t, m);
@@ -274,7 +262,7 @@ static float parse_real (const std::string &name, quex::TColLexer* qlex)
         } else if (t.type_id()==QUEX_TKN_NATURAL) {
                 return (float)t.number();
         } else {
-                err(name,qlex,t,"float");
+                err4(name,qlex,t,"float");
                 return 0.0; // suppress msvc warning
         }
 }
@@ -289,10 +277,10 @@ static float parse_positive_real (const std::string &name,
         } else if (t.type_id()==QUEX_TKN_NATURAL) {
                 v = (float)t.number();
         } else {
-                err(name,qlex,t,"float");
+                err4(name,qlex,t,"float");
         }
         if (v<0)
-                err(name,qlex,t,"positive float");
+                err4(name,qlex,t,"positive float");
         return v;
 }
 
@@ -304,7 +292,7 @@ bool more_to_come (const std::string &name, quex::TColLexer* qlex)
                 case QUEX_TKN_SEMI: return true;
                 case QUEX_TKN_RBRACE: return false;
                 default:
-                        err(name,qlex,t,"; or }");
+                        err4(name,qlex,t,"; or }");
         }
         return false; // never happens
 }
@@ -335,7 +323,7 @@ static void parse_vertexes (const std::string &name,
                         break;
 
                         default:
-                        err(name,qlex,t,"3 floats or }");
+                        err4(name,qlex,t,"3 floats or }");
                 }
 
                 break;
@@ -539,7 +527,7 @@ static void parse_hull (const std::string &name,
 
                         case QUEX_TKN_SHRINK:
                         if (has_vertexes) {
-                                err(name,qlex,"Give shrink before vertexes!");
+                                err3(name,qlex,"Give shrink before vertexes!");
                         }
                         shrink = parse_positive_real(name,qlex);
                         if (more_to_come(name, qlex)) continue;
@@ -547,7 +535,7 @@ static void parse_hull (const std::string &name,
 
                         case QUEX_TKN_VERTEXES:
                         if (has_vertexes) {
-                                err(name,qlex,"Only one vertex list allowed.");
+                                err3(name,qlex,"Only one vertex list allowed.");
                         }
                         has_vertexes = true;
                         parse_vertexes(name, qlex, hull.vertexes);
@@ -561,17 +549,17 @@ static void parse_hull (const std::string &name,
                         break;
 
                         default:
-                        err(name,qlex,t,"margin, shrink, vertexes or }");
+                        err4(name,qlex,t,"margin, shrink, vertexes or }");
                 }
                 break;
         }       
 
         if (!has_vertexes) {
-                err(name,qlex,"No vertexes provided for hull.");
+                err3(name,qlex,"No vertexes provided for hull.");
         }
 
         if (!have_material) {
-                err(name,qlex,"No material provided for hull.");
+                err3(name,qlex,"No material provided for hull.");
         }
 }
 
@@ -633,18 +621,18 @@ static void parse_box (const std::string &name,
                         break;
 
                         default:
-                        err(name,qlex,t,"margin, material, centre, orientation, or dimensions");
+                        err4(name,qlex,t,"margin, material, centre, orientation, or dimensions");
                 }
                 break;
         }
         if (!have_material) {
-                err(name,qlex,"No material provided for box.");
+                err3(name,qlex,"No material provided for box.");
         }
         if (!have_centre) {
-                err(name,qlex,"No centre provided for box.");
+                err3(name,qlex,"No centre provided for box.");
         }
         if (!have_dimensions) {
-                err(name,qlex,"No dimensions provided for box.");
+                err3(name,qlex,"No dimensions provided for box.");
         }
 }
 
@@ -706,18 +694,18 @@ static void parse_cylinder (const std::string &name,
                         break;
 
                         default:
-                        err(name,qlex,t,"margin, material, centre, orientation or dimensions");
+                        err4(name,qlex,t,"margin, material, centre, orientation or dimensions");
                 }
                 break;
         }
         if (!have_material) {
-                err(name,qlex,"No material provided for cylinder.");
+                err3(name,qlex,"No material provided for cylinder.");
         }
         if (!have_dimensions) {
-                err(name,qlex,"No dimensions provided for cylinder.");
+                err3(name,qlex,"No dimensions provided for cylinder.");
         }
         if (!have_centre) {
-                err(name,qlex,"No centre provided for cylinder.");
+                err3(name,qlex,"No centre provided for cylinder.");
         }
 }
 
@@ -784,21 +772,21 @@ static void parse_cone (const std::string &name,
                         break;
 
                         default:
-                        err(name,qlex,t,"margin, material, centre, height, orientation or radius");
+                        err4(name,qlex,t,"margin, material, centre, height, orientation or radius");
                 }
                 break;
         }
         if (!have_material) {
-                err(name,qlex,"No material provided for cone.");
+                err3(name,qlex,"No material provided for cone.");
         }
         if (!have_centre) {
-                err(name,qlex,"No centre provided for cone.");
+                err3(name,qlex,"No centre provided for cone.");
         }
         if (!have_radius) {
-                err(name,qlex,"No radius provided for cone.");
+                err3(name,qlex,"No radius provided for cone.");
         }
         if (!have_height) {
-                err(name,qlex,"No height provided for cone.");
+                err3(name,qlex,"No height provided for cone.");
         }
 }
 
@@ -885,7 +873,7 @@ static void parse_compound_shape (const std::string &name,
                         break;
 
                         default:
-                                err(name,qlex,t,"compound, box, sphere, hull");
+                                err4(name,qlex,t,"compound, box, sphere, hull");
                 }
 
                 break;
@@ -919,7 +907,7 @@ static void parse_faces (const std::string &name,
                         break;
 
                         default:
-                        err(name,qlex,t,"positive integer or }");
+                        err4(name,qlex,t,"positive integer or }");
                 }
 
                 break;
@@ -935,8 +923,39 @@ static void parse_static_trimesh_shape (const std::string &name,
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
         triMesh.margin = 0.00;
+        bool have_max_edge_angle_threshold = false;
+        triMesh.maxEdgeAngleThreshold = Degree(22.5);
+        bool have_edge_distance_threshold = false;
+        triMesh.edgeDistanceThreshold = 0.001;
 
-        ensure_token(name,qlex,QUEX_TKN_VERTEXES);
+        do {
+                quex::Token t; qlex->get_token(&t);
+                switch (t.type_id()) {
+                        
+                        case QUEX_TKN_MAX_EDGE_ANGLE_THRESHOLD:
+                        if (have_max_edge_angle_threshold)
+                                err3(name,qlex,"Already have max_edge_angle_threshold");
+                        have_max_edge_angle_threshold = true;
+                        triMesh.maxEdgeAngleThreshold = Degree(parse_positive_real(name,qlex));
+                        ensure_token(name,qlex,QUEX_TKN_SEMI);
+                        continue;
+
+                        case QUEX_TKN_EDGE_DISTANCE_THRESHOLD:
+                        if (have_edge_distance_threshold)
+                                err3(name,qlex,"Already have edge_distance_threshold");
+                        have_edge_distance_threshold = true;
+                        triMesh.edgeDistanceThreshold = parse_positive_real(name,qlex);
+                        ensure_token(name,qlex,QUEX_TKN_SEMI);
+                        continue;
+                        
+                        case QUEX_TKN_VERTEXES:
+                        break;
+                        
+                        default:
+                        err4(name,qlex,t,"max_edge_angle_threshold, edge_distance_threshold, vertexes");
+                }
+                break;
+        } while (true);
 
         parse_vertexes(name,qlex,triMesh.vertexes);
 
@@ -971,7 +990,7 @@ static void parse_dynamic_trimesh_shape (const std::string &name,
                 break;
 
                 default:
-                err(name,qlex,t,"margin, vertexes");
+                err4(name,qlex,t,"margin, vertexes");
         }
 
         parse_vertexes(name,qlex,triMesh.vertexes);
@@ -1021,27 +1040,27 @@ void parse_tcol_1_0 (const std::string &name,
 
                         case QUEX_TKN_STATIC:
                         if (is_static==NO)
-                                err(name,qlex,"If static, do not give mass");
+                                err3(name,qlex,"If static, do not give mass");
                         if (is_static==YES)
-                                err(name,qlex,"Already have static");
+                                err3(name,qlex,"Already have static");
                         is_static = YES;
                         file.mass = 0;
                         if (more_to_come(name,qlex)) continue; break;
 
                         case QUEX_TKN_MASS:
                         if (is_static==YES)
-                                err(name,qlex,"If static, do not give mass");
+                                err3(name,qlex,"If static, do not give mass");
                         if (is_static==NO)
-                                err(name,qlex,"Already have mass");
+                                err3(name,qlex,"Already have mass");
                         file.mass = parse_positive_real(name,qlex);
                         if (file.mass == 0)
-                                err(name,qlex,"Mass of 0 is not allowed.  Did you mean to use static?");
+                                err3(name,qlex,"Mass of 0 is not allowed.  Did you mean to use static?");
                         is_static = NO;
                         if (more_to_come(name,qlex)) continue; break;
 
                         case QUEX_TKN_INERTIA:
                         if (have_inertia)
-                                err(name,qlex,"Already have inertia");
+                                err3(name,qlex,"Already have inertia");
                         file.inertia_x = parse_real(name,qlex);
                         file.inertia_y = parse_real(name,qlex);
                         file.inertia_z = parse_real(name,qlex);
@@ -1050,42 +1069,42 @@ void parse_tcol_1_0 (const std::string &name,
 
                         case QUEX_TKN_LINEAR_DAMPING:
                         if (have_linear_damping)
-                                err(name,qlex,"Already have linear_damping");
+                                err3(name,qlex,"Already have linear_damping");
                         file.linearDamping = parse_positive_real(name,qlex);
                         have_linear_damping = true;
                         if (more_to_come(name,qlex)) continue; break;
 
                         case QUEX_TKN_ANGULAR_DAMPING:
                         if (have_angular_damping)
-                                err(name,qlex,"Already have angular_damping");
+                                err3(name,qlex,"Already have angular_damping");
                         file.angularDamping = parse_positive_real(name,qlex);
                         have_angular_damping = true;
                         if (more_to_come(name,qlex)) continue; break;
 
                         case QUEX_TKN_LINEAR_SLEEP_THRESHOLD:
                         if (have_linear_sleep_threshold)
-                                err(name,qlex, "Already have linear_sleep_threshold");
+                                err3(name,qlex, "Already have linear_sleep_threshold");
                         file.linearSleepThreshold = parse_real(name,qlex);
                         have_linear_sleep_threshold = true;
                         if (more_to_come(name,qlex)) continue; break;
 
                         case QUEX_TKN_ANGULAR_SLEEP_THRESHOLD:
                         if (have_angular_sleep_threshold)
-                               err(name,qlex, "Already have angular_sleep_threshold");
+                               err3(name,qlex, "Already have angular_sleep_threshold");
                         file.angularSleepThreshold = parse_real(name,qlex);
                         have_angular_sleep_threshold = true;
                         if (more_to_come(name,qlex)) continue; break;
 
                         case QUEX_TKN_CCD_MOTION_THRESHOLD:
                         if (have_ccd_motion_threshold)
-                               err(name,qlex, "Already have ccd_motion_threshold");
+                               err3(name,qlex, "Already have ccd_motion_threshold");
                         file.ccdMotionThreshold = parse_real(name,qlex);
                         have_ccd_motion_threshold = true;
                         if (more_to_come(name,qlex)) continue; break;
 
                         case QUEX_TKN_CCD_SWEPT_SPHERE_RADIUS:
                         if (have_ccd_swept_sphere_radius)
-                               err(name,qlex, "Already have ccd_swept_sphere_radius");
+                               err3(name,qlex, "Already have ccd_swept_sphere_radius");
                         file.ccdSweptSphereRadius = parse_real(name,qlex);
                         have_ccd_swept_sphere_radius = true;
                         if (more_to_come(name,qlex)) continue; break;
@@ -1093,7 +1112,7 @@ void parse_tcol_1_0 (const std::string &name,
                         case QUEX_TKN_RBRACE: break; 
 
                         default:
-                        err(name,qlex,t,"mass, linear_damping, angular_damping, etc or }");
+                        err4(name,qlex,t,"mass, linear_damping, angular_damping, etc or }");
 
                 }
 
@@ -1101,7 +1120,7 @@ void parse_tcol_1_0 (const std::string &name,
         } while (true);
 
         if (is_static==UNKNOWN)
-                err(name,qlex,"Need either static or mass");
+                err3(name,qlex,"Need either static or mass");
 
 
         file.usingTriMesh = false;
@@ -1115,7 +1134,7 @@ void parse_tcol_1_0 (const std::string &name,
                 qlex->get_token(&t);
                 if (t.type_id()==QUEX_TKN_TERMINATION) break;
                 if (t.type_id()!=QUEX_TKN_TRIMESH)
-                        err(name,qlex,t,"trimesh or EOF");
+                        err4(name,qlex,t,"trimesh or EOF");
 
                 case QUEX_TKN_TRIMESH:
                 if (is_static==YES) {
@@ -1128,7 +1147,7 @@ void parse_tcol_1_0 (const std::string &name,
                 ensure_token(name,qlex,QUEX_TKN_TERMINATION);
                 break;
 
-                default: err(name,qlex,t,"compound or trimesh");
+                default: err4(name,qlex,t,"compound or trimesh");
         }
 
 

@@ -226,6 +226,20 @@ bool contact_added_callback (btManifoldPoint& cp,
 
                 if (world->useTriangleEdgeInfo) {
                         btAdjustInternalEdgeContacts(cp,sta_body, dyn_body, part1,index1);
+                        if (world->verboseContacts) {
+                                CLOG << cp.m_lifeTime << " " << cp.m_positionWorldOnA
+                                                      << " " << cp.m_positionWorldOnB
+                                     << " " << cp.m_normalWorldOnB << " " << cp.m_distance1
+                                     << " *" << cp.m_appliedImpulse << "* |" << cp.m_combinedFriction
+                                     << "| >" << cp.m_combinedRestitution << "<   (CORRECTION)" << std::endl;
+                                /*
+                                bool    m_lateralFrictionInitialized
+                                btScalar        m_appliedImpulseLateral1
+                                btScalar        m_appliedImpulseLateral2
+                                btVector3       m_lateralFrictionDir1
+                                btVector3       m_lateralFrictionDir2
+                                */
+                        }
                 }
 
                 if (world->bumpyTriangleMeshHack) {

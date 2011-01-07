@@ -28,8 +28,8 @@
 #include <OgreOctreeSceneManager.h>
 #include <OgreVector3.h>
 #include <OgreQuaternion.h>
-
-
+#include <OgreCustomCompositionPass.h>
+#include <OgreCompositor.h>
 #ifdef NO_PLUGINS
 #  include "OgreOctreePlugin.h"
 #  include "OgreGLPlugin.h"
@@ -39,7 +39,6 @@
 #    include "OgreD3D9Plugin.h"
 #  endif
 #endif
-
 
 #include "gfx.h"
 #include "HUD.h"
@@ -54,8 +53,13 @@ bool use_hwgamma = getenv("GRIT_NOHWGAMMA")==NULL;
 
 Ogre::Root *ogre_root;
 Ogre::OctreeSceneManager *ogre_sm;
+Ogre::SceneNode *ogre_root_node;
 Ogre::Camera *left_eye;
 Ogre::Camera *right_eye;
+Ogre::Light *ogre_sun;
+Ogre::SceneNode *ogre_celestial;
+Ogre::SceneNode *ogre_sky_node;
+Ogre::Entity *ogre_sky_ent;
 Ogre::Viewport *overlay_vp;
 Ogre::Viewport *left_vp;
 Ogre::Viewport *right_vp;
@@ -75,10 +79,9 @@ GfxCallback *gfx_cb;
 bool shutting_down = false;
 float cam_separation = 0;
 
+
 bool stereoscopic (void) 
-{
-    return gfx_option(GFX_CROSS_EYE) || gfx_option(GFX_ANAGLYPH);
-}
+{ return gfx_option(GFX_CROSS_EYE) || gfx_option(GFX_ANAGLYPH); }
 
 int freshname_counter = 0;
 std::string freshname (void)
@@ -89,8 +92,25 @@ std::string freshname (void)
     return ss.str();
 }
 
+
+// {{{ FRAMEBUFFER / COMPOSITOR
+
 #define ANAGLYPH_COMPOSITOR "system/AnaglyphCompositor"
 #define DEFERRED_COMPOSITOR "system/CoreCompositor"
+
+template<class T> void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
+                                               const char *name, const T &v)
+{
+    try {
+        p->setNamedConstant(name,v);
+    } catch (const Ogre::Exception &e) {
+        if (e.getNumber() == Ogre::Exception::ERR_INVALIDPARAMS) {
+            CLOG << "WARNING: " << e.getDescription() << std::endl;
+        } else {
+            throw e;
+        }
+    }
+}
 
 class DeferredAmbientSunListener : public Ogre::CompositorInstance::Listener {
 public:
@@ -115,12 +135,20 @@ public:
         Ogre::Vector3 bottom_left_ray = cam->getWorldSpaceCorners()[6] - cam_pos;
         Ogre::Vector3 bottom_right_ray = cam->getWorldSpaceCorners()[7] - cam_pos;
 
-        p->getVertexProgramParameters()->setNamedConstant("top_left_ray",top_left_ray);
-        p->getVertexProgramParameters()->setNamedConstant("top_right_ray",top_right_ray);
-        p->getVertexProgramParameters()->setNamedConstant("bottom_left_ray",bottom_left_ray);
-        p->getVertexProgramParameters()->setNamedConstant("bottom_right_ray",bottom_right_ray);
+        const Ogre::GpuProgramParametersSharedPtr &vp = p->getVertexProgramParameters();
+        const Ogre::GpuProgramParametersSharedPtr &fp = p->getFragmentProgramParameters();
 
-        p->getVertexProgramParameters()->setNamedConstant("far_clip_distance",cam->getFarClipDistance());
+        try_set_named_constant(vp, "top_left_ray", top_left_ray);
+        try_set_named_constant(vp, "top_right_ray", top_right_ray);
+        try_set_named_constant(vp, "bottom_left_ray", bottom_left_ray);
+        try_set_named_constant(vp, "bottom_right_ray", bottom_right_ray);
+
+        try_set_named_constant(vp, "far_clip_distance", cam->getFarClipDistance());
+
+        // actually we need only the z and w rows but this is just one renderable per frame so
+        // not a big deal
+        Ogre::Matrix4 view_proj = cam->getProjectionMatrixRS() * cam->getViewMatrix();
+        try_set_named_constant(fp, "view_proj", view_proj);
     }
 };
 
@@ -150,10 +178,48 @@ static void clean_compositors (void)
 
 }
 
+typedef Ogre::CompositorInstance CI;
+typedef Ogre::CompositionPass CP;
+
+class DeferredLightsRenderOp : public CI::RenderSystemOperation {   
+
+public:
+
+    DeferredLightsRenderOp (CI* ins, const CP* p)
+    {
+    }
+    
+    virtual ~DeferredLightsRenderOp (void)
+    {
+    }
+
+    virtual void execute (Ogre::SceneManager *sm, Ogre::RenderSystem *rs)
+    {
+    }
+};
+        
+class DeferredLightsPass : public Ogre::CustomCompositionPass {   
+    virtual ~DeferredLightsPass() { }
+
+public:
+
+    virtual CI::RenderSystemOperation* createOperation(CI* ins, const CP* p)
+    {
+        return OGRE_NEW DeferredLightsRenderOp(ins, p);
+    }
+};
+
+static void init_compositor (void)
+{
+    Ogre::CompositorManager::getSingleton()
+        .registerCustomCompositionPass("DeferredLights", new DeferredLightsPass());
+}
+
+
 static void add_deferred_compositor (bool left)
 {
     Ogre::Viewport *vp = left ? left_vp : right_vp;
-    Ogre::CompositorInstance *def_comp = Ogre::CompositorManager::getSingleton()
+    CI *def_comp = Ogre::CompositorManager::getSingleton()
         .addCompositor(vp,DEFERRED_COMPOSITOR);
     def_comp->setEnabled(true);
     def_comp->addListener(left ? &left_dasl : &right_dasl);
@@ -232,58 +298,10 @@ void do_reset_framebuffer (void)
     }
 }
 
-struct MeshSerializerListener : Ogre::MeshSerializerListener {
-    void processMaterialName (Ogre::Mesh *mesh, std::string *name)
-    {
-        if (shutting_down) return;
-        std::string filename = mesh->getName();
-        std::string dir(filename, 0, filename.rfind('/')+1);
-        *name = pwd_full_ex(*name, "/"+dir, "BaseWhite");
-    }
+// }}}
 
-    void processSkeletonName (Ogre::Mesh *mesh, std::string *name)
-    {
-        if (shutting_down) return;
-        std::string filename = mesh->getName();
-        std::string dir(filename, 0, filename.rfind('/')+1);
-        *name = pwd_full_ex(*name, "/"+dir, *name).substr(1); // strip leading '/' from this one
-    }
-} msl;
 
-struct WindowEventListener : Ogre::WindowEventListener {
-
-    void windowResized(Ogre::RenderWindow *rw)
-    {
-        if (shutting_down) return;
-        gfx_cb->windowResized(rw->getWidth(),rw->getHeight());
-        clean_compositors();
-        do_reset_framebuffer();
-        do_reset_compositors();
-    }
-
-    void windowClosed (Ogre::RenderWindow *rw)
-    {
-        (void) rw;
-        if (shutting_down) return;
-        gfx_cb->clickedClose();
-    }
-
-} wel;
-
-struct LogListener : Ogre::LogListener {
-    virtual void messageLogged (const std::string &message,
-                                Ogre::LogMessageLevel lml,
-                                bool maskDebug,
-                                const std::string &logName)
-    {
-        (void)lml;
-        (void)logName;
-        if (!maskDebug)
-            gfx_cb->messageLogged(message);
-    }
-} ll;
-
-HUD::TextListOverlayElementFactory tloef;
+// {{{ GFX_OPTION
 
 GfxBoolOption gfx_bool_options[] = {
     GFX_AUTOUPDATE,
@@ -298,6 +316,7 @@ GfxBoolOption gfx_bool_options[] = {
     GFX_CROSS_EYE,
     GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST,
     GFX_SHADOW_AGGRESSIVE_FOCUS_REGION,
+    GFX_SKY,
 };
 
 GfxIntOption gfx_int_options[] = {
@@ -411,6 +430,7 @@ std::string gfx_option_to_string (GfxBoolOption o)
         case GFX_CROSS_EYE: return "GFX_CROSS_EYE";
         case GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST: return "SHADOW_SIMPLE_OPTIMAL_ADJUST";
         case GFX_SHADOW_AGGRESSIVE_FOCUS_REGION: return "SHADOW_AGGRESSIVE_FOCUS_REGION";
+        case GFX_SKY: return "SKY";
     }
     return "UNKNOWN_BOOL_OPTION";
 }
@@ -474,6 +494,7 @@ void gfx_option_from_string (const std::string &s,
     else if (s=="CROSS_EYE") { t = 0; o0 = GFX_CROSS_EYE; }
     else if (s=="SHADOW_SIMPLE_OPTIMAL_ADJUST") { t = 0; o0 = GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST; }
     else if (s=="SHADOW_AGGRESSIVE_FOCUS_REGION") { t = 0; o0 = GFX_SHADOW_AGGRESSIVE_FOCUS_REGION; }
+    else if (s=="SKY") { t = 0; o0 = GFX_SKY; }
     else if (s=="FULLSCREEN_WIDTH") { t = 1; o1 = GFX_FULLSCREEN_WIDTH; }
     else if (s=="FULLSCREEN_HEIGHT") { t = 1; o1 = GFX_FULLSCREEN_HEIGHT; }
     else if (s=="SHADOW_RES") { t = 1; o1 = GFX_SHADOW_RES; }
@@ -550,6 +571,9 @@ static void options_update (bool flush)
             break;
             case GFX_SHADOW_AGGRESSIVE_FOCUS_REGION:
             reset_pcss = true;
+            break;
+            case GFX_SKY:
+            ogre_sky_ent->setVisible(v_new);
             break;
         }
     }
@@ -758,6 +782,7 @@ static void init_options (void)
     valid_option(GFX_CROSS_EYE, truefalse);
     valid_option(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST, truefalse);
     valid_option(GFX_SHADOW_AGGRESSIVE_FOCUS_REGION, truefalse);
+    valid_option(GFX_SKY, truefalse);
 
     valid_option(GFX_FULLSCREEN_WIDTH, new ValidOptionRange<int>(1,10000));
     valid_option(GFX_FULLSCREEN_HEIGHT, new ValidOptionRange<int>(1,10000));
@@ -830,6 +855,7 @@ static void init_options (void)
     gfx_option(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST, true);
     gfx_option(GFX_SHADOW_PADDING, 0.8);
     gfx_option(GFX_SHADOW_AGGRESSIVE_FOCUS_REGION, true);
+    gfx_option(GFX_SKY, true);
     gfx_option(GFX_ANAGLYPH_DESATURATION, 0.5);
     gfx_option(GFX_ANAGLYPH_LEFT_RED_MASK, 1);
     gfx_option(GFX_ANAGLYPH_LEFT_GREEN_MASK, 0);
@@ -888,35 +914,680 @@ float gfx_option (GfxFloatOption o)
     return options_float[o];
 }
 
-void GfxBody::setParent(GfxBody *par_)
-{
-    par = par_;
-}
+// }}}
 
-GfxBody::GfxBody (const std::string &mesh_name)
+
+// {{{ GFX_BODY
+
+#define THROW_DEAD(name) do { GRIT_EXCEPT(std::string(name)+" has been destroyed."); } while (0)
+
+GfxBody::GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_)
 {
+    dead = false;
+    pos = Vector3(0,0,0);
+    scl = Vector3(1,1,1);
+    quat = Quaternion(1,0,0,0);
+    memset(colours, 0, sizeof(colours));
     node = ogre_sm->createSceneNode();
     std::string ogre_name = mesh_name.substr(1);
-    ent = ogre_sm->createEntity(freshname(), mesh_name);
+    Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().load(ogre_name,"GRIT");
+    materials = std::vector<GfxMaterialPtr>(mesh->getNumSubMeshes());
+    for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
+        Ogre::SubMesh *sm = mesh->getSubMesh(i);
+        std::string matname = sm->getMaterialName();
+        if (!gfx_material_has(matname)) {
+            CERR << "Mesh \""<<mesh_name<<"\" references non-existing material "
+                 << "\""<<matname<<"\""<<std::endl;
+            matname = "/BaseWhite";
+            sm->setMaterialName(matname);
+        }
+        materials[i] = gfx_material_get(matname);
+    }
+    ent = ogre_sm->createEntity(freshname(), ogre_name);
+    for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
+        Ogre::SubEntity *se = ent->getSubEntity(i);
+        if (materials[i]->getAlphaBlend()) {
+            se->setRenderQueueGroup(Ogre::RENDER_QUEUE_SKIES_LATE);
+        }
+    }
+    node->attachObject(ent);
+    par = GfxBodyPtr(NULL); setParent(par_);
+    setFade(1.0f, 0);
+}
+
+GfxBody::GfxBody (const GfxBodyPtr &par_)
+{
+    dead = false;
+    pos = Vector3(0,0,0);
+    scl = Vector3(1,1,1);
+    quat = Quaternion(1,0,0,0);
+    memset(colours, 0, sizeof(colours));
+    node = ogre_sm->createSceneNode();
+    par = GfxBodyPtr(NULL); setParent(par_);
+    ent = NULL;
+}
+
+GfxBody::~GfxBody (void)
+{
+    if (!dead) destroy();
+}
+
+void GfxBody::destroy (void)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    for (unsigned i=0 ; i<children.size() ; ++i) {
+        children[i]->notifyParentDead();
+    }
+    if (!par.isNull()) par->notifyLostChild(this);
+    ogre_sm->destroySceneNode(node->getName());
+    if (ent) ogre_sm->destroyEntity(ent);
+    node = NULL;
+    ent = NULL;
+    par = GfxBodyPtr(NULL);
+    dead = true;
+}
+
+void GfxBody::notifyParentDead (void)
+{
+    setParent(GfxBodyPtr(NULL));
+}
+
+void GfxBody::notifyLostChild (GfxBody *child)
+{
+    unsigned ci = 0;
+    bool found_child = false;
+    for (unsigned i=0 ; i<children.size() ; ++i) {
+        if (children[i]==child) {
+            ci = i;
+            found_child = true;
+            break;
+        }
+    }
+    APP_ASSERT(found_child);
+    children[ci] = children[children.size()-1];
+    children.pop_back();
+}
+
+void GfxBody::notifyGainedChild (GfxBody *child)
+{
+    children.push_back(child);
+}
+
+const GfxBodyPtr &GfxBody::getParent (void) const
+{
+    if (dead) THROW_DEAD("GfxBody");
+    return par;
+}
+
+void GfxBody::setParent (const GfxBodyPtr &par_)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!par_.isNull()) par_->scanForCycle(this); // check that we are not a parent of par_
+    if (!par.isNull()) {
+        par->node->removeChild(node);
+        par->notifyLostChild(this);
+    } else {
+        ogre_root_node->removeChild(node);
+    }
+    par = par_;
+    if (!par.isNull()) {
+        par->notifyGainedChild(this);
+        par->node->addChild(node);
+    } else {
+        ogre_root_node->addChild(node);
+    }
+}
+
+void GfxBody::scanForCycle (GfxBody *leaf) const
+{
+    if (leaf==this) GRIT_EXCEPT("Parenthood must be acyclic.");
+    if (par.isNull()) return;
+    par->scanForCycle(leaf);
+}
+
+unsigned GfxBody::getBatches (void) const
+{
+    return materials.size();
+}
+
+unsigned GfxBody::getBatchesWithChildren (void) const
+{
+    unsigned total = getBatches();
+    for (unsigned i=0 ; i<children.size() ; ++i) {
+        total += children[i]->getBatchesWithChildren();
+    }
+    return total;
 }
 
 void GfxBody::setLocalPosition (const Vector3 &p)
 {
+    if (dead) THROW_DEAD("GfxBody");
     pos = p;
     node->setPosition(to_ogre(p));
 }
 
 void GfxBody::setLocalOrientation (const Quaternion &q)
 {
+    if (dead) THROW_DEAD("GfxBody");
     quat = q;
     node->setOrientation(to_ogre(q));
 }
 
 void GfxBody::setLocalScale (const Vector3 &s)
 {
+    if (dead) THROW_DEAD("GfxBody");
     scl = s;
     node->setScale(to_ogre(s));
 }
+
+Vector3 GfxBody::transformPosition (const Vector3 &v)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (par.isNull()) return v;
+    return getWorldPosition() + getWorldScale()*(getWorldOrientation()*v);
+}
+Quaternion GfxBody::transformOrientation (const Quaternion &v)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (par.isNull()) return v;
+    return getWorldOrientation()*v;
+}
+Vector3 GfxBody::transformScale (const Vector3 &v)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (par.isNull()) return v;
+    return getWorldScale()*v;
+}
+
+const Vector3 &GfxBody::getLocalPosition (void)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    return pos;
+}
+Vector3 GfxBody::getWorldPosition (void)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    return par.isNull() ? pos : par->transformPosition(pos);
+}
+
+const Quaternion &GfxBody::getLocalOrientation (void)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    return quat;
+}
+Quaternion GfxBody::getWorldOrientation (void)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    return par.isNull() ? quat : par->transformOrientation(quat);
+}
+
+const Vector3 &GfxBody::getLocalScale (void)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    return scl;
+}
+Vector3 GfxBody::getWorldScale (void)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    return  par.isNull()? scl : par->transformScale(scl);
+}
+
+float GfxBody::getFade (void)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    return fade;
+}
+void GfxBody::setFade (float f, int transition)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    fade = f;
+    if (!ent) return;
+    for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
+        Ogre::SubEntity *se = ent->getSubEntity(i);
+        se->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
+        GfxMaterialPtr true_material = materials[i];
+        if (transition == 0) {
+            se->setMaterial(true_material->regularMat);
+        } else {
+            if (!true_material->fadingMat.isNull()) {
+                se->setMaterial(true_material->fadingMat);
+            }
+        }
+    }
+    ent->setVisible(fade > 0.001);
+}
+
+bool GfxBody::getCastShadows (void)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) return false;
+    return ent->getCastShadows();
+}
+void GfxBody::setCastShadows (bool v)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) return;
+    ent->setCastShadows(v);
+}
+
+GfxPaintColour GfxBody::getPaintColour (int i)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    return colours[i];
+}
+void GfxBody::setPaintColour (int i, const GfxPaintColour &c)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    colours[i] = c;
+    if (!ent) return;
+    for (size_t j=0 ; j<ent->getNumSubEntities() ; ++j) {
+            Ogre::SubEntity *se = ent->getSubEntity(j);
+            se->setCustomParameter(2*i+1,Ogre::Vector4(c.diff.r, c.diff.g, c.diff.b, c.met));
+            se->setCustomParameter(2*i+2,  Ogre::Vector4(c.spec.r, c.spec.g, c.spec.b, 0));
+    }
+}
+
+unsigned GfxBody::getNumBones (void)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) return 0;
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) return 0;
+    return skel->getNumBones();
+}
+
+unsigned GfxBody::getBoneId (const std::string name)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL)
+    if (!skel->hasBone(name)) GRIT_EXCEPT("GfxBody has no bone \""+name+"\"");
+    return skel->getBone(name)->getHandle();
+}
+
+const std::string &GfxBody::getBoneName (unsigned n)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    return skel->getBone(n)->getName();
+}
+
+bool GfxBody::getBoneManuallyControlled (unsigned n)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    return skel->getBone(n)->isManuallyControlled();
+}
+
+void GfxBody::setBoneManuallyControlled (unsigned n, bool v)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    skel->getBone(n)->setManuallyControlled(v);
+    skel->_notifyManualBonesDirty(); // HACK: ogre should do this itself
+}
+
+void GfxBody::setAllBonesManuallyControlled (bool v)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    for (unsigned i=0 ; i<skel->getNumBones() ; ++i) {
+        skel->getBone(i)->setManuallyControlled(v);
+    }
+    skel->_notifyManualBonesDirty(); // HACK: ogre should do this itself
+}
+
+Vector3 GfxBody::getBoneInitialPosition (unsigned n)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Bone *bone = skel->getBone(n);
+    return from_ogre(bone->getInitialPosition());
+}
+
+Vector3 GfxBody::getBoneWorldPosition (unsigned n)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Bone *bone = skel->getBone(n);
+    return from_ogre(bone->_getDerivedPosition());
+}
+
+Vector3 GfxBody::getBoneLocalPosition (unsigned n)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Bone *bone = skel->getBone(n);
+    return from_ogre(bone->getPosition());
+}
+
+Quaternion GfxBody::getBoneInitialOrientation (unsigned n)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Bone *bone = skel->getBone(n);
+    return from_ogre(bone->getInitialOrientation());
+}
+
+Quaternion GfxBody::getBoneWorldOrientation (unsigned n)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Bone *bone = skel->getBone(n);
+    return from_ogre(bone->_getDerivedOrientation());
+}
+
+Quaternion GfxBody::getBoneLocalOrientation (unsigned n)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Bone *bone = skel->getBone(n);
+    return from_ogre(bone->getOrientation());
+}
+
+
+void GfxBody::setBoneLocalPosition (unsigned n, const Vector3 &v)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Bone *bone = skel->getBone(n);
+    bone->setPosition(to_ogre(v));
+}
+
+void GfxBody::setBoneLocalOrientation (unsigned n, const Quaternion &v)
+{
+    if (dead) THROW_DEAD("GfxBody");
+    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::Bone *bone = skel->getBone(n);
+    bone->setOrientation(to_ogre(v));
+}
+
+// }}}
+
+
+// {{{ GFX_MATERIAL
+
+GfxMaterial::GfxMaterial (const std::string &name_)
+  : fadingMat(NULL),
+    alpha(1),
+    alphaBlend(false),
+    name(name_)
+{
+}
+
+void GfxMaterial::setAlpha (float v)
+{
+    alpha = v;
+}
+
+void GfxMaterial::setAlphaBlend (bool v)
+{
+    alphaBlend = v;
+}
+
+// }}}
+
+
+// {{{ GFX_MATERIAL_DB
+
+typedef std::map<std::string,GfxMaterialPtr> GfxMaterialDB;
+static GfxMaterialDB material_db;
+
+GfxMaterialPtr gfx_material_add (const std::string &name)
+{
+    if (gfx_material_has(name)) GRIT_EXCEPT("Material already exists: \""+name+"\"");
+    GfxMaterialPtr r = GfxMaterialPtr(new GfxMaterial(name));
+    material_db[name] = r;
+    return r;
+}
+
+GfxMaterialPtr gfx_material_add_or_get (const std::string &name)
+{
+    if (gfx_material_has(name)) return gfx_material_get(name);
+    return gfx_material_add(name);
+}
+
+GfxMaterialPtr gfx_material_get (const std::string &name)
+{
+    if (!gfx_material_has(name)) GRIT_EXCEPT("Material does not exist: \""+name+"\"");
+    return material_db[name];
+}
+
+bool gfx_material_has (const std::string &name)
+{
+    return material_db.find(name) != material_db.end();
+}
+
+// }}}
+
+
+GfxRGB gfx_sun_get_diffuse (void)
+{
+    return from_ogre(ogre_sun->getDiffuseColour());;
+}
+
+void gfx_sun_set_diffuse (const GfxRGB &v)
+{
+    ogre_sun->setDiffuseColour(to_ogre(v));
+}
+
+GfxRGB gfx_sun_get_specular (void)
+{
+    return from_ogre(ogre_sun->getSpecularColour());;
+}
+
+void gfx_sun_set_specular (const GfxRGB &v)
+{
+    ogre_sun->setSpecularColour(to_ogre(v));
+}
+
+Vector3 gfx_sun_get_direction (void)
+{
+    return from_ogre(ogre_sun->getDirection());
+}
+
+void gfx_sun_set_direction (const Vector3 &v)
+{
+    ogre_sun->setDirection(to_ogre(v));
+}
+
+GfxRGB gfx_get_ambient (void)
+{
+    return from_ogre(ogre_sm->getAmbientLight());
+}
+
+void gfx_set_ambient (const GfxRGB &v)
+{
+    ogre_sm->setAmbientLight(to_ogre(v));
+}
+
+
+static GfxRGB fog_colour;
+static float fog_density;
+
+GfxRGB gfx_fog_get_colour (void)
+{
+    return fog_colour;
+}
+
+void gfx_fog_set_colour (const GfxRGB &v)
+{
+    fog_colour = v;
+    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre(fog_colour), fog_density, 0, 0);
+}
+
+float gfx_fog_get_density (void)
+{
+    return fog_density;
+}
+
+void gfx_fog_set_density (float v)
+{
+    fog_density = v;
+    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre(fog_colour), fog_density, 0, 0);
+}
+
+
+Quaternion gfx_get_celestial_orientation (void)
+{
+    return from_ogre(ogre_celestial->getOrientation());
+}
+
+void gfx_set_celestial_orientation (const Quaternion &v)
+{
+    ogre_celestial->setOrientation(to_ogre(v));
+}
+
+
+// {{{ RENDER
+
+static void position_camera (bool left, const Vector3 &cam_pos, const Quaternion &cam_dir)
+{
+    Ogre::Camera *cam = left ? left_eye : right_eye;
+    float sep = cam_separation/2;
+    Vector3 p = cam_pos + cam_dir * Vector3((left?-1:1) * sep,0,0);
+    cam->setPosition(to_ogre(p));
+    cam->setOrientation(to_ogre(cam_dir*Quaternion(Degree(90),Vector3(1,0,0))));
+}
+
+void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir)
+{
+    try {
+        Ogre::WindowEventUtilities::messagePump();
+
+        position_camera(true, cam_pos, cam_dir);
+        if (stereoscopic())
+            position_camera(false, cam_pos, cam_dir);
+        ogre_root->renderOneFrame(elapsed);
+
+    } catch (Ogre::Exception &e) {
+        GRIT_EXCEPT2(e.getFullDescription(), "Rendering a frame");
+    }
+}
+
+// }}}
+
+
+void gfx_screenshot (const std::string &filename)
+{
+    ogre_win->writeContentsToFile(filename);
+}
+
+static GfxLastRenderStats stats_from_rt (Ogre::RenderTarget *rt)
+{
+    GfxLastRenderStats r;
+    r.batches = rt->getBatchCount();
+    r.triangles = rt->getTriangleCount();
+    return r;
+}
+
+GfxLastFrameStats gfx_last_frame_stats (void)
+{
+    GfxLastFrameStats r;
+    if (stereoscopic()) {
+        r.left = stats_from_rt(ogre_win);
+        r.right = stats_from_rt(anaglyph_fb->getBuffer()->getRenderTarget());
+    } else {
+        r.left = stats_from_rt(ogre_win);
+    }
+    for (int i=0 ; i<3 ; ++i) {
+        r.shadow[i] = stats_from_rt(ogre_sm->getShadowTexture(i)->getBuffer()->getRenderTarget());
+    }
+    return r;
+}
+
+GfxRunningFrameStats gfx_running_frame_stats (void)
+{
+    GfxRunningFrameStats r;
+    return r;
+}
+
+void gfx_reload_resources (void)
+{
+}
+
+
+// {{{ LISTENERS 
+
+struct MeshSerializerListener : Ogre::MeshSerializerListener {
+    void processMaterialName (Ogre::Mesh *mesh, std::string *name)
+    {
+        if (shutting_down) return;
+        std::string filename = mesh->getName();
+        std::string dir(filename, 0, filename.rfind('/')+1);
+        *name = pwd_full_ex(*name, "/"+dir, "BaseWhite");
+    }
+
+    void processSkeletonName (Ogre::Mesh *mesh, std::string *name)
+    {
+        if (shutting_down) return;
+        std::string filename = mesh->getName();
+        std::string dir(filename, 0, filename.rfind('/')+1);
+        *name = pwd_full_ex(*name, "/"+dir, *name).substr(1); // strip leading '/' from this one
+    }
+} msl;
+
+struct WindowEventListener : Ogre::WindowEventListener {
+
+    void windowResized(Ogre::RenderWindow *rw)
+    {
+        if (shutting_down) return;
+        gfx_cb->windowResized(rw->getWidth(),rw->getHeight());
+        clean_compositors();
+        do_reset_framebuffer();
+        do_reset_compositors();
+    }
+
+    void windowClosed (Ogre::RenderWindow *rw)
+    {
+        (void) rw;
+        if (shutting_down) return;
+        gfx_cb->clickedClose();
+    }
+
+} wel;
+
+struct LogListener : Ogre::LogListener {
+    virtual void messageLogged (const std::string &message,
+                                Ogre::LogMessageLevel lml,
+                                bool maskDebug,
+                                const std::string &logName)
+    {
+        (void)lml;
+        (void)logName;
+        if (!maskDebug) gfx_cb->messageLogged(message);
+    }
+} ll;
+
+// }}}
+
+
+// {{{ INIT / SHUTDOWN
 
 size_t gfx_init (GfxCallback &cb_)
 {
@@ -1010,8 +1681,11 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_root->addMovableObjectFactory(new RangedClutterFactory());
 
         ogre_sm = static_cast<Ogre::OctreeSceneManager*>(ogre_root->createSceneManager("OctreeSceneManager"));
+        ogre_root_node = ogre_sm->getRootSceneNode();
         ogre_sm->setShadowCasterRenderBackFaces(false);
         Ogre::MeshManager::getSingleton().setListener(&msl);
+
+        init_compositor();
         
         Ogre::ResourceGroupManager::getSingleton()
                 .addResourceLocation(".","FileSystem","GRIT",true);
@@ -1026,6 +1700,18 @@ size_t gfx_init (GfxCallback &cb_)
 
         left_vp = ogre_win->addViewport(left_eye, 1, 0,0,1,1);
         right_vp = NULL;
+
+        ogre_sun = ogre_sm->createLight("Sun");
+        ogre_sun->setType(Ogre::Light::LT_DIRECTIONAL);
+
+        Ogre::MeshManager::getSingleton().load("system/SkyCube.mesh","GRIT")
+            ->_setBounds(Ogre::AxisAlignedBox::BOX_INFINITE);
+        ogre_sky_node = ogre_sm->getSkyCustomNode();
+        ogre_celestial = ogre_sky_node->createChildSceneNode();
+        ogre_sky_ent = ogre_sm->createEntity("SkyEntity", "system/SkyCube.mesh");
+        ogre_celestial->attachObject(ogre_sky_ent);
+        ogre_sky_ent->setCastShadows(false);
+        ogre_sky_ent->setRenderQueueGroup(Ogre::RENDER_QUEUE_SKIES_LATE);
         
         Ogre::WindowEventUtilities::addWindowEventListener(ogre_win, &wel);
 
@@ -1035,77 +1721,6 @@ size_t gfx_init (GfxCallback &cb_)
     } catch (Ogre::Exception &e) {
         GRIT_EXCEPT2(e.getFullDescription(), "Initialising graphics subsystem");
     }
-}
-
-static void position_camera (bool left, const Vector3 &cam_pos, const Quaternion &cam_dir,
-                             float cam_chase)
-{
-    Ogre::Camera *cam = left ? left_eye : right_eye;
-    float sep = cam_separation/2;
-    Vector3 p = cam_pos + cam_dir * Vector3((left?-1:1) * sep,-cam_chase,0);
-    cam->setPosition(to_ogre(p));
-    cam->setOrientation(to_ogre(cam_dir*Quaternion(Degree(90),Vector3(1,0,0))));
-}
-
-void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir, float cam_chase)
-{
-    try {
-        position_camera(true, cam_pos, cam_dir, cam_chase);
-        if (stereoscopic())
-            position_camera(false, cam_pos, cam_dir, cam_chase);
-        ogre_root->renderOneFrame(elapsed);
-
-    } catch (Ogre::Exception &e) {
-        GRIT_EXCEPT2(e.getFullDescription(), "Rendering a frame");
-    }
-}
-
-void gfx_pump (void)
-{
-    try {
-        Ogre::WindowEventUtilities::messagePump();
-    } catch (Ogre::Exception &e) {
-        GRIT_EXCEPT2(e.getFullDescription(), "Rendering a frame");
-    }
-}
-
-void gfx_screenshot (const std::string &filename)
-{
-    ogre_win->writeContentsToFile(filename);
-}
-
-static GfxLastRenderStats stats_from_rt (Ogre::RenderTarget *rt)
-{
-    GfxLastRenderStats r;
-    r.batches = rt->getBatchCount();
-    r.triangles = rt->getTriangleCount();
-    return r;
-}
-
-
-GfxLastFrameStats gfx_last_frame_stats (void)
-{
-    GfxLastFrameStats r;
-    if (stereoscopic()) {
-        r.left = stats_from_rt(ogre_win);
-        r.right = stats_from_rt(anaglyph_fb->getBuffer()->getRenderTarget());
-    } else {
-        r.left = stats_from_rt(ogre_win);
-    }
-    for (int i=0 ; i<3 ; ++i) {
-        r.shadow[i] = stats_from_rt(ogre_sm->getShadowTexture(i)->getBuffer()->getRenderTarget());
-    }
-    return r;
-}
-
-GfxRunningFrameStats gfx_running_frame_stats (void)
-{
-    GfxRunningFrameStats r;
-    return r;
-}
-
-void gfx_reload_resources (void)
-{
 }
 
 HUD::RootPtr gfx_init_hud (void)
@@ -1118,6 +1733,7 @@ void gfx_shutdown (void)
     try {
         if (shutting_down) return;
         shutting_down = true;
+        material_db.clear();
         clean_compositors();
         anaglyph_fb.setNull();
         if (ogre_sm && ogre_root) ogre_root->destroySceneManager(ogre_sm);
@@ -1137,3 +1753,4 @@ void gfx_shutdown (void)
 
 }
 
+// }}}

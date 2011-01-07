@@ -32,6 +32,8 @@ token {
     DISTANCE
     VERTEXES
     FACES
+    MAX_EDGE_ANGLE_THRESHOLD
+    EDGE_DISTANCE_THRESHOLD
 
     COMPOUND
     HULL
@@ -97,6 +99,10 @@ mode MAIN : END_OF_FILE
     "distance"                         => QUEX_TKN_DISTANCE;
     "vertexes"|"vertices"              => QUEX_TKN_VERTEXES;
     "faces"                            => QUEX_TKN_FACES;
+    "max_edge_angle_threshold"         => QUEX_TKN_MAX_EDGE_ANGLE_THRESHOLD;
+    "edge_distance_threshold"          => QUEX_TKN_EDGE_DISTANCE_THRESHOLD;
+    
+    
 
     "compound"                         => QUEX_TKN_COMPOUND;
     "hull"                             => QUEX_TKN_HULL;

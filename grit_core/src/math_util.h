@@ -45,21 +45,33 @@ struct Vector3;
 // {{{ Degree & Radian
 
 struct Radian {
-    float f;
     explicit Radian (float f_) : f(f_) { }
+    Radian (void) { }
     Radian (const Degree &d);
+    Radian (const Radian &r) : f(r.f) { }
+    float inDegrees (void) const { return f / M_PI * 180; }
+    float inRadians (void) const { return f; }
+    Radian &operator = (const Radian &o) { f = o.inRadians(); return *this; }
+    protected:
+    float f;
 };
 
 struct Degree {
-    float f;
     explicit Degree (float f_) : f(f_) { }
-    Degree (const Radian &r) : f(r.f/M_PI*180) { }
+    Degree (void) { }
+    Degree (const Radian &r) : f(r.inDegrees()) { }
+    Degree (const Degree &r) : f(r.f) { }
+    float inDegrees (void) const { return f; }
+    float inRadians (void) const { return f * M_PI / 180; }
+    Degree &operator = (const Degree &o) { f = o.inDegrees(); return *this; }
+    protected:
+    float f;
 };
 
-inline Radian::Radian (const Degree &d) : f(d.f*M_PI/180) { }
+inline Radian::Radian (const Degree &d) : f(d.inRadians()) { }
 
-inline float gritcos (Radian r) { return cosf(r.f); }
-inline float gritsin (Radian r) { return sinf(r.f); }
+inline float gritcos (Radian r) { return cosf(r.inRadians()); }
+inline float gritsin (Radian r) { return sinf(r.inRadians()); }
 inline Radian gritacos (float x) { return Radian(acosf(x)); }
 inline Radian gritasin (float x) { return Radian(asinf(x)); }
 
@@ -326,7 +338,7 @@ inline Vector3 operator * (const Quaternion &q, const Vector3& v)
 
 inline Quaternion::Quaternion(const Radian& a, const Vector3& axis)
 {
-    float ha ( 0.5f*a.f );
+    float ha ( 0.5f*a.inRadians() );
     float s = sinf(ha);
     w = cosf(ha);
     x = s*axis.x;

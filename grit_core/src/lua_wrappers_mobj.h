@@ -38,6 +38,7 @@ namespace Ogre {
         class ParticleSystem;
 }
 
+class RangedClutter;
 class MovableClutter;
 
 Ogre::MovableObject *check_mobj(lua_State *L,int index);

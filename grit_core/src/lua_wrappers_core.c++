@@ -59,6 +59,7 @@
 #include "lua_wrappers_render.h"
 #include "lua_wrappers_gritobj.h"
 #include "lua_wrappers_hud.h"
+#include "lua_wrappers_gfx.h"
 #include "path_util.h"
 
 #include "lua_utf8.h"
@@ -213,67 +214,6 @@ TRY_START
         bool b = check_bool(L,1);
         mouse->setGrab(b);
         return 0;
-TRY_END
-}
-
-static int global_gfx_render (lua_State *L)
-{
-TRY_START
-        check_args(L,1+3+4+1);
-        float elapsed = luaL_checknumber(L,1);
-        GET_V3(cam_pos,2);
-        GET_QUAT(cam_dir,5);
-        float cam_chase = luaL_checknumber(L,9);
-        gfx_render(elapsed, cam_pos, cam_dir, cam_chase);
-        return 0;
-TRY_END
-}
-
-static int global_gfx_screenshot (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        const char *filename = luaL_checkstring(L,1);
-        gfx_screenshot(filename);
-        return 0;
-TRY_END
-}
-
-static int global_gfx_option (lua_State *L)
-{
-TRY_START
-        if (lua_gettop(L)==2) {
-                std::string opt = luaL_checkstring(L,1);
-                int t;
-                GfxBoolOption o0;
-                GfxIntOption o1;
-                GfxFloatOption o2;
-                gfx_option_from_string(opt, t, o0, o1, o2);
-                switch (t) {
-                        case -1: my_lua_error(L,"Unrecognised graphics option: \""+opt+"\"");
-                        case 0: gfx_option(o0, check_bool(L,2)); break;
-                        case 1: gfx_option(o1, check_t<int>(L,2)); break;
-                        case 2: gfx_option(o2, luaL_checknumber(L,2)); break;
-                        default: my_lua_error(L,"Unrecognised type from gfx_option_from_string");
-                }
-                return 0;
-        } else {
-                check_args(L,1);
-                std::string opt = luaL_checkstring(L,1);
-                int t;
-                GfxBoolOption o0;
-                GfxIntOption o1;
-                GfxFloatOption o2;
-                gfx_option_from_string(opt, t, o0, o1, o2);
-                switch (t) {
-                        case -1: my_lua_error(L,"Unrecognised graphics option: \""+opt+"\"");
-                        case 0: lua_pushboolean(L,gfx_option(o0)); break;
-                        case 1: lua_pushnumber(L,gfx_option(o1)); break;
-                        case 2: lua_pushnumber(L,gfx_option(o2)); break;
-                        default: my_lua_error(L,"Unrecognised type from gfx_option_from_string");
-                }
-                return 1;
-        }
 TRY_END
 }
 
@@ -898,6 +838,19 @@ TRY_START
         ExternalTable &t = mat_map[name];
         t.clear();
         t.takeTableFromLuaStack(L,2);
+        GfxMaterialPtr gfxmat = gfx_material_add_or_get(name);
+        lua_getfield(L, 2, "alpha");
+        if (lua_isboolean(L,-1)) {
+                gfxmat->setAlphaBlend(lua_toboolean(L,-1)!=0);
+        } else if (lua_isnumber(L,-1)) {
+                gfxmat->setAlphaBlend(true);
+                gfxmat->setAlpha(lua_tonumber(L,-1));
+        } else if (lua_isnil(L,-1)) {
+        } else {
+                my_lua_error(L,"alpha should be boolean or number");
+        }
+        lua_pop(L,1);
+        gfxmat->regularMat = Ogre::MaterialManager::getSingleton().getByName(name,"GRIT");
         return 0;
 TRY_END
 }
@@ -925,20 +878,6 @@ TRY_START
                 my_lua_error(L, "Material does not exist: \""+std::string(name)+"\"");
         ExternalTable &t = mat_map[name];
         t.luaGet(L, key);
-        return 1;
-TRY_END
-}
-
-static int global_registered_material_set (lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        const char *name = luaL_checkstring(L,1);
-        const char *key = luaL_checkstring(L,2);
-        if (mat_map.find(name) == mat_map.end())
-                my_lua_error(L, "Material does not exist: \""+std::string(name)+"\"");
-        ExternalTable &t = mat_map[name];
-        t.luaSet(L, key);
         return 1;
 TRY_END
 }
@@ -1344,15 +1283,6 @@ TRY_START
         lua_pushstring(L,output.asUTF8_c_str());
         lua_pushstring(L,offcut.asUTF8_c_str());
         return 2;
-TRY_END
-}
-
-static int global_pump (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        gfx_pump();
-        return 0;
 TRY_END
 }
 
@@ -1773,186 +1703,9 @@ TRY_START
 TRY_END
 }
 
-static int global_mulqq (lua_State *L)
-{
-TRY_START
-        check_args(L,8);
-        GET_QUAT(a,1);
-        GET_QUAT(b,5);
-        PUT_QUAT(a*b);
-        return 4;
-TRY_END
-}
-
-static int global_mulqv (lua_State *L)
-{
-TRY_START
-        check_args(L,7);
-        GET_QUAT(a,1);
-        GET_V3(b,5);
-        PUT_V3(a*b);
-        return 3;
-TRY_END
-}
-
-static int global_mulvv (lua_State *L)
-{
-TRY_START
-        check_args(L,6);
-        GET_V3(a,1);
-        GET_V3(b,4);
-        PUT_V3(a*b);
-        return 3;
-TRY_END
-}
-
-static int global_mulnv (lua_State *L)
-{
-TRY_START
-        check_args(L,4);
-        lua_Number a = luaL_checknumber(L,1);
-        GET_V3(b,2);
-        PUT_V3(a*b);
-        return 3;
-TRY_END
-}
-
-static int global_mulnq (lua_State *L)
-{
-TRY_START
-        check_args(L,5);
-        lua_Number a = luaL_checknumber(L,1);
-        GET_QUAT(b,2);
-        PUT_QUAT(a*b);
-        return 4;
-TRY_END
-}
-
-static int global_addvv (lua_State *L)
-{
-TRY_START
-        check_args(L,6);
-        GET_V3(a,1);
-        GET_V3(b,4);
-        PUT_V3(a+b);
-        return 3;
-TRY_END
-}
-
-static int global_dot (lua_State *L)
-{
-TRY_START
-        check_args(L,6);
-        GET_V3(a,1);
-        GET_V3(b,4);
-        lua_pushnumber(L,a.dot(b));
-        return 1;
-TRY_END
-}
-
-static int global_cross (lua_State *L)
-{
-TRY_START
-        check_args(L,6);
-        GET_V3(a,1);
-        GET_V3(b,4);
-        PUT_V3(a.cross(b));
-        return 3;
-TRY_END
-}
-
-static int global_project (lua_State *L)
-{
-TRY_START
-        check_args(L,6);
-        GET_V3(a,1);
-        GET_V3(b,4);
-        PUT_V3(a - a.dot(b) * b);
-        return 3;
-TRY_END
-}
-
-static int global_lenv (lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        GET_V3(a,1);
-        lua_pushnumber(L,a.length());
-        return 1;
-TRY_END
-}
-
-static int global_lenq (lua_State *L)
-{
-TRY_START
-        check_args(L,4);
-        GET_QUAT(a,1);
-        lua_pushnumber(L,a.w*a.w + a.x*a.x + a.y*a.y + a.z*a.z);
-        return 1;
-TRY_END
-}
-
-static int global_normv (lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        GET_V3(a,1);
-        a.normalise();
-        PUT_V3(a);
-        return 3;
-TRY_END
-}
-
-static int global_normq (lua_State *L)
-{
-TRY_START
-        check_args(L,4);
-        GET_QUAT(a,1);
-        a.normalise();
-        PUT_QUAT(a);
-        return 4;
-TRY_END
-}
-
-static int global_quat_angle (lua_State *L)
-{
-TRY_START
-        check_args(L,4);
-        lua_Number a = luaL_checknumber(L,1);
-        GET_V3(b,2);
-        PUT_QUAT(Quaternion(Degree(a), b));
-        return 4;
-TRY_END
-}
-
-static int global_quat_between (lua_State *L)
-{
-TRY_START
-        check_args(L,6);
-        GET_V3(a,1);
-        GET_V3(b,4);
-        PUT_QUAT(a.getRotationTo(b));
-        return 4;
-TRY_END
-}
 
 
 static const luaL_reg global[] = {
-        {"mulqv",global_mulqv},
-        {"mulvv",global_mulvv},
-        {"mulqq",global_mulqq},
-        {"mulnv",global_mulnv},
-        {"mulnq",global_mulnq},
-        {"addvv",global_addvv},
-        {"dot",global_dot},
-        {"cross",global_cross},
-        {"project",global_project},
-        {"lenv",global_lenv},
-        {"lenq",global_lenq},
-        {"normv",global_normv},
-        {"normq",global_normq},
-        {"quat_angle",global_quat_angle},
-        {"quat_between",global_quat_between},
 
         {"fqn",global_fqn},
         {"fqn_ex",global_fqn_ex},
@@ -1969,7 +1722,6 @@ static const luaL_reg global[] = {
         {"echo",global_echo},
         {"console_poll",global_console_poll},
 
-        {"pump",global_pump},
         {"clicked_close",global_clicked_close},
         {"have_focus",global_have_focus},
 
@@ -1987,6 +1739,22 @@ static const luaL_reg global[] = {
         {"gfx_render",global_gfx_render},
         {"gfx_screenshot",global_gfx_screenshot},
         {"gfx_option",global_gfx_option},
+        {"gfx_body_make",global_gfx_body_make},
+        {"gfx_sun_get_diffuse",global_gfx_sun_get_diffuse},
+        {"gfx_sun_set_diffuse",global_gfx_sun_set_diffuse},
+        {"gfx_sun_get_specular",global_gfx_sun_get_specular},
+        {"gfx_sun_set_specular",global_gfx_sun_set_specular},
+        {"gfx_sun_get_direction",global_gfx_sun_get_direction},
+        {"gfx_sun_set_direction",global_gfx_sun_set_direction},
+        {"gfx_fog_get_colour",global_gfx_fog_get_colour},
+        {"gfx_fog_set_colour",global_gfx_fog_set_colour},
+        {"gfx_fog_get_density",global_gfx_fog_get_density},
+        {"gfx_fog_set_density",global_gfx_fog_set_density},
+        {"gfx_get_ambient",global_gfx_get_ambient},
+        {"gfx_set_ambient",global_gfx_set_ambient},
+        {"gfx_get_celestial_orientation",global_gfx_get_celestial_orientation},
+        {"gfx_set_celestial_orientation",global_gfx_set_celestial_orientation},
+
         {"get_rendersystem",global_get_rendersystem},
 
         {"get_hud_root",global_get_hud_root},
@@ -2059,7 +1827,6 @@ static const luaL_reg global[] = {
         {"register_material" ,global_register_material},
         {"dump_registered_material" ,global_dump_registered_material},
         {"registered_material_get" ,global_registered_material_get},
-        {"registered_material_set" ,global_registered_material_set},
         {"reprocess_all_registered_materials" ,global_reprocess_all_registered_materials},
 
         {"get_alloc_stats" ,global_get_alloc_stats},
@@ -2177,6 +1944,8 @@ lua_State *init_lua(const char *filename)
         ADD_MT_MACRO(pworld,PWORLD_TAG);
         ADD_MT_MACRO(rbody,RBODY_TAG);
         ADD_MT_MACRO(colmesh,COLMESH_TAG);
+
+        ADD_MT_MACRO(gfxbody,GFXBODY_TAG);
 
         ADD_MT_MACRO(scnmgr,SCNMGR_TAG);
         ADD_MT_MACRO(node,NODE_TAG);

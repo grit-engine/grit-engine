@@ -148,13 +148,11 @@ TRY_END
 static int gritobj_update_sphere (lua_State *L)
 {
 TRY_START
-        check_args(L,5);
+        check_args(L,3);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        float x = luaL_checknumber(L,2);
-        float y = luaL_checknumber(L,3);
-        float z = luaL_checknumber(L,4);
-        float r = luaL_checknumber(L,5);
-        self->updateSphere(x,y,z,r);
+        Vector3 pos = check_v3(L,2);
+        float r = luaL_checknumber(L,3);
+        self->updateSphere(pos, r);
         return 0;
 TRY_END
 }
@@ -373,8 +371,8 @@ static int streamer_get_bounds (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        push(L,new Vector3(self.getBoundsMin()),VECTOR3_TAG);
-        push(L,new Vector3(self.getBoundsMax()),VECTOR3_TAG);
+        push_v3(L, self.getBoundsMin());
+        push_v3(L, self.getBoundsMax());
         return 2;
 TRY_END
 }
@@ -385,8 +383,8 @@ static int streamer_set_bounds (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        GET_UD_MACRO(Vector3,min,2,VECTOR3_TAG);
-        GET_UD_MACRO(Vector3,max,3,VECTOR3_TAG);
+        Vector3 min = check_v3(L,2);
+        Vector3 max = check_v3(L,3);
         self.setBounds(L, min, max);
         return 0;
 TRY_END
@@ -395,12 +393,10 @@ TRY_END
 static int streamer_centre (lua_State *L)
 {
 TRY_START
-        check_args(L,4);
+        check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        float x = luaL_checknumber(L,2);
-        float y = luaL_checknumber(L,3);
-        float z = luaL_checknumber(L,4);
-        self.centre(L,x,y,z);
+        Vector3 pos = check_v3(L,2);
+        self.centre(L, pos.x, pos.y, pos.z);
         return 0;
 TRY_END
 }
@@ -493,41 +489,25 @@ TRY_END
 static int streamer_add_object (lua_State *L)
 {
 TRY_START
-        if (lua_gettop(L)==3 || lua_gettop(L)==5)
-                lua_newtable(L);
-        if (lua_gettop(L)!=4)
-                check_args(L,6);
+        if (lua_gettop(L)==3) lua_newtable(L);
+        check_args(L,4);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         std::string className = pwd_full(L, luaL_checkstring(L,2));
-        float x,y,z;
-        if (lua_gettop(L)==4) {
-                GET_UD_MACRO(Vector3,val,3,VECTOR3_TAG);
-                x = val.x;
-                y = val.y;
-                z = val.z;
-        } else {
-                x = luaL_checknumber(L,3);
-                y = luaL_checknumber(L,4);
-                z = luaL_checknumber(L,5);
-        }
+        Vector3 spawnPos = check_v3(L, 3);
         int table_index = lua_gettop(L);
-        if (!lua_istable(L,table_index))
-                my_lua_error(L,"Last parameter should be a table");
+        if (!lua_istable(L,table_index)) my_lua_error(L,"Last parameter should be a table");
         lua_getfield(L,table_index,"name");
         std::string name;
         if (lua_isnil(L,-1)) {
                 name = "";
         } else {
-                if (lua_type(L,-1)==LUA_TSTRING) {
-                        name = lua_tostring(L,-1);
-                } else {
-                        my_lua_error(L,"Name wasn't a string!");
-                }
+                if (lua_type(L,-1)!=LUA_TSTRING) my_lua_error(L,"Name wasn't a string!");
+                name = lua_tostring(L,-1);
         }
         lua_pop(L,1);
 
         GritObjectPtr o = self.addObject(L,name,self.getClass(className));
-        o->userValues.set("spawnPos", Vector3(x,y,z));
+        o->userValues.set("spawnPos", spawnPos);
         o->getClass()->get(L,"renderingDistance");
         if (lua_isnil(L,-1)) {
                 self.deleteObject(L,o);
@@ -540,7 +520,7 @@ TRY_START
                                +className+"\"");
         }
         float r = lua_tonumber(L,-1);
-        o->updateSphere(x,y,z,r);
+        o->updateSphere(spawnPos, r);
         lua_pop(L,1);
 
         lua_getfield(L,table_index,"near");

@@ -517,15 +517,14 @@ bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, float e
         return status==0;
 }
 
-void GritObject::updateSphere (float x_, float y_,
-                               float z_, float r_)
+void GritObject::updateSphere (const Vector3 &pos, float r_)
 {
         if (index==-1) return;
-        x = x_;
-        y = y_;
-        z = z_;
+        x = pos.x;
+        y = pos.y;
+        z = pos.z;
         r = r_;
-        streamer->updateSphere(index,x_,y_,z_,r_);
+        streamer->updateSphere(index,x,y,z,r);
 }
 
 void GritObject::setNeedsFrameCallbacks (const GritObjectPtr &self, bool v)

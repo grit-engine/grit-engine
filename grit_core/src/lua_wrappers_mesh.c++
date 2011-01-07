@@ -226,10 +226,10 @@ TRY_END
 static int mesh_set_bounds (lua_State *L)
 {
 TRY_START
-        check_args(L,7);
+        check_args(L,3);
         GET_UD_MACRO(Ogre::MeshPtr,self,1,MESH_TAG);
-        GET_V3(min,2);
-        GET_V3(max,5);
+        Vector3 min = check_v3(L, 2);
+        Vector3 max = check_v3(L, 3);
         Ogre::AxisAlignedBox box(min.x, min.y, min.z, max.x, max.y, max.z);
         self->_setBounds(box);
         return 0;

@@ -46,10 +46,10 @@ static void push (lua_State *L, const ExternalTable::Value &v)
                 lua_pushstring(L,v.str.c_str());
                 break;
                 case 2:
-                push(L,new Vector3(v.v3),VECTOR3_TAG);
+                push_v3(L, v.v3);
                 break;
                 case 3:
-                push(L,new Quaternion(v.q),QUAT_TAG);
+                push_quat(L, v.q);
                 break;
                 case 4:
                 lua_pushboolean(L,v.b);
@@ -105,11 +105,11 @@ const char *ExternalTable::luaSet (lua_State *L, const std::string &key)
         } else if (lua_type(L,-1)==LUA_TBOOLEAN) {
                 bool val = check_bool(L,-1);
                 set(key,val);
-        } else if (has_tag(L,-1,VECTOR3_TAG)) {
-                GET_UD_MACRO(Vector3,val,-1,VECTOR3_TAG);
+        } else if (lua_type(L,-1)==LUA_TVECTOR3) {
+                Vector3 val = check_v3(L,-1);
                 set(key,val);
-        } else if (has_tag(L,-1,QUAT_TAG)) {
-                GET_UD_MACRO(Quaternion,val,-1,QUAT_TAG);
+        } else if (lua_type(L,-1)==LUA_TQUAT) {
+                Quaternion val = check_quat(L,-1);
                 set(key,val);
         } else if (lua_type(L,-1)==LUA_TTABLE) {
                 ExternalTable *self = new ExternalTable();
@@ -134,11 +134,11 @@ const char *ExternalTable::luaSet (lua_State *L, lua_Number key)
         } else if (lua_type(L,-1)==LUA_TBOOLEAN) {
                 bool val = check_bool(L,-1);
                 set(key,val);
-        } else if (has_tag(L,-1,VECTOR3_TAG)) {
-                GET_UD_MACRO(Vector3,val,-1,VECTOR3_TAG);
+        } else if (lua_type(L,-1)==LUA_TVECTOR3) {
+                Vector3 val = check_v3(L,-1);
                 set(key,val);
-        } else if (has_tag(L,-1,QUAT_TAG)) {
-                GET_UD_MACRO(Quaternion,val,-1,QUAT_TAG);
+        } else if (lua_type(L,-1)==LUA_TQUAT) {
+                Quaternion val = check_quat(L,-1);
                 set(key,val);
         } else if (lua_type(L,-1)==LUA_TTABLE) {
                 ExternalTable *self = new ExternalTable();

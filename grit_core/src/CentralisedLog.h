@@ -132,7 +132,7 @@ struct GritException {
         std::string longMessage (void)
         {
                 std::stringstream ss;
-                ss << msg << " (" << func << " at " << file << ":" << line << ")";
+                ss << msg << " (" << file << ":" << line << ": " << func << ")";
                 return ss.str();
         }
 

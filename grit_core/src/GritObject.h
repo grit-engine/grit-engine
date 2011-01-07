@@ -164,8 +164,7 @@ class GritObject {
                 index = index_;
         }
 
-        void updateSphere (float x_, float y_, float z_,
-                                   float r_);
+        void updateSphere (const Vector3 &pos, float r_);
 
         float getX() const { return x; }
         float getY() const { return y; }

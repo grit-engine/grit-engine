@@ -1933,7 +1933,7 @@ int main(int argc, char **argv)
                     }
                     lua_file<<oname<<"_"<<fr.name<<" = "<<parent<<":createChild()"<<std::endl;
                     lua_file<<oname<<"_"<<fr.name<<".position = "
-                            <<"Vector3("<<fr.x<<","<<fr.y<<","<<fr.z<<")"<<std::endl;
+                            <<"vector3("<<fr.x<<","<<fr.y<<","<<fr.z<<")"<<std::endl;
 
                     // ignore dummies for now
                     if (fr.geometry == -1) continue;

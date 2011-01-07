@@ -1103,6 +1103,33 @@ TRY_END
 }
 
 
+static int entity_set_render_queue_group (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        unsigned n = check_t<unsigned>(L,2);
+        unsigned char q = check_int(L,3,0,255);
+        Ogre::SubEntity *se = self.getSubEntity(n);
+        se->setRenderQueueGroup(q);
+        return 0;
+TRY_END
+}
+
+
+static int entity_get_render_queue_group (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
+        unsigned n = check_t<unsigned>(L,2);
+        Ogre::SubEntity *se = self.getSubEntity(n);
+        lua_pushnumber(L, se->getRenderQueueGroup());
+        return 1;
+TRY_END
+}
+
+
 static int entity_set_custom_parameter (lua_State *L)
 {
 TRY_START
@@ -1351,8 +1378,8 @@ TRY_START
         unsigned n = check_int(L,2,0,skel->getNumBones()-1);
         Ogre::Quaternion parent = skel->getBone(n)->getInitialOrientation();
         Ogre::Quaternion world = skel->getBone(n)->getOrientation();
-        PUT_QUAT(from_ogre(parent.Inverse() * world));
-        return 4;
+        push_quat(L, from_ogre(parent.Inverse() * world));
+        return 1;
 TRY_END
 }
 
@@ -1366,8 +1393,8 @@ TRY_START
         unsigned n = check_int(L,2,0,skel->getNumBones()-1);
         Ogre::Vector3 parent = skel->getBone(n)->getInitialPosition();
         Ogre::Vector3 world = skel->getBone(n)->getPosition();
-        PUT_V3(from_ogre(world - parent));
-        return 3;
+        push_v3(L, from_ogre(world - parent));
+        return 1;
 TRY_END
 }
 
@@ -1607,6 +1634,10 @@ TRY_START
                 push_cfunction(L,entity_get_material_name);
         } else if (0==strcmp(key,"setMaterial")) {
                 push_cfunction(L,entity_set_material);
+        } else if (0==strcmp(key,"setRenderQueueGroup")) {
+                push_cfunction(L,entity_set_render_queue_group);
+        } else if (0==strcmp(key,"getRenderQueueGroup")) {
+                push_cfunction(L,entity_get_render_queue_group);
         } else if (0==strcmp(key,"numSubEntities")) {
                 lua_pushnumber(L,self.getNumSubEntities());
         } else if (0==strcmp(key,"mesh")) {

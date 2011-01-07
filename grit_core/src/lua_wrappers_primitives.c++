@@ -665,6 +665,8 @@ TRY_START
                 lua_pushnumber(L,v.z);
         } else if (key=="xyz") {
                 push_cfunction(L,vector3_xyz);
+        } else if (key=="HACK") {
+                lua_pushvector3(L, v.x, v.y, v.z);
         } else if (key=="append") {
                 push_cfunction(L,vector3_append);
         } else if (key=="remove") {
@@ -946,6 +948,8 @@ TRY_START
                 lua_pushnumber(L,q.z);
         } else if (key=="w") {
                 lua_pushnumber(L,q.w);
+        } else if (key=="HACK") {
+                lua_pushquat(L, q.w, q.x, q.y, q.z);
         } else if (key=="axis") {
                 Vector3 axis(q.x, q.y, q.z);
                 axis.normalise();

@@ -57,6 +57,16 @@ no need to touch meshes/textures except to reload -- probably will have reload_m
 
 #endif
 
+struct GfxCallback;
+class GfxBody;
+class GfxMaterial;
+struct GfxLastRenderStats;
+struct GfxLastFrameStats;
+struct GfxRunningFrameStats;
+struct GfxRGB;
+struct GfxPaintColour;
+
+
 #ifndef gfx_h
 #define gfx_h
 
@@ -75,9 +85,7 @@ struct GfxCallback {
 
 size_t gfx_init (GfxCallback &cb);
 
-void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir, float cam_chase);
-void gfx_pump();
-
+void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir);
 enum GfxBoolOption {
     GFX_AUTOUPDATE,
     GFX_SHADOW_RECEIVE,
@@ -90,7 +98,8 @@ enum GfxBoolOption {
     GFX_ANAGLYPH,
     GFX_CROSS_EYE,
     GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST,
-    GFX_SHADOW_AGGRESSIVE_FOCUS_REGION
+    GFX_SHADOW_AGGRESSIVE_FOCUS_REGION,
+    GFX_SKY
 };
 
 enum GfxIntOption {
@@ -145,51 +154,155 @@ int gfx_option (GfxIntOption o);
 void gfx_option (GfxFloatOption o, float v);
 float gfx_option (GfxFloatOption o);
 
-class GfxBody {
+typedef SharedPtr<GfxMaterial> GfxMaterialPtr;
+typedef std::vector<GfxMaterialPtr> GfxMaterialPtrs;
+class GfxMaterial {
+    public:
+    Ogre::MaterialPtr regularMat;     // no suffix
+    Ogre::MaterialPtr fadingMat;      // ' can be NULL
+    //Ogre::MaterialPtr shadowMat;      // ! can be simply a link to the default
+    //Ogre::MaterialPtr worldMat;       // & 
+    //Ogre::MaterialPtr worldShadowMat; // % can be simply a link to the default
+
     protected:
-    Vector3 pos; Quaternion quat; Vector3 scl;
-    GfxBody *par;
-    Ogre::Entity *ent;
-    Ogre::SceneNode *node;
+    float alpha;
+    bool alphaBlend;
 
-    GfxBody (const std::string &mesh_name);
+    GfxMaterial (const std::string &name);
 
-    GfxBody *getParent (void) const { return par; }
-    void setParent(GfxBody *par_);
+    bool delayedDeferred (void) { return alphaBlend; }
 
-    Vector3 transformPosition (const Vector3 &v)
-    {
-        if (par==NULL) return v;
-        return getWorldPosition() + getWorldScale()*(getWorldOrientation()*v);
-    }
-    Quaternion transformOrientation (const Quaternion &v)
-    {
-        if (par==NULL) return v;
-        return getWorldOrientation()*v;
-    }
-    Vector3 transformScale (const Vector3 &v)
-    {
-        if (par==NULL) return v;
-        return getWorldScale()*v;
-    }
+    public:
 
-    const Vector3 &getLocalPosition (void) { return pos; }
-    void setLocalPosition (const Vector3 &p);
-    const Vector3 getWorldPosition (void)
-    { return par==NULL ? pos : par->transformPosition(pos); }
+    float getAlpha (void) { return alpha; }
+    void setAlpha (float v);
+    bool getAlphaBlend (void) { return alphaBlend; }
+    void setAlphaBlend (bool v);
+    const std::string name;
 
-    const Quaternion &getLocalOrientation (void) { return quat; }
-    void setLocalOrientation (const Quaternion &q);
-    const Quaternion getWorldOrientation (void)
-    {return par==NULL ? quat : par->transformOrientation(quat); }
+    friend GfxMaterialPtr gfx_material_add(const std::string &);
+    friend class GfxBody;
+};
 
-    const Vector3 &getLocalScale (void) { return scl; }
-    void setLocalScale (const Vector3 &s);
-    const Vector3 getWorldScale (void)
-    { return  par==NULL? scl : par->transformScale(scl); }
+GfxMaterialPtr gfx_material_add (const std::string &name);
+
+GfxMaterialPtr gfx_material_add_or_get (const std::string &name);
+
+GfxMaterialPtr gfx_material_get (const std::string &name);
+
+bool gfx_material_has (const std::string &name);
+
+struct GfxRGB {
+    float r, g, b;
+};
+
+struct GfxPaintColour {
+    GfxRGB diff, spec;
+    float met; // metallic paint (0 -> 1)
 };
 
 typedef SharedPtr<GfxBody> GfxBodyPtr;
+class GfxBody {
+    protected:
+    Vector3 pos; Quaternion quat; Vector3 scl;
+    GfxBodyPtr par;
+    std::vector<GfxBody*> children; // caution!
+    public: // HACK
+    Ogre::Entity *ent;
+    Ogre::SceneNode *node;
+    protected:
+    bool dead;
+    float fade;
+    GfxMaterialPtrs materials;
+    GfxPaintColour colours[4];
+
+    GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_);
+    GfxBody (const GfxBodyPtr &par_);
+
+    void notifyParentDead (void);
+    void notifyGainedChild (GfxBody *child);
+    void notifyLostChild (GfxBody *child);
+    void scanForCycle (GfxBody *leaf) const;
+
+    public:
+    static GfxBodyPtr make (const std::string &mesh_name, const GfxBodyPtr &par_=GfxBodyPtr(NULL))
+    { return GfxBodyPtr(new GfxBody(mesh_name, par_)); }
+
+    static GfxBodyPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
+    { return GfxBodyPtr(new GfxBody(par_)); }
+    
+    ~GfxBody ();
+
+    const GfxBodyPtr &getParent (void) const;
+    void setParent (const GfxBodyPtr &par_);
+
+    unsigned getBatches (void) const;
+    unsigned getBatchesWithChildren (void) const;
+
+    Vector3 transformPosition (const Vector3 &v);
+    Quaternion transformOrientation (const Quaternion &v);
+    Vector3 transformScale (const Vector3 &v);
+
+    const Vector3 &getLocalPosition (void);
+    void setLocalPosition (const Vector3 &p);
+    Vector3 getWorldPosition (void);
+
+    const Quaternion &getLocalOrientation (void);
+    void setLocalOrientation (const Quaternion &q);
+    Quaternion getWorldOrientation (void);
+
+    const Vector3 &getLocalScale (void);
+    void setLocalScale (const Vector3 &s);
+    Vector3 getWorldScale (void);
+
+    float getFade (void);
+    void setFade (float f, int transition);
+
+    bool getCastShadows (void);
+    void setCastShadows (bool v);
+
+    GfxPaintColour getPaintColour (int i);
+    void setPaintColour (int i, const GfxPaintColour &c);
+
+    unsigned getNumBones (void);
+    unsigned getBoneId (const std::string name);
+    const std::string &getBoneName (unsigned n);
+
+    bool getBoneManuallyControlled (unsigned n);
+    void setBoneManuallyControlled (unsigned n, bool v);
+    void setAllBonesManuallyControlled (bool v);
+
+    Vector3 getBoneInitialPosition (unsigned n);
+    Vector3 getBoneWorldPosition (unsigned n);
+    Vector3 getBoneLocalPosition (unsigned n);
+    Quaternion getBoneInitialOrientation (unsigned n);
+    Quaternion getBoneWorldOrientation (unsigned n);
+    Quaternion getBoneLocalOrientation (unsigned n);
+
+    void setBoneLocalPosition (unsigned n, const Vector3 &v);
+    void setBoneLocalOrientation (unsigned n, const Quaternion &v);
+    
+    void destroy (void);
+};
+
+
+GfxRGB gfx_sun_get_diffuse (void);
+void gfx_sun_set_diffuse (const GfxRGB &v);
+GfxRGB gfx_sun_get_specular (void);
+void gfx_sun_set_specular (const GfxRGB &v);
+Vector3 gfx_sun_get_direction (void);
+void gfx_sun_set_direction (const Vector3 &v);
+
+GfxRGB gfx_get_ambient (void);
+void gfx_set_ambient (const GfxRGB &v);
+
+GfxRGB gfx_fog_get_colour (void);
+void gfx_fog_set_colour (const GfxRGB &v);
+float gfx_fog_get_density (void);
+void gfx_fog_set_density (float v);
+
+Quaternion gfx_get_celestial_orientation (void);
+void gfx_set_celestial_orientation (const Quaternion &v);
 
 void gfx_screenshot (const std::string &filename);
 
@@ -244,10 +357,14 @@ static inline Ogre::Vector3 to_ogre (const Vector3 &v)
 { return Ogre::Vector3(v.x,v.y,v.z); }
 static inline Ogre::Quaternion to_ogre (const Quaternion &v)
 { return Ogre::Quaternion(v.w,v.x,v.y,v.z); }
+static inline Ogre::ColourValue to_ogre (const GfxRGB &v)
+{ return Ogre::ColourValue(v.r,v.g,v.b); }
 
 static inline Vector3 from_ogre (const Ogre::Vector3 &v)
 { return Vector3(v.x,v.y,v.z); }
 static inline Quaternion from_ogre (const Ogre::Quaternion &v)
 { return Quaternion(v.w,v.x,v.y,v.z); }
+static inline GfxRGB from_ogre (const Ogre::ColourValue &v)
+{ GfxRGB c = {v.r, v.g, v.b}; return c; }
 
 #endif 

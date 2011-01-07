@@ -36,6 +36,7 @@ COMMON_OBJ=\
         ldbglue.o \
         lua_util.o \
         lua_wrappers_core.o \
+        lua_wrappers_gfx.o \
         lua_wrappers_gpuprog.o \
         lua_wrappers_gritobj.o \
         lua_wrappers_hud.o \
@@ -252,6 +253,19 @@ lua_wrappers_core.o: ../src/lua_wrappers_render.h
 lua_wrappers_core.o: ../src/lua_wrappers_gritobj.h
 lua_wrappers_core.o: ../src/lua_wrappers_hud.h ../src/path_util.h
 lua_wrappers_core.o: ../src/lua_utf8.h
+lua_wrappers_gfx.o: ../src/PhysicsWorld.h ../src/CentralisedLog.h
+lua_wrappers_gfx.o: ../src/console_colour.h ../src/SharedPtr.h
+lua_wrappers_gfx.o: ../src/TColParser.h ../src/TColLexer
+lua_wrappers_gfx.o: ../src/TColLexer-token_ids ../src/math_util.h
+lua_wrappers_gfx.o: ../src/CollisionMesh.h ../src/LooseEnd.h
+lua_wrappers_gfx.o: ../src/sleep.h ../src/GritObject.h
+lua_wrappers_gfx.o: ../src/Streamer.h ../src/GritClass.h
+lua_wrappers_gfx.o: ../src/ExternalTable.h ../src/lua_util.h
+lua_wrappers_gfx.o: ../src/CacheFriendlyRangeSpaceSIMD.h
+lua_wrappers_gfx.o: ../src/SSEAllocator.h
+lua_wrappers_gfx.o: ../src/BackgroundMeshLoader.h ../src/Clutter.h
+lua_wrappers_gfx.o: ../src/lua_wrappers_primitives.h
+lua_wrappers_gfx.o: ../src/lua_wrappers_common.h
 lua_wrappers_gpuprog.o: ../src/lua_wrappers_gpuprog.h
 lua_wrappers_gpuprog.o: ../src/lua_wrappers_common.h ../src/lua_util.h
 lua_wrappers_gpuprog.o: ../src/CentralisedLog.h

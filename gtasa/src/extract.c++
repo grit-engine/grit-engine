@@ -911,25 +911,25 @@ void extract (const Config &cfg, std::ostream &out)
                 x = fr_wheel_lf->x; y = fr_wheel_lf->y; z = fr_wheel_lf->z + vdata->susp_upper;
                 lua_file << "        front_left = {\n";
                 lua_file << "          "<<all_wheels.str() << front_wheels.str() << "left=true;\n";
-                lua_file << "          attachPos=Vector3("<<x<<","<<y<<","<<z<<");\n";
+                lua_file << "          attachPos=vector3("<<x<<","<<y<<","<<z<<");\n";
                 lua_file << "        },\n";
 
                 x = fr_wheel_rf->x; y = fr_wheel_rf->y; z = fr_wheel_rf->z + vdata->susp_upper;
                 lua_file << "        front_right = {\n";
                 lua_file << "          "<<all_wheels.str() << front_wheels.str() << "\n";
-                lua_file << "          attachPos=Vector3("<<x<<","<<y<<","<<z<<");\n";
+                lua_file << "          attachPos=vector3("<<x<<","<<y<<","<<z<<");\n";
                 lua_file << "        },\n";
 
                 x = fr_wheel_lb->x; y = fr_wheel_lb->y; z = fr_wheel_lb->z + vdata->susp_upper;
                 lua_file << "        rear_left = {\n";
                 lua_file << "          "<<all_wheels.str() << rear_wheels.str() << "left=true;\n";
-                lua_file << "          attachPos=Vector3("<<x<<","<<y<<","<<z<<");\n";
+                lua_file << "          attachPos=vector3("<<x<<","<<y<<","<<z<<");\n";
                 lua_file << "        },\n";
 
                 x = fr_wheel_rb->x; y = fr_wheel_rb->y; z = fr_wheel_rb->z + vdata->susp_upper;
                 lua_file << "        rear_right = {\n";
                 lua_file << "          "<<all_wheels.str() << rear_wheels.str() << "\n";
-                lua_file << "          attachPos=Vector3("<<x<<","<<y<<","<<z<<");\n";
+                lua_file << "          attachPos=vector3("<<x<<","<<y<<","<<z<<");\n";
                 lua_file << "        },\n";
 
                 lua_file << "    },\n";
@@ -1014,9 +1014,9 @@ void extract (const Config &cfg, std::ostream &out)
                 if (!ids_written_out[inst.id]) continue;
                 if (inst.near_for==-1) {
                     map<<"streamer:addObject(\""<<inst.id<<"\","
-                       <<inst.x<<","<<inst.y<<","<<inst.z;
+                       <<"vector3("<<inst.x<<","<<inst.y<<","<<inst.z<<")";
                     if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
-                        map<<",{rot=Quat("
+                        map<<",{rot=quat("
                            <<inst.rw<<","<<inst.rx<<","
                            <<inst.ry<<","<<inst.rz<<")}";
                     }
@@ -1024,18 +1024,18 @@ void extract (const Config &cfg, std::ostream &out)
                 } else {
                     const Inst &far = insts[inst.near_for];
                     map<<"last=streamer:addObject(\""<<inst.id<<"\","
-                       <<inst.x<<","<<inst.y<<","<<inst.z;
+                       <<"vector3("<<inst.x<<","<<inst.y<<","<<inst.z<<")";
                     if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
-                        map<<",{rot=Quat("
+                        map<<",{rot=quat("
                            <<inst.rw<<","<<inst.rx<<","
                            <<inst.ry<<","<<inst.rz<<")}";
                     }
                     map<<")\n";
                     map<<"streamer:addObject(\""<<far.id<<"\","
-                       <<far.x<<","<<far.y<<","<<far.z;
+                       <<"vector3("<<far.x<<","<<far.y<<","<<far.z<<")";
                     map<<",{";
                     if (far.rx!=0 || far.ry!=0 || far.rz!=0) {
-                        map<<"rot=Quat("
+                        map<<"rot=quat("
                            <<far.rw<<","<<far.rx<<","
                            <<far.ry<<","<<far.rz<<"),";
                     }

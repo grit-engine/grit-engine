@@ -55,25 +55,15 @@ extern "C" {
 #define STACK_CHECK_(name) STACK_CHECK_N_(name,0)
 #define STACK_CHECK STACK_CHECK_N(0)
 
-#define GET_V3(n,index) \
-Vector3 n(check_float(L,index+0), \
-check_float(L,index+1), \
-check_float(L,index+2))
+static inline Vector3 check_v3 (lua_State *L, int idx)
+{ Vector3 v; lua_checkvector3(L, idx, &v.x, &v.y, &v.z); return v; } 
+static inline void push_v3 (lua_State *L, const Vector3 &v)
+{ lua_pushvector3(L, v.x, v.y, v.z); }
 
-#define GET_QUAT(n,index) \
-Quaternion n(check_float(L,index+0), \
-check_float(L,index+1), \
-check_float(L,index+2), \
-check_float(L,index+3))
-
-#define PUT_QUAT(n) do { \
-        Quaternion q = n; \
-lua_pushnumber(L,q.w); lua_pushnumber(L,q.x); lua_pushnumber(L,q.y); lua_pushnumber(L,q.z); \
-} while (false)
-
-#define PUT_V3(n) do { \
-        Vector3 v = n; lua_pushnumber(L,v.x); lua_pushnumber(L,v.y); lua_pushnumber(L,v.z); \
-} while (false)
+static inline Quaternion check_quat (lua_State *L, int idx)
+{ Quaternion v; lua_checkquat(L, idx, &v.w, &v.x, &v.y, &v.z); return v; } 
+static inline void push_quat (lua_State *L, const Quaternion &v)
+{ lua_pushquat(L, v.w, v.x, v.y, v.z); }
 
 void my_lua_error(lua_State *l, const std::string &msg) NORETURN;
 void my_lua_error(lua_State *l, const std::string &msg, unsigned long level) NORETURN;

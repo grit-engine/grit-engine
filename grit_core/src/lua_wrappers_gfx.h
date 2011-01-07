@@ -27,4 +27,34 @@
 MT_MACRO_DECLARE(gfxbody);
 void push_gfxbody (lua_State *L, const GfxBodyPtr &self);
 
+int global_gfx_render (lua_State *L);
+
+int global_gfx_screenshot (lua_State *L);
+
+int global_gfx_option (lua_State *L);
+
+int global_gfx_body_make (lua_State *L);
+
+
+int global_gfx_sun_get_diffuse (lua_State *L);
+int global_gfx_sun_set_diffuse (lua_State *L);
+
+int global_gfx_sun_get_specular (lua_State *L);
+int global_gfx_sun_set_specular (lua_State *L);
+
+int global_gfx_sun_get_direction (lua_State *L);
+int global_gfx_sun_set_direction (lua_State *L);
+
+int global_gfx_get_ambient (lua_State *L);
+int global_gfx_set_ambient (lua_State *L);
+
+int global_gfx_fog_get_colour (lua_State *L);
+int global_gfx_fog_set_colour (lua_State *L);
+
+int global_gfx_fog_get_density (lua_State *L);
+int global_gfx_fog_set_density (lua_State *L);
+
+int global_gfx_get_celestial_orientation (lua_State *L);
+int global_gfx_set_celestial_orientation (lua_State *L);
+
 // vim: shiftwidth=8:tabstop=8:expandtab

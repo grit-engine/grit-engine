@@ -171,6 +171,8 @@ typedef std::vector<Face> Faces;
 
 struct TriMesh {
         float margin;
+        Radian maxEdgeAngleThreshold;
+        float edgeDistanceThreshold;
         Vertexes vertexes;
         Faces faces;
 };
