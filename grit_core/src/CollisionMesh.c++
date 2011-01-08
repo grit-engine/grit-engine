@@ -174,7 +174,7 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
                 s = tm;
                 s->setMargin(0);
                 btTriangleInfoMap* tri_info_map = new btTriangleInfoMap();
-                tri_info_map->m_maxEdgeAngleThreshold = f.maxEdgeAngleThreshold.inRadians();
+                //tri_info_map->m_maxEdgeAngleThreshold = f.maxEdgeAngleThreshold.inRadians();
                 tri_info_map->m_edgeDistanceThreshold = f.edgeDistanceThreshold;
 
                 btGenerateInternalEdgeInfo(tm,tri_info_map);
