@@ -454,10 +454,8 @@ TRY_START
         Ogre::Quaternion orientation=Ogre::Quaternion::IDENTITY;
 
         switch (num_args) {
-                case 6: {
-                        GET_UD_MACRO(Ogre::Quaternion,q,6,QUAT_TAG);
-                        orientation = q;
-                }
+                case 6: 
+                orientation = to_ogre(check_quat(L,6));
                 case 5:
                 draw_first = check_bool(L,5);
                 case 4:

@@ -33,12 +33,4 @@ int spline_make(lua_State *L);
 MT_MACRO_DECLARE(plot);
 int plot_make(lua_State *L);
 
-#define VECTOR3_TAG "Grit/Vector3"
-MT_MACRO_DECLARE(vector3);
-int vector3_make(lua_State *L);
-
-#define QUAT_TAG "Grit/Quaternion"
-MT_MACRO_DECLARE(quat);
-int quat_make(lua_State *L);
-
 // vim: shiftwidth=8:tabstop=8:expandtab

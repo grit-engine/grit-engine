@@ -606,9 +606,9 @@ TRY_START
         } else if (key=="castShadows") {
                 lua_pushboolean(L,self.getCastShadows());
         } else if (key=="position") {
-                push(L,new Vector3(from_ogre(self.getPosition())),VECTOR3_TAG);
+                push_v3(L, from_ogre(self.getPosition()));
         } else if (key=="direction") {
-                push(L,new Vector3(from_ogre(self.getDirection())),VECTOR3_TAG);
+                push_v3(L, from_ogre(self.getDirection()));
         } else if (key=="getDiffuseColour") {
                 push_cfunction(L,light_get_diffuse_colour);
         } else if (key=="setDiffuseColour") {
@@ -650,11 +650,9 @@ TRY_START
                 bool b = check_bool(L,3);
                 self.setCastShadows(b);
         } else if (key=="position") {
-                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
-                self.setPosition(to_ogre(v));
+                self.setPosition(to_ogre(check_v3(L,3)));
         } else if (key=="direction") {
-                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
-                self.setDirection(to_ogre(v));
+                self.setDirection(to_ogre(check_v3(L,3)));
         } else if (key=="type") {
                 self.setType
                         (light_type_from_string(L,luaL_checkstring(L,3)));
@@ -1726,9 +1724,9 @@ TRY_START
         check_args(L,5);
         GET_UD_MACRO(Ogre::InstancedGeometry,self,1,INSTGEO_TAG);
         GET_UD_MACRO(Ogre::Entity,ent,2,ENTITY_TAG);
-        GET_UD_MACRO(Vector3,pos,3,VECTOR3_TAG);
-        GET_UD_MACRO(Quaternion,q,4,QUAT_TAG);
-        GET_UD_MACRO(Vector3,scale,5,VECTOR3_TAG);
+        Vector3 pos = check_v3(L,3);
+        Quaternion q = check_quat(L,4);
+        Vector3 scale = check_v3(L,3);
 
         self.addEntity(&ent,to_ogre(pos),to_ogre(q),to_ogre(scale));
         return 0;
@@ -1782,10 +1780,9 @@ TRY_START
         } else if (key=="squaredRenderingDistance") {
                 lua_pushnumber(L,self.getSquaredRenderingDistance());
         } else if (key=="regionDimensions") {
-                push(L,new Vector3(from_ogre(self.getBatchInstanceDimensions())), VECTOR3_TAG);
+                push_v3(L, from_ogre(self.getBatchInstanceDimensions()));
         } else if (key=="origin") {
-                push(L,new Vector3(from_ogre(self.getOrigin())),VECTOR3_TAG);
-
+                push_v3(L, from_ogre(self.getOrigin()));
         } else if (key=="addEntity") {
                 push_cfunction(L,instgeo_add_entity);
         } else if (key=="name") {
@@ -1810,11 +1807,9 @@ TRY_START
                 lua_Number n = luaL_checknumber(L,3);
                 self.setRenderingDistance(n);
         } else if (key=="regionDimensions") {
-                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
-                self.setBatchInstanceDimensions(to_ogre(v));
+                self.setBatchInstanceDimensions(to_ogre(check_v3(L,3)));
         } else if (key=="origin") {
-                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
-                self.setOrigin(to_ogre(v));
+                self.setOrigin(to_ogre(check_v3(L,3)));
         } else {
                 std::string s("Not a valid Instanced Geometry member: ");
                 my_lua_error(L,s+key);
@@ -1874,9 +1869,9 @@ TRY_START
         check_args(L,5);
         GET_UD_MACRO(Ogre::StaticGeometry,self,1,STATGEO_TAG);
         GET_UD_MACRO(Ogre::Entity,ent,2,ENTITY_TAG);
-        GET_UD_MACRO(Vector3,pos,3,VECTOR3_TAG);
-        GET_UD_MACRO(Quaternion,q,4,QUAT_TAG);
-        GET_UD_MACRO(Vector3,scale,5,VECTOR3_TAG);
+        Vector3 pos = check_v3(L,3);
+        Quaternion q = check_quat(L,3);
+        Vector3 scale = check_v3(L,5);
 
         self.addEntity(&ent,to_ogre(pos),to_ogre(q),to_ogre(scale));
         return 0;
@@ -1930,10 +1925,9 @@ TRY_START
         } else if (key=="squaredRenderingDistance") {
                 lua_pushnumber(L,self.getSquaredRenderingDistance());
         } else if (key=="regionDimensions") {
-                push(L,new Vector3(from_ogre(self.getRegionDimensions())), VECTOR3_TAG);
+                push_v3(L, from_ogre(self.getRegionDimensions()));
         } else if (key=="origin") {
-                push(L,new Vector3(from_ogre(self.getOrigin())),VECTOR3_TAG);
-
+                push_v3(L, from_ogre(self.getOrigin()));
         } else if (key=="addEntity") {
                 push_cfunction(L,statgeo_add_entity);
         } else if (key=="name") {
@@ -1958,10 +1952,10 @@ TRY_START
                 lua_Number n = luaL_checknumber(L,3);
                 self.setRenderingDistance(n);
         } else if (key=="regionDimensions") {
-                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
+                Vector3 v = check_v3(L,3);
                 self.setRegionDimensions(to_ogre(v));
         } else if (key=="origin") {
-                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
+                Vector3 v = check_v3(L,3);
                 self.setOrigin(to_ogre(v));
         } else {
                 std::string s("Not a valid Static Geometry member: ");
@@ -2121,13 +2115,13 @@ TRY_START
         GET_UD_MACRO(Ogre::Camera,self,1,CAM_TAG);
         std::string key  = luaL_checkstring(L,2);
         if (key=="position") {
-                push(L,new Vector3(from_ogre(self.getPosition())),VECTOR3_TAG);
+                push_v3(L, from_ogre(self.getPosition()));
         } else if (key=="orientation") {
-                push(L,new Quaternion(from_ogre(self.getOrientation())),QUAT_TAG);
+                push_quat(L, from_ogre(self.getOrientation()));
         } else if (key=="derivedPosition") {
-                push(L,new Vector3(from_ogre(self.getDerivedPosition())), VECTOR3_TAG);
+                push_v3(L, from_ogre(self.getDerivedPosition()));
         } else if (key=="derivedOrientation") {
-                push(L,new Quaternion(from_ogre(self.getDerivedOrientation())), QUAT_TAG);
+                push_quat(L, from_ogre(self.getDerivedOrientation()));
         } else if (key=="polygonMode") {
                 std::string s = polygon_mode_to_string(L,self.getPolygonMode());
                 lua_pushstring(L,s.c_str());
@@ -2175,10 +2169,10 @@ TRY_START
         GET_UD_MACRO(Ogre::Camera,self,1,CAM_TAG);
         std::string key  = luaL_checkstring(L,2);
         if (key=="position") {
-                GET_UD_MACRO(Vector3,v,3,VECTOR3_TAG);
+                Vector3 v = check_v3(L,3);
                 self.setPosition(to_ogre(v));
         } else if (key=="orientation") {
-                GET_UD_MACRO(Quaternion,q,3,QUAT_TAG);
+                Quaternion q = check_quat(L,3);
                 self.setOrientation(to_ogre(q));
         } else if (key=="polygonMode") {
                 std::string s = luaL_checkstring(L,3);

@@ -164,31 +164,31 @@ bool LuaParticleData::call (lua_State *L,
                 } else {
                         switch (nresults) {
                                 case 13:
-                                dz = luaL_checknumber(L,stack_base+13);
+                                dz = check_float(L,stack_base+13);
                                 case 12:
-                                dy = luaL_checknumber(L,stack_base+12);
+                                dy = check_float(L,stack_base+12);
                                 case 11:
-                                dx = luaL_checknumber(L,stack_base+11);
+                                dx = check_float(L,stack_base+11);
                                 case 10:
-                                a = luaL_checknumber(L,stack_base+10);
+                                a = check_float(L,stack_base+10);
                                 case 9:
-                                b = luaL_checknumber(L,stack_base+9);
+                                b = check_float(L,stack_base+9);
                                 case 8:
-                                g = luaL_checknumber(L,stack_base+8);
+                                g = check_float(L,stack_base+8);
                                 case 7:
-                                r = luaL_checknumber(L,stack_base+7);
+                                r = check_float(L,stack_base+7);
                                 case 6:
-                                h = luaL_checknumber(L,stack_base+6);
+                                h = check_float(L,stack_base+6);
                                 case 5:
-                                w = luaL_checknumber(L,stack_base+5);
+                                w = check_float(L,stack_base+5);
                                 case 4:
-                                rot = luaL_checknumber(L,stack_base+4);
+                                rot = check_float(L,stack_base+4);
                                 case 3:
-                                z = luaL_checknumber(L,stack_base+3);
+                                z = check_float(L,stack_base+3);
                                 case 2:
-                                y = luaL_checknumber(L,stack_base+2);
+                                y = check_float(L,stack_base+2);
                                 case 1:
-                                x = luaL_checknumber(L,stack_base+1);
+                                x = check_float(L,stack_base+1);
                                 case 0:;
                         }
                 }
