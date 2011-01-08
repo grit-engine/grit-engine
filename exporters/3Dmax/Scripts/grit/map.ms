@@ -171,10 +171,10 @@ Rollout GritRolloutPlace "Placement" -- {{{
 			(
 				if onamexp.triState == 1 then
 				(
-					format ", rot=Vector3(%,%,%)" RX RY RZ to:listener
+					format ", rot=euler(%,%,%)" RX RY RZ to:listener
 				)
 				else
-				format "rot=Vector3(%,%,%)" RX RY RZ to:listener
+				format "rot=euler(%,%,%)" RX RY RZ to:listener
 			)
 			format "}\n" to:listener
 		)
@@ -210,10 +210,10 @@ Rollout GritRolloutPlace "Placement" -- {{{
 				(
 					if onamexp.triState == 1 then
 					(
-						format ", rot=Vector3(%,%,%)" RX RY RZ to:objfl
+						format ", rot=euler(%,%,%)" RX RY RZ to:objfl
 					)
 					else
-					format "rot=Vector3(%,%,%)" RX RY RZ to:objfl
+					format "rot=euler(%,%,%)" RX RY RZ to:objfl
 				)
 				PBOEXP.value = (PBOEXP.value + PBONMB)
 				format "}\n" to:objfl
@@ -249,10 +249,10 @@ Rollout GritRolloutPlace "Placement" -- {{{
 			(
 				if onamexp.triState == 1 then
 				(
-					format ", rot=Vector3(%,%,%)" RX RY RZ to:listener
+					format ", rot=euler(%,%,%)" RX RY RZ to:listener
 				)
 				else
-				format "rot=Vector3(%,%,%)" RX RY RZ to:listener
+				format "rot=euler(%,%,%)" RX RY RZ to:listener
 			)
 			format "}\n" to:listener
 			PBOEXP.value = (PBOEXP.value + PBONMB)
