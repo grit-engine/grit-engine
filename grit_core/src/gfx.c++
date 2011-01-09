@@ -147,7 +147,7 @@ public:
 
         // actually we need only the z and w rows but this is just one renderable per frame so
         // not a big deal
-        Ogre::Matrix4 view_proj = cam->getProjectionMatrixRS() * cam->getViewMatrix();
+        Ogre::Matrix4 view_proj = cam->getProjectionMatrix() * cam->getViewMatrix();
         try_set_named_constant(fp, "view_proj", view_proj);
     }
 };

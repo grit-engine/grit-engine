@@ -2029,6 +2029,21 @@ TRY_START
 TRY_END
 }
 
+static int cam_projection_matrix_rs (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(Ogre::Camera,self,1,CAM_TAG);
+        const Ogre::Matrix4 &mat = self.getProjectionMatrixRS();
+        for (int row=0 ; row<4 ; ++row) {
+                for (int col=0 ; col<4 ; ++col) {
+                        lua_pushnumber(L,mat[row][col]);
+                }
+        }
+        return 16;
+TRY_END
+}
+
 static int cam_view_projection_matrix (lua_State *L)
 {
 TRY_START
@@ -2145,6 +2160,8 @@ TRY_START
                 push_cfunction(L,cam_view_matrix);
         } else if (key=="projectionMatrix") {
                 push_cfunction(L,cam_projection_matrix);
+        } else if (key=="projectionMatrixRS") {
+                push_cfunction(L,cam_projection_matrix_rs);
         } else if (key=="viewProjectionMatrix") {
                 push_cfunction(L,cam_view_projection_matrix);
         } else if (key=="inverseViewMatrix") {
