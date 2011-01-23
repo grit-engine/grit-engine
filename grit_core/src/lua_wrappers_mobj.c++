@@ -1118,7 +1118,7 @@ TRY_END
 static int entity_get_render_queue_group (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
+        check_args(L,2);
         GET_UD_MACRO(Ogre::Entity,self,1,ENTITY_TAG);
         unsigned n = check_t<unsigned>(L,2);
         Ogre::SubEntity *se = self.getSubEntity(n);
