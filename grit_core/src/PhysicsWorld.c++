@@ -365,6 +365,30 @@ int PhysicsWorld::pump (lua_State *L, float elapsed)
                 world->step();
                 needsGraphicsUpdate = true;
                 extrapolate = elapsed;
+
+                unsigned num_manifolds = world->getDispatcher()->getNumManifolds();
+                for (unsigned i=0 ; i<num_manifolds; ++i) {
+                        btPersistentManifold* manifold =
+                                world->getDispatcher()->getManifoldByIndexInternal(i);
+                        btCollisionObject
+                                *ob_a = static_cast<btCollisionObject*>(manifold->getBody0()),
+                                *ob_b = static_cast<btCollisionObject*>(manifold->getBody1());
+   
+                        unsigned num_contacts = manifold->getNumContacts();
+                        for (unsigned j=0 ; j<num_contacts ; ++j) {
+                                btManifoldPoint &p = manifold->getContactPoint(j);
+                                if (p.getDistance() < 0.0f) {
+
+                                        const btVector3& ptA = p.m_localPointA;
+                                        const btVector3& ptB = p.m_localPointB;
+                                        const btVector3& normalOnB = p.m_normalWorldOnB;
+                                        float distance = p.getDistance();
+                                        float impulse = p.getAppliedImpulse();
+                                        float lifetime = p.getLifeTime();
+                                }
+                        }
+                }
+
                 std::vector<RigidBody*> nan_bodies;
                 for (int i=0 ; i<world->getNumCollisionObjects() ; ++i) {
 

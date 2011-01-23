@@ -61,31 +61,23 @@ TRY_START
         GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
         int i = check_int(L,2,0,3);
         GfxPaintColour col = self->getPaintColour(i);
-        lua_pushnumber(L, col.diff.r);
-        lua_pushnumber(L, col.diff.g);
-        lua_pushnumber(L, col.diff.b);
+        push_v3(L, col.diff);
         lua_pushnumber(L, col.met);
-        lua_pushnumber(L, col.spec.r);
-        lua_pushnumber(L, col.spec.g);
-        lua_pushnumber(L, col.spec.b);
-        return 7;
+        push_v3(L, col.spec);
+        return 3;
 TRY_END
 }
 
 static int gfxbody_set_paint_colour (lua_State *L)
 {
 TRY_START
-        check_args(L,9);
+        check_args(L,5);
         GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
         int i = check_int(L,2,0,3);
         GfxPaintColour col;
-        col.diff.r = luaL_checknumber(L,3);
-        col.diff.g = luaL_checknumber(L,4);
-        col.diff.b = luaL_checknumber(L,5);
-        col.met    = luaL_checknumber(L,6);
-        col.spec.r = luaL_checknumber(L,7);
-        col.spec.g = luaL_checknumber(L,8);
-        col.spec.b = luaL_checknumber(L,9);
+        col.diff = check_v3(L,3);
+        col.met    = luaL_checknumber(L,4);
+        col.spec = check_v3(L,5);
         self->setPaintColour(i, col);
         return 0;
 TRY_END
@@ -319,6 +311,10 @@ TRY_START
                 lua_pushnumber(L, self->getBatches());
         } else if (!::strcmp(key,"batchesWithChildren")) {
                 lua_pushnumber(L, self->getBatchesWithChildren());
+        } else if (!::strcmp(key,"triangles")) {
+                lua_pushnumber(L, self->getTriangles());
+        } else if (!::strcmp(key,"trianglesWithChildren")) {
+                lua_pushnumber(L, self->getTrianglesWithChildren());
         } else if (!::strcmp(key,"nodeHACK")) {
                 push_node(L, self->node);
         } else if (!::strcmp(key,"entHACK")) {
@@ -402,8 +398,12 @@ TRY_START
                 Vector3 v = check_v3(L,3);
                 self->setLocalScale(v);
         } else if (!::strcmp(key,"parent")) {
-                GET_UD_MACRO(GfxBodyPtr,par,3,GFXBODY_TAG);
-                self->setParent(par);
+                if (lua_isnil(L,3)) {
+                        self->setParent(GfxBodyPtr(NULL));
+                } else {
+                        GET_UD_MACRO(GfxBodyPtr,par,3,GFXBODY_TAG);
+                        self->setParent(par);
+                }
         } else if (!::strcmp(key,"castShadows")) {
                 bool v = check_bool(L,3);
                 self->setCastShadows(v);
@@ -417,6 +417,139 @@ TRY_END
 EQ_MACRO(GfxBodyPtr,gfxbody,GFXBODY_TAG)
 
 MT_MACRO_NEWINDEX(gfxbody);
+
+//}}}
+
+
+// GFXLIGHT ============================================================== {{{
+
+void push_gfxlight (lua_State *L, const GfxLightPtr &self)
+{
+        if (self.isNull())
+                lua_pushnil(L);
+        else
+                push(L,new GfxLightPtr(self),GFXLIGHT_TAG);
+}
+
+GC_MACRO(GfxLightPtr,gfxlight,GFXLIGHT_TAG)
+
+static int gfxlight_destroy (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(GfxLightPtr,self,1,GFXLIGHT_TAG);
+        self->destroy();
+        return 0;
+TRY_END
+}
+
+
+
+TOSTRING_SMART_PTR_MACRO (gfxlight,GfxLightPtr,GFXLIGHT_TAG)
+
+
+static int gfxlight_index (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        GET_UD_MACRO(GfxLightPtr,self,1,GFXLIGHT_TAG);
+        const char *key = luaL_checkstring(L,2);
+        if (!::strcmp(key,"localPosition")) {
+                push_v3(L, self->getLocalPosition());
+        } else if (!::strcmp(key,"worldPosition")) {
+                push_v3(L, self->getWorldPosition());
+        } else if (!::strcmp(key,"localOrientation")) {
+                push_quat(L, self->getLocalOrientation());
+        } else if (!::strcmp(key,"worldOrientation")) {
+                push_quat(L, self->getWorldOrientation());
+        } else if (!::strcmp(key,"localScale")) {
+                push_v3(L, self->getLocalScale());
+        } else if (!::strcmp(key,"worldScale")) {
+                push_v3(L, self->getWorldScale());
+        } else if (!::strcmp(key,"diffuseColour")) {
+                push_v3(L, self->getDiffuseColour());
+        } else if (!::strcmp(key,"specularColour")) {
+                push_v3(L, self->getSpecularColour());
+        } else if (!::strcmp(key,"aim")) {
+                push_v3(L, self->getAim());
+        } else if (!::strcmp(key,"range")) {
+                lua_pushnumber(L, self->getRange());
+        } else if (!::strcmp(key,"innerAngle")) {
+                lua_pushnumber(L, self->getInnerAngle().inDegrees());
+        } else if (!::strcmp(key,"outerAngle")) {
+                lua_pushnumber(L, self->getOuterAngle().inDegrees());
+        } else if (!::strcmp(key,"enabled")) {
+                lua_pushboolean(L, self->isEnabled());
+        } else if (!::strcmp(key,"parent")) {
+                push_gfxbody(L, self->getParent());
+        } else if (!::strcmp(key,"nodeHACK")) {
+                push_node(L, self->node);
+        } else if (!::strcmp(key,"lightHACK")) {
+                push_light(L, self->light);
+
+        } else if (!::strcmp(key,"destroy")) {
+                push_cfunction(L,gfxlight_destroy);
+        } else {
+                my_lua_error(L,"Not a readable GfxLight member: "+std::string(key));
+        }
+        return 1;
+TRY_END
+}
+
+
+static int gfxlight_newindex (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(GfxLightPtr,self,1,GFXLIGHT_TAG);
+        const char *key = luaL_checkstring(L,2);
+        if (!::strcmp(key,"localPosition")) {
+                Vector3 v = check_v3(L,3);
+                self->setLocalPosition(v);
+        } else if (!::strcmp(key,"localOrientation")) {
+                Quaternion v = check_quat(L,3);
+                self->setLocalOrientation(v);
+        } else if (!::strcmp(key,"localScale")) {
+                Vector3 v = check_v3(L,3);
+                self->setLocalScale(v);
+        } else if (!::strcmp(key,"diffuseColour")) {
+                Vector3 v = check_v3(L,3);
+                self->setDiffuseColour(v);
+        } else if (!::strcmp(key,"specularColour")) {
+                Vector3 v = check_v3(L,3);
+                self->setSpecularColour(v);
+        } else if (!::strcmp(key,"aim")) {
+                Vector3 v = check_v3(L,3);
+                self->setAim(v);
+        } else if (!::strcmp(key,"range")) {
+                float v = check_float(L,3);
+                self->setRange(v);
+        } else if (!::strcmp(key,"innerAngle")) {
+                float v = check_float(L,3);
+                self->setInnerAngle(Degree(v));
+        } else if (!::strcmp(key,"outerAngle")) {
+                float v = check_float(L,3);
+                self->setOuterAngle(Degree(v));
+        } else if (!::strcmp(key,"enabled")) {
+                bool v = check_bool(L,3);
+                self->setEnabled(v);
+        } else if (!::strcmp(key,"parent")) {
+                if (lua_isnil(L,3)) {
+                        self->setParent(GfxBodyPtr(NULL));
+                } else {
+                        GET_UD_MACRO(GfxBodyPtr,par,3,GFXBODY_TAG);
+                        self->setParent(par);
+                }
+        } else {
+               my_lua_error(L,"Not a writeable GfxLight member: "+std::string(key));
+        }
+        return 0;
+TRY_END
+}
+
+EQ_MACRO(GfxLightPtr,gfxlight,GFXLIGHT_TAG)
+
+MT_MACRO_NEWINDEX(gfxlight);
 
 //}}}
 
@@ -495,26 +628,29 @@ TRY_START
 TRY_END
 }
 
+int global_gfx_light_make (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        push_gfxlight(L, GfxLight::make());
+        return 1;
+TRY_END
+}
+
 int global_gfx_sun_get_diffuse (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        GfxRGB c = gfx_sun_get_diffuse();
-        lua_pushnumber(L, c.r);
-        lua_pushnumber(L, c.g);
-        lua_pushnumber(L, c.b);
-        return 3;
+        push_v3(L, gfx_sun_get_diffuse());
+        return 1;
 TRY_END
 }
 
 int global_gfx_sun_set_diffuse (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
-        GfxRGB c;
-        c.r = luaL_checknumber(L,1);
-        c.g = luaL_checknumber(L,2);
-        c.b = luaL_checknumber(L,3);
+        check_args(L,1);
+        Vector3 c = check_v3(L,1);
         gfx_sun_set_diffuse(c);
         return 0;
 TRY_END
@@ -524,22 +660,16 @@ int global_gfx_sun_get_specular (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        GfxRGB c = gfx_sun_get_specular();
-        lua_pushnumber(L, c.r);
-        lua_pushnumber(L, c.g);
-        lua_pushnumber(L, c.b);
-        return 3;
+        push_v3(L, gfx_sun_get_specular());
+        return 1;
 TRY_END
 }
 
 int global_gfx_sun_set_specular (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
-        GfxRGB c;
-        c.r = luaL_checknumber(L,1);
-        c.g = luaL_checknumber(L,2);
-        c.b = luaL_checknumber(L,3);
+        check_args(L,1);
+        Vector3 c = check_v3(L,1);
         gfx_sun_set_specular(c);
         return 0;
 TRY_END
@@ -549,8 +679,7 @@ int global_gfx_sun_get_direction (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        Vector3 d = gfx_sun_get_direction();
-        push_v3(L, d);
+        push_v3(L, gfx_sun_get_direction());
         return 1;
 TRY_END
 }
@@ -566,27 +695,20 @@ TRY_END
 }
 
 
-int global_gfx_get_ambient (lua_State *L)
+int global_gfx_get_scene_ambient (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        GfxRGB c = gfx_get_ambient();
-        lua_pushnumber(L, c.r);
-        lua_pushnumber(L, c.g);
-        lua_pushnumber(L, c.b);
-        return 3;
+        push_v3(L, gfx_get_scene_ambient());
+        return 1;
 TRY_END
 }
 
-int global_gfx_set_ambient (lua_State *L)
+int global_gfx_set_scene_ambient (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
-        GfxRGB c;
-        c.r = luaL_checknumber(L,1);
-        c.g = luaL_checknumber(L,2);
-        c.b = luaL_checknumber(L,3);
-        gfx_set_ambient(c);
+        check_args(L,1);
+        gfx_set_scene_ambient(check_v3(L,1));
         return 0;
 TRY_END
 }
@@ -596,23 +718,16 @@ int global_gfx_fog_get_colour (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        GfxRGB c = gfx_fog_get_colour();
-        lua_pushnumber(L, c.r);
-        lua_pushnumber(L, c.g);
-        lua_pushnumber(L, c.b);
-        return 3;
+        push_v3(L, gfx_fog_get_colour());
+        return 1;
 TRY_END
 }
 
 int global_gfx_fog_set_colour (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
-        GfxRGB c;
-        c.r = luaL_checknumber(L,1);
-        c.g = luaL_checknumber(L,2);
-        c.b = luaL_checknumber(L,3);
-        gfx_fog_set_colour(c);
+        check_args(L,1);
+        gfx_fog_set_colour(check_v3(L,1));
         return 0;
 TRY_END
 }

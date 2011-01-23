@@ -22,14 +22,10 @@
 #if 0
 some way of distinguishing sky from everything else
 
-scnmgr
-entity
 manobj
-light
 clutter
 rclutter
 psys
-viewport
 
 mat
 tex
@@ -42,28 +38,27 @@ rwin
 
 Script or user customisable graphical elements within a typical grit game:
 
-Entities, Entity hierarchy, Bone hierarchy
 Clutter
 Lights (high level lights with coronas etc)
 Particles
 Material definitions
-Sky attributes
-Ambient lighting
-Shadow config
 Shaders?
-screenshot
 
 no need to touch meshes/textures except to reload -- probably will have reload_mesh(string) or similar
 
 #endif
 
+#include "SharedPtr.h"
+
 struct GfxCallback;
 class GfxBody;
+typedef SharedPtr<GfxBody> GfxBodyPtr;
+class GfxLight;
+typedef SharedPtr<GfxLight> GfxLightPtr;
 class GfxMaterial;
 struct GfxLastRenderStats;
 struct GfxLastFrameStats;
 struct GfxRunningFrameStats;
-struct GfxRGB;
 struct GfxPaintColour;
 
 
@@ -74,7 +69,6 @@ struct GfxPaintColour;
 
 #include "HUD.h"
 #include "math_util.h"
-#include "SharedPtr.h"
 
 struct GfxCallback {
     virtual ~GfxCallback (void) { }
@@ -192,52 +186,33 @@ GfxMaterialPtr gfx_material_get (const std::string &name);
 
 bool gfx_material_has (const std::string &name);
 
-struct GfxRGB {
-    float r, g, b;
-};
-
 struct GfxPaintColour {
-    GfxRGB diff, spec;
+    Vector3 diff, spec;
     float met; // metallic paint (0 -> 1)
 };
 
-typedef SharedPtr<GfxBody> GfxBodyPtr;
-class GfxBody {
+
+// this should rarely need to be used by users of this API
+class GfxNode {
     protected:
+    static const std::string className;
     Vector3 pos; Quaternion quat; Vector3 scl;
     GfxBodyPtr par;
-    std::vector<GfxBody*> children; // caution!
     public: // HACK
-    Ogre::Entity *ent;
     Ogre::SceneNode *node;
     protected:
     bool dead;
-    float fade;
-    GfxMaterialPtrs materials;
-    GfxPaintColour colours[4];
 
-    GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_);
-    GfxBody (const GfxBodyPtr &par_);
+    GfxNode (const GfxBodyPtr &par_);
 
     void notifyParentDead (void);
-    void notifyGainedChild (GfxBody *child);
-    void notifyLostChild (GfxBody *child);
-    void scanForCycle (GfxBody *leaf) const;
+    void ensureNotChildOf (GfxBody *leaf) const;
 
     public:
-    static GfxBodyPtr make (const std::string &mesh_name, const GfxBodyPtr &par_=GfxBodyPtr(NULL))
-    { return GfxBodyPtr(new GfxBody(mesh_name, par_)); }
-
-    static GfxBodyPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
-    { return GfxBodyPtr(new GfxBody(par_)); }
-    
-    ~GfxBody ();
+    virtual ~GfxNode ();
 
     const GfxBodyPtr &getParent (void) const;
-    void setParent (const GfxBodyPtr &par_);
-
-    unsigned getBatches (void) const;
-    unsigned getBatchesWithChildren (void) const;
+    virtual void setParent (const GfxBodyPtr &par_);
 
     Vector3 transformPosition (const Vector3 &v);
     Quaternion transformOrientation (const Quaternion &v);
@@ -254,6 +229,44 @@ class GfxBody {
     const Vector3 &getLocalScale (void);
     void setLocalScale (const Vector3 &s);
     Vector3 getWorldScale (void);
+
+    virtual void destroy (void);
+
+    friend class GfxBody; // otherwise it cannot access our protected stuff
+};
+
+class GfxBody : public GfxNode {
+    protected:
+    static const std::string className;
+    std::vector<GfxNode*> children; // caution!
+    public: // HACK
+    Ogre::Entity *ent;
+    protected:
+    float fade;
+    GfxMaterialPtrs materials;
+    GfxPaintColour colours[4];
+
+    GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_);
+    GfxBody (const GfxBodyPtr &par_);
+
+    public:
+    static GfxBodyPtr make (const std::string &mesh_name, const GfxBodyPtr &par_=GfxBodyPtr(NULL))
+    { return GfxBodyPtr(new GfxBody(mesh_name, par_)); }
+
+    static GfxBodyPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
+    { return GfxBodyPtr(new GfxBody(par_)); }
+    
+    ~GfxBody ();
+
+    void notifyLostChild (GfxNode *child);
+    void notifyGainedChild (GfxNode *child);
+    void setParent (const GfxBodyPtr &par_);
+
+    unsigned getBatches (void) const;
+    unsigned getBatchesWithChildren (void) const;
+
+    unsigned getTriangles (void) const;
+    unsigned getTrianglesWithChildren (void) const;
 
     float getFade (void);
     void setFade (float f, int transition);
@@ -285,19 +298,54 @@ class GfxBody {
     void destroy (void);
 };
 
+class GfxLight : public GfxNode {
+    protected:
+    static const std::string className;
+    public: // HACK
+    Ogre::Light *light;
+    protected:
 
-GfxRGB gfx_sun_get_diffuse (void);
-void gfx_sun_set_diffuse (const GfxRGB &v);
-GfxRGB gfx_sun_get_specular (void);
-void gfx_sun_set_specular (const GfxRGB &v);
+    GfxLight (const GfxBodyPtr &par_);
+
+
+    public:
+    static GfxLightPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
+    { return GfxLightPtr(new GfxLight(par_)); }
+    
+    ~GfxLight ();
+
+    Vector3 getDiffuseColour (void);
+    Vector3 getSpecularColour (void);
+    void setDiffuseColour (const Vector3 &v);
+    void setSpecularColour (const Vector3 &v);
+    Vector3 getAim (void);
+    void setAim (const Vector3 &v);
+    float getRange (void);
+    void setRange (float v);
+    Degree getInnerAngle (void);
+    void setInnerAngle (Degree v);
+    Degree getOuterAngle (void);
+    void setOuterAngle (Degree v);
+
+    bool isEnabled (void);
+    void setEnabled (bool v);
+
+    void destroy (void);
+};
+    
+
+Vector3 gfx_sun_get_diffuse (void);
+void gfx_sun_set_diffuse (const Vector3 &v);
+Vector3 gfx_sun_get_specular (void);
+void gfx_sun_set_specular (const Vector3 &v);
 Vector3 gfx_sun_get_direction (void);
 void gfx_sun_set_direction (const Vector3 &v);
 
-GfxRGB gfx_get_ambient (void);
-void gfx_set_ambient (const GfxRGB &v);
+Vector3 gfx_get_scene_ambient (void);
+void gfx_set_scene_ambient (const Vector3 &v);
 
-GfxRGB gfx_fog_get_colour (void);
-void gfx_fog_set_colour (const GfxRGB &v);
+Vector3 gfx_fog_get_colour (void);
+void gfx_fog_set_colour (const Vector3 &v);
 float gfx_fog_get_density (void);
 void gfx_fog_set_density (float v);
 
@@ -357,14 +405,22 @@ static inline Ogre::Vector3 to_ogre (const Vector3 &v)
 { return Ogre::Vector3(v.x,v.y,v.z); }
 static inline Ogre::Quaternion to_ogre (const Quaternion &v)
 { return Ogre::Quaternion(v.w,v.x,v.y,v.z); }
-static inline Ogre::ColourValue to_ogre (const GfxRGB &v)
-{ return Ogre::ColourValue(v.r,v.g,v.b); }
+static inline Ogre::ColourValue to_ogre_cv (const Vector3 &v)
+{ return Ogre::ColourValue(v.x,v.y,v.z); }
+static inline Ogre::Degree to_ogre (const Degree &v)
+{ return Ogre::Degree(v.inDegrees()); }
+static inline Ogre::Radian to_ogre (const Radian &v)
+{ return Ogre::Degree(v.inRadians()); }
 
 static inline Vector3 from_ogre (const Ogre::Vector3 &v)
 { return Vector3(v.x,v.y,v.z); }
 static inline Quaternion from_ogre (const Ogre::Quaternion &v)
 { return Quaternion(v.w,v.x,v.y,v.z); }
-static inline GfxRGB from_ogre (const Ogre::ColourValue &v)
-{ GfxRGB c = {v.r, v.g, v.b}; return c; }
+static inline Vector3 from_ogre_cv (const Ogre::ColourValue &v)
+{ return Vector3(v.r, v.g, v.b); }
+static inline Degree from_ogre (const Ogre::Degree &v)
+{ return Degree(v.valueDegrees()); }
+static inline Radian from_ogre (const Ogre::Radian &v)
+{ return Degree(v.valueRadians()); }
 
 #endif 

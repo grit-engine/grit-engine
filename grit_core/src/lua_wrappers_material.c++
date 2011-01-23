@@ -949,23 +949,63 @@ TRY_START
 TRY_END
 }
 
-static int mat_get_is_shadow (lua_State *L)
+static const char *
+content_type_to_string (lua_State *L, Ogre::TextureUnitState::ContentType ct)
+{
+        switch (ct) {
+                case Ogre::TextureUnitState::CONTENT_NAMED: return "NAMED";
+                case Ogre::TextureUnitState::CONTENT_SHADOW: return "SHADOW";
+                case Ogre::TextureUnitState::CONTENT_COMPOSITOR: return "COMPOSITOR";
+                default:
+                my_lua_error(L,"Unrecognised content type.");
+                return "never happens";
+        }
+}
+static Ogre::TextureUnitState::ContentType
+content_type_from_string (lua_State *L, const std::string& t)
+{
+        if (t=="NAMED") {
+                return Ogre::TextureUnitState::CONTENT_NAMED;
+        } else if (t=="SHADOW") {
+                return Ogre::TextureUnitState::CONTENT_SHADOW;
+        } else if (t=="COMPOSITOR") {
+                return Ogre::TextureUnitState::CONTENT_COMPOSITOR;
+        } else {
+                my_lua_error(L,"Unrecognised content type: "+t);
+                return Ogre::TextureUnitState::CONTENT_NAMED; //never happens
+        }
+}
+
+
+static int mat_get_content_type (lua_State *L)
 {
 TRY_START
         check_args(L,4);
         Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
-        lua_pushboolean(L,tex->getContentType()==Ogre::TextureUnitState::CONTENT_SHADOW);
+        lua_pushstring(L,content_type_to_string(L,tex->getContentType()));
         return 1;
 TRY_END
 }
-static int mat_set_is_shadow (lua_State *L)
+static int mat_set_content_type (lua_State *L)
 {
 TRY_START
         check_args(L,4+1);
         Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
-        bool b = check_bool(L,5);
-        tex->setContentType(b ?  Ogre::TextureUnitState::CONTENT_SHADOW :
-                                 Ogre::TextureUnitState::CONTENT_NAMED);
+        const char *ct = luaL_checkstring(L,5);
+        tex->setContentType(content_type_from_string(L, ct));
+        return 0;
+TRY_END
+}
+
+static int mat_set_compositor_reference (lua_State *L)
+{
+TRY_START
+        check_args(L,4+3);
+        Ogre::TextureUnitState *tex = mat_get_texture_unit_state(L);
+        const char *comp_name = luaL_checkstring(L,5);
+        const char *tex_name = luaL_checkstring(L,6);
+        size_t mrt_index = check_t<size_t>(L, 7);
+        tex->setCompositorReference(comp_name, tex_name, mrt_index);
         return 0;
 TRY_END
 }
@@ -1234,9 +1274,11 @@ TRY_START
         Ogre::Pass *p = mat_get_pass(L);
         Ogre::CullingMode m = p->getCullingMode();
         if (m==Ogre::CULL_CLOCKWISE) {
-                lua_pushboolean(L,true);
+                lua_pushstring(L,"CULL_CLOCKWISE");
         } else if (m==Ogre::CULL_NONE) {
-                lua_pushboolean(L,false);
+                lua_pushstring(L,"CULL_NONE");
+        } else if (m==Ogre::CULL_ANTICLOCKWISE) {
+                lua_pushstring(L,"CULL_ANTICLOCKWISE");
         } else {
                 my_lua_error(L,"culling mode not clockwise or none");
         }
@@ -1248,8 +1290,14 @@ static int mat_set_cull (lua_State *L)
 TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
-        bool b = check_bool(L,4);
-        p->setCullingMode(b?Ogre::CULL_CLOCKWISE:Ogre::CULL_NONE);
+        std::string str = luaL_checkstring(L,4);
+        if (str == "CULL_CLOCKWISE") {
+                p->setCullingMode(Ogre::CULL_CLOCKWISE);
+        } else if (str == "CULL_ANTICLOCKWISE") {
+                p->setCullingMode(Ogre::CULL_ANTICLOCKWISE);
+        } else if (str == "CULL_NONE") {
+                p->setCullingMode(Ogre::CULL_NONE);
+        }
         return 0;
 TRY_END
 }
@@ -1981,10 +2029,12 @@ static int mat_index(lua_State *L) {
                 push_cfunction(L,mat_get_texture_name);
         } else if (!::strcmp(key,"setTextureName")) {
                 push_cfunction(L,mat_set_texture_name);
-        } else if (!::strcmp(key,"getIsShadow")) {
-                push_cfunction(L,mat_get_is_shadow);
-        } else if (!::strcmp(key,"setIsShadow")) {
-                push_cfunction(L,mat_set_is_shadow);
+        } else if (!::strcmp(key,"getContentType")) {
+                push_cfunction(L,mat_get_content_type);
+        } else if (!::strcmp(key,"setContentType")) {
+                push_cfunction(L,mat_set_content_type);
+        } else if (!::strcmp(key,"setCompositorReference")) {
+                push_cfunction(L,mat_set_compositor_reference);
         } else if (!::strcmp(key,"setCubicTextureName")) {
                 push_cfunction(L,mat_set_cubic_texture_name);
         } else if (!::strcmp(key,"getEnvMap")) {

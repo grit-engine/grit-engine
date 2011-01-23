@@ -1740,6 +1740,7 @@ static const luaL_reg global[] = {
         {"gfx_screenshot",global_gfx_screenshot},
         {"gfx_option",global_gfx_option},
         {"gfx_body_make",global_gfx_body_make},
+        {"gfx_light_make",global_gfx_light_make},
         {"gfx_sun_get_diffuse",global_gfx_sun_get_diffuse},
         {"gfx_sun_set_diffuse",global_gfx_sun_set_diffuse},
         {"gfx_sun_get_specular",global_gfx_sun_get_specular},
@@ -1750,8 +1751,8 @@ static const luaL_reg global[] = {
         {"gfx_fog_set_colour",global_gfx_fog_set_colour},
         {"gfx_fog_get_density",global_gfx_fog_get_density},
         {"gfx_fog_set_density",global_gfx_fog_set_density},
-        {"gfx_get_ambient",global_gfx_get_ambient},
-        {"gfx_set_ambient",global_gfx_set_ambient},
+        {"gfx_get_scene_ambient",global_gfx_get_scene_ambient},
+        {"gfx_set_scene_ambient",global_gfx_set_scene_ambient},
         {"gfx_get_celestial_orientation",global_gfx_get_celestial_orientation},
         {"gfx_set_celestial_orientation",global_gfx_set_celestial_orientation},
 
@@ -1942,6 +1943,7 @@ lua_State *init_lua(const char *filename)
         ADD_MT_MACRO(colmesh,COLMESH_TAG);
 
         ADD_MT_MACRO(gfxbody,GFXBODY_TAG);
+        ADD_MT_MACRO(gfxlight,GFXLIGHT_TAG);
 
         ADD_MT_MACRO(scnmgr,SCNMGR_TAG);
         ADD_MT_MACRO(node,NODE_TAG);

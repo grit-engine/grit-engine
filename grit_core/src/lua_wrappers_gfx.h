@@ -27,6 +27,10 @@
 MT_MACRO_DECLARE(gfxbody);
 void push_gfxbody (lua_State *L, const GfxBodyPtr &self);
 
+#define GFXLIGHT_TAG "Grit/GfxLight"
+MT_MACRO_DECLARE(gfxlight);
+void push_gfxlight (lua_State *L, const GfxLightPtr &self);
+
 int global_gfx_render (lua_State *L);
 
 int global_gfx_screenshot (lua_State *L);
@@ -34,6 +38,8 @@ int global_gfx_screenshot (lua_State *L);
 int global_gfx_option (lua_State *L);
 
 int global_gfx_body_make (lua_State *L);
+
+int global_gfx_light_make (lua_State *L);
 
 
 int global_gfx_sun_get_diffuse (lua_State *L);
@@ -45,8 +51,8 @@ int global_gfx_sun_set_specular (lua_State *L);
 int global_gfx_sun_get_direction (lua_State *L);
 int global_gfx_sun_set_direction (lua_State *L);
 
-int global_gfx_get_ambient (lua_State *L);
-int global_gfx_set_ambient (lua_State *L);
+int global_gfx_get_scene_ambient (lua_State *L);
+int global_gfx_set_scene_ambient (lua_State *L);
 
 int global_gfx_fog_get_colour (lua_State *L);
 int global_gfx_fog_set_colour (lua_State *L);

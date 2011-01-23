@@ -22,6 +22,9 @@
 #ifndef SharedPtr_h
 #define SharedPtr_h
 
+#include <cstdlib>
+#include <functional>
+
 // Totally unthreadsafe
 template<class T> class SharedPtr {
     T *ptr;
