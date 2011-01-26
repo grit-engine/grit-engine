@@ -401,6 +401,16 @@ function get_map_vert mesh channel face fv = (
     meshop.getMapVert mesh channel ((meshop.getMapFace mesh channel face)[fv])
 )
 
+function get_material m face = (
+    local mat_id = getFaceMatId m face
+    local mat = m.material
+    if (classof mat) == MultiMaterial then (
+        mat.materialList[mat_id]
+    ) else (
+        mat
+    )
+)
+
 function write_mesh_xml selected options out_name = -- {{{
 (
     local skin = getSkin selected
@@ -448,7 +458,8 @@ function write_mesh_xml selected options out_name = -- {{{
 
     -- We're going to have to split vertexes as max won't do this for us.
     -- Consequently we will end up with a 1:many ratio between max vertexes and ogre
-    -- vertexes.  The ogre vertexes that represent a given max vertex will each have a different normal, as defined by     -- the needs of a particular face.
+    -- vertexes.  The ogre vertexes that represent a given max vertex will each have a different normal, as defined by
+    -- the needs of a particular face.
 
     struct OgreVert (pos, normal, ambient, alpha, texcoord, sharpness, weights)
 
@@ -474,14 +485,14 @@ function write_mesh_xml selected options out_name = -- {{{
     local face_to_ogre_vert = #()
 
     local num_max_faces = getNumFaces m
-    local mat_ids = #()
+    local mats = #()
 
     local next_ogre_vertex = 1
     for face = 1 to num_max_faces do (
         GritRolloutOgreMain.exportProgress.value = (50.0*face)/num_max_faces
         local max_indexes = getFace m face
-        local mat_id = getFaceMatId m face
-        appendIfUnique mat_ids mat_id
+        local mat = get_material m face
+        appendIfUnique mats mat
         local ogre_face = [1,1,1]
         for fv=1 to 3 do (
             local v = (max_indexes[fv])
@@ -601,16 +612,13 @@ function write_mesh_xml selected options out_name = -- {{{
 
     format "    <submeshes>\n" to:out_file
     local counter = 0
-    for submesh_mat_id in mat_ids do (
-        local mat = selected.material
-        if (classof mat) == MultiMaterial then (
-            mat = mat.materialList[submesh_mat_id]
-        )
-        local matname = if mat == undefined then "BaseWhite" else mat.name
+    for submesh_mat in mats do (
+        local matname = if submesh_mat == undefined then "BaseWhite" else submesh_mat.name
         format "        <submesh material=\"%\" use32bitindexes=\"%\">\n" matname (num_ogre_vertexes > 65535) to:out_file
         format "            <faces>\n" to:out_file
         for face = 1 to num_max_faces do (
-            if (getFaceMatId m face) == submesh_mat_id then (
+            local mat = get_material m face
+            if mat == submesh_mat then (
                 GritRolloutOgreMain.exportProgress.value = 75.0 + (25.0*counter)/num_max_faces
                 local fv = face_to_ogre_vert[face] - 1 -- ogre is zero-based
                 format "                <face v1=\"%\" v2=\"%\" v3=\"%\" />\n" ((int)fv.x) ((int)fv.y) ((int)fv.z) to:out_file

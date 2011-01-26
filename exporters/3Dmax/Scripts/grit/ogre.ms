@@ -297,6 +297,7 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
 	bitmap IMGEXP fileName:"ui/export.bmp"
     button chooseDir "Browse save Dir" toolTip:"Choose dir where files are written" across:2
     button Export "Export Selection" toolTip:"Write OGRE files"
+    checkbox doPause "Keep command window open after exit" enabled:true checked:false
     edittext editDir ""
     progressBar exportProgress "" color:orange
 	bitmap IMGXML fileName:"ui/xmlcon.bmp"
@@ -407,6 +408,7 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
                         local batchfile = createFile (bat_file)
                         format "\"%\" %\n" cmd params to:batchfile
                         format "@IF ERRORLEVEL 1 GOTO BROKEN\n" to:batchfile
+                        if doPause.checked then format "@pause\n" to:batchfile
                         format "@exit\n" to:batchfile
                         format ":BROKEN\n" to:batchfile
                         format "@echo ------------------------------------------------------------------------\n" to:batchfile
