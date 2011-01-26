@@ -335,7 +335,7 @@ public:
 
         Ogre::Matrix4 view = cam->getViewMatrix();
         //try_set_named_constant(vp, "view", view);
-        Ogre::Matrix4 proj = cam->getProjectionMatrix();
+        Ogre::Matrix4 proj = cam->getProjectionMatrixWithRSDepth();
         //try_set_named_constant(vp, "proj", proj);
         try_set_named_constant(vp, "view_proj", proj*view);
 
@@ -413,6 +413,13 @@ public:
             // does not allow us to avoid lighting when there is an object
             // between the lit surface and the camera occluding the fragments
             // to be shaded.
+
+            // on the other hand, the 'inside' method does have an optimisation
+            // in the case where the light is between the camera and a fragment
+            // but the fragment is out of range of the light
+
+            // I am choosing to prefer the occlusion optimisation as lights that are
+            // too far from surfaces should be avoided by good level design.
 
             // however 'inside' is the only method that can be used if the
             // camera is inside the light volume.
