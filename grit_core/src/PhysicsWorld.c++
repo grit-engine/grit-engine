@@ -366,6 +366,7 @@ int PhysicsWorld::pump (lua_State *L, float elapsed)
                 needsGraphicsUpdate = true;
                 extrapolate = elapsed;
 
+                // first, check for collisions
                 unsigned num_manifolds = world->getDispatcher()->getNumManifolds();
                 for (unsigned i=0 ; i<num_manifolds; ++i) {
                         btPersistentManifold* manifold =
@@ -373,31 +374,48 @@ int PhysicsWorld::pump (lua_State *L, float elapsed)
                         btCollisionObject
                                 *ob_a = static_cast<btCollisionObject*>(manifold->getBody0()),
                                 *ob_b = static_cast<btCollisionObject*>(manifold->getBody1());
+
+                        btRigidBody* brb_a = btRigidBody::upcast(ob_a);
+                        btRigidBody* brb_b = btRigidBody::upcast(ob_b);
+
+                        RigidBody *rb_a = brb_a==NULL
+                                        ? NULL : static_cast<RigidBody*>(brb_a->getMotionState());
+                        RigidBody *rb_b = brb_b==NULL
+                                        ? NULL : static_cast<RigidBody*>(brb_b->getMotionState());
    
+                        // each manifold has a number of points (usually 3?) that provide
+                        // a stable foundation
                         unsigned num_contacts = manifold->getNumContacts();
                         for (unsigned j=0 ; j<num_contacts ; ++j) {
                                 btManifoldPoint &p = manifold->getContactPoint(j);
                                 if (p.getDistance() < 0.0f) {
-
-                                        const btVector3& ptA = p.m_localPointA;
-                                        const btVector3& ptB = p.m_localPointB;
-                                        const btVector3& normalOnB = p.m_normalWorldOnB;
-                                        float distance = p.getDistance();
-                                        float impulse = p.getAppliedImpulse();
-                                        float lifetime = p.getLifeTime();
+                                        if (rb_a!=NULL) rb_a->collisionCallback(L,
+                                                p.getLifeTime(),
+                                                p.getAppliedImpulse(),
+                                                p.getDistance(),
+                                                from_bullet(p.m_localPointA),
+                                                from_bullet(p.m_positionWorldOnA),
+                                                -from_bullet(p.m_normalWorldOnB));
+                                        if (rb_b!=NULL) rb_b->collisionCallback(L,
+                                                p.getLifeTime(),
+                                                p.getAppliedImpulse(),
+                                                p.getDistance(),
+                                                from_bullet(p.m_localPointB),
+                                                from_bullet(p.m_positionWorldOnB),
+                                                from_bullet(p.m_normalWorldOnB));
                                 }
                         }
                 }
 
+                // call the step callback
+                // also check whether NaN has crept in anywhere
                 std::vector<RigidBody*> nan_bodies;
                 for (int i=0 ; i<world->getNumCollisionObjects() ; ++i) {
 
-                        btCollisionObject* victim =
-                                world->getCollisionObjectArray()[i];
+                        btCollisionObject* victim = world->getCollisionObjectArray()[i];
                         btRigidBody* victim2 = btRigidBody::upcast(victim);
                         if (victim2==NULL) continue;
-                        RigidBody *rb =
-                             static_cast<RigidBody*>(victim2->getMotionState());
+                        RigidBody *rb = static_cast<RigidBody*>(victim2->getMotionState());
 
                         const btTransform &current_xform = victim2->getWorldTransform();
                         const btVector3 &pos = current_xform.getOrigin();
@@ -405,24 +423,27 @@ int PhysicsWorld::pump (lua_State *L, float elapsed)
                         current_xform.getBasis().getRotation(quat);
                         float x=pos.x(), y=pos.y(), z=pos.z();
                         float qw=quat.w(), qx=quat.x(), qy=quat.y(), qz=quat.z();
-                        if (isnan(x) || isnan(y) || isnan(z) || isnan(qw) || isnan(qx) || isnan(qy) || isnan(qz)) {
+                        if (isnan(x) || isnan(y) || isnan(z) ||
+                            isnan(qw) || isnan(qx) || isnan(qy) || isnan(qz)) {
                                 CERR << "NaN from physics engine position update." << std::endl;
                                 nan_bodies.push_back(rb);
                         } else {
+                                // don't bother calling the step callback on broken things
                                 rb->stepCallback(L);
                         }
                 }
+                // chuck them out if they have misbehaved
                 for (unsigned int i=0 ; i<nan_bodies.size() ; ++i) {
                         nan_bodies[i]->removeFromWorld();
                 }
+
+                // call the stabilise callbacks
                 for (int i=0 ; i<world->getNumCollisionObjects() ; ++i) {
 
-                        btCollisionObject* victim =
-                                world->getCollisionObjectArray()[i];
+                        btCollisionObject* victim = world->getCollisionObjectArray()[i];
                         btRigidBody* victim2 = btRigidBody::upcast(victim);
                         if (victim2==NULL) continue;
-                        RigidBody *rb =
-                             static_cast<RigidBody*>(victim2->getMotionState());
+                        RigidBody *rb = static_cast<RigidBody*>(victim2->getMotionState());
                         rb->stabiliseCallback(L);
                 }
         }
@@ -438,6 +459,7 @@ void PhysicsWorld::updateGraphics (lua_State *L)
         // to handle errors raised by the lua callback
         push_cfunction(L, my_lua_error_handler);
 
+        // call all the graphic update callbacks
         for (int i=0 ; i<world->getNumCollisionObjects() ; ++i) {
                 btCollisionObject* victim = world->getCollisionObjectArray()[i];
                 btRigidBody* victim2 = btRigidBody::upcast(victim);
@@ -681,6 +703,7 @@ RigidBody::RigidBody (const PhysicsWorldPtr &world_,
         // first, peel callback from lua stack...
         updateCallbackIndex = LUA_NOREF;
         stepCallbackIndex = LUA_NOREF;
+        collisionCallbackIndex = LUA_NOREF;
         stabiliseCallbackIndex = LUA_NOREF;
 
         colMesh->registerUser(this);
@@ -760,8 +783,9 @@ void RigidBody::destroy (lua_State *L)
         colMesh->unregisterUser(this);
         if (body==NULL) return;
         removeFromWorld();
-        luaL_unref(L,LUA_REGISTRYINDEX,updateCallbackIndex);
         luaL_unref(L,LUA_REGISTRYINDEX,stepCallbackIndex);
+        luaL_unref(L,LUA_REGISTRYINDEX,updateCallbackIndex);
+        luaL_unref(L,LUA_REGISTRYINDEX,collisionCallbackIndex);
         // the next line prevents the RigidBody being destructed prematurely
         self.useCount()++;
         self.setNull();
@@ -809,24 +833,17 @@ void RigidBody::updateGraphicsCallback (lua_State *L)
         btQuaternion quat;
         current_xform.getBasis().getRotation(quat);
         quat = check_nan(quat);
-        float x=pos.x(), y=pos.y(), z=pos.z();
-        float qw=quat.w(), qx=quat.x(), qy=quat.y(), qz=quat.z();
 
         int error_handler = lua_gettop(L);
 
         // get callback
         lua_rawgeti(L,LUA_REGISTRYINDEX,updateCallbackIndex);
 
-        lua_pushnumber(L,x); // arg 1
-        lua_pushnumber(L,y); // arg 2
-        lua_pushnumber(L,z); // arg 3
-        lua_pushnumber(L,qw); // arg 4
-        lua_pushnumber(L,qx); // arg 5
-        lua_pushnumber(L,qy); // arg 6
-        lua_pushnumber(L,qz); // arg 7
+        push_v3(L,from_bullet(pos)); // arg 1
+        push_quat(L,from_bullet(quat)); // arg 1
 
         // call callback (7 args, no return values)
-        int status = lua_pcall(L,7,0,error_handler);
+        int status = lua_pcall(L,2,0,error_handler);
         if (status) {
                 // pop the error message since the error handler will
                 // have already printed it out
@@ -866,6 +883,39 @@ void RigidBody::stepCallback (lua_State *L)
         if (status) {
                 lua_pop(L,1);
                 luaL_unref(L,LUA_REGISTRYINDEX,stepCallbackIndex);
+                stepCallbackIndex = LUA_NOREF;
+        }
+
+        lua_pop(L,1); // error handler
+
+        STACK_CHECK;
+}
+
+void RigidBody::collisionCallback (lua_State *L, int lifetime, float impulse, float penetration,
+                                   const Vector3 &lpos, const Vector3 &wpos, const Vector3 &wnormal)
+{
+        if (collisionCallbackIndex==LUA_NOREF) return;
+        if (collisionCallbackIndex==LUA_REFNIL) return;
+
+        STACK_BASE;
+
+        // to handle errors raised by the lua callback
+        push_cfunction(L, my_lua_error_handler);
+        int error_handler = lua_gettop(L);
+
+        // get callback
+        lua_rawgeti(L,LUA_REGISTRYINDEX,collisionCallbackIndex);
+
+        lua_pushnumber(L,lifetime);
+        lua_pushnumber(L,impulse);
+        lua_pushnumber(L,penetration);
+        push_v3(L,lpos);
+        push_v3(L,wpos);
+        push_v3(L,wnormal);
+        int status = lua_pcall(L,6,0,error_handler);
+        if (status) {
+                lua_pop(L,1);
+                luaL_unref(L,LUA_REGISTRYINDEX,collisionCallbackIndex);
                 stepCallbackIndex = LUA_NOREF;
         }
 

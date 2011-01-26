@@ -744,6 +744,8 @@ TRY_START
                 self->pushUpdateCallback(L);
         } else if (!::strcmp(key,"stepCallback")) {
                 self->pushStepCallback(L);
+        } else if (!::strcmp(key,"collisionCallback")) {
+                self->pushCollisionCallback(L);
         } else if (!::strcmp(key,"stabiliseCallback")) {
                 self->pushStabiliseCallback(L);
         } else {
@@ -793,6 +795,8 @@ TRY_START
                 self->setUpdateCallback(L);
         } else if (!::strcmp(key,"stepCallback")) {
                 self->setStepCallback(L);
+        } else if (!::strcmp(key,"collisionCallback")) {
+                self->setCollisionCallback(L);
         } else if (!::strcmp(key,"stabiliseCallback")) {
                 self->setStabiliseCallback(L);
         } else if (!::strcmp(key,"inertia")) {

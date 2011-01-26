@@ -358,6 +358,8 @@ class RigidBody : public btMotionState {
         }
 
         void stepCallback (lua_State *L);
+        void collisionCallback (lua_State *L, int lifetime, float impulse, float penetration,
+                                const Vector3 &lpos, const Vector3 &wpos, const Vector3 &wnormal);
         void stabiliseCallback (lua_State *L);
         void updateGraphicsCallback (lua_State *L);
 
@@ -434,6 +436,19 @@ class RigidBody : public btMotionState {
                 stepCallbackIndex = luaL_ref(L,LUA_REGISTRYINDEX);
         }
 
+        void pushCollisionCallback (lua_State *L)
+        {
+                // pushes nil if index is LUA_NOREF
+                lua_rawgeti(L,LUA_REGISTRYINDEX,collisionCallbackIndex);
+        }
+
+        void setCollisionCallback (lua_State *L)
+        {
+                // unref if not already
+                luaL_unref(L,LUA_REGISTRYINDEX,collisionCallbackIndex);
+                collisionCallbackIndex = luaL_ref(L,LUA_REGISTRYINDEX);
+        }
+
         void pushStabiliseCallback (lua_State *L)
         {
                 // pushes nil if index is LUA_NOREF
@@ -475,6 +490,7 @@ class RigidBody : public btMotionState {
 
         int updateCallbackIndex;
         int stepCallbackIndex;
+        int collisionCallbackIndex;
         int stabiliseCallbackIndex;
 
         btRigidBody *body;
