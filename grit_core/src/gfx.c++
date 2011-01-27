@@ -2014,8 +2014,16 @@ GfxRunningFrameStats gfx_running_frame_stats (void)
     return r;
 }
 
-void gfx_reload_resources (void)
+void gfx_reload_mesh (const std::string &name)
 {
+    // TODO: reload Ogre::Mesh
+    // TODO: reload Ogre::Skeleton if needed
+    // TODO: also need to iterate through GfxBody refreshing them if necessary
+}
+
+void gfx_reload_texture (const std::string &name)
+{
+    // TODO: reload Ogre::Texture
 }
 
 

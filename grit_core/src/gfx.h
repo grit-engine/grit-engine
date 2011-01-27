@@ -294,7 +294,7 @@ class GfxBody : public GfxNode {
 
     void setBoneLocalPosition (unsigned n, const Vector3 &v);
     void setBoneLocalOrientation (unsigned n, const Quaternion &v);
-    
+
     void destroy (void);
 };
 
@@ -386,7 +386,8 @@ struct GfxRunningFrameStats {
 GfxLastFrameStats gfx_last_frame_stats (void);
 GfxRunningFrameStats gfx_running_frame_stats (void);
 
-void gfx_reload_resources (void);
+void gfx_reload_mesh (const std::string &name);
+void gfx_reload_texture (const std::string &name);
 
 HUD::RootPtr gfx_init_hud (void);
 
