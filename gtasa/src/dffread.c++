@@ -761,6 +761,9 @@ static void ios_read_geometry (int d,
                         }
                     break;
                     case TWODFX_PFX:
+                        fx.pfx.particle_name = ios_read_fixedstr(f,24);
+                        VBOS(1,p<<"2DFX["<<j<<"].pfx.particle_name = "<<fx.pfx.particle_name);
+                    break;
                     case TWODFX_PED:
                     case TWODFX_UNK1:
                     case TWODFX_SIGN:

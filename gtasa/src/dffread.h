@@ -201,6 +201,7 @@ struct twodfx {
                 uint8_t flare_params[3];
         } light;
         struct {
+                std::string particle_name;
         } pfx;
         struct {
         } ped;
