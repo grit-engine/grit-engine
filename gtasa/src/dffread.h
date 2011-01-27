@@ -175,6 +175,46 @@ static inline bool vect_eq (struct vect v1, struct vect v2)
     return v1.x==v2.x && v1.y==v2.y && v1.z==v2.z;
 }
 
+// 2dfx
+#define TWODFX_LIGHT 0
+#define TWODFX_PFX 1
+#define TWODFX_PED 3
+#define TWODFX_UNK1 6
+#define TWODFX_SIGN 7
+#define TWODFX_SLOTMACHINE 8
+#define TWODFX_UNK2 9
+#define TWODFX_ESCALATOR 10
+struct twodfx {
+        float x,y,z;
+        uint32_t sz;
+        uint32_t type;
+        struct {
+                uint8_t r, g, b, x;
+                float draw_distance;
+                float outer_range;
+                float size;
+                float inner_range;
+                uint8_t params[5];
+                std::string corona_name;
+                std::string shadow_name;
+                int32_t flare;
+                uint8_t flare_params[3];
+        } light;
+        struct {
+        } pfx;
+        struct {
+        } ped;
+        struct {
+        } unk1;
+        struct {
+        } sign;
+        struct {
+        } slotmachine;
+        struct{
+        } unk2 ;
+        struct {
+        } escalator;
+};
 
 struct geometry {
         unsigned long flags;
@@ -207,6 +247,7 @@ struct geometry {
         std::vector<unsigned short> meshext_indexes;
         std::vector<unsigned short> meshext_face_fragment;
         std::vector<struct fragment> meshext_fragments;
+        std::vector<struct twodfx> twodfxs;
 
         long frame;
 };
@@ -239,8 +280,8 @@ struct light2 {
         float unk2;
         float unk3;
         float unk4;
-        float unk5;
-        float unk6;
+        float unk5; // usually 0 (1026/1038 times)
+        unsigned long flags;
 };
 
 struct dff {

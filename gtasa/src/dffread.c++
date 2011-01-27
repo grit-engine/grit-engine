@@ -61,6 +61,7 @@
 #define HEX(x) std::hex<<(x)<<std::dec
 
 #define DECHEX(x) (x)<<" [0x"<<HEX(x)<<"]"
+#define FLTDECHEX(x) (*(float*)&(x))<<" "<<(x)<<" [0x"<<HEX(x)<<"]"
 
 static void unrec (const std::string &p, unsigned long type,
                    unsigned long size, const std::string &word)
@@ -708,10 +709,73 @@ static void ios_read_geometry (int d,
             }
         } break;
 
-        case RW_2DFX:
-            VBOS(1,p<<"SKIPPING_OVER_2DFX: "<<DECHEX(size));
-            ios_read_byte_array(f,NULL,size);
-            break;
+        case RW_2DFX: {
+            uint32_t num_2dfx = ios_read_u32(f);
+            VBOS(1,p<<"num_2dfx = "<<num_2dfx);
+            g.twodfxs.resize(num_2dfx);
+            uint32_t counter = 4;
+            for (unsigned j=0 ; j<num_2dfx ; ++j) {
+                twodfx &fx = g.twodfxs[j];
+                fx.x = ios_read_float(f);
+                fx.y = ios_read_float(f);
+                fx.z = ios_read_float(f);
+                VBOS(1,p<<"2DFX["<<j<<"].x = "<<fx.x);
+                VBOS(1,p<<"2DFX["<<j<<"].y = "<<fx.y);
+                VBOS(1,p<<"2DFX["<<j<<"].z = "<<fx.z);
+                fx.type = ios_read_u32(f);
+                VBOS(1,p<<"2DFX["<<j<<"].type = "<<fx.type);
+                fx.sz = ios_read_u32(f);
+                counter += fx.sz + 20;
+                VBOS(1,p<<"2DFX["<<j<<"].sz = "<<fx.sz);
+                switch (fx.type) {
+                    case TWODFX_LIGHT:
+                        fx.light.r = ios_read_u8(f);
+                        VBOS(1,p<<"2DFX["<<j<<"].light.r = "<<(int)fx.light.r);
+                        fx.light.g = ios_read_u8(f);
+                        VBOS(1,p<<"2DFX["<<j<<"].light.g = "<<(int)fx.light.g);
+                        fx.light.b = ios_read_u8(f);
+                        VBOS(1,p<<"2DFX["<<j<<"].light.b = "<<(int)fx.light.b);
+                        fx.light.x = ios_read_u8(f);
+                        VBOS(1,p<<"2DFX["<<j<<"].light.x = "<<(int)fx.light.x);
+                        fx.light.draw_distance = ios_read_float(f);
+                        VBOS(1,p<<"2DFX["<<j<<"].light.draw_distance = "<<fx.light.draw_distance);
+                        fx.light.outer_range = ios_read_float(f);
+                        VBOS(1,p<<"2DFX["<<j<<"].light.outer_range = "<<fx.light.outer_range);
+                        fx.light.size = ios_read_float(f);
+                        VBOS(1,p<<"2DFX["<<j<<"].light.size = "<<fx.light.size);
+                        fx.light.inner_range = ios_read_float(f);
+                        VBOS(1,p<<"2DFX["<<j<<"].light.inner_range = "<<fx.light.inner_range);
+                        for (int pi=0 ; pi<5; ++pi) {
+                            fx.light.params[pi] = ios_read_u8(f);
+                            VBOS(1,p<<"2DFX["<<j<<"].light.params["<<pi<<"] = "<<(int)fx.light.params[pi]);
+                        }
+                        fx.light.corona_name = ios_read_fixedstr(f,24);
+                        VBOS(1,p<<"2DFX["<<j<<"].light.corona_name = "<<fx.light.corona_name);
+                        fx.light.shadow_name = ios_read_fixedstr(f,24);
+                        VBOS(1,p<<"2DFX["<<j<<"].light.shadow_name = "<<fx.light.shadow_name);
+                        fx.light.flare = ios_read_s32(f);
+                        VBOS(1,p<<"2DFX["<<j<<"].light.flare = "<<fx.light.flare);
+                        for (int pi=0 ; pi<3; ++pi) {
+                            fx.light.flare_params[pi] = ios_read_u8(f);
+                            VBOS(1,p<<"2DFX["<<j<<"].light.flare_params["<<pi<<"] = "<<(int)fx.light.flare_params[pi]);
+                        }
+                    break;
+                    case TWODFX_PFX:
+                    case TWODFX_PED:
+                    case TWODFX_UNK1:
+                    case TWODFX_SIGN:
+                    case TWODFX_SLOTMACHINE:
+                    case TWODFX_UNK2:
+                    case TWODFX_ESCALATOR:
+                    VBOS(1,p<<"Skipping over 2DFX type: "<<fx.type<<" of size "<<DECHEX(fx.sz));
+                    ios_read_byte_array(f,NULL,fx.sz);
+                    break;
+                    default:
+                    IOS_EXCEPT("Unknown 2DFX type!");
+                };
+            }
+            ASSERT(counter==size);
+        } break;
         default:
             unrec(p,type,size,"GEOMETRY");
         }
@@ -948,8 +1012,8 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
         VBOS(3,pref<<"unk4: "<<light.unk4);
         light.unk5 = ios_read_float(f);
         VBOS(3,pref<<"unk5: "<<light.unk5);
-        light.unk6 = ios_read_float(f);
-        VBOS(3,pref<<"unk6: "<<light.unk6);
+        light.flags = ios_read_u32(f);
+        VBOS(3,pref<<"flags: 0x"<<std::hex<<light.flags<<std::dec);
 
         ios_read_header(f,&type,&size,NULL,&file_version);
         ASSERT(type==RW_EXT);

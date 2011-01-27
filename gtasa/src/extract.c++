@@ -662,6 +662,7 @@ void extract (const Config &cfg, std::ostream &out)
             }
 
             std::stringstream col_field;
+            std::stringstream lights_field;
             std::string cls = "BaseClass";
 
             std::string tcol_name = img->name+"/"+o.dff+".tcol";
@@ -685,6 +686,23 @@ void extract (const Config &cfg, std::ostream &out)
                 col_field << ",colMesh=\""<<tcol_name<<"\"";
                 cls = "ColClass";
             }
+            if (dff.geometries.size()==1) {
+                bool no_lights_yet = true;
+                std::string prefix = ", lights={ ";
+                for (unsigned i=0 ; i<dff.geometries[0].twodfxs.size() ; ++i) {
+                    twodfx &fx = dff.geometries[0].twodfxs[i];
+                    if (fx.type != TWODFX_LIGHT) continue;
+                    float r=fx.light.r/255.0, g=fx.light.g/255.0, b=fx.light.b/255.0;
+                    lights_field << prefix << "{ "
+                                 << "pos=vector3("<<fx.x<<","<<fx.y<<","<<fx.z<<"), "
+                                 << "range="<<fx.light.outer_range<<", "
+                                 << "diff=vector3("<<r<<","<<g<<","<<b<<"), "
+                                 << "spec=vector3("<<r<<","<<g<<","<<b<<") }";
+                    no_lights_yet = false;
+                    prefix = ", ";
+                }
+                if (!no_lights_yet) lights_field << "}";
+            }
 
             //preloads -- the mesh(s) and textures fr
             std::stringstream background_texs_ss;
@@ -707,6 +725,7 @@ void extract (const Config &cfg, std::ostream &out)
                    <<",renderingDistance="<<(o.draw_distance+rad)
                    <<",textures={"<<background_texs_ss.str()<<"}"
                    <<col_field.str()
+                   <<lights_field.str()
                    <<"})\n";
             
         }
