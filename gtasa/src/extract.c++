@@ -693,9 +693,10 @@ void extract (const Config &cfg, std::ostream &out)
                     twodfx &fx = dff.geometries[0].twodfxs[i];
                     if (fx.type != TWODFX_LIGHT) continue;
                     float r=fx.light.r/255.0, g=fx.light.g/255.0, b=fx.light.b/255.0;
+                    float R=std::max(fx.light.outer_range,fx.light.size);
                     lights_field << prefix << "{ "
                                  << "pos=vector3("<<fx.x<<","<<fx.y<<","<<fx.z<<"), "
-                                 << "range="<<fx.light.outer_range<<", "
+                                 << "range="<<R<<", "
                                  << "diff=vector3("<<r<<","<<g<<","<<b<<"), "
                                  << "spec=vector3("<<r<<","<<g<<","<<b<<") }";
                     no_lights_yet = false;
