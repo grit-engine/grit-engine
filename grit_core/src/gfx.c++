@@ -33,7 +33,7 @@
 #ifdef NO_PLUGINS
 #  include "OgreOctreePlugin.h"
 #  include "OgreGLPlugin.h"
-#  include "OgreParticleFXPlugin.h"
+//#  include "OgreParticleFXPlugin.h"
 #  include "OgreCgPlugin.h"
 #  ifdef WIN32
 #    include "OgreD3D9Plugin.h"
@@ -64,6 +64,10 @@ bool use_hwgamma = getenv("GRIT_NOHWGAMMA")==NULL;
 
 #define RESGRP "GRIT"
 
+// render queues
+#define RQ_GBUFFER_OPAQUE 50
+#define RQ_FORWARD_OPAQUE 51
+#define RQ_SKIES_AND_ALPHA 95
 
 Ogre::Root *ogre_root;
 Ogre::OctreeSceneManager *ogre_sm;
@@ -82,7 +86,7 @@ Ogre::RenderWindow *ogre_win;
 #ifdef NO_PLUGINS
     Ogre::GLPlugin *gl;
     Ogre::OctreePlugin *octree;
-    Ogre::ParticleFXPlugin *pfx;
+    //Ogre::ParticleFXPlugin *pfx;
     Ogre::CgPlugin *cg;
     #ifdef WIN32
         Ogre::D3D9Plugin *d3d9;
@@ -93,17 +97,25 @@ GfxCallback *gfx_cb;
 bool shutting_down = false;
 float cam_separation = 0;
 
+Vector3 fog_colour;
+float fog_density;
+
+
 
 bool stereoscopic (void) 
 { return gfx_option(GFX_CROSS_EYE) || gfx_option(GFX_ANAGLYPH); }
 
 int freshname_counter = 0;
-std::string freshname (void)
+std::string freshname (const std::string &prefix)
 {
     std::stringstream ss;
-    ss << "F:" << freshname_counter;
+    ss << prefix << freshname_counter;
     freshname_counter++;
     return ss.str();
+}
+std::string freshname (void)
+{
+    return freshname("F:");
 }
 
 
@@ -379,17 +391,19 @@ public:
         float *frame_data_inside = mdl_inside.getFrameData();
         int triangle_counter = 0;
         int triangle_counter_inside = 0;
+        int light_counter = 0;
         Ogre::Camera *cam = viewport->getCamera();
         const Ogre::Vector3 &cam_pos = cam->getDerivedPosition();
         for (Ogre::LightList::const_iterator i=ll.begin(),i_=ll.end(); i!=i_ ; ++i) {
             Ogre::Light *l = *i;
             if (l == ogre_sun) continue;
+            light_counter++;
             const Ogre::Vector3 &dir_ws = l->getDerivedDirection();
             const Ogre::ColourValue &diff = l->getDiffuseColour();
             const Ogre::ColourValue &spec = l->getSpecularColour();
             float inner = Ogre::Math::Cos(l->getSpotlightInnerAngle());
             float outer = Ogre::Math::Cos(l->getSpotlightOuterAngle());
-            float range = l->getSpotlightFalloff();
+            float range = l->getAttenuationRange();
             Ogre::Vector3 wpos = l->getDerivedPosition();
             // define cone space in terms of world space
             Ogre::Vector3 dir_z = dir_ws;
@@ -507,6 +521,7 @@ public:
         }
         mdl.inject(triangle_counter, sm, viewport);
         mdl_inside.inject(triangle_counter_inside, sm, viewport);
+        //CVERB << "Total lights: " << light_counter << std::endl;
     }
 };
         
@@ -1389,7 +1404,7 @@ GfxBody::GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_)
     memset(colours, 0, sizeof(colours));
     std::string ogre_name = mesh_name.substr(1);
     Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().load(ogre_name,RESGRP);
-    materials = std::vector<GfxMaterialPtr>(mesh->getNumSubMeshes());
+    materials = std::vector<GfxMaterial*>(mesh->getNumSubMeshes());
     for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
         Ogre::SubMesh *sm = mesh->getSubMesh(i);
         std::string matname = sm->getMaterialName();
@@ -1405,7 +1420,9 @@ GfxBody::GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_)
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
         Ogre::SubEntity *se = ent->getSubEntity(i);
         if (materials[i]->getAlphaBlend()) {
-            se->setRenderQueueGroup(Ogre::RENDER_QUEUE_SKIES_LATE);
+            se->setRenderQueueGroup(RQ_SKIES_AND_ALPHA);
+        } else {
+            se->setRenderQueueGroup(RQ_GBUFFER_OPAQUE);
         }
     }
     node->attachObject(ent);
@@ -1514,7 +1531,7 @@ void GfxBody::setFade (float f, int transition)
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
         Ogre::SubEntity *se = ent->getSubEntity(i);
         se->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
-        GfxMaterialPtr true_material = materials[i];
+        GfxMaterial *true_material = materials[i];
         if (transition == 0) {
             se->setMaterial(true_material->regularMat);
         } else {
@@ -1696,6 +1713,18 @@ void GfxBody::setBoneLocalOrientation (unsigned n, const Quaternion &v)
     bone->setOrientation(to_ogre(v));
 }
 
+bool GfxBody::isEnabled (void)
+{
+    if (dead) THROW_DEAD(className);
+    return ent->isVisible();
+}
+
+void GfxBody::setEnabled (bool v)
+{
+    if (dead) THROW_DEAD(className);
+    ent->setVisible(v);
+}
+
 // }}}
 
 
@@ -1704,12 +1733,14 @@ void GfxBody::setBoneLocalOrientation (unsigned n, const Quaternion &v)
 const std::string GfxLight::className = "GfxLight";
 
 GfxLight::GfxLight (const GfxBodyPtr &par_)
-  : GfxNode(par_)
+  : GfxNode(par_),
+    enabled(true),
+    fade(1)
 {
     light = ogre_sm->createLight();
     node->attachObject(light);
     light->setDirection(Ogre::Vector3(0,1,0));
-    light->setSpotlightFalloff(10);
+    light->setAttenuation(10, 0, 0, 0);
     light->setSpotlightInnerAngle(Ogre::Degree(180));
     light->setSpotlightOuterAngle(Ogre::Degree(180));
     light->setDiffuseColour(Ogre::ColourValue(1,1,1));
@@ -1732,25 +1763,27 @@ void GfxLight::destroy (void)
 Vector3 GfxLight::getDiffuseColour (void)
 {
     if (dead) THROW_DEAD(className);
-    return from_ogre_cv(light->getDiffuseColour());
+    return diffuse;
 }
 
 Vector3 GfxLight::getSpecularColour (void)
 {
     if (dead) THROW_DEAD(className);
-    return from_ogre_cv(light->getSpecularColour());
+    return specular;
 }
 
 void GfxLight::setDiffuseColour (const Vector3 &v)
 {
     if (dead) THROW_DEAD(className);
-    light->setDiffuseColour(to_ogre_cv(v));
+    diffuse = v;
+    light->setDiffuseColour(to_ogre_cv(fade * diffuse));
 }
 
 void GfxLight::setSpecularColour (const Vector3 &v)
 {
     if (dead) THROW_DEAD(className);
-    light->setSpecularColour(to_ogre_cv(v));
+    specular = v;
+    light->setSpecularColour(to_ogre_cv(fade * specular));
 }
 
 Vector3 GfxLight::getAim (void)
@@ -1768,13 +1801,13 @@ void GfxLight::setAim (const Vector3 &v)
 float GfxLight::getRange (void)
 {
     if (dead) THROW_DEAD(className);
-    return light->getSpotlightFalloff();
+    return light->getAttenuationRange();
 }
 
 void GfxLight::setRange (float v)
 {
     if (dead) THROW_DEAD(className);
-    light->setSpotlightFalloff(v);
+    light->setAttenuation(v, 0, 0, 0);
 }
 
 Degree GfxLight::getInnerAngle (void)
@@ -1804,13 +1837,28 @@ void GfxLight::setOuterAngle (Degree v)
 bool GfxLight::isEnabled (void)
 {
     if (dead) THROW_DEAD(className);
-    return light->isVisible();
+    return enabled;
 }
 
 void GfxLight::setEnabled (bool v)
 {
     if (dead) THROW_DEAD(className);
-    light->setVisible(v);
+    enabled = v;
+    light->setVisible(enabled && fade > 0.001);
+}
+
+float GfxLight::getFade (void)
+{
+    if (dead) THROW_DEAD(className);
+    return fade;
+}
+void GfxLight::setFade (float f)
+{
+    if (dead) THROW_DEAD(className);
+    fade = f;
+    light->setVisible(enabled && fade > 0.001);
+    light->setDiffuseColour(to_ogre_cv(fade * diffuse));
+    light->setSpecularColour(to_ogre_cv(fade * specular));
 }
 
 // }}}
@@ -1842,24 +1890,24 @@ void GfxMaterial::setAlphaBlend (bool v)
 
 // {{{ GFX_MATERIAL_DB
 
-typedef std::map<std::string,GfxMaterialPtr> GfxMaterialDB;
+typedef std::map<std::string,GfxMaterial*> GfxMaterialDB;
 static GfxMaterialDB material_db;
 
-GfxMaterialPtr gfx_material_add (const std::string &name)
+GfxMaterial *gfx_material_add (const std::string &name)
 {
     if (gfx_material_has(name)) GRIT_EXCEPT("Material already exists: \""+name+"\"");
-    GfxMaterialPtr r = GfxMaterialPtr(new GfxMaterial(name));
+    GfxMaterial *r = new GfxMaterial(name);
     material_db[name] = r;
     return r;
 }
 
-GfxMaterialPtr gfx_material_add_or_get (const std::string &name)
+GfxMaterial *gfx_material_add_or_get (const std::string &name)
 {
     if (gfx_material_has(name)) return gfx_material_get(name);
     return gfx_material_add(name);
 }
 
-GfxMaterialPtr gfx_material_get (const std::string &name)
+GfxMaterial *gfx_material_get (const std::string &name)
 {
     if (!gfx_material_has(name)) GRIT_EXCEPT("Material does not exist: \""+name+"\"");
     return material_db[name];
@@ -1872,6 +1920,8 @@ bool gfx_material_has (const std::string &name)
 
 // }}}
 
+
+// {{{ SCENE PROPERTIES
 
 Vector3 gfx_sun_get_diffuse (void)
 {
@@ -1913,10 +1963,6 @@ void gfx_set_scene_ambient (const Vector3 &v)
     ogre_sm->setAmbientLight(to_ogre_cv(v));
 }
 
-
-static Vector3 fog_colour;
-static float fog_density;
-
 Vector3 gfx_fog_get_colour (void)
 {
     return fog_colour;
@@ -1950,6 +1996,8 @@ void gfx_set_celestial_orientation (const Quaternion &v)
     ogre_celestial->setOrientation(to_ogre(v));
 }
 
+// }}}
+
 
 // {{{ RENDER
 
@@ -1980,10 +2028,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 // }}}
 
 
-void gfx_screenshot (const std::string &filename)
-{
-    ogre_win->writeContentsToFile(filename);
-}
+void gfx_screenshot (const std::string &filename) { ogre_win->writeContentsToFile(filename); }
 
 static GfxLastRenderStats stats_from_rt (Ogre::RenderTarget *rt)
 {
@@ -2014,8 +2059,211 @@ GfxRunningFrameStats gfx_running_frame_stats (void)
     return r;
 }
 
+// {{{ PARTICLES
+
+// a particle system holds the buffer for particles of a particular material
+class GfxParticleSystem {
+    Ogre::BillboardSet *bbset;
+    float texHeight;
+    float texWidth;
+    public:
+    GfxParticleSystem (const std::string &pname, std::string texname,
+                       GfxParticleBlend blend, float alphaRej)
+    {
+        bbset = ogre_sm->createBillboardSet(pname, 100);
+        ogre_root_node->attachObject(bbset);
+
+        std::string mname = "P:"+pname;
+        Ogre::MaterialPtr mat =
+            Ogre::MaterialManager::getSingleton().createOrRetrieve(mname, RESGRP).first;
+        mat->removeAllTechniques();
+        Ogre::Pass *pass = mat->createTechnique()->createPass();
+        Ogre::TextureUnitState *tus = pass->createTextureUnitState();
+        texname = texname.substr(1);
+        Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().load(texname, RESGRP);
+        texHeight = tex->getHeight();
+        texWidth = tex->getWidth();
+        tus->setTextureName(texname);
+        tus->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
+        std::string gpuprog_name;
+        switch (blend) {
+            case GFX_PARTICLE_OPAQUE:
+            pass->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
+            pass->setDepthWriteEnabled(true);
+            gpuprog_name = "O";
+            break;
+            case GFX_PARTICLE_ALPHA:
+            pass->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+            pass->setDepthWriteEnabled(false);
+            gpuprog_name = "A";
+            break;
+            case GFX_PARTICLE_ADD:
+            pass->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
+            pass->setDepthWriteEnabled(false);
+            gpuprog_name = "L";
+            break;
+        }
+        pass->setAlphaRejectFunction(Ogre::CMPF_GREATER_EQUAL);
+        pass->setAlphaRejectValue(alphaRej);
+        pass->setFragmentProgram("particle_f:"+gpuprog_name);
+        pass->setVertexProgram("particle_v:"+gpuprog_name);
+        bbset->setMaterialName(mname);
+
+        bbset->setBillboardRotationType(Ogre::BBR_VERTEX);
+        if (blend==GFX_PARTICLE_OPAQUE) {
+            bbset->setRenderQueueGroup(RQ_FORWARD_OPAQUE);
+            bbset->setSortingEnabled(false);
+        } else {
+            bbset->setRenderQueueGroup(RQ_SKIES_AND_ALPHA);
+            bbset->setSortingEnabled(true);
+        }
+        //bbset->setBillboardsInWorldSpace(true);
+    }
+    ~GfxParticleSystem (void)
+    {
+        ogre_sm->destroyBillboardSet(bbset);
+    }
+
+    GfxParticle emit (void)
+    {
+        return GfxParticle (this);
+    }
+
+    void *acquire (void)
+    {
+        return bbset->createBillboard(Ogre::Vector3(0,0,0));
+    }
+
+    void release (void *bb_)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bbset->removeBillboard(bb);
+    }
+
+    void setPosition (void *bb_, const Vector3 &v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setPosition(to_ogre(v));
+    }
+
+    void setEmissive (void *bb_, const Vector3 &v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        (void) bb;
+        (void) v;
+        // TODO: emissive -- probably need to fiddle with the billboard itself
+    }
+
+    void setAmbient (void *bb_, const Vector3 &v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        Ogre::ColourValue cv = bb->getColour();
+        cv.r = v.x;
+        cv.g = v.y;
+        cv.b = v.z;
+        bb->setColour(cv);
+    }
+
+    void setAlpha (void *bb_, float v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        Ogre::ColourValue cv = bb->getColour();
+        cv.a = v;
+        bb->setColour(cv);
+    }
+
+    void setAngle (void *bb_, float v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setRotation(Ogre::Degree(v));
+    }
+
+    void setUV (void *bb_, float u1, float v1, float u2, float v2)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setTexcoordRect(u1/texWidth, v1/texHeight, u2/texWidth, v2/texHeight);
+    }
+
+    void setDefaultUV (void *bb_)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setTexcoordRect(0.5/texWidth, 0.5/texHeight,
+                            (texWidth-0.5)/texWidth, (texHeight-0.5)/texHeight);
+    }
+
+    void setWidth (void *bb_, float v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setDimensions(bb->getOwnWidth(), v);
+    }
+
+    void setHeight (void *bb_, float v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setDimensions(v, bb->getOwnHeight());
+    }
+
+};
+
+static std::map<std::string, GfxParticleSystem*> psystems;
+
+GfxParticle::GfxParticle (GfxParticleSystem *sys_)
+  : sys(sys_)
+{
+    internal = sys->acquire();
+}
+
+void GfxParticle::setPosition (const Vector3 &v)
+{ sys->setPosition(internal, v); }
+
+void GfxParticle::setEmissive (const Vector3 &v)
+{ sys->setEmissive(internal, v); }
+
+void GfxParticle::setAmbient (const Vector3 &v)
+{ sys->setAmbient(internal, v); }
+
+void GfxParticle::setAlpha (float v)
+{ sys->setAlpha(internal, v); }
+
+void GfxParticle::setAngle (float v)
+{ sys->setAngle(internal, v); }
+
+void GfxParticle::setUV (float u1, float v1, float u2, float v2)
+{ sys->setUV(internal, u1,v1,u2,v2); }
+
+void GfxParticle::setDefaultUV (void)
+{ sys->setDefaultUV(internal); }
+
+void GfxParticle::setWidth (float v)
+{ sys->setWidth(internal, v); }
+
+void GfxParticle::setHeight (float v)
+{ sys->setHeight(internal, v); }
+
+void GfxParticle::release (void)
+{ sys->release(internal); }
+
+void gfx_particle_define (const std::string &pname, const std::string &tex_name,
+                          GfxParticleBlend blend, float alpha_rej)
+{
+    GfxParticleSystem *&psys = psystems[pname];
+    if (psys != NULL) delete psys;
+    psys = new GfxParticleSystem(pname, tex_name, blend, alpha_rej);
+}
+
+GfxParticle gfx_particle_emit (const std::string &pname)
+{
+    GfxParticleSystem *&psys = psystems[pname];
+    if (psys == NULL) GRIT_EXCEPT("No such particle: \""+pname+"\"");
+    return psys->emit();
+}
+
+// }}}
+
+
 void gfx_reload_mesh (const std::string &name)
 {
+    (void) name;
     // TODO: reload Ogre::Mesh
     // TODO: reload Ogre::Skeleton if needed
     // TODO: also need to iterate through GfxBody refreshing them if necessary
@@ -2023,6 +2271,7 @@ void gfx_reload_mesh (const std::string &name)
 
 void gfx_reload_texture (const std::string &name)
 {
+    (void) name;
     // TODO: reload Ogre::Texture
 }
 
@@ -2111,7 +2360,7 @@ size_t gfx_init (GfxCallback &cb_)
             octree = OGRE_NEW Ogre::OctreePlugin();
             ogre_root->installPlugin(octree);
 
-            pfx = OGRE_NEW Ogre::ParticleFXPlugin();
+            //pfx = OGRE_NEW Ogre::ParticleFXPlugin();
             //ogre_root->installPlugin(pfx);
 
             cg = OGRE_NEW Ogre::CgPlugin();
@@ -2203,7 +2452,7 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_sky_ent = ogre_sm->createEntity("SkyEntity", SKY_MESH);
         ogre_celestial->attachObject(ogre_sky_ent);
         ogre_sky_ent->setCastShadows(false);
-        ogre_sky_ent->setRenderQueueGroup(Ogre::RENDER_QUEUE_SKIES_LATE);
+        ogre_sky_ent->setRenderQueueGroup(RQ_SKIES_AND_ALPHA);
         
         Ogre::WindowEventUtilities::addWindowEventListener(ogre_win, &wel);
 
@@ -2233,7 +2482,7 @@ void gfx_shutdown (void)
         #ifdef NO_PLUGINS
             OGRE_DELETE gl;
             OGRE_DELETE octree;
-            OGRE_DELETE pfx;
+            //OGRE_DELETE pfx;
             OGRE_DELETE cg;
             #ifdef WIN32
                 OGRE_DELETE d3d9;

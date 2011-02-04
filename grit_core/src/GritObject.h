@@ -75,8 +75,7 @@ class GritObject {
 
         float calcFade (const float range2, bool &overlap);
 
-        void notifyRange2 (lua_State *L, const GritObjectPtr &self,
-                           const float range2)
+        void notifyRange2 (lua_State *L, const GritObjectPtr &self, const float range2)
         {
                 if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
                 bool overlap = false;
@@ -123,23 +122,22 @@ class GritObject {
         const StringPairs &getAdvanceHints (void) const
         { return advanceResources; }
 
-        bool queueBGPrepare (float x, float y, float z)
+        bool queueBGPrepare (const Vector3 &cam_pos)
         {
                 if (!demandRegistered) {
-                        doQueueBGPrepare(x,y,z);
+                        doQueueBGPrepare(cam_pos);
                         return true;
                 } else {
-                        updateDemand(x,y,z);
+                        updateDemand(cam_pos);
                         return false;
                 }
         }
 
-        void updateDemand(float x_, float y_, float z_) {
-                const float dx=x-x_, dy=y-y_, dz=z-z_;
-                demand.mDist = dx*dx + dy*dy + dz*dz;
+        void updateDemand (const Vector3 cam_pos) {
+                demand.mDist = (cam_pos - pos).length2();
         }
 
-        void doQueueBGPrepare (float, float, float);
+        void doQueueBGPrepare (const Vector3 &cam_pos);
 
         void tryUnloadResources (void);
 
@@ -165,10 +163,10 @@ class GritObject {
         }
 
         void updateSphere (const Vector3 &pos, float r_);
+        void updateSphere (const Vector3 &pos);
+        void updateSphere (float r_);
 
-        float getX() const { return x; }
-        float getY() const { return y; }
-        float getZ() const { return z; }
+        Vector3 getPos() const { return pos; }
         float getR() const { return r; }
                 
         const GritObjectPtr &getNear (void) const { return near; }
@@ -228,18 +226,15 @@ class GritObject {
                 }
         }
 
-        float range2 (float x_, float y_, float z_) const
+        float range2 (const Vector3 &cam_pos) const
         {
-                const float dx=x-x_, dy=y-y_, dz=z-z_;
-                return (dx*dx + dy*dy + dz*dz) / (r*r);
+                return (cam_pos - pos).length2() / (r*r);
         }
 
-        bool withinRange (float x_, float y_,
-                          float z_, float factor) const
+        bool withinRange (const Vector3 &cam_pos, float factor) const
         {
-                const float dx=x-x_, dy=y-y_, dz=z-z_;
                 const float rad = r*factor;
-                return dx*dx + dy*dy + dz*dz < rad*rad;
+                return (cam_pos - pos).length2() < rad*rad;
         }
 
         float getImposedFarFade (void) const { return imposedFarFade; }
@@ -250,7 +245,8 @@ class GritObject {
 
     protected:
 
-        float x, y, z, r;
+        Vector3 pos;
+        float r;
                 
         GritClass *gritClass;
 

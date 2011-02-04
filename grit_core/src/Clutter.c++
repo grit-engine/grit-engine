@@ -25,6 +25,7 @@
 #include <OgreMesh.h>
 
 #include "main.h"
+#include "gfx.h"
 
 
 
@@ -566,7 +567,7 @@ void RangedClutter::_updateRenderQueue (Ogre::RenderQueue *queue)
     }
 }
 
-void RangedClutter::update (float x, float y, float z)
+void RangedClutter::update (const Vector3 &new_pos)
 {
     const float vis2 = mVisibility * mVisibility;
     typedef Cargo::iterator I;
@@ -576,7 +577,7 @@ void RangedClutter::update (float x, float y, float z)
     for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
         Item *o = *i;
          //note we use vis2 not visibility
-        float range2 = o->range2(x,y,z) / vis2;
+        float range2 = o->range2(new_pos) / vis2;
 
         if (range2 > 1) {
             // now out of range
@@ -590,21 +591,21 @@ void RangedClutter::update (float x, float y, float z)
             // still in range, update visibility
             float fade = o->calcFade(range2);
             if (fade!=o->lastFade) {
-                mClutter.updateGeometry(o->ticket, o->pos, o->quat, fade);
+                mClutter.updateGeometry(o->ticket, to_ogre(o->pos), to_ogre(o->quat), fade);
                 o->lastFade = fade;
             }
         }
     }
 
     Cargo cargo;
-    mSpace.getPresent(x, y, z, mStepSize, mVisibility, cargo);
+    mSpace.getPresent(new_pos.x, new_pos.y, new_pos.z, mStepSize, mVisibility, cargo);
     // iterate through the cargo to see who needs to become activated
     for (Cargo::iterator i=cargo.begin(),i_=cargo.end() ; i!=i_ ; ++i) {
         Item *o = *i;
 
         if (o->activated) continue;
 
-        float range2 = o->range2(x,y,z) / vis2;
+        float range2 = o->range2(new_pos) / vis2;
 
         // not in range yet
         if (range2 > 1) continue;
@@ -615,7 +616,7 @@ void RangedClutter::update (float x, float y, float z)
         //activate o
         o->ticket = mClutter.reserveGeometry(o->mesh);
         if (!o->ticket.valid()) continue;
-        mClutter.updateGeometry(o->ticket, o->pos, o->quat, fade);
+        mClutter.updateGeometry(o->ticket, to_ogre(o->pos), to_ogre(o->quat), fade);
         o->activatedIndex = activated.size();
         activated.push_back(o);
         o->activated = true;
@@ -631,10 +632,10 @@ void RangedClutter::push_back (const Transform &t)
     item.parent = this;
     item.activated = false;
     item.mesh = mNextMesh;
-    item.quat = Ogre::Quaternion(t.r.w, t.r.x, t.r.y, t.r.z);
+    item.quat = Quaternion(t.r.w, t.r.x, t.r.y, t.r.z);
     item.lastFade = 0;
     mSpace.add(&item);
-    item.updateSphere(t.p.x, t.p.y, t.p.z, mItemRenderingDistance);
+    item.updateSphere(t.p, mItemRenderingDistance);
 }
 
 void RangedClutter::getUtilisation (size_t &used, size_t &rendered, size_t &total)

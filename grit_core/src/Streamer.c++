@@ -229,7 +229,7 @@ void Streamer::setNeedsFrameCallbacks (const GritObjectPtr & ptr, bool v)
         }
 }
 
-void Streamer::centre (lua_State *L, float x, float y, float z)
+void Streamer::centre (lua_State *L, const Vector3 &new_pos)
 {
         Space::Cargo fnd = fresh;
         fresh.clear();
@@ -252,7 +252,7 @@ void Streamer::centre (lua_State *L, float x, float y, float z)
         for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = *i;
                  //note we use vis2 not visibility
-                float range2 = o->range2(x,y,z) / vis2;
+                float range2 = o->range2(new_pos) / vis2;
                 // sometimes deactivation of an object can cause the deletion of other objects
                 // if those objects are also in the victims list, this can become a problem
                 // so just skip them
@@ -262,7 +262,7 @@ void Streamer::centre (lua_State *L, float x, float y, float z)
                         // update the far (perhaps for a second time this frame)
                         // to make sure it has picked up the fade imposed by o
                         const GritObjectPtr &f = o->getFar();
-                        float range2 = f->range2(x,y,z) / vis2;
+                        float range2 = f->range2(new_pos) / vis2;
                         f->notifyRange2(L,f,range2);
                 }
                 if (range2 > 1) {
@@ -288,7 +288,7 @@ void Streamer::centre (lua_State *L, float x, float y, float z)
                 // Iteration should be fast for removal of significant number of
                 // elements.  Don't do this if it ever stops being a vector.
                 const GritObjectPtr &o = loaded[i];
-                if (!o->withinRange(x,y,z,tpF)) {
+                if (!o->withinRange(new_pos,tpF)) {
                         // unregister demand...
                         // we deactivated first so this should
                         // unload any resources we were using
@@ -308,7 +308,7 @@ void Streamer::centre (lua_State *L, float x, float y, float z)
         ////////////////////////////////////////////////////////////////////////
         // note: since fnd is prepopulated by new objects and the lods of deactivated objects
         // it may have duplicates after the rangespace has gone through
-        rs.getPresent(x,y,z,stepSize,tpF,fnd);
+        rs.getPresent(new_pos.x,new_pos.y,new_pos.z,stepSize,tpF,fnd);
         for (Space::Cargo::iterator i=fnd.begin(),i_=fnd.end() ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = *i;
 
@@ -319,7 +319,7 @@ void Streamer::centre (lua_State *L, float x, float y, float z)
                 if (o->isActivated()) continue;
 
                 // consider background loading
-                if (o->queueBGPrepare(x,y,z)) {
+                if (o->queueBGPrepare(new_pos)) {
                         // note 'loaded' includes things which have started
                         // but not finished loading...
                         loaded.push_back(o);
@@ -327,7 +327,7 @@ void Streamer::centre (lua_State *L, float x, float y, float z)
 
                 if (!o->backgroundPrepareComplete()) continue;
 
-                float range2 = o->range2(x,y,z) / vis2;
+                float range2 = o->range2(new_pos) / vis2;
                 // not in range yet
                 if (range2 > 1) continue;
 
@@ -335,7 +335,7 @@ void Streamer::centre (lua_State *L, float x, float y, float z)
                 // a near object in the way
                 GritObjectPtr near = o->getNear();
                 while (!near.isNull()) {
-                        if (near->withinRange(x,y,z,visibility * fadeOverlapFactor)) {
+                        if (near->withinRange(new_pos,visibility * fadeOverlapFactor)) {
                                 if (near->isActivated()) {
                                         // why deactivate?
                                         // we already ensured it is not activated above...
@@ -365,7 +365,7 @@ void Streamer::centre (lua_State *L, float x, float y, float z)
         BackgroundMeshLoader::getSingleton().checkGPUUsage();
 
         for (UpdateHooks::iterator i=updateHooks.begin(),i_=updateHooks.end() ; i!=i_ ; ++i) {
-                (*i)->update(x,y,z);
+                (*i)->update(new_pos);
         }
 }
 

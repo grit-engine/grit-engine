@@ -186,12 +186,10 @@ TRY_END
 static int rclutter_update (lua_State *L)
 {
 TRY_START
-        check_args(L,4);
+        check_args(L,2);
         GET_UD_MACRO(RangedClutter,self,1,RCLUTTER_TAG);
-        float x = check_float(L,2);
-        float y = check_float(L,3);
-        float z = check_float(L,4);
-        self.update(x,y,z);
+        Vector3 new_pos = check_v3(L,2);
+        self.update(new_pos);
         return 0;
 TRY_END
 }

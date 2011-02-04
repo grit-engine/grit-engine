@@ -62,7 +62,7 @@ void GritObject::destroy (lua_State *L, const GritObjectPtr &self)
 }       
 
 
-void GritObject::doQueueBGPrepare (float x, float y, float z)
+void GritObject::doQueueBGPrepare (const Vector3 &cam_pos)
 {
         std::vector<Ogre::ResourcePtr> &rs = demand.rPtrs;
         rs.reserve(advanceResources.size());
@@ -99,7 +99,7 @@ void GritObject::doQueueBGPrepare (float x, float y, float z)
                 }
         }
         if (background_prepare_needed) {
-                updateDemand(x,y,z);
+                updateDemand(cam_pos);
                 demand.mProcessed = false;
                 BackgroundMeshLoader::getSingleton().checkGPUUsage();
                 BackgroundMeshLoader::getSingleton().add(&demand);
@@ -517,14 +517,22 @@ bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, float e
         return status==0;
 }
 
-void GritObject::updateSphere (const Vector3 &pos, float r_)
+void GritObject::updateSphere (const Vector3 &pos_, float r_)
 {
         if (index==-1) return;
-        x = pos.x;
-        y = pos.y;
-        z = pos.z;
+        pos = pos_;
         r = r_;
-        streamer->updateSphere(index,x,y,z,r);
+        streamer->updateSphere(index,pos,r);
+}
+
+void GritObject::updateSphere (const Vector3 &pos_)
+{
+        updateSphere(pos_, r);
+}
+
+void GritObject::updateSphere (float r_)
+{
+        updateSphere(pos,r_);
 }
 
 void GritObject::setNeedsFrameCallbacks (const GritObjectPtr &self, bool v)

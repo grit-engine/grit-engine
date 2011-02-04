@@ -34,6 +34,9 @@ extern "C" {
 
 #include "math_util.h"
 
+// Purpose of this class is to store lua data outside of lua so as to avoid
+// putting stress on the garbage collector.  Only certain kinds of primitive data
+// are supported.
 
 class ExternalTable {
 

@@ -123,14 +123,14 @@ class Streamer {
         const GritObjectPtr &getObject (const std::string &name);
 
         void getObjects (GObjMap::iterator &begin,
-                                 GObjMap::iterator &end)
+                         GObjMap::iterator &end)
         {
                 begin = gObjs.begin();
                 end = gObjs.end();
         }
 
         void getObjects (GObjMap::const_iterator &begin,
-                                 GObjMap::const_iterator &end) const
+                         GObjMap::const_iterator &end) const
         {
                 begin = gObjs.begin();
                 end = gObjs.end();
@@ -158,13 +158,11 @@ class Streamer {
 
         float visibility;
 
-        void centre (lua_State *L, float x, float y, float z);
+        void centre (lua_State *L, const Vector3 &new_pos);
 
-        inline void updateSphere (size_t index, float x,
-                                          float y, float z,
-                                          float d)
+        inline void updateSphere (size_t index, const Vector3 &pos, float d)
         {
-                rs.updateSphere(index,x,y,z,d);
+                rs.updateSphere(index,pos.x,pos.y,pos.z,d);
         }
         
         size_t stepSize;
@@ -180,7 +178,7 @@ class Streamer {
         // ACTIVATION UPDATE CALLBACK
 
         struct UpdateHook {
-                virtual void update(float x, float y, float z) = 0;
+                virtual void update(const Vector3 &new_pos) = 0;
         };
 
         void registerUpdateHook (UpdateHook *rc);

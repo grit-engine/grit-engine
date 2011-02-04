@@ -314,7 +314,7 @@ class RangedClutter : public Ogre::MovableObject, public Streamer::UpdateHook {
         virtual void _updateRenderQueue(Ogre::RenderQueue *q);
 
 
-        void update (float x, float y, float z);
+        void update (const Vector3 &new_pos);
 
         // be compatible with std::vector
         void push_back (const Transform &t);
@@ -340,23 +340,23 @@ class RangedClutter : public Ogre::MovableObject, public Streamer::UpdateHook {
             RangedClutter *parent;
             int index; // maintained by the RangeSpace class
             Ogre::MeshPtr mesh;
-            Ogre::Vector3 pos;
-            Ogre::Quaternion quat;
+            Vector3 pos;
+            Quaternion quat;
             bool activated;
             int activatedIndex;
             ClutterBuffer::MTicket ticket;
             float renderingDistance;
             float lastFade;
-            void updateSphere (float x_, float y_, float z_, float r_)
+            void updateSphere (const Vector3 &pos_, float r_)
             {
                 renderingDistance = r_;
-                pos = Ogre::Vector3(x_,y_,z_);
-                parent->mSpace.updateSphere(index, x_, y_, z_, r_);
+                pos = pos_;
+                parent->mSpace.updateSphere(index, pos.x, pos.y, pos.z, r_);
             }
             void updateIndex (int index_) { index = index_; }
-            float range2 (float x, float y, float z) const
+            float range2 (const Vector3 &new_pos) const
             {
-                return (Ogre::Vector3(x,y,z)-pos).squaredLength() / renderingDistance / renderingDistance;
+                return (new_pos-pos).length2() / renderingDistance / renderingDistance;
             }
             float calcFade (float range2);
         };

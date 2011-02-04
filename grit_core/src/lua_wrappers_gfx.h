@@ -63,4 +63,8 @@ int global_gfx_fog_set_density (lua_State *L);
 int global_gfx_get_celestial_orientation (lua_State *L);
 int global_gfx_set_celestial_orientation (lua_State *L);
 
+int global_gfx_particle_define (lua_State *L);
+int global_gfx_particle_emit (lua_State *L);
+int global_gfx_particle_pump (lua_State *L);
+
 // vim: shiftwidth=8:tabstop=8:expandtab

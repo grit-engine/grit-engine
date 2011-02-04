@@ -157,19 +157,6 @@ TRY_START
 TRY_END
 }
 
-static int gritobj_get_sphere (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        lua_pushnumber(L,self->getX());
-        lua_pushnumber(L,self->getY());
-        lua_pushnumber(L,self->getZ());
-        lua_pushnumber(L,self->getR());
-        return 4;
-TRY_END
-}
-
 static int gritobj_hint_advance_prepare (lua_State *L)
 {
 TRY_START
@@ -235,8 +222,10 @@ TRY_START
                 lua_pushnumber(L,self->getFade());
         } else if (key=="updateSphere") {
                 push_cfunction(L,gritobj_update_sphere);
-        } else if (key=="getSphere") {
-                push_cfunction(L,gritobj_get_sphere);
+        } else if (key=="pos") {
+                push_v3(L, self->getPos());
+        } else if (key=="renderingDistance") {
+                lua_pushnumber(L, self->getR());
         } else if (key=="deactivate") {
                 push_cfunction(L,gritobj_deactivate);
         } else if (key=="activate") {
@@ -302,6 +291,10 @@ TRY_START
                 my_lua_error(L,"Not a writeable GritObject member: "+key);
         } else if (key=="updateSphere") {
                 my_lua_error(L,"Not a writeable GritObject member: "+key);
+        } else if (key=="pos") {
+                self->updateSphere(check_v3(L,3));
+        } else if (key=="renderingDistance") {
+                self->updateSphere(luaL_checknumber(L,3));
         } else if (key=="getSphere") {
                 my_lua_error(L,"Not a writeable GritObject member: "+key);
         } else if (key=="activated") {
@@ -396,7 +389,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         Vector3 pos = check_v3(L,2);
-        self.centre(L, pos.x, pos.y, pos.z);
+        self.centre(L, pos);
         return 0;
 TRY_END
 }
@@ -411,29 +404,6 @@ TRY_START
         return 0;
 TRY_END
 }
-
-/*
-static int streamer_add_class (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        if (!lua_istable(L,2))
-                my_lua_error(L,"Second parameter should be a table");
-        lua_getfield(L,2,"name");
-        if (lua_isnil(L,-1))
-                my_lua_error(L,"Expected a \"name\" field.");
-        if (lua_type(L,-1)!=LUA_TSTRING)
-                my_lua_error(L,"The \"name\" field should be a string.");
-        std::string name = lua_tostring(L,-1);
-        lua_pushnil(L);
-        lua_setfield(L,2,"name");
-        lua_pop(L,1);
-        self.addClass(L, name);
-        return 1;
-TRY_END
-}
-*/
 
 static int streamer_add_class (lua_State *L)
 {

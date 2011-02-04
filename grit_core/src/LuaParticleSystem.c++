@@ -219,8 +219,7 @@ void LuaParticleAffector::_affectParticles (Ogre::ParticleSystem *ps,
         lastTime = time;
         while (!pi.end()) {
                 Ogre::Particle *p = pi.getNext();
-                LuaParticleData *pd =
-                        static_cast<LuaParticleData*>(p->getVisualData());
+                LuaParticleData *pd = static_cast<LuaParticleData*>(p->getVisualData());
                 pd->affect(core_L, p, elapsed);
         }        
 }

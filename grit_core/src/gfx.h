@@ -50,6 +50,7 @@ no need to touch meshes/textures except to reload -- probably will have reload_m
 
 #include "SharedPtr.h"
 
+// Only things that are referenced from Lua AND can be destroyed (before shutdown) get a SharedPtr
 struct GfxCallback;
 class GfxBody;
 typedef SharedPtr<GfxBody> GfxBodyPtr;
@@ -60,6 +61,7 @@ struct GfxLastRenderStats;
 struct GfxLastFrameStats;
 struct GfxRunningFrameStats;
 struct GfxPaintColour;
+class GfxParticle;
 
 
 #ifndef gfx_h
@@ -148,8 +150,7 @@ int gfx_option (GfxIntOption o);
 void gfx_option (GfxFloatOption o, float v);
 float gfx_option (GfxFloatOption o);
 
-typedef SharedPtr<GfxMaterial> GfxMaterialPtr;
-typedef std::vector<GfxMaterialPtr> GfxMaterialPtrs;
+typedef std::vector<GfxMaterial*> GfxMaterialPtrs;
 class GfxMaterial {
     public:
     Ogre::MaterialPtr regularMat;     // no suffix
@@ -174,15 +175,15 @@ class GfxMaterial {
     void setAlphaBlend (bool v);
     const std::string name;
 
-    friend GfxMaterialPtr gfx_material_add(const std::string &);
+    friend GfxMaterial *gfx_material_add(const std::string &);
     friend class GfxBody;
 };
 
-GfxMaterialPtr gfx_material_add (const std::string &name);
+GfxMaterial *gfx_material_add (const std::string &name);
 
-GfxMaterialPtr gfx_material_add_or_get (const std::string &name);
+GfxMaterial *gfx_material_add_or_get (const std::string &name);
 
-GfxMaterialPtr gfx_material_get (const std::string &name);
+GfxMaterial *gfx_material_get (const std::string &name);
 
 bool gfx_material_has (const std::string &name);
 
@@ -295,12 +296,19 @@ class GfxBody : public GfxNode {
     void setBoneLocalPosition (unsigned n, const Vector3 &v);
     void setBoneLocalOrientation (unsigned n, const Quaternion &v);
 
+    bool isEnabled (void);
+    void setEnabled (bool v);
+
     void destroy (void);
 };
 
 class GfxLight : public GfxNode {
     protected:
     static const std::string className;
+    bool enabled;
+    float fade;
+    Vector3 diffuse;
+    Vector3 specular;
     public: // HACK
     Ogre::Light *light;
     protected:
@@ -330,9 +338,12 @@ class GfxLight : public GfxNode {
     bool isEnabled (void);
     void setEnabled (bool v);
 
+    float getFade (void);
+    void setFade (float f);
+
     void destroy (void);
 };
-    
+
 
 Vector3 gfx_sun_get_diffuse (void);
 void gfx_sun_set_diffuse (const Vector3 &v);
@@ -386,6 +397,34 @@ struct GfxRunningFrameStats {
 GfxLastFrameStats gfx_last_frame_stats (void);
 GfxRunningFrameStats gfx_running_frame_stats (void);
 
+class GfxParticleSystem;
+
+struct GfxParticle {
+    GfxParticleSystem *sys;
+    void *internal;
+
+    GfxParticle (GfxParticleSystem *sys);
+    
+    void setPosition (const Vector3 &v);
+    void setEmissive (const Vector3 &v);
+    void setAmbient (const Vector3 &v);
+    void setAlpha (float v);
+    void setAngle (float v);
+    void setUV (float u1, float v1, float u2, float v2);
+    void setDefaultUV (void);
+    void setWidth (float v);
+    void setHeight (float v);
+
+    void release (void);
+};
+
+enum GfxParticleBlend { GFX_PARTICLE_OPAQUE, GFX_PARTICLE_ALPHA, GFX_PARTICLE_ADD };
+
+void gfx_particle_define (const std::string &pname, const std::string &tex_name,
+                          GfxParticleBlend blend, float alpha_rej);
+
+GfxParticle gfx_particle_emit (const std::string &pname);
+    
 void gfx_reload_mesh (const std::string &name);
 void gfx_reload_texture (const std::string &name);
 

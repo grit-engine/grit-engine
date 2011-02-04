@@ -107,7 +107,7 @@ Clutter.o: ../src/GritObject.h ../src/SharedPtr.h
 Clutter.o: ../src/PhysicsWorld.h ../src/TColParser.h ../src/TColLexer
 Clutter.o: ../src/TColLexer-token_ids ../src/CollisionMesh.h
 Clutter.o: ../src/LooseEnd.h ../src/sleep.h ../src/HUD.h
-Clutter.o: ../src/TextListOverlayElement.h
+Clutter.o: ../src/TextListOverlayElement.h ../src/gfx.h
 CollisionMesh.o: ../src/CollisionMesh.h ../src/TColParser.h
 CollisionMesh.o: ../src/TColLexer ../src/TColLexer-token_ids
 CollisionMesh.o: ../src/math_util.h ../src/CentralisedLog.h
@@ -262,7 +262,8 @@ lua_wrappers_gfx.o: ../src/lua_wrappers_gfx.h
 lua_wrappers_gfx.o: ../src/lua_wrappers_common.h ../src/lua_util.h
 lua_wrappers_gfx.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_gfx.o: ../src/lua_wrappers_scnmgr.h
-lua_wrappers_gfx.o: ../src/lua_wrappers_mobj.h
+lua_wrappers_gfx.o: ../src/lua_wrappers_mobj.h ../src/ExternalTable.h
+lua_wrappers_gfx.o: ../src/path_util.h
 lua_wrappers_gpuprog.o: ../src/lua_wrappers_gpuprog.h
 lua_wrappers_gpuprog.o: ../src/lua_wrappers_common.h ../src/lua_util.h
 lua_wrappers_gpuprog.o: ../src/CentralisedLog.h

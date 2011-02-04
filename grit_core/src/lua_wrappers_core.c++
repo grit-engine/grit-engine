@@ -838,7 +838,7 @@ TRY_START
         ExternalTable &t = mat_map[name];
         t.clear();
         t.takeTableFromLuaStack(L,2);
-        GfxMaterialPtr gfxmat = gfx_material_add_or_get(name);
+        GfxMaterial *gfxmat = gfx_material_add_or_get(name);
         lua_getfield(L, 2, "alpha");
         if (lua_isboolean(L,-1)) {
                 gfxmat->setAlphaBlend(lua_toboolean(L,-1)!=0);
@@ -1755,6 +1755,9 @@ static const luaL_reg global[] = {
         {"gfx_set_scene_ambient",global_gfx_set_scene_ambient},
         {"gfx_get_celestial_orientation",global_gfx_get_celestial_orientation},
         {"gfx_set_celestial_orientation",global_gfx_set_celestial_orientation},
+        {"gfx_particle_define",global_gfx_particle_define},
+        {"gfx_particle_emit",global_gfx_particle_emit},
+        {"gfx_particle_pump",global_gfx_particle_pump},
 
         {"get_rendersystem",global_get_rendersystem},
 
