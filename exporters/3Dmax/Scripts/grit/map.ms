@@ -45,10 +45,10 @@ Rollout GritRolloutClass "Classes" -- {{{
 	(
 	format "\nExporting class...\n" to:listener
 		if $ != undefined then
-		PBCNMB = $.count / 100
+		--PBCNMB = $.count / 100
 		for objs in $ do
 		(
-		PBCEXP.value = (PBCEXP.value + PBCNMB)
+		--PBCEXP.value = (PBCEXP.value + PBCNMB)
 		mdir = getUserProp objs "obmpath"
 		mname = getUserProp objs "obmnpath" 
 		mdrawd = getUserProp objs "obdrawd"
@@ -70,10 +70,10 @@ Rollout GritRolloutClass "Classes" -- {{{
 			objfl = createFile (objfl)
 			format "--lua file generated with JostVice's GritMap script\n--Classes\n" to:objfl
 			if $ != undefined then
-			PBCNMB = $.count / 100
+			--PBCNMB = $.count / 100
 			for objs in $ do
 			(
-				PBCEXP.value = (PBCEXP.value + PBCNMB)
+				--PBCEXP.value = (PBCEXP.value + PBCNMB)
 				mdir = getUserProp objs "obmpath"
 				mname = getUserProp objs "obmnpath" 
 				mdrawd = getUserProp objs "obdrawd"
@@ -189,7 +189,7 @@ Rollout GritRolloutPlace "Placement" -- {{{
 			objfl = createFile (objfl)
 			format "--lua file generated with JostVice's GritMap script\n--Placement\n" to:objfl
 		if $ != undefined then
-		PBONMB = $.count / 100
+		--PBONMB = $.count / 100
 		for objs in $ do
 			(
 				X = objs.pos.X 
@@ -215,10 +215,10 @@ Rollout GritRolloutPlace "Placement" -- {{{
 					else
 					format "rot=euler(%,%,%)" RX RY RZ to:objfl
 				)
-				PBOEXP.value = (PBOEXP.value + PBONMB)
+				--PBOEXP.value = (PBOEXP.value + PBONMB)
 				format "}\n" to:objfl
 			)
-			PBOEXP.value = 0
+			--PBOEXP.value = 0
 			format "Finished!\n" to:listener
 		close objfl
 		)
@@ -228,7 +228,7 @@ Rollout GritRolloutPlace "Placement" -- {{{
 	(
 	format "\nStarting exporting coords\n" to:listener
 	if $ != undefined then
-	PBONMB = $.count / 100
+	--PBONMB = $.count / 100
 	for objs in $ do
 		(
 			X = objs.pos.X 
@@ -255,9 +255,9 @@ Rollout GritRolloutPlace "Placement" -- {{{
 				format "rot=euler(%,%,%)" RX RY RZ to:listener
 			)
 			format "}\n" to:listener
-			PBOEXP.value = (PBOEXP.value + PBONMB)
+			--PBOEXP.value = (PBOEXP.value + PBONMB)
 		)
-		PBOEXP.value = 0
+		--PBOEXP.value = 0
 		format "Finished!\n" to:listener
 	)
 ) -- }}}
