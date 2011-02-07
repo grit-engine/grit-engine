@@ -42,7 +42,6 @@
 
 #include "gfx.h"
 #include "HUD.h"
-#include "LuaParticleSystem.h"
 #include "Clutter.h"
 #include "path_util.h"
 #include "math_util.h"
@@ -61,6 +60,7 @@ bool use_hwgamma = getenv("GRIT_NOHWGAMMA")==NULL;
 #define DEFERRED_POINT_LIGHT_MATERIAL "/system/DeferredLights"
 #define DEFERRED_POINT_LIGHT_INSIDE_MATERIAL "/system/DeferredLightsInside"
 #define DEFERRED_LIGHTS_CUSTOM_PASS "DeferredLights"
+#define CORONAS_CUSTOM_PASS "Coronas"
 
 #define RESGRP "GRIT"
 
@@ -93,6 +93,7 @@ Ogre::RenderWindow *ogre_win;
     #endif
 #endif
 
+
 GfxCallback *gfx_cb;
 bool shutting_down = false;
 float cam_separation = 0;
@@ -101,6 +102,7 @@ Vector3 fog_colour;
 float fog_density;
 
 
+// {{{ utilities
 
 bool stereoscopic (void) 
 { return gfx_option(GFX_CROSS_EYE) || gfx_option(GFX_ANAGLYPH); }
@@ -117,6 +119,17 @@ std::string freshname (void)
 {
     return freshname("F:");
 }
+
+template<class T> bool between (T x, T m, T M) { return std::less<T>()(m,x)&&std::less<T>()(x,M); }
+
+template<class T> void vect_remove_fast (std::vector<T> &vect, size_t index)
+{
+        std::swap<T>(vect[index],vect[vect.size()-1]);
+        vect.pop_back();
+}
+
+// }}}
+
 
 
 // {{{ FRAMEBUFFER / COMPOSITOR
@@ -136,6 +149,8 @@ template<class T> void try_set_named_constant (const Ogre::GpuProgramParametersS
 }
 
 #define AMBIENT_SUN_PASS_ID 42
+
+// {{{ Ambient / sun light
 
 class DeferredAmbientSunListener : public Ogre::CompositorInstance::Listener {
 public:
@@ -185,6 +200,8 @@ public:
 DeferredAmbientSunListener left_dasl(true);
 DeferredAmbientSunListener right_dasl(false);
 
+// }}}
+
 // anything that might need removing will get removed
 static void clean_compositors (void)
 {
@@ -211,6 +228,8 @@ static void clean_compositors (void)
 typedef Ogre::CompositorInstance CI;
 typedef Ogre::CompositionPass CP;
 
+// {{{ Multiple small lights
+
 class MultiDeferredLight : public Ogre::Renderable
 {
 protected:
@@ -218,14 +237,17 @@ protected:
     Ogre::MaterialPtr mMaterial;
     Ogre::RenderOperation mRenderOperation;
     Ogre::VertexData mVertexData;
+    Ogre::IndexData mIndexData;
 
     Ogre::LightList emptyLightList;
 
     unsigned mDeclSize;
-    unsigned mMaxTriangles;
-    unsigned mMaxTrianglesGPU;
+    unsigned mMaxVertexesGPU;
+    unsigned mMaxIndexesGPU;
 
-    float *mFrameData;
+    float *mVertexPtr0; // hold the base pointer
+    uint16_t *mIndexPtr0; // hold the base pointer
+    
 
 public:
 
@@ -233,15 +255,18 @@ public:
       :
         mMaterial(m),
         mDeclSize(0),
-        mMaxTriangles(0), // increase later
-        mMaxTrianglesGPU(0), // increase later
-        mFrameData(NULL) // allocate later
+        mMaxVertexesGPU(0), // increase later
+        mMaxIndexesGPU(0), // increase later
+        mVertexPtr0(NULL),
+        mIndexPtr0(NULL)
     {
         APP_ASSERT(!mMaterial.isNull());
 
         mRenderOperation.useIndexes = false;
         mRenderOperation.vertexData = &mVertexData;
+        mRenderOperation.indexData = &mIndexData;
         mRenderOperation.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+        mRenderOperation.useIndexes = true;
 
         // position on screen (just distinguishes the corners frome each other, -1 or 1)
         mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
@@ -268,13 +293,11 @@ public:
                                                                 Ogre::VES_TEXTURE_COORDINATES, 1);
         mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
 
-        sizeVertexBuffer(10);
     }
 
     ~MultiDeferredLight (void)
     {
         // everything else cleaned up by destructors and Ogre::SharedPtr for the vbuf
-        delete [] mFrameData;
     }
 
     Ogre::RenderOperation *getRenderOperation (void) { return &mRenderOperation; }
@@ -288,24 +311,14 @@ public:
     Ogre::Real getSquaredViewDepth (const Ogre::Camera *) const { return 0; }
     const Ogre::LightList &getLights (void) const { return emptyLightList; }
 
-    void sizeVertexBuffer (unsigned requested_triangles)
+    unsigned indexesUsed (uint16_t *&iptr) { return iptr - mIndexPtr0; }
+    unsigned vertexesUsed (float *&vptr) { return ((vptr-mVertexPtr0)*sizeof(float)) / mDeclSize; }
+
+    void beginLights (unsigned lights, float *&vptr, uint16_t *&iptr)
     {
-        unsigned vertexes = requested_triangles * 3;
-        if (requested_triangles <= mMaxTriangles) return; // already enough lights
-        mMaxTriangles = requested_triangles;
-        delete [] mFrameData;
-        mFrameData = new float[mDeclSize/sizeof(float) * vertexes];
-    }
-
-    float *getFrameData (void) const { return mFrameData; }
-
-    void inject (unsigned num_triangles, Ogre::SceneManager *sm, Ogre::Viewport *viewport)
-    {
-        unsigned vertexes = num_triangles * 3;
-        if (vertexes == 0) return;
-
-        if (num_triangles > mMaxTrianglesGPU) {
-            mMaxTrianglesGPU = num_triangles;
+        unsigned vertexes = lights * 8; // assume worst case -- all cubes
+        if (vertexes > mMaxVertexesGPU) {
+            mMaxVertexesGPU = vertexes;
             Ogre::HardwareVertexBufferSharedPtr vbuf =
                 Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
                     mDeclSize, vertexes,
@@ -313,11 +326,140 @@ public:
             mVertexData.vertexBufferBinding->setBinding(0, vbuf);
         }
 
+        unsigned indexes = lights * 36; // assume worst case -- all cubes
+        if (indexes > mMaxIndexesGPU) {
+            mMaxIndexesGPU = indexes;
+            mIndexData.indexBuffer = Ogre::HardwareBufferManager::getSingleton().
+                createIndexBuffer(Ogre::HardwareIndexBuffer::IT_16BIT, indexes,
+                                  Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
+        }
 
-        mVertexData.vertexCount = vertexes;
+        mVertexPtr0 = vptr = static_cast<float*>(mVertexData.vertexBufferBinding->getBuffer(0)
+                                                 ->lock(Ogre::HardwareBuffer::HBL_DISCARD));
+        mIndexPtr0 = iptr = static_cast<uint16_t*>(mIndexData.indexBuffer
+                                                   ->lock(Ogre::HardwareBuffer::HBL_DISCARD));
+    }
 
-        mVertexData.vertexBufferBinding->getBuffer(0)
-            ->writeData(0, mVertexData.vertexCount*mDeclSize, mFrameData);
+    #define quad_vertexes(a,b,c,d) a, b, d, a, d, c
+
+    void pyramidLight (float *&vptr, uint16_t *&iptr, const Ogre::Vector3 &wpos,
+                       const Ogre::Vector3 *cuboid_planes, const Ogre::Vector3 &dir_ws,
+                       const Ogre::ColourValue &diff, const Ogre::ColourValue &spec,
+                       float inner, float outer, float range)
+    {
+
+        Ogre::Vector3 vertexes[] = {
+            wpos + cuboid_planes[0] + cuboid_planes[2] + cuboid_planes[5],
+            wpos + cuboid_planes[0] + cuboid_planes[3] + cuboid_planes[5],
+            wpos + cuboid_planes[1] + cuboid_planes[2] + cuboid_planes[5],
+            wpos + cuboid_planes[1] + cuboid_planes[3] + cuboid_planes[5],
+            wpos,
+        };
+
+        static unsigned indexes[] = {
+            quad_vertexes(3,1,2,0),
+            3, 4, 1,
+            1, 4, 0,
+            0, 4, 2,
+            2, 4, 3,
+        };
+
+        unsigned offset = vertexesUsed(vptr);
+        for (int j=0 ; j<5 ; ++j) {
+            // position
+            *(vptr++) = vertexes[j].x;
+            *(vptr++) = vertexes[j].y;
+            *(vptr++) = vertexes[j].z;
+            // direction
+            *(vptr++) = dir_ws.x;
+            *(vptr++) = dir_ws.y;
+            *(vptr++) = dir_ws.z;
+            // diffuse colour
+            *(vptr++) = diff.r;
+            *(vptr++) = diff.g;
+            *(vptr++) = diff.b;
+            // specular colour
+            *(vptr++) = spec.r;
+            *(vptr++) = spec.g;
+            *(vptr++) = spec.b;
+            // centre position
+            *(vptr++) = wpos.x;
+            *(vptr++) = wpos.y;
+            *(vptr++) = wpos.z;
+            // inner/outer cone dot product, range
+            *(vptr++) = inner;
+            *(vptr++) = outer;
+            *(vptr++) = range;
+        }
+        for (int j=0 ; j<18 ; ++j) {
+            *(iptr++) = offset+indexes[j];
+        }
+    }
+
+    void cubeLight (float *&vptr, uint16_t *&iptr, const Ogre::Vector3 &wpos,
+                    const Ogre::Vector3 *cuboid_planes, const Ogre::Vector3 &dir_ws,
+                    const Ogre::ColourValue &diff, const Ogre::ColourValue &spec,
+                    float inner, float outer, float range)
+    {
+        Ogre::Vector3 vertexes[] = {
+            wpos + cuboid_planes[0] + cuboid_planes[2] + cuboid_planes[4],
+            wpos + cuboid_planes[0] + cuboid_planes[2] + cuboid_planes[5],
+            wpos + cuboid_planes[0] + cuboid_planes[3] + cuboid_planes[4],
+            wpos + cuboid_planes[0] + cuboid_planes[3] + cuboid_planes[5],
+            wpos + cuboid_planes[1] + cuboid_planes[2] + cuboid_planes[4],
+            wpos + cuboid_planes[1] + cuboid_planes[2] + cuboid_planes[5],
+            wpos + cuboid_planes[1] + cuboid_planes[3] + cuboid_planes[4],
+            wpos + cuboid_planes[1] + cuboid_planes[3] + cuboid_planes[5],
+        };
+
+        static unsigned indexes[] = {
+            quad_vertexes(2,6,0,4),
+            quad_vertexes(7,3,5,1),
+            quad_vertexes(3,2,1,0),
+            quad_vertexes(6,7,4,5),
+            quad_vertexes(0,4,1,5),
+            quad_vertexes(3,7,2,6)
+        };
+
+        unsigned offset = vertexesUsed(vptr);
+        for (int j=0 ; j<8 ; ++j) {
+            // position
+            *(vptr++) = vertexes[j].x;
+            *(vptr++) = vertexes[j].y;
+            *(vptr++) = vertexes[j].z;
+            // direction
+            *(vptr++) = dir_ws.x;
+            *(vptr++) = dir_ws.y;
+            *(vptr++) = dir_ws.z;
+            // diffuse colour
+            *(vptr++) = diff.r;
+            *(vptr++) = diff.g;
+            *(vptr++) = diff.b;
+            // specular colour
+            *(vptr++) = spec.r;
+            *(vptr++) = spec.g;
+            *(vptr++) = spec.b;
+            // centre position
+            *(vptr++) = wpos.x;
+            *(vptr++) = wpos.y;
+            *(vptr++) = wpos.z;
+            // inner/outer cone dot product, range
+            *(vptr++) = inner;
+            *(vptr++) = outer;
+            *(vptr++) = range;
+        }
+        for (int j=0 ; j<36 ; ++j) {
+            *(iptr++) = offset+indexes[j];
+        }
+    }
+
+    void endLights (float *&vptr, uint16_t *&iptr, Ogre::SceneManager *sm, Ogre::Viewport *viewport)
+    {
+        mVertexData.vertexBufferBinding->getBuffer(0)->unlock();
+        mIndexData.indexBuffer->unlock();
+
+        mVertexData.vertexCount = vertexesUsed(vptr);
+        mIndexData.indexCount = indexesUsed(iptr);
 
         mMaterial->load();
         Ogre::Pass *p = mMaterial->getTechnique(0)->getPass(0);
@@ -356,8 +498,6 @@ public:
 
 };
 
-template<class T> bool between (T x, T m, T M) { return std::less<T>()(m,x)&&std::less<T>()(x,M); }
-
 class DeferredLightsRenderOp : public CI::RenderSystemOperation {   
 
     Ogre::Viewport *viewport;
@@ -384,13 +524,14 @@ public:
     {
         (void) rs;
         const Ogre::LightList &ll = sm->_getLightsAffectingFrustum();
-        // assume worst case -- 36 triangles per light
-        mdl.sizeVertexBuffer(ll.size()*36);
-        mdl_inside.sizeVertexBuffer(ll.size()*36);
-        float *frame_data = mdl.getFrameData();
-        float *frame_data_inside = mdl_inside.getFrameData();
-        int triangle_counter = 0;
-        int triangle_counter_inside = 0;
+
+        float *mdl_vptr;
+        uint16_t *mdl_iptr;
+        mdl.beginLights(ll.size(), mdl_vptr, mdl_iptr);
+        float *mdl_inside_vptr;
+        uint16_t *mdl_inside_iptr;
+        mdl_inside.beginLights(ll.size(), mdl_inside_vptr, mdl_inside_iptr);
+
         int light_counter = 0;
         Ogre::Camera *cam = viewport->getCamera();
         const Ogre::Vector3 &cam_pos = cam->getDerivedPosition();
@@ -450,77 +591,18 @@ public:
                 cs_z_min * dir_z, cs_z_max * dir_z,
             };
 
-            Ogre::Vector3 cuboid_corners[] = {
-                wpos + cuboid_planes[0] + cuboid_planes[2] + cuboid_planes[4],
-                wpos + cuboid_planes[0] + cuboid_planes[2] + cuboid_planes[5],
-                wpos + cuboid_planes[0] + cuboid_planes[3] + cuboid_planes[4],
-                wpos + cuboid_planes[0] + cuboid_planes[3] + cuboid_planes[5],
-                wpos + cuboid_planes[1] + cuboid_planes[2] + cuboid_planes[4],
-                wpos + cuboid_planes[1] + cuboid_planes[2] + cuboid_planes[5],
-                wpos + cuboid_planes[1] + cuboid_planes[3] + cuboid_planes[4],
-                wpos + cuboid_planes[1] + cuboid_planes[3] + cuboid_planes[5],
-                wpos,
-            };
+            float *&vp = inside ? mdl_inside_vptr : mdl_vptr;
+            uint16_t *&ip = inside ? mdl_inside_iptr : mdl_iptr;
+            MultiDeferredLight &mdl_ = inside ? mdl_inside : mdl;
 
-            // a b
-            // c d
-            #define quad_vertexes(a,b,c,d) \
-                &cuboid_corners[a], &cuboid_corners[b], &cuboid_corners[d], \
-                &cuboid_corners[a], &cuboid_corners[d], &cuboid_corners[c]
-            #define tri_vertexes(a,b,c) \
-                &cuboid_corners[a], &cuboid_corners[b], &cuboid_corners[c]
-
-            Ogre::Vector3 *cube_corners[] = {
-                quad_vertexes(2,6,0,4),
-                quad_vertexes(7,3,5,1),
-                quad_vertexes(3,2,1,0),
-                quad_vertexes(6,7,4,5),
-                quad_vertexes(0,4,1,5),
-                quad_vertexes(3,7,2,6)
-            };
-
-            Ogre::Vector3 *pyramid_corners[] = {
-                quad_vertexes(7,3,5,1),
-                tri_vertexes(7,8,3),
-                tri_vertexes(3,8,1),
-                tri_vertexes(1,8,5),
-                tri_vertexes(5,8,7),
-            };
-
-            int num_triangles       = use_pyramid ? 6 : 12;
-            Ogre::Vector3 **corners = use_pyramid ? pyramid_corners : cube_corners;
-            float *&data = inside ? frame_data_inside : frame_data;
-            (inside ? triangle_counter_inside : triangle_counter)+=num_triangles;
-
-            for (int j=0 ; j<num_triangles*3 ; ++j) {
-                // position
-                *(data++) = corners[j]->x;
-                *(data++) = corners[j]->y;
-                *(data++) = corners[j]->z;
-                // direction
-                *(data++) = dir_ws.x;
-                *(data++) = dir_ws.y;
-                *(data++) = dir_ws.z;
-                // diffuse colour
-                *(data++) = diff.r;
-                *(data++) = diff.g;
-                *(data++) = diff.b;
-                // specular colour
-                *(data++) = spec.r;
-                *(data++) = spec.g;
-                *(data++) = spec.b;
-                // centre position
-                *(data++) = wpos.x;
-                *(data++) = wpos.y;
-                *(data++) = wpos.z;
-                // inner/outer cone dot product, range
-                *(data++) = inner;
-                *(data++) = outer;
-                *(data++) = range;
+            if (use_pyramid) {
+                mdl_.pyramidLight(vp,ip, wpos, cuboid_planes, dir_ws,diff,spec,inner,outer,range);
+            } else {
+                mdl_.cubeLight(vp,ip, wpos, cuboid_planes, dir_ws,diff,spec,inner,outer,range);
             }
         }
-        mdl.inject(triangle_counter, sm, viewport);
-        mdl_inside.inject(triangle_counter_inside, sm, viewport);
+        mdl.endLights(mdl_vptr, mdl_iptr, sm, viewport);
+        mdl_inside.endLights(mdl_inside_vptr, mdl_inside_iptr, sm, viewport);
         //CVERB << "Total lights: " << light_counter << std::endl;
     }
 };
@@ -535,6 +617,8 @@ public:
         return OGRE_NEW DeferredLightsRenderOp(ins, p);
     }
 };
+
+// }}}
 
 static void init_compositor (void)
 {
@@ -1247,6 +1331,8 @@ float gfx_option (GfxFloatOption o)
 // }}}
 
 
+static std::vector<GfxBody*> all_bodies;
+static std::vector<GfxLight*> all_lights;
 
 // {{{ GFX_NODE
 
@@ -1342,20 +1428,33 @@ void GfxNode::setLocalScale (const Vector3 &s)
 Vector3 GfxNode::transformPosition (const Vector3 &v)
 {
     if (dead) THROW_DEAD(className);
-    if (par.isNull()) return v;
     return getWorldPosition() + getWorldScale()*(getWorldOrientation()*v);
 }
 Quaternion GfxNode::transformOrientation (const Quaternion &v)
 {
     if (dead) THROW_DEAD(className);
-    if (par.isNull()) return v;
     return getWorldOrientation()*v;
 }
 Vector3 GfxNode::transformScale (const Vector3 &v)
 {
     if (dead) THROW_DEAD(className);
-    if (par.isNull()) return v;
     return getWorldScale()*v;
+}
+
+Vector3 GfxNode::transformPositionParent (const Vector3 &v)
+{
+    if (dead) THROW_DEAD(className);
+    return par.isNull() ? v : par->transformPosition(v);
+}
+Quaternion GfxNode::transformOrientationParent (const Quaternion &v)
+{
+    if (dead) THROW_DEAD(className);
+    return par.isNull() ? v : par->transformOrientation(v);
+}
+Vector3 GfxNode::transformScaleParent (const Vector3 &v)
+{
+    if (dead) THROW_DEAD(className);
+    return par.isNull() ? v : par->transformScale(v);
 }
 
 const Vector3 &GfxNode::getLocalPosition (void)
@@ -1366,7 +1465,7 @@ const Vector3 &GfxNode::getLocalPosition (void)
 Vector3 GfxNode::getWorldPosition (void)
 {
     if (dead) THROW_DEAD(className);
-    return par.isNull() ? pos : par->transformPosition(pos);
+    return transformPositionParent(pos);
 }
 
 const Quaternion &GfxNode::getLocalOrientation (void)
@@ -1377,7 +1476,7 @@ const Quaternion &GfxNode::getLocalOrientation (void)
 Quaternion GfxNode::getWorldOrientation (void)
 {
     if (dead) THROW_DEAD(className);
-    return par.isNull() ? quat : par->transformOrientation(quat);
+    return transformOrientationParent(quat);
 }
 
 const Vector3 &GfxNode::getLocalScale (void)
@@ -1388,7 +1487,7 @@ const Vector3 &GfxNode::getLocalScale (void)
 Vector3 GfxNode::getWorldScale (void)
 {
     if (dead) THROW_DEAD(className);
-    return  par.isNull()? scl : par->transformScale(scl);
+    return transformScaleParent(scl);
 }
 
 // }}}
@@ -1427,6 +1526,8 @@ GfxBody::GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_)
     }
     node->attachObject(ent);
     setFade(1.0f, 0);
+    allBodiesIndex = all_bodies.size();
+    all_bodies.push_back(this);
 }
 
 GfxBody::GfxBody (const GfxBodyPtr &par_)
@@ -1449,6 +1550,7 @@ void GfxBody::destroy (void)
     children.clear();
     if (ent) ogre_sm->destroyEntity(ent);
     ent = NULL;
+    vect_remove_fast(all_bodies,allBodiesIndex);
     GfxNode::destroy();
 }
 
@@ -1728,14 +1830,228 @@ void GfxBody::setEnabled (bool v)
 // }}}
 
 
+// {{{ PARTICLES
+
+// a particle system holds the buffer for particles of a particular material
+class GfxParticleSystem {
+    Ogre::BillboardSet *bbset;
+    float texHeight;
+    float texWidth;
+    public:
+    GfxParticleSystem (const std::string &pname, std::string texname,
+                       GfxParticleBlend blend, float alphaRej, bool emissive)
+    {
+        bbset = ogre_sm->createBillboardSet(pname, 100);
+        ogre_root_node->attachObject(bbset);
+
+        std::string mname = "P:"+pname;
+        Ogre::MaterialPtr mat =
+            Ogre::MaterialManager::getSingleton().createOrRetrieve(mname, RESGRP).first;
+        mat->removeAllTechniques();
+        Ogre::Pass *pass = mat->createTechnique()->createPass();
+        Ogre::TextureUnitState *tus = pass->createTextureUnitState();
+        texname = texname.substr(1);
+        Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().load(texname, RESGRP);
+        texHeight = tex->getHeight();
+        texWidth = tex->getWidth();
+        tus->setTextureName(texname);
+        tus->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
+        std::string gpuprog_name;
+        switch (blend) {
+            case GFX_PARTICLE_OPAQUE:
+            pass->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
+            pass->setDepthWriteEnabled(true);
+            gpuprog_name = "O";
+            break;
+            case GFX_PARTICLE_ALPHA:
+            pass->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+            pass->setDepthWriteEnabled(false);
+            gpuprog_name = "A";
+            break;
+            case GFX_PARTICLE_ADD:
+            pass->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
+            pass->setDepthWriteEnabled(false);
+            gpuprog_name = "L";
+            break;
+        }
+        gpuprog_name += "_";
+        gpuprog_name += emissive ? "E" : "e";
+        pass->setAlphaRejectFunction(Ogre::CMPF_GREATER_EQUAL);
+        pass->setAlphaRejectValue(alphaRej);
+        pass->setFragmentProgram("particle_f:"+gpuprog_name);
+        pass->setVertexProgram("particle_v:"+gpuprog_name);
+        bbset->setMaterialName(mname);
+
+        bbset->setBillboardRotationType(Ogre::BBR_VERTEX);
+        if (blend==GFX_PARTICLE_OPAQUE) {
+            bbset->setRenderQueueGroup(RQ_FORWARD_OPAQUE);
+            bbset->setSortingEnabled(false);
+        } else {
+            bbset->setRenderQueueGroup(RQ_SKIES_AND_ALPHA);
+            bbset->setSortingEnabled(true);
+        }
+        //bbset->setBillboardsInWorldSpace(true);
+    }
+    ~GfxParticleSystem (void)
+    {
+        ogre_sm->destroyBillboardSet(bbset);
+    }
+
+    GfxParticle emit (void)
+    {
+        return GfxParticle (this);
+    }
+
+    void *acquire (void)
+    {
+        return bbset->createBillboard(Ogre::Vector3(0,0,0));
+    }
+
+    void release (void *bb_)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bbset->removeBillboard(bb);
+    }
+
+    void setPosition (void *bb_, const Vector3 &v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setPosition(to_ogre(v));
+    }
+
+    void setAmbient (void *bb_, const Vector3 &v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        Ogre::ColourValue cv = bb->getColour();
+        cv.r = v.x;
+        cv.g = v.y;
+        cv.b = v.z;
+        bb->setColour(cv);
+    }
+
+    void setAlpha (void *bb_, float v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        Ogre::ColourValue cv = bb->getColour();
+        cv.a = v;
+        bb->setColour(cv);
+    }
+
+    void setAngle (void *bb_, float v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setRotation(Ogre::Degree(v));
+    }
+
+    void setUV (void *bb_, float u1, float v1, float u2, float v2)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setTexcoordRect(u1/texWidth, v1/texHeight, u2/texWidth, v2/texHeight);
+    }
+
+    void setDefaultUV (void *bb_)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setTexcoordRect(0.5/texWidth, 0.5/texHeight,
+                            (texWidth-0.5)/texWidth, (texHeight-0.5)/texHeight);
+    }
+
+    void setWidth (void *bb_, float v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setDimensions(bb->getOwnWidth(), v);
+    }
+
+    void setHeight (void *bb_, float v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setDimensions(v, bb->getOwnHeight());
+    }
+
+};
+
+static std::map<std::string, GfxParticleSystem*> psystems;
+
+GfxParticle::GfxParticle (GfxParticleSystem *sys_)
+  : sys(sys_)
+{
+    internal = sys->acquire();
+}
+
+GfxParticle &GfxParticle::operator= (const GfxParticle &other)
+{
+    sys = other.sys;
+    internal = other.internal;
+    return *this;
+}
+
+void GfxParticle::setPosition (const Vector3 &v)
+{ sys->setPosition(internal, v); }
+
+void GfxParticle::setAmbient (const Vector3 &v)
+{ sys->setAmbient(internal, v); }
+
+void GfxParticle::setAlpha (float v)
+{ sys->setAlpha(internal, v); }
+
+void GfxParticle::setAngle (float v)
+{ sys->setAngle(internal, v); }
+
+void GfxParticle::setUV (float u1, float v1, float u2, float v2)
+{ sys->setUV(internal, u1,v1,u2,v2); }
+
+void GfxParticle::setDefaultUV (void)
+{ sys->setDefaultUV(internal); }
+
+void GfxParticle::setWidth (float v)
+{ sys->setWidth(internal, v); }
+
+void GfxParticle::setHeight (float v)
+{ sys->setHeight(internal, v); }
+
+void GfxParticle::release (void)
+{ sys->release(internal); }
+
+void gfx_particle_define (const std::string &pname, const std::string &tex_name,
+                          GfxParticleBlend blend, float alpha_rej, bool emissive)
+{
+    GfxParticleSystem *&psys = psystems[pname];
+    if (psys != NULL) delete psys;
+    psys = new GfxParticleSystem(pname, tex_name, blend, alpha_rej, emissive);
+}
+
+GfxParticle gfx_particle_emit (const std::string &pname)
+{
+    GfxParticleSystem *&psys = psystems[pname];
+    if (psys == NULL) GRIT_EXCEPT("No such particle: \""+pname+"\"");
+    return psys->emit();
+}
+
+// }}}
+
+
 // {{{ GFX_LIGHT
+
+GfxParticleSystem *coronas = NULL;
+
+static void ensure_coronas_init (void)
+{
+    if (coronas != NULL) return;
+    // this only happens once
+    coronas = new GfxParticleSystem("/system/Coronas", "/system/Corona.bmp",
+                                    GFX_PARTICLE_ADD, 0, true);
+}
 
 const std::string GfxLight::className = "GfxLight";
 
 GfxLight::GfxLight (const GfxBodyPtr &par_)
   : GfxNode(par_),
     enabled(true),
-    fade(1)
+    fade(1),
+    coronaLocalPos(0,0,0),
+    coronaSize(1),
+    coronaColour(1,1,1),
+    aim(1,0,0,0)
 {
     light = ogre_sm->createLight();
     node->attachObject(light);
@@ -1745,6 +2061,14 @@ GfxLight::GfxLight (const GfxBodyPtr &par_)
     light->setSpotlightOuterAngle(Ogre::Degree(180));
     light->setDiffuseColour(Ogre::ColourValue(1,1,1));
     light->setSpecularColour(Ogre::ColourValue(1,1,1));
+    allLightsIndex = all_lights.size();
+    all_lights.push_back(this);
+    ensure_coronas_init();
+    corona = coronas->emit();
+    corona.setDefaultUV();
+    corona.setAlpha(1);
+    corona.setAngle(0);
+    updateCorona();
 }
 
 GfxLight::~GfxLight (void)
@@ -1757,7 +2081,54 @@ void GfxLight::destroy (void)
     if (dead) THROW_DEAD(className);
     if (light) ogre_sm->destroyLight(light);
     light = NULL;
+    vect_remove_fast(all_lights,allLightsIndex);
+    corona.release();
     GfxNode::destroy();
+}
+
+void GfxLight::updateCorona (void)
+{
+    //if (dead) THROW_DEAD(className); // not called from Lua so assume it is safe
+    coronaPos = transformPositionParent(coronaLocalPos);
+    corona.setPosition(coronaPos);
+    corona.setAmbient(enabled ? fade * coronaColour : Vector3(0,0,0));
+    corona.setWidth(coronaSize);
+    corona.setHeight(coronaSize);
+}
+
+float GfxLight::getCoronaSize (void)
+{
+    if (dead) THROW_DEAD(className);
+    return coronaSize;
+}
+void GfxLight::setCoronaSize (float v)
+{
+    if (dead) THROW_DEAD(className);
+    coronaSize = v;
+}
+
+Vector3 GfxLight::getCoronaLocalPosition (void)
+{
+    if (dead) THROW_DEAD(className);
+    return coronaLocalPos;
+}
+
+void GfxLight::setCoronaLocalPosition (const Vector3 &v)
+{
+    if (dead) THROW_DEAD(className);
+    coronaLocalPos = v;
+}
+
+Vector3 GfxLight::getCoronaColour (void)
+{
+    if (dead) THROW_DEAD(className);
+    return coronaColour;
+}
+
+void GfxLight::setCoronaColour (const Vector3 &v)
+{
+    if (dead) THROW_DEAD(className);
+    coronaColour = v;
 }
 
 Vector3 GfxLight::getDiffuseColour (void)
@@ -1786,16 +2157,17 @@ void GfxLight::setSpecularColour (const Vector3 &v)
     light->setSpecularColour(to_ogre_cv(fade * specular));
 }
 
-Vector3 GfxLight::getAim (void)
+Quaternion GfxLight::getAim (void)
 {
     if (dead) THROW_DEAD(className);
-    return from_ogre(light->getDirection());
+    return aim;
 }
 
-void GfxLight::setAim (const Vector3 &v)
+void GfxLight::setAim (const Quaternion &v)
 {
     if (dead) THROW_DEAD(className);
-    light->setDirection(to_ogre(v).normalisedCopy());
+    aim = v;
+    light->setDirection(to_ogre(v * Vector3(0,1,0)));
 }
 
 float GfxLight::getRange (void)
@@ -2010,14 +2382,26 @@ static void position_camera (bool left, const Vector3 &cam_pos, const Quaternion
     cam->setOrientation(to_ogre(cam_dir*Quaternion(Degree(90),Vector3(1,0,0))));
 }
 
+static void update_coronas (void)
+{
+    //const Ogre::LightList &ll = sm->_getLightsAffectingFrustum();
+    for (unsigned long i=0 ; i<all_lights.size() ; ++i) {
+        all_lights[i]->updateCorona();
+    }
+    
+}
+
 void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir)
 {
     try {
         Ogre::WindowEventUtilities::messagePump();
 
+        update_coronas();
+
         position_camera(true, cam_pos, cam_dir);
         if (stereoscopic())
             position_camera(false, cam_pos, cam_dir);
+
         ogre_root->renderOneFrame(elapsed);
 
     } catch (Ogre::Exception &e) {
@@ -2058,208 +2442,6 @@ GfxRunningFrameStats gfx_running_frame_stats (void)
     GfxRunningFrameStats r;
     return r;
 }
-
-// {{{ PARTICLES
-
-// a particle system holds the buffer for particles of a particular material
-class GfxParticleSystem {
-    Ogre::BillboardSet *bbset;
-    float texHeight;
-    float texWidth;
-    public:
-    GfxParticleSystem (const std::string &pname, std::string texname,
-                       GfxParticleBlend blend, float alphaRej)
-    {
-        bbset = ogre_sm->createBillboardSet(pname, 100);
-        ogre_root_node->attachObject(bbset);
-
-        std::string mname = "P:"+pname;
-        Ogre::MaterialPtr mat =
-            Ogre::MaterialManager::getSingleton().createOrRetrieve(mname, RESGRP).first;
-        mat->removeAllTechniques();
-        Ogre::Pass *pass = mat->createTechnique()->createPass();
-        Ogre::TextureUnitState *tus = pass->createTextureUnitState();
-        texname = texname.substr(1);
-        Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().load(texname, RESGRP);
-        texHeight = tex->getHeight();
-        texWidth = tex->getWidth();
-        tus->setTextureName(texname);
-        tus->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
-        std::string gpuprog_name;
-        switch (blend) {
-            case GFX_PARTICLE_OPAQUE:
-            pass->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
-            pass->setDepthWriteEnabled(true);
-            gpuprog_name = "O";
-            break;
-            case GFX_PARTICLE_ALPHA:
-            pass->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
-            pass->setDepthWriteEnabled(false);
-            gpuprog_name = "A";
-            break;
-            case GFX_PARTICLE_ADD:
-            pass->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
-            pass->setDepthWriteEnabled(false);
-            gpuprog_name = "L";
-            break;
-        }
-        pass->setAlphaRejectFunction(Ogre::CMPF_GREATER_EQUAL);
-        pass->setAlphaRejectValue(alphaRej);
-        pass->setFragmentProgram("particle_f:"+gpuprog_name);
-        pass->setVertexProgram("particle_v:"+gpuprog_name);
-        bbset->setMaterialName(mname);
-
-        bbset->setBillboardRotationType(Ogre::BBR_VERTEX);
-        if (blend==GFX_PARTICLE_OPAQUE) {
-            bbset->setRenderQueueGroup(RQ_FORWARD_OPAQUE);
-            bbset->setSortingEnabled(false);
-        } else {
-            bbset->setRenderQueueGroup(RQ_SKIES_AND_ALPHA);
-            bbset->setSortingEnabled(true);
-        }
-        //bbset->setBillboardsInWorldSpace(true);
-    }
-    ~GfxParticleSystem (void)
-    {
-        ogre_sm->destroyBillboardSet(bbset);
-    }
-
-    GfxParticle emit (void)
-    {
-        return GfxParticle (this);
-    }
-
-    void *acquire (void)
-    {
-        return bbset->createBillboard(Ogre::Vector3(0,0,0));
-    }
-
-    void release (void *bb_)
-    {
-        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        bbset->removeBillboard(bb);
-    }
-
-    void setPosition (void *bb_, const Vector3 &v)
-    {
-        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        bb->setPosition(to_ogre(v));
-    }
-
-    void setEmissive (void *bb_, const Vector3 &v)
-    {
-        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        (void) bb;
-        (void) v;
-        // TODO: emissive -- probably need to fiddle with the billboard itself
-    }
-
-    void setAmbient (void *bb_, const Vector3 &v)
-    {
-        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        Ogre::ColourValue cv = bb->getColour();
-        cv.r = v.x;
-        cv.g = v.y;
-        cv.b = v.z;
-        bb->setColour(cv);
-    }
-
-    void setAlpha (void *bb_, float v)
-    {
-        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        Ogre::ColourValue cv = bb->getColour();
-        cv.a = v;
-        bb->setColour(cv);
-    }
-
-    void setAngle (void *bb_, float v)
-    {
-        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        bb->setRotation(Ogre::Degree(v));
-    }
-
-    void setUV (void *bb_, float u1, float v1, float u2, float v2)
-    {
-        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        bb->setTexcoordRect(u1/texWidth, v1/texHeight, u2/texWidth, v2/texHeight);
-    }
-
-    void setDefaultUV (void *bb_)
-    {
-        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        bb->setTexcoordRect(0.5/texWidth, 0.5/texHeight,
-                            (texWidth-0.5)/texWidth, (texHeight-0.5)/texHeight);
-    }
-
-    void setWidth (void *bb_, float v)
-    {
-        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        bb->setDimensions(bb->getOwnWidth(), v);
-    }
-
-    void setHeight (void *bb_, float v)
-    {
-        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        bb->setDimensions(v, bb->getOwnHeight());
-    }
-
-};
-
-static std::map<std::string, GfxParticleSystem*> psystems;
-
-GfxParticle::GfxParticle (GfxParticleSystem *sys_)
-  : sys(sys_)
-{
-    internal = sys->acquire();
-}
-
-void GfxParticle::setPosition (const Vector3 &v)
-{ sys->setPosition(internal, v); }
-
-void GfxParticle::setEmissive (const Vector3 &v)
-{ sys->setEmissive(internal, v); }
-
-void GfxParticle::setAmbient (const Vector3 &v)
-{ sys->setAmbient(internal, v); }
-
-void GfxParticle::setAlpha (float v)
-{ sys->setAlpha(internal, v); }
-
-void GfxParticle::setAngle (float v)
-{ sys->setAngle(internal, v); }
-
-void GfxParticle::setUV (float u1, float v1, float u2, float v2)
-{ sys->setUV(internal, u1,v1,u2,v2); }
-
-void GfxParticle::setDefaultUV (void)
-{ sys->setDefaultUV(internal); }
-
-void GfxParticle::setWidth (float v)
-{ sys->setWidth(internal, v); }
-
-void GfxParticle::setHeight (float v)
-{ sys->setHeight(internal, v); }
-
-void GfxParticle::release (void)
-{ sys->release(internal); }
-
-void gfx_particle_define (const std::string &pname, const std::string &tex_name,
-                          GfxParticleBlend blend, float alpha_rej)
-{
-    GfxParticleSystem *&psys = psystems[pname];
-    if (psys != NULL) delete psys;
-    psys = new GfxParticleSystem(pname, tex_name, blend, alpha_rej);
-}
-
-GfxParticle gfx_particle_emit (const std::string &pname)
-{
-    GfxParticleSystem *&psys = psystems[pname];
-    if (psys == NULL) GRIT_EXCEPT("No such particle: \""+pname+"\"");
-    return psys->emit();
-}
-
-// }}}
-
 
 void gfx_reload_mesh (const std::string &name)
 {
@@ -2412,10 +2594,6 @@ size_t gfx_init (GfxCallback &cb_)
         Ogre::MeshManager::getSingleton().setVerbose(false);
 
 
-        Ogre::ParticleSystemManager::getSingleton()
-                .addAffectorFactory(new LuaParticleAffectorFactory());
-        Ogre::ParticleSystemManager::getSingleton()
-                .addRendererFactory(new LuaParticleRendererFactory());
         Ogre::OverlayManager::getSingleton()
                 .addOverlayElementFactory(new HUD::TextListOverlayElementFactory());
         ogre_root->addMovableObjectFactory(new MovableClutterFactory());
@@ -2457,6 +2635,8 @@ size_t gfx_init (GfxCallback &cb_)
         Ogre::WindowEventUtilities::addWindowEventListener(ogre_win, &wel);
 
         init_options();
+
+ 
 
         return winid;
     } catch (Ogre::Exception &e) {

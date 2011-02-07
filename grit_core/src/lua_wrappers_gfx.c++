@@ -475,8 +475,14 @@ TRY_START
         push_v3(L, self->getDiffuseColour());
     } else if (!::strcmp(key,"specularColour")) {
         push_v3(L, self->getSpecularColour());
+    } else if (!::strcmp(key,"coronaSize")) {
+        lua_pushnumber(L, self->getCoronaSize());
+    } else if (!::strcmp(key,"coronaLocalPosition")) {
+        push_v3(L, self->getCoronaLocalPosition());
+    } else if (!::strcmp(key,"coronaColour")) {
+        push_v3(L, self->getCoronaColour());
     } else if (!::strcmp(key,"aim")) {
-        push_v3(L, self->getAim());
+        push_quat(L, self->getAim());
     } else if (!::strcmp(key,"range")) {
         lua_pushnumber(L, self->getRange());
     } else if (!::strcmp(key,"fade")) {
@@ -525,8 +531,17 @@ TRY_START
     } else if (!::strcmp(key,"specularColour")) {
         Vector3 v = check_v3(L,3);
         self->setSpecularColour(v);
-    } else if (!::strcmp(key,"aim")) {
+    } else if (!::strcmp(key,"coronaSize")) {
+        float v = luaL_checknumber(L,3);
+        self->setCoronaSize(v);
+    } else if (!::strcmp(key,"coronaLocalPosition")) {
         Vector3 v = check_v3(L,3);
+        self->setCoronaLocalPosition(v);
+    } else if (!::strcmp(key,"coronaColour")) {
+        Vector3 v = check_v3(L,3);
+        self->setCoronaColour(v);
+    } else if (!::strcmp(key,"aim")) {
+        Quaternion v = check_quat(L,3);
         self->setAim(v);
     } else if (!::strcmp(key,"fade")) {
         float v = check_float(L,3);
@@ -907,17 +922,6 @@ namespace {
                 }
                 lua_pop(L,1);
 
-                lua_getfield(L, -1, "emissive");
-                if (lua_isnil(L,-1)) {
-                    p.setEmissive(Vector3(0,0,0));
-                } else if (!lua_isvector3(L,-1)) {
-                    CERR << "Particle emissive was not a vector3." << std::endl;
-                    destroy = true;
-                } else {
-                    p.setEmissive(check_v3(L,-1));
-                }
-                lua_pop(L,1);
-
                 lua_getfield(L, -1, "alpha");
                 if (lua_isnil(L,-1)) {
                     p.setAlpha(1);
@@ -1054,10 +1058,10 @@ TRY_START
             blend = GFX_PARTICLE_OPAQUE;
         } else if (blending=="ALPHA") {
             blend = GFX_PARTICLE_ALPHA;
-        } else if (blending=="LIGHT") {
+        } else if (blending=="ADD") {
             blend = GFX_PARTICLE_ADD;
         } else {
-            my_lua_error(L, "Particle blending must be OPAQUE / ALPHA / LIGHT.");
+            my_lua_error(L, "Particle blending must be OPAQUE / ALPHA / ADD.");
             blend = GFX_PARTICLE_OPAQUE; // to shut up the compiler
         }
     }
@@ -1077,6 +1081,19 @@ TRY_START
     lua_pop(L,1);
     lua_pushnil(L);
     lua_setfield(L, 2, "alphaReject");
+
+    bool emissive;
+    lua_getfield(L, 2, "emissive");
+    if (lua_isnil(L,-1)) {
+        emissive = false;
+    } else if (!lua_isboolean(L,-1)) {
+        my_lua_error(L,"Particle emissive must be a boolean.");
+    } else {
+        alpha_rej = (bool)lua_toboolean(L,-1);
+    }
+    lua_pop(L,1);
+    lua_pushnil(L);
+    lua_setfield(L, 2, "emissive");
 
     lua_getfield(L, 2, "frames");
     std::vector<UVRect> frames;
@@ -1133,7 +1150,7 @@ TRY_START
         pd->destroy(L);
         delete pd;
     }
-    gfx_particle_define(name, texture, blend, alpha_rej); // will invalidate 
+    gfx_particle_define(name, texture, blend, alpha_rej, emissive); // will invalidate 
     ParticleDefinition *newpd = new ParticleDefinition(name, frames, table, behaviour);
     pd = newpd;
     return 0;

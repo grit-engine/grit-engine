@@ -32,7 +32,6 @@
 #include "Clutter.h"
 #include "main.h"
 #include "gfx.h"
-#include "LuaParticleSystem.h"
 
 #include "lua_wrappers_mobj.h"
 #include "lua_wrappers_scnmgr.h"
@@ -62,8 +61,6 @@ Ogre::MovableObject *check_mobj(lua_State *L,int index)
                 ptr = *static_cast<RangedClutter**>(lua_touserdata(L,index));
         } else if (has_tag(L,index,MANOBJ_TAG)) {
                 ptr = *static_cast<Ogre::ManualObject**>(lua_touserdata(L,index));
-        } else if (has_tag(L,index,PSYS_TAG)) {
-                ptr = *static_cast<Ogre::ParticleSystem**>(lua_touserdata(L,index));
         }
 
         if (!ptr) {
@@ -73,8 +70,7 @@ Ogre::MovableObject *check_mobj(lua_State *L,int index)
                 acceptable_types += LIGHT_TAG ", or ";
                 acceptable_types += CLUTTER_TAG ", or ";
                 acceptable_types += RCLUTTER_TAG ", or ";
-                acceptable_types += MANOBJ_TAG ", or ";
-                acceptable_types += PSYS_TAG;
+                acceptable_types += MANOBJ_TAG;
                 luaL_typerror(L,index,acceptable_types.c_str());
         }
         return ptr;
@@ -103,9 +99,6 @@ bool push_mobj (lua_State *L, Ogre::MovableObject *mobj)
                 return true;
         } else if (dynamic_cast<Ogre::ManualObject*>(mobj)) {
                 push_manobj(L,static_cast<Ogre::ManualObject*>(mobj));
-                return true;
-        } else if (dynamic_cast<Ogre::ParticleSystem*>(mobj)) {
-                push_psys(L,static_cast<Ogre::ParticleSystem*>(mobj));
                 return true;
         }
         return false;
@@ -664,219 +657,6 @@ TRY_END
 EQ_PTR_MACRO(Ogre::Light,light,LIGHT_TAG)
 
 MT_MACRO_NEWINDEX(light);
-
-//}}}
-
-
-// PSYS =================================================================== {{{
-
-Ogre::ParticleSystem *make_psys (Ogre::SceneManager *sm,
-                                 const std::string &name)
-{
-        Ogre::ParticleSystem *psys = sm->createParticleSystem(name);
-        psys->setRenderer("LuaParticleRenderer");
-        psys->addAffector("LuaParticleAffector");
-        psys->setSpeedFactor(0);
-        return psys;
-}
-
-void push_psys (lua_State *L, Ogre::ParticleSystem *self)
-{
-        void **ud = static_cast<void**>(lua_newuserdata(L, sizeof(*ud)));
-        ud[0] = static_cast<void*> (self);
-        luaL_getmetatable(L, PSYS_TAG);
-        lua_setmetatable(L, -2);
-        Ogre::SceneManager *sm = self->_getManager();
-        scnmgr_maps& maps = user_data_tables.scnmgrs[sm];
-        maps.psyss[self].push_back(ud);
-}
-
-static int psys_add_particle_ex (lua_State *L, bool err)
-{
-TRY_START
-        check_args(L,17);
-        GET_UD_MACRO(Ogre::ParticleSystem,self,1,PSYS_TAG);
-        float x = luaL_checknumber(L,2);
-        float y = luaL_checknumber(L,3);
-        float z = luaL_checknumber(L,4);
-        float rot = luaL_checknumber(L,5);
-        float w = luaL_checknumber(L,6);
-        float h = luaL_checknumber(L,7);
-        float r = luaL_checknumber(L,8);
-        float g = luaL_checknumber(L,9);
-        float b = luaL_checknumber(L,10);
-        float a = luaL_checknumber(L,11);
-        float dx = luaL_checknumber(L,12);
-        float dy = luaL_checknumber(L,13);
-        float dz = luaL_checknumber(L,14);
-        luaL_checktype(L,15,LUA_TFUNCTION);
-        lua_pushvalue(L,15); //func
-        lua_pushvalue(L,16); //arg
-        float advance = luaL_checknumber(L,17);
-        Ogre::Particle *p = self.createParticle();
-        if (p==NULL) {
-                if (err) {
-                        my_lua_error(L, "No more particles");
-                } else {
-                        return 0;
-                }
-        }
-        p->position = Ogre::Vector3(x,y,z);
-        p->direction = Ogre::Vector3(dx,dy,dz);
-        p->setRotation(Ogre::Degree(rot));
-        p->setDimensions(w,h);
-        p->colour = Ogre::ColourValue(r,g,b,a);
-        p->particleType = Ogre::Particle::Visual;
-        p->timeToLive = 1;
-        LuaParticleData *pd = static_cast<LuaParticleData*>(p->getVisualData());
-        pd->age = 0;
-        pd->setFunctionArg(L);
-        (void) advance;
-        return 0;
-TRY_END
-}
-
-static int psys_add_particle (lua_State *L)
-{
-TRY_START
-        return psys_add_particle_ex(L, true);
-TRY_END
-}
-
-static int psys_try_add_particle (lua_State *L)
-{
-TRY_START
-        return psys_add_particle_ex(L, false);
-TRY_END
-}
-
-static int psys_update (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Ogre::ParticleSystem,self,1,PSYS_TAG);
-        float t = luaL_checknumber(L,2);
-        self._update(t);
-        return 0;
-TRY_END
-}
-
-static int psys_clear (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(Ogre::ParticleSystem,self,1,PSYS_TAG);
-        self.clear();
-        return 0;
-TRY_END
-}
-
-static int psys_gc(lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO_OFFSET(Ogre::ParticleSystem,self,1,PSYS_TAG,0);
-        if (self==NULL) return 0;
-        Ogre::SceneManager *sm = self->_getManager();
-        vec_nullify_remove(user_data_tables.scnmgrs[sm].psyss[self],&self);
-        return 0;
-TRY_END
-}
-
-static int psys_destroy (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(Ogre::ParticleSystem,self,1,PSYS_TAG);
-        Ogre::SceneManager *sm = self._getManager();
-        sm->destroyParticleSystem(&self);
-        map_nullify_remove(user_data_tables.scnmgrs[sm].psyss,&self);
-        return 0;
-TRY_END
-}
-
-
-
-
-TOSTRING_ADDR_MACRO(psys,Ogre::ParticleSystem,PSYS_TAG)
-
-static int psys_index(lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Ogre::ParticleSystem,self,1,PSYS_TAG);
-        LuaParticleRenderer *renderer=
-                static_cast<LuaParticleRenderer*>(self.getRenderer());
-        std::string key = luaL_checkstring(L,2);
-        if (key=="destroy") {
-                push_cfunction(L,psys_destroy);
-        } else if (key=="quota") {
-                lua_pushnumber(L, self.getParticleQuota());
-        } else if (key=="activeParticles") {
-                lua_pushnumber(L, self.getNumParticles());
-        } else if (key=="sortingEnabled") {
-                lua_pushboolean(L, self.getSortingEnabled());
-        } else if (key=="accurateFacing") {
-                lua_pushboolean(L, renderer->getUseAccurateFacing());
-        } else if (key=="pointRenderingEnabled") {
-                lua_pushboolean(L, renderer->isPointRenderingEnabled());
-        } else if (key=="rotateVertexes") {
-                bool b = renderer->getBillboardRotationType()==Ogre::BBR_VERTEX;
-                lua_pushboolean(L, b);
-        } else if (key=="materialName") {
-                lua_pushstring(L, self.getMaterialName().c_str());
-        } else if (key=="addParticle") {
-                push_cfunction(L, psys_add_particle);
-        } else if (key=="tryAddParticle") {
-                push_cfunction(L, psys_try_add_particle);
-        } else if (key=="clear") {
-                push_cfunction(L, psys_clear);
-        } else if (key=="update") {
-                push_cfunction(L, psys_update);
-        } else if (!mobj_index(L,self,key)) {
-                my_lua_error(L,"Not a readable ParticleSystem member: "+key);
-        }
-        return 1;
-TRY_END
-}
-
-static int psys_newindex(lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(Ogre::ParticleSystem,self,1,PSYS_TAG);
-        LuaParticleRenderer *renderer=
-                static_cast<LuaParticleRenderer*>(self.getRenderer());
-        std::string key = luaL_checkstring(L,2);
-        if (key=="quota") {
-                float v = luaL_checknumber(L,3);
-                self.setParticleQuota(v);
-        } else if (key=="sortingEnabled") {
-                bool b = check_bool(L,3);
-                self.setSortingEnabled(b);
-        } else if (key=="accurateFacing") {
-                bool b = check_bool(L,3);
-                renderer->setUseAccurateFacing(b);
-        } else if (key=="pointRenderingEnabled") {
-                bool b = check_bool(L,3);
-                renderer->setPointRenderingEnabled(b);
-        } else if (key=="rotateVertexes") {
-                bool b = check_bool(L,3);
-                renderer->setBillboardRotationType(b?Ogre::BBR_VERTEX
-                                                    :Ogre::BBR_TEXCOORD);
-        } else if (key=="materialName") {
-                std::string v = luaL_checkstring(L,3);
-                self.setMaterialName(v);
-        } else if (!mobj_newindex(L,self,key)) {
-                my_lua_error(L,"Not a writeable ParticleSystem member: "+key);
-        }
-        return 0;
-TRY_END
-}
-
-EQ_PTR_MACRO(Ogre::ParticleSystem,psys,PSYS_TAG)
-
-MT_MACRO_NEWINDEX(psys);
 
 //}}}
 

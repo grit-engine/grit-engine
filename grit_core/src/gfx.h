@@ -150,6 +150,37 @@ int gfx_option (GfxIntOption o);
 void gfx_option (GfxFloatOption o, float v);
 float gfx_option (GfxFloatOption o);
 
+class GfxParticleSystem;
+
+struct GfxParticle {
+    GfxParticleSystem *sys;
+    void *internal;
+
+    GfxParticle (void) { }
+
+    GfxParticle (GfxParticleSystem *sys);
+
+    GfxParticle &operator= (const GfxParticle &other);
+    
+    void setPosition (const Vector3 &v);
+    void setAmbient (const Vector3 &v);
+    void setAlpha (float v);
+    void setAngle (float v);
+    void setUV (float u1, float v1, float u2, float v2);
+    void setDefaultUV (void);
+    void setWidth (float v);
+    void setHeight (float v);
+
+    void release (void);
+};
+
+enum GfxParticleBlend { GFX_PARTICLE_OPAQUE, GFX_PARTICLE_ALPHA, GFX_PARTICLE_ADD };
+
+void gfx_particle_define (const std::string &pname, const std::string &tex_name,
+                          GfxParticleBlend blend, float alpha_rej, bool emissive);
+
+GfxParticle gfx_particle_emit (const std::string &pname);
+    
 typedef std::vector<GfxMaterial*> GfxMaterialPtrs;
 class GfxMaterial {
     public:
@@ -205,16 +236,19 @@ class GfxNode {
     bool dead;
 
     GfxNode (const GfxBodyPtr &par_);
+    virtual ~GfxNode ();
 
     void notifyParentDead (void);
     void ensureNotChildOf (GfxBody *leaf) const;
 
     public:
-    virtual ~GfxNode ();
 
     const GfxBodyPtr &getParent (void) const;
     virtual void setParent (const GfxBodyPtr &par_);
 
+    Vector3 transformPositionParent (const Vector3 &v);
+    Quaternion transformOrientationParent (const Quaternion &v);
+    Vector3 transformScaleParent (const Vector3 &v);
     Vector3 transformPosition (const Vector3 &v);
     Quaternion transformOrientation (const Quaternion &v);
     Vector3 transformScale (const Vector3 &v);
@@ -246,9 +280,11 @@ class GfxBody : public GfxNode {
     float fade;
     GfxMaterialPtrs materials;
     GfxPaintColour colours[4];
+    unsigned long allBodiesIndex;
 
     GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_);
     GfxBody (const GfxBodyPtr &par_);
+    ~GfxBody ();
 
     public:
     static GfxBodyPtr make (const std::string &mesh_name, const GfxBodyPtr &par_=GfxBodyPtr(NULL))
@@ -257,7 +293,6 @@ class GfxBody : public GfxNode {
     static GfxBodyPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
     { return GfxBodyPtr(new GfxBody(par_)); }
     
-    ~GfxBody ();
 
     void notifyLostChild (GfxNode *child);
     void notifyGainedChild (GfxNode *child);
@@ -300,6 +335,8 @@ class GfxBody : public GfxNode {
     void setEnabled (bool v);
 
     void destroy (void);
+
+    friend class SharedPtr<GfxBody>;
 };
 
 class GfxLight : public GfxNode {
@@ -307,27 +344,33 @@ class GfxLight : public GfxNode {
     static const std::string className;
     bool enabled;
     float fade;
+    Vector3 coronaLocalPos;
+    Vector3 coronaPos;
+    float coronaSize;
+    Vector3 coronaColour;
     Vector3 diffuse;
     Vector3 specular;
+    unsigned long allLightsIndex;
+    GfxParticle corona;
+    Quaternion aim;
     public: // HACK
     Ogre::Light *light;
     protected:
 
     GfxLight (const GfxBodyPtr &par_);
+    ~GfxLight ();
 
 
     public:
     static GfxLightPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
     { return GfxLightPtr(new GfxLight(par_)); }
     
-    ~GfxLight ();
-
     Vector3 getDiffuseColour (void);
     Vector3 getSpecularColour (void);
     void setDiffuseColour (const Vector3 &v);
     void setSpecularColour (const Vector3 &v);
-    Vector3 getAim (void);
-    void setAim (const Vector3 &v);
+    Quaternion getAim (void);
+    void setAim (const Quaternion &v);
     float getRange (void);
     void setRange (float v);
     Degree getInnerAngle (void);
@@ -341,7 +384,19 @@ class GfxLight : public GfxNode {
     float getFade (void);
     void setFade (float f);
 
+    void updateCorona (void);
+
+    Vector3 getCoronaLocalPosition (void);
+    void setCoronaLocalPosition (const Vector3 &v);
+
+    float getCoronaSize (void);
+    void setCoronaSize (float v);
+    Vector3 getCoronaColour (void);
+    void setCoronaColour (const Vector3 &v);
+
     void destroy (void);
+
+    friend class SharedPtr<GfxLight>;
 };
 
 
@@ -397,34 +452,6 @@ struct GfxRunningFrameStats {
 GfxLastFrameStats gfx_last_frame_stats (void);
 GfxRunningFrameStats gfx_running_frame_stats (void);
 
-class GfxParticleSystem;
-
-struct GfxParticle {
-    GfxParticleSystem *sys;
-    void *internal;
-
-    GfxParticle (GfxParticleSystem *sys);
-    
-    void setPosition (const Vector3 &v);
-    void setEmissive (const Vector3 &v);
-    void setAmbient (const Vector3 &v);
-    void setAlpha (float v);
-    void setAngle (float v);
-    void setUV (float u1, float v1, float u2, float v2);
-    void setDefaultUV (void);
-    void setWidth (float v);
-    void setHeight (float v);
-
-    void release (void);
-};
-
-enum GfxParticleBlend { GFX_PARTICLE_OPAQUE, GFX_PARTICLE_ALPHA, GFX_PARTICLE_ADD };
-
-void gfx_particle_define (const std::string &pname, const std::string &tex_name,
-                          GfxParticleBlend blend, float alpha_rej);
-
-GfxParticle gfx_particle_emit (const std::string &pname);
-    
 void gfx_reload_mesh (const std::string &name);
 void gfx_reload_texture (const std::string &name);
 
@@ -461,6 +488,6 @@ static inline Vector3 from_ogre_cv (const Ogre::ColourValue &v)
 static inline Degree from_ogre (const Ogre::Degree &v)
 { return Degree(v.valueDegrees()); }
 static inline Radian from_ogre (const Ogre::Radian &v)
-{ return Degree(v.valueRadians()); }
+{ return Radian(v.valueRadians()); }
 
 #endif 

@@ -73,11 +73,6 @@ void push_cam (lua_State *, Ogre::Camera *);
 MT_MACRO_DECLARE(light);
 void push_light (lua_State *, Ogre::Light *);
 
-#define PSYS_TAG "Grit/ParticleSystem"
-MT_MACRO_DECLARE(psys);
-void push_psys (lua_State *, Ogre::ParticleSystem *);
-Ogre::ParticleSystem *make_psys (Ogre::SceneManager *, const std::string &);
-
 #define CLUTTER_TAG "Grit/MovableClutter"
 MT_MACRO_DECLARE(clutter);
 void push_clutter (lua_State *, MovableClutter *);
