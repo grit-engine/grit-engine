@@ -292,10 +292,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\LuaParticleSystem.c++"
-				>
-			</File>
-			<File
 				RelativePath=".\src\main.c++"
 				>
 			</File>
