@@ -40,7 +40,7 @@ struct GfxLastRenderStats;
 struct GfxLastFrameStats;
 struct GfxRunningFrameStats;
 struct GfxPaintColour;
-class GfxParticle;
+struct GfxParticle;
 
 
 #ifndef gfx_h
