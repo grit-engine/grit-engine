@@ -148,6 +148,7 @@ template<class T> struct vect_element_update_index<T*> {
 template<class T> void vect_remove_fast_safe (std::vector<T> &vect, size_t index)
 {
         vect_remove_fast(vect, index);
+        if (vect.size() == index) return;
         vect_element_update_index<T>::_(vect[index], index);
 }
 
@@ -648,7 +649,7 @@ public:
 static void init_compositor (void)
 {
     Ogre::CompositorManager::getSingleton()
-        .registerCustomCompositionPass(DEFERRED_LIGHTS_CUSTOM_PASS, OGRE_NEW DeferredLightsPass());
+        .registerCustomCompositionPass(DEFERRED_LIGHTS_CUSTOM_PASS, new DeferredLightsPass());
 }
 
 
