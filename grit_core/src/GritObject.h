@@ -79,19 +79,10 @@ class GritObject {
         {
                 if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
                 bool overlap = false;
-                volatile float fade = calcFade(range2, overlap);
+                float fade = calcFade(range2, overlap);
                 // if fade is sufficiently different
                 if (fade!=lastFade) {
-                        int transition;
-                        if (((lastFade<1) == (fade<1)) && (lastFade != -1))
-                                transition = -1;
-                        else if (fade>=1)
-                                transition = 0;
-                        else if (overlap)
-                                transition = 1;
-                        else
-                                transition = 2;
-                        notifyFade(L, self, fade, transition);
+                        notifyFade(L, self, fade);
                         lastFade = fade;
                 }
         }
@@ -102,8 +93,7 @@ class GritObject {
 
         void notifyFade (lua_State *L,
                          const GritObjectPtr &self,
-                         const float fade,
-                         const int transition);
+                         const float fade);
 
         bool isActivated (void) const { return lua!=LUA_NOREF; }
 

@@ -40,22 +40,6 @@ void push_gfxbody (lua_State *L, const GfxBodyPtr &self)
 
 GC_MACRO(GfxBodyPtr,gfxbody,GFXBODY_TAG)
 
-static int gfxbody_set_fade (lua_State *L)
-{
-TRY_START
-    check_args(L,3);
-    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    float f = luaL_checknumber(L,2);
-    if (lua_isnil(L,3)) {
-        self->setFade(f, -1);
-    } else {
-        int t = check_int(L,3,0,2);
-        self->setFade(f, t);
-    }
-    return 0;
-TRY_END
-}
-
 static int gfxbody_get_paint_colour (lua_State *L)
 {
 TRY_START
@@ -320,12 +304,18 @@ TRY_START
     } else if (!::strcmp(key,"nodeHACK")) {
         push_node(L, self->node);
     } else if (!::strcmp(key,"entHACK")) {
-        push_entity(L, self->ent);
+        if (self->ent)
+            push_entity(L, self->ent);
+        else
+            lua_pushnil(L);
+    } else if (!::strcmp(key,"entEmissiveHACK")) {
+        if (self->entEmissive)
+            push_entity(L, self->entEmissive);
+        else
+            lua_pushnil(L);
 
     } else if (!::strcmp(key,"fade")) {
         lua_pushnumber(L, self->getFade());
-    } else if (!::strcmp(key,"setFade")) {
-        push_cfunction(L,gfxbody_set_fade);
     } else if (!::strcmp(key,"castShadows")) {
         lua_pushboolean(L, self->getCastShadows());
 
@@ -399,6 +389,9 @@ TRY_START
     } else if (!::strcmp(key,"localScale")) {
         Vector3 v = check_v3(L,3);
         self->setLocalScale(v);
+    } else if (!::strcmp(key,"fade")) {
+        float v = check_float(L,3);
+        self->setFade(v);
     } else if (!::strcmp(key,"parent")) {
         if (lua_isnil(L,3)) {
             self->setParent(GfxBodyPtr(NULL));
@@ -1247,4 +1240,23 @@ TRY_START
 TRY_END
 }
 
+int global_gfx_reload_mesh (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    const char *name = luaL_checkstring(L,1);
+    gfx_reload_mesh(name);
+    return 0;
+TRY_END
+}
+
+int global_gfx_reload_texture (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    const char *name = luaL_checkstring(L,1);
+    gfx_reload_texture(name);
+    return 0;
+TRY_END
+}
 // vim: shiftwidth=4:tabstop=4:expandtab

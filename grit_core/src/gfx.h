@@ -19,34 +19,13 @@
  * THE SOFTWARE.
  */
 
-#if 0
-some way of distinguishing sky from everything else
-
-manobj
-clutter
-rclutter
-psys
-
-mat
-tex
-mesh
-skel
-gpuprog
-rtex
-rwin
-
-
-Script or user customisable graphical elements within a typical grit game:
-
-Clutter
-Lights (high level lights with coronas etc)
-Particles
-Material definitions
-Shaders?
-
-no need to touch meshes/textures except to reload -- probably will have reload_mesh(string) or similar
-
-#endif
+/* TODO:
+ * sky node
+ * clutter / rclutter
+ * shaders
+ * materials
+ * set material of a body
+ */
 
 #include "SharedPtr.h"
 
@@ -181,29 +160,35 @@ void gfx_particle_define (const std::string &pname, const std::string &tex_name,
 
 GfxParticle gfx_particle_emit (const std::string &pname);
     
-typedef std::vector<GfxMaterial*> GfxMaterialPtrs;
+typedef std::vector<GfxMaterial*> GfxMaterials;
+
+enum GfxMaterialBlend { GFX_MATERIAL_OPAQUE, GFX_MATERIAL_ALPHA, GFX_MATERIAL_ALPHA_DEPTH };
+
 class GfxMaterial {
-    public:
+    public: // hack
     Ogre::MaterialPtr regularMat;     // no suffix
     Ogre::MaterialPtr fadingMat;      // ' can be NULL
+    Ogre::MaterialPtr emissiveMat;
     //Ogre::MaterialPtr shadowMat;      // ! can be simply a link to the default
     //Ogre::MaterialPtr worldMat;       // & 
     //Ogre::MaterialPtr worldShadowMat; // % can be simply a link to the default
 
-    protected:
-    float alpha;
-    bool alphaBlend;
+    private: GfxMaterial (const std::string &name);
 
-    GfxMaterial (const std::string &name);
+    private: float alpha;
+    public: float getAlpha (void) const { return alpha; }
+    public: void setAlpha (float v);
 
-    bool delayedDeferred (void) { return alphaBlend; }
+    private: GfxMaterialBlend blend;
+    public: GfxMaterialBlend getBlend (void) const { return blend; }
+    public: void setBlend (GfxMaterialBlend v);
+
+    private: bool stipple;
+    public: bool getStipple (void) const { return stipple; }
+    public: void setStipple (bool v);
+
 
     public:
-
-    float getAlpha (void) { return alpha; }
-    void setAlpha (float v);
-    bool getAlphaBlend (void) { return alphaBlend; }
-    void setAlphaBlend (bool v);
     const std::string name;
 
     friend GfxMaterial *gfx_material_add(const std::string &);
@@ -230,6 +215,7 @@ class GfxNode {
     static const std::string className;
     Vector3 pos; Quaternion quat; Vector3 scl;
     GfxBodyPtr par;
+    Ogre::MeshPtr mesh;
     public: // HACK
     Ogre::SceneNode *node;
     protected:
@@ -276,15 +262,18 @@ class GfxBody : public GfxNode {
     std::vector<GfxNode*> children; // caution!
     public: // HACK
     Ogre::Entity *ent;
+    Ogre::Entity *entEmissive;
     protected:
     float fade;
-    GfxMaterialPtrs materials;
+    GfxMaterials materials;
     GfxPaintColour colours[4];
     unsigned long allBodiesIndex;
+    bool enabled;
 
     GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_);
     GfxBody (const GfxBodyPtr &par_);
     ~GfxBody ();
+
 
     public:
     static GfxBodyPtr make (const std::string &mesh_name, const GfxBodyPtr &par_=GfxBodyPtr(NULL))
@@ -293,10 +282,19 @@ class GfxBody : public GfxNode {
     static GfxBodyPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
     { return GfxBodyPtr(new GfxBody(par_)); }
     
+    GfxMaterial *getMaterial (unsigned i) { return materials[i]; }
+    unsigned getNumMaterials (void) { return materials.size(); }
 
     void notifyLostChild (GfxNode *child);
     void notifyGainedChild (GfxNode *child);
     void setParent (const GfxBodyPtr &par_);
+
+    void updateEntEmissive (void);
+    void updateVisibility (void);
+    void updateMaterials (void);
+    void updateEntity (void);
+    void reinitialiseEntity (void);
+    void updateSubEntity (unsigned i);
 
     unsigned getBatches (void) const;
     unsigned getBatchesWithChildren (void) const;
@@ -305,7 +303,7 @@ class GfxBody : public GfxNode {
     unsigned getTrianglesWithChildren (void) const;
 
     float getFade (void);
-    void setFade (float f, int transition);
+    void setFade (float f);
 
     bool getCastShadows (void);
     void setCastShadows (bool v);
@@ -336,7 +334,10 @@ class GfxBody : public GfxNode {
 
     void destroy (void);
 
+    void updateIndex (size_t v);
+
     friend class SharedPtr<GfxBody>;
+    friend void gfx_reload_mesh (const std::string &name);
 };
 
 class GfxLight : public GfxNode {
@@ -360,6 +361,7 @@ class GfxLight : public GfxNode {
     GfxLight (const GfxBodyPtr &par_);
     ~GfxLight ();
 
+    void updateVisibility (void);
 
     public:
     static GfxLightPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
@@ -395,6 +397,8 @@ class GfxLight : public GfxNode {
     void setCoronaColour (const Vector3 &v);
 
     void destroy (void);
+
+    void updateIndex (size_t v);
 
     friend class SharedPtr<GfxLight>;
 };

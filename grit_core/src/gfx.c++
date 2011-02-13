@@ -67,7 +67,10 @@ bool use_hwgamma = getenv("GRIT_NOHWGAMMA")==NULL;
 // render queues
 #define RQ_GBUFFER_OPAQUE 50
 #define RQ_FORWARD_OPAQUE 51
-#define RQ_SKIES_AND_ALPHA 95
+#define RQ_SKY 60
+#define RQ_FORWARD_EMISSIVE 61
+#define RQ_FORWARD_ALPHA_DEPTH 94
+#define RQ_FORWARD_ALPHA 95
 
 Ogre::Root *ogre_root;
 Ogre::OctreeSceneManager *ogre_sm;
@@ -126,6 +129,26 @@ template<class T> void vect_remove_fast (std::vector<T> &vect, size_t index)
 {
         std::swap<T>(vect[index],vect[vect.size()-1]);
         vect.pop_back();
+}
+
+template<class T> struct vect_element_update_index {
+    static void _ (T &el, size_t index)
+    {
+        el.updateIndex(index);
+    }
+};
+
+template<class T> struct vect_element_update_index<T*> {
+    static void _ (T *&el, size_t index)
+    {
+        el->updateIndex(index);
+    }
+};
+
+template<class T> void vect_remove_fast_safe (std::vector<T> &vect, size_t index)
+{
+        vect_remove_fast(vect, index);
+        vect_element_update_index<T>::_(vect[index], index);
 }
 
 // }}}
@@ -194,6 +217,8 @@ public:
         Ogre::Matrix4 proj = cam->getProjectionMatrix();
         //try_set_named_constant(fp, "proj", proj);
         try_set_named_constant(fp, "view_proj", proj*view);
+        Ogre::Vector3 sun_pos_ws = ogre_sun->getDirection();
+        try_set_named_constant(fp, "sun_pos_ws", -sun_pos_ws);
     }
 };
 
@@ -1352,7 +1377,7 @@ GfxNode::GfxNode (const GfxBodyPtr &par_)
 
 GfxNode::~GfxNode (void)
 {
-    if (!dead) GRIT_EXCEPT(className+" has not been destroyed properly.");
+    if (!dead) CERR << className+" has not been destroyed properly." << std::endl;
 }
 
 void GfxNode::destroy (void)
@@ -1497,43 +1522,185 @@ Vector3 GfxNode::getWorldScale (void)
 
 const std::string GfxBody::className = "GfxBody";
 
+void validate_mesh (const Ogre::MeshPtr &mesh)
+{
+    for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
+        Ogre::SubMesh *sm = mesh->getSubMesh(i);
+        std::string matname = sm->getMaterialName();
+        if (!gfx_material_has(matname)) {
+            CERR << "Mesh \"/"<<mesh->getName()<<"\" references non-existing material "
+                 << "\""<<matname<<"\""<<std::endl;
+            matname = "/BaseWhite";
+            sm->setMaterialName(matname);
+        }
+    }
+}
+
 GfxBody::GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_)
   : GfxNode(par_)
 {
     memset(colours, 0, sizeof(colours));
     std::string ogre_name = mesh_name.substr(1);
-    Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().load(ogre_name,RESGRP);
+
+    mesh = Ogre::MeshManager::getSingleton().load(ogre_name,RESGRP);
+    // validate mesh in case it was just loaded for the first time
+    validate_mesh(mesh);
+
+    ent = ogre_sm->createEntity(freshname(), ogre_name);
+    node->attachObject(ent);
+    entEmissive = NULL;
+    fade = 1;
+    enabled = true;
+
+    updateMaterials();
+    updateEntity();
+
+    allBodiesIndex = all_bodies.size();
+    all_bodies.push_back(this);
+}
+
+void GfxBody::updateMaterials (void)
+{
+    if (mesh.isNull()) return;
     materials = std::vector<GfxMaterial*>(mesh->getNumSubMeshes());
     for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
         Ogre::SubMesh *sm = mesh->getSubMesh(i);
         std::string matname = sm->getMaterialName();
-        if (!gfx_material_has(matname)) {
-            CERR << "Mesh \""<<mesh_name<<"\" references non-existing material "
-                 << "\""<<matname<<"\""<<std::endl;
-            matname = "/BaseWhite";
-            sm->setMaterialName(matname);
-        }
         materials[i] = gfx_material_get(matname);
     }
-    ent = ogre_sm->createEntity(freshname(), ogre_name);
+}
+
+void GfxBody::reinitialiseEntity (void)
+{
+    if (ent==NULL) return;
+    ent->_initialise(true);
+    updateEntity();
+}
+
+void GfxBody::updateSubEntity (unsigned i)
+{
+    if (ent==NULL) return;
+
+    Ogre::SubEntity *se = ent->getSubEntity(i);
+
+    GfxMaterial *gfx_material = materials[i];
+
+    switch (gfx_material->getBlend()) {
+        case GFX_MATERIAL_OPAQUE:
+        se->setRenderQueueGroup(RQ_GBUFFER_OPAQUE);
+        break;
+        case GFX_MATERIAL_ALPHA:
+        se->setRenderQueueGroup(RQ_FORWARD_ALPHA);
+        break;
+        case GFX_MATERIAL_ALPHA_DEPTH:
+        se->setRenderQueueGroup(RQ_FORWARD_ALPHA_DEPTH);
+        break;
+    }
+
+    // materials
+    /* TODO: include other criteria to pick a specific Ogre::Material:
+     * bones: 1 2 3 4
+     * vertex colours: false/true
+     * vertex alpha: false/true
+     * Fading: false/true
+     * World: false/true
+     */
+    if (fade < 1 && !gfx_material->getStipple()) {
+        se->setMaterial(gfx_material->fadingMat);
+    } else {
+        se->setMaterial(gfx_material->regularMat);
+    }
+
+    // car paint
+    for (int k=0 ; k<4 ; ++k) {
+        const GfxPaintColour &c = colours[k];
+        se->setCustomParameter(2*k+1,Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, c.met));
+        se->setCustomParameter(2*k+2,  Ogre::Vector4(c.spec.x, c.spec.y, c.spec.z, 0));
+    }
+}
+
+void GfxBody::updateVisibility (void)
+{
+    if (ent==NULL) return;
+    // avoid the draw entirely if faded out
+    ent->setVisible(enabled && fade > 0.001);
+    if (entEmissive) entEmissive->setVisible(enabled && fade > 0.001);
+
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
         Ogre::SubEntity *se = ent->getSubEntity(i);
-        if (materials[i]->getAlphaBlend()) {
-            se->setRenderQueueGroup(RQ_SKIES_AND_ALPHA);
-        } else {
-            se->setRenderQueueGroup(RQ_GBUFFER_OPAQUE);
+        // fading in/out (either stipple or alpha factor)
+        se->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
+    }
+
+    if (entEmissive != NULL) {
+        for (unsigned i=0 ; i<entEmissive->getNumSubEntities() ; ++i) {
+            Ogre::SubEntity *se = entEmissive->getSubEntity(i);
+            // fading in/out (either stipple or alpha factor)
+            se->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
         }
     }
-    node->attachObject(ent);
-    setFade(1.0f, 0);
-    allBodiesIndex = all_bodies.size();
-    all_bodies.push_back(this);
+
+}
+
+void GfxBody::updateEntEmissive (void)
+{
+    if (ent==NULL) return;
+    if (entEmissive != NULL) {
+        // destroy it if we've already got one
+        ogre_sm->destroyEntity(entEmissive);
+    }
+    bool needs_emissive = false;
+    for (unsigned i=0 ; i<materials.size() ; ++i) {
+        GfxMaterial *gfx_material = materials[i];
+        if (!gfx_material->emissiveMat.isNull()) {
+            needs_emissive = true;
+        }
+    }
+    if (!needs_emissive) return;
+    entEmissive = ogre_sm->createEntity(freshname(), mesh->getName());
+    node->attachObject(entEmissive);
+    for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
+        GfxMaterial *gfx_material = materials[i];
+        Ogre::SubEntity *se = entEmissive->getSubEntity(i);
+        if (!gfx_material->emissiveMat.isNull()) {
+            se->setMaterial(gfx_material->emissiveMat);
+            se->setRenderQueueGroup(RQ_FORWARD_EMISSIVE);
+        } else {
+            se->setVisible(false);
+        }
+    }
+    updateVisibility();
+}
+
+void GfxBody::updateEntity (void)
+{
+    if (ent==NULL) return;
+
+    for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
+        updateSubEntity(i);
+    }
+
+    updateEntEmissive();
+
 }
 
 GfxBody::GfxBody (const GfxBodyPtr &par_)
   : GfxNode(par_)
 {
+    memset(colours, 0, sizeof(colours));
+
+    mesh.setNull();
+
     ent = NULL;
+    fade = 1;
+    enabled = true;
+    entEmissive = NULL;
+
+    updateMaterials();
+    updateEntity();
+
+    allBodiesIndex = all_bodies.size();
+    all_bodies.push_back(this);
 }
 
 GfxBody::~GfxBody (void)
@@ -1550,8 +1717,15 @@ void GfxBody::destroy (void)
     children.clear();
     if (ent) ogre_sm->destroyEntity(ent);
     ent = NULL;
-    vect_remove_fast(all_bodies,allBodiesIndex);
+    if (entEmissive) ogre_sm->destroyEntity(entEmissive);
+    entEmissive = NULL;
+    vect_remove_fast_safe(all_bodies,allBodiesIndex);
     GfxNode::destroy();
+}
+
+void GfxBody::updateIndex (size_t v)
+{
+    allBodiesIndex = v;
 }
 
 void GfxBody::notifyLostChild (GfxNode *child)
@@ -1625,24 +1799,12 @@ float GfxBody::getFade (void)
     if (dead) THROW_DEAD(className);
     return fade;
 }
-void GfxBody::setFade (float f, int transition)
+void GfxBody::setFade (float f)
 {
     if (dead) THROW_DEAD(className);
     fade = f;
-    if (!ent) return;
-    for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
-        Ogre::SubEntity *se = ent->getSubEntity(i);
-        se->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
-        GfxMaterial *true_material = materials[i];
-        if (transition == 0) {
-            se->setMaterial(true_material->regularMat);
-        } else {
-            if (!true_material->fadingMat.isNull()) {
-                se->setMaterial(true_material->fadingMat);
-            }
-        }
-    }
-    ent->setVisible(fade > 0.001);
+    //if (!ent) return;
+    updateVisibility();
 }
 
 bool GfxBody::getCastShadows (void)
@@ -1668,11 +1830,6 @@ void GfxBody::setPaintColour (int i, const GfxPaintColour &c)
     if (dead) THROW_DEAD(className);
     colours[i] = c;
     if (!ent) return;
-    for (size_t j=0 ; j<ent->getNumSubEntities() ; ++j) {
-            Ogre::SubEntity *se = ent->getSubEntity(j);
-            se->setCustomParameter(2*i+1,Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, c.met));
-            se->setCustomParameter(2*i+2,  Ogre::Vector4(c.spec.x, c.spec.y, c.spec.z, 0));
-    }
 }
 
 unsigned GfxBody::getNumBones (void)
@@ -1818,13 +1975,14 @@ void GfxBody::setBoneLocalOrientation (unsigned n, const Quaternion &v)
 bool GfxBody::isEnabled (void)
 {
     if (dead) THROW_DEAD(className);
-    return ent->isVisible();
+    return enabled;
 }
 
 void GfxBody::setEnabled (bool v)
 {
     if (dead) THROW_DEAD(className);
-    ent->setVisible(v);
+    enabled = v;
+    updateVisibility();
 }
 
 // }}}
@@ -1887,7 +2045,7 @@ class GfxParticleSystem {
             bbset->setRenderQueueGroup(RQ_FORWARD_OPAQUE);
             bbset->setSortingEnabled(false);
         } else {
-            bbset->setRenderQueueGroup(RQ_SKIES_AND_ALPHA);
+            bbset->setRenderQueueGroup(RQ_FORWARD_ALPHA);
             bbset->setSortingEnabled(true);
         }
         //bbset->setBillboardsInWorldSpace(true);
@@ -2051,6 +2209,8 @@ GfxLight::GfxLight (const GfxBodyPtr &par_)
     coronaLocalPos(0,0,0),
     coronaSize(1),
     coronaColour(1,1,1),
+    diffuse(1,1,1),
+    specular(1,1,1),
     aim(1,0,0,0)
 {
     light = ogre_sm->createLight();
@@ -2059,8 +2219,7 @@ GfxLight::GfxLight (const GfxBodyPtr &par_)
     light->setAttenuation(10, 0, 0, 0);
     light->setSpotlightInnerAngle(Ogre::Degree(180));
     light->setSpotlightOuterAngle(Ogre::Degree(180));
-    light->setDiffuseColour(Ogre::ColourValue(1,1,1));
-    light->setSpecularColour(Ogre::ColourValue(1,1,1));
+    updateVisibility();
     allLightsIndex = all_lights.size();
     all_lights.push_back(this);
     ensure_coronas_init();
@@ -2081,14 +2240,19 @@ void GfxLight::destroy (void)
     if (dead) THROW_DEAD(className);
     if (light) ogre_sm->destroyLight(light);
     light = NULL;
-    vect_remove_fast(all_lights,allLightsIndex);
+    vect_remove_fast_safe(all_lights,allLightsIndex);
     corona.release();
     GfxNode::destroy();
 }
 
+void GfxLight::updateIndex (size_t v)
+{
+    allLightsIndex = v;
+}
+
 void GfxLight::updateCorona (void)
 {
-    //if (dead) THROW_DEAD(className); // not called from Lua so assume it is safe
+    if (dead) THROW_DEAD(className);
     coronaPos = transformPositionParent(coronaLocalPos);
     corona.setPosition(coronaPos);
     corona.setAmbient(enabled ? fade * coronaColour : Vector3(0,0,0));
@@ -2147,14 +2311,14 @@ void GfxLight::setDiffuseColour (const Vector3 &v)
 {
     if (dead) THROW_DEAD(className);
     diffuse = v;
-    light->setDiffuseColour(to_ogre_cv(fade * diffuse));
+    updateVisibility();
 }
 
 void GfxLight::setSpecularColour (const Vector3 &v)
 {
     if (dead) THROW_DEAD(className);
     specular = v;
-    light->setSpecularColour(to_ogre_cv(fade * specular));
+    updateVisibility();
 }
 
 Quaternion GfxLight::getAim (void)
@@ -2216,7 +2380,7 @@ void GfxLight::setEnabled (bool v)
 {
     if (dead) THROW_DEAD(className);
     enabled = v;
-    light->setVisible(enabled && fade > 0.001);
+    updateVisibility();
 }
 
 float GfxLight::getFade (void)
@@ -2228,33 +2392,72 @@ void GfxLight::setFade (float f)
 {
     if (dead) THROW_DEAD(className);
     fade = f;
+    updateVisibility();
+}
+
+void GfxLight::updateVisibility (void)
+{
     light->setVisible(enabled && fade > 0.001);
     light->setDiffuseColour(to_ogre_cv(fade * diffuse));
     light->setSpecularColour(to_ogre_cv(fade * specular));
 }
-
 // }}}
 
 
 
 // {{{ GFX_MATERIAL
 
+static std::set<GfxMaterial*> dirty_mats;
+
+static void handle_dirty_materials (void)
+{
+    if (dirty_mats.empty()) return;
+
+    for (unsigned long i=0 ; i<all_bodies.size() ; ++i) {
+        GfxBody *b = all_bodies[i];
+        bool needs_emissive_update = false;
+        for (unsigned j=0 ; j<b->getNumMaterials() ; ++j) {
+            GfxMaterial *m = b->getMaterial(j);
+            if (dirty_mats.find(m)!=dirty_mats.end()) {
+                b->updateSubEntity(j);
+                needs_emissive_update = true;
+            }
+        }
+        if (needs_emissive_update) {
+            b->updateEntEmissive();
+        }
+    }
+
+    dirty_mats.clear();
+}
+
 GfxMaterial::GfxMaterial (const std::string &name_)
   : fadingMat(NULL),
     alpha(1),
-    alphaBlend(false),
+    blend(GFX_MATERIAL_OPAQUE),
+    stipple(true),
     name(name_)
 {
 }
 
+// FIXME: any updates to material properties need to be propagated to the GfxBodies that use them...
+
 void GfxMaterial::setAlpha (float v)
 {
     alpha = v;
+    dirty_mats.insert(this);
 }
 
-void GfxMaterial::setAlphaBlend (bool v)
+void GfxMaterial::setBlend (GfxMaterialBlend v)
 {
-    alphaBlend = v;
+    blend = v;
+    dirty_mats.insert(this);
+}
+
+void GfxMaterial::setStipple (bool v)
+{
+    stipple = v;
+    dirty_mats.insert(this);
 }
 
 // }}}
@@ -2398,6 +2601,8 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 
         update_coronas();
 
+        handle_dirty_materials();
+
         position_camera(true, cam_pos, cam_dir);
         if (stereoscopic())
             position_camera(false, cam_pos, cam_dir);
@@ -2445,16 +2650,24 @@ GfxRunningFrameStats gfx_running_frame_stats (void)
 
 void gfx_reload_mesh (const std::string &name)
 {
-    (void) name;
-    // TODO: reload Ogre::Mesh
-    // TODO: reload Ogre::Skeleton if needed
-    // TODO: also need to iterate through GfxBody refreshing them if necessary
+    Ogre::MeshPtr ptr = Ogre::MeshManager::getSingleton().getByName(name.substr(1), RESGRP);
+    if (ptr.isNull()) GRIT_EXCEPT("Could not find mesh \""+name+"\"");
+    // old skeleton may become unlinked now, may be important for resource management in future
+    ptr->reload();
+    validate_mesh(ptr);
+    if (ptr->hasSkeleton()) ptr->getSkeleton()->reload();
+    for (unsigned long i=0 ; i<all_bodies.size() ; ++i) {
+        GfxBody *b = all_bodies[i];
+        b->updateMaterials();
+        b->reinitialiseEntity();
+    }
 }
 
 void gfx_reload_texture (const std::string &name)
 {
-    (void) name;
-    // TODO: reload Ogre::Texture
+    Ogre::TexturePtr ptr = Ogre::TextureManager::getSingleton().getByName(name.substr(1), RESGRP);
+    if (ptr.isNull()) GRIT_EXCEPT("Could not find texture \""+name+"\"");
+    ptr->reload();
 }
 
 
@@ -2583,8 +2796,10 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_win->getCustomAttribute("WINDOW", &winid);
         #ifdef WIN32
         HMODULE mod = GetModuleHandle(NULL);
-        HICON icon_big = (HICON)LoadImage(mod,MAKEINTRESOURCE(118),IMAGE_ICON,0,0,LR_DEFAULTSIZE|LR_SHARED);
-        HICON icon_small = (HICON)LoadImage(mod,MAKEINTRESOURCE(118),IMAGE_ICON,16,16,LR_DEFAULTSIZE|LR_SHARED);
+        HICON icon_big = (HICON)LoadImage(mod, MAKEINTRESOURCE(118), IMAGE_ICON,
+                                          0, 0, LR_DEFAULTSIZE|LR_SHARED);
+        HICON icon_small = (HICON)LoadImage(mod,MAKEINTRESOURCE(118), IMAGE_ICON,
+                                          16, 16, LR_DEFAULTSIZE|LR_SHARED);
         SendMessage((HWND)winid, (UINT)WM_SETICON, (WPARAM) ICON_BIG, (LPARAM) icon_big);
         SendMessage((HWND)winid, (UINT)WM_SETICON, (WPARAM) ICON_SMALL, (LPARAM) icon_small);
         #endif
@@ -2599,7 +2814,8 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_root->addMovableObjectFactory(new MovableClutterFactory());
         ogre_root->addMovableObjectFactory(new RangedClutterFactory());
 
-        ogre_sm = static_cast<Ogre::OctreeSceneManager*>(ogre_root->createSceneManager("OctreeSceneManager"));
+        ogre_sm =static_cast<Ogre::OctreeSceneManager*>(
+                                               ogre_root->createSceneManager("OctreeSceneManager"));
         ogre_root_node = ogre_sm->getRootSceneNode();
         ogre_sm->setShadowCasterRenderBackFaces(false);
         Ogre::MeshManager::getSingleton().setListener(&msl);
@@ -2630,7 +2846,7 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_sky_ent = ogre_sm->createEntity("SkyEntity", SKY_MESH);
         ogre_celestial->attachObject(ogre_sky_ent);
         ogre_sky_ent->setCastShadows(false);
-        ogre_sky_ent->setRenderQueueGroup(RQ_SKIES_AND_ALPHA);
+        ogre_sky_ent->setRenderQueueGroup(RQ_SKY);
         
         Ogre::WindowEventUtilities::addWindowEventListener(ogre_win, &wel);
 

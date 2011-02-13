@@ -258,12 +258,12 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                 // so just skip them
                 if (o->getClass()==NULL) continue;
                 o->notifyRange2(L,o,range2);
-                if (!o->getFar().isNull()) {
+                const GritObjectPtr &far = o->getFar();
+                if (!far.isNull()) {
                         // update the far (perhaps for a second time this frame)
                         // to make sure it has picked up the fade imposed by o
-                        const GritObjectPtr &f = o->getFar();
-                        float range2 = f->range2(new_pos) / vis2;
-                        f->notifyRange2(L,f,range2);
+                        float range2 = far->range2(new_pos) / vis2;
+                        far->notifyRange2(L,far,range2);
                 }
                 if (range2 > 1) {
                         // now out of range

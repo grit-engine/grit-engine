@@ -67,4 +67,7 @@ int global_gfx_particle_define (lua_State *L);
 int global_gfx_particle_emit (lua_State *L);
 int global_gfx_particle_pump (lua_State *L);
 
+int global_gfx_reload_mesh (lua_State *L);
+int global_gfx_reload_texture (lua_State *L);
+
 // vim: shiftwidth=8:tabstop=8:expandtab

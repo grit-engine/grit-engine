@@ -839,18 +839,49 @@ TRY_START
         t.clear();
         t.takeTableFromLuaStack(L,2);
         GfxMaterial *gfxmat = gfx_material_add_or_get(name);
+
+        bool alpha = false;
         lua_getfield(L, 2, "alpha");
         if (lua_isboolean(L,-1)) {
-                gfxmat->setAlphaBlend(lua_toboolean(L,-1)!=0);
+                alpha = lua_toboolean(L,-1) != 0;
+                gfxmat->setAlpha(1);
         } else if (lua_isnumber(L,-1)) {
-                gfxmat->setAlphaBlend(true);
+                alpha = true;
                 gfxmat->setAlpha(lua_tonumber(L,-1));
         } else if (lua_isnil(L,-1)) {
+                alpha = false;
         } else {
                 my_lua_error(L,"alpha should be boolean or number");
         }
         lua_pop(L,1);
+
+        bool depth_write = true;
+        lua_getfield(L, 2, "depthWrite");
+        if (lua_isboolean(L,-1)) {
+                depth_write = lua_toboolean(L,-1) != 0;
+        } else if (lua_isnil(L,-1)) {
+                depth_write = true;
+        } else {
+                my_lua_error(L,"alpha should be boolean or number");
+        }
+        lua_pop(L,1);
+       
+        lua_getfield(L, 2, "stipple");
+        if (lua_isboolean(L,-1)) {
+                gfxmat->setStipple(lua_toboolean(L,-1) != 0);
+        } else if (lua_isnil(L,-1)) {
+                gfxmat->setStipple(!alpha);
+        } else {
+                my_lua_error(L,"alpha should be boolean or number");
+        }
+        lua_pop(L,1);
+       
+        gfxmat->setBlend(alpha ? depth_write ? GFX_MATERIAL_ALPHA_DEPTH : GFX_MATERIAL_ALPHA : GFX_MATERIAL_OPAQUE);
+
         gfxmat->regularMat = Ogre::MaterialManager::getSingleton().getByName(name,"GRIT");
+        gfxmat->fadingMat = gfxmat->regularMat;
+        std::string ename = name+std::string("^");
+        gfxmat->emissiveMat = Ogre::MaterialManager::getSingleton().getByName(ename,"GRIT");
         return 0;
 TRY_END
 }
@@ -1758,6 +1789,8 @@ static const luaL_reg global[] = {
         {"gfx_particle_define",global_gfx_particle_define},
         {"gfx_particle_emit",global_gfx_particle_emit},
         {"gfx_particle_pump",global_gfx_particle_pump},
+        {"gfx_reload_mesh",global_gfx_reload_mesh},
+        {"gfx_reload_texture",global_gfx_reload_texture},
 
         {"get_rendersystem",global_get_rendersystem},
 

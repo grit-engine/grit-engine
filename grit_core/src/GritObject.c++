@@ -151,8 +151,7 @@ void GritObject::tryUnloadResources(void)
 
 void GritObject::notifyFade (lua_State *L,
                              const GritObjectPtr &self,
-                             const float fade,
-                             const int transition)
+                             const float fade)
 {
         if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
 
@@ -185,13 +184,8 @@ void GritObject::notifyFade (lua_State *L,
         push_gritobj(L,self); // persistent grit obj
         pushLuaTable(L); // the instance
         lua_pushnumber(L,fade);
-        if (transition<0) {
-                lua_pushnil(L);
-        } else {
-                lua_pushnumber(L, transition);
-        }
         //stack: err,class,callback,object
-        int status = lua_pcall(L,4,0,error_handler);
+        int status = lua_pcall(L,3,0,error_handler);
         if (status) {
                 //stack: err,class,msg
                 // pop the error message since the error handler will
