@@ -127,6 +127,7 @@ template<class T> bool between (T x, T m, T M) { return std::less<T>()(m,x)&&std
 
 template<class T> void vect_remove_fast (std::vector<T> &vect, size_t index)
 {
+        APP_ASSERT(index < vect.size());
         std::swap<T>(vect[index],vect[vect.size()-1]);
         vect.pop_back();
 }
@@ -1830,7 +1831,7 @@ void GfxBody::setPaintColour (int i, const GfxPaintColour &c)
 {
     if (dead) THROW_DEAD(className);
     colours[i] = c;
-    if (!ent) return;
+    updateEntity();
 }
 
 unsigned GfxBody::getNumBones (void)
