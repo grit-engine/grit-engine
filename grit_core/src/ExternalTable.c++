@@ -57,6 +57,14 @@ static void push (lua_State *L, const ExternalTable::Value &v)
                 case 5:
                 v.t->dump(L);
                 break;
+                case 6:
+                push(L,new Plot(v.plot),PLOT_TAG);
+                break;
+                case 7:
+                push(L,new PlotV3(v.plot_v3),PLOT_V3_TAG);
+                break;
+                default:
+                CERR << "Unhandled ExternalTable type: " << v.type << std::endl;
         }
 }
 
@@ -111,6 +119,12 @@ const char *ExternalTable::luaSet (lua_State *L, const std::string &key)
         } else if (lua_type(L,-1)==LUA_TQUAT) {
                 Quaternion val = check_quat(L,-1);
                 set(key,val);
+        } else if (is_userdata(L,-1,PLOT_TAG)) {
+                GET_UD_MACRO(Plot,self,-1,PLOT_TAG);
+                set(key,self);
+        } else if (is_userdata(L,-1,PLOT_V3_TAG)) {
+                GET_UD_MACRO(PlotV3,self,-1,PLOT_V3_TAG);
+                set(key,self);
         } else if (lua_type(L,-1)==LUA_TTABLE) {
                 ExternalTable *self = new ExternalTable();
                 self->takeTableFromLuaStack(L,lua_gettop(L));
@@ -140,6 +154,12 @@ const char *ExternalTable::luaSet (lua_State *L, lua_Number key)
         } else if (lua_type(L,-1)==LUA_TQUAT) {
                 Quaternion val = check_quat(L,-1);
                 set(key,val);
+        } else if (is_userdata(L,-1,PLOT_TAG)) {
+                GET_UD_MACRO(Plot,self,-1,PLOT_TAG);
+                set(key,self);
+        } else if (is_userdata(L,-1,PLOT_V3_TAG)) {
+                GET_UD_MACRO(PlotV3,self,-1,PLOT_V3_TAG);
+                set(key,self);
         } else if (lua_type(L,-1)==LUA_TTABLE) {
                 ExternalTable *self = new ExternalTable();
                 self->takeTableFromLuaStack(L,-1);

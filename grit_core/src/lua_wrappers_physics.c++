@@ -837,15 +837,8 @@ void push_pworld (lua_State *L, const PhysicsWorldPtr &self)
 int pworld_make(lua_State *L)
 {
 TRY_START
-        check_args(L,6);
-        float mX = luaL_checknumber(L,1);
-        float mY = luaL_checknumber(L,2);
-        float mZ = luaL_checknumber(L,3);
-        float MX = luaL_checknumber(L,4);
-        float MY = luaL_checknumber(L,5);
-        float MZ = luaL_checknumber(L,6);
-        push_pworld (L, PhysicsWorldPtr(new PhysicsWorld
-                (Vector3(mX,mY,mZ),Vector3(MX,MY,MZ))));
+        check_args(L,0);
+        push_pworld (L, PhysicsWorldPtr(new PhysicsWorld()));
         return 1;
 TRY_END
 }
@@ -867,6 +860,91 @@ TRY_START
         check_args(L,1);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
         self->draw();
+        return 0;
+TRY_END
+}
+
+class LuaTestCallback : public PhysicsWorld::TestCallback {
+    public:
+
+        void result (RigidBody *body, const Vector3 &pos, const Vector3 &wpos,
+                     const Vector3 &normal, float penetration, int m)
+        {
+                resultMap[body].push_back(Result(pos,wpos,normal,penetration,m));
+        }
+
+        void pushResults (lua_State *L, const PhysicsWorldPtr &world,
+                          int func_index, int err_handler)
+        {
+                for (ResultMap::iterator i=resultMap.begin(),i_=resultMap.end() ; i!=i_ ; ++i) {
+                        RigidBody *body = i->first;
+                        Results &results = i->second;
+                        for (Results::iterator j=results.begin(),j_=results.end() ; j!=j_ ; ++j) {
+                                lua_pushvalue(L,func_index);
+                                push_rbody(L,body->getPtr());
+                                lua_pushnumber(L,results.size());
+                                push_v3(L,j->pos);
+                                push_v3(L,j->wpos);
+                                push_v3(L,j->normal);
+                                lua_pushnumber(L,j->penetration);
+                                lua_pushstring(L,world->getMaterial(j->m).name.c_str());
+                                int status = lua_pcall(L,7,0,err_handler);
+                                if (status) {
+                                        lua_pop(L,1); // error message, already printed
+                                        break;
+                                }
+                        }
+                }
+        }
+
+    protected:
+
+        struct Result {
+                Result (Vector3 pos_, Vector3 wpos_,
+                        Vector3 normal_, float penetration_, int m_)
+                      : pos(pos_), wpos(wpos_), normal(normal_),
+                        penetration(penetration_), m(m_)
+                { }
+                Vector3 pos;
+                Vector3 wpos;
+                Vector3 normal;
+                float penetration;
+                int m;
+        };
+
+        typedef std::vector<Result> Results;
+        typedef std::map<RigidBody*,Results > ResultMap;
+        ResultMap resultMap;
+};
+
+static int pworld_test (lua_State *L)
+{
+TRY_START
+        LuaTestCallback lcb;
+        push_cfunction(L, my_lua_error_handler);
+        int error_handler = lua_gettop(L);
+        if (lua_gettop(L)==5) {
+                GET_UD_MACRO(PhysicsWorldPtr,world,1,PWORLD_TAG);
+                float radius = lua_tonumber(L,2);
+                Vector3 pos = check_v3(L,3);
+                if (lua_type(L,4) != LUA_TFUNCTION)
+                        my_lua_error(L,"Parameter 4 should be a function.");
+
+                world->testSphere(radius,pos,lcb);
+                lcb.pushResults(L, world, 4, error_handler);
+        } else {
+                check_args(L,6);
+                GET_UD_MACRO(PhysicsWorldPtr,world,1,PWORLD_TAG);
+                GET_UD_MACRO(CollisionMeshPtr,col_mesh,2,COLMESH_TAG);
+                Vector3 pos = check_v3(L,3);
+                Quaternion quat = check_quat(L,4);
+                if (lua_type(L,5) != LUA_TFUNCTION)
+                        my_lua_error(L,"Parameter 5 should be a function.");
+
+                world->test(col_mesh,pos,quat,lcb);
+                lcb.pushResults(L, world, 5, error_handler);
+        }
+        lua_pop(L,1); // error handler
         return 0;
 TRY_END
 }
@@ -1125,6 +1203,8 @@ TRY_START
         const char *key = luaL_checkstring(L,2);
         if (!::strcmp(key,"cast")) {
                 push_cfunction(L,cast);
+        } else if (!::strcmp(key,"test")) {
+                push_cfunction(L,pworld_test);
         } else if (!::strcmp(key,"pump")) {
                 push_cfunction(L,pworld_pump);
         } else if (!::strcmp(key,"updateGraphics")) {

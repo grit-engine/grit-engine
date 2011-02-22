@@ -34,6 +34,8 @@ extern "C" {
 
 #include "math_util.h"
 
+#include "SplineTable.h"
+
 // Purpose of this class is to store lua data outside of lua so as to avoid
 // putting stress on the garbage collector.  Only certain kinds of primitive data
 // are supported.
@@ -81,6 +83,18 @@ class ExternalTable {
                 fields[key].t = t;
         }
 
+        void set (const std::string &key, Plot plot)
+        {
+                fields[key].type = 6;
+                fields[key].plot = plot;
+        }
+
+        void set (const std::string &key, PlotV3 plot_v3)
+        {
+                fields[key].type = 7;
+                fields[key].plot_v3 = plot_v3;
+        }
+
         void set (lua_Number key, const lua_Number r)
         {
                 elements[key].type = 0;
@@ -117,6 +131,18 @@ class ExternalTable {
                 elements[key].t = t;
         }
 
+        void set (lua_Number &key, Plot plot)
+        {
+                elements[key].type = 6;
+                elements[key].plot = plot;
+        }
+
+        void set (lua_Number &key, PlotV3 plot_v3)
+        {
+                elements[key].type = 7;
+                elements[key].plot_v3 = plot_v3;
+        }
+
         const char *luaGet (lua_State *L);
         const char *luaSet (lua_State *L);
 
@@ -151,6 +177,8 @@ class ExternalTable {
                 Quaternion q;
                 bool b;
                 UniquePtr<ExternalTable> t;
+                Plot plot;
+                PlotV3 plot_v3;
         };
 
     protected:

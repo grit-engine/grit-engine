@@ -27,8 +27,6 @@ class Streamer;
 
 #include <map>
 
-#include <OgreSceneNode.h>
-
 extern "C" {
         #include "lua.h"
         #include <lauxlib.h>
@@ -47,18 +45,7 @@ class Streamer {
 
     public:
 
-        Streamer (void)
-              : prepareDistanceFactor(1.3f),
-                fadeOutFactor(.7f),
-                fadeOverlapFactor(.7f),
-                visibility(1.0f),
-                stepSize(20000),
-                gfx(NULL),
-                boundsMin(-3000.0f,-3000.0f,-3000.0f),
-                boundsMax(3000.0f,3000.0f,3000.0f),
-                nameGenerationCounter(0), shutdown(false)
-        {
-        }
+        Streamer (void);
 
         ~Streamer (void);
 
@@ -72,15 +59,9 @@ class Streamer {
 
         // GLOBAL STUFF
 
-        void setGFX (lua_State *L, Ogre::SceneNode *gfx);
-        Ogre::SceneNode *getGFX (void) { return gfx; }
-
         PhysicsWorldPtr getPhysics (void) { return physics; }
 
         void setBounds (lua_State *L, const Vector3 &bounds_min, const Vector3 &bounds_max);
-
-        const Vector3 &getBoundsMin () { return boundsMin; }
-        const Vector3 &getBoundsMax () { return boundsMax; }
 
         // CLASS STUFF
 
@@ -189,8 +170,6 @@ class Streamer {
 
         void eraseClass (const std::string &name);
 
-        void setPhysics (lua_State *L, const PhysicsWorldPtr &physics);
-
         GritClassMap classes;
 
         GObjMap gObjs;
@@ -200,11 +179,7 @@ class Streamer {
         GObjPtrs loaded;
         GObjPtrs fresh; // just been added - skip the queue for activation
 
-        Ogre::SceneNode *gfx;
-
         PhysicsWorldPtr physics;
-
-        Vector3 boundsMin, boundsMax;
 
         size_t nameGenerationCounter;
 

@@ -22,15 +22,38 @@
 #ifndef SplineTable_h
 #define SplineTable_h
 
+#include <cstdlib>
 #include <map>
 
+#include "math_util.h"
+
 // http://en.wikipedia.org/wiki/Cubic_Hermite_spline
+
+template<class T> inline T zero (void) { return 0; }
+template<> inline Vector3 zero<Vector3> (void) { return Vector3(0,0,0); }
+
+template<class T> inline T fix_tangent (T prev, T curr, T next, T t)
+{
+        if (next==curr || prev==curr) return 0;
+        if (prev > curr && next > curr) return 0; // minimum
+        if (prev < curr && next < curr) return 0; // maximum
+        return t;
+}
+
+template<> inline Vector3 fix_tangent (Vector3 prev, Vector3 curr, Vector3 next, Vector3 t)
+{
+        return Vector3(
+                fix_tangent(prev.x, curr.x, next.x, t.x),
+                fix_tangent(prev.y, curr.y, next.y, t.y),
+                fix_tangent(prev.z, curr.z, next.z, t.z)
+        );
+}
 
 template<class T> class SplineTable {
 
     public:
 
-        void addPoint (T x, T y)
+        void addPoint (float x, T y)
         {
                 points[x] = y;
         }
@@ -40,14 +63,16 @@ template<class T> class SplineTable {
                 // calculate tangents
                 if (points.size()==0) return;
                 if (points.size()==1) {
-                        tangents[points.begin()->first] = 0;
+                        tangents[points.begin()->first] = zero<T>();
                         return;
                 }
                 if (points.size()==2) {
                         typename Map::iterator i = points.begin();
-                        T lastx = i->first, lasty = i->second;
+                        float lastx = i->first;
+                        T lasty = i->second;
                         i++;
-                        T nextx = i->first, nexty = i->second;
+                        float nextx = i->first;
+                        T nexty = i->second;
                         tangents[lastx] = tangents[nextx]
                                         = (nexty-lasty)/(nextx-lastx);
                         return;
@@ -56,9 +81,11 @@ template<class T> class SplineTable {
                 {
                         MI i;
                         i = points.begin();
-                        T lastx = i->first, lasty = i->second;
+                        float lastx = i->first;
+                        T lasty = i->second;
                         i++;
-                        T nextx = i->first, nexty = i->second;
+                        float nextx = i->first;
+                        T nexty = i->second;
                         tangents[lastx] = (nexty-lasty)/(nextx-lastx);
                 }
 
@@ -66,39 +93,44 @@ template<class T> class SplineTable {
                 MI curr = points.begin(); std::advance(curr,1);
                 MI last = points.begin(); std::advance(last,0);
                 for (MI i_=points.end() ; next!=i_  ; next++, curr++, last++ ) {
-                        T lastx = last->first, lasty = last->second;
-                        T nextx = next->first, nexty = next->second;
-                        tangents[curr->first] = (nexty-lasty)/(nextx-lastx);
+                        float lastx = last->first;
+                        T lasty = last->second;
+                        float nextx = next->first;
+                        T nexty = next->second;
+                        T curry = curr->second;
+                        tangents[curr->first] = fix_tangent(lasty,curry,nexty,(nexty-lasty)/(nextx-lastx));
                 }
 
                 {
                         MI i;
                         i = points.end(); std::advance(i,-2);
-                        T lastx = i->first, lasty = i->second;
+                        float lastx = i->first;
+                        T lasty = i->second;
                         i++;
-                        T nextx = i->first, nexty = i->second;
+                        float nextx = i->first;
+                        T nexty = i->second;
                         tangents[nextx] = (nexty-lasty)/(nextx-lastx);
                 }
 
         }
 
-        T maxX (void) {
+        float maxX (void) {
                 MI i = points.end();
                 i--;
                 return i->first;
         }
 
-        T minX (void) {
+        float minX (void) {
                 MI i = points.begin();
                 return i->first;
         }
 
-        T operator[] (T x) {
-                if (points.size()==0) return 0;
+        T operator[] (float x) {
+                if (points.size()==0) return zero<T>();
                 if (points.size()==1) return points.begin()->second;
 
                 {
-                        T minx = minX(), maxx = maxX();
+                        float minx = minX(), maxx = maxX();
                         if (x<=minx) {
                                 return points[minx] + (x-minx)*tangents[minx];
                         }
@@ -109,16 +141,18 @@ template<class T> class SplineTable {
 
                 // note that due to the minx early return we do not need
                 // to initialise these
-                T x0, y0;
+                float x0 = 0;
+                T y0 = zero<T>();
 
                 for (MI i=points.begin(), i_=points.end() ; i!=i_ ; ++i) {
                         if (i->first > x) {
                                 // i never == points.begin()
-                                T x1 = i->first, y1 = i->second;
+                                float x1 = i->first;
+                                T y1 = i->second;
                                 T m0 = tangents[x0], m1 = tangents[x1];
-                                T h = x1 - x0;
-                                T t = (x - x0)/h;
-                                T r = 0;
+                                float h = x1 - x0;
+                                float t = (x - x0)/h;
+                                T r = zero<T>();
                                 r += (1+2*t)*(1-t)*(1-t  ) * y0;
                                 r += (    t)*(1-t)*(1-t  ) * h*m0;
                                 r += (    t)*(t  )*(3-2*t) * y1;
@@ -130,10 +164,10 @@ template<class T> class SplineTable {
                 }
                 // should never get here
                 abort();
-                return 0.0;  // MSVC doesn't understand abort()
+                return zero<T>();  // MSVC doesn't understand abort()
         }
 
-        typedef std::map<T,T> Map;
+        typedef std::map<float,T> Map;
         typedef typename Map::iterator MI;
 
         const Map &getTangents (void) const { return tangents; }
@@ -145,6 +179,9 @@ template<class T> class SplineTable {
         Map tangents;
 
 };
+
+typedef SplineTable<float> Plot;
+typedef SplineTable<Vector3> PlotV3;
 
 
 #endif

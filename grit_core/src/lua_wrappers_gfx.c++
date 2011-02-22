@@ -840,36 +840,34 @@ namespace {
             p.release();
         }
 
-        bool updateGraphics (lua_State *L, float elapsed=0, int error_handler=0)
+        bool updateGraphics (lua_State *L, float elapsed, int error_handler)
         {
             lua_rawgeti(L, LUA_REGISTRYINDEX, state);
             // stack: err tab
 
             bool destroy = false;
 
-            if (elapsed > 0) {
-                lua_getfield(L, -1, "behaviour");
-                // stack: err tab func
-                lua_pushvalue(L,-2);
-                // stack: err tab func tab
-                lua_pushnumber(L,elapsed);
-                // stack: err tab func tab elapsed
-                int status = lua_pcall(L,2,1,error_handler);
-                if (status) {
-                    // stack: err,tab,msg
-                    // pop the error message since the error handler will
-                    // have already printed it out
-                    lua_pop(L,1);
-                    //stack: err,tab
-                    destroy = true;
-                } else {
-                    // stack: err, tab, bool
-                    if (lua_isboolean(L,-1) && !lua_toboolean(L,-1)) destroy = true;
-                    lua_pop(L,1); // destroy code
-                    // stack: err, tab
-                }
+            lua_getfield(L, -1, "behaviour");
+            // stack: err tab func
+            lua_pushvalue(L,-2);
+            // stack: err tab func tab
+            lua_pushnumber(L,elapsed);
+            // stack: err tab func tab elapsed
+            int status = lua_pcall(L,2,1,error_handler);
+            if (status) {
+                // stack: err,tab,msg
+                // pop the error message since the error handler will
+                // have already printed it out
+                lua_pop(L,1);
+                //stack: err,tab
+                destroy = true;
+            } else {
+                // stack: err, tab, bool
+                if (lua_isboolean(L,-1) && !lua_toboolean(L,-1)) destroy = true;
+                lua_pop(L,1); // destroy code
                 // stack: err, tab
             }
+            // stack: err, tab
 
             if (!destroy) {
                 // handle stuff from tab
@@ -901,6 +899,17 @@ namespace {
                     destroy = true;
                 } else {
                     p.setHeight(luaL_checknumber(L,-1));
+                }
+                lua_pop(L,1);
+
+                lua_getfield(L, -1, "depth");
+                if (lua_isnil(L,-1)) {
+                    p.setDepth(1);
+                } else if (!lua_isnumber(L,-1)) {
+                    CERR << "Particle depth was not a number." << std::endl;
+                    destroy = true;
+                } else {
+                    p.setDepth(luaL_checknumber(L,-1));
                 }
                 lua_pop(L,1);
 
@@ -1082,7 +1091,7 @@ TRY_START
     } else if (!lua_isboolean(L,-1)) {
         my_lua_error(L,"Particle emissive must be a boolean.");
     } else {
-        alpha_rej = (bool)lua_toboolean(L,-1);
+        emissive = (bool)lua_toboolean(L,-1);
     }
     lua_pop(L,1);
     lua_pushnil(L);
@@ -1194,15 +1203,20 @@ TRY_START
     LuaParticle *lp = new LuaParticle(L, gfx_particle_emit(pd->material), pd);
     particles.push_back(lp);
 
-    bool destroy = lp->updateGraphics(L);
+    push_cfunction(L, my_lua_error_handler);
+    int error_handler = lua_gettop(L);
+    // stack: eh
+
+    bool destroy = lp->updateGraphics(L, 0, error_handler);
     if (destroy) {
-        // stack: err
+        // stack: eh,
         particles.pop_back();
         lp->destroy(L);
         delete lp;
     }
+    // stack: eh
 
-    lua_pop(L,1); 
+    lua_pop(L,1);
     // stack:
 
     return 0;

@@ -19,13 +19,13 @@
  * THE SOFTWARE.
  */
 
+#ifndef MATH_UTIL_H
+#define MATH_UTIL_H
+
 struct Radian;
 struct Degree;
 struct Quaternion;
 struct Vector3;
-
-#ifndef MATH_UTIL_H
-#define MATH_UTIL_H
 
 #include <cmath>
 #include <cfloat>

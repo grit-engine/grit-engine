@@ -26,15 +26,10 @@
 
 #include "lua_wrappers_primitives.h"
 #include "gfx.h"
-#include "SplineTable.h"
 #include "math_util.h"
 
 
-
-
 // PLOT ==================================================================== {{{
-
-typedef SplineTable<float> Plot;
 
 int plot_make (lua_State *L)
 {
@@ -118,6 +113,94 @@ TRY_END
 EQ_PTR_MACRO(Plot,plot,PLOT_TAG)
 
 MT_MACRO_NEWINDEX(plot);
+
+// }}}
+
+
+// PLOT_V3 ==================================================================== {{{
+
+int plot_v3_make (lua_State *L)
+{
+TRY_START
+        PlotV3 *self = new PlotV3();
+        check_args(L,1);
+        int table = lua_gettop(L);
+        if (!lua_istable(L,table))
+                my_lua_error(L,"Parameter should be a table");
+        for (lua_pushnil(L) ; lua_next(L,table)!=0 ; lua_pop(L,1)) {
+                // the name is held in the object anyway
+                float k = check_float(L,-2);
+                Vector3 v = check_v3(L,-1);
+                self->addPoint(k,v);
+        }
+        self->commit();
+        push(L,self,PLOT_V3_TAG);
+        return 1;
+TRY_END
+}
+
+TOSTRING_ADDR_MACRO(plot_v3,PlotV3,PLOT_V3_TAG)
+
+GC_MACRO(PlotV3,plot_v3,PLOT_V3_TAG)
+
+static int plot_v3_index(lua_State *L)
+{
+TRY_START
+        typedef PlotV3::Map Map;
+        typedef PlotV3::MI MI;
+        check_args(L,2);
+        GET_UD_MACRO(PlotV3,self,1,PLOT_V3_TAG);
+        if (lua_type(L,2)==LUA_TNUMBER) {
+                float k = check_float(L,2);
+                push_v3(L,self[k]);
+        } else {
+                std::string key  = luaL_checkstring(L,2);
+                if (key=="minX") {
+                        lua_pushnumber(L,self.minX());
+                } else if (key=="maxX") {
+                        lua_pushnumber(L,self.maxX());
+                } else if (key=="points") {
+                        Map data = self.getPoints();
+                        lua_createtable(L, data.size(), 0);
+                        for (MI i=data.begin(), i_=data.end() ; i!=i_ ; ++i) {
+                                lua_pushnumber(L,i->first);
+                                push_v3(L,i->second);
+                                lua_settable(L,-3);
+                        }
+                } else if (key=="tangents") {
+                        Map data = self.getTangents();
+                        lua_createtable(L, data.size(), 0);
+                        for (MI i=data.begin(), i_=data.end() ; i!=i_ ; ++i) {
+                                lua_pushnumber(L,i->first);
+                                push_v3(L,i->second);
+                                lua_settable(L,-3);
+                        }
+                } else {
+                        my_lua_error(L,"Not a readable PlotV3 member: "+key);
+                }
+        }
+        return 1;
+TRY_END
+}
+
+static int plot_v3_newindex(lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        GET_UD_MACRO(PlotV3,self,1,PLOT_V3_TAG);
+        (void) self;
+        std::string key  = luaL_checkstring(L,2);
+        if (false) {
+        } else {
+                my_lua_error(L,"Not a writeable PlotV3 member: "+key);
+        }
+        return 0;
+TRY_END
+}
+
+EQ_PTR_MACRO(PlotV3,plot_v3,PLOT_V3_TAG)
+
+MT_MACRO_NEWINDEX(plot_v3);
 
 // }}}
 
@@ -260,115 +343,5 @@ MT_MACRO_LEN_NEWINDEX(stringdb);
 
 // }}}
 
-
-// SPLINE ================================================================== {{{
-
-
-int spline_make (lua_State *L)
-{
-TRY_START
-        // TODO: take table of vectors to initialise with
-        push(L,new Ogre::SimpleSpline(),SPLINE_TAG);
-        return 1;
-TRY_END
-}
-
-
-static int spline_add (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Ogre::SimpleSpline,self,1,SPLINE_TAG);
-        Vector3 v = check_v3(L,2);
-        self.addPoint(to_ogre(v));
-        return 0;
-TRY_END
-}
-
-
-static int spline_clear (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(Ogre::SimpleSpline,self,1,SPLINE_TAG);
-        self.clear();
-        return 0;
-TRY_END
-}
-
-
-TOSTRING_ADDR_MACRO(spline,Ogre::SimpleSpline,SPLINE_TAG)
-
-GC_MACRO(Ogre::SimpleSpline,spline,SPLINE_TAG)
-
-static int spline_index(lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Ogre::SimpleSpline,self,1,SPLINE_TAG);
-        if (lua_type(L,2)==LUA_TNUMBER) {
-                if (self.getNumPoints()==0) {
-                        my_lua_error(L,"Empty spline");
-                }
-                float index = lua_tonumber(L,2);
-                index = std::max(index,float(0));
-                index = std::min(index,self.getNumPoints()-float(1));
-                push_v3(L,from_ogre(self.interpolate(index)));
-        } else {
-                std::string key  = luaL_checkstring(L,2);
-                if (key=="add") {
-                        push_cfunction(L,spline_add);
-                } else if (key=="clear") {
-                        push_cfunction(L,spline_clear);
-                } else {
-                        my_lua_error(L,"Not a readable Spline member: "+key);
-                }
-        }
-        return 1;
-TRY_END
-}
-
-static int spline_newindex(lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(Ogre::SimpleSpline,self,1,SPLINE_TAG);
-        std::string key  = luaL_checkstring(L,2);
-        if (lua_type(L,2)==LUA_TNUMBER) {
-                if (self.getNumPoints()==0) {
-                        my_lua_error(L,"Empty spline");
-                }
-                unsigned short index =
-                        check_t<unsigned short>(L,2,0,self.getNumPoints()-1);
-                Vector3 v = check_v3(L,3);
-                self.updatePoint(index,to_ogre(v));
-        } else {
-                if (key=="value") {
-                        GET_UD_MACRO(Ogre::SimpleSpline,v,3,SPLINE_TAG);
-                        self = v;
-                } else {
-                        my_lua_error(L,"Not a writeable Spline member: "+key);
-                }
-        }
-        return 0;
-TRY_END
-}
-
-static int spline_len(lua_State *L)
-{
-TRY_START
-        check_args(L,2); // a
-        GET_UD_MACRO(Ogre::SimpleSpline,self,1,SPLINE_TAG);
-        lua_pushnumber(L,self.getNumPoints());
-        return 1;
-
-TRY_END
-}
-
-EQ_PTR_MACRO(Ogre::SimpleSpline,spline,SPLINE_TAG)
-
-MT_MACRO_LEN_NEWINDEX(spline);
-
-// }}}
 
 // vim: shiftwidth=8:tabstop=8:expandtab

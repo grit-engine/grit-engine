@@ -203,9 +203,7 @@ void GritObject::notifyFade (lua_State *L,
 }
 
 void GritObject::activate (lua_State *L,
-                           const GritObjectPtr &self,
-                           Ogre::SceneNode *root,
-                           const PhysicsWorldPtr &physics)
+                           const GritObjectPtr &self)
 {
         if (isActivated()) return;
 
@@ -247,19 +245,17 @@ void GritObject::activate (lua_State *L,
 
         // push 4 args
         lua_checkstack(L,5);
-        push_gritobj(L,self); // this
-        lua_newtable(L);
+        push_gritobj(L,self); // persistent
+        lua_newtable(L); // instance
         lua_pushvalue(L,-1);
-        lua = luaL_ref(L,LUA_REGISTRYINDEX);
+        lua = luaL_ref(L,LUA_REGISTRYINDEX); // set up the lua ref to the new instance while we're at it
         STACK_CHECK_N(5);
         push_gritcls(L,gritClass); // the class (again)
-        push_node(L,root); // the graphics
-        push_pworld(L,physics); // the physics
         //stack: err,class,callback,persistent,class,gfx,physics
-        STACK_CHECK_N(8);
+        STACK_CHECK_N(6);
 
         // call (5 args), pops function too
-        int status = lua_pcall(L,5,0,error_handler);
+        int status = lua_pcall(L,3,0,error_handler);
         if (status) {
                 STACK_CHECK_N(3);
                 //stack: err,class,error

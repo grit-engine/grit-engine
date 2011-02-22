@@ -149,6 +149,7 @@ struct GfxParticle {
     void setDefaultUV (void);
     void setWidth (float v);
     void setHeight (float v);
+    void setDepth (float v);
 
     void release (void);
 };

@@ -43,6 +43,18 @@
 #define M_PI 3.1415926535897932385
 #endif
 
+static inline Vector3 from_bullet (const btVector3 &from)
+{ return Vector3 (from.x(), from.y(), from.z()); }
+
+static inline Quaternion from_bullet (const btQuaternion &from)
+{ return Quaternion (from.w(), from.x(), from.y(), from.z()); }
+
+static inline btVector3 to_bullet (const Vector3 &from)
+{ return btVector3(from.x,from.y,from.z); }
+
+static inline btQuaternion to_bullet (const Quaternion &from)
+{ return btQuaternion(from.x, from.y, from.z, from.w); }
+
 btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
                                   LooseEnds &les,
                                   CollisionMesh::Materials &partMaterials)

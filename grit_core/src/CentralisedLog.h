@@ -23,8 +23,7 @@
 #define CentralisedLog_h
 
 #include <iostream>
-
-#include <OgreLog.h>
+#include <sstream>
 
 #include "console_colour.h"
 

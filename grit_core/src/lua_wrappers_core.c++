@@ -1893,8 +1893,8 @@ static const luaL_reg global[] = {
         {"set_physics_debug" ,global_set_physics_debug},
         {"get_physics_debug" ,global_get_physics_debug},
 
+        {"PlotV3",plot_v3_make},
         {"Plot",plot_make},
-        {"Spline",spline_make},
         {"StringDB",stringdb_make},
         {"Material" ,global_make_material},
         {"Texture" ,global_make_tex},
@@ -1970,8 +1970,8 @@ lua_State *init_lua(const char *filename)
         ADD_MT_MACRO(streamer,STREAMER_TAG);
         ADD_MT_MACRO(gritcls,GRITCLS_TAG);
         ADD_MT_MACRO(gritobj,GRITOBJ_TAG);
-        ADD_MT_MACRO(spline,SPLINE_TAG);
         ADD_MT_MACRO(plot,PLOT_TAG);
+        ADD_MT_MACRO(plot_v3,PLOT_V3_TAG);
         ADD_MT_MACRO(stringdb,STRINGDB_TAG);
 
         ADD_MT_MACRO(pworld,PWORLD_TAG);

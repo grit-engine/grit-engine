@@ -19,6 +19,7 @@
  * THE SOFTWARE.
  */
 
+#include <vector>
 #include <string>
 struct lua_State;
 

@@ -138,9 +138,7 @@ static int gritobj_activate (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        self->activate(L, self,
-                       streamer->getGFX(),
-                       streamer->getPhysics());
+        self->activate(L, self);
         return 0;
 TRY_END
 }
@@ -358,30 +356,6 @@ TRY_START
 TRY_END
 }
 
-
-static int streamer_get_bounds (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        push_v3(L, self.getBoundsMin());
-        push_v3(L, self.getBoundsMax());
-        return 2;
-TRY_END
-}
-
-
-static int streamer_set_bounds (lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Vector3 min = check_v3(L,2);
-        Vector3 max = check_v3(L,3);
-        self.setBounds(L, min, max);
-        return 0;
-TRY_END
-}
 
 static int streamer_centre (lua_State *L)
 {
@@ -656,9 +630,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         const char *key = luaL_checkstring(L,2);
-        if (!::strcmp(key,"gfx")) {
-                push_node(L,self.getGFX());
-        } else if (!::strcmp(key,"physics")) {
+        if (!::strcmp(key,"physics")) {
                 push_pworld(L,self.getPhysics());
         } else if (!::strcmp(key,"stepSize")) {
                 lua_pushnumber(L,self.stepSize);
@@ -668,10 +640,6 @@ TRY_START
                 push_cfunction(L,streamer_centre);
         } else if (!::strcmp(key,"frameCallbacks")) {
                 push_cfunction(L,streamer_frame_callbacks);
-        } else if (!::strcmp(key,"getBounds")) {
-                push_cfunction(L,streamer_get_bounds);
-        } else if (!::strcmp(key,"setBounds")) {
-                push_cfunction(L,streamer_set_bounds);
         } else if (!::strcmp(key,"addClass")) {
                 push_cfunction(L,streamer_add_class);
         } else if (!::strcmp(key,"getClass")) {
@@ -753,10 +721,7 @@ TRY_START
         check_args(L,3);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         std::string key = luaL_checkstring(L,2);
-        if (key=="gfx") {
-                GET_UD_MACRO_OFFSET(Ogre::SceneNode,node,3,NODE_TAG,0);
-                self.setGFX(L,node);
-        } else if (key=="stepSize") {
+        if (key=="stepSize") {
                 size_t v = check_t<size_t>(L,3);
                 self.stepSize = v;
         } else if (key=="visibility") {

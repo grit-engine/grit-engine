@@ -31,6 +31,18 @@
 #include "CentralisedLog.h"
 #include "PhysicsWorld.h"
 
+static inline Vector3 from_bullet (const btVector3 &from)
+{ return Vector3 (from.x(), from.y(), from.z()); }
+
+static inline Quaternion from_bullet (const btQuaternion &from)
+{ return Quaternion (from.w(), from.x(), from.y(), from.z()); }
+
+static inline btVector3 to_bullet (const Vector3 &from)
+{ return btVector3(from.x,from.y,from.z); }
+
+static inline btQuaternion to_bullet (const Quaternion &from)
+{ return btQuaternion(from.x, from.y, from.z, from.w); }
+
 BulletDebugDrawer::BulletDebugDrawer (Ogre::SceneManager *sm)
 {
     mContactPoints = &mContactPoints1;

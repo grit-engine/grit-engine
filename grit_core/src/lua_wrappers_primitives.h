@@ -21,16 +21,19 @@
 
 #include "lua_wrappers_common.h"
 
+#include "SplineTable.h"
+
 #define STRINGDB_TAG "Grit/StringDB"
 MT_MACRO_DECLARE(stringdb);
 int stringdb_make(lua_State *L);
 
-#define SPLINE_TAG "Grit/Spline"
-MT_MACRO_DECLARE(spline);
-int spline_make(lua_State *L);
-
 #define PLOT_TAG "Grit/Plot"
 MT_MACRO_DECLARE(plot);
 int plot_make(lua_State *L);
+
+#define PLOT_V3_TAG "Grit/PlotV3"
+MT_MACRO_DECLARE(plot_v3);
+int plot_v3_make(lua_State *L);
+
 
 // vim: shiftwidth=8:tabstop=8:expandtab

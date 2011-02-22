@@ -19,11 +19,6 @@
  * THE SOFTWARE.
  */
 
-#ifdef WIN32
-#include <float.h>
-#define isnan _isnan
-#endif
-
 #include <map>
 
 #include "CentralisedLog.h"
@@ -52,78 +47,7 @@ extern "C" {
 #include "GritObject.h"
 #include "math_util.h"
 
-static inline btVector3 check_nan_ (const btVector3 &v, const char *file, int line)
-{
-        if (isnan(v.x()) || isnan(v.y()) || isnan(v.z())) {
-                CLog(file,line,true) << "Vect3 NaN from Bullet." << std::endl;
-                return btVector3(0,0,0);
-        }
-        return v;
-}
-
-static inline Vector3 check_nan_ (const Vector3 &v, const char *file, int line)
-{
-        if (isnan(v.x) || isnan(v.y) || isnan(v.z)) {
-                CLog(file,line,true) << "Vect3 NaN from Grit." << std::endl;
-                return Vector3(0,0,0);
-        }
-        return v;
-}
-
-static inline btQuaternion check_nan_ (const btQuaternion &v, const char *file, int line)
-{
-        if (isnan(v.w()) || isnan(v.x()) || isnan(v.y()) || isnan(v.z())) {
-                CLog(file,line,true) << "Quat NaN from Bullet." << std::endl;
-                return btQuaternion(0,0,0,1);
-        }
-        return v;
-}
-
-static inline Quaternion check_nan_ (const Quaternion &v, const char *file, int line)
-{
-        if (isnan(v.w) || isnan(v.x) || isnan(v.y) || isnan(v.z)) {
-                CLog(file,line,true) << "Quat NaN from Grit." << std::endl;
-                return Quaternion(1,0,0,0);
-        }
-        return v;
-}
-
-static inline Vector3 from_bullet (const btVector3 &from)
-{ return Vector3 (from.x(), from.y(), from.z()); }
-
-static inline Quaternion from_bullet (const btQuaternion &from)
-{ return Quaternion (from.w(), from.x(), from.y(), from.z()); }
-
-static inline btVector3 to_bullet (const Vector3 &from)
-{ return btVector3(from.x,from.y,from.z); }
-
-static inline btQuaternion to_bullet (const Quaternion &from)
-{ return btQuaternion(from.x, from.y, from.z, from.w); }
-
-#define check_nan(x) check_nan_(x,__FILE__,__LINE__)
-
-class DynamicsWorld : public btDiscreteDynamicsWorld {
-    public:
-        DynamicsWorld (btCollisionDispatcher *colDisp,
-                       btBroadphaseInterface *broadphase,
-                       btConstraintSolver *conSolver,
-                       btCollisionConfiguration *colConf)
-              : btDiscreteDynamicsWorld(colDisp,broadphase,conSolver,colConf),
-                stepSize(1.0f/60.0f),
-                dirty(false)
-        { }
-
-        void step (void);
-        void end (void);
-
-        btScalar getStepSize (void) const { return stepSize; }
-        void setStepSize (btScalar v) { stepSize = v; }
-
-    protected:
-
-        btScalar stepSize;
-        bool dirty;
-};
+class DynamicsWorld;
 
 class PhysicsWorld {
 
@@ -132,9 +56,9 @@ class PhysicsWorld {
 
     public:
 
-        PhysicsWorld (const Vector3 &bounds_min, const Vector3 &bounds_max);
+        PhysicsWorld (void);
 
-        ~PhysicsWorld ();
+        ~PhysicsWorld (void);
 
         int pump (lua_State *L, float time_step);
 
@@ -201,8 +125,7 @@ class PhysicsWorld {
         // to be extended by lua wrapper or whatever
         class SweepCallback {
             public:
-                virtual void result (RigidBody &body, float d,
-                                     const Vector3 &normal, int m) = 0;
+                virtual void result (RigidBody &body, float d, const Vector3 &normal, int m) = 0;
         };
 
         void ray (const Vector3 &start,
@@ -218,6 +141,16 @@ class PhysicsWorld {
                     const Quaternion &endq,
                     SweepCallback &scb) const;
 
+        class TestCallback {
+            public:
+                virtual void result (RigidBody *body, const Vector3 &pos, const Vector3 &wpos,
+                                     const Vector3 &normal, float penetration, int m) = 0;
+        };
+
+        void test (const CollisionMeshPtr &col_mesh,
+                   const Vector3 &pos, const Quaternion &quat, TestCallback &cb);
+
+        void testSphere (float rad, const Vector3 &pos, TestCallback &cb);
 
         float getDeactivationTime (void) const;
         void setDeactivationTime (float);
@@ -261,13 +194,13 @@ class PhysicsWorld {
         float getSolverSplitImpulseThreshold (void) const;
         void setSolverSplitImpulseThreshold (float);
 
-        btScalar getStepSize (void) const { return world->getStepSize(); }
-        void setStepSize (btScalar v) { world->setStepSize(v); }
+        btScalar getStepSize (void) const;
+        void setStepSize (btScalar v);
 
-        btScalar getMaxSteps (void) const { return maxSteps; }
-        void setMaxSteps (btScalar v) { maxSteps = v; }
+        btScalar getMaxSteps (void) const;
+        void setMaxSteps (btScalar v);
 
-        void draw (void) { world->debugDrawWorld(); }
+        void draw (void);
 
         bool verboseContacts;
         bool errorContacts;
@@ -329,36 +262,16 @@ class RigidBody : public btMotionState {
 
         void setWorldTransform (const btTransform& current_xform);
 
-        Vector3 getPosition (void) const
-        {
-                if (body==NULL) return Vector3(0,0,0); // deactivated
-                return from_bullet(body->getCenterOfMassPosition());
-        }
+        Vector3 getPosition (void) const;
 
-        Quaternion getOrientation (void) const
-        {
-                if (body==NULL) return Quaternion(0,1,0,0); // deactivated
-                return from_bullet(body->getOrientation());
-        }
+        Quaternion getOrientation (void) const;
 
-        void setPosition (const Vector3 &v)
-        {
-                if (body==NULL) return; // deactivated
-                body->setCenterOfMassTransform(
-                    btTransform(body->getOrientation(), to_bullet(v)));
-                body->activate();
-        }
+        void setPosition (const Vector3 &v);
 
-        void setOrientation (const Quaternion &q)
-        {
-                if (body==NULL) return; // deactivated
-                body->setCenterOfMassTransform(
-                     btTransform(to_bullet(q),body->getCenterOfMassPosition()));
-                body->activate();
-        }
+        void setOrientation (const Quaternion &q);
 
         void stepCallback (lua_State *L);
-        void collisionCallback (lua_State *L, int lifetime, float impulse, float penetration,
+        void collisionCallback (lua_State *L, int lifetime, float impulse, int m, float penetration,
                                 const Vector3 &lpos, const Vector3 &wpos, const Vector3 &wnormal);
         void stabiliseCallback (lua_State *L);
         void updateGraphicsCallback (lua_State *L);

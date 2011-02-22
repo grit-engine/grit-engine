@@ -2003,19 +2003,28 @@ class GfxParticleSystem {
     {
         bbset = ogre_sm->createBillboardSet(pname, 100);
         ogre_root_node->attachObject(bbset);
+        bbset->setUseAccurateFacing(true);
 
         std::string mname = "P:"+pname;
         Ogre::MaterialPtr mat =
             Ogre::MaterialManager::getSingleton().createOrRetrieve(mname, RESGRP).first;
         mat->removeAllTechniques();
         Ogre::Pass *pass = mat->createTechnique()->createPass();
-        Ogre::TextureUnitState *tus = pass->createTextureUnitState();
-        texname = texname.substr(1);
-        Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().load(texname, RESGRP);
-        texHeight = tex->getHeight();
-        texWidth = tex->getWidth();
-        tus->setTextureName(texname);
-        tus->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
+        {
+            Ogre::TextureUnitState *tus = pass->createTextureUnitState();
+            tus->setTextureFiltering(Ogre::FO_POINT, Ogre::FO_POINT, Ogre::FO_NONE);
+            tus->setContentType(Ogre::TextureUnitState::CONTENT_COMPOSITOR);
+            tus->setCompositorReference(DEFERRED_COMPOSITOR,"fat_fb",0);
+        }
+        {
+            Ogre::TextureUnitState *tus = pass->createTextureUnitState();
+            texname = texname.substr(1);
+            Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().load(texname, RESGRP);
+            texHeight = tex->getHeight();
+            texWidth = tex->getWidth();
+            tus->setTextureName(texname);
+            tus->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
+        }
         std::string gpuprog_name;
         switch (blend) {
             case GFX_PARTICLE_OPAQUE:
@@ -2051,6 +2060,7 @@ class GfxParticleSystem {
             bbset->setSortingEnabled(true);
         }
         //bbset->setBillboardsInWorldSpace(true);
+        bbset->setBounds(Ogre::AxisAlignedBox::BOX_INFINITE, 100000);
     }
     ~GfxParticleSystem (void)
     {
@@ -2128,6 +2138,12 @@ class GfxParticleSystem {
         bb->setDimensions(v, bb->getOwnHeight());
     }
 
+    void setDepth (void *bb_, float v)
+    {
+        Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
+        bb->setBias(-v/2);
+    }
+
 };
 
 static std::map<std::string, GfxParticleSystem*> psystems;
@@ -2168,6 +2184,9 @@ void GfxParticle::setWidth (float v)
 
 void GfxParticle::setHeight (float v)
 { sys->setHeight(internal, v); }
+
+void GfxParticle::setDepth (float v)
+{ sys->setDepth(internal, v); }
 
 void GfxParticle::release (void)
 { sys->release(internal); }
@@ -2260,6 +2279,7 @@ void GfxLight::updateCorona (void)
     corona.setAmbient(enabled ? fade * coronaColour : Vector3(0,0,0));
     corona.setWidth(coronaSize);
     corona.setHeight(coronaSize);
+    corona.setDepth(coronaSize);
 }
 
 float GfxLight::getCoronaSize (void)

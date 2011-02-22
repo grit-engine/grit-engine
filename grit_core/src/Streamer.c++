@@ -19,10 +19,18 @@
  * THE SOFTWARE.
  */
 
-#include <OgreSceneManager.h>
-#include <OgreException.h>
-
 #include "Streamer.h"
+
+Streamer::Streamer (void)
+      : prepareDistanceFactor(1.3f),
+        fadeOutFactor(.7f),
+        fadeOverlapFactor(.7f),
+        visibility(1.0f),
+        stepSize(20000),
+        nameGenerationCounter(0), shutdown(false)
+{
+        physics = PhysicsWorldPtr(new PhysicsWorld());
+}
 
 Streamer::~Streamer (void)
 {
@@ -63,34 +71,6 @@ void Streamer::clearAnonymousObjects (lua_State *L)
                 if (i->second->anonymous) deleteObject(L,i->second);
         }
 }
-
-
-void Streamer::setGFX (lua_State *L, Ogre::SceneNode *gfx)
-{
-        GObjMap gObjs = this->gObjs;
-        for (GObjMap::iterator i=gObjs.begin(), i_=gObjs.end() ; i!=i_ ; ++i) {
-                i->second->deactivate(L, i->second);
-        }
-        this->gfx = gfx;
-}
-
-void Streamer::setBounds (lua_State *L, const Vector3 &bounds_min, const Vector3 &bounds_max)
-{
-        boundsMin = bounds_min;
-        boundsMax = bounds_max;
-        setPhysics(L, PhysicsWorldPtr(new PhysicsWorld(bounds_min, bounds_max)));
-}
-
-void Streamer::setPhysics (lua_State *L, const PhysicsWorldPtr &physics)
-{
-        GObjMap gObjs = this->gObjs;
-        // don't need to clearPhysics() because it's a smart pointer
-        this->physics = physics;
-        for (GObjMap::iterator i=gObjs.begin(), i_=gObjs.end() ; i!=i_ ; ++i) {
-                i->second->deactivate(L,i->second);
-        }
-}
-
 
 
 GritClass *Streamer::addClass (lua_State *L, const std::string& name)
@@ -140,9 +120,6 @@ GritObjectPtr Streamer::addObject (
         GritClass *grit_class)
 {
         (void) L; // may need this again some day
-        if (gfx==NULL) {
-                GRIT_EXCEPT("No graphics engine set up, call setGFX()");
-        }
         if (physics.isNull()) {
                 GRIT_EXCEPT("No physics engine set up, call setPhysics()");
         }
@@ -350,7 +327,7 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
       
 
                 // ok there wasn't so activate
-                o->activate(L,o,gfx,physics);
+                o->activate(L,o);
 
                 // activation can result in a lua error which triggers the destruction of the
                 // object 'o' so we test for that here before doing more stuff

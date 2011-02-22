@@ -68,10 +68,7 @@ class GritObject {
 
         void init (lua_State *L, const GritObjectPtr &self);
 
-        void activate (lua_State *L,
-                       const GritObjectPtr &self,
-                       Ogre::SceneNode *gfxNode,
-                       const PhysicsWorldPtr &physics);
+        void activate (lua_State *L, const GritObjectPtr &self);
 
         float calcFade (const float range2, bool &overlap);
 
