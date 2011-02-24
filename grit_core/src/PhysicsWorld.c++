@@ -451,9 +451,14 @@ int PhysicsWorld::pump (lua_State *L, float elapsed)
             btCollisionObject
                 *ob_a = static_cast<btCollisionObject*>(manifold->getBody0()),
                 *ob_b = static_cast<btCollisionObject*>(manifold->getBody1());
+            APP_ASSERT(ob_a != NULL);
+            APP_ASSERT(ob_b != NULL);
 
             btRigidBody* brb_a = btRigidBody::upcast(ob_a);
             btRigidBody* brb_b = btRigidBody::upcast(ob_b);
+
+            APP_ASSERT(brb_a);
+            APP_ASSERT(brb_b);
 
             RigidBody *rb_a = brb_a==NULL
                     ? NULL : static_cast<RigidBody*>(brb_a->getMotionState());
@@ -467,24 +472,24 @@ int PhysicsWorld::pump (lua_State *L, float elapsed)
                 btManifoldPoint &p = manifold->getContactPoint(j);
                 int mat0 = p.m_partId0;
                 int mat1 = p.m_partId1;
-                if (p.getDistance() < 0.0f) {
-                    if (rb_a!=NULL) rb_a->collisionCallback(L,
+                //if (p.getDistance() < 0.0f) {
+                    if (brb_a!=NULL) rb_a->collisionCallback(L,
                         p.getLifeTime(),
                         p.getAppliedImpulse(),
-                        mat0,
+                        mat0, mat1,
                         p.getDistance(),
                         from_bullet(p.m_localPointA),
                         from_bullet(p.m_positionWorldOnA),
                         -from_bullet(p.m_normalWorldOnB));
-                    if (rb_b!=NULL) rb_b->collisionCallback(L,
+                    if (brb_b!=NULL) rb_b->collisionCallback(L,
                         p.getLifeTime(),
                         p.getAppliedImpulse(),
-                        mat1,
+                        mat1, mat0,
                         p.getDistance(),
                         from_bullet(p.m_localPointB),
                         from_bullet(p.m_positionWorldOnB),
                         from_bullet(p.m_normalWorldOnB));
-                }
+                //}
             }
         }
 
@@ -1083,7 +1088,7 @@ void RigidBody::stepCallback (lua_State *L)
     STACK_CHECK;
 }
 
-void RigidBody::collisionCallback (lua_State *L, int lifetime, float impulse, int m,
+void RigidBody::collisionCallback (lua_State *L, int lifetime, float impulse, int m, int m2,
                                    float penetration, const Vector3 &lpos, const Vector3 &wpos,
                                    const Vector3 &wnormal)
 {
@@ -1102,11 +1107,12 @@ void RigidBody::collisionCallback (lua_State *L, int lifetime, float impulse, in
     lua_pushnumber(L,lifetime);
     lua_pushnumber(L,impulse);
     lua_pushstring(L,world->getMaterial(m).name.c_str());
+    lua_pushstring(L,world->getMaterial(m2).name.c_str());
     lua_pushnumber(L,penetration);
     push_v3(L,lpos);
     push_v3(L,wpos);
     push_v3(L,wnormal);
-    int status = lua_pcall(L,6,0,error_handler);
+    int status = lua_pcall(L,8,0,error_handler);
     if (status) {
         lua_pop(L,1);
         luaL_unref(L,LUA_REGISTRYINDEX,collisionCallbackIndex);

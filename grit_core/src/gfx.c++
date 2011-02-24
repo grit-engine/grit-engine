@@ -221,6 +221,10 @@ public:
         try_set_named_constant(fp, "view_proj", proj*view);
         Ogre::Vector3 sun_pos_ws = ogre_sun->getDirection();
         try_set_named_constant(fp, "sun_pos_ws", -sun_pos_ws);
+        Ogre::ColourValue sun_diffuse = ogre_sun->getDiffuseColour();
+        try_set_named_constant(fp, "sun_diffuse", sun_diffuse);
+        Ogre::ColourValue sun_specular = ogre_sun->getSpecularColour();
+        try_set_named_constant(fp, "sun_specular", sun_specular);
     }
 };
 
@@ -1524,6 +1528,7 @@ Vector3 GfxNode::getWorldScale (void)
 
 const std::string GfxBody::className = "GfxBody";
 
+
 void validate_mesh (const Ogre::MeshPtr &mesh)
 {
     for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
@@ -1548,14 +1553,12 @@ GfxBody::GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_)
     // validate mesh in case it was just loaded for the first time
     validate_mesh(mesh);
 
-    ent = ogre_sm->createEntity(freshname(), ogre_name);
-    node->attachObject(ent);
+    ent = NULL;
     entEmissive = NULL;
     fade = 1;
     enabled = true;
 
-    updateMaterials();
-    updateEntity();
+    reinitialise();
 
     allBodiesIndex = all_bodies.size();
     all_bodies.push_back(this);
@@ -1572,53 +1575,31 @@ void GfxBody::updateMaterials (void)
     }
 }
 
-void GfxBody::reinitialiseEntity (void)
+void GfxBody::updateBones (void)
 {
-    if (ent==NULL) return;
-    ent->_initialise(true);
-    updateEntity();
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) {
+        manualBones.clear();
+        return;
+    }
+    manualBones.resize(skel->getNumBones());
+    for (unsigned i=0 ; i<skel->getNumBones() ; ++i) {
+        skel->getBone(i)->setManuallyControlled(manualBones[i]);
+    }
+    skel->_notifyManualBonesDirty(); // HACK: ogre should do this itself
 }
 
-void GfxBody::updateSubEntity (unsigned i)
+void GfxBody::reinitialise (void)
 {
-    if (ent==NULL) return;
+    updateMaterials();
+    if (entEmissive) ogre_sm->destroyEntity(entEmissive);
+    entEmissive = NULL;
 
-    Ogre::SubEntity *se = ent->getSubEntity(i);
-
-    GfxMaterial *gfx_material = materials[i];
-
-    switch (gfx_material->getBlend()) {
-        case GFX_MATERIAL_OPAQUE:
-        se->setRenderQueueGroup(RQ_GBUFFER_OPAQUE);
-        break;
-        case GFX_MATERIAL_ALPHA:
-        se->setRenderQueueGroup(RQ_FORWARD_ALPHA);
-        break;
-        case GFX_MATERIAL_ALPHA_DEPTH:
-        se->setRenderQueueGroup(RQ_FORWARD_ALPHA_DEPTH);
-        break;
-    }
-
-    // materials
-    /* TODO: include other criteria to pick a specific Ogre::Material:
-     * bones: 1 2 3 4
-     * vertex colours: false/true
-     * vertex alpha: false/true
-     * Fading: false/true
-     * World: false/true
-     */
-    if (fade < 1 && !gfx_material->getStipple()) {
-        se->setMaterial(gfx_material->fadingMat);
-    } else {
-        se->setMaterial(gfx_material->regularMat);
-    }
-
-    // car paint
-    for (int k=0 ; k<4 ; ++k) {
-        const GfxPaintColour &c = colours[k];
-        se->setCustomParameter(2*k+1,Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, c.met));
-        se->setCustomParameter(2*k+2,  Ogre::Vector4(c.spec.x, c.spec.y, c.spec.z, 0));
-    }
+    if (ent!=NULL) ogre_sm->destroyEntity(ent);
+    ent = ogre_sm->createEntity(freshname(), mesh->getName());
+    node->attachObject(ent);
+    updateProperties();
+    updateBones();
 }
 
 void GfxBody::updateVisibility (void)
@@ -1674,16 +1655,54 @@ void GfxBody::updateEntEmissive (void)
     updateVisibility();
 }
 
-void GfxBody::updateEntity (void)
+void GfxBody::updateProperties (void)
 {
     if (ent==NULL) return;
 
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
-        updateSubEntity(i);
+        if (ent==NULL) return;
+
+        Ogre::SubEntity *se = ent->getSubEntity(i);
+
+        GfxMaterial *gfx_material = materials[i];
+
+        switch (gfx_material->getBlend()) {
+            case GFX_MATERIAL_OPAQUE:
+            se->setRenderQueueGroup(RQ_GBUFFER_OPAQUE);
+            break;
+            case GFX_MATERIAL_ALPHA:
+            se->setRenderQueueGroup(RQ_FORWARD_ALPHA);
+            break;
+            case GFX_MATERIAL_ALPHA_DEPTH:
+            se->setRenderQueueGroup(RQ_FORWARD_ALPHA_DEPTH);
+            break;
+        }
+
+        // materials
+        /* TODO: include other criteria to pick a specific Ogre::Material:
+         * bones: 1 2 3 4
+         * vertex colours: false/true
+         * vertex alpha: false/true
+         * Fading: false/true
+         * World: false/true
+         */
+        if (fade < 1 && !gfx_material->getStipple()) {
+            se->setMaterial(gfx_material->fadingMat);
+        } else {
+            se->setMaterial(gfx_material->regularMat);
+        }
+
+        // car paint
+        for (int k=0 ; k<4 ; ++k) {
+            const GfxPaintColour &c = colours[k];
+            se->setCustomParameter(2*k+1,Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, c.met));
+            se->setCustomParameter(2*k+2,  Ogre::Vector4(c.spec.x, c.spec.y, c.spec.z, 0));
+        }
     }
 
     updateEntEmissive();
 
+    updateVisibility();
 }
 
 GfxBody::GfxBody (const GfxBodyPtr &par_)
@@ -1694,12 +1713,9 @@ GfxBody::GfxBody (const GfxBodyPtr &par_)
     mesh.setNull();
 
     ent = NULL;
+    entEmissive = NULL;
     fade = 1;
     enabled = true;
-    entEmissive = NULL;
-
-    updateMaterials();
-    updateEntity();
 
     allBodiesIndex = all_bodies.size();
     all_bodies.push_back(this);
@@ -1760,6 +1776,7 @@ void GfxBody::setParent (const GfxBodyPtr &par_)
 
 unsigned GfxBody::getBatches (void) const
 {
+    if (!hasGraphics()) return 0;
     return materials.size();
 }
 
@@ -1777,6 +1794,7 @@ unsigned GfxBody::getBatchesWithChildren (void) const
 
 unsigned GfxBody::getTriangles (void) const
 {
+    if (!hasGraphics()) return 0;
     unsigned total = 0;
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
         total += ent->getSubEntity(i)->getSubMesh()->indexData->indexCount/3;
@@ -1799,26 +1817,28 @@ unsigned GfxBody::getTrianglesWithChildren (void) const
 float GfxBody::getFade (void)
 {
     if (dead) THROW_DEAD(className);
+    // It's convenient to just set fade for all nodes in the hierarchy
+    //if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     return fade;
 }
 void GfxBody::setFade (float f)
 {
     if (dead) THROW_DEAD(className);
+    //if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     fade = f;
-    //if (!ent) return;
     updateVisibility();
 }
 
 bool GfxBody::getCastShadows (void)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) return false;
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     return ent->getCastShadows();
 }
 void GfxBody::setCastShadows (bool v)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) return;
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     ent->setCastShadows(v);
 }
 
@@ -1831,74 +1851,77 @@ void GfxBody::setPaintColour (int i, const GfxPaintColour &c)
 {
     if (dead) THROW_DEAD(className);
     colours[i] = c;
-    updateEntity();
+    updateProperties();
 }
 
 unsigned GfxBody::getNumBones (void)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) return 0;
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) return 0;
-    return skel->getNumBones();
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    return manualBones.size();
 }
 
 unsigned GfxBody::getBoneId (const std::string name)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL)
     if (!skel->hasBone(name)) GRIT_EXCEPT("GfxBody has no bone \""+name+"\"");
     return skel->getBone(name)->getHandle();
+}
+
+void GfxBody::checkBone (unsigned n)
+{
+    if (manualBones.size()==0) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (n >= manualBones.size()) {
+        std::stringstream ss;
+        ss << "Bone " << n << " out of range [0," << manualBones.size() << ")";
+        GRIT_EXCEPT(ss.str());
+    }
 }
 
 const std::string &GfxBody::getBoneName (unsigned n)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     return skel->getBone(n)->getName();
 }
 
 bool GfxBody::getBoneManuallyControlled (unsigned n)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    return skel->getBone(n)->isManuallyControlled();
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    checkBone(n);
+    return manualBones[n];
 }
 
 void GfxBody::setBoneManuallyControlled (unsigned n, bool v)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    skel->getBone(n)->setManuallyControlled(v);
-    skel->_notifyManualBonesDirty(); // HACK: ogre should do this itself
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    checkBone(n);
+    manualBones[n] = v;
+    updateBones();
 }
 
 void GfxBody::setAllBonesManuallyControlled (bool v)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    for (unsigned i=0 ; i<skel->getNumBones() ; ++i) {
-        skel->getBone(i)->setManuallyControlled(v);
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    for (unsigned i=0 ; i<manualBones.size() ; ++i) {
+        manualBones[i] = v;
     }
-    skel->_notifyManualBonesDirty(); // HACK: ogre should do this itself
+    updateBones();
 }
 
 Vector3 GfxBody::getBoneInitialPosition (unsigned n)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->getInitialPosition());
 }
@@ -1906,9 +1929,9 @@ Vector3 GfxBody::getBoneInitialPosition (unsigned n)
 Vector3 GfxBody::getBoneWorldPosition (unsigned n)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->_getDerivedPosition());
 }
@@ -1916,9 +1939,9 @@ Vector3 GfxBody::getBoneWorldPosition (unsigned n)
 Vector3 GfxBody::getBoneLocalPosition (unsigned n)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->getPosition());
 }
@@ -1926,9 +1949,9 @@ Vector3 GfxBody::getBoneLocalPosition (unsigned n)
 Quaternion GfxBody::getBoneInitialOrientation (unsigned n)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->getInitialOrientation());
 }
@@ -1936,9 +1959,9 @@ Quaternion GfxBody::getBoneInitialOrientation (unsigned n)
 Quaternion GfxBody::getBoneWorldOrientation (unsigned n)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->_getDerivedOrientation());
 }
@@ -1946,9 +1969,9 @@ Quaternion GfxBody::getBoneWorldOrientation (unsigned n)
 Quaternion GfxBody::getBoneLocalOrientation (unsigned n)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->getOrientation());
 }
@@ -1957,9 +1980,9 @@ Quaternion GfxBody::getBoneLocalOrientation (unsigned n)
 void GfxBody::setBoneLocalPosition (unsigned n, const Vector3 &v)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     bone->setPosition(to_ogre(v));
 }
@@ -1967,9 +1990,9 @@ void GfxBody::setBoneLocalPosition (unsigned n, const Vector3 &v)
 void GfxBody::setBoneLocalOrientation (unsigned n, const Quaternion &v)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel==NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     bone->setOrientation(to_ogre(v));
 }
@@ -2430,23 +2453,21 @@ void GfxLight::updateVisibility (void)
 // {{{ GFX_MATERIAL
 
 static std::set<GfxMaterial*> dirty_mats;
-
 static void handle_dirty_materials (void)
 {
     if (dirty_mats.empty()) return;
 
     for (unsigned long i=0 ; i<all_bodies.size() ; ++i) {
         GfxBody *b = all_bodies[i];
-        bool needs_emissive_update = false;
+        bool needs_update = false;
         for (unsigned j=0 ; j<b->getNumMaterials() ; ++j) {
             GfxMaterial *m = b->getMaterial(j);
             if (dirty_mats.find(m)!=dirty_mats.end()) {
-                b->updateSubEntity(j);
-                needs_emissive_update = true;
+                needs_update = true;
             }
         }
-        if (needs_emissive_update) {
-            b->updateEntEmissive();
+        if (needs_update) {
+            b->updateProperties();
         }
     }
 
@@ -2680,8 +2701,7 @@ void gfx_reload_mesh (const std::string &name)
     if (ptr->hasSkeleton()) ptr->getSkeleton()->reload();
     for (unsigned long i=0 ; i<all_bodies.size() ; ++i) {
         GfxBody *b = all_bodies[i];
-        b->updateMaterials();
-        b->reinitialiseEntity();
+        if (b->mesh == ptr) b->reinitialise();
     }
 }
 

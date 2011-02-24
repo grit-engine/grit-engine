@@ -271,7 +271,8 @@ class RigidBody : public btMotionState {
         void setOrientation (const Quaternion &q);
 
         void stepCallback (lua_State *L);
-        void collisionCallback (lua_State *L, int lifetime, float impulse, int m, float penetration,
+        void collisionCallback (lua_State *L, int lifetime, float impulse,
+                                int m, int m2, float penetration,
                                 const Vector3 &lpos, const Vector3 &wpos, const Vector3 &wnormal);
         void stabiliseCallback (lua_State *L);
         void updateGraphicsCallback (lua_State *L);

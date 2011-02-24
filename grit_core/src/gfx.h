@@ -270,6 +270,7 @@ class GfxBody : public GfxNode {
     GfxPaintColour colours[4];
     unsigned long allBodiesIndex;
     bool enabled;
+    std::vector<bool> manualBones;
 
     GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_);
     GfxBody (const GfxBodyPtr &par_);
@@ -290,12 +291,15 @@ class GfxBody : public GfxNode {
     void notifyGainedChild (GfxNode *child);
     void setParent (const GfxBodyPtr &par_);
 
+    protected:
     void updateEntEmissive (void);
     void updateVisibility (void);
     void updateMaterials (void);
-    void updateEntity (void);
-    void reinitialiseEntity (void);
-    void updateSubEntity (unsigned i);
+    void updateBones (void);
+    void checkBone (unsigned n);
+    public:
+    void updateProperties (void);
+    void reinitialise (void);
 
     unsigned getBatches (void) const;
     unsigned getBatchesWithChildren (void) const;
@@ -336,6 +340,9 @@ class GfxBody : public GfxNode {
     void destroy (void);
 
     void updateIndex (size_t v);
+
+    bool hasGraphics (void) const { return ent!=NULL; }
+
 
     friend class SharedPtr<GfxBody>;
     friend void gfx_reload_mesh (const std::string &name);

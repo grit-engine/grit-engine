@@ -50,6 +50,10 @@ public:
     SharedPtr (const SharedPtr<T> &p) : ptr(p.ptr), cnt(p.cnt) { if (!isNull()) useCount()++; }
     ~SharedPtr (void) { setNull(); }
     SharedPtr &operator= (const SharedPtr<T> &p) {
+        // The next line is not just an optimisation, it is needed for correctness
+        // without it if *cnt==1 then the setNull() would free the storage,
+        // in what ought to be a no-op.  Obviously this causes considerable drama.
+        if (p==*this) return *this;
         T *ptr_ = p.ptr;
         unsigned int *cnt_ = p.cnt;
         setNull();

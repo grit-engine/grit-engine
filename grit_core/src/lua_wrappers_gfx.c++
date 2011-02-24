@@ -40,6 +40,16 @@ void push_gfxbody (lua_State *L, const GfxBodyPtr &self)
 
 GC_MACRO(GfxBodyPtr,gfxbody,GFXBODY_TAG)
 
+static int gfxbody_reinitialise (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    self->reinitialise();
+    return 0;
+TRY_END
+}
+
 static int gfxbody_get_paint_colour (lua_State *L)
 {
 TRY_START
@@ -313,6 +323,8 @@ TRY_START
             push_entity(L, self->entEmissive);
         else
             lua_pushnil(L);
+    } else if (!::strcmp(key,"reinitialise")) {
+        push_cfunction(L, gfxbody_reinitialise);
 
     } else if (!::strcmp(key,"fade")) {
         lua_pushnumber(L, self->getFade());
