@@ -178,7 +178,7 @@ int main(int argc, const char **argv)
                 if (debug_drawer) delete debug_drawer;
                 if (mouse) delete mouse;
                 if (keyboard) delete keyboard;
-                if (core_L) lua_close(core_L);
+                if (core_L) shutdown_lua(core_L);
                 hud.setNull();
                 gfx_shutdown();
 

@@ -26,6 +26,7 @@
 #include <sstream>
 
 #include "lua_util.h"
+#include "LuaPtr.h"
 #include "CentralisedLog.h"
 
 
@@ -316,18 +317,23 @@ bool is_userdata (lua_State *L, int ud, const char *tname)
 } 
 
 
-typedef std::map<int (*)(lua_State*),int> FuncMap;
+typedef std::map<int (*)(lua_State*),LuaPtr> FuncMap;
 FuncMap func_map;
 void push_cfunction (lua_State *L, int (*func)(lua_State*))
 {
         if (func_map.find(func)==func_map.end()) {
                 lua_pushcfunction(L, func);
-                lua_pushvalue(L,-1);
-                func_map[func] = luaL_ref(L, LUA_REGISTRYINDEX);
+                func_map[func].setNoPop(L);
         } else {
-                lua_rawgeti(L,LUA_REGISTRYINDEX,func_map[func]);
+                func_map[func].push(L);
         }
 }
 
+void func_map_shutdown (lua_State *L)
+{
+        for (FuncMap::iterator i=func_map.begin(), i_=func_map.end() ; i!=i_ ; ++i) {
+                i->second.setNil(L);
+        }
+}
 
 // vim: shiftwidth=8:tabstop=8:expandtab

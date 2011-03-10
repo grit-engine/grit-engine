@@ -248,6 +248,8 @@ TRY_START
                 lua_pushstring(L,self->name.c_str());
         } else if (key=="needsFrameCallbacks") {
                 lua_pushboolean(L,self->getNeedsFrameCallbacks());
+        } else if (key=="dump") {
+                self->userValues.dump(L);
         } else {
                 GritClass *c = self->getClass();
                 if (c==NULL) my_lua_error(L,"GritObject destroyed");

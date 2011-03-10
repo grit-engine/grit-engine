@@ -1573,6 +1573,11 @@ void GfxBody::updateMaterials (void)
         std::string matname = sm->getMaterialName();
         materials[i] = gfx_material_get(matname);
     }
+    unsigned old_size = emissiveEnabled.size();
+    emissiveEnabled.resize(mesh->getNumSubMeshes());
+    for (unsigned i=old_size ; i<emissiveEnabled.size() ; ++i) {
+        emissiveEnabled[i] = true;
+    }
 }
 
 void GfxBody::updateBones (void)
@@ -1631,11 +1636,12 @@ void GfxBody::updateEntEmissive (void)
     if (entEmissive != NULL) {
         // destroy it if we've already got one
         ogre_sm->destroyEntity(entEmissive);
+        entEmissive = NULL;
     }
     bool needs_emissive = false;
     for (unsigned i=0 ; i<materials.size() ; ++i) {
         GfxMaterial *gfx_material = materials[i];
-        if (!gfx_material->emissiveMat.isNull()) {
+        if (!gfx_material->emissiveMat.isNull() && emissiveEnabled[i]) {
             needs_emissive = true;
         }
     }
@@ -1645,7 +1651,7 @@ void GfxBody::updateEntEmissive (void)
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
         GfxMaterial *gfx_material = materials[i];
         Ogre::SubEntity *se = entEmissive->getSubEntity(i);
-        if (!gfx_material->emissiveMat.isNull()) {
+        if (!gfx_material->emissiveMat.isNull() && emissiveEnabled[i]) {
             se->setMaterial(gfx_material->emissiveMat);
             se->setRenderQueueGroup(RQ_FORWARD_EMISSIVE);
         } else {
@@ -1660,7 +1666,6 @@ void GfxBody::updateProperties (void)
     if (ent==NULL) return;
 
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
-        if (ent==NULL) return;
 
         Ogre::SubEntity *se = ent->getSubEntity(i);
 
@@ -1744,6 +1749,32 @@ void GfxBody::destroy (void)
 void GfxBody::updateIndex (size_t v)
 {
     allBodiesIndex = v;
+}
+
+GfxMaterial *GfxBody::getMaterial (unsigned i)
+{
+    if (i >= materials.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    return materials[i];
+}
+
+void GfxBody::setMaterial (unsigned i, GfxMaterial *m)
+{
+    if (i >= materials.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    materials[i] = m;
+    updateProperties();
+}
+
+bool GfxBody::getEmissiveEnabled (unsigned i)
+{
+    if (i >= emissiveEnabled.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    return emissiveEnabled[i];
+}
+
+void GfxBody::setEmissiveEnabled (unsigned i, bool v)
+{
+    if (i >= emissiveEnabled.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    emissiveEnabled[i] = v;
+    updateEntEmissive();
 }
 
 void GfxBody::notifyLostChild (GfxNode *child)
@@ -2460,7 +2491,7 @@ static void handle_dirty_materials (void)
     for (unsigned long i=0 ; i<all_bodies.size() ; ++i) {
         GfxBody *b = all_bodies[i];
         bool needs_update = false;
-        for (unsigned j=0 ; j<b->getNumMaterials() ; ++j) {
+        for (unsigned j=0 ; j<b->getNumSubMeshes() ; ++j) {
             GfxMaterial *m = b->getMaterial(j);
             if (dirty_mats.find(m)!=dirty_mats.end()) {
                 needs_update = true;

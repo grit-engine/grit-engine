@@ -289,9 +289,9 @@ TRY_START
         check_args(L,3);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         Vector3 force = check_v3(L, 2);
-        Vector3 rel_pos = check_v3(L, 3);
+        Vector3 wpos = check_v3(L, 3);
         const Vector3 &pos = self->getPosition();
-        self->force(force,rel_pos-pos);
+        self->force(force,wpos-pos);
         return 0;
 TRY_END
 }
@@ -302,9 +302,9 @@ TRY_START
         check_args(L,3);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         Vector3 impulse = check_v3(L, 2);
-        Vector3 rel_pos = check_v3(L, 3);
+        Vector3 wpos = check_v3(L, 3);
         const Vector3 &pos = self->getPosition();
-        self->impulse(impulse, rel_pos-pos);
+        self->impulse(impulse, wpos-pos);
         return 0;
 TRY_END
 }
@@ -708,6 +708,8 @@ TRY_START
                 lua_pushnumber(L,self->getMass());
         } else if (!::strcmp(key,"inertia")) {
                 push_v3(L, self->getInertia());
+        } else if (!::strcmp(key,"ghost")) {
+                lua_pushboolean(L,self->getGhost());
 
         } else if (!::strcmp(key,"numParts")) {
                 lua_pushnumber(L, self->getNumElements());
@@ -741,13 +743,13 @@ TRY_START
                 }
 
         } else if (!::strcmp(key,"updateCallback")) {
-                self->pushUpdateCallback(L);
+                self->updateCallbackPtr.push(L);
         } else if (!::strcmp(key,"stepCallback")) {
-                self->pushStepCallback(L);
+                self->stepCallbackPtr.push(L);
         } else if (!::strcmp(key,"collisionCallback")) {
-                self->pushCollisionCallback(L);
+                self->collisionCallbackPtr.push(L);
         } else if (!::strcmp(key,"stabiliseCallback")) {
-                self->pushStabiliseCallback(L);
+                self->stabiliseCallbackPtr.push(L);
         } else {
                 my_lua_error(L,"Not a readable RigidBody member: "+std::string(key));
         }
@@ -791,14 +793,17 @@ TRY_START
         } else if (!::strcmp(key,"mass")) {
                 float v = luaL_checknumber(L,3);
                 self->setMass(v);
+        } else if (!::strcmp(key,"ghost")) {
+                bool v = check_bool(L,3);
+                self->setGhost(v);
         } else if (!::strcmp(key,"updateCallback")) {
-                self->setUpdateCallback(L);
+                self->updateCallbackPtr.set(L);
         } else if (!::strcmp(key,"stepCallback")) {
-                self->setStepCallback(L);
+                self->stepCallbackPtr.set(L);
         } else if (!::strcmp(key,"collisionCallback")) {
-                self->setCollisionCallback(L);
+                self->collisionCallbackPtr.set(L);
         } else if (!::strcmp(key,"stabiliseCallback")) {
-                self->setStabiliseCallback(L);
+                self->stabiliseCallbackPtr.set(L);
         } else if (!::strcmp(key,"inertia")) {
                 Vector3 v = check_v3(L, 3);
                 self->setInertia(v);
@@ -880,6 +885,7 @@ class LuaTestCallback : public PhysicsWorld::TestCallback {
                         RigidBody *body = i->first;
                         Results &results = i->second;
                         for (Results::iterator j=results.begin(),j_=results.end() ; j!=j_ ; ++j) {
+                                if (body->destroyed()) continue;
                                 lua_pushvalue(L,func_index);
                                 push_rbody(L,body->getPtr());
                                 lua_pushnumber(L,results.size());

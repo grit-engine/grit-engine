@@ -26,6 +26,7 @@
 #include "lua_wrappers_scnmgr.h"
 #include "lua_wrappers_mobj.h"
 #include "ExternalTable.h"
+#include "LuaPtr.h"
 #include "path_util.h"
 
 // GFXBODY ============================================================== {{{
@@ -46,6 +47,54 @@ TRY_START
     check_args(L,1);
     GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
     self->reinitialise();
+    return 0;
+TRY_END
+}
+
+static int gfxbody_get_emissive_enabled (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    unsigned n = check_t<unsigned>(L,2);
+    lua_pushboolean(L, self->getEmissiveEnabled(n));
+    return 1;
+TRY_END
+}
+
+static int gfxbody_set_emissive_enabled (lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    unsigned n = check_t<unsigned>(L,2);
+    bool v = check_bool(L,3);
+    self->setEmissiveEnabled(n,v);
+    return 0;
+TRY_END
+}
+
+static int gfxbody_get_material (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    unsigned n = check_t<unsigned>(L,2);
+    GfxMaterial *m = self->getMaterial(n);
+    lua_pushstring(L, m->name.c_str());
+    return 1;
+TRY_END
+}
+
+static int gfxbody_set_material (lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    unsigned n = check_t<unsigned>(L,2);
+    const char *mname = luaL_checkstring(L,3);
+    GfxMaterial *m = gfx_material_get(mname);
+    self->setMaterial(n,m);
     return 0;
 TRY_END
 }
@@ -311,6 +360,14 @@ TRY_START
         lua_pushnumber(L, self->getTriangles());
     } else if (!::strcmp(key,"trianglesWithChildren")) {
         lua_pushnumber(L, self->getTrianglesWithChildren());
+    } else if (!::strcmp(key,"getMaterial")) {
+        push_cfunction(L,gfxbody_get_material);
+    } else if (!::strcmp(key,"setMaterial")) {
+        push_cfunction(L,gfxbody_set_material);
+    } else if (!::strcmp(key,"getEmissiveEnabled")) {
+        push_cfunction(L,gfxbody_get_emissive_enabled);
+    } else if (!::strcmp(key,"setEmissiveEnabled")) {
+        push_cfunction(L,gfxbody_set_emissive_enabled);
     } else if (!::strcmp(key,"nodeHACK")) {
         push_node(L, self->node);
     } else if (!::strcmp(key,"entHACK")) {
@@ -376,6 +433,8 @@ TRY_START
 
     } else if (!::strcmp(key,"makeChild")) {
         push_cfunction(L,gfxbody_make_child);
+    } else if (!::strcmp(key,"destroyed")) {
+        lua_pushboolean(L,self->destroyed());
     } else if (!::strcmp(key,"destroy")) {
         push_cfunction(L,gfxbody_destroy);
     } else {
@@ -505,6 +564,8 @@ TRY_START
     } else if (!::strcmp(key,"lightHACK")) {
         push_light(L, self->light);
 
+    } else if (!::strcmp(key,"destroyed")) {
+        lua_pushboolean(L,self->destroyed());
     } else if (!::strcmp(key,"destroy")) {
         push_cfunction(L,gfxlight_destroy);
     } else {
@@ -813,48 +874,41 @@ namespace {
     struct ParticleDefinition;
 
     struct ParticleDefinition {
-        ParticleDefinition (const std::string &m, const std::vector<UVRect> fs,
-                    const ExternalTable &t, int b)
-              : material(m), frames(fs), table(t), behaviour(b)
+        ParticleDefinition (const std::string &m, const std::vector<UVRect> fs, lua_State *L, int t)
+          : material(m), frames(fs)
         {
+            table.takeTableFromLuaStack(L, t);
         }
         void destroy (lua_State *L);
                     
         std::string material;
         std::vector<UVRect> frames;
         ExternalTable table;
-        int behaviour; // pointer to lua function
     };
 
     std::map<std::string, ParticleDefinition*> particle_defs;
 
     struct LuaParticle {
 
-        int state; // pointer to lua table
+        LuaPtr state;
         GfxParticle p;
         ParticleDefinition *pd;
 
         LuaParticle (lua_State *L, const GfxParticle &p_, ParticleDefinition *pd_)
-             : p(p_), pd(pd_)
+          : p(p_), pd(pd_)
         {
-            state = luaL_ref(L, LUA_REGISTRYINDEX);
-        }
-
-        ~LuaParticle (void)
-        {
-            APP_ASSERT(state==LUA_NOREF);
+            state.set(L);
         }
 
         void destroy (lua_State *L)
         {
-            luaL_unref(L,LUA_REGISTRYINDEX,state);
-            state = LUA_NOREF;
+            state.setNil(L);
             p.release();
         }
 
         bool updateGraphics (lua_State *L, float elapsed, int error_handler)
         {
-            lua_rawgeti(L, LUA_REGISTRYINDEX, state);
+            state.push(L);
             // stack: err tab
 
             bool destroy = false;
@@ -1029,7 +1083,6 @@ namespace {
 
     void ParticleDefinition::destroy (lua_State *L)
     {
-        luaL_unref(L,LUA_REGISTRYINDEX,behaviour);
         // remove any particles that used to belong to this definition
         for (unsigned i=0 ; i<particles.size() ; ++i) {
             LuaParticle *p = particles[i];
@@ -1040,6 +1093,7 @@ namespace {
                 --i;
             }
         }
+        table.destroy(L);
     }
 
 }
@@ -1152,21 +1206,16 @@ TRY_START
 
     lua_getfield(L, 2, "behaviour");
     if (!lua_isfunction(L,-1)) my_lua_error(L,"Particle behaviour must be a function.");
-    int behaviour = luaL_ref(L,LUA_REGISTRYINDEX);
-    lua_pushnil(L);
-    lua_setfield(L, 2, "behaviour");
     
-    ExternalTable table;
-    table.takeTableFromLuaStack(L,2);
-
     ParticleDefinition *&pd = particle_defs[name];
     if (pd != NULL) {
         pd->destroy(L);
         delete pd;
     }
-    gfx_particle_define(name, texture, blend, alpha_rej, emissive); // will invalidate 
-    ParticleDefinition *newpd = new ParticleDefinition(name, frames, table, behaviour);
+
+    ParticleDefinition *newpd = new ParticleDefinition(name, frames, L, 2);
     pd = newpd;
+    gfx_particle_define(name, texture, blend, alpha_rej, emissive); // will invalidate 
     return 0;
 TRY_END
 }
@@ -1196,8 +1245,6 @@ TRY_START
     lua_setfield(L,-2,"position");
     push_v3(L, vel);
     lua_setfield(L,-2,"velocity");
-    lua_rawgeti(L,LUA_REGISTRYINDEX,pd->behaviour);
-    lua_setfield(L,-2,"behaviour");
 
     // stack: particle
     for (lua_pushnil(L) ; lua_next(L,4)!=0 ; lua_pop(L,1)) {

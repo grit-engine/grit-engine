@@ -34,6 +34,7 @@ extern "C" {
 
 #include "ExternalTable.h"
 #include "lua_util.h"
+#include "LuaPtr.h"
 
 class GritClass {
 
@@ -48,18 +49,17 @@ class GritClass {
                         if (err) my_lua_error(L, err);
                 }
                 lua_pop(L,1); // the table we just iterated through
-                parentClass = luaL_ref(L,LUA_REGISTRYINDEX);
+                parentClass.set(L);
         }
 
         void setParent (lua_State *L)
         {
-                luaL_unref(L,LUA_REGISTRYINDEX,parentClass);
-                parentClass = luaL_ref(L,LUA_REGISTRYINDEX);
+                parentClass.set(L);
         }
 
         void pushParent (lua_State *L)
         {
-                lua_rawgeti(L,LUA_REGISTRYINDEX,parentClass);
+                parentClass.push(L);
         }
 
         void get (lua_State *L, const std::string &key)
@@ -100,7 +100,8 @@ class GritClass {
         {
                 refCount--;
                 if (refCount>0) return;
-                luaL_unref(L,LUA_REGISTRYINDEX,parentClass);
+                table.destroy(L);
+                parentClass.setNil(L);
                 delete this;
         }
 
@@ -110,7 +111,7 @@ class GritClass {
 
         int refCount;
 
-        int parentClass;
+        LuaPtr parentClass;
 
         ExternalTable table;
 

@@ -47,6 +47,8 @@ extern "C" {
 #include "GritObject.h"
 #include "math_util.h"
 
+#include "LuaPtr.h"
+
 class DynamicsWorld;
 
 class PhysicsWorld {
@@ -258,6 +260,8 @@ class RigidBody : public btMotionState {
 
         void destroy (lua_State *L);
 
+        bool destroyed (void) const { return body==NULL; }
+
         void getWorldTransform (btTransform& into_here) const;
 
         void setWorldTransform (const btTransform& current_xform);
@@ -272,8 +276,9 @@ class RigidBody : public btMotionState {
 
         void stepCallback (lua_State *L);
         void collisionCallback (lua_State *L, int lifetime, float impulse,
+                                const RigidBodyPtr &other,
                                 int m, int m2, float penetration,
-                                const Vector3 &lpos, const Vector3 &wpos, const Vector3 &wnormal);
+                                const Vector3 &pos, const Vector3 &pos2, const Vector3 &wnormal);
         void stabiliseCallback (lua_State *L);
         void updateGraphicsCallback (lua_State *L);
 
@@ -324,58 +329,6 @@ class RigidBody : public btMotionState {
 
         const CollisionMeshPtr colMesh;
 
-        void pushUpdateCallback (lua_State *L)
-        {
-                // pushes nil if index is LUA_NOREF
-                lua_rawgeti(L,LUA_REGISTRYINDEX,updateCallbackIndex);
-        }
-
-        void setUpdateCallback (lua_State *L)
-        {
-                // unref if not already
-                luaL_unref(L,LUA_REGISTRYINDEX,updateCallbackIndex);
-                updateCallbackIndex = luaL_ref(L,LUA_REGISTRYINDEX);
-        }
-
-        void pushStepCallback (lua_State *L)
-        {
-                // pushes nil if index is LUA_NOREF
-                lua_rawgeti(L,LUA_REGISTRYINDEX,stepCallbackIndex);
-        }
-
-        void setStepCallback (lua_State *L)
-        {
-                // unref if not already
-                luaL_unref(L,LUA_REGISTRYINDEX,stepCallbackIndex);
-                stepCallbackIndex = luaL_ref(L,LUA_REGISTRYINDEX);
-        }
-
-        void pushCollisionCallback (lua_State *L)
-        {
-                // pushes nil if index is LUA_NOREF
-                lua_rawgeti(L,LUA_REGISTRYINDEX,collisionCallbackIndex);
-        }
-
-        void setCollisionCallback (lua_State *L)
-        {
-                // unref if not already
-                luaL_unref(L,LUA_REGISTRYINDEX,collisionCallbackIndex);
-                collisionCallbackIndex = luaL_ref(L,LUA_REGISTRYINDEX);
-        }
-
-        void pushStabiliseCallback (lua_State *L)
-        {
-                // pushes nil if index is LUA_NOREF
-                lua_rawgeti(L,LUA_REGISTRYINDEX,stabiliseCallbackIndex);
-        }
-
-        void setStabiliseCallback (lua_State *L)
-        {
-                // unref if not already
-                luaL_unref(L,LUA_REGISTRYINDEX,stabiliseCallbackIndex);
-                stabiliseCallbackIndex = luaL_ref(L,LUA_REGISTRYINDEX);
-        }
-
         GritObjectPtr owner;
 
         void notifyMeshReloaded (void)
@@ -398,15 +351,23 @@ class RigidBody : public btMotionState {
         Quaternion getElementOrientationOffset (int i);
         int getNumElements (void) { return localChanges.size(); };
 
+        bool getGhost (void) const { return ghost; }
+        void setGhost (bool v) { ghost = v; updateCollisionFlags(); }
+
     protected:
+
+        float mass;
+        bool ghost;
 
         btTransform lastXform;
 
-        int updateCallbackIndex;
-        int stepCallbackIndex;
-        int collisionCallbackIndex;
-        int stabiliseCallbackIndex;
+    public:
+        LuaPtr updateCallbackPtr;
+        LuaPtr stepCallbackPtr;
+        LuaPtr collisionCallbackPtr;
+        LuaPtr stabiliseCallbackPtr;
 
+    protected:
         btRigidBody *body;
         btCompoundShape *shape;
 
@@ -418,6 +379,8 @@ class RigidBody : public btMotionState {
                 btTransform offset;
         };
         btAlignedObjectArray<CompElement> localChanges; // to the master compound
+
+        void updateCollisionFlags (void);
 };
 
 

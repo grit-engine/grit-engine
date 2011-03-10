@@ -23,7 +23,32 @@
 #include "lua_util.h"
 #include "lua_wrappers_primitives.h"
 
+void ExternalTable::destroy (lua_State *L)
+{
+        clear(L);
+}
 
+void ExternalTable::clear (lua_State *L)
+{
+        for (StringMap::iterator i=fields.begin(),i_=fields.end() ; i!=i_ ; ++i) {
+                Value &v = i->second;
+                if (v.type == 8) {
+                        v.func.setNil(L);
+                } else if (v.type == 5) {
+                        v.t->destroy(L);
+                }
+        }
+        for (NumberMap::iterator i=elements.begin(),i_=elements.end() ; i!=i_ ; ++i) {
+                Value &v = i->second;
+                if (v.type == 8) {
+                        v.func.setNil(L);
+                } else if (v.type == 5) {
+                        v.t->destroy(L);
+                }
+        }
+        fields.clear();
+        elements.clear();
+}
 const char *ExternalTable::luaGet (lua_State *L)
 {
         if (lua_type(L,-1)==LUA_TSTRING) {
@@ -62,6 +87,9 @@ static void push (lua_State *L, const ExternalTable::Value &v)
                 break;
                 case 7:
                 push(L,new PlotV3(v.plot_v3),PLOT_V3_TAG);
+                break;
+                case 8:
+                v.func.push(L);
                 break;
                 default:
                 CERR << "Unhandled ExternalTable type: " << v.type << std::endl;
@@ -126,9 +154,13 @@ const char *ExternalTable::luaSet (lua_State *L, const std::string &key)
                 GET_UD_MACRO(PlotV3,self,-1,PLOT_V3_TAG);
                 set(key,self);
         } else if (lua_type(L,-1)==LUA_TTABLE) {
-                ExternalTable *self = new ExternalTable();
+                SharedPtr<ExternalTable> self = SharedPtr<ExternalTable>(new ExternalTable());
                 self->takeTableFromLuaStack(L,lua_gettop(L));
                 set(key,self);
+        } else if (lua_type(L,-1)==LUA_TFUNCTION) {
+                Value &v = fields[key];
+                v.func.setNoPop(L);
+                v.type = 8;
         } else {
                 return "type not supported";
         }
@@ -161,9 +193,13 @@ const char *ExternalTable::luaSet (lua_State *L, lua_Number key)
                 GET_UD_MACRO(PlotV3,self,-1,PLOT_V3_TAG);
                 set(key,self);
         } else if (lua_type(L,-1)==LUA_TTABLE) {
-                ExternalTable *self = new ExternalTable();
+                SharedPtr<ExternalTable> self = SharedPtr<ExternalTable>(new ExternalTable());
                 self->takeTableFromLuaStack(L,-1);
                 set(key,self);
+        } else if (lua_type(L,-1)==LUA_TFUNCTION) {
+                Value &v = elements[key];
+                v.func.setNoPop(L);
+                v.type = 8;
         } else {
                 return "type not supported";
         }

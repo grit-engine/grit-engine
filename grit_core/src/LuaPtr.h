@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2010
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2011
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,12 +19,50 @@
  * THE SOFTWARE.
  */
 
-extern "C" {
-#include "lua.h"
-}
+#ifndef LuaPtr_h
+#define LuaPtr_h
 
-lua_State *init_lua(const char *filename);
+class LuaPtr {
+  public:
+    LuaPtr (void)
+    {
+        ptr = LUA_REFNIL;
+    }
 
-void shutdown_lua (lua_State *L);
+    bool isNil() const { return ptr == LUA_REFNIL; }
 
-// vim: shiftwidth=8:tabstop=8:expandtab
+    void set (lua_State *L)
+    {
+        luaL_unref(L, LUA_REGISTRYINDEX, ptr);
+        ptr = luaL_ref(L, LUA_REGISTRYINDEX);
+    }
+
+    void setNoPop (lua_State *L)
+    {
+        lua_pushvalue(L, -1);
+        set(L);
+    }
+
+    void setNil (lua_State *L)
+    {
+        luaL_unref(L, LUA_REGISTRYINDEX, ptr);
+        ptr = LUA_REFNIL;
+    }
+
+    ~LuaPtr (void)
+    {
+        if (!isNil())
+            CERR << "LuaPtr was not shut down properly (call setNil())." << std::endl;
+    }
+
+    void push (lua_State *L) const
+    {
+        lua_rawgeti(L, LUA_REGISTRYINDEX, ptr);
+    }
+
+  protected:
+    lua_Number ptr;
+};
+
+#endif
+// vim: shiftwidth=4:tabstop=4:expandtab

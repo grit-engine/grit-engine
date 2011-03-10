@@ -59,6 +59,7 @@ void GritObject::destroy (lua_State *L, const GritObjectPtr &self)
         gritClass->release(L);
         gritClass = NULL;
         tryUnloadResources();
+        userValues.destroy(L);
 }       
 
 

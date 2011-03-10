@@ -253,6 +253,7 @@ class GfxNode {
     Vector3 getWorldScale (void);
 
     virtual void destroy (void);
+    virtual bool destroyed (void) const { return dead; }
 
     friend class GfxBody; // otherwise it cannot access our protected stuff
 };
@@ -267,6 +268,7 @@ class GfxBody : public GfxNode {
     protected:
     float fade;
     GfxMaterials materials;
+    std::vector<bool> emissiveEnabled;
     GfxPaintColour colours[4];
     unsigned long allBodiesIndex;
     bool enabled;
@@ -284,8 +286,11 @@ class GfxBody : public GfxNode {
     static GfxBodyPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
     { return GfxBodyPtr(new GfxBody(par_)); }
     
-    GfxMaterial *getMaterial (unsigned i) { return materials[i]; }
-    unsigned getNumMaterials (void) { return materials.size(); }
+    GfxMaterial *getMaterial (unsigned i);
+    void setMaterial (unsigned i, GfxMaterial *m);
+    bool getEmissiveEnabled (unsigned i);
+    void setEmissiveEnabled (unsigned i, bool v);
+    unsigned getNumSubMeshes (void) { return materials.size(); }
 
     void notifyLostChild (GfxNode *child);
     void notifyGainedChild (GfxNode *child);

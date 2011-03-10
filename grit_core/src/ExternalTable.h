@@ -30,9 +30,12 @@ class ExternalTable;
 
 extern "C" {
         #include <lua.h>
+        #include <lauxlib.h>
 }
 
 #include "math_util.h"
+#include "SharedPtr.h"
+#include "LuaPtr.h"
 
 #include "SplineTable.h"
 
@@ -44,8 +47,137 @@ class ExternalTable {
 
     public:
 
+        ExternalTable (void) { }
+
+        void destroy (lua_State *L);
+
         bool has (const std::string &key) { return fields.find(key)!=fields.end(); }
         bool has (lua_Number key) { return elements.find(key)!=elements.end(); }
+
+        template<class U> void get (const std::string &key, U &val, const U &def)
+        {
+                if (!has(key) || !get(key,val)) val = def;
+                
+        }
+
+        template<class U> void get (lua_Number key, U &val, const U &def)
+        {
+                if (!has(key) || !get(key,val)) val = def;
+                
+        }
+
+        bool get (const std::string &key, lua_Number &v)
+        {
+                if (fields[key].type != 0) return false;
+                v = fields[key].real;
+                return true;
+        }
+
+        bool get (const std::string &key, std::string &v)
+        {
+                if (fields[key].type != 1) return false;
+                v = fields[key].str;
+                return true;
+        }
+
+        bool get (const std::string &key, Vector3 &v)
+        {
+                if (fields[key].type != 2) return false;
+                v = fields[key].v3 ;
+                return true;
+        }
+
+        bool get (const std::string &key, Quaternion &v)
+        {
+                if (fields[key].type != 3) return false;
+                v = fields[key].q;
+                return true;
+        }
+
+        bool get (const std::string &key, bool &v)
+        {
+                if (fields[key].type != 4) return false;
+                v = fields[key].b;
+                return true;
+        }
+
+        bool get (const std::string &key, SharedPtr<ExternalTable> &v)
+        {
+                if (fields[key].type != 5) return false;
+                v = fields[key].t;
+                return true;
+        }
+
+        bool get (const std::string &key, Plot &v)
+        {
+                if (fields[key].type != 6) return false;
+                v = fields[key].plot;
+                return true;
+        }
+
+        bool get (const std::string &key, PlotV3 &v)
+        {
+                if (fields[key].type != 7) return false;
+                v = fields[key].plot_v3;
+                return true;
+        }
+
+        bool get (lua_Number key, lua_Number &v)
+        {
+                if (elements[key].type != 0) return false;
+                v = elements[key].real;
+                return true;
+        }
+
+        bool get (lua_Number key, std::string &v)
+        {
+                if (elements[key].type != 1) return false;
+                v = elements[key].str;
+                return true;
+        }
+
+        bool get (lua_Number key, Vector3 &v)
+        {
+                if (elements[key].type != 2) return false;
+                v = elements[key].v3 ;
+                return true;
+        }
+
+        bool get (lua_Number key, Quaternion &v)
+        {
+                if (elements[key].type != 3) return false;
+                v = elements[key].q;
+                return true;
+        }
+
+        bool get (lua_Number key, bool &v)
+        {
+                if (elements[key].type != 4) return false;
+                v = elements[key].b;
+                return true;
+        }
+
+        bool get (lua_Number key, SharedPtr<ExternalTable> &v)
+        {
+                if (elements[key].type != 5) return false;
+                v = elements[key].t;
+                return true;
+        }
+
+        bool get (lua_Number key, Plot &v)
+        {
+                if (elements[key].type != 6) return false;
+                v = elements[key].plot;
+                return true;
+        }
+
+        bool get (lua_Number key, PlotV3 &v)
+        {
+                if (elements[key].type != 7) return false;
+                v = elements[key].plot_v3;
+                return true;
+        }
+
 
         void set (const std::string &key, const lua_Number r)
         {
@@ -77,7 +209,7 @@ class ExternalTable {
                 fields[key].b = b;
         }
 
-        void set (const std::string &key, ExternalTable *t)
+        void set (const std::string &key, const SharedPtr<ExternalTable> &t)
         {
                 fields[key].type = 5;
                 fields[key].t = t;
@@ -125,19 +257,19 @@ class ExternalTable {
                 elements[key].b = b;
         }
 
-        void set (lua_Number &key, ExternalTable *t)
+        void set (lua_Number &key, const SharedPtr<ExternalTable> &t)
         {
                 elements[key].type = 5;
                 elements[key].t = t;
         }
 
-        void set (lua_Number &key, Plot plot)
+        void set (lua_Number &key, const Plot &plot)
         {
                 elements[key].type = 6;
                 elements[key].plot = plot;
         }
 
-        void set (lua_Number &key, PlotV3 plot_v3)
+        void set (lua_Number &key, const PlotV3 &plot_v3)
         {
                 elements[key].type = 7;
                 elements[key].plot_v3 = plot_v3;
@@ -155,17 +287,18 @@ class ExternalTable {
         void unset (const std::string &key) { fields.erase(key); }
         void unset (lua_Number key) { elements.erase(key); }
 
-        void clear (void) { fields.clear(); elements.clear(); }
+        void clear (lua_State *L);
 
         void dump (lua_State *L);
         void takeTableFromLuaStack (lua_State *L, int tab);
 
         template<typename T> class UniquePtr {
                 T *ptr;
-        public:
+            public:
                 UniquePtr () : ptr(NULL) { }
                 ~UniquePtr (void) { delete ptr; }
                 T *operator-> (void) const { return ptr; }
+                T &operator* (void) const { return *ptr; }
                 T *operator= (T *ptr_) { delete ptr; return ptr=ptr_; }
         };
 
@@ -176,9 +309,10 @@ class ExternalTable {
                 Vector3 v3;
                 Quaternion q;
                 bool b;
-                UniquePtr<ExternalTable> t;
+                SharedPtr<ExternalTable> t;
                 Plot plot;
                 PlotV3 plot_v3;
+                LuaPtr func;
         };
 
     protected:

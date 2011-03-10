@@ -836,52 +836,38 @@ TRY_START
                 my_lua_error(L,"Second parameter should be a table");
 
         ExternalTable &t = mat_map[name];
-        t.clear();
+        t.clear(L);
         t.takeTableFromLuaStack(L,2);
         GfxMaterial *gfxmat = gfx_material_add_or_get(name);
 
-        bool alpha = false;
-        lua_getfield(L, 2, "alpha");
-        if (lua_isboolean(L,-1)) {
-                alpha = lua_toboolean(L,-1) != 0;
-                gfxmat->setAlpha(1);
-        } else if (lua_isnumber(L,-1)) {
-                alpha = true;
-                gfxmat->setAlpha(lua_tonumber(L,-1));
-        } else if (lua_isnil(L,-1)) {
-                alpha = false;
+        bool has_alpha;
+        lua_Number alpha;
+        if (t.has("alpha")) {
+                t.get("alpha", has_alpha, true);
+                t.get("alpha", alpha, 1.0);
         } else {
-                my_lua_error(L,"alpha should be boolean or number");
+                has_alpha = false;
+                alpha = 1.0;
         }
-        lua_pop(L,1);
 
-        bool depth_write = true;
-        lua_getfield(L, 2, "depthWrite");
-        if (lua_isboolean(L,-1)) {
-                depth_write = lua_toboolean(L,-1) != 0;
-        } else if (lua_isnil(L,-1)) {
-                depth_write = true;
-        } else {
-                my_lua_error(L,"alpha should be boolean or number");
-        }
-        lua_pop(L,1);
+        bool depth_write;
+        t.get("depthWrite", depth_write, true);
        
-        lua_getfield(L, 2, "stipple");
-        if (lua_isboolean(L,-1)) {
-                gfxmat->setStipple(lua_toboolean(L,-1) != 0);
-        } else if (lua_isnil(L,-1)) {
-                gfxmat->setStipple(!alpha);
-        } else {
-                my_lua_error(L,"alpha should be boolean or number");
-        }
-        lua_pop(L,1);
+        bool stipple;
+        t.get("stipple", stipple, true);
        
-        gfxmat->setBlend(alpha ? depth_write ? GFX_MATERIAL_ALPHA_DEPTH : GFX_MATERIAL_ALPHA : GFX_MATERIAL_OPAQUE);
+        gfxmat->setBlend(has_alpha ? depth_write ? GFX_MATERIAL_ALPHA_DEPTH : GFX_MATERIAL_ALPHA : GFX_MATERIAL_OPAQUE);
 
         gfxmat->regularMat = Ogre::MaterialManager::getSingleton().getByName(name,"GRIT");
         gfxmat->fadingMat = gfxmat->regularMat;
-        std::string ename = name+std::string("^");
-        gfxmat->emissiveMat = Ogre::MaterialManager::getSingleton().getByName(ename,"GRIT");
+        Vector3 emissive_colour;
+        t.get("emissiveColour",emissive_colour,Vector3(0,0,0));
+        if (emissive_colour != Vector3(0,0,0) ) {
+                std::string ename = name+std::string("^");
+                gfxmat->emissiveMat = Ogre::MaterialManager::getSingleton().getByName(ename,"GRIT");
+        } else {
+                gfxmat->emissiveMat.setNull();
+        }
         return 0;
 TRY_END
 }
@@ -1672,7 +1658,7 @@ TRY_START
                 status = lua_pcall(L,0,0,error_handler);
                 pwd_pop();
                 if (status) {
-                        my_lua_error(L, "Failed to include file.");
+                        //my_lua_error(L, "Failed to include file.");
                         lua_pop(L,1); //message
                 }
         }
@@ -1731,6 +1717,112 @@ TRY_START
                 luaL_typerror(L,1,"userdata");
         lua_pushboolean(L,*(void**)ud!=NULL);
         return 1;
+TRY_END
+}
+
+static lua_Number game_time = 0;
+typedef std::map<lua_Number, std::vector<LuaPtr*> > EventMap;
+static EventMap event_map;
+
+static void add_event (lua_State *L, lua_Number countdown)
+{
+        LuaPtr *lp = new LuaPtr();
+        lp->setNoPop(L);
+        event_map[countdown + game_time].push_back(lp);
+}
+
+static int global_future_event (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        lua_Number countdown = luaL_checknumber(L,1);
+        if (!lua_isfunction(L,2)) my_lua_error(L, "Argument 2 must be a function.");
+        add_event(L, countdown);
+        return 0;
+TRY_END
+}
+
+static int global_clear_events (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        for (EventMap::iterator i=event_map.begin(),i_=event_map.end() ; i!=i_ ; ++i) {
+                for (unsigned j=0 ; j<i->second.size() ; ++j) {
+                        i->second[j]->setNil(L);
+                        delete i->second[j];
+                }
+        }
+        event_map.clear();
+        return 0;
+TRY_END
+}
+
+static int global_dump_events (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_newtable(L);
+        int counter = 1;
+        for (EventMap::iterator i=event_map.begin(),i_=event_map.end() ; i!=i_ ; ++i) {
+                for (unsigned j=0 ; j<i->second.size() ; ++j) {
+                        i->second[j]->push(L);
+                        lua_rawseti(L, -2, counter++);
+                        lua_pushnumber(L, i->first);
+                        lua_rawseti(L, -2, counter++);
+                }
+        }
+        return 1;
+TRY_END
+}
+
+static int global_do_events (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        lua_Number elapsed = luaL_checknumber(L,1);
+        
+        lua_pushcfunction(L, my_lua_error_handler);
+        int error_handler = lua_gettop(L);
+
+        game_time += elapsed;
+        do {
+                // stack: eh
+                EventMap::iterator i = event_map.begin();
+                if (i==event_map.end()) break;
+                lua_Number time = i->first;
+                std::vector<LuaPtr*> &events = i->second;
+                if (time > game_time) break;
+                for (unsigned j=0 ; j<events.size() ; ++j) {
+                        // stack: eh
+                        LuaPtr *func = events[j];
+                        func->push(L);
+                        // stack: eh, func
+                        int status = lua_pcall(L, 0, 1, error_handler);
+                        if (status) {
+                                lua_pop(L,1); // error msg
+                        } else {
+                                // stack: eh, r
+                                if (!lua_isnil(L,-1)) {
+                                        if (!lua_isnumber(L,-1)) {
+                                                CERR << "Return type of event must be number or nil." << std::endl;
+                                        } else {
+                                                lua_Number r = lua_tonumber(L,-1);
+                                                func->push(L);
+                                                add_event(L, r);
+                                                lua_pop(L,1);
+                                        }
+                                        // stack: eh, r;
+                                }
+                                lua_pop(L, 1);
+                                // stack: eh
+                        }
+                        func->setNil(L);
+                        delete func;
+                        // stack: eh
+                }
+                event_map.erase(i);
+        } while (true);
+        return 0;
 TRY_END
 }
 
@@ -1906,6 +1998,11 @@ static const luaL_reg global[] = {
         {"initialise_all_resource_groups",global_init_all_resource_groups},
         {"resource_exists",global_resource_exists},
 
+        {"future_event",global_future_event},
+        {"clear_events",global_clear_events},
+        {"dump_events",global_dump_events},
+        {"do_events",global_do_events},
+
         {NULL, NULL}
 };
 
@@ -2029,6 +2126,12 @@ lua_State *init_lua(const char *filename)
 
         return L;
 
+}
+
+void shutdown_lua (lua_State *L)
+{
+        func_map_shutdown(L);
+        lua_close(L);
 }
 
 //}}}
