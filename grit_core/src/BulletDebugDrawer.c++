@@ -49,12 +49,14 @@ BulletDebugDrawer::BulletDebugDrawer (Ogre::SceneManager *sm)
 
     mLines = new Ogre::ManualObject("physics lines");
     APP_ASSERT(mLines);
+    mLines->setRenderQueueGroup(75);
     mLines->setDynamic(true);
     mLines->setCastShadows(false);
     sm->getRootSceneNode()->attachObject(mLines);
 
     mTriangles = new Ogre::ManualObject("physics triangles");
     APP_ASSERT(mTriangles);
+    mTriangles->setRenderQueueGroup(75);
     mTriangles->setDynamic(true);
     mTriangles->setCastShadows(false);
     sm->getRootSceneNode()->attachObject(mTriangles);
