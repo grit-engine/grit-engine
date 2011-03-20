@@ -61,7 +61,7 @@ class LuaPtr {
     }
 
   protected:
-    lua_Number ptr;
+    int ptr;
 };
 
 #endif
