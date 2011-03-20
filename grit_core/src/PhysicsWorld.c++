@@ -792,8 +792,8 @@ class BulletTestCallback : public btCollisionWorld::ContactResultCallback {
      *  (supplied by the superclass) for needsCollision() */
     BulletTestCallback (btCollisionObject& obj_,
                         PhysicsWorld::TestCallback &tcb_,
-                        PhysicsWorld &world_)
-        : obj(obj_), tcb(tcb_), world(world_) { }
+                        PhysicsWorld &world_, bool dyn_only)
+        : obj(obj_), tcb(tcb_), world(world_), dynOnly(dyn_only) { }
     
     virtual btScalar addSingleResult (btManifoldPoint& cp,
         const btCollisionObject* colObj0,int,int index0,
@@ -823,6 +823,8 @@ class BulletTestCallback : public btCollisionWorld::ContactResultCallback {
                                                                           bbody->getMotionState()));
         APP_ASSERT(body!=NULL);
 
+        if (body->getMass()==0 && dynOnly) return 0;
+
         CollisionMeshPtr cmesh = body->colMesh;
 
         const btCollisionShape *shape, *parent;
@@ -843,29 +845,30 @@ class BulletTestCallback : public btCollisionWorld::ContactResultCallback {
     btCollisionObject &obj;
     PhysicsWorld::TestCallback &tcb;
     PhysicsWorld &world;
+    bool dynOnly;
 };
 
 void PhysicsWorld::test (const CollisionMeshPtr &col_mesh,
                          const Vector3 &pos, const Quaternion &quat,
-                         TestCallback &cb_)
+                         bool dyn_only, TestCallback &cb_)
 {
     btCollisionObject encroacher;
     encroacher.setCollisionShape(col_mesh->getMasterShape());
     encroacher.setWorldTransform(btTransform(to_bullet(quat), to_bullet(pos)));
     
-    BulletTestCallback cb(encroacher,cb_,*this);
+    BulletTestCallback cb(encroacher,cb_,*this,dyn_only);
     world->contactTest(&encroacher,cb);
 }
 
 
-void PhysicsWorld::testSphere (float rad, const Vector3 &pos, TestCallback &cb_)
+void PhysicsWorld::testSphere (float rad, const Vector3 &pos, bool dyn_only, TestCallback &cb_)
 {
     btCollisionObject encroacher;
     btSphereShape sphere(rad);
     encroacher.setCollisionShape(&sphere);
     encroacher.setWorldTransform(btTransform(btQuaternion(0,0,0,1), to_bullet(pos)));
     
-    BulletTestCallback cb(encroacher,cb_,*this);
+    BulletTestCallback cb(encroacher,cb_,*this,dyn_only);
     world->contactTest(&encroacher,cb);
 }
 

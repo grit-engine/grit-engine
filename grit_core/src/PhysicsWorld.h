@@ -150,9 +150,9 @@ class PhysicsWorld {
         };
 
         void test (const CollisionMeshPtr &col_mesh,
-                   const Vector3 &pos, const Quaternion &quat, TestCallback &cb);
+                   const Vector3 &pos, const Quaternion &quat, bool dyn_only, TestCallback &cb);
 
-        void testSphere (float rad, const Vector3 &pos, TestCallback &cb);
+        void testSphere (float rad, const Vector3 &pos, bool dyn_only, TestCallback &cb);
 
         float getDeactivationTime (void) const;
         void setDeactivationTime (float);

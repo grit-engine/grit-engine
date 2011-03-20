@@ -929,26 +929,28 @@ TRY_START
         LuaTestCallback lcb;
         push_cfunction(L, my_lua_error_handler);
         int error_handler = lua_gettop(L);
-        if (lua_gettop(L)==5) {
+        if (lua_gettop(L)==6) {
                 GET_UD_MACRO(PhysicsWorldPtr,world,1,PWORLD_TAG);
                 float radius = lua_tonumber(L,2);
                 Vector3 pos = check_v3(L,3);
-                if (lua_type(L,4) != LUA_TFUNCTION)
+                bool only_dyn = check_bool(L,4);
+                if (lua_type(L,5) != LUA_TFUNCTION)
                         my_lua_error(L,"Parameter 4 should be a function.");
 
-                world->testSphere(radius,pos,lcb);
-                lcb.pushResults(L, world, 4, error_handler);
+                world->testSphere(radius,pos,only_dyn,lcb);
+                lcb.pushResults(L, world, 5, error_handler);
         } else {
-                check_args(L,6);
+                check_args(L,7);
                 GET_UD_MACRO(PhysicsWorldPtr,world,1,PWORLD_TAG);
                 GET_UD_MACRO(CollisionMeshPtr,col_mesh,2,COLMESH_TAG);
                 Vector3 pos = check_v3(L,3);
                 Quaternion quat = check_quat(L,4);
-                if (lua_type(L,5) != LUA_TFUNCTION)
+                bool only_dyn = check_bool(L,5);
+                if (lua_type(L,6) != LUA_TFUNCTION)
                         my_lua_error(L,"Parameter 5 should be a function.");
 
-                world->test(col_mesh,pos,quat,lcb);
-                lcb.pushResults(L, world, 5, error_handler);
+                world->test(col_mesh,pos,quat,only_dyn,lcb);
+                lcb.pushResults(L, world, 6, error_handler);
         }
         lua_pop(L,1); // error handler
         return 0;
