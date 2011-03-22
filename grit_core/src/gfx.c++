@@ -1528,12 +1528,22 @@ Vector3 GfxNode::getWorldScale (void)
 
 const std::string GfxBody::className = "GfxBody";
 
-
-void validate_mesh (const Ogre::MeshPtr &mesh)
+static const std::string &apply_map (const GfxStringMap &sm, const std::string &s)
 {
+    GfxStringMap::const_iterator i = sm.find(s);
+    return i==sm.end() ? s : i->second;
+}
+
+static void validate_mesh (const Ogre::MeshPtr &mesh, const GfxStringMap &gsm)
+{
+/*
+    for (GfxStringMap::const_iterator i=gsm.begin(),i_=gsm.end() ; i!=i_ ; ++i) {
+        CVERB << i->first << " " << i->second << std::endl;
+    }
+*/
     for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
         Ogre::SubMesh *sm = mesh->getSubMesh(i);
-        std::string matname = sm->getMaterialName();
+        std::string matname = apply_map(gsm, sm->getMaterialName());
         if (!gfx_material_has(matname)) {
             CERR << "Mesh \"/"<<mesh->getName()<<"\" references non-existing material "
                  << "\""<<matname<<"\""<<std::endl;
@@ -1543,15 +1553,14 @@ void validate_mesh (const Ogre::MeshPtr &mesh)
     }
 }
 
-GfxBody::GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_)
-  : GfxNode(par_)
+GfxBody::GfxBody (const std::string &mesh_name, const GfxStringMap &sm, const GfxBodyPtr &par_)
+  : GfxNode(par_), initialMaterialMap(sm)
 {
     memset(colours, 0, sizeof(colours));
     std::string ogre_name = mesh_name.substr(1);
 
     mesh = Ogre::MeshManager::getSingleton().load(ogre_name,RESGRP);
     // validate mesh in case it was just loaded for the first time
-    validate_mesh(mesh);
 
     ent = NULL;
     entEmissive = NULL;
@@ -1567,10 +1576,11 @@ GfxBody::GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_)
 void GfxBody::updateMaterials (void)
 {
     if (mesh.isNull()) return;
+    validate_mesh(mesh, initialMaterialMap);
     materials = std::vector<GfxMaterial*>(mesh->getNumSubMeshes());
     for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
         Ogre::SubMesh *sm = mesh->getSubMesh(i);
-        std::string matname = sm->getMaterialName();
+        std::string matname = apply_map(initialMaterialMap, sm->getMaterialName());
         materials[i] = gfx_material_get(matname);
     }
     unsigned old_size = emissiveEnabled.size();
@@ -1578,6 +1588,18 @@ void GfxBody::updateMaterials (void)
     for (unsigned i=old_size ; i<emissiveEnabled.size() ; ++i) {
         emissiveEnabled[i] = true;
     }
+}
+
+unsigned GfxBody::getSubMeshByOriginalMaterialName (const std::string &n)
+{
+    for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
+        Ogre::SubMesh *sm = mesh->getSubMesh(i);
+        if (sm->getMaterialName() == n) {
+            return i;
+        }
+    }
+    CERR << "Mesh did not contain material \""<<n<<"\"" <<std::endl;
+    return 0;
 }
 
 void GfxBody::updateBones (void)
@@ -1757,9 +1779,16 @@ GfxMaterial *GfxBody::getMaterial (unsigned i)
     return materials[i];
 }
 
+const std::string &GfxBody::getOriginalMaterialName (unsigned i)
+{
+    if (i >= materials.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    return mesh->getSubMesh(i)->getMaterialName();
+}
+
 void GfxBody::setMaterial (unsigned i, GfxMaterial *m)
 {
     if (i >= materials.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    if (materials[i] == m) return;
     materials[i] = m;
     updateProperties();
 }
@@ -2302,7 +2331,7 @@ GfxLight::GfxLight (const GfxBodyPtr &par_)
     corona.setDefaultUV();
     corona.setAlpha(1);
     corona.setAngle(0);
-    updateCorona();
+    updateCorona(Vector3(0,0,0));
 }
 
 GfxLight::~GfxLight (void)
@@ -2325,15 +2354,27 @@ void GfxLight::updateIndex (size_t v)
     allLightsIndex = v;
 }
 
-void GfxLight::updateCorona (void)
+void GfxLight::updateCorona (const Vector3 &cam_pos)
 {
     if (dead) THROW_DEAD(className);
     coronaPos = transformPositionParent(coronaLocalPos);
     corona.setPosition(coronaPos);
-    corona.setAmbient(enabled ? fade * coronaColour : Vector3(0,0,0));
+    Vector3 col = enabled ? fade * coronaColour : Vector3(0,0,0);
     corona.setWidth(coronaSize);
     corona.setHeight(coronaSize);
     corona.setDepth(coronaSize);
+
+    Vector3 light_dir_ws = (cam_pos - getWorldPosition()).normalisedCopy();
+    Vector3 light_aim_ws_ = getWorldOrientation() * Vector3(0,1,0);
+
+    float angle = light_aim_ws_.dot(light_dir_ws);
+    float inner = Ogre::Math::Cos(light->getSpotlightInnerAngle());
+    float outer = Ogre::Math::Cos(light->getSpotlightOuterAngle());
+    if (outer != inner) {
+            float occlusion = std::min(std::max((angle-inner)/(outer-inner), 0.0f), 1.0f);
+            col *= (1-occlusion);
+    }
+    corona.setAmbient(col);
 }
 
 float GfxLight::getCoronaSize (void)
@@ -2395,19 +2436,6 @@ void GfxLight::setSpecularColour (const Vector3 &v)
     if (dead) THROW_DEAD(className);
     specular = v;
     updateVisibility();
-}
-
-Quaternion GfxLight::getAim (void)
-{
-    if (dead) THROW_DEAD(className);
-    return aim;
-}
-
-void GfxLight::setAim (const Quaternion &v)
-{
-    if (dead) THROW_DEAD(className);
-    aim = v;
-    light->setDirection(to_ogre(v * Vector3(0,1,0)));
 }
 
 float GfxLight::getRange (void)
@@ -2659,11 +2687,11 @@ static void position_camera (bool left, const Vector3 &cam_pos, const Quaternion
     cam->setOrientation(to_ogre(cam_dir*Quaternion(Degree(90),Vector3(1,0,0))));
 }
 
-static void update_coronas (void)
+static void update_coronas (const Vector3 &cam_pos)
 {
     //const Ogre::LightList &ll = sm->_getLightsAffectingFrustum();
     for (unsigned long i=0 ; i<all_lights.size() ; ++i) {
-        all_lights[i]->updateCorona();
+        all_lights[i]->updateCorona(cam_pos);
     }
     
 }
@@ -2673,7 +2701,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
     try {
         Ogre::WindowEventUtilities::messagePump();
 
-        update_coronas();
+        update_coronas(cam_pos);
 
         handle_dirty_materials();
 
@@ -2728,7 +2756,6 @@ void gfx_reload_mesh (const std::string &name)
     if (ptr.isNull()) GRIT_EXCEPT("Could not find mesh \""+name+"\"");
     // old skeleton may become unlinked now, may be important for resource management in future
     ptr->reload();
-    validate_mesh(ptr);
     if (ptr->hasSkeleton()) ptr->getSkeleton()->reload();
     for (unsigned long i=0 ; i<all_bodies.size() ; ++i) {
         GfxBody *b = all_bodies[i];

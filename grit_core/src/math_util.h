@@ -171,7 +171,7 @@ struct Vector3 {
     friend bool operator == (const Vector3 &a, const Vector3& b)
     { return a.x==b.x && a.y==b.y && a.z==b.z; }
     friend bool operator != (const Vector3 &a, const Vector3& b)
-    { return a.x!=b.x && a.y!=b.y && a.z!=b.z; }
+    { return ! (a==b); }
     friend bool operator < (const Vector3 &a, const Vector3& b)
     { return a.x<b.x && a.y<b.y && a.z<b.z; }
     friend bool operator > (const Vector3 &a, const Vector3& b)

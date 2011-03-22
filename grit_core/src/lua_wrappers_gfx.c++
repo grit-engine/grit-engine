@@ -56,8 +56,9 @@ static int gfxbody_get_emissive_enabled (lua_State *L)
 TRY_START
     check_args(L,2);
     GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    unsigned n = check_t<unsigned>(L,2);
-    lua_pushboolean(L, self->getEmissiveEnabled(n));
+    const std::string &n = luaL_checkstring(L,2);
+    unsigned n2 = self->getSubMeshByOriginalMaterialName(n);
+    lua_pushboolean(L, self->getEmissiveEnabled(n2));
     return 1;
 TRY_END
 }
@@ -67,9 +68,10 @@ static int gfxbody_set_emissive_enabled (lua_State *L)
 TRY_START
     check_args(L,3);
     GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    unsigned n = check_t<unsigned>(L,2);
+    const std::string &n = luaL_checkstring(L,2);
+    unsigned n2 = self->getSubMeshByOriginalMaterialName(n);
     bool v = check_bool(L,3);
-    self->setEmissiveEnabled(n,v);
+    self->setEmissiveEnabled(n2,v);
     return 0;
 TRY_END
 }
@@ -79,8 +81,9 @@ static int gfxbody_get_material (lua_State *L)
 TRY_START
     check_args(L,2);
     GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    unsigned n = check_t<unsigned>(L,2);
-    GfxMaterial *m = self->getMaterial(n);
+    const std::string &n = luaL_checkstring(L,2);
+    unsigned n2 = self->getSubMeshByOriginalMaterialName(n);
+    GfxMaterial *m = self->getMaterial(n2);
     lua_pushstring(L, m->name.c_str());
     return 1;
 TRY_END
@@ -91,10 +94,11 @@ static int gfxbody_set_material (lua_State *L)
 TRY_START
     check_args(L,3);
     GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    unsigned n = check_t<unsigned>(L,2);
+    const std::string &n = luaL_checkstring(L,2);
+    unsigned n2 = self->getSubMeshByOriginalMaterialName(n);
     const char *mname = luaL_checkstring(L,3);
     GfxMaterial *m = gfx_material_get(mname);
-    self->setMaterial(n,m);
+    self->setMaterial(n2,m);
     return 0;
 TRY_END
 }
@@ -311,7 +315,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
         const char *meshname = luaL_checkstring(L,2);
-        push_gfxbody(L, GfxBody::make(meshname, self));
+        push_gfxbody(L, GfxBody::make(meshname, gfx_empty_string_map, self));
     }
     return 1;
 TRY_END
@@ -545,8 +549,6 @@ TRY_START
         push_v3(L, self->getCoronaLocalPosition());
     } else if (!::strcmp(key,"coronaColour")) {
         push_v3(L, self->getCoronaColour());
-    } else if (!::strcmp(key,"aim")) {
-        push_quat(L, self->getAim());
     } else if (!::strcmp(key,"range")) {
         lua_pushnumber(L, self->getRange());
     } else if (!::strcmp(key,"fade")) {
@@ -606,9 +608,6 @@ TRY_START
     } else if (!::strcmp(key,"coronaColour")) {
         Vector3 v = check_v3(L,3);
         self->setCoronaColour(v);
-    } else if (!::strcmp(key,"aim")) {
-        Quaternion v = check_quat(L,3);
-        self->setAim(v);
     } else if (!::strcmp(key,"fade")) {
         float v = check_float(L,3);
         self->setFade(v);
@@ -710,10 +709,32 @@ int global_gfx_body_make (lua_State *L)
 TRY_START
     if (lua_gettop(L)==0) {
         push_gfxbody(L, GfxBody::make());
-    } else {
-        check_args(L,1);
+    } else if (lua_gettop(L)==1) {
+        push_gfxbody(L, GfxBody::make());
         const char *meshname = luaL_checkstring(L,1);
         push_gfxbody(L, GfxBody::make(meshname));
+    } else {
+        check_args(L,2);
+        const char *meshname = luaL_checkstring(L,1);
+        if (lua_isnil(L,2)) {
+            push_gfxbody(L, GfxBody::make(meshname));
+        } else {
+            if (lua_type(L,2)!=LUA_TTABLE) {
+                my_lua_error(L, "Second parameter should be a table (string map)");
+            }
+            GfxStringMap sm;
+            for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
+                // stack: sm, key, val
+                if (lua_type(L,-2)!=LUA_TSTRING) {
+                    my_lua_error(L, "Table keys must be strings");
+                }
+                if (lua_type(L,-1)!=LUA_TSTRING) {
+                    my_lua_error(L, "Table values must be strings");
+                }
+                sm[lua_tostring(L,-2)] = lua_tostring(L,-1);
+            }
+            push_gfxbody(L, GfxBody::make(meshname, sm));
+        }
     }
     return 1;
 TRY_END
@@ -862,6 +883,8 @@ TRY_START
 TRY_END
 }
 
+
+// {{{ Particles
 
 template<class T> void vect_remove_fast (std::vector<T> &vect, size_t index)
 {
@@ -1312,6 +1335,9 @@ TRY_START
     return 0;
 TRY_END
 }
+
+// }}}
+
 
 int global_gfx_reload_mesh (lua_State *L)
 {

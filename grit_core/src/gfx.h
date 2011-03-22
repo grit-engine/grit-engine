@@ -258,6 +258,9 @@ class GfxNode {
     friend class GfxBody; // otherwise it cannot access our protected stuff
 };
 
+typedef std::map<std::string, std::string> GfxStringMap;
+const GfxStringMap gfx_empty_string_map;
+
 class GfxBody : public GfxNode {
     protected:
     static const std::string className;
@@ -273,20 +276,25 @@ class GfxBody : public GfxNode {
     unsigned long allBodiesIndex;
     bool enabled;
     std::vector<bool> manualBones;
+    GfxStringMap initialMaterialMap;
 
-    GfxBody (const std::string &mesh_name, const GfxBodyPtr &par_);
+    GfxBody (const std::string &mesh_name, const GfxStringMap &sm, const GfxBodyPtr &par_);
     GfxBody (const GfxBodyPtr &par_);
     ~GfxBody ();
 
 
     public:
-    static GfxBodyPtr make (const std::string &mesh_name, const GfxBodyPtr &par_=GfxBodyPtr(NULL))
-    { return GfxBodyPtr(new GfxBody(mesh_name, par_)); }
+    static GfxBodyPtr make (const std::string &mesh_name,
+                            const GfxStringMap &sm=gfx_empty_string_map,
+                            const GfxBodyPtr &par_=GfxBodyPtr(NULL))
+    { return GfxBodyPtr(new GfxBody(mesh_name, sm, par_)); }
 
     static GfxBodyPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
     { return GfxBodyPtr(new GfxBody(par_)); }
     
     GfxMaterial *getMaterial (unsigned i);
+    const std::string &getOriginalMaterialName (unsigned i);
+    unsigned getSubMeshByOriginalMaterialName (const std::string &n);
     void setMaterial (unsigned i, GfxMaterial *m);
     bool getEmissiveEnabled (unsigned i);
     void setEmissiveEnabled (unsigned i, bool v);
@@ -384,8 +392,6 @@ class GfxLight : public GfxNode {
     Vector3 getSpecularColour (void);
     void setDiffuseColour (const Vector3 &v);
     void setSpecularColour (const Vector3 &v);
-    Quaternion getAim (void);
-    void setAim (const Quaternion &v);
     float getRange (void);
     void setRange (float v);
     Degree getInnerAngle (void);
@@ -399,7 +405,7 @@ class GfxLight : public GfxNode {
     float getFade (void);
     void setFade (float f);
 
-    void updateCorona (void);
+    void updateCorona (const Vector3 &cam_pos);
 
     Vector3 getCoronaLocalPosition (void);
     void setCoronaLocalPosition (const Vector3 &v);

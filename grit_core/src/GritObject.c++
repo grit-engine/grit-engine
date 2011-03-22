@@ -183,10 +183,9 @@ void GritObject::notifyFade (lua_State *L,
         // we now have the callback to play with
 
         push_gritobj(L,self); // persistent grit obj
-        pushLuaTable(L); // the instance
-        lua_pushnumber(L,fade);
-        //stack: err,class,callback,object
-        int status = lua_pcall(L,3,0,error_handler);
+        lua_pushnumber(L,fade); // fade
+        //stack: err,class,callback,persistent, fade
+        int status = lua_pcall(L,2,0,error_handler);
         if (status) {
                 //stack: err,class,msg
                 // pop the error message since the error handler will
@@ -246,17 +245,19 @@ void GritObject::activate (lua_State *L,
 
         // push 4 args
         lua_checkstack(L,5);
+        //stack: err,class,callback
         push_gritobj(L,self); // persistent
+        //stack: err,class,callback,persistent
         lua_newtable(L); // instance
+        //stack: err,class,callback,persistent,instance
         lua_pushvalue(L,-1);
+        //stack: err,class,callback,persistent,instance,instance
         lua = luaL_ref(L,LUA_REGISTRYINDEX); // set up the lua ref to the new instance while we're at it
+        //stack: err,class,callback,persistent,instance
         STACK_CHECK_N(5);
-        push_gritcls(L,gritClass); // the class (again)
-        //stack: err,class,callback,persistent,class,gfx,physics
-        STACK_CHECK_N(6);
 
-        // call (5 args), pops function too
-        int status = lua_pcall(L,3,0,error_handler);
+        // call (2 args), pops function too
+        int status = lua_pcall(L,2,0,error_handler);
         if (status) {
                 STACK_CHECK_N(3);
                 //stack: err,class,error
@@ -377,9 +378,8 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
         // we now have the callback to play with
 
         push_gritobj(L,self); // persistent grit obj
-        pushLuaTable(L); // the instance
-        //stack: err,class,callback,object
-        int status = lua_pcall(L,2,1,error_handler);
+        //stack: err,class,callback
+        int status = lua_pcall(L,1,1,error_handler);
         if (status) {
                 //stack: err,class,msg
                 // pop the error message since the error handler will
@@ -438,9 +438,8 @@ void GritObject::init (lua_State *L, const GritObjectPtr &self)
 
         lua_checkstack(L,2);
         push_gritobj(L,self); // persistent grit obj
-        push_gritcls(L,gritClass); // class (again)
-        //stack: err,class,callback,instance,class
-        int status = lua_pcall(L,2,0,error_handler);
+        //stack: err,class,callback,persistent
+        int status = lua_pcall(L,1,0,error_handler);
         if (status) {
                 //stack: err,class,msg
                 // pop the error message since the error handler will
@@ -488,10 +487,9 @@ bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, float e
 
         lua_checkstack(L,2);
         push_gritobj(L,self); // persistent grit obj
-        pushLuaTable(L); // the instance
         lua_pushnumber(L, elapsed); // time since last frame
-        //stack: err,class,callback,instance,class
-        int status = lua_pcall(L,3,0,error_handler);
+        //stack: err,class,callback,instance,elapsed
+        int status = lua_pcall(L,2,0,error_handler);
         if (status) {
                 //stack: err,class,msg
                 // pop the error message since the error handler will
