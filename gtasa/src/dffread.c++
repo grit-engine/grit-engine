@@ -1329,19 +1329,19 @@ export_or_provide_mat (const StringSet &texs,
         if ((m.colour|0xff000000)==0xff00ff3c && obj.is_car) {
             // colour 1
             m.colour=0xFFFFFFFF;
-            lua_file<<"coloured=1, ";
+            lua_file<<"paintColour=1, ";
         } else if ((m.colour|0xff000000)==0xffaf00ff && obj.is_car) {
             // colour 2
             m.colour=0xFFFFFFFF;
-            lua_file<<"coloured=2, ";
+            lua_file<<"paintColour=2, ";
         } else if ((m.colour|0xff000000)==0xffffff00 && obj.is_car) {
             // colour 3
             m.colour=0xFFFFFFFF;
-            lua_file<<"coloured=3, ";
+            lua_file<<"paintColour=3, ";
         } else if ((m.colour|0xff000000)==0xffff00ff && obj.is_car) {
             // colour 4
             m.colour=0xFFFFFFFF;
-            lua_file<<"coloured=4, ";
+            lua_file<<"paintColour=4, ";
         } else if ((m.colour|0xff000000)==0xff00afff && obj.is_car) {
             // left headlight
             m.colour=0xFFFFFFFF;
