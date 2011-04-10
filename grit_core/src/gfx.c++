@@ -33,7 +33,6 @@
 #ifdef NO_PLUGINS
 #  include "OgreOctreePlugin.h"
 #  include "OgreGLPlugin.h"
-//#  include "OgreParticleFXPlugin.h"
 #  include "OgreCgPlugin.h"
 #  ifdef WIN32
 #    include "OgreD3D9Plugin.h"
@@ -47,7 +46,7 @@
 #include "math_util.h"
 
 
-bool use_hwgamma = getenv("GRIT_NOHWGAMMA")==NULL;
+bool use_hwgamma = false; //getenv("GRIT_NOHWGAMMA")==NULL;
 
 #define ANAGLYPH_COMPOSITOR "system/AnaglyphCompositor"
 #define ANAGLYPH_FB_TEXTURE "system/AnaglyphFB"
@@ -186,6 +185,8 @@ public:
     virtual void notifyMaterialRender (Ogre::uint32 pass_id, Ogre::MaterialPtr &mat)
     {
         if (pass_id != AMBIENT_SUN_PASS_ID) return;
+
+        //CVERB << "Setting ambient sun params for material " << mat->getName() << std::endl;
 
         // set params on material
         Ogre::Pass *p = mat->getTechnique(0)->getPass(0);
@@ -666,7 +667,19 @@ static void add_deferred_compositor (bool left)
     APP_ASSERT(def_comp!=NULL);
     def_comp->setEnabled(true);
     def_comp->addListener(left ? &left_dasl : &right_dasl);
-    def_comp->getTechnique()->getOutputTargetPass()->getPass(0)->setIdentifier(AMBIENT_SUN_PASS_ID);
+    Ogre::CompositionTechnique *t = def_comp->getTechnique();
+    size_t np = t->getNumTargetPasses();
+    Ogre::CompositionTargetPass *tp = np<=1 ? t->getOutputTargetPass() : t->getTargetPass(1);
+    for (unsigned i=0 ; i<tp->getNumPasses() ; ++i) {
+        Ogre::CompositionPass *pass = tp->getPass(i);
+        // clear passes don't hvae a material?
+        if (!pass->getMaterial().isNull()) {
+            if (pass->getMaterial()->getName() == DEFERRED_AMBIENT_SUN_MATERIAL) {
+                pass->setIdentifier(AMBIENT_SUN_PASS_ID);
+                break;
+            }
+        }
+    }
 }
 
 static void do_reset_compositors (void)
@@ -2075,6 +2088,48 @@ void GfxBody::setEnabled (bool v)
 
 // {{{ PARTICLES
 
+static void reset_particle_material (const Ogre::MaterialPtr &mat, std::string texname,
+                                     GfxParticleBlend blend, float alphaRej, bool emissive)
+{
+    mat->removeAllTechniques();
+    Ogre::Pass *pass = mat->createTechnique()->createPass();
+    {
+        Ogre::TextureUnitState *tus = pass->createTextureUnitState();
+        tus->setTextureFiltering(Ogre::FO_POINT, Ogre::FO_POINT, Ogre::FO_NONE);
+        tus->setContentType(Ogre::TextureUnitState::CONTENT_COMPOSITOR);
+        tus->setCompositorReference(DEFERRED_COMPOSITOR,"fat_fb",0);
+    }
+    {
+        Ogre::TextureUnitState *tus = pass->createTextureUnitState();
+        tus->setTextureName(texname);
+        tus->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
+    }
+    std::string gpuprog_name;
+    switch (blend) {
+        case GFX_PARTICLE_OPAQUE:
+        pass->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
+        pass->setDepthWriteEnabled(true);
+        gpuprog_name = "O";
+        break;
+        case GFX_PARTICLE_ALPHA:
+        pass->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+        pass->setDepthWriteEnabled(false);
+        gpuprog_name = "A";
+        break;
+        case GFX_PARTICLE_ADD:
+        pass->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
+        pass->setDepthWriteEnabled(false);
+        gpuprog_name = "L";
+        break;
+    }
+    gpuprog_name += "_";
+    gpuprog_name += emissive ? "E" : "e";
+    pass->setAlphaRejectFunction(Ogre::CMPF_GREATER_EQUAL);
+    pass->setAlphaRejectValue(alphaRej);
+    pass->setFragmentProgram("particle_f:"+gpuprog_name);
+    pass->setVertexProgram("particle_v:"+gpuprog_name);
+}
+
 // a particle system holds the buffer for particles of a particular material
 class GfxParticleSystem {
     Ogre::BillboardSet *bbset;
@@ -2089,49 +2144,13 @@ class GfxParticleSystem {
         bbset->setUseAccurateFacing(true);
 
         std::string mname = "P:"+pname;
+        texname = texname.substr(1);
+        Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().load(texname, RESGRP);
+        texHeight = tex->getHeight();
+        texWidth = tex->getWidth();
         Ogre::MaterialPtr mat =
             Ogre::MaterialManager::getSingleton().createOrRetrieve(mname, RESGRP).first;
-        mat->removeAllTechniques();
-        Ogre::Pass *pass = mat->createTechnique()->createPass();
-        {
-            Ogre::TextureUnitState *tus = pass->createTextureUnitState();
-            tus->setTextureFiltering(Ogre::FO_POINT, Ogre::FO_POINT, Ogre::FO_NONE);
-            tus->setContentType(Ogre::TextureUnitState::CONTENT_COMPOSITOR);
-            tus->setCompositorReference(DEFERRED_COMPOSITOR,"fat_fb",0);
-        }
-        {
-            Ogre::TextureUnitState *tus = pass->createTextureUnitState();
-            texname = texname.substr(1);
-            Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().load(texname, RESGRP);
-            texHeight = tex->getHeight();
-            texWidth = tex->getWidth();
-            tus->setTextureName(texname);
-            tus->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
-        }
-        std::string gpuprog_name;
-        switch (blend) {
-            case GFX_PARTICLE_OPAQUE:
-            pass->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
-            pass->setDepthWriteEnabled(true);
-            gpuprog_name = "O";
-            break;
-            case GFX_PARTICLE_ALPHA:
-            pass->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
-            pass->setDepthWriteEnabled(false);
-            gpuprog_name = "A";
-            break;
-            case GFX_PARTICLE_ADD:
-            pass->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
-            pass->setDepthWriteEnabled(false);
-            gpuprog_name = "L";
-            break;
-        }
-        gpuprog_name += "_";
-        gpuprog_name += emissive ? "E" : "e";
-        pass->setAlphaRejectFunction(Ogre::CMPF_GREATER_EQUAL);
-        pass->setAlphaRejectValue(alphaRej);
-        pass->setFragmentProgram("particle_f:"+gpuprog_name);
-        pass->setVertexProgram("particle_v:"+gpuprog_name);
+        reset_particle_material(mat, texname, blend, alphaRej, emissive);
         bbset->setMaterialName(mname);
 
         bbset->setBillboardRotationType(Ogre::BBR_VERTEX);
@@ -2855,9 +2874,6 @@ size_t gfx_init (GfxCallback &cb_)
             octree = OGRE_NEW Ogre::OctreePlugin();
             ogre_root->installPlugin(octree);
 
-            //pfx = OGRE_NEW Ogre::ParticleFXPlugin();
-            //ogre_root->installPlugin(pfx);
-
             cg = OGRE_NEW Ogre::CgPlugin();
             ogre_root->installPlugin(cg);
 
@@ -2978,7 +2994,6 @@ void gfx_shutdown (void)
         #ifdef NO_PLUGINS
             OGRE_DELETE gl;
             OGRE_DELETE octree;
-            //OGRE_DELETE pfx;
             OGRE_DELETE cg;
             #ifdef WIN32
                 OGRE_DELETE d3d9;
