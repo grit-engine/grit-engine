@@ -944,7 +944,7 @@ TRY_START
                 for (size_t i=0 ; i<self.getNumSubEntities() ; ++i) {
                         Ogre::SubEntity *se = self.getSubEntity(i);
                         // Undefined behaviour here
-                        Ogre::Vector4 cp = static_cast<Hack*>(se)->hasCustomParameter(varindex) ? se->getCustomParameter(varindex) : Ogre::Vector4(0,0,0,0);
+                        Ogre::Vector4 cp = static_cast<Hack*>(se)->hasCustomParameter(varindex) ? *(Ogre::Vector4*)se->getCustomParameterPtr(varindex) : Ogre::Vector4(0,0,0,0);
                         switch (elindex) {
                                 case 0: cp.x = v; break;
                                 case 1: cp.y = v; break;
@@ -979,7 +979,7 @@ TRY_START
         unsigned n = check_t<unsigned>(L,2);
         unsigned varindex = check_t<unsigned>(L,3);
         Ogre::SubEntity *se = self.getSubEntity(n);
-        const Ogre::Vector4 &cp = se->getCustomParameter(varindex);
+        const Ogre::Vector4 &cp = *(Ogre::Vector4*)se->getCustomParameterPtr(varindex);
         lua_pushnumber(L,cp[0]);
         lua_pushnumber(L,cp[1]);
         lua_pushnumber(L,cp[2]);
