@@ -1,3 +1,5 @@
+# (c) David Cunningham 2011, Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
+
 COMPILER=c:/mingw/bin/g++ -W -Wall -ansi
 
 THREADED=semithreaded

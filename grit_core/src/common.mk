@@ -1,3 +1,5 @@
+# (c) David Cunningham 2011, Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
+
 COMPILING=echo "Compiling: [32m$<[0m"
 LINKING=echo "Linking: [1;32m$@[0m"
 
