@@ -42,8 +42,8 @@
 #include "gfx.h"
 #include "HUD.h"
 #include "Clutter.h"
-#include "path_util.h"
-#include "math_util.h"
+#include "../path_util.h"
+#include "../math_util.h"
 
 
 bool use_hwgamma = false; //getenv("GRIT_NOHWGAMMA")==NULL;
@@ -233,6 +233,10 @@ typedef Ogre::CompositorInstance CI;
 typedef Ogre::CompositionPass CP;
 
 // {{{ Multiple small lights
+
+#ifdef WIN32
+typedef unsigned short uint16_t;
+#endif
 
 class MultiDeferredLight : public Ogre::Renderable
 {

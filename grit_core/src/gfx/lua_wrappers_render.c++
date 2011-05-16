@@ -25,7 +25,7 @@
 #include <OgreRenderTexture.h>
 #include <OgreCompositorManager.h>
 
-#include "main.h"
+#include "../main.h"
 #include "gfx.h"
 
 #include "lua_wrappers_render.h"

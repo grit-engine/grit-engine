@@ -192,7 +192,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\src\BackgroundMeshLoader.c++"
+				RelativePath=".\src\BackgroundLoader.c++"
 				>
 			</File>
 			<File
@@ -200,11 +200,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\Clutter.c++"
+				RelativePath=".\src\CentralisedLog.c++"
 				>
 			</File>
 			<File
-				RelativePath=".\src\CollisionMesh.c++"
+				RelativePath=".\src\gfx\Clutter.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\physics\CollisionMesh.c++"
 				>
 			</File>
 			<File
@@ -212,7 +216,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\gfx.c++"
+				RelativePath=".\src\gfx\gfx.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\gfx\GfxDiskResource.c++"
 				>
 			</File>
 			<File
@@ -220,7 +228,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\HUD.c++"
+				RelativePath=".\src\gfx\HUD.c++"
 				>
 			</File>
 			<File
@@ -244,11 +252,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\lua_wrappers_gfx.c++"
+				RelativePath=".\src\gfx\lua_wrappers_gfx.c++"
 				>
 			</File>
 			<File
-				RelativePath=".\src\lua_wrappers_gpuprog.c++"
+				RelativePath=".\src\gfx\lua_wrappers_gpuprog.c++"
 				>
 			</File>
 			<File
@@ -256,23 +264,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\lua_wrappers_hud.c++"
+				RelativePath=".\src\gfx\lua_wrappers_hud.c++"
 				>
 			</File>
 			<File
-				RelativePath=".\src\lua_wrappers_material.c++"
+				RelativePath=".\src\gfx\lua_wrappers_material.c++"
 				>
 			</File>
 			<File
-				RelativePath=".\src\lua_wrappers_mesh.c++"
+				RelativePath=".\src\gfx\lua_wrappers_mesh.c++"
 				>
 			</File>
 			<File
-				RelativePath=".\src\lua_wrappers_mobj.c++"
+				RelativePath=".\src\gfx\lua_wrappers_mobj.c++"
 				>
 			</File>
 			<File
-				RelativePath=".\src\lua_wrappers_physics.c++"
+				RelativePath=".\src\physics\lua_wrappers_physics.c++"
 				>
 			</File>
 			<File
@@ -280,15 +288,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\lua_wrappers_render.c++"
+				RelativePath=".\src\gfx\lua_wrappers_render.c++"
 				>
 			</File>
 			<File
-				RelativePath=".\src\lua_wrappers_scnmgr.c++"
+				RelativePath=".\src\gfx\lua_wrappers_scnmgr.c++"
 				>
 			</File>
 			<File
-				RelativePath=".\src\lua_wrappers_tex.c++"
+				RelativePath=".\src\gfx\lua_wrappers_tex.c++"
 				>
 			</File>
 			<File
@@ -304,11 +312,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\PhysicsWorld.c++"
+				RelativePath=".\src\physics\PhysicsWorld.c++"
 				>
 			</File>
 			<File
-				RelativePath=".\src\ray.c++"
+				RelativePath=".\src\gfx\ray.c++"
 				>
 			</File>
 			<File
@@ -316,19 +324,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\TColLexer-core-engine.cpp"
+				RelativePath=".\src\physics\TColLexer-core-engine.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\TColLexer.cpp"
+				RelativePath=".\src\physics\TColLexer.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\TColParser.c++"
+				RelativePath=".\src\physics\TColParser.c++"
 				>
 			</File>
 			<File
-				RelativePath=".\src\TextListOverlayElement.c++"
+				RelativePath=".\src\gfx\TextListOverlayElement.c++"
 				>
 			</File>
 			<File

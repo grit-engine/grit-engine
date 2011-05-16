@@ -26,7 +26,7 @@
 
 #include "gfx.h"
 #include "lua_wrappers_gfx.h"
-#include "lua_wrappers_primitives.h"
+#include "../lua_wrappers_primitives.h"
 #include "lua_wrappers_scnmgr.h"
 #include "lua_wrappers_mobj.h"
 

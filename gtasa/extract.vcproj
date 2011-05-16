@@ -235,15 +235,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\grit_core\src\TColLexer-core-engine.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\grit_core\src\TColLexer.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\grit_core\src\TColParser.c++"
+				RelativePath="..\grit_core\src\physics\TColParser.c++"
 				>
 			</File>
 			<File

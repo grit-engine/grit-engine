@@ -44,10 +44,10 @@ extern "C" {
 #include "TColParser.h"
 #include "CollisionMesh.h"
 
-#include "GritObject.h"
-#include "math_util.h"
+#include "../GritObject.h"
+#include "../math_util.h"
 
-#include "LuaPtr.h"
+#include "../LuaPtr.h"
 
 class DynamicsWorld;
 

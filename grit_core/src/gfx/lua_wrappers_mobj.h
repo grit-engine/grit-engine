@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-#include "lua_wrappers_common.h"
+#include "../lua_wrappers_common.h"
 
 #include <OgreLight.h>
 

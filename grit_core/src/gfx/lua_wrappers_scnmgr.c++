@@ -28,11 +28,11 @@
 #include <OgreShadowCameraSetupLiSPSM.h>
 #include <OgreShadowCameraSetupPSSM.h>
 
-#include "main.h"
+#include "../main.h"
 #include "gfx.h"
 #include "lua_wrappers_scnmgr.h"
 #include "lua_wrappers_mobj.h"
-#include "lua_wrappers_primitives.h"
+#include "../lua_wrappers_primitives.h"
 #include "lua_wrappers_material.h"
 #include "lua_wrappers_tex.h"
 

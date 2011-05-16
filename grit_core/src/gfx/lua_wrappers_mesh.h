@@ -21,7 +21,7 @@
 
 #include <OgreMesh.h>
 
-#include "lua_wrappers_common.h"
+#include "../lua_wrappers_common.h"
 
 
 #define MESH_TAG "Grit/Mesh"

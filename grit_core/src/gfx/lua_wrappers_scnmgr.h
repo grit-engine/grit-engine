@@ -21,7 +21,7 @@
 
 #include <OgrePixelFormat.h>
 
-#include "lua_wrappers_common.h"
+#include "../lua_wrappers_common.h"
 
 #define SCNMGR_TAG "Grit/SceneManager"
 MT_MACRO_DECLARE(scnmgr);

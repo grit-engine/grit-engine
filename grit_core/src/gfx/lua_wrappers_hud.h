@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-#include "lua_wrappers_common.h"
+#include "../lua_wrappers_common.h"
 
 #define PANE_TAG "Grit/HUD/Pane"
 MT_MACRO_DECLARE(pane);

@@ -27,7 +27,7 @@
  * set material of a body
  */
 
-#include "SharedPtr.h"
+#include "../SharedPtr.h"
 
 // Only things that are referenced from Lua AND can be destroyed (before shutdown) get a SharedPtr
 struct GfxCallback;

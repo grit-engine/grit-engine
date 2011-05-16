@@ -24,7 +24,7 @@
 #include <OgreFontManager.h>
 
 #include "HUD.h"
-#include "CentralisedLog.h"
+#include "../CentralisedLog.h"
 
 #define GET_CHAR(i) OGRE_DEREF_DISPLAYSTRING_ITERATOR((i))
 

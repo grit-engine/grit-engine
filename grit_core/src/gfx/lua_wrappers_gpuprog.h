@@ -21,7 +21,7 @@
 
 #include <OgreGpuProgram.h>
 
-#include "lua_wrappers_common.h"
+#include "../lua_wrappers_common.h"
 
 
 #define GPUPROG_TAG "Grit/GPUProg"

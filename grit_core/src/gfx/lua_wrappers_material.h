@@ -21,7 +21,7 @@
 
 #include <OgreCommon.h>
 
-#include "lua_wrappers_common.h"
+#include "../lua_wrappers_common.h"
 
 #define MAT_TAG "Grit/Material"
 MT_MACRO_DECLARE(mat);

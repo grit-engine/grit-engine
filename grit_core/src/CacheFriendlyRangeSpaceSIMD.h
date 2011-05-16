@@ -30,6 +30,9 @@ template <typename T> class CacheFriendlyRangeSpaceSIMD;
 #include <algorithm>
 #include <cmath>
 
+#ifdef WIN32
+#include <xmmintrin.h>
+#endif
 
 #include "SSEAllocator.h"
 #include "CentralisedLog.h"

@@ -58,8 +58,9 @@ http://www.gnu.org/copyleft/lesser.txt
 #include <OgreFontManager.h>
 
 #include "TextListOverlayElement.h"
-#include "main.h"
 #include "gfx.h"
+
+#include "../main.h"
 
 namespace HUD {
 
