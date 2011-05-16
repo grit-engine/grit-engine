@@ -24,6 +24,7 @@
 #include <iostream>
 #include <fstream>
 #include <locale>
+#include <algorithm>
 
 #include "imgread.h"
 #include "iplread.h"
@@ -31,7 +32,7 @@
 #include "tex_dups.h"
 #include "dffread.h"
 #include "txdread.h"
-#include "TColParser.h"
+#include "physics/TColParser.h"
 #include "ColParser.h"
 
 #include "ios_util.h"

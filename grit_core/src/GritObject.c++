@@ -21,6 +21,8 @@
 
 #include <cmath>
 
+#include <OgreException.h>
+#include <OgreSceneNode.h>
 #include <OgreMeshManager.h>
 #include <OgreTextureManager.h>
 #include <OgreMaterialManager.h>
@@ -28,13 +30,10 @@
 #include <OgreSubMesh.h>
 
 #include "main.h"
-#include "PhysicsWorld.h"
 #include "GritObject.h"
 
 #include "lua_util.h"
 #include "lua_wrappers_gritobj.h"
-#include "lua_wrappers_physics.h"
-#include "lua_wrappers_scnmgr.h"
 
 GritObject::GritObject (const std::string &name_,
                         GritClass *gritClass_)
@@ -63,90 +62,16 @@ void GritObject::destroy (lua_State *L, const GritObjectPtr &self)
 }       
 
 
-void GritObject::doQueueBGPrepare (const Vector3 &cam_pos)
+bool GritObject::requestLoad (const Vector3 &cam_pos)
 {
-        std::vector<Ogre::ResourcePtr> &rs = demand.rPtrs;
-        rs.reserve(advanceResources.size());
-        bool background_prepare_needed = false;
-        for (StringPairs::iterator i=advanceResources.begin(),
-                                   i_=advanceResources.end() ;
-             i!=i_ ; ++i) {
-                const std::string &type = i->first;
-                const std::string &name = i->second;
-                if (type=="Mesh") {
-                        Ogre::HardwareBuffer::Usage u =
-                                Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
-                        Ogre::MeshPtr mp = Ogre::MeshManager::getSingleton()
-                                .createOrRetrieve(name,"GRIT",
-                                                  false,0,
-                                                  0,
-                                                  u,u,false,false)
-                                        .first;
-                        rs.push_back(mp);
-                        if (!mp->isPrepared() && !mp->isLoaded()) {
-                                background_prepare_needed = true;
-                        }
-                } else if (type=="Texture") {
-                        Ogre::TexturePtr tp =
-                                Ogre::TextureManager::getSingleton()
-                                        .createOrRetrieve(name,"GRIT")
-                                                .first;
-                        rs.push_back(tp);
-                        if (!tp->isPrepared() && !tp->isLoaded()) {
-                                background_prepare_needed = true;
-                        }
-                } else if (type=="Col") {
-                        // do nothing at present, Col files loaded at startup.
-                }
-        }
-        if (background_prepare_needed) {
-                updateDemand(cam_pos);
-                demand.mProcessed = false;
-                BackgroundMeshLoader::getSingleton().checkGPUUsage();
-                BackgroundMeshLoader::getSingleton().add(&demand);
-        } else {
-                demand.mProcessed = true;
-        }
-        demandRegistered = true;
-}
-
-
-void finished_with_mesh(Ogre::Mesh *m)
-{
-        Ogre::Mesh::SubMeshIterator i = m->getSubMeshIterator();
-
-        while (i.hasMoreElements()) {
-                Ogre::SubMesh *sm = i.getNext();
-
-                std::string matname = sm->getMaterialName();
-
-                Ogre::MaterialPtr mat;
-
-                mat = Ogre::MaterialManager::getSingleton().getByName(matname);
-                BackgroundMeshLoader::getSingleton().finishedWith(mat);
-
-                matname += "'";
-                mat = Ogre::MaterialManager::getSingleton().getByName(matname);
-                BackgroundMeshLoader::getSingleton().finishedWith(mat);
-        }
+        return demand.requestLoad((cam_pos - pos).length2());
 }
 
 
 
 void GritObject::tryUnloadResources(void)
 {
-        BackgroundMeshLoader::getSingleton().remove(&demand);
-        ResourcePtrs &rps = demand.rPtrs;
-        ResourcePtrSet s;
-        for (ResourcePtrs::iterator i=rps.begin(),i_=rps.end() ; i!=i_ ; ++i) {
-                const Ogre::ResourcePtr &rp = *i;
-                s.insert(rp);
-                Ogre::Mesh *m = dynamic_cast<Ogre::Mesh*>(&*rp);
-                if (m!=NULL) finished_with_mesh(m);
-        }
-        demand.rPtrs.clear();
-        BackgroundMeshLoader::getSingleton().finishedWith(s);
-        demandRegistered = false;
+        demand.finishedWith();
 }
 
 

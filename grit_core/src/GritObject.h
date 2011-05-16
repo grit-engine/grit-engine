@@ -36,13 +36,9 @@ typedef std::set<GritObjectPtr> GObjSet;
 #ifndef GritObject_h
 #define GritObject_h
 
-#include <OgreException.h>
-#include <OgreSceneNode.h>
-
-#include "PhysicsWorld.h"
 #include "Streamer.h"
-#include "BackgroundMeshLoader.h"
 #include "ExternalTable.h"
+#include "BackgroundLoader.h"
 
 #ifdef near
 #undef near
@@ -54,9 +50,6 @@ typedef std::set<GritObjectPtr> GObjSet;
 class GritObject {
 
     public:
-
-        typedef std::pair<std::string,std::string> StringPair;
-        typedef std::vector<StringPair> StringPairs;
 
         GritObject (const std::string &name_, GritClass *gritClass_);
 
@@ -99,38 +92,19 @@ class GritObject {
                  lua_rawgeti(L,LUA_REGISTRYINDEX,lua);
         }
 
-        void hintPrepareInAdvance (const std::string &type,
-                                           const std::string &name)
-        { advanceResources.push_back(StringPair(type,name)); }
+        void addDiskResource (const std::string &name)
+        { demand.addDiskResource(name); }
 
-        void clearAdvanceHints (void)
-        { advanceResources.clear(); }
+        void clearDiskResources (void)
+        { demand.clearDiskResources(); }
 
-        const StringPairs &getAdvanceHints (void) const
-        { return advanceResources; }
-
-        bool queueBGPrepare (const Vector3 &cam_pos)
-        {
-                if (!demandRegistered) {
-                        doQueueBGPrepare(cam_pos);
-                        return true;
-                } else {
-                        updateDemand(cam_pos);
-                        return false;
-                }
-        }
-
-        void updateDemand (const Vector3 cam_pos) {
-                demand.mDist = (cam_pos - pos).length2();
-        }
-
-        void doQueueBGPrepare (const Vector3 &cam_pos);
+        bool requestLoad (const Vector3 &cam_pos);
 
         void tryUnloadResources (void);
 
-        bool backgroundPrepareComplete (void)
+        bool beingLoaded (void)
         {
-                return demand.mProcessed;
+                return demand.isBeingLoaded();
         }
 
         GritClass *getClass (void) { return gritClass; }
@@ -245,8 +219,6 @@ class GritObject {
 
         GritObjectPtr near, far;
                 
-        StringPairs advanceResources;
-
         bool demandRegistered;
         Demand demand;
 

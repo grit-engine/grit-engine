@@ -20,8 +20,13 @@ grit: ../media/Grit.x11 grit.x11.stripped
 all: $(TARGETS)
 
 depend:
-	makedepend -Y -f ../src/common.mk ../src/*.c++ ../src/linux/*.c++ ../src/win32/*.c++
-	sed -i 's_^[.][.]/src/\(\(linux\|win32\)/\)\?\([^.]*[.]o:\)_\3_g' ../src/common.mk
+	makedepend -Y -f ../src/common.mk ../src/*.c++ ../src/linux/*.c++ ../src/win32/*.c++ ../src/gfx/*.c++ ../src/physics/*.c++ -I ../depend_stubs
+	sed -i 's_^[.][.]/src/linux/\([^.]*[.]o:\)_\1_g' ../src/common.mk
+	sed -i 's_^[.][.]/src/win32/\([^.]*[.]o:\)_\1_g' ../src/common.mk
+	sed -i 's_^[.][.]/src/gfx/\([^.]*[.]o:\)_\1_g' ../src/common.mk
+	sed -i 's_^[.][.]/src/physics/\([^.]*[.]o:\)_\1_g' ../src/common.mk
+	sed -i 's_^[.][.]/src/\([^.]*[.]o:\)_\1_g' ../src/common.mk
+
 
 .PHONY: depend
 

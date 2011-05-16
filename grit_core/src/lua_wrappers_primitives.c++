@@ -21,11 +21,8 @@
 
 #include <algorithm>
 
-#include <OgreSimpleSpline.h>
-
 
 #include "lua_wrappers_primitives.h"
-#include "gfx.h"
 #include "math_util.h"
 
 

@@ -26,7 +26,7 @@
 #include <fstream>
 
 #include "ios_util.h"
-#include "TColParser.h"
+#include "physics/TColParser.h"
 #include "ColParser.h"
 
 #define VERSION "1.0"

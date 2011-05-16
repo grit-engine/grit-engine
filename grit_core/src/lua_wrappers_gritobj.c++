@@ -21,11 +21,8 @@
 
 #include "GritObject.h"
 #include "main.h"
-#include "gfx.h"
 
 #include "lua_wrappers_gritobj.h"
-#include "lua_wrappers_physics.h"
-#include "lua_wrappers_scnmgr.h"
 #include "lua_wrappers_primitives.h"
 #include "lua_wrappers_core.h"
 #include "path_util.h"
@@ -155,18 +152,18 @@ TRY_START
 TRY_END
 }
 
-static int gritobj_hint_advance_prepare (lua_State *L)
+static int gritobj_add_disk_resource (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
+        check_args(L,2);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        std::string type = luaL_checkstring(L,2);
-        std::string name = luaL_checkstring(L,3);
-        self->hintPrepareInAdvance(type,name);
+        std::string name = luaL_checkstring(L,2);
+        self->addDiskResource(name);
         return 0;
 TRY_END
 }
 
+/*
 static int gritobj_get_advance_prepare_hints (lua_State *L)
 {
 TRY_START
@@ -185,6 +182,7 @@ TRY_START
         return counter;
 TRY_END
 }
+*/
 
 static int gritobj_deactivate (lua_State *L)
 {
@@ -230,10 +228,12 @@ TRY_START
                 push_cfunction(L,gritobj_activate);
         } else if (key=="instance") {
                 self->pushLuaTable(L);
-        } else if (key=="hintAdvancePrepare") {
-                push_cfunction(L,gritobj_hint_advance_prepare);
+        } else if (key=="addDiskResource") {
+                push_cfunction(L,gritobj_add_disk_resource);
+/*
         } else if (key=="getAdvancePrepareHints") {
                 push_cfunction(L,gritobj_get_advance_prepare_hints);
+*/
         } else if (key=="destroyed") {
                 lua_pushboolean(L,self->getClass()==NULL);
         } else if (key=="class") {
@@ -632,9 +632,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
         const char *key = luaL_checkstring(L,2);
-        if (!::strcmp(key,"physics")) {
-                push_pworld(L,self.getPhysics());
-        } else if (!::strcmp(key,"stepSize")) {
+        if (!::strcmp(key,"stepSize")) {
                 lua_pushnumber(L,self.stepSize);
         } else if (!::strcmp(key,"visibility")) {
                 lua_pushnumber(L,self.visibility);

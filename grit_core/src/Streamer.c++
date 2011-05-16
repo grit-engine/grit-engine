@@ -20,6 +20,7 @@
  */
 
 #include "Streamer.h"
+#include "main.h"
 
 Streamer::Streamer (void)
       : prepareDistanceFactor(1.3f),
@@ -29,7 +30,6 @@ Streamer::Streamer (void)
         stepSize(20000),
         nameGenerationCounter(0), shutdown(false)
 {
-        physics = PhysicsWorldPtr(new PhysicsWorld());
 }
 
 Streamer::~Streamer (void)
@@ -120,9 +120,6 @@ GritObjectPtr Streamer::addObject (
         GritClass *grit_class)
 {
         (void) L; // may need this again some day
-        if (physics.isNull()) {
-                GRIT_EXCEPT("No physics engine set up, call setPhysics()");
-        }
         bool anonymous = false;
         if (name=="") {
                 anonymous = true;
@@ -296,13 +293,13 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                 if (o->isActivated()) continue;
 
                 // consider background loading
-                if (o->queueBGPrepare(new_pos)) {
+                if (o->requestLoad(new_pos)) {
                         // note 'loaded' includes things which have started
                         // but not finished loading...
                         loaded.push_back(o);
                 }
 
-                if (!o->backgroundPrepareComplete()) continue;
+                if (o->beingLoaded()) continue;
 
                 float range2 = o->range2(new_pos) / vis2;
                 // not in range yet
@@ -338,8 +335,9 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                 skip:;
         }
 
-        BackgroundMeshLoader::getSingleton().handleBastards();
-        BackgroundMeshLoader::getSingleton().checkGPUUsage();
+        bgl->handleBastards();
+        bgl->checkRAMHost();
+        bgl->checkRAMGPU();
 
         for (UpdateHooks::iterator i=updateHooks.begin(),i_=updateHooks.end() ; i!=i_ ; ++i) {
                 (*i)->update(new_pos);

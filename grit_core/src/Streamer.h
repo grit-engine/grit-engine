@@ -36,7 +36,6 @@ extern "C" {
 
 #include "GritClass.h"
 #include "GritObject.h"
-#include "PhysicsWorld.h"
 #include "CacheFriendlyRangeSpaceSIMD.h"
 
 typedef std::map<std::string,GritClass*> GritClassMap;
@@ -58,8 +57,6 @@ class Streamer {
 
 
         // GLOBAL STUFF
-
-        PhysicsWorldPtr getPhysics (void) { return physics; }
 
         void setBounds (lua_State *L, const Vector3 &bounds_min, const Vector3 &bounds_max);
 
@@ -178,8 +175,6 @@ class Streamer {
         GObjPtrs needFrameCallbacks;
         GObjPtrs loaded;
         GObjPtrs fresh; // just been added - skip the queue for activation
-
-        PhysicsWorldPtr physics;
 
         size_t nameGenerationCounter;
 

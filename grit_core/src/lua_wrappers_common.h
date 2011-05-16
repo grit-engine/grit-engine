@@ -22,7 +22,7 @@
 #ifndef lua_wrappers_common_h
 #define lua_wrappers_common_h
 
-#include <OgreString.h>
+#include <string>
 #include <OgreException.h>
 
 extern "C" {

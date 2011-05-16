@@ -104,9 +104,11 @@ CVERB << "hello world" << std::endl;
 #define CLOG CLog()
 #define CVERB CLog(__FILE__,__LINE__,false)
 
+void assert_triggered (const std::string &msg);
+
 #define APP_ASSERT(cond) do { \
         if (!(cond)) { \
-                CERR << "assertion failed: " << #cond << std::endl;\
+                assert_triggered(#cond); \
         } \
 } while (0)
 

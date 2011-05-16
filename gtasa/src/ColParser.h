@@ -20,7 +20,7 @@
  */
 
 #include <iostream>
-#include "TColParser.h"
+#include "physics/TColParser.h"
 
 void init_col_db (const std::string &prefix);
 extern MaterialDB db;

@@ -24,7 +24,7 @@ class GritClass;
 #ifndef GritClass_h
 #define GritClass_h
 
-#include <OgreString.h>
+#include <string>
 
 extern "C" {
         #include <lua.h>

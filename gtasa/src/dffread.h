@@ -27,7 +27,7 @@
 #include <vector>
 
 #include "ideread.h"
-#include "TColParser.h"
+#include "physics/TColParser.h"
 
 #define GEO_TRISTRIP 0x1
 #define GEO_POSITIONS 0x2

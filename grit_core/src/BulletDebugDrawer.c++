@@ -26,10 +26,11 @@
 #include <OgreMaterialManager.h>
 #include <OgreRoot.h>
 
-#include "gfx.h"
 #include "BulletDebugDrawer.h"
 #include "CentralisedLog.h"
-#include "PhysicsWorld.h"
+
+#include "gfx/gfx.h"
+#include "physics/PhysicsWorld.h"
 
 static inline Vector3 from_bullet (const btVector3 &from)
 { return Vector3 (from.x(), from.y(), from.z()); }

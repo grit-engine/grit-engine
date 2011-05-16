@@ -71,9 +71,7 @@ class CacheFriendlyRangeSpace {
                 o->updateIndex(index);
         }
 
-        inline void updateSphere (size_t index, float x,
-                                          float y, float z,
-                                          float d)
+        inline void updateSphere (size_t index, float x, float y, float z, float d)
         {
                 positions[index].x = (short)x;
                 positions[index].y = (short)y;

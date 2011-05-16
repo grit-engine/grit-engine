@@ -34,13 +34,15 @@
 #endif
 
 #include "main.h"
-#include "gfx.h"
-
-
 #include "console_colour.h"
-
 #include "lua_util.h"
 #include "lua_wrappers_core.h"
+
+#include "gfx/gfx.h"
+
+#include "physics/PhysicsWorld.h"
+
+
 
 CentralisedLog clog;
 bool clicked_close = false;
@@ -49,9 +51,11 @@ Keyboard *keyboard = NULL;
 lua_State *core_L = NULL;
 UserDataTables user_data_tables;
 Streamer *streamer = NULL;
+PhysicsWorldPtr physics_world;
 BulletDebugDrawer *debug_drawer = NULL;
 std::stringstream gfx_msg_buffer;
 HUD::RootPtr hud;
+BackgroundLoader *bgl;
 
 struct TheGfxCallback : GfxCallback {
 
@@ -106,7 +110,7 @@ int main(int argc, const char **argv)
                 //feenableexcept(FE_DIVBYZERO | FE_INVALID);
                 #endif
 
-                BackgroundMeshLoader *bml = new BackgroundMeshLoader();
+                bgl = new BackgroundLoader();
 
                 size_t winid = gfx_init(cb);
 
@@ -118,11 +122,13 @@ int main(int argc, const char **argv)
                 mouse = new MouseDirectInput8(winid);
                 bool use_dinput = getenv("GRIT_DINPUT")!=NULL;
                 keyboard = use_dinput ? (Keyboard *)new KeyboardDirectInput8(winid)
-                                            : (Keyboard *)new KeyboardWinAPI(winid);
+                                      : (Keyboard *)new KeyboardWinAPI(winid);
                 #else
                 mouse = new MouseX11(winid);
                 keyboard = new KeyboardX11(winid);
                 #endif
+
+                physics_world = PhysicsWorldPtr(new PhysicsWorld());
 
                 streamer = new Streamer();
 
@@ -169,20 +175,23 @@ int main(int argc, const char **argv)
 
                 // lua returns - we quit
 
-                bml->shutdown();
+
+                streamer->doShutdown(core_L); // will remove all demands from bgl
 
                 hud->removeAllChildren(); // will avoid any lua callbacks during destruction
 
-                streamer->doShutdown(core_L);
+                bgl->shutdown();
+
                 delete streamer;
                 if (debug_drawer) delete debug_drawer;
+                physics_world.setNull();
                 if (mouse) delete mouse;
                 if (keyboard) delete keyboard;
                 if (core_L) shutdown_lua(core_L);
                 hud.setNull();
                 gfx_shutdown();
 
-                delete bml;
+                delete bgl;
 
         } catch( GritException& e ) {
                 std::cerr << "An exception has occured: "

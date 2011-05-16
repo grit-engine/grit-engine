@@ -25,11 +25,14 @@ extern "C" {
 
 #include "Mouse.h"
 #include "Keyboard.h"
-#include "BackgroundMeshLoader.h"
+#include "BackgroundLoader.h"
 #include "CentralisedLog.h"
 #include "BulletDebugDrawer.h"
-#include "lua_userdata_dependency_tracker.h"
-#include "HUD.h"
+
+#include "gfx/lua_userdata_dependency_tracker.h"
+#include "gfx/HUD.h"
+
+#include "physics/PhysicsWorld.h"
 
 extern CentralisedLog clog;
 extern bool clicked_close;
@@ -38,7 +41,9 @@ extern Keyboard *keyboard;
 extern lua_State *core_L;
 extern UserDataTables user_data_tables;
 extern Streamer *streamer;
+extern PhysicsWorldPtr physics_world;
 extern BulletDebugDrawer *debug_drawer;
 extern HUD::RootPtr hud;
+extern BackgroundLoader *bgl;
 
 std::string poll_gfx_msg_buffer (void);

@@ -20,6 +20,9 @@
  */
 
 #include <locale>
+#include <algorithm>
+#include <iostream>
+#include <fstream>
 
 #include "ColParser.h"
 #include "ios_util.h"
