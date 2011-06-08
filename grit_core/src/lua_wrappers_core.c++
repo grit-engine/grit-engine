@@ -329,12 +329,22 @@ TRY_END
 }
 
 
-static int global_sleep (lua_State *L)
+static int global_sleep_micros (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        long n = check_t<long>(L, 1);
-        mysleep(n);
+        lua_Number micros = luaL_checknumber(L,1);
+        mysleep((long)micros);
+        return 0;
+TRY_END
+}
+
+static int global_sleep_seconds (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        lua_Number secs = luaL_checknumber(L,1);
+        mysleep((long)(1E6*secs));
         return 0;
 TRY_END
 }
@@ -794,7 +804,9 @@ static const luaL_reg global[] = {
 
         {"micros" ,global_micros},
         {"seconds" ,global_seconds},
-        {"sleep",global_sleep},
+        {"sleep_seconds",global_sleep_seconds},
+        {"sleep_micros",global_sleep_micros},
+        {"sleep",global_sleep_micros},
         {"get_clipboard",global_get_clipboard},
         {"set_clipboard",global_set_clipboard},
 
