@@ -92,23 +92,29 @@ class GritObject {
                  lua_rawgeti(L,LUA_REGISTRYINDEX,lua);
         }
 
+
         void addDiskResource (const std::string &name)
         { demand.addDiskResource(name); }
 
         void clearDiskResources (void)
         { demand.clearDiskResources(); }
 
-        bool requestLoad (const Vector3 &cam_pos);
-
-        void tryUnloadResources (void);
-
-        bool beingLoaded (void)
+        bool requestLoad (const Vector3 &cam_pos)
         {
-                return demand.isBeingLoaded();
+                return demand.requestLoad((cam_pos - pos).length2());
+        }
+        void tryUnloadResources(void)
+        {
+                demand.finishedWith();
+        }
+        bool isInBackgroundQueue (void)
+        {
+                return demand.isInBackgroundQueue();
         }
 
-        GritClass *getClass (void) { return gritClass; }
 
+
+        GritClass *getClass (void) { return gritClass; }
 
         float getFade (void) const { return lastFade; }
 

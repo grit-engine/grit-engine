@@ -25,19 +25,18 @@
 #include <OgreTextureManager.h>
 
 #include "GfxDiskResource.h"
+#include "gfx.h"
 
 size_t gfx_gpu_ram_available (void)
 {
-        Ogre::TextureManager &tm = Ogre::TextureManager::getSingleton();
-        Ogre::MeshManager &mm = Ogre::MeshManager::getSingleton();
-        return tm.getMemoryBudget() + mm.getMemoryBudget();
+    return gfx_option(GFX_RAM) * 1024 * 1024;
 }
 
 size_t gfx_gpu_ram_used (void)
 {
-        Ogre::TextureManager &tm = Ogre::TextureManager::getSingleton();
-        Ogre::MeshManager &mm = Ogre::MeshManager::getSingleton();
-        return tm.getMemoryUsage() + mm.getMemoryUsage();
+    Ogre::TextureManager &tm = Ogre::TextureManager::getSingleton();
+    Ogre::MeshManager &mm = Ogre::MeshManager::getSingleton();
+    return tm.getMemoryUsage() + mm.getMemoryUsage();
 }
 
 
@@ -70,6 +69,7 @@ void GfxDiskResource::load (void)
 
 void GfxDiskResource::unload(void)
 {
+    //CVERB << "Unloading; " << rp->getName() << std::endl;
     try {
         rp->unload();
         DiskResource::unload();

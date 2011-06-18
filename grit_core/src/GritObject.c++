@@ -62,17 +62,6 @@ void GritObject::destroy (lua_State *L, const GritObjectPtr &self)
 }       
 
 
-bool GritObject::requestLoad (const Vector3 &cam_pos)
-{
-        return demand.requestLoad((cam_pos - pos).length2());
-}
-
-
-
-void GritObject::tryUnloadResources(void)
-{
-        demand.finishedWith();
-}
 
 
 void GritObject::notifyFade (lua_State *L,

@@ -289,6 +289,24 @@ TRY_START
 TRY_END
 }
 
+static int global_check_ram_gpu (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        bgl->checkRAMGPU();
+        return 0;
+TRY_END
+}
+
+static int global_check_ram_host (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        bgl->checkRAMHost();
+        return 0;
+TRY_END
+}
+
 
 static int global_get_streamer (lua_State *L)
 {
@@ -819,6 +837,8 @@ static const luaL_reg global[] = {
         {"get_out_queue_size_host" ,global_get_out_queue_size_host},
         {"give_queue_allowance" ,global_give_queue_allowance},
         {"handle_bastards" ,global_handle_bastards},
+        {"check_ram_gpu" ,global_check_ram_gpu},
+        {"check_ram_host" ,global_check_ram_host},
 
         {"mlockall" ,global_mlockall},
         {"munlockall" ,global_munlockall},

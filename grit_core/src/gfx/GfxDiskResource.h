@@ -34,7 +34,7 @@ class GfxDiskResource : public DiskResource {
 
     virtual void load (void);
 
-    virtual void unload(void);
+    virtual void unload (void);
 
     virtual bool isGPUResource (void);
 
@@ -53,6 +53,25 @@ class GfxDiskResource : public DiskResource {
     // The material will have a link to a DiskResource for each texture, it will not incrememnt it
     // if the material changes texture, it will have to cause the users of that material to decrement it
 };
+
+// When the resource is created, it is not known what other resources it depends on.
+
+// When the resource is incremented, it is still not known.
+
+// Dependent resources are only known when the resource is loaded.  In the case
+// of meshes and textures, once the mesh is loaded (i.e. prepared in Ogre
+// terminology) we sync with the main thread to get the textures for its
+// material.  There is an issue of what happens when the material changes and
+// the dependencies are stale.
+
+// upon load, get vector<DiskResource>
+// upon any change to dependencies, ensure 
+// increment them all
+// load them all if not already loaded
+
+// upon unload
+// decrement them all
+// 
 
 size_t gfx_gpu_ram_available (void);
 size_t gfx_gpu_ram_used (void);

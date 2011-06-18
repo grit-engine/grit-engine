@@ -25,21 +25,27 @@
 #include <iostream>
 #include <sstream>
 
+#include <boost/thread/recursive_mutex.hpp>
+
 #include "console_colour.h"
 
 void app_fatal();
+
+
 
 class CentralisedLog {
 
     public:
 
-        virtual void echo (const std::string &line)
+        boost::recursive_mutex lock;
+
+        void echo (const std::string &line)
         {
                 std::cout << line << RESET << std::endl;
                 buffer << line << RESET << std::endl;
         }
 
-        virtual std::string consolePoll (void) 
+        std::string consolePoll (void) 
         {
                 std::string r = buffer.str();
                 buffer.str("");
@@ -58,10 +64,14 @@ class CentralisedLog {
 extern CentralisedLog clog;
 
 class CLog {
+        bool takenLock;
+
     public:
 
         CLog (const char *file, int line, bool error)
+              : takenLock(true)
         {
+                clog.lock.lock();
                 if (error) {
                         clog.tmp << BOLD << RED << "ERROR" << RESET;
                 } else {
@@ -71,15 +81,33 @@ class CLog {
                         <<":"<<BOLD<<line<<NOBOLD<<"): ";
         }
 
-        CLog () { }
+        CLog ()
+              : takenLock(true)
+        {
+                clog.lock.lock();
+        }
+
+        ~CLog (void)
+        {
+                if (takenLock) {
+                        (*this) << " (missing std::endl)" << std::endl;
+                }
+        }
 
         typedef std::ostream &manip(std::ostream&);
 
         CLog &operator<< (manip *o)
         {
+                if (!takenLock) {
+                        clog.lock.lock();
+                        takenLock = true;
+                }
+
                 if (o == (manip*)std::endl) {
                         clog.echo(clog.tmp.str());
                         clog.tmp.str("");
+                        clog.lock.unlock();
+                        takenLock = false;
                 } else {
                         clog.tmp << o;
                 }
@@ -88,6 +116,10 @@ class CLog {
 
         template<typename T> CLog &operator<<(T const &o)
         {
+                if (!takenLock) {
+                        clog.lock.lock();
+                        takenLock = true;
+                }
                 clog.tmp << o;
                 return *this;
         }

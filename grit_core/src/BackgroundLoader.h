@@ -102,6 +102,10 @@ template<typename T> class LRUQueue {
 
 
 // each DiskResource can be in a loaded or unloaded state.
+// the predicates 'users>0' and 'loaded' are unrelated by logic
+// !loaded => dependencies.size()==0
+// loaded  => forall d in dependencies: d.loaded
+// users>0 => forall d in dependencies: d.users > 0
 class DiskResource {
 
     public:
@@ -114,11 +118,13 @@ class DiskResource {
 
         virtual void load (void) 
         {
+                //CVERB << "LOAD " << getName() << std::endl;
                 loaded = true;
         }
 
         virtual void unload (void)
         {
+                //CVERB << "FREE " << getName() << std::endl;
                 APP_ASSERT(noUsers());
                 loaded = false;
         }
@@ -135,11 +141,13 @@ class DiskResource {
 
         void increment (void)
         {
+                //CVERB << "++ " << getName() << std::endl;
                 users++;
         }
 
         bool decrement (void)
         {
+                //CVERB << "-- " << getName() << std::endl;
                 users--;
                 // do not unload at this time, will be added to LRU queue by caller
                 return users == 0;
@@ -149,6 +157,9 @@ class DiskResource {
 
         bool loaded;
         int users;
+        DiskResources dependencies;
+
+        void setDependenciesBG (DiskResources &new_dep);
 
         friend class Demand;
         friend class BackgroundLoader;
@@ -159,11 +170,20 @@ inline std::ostream &operator << (std::ostream &o, const DiskResource &dr)
         return o << dr.getName();
 }
 
+inline std::ostream &operator << (std::ostream &o, const DiskResources &dr)
+{
+        o << "[";
+        for (unsigned i=0 ; i<dr.size() ; ++i) {
+                o << (i==0?" ":", ") << (*dr[i]);
+        }
+        return o << (dr.size()==0?"]":" ]");
+}
+
 DiskResource *disk_resource_get_or_make (const std::string &rn);
 
 class Demand : public fast_erase_index {
     public:
-        Demand() : mBeingLoaded(false) { }
+        Demand() : mInBackgroundQueue(false), incremented(false) { }
 
         void addDiskResource (const std::string &rn)
         {
@@ -177,15 +197,28 @@ class Demand : public fast_erase_index {
                 resources.clear();
         }
 
+        // called by the main thread to get resources loaded prior
+        // to activation of objects
+        // repeated calls update the distance of the object, used for prioritising
+        // the queue of demands
+        // as a convenience, returns !isInBackgroundQueue()
         bool requestLoad (float dist);
-        bool isBeingLoaded (void) { return mBeingLoaded; }
+
+        // is the demand registered to be procesed by the background thread
+        // if returns true after a call to requestLoad, the resources should be loaded
+        bool isInBackgroundQueue (void) { return mInBackgroundQueue; }
+
+        // the object nolonger requires its resources, they may be unloaded if necessary
+        // may be called when isInBackgroundQueue()==true in which case the demand
+        // is removed from the background queue (may also be partially loaded at this point)
         void finishedWith (void);
 
     private:
-        volatile bool mBeingLoaded; // is it in the bgl's queue
+        volatile bool mInBackgroundQueue; // is it in the bgl's queue
         DiskResources resources;
         volatile float mDist;
         friend class BackgroundLoader;
+        bool incremented; // have we called increment() on required resources?
 };
 
 
@@ -249,7 +282,6 @@ class BackgroundLoader {
         size_t getLRUQueueSizeHost (void) const
         { return mDeathRowHost.size(); }
 
-        void finishedWith (const DiskResources &);
         void finishedWith (DiskResource *);
 
         void checkRAMHost (void);

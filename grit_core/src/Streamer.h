@@ -136,8 +136,10 @@ class Streamer {
 
         float visibility;
 
+        // called every frame with new camera position, to govern streaming
         void centre (lua_State *L, const Vector3 &new_pos);
 
+        // called by objects when they change position or rendering distance
         inline void updateSphere (size_t index, const Vector3 &pos, float d)
         {
                 rs.updateSphere(index,pos.x,pos.y,pos.z,d);

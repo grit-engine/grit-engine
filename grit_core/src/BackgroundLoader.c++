@@ -69,41 +69,56 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
         return dr;
 }
 
+// called by main thread only
 bool Demand::requestLoad (float dist)
 {
         mDist = dist;
-        if (mBeingLoaded) return false;
+        if (mInBackgroundQueue) return false;
         bool all_loaded = true;
+        if (!incremented) {
+                //CVERB << "Incrementing resources: " << resources << std::endl;
+                for (unsigned i=0 ; i<resources.size() ; ++i) {
+                        // increment all the resource counters so that we know they're in use
+                        resources[i]->increment();
+                }
+                incremented = true;
+        }
+        //CVERB << "Checking if resources are loaded: " << resources << std::endl;
         for (unsigned i=0 ; i<resources.size() ; ++i) {
-                // increment all the resource counters so that we know they're in use
-                resources[i]->increment();
                 if (!resources[i]->isLoaded()) all_loaded = false;
         }
         // if all the resources are in a loaded state then return true
         if (all_loaded) return true;
 
+        //CVERB << "Requesting background load: " << resources << std::endl;
         // else get the bgl to do the right thing and return false
         bgl->checkRAMHost();
         bgl->checkRAMGPU();
         bgl->add(this);
-        mBeingLoaded = true;
 
         return false;
 }
 
+// called by main thread only
 void Demand::finishedWith (void)
 {
+        //CVERB << "No longer need: " << resources << std::endl;
+
         // we could be called because a grit object is being destroyed (unusual)
         // in which case, the Demand may get destructed pretty soon
 
         // or we could also be called if the grit object is simply deactivating (hot path)
 
         // certainly do not bother continuing to load if a load is in progress
-        if (mBeingLoaded) {
-                bgl->remove(this);
-                mBeingLoaded = false;
-        }
+        bgl->remove(this);
 
+        // consider putting the resources up for reclamation
+        if (incremented) {
+                for (unsigned i=0 ; i<resources.size() ; ++i) {
+                        resources[i]->decrement();
+                }
+                incremented = false;
+        }
         for (unsigned i=0 ; i<resources.size() ; ++i) {
                 bgl->finishedWith(resources[i]);
         }
@@ -144,16 +159,19 @@ void BackgroundLoader::add (Demand *d)
 {
         SYNCHRONISED;
         mDemands.push_back(d);
+        d->mInBackgroundQueue = true;
         cVar.notify_one();
 }
 
+// called by main thread only
 void BackgroundLoader::remove (Demand *d)
 {
         SYNCHRONISED;
-        if (!d->mBeingLoaded) return;
+        if (!d->mInBackgroundQueue) return;
         mDemands.erase(d);
         if (mCurrent == d)
                 mCurrent = NULL;
+        d->mInBackgroundQueue = false;
 }               
 
 void BackgroundLoader::handleBastards (void)
@@ -170,7 +188,9 @@ void BackgroundLoader::handleBastards (void)
                 mNumBastards = 0;
         }
 
-        finishedWith(s);
+        for (unsigned i=0 ; i<s.size() ; ++i) {
+                finishedWith(s[i]);
+        }
 }
 
 
@@ -185,7 +205,7 @@ void BackgroundLoader::operator() (void)
                                 // Usual case:
                                 // demand wasn't retracted while we were
                                 // processing it
-                                mCurrent->mBeingLoaded = false;
+                                mCurrent->mInBackgroundQueue = false;
                                 // cache in d to suppress compiler error
                                 Demand *d = mCurrent;
                                 mDemands.erase(d);
@@ -206,7 +226,7 @@ void BackgroundLoader::operator() (void)
                         if (mAllowance <= 0 || !nearestDemand(mCurrent)) {
                                 cVar.wait(_scoped_lock);
                                 continue;        
-                        }       
+                        }
                         pending = mCurrent->resources;
                 }
                 //APP_VERBOSE("BackgroundLoader: loading: "+name);
@@ -257,19 +277,11 @@ void BackgroundLoader::setAllowance (float m)
 }
 
 
-// unloading of meshes /////////////////////////////////////////////////////////
-
-void BackgroundLoader::finishedWith (const DiskResources &s) {
-        if (mQuit) return;
-        for (DiskResources::const_iterator i=s.begin(), i_=s.end() ; i!=i_ ; ++i) {
-                finishedWith(*i);
-        }
-}
+// unloading of resources /////////////////////////////////////////////////////////
 
 void BackgroundLoader::finishedWith (DiskResource *de)
 {
         if (mQuit) return;
-        de->decrement();
         if (de->noUsers()) {
                 mDeathRowHost.push(de); 
                 if (de->isGPUResource()) {

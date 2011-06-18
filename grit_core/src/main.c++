@@ -146,7 +146,7 @@ int main(int argc, const char **argv)
                         if (lua_isnil(L,-1)) {
                                 lua_pop(L,1); // nil 'main object'
                                 lua_pop(L,1); //handler
-                                CERR << "invoking main:run(...): object \"main\" not found";
+                                CERR << "invoking main:run(...): object \"main\" not found" << std::endl;
                                 app_fatal();
                         }
 
@@ -154,7 +154,7 @@ int main(int argc, const char **argv)
                         if (lua_isnil(L,-1)) {
                                 lua_pop(L,1); // nil 'run function'
                                 lua_pop(L,1); //handler
-                                CERR << "invoking main:run(...): function \"run\" not found";
+                                CERR << "invoking main:run(...): function \"run\" not found" << std::endl;
                                 app_fatal();
                         }
 

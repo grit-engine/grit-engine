@@ -292,18 +292,24 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                 if (o->getClass()==NULL) continue;
                 if (o->isActivated()) continue;
 
+                float range2 = o->range2(new_pos) / vis2;
+                // not in range yet
+                if (range2 > 1) continue;
+
+                //CVERB << "Preparing for activation: " << o->name << std::endl;
+
                 // consider background loading
                 if (o->requestLoad(new_pos)) {
                         // note 'loaded' includes things which have started
                         // but not finished loading...
                         loaded.push_back(o);
+                } else {
+                        // technically not always true because the background thread
+                        // may have loaded it very quickly, in which case we will simply
+                        // wait until next time
+                        //APP_ASSERT(o->isInBackgroundQueue());
+                        continue;
                 }
-
-                if (o->beingLoaded()) continue;
-
-                float range2 = o->range2(new_pos) / vis2;
-                // not in range yet
-                if (range2 > 1) continue;
 
                 // if we get this far, we should be displayed but there might be
                 // a near object in the way

@@ -1222,7 +1222,7 @@ static void init_options (void)
     valid_option(GFX_FULLSCREEN_HEIGHT, new ValidOptionRange<int>(1,10000));
     int res_list[] = {512,1024,2048,4096};
     valid_option(GFX_SHADOW_RES, new ValidOptionList<int,int[4]>(res_list));
-    valid_option(GFX_RAM, new ValidOptionRange<int>(1,16384));
+    valid_option(GFX_RAM, new ValidOptionRange<int>(0,16384));
 
     valid_option(GFX_FOV, new ValidOptionRange<float>(0.0000001,179));
     valid_option(GFX_NEAR_CLIP, new ValidOptionRange<float>(0.0000001,10000));
