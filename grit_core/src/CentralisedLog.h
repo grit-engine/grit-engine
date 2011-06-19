@@ -90,7 +90,8 @@ class CLog {
         ~CLog (void)
         {
                 if (takenLock) {
-                        (*this) << " (missing std::endl)" << std::endl;
+                        clog.lock.unlock();
+                        takenLock = false;
                 }
         }
 
