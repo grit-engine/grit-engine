@@ -27,6 +27,12 @@
 #include "ColParser.h"
 #include "ios_util.h"
 
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 
 MaterialDB db;
 

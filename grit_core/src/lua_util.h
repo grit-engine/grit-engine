@@ -35,6 +35,13 @@ extern "C" {
 #include "CentralisedLog.h"
 #include "math_util.h"
 
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
 
 #ifdef __GNUC__
 #define NORETURN __attribute__ ((noreturn))
