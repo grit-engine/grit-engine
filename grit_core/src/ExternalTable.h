@@ -56,18 +56,19 @@ class ExternalTable {
 
         template<class U> void get (const std::string &key, U &val, const U &def)
         {
-                if (!has(key) || !get(key,val)) val = def;
+                if (!get(key,val)) val = def;
                 
         }
 
         template<class U> void get (lua_Number key, U &val, const U &def)
         {
-                if (!has(key) || !get(key,val)) val = def;
+                if (!get(key,val)) val = def;
                 
         }
 
         bool get (const std::string &key, lua_Number &v)
         {
+                if (!has(key)) return false;
                 if (fields[key].type != 0) return false;
                 v = fields[key].real;
                 return true;
@@ -75,6 +76,7 @@ class ExternalTable {
 
         bool get (const std::string &key, std::string &v)
         {
+                if (!has(key)) return false;
                 if (fields[key].type != 1) return false;
                 v = fields[key].str;
                 return true;
@@ -82,6 +84,7 @@ class ExternalTable {
 
         bool get (const std::string &key, Vector3 &v)
         {
+                if (!has(key)) return false;
                 if (fields[key].type != 2) return false;
                 v = fields[key].v3 ;
                 return true;
@@ -89,6 +92,7 @@ class ExternalTable {
 
         bool get (const std::string &key, Quaternion &v)
         {
+                if (!has(key)) return false;
                 if (fields[key].type != 3) return false;
                 v = fields[key].q;
                 return true;
@@ -96,6 +100,7 @@ class ExternalTable {
 
         bool get (const std::string &key, bool &v)
         {
+                if (!has(key)) return false;
                 if (fields[key].type != 4) return false;
                 v = fields[key].b;
                 return true;
@@ -103,6 +108,7 @@ class ExternalTable {
 
         bool get (const std::string &key, SharedPtr<ExternalTable> &v)
         {
+                if (!has(key)) return false;
                 if (fields[key].type != 5) return false;
                 v = fields[key].t;
                 return true;
@@ -110,6 +116,7 @@ class ExternalTable {
 
         bool get (const std::string &key, Plot &v)
         {
+                if (!has(key)) return false;
                 if (fields[key].type != 6) return false;
                 v = fields[key].plot;
                 return true;
@@ -117,6 +124,7 @@ class ExternalTable {
 
         bool get (const std::string &key, PlotV3 &v)
         {
+                if (!has(key)) return false;
                 if (fields[key].type != 7) return false;
                 v = fields[key].plot_v3;
                 return true;
@@ -124,6 +132,7 @@ class ExternalTable {
 
         bool get (lua_Number key, lua_Number &v)
         {
+                if (!has(key)) return false;
                 if (elements[key].type != 0) return false;
                 v = elements[key].real;
                 return true;
@@ -131,6 +140,7 @@ class ExternalTable {
 
         bool get (lua_Number key, std::string &v)
         {
+                if (!has(key)) return false;
                 if (elements[key].type != 1) return false;
                 v = elements[key].str;
                 return true;
@@ -138,6 +148,7 @@ class ExternalTable {
 
         bool get (lua_Number key, Vector3 &v)
         {
+                if (!has(key)) return false;
                 if (elements[key].type != 2) return false;
                 v = elements[key].v3 ;
                 return true;
@@ -145,6 +156,7 @@ class ExternalTable {
 
         bool get (lua_Number key, Quaternion &v)
         {
+                if (!has(key)) return false;
                 if (elements[key].type != 3) return false;
                 v = elements[key].q;
                 return true;
@@ -152,6 +164,7 @@ class ExternalTable {
 
         bool get (lua_Number key, bool &v)
         {
+                if (!has(key)) return false;
                 if (elements[key].type != 4) return false;
                 v = elements[key].b;
                 return true;
@@ -159,6 +172,7 @@ class ExternalTable {
 
         bool get (lua_Number key, SharedPtr<ExternalTable> &v)
         {
+                if (!has(key)) return false;
                 if (elements[key].type != 5) return false;
                 v = elements[key].t;
                 return true;
@@ -166,6 +180,7 @@ class ExternalTable {
 
         bool get (lua_Number key, Plot &v)
         {
+                if (!has(key)) return false;
                 if (elements[key].type != 6) return false;
                 v = elements[key].plot;
                 return true;
@@ -173,6 +188,7 @@ class ExternalTable {
 
         bool get (lua_Number key, PlotV3 &v)
         {
+                if (!has(key)) return false;
                 if (elements[key].type != 7) return false;
                 v = elements[key].plot_v3;
                 return true;

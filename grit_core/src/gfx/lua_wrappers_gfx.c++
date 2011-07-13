@@ -1139,7 +1139,7 @@ TRY_START
     lua_setfield(L, 2, "map");
 
     lua_getfield(L, 2, "blending");
-    GfxParticleBlend blend;
+    GfxParticleSceneBlend blend;
     if (lua_isnil(L,-1)) {
         blend = GFX_PARTICLE_OPAQUE;
     } else if (!lua_isstring(L,-1)) {
@@ -1931,20 +1931,74 @@ TRY_END
 
 // new material interface
 
+static void process_tex_blend (GfxMaterial *gfxmat, ExternalTable &src, GfxMaterialTextureBlendUnit &dst)
+{
+
+        std::string diffuse_map;
+        src.get("diffuseMap", diffuse_map, std::string(""));
+        dst.setDiffuseMap(diffuse_map);
+
+        std::string normal_map;
+        src.get("normalMap", normal_map, std::string(""));
+        dst.setNormalMap(normal_map);
+
+        std::string specular_map;
+        src.get("specularMap", specular_map, std::string(""));
+        dst.setSpecularMap(specular_map);
+        if (specular_map.length() > 0)
+                gfxmat->setSpecularMode(GFX_MATERIAL_SPEC_MAP);
+
+        lua_Number specular_diffuse_brightness = 0;
+        lua_Number specular_diffuse_contrast = 0;
+        SharedPtr<ExternalTable> specular_diffuse;
+        if (src.get("specularFromDiffuse",specular_diffuse)) {
+                specular_diffuse->get(lua_Number(1), specular_diffuse_brightness);
+                specular_diffuse->get(lua_Number(2), specular_diffuse_contrast);
+                gfxmat->setSpecularMode(GFX_MATERIAL_SPEC_ADJUSTED_DIFFUSE_COLOUR);
+        }
+        dst.setSpecularDiffuseBrightness(specular_diffuse_brightness);
+        dst.setSpecularDiffuseContrast(specular_diffuse_contrast);
+
+        lua_Number texture_animation_x = 0;
+        lua_Number texture_animation_y = 0;
+        SharedPtr<ExternalTable> texture_animation;
+        if (src.get("textureAnimation",texture_animation)) {
+                texture_animation->get(lua_Number(1), texture_animation_x);
+                texture_animation->get(lua_Number(2), texture_animation_y);
+        }
+        dst.setTextureAnimationX(texture_animation_x);
+        dst.setTextureAnimationY(texture_animation_y);
+        
+        lua_Number texture_scale_x = 0;
+        lua_Number texture_scale_y = 0;
+        SharedPtr<ExternalTable> texture_scale;
+        if (src.get("textureScale",texture_scale)) {
+                texture_scale->get(lua_Number(1), texture_scale_x);
+                texture_scale->get(lua_Number(2), texture_scale_y);
+        }
+        dst.setTextureScaleX(texture_scale_x);
+        dst.setTextureScaleY(texture_scale_y);
+}
+
 typedef std::map<std::string, ExternalTable> MatMap;
 static MatMap mat_map;
 
 static int global_register_material (lua_State *L)
 {
 TRY_START
+
         check_args(L,2);
         const char *name = luaL_checkstring(L,1);
         if (!lua_istable(L,2))
                 my_lua_error(L,"Second parameter should be a table");
 
+        //CVERB << name << std::endl;
+
         ExternalTable &t = mat_map[name];
         t.clear(L);
         t.takeTableFromLuaStack(L,2);
+
+        GFX_MAT_SYNC;
         GfxMaterial *gfxmat = gfx_material_add_or_get(name);
 
         bool has_alpha;
@@ -1963,18 +2017,75 @@ TRY_START
         bool stipple;
         t.get("stipple", stipple, true);
        
-        gfxmat->setBlend(has_alpha ? depth_write ? GFX_MATERIAL_ALPHA_DEPTH : GFX_MATERIAL_ALPHA : GFX_MATERIAL_OPAQUE);
+        gfxmat->setSceneBlend(has_alpha ? depth_write ? GFX_MATERIAL_ALPHA_DEPTH : GFX_MATERIAL_ALPHA : GFX_MATERIAL_OPAQUE);
 
         gfxmat->regularMat = Ogre::MaterialManager::getSingleton().getByName(name,"GRIT");
         gfxmat->fadingMat = gfxmat->regularMat;
+
         Vector3 emissive_colour;
         t.get("emissiveColour",emissive_colour,Vector3(0,0,0));
-        if (emissive_colour != Vector3(0,0,0) ) {
-                std::string ename = name+std::string("^");
-                gfxmat->emissiveMat = Ogre::MaterialManager::getSingleton().getByName(ename,"GRIT");
+        gfxmat->setEmissiveColour(emissive_colour);
+
+        std::string emissive_map;
+        t.get("emissiveMap", emissive_map, std::string(""));
+        gfxmat->setEmissiveMap(emissive_map);
+
+        std::string paint_map;
+        lua_Number paint_colour;
+        if (t.get("paintColour", paint_colour)) {
+                if (paint_colour == 1) {
+                        gfxmat->setPaintMode(GFX_MATERIAL_PAINT_1);
+                } else if (paint_colour == 2) {
+                        gfxmat->setPaintMode(GFX_MATERIAL_PAINT_2);
+                } else if (paint_colour == 3) {
+                        gfxmat->setPaintMode(GFX_MATERIAL_PAINT_3);
+                } else if (paint_colour == 4) {
+                        gfxmat->setPaintMode(GFX_MATERIAL_PAINT_4);
+                } else {
+                        CERR << "Unexpected paint_colour: " << paint_colour << std::endl;
+                        gfxmat->setPaintMode(GFX_MATERIAL_PAINT_NONE);
+                }
+                gfxmat->setPaintMap("");
+        } else if (t.get("paintMap", paint_map)) {
+                gfxmat->setPaintMap(paint_map);
+                gfxmat->setPaintMode(GFX_MATERIAL_PAINT_MAP);
         } else {
-                gfxmat->emissiveMat.setNull();
+                gfxmat->setPaintMode(GFX_MATERIAL_PAINT_NONE);
         }
+        bool paint_by_diffuse_alpha;
+        t.get("paintByDiffuseAlpha", paint_by_diffuse_alpha, false);
+        gfxmat->setPaintByDiffuseAlpha(paint_by_diffuse_alpha);
+
+        gfxmat->setSpecularMode(GFX_MATERIAL_SPEC_NONE);
+
+        SharedPtr<ExternalTable> blend;
+        if(t.get("blend", blend)) {
+                for (lua_Number i=1 ; i<=4 ; ++i) {
+                        unsigned i_ = unsigned(i)-1;
+                        SharedPtr<ExternalTable> texBlends;
+                        if (!blend->get(i, texBlends)) {
+                                gfxmat->setNumTextureBlends(i_);
+                                break;
+                        }
+                        process_tex_blend(gfxmat, *texBlends, gfxmat->texBlends[i_]);
+                }
+        } else {
+                process_tex_blend(gfxmat, t, gfxmat->texBlends[0]);
+                gfxmat->setNumTextureBlends(0);
+        }
+
+        bool gloss_from_specular_alpha;
+        t.get("glossFromSpecularAlpha", gloss_from_specular_alpha, false);
+        if (gloss_from_specular_alpha) {
+                gfxmat->setSpecularMode(GFX_MATERIAL_SPEC_MAP_WITH_GLOSS);
+        }
+
+        bool specular_from_diffuse_alpha;
+        t.get("specularFromDiffuseAlpha", specular_from_diffuse_alpha, false);
+        if (specular_from_diffuse_alpha) {
+                gfxmat->setSpecularMode(GFX_MATERIAL_SPEC_DIFFUSE_ALPHA);
+        }
+
         return 0;
 TRY_END
 }

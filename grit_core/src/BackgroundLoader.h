@@ -42,6 +42,16 @@ typedef fast_erase_vector<Demand*> Demands;
 #include "CentralisedLog.h"
 
 
+extern bool disk_resource_verbose_loads;
+extern bool disk_resource_verbose_incs;
+
+int disk_resource_num (void);
+int disk_resource_num_loaded (void);
+DiskResources disk_resource_all (void);
+DiskResources disk_resource_all_loaded (void);
+DiskResource *disk_resource_get_or_make (const std::string &rn);
+DiskResource *disk_resource_get (const std::string &rn);
+
 template<typename T> class LRUQueue {
 
     protected:
@@ -101,8 +111,11 @@ template<typename T> class LRUQueue {
 };
 
 
+
 // each DiskResource can be in a loaded or unloaded state.
 // the predicates 'users>0' and 'loaded' are unrelated by logic
+// Example of users>0 && !loaded: demand placed in queue, not yet loaded
+// Example of users==0 && loaded: resource in LRU queue, no pressure to unload yet
 // !loaded => dependencies.size()==0
 // loaded  => forall d in dependencies: d.loaded
 // users>0 => forall d in dependencies: d.users > 0
@@ -114,20 +127,17 @@ class DiskResource {
 
         virtual std::string getName (void) const = 0;
 
+        bool isLoaded (void) { return loaded; }
+
+        int getUsers (void) { return users; }
+
+        bool noUsers() { return users == 0; }
+
     protected:
 
-        virtual void load (void) 
-        {
-                //CVERB << "LOAD " << getName() << std::endl;
-                loaded = true;
-        }
+        virtual void load (void);
 
-        virtual void unload (void)
-        {
-                //CVERB << "FREE " << getName() << std::endl;
-                APP_ASSERT(noUsers());
-                loaded = false;
-        }
+        virtual void unload (void);
 
         // if returns true, will get added to gpu death row list when no-longer required
         virtual bool isGPUResource (void)
@@ -135,31 +145,39 @@ class DiskResource {
                 return false;
         }
 
-    private:
+        // called as 'this' is loaded
+        void addDependency (const std::string &name)
+        {
+                APP_ASSERT(name!="");
+                DiskResource *dep = disk_resource_get_or_make(name);
+                dependencies.push_back(dep);
+                dep->increment();
+                dep->load();
+        }
 
-        bool noUsers() { return users == 0; }
+    private:
 
         void increment (void)
         {
-                //CVERB << "++ " << getName() << std::endl;
+                if (disk_resource_verbose_incs)
+                        CVERB << "++ " << getName() << std::endl;
                 users++;
         }
 
         bool decrement (void)
         {
-                //CVERB << "-- " << getName() << std::endl;
+                if (disk_resource_verbose_incs)
+                        CVERB << "-- " << getName() << std::endl;
                 users--;
                 // do not unload at this time, will be added to LRU queue by caller
                 return users == 0;
         }
 
-        bool isLoaded (void) { return loaded; }
+        DiskResources dependencies;
 
         bool loaded;
         int users;
-        DiskResources dependencies;
 
-        void setDependenciesBG (DiskResources &new_dep);
 
         friend class Demand;
         friend class BackgroundLoader;
@@ -178,8 +196,6 @@ inline std::ostream &operator << (std::ostream &o, const DiskResources &dr)
         }
         return o << (dr.size()==0?"]":" ]");
 }
-
-DiskResource *disk_resource_get_or_make (const std::string &rn);
 
 class Demand : public fast_erase_index {
     public:
@@ -247,12 +263,12 @@ class BackgroundLoader {
         // background thread entry point
         void operator() (void);
 
+        boost::recursive_mutex lock;
+        boost::condition cVar;
+
     protected:
 
         bool nearestDemand (Demand * volatile &return_demand);
-
-        boost::recursive_mutex lock;
-        boost::condition cVar;
 
         DiskResources mBastards;
         volatile unsigned short mNumBastards;
@@ -268,14 +284,6 @@ class BackgroundLoader {
 
 
     public:
-
-/*
-        void refreshDiskResource (DiskResource *v)
-        {
-                mDeathRow.removeIfPresent(v);
-        }
-*/
-                
 
         size_t getLRUQueueSizeGPU (void) const
         { return mDeathRowGPU.size(); }

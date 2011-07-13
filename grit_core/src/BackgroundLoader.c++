@@ -26,9 +26,54 @@
 #include "main.h"
 
 #define SYNCHRONISED boost::recursive_mutex::scoped_lock _scoped_lock(lock)
+#define SYNCHRONISED2(bgl) boost::recursive_mutex::scoped_lock _scoped_lock(bgl->lock)
+
+bool disk_resource_verbose_loads = false;
+bool disk_resource_verbose_incs = false;
 
 typedef std::map<std::string, DiskResource*> DiskResourceMap;
 DiskResourceMap disk_resource_map;
+
+int disk_resource_num(void)
+{
+        return disk_resource_map.size();
+}
+
+int disk_resource_num_loaded (void)
+{
+        int r = 0;
+        DiskResourceMap &m = disk_resource_map;
+        for (DiskResourceMap::iterator i=m.begin(),i_=m.end() ; i!=i_ ; ++i) {
+                if (i->second->isLoaded()) r++;
+        }
+        return r;
+}
+
+DiskResources disk_resource_all (void)
+{
+        DiskResources r;
+        DiskResourceMap &m = disk_resource_map;
+        for (DiskResourceMap::iterator i=m.begin(),i_=m.end() ; i!=i_ ; ++i) {
+                r.push_back(i->second);
+        }
+        return r;
+}
+
+DiskResources disk_resource_all_loaded (void)
+{
+        DiskResources r;
+        DiskResourceMap &m = disk_resource_map;
+        for (DiskResourceMap::iterator i=m.begin(),i_=m.end() ; i!=i_ ; ++i) {
+                if (i->second->isLoaded())
+                        r.push_back(i->second);
+        }
+        return r;
+}
+ 
+DiskResource *disk_resource_get (const std::string &rn)
+{
+        return disk_resource_map[rn];
+}
 
 DiskResource *disk_resource_get_or_make (const std::string &rn)
 {
@@ -69,11 +114,38 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
         return dr;
 }
 
+
+void DiskResource::load (void)
+{
+        if (disk_resource_verbose_loads)
+                CVERB << "LOAD " << getName() << std::endl;
+        loaded = true;
+}
+
+void DiskResource::unload (void)
+{
+        if (disk_resource_verbose_loads)
+                CVERB << "FREE " << getName() << std::endl;
+        APP_ASSERT(noUsers());
+        for (unsigned i=0 ; i<dependencies.size() ; ++i) {
+                dependencies[i]->decrement();
+                bgl->finishedWith(dependencies[i]);
+        }
+        dependencies.clear();
+        loaded = false;
+}
+
+
+
 // called by main thread only
 bool Demand::requestLoad (float dist)
 {
         mDist = dist;
-        if (mInBackgroundQueue) return false;
+        {
+                SYNCHRONISED2(bgl);
+                if (mInBackgroundQueue) return false;
+        }
+
         bool all_loaded = true;
         if (!incremented) {
                 //CVERB << "Incrementing resources: " << resources << std::endl;
@@ -83,20 +155,22 @@ bool Demand::requestLoad (float dist)
                 }
                 incremented = true;
         }
+
         //CVERB << "Checking if resources are loaded: " << resources << std::endl;
         for (unsigned i=0 ; i<resources.size() ; ++i) {
                 if (!resources[i]->isLoaded()) all_loaded = false;
         }
+
         // if all the resources are in a loaded state then return true
-        if (all_loaded) return true;
+        if (!all_loaded) {
+                //CVERB << "Requesting background load: " << resources << std::endl;
+                // else get the bgl to do the right thing and return false
+                bgl->checkRAMHost();
+                bgl->checkRAMGPU();
+                bgl->add(this);
+        }
 
-        //CVERB << "Requesting background load: " << resources << std::endl;
-        // else get the bgl to do the right thing and return false
-        bgl->checkRAMHost();
-        bgl->checkRAMGPU();
-        bgl->add(this);
-
-        return false;
+        return true;
 }
 
 // called by main thread only
@@ -155,6 +229,7 @@ void BackgroundLoader::shutdown (void)
         delete mThread;
 }
 
+// called by main thread only
 void BackgroundLoader::add (Demand *d)
 {
         SYNCHRONISED;
@@ -169,8 +244,11 @@ void BackgroundLoader::remove (Demand *d)
         SYNCHRONISED;
         if (!d->mInBackgroundQueue) return;
         mDemands.erase(d);
-        if (mCurrent == d)
+        //CVERB << "Retracted demand." << std::endl;
+        if (mCurrent == d) {
+                //CVERB << "making a bastard..." << std::endl;
                 mCurrent = NULL;
+        }
         d->mInBackgroundQueue = false;
 }               
 
@@ -203,7 +281,7 @@ void BackgroundLoader::operator() (void)
                         SYNCHRONISED;
                         if (mCurrent) {
                                 // Usual case:
-                                // demand wasn't retracted while we were
+                                // demand was not retracted while we were
                                 // processing it
                                 mCurrent->mInBackgroundQueue = false;
                                 // cache in d to suppress compiler error
@@ -217,6 +295,7 @@ void BackgroundLoader::operator() (void)
                                 // in which case pending is empty)
                                 typedef DiskResources::const_iterator DRCI;
                                 for (DRCI i=pending.begin(), i_=pending.end() ; i!=i_ ; ++i) {
+                                        //CVERB << "Poor bastard: " << (*i)->getName() << " (" << (*i)->getUsers() << ")" << std::endl;
                                         mBastards.push_back(*i);
                                         mNumBastards = mBastards.size();
                                 }
@@ -283,9 +362,10 @@ void BackgroundLoader::finishedWith (DiskResource *de)
 {
         if (mQuit) return;
         if (de->noUsers()) {
-                mDeathRowHost.push(de); 
                 if (de->isGPUResource()) {
                        mDeathRowGPU.push(de); 
+                } else {
+                        mDeathRowHost.push(de); 
                 }
         }
 }
@@ -303,7 +383,7 @@ void BackgroundLoader::checkRAMGPU ()
 
                 DiskResource *r = mDeathRowGPU.pop();
 
-                if (r->noUsers()) r->unload();
+                if (r->noUsers() && r->isLoaded()) r->unload();
         }
 
 }
@@ -331,7 +411,7 @@ void BackgroundLoader::checkRAMHost ()
 
                 DiskResource *r = mDeathRowHost.pop();
 
-                if (r->noUsers()) r->unload();
+                if (r->noUsers() && r->isLoaded()) r->unload();
         }
 
 }

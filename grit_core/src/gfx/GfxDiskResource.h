@@ -42,21 +42,8 @@ class GfxDiskResource : public DiskResource {
 
   private:
     Ogre::ResourcePtr rp;
-    // have a vector of other DiskResource, increment them when this one is incremented
-    // decrement them when this one is decremented
-    // if a material is changed to use a different texture then
-    // clearly this vector will be wrong
-    // however the most harm this will do is to cause a loading stutter
-    // It may also be possible to update this record when a material is changed
-    // Even better: link to the materials from here, not the resources
-    // then, we can do the increment thing by reading from the materials the correct value
-    // The material will have a link to a DiskResource for each texture, it will not incrememnt it
-    // if the material changes texture, it will have to cause the users of that material to decrement it
+
 };
-
-// When the resource is created, it is not known what other resources it depends on.
-
-// When the resource is incremented, it is still not known.
 
 // Dependent resources are only known when the resource is loaded.  In the case
 // of meshes and textures, once the mesh is loaded (i.e. prepared in Ogre
@@ -64,16 +51,22 @@ class GfxDiskResource : public DiskResource {
 // material.  There is an issue of what happens when the material changes and
 // the dependencies are stale.
 
-// upon load, get vector<DiskResource>
-// upon any change to dependencies, ensure 
-// increment them all
-// load them all if not already loaded
+// Modifications to children at load or unload:
 
-// upon unload
-// decrement them all
-// 
+// * at load, will set children from empty set to the correct set, and increment
+// * at unload, will set children to empty set, and decrement
+
+// Modifications to children due to material changes
+
+// * When a material changes texture, iterate through all meshes to find users of this material
+// * For each mesh that uses the material:
+// * * calculate: New set of children, old set of children
+// * * new set of children are incremented, and loaded (foreground thread) if needed
+// * * old set of children are decremented
 
 size_t gfx_gpu_ram_available (void);
 size_t gfx_gpu_ram_used (void);
+
+extern bool gfx_disk_resource_verbose_loads;
 
 #endif

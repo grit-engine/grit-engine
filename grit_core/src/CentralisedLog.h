@@ -63,52 +63,44 @@ class CentralisedLog {
 
 extern CentralisedLog clog;
 
+// Chickening out of making this thread safe -- because the only sane way to do it is to introduce
+// yield points at the std::endl, but then if someone forgets a std::endl it will deadlock
+
 class CLog {
-        bool takenLock;
+        //static bool takenLock;
 
     public:
 
         CLog (const char *file, int line, bool error)
-              : takenLock(true)
         {
-                clog.lock.lock();
-                if (error) {
-                        clog.tmp << BOLD << RED << "ERROR" << RESET;
-                } else {
-                        clog.tmp << BOLD << BLUE << "VERBOSE" << RESET;
-                }       
-                clog.tmp<<" ("<<BOLD<<file<<NOBOLD
-                        <<":"<<BOLD<<line<<NOBOLD<<"): ";
+                (error ? (*this) << BOLD << RED << "ERROR" << RESET
+                       : (*this) << BOLD << BLUE << "VERBOSE" << RESET)
+                
+                <<" ("<<BOLD<<file<<NOBOLD<<":"<<BOLD<<line<<NOBOLD<<"): ";
         }
 
         CLog ()
-              : takenLock(true)
         {
-                clog.lock.lock();
         }
 
         ~CLog (void)
         {
-                if (takenLock) {
-                        clog.lock.unlock();
-                        takenLock = false;
-                }
         }
 
         typedef std::ostream &manip(std::ostream&);
 
         CLog &operator<< (manip *o)
         {
-                if (!takenLock) {
-                        clog.lock.lock();
-                        takenLock = true;
-                }
+                //if (!takenLock) {
+                //        clog.lock.lock();
+                //        takenLock = true;
+                //}
 
                 if (o == (manip*)std::endl) {
                         clog.echo(clog.tmp.str());
                         clog.tmp.str("");
-                        clog.lock.unlock();
-                        takenLock = false;
+                        //clog.lock.unlock();
+                        //takenLock = false;
                 } else {
                         clog.tmp << o;
                 }
@@ -117,10 +109,10 @@ class CLog {
 
         template<typename T> CLog &operator<<(T const &o)
         {
-                if (!takenLock) {
-                        clog.lock.lock();
-                        takenLock = true;
-                }
+                //if (!takenLock) {
+                //        clog.lock.lock();
+                //        takenLock = true;
+                //}
                 clog.tmp << o;
                 return *this;
         }
@@ -137,18 +129,20 @@ CVERB << "hello world" << std::endl;
 #define CLOG CLog()
 #define CVERB CLog(__FILE__,__LINE__,false)
 
-void assert_triggered (const std::string &msg);
+void assert_triggered (void);
 
 #define APP_ASSERT(cond) do { \
         if (!(cond)) { \
-                assert_triggered(#cond); \
+                CERR << "assertion failed: " << #cond << std::endl; \
+                assert_triggered(); \
         } \
 } while (0)
 
 #define APP_PERROR_ASSERT(cond) do { \
         if (!(cond)) {\
-                CERR << "assertion failed: " << #cond << std::endl;\
+                CERR << "assertion failed: " << #cond << std::endl; \
                 perror("perror says"); \
+                assert_triggered(); \
         } \
 } while (0)
 

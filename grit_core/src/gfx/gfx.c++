@@ -1548,8 +1548,15 @@ GfxBody::GfxBody (const std::string &mesh_name, const GfxStringMap &sm, const Gf
     memset(colours, 0, sizeof(colours));
     std::string ogre_name = mesh_name.substr(1);
 
-    mesh = Ogre::MeshManager::getSingleton().load(ogre_name,RESGRP);
-    // validate mesh in case it was just loaded for the first time
+    mesh = Ogre::MeshManager::getSingleton().getByName(ogre_name,RESGRP);
+    if (mesh.isNull()) {
+        mesh = Ogre::MeshManager::getSingleton().load(ogre_name,RESGRP);
+        CVERB << "Ogre::Mesh was not created yet: \""<<mesh->getName()<<"\"" << std::endl;
+    }
+    if (!mesh->isPrepared() && !mesh->isLoaded()) {
+        CVERB << "Ogre::Mesh was not prepared yet: \""<<mesh->getName()<<"\"" << std::endl;
+    }
+    mesh->load();
 
     ent = NULL;
     entEmissive = NULL;
@@ -1563,6 +1570,7 @@ GfxBody::GfxBody (const std::string &mesh_name, const GfxStringMap &sm, const Gf
 
 void GfxBody::updateMaterials (void)
 {
+    GFX_MAT_SYNC;
     if (mesh.isNull()) return;
     validate_mesh(mesh, initialMaterialMap);
     materials = std::vector<GfxMaterial*>(mesh->getNumSubMeshes());
@@ -1642,6 +1650,7 @@ void GfxBody::updateVisibility (void)
 
 void GfxBody::updateEntEmissive (void)
 {
+    GFX_MAT_SYNC;
     if (ent==NULL) return;
     if (entEmissive != NULL) {
         // destroy it if we've already got one
@@ -1671,8 +1680,14 @@ void GfxBody::updateEntEmissive (void)
     updateVisibility();
 }
 
+// Currently needs to be updated when these material properties change:
+// getSceneBlend
+// getStipple
+// emissiveMat
 void GfxBody::updateProperties (void)
 {
+    GFX_MAT_SYNC;
+
     if (ent==NULL) return;
 
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
@@ -1681,7 +1696,7 @@ void GfxBody::updateProperties (void)
 
         GfxMaterial *gfx_material = materials[i];
 
-        switch (gfx_material->getBlend()) {
+        switch (gfx_material->getSceneBlend()) {
             case GFX_MATERIAL_OPAQUE:
             se->setRenderQueueGroup(RQ_GBUFFER_OPAQUE);
             break;
@@ -2058,7 +2073,7 @@ void GfxBody::setEnabled (bool v)
 // {{{ PARTICLES
 
 static void reset_particle_material (const Ogre::MaterialPtr &mat, std::string texname,
-                                     GfxParticleBlend blend, float alphaRej, bool emissive)
+                                     GfxParticleSceneBlend blend, float alphaRej, bool emissive)
 {
     mat->removeAllTechniques();
     Ogre::Pass *pass = mat->createTechnique()->createPass();
@@ -2106,7 +2121,7 @@ class GfxParticleSystem {
     float texWidth;
     public:
     GfxParticleSystem (const std::string &pname, std::string texname,
-                       GfxParticleBlend blend, float alphaRej, bool emissive)
+                       GfxParticleSceneBlend blend, float alphaRej, bool emissive)
     {
         bbset = ogre_sm->createBillboardSet(pname, 100);
         ogre_root_node->attachObject(bbset);
@@ -2263,7 +2278,7 @@ void GfxParticle::release (void)
 { sys->release(internal); }
 
 void gfx_particle_define (const std::string &pname, const std::string &tex_name,
-                          GfxParticleBlend blend, float alpha_rej, bool emissive)
+                          GfxParticleSceneBlend blend, float alpha_rej, bool emissive)
 {
     GfxParticleSystem *&psys = psystems[pname];
     if (psys != NULL) delete psys;
@@ -2515,32 +2530,48 @@ static void handle_dirty_materials (void)
     dirty_mats.clear();
 }
 
+boost::recursive_mutex gfx_material_lock;
+
 GfxMaterial::GfxMaterial (const std::string &name_)
   : fadingMat(NULL),
     alpha(1),
-    blend(GFX_MATERIAL_OPAQUE),
+    sceneBlend(GFX_MATERIAL_OPAQUE),
     stipple(true),
+    paintMode(GFX_MATERIAL_PAINT_NONE),
+    paintByDiffuseAlpha(false),
+    specularMode(GFX_MATERIAL_SPEC_NONE),
+    numTextureBlends(1),
+
     name(name_)
 {
 }
 
-// FIXME: any updates to material properties need to be propagated to the GfxBodies that use them...
+// FIXME: certain updates to material properties need to be propagated to the GfxBodies that use them...
 
-void GfxMaterial::setAlpha (float v)
+void GfxMaterial::setSceneBlend (GfxMaterialSceneBlend v)
 {
-    alpha = v;
-    dirty_mats.insert(this);
-}
-
-void GfxMaterial::setBlend (GfxMaterialBlend v)
-{
-    blend = v;
+    GFX_MAT_SYNC;
+    sceneBlend = v;
     dirty_mats.insert(this);
 }
 
 void GfxMaterial::setStipple (bool v)
 {
+    GFX_MAT_SYNC;
     stipple = v;
+    dirty_mats.insert(this);
+}
+
+void GfxMaterial::setEmissiveColour (const Vector3 &v)
+{
+    GFX_MAT_SYNC;
+    emissiveColour = v;
+    if (emissiveColour != Vector3(0,0,0) ) {
+            std::string ename = name+std::string("^");
+            emissiveMat = Ogre::MaterialManager::getSingleton().getByName(ename,"GRIT");
+    } else {
+            emissiveMat.setNull();
+    }
     dirty_mats.insert(this);
 }
 
@@ -2554,6 +2585,7 @@ static GfxMaterialDB material_db;
 
 GfxMaterial *gfx_material_add (const std::string &name)
 {
+    GFX_MAT_SYNC;
     if (gfx_material_has(name)) GRIT_EXCEPT("Material already exists: \""+name+"\"");
     GfxMaterial *r = new GfxMaterial(name);
     material_db[name] = r;
@@ -2562,18 +2594,21 @@ GfxMaterial *gfx_material_add (const std::string &name)
 
 GfxMaterial *gfx_material_add_or_get (const std::string &name)
 {
+    GFX_MAT_SYNC;
     if (gfx_material_has(name)) return gfx_material_get(name);
     return gfx_material_add(name);
 }
 
 GfxMaterial *gfx_material_get (const std::string &name)
 {
+    GFX_MAT_SYNC;
     if (!gfx_material_has(name)) GRIT_EXCEPT("Material does not exist: \""+name+"\"");
     return material_db[name];
 }
 
 bool gfx_material_has (const std::string &name)
 {
+    GFX_MAT_SYNC;
     return material_db.find(name) != material_db.end();
 }
 

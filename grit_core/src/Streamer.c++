@@ -303,7 +303,8 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                         // note 'loaded' includes things which have started
                         // but not finished loading...
                         loaded.push_back(o);
-                } else {
+                }
+                if (o->isInBackgroundQueue()) {
                         // technically not always true because the background thread
                         // may have loaded it very quickly, in which case we will simply
                         // wait until next time
