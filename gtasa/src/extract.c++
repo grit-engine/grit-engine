@@ -611,7 +611,6 @@ void extract (const Config &cfg, std::ostream &out)
             ASSERT(dff.geometries.size()==1 || dff.geometries.size()==2);
 
             typedef std::vector<std::string> Strs;
-            Strs background_texs;
 
             float rad = 0;
             for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
@@ -656,16 +655,6 @@ void extract (const Config &cfg, std::ostream &out)
                         out,out_name,
                         o,objname,g,matdb,materials_lua);
 
-                MatSplits &ms = g.mat_spls;
-                for (MatSplits::iterator s=ms.begin(), s_=ms.end() ; s!=s_ ; s++) {
-                    const material &m = g.materials[s->material];
-                    const Strings &texs = m.rewrittenTextures;
-                    if (texs.size()==0) continue;
-                    ASSERT(texs.size()==1);
-                    background_texs.push_back(texs[0]);
-                }
-
-                
             }
 
             std::stringstream col_field;
@@ -712,15 +701,6 @@ void extract (const Config &cfg, std::ostream &out)
                 if (!no_lights_yet) lights_field << "}";
             }
 
-            //preloads -- the mesh(s) and textures fr
-            std::stringstream background_texs_ss;
-            for (Strs::iterator i=background_texs.begin(),
-                        i_=background_texs.end() ; i!=i_ ; ++i) {
-                if (*i=="") continue;
-                background_texs_ss<<"\""<<*i<<"\",";
-            }
-            
-
             bool cast_shadow = 0 != (o.flags&OBJ_FLAG_POLE_SHADOW);
             cast_shadow = true;
             if ((o.flags & OBJ_FLAG_ALPHA1) && (o.flags & OBJ_FLAG_NO_SHADOW))
@@ -731,7 +711,6 @@ void extract (const Config &cfg, std::ostream &out)
                    <<cls<<",{"
                    <<"castShadows="<<(cast_shadow?"true":"false")
                    <<",renderingDistance="<<(o.draw_distance+rad)
-                   <<",textures={"<<background_texs_ss.str()<<"}"
                    <<col_field.str()
                    <<lights_field.str()
                    <<"})\n";

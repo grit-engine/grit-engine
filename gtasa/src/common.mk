@@ -78,17 +78,42 @@ clean:
 
 # DO NOT DELETE
 
-ColParser.o: ../src/ColParser.h ../src/ios_util.h
-colread.o: ../src/ios_util.h ../src/ColParser.h
+ColParser.o: ../src/ColParser.h
+ColParser.o: ../../grit_core/src/physics/TColParser.h
+ColParser.o: ../../grit_core/src/math_util.h
+ColParser.o: ../../grit_core/src/CentralisedLog.h
+ColParser.o: ../../grit_core/src/console_colour.h
+ColParser.o: ../../grit_core/src/physics/TColLexer
+ColParser.o: ../../grit_core/src/physics/TColLexer-token_ids
+ColParser.o: ../src/ios_util.h
+colread.o: ../src/ios_util.h ../../grit_core/src/physics/TColParser.h
+colread.o: ../../grit_core/src/math_util.h
+colread.o: ../../grit_core/src/CentralisedLog.h
+colread.o: ../../grit_core/src/console_colour.h
+colread.o: ../../grit_core/src/physics/TColLexer
+colread.o: ../../grit_core/src/physics/TColLexer-token_ids
+colread.o: ../src/ColParser.h
 csvread.o: ../src/csvread.h ../src/ios_util.h
 dffread.o: ../src/ios_util.h ../src/dffread.h ../src/ideread.h
+dffread.o: ../../grit_core/src/physics/TColParser.h
+dffread.o: ../../grit_core/src/math_util.h
+dffread.o: ../../grit_core/src/CentralisedLog.h
+dffread.o: ../../grit_core/src/console_colour.h
+dffread.o: ../../grit_core/src/physics/TColLexer
+dffread.o: ../../grit_core/src/physics/TColLexer-token_ids
 dffread.o: ../src/tex_dups.h ../src/ColParser.h
 dirutil.o: ../src/dirutil.h ../src/ios_util.h
 extract.o: ../src/imgread.h ../src/iplread.h ../src/ideread.h
-extract.o: ../src/tex_dups.h ../src/dffread.h ../src/txdread.h
-extract.o: ../src/ColParser.h ../src/ios_util.h ../src/dirutil.h
-extract.o: ../src/csvread.h ../src/handling.h ../src/surfinfo.h
-extract.o: ../src/procobj.h
+extract.o: ../src/tex_dups.h ../src/dffread.h
+extract.o: ../../grit_core/src/physics/TColParser.h
+extract.o: ../../grit_core/src/math_util.h
+extract.o: ../../grit_core/src/CentralisedLog.h
+extract.o: ../../grit_core/src/console_colour.h
+extract.o: ../../grit_core/src/physics/TColLexer
+extract.o: ../../grit_core/src/physics/TColLexer-token_ids
+extract.o: ../src/txdread.h ../src/ColParser.h ../src/ios_util.h
+extract.o: ../src/dirutil.h ../src/csvread.h ../src/handling.h
+extract.o: ../src/surfinfo.h ../src/procobj.h
 handling.o: ../src/handling.h ../src/csvread.h ../src/ios_util.h
 ideread.o: ../src/ideread.h ../src/ios_util.h ../src/csvread.h
 ifpread.o: ../src/ios_util.h
