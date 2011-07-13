@@ -64,9 +64,9 @@ GfxDiskResource::GfxDiskResource (std::string name, const std::string &ext)
 // hack to get access to stuff
 class MyMeshHack : public Ogre::Mesh {
     public:
-    static Ogre::MemoryDataStreamPtr getData (const Ogre::MeshPtr &mp) 
+    static Ogre::DataStreamPtr getData (const Ogre::MeshPtr &mp) 
     {
-        return Ogre::MemoryDataStreamPtr((*mp).*&MyMeshHack::mFreshFromDisk);
+        return ((*mp).*&MyMeshHack::mFreshFromDisk);
     }
 };
 
@@ -190,7 +190,7 @@ void GfxDiskResource::load (void)
             // what textures we are depending on...
             if (rp->getCreator()->getResourceType() == "Mesh") {
                 Ogre::MeshPtr mp = rp;
-                Ogre::MemoryDataStreamPtr mesh_data = MyMeshHack::getData(mp);
+                Ogre::DataStreamPtr mesh_data = MyMeshHack::getData(mp);
                 std::vector<std::string> mat_names;
                 MyMeshDeserializer mmd(mesh_data, Ogre::MeshManager::getSingleton().getListener());
                 mmd.importMatNames(mp, mat_names);
