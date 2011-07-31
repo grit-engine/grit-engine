@@ -56,9 +56,32 @@ static inline btVector3 to_bullet (const Vector3 &from)
 static inline btQuaternion to_bullet (const Quaternion &from)
 { return btQuaternion(from.x, from.y, from.z, from.w); }
 
-btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
+static int parse_material (const std::string &name,
+                           const std::string &material_name,
+                           const MaterialDB &db)
+{                          
+        int id = 0; // initialise to avoid warning
+        try {
+                id = db.getMaterial(pwd_full(material_name,"/common/Frictionless")).id;
+        } catch (GritException &e) {
+                CERR << e.longMessage()
+                     << " (while parsing \"" << name << "\")" << std::endl;
+                try {
+                        id = db.getMaterial("/common/Frictionless").id;
+                } catch (GritException &e) {
+                        CERR << e.longMessage()
+                             << " (while handling the above error!)" << std::endl;
+                        app_fatal();
+                }
+        }               
+        return id;
+}                       
+
+btCompoundShape *import_compound (const std::string &name,
+                                  btCompoundShape *s, const Compound &c,
                                   LooseEnds &les,
-                                  CollisionMesh::Materials &partMaterials)
+                                  CollisionMesh::Materials &partMaterials,
+                                  const MaterialDB &db)
 {
 
         les.push_back(new LooseEndImpl<btCollisionShape>(s));
@@ -76,7 +99,7 @@ btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
                         s2->addPoint(to_bullet(v));
                 }
                 s->addChildShape(btTransform(ZQ,ZV), s2);
-                partMaterials.push_back(h.material);
+                partMaterials.push_back(parse_material(name,h.material,db));
         }
 
         for (size_t i=0 ; i<c.boxes.size() ; ++i) {
@@ -97,7 +120,7 @@ btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
                 s2->setMargin(b.margin);
                 s->addChildShape(btTransform(btQuaternion(b.qx,b.qy,b.qz,b.qw),
                                              btVector3(b.px,b.py,b.pz)), s2);
-                partMaterials.push_back(b.material);
+                partMaterials.push_back(parse_material(name,b.material,db));
         }
 
         for (size_t i=0 ; i<c.cylinders.size() ; ++i) {
@@ -109,7 +132,7 @@ btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
                 s->addChildShape(
                         btTransform(btQuaternion(cyl.qx,cyl.qy,cyl.qz,cyl.qw),
                                     btVector3(cyl.px,cyl.py,cyl.pz)), s2);
-                partMaterials.push_back(cyl.material);
+                partMaterials.push_back(parse_material(name,cyl.material,db));
         }
 
         for (size_t i=0 ; i<c.cones.size() ; ++i) {
@@ -120,7 +143,7 @@ btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
                 s->addChildShape(
                       btTransform(btQuaternion(cone.qx,cone.qy,cone.qz,cone.qw),
                                   btVector3(cone.px,cone.py,cone.pz)), s2);
-                partMaterials.push_back(cone.material);
+                partMaterials.push_back(parse_material(name,cone.material,db));
         }
 
         for (size_t i=0 ; i<c.planes.size() ; ++i) {
@@ -129,7 +152,7 @@ btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
                         new btStaticPlaneShape(btVector3(p.nx,p.ny,p.nz),p.d);
                 les.push_back(new LooseEndImpl<btCollisionShape>(s2));
                 s->addChildShape(btTransform(ZQ,ZV), s2);
-                partMaterials.push_back(p.material);
+                partMaterials.push_back(parse_material(name,p.material,db));
         }
 
         for (size_t i=0 ; i<c.spheres.size() ; ++i) {
@@ -138,16 +161,18 @@ btCompoundShape *import_compound (btCompoundShape *s, const Compound &c,
                 les.push_back(new LooseEndImpl<btCollisionShape>(s2));
                 s->addChildShape(btTransform(ZQ,
                                              btVector3(sp.px,sp.py,sp.pz)), s2);
-                partMaterials.push_back(sp.material);
+                partMaterials.push_back(parse_material(name,sp.material,db));
         }
 
         return s;
 }
 
 
-btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &les,
+btCollisionShape *import_trimesh (const std::string &name,
+                                  const TriMesh &f, bool is_static, LooseEnds &les,
                                   CollisionMesh::Materials &faceMaterials,
-                                  CollisionMesh::ProcObjFaceDB &faceDB)
+                                  CollisionMesh::ProcObjFaceDB &faceDB,
+                                  const MaterialDB &db)
 {
         Vertexes *vertexes = new Vertexes();
         les.push_back(new LooseEndImpl<Vertexes>(vertexes));
@@ -162,7 +187,7 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
 
         faceMaterials.reserve(f.faces.size());
         for (Faces::const_iterator i=f.faces.begin(), i_=f.faces.end() ; i!=i_ ; ++i) {
-                int m = i->material;
+                int m = parse_material(name, i->material, db);
                 faceMaterials.push_back(m);
                 CollisionMesh::ProcObjFace f;
                 f.A =  (*vertexes)[i->v1];
@@ -211,23 +236,26 @@ btCollisionShape *import_trimesh (const TriMesh &f, bool is_static, LooseEnds &l
 }
 
 
-btCompoundShape *import (const TColFile &f,
+btCompoundShape *import (const std::string &name,
+                         const TColFile &f,
                          CollisionMesh *cm,
                          LooseEnds &les,
                          CollisionMesh::Materials &partMaterials,
                          CollisionMesh::Materials &faceMaterials,
-                         CollisionMesh::ProcObjFaceDB &faceDB)
+                         CollisionMesh::ProcObjFaceDB &faceDB,
+                         const MaterialDB &db)
 {
 
         bool stat = f.mass == 0.0f; // static
         btCompoundShape *s = new btCompoundShape();
 
         if (f.usingCompound) {
-                import_compound(s, f.compound, les, partMaterials);
+                import_compound(name, s, f.compound, les, partMaterials, db);
         }
 
         if (f.usingTriMesh) {
-                btCollisionShape *s2 = import_trimesh (f.triMesh, stat, les, faceMaterials, faceDB);
+                btCollisionShape *s2 = import_trimesh(name, f.triMesh, stat, les,
+                                                      faceMaterials, faceDB, db);
                 s->addChildShape(btTransform(btQuaternion(0,0,0,1),btVector3(0,0,0)), s2);
         }
 
@@ -342,23 +370,24 @@ void CollisionMesh::importFromFile (const Ogre::DataStreamPtr &file, const Mater
                 std::istream stream(&proxy);
                 quex::TColLexer qlex(&stream);
                 TColFile tcol;
-                pwd_push_file("/"+file->getName());
-                parse_tcol_1_0(file->getName(),&qlex,tcol,db);
-                pwd_pop();
+                parse_tcol_1_0(file->getName(),&qlex,tcol);
 
                 Materials m1, m2;
                 ProcObjFaceDB fdb;
                 LooseEnds ls;
                 btCompoundShape *loaded_shape;
 
+                pwd_push_file("/"+file->getName());
                 try {
-                        loaded_shape = import(tcol,this,ls,m1,m2,fdb);
+                        loaded_shape = import(file->getName(),tcol,this,ls,m1,m2,fdb,db);
                 } catch (GritException& e) {
+                        pwd_pop();
                         for (LooseEnds::iterator i=ls.begin(), i_=ls.end() ; i!=i_ ; ++i) {
                                 delete *i;
                         }
                         throw e;
                 }
+                pwd_pop();
 
                 for (LooseEnds::iterator i=looseEnds.begin(), i_=looseEnds.end() ; i!=i_ ; ++i) {
                         delete *i;

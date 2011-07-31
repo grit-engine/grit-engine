@@ -30,6 +30,9 @@ typedef SharedPtr<PhysicsWorld> PhysicsWorldPtr;
 class RigidBody;
 typedef SharedPtr<RigidBody> RigidBodyPtr;
 
+struct PhysicsMaterial;
+class MaterialDB;
+
 #ifndef PhysicsWorld_h
 #define PhysicsWorld_h
 
@@ -49,6 +52,62 @@ extern "C" {
 
 #include "../LuaPtr.h"
 
+struct PhysicsMaterial {
+        std::string name;
+        int interactionGroup;
+        int id;
+};      
+
+class MaterialDB {
+
+    public:
+
+        const PhysicsMaterial &getMaterial (const std::string &name) const
+        {
+                SDB::const_iterator i = mdb.find(name);
+                if (i==mdb.end())
+                        GRIT_EXCEPT("Physical Material \""+name+"\" does not exist.");
+                return i->second;
+        }
+
+        const PhysicsMaterial &getMaterial (int material) const
+        { return *mdb2[material]; }
+
+        const PhysicsMaterial &getMaterialSafe (int material) const
+        {
+                if ((size_t)material<mdb2.size()) return *mdb2[material];
+                if (mdb2.size() == 0) {
+                        CERR << "MaterialDB is empty!" << std::endl;
+                        app_fatal();
+                }
+                CERR << "Got a bad material id: " << material << std::endl;
+                return *mdb2[0];
+        }
+
+        void setMaterial (const std::string &name, int interaction_group)
+        {
+                if (mdb.find(name) == mdb.end()) {
+                        PhysicsMaterial &m = mdb[name];
+                        m.name = name;
+                        m.interactionGroup = interaction_group;
+                        m.id = mdb2.size();
+                        mdb2.push_back(&m);
+                } else {
+                        PhysicsMaterial &m = mdb[name];
+                        m.interactionGroup = interaction_group;
+                }
+        }
+
+    protected:
+
+        typedef std::map<std::string, PhysicsMaterial> SDB; // map string to material
+        SDB mdb;
+
+        typedef std::vector<PhysicsMaterial*> IDB; // map id to material
+        IDB mdb2;
+};
+
+// a class that extends a bullet class
 class DynamicsWorld;
 
 class PhysicsWorld {

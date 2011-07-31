@@ -29,6 +29,7 @@
 
 #include "TColParser.h"
 #include "LooseEnd.h"
+#include "PhysicsWorld.h"
 
 class CollisionMesh;
 typedef SharedPtr<CollisionMesh> CollisionMeshPtr;

@@ -29,6 +29,8 @@
 #include "ideread.h"
 #include "physics/TColParser.h"
 
+#include "ColParser.h"
+
 #define GEO_TRISTRIP 0x1
 #define GEO_POSITIONS 0x2
 #define GEO_TEXCOORDS 0x4
@@ -299,7 +301,8 @@ struct dff {
 
 // read from f, write into c, use p as a prefix on debug messages
 void ios_read_dff (int debug_threshold, std::ifstream &f,
-                   dff *c, const std::string &p);
+                   dff *c, const std::string &p,
+                   const std::string &phys_mat_pref, MaterialMap &db);
 
 void offset_dff (dff &dff, float x, float y, float z);
 

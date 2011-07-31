@@ -61,9 +61,6 @@ std::string next_arg(int& so_far, int argc, char **argv)
 CentralisedLog clog;
 void app_fatal (void) { abort(); }
 
-// I think we never actually call this as we never read a tcol
-std::string pwd_full (const std::string &, const std::string &)
-{ abort(); return std::string(); }
 
 int main(int argc, char **argv)
 {
@@ -75,6 +72,7 @@ int main(int argc, char **argv)
 
         // default parameters
         int debug_level = 0;
+        bool output_binary_specified = false;
         bool output_binary = false;
         std::string input_filename;
         std::string output_filename;
@@ -94,8 +92,10 @@ int main(int argc, char **argv)
                         output_filename = next_arg(so_far,argc,argv);
                 } else if (arg=="-B" || arg=="--output-bcol") {
                         output_binary = true;
+                        output_binary_specified = true;
                 } else if (arg=="-T" || arg=="--output-tcol") {
                         output_binary = false;
+                        output_binary_specified = true;
                 } else if (arg=="-m" || arg=="--material-prefix") {
                         mat_prefix = next_arg(so_far,argc,argv);
                 } else if (arg=="-h" || arg=="--help") {
@@ -108,10 +108,17 @@ int main(int argc, char **argv)
                 }
         }
 
+        if (!output_binary_specified) {
+                if (output_filename.length()>=5 && output_filename.substr(output_filename.length()-5)==".bcol")
+                        output_binary = true;
+                else
+                        output_binary = false;
+        }
+
         std::istream *in = NULL;
         std::ostream *out = NULL;
 
-        init_col_db(mat_prefix);
+        init_global_db();
 
         try {
 
@@ -134,7 +141,7 @@ int main(int argc, char **argv)
 
                         quex::TColLexer* qlex =
                                 new quex::TColLexer(in);
-                        parse_tcol_1_0(input_filename,qlex,tcol,db);
+                        parse_tcol_1_0(input_filename,qlex,tcol);
                         delete qlex;
 
                         if (output_filename==""||output_filename=="-") {
@@ -147,16 +154,20 @@ int main(int argc, char **argv)
                                 ASSERT_IO_SUCCESSFUL(*out_,
                                                     "opening "+output_filename);
                         }
-                        pretty_print_tcol(*out,tcol,db);
+                        if (output_binary) {
+                                //write_tcol_as_bcol(*out, tcol);
+                        } else {
+                                pretty_print_tcol(*out,tcol);
+                        }
 
                 } else if (fourcc==0x4c4f4342) { //BCOL
                         IOS_EXCEPT("Reading bcol not implemented.");
                 } else if (fourcc==0x4c4c4f43) { // COLL
-                                dump_all_cols(*in,output_binary,debug_level);
+                                dump_all_cols(*in,output_binary,mat_prefix,global_db,debug_level);
                 } else if (fourcc==0x324c4f43) { // COL2
-                                dump_all_cols(*in,output_binary,debug_level);
+                                dump_all_cols(*in,output_binary,mat_prefix,global_db,debug_level);
                 } else if (fourcc==0x334c4f43) { // COL3
-                                dump_all_cols(*in,output_binary,debug_level);
+                                dump_all_cols(*in,output_binary,mat_prefix,global_db,debug_level);
                 } else {
                         IOS_EXCEPT("Unrecognised fourcc tag.");
                 }

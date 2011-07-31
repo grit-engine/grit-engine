@@ -22,19 +22,27 @@
 #include <iostream>
 #include "physics/TColParser.h"
 
-void init_col_db (const std::string &prefix);
-extern MaterialDB db;
+typedef std::map<int, std::string> MaterialMap;
 
-void parse_col (std::string &name,
-                std::istream &in,
-                TColFile &tcol,
-                int debug_level=0);
-
-void dump_all_cols (std::istream &in, bool binary, int debug_level=0);
+extern MaterialMap global_db;
+void init_global_db (void);
 
 #ifndef ColParser_h
 #define ColParser_h
 
+
+void parse_col (std::string &name,
+                std::istream &in,
+                TColFile &tcol,
+                const std::string &mat_pref,
+                MaterialMap &db,
+                int debug_level=0);
+
+void dump_all_cols (std::istream &in,
+                    bool binary,
+                    const std::string &mat_pref,
+                    MaterialMap &db,
+                    int debug_level=0);
 #endif
 
 // vim: shiftwidth=8:tabstop=8:expandtab

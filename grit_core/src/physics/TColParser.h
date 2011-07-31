@@ -26,15 +26,12 @@
 #include "TColLexer"
 
 struct TColFile;
-struct PhysicsMaterial;
-class MaterialDB;
 
 void parse_tcol_1_0 (const std::string &name,
                      quex::TColLexer* qlex,
-                     TColFile &file,
-                     const MaterialDB &db);
+                     TColFile &file);
 
-void pretty_print_tcol (std::ostream &o, TColFile &f, const MaterialDB &db);
+void pretty_print_tcol (std::ostream &o, TColFile &f);
 
 typedef std::vector<Vector3> Vertexes;
 
@@ -42,60 +39,6 @@ typedef std::vector<Vector3> Vertexes;
 #ifndef TColParser_h
 #define TColParser_h
 
-struct PhysicsMaterial {
-        std::string name;
-        int interactionGroup;
-        int id;
-};  
-
-class MaterialDB {
-
-    public:
-
-        const PhysicsMaterial &getMaterial (const std::string &name) const
-        {
-                SDB::const_iterator i = mdb.find(name);
-                if (i==mdb.end())
-                        GRIT_EXCEPT("Physical Material \""+name+"\" does not exist.");
-                return i->second;
-        }
-
-        const PhysicsMaterial &getMaterial (int material) const
-        { return *mdb2[material]; }
-
-        const PhysicsMaterial &getMaterialSafe (int material) const
-        {
-                if ((size_t)material<mdb2.size()) return *mdb2[material];
-                if (mdb2.size() == 0) {
-                        CERR << "MaterialDB is empty!" << std::endl;
-                        app_fatal();
-                }
-                CERR << "Got a bad material id: " << material << std::endl;
-                return *mdb2[0];
-        }
-
-        void setMaterial (const std::string &name, int interaction_group)
-        {
-                if (mdb.find(name) == mdb.end()) {
-                        PhysicsMaterial &m = mdb[name];
-                        m.name = name;
-                        m.interactionGroup = interaction_group;
-                        m.id = mdb2.size();
-                        mdb2.push_back(&m);
-                } else {
-                        PhysicsMaterial &m = mdb[name];
-                        m.interactionGroup = interaction_group;
-                }
-        }
-
-    protected:
-
-        typedef std::map<std::string, PhysicsMaterial> SDB; // map string to material
-        SDB mdb;
-
-        typedef std::vector<PhysicsMaterial*> IDB; // map id to material
-        IDB mdb2;
-};
 
 struct HasMargin {
         float margin;
@@ -103,8 +46,8 @@ struct HasMargin {
 
 struct HasMaterial {
         HasMaterial () { }
-        HasMaterial (int material_) : material(material_) { }
-        int material;
+        HasMaterial (const std::string &material_) : material(material_) { }
+        std::string material;
 };
 
 struct Hull : public HasMargin, public HasMaterial {
@@ -161,11 +104,10 @@ struct Compound {
 };
 
 
-struct Face {
-        Face (int v1_, int v2_, int v3_, int material_)
-              : v1(v1_), v2(v2_), v3(v3_), material(material_) { }
+struct Face : HasMaterial {
+        Face (int v1_, int v2_, int v3_, const std::string &material_)
+              : HasMaterial(material_), v1(v1_), v2(v2_), v3(v3_) { }
         int v1, v2, v3;
-        int material;
 };
 typedef std::vector<Face> Faces;
 

@@ -34,193 +34,197 @@
 #undef max
 #endif
 
-MaterialDB db;
+MaterialMap global_db;
 
-void init_col_db (const std::string &prefix)
+// This is called by the standalone tools (colread && dffread)
+// extract.exe on the other hand reads surface.dat
+// Don't want to read surface.dat in colread or dffread as we want a single input dff
+// The output of such tools is not usually used as an input to grit, it is mainly
+// for verifying or debugging the gta format parsing code, and using verbose output
+// to inspect the gta dataset
+void init_global_db ()
 {
-        // they are numbered internally from zero
-        db.setMaterial(prefix+"DEFAULT", 0);
-        db.setMaterial(prefix+"TARMAC", 0);
-        db.setMaterial(prefix+"TARMAC_FUCKED", 0);
-        db.setMaterial(prefix+"TARMAC_REALLYFUCKED", 0);
-        db.setMaterial(prefix+"PAVEMENT", 0);
-        db.setMaterial(prefix+"PAVEMENT_FUCKED", 0);
-        db.setMaterial(prefix+"GRAVEL", 0);
-        db.setMaterial(prefix+"FUCKED_CONCRETE", 0);
-        db.setMaterial(prefix+"PAINTED_GROUND", 0);
-        db.setMaterial(prefix+"GRASS_SHORT_LUSH", 0);
-        db.setMaterial(prefix+"GRASS_MEDIUM_LUSH", 0);
-        db.setMaterial(prefix+"GRASS_LONG_LUSH", 0);
-        db.setMaterial(prefix+"GRASS_SHORT_DRY", 0);
-        db.setMaterial(prefix+"GRASS_MEDIUM_DRY", 0);
-        db.setMaterial(prefix+"GRASS_LONG_DRY", 0);
-        db.setMaterial(prefix+"GOLFGRASS_ROUGH", 0);
-        db.setMaterial(prefix+"GOLFGRASS_SMOOTH", 0);
-        db.setMaterial(prefix+"STEEP_SLIDYGRASS", 0);
-        db.setMaterial(prefix+"STEEP_CLIFF", 0);
-        db.setMaterial(prefix+"FLOWERBED", 0);
-        db.setMaterial(prefix+"MEADOW", 0);
-        db.setMaterial(prefix+"WASTEGROUND", 0);
-        db.setMaterial(prefix+"WOODLANDGROUND", 0);
-        db.setMaterial(prefix+"VEGETATION", 0);
-        db.setMaterial(prefix+"MUD_WET", 0);
-        db.setMaterial(prefix+"MUD_DRY", 0);
-        db.setMaterial(prefix+"DIRT", 0);
-        db.setMaterial(prefix+"DIRTTRACK", 0);
-        db.setMaterial(prefix+"SAND_DEEP", 0);
-        db.setMaterial(prefix+"SAND_MEDIUM", 0);
-        db.setMaterial(prefix+"SAND_COMPACT", 0);
-        db.setMaterial(prefix+"SAND_ARID", 0);
-        db.setMaterial(prefix+"SAND_MORE", 0);
-        db.setMaterial(prefix+"SAND_BEACH", 0);
-        db.setMaterial(prefix+"CONCRETE_BEACH", 0);
-        db.setMaterial(prefix+"ROCK_DRY", 0);
-        db.setMaterial(prefix+"ROCK_WET", 0);
-        db.setMaterial(prefix+"ROCK_CLIFF", 0);
-        db.setMaterial(prefix+"WATER_RIVERBED", 0);
-        db.setMaterial(prefix+"WATER_SHALLOW", 0);
-        db.setMaterial(prefix+"CORNFIELD", 0);
-        db.setMaterial(prefix+"HEDGE", 0);
-        db.setMaterial(prefix+"WOOD_CRATES", 0);
-        db.setMaterial(prefix+"WOOD_SOLID", 0);
-        db.setMaterial(prefix+"WOOD_THIN", 0);
-        db.setMaterial(prefix+"GLASS", 0);
-        db.setMaterial(prefix+"GLASS_WINDOWS_LARGE", 0);
-        db.setMaterial(prefix+"GLASS_WINDOWS_SMALL", 0);
-        db.setMaterial(prefix+"EMPTY1", 0);
-        db.setMaterial(prefix+"EMPTY2", 0);
-        db.setMaterial(prefix+"GARAGE_DOOR", 0);
-        db.setMaterial(prefix+"THICK_METAL_PLATE", 0);
-        db.setMaterial(prefix+"SCAFFOLD_POLE", 0);
-        db.setMaterial(prefix+"LAMP_POST", 0);
-        db.setMaterial(prefix+"METAL_GATE", 0);
-        db.setMaterial(prefix+"METAL_CHAIN_FENCE", 0);
-        db.setMaterial(prefix+"GIRDER", 0);
-        db.setMaterial(prefix+"FIRE_HYDRANT", 0);
-        db.setMaterial(prefix+"CONTAINER", 0);
-        db.setMaterial(prefix+"NEWS_VENDOR", 0);
-        db.setMaterial(prefix+"WHEELBASE", 0);
-        db.setMaterial(prefix+"CARDBOARDBOX", 0);
-        db.setMaterial(prefix+"PED", 0);
-        db.setMaterial(prefix+"CAR", 0);
-        db.setMaterial(prefix+"CAR_PANEL", 0);
-        db.setMaterial(prefix+"CAR_MOVINGCOMPONENT", 0);
-        db.setMaterial(prefix+"TRANSPARENT_CLOTH", 0);
-        db.setMaterial(prefix+"RUBBER", 0);
-        db.setMaterial(prefix+"PLASTIC", 0);
-        db.setMaterial(prefix+"TRANSPARENT_STONE", 0);
-        db.setMaterial(prefix+"WOOD_BENCH", 0);
-        db.setMaterial(prefix+"CARPET", 0);
-        db.setMaterial(prefix+"FLOORBOARD", 0);
-        db.setMaterial(prefix+"STAIRSWOOD", 0);
-        db.setMaterial(prefix+"P_SAND", 0);
-        db.setMaterial(prefix+"P_SAND_DENSE", 0);
-        db.setMaterial(prefix+"P_SAND_ARID", 0);
-        db.setMaterial(prefix+"P_SAND_COMPACT", 0);
-        db.setMaterial(prefix+"P_SAND_ROCKY", 0);
-        db.setMaterial(prefix+"P_SANDBEACH", 0);
-        db.setMaterial(prefix+"P_GRASS_SHORT", 0);
-        db.setMaterial(prefix+"P_GRASS_MEADOW", 0);
-        db.setMaterial(prefix+"P_GRASS_DRY", 0);
-        db.setMaterial(prefix+"P_WOODLAND", 0);
-        db.setMaterial(prefix+"P_WOODDENSE", 0);
-        db.setMaterial(prefix+"P_ROADSIDE", 0);
-        db.setMaterial(prefix+"P_ROADSIDEDES", 0);
-        db.setMaterial(prefix+"P_FLOWERBED", 0);
-        db.setMaterial(prefix+"P_WASTEGROUND", 0);
-        db.setMaterial(prefix+"P_CONCRETE", 0);
-        db.setMaterial(prefix+"P_OFFICEDESK", 0);
-        db.setMaterial(prefix+"P_711SHELF1", 0);
-        db.setMaterial(prefix+"P_711SHELF2", 0);
-        db.setMaterial(prefix+"P_711SHELF3", 0);
-        db.setMaterial(prefix+"P_RESTUARANTTABLE", 0);
-        db.setMaterial(prefix+"P_BARTABLE", 0);
-        db.setMaterial(prefix+"P_UNDERWATERLUSH", 0);
-        db.setMaterial(prefix+"P_UNDERWATERBARREN", 0);
-        db.setMaterial(prefix+"P_UNDERWATERCORAL", 0);
-        db.setMaterial(prefix+"P_UNDERWATERDEEP", 0);
-        db.setMaterial(prefix+"P_RIVERBED", 0);
-        db.setMaterial(prefix+"P_RUBBLE", 0);
-        db.setMaterial(prefix+"P_BEDROOMFLOOR", 0);
-        db.setMaterial(prefix+"P_KIRCHENFLOOR", 0);
-        db.setMaterial(prefix+"P_LIVINGRMFLOOR", 0);
-        db.setMaterial(prefix+"P_CORRIDORFLOOR", 0);
-        db.setMaterial(prefix+"P_711FLOOR", 0);
-        db.setMaterial(prefix+"P_FASTFOODFLOOR", 0);
-        db.setMaterial(prefix+"P_SKANKYFLOOR", 0);
-        db.setMaterial(prefix+"P_MOUNTAIN", 0);
-        db.setMaterial(prefix+"P_MARSH", 0);
-        db.setMaterial(prefix+"P_BUSHY", 0);
-        db.setMaterial(prefix+"P_BUSHYMIX", 0);
-        db.setMaterial(prefix+"P_BUSHYDRY", 0);
-        db.setMaterial(prefix+"P_BUSHYMID", 0);
-        db.setMaterial(prefix+"P_GRASSWEEFLOWERS", 0);
-        db.setMaterial(prefix+"P_GRASSDRYTALL", 0);
-        db.setMaterial(prefix+"P_GRASSLUSHTALL", 0);
-        db.setMaterial(prefix+"P_GRASSGRNMIX", 0);
-        db.setMaterial(prefix+"P_GRASSBRNMIX", 0);
-        db.setMaterial(prefix+"P_GRASSLOW", 0);
-        db.setMaterial(prefix+"P_GRASSROCKY", 0);
-        db.setMaterial(prefix+"P_GRASSSMALLTREES", 0);
-        db.setMaterial(prefix+"P_DIRTROCKY", 0);
-        db.setMaterial(prefix+"P_DIRTWEEDS", 0);
-        db.setMaterial(prefix+"P_GRASSWEEDS", 0);
-        db.setMaterial(prefix+"P_RIVEREDGE", 0);
-        db.setMaterial(prefix+"P_POOLSIDE", 0);
-        db.setMaterial(prefix+"P_FORESTSTUMPS", 0);
-        db.setMaterial(prefix+"P_FORESTSTICKS", 0);
-        db.setMaterial(prefix+"P_FORRESTLEAVES", 0);
-        db.setMaterial(prefix+"P_DESERTROCKS", 0);
-        db.setMaterial(prefix+"P_FORRESTDRY", 0);
-        db.setMaterial(prefix+"P_SPARSEFLOWERS", 0);
-        db.setMaterial(prefix+"P_BUILDINGSITE", 0);
-        db.setMaterial(prefix+"P_DOCKLANDS", 0);
-        db.setMaterial(prefix+"P_INDUSTRIAL", 0);
-        db.setMaterial(prefix+"P_INDUSTJETTY", 0);
-        db.setMaterial(prefix+"P_CONCRETELITTER", 0);
-        db.setMaterial(prefix+"P_ALLEYRUBISH", 0);
-        db.setMaterial(prefix+"P_JUNKYARDPILES", 0);
-        db.setMaterial(prefix+"P_JUNKYARDGRND", 0);
-        db.setMaterial(prefix+"P_DUMP", 0);
-        db.setMaterial(prefix+"P_CACTUSDENSE", 0);
-        db.setMaterial(prefix+"P_AIRPORTGRND", 0);
-        db.setMaterial(prefix+"P_CORNFIELD", 0);
-        db.setMaterial(prefix+"P_GRASSLIGHT", 0);
-        db.setMaterial(prefix+"P_GRASSLIGHTER", 0);
-        db.setMaterial(prefix+"P_GRASSLIGHTER2", 0);
-        db.setMaterial(prefix+"P_GRASSMID1", 0);
-        db.setMaterial(prefix+"P_GRASSMID2", 0);
-        db.setMaterial(prefix+"P_GRASSDARK", 0);
-        db.setMaterial(prefix+"P_GRASSDARK2", 0);
-        db.setMaterial(prefix+"P_GRASSDIRTMIX", 0);
-        db.setMaterial(prefix+"P_RIVERBEDSTONE", 0);
-        db.setMaterial(prefix+"P_RIVERBEDSHALLOW", 0);
-        db.setMaterial(prefix+"P_RIVERBEDWEEDS", 0);
-        db.setMaterial(prefix+"P_SEAWEED", 0);
-        db.setMaterial(prefix+"DOOR", 0);
-        db.setMaterial(prefix+"PLASTICBARRIER", 0);
-        db.setMaterial(prefix+"PARKGRASS", 0);
-        db.setMaterial(prefix+"STAIRSSTONE", 0);
-        db.setMaterial(prefix+"STAIRSMETAL", 0);
-        db.setMaterial(prefix+"STAIRSCARPET", 0);
-        db.setMaterial(prefix+"FLOORMETAL", 0);
-        db.setMaterial(prefix+"FLOORCONCRETE", 0);
-        db.setMaterial(prefix+"BIN_BAG", 0);
-        db.setMaterial(prefix+"THIN_METAL_SHEET", 0);
-        db.setMaterial(prefix+"METAL_BARREL", 0);
-        db.setMaterial(prefix+"PLASTIC_CONE", 0);
-        db.setMaterial(prefix+"PLASTIC_DUMPSTER", 0);
-        db.setMaterial(prefix+"METAL_DUMPSTER", 0);
-        db.setMaterial(prefix+"WOOD_PICKET_FENCE", 0);
-        db.setMaterial(prefix+"WOOD_SLATTED_FENCE", 0);
-        db.setMaterial(prefix+"WOOD_RANCH_FENCE", 0);
-        db.setMaterial(prefix+"UNBREAKABLE_GLASS", 0);
-        db.setMaterial(prefix+"HAY_BALE", 0);
-        db.setMaterial(prefix+"GORE", 0);
-        db.setMaterial(prefix+"RAILTRACK", 0);
-        db.setMaterial("/common/Metal", 0);
+        int counter = 0;
+        global_db[counter++] = "DEFAULT";
+        global_db[counter++] = "TARMAC";
+        global_db[counter++] = "TARMAC_FUCKED";
+        global_db[counter++] = "TARMAC_REALLYFUCKED";
+        global_db[counter++] = "PAVEMENT";
+        global_db[counter++] = "PAVEMENT_FUCKED";
+        global_db[counter++] = "GRAVEL";
+        global_db[counter++] = "FUCKED_CONCRETE";
+        global_db[counter++] = "PAINTED_GROUND";
+        global_db[counter++] = "GRASS_SHORT_LUSH";
+        global_db[counter++] = "GRASS_MEDIUM_LUSH";
+        global_db[counter++] = "GRASS_LONG_LUSH";
+        global_db[counter++] = "GRASS_SHORT_DRY";
+        global_db[counter++] = "GRASS_MEDIUM_DRY";
+        global_db[counter++] = "GRASS_LONG_DRY";
+        global_db[counter++] = "GOLFGRASS_ROUGH";
+        global_db[counter++] = "GOLFGRASS_SMOOTH";
+        global_db[counter++] = "STEEP_SLIDYGRASS";
+        global_db[counter++] = "STEEP_CLIFF";
+        global_db[counter++] = "FLOWERBED";
+        global_db[counter++] = "MEADOW";
+        global_db[counter++] = "WASTEGROUND";
+        global_db[counter++] = "WOODLANDGROUND";
+        global_db[counter++] = "VEGETATION";
+        global_db[counter++] = "MUD_WET";
+        global_db[counter++] = "MUD_DRY";
+        global_db[counter++] = "DIRT";
+        global_db[counter++] = "DIRTTRACK";
+        global_db[counter++] = "SAND_DEEP";
+        global_db[counter++] = "SAND_MEDIUM";
+        global_db[counter++] = "SAND_COMPACT";
+        global_db[counter++] = "SAND_ARID";
+        global_db[counter++] = "SAND_MORE";
+        global_db[counter++] = "SAND_BEACH";
+        global_db[counter++] = "CONCRETE_BEACH";
+        global_db[counter++] = "ROCK_DRY";
+        global_db[counter++] = "ROCK_WET";
+        global_db[counter++] = "ROCK_CLIFF";
+        global_db[counter++] = "WATER_RIVERBED";
+        global_db[counter++] = "WATER_SHALLOW";
+        global_db[counter++] = "CORNFIELD";
+        global_db[counter++] = "HEDGE";
+        global_db[counter++] = "WOOD_CRATES";
+        global_db[counter++] = "WOOD_SOLID";
+        global_db[counter++] = "WOOD_THIN";
+        global_db[counter++] = "GLASS";
+        global_db[counter++] = "GLASS_WINDOWS_LARGE";
+        global_db[counter++] = "GLASS_WINDOWS_SMALL";
+        global_db[counter++] = "EMPTY1";
+        global_db[counter++] = "EMPTY2";
+        global_db[counter++] = "GARAGE_DOOR";
+        global_db[counter++] = "THICK_METAL_PLATE";
+        global_db[counter++] = "SCAFFOLD_POLE";
+        global_db[counter++] = "LAMP_POST";
+        global_db[counter++] = "METAL_GATE";
+        global_db[counter++] = "METAL_CHAIN_FENCE";
+        global_db[counter++] = "GIRDER";
+        global_db[counter++] = "FIRE_HYDRANT";
+        global_db[counter++] = "CONTAINER";
+        global_db[counter++] = "NEWS_VENDOR";
+        global_db[counter++] = "WHEELBASE";
+        global_db[counter++] = "CARDBOARDBOX";
+        global_db[counter++] = "PED";
+        global_db[counter++] = "CAR";
+        global_db[counter++] = "CAR_PANEL";
+        global_db[counter++] = "CAR_MOVINGCOMPONENT";
+        global_db[counter++] = "TRANSPARENT_CLOTH";
+        global_db[counter++] = "RUBBER";
+        global_db[counter++] = "PLASTIC";
+        global_db[counter++] = "TRANSPARENT_STONE";
+        global_db[counter++] = "WOOD_BENCH";
+        global_db[counter++] = "CARPET";
+        global_db[counter++] = "FLOORBOARD";
+        global_db[counter++] = "STAIRSWOOD";
+        global_db[counter++] = "P_SAND";
+        global_db[counter++] = "P_SAND_DENSE";
+        global_db[counter++] = "P_SAND_ARID";
+        global_db[counter++] = "P_SAND_COMPACT";
+        global_db[counter++] = "P_SAND_ROCKY";
+        global_db[counter++] = "P_SANDBEACH";
+        global_db[counter++] = "P_GRASS_SHORT";
+        global_db[counter++] = "P_GRASS_MEADOW";
+        global_db[counter++] = "P_GRASS_DRY";
+        global_db[counter++] = "P_WOODLAND";
+        global_db[counter++] = "P_WOODDENSE";
+        global_db[counter++] = "P_ROADSIDE";
+        global_db[counter++] = "P_ROADSIDEDES";
+        global_db[counter++] = "P_FLOWERBED";
+        global_db[counter++] = "P_WASTEGROUND";
+        global_db[counter++] = "P_CONCRETE";
+        global_db[counter++] = "P_OFFICEDESK";
+        global_db[counter++] = "P_711SHELF1";
+        global_db[counter++] = "P_711SHELF2";
+        global_db[counter++] = "P_711SHELF3";
+        global_db[counter++] = "P_RESTUARANTTABLE";
+        global_db[counter++] = "P_BARTABLE";
+        global_db[counter++] = "P_UNDERWATERLUSH";
+        global_db[counter++] = "P_UNDERWATERBARREN";
+        global_db[counter++] = "P_UNDERWATERCORAL";
+        global_db[counter++] = "P_UNDERWATERDEEP";
+        global_db[counter++] = "P_RIVERBED";
+        global_db[counter++] = "P_RUBBLE";
+        global_db[counter++] = "P_BEDROOMFLOOR";
+        global_db[counter++] = "P_KIRCHENFLOOR";
+        global_db[counter++] = "P_LIVINGRMFLOOR";
+        global_db[counter++] = "P_CORRIDORFLOOR";
+        global_db[counter++] = "P_711FLOOR";
+        global_db[counter++] = "P_FASTFOODFLOOR";
+        global_db[counter++] = "P_SKANKYFLOOR";
+        global_db[counter++] = "P_MOUNTAIN";
+        global_db[counter++] = "P_MARSH";
+        global_db[counter++] = "P_BUSHY";
+        global_db[counter++] = "P_BUSHYMIX";
+        global_db[counter++] = "P_BUSHYDRY";
+        global_db[counter++] = "P_BUSHYMID";
+        global_db[counter++] = "P_GRASSWEEFLOWERS";
+        global_db[counter++] = "P_GRASSDRYTALL";
+        global_db[counter++] = "P_GRASSLUSHTALL";
+        global_db[counter++] = "P_GRASSGRNMIX";
+        global_db[counter++] = "P_GRASSBRNMIX";
+        global_db[counter++] = "P_GRASSLOW";
+        global_db[counter++] = "P_GRASSROCKY";
+        global_db[counter++] = "P_GRASSSMALLTREES";
+        global_db[counter++] = "P_DIRTROCKY";
+        global_db[counter++] = "P_DIRTWEEDS";
+        global_db[counter++] = "P_GRASSWEEDS";
+        global_db[counter++] = "P_RIVEREDGE";
+        global_db[counter++] = "P_POOLSIDE";
+        global_db[counter++] = "P_FORESTSTUMPS";
+        global_db[counter++] = "P_FORESTSTICKS";
+        global_db[counter++] = "P_FORRESTLEAVES";
+        global_db[counter++] = "P_DESERTROCKS";
+        global_db[counter++] = "P_FORRESTDRY";
+        global_db[counter++] = "P_SPARSEFLOWERS";
+        global_db[counter++] = "P_BUILDINGSITE";
+        global_db[counter++] = "P_DOCKLANDS";
+        global_db[counter++] = "P_INDUSTRIAL";
+        global_db[counter++] = "P_INDUSTJETTY";
+        global_db[counter++] = "P_CONCRETELITTER";
+        global_db[counter++] = "P_ALLEYRUBISH";
+        global_db[counter++] = "P_JUNKYARDPILES";
+        global_db[counter++] = "P_JUNKYARDGRND";
+        global_db[counter++] = "P_DUMP";
+        global_db[counter++] = "P_CACTUSDENSE";
+        global_db[counter++] = "P_AIRPORTGRND";
+        global_db[counter++] = "P_CORNFIELD";
+        global_db[counter++] = "P_GRASSLIGHT";
+        global_db[counter++] = "P_GRASSLIGHTER";
+        global_db[counter++] = "P_GRASSLIGHTER2";
+        global_db[counter++] = "P_GRASSMID1";
+        global_db[counter++] = "P_GRASSMID2";
+        global_db[counter++] = "P_GRASSDARK";
+        global_db[counter++] = "P_GRASSDARK2";
+        global_db[counter++] = "P_GRASSDIRTMIX";
+        global_db[counter++] = "P_RIVERBEDSTONE";
+        global_db[counter++] = "P_RIVERBEDSHALLOW";
+        global_db[counter++] = "P_RIVERBEDWEEDS";
+        global_db[counter++] = "P_SEAWEED";
+        global_db[counter++] = "DOOR";
+        global_db[counter++] = "PLASTICBARRIER";
+        global_db[counter++] = "PARKGRASS";
+        global_db[counter++] = "STAIRSSTONE";
+        global_db[counter++] = "STAIRSMETAL";
+        global_db[counter++] = "STAIRSCARPET";
+        global_db[counter++] = "FLOORMETAL";
+        global_db[counter++] = "FLOORCONCRETE";
+        global_db[counter++] = "BIN_BAG";
+        global_db[counter++] = "THIN_METAL_SHEET";
+        global_db[counter++] = "METAL_BARREL";
+        global_db[counter++] = "PLASTIC_CONE";
+        global_db[counter++] = "PLASTIC_DUMPSTER";
+        global_db[counter++] = "METAL_DUMPSTER";
+        global_db[counter++] = "WOOD_PICKET_FENCE";
+        global_db[counter++] = "WOOD_SLATTED_FENCE";
+        global_db[counter++] = "WOOD_RANCH_FENCE";
+        global_db[counter++] = "UNBREAKABLE_GLASS";
+        global_db[counter++] = "HAY_BALE";
+        global_db[counter++] = "GORE";
+        global_db[counter++] = "RAILTRACK";
 }
-
 
 static inline int tolowr (int c)
 {
@@ -236,6 +240,8 @@ static inline std::string& strlower(std::string& s)
 void parse_col (std::string &name,
                 std::istream &in,
                 TColFile &tcol,
+                const std::string &phys_mat_pref,
+                MaterialMap &db,
                 int debug_level)
 {
         unsigned long fourcc;
@@ -348,7 +354,7 @@ void parse_col (std::string &name,
                         sphere.py = ios_read_float(in);
                         sphere.pz = ios_read_float(in);
                         sphere.radius = ios_read_float(in);
-                        sphere.material = ios_read_u8(in) & 0xFF;
+                        sphere.material = phys_mat_pref+db[ios_read_u8(in)];
                         unsigned char flag = ios_read_u8(in);
                         unsigned char unk = ios_read_u8(in);
                         unsigned char light = ios_read_u8(in);
@@ -381,7 +387,7 @@ void parse_col (std::string &name,
                         box.qy = 0;
                         box.qz = 0;
                         box.margin = 0.04;
-                        box.material = ios_read_u8(in);
+                        box.material = phys_mat_pref+db[ios_read_u8(in)];
                         unsigned char flag = ios_read_u8(in);
                         unsigned char unk = ios_read_u8(in);
                         unsigned char light = ios_read_u8(in);
@@ -426,7 +432,7 @@ void parse_col (std::string &name,
                         //std::cout<<"face mat: "<<(int)mat<<std::endl;
                         //std::cout<<"face light: "<<(int)light<<std::endl;
                         (void) light; // not used yet
-                        tcol.triMesh.faces.push_back(Face(a,b,c,mat));
+                        tcol.triMesh.faces.push_back(Face(a,b,c,phys_mat_pref+db[mat]));
                 }
 
                 if (num_faces > 0) {
@@ -460,12 +466,13 @@ void parse_col (std::string &name,
         }
 }
 
-void dump_all_cols (std::istream &in, bool binary, int debug_level)
+void dump_all_cols (std::istream &in, bool binary, const std::string &phys_mat_pref,
+                    MaterialMap &db, int debug_level)
 {
         do {
                 TColFile tcol;
                 std::string name;
-                parse_col(name,in,tcol,debug_level);
+                parse_col(name,in,tcol,phys_mat_pref,db,debug_level);
 
                 if (!tcol.usingCompound && !tcol.usingTriMesh) {
                         if (debug_level>0)
@@ -481,7 +488,7 @@ void dump_all_cols (std::istream &in, bool binary, int debug_level)
                         out.open(name.c_str(), std::ios::binary);
                         ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
 
-                        pretty_print_tcol(out,tcol,db);
+                        pretty_print_tcol(out,tcol);
                 }
                 
                 std::istream::int_type next = in.peek();

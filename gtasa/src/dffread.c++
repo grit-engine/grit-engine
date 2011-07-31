@@ -46,7 +46,6 @@
 #include "dffread.h"
 #include "ideread.h"
 #include "tex_dups.h"
-#include "ColParser.h"
 
 #ifdef rad2
 #undef rad2
@@ -788,7 +787,8 @@ static void ios_read_geometry (int d,
 }}}
 
 
-void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
+void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p,
+                   const std::string &phys_mat_pref, MaterialMap &db)
 {{{
     unsigned long type, file_version, dff_size;
     ios_read_header(f,&type,&dff_size,&file_version,NULL);
@@ -1044,7 +1044,7 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p)
                 //f.write((char*)data, size);
                 delete [] data;
             } else {
-                parse_col(c->col_name, f, c->tcol, d-1);
+                parse_col(c->col_name, f, c->tcol, phys_mat_pref, db, d-1);
                 c->has_tcol = true;
             }
         } break;
@@ -1889,9 +1889,10 @@ int main(int argc, char **argv)
     int extras = 0; // number of args that weren't options
     std::string file_name;
     bool filename_given = false;
+    std::string phys_mat_pref;
 
     //init_col_db_same("/common/Metal");
-    init_col_db("/gtasa/");
+    init_global_db();
 
     while (so_far<argc) {
         std::string arg = next_arg(so_far,argc,argv);
@@ -1905,6 +1906,8 @@ int main(int argc, char **argv)
             orphans = false;
         } else if (arg=="-t" || arg=="--txd") {
             txdname = next_arg(so_far,argc,argv);
+        } else if (arg=="-p" || arg=="--phys-mat-prefix") {
+            phys_mat_pref = next_arg(so_far,argc,argv);
         } else if (arg=="-e" || arg=="--export") {
             oname = next_arg(so_far,argc,argv);
             do_export_mesh = true;
@@ -1953,7 +1956,7 @@ int main(int argc, char **argv)
         VBOS(0,"reading dff: "<<file_name<<"\n");
 
         struct dff dff;
-        ios_read_dff(d,f,&dff,file_name+"/");
+        ios_read_dff(d,f,&dff,file_name+"/", phys_mat_pref,global_db);
 
         if (orphans)
             list_orphans(d,&dff,file_name+"/");
@@ -2016,21 +2019,22 @@ int main(int argc, char **argv)
 
                 if (dff.has_tcol) {
                     std::string col_name = oname;
+                    static const char *phys_mat = "/common/Metal";
 
                     for (unsigned i=0 ; i<dff.tcol.compound.hulls.size() ; ++i)
-                        dff.tcol.compound.hulls[i].material = 179;
+                        dff.tcol.compound.hulls[i].material = phys_mat;
                     for (unsigned i=0 ; i<dff.tcol.compound.boxes.size() ; ++i)
-                        dff.tcol.compound.boxes[i].material = 179;
+                        dff.tcol.compound.boxes[i].material = phys_mat;
                     for (unsigned i=0 ; i<dff.tcol.compound.cylinders.size() ; ++i)
-                        dff.tcol.compound.cylinders[i].material = 179;
+                        dff.tcol.compound.cylinders[i].material = phys_mat;
                     for (unsigned i=0 ; i<dff.tcol.compound.cones.size() ; ++i)
-                        dff.tcol.compound.cones[i].material = 179;
+                        dff.tcol.compound.cones[i].material = phys_mat;
                     for (unsigned i=0 ; i<dff.tcol.compound.planes.size() ; ++i)
-                        dff.tcol.compound.planes[i].material = 179;
+                        dff.tcol.compound.planes[i].material = phys_mat;
                     for (unsigned i=0 ; i<dff.tcol.compound.spheres.size() ; ++i)
-                        dff.tcol.compound.spheres[i].material = 179;
+                        dff.tcol.compound.spheres[i].material = phys_mat;
                     for (unsigned i=0 ; i<dff.tcol.triMesh.faces.size() ; ++i)
-                        dff.tcol.triMesh.faces[i].material = 179;
+                        dff.tcol.triMesh.faces[i].material = phys_mat;
 
                     dff.tcol.mass = 1000;
 
@@ -2048,7 +2052,7 @@ int main(int argc, char **argv)
                             out.open(col_name.c_str(), std::ios::binary);
                             ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
 
-                            pretty_print_tcol(out,dff.tcol,db);
+                            pretty_print_tcol(out,dff.tcol);
                     }
 
                     lua_file << std::endl;

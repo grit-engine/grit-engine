@@ -259,11 +259,11 @@ void process_cols (std::ostream &out,
            ColNames &cols_including_empty,
            ImgHandle &img,
            const std::string &dest_dir,
-           const std::string &modname)
+           const std::string &modname,
+           MaterialMap &db)
 {
     if (getenv("SKIP_COLS")!=NULL) return;
     (void) out;
-    init_col_db("../");
     for (unsigned int i=0 ; i<img.i.size(); ++i) {
         const std::string &fname = img.i.fileName(i);
         if (fname.size()<4) continue;
@@ -278,7 +278,8 @@ void process_cols (std::ostream &out,
 
             TColFile tcol;
             std::string name;
-            parse_col(name,img.f,tcol);
+            // the materials are in gtasa/ but imgs are behind another dir so prefix ../
+            parse_col(name,img.f,tcol, "../", db);
 
             std::string tcolname = img.name+"/"+name+".tcol";
 
@@ -294,7 +295,7 @@ void process_cols (std::ostream &out,
                 f.open(name.c_str(), std::ios::binary);
                 ASSERT_IO_SUCCESSFUL(f,"opening tcol for writing");
 
-                pretty_print_tcol(f, tcol, db);
+                pretty_print_tcol(f, tcol);
             }
 
             next = img.f.peek();
@@ -405,6 +406,7 @@ void extract (const Config &cfg, std::ostream &out)
 
     out << "Reading surface info file..." << std::endl;
     SurfInfoData surfinfo;
+    MaterialMap db;
     {
         std::ofstream physmats_lua;
         physmats_lua.open((dest_dir+"/"+cfg.modname+"/phys_mats.lua").c_str(),
@@ -419,7 +421,7 @@ void extract (const Config &cfg, std::ostream &out)
         read_surfinfo(surfinfo_csv, surfinfo);
         for (unsigned i=0 ; i<surfinfo.surfaces.size() ; ++i) {
             SurfInfo &surf = surfinfo.surfaces[i];
-            db.setMaterial("/"+cfg.modname+"/"+surf.name, 0);
+            db[i] = surf.name;
             physmats_lua<<"physical_material \""<<surf.name<<"\" {"<<std::endl;
             float rtf, ortf;
             if (surf.adhesion_group=="RUBBER") {
@@ -507,7 +509,7 @@ void extract (const Config &cfg, std::ostream &out)
 
     out << "Extracting cols from imgs..." << std::endl;
     for (size_t i=0 ; i<cfg.imgs.size() ; ++i) {
-        process_cols(out, cols, cols_i, *imgs[cfg.imgs[i].second], dest_dir, cfg.modname);
+        process_cols(out, cols, cols_i, *imgs[cfg.imgs[i].second], dest_dir, cfg.modname, db);
     }
 
     if (getenv("DUMP_TEX_LIST")) {
@@ -606,7 +608,7 @@ void extract (const Config &cfg, std::ostream &out)
             }
 
             img->open_file_img(out,dff_name);
-            ios_read_dff(1,img->f,&dff,img->name+"/"+dff_name+"/");
+            ios_read_dff(1,img->f,&dff,img->name+"/"+dff_name+"/","../",db);
         
             ASSERT(dff.geometries.size()==1 || dff.geometries.size()==2);
 
@@ -764,7 +766,8 @@ void extract (const Config &cfg, std::ostream &out)
         }
 
         img->open_file_img(out,dff_name);
-        ios_read_dff(1,img->f,&dff,img->name+"/"+dff_name+"/");
+        // use a ../ prefix because the car tcol lives in its own directory
+        ios_read_dff(1,img->f,&dff,img->name+"/"+dff_name+"/","../",db);
 
         VehicleData *vdata = handling[v.handling_id];
         ASSERT(vdata!=NULL);
@@ -874,7 +877,7 @@ void extract (const Config &cfg, std::ostream &out)
                 out.open((vehicle_dir+"/chassis.tcol").c_str(), std::ios::binary);
                 ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
 
-                pretty_print_tcol(out,dff.tcol,db);
+                pretty_print_tcol(out,dff.tcol);
             }
 
             if (v.type == "car") {
