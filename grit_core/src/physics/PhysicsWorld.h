@@ -30,18 +30,15 @@ typedef SharedPtr<PhysicsWorld> PhysicsWorldPtr;
 class RigidBody;
 typedef SharedPtr<RigidBody> RigidBodyPtr;
 
-struct PhysicsMaterial;
-class MaterialDB;
-
 #ifndef PhysicsWorld_h
 #define PhysicsWorld_h
 
 #include <btBulletDynamicsCommon.h>
 
 extern "C" {
-        #include <lua.h>
-        #include <lauxlib.h>
-        #include <lualib.h>
+    #include <lua.h>
+    #include <lauxlib.h>
+    #include <lualib.h>
 }
 
 #include "TColParser.h"
@@ -52,397 +49,302 @@ extern "C" {
 
 #include "../LuaPtr.h"
 
-struct PhysicsMaterial {
-        std::string name;
-        int interactionGroup;
-        int id;
-};      
+#include "PhysicalMaterial.h"
 
-class MaterialDB {
-
-    public:
-
-        const PhysicsMaterial &getMaterial (const std::string &name) const
-        {
-                SDB::const_iterator i = mdb.find(name);
-                if (i==mdb.end())
-                        GRIT_EXCEPT("Physical Material \""+name+"\" does not exist.");
-                return i->second;
-        }
-
-        const PhysicsMaterial &getMaterial (int material) const
-        { return *mdb2[material]; }
-
-        const PhysicsMaterial &getMaterialSafe (int material) const
-        {
-                if ((size_t)material<mdb2.size()) return *mdb2[material];
-                if (mdb2.size() == 0) {
-                        CERR << "MaterialDB is empty!" << std::endl;
-                        app_fatal();
-                }
-                CERR << "Got a bad material id: " << material << std::endl;
-                return *mdb2[0];
-        }
-
-        void setMaterial (const std::string &name, int interaction_group)
-        {
-                if (mdb.find(name) == mdb.end()) {
-                        PhysicsMaterial &m = mdb[name];
-                        m.name = name;
-                        m.interactionGroup = interaction_group;
-                        m.id = mdb2.size();
-                        mdb2.push_back(&m);
-                } else {
-                        PhysicsMaterial &m = mdb[name];
-                        m.interactionGroup = interaction_group;
-                }
-        }
-
-    protected:
-
-        typedef std::map<std::string, PhysicsMaterial> SDB; // map string to material
-        SDB mdb;
-
-        typedef std::vector<PhysicsMaterial*> IDB; // map id to material
-        IDB mdb2;
-};
 
 // a class that extends a bullet class
 class DynamicsWorld;
 
 class PhysicsWorld {
 
-        friend class CollisionMesh;
-        friend class RigidBody;
+    friend class CollisionMesh;
+    friend class RigidBody;
 
     public:
 
-        PhysicsWorld (void);
+    PhysicsWorld (void);
 
-        ~PhysicsWorld (void);
+    ~PhysicsWorld (void);
 
-        int pump (lua_State *L, float time_step);
+    int pump (lua_State *L, float time_step);
 
-        void setGravity (const Vector3 &);
-        Vector3 getGravity (void) const;
+    void setGravity (const Vector3 &);
+    Vector3 getGravity (void) const;
 
-        CollisionMeshPtr createFromFile (
-                const std::string &fileName);
+    CollisionMeshPtr createFromFile (const std::string &fileName);
 
-        bool hasMesh (const std::string &name) const
-        { return colMeshes.find(name) != colMeshes.end(); }
+    bool hasMesh (const std::string &name) const
+    { return colMeshes.find(name) != colMeshes.end(); }
 
-        CollisionMeshPtr getMesh (const std::string &name)
-        {
-                CollisionMeshMap::iterator i = colMeshes.find(name);
-                if (i==colMeshes.end())
-                        return createFromFile(name);
-                return i->second;
-        }
+    CollisionMeshPtr getMesh (const std::string &name)
+    {
+        CollisionMeshMap::iterator i = colMeshes.find(name);
+        if (i==colMeshes.end())
+            return createFromFile(name);
+        return i->second;
+    }
 
-        void deleteMesh (const std::string &name);
+    void deleteMesh (const std::string &name);
 
-        void clearMeshes (void)
-        { colMeshes.clear(); }
+    void clearMeshes (void)
+    { colMeshes.clear(); }
 
-        static const CollisionMeshMap &getMeshes (void) { return colMeshes; }
+    static const CollisionMeshMap &getMeshes (void) { return colMeshes; }
 
-        const PhysicsMaterial &getMaterial (const std::string &name) const
-        { return mdb.getMaterial(name); }
+    // to be extended by lua wrapper or whatever
+    class SweepCallback {
+        public:
+        virtual void result (RigidBody &body, float d, const Vector3 &normal, int m) = 0;
+    };
 
-        const PhysicsMaterial &getMaterial (int material) const
-        { return mdb.getMaterial(material); }
-
-        void setMaterial (const std::string &name, int interaction_group)
-        { mdb.setMaterial(name, interaction_group); }
-
-        void setInteractionGroups (unsigned groups,
-                                   const std::vector<std::pair<float,float> > &interactions_)
-        {
-                APP_ASSERT(groups * groups == interactions_.size());
-                numInteractions = groups;
-                interactions = interactions_;
-        }
-
-        void getFrictionRestitution (int mat0, int mat1, float &f, float &r)
-        {
-                unsigned char ig0 = getMaterial(mat0).interactionGroup;
-                unsigned char ig1 = getMaterial(mat1).interactionGroup;
-                if (ig0 > numInteractions) {
-                        CERR<<"Invalid interaction group "<<ig0<<" in material \""
-                            <<getMaterial(mat0).name<<"\""<<std::endl;
-                        f = 0; r = 0; return;
-                }
-                if (ig1 > numInteractions) {
-                        CERR<<"Invalid interaction group "<<ig1<<" in material \""
-                            <<getMaterial(mat1).name<<"\""<<std::endl;
-                        f = 0; r = 0; return;
-                }
-                int code = ig0*numInteractions + ig1;
-                f = interactions[code].first;
-                r = interactions[code].second;
-        }
-
-        // to be extended by lua wrapper or whatever
-        class SweepCallback {
-            public:
-                virtual void result (RigidBody &body, float d, const Vector3 &normal, int m) = 0;
-        };
-
-        void ray (const Vector3 &start,
-                  const Vector3 &end,
-                  SweepCallback &rcb,
-                  float radius=0) const;
+    void ray (const Vector3 &start,
+          const Vector3 &end,
+          SweepCallback &rcb,
+          float radius=0) const;
 
 
-        void sweep (const CollisionMeshPtr &col_mesh,
-                    const Vector3 &startp,
-                    const Quaternion &startq,
-                    const Vector3 &endp,
-                    const Quaternion &endq,
-                    SweepCallback &scb) const;
+    void sweep (const CollisionMeshPtr &col_mesh,
+            const Vector3 &startp,
+            const Quaternion &startq,
+            const Vector3 &endp,
+            const Quaternion &endq,
+            SweepCallback &scb) const;
 
-        class TestCallback {
-            public:
-                virtual void result (RigidBody *body, const Vector3 &pos, const Vector3 &wpos,
-                                     const Vector3 &normal, float penetration, int m) = 0;
-        };
+    class TestCallback {
+        public:
+        virtual void result (RigidBody *body, const Vector3 &pos, const Vector3 &wpos,
+                     const Vector3 &normal, float penetration, int m) = 0;
+    };
 
-        void test (const CollisionMeshPtr &col_mesh,
-                   const Vector3 &pos, const Quaternion &quat, bool dyn_only, TestCallback &cb);
+    void test (const CollisionMeshPtr &col_mesh,
+           const Vector3 &pos, const Quaternion &quat, bool dyn_only, TestCallback &cb);
 
-        void testSphere (float rad, const Vector3 &pos, bool dyn_only, TestCallback &cb);
+    void testSphere (float rad, const Vector3 &pos, bool dyn_only, TestCallback &cb);
 
-        float getDeactivationTime (void) const;
-        void setDeactivationTime (float);
+    float getDeactivationTime (void) const;
+    void setDeactivationTime (float);
 
-        float getContactBreakingThreshold (void) const;
-        void setContactBreakingThreshold (float);
+    float getContactBreakingThreshold (void) const;
+    void setContactBreakingThreshold (float);
 
-        float getSolverDamping (void) const;
-        void setSolverDamping (float);
+    float getSolverDamping (void) const;
+    void setSolverDamping (float);
 
-        int getSolverIterations (void) const;
-        void setSolverIterations (int);
+    int getSolverIterations (void) const;
+    void setSolverIterations (int);
 
-        float getSolverErp (void) const;
-        void setSolverErp (float);
+    float getSolverErp (void) const;
+    void setSolverErp (float);
 
-        float getSolverErp2 (void) const;
-        void setSolverErp2 (float);
+    float getSolverErp2 (void) const;
+    void setSolverErp2 (float);
 
-        float getSolverLinearSlop (void) const;
-        void setSolverLinearSlop (float);
+    float getSolverLinearSlop (void) const;
+    void setSolverLinearSlop (float);
 
-        float getSolverWarmStartingFactor (void) const;
-        void setSolverWarmStartingFactor (float);
+    float getSolverWarmStartingFactor (void) const;
+    void setSolverWarmStartingFactor (float);
 
-        bool getSolverRandomiseOrder (void) const;
-        void setSolverRandomiseOrder (bool);
+    bool getSolverRandomiseOrder (void) const;
+    void setSolverRandomiseOrder (bool);
 
-        bool getSolverFrictionSeparate (void) const;
-        void setSolverFrictionSeparate (bool);
+    bool getSolverFrictionSeparate (void) const;
+    void setSolverFrictionSeparate (bool);
 
-        bool getSolverUseWarmStarting (void) const;
-        void setSolverUseWarmStarting (bool);
+    bool getSolverUseWarmStarting (void) const;
+    void setSolverUseWarmStarting (bool);
 
-        bool getSolverCacheFriendly (void) const;
-        void setSolverCacheFriendly (bool);
+    bool getSolverCacheFriendly (void) const;
+    void setSolverCacheFriendly (bool);
 
-        bool getSolverSplitImpulse (void) const;
-        void setSolverSplitImpulse (bool);
+    bool getSolverSplitImpulse (void) const;
+    void setSolverSplitImpulse (bool);
 
-        float getSolverSplitImpulseThreshold (void) const;
-        void setSolverSplitImpulseThreshold (float);
+    float getSolverSplitImpulseThreshold (void) const;
+    void setSolverSplitImpulseThreshold (float);
 
-        btScalar getStepSize (void) const;
-        void setStepSize (btScalar v);
+    btScalar getStepSize (void) const;
+    void setStepSize (btScalar v);
 
-        btScalar getMaxSteps (void) const;
-        void setMaxSteps (btScalar v);
+    btScalar getMaxSteps (void) const;
+    void setMaxSteps (btScalar v);
 
-        void draw (void);
+    void draw (void);
 
-        bool verboseContacts;
-        bool errorContacts;
-        bool verboseCasts;
-        bool errorCasts;
-        bool bumpyTriangleMeshHack;
-        bool useTriangleEdgeInfo;
-        bool gimpactOneWayMeshHack;
+    bool verboseContacts;
+    bool errorContacts;
+    bool verboseCasts;
+    bool errorCasts;
+    bool bumpyTriangleMeshHack;
+    bool useTriangleEdgeInfo;
+    bool gimpactOneWayMeshHack;
 
-        void updateGraphics (lua_State *L);
-
-        const MaterialDB &getMaterialDB (void) { return mdb; }
+    void updateGraphics (lua_State *L);
 
     protected:
 
-        bool needsGraphicsUpdate;
+    bool needsGraphicsUpdate;
 
-        btDefaultCollisionConfiguration *colConf;
-        btCollisionDispatcher *colDisp;
+    btDefaultCollisionConfiguration *colConf;
+    btCollisionDispatcher *colDisp;
 
-        btBroadphaseInterface *broadphase;
+    btBroadphaseInterface *broadphase;
 
-        btConstraintSolver *conSolver;
+    btConstraintSolver *conSolver;
 
-        DynamicsWorld *world;
+    DynamicsWorld *world;
 
-        btScalar maxSteps;
+    btScalar maxSteps;
 
-        btScalar extrapolate;
+    btScalar extrapolate;
 
-        static CollisionMeshMap colMeshes;
+    static CollisionMeshMap colMeshes;
 
-        lua_State *last_L;
+    lua_State *last_L;
 
-        MaterialDB mdb;
-
-        std::vector<std::pair<float, float> > interactions;
-        unsigned numInteractions;
 };
 
 class RigidBody : public btMotionState {
 
-        friend class PhysicsWorld;
-        friend class CollisionMesh;
+    friend class PhysicsWorld;
+    friend class CollisionMesh;
 
     public:
 
-        RigidBody (const PhysicsWorldPtr &world,
-                   const CollisionMeshPtr &col_mesh,
-                   const Vector3 &pos,
-                   const Quaternion &quat);
+    RigidBody (const PhysicsWorldPtr &world,
+           const CollisionMeshPtr &col_mesh,
+           const Vector3 &pos,
+           const Quaternion &quat);
 
 
-        ~RigidBody (void);
+    ~RigidBody (void);
 
-        void destroy (lua_State *L);
+    void destroy (lua_State *L);
 
-        bool destroyed (void) const { return body==NULL; }
+    bool destroyed (void) const { return body==NULL; }
 
-        void getWorldTransform (btTransform& into_here) const;
+    void getWorldTransform (btTransform& into_here) const;
 
-        void setWorldTransform (const btTransform& current_xform);
+    void setWorldTransform (const btTransform& current_xform);
 
-        Vector3 getPosition (void) const;
+    Vector3 getPosition (void) const;
 
-        Quaternion getOrientation (void) const;
+    Quaternion getOrientation (void) const;
 
-        void setPosition (const Vector3 &v);
+    void setPosition (const Vector3 &v);
 
-        void setOrientation (const Quaternion &q);
+    void setOrientation (const Quaternion &q);
 
-        void stepCallback (lua_State *L);
-        void collisionCallback (lua_State *L, int lifetime, float impulse,
-                                const RigidBodyPtr &other,
-                                int m, int m2, float penetration,
-                                const Vector3 &pos, const Vector3 &pos2, const Vector3 &wnormal);
-        void stabiliseCallback (lua_State *L);
-        void updateGraphicsCallback (lua_State *L);
+    void stepCallback (lua_State *L);
+    void collisionCallback (lua_State *L, int lifetime, float impulse,
+                const RigidBodyPtr &other,
+                int m, int m2, float penetration,
+                const Vector3 &pos, const Vector3 &pos2, const Vector3 &wnormal);
+    void stabiliseCallback (lua_State *L);
+    void updateGraphicsCallback (lua_State *L);
 
-        void activate (void);
-        void deactivate (void);
+    void activate (void);
+    void deactivate (void);
 
-        void force (const Vector3 &force);
-        void force (const Vector3 &force,
-                    const Vector3 &rel_pos);
-        void impulse (const Vector3 &impulse);
-        void impulse (const Vector3 &impulse,
-                      const Vector3 &rel_pos);
-        void torque (const Vector3 &torque);
-        void torqueImpulse (const Vector3 &torque);
+    void force (const Vector3 &force);
+    void force (const Vector3 &force,
+            const Vector3 &rel_pos);
+    void impulse (const Vector3 &impulse);
+    void impulse (const Vector3 &impulse,
+              const Vector3 &rel_pos);
+    void torque (const Vector3 &torque);
+    void torqueImpulse (const Vector3 &torque);
 
-        float getContactProcessingThreshold (void) const;
-        void setContactProcessingThreshold (float v);
+    float getContactProcessingThreshold (void) const;
+    void setContactProcessingThreshold (float v);
 
-        float getLinearDamping (void) const;
-        void setLinearDamping (float r);
+    float getLinearDamping (void) const;
+    void setLinearDamping (float r);
 
-        float getAngularDamping (void) const;
-        void setAngularDamping (float r);
+    float getAngularDamping (void) const;
+    void setAngularDamping (float r);
 
-        float getLinearSleepThreshold (void) const;
-        void setLinearSleepThreshold (float r);
+    float getLinearSleepThreshold (void) const;
+    void setLinearSleepThreshold (float r);
 
-        float getAngularSleepThreshold (void) const;
-        void setAngularSleepThreshold (float r);
+    float getAngularSleepThreshold (void) const;
+    void setAngularSleepThreshold (float r);
 
-        Vector3 getLinearVelocity (void) const;
-        void setLinearVelocity (const Vector3 &v);
+    Vector3 getLinearVelocity (void) const;
+    void setLinearVelocity (const Vector3 &v);
 
-        Vector3 getAngularVelocity (void) const;
-        void setAngularVelocity (const Vector3 &v);
+    Vector3 getAngularVelocity (void) const;
+    void setAngularVelocity (const Vector3 &v);
 
-        Vector3 getLocalVelocity (const Vector3 &) const;
+    Vector3 getLocalVelocity (const Vector3 &) const;
 
-        float getMass (void) const;
-        void setMass (float r);
+    float getMass (void) const;
+    void setMass (float r);
 
-        Vector3 getInertia (void) const;
-        void setInertia (const Vector3 &v);
+    Vector3 getInertia (void) const;
+    void setInertia (const Vector3 &v);
 
-        RigidBodyPtr getPtr (void) const { return self; }
+    RigidBodyPtr getPtr (void) const { return self; }
 
-        const PhysicsWorldPtr world;
+    const PhysicsWorldPtr world;
 
-        const CollisionMeshPtr colMesh;
+    const CollisionMeshPtr colMesh;
 
-        GritObjectPtr owner;
+    GritObjectPtr owner;
 
-        void notifyMeshReloaded (void)
-        {
-                removeFromWorld();
-                addToWorld();
-        }
+    void notifyMeshReloaded (void)
+    {
+        removeFromWorld();
+        addToWorld();
+    }
 
-        void addToWorld (void);
-        void removeFromWorld (void);
+    void addToWorld (void);
+    void removeFromWorld (void);
 
-        void setElementEnabled (int i, bool v);
-        bool getElementEnabled (int i);
+    void setElementEnabled (int i, bool v);
+    bool getElementEnabled (int i);
 
-        Vector3 getElementPositionMaster (int i);
-        void setElementPositionOffset (int i, const Vector3 &v);
-        Vector3 getElementPositionOffset (int i);
-        Quaternion getElementOrientationMaster (int i);
-        void setElementOrientationOffset (int i, const Quaternion &q);
-        Quaternion getElementOrientationOffset (int i);
-        int getNumElements (void) { return localChanges.size(); };
+    Vector3 getElementPositionMaster (int i);
+    void setElementPositionOffset (int i, const Vector3 &v);
+    Vector3 getElementPositionOffset (int i);
+    Quaternion getElementOrientationMaster (int i);
+    void setElementOrientationOffset (int i, const Quaternion &q);
+    Quaternion getElementOrientationOffset (int i);
+    int getNumElements (void) { return localChanges.size(); };
 
-        bool getGhost (void) const { return ghost; }
-        void setGhost (bool v) { ghost = v; updateCollisionFlags(); }
+    bool getGhost (void) const { return ghost; }
+    void setGhost (bool v) { ghost = v; updateCollisionFlags(); }
 
     protected:
 
-        float mass;
-        bool ghost;
+    float mass;
+    bool ghost;
 
-        btTransform lastXform;
+    btTransform lastXform;
 
     public:
-        LuaPtr updateCallbackPtr;
-        LuaPtr stepCallbackPtr;
-        LuaPtr collisionCallbackPtr;
-        LuaPtr stabiliseCallbackPtr;
+    LuaPtr updateCallbackPtr;
+    LuaPtr stepCallbackPtr;
+    LuaPtr collisionCallbackPtr;
+    LuaPtr stabiliseCallbackPtr;
 
     protected:
-        btRigidBody *body;
-        btCompoundShape *shape;
+    btRigidBody *body;
+    btCompoundShape *shape;
 
-        // yes, it's stupid, but it must be done
-        RigidBodyPtr self;
+    // yes, it's stupid, but it must be done
+    RigidBodyPtr self;
 
-        struct CompElement {
-                bool enabled;
-                btTransform offset;
-        };
-        btAlignedObjectArray<CompElement> localChanges; // to the master compound
+    struct CompElement {
+        bool enabled;
+        btTransform offset;
+    };
+    btAlignedObjectArray<CompElement> localChanges; // to the master compound
 
-        void updateCollisionFlags (void);
+    void updateCollisionFlags (void);
 };
 
 
 #endif
 
-// vim: shiftwidth=8:tabstop=8:expandtab
+// vim: shiftwidth=4:tabstop=4:expandtab

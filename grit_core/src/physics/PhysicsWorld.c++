@@ -38,6 +38,7 @@
 #include "PhysicsWorld.h"
 #include "lua_wrappers_physics.h"
 
+
 static inline btVector3 check_nan_ (const btVector3 &v, const char *file, int line)
 {
     if (isnan(v.x()) || isnan(v.y()) || isnan(v.z())) {
@@ -205,23 +206,27 @@ int get_material (const CollisionMeshPtr &cmesh, const btCollisionShape *shape,
         if (id < 0 || id >= max) {
             if (verb) {
                 CERR << "index from bullet was garbage: " << id
-                     << " >= " << max << std::endl;
+                     << " >= " << max
+                     << " cmesh: \"" << cmesh->getName() << "\""
+                     << std::endl;
                 if (err) *err = true;
             }
             id = 0;
         }
-        return cmesh->getMaterialFromFace(id);
+        return cmesh->getMaterialFromFace(id)->id;
     } else {
         int max = cmesh->partMaterials.size();
         if (id < 0 || id >= max) {
             if (verb) {
                 CERR << "index from bullet was garbage: " << id
-                     << " >= " << max << std::endl;
+                     << " >= " << max
+                     << " cmesh: \"" << cmesh->getName() << "\""
+                     << std::endl;
                 if (err) *err = true;
             }
             id = 0;
         }
-        return cmesh->getMaterialFromPart(id);
+        return cmesh->getMaterialFromPart(id)->id;
     }
 }
 
@@ -269,7 +274,7 @@ bool contact_added_callback (btManifoldPoint& cp,
     cp.m_partId0 = mat0;
     cp.m_partId1 = mat1;
 
-    world->getFrictionRestitution(mat0, mat1, cp.m_combinedFriction, cp.m_combinedRestitution);
+    phys_mats.getFrictionRestitution(mat0, mat1, cp.m_combinedFriction, cp.m_combinedRestitution);
 
     if (err || world->verboseContacts) {
         CLOG << mat0 << "[" << shape_str(shape0->getShapeType()) << "]"
@@ -653,13 +658,8 @@ CollisionMeshPtr PhysicsWorld::createFromFile (const std::string &name)
     if (hasMesh(name))
         GRIT_EXCEPT("Collision mesh \""+name+"\" already exists.");
     CollisionMeshPtr cmp = CollisionMeshPtr(new CollisionMesh(name));
-    // Note: this only works because both ogre and bullet are using float
-    // if this situation changes it will be necessary to convert
-    // from float to btScalar.
-    Ogre::DataStreamPtr file =
-        Ogre::ResourceGroupManager::getSingleton().openResource(name,"GRIT");
-    cmp->importFromFile(file, mdb);
     colMeshes[name] = cmp;
+    cmp->load();
     return cmp;
 }
 
@@ -1113,8 +1113,8 @@ void RigidBody::collisionCallback (lua_State *L, int lifetime, float impulse,
     lua_pushnumber(L,lifetime);
     lua_pushnumber(L,impulse);
     push_rbody(L,other);
-    lua_pushstring(L,world->getMaterial(m).name.c_str());
-    lua_pushstring(L,world->getMaterial(m2).name.c_str());
+    lua_pushstring(L,phys_mats.getMaterial(m)->name.c_str());
+    lua_pushstring(L,phys_mats.getMaterial(m2)->name.c_str());
     lua_pushnumber(L,penetration);
     push_v3(L,pos);
     push_v3(L,pos2);

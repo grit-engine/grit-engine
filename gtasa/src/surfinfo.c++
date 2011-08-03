@@ -13,7 +13,7 @@ void read_surfinfo (Csv &csv, SurfInfoData &data)
         const CsvSection &s = csv["nosection"];
         for (unsigned i=0 ; i<s.size() ; ++i) {
                 const CsvLine &line = s[i];
-                ASSERT(line.size()>=36);
+                APP_ASSERT(line.size()>=36);
 
                 SurfInfo v;
                 v.name = line[0];
@@ -68,6 +68,8 @@ void read_surfinfo (Csv &csv, SurfInfoData &data)
 
 #include "console_colour.h"
 
+void assert_triggered (void) { }
+
 void app_verbose(char const* file, int line, const std::string& msg)
 {
         std::cout<<BOLD GREEN"VERBOSE "RESET
@@ -116,12 +118,12 @@ int main(int argc, char *argv[])
                 } else {
                         filename = argv[1];
                         surfinfofstream.open (filename.c_str());
-                        ASSERT_IO_SUCCESSFUL(surfinfofstream,
+                        APP_ASSERT_IO_SUCCESSFUL(surfinfofstream,
                                           "Opening surfinfo: "+filename);
                         if (surfinfofstream.fail() || surfinfofstream.bad()) {
                                 std::stringstream ss;
                                 ss << filename << ": IO Error: " << strerror(errno) << "\n";
-                                IOS_EXCEPT(ss.str());
+                                GRIT_EXCEPT(ss.str());
                         }
                 }
 
@@ -135,14 +137,14 @@ int main(int argc, char *argv[])
                         const std::string name = i->first;
                         const SurfInfo &v = *i->second;
 
-                        ASSERT(name == v.name);
+                        APP_ASSERT(name == v.name);
 
                         std::cout << name << std::endl;
                 }
 
-        } catch (Exception &e) {
+        } catch (GritException &e) {
 
-                std::cerr << "ERROR: " << e.getFullDescription() << std::endl;
+                CERR << e << std::endl;
                 return EXIT_FAILURE;
 
         }

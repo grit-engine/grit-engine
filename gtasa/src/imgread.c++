@@ -46,7 +46,7 @@ void Img::init (std::istream &f, std::string name_)
 {
         name = name_;
         unsigned long version = ios_read_u32(f);
-        ASSERT(version==0x32524556);
+        APP_ASSERT(version==0x32524556);
 
         numFiles = ios_read_u32(f);
         names.resize(numFiles);
@@ -79,14 +79,14 @@ bool Img::fileExists (const std::string &fname) const
 void Img::fileOffset (std::istream &f, unsigned long i) const
 {
         f.seekg(fileOffset(i)); 
-        ASSERT_IO_SUCCESSFUL(f,"seeking to: "+fileName(i));
+        APP_ASSERT_IO_SUCCESSFUL(f,"seeking to: "+fileName(i));
 }
 
 Img::Dir::const_iterator Img::find (const std::string &fname) const
 {
         Dir::const_iterator iter = dir.find(fname);
         if (iter==dir.end())
-                IOS_EXCEPT(name+" did not contain: \""+fname+"\"");
+                GRIT_EXCEPT(name+" did not contain: \""+fname+"\"");
         return iter;
 }
 
@@ -125,22 +125,24 @@ unsigned long Img::fileSize (const std::string &fname) const
 size_t amount_read = 0;
 size_t amount_seeked = 0;
 
+void assert_triggered (void) { } 
+
 void extract_file (std::ifstream &in,
                    const std::string &name,
                    unsigned long off, unsigned long sz)
 {
         char *data = new char[sz];
         in.seekg(off);
-        ASSERT_IO_SUCCESSFUL(in,"extracting: "+name);
+        APP_ASSERT_IO_SUCCESSFUL(in,"extracting: "+name);
         in.read(data,sz);
-        ASSERT_IO_SUCCESSFUL(in,"extracting: "+name);
+        APP_ASSERT_IO_SUCCESSFUL(in,"extracting: "+name);
         
         std::ofstream out;
         out.open(name.c_str(), std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(out,"opening output: "+name);
+        APP_ASSERT_IO_SUCCESSFUL(out,"opening output: "+name);
 
         out.write(data,sz);
-        ASSERT_IO_SUCCESSFUL(out,"writing output: "+name);
+        APP_ASSERT_IO_SUCCESSFUL(out,"writing output: "+name);
 
         delete data;
 }
@@ -164,7 +166,7 @@ int main(int argc, char *argv[])
 
                 std::ifstream in;
                 in.open(argv[1], std::ios::binary);
-                ASSERT_IO_SUCCESSFUL(in,"opening IMG");
+                APP_ASSERT_IO_SUCCESSFUL(in,"opening IMG");
 
                 Img img;
 
@@ -184,9 +186,8 @@ int main(int argc, char *argv[])
                 }
                 return EXIT_SUCCESS;
 
-        } catch (Exception &e) {
-                
-                std::cerr << "ERROR: " << e.getFullDescription() << std::endl;
+        } catch (GritException &e) {
+                CERR << e << std::endl;
 
                 return EXIT_FAILURE;
         }

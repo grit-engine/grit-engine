@@ -28,14 +28,14 @@ void read_handling (Csv &csv, HandlingData &data)
         const CsvSection &s = csv["nosection"];
         for (unsigned i=0 ; i<s.size() ; ++i) {
                 const CsvLine &line = s[i];
-                ASSERT(line.size()>0);
+                APP_ASSERT(line.size()>0);
 
                 if (line[0] == "%") continue;
                 if (line[0] == "!") continue;
                 if (line[0] == "$") continue;
                 if (line[0] == "^") continue;
 
-                ASSERT(line.size()==36);
+                APP_ASSERT(line.size()==36);
 
                 VehicleData v;
                 v.name = strlower(line[0]);
@@ -70,7 +70,7 @@ void read_handling (Csv &csv, HandlingData &data)
                 v.brakes = f(line[17]);
                 v.brake_bias = f(line[18]);
                 v.abs = dec(line[19])==1;
-                ASSERT(!v.abs);
+                APP_ASSERT(!v.abs);
                 v.steering_lock = f(line[20]);
 
                 v.susp_force = f(line[21]);
@@ -166,11 +166,11 @@ void read_handling (Csv &csv, HandlingData &data)
         }
         for (unsigned i=0 ; i<s.size() ; ++i) {
                 const CsvLine &line = s[i];
-                ASSERT(line.size()>0);
+                APP_ASSERT(line.size()>0);
                 if (line[0] == "%") {
-                        ASSERT(line.size()==16);
+                        APP_ASSERT(line.size()==16);
                         const std::string &name = strlower(line[1]);
-                        ASSERT(data[name]!=NULL);
+                        APP_ASSERT(data[name]!=NULL);
                         VehicleData &v = *data[name];
                         v.has_boat_data = true;
                         // boat
@@ -189,9 +189,9 @@ void read_handling (Csv &csv, HandlingData &data)
                         v.boat_turn_res_z = f(line[14]);
                         v.boat_look_l_r_behind_cam_height = f(line[15]);
                 } else if (line[0] == "!") {
-                        ASSERT(line.size()==17);
+                        APP_ASSERT(line.size()==17);
                         const std::string &name = strlower(line[1]);
-                        ASSERT(data[name]!=NULL);
+                        APP_ASSERT(data[name]!=NULL);
                         VehicleData &v = *data[name];
                         v.has_bike_data = true;
                         // bike
@@ -211,9 +211,9 @@ void read_handling (Csv &csv, HandlingData &data)
                         v.bike_wheelie_stab_mult = f(line[15]);
                         v.bike_stoppie_stab_mult = f(line[16]);
                 } else if (line[0] == "$") {
-                        ASSERT(line.size()==23);
+                        APP_ASSERT(line.size()==23);
                         const std::string &name = strlower(line[1]);
-                        ASSERT(data[name]!=NULL);
+                        APP_ASSERT(data[name]!=NULL);
                         VehicleData &v = *data[name];
                         v.has_plane_data = true;
                         // plane
@@ -277,6 +277,8 @@ void app_fatal()
         abort();
 }
 
+void assert_triggered (void) { }
+
 int main(int argc, char *argv[])
 {
         if (argc!=2) {
@@ -296,12 +298,12 @@ int main(int argc, char *argv[])
                 } else {
                         filename = argv[1];
                         handlingfstream.open (filename.c_str());
-                        ASSERT_IO_SUCCESSFUL(handlingfstream,
+                        APP_ASSERT_IO_SUCCESSFUL(handlingfstream,
                                           "Opening handling: "+filename);
                         if (handlingfstream.fail() || handlingfstream.bad()) {
                                 std::stringstream ss;
                                 ss << filename << ": IO Error: " << strerror(errno) << "\n";
-                                IOS_EXCEPT(ss.str());
+                                GRIT_EXCEPT(ss.str());
                         }
                 }
 
@@ -315,14 +317,14 @@ int main(int argc, char *argv[])
                         const std::string name = i->first;
                         const VehicleData &v = *i->second;
 
-                        ASSERT(name == v.name);
+                        APP_ASSERT(name == v.name);
 
                         std::cout << name << std::endl;
                 }
 
-        } catch (Exception &e) {
+        } catch (GritException &e) {
 
-                std::cerr << "ERROR: " << e.getFullDescription() << std::endl;
+                CERR << e << std::endl;
                 return EXIT_FAILURE;
 
         }

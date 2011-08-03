@@ -74,3 +74,4 @@ provided string is substituted.
 */
 std::string pwd_full (const std::string &rel, const std::string &def);
 
+std::string grit_dirname (const std::string &p);

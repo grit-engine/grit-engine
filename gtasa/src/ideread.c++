@@ -140,7 +140,7 @@ void read_ide (const std::string &filename, std::istream &f, struct ide *ide)
                                 obj.draw_distance = (float)strtod(line[3].c_str(),NULL);
                                 obj.flags = get_ulong(line[4],"Flags");
                                 obj.is_car = false;
-                                ASSERT((obj.flags|0x77feef) == 0x77feef);
+                                APP_ASSERT((obj.flags|0x77feef) == 0x77feef);
                                 ide->objs.push_back(obj);
                         } else if (section=="objs" && line.size()==6) {
                                 // mysterious airtrain_vlo thing
@@ -151,7 +151,7 @@ void read_ide (const std::string &filename, std::istream &f, struct ide *ide)
                                 tobj.txd = str_lcase_crop(line[2]);
                                 tobj.draw_distance =(float)strtod(line[3].c_str(),NULL);
                                 tobj.flags = get_ulong(line[4],"Flags");
-                                ASSERT((tobj.flags|0x77feef) == 0x77feef);
+                                APP_ASSERT((tobj.flags|0x77feef) == 0x77feef);
                                 tobj.hour_on = get_uchar(line[5],"Hour on");
                                 tobj.hour_off = get_uchar(line[6],"Hour off");
                                 ide->tobjs.push_back(tobj);
@@ -166,7 +166,7 @@ void read_ide (const std::string &filename, std::istream &f, struct ide *ide)
                                 anim.ifp_file = str_lcase_crop(line[3]);
                                 anim.draw_distance =(float)strtod(line[4].c_str(),NULL);
                                 anim.flags = get_ulong(line[5],"Flags");
-                                ASSERT((anim.flags|0x77feef) == 0x77feef);
+                                APP_ASSERT((anim.flags|0x77feef) == 0x77feef);
                                 ide->anims.push_back(anim);
                         } else if (section=="txdp" && line.size()==2) {
                                 TXDP txdp;
@@ -180,10 +180,10 @@ void read_ide (const std::string &filename, std::istream &f, struct ide *ide)
                                 weap.txd = str_lcase_crop(line[2]);
                                 weap.type = str_lcase_crop(line[3]);
                                 weap.unk_one = get_ulong(line[4],"Unknown");
-                                ASSERT(weap.unk_one==1);
+                                APP_ASSERT(weap.unk_one==1);
                                 weap.unk_num = get_ulong(line[5],"Unknown");
                                 weap.unk_zero = get_ulong(line[6],"Unknown");
-                                ASSERT(weap.unk_zero==0);
+                                APP_ASSERT(weap.unk_zero==0);
                                 ide->weaps.push_back(weap);
                         } else if (section=="hier" && line.size()==5) {
                         } else if (section=="peds" && line.size()==14) {
@@ -227,15 +227,15 @@ void read_ide (const std::string &filename, std::istream &f, struct ide *ide)
                                 vehicle.comp_rules = get_hex(line[10],"CompRules");
                                 // boats do not have the following:
                                 if (line.size()>=15) {
-                                        ASSERT(vehicle.type!="boat");
+                                        APP_ASSERT(vehicle.type!="boat");
                                         // on bikes, 16 or 23, otherwise -1
                                         vehicle.unk1 = get_long(line[11],"Unknown1");
-                                        ASSERT(vehicle.type=="bike" ||
+                                        APP_ASSERT(vehicle.type=="bike" ||
                                                    vehicle.type=="bmx" ||
                                                    vehicle.unk1==-1);
-                                        ASSERT(vehicle.type!="bmx" ||
+                                        APP_ASSERT(vehicle.type!="bmx" ||
                                                    vehicle.unk1==16||vehicle.unk1==23);
-                                        ASSERT(vehicle.type!="bike" ||
+                                        APP_ASSERT(vehicle.type!="bike" ||
                                                    vehicle.unk1==16||vehicle.unk1==23);
                                         vehicle.front_wheel_size =
                                                 (float)strtod(line[12].c_str(),NULL);
@@ -243,8 +243,8 @@ void read_ide (const std::string &filename, std::istream &f, struct ide *ide)
                                                 (float)strtod(line[13].c_str(),NULL);
                                         // -1 0 1 2 (on non-cars always -1)
                                         vehicle.unk2 = get_long(line[14],"Unknown2");
-                                        ASSERT(vehicle.unk2>=-1 && vehicle.unk2<=2);
-                                        ASSERT(vehicle.type=="car" ||
+                                        APP_ASSERT(vehicle.unk2>=-1 && vehicle.unk2<=2);
+                                        APP_ASSERT(vehicle.type=="car" ||
                                                    vehicle.unk2==-1);
                                 }
                                 ide->vehicles.push_back(vehicle);
@@ -322,7 +322,7 @@ void read_ide (std::istream &f, struct ide *ide)
                         obj.draw_distance = (float)strtod(strs[3].c_str(),NULL);
                         obj.flags = get_ulong(strs[4],"Flags");
                         obj.is_car = false;
-                        ASSERT((obj.flags|0x77feef) == 0x77feef);
+                        APP_ASSERT((obj.flags|0x77feef) == 0x77feef);
                         ide->objs.push_back(obj);
                 } else if (section=="objs" && strs.size()==6) {
                         // mysterious airtrain_vlo thing
@@ -333,7 +333,7 @@ void read_ide (std::istream &f, struct ide *ide)
                         tobj.txd = str_lcase_crop(strs[2]);
                         tobj.draw_distance =(float)strtod(strs[3].c_str(),NULL);
                         tobj.flags = get_ulong(strs[4],"Flags");
-                        ASSERT((tobj.flags|0x77feef) == 0x77feef);
+                        APP_ASSERT((tobj.flags|0x77feef) == 0x77feef);
                         tobj.hour_on = get_uchar(strs[5],"Hour on");
                         tobj.hour_off = get_uchar(strs[6],"Hour off");
                         ide->tobjs.push_back(tobj);
@@ -348,7 +348,7 @@ void read_ide (std::istream &f, struct ide *ide)
                         anim.ifp_file = str_lcase_crop(strs[3]);
                         anim.draw_distance =(float)strtod(strs[4].c_str(),NULL);
                         anim.flags = get_ulong(strs[5],"Flags");
-                        ASSERT((anim.flags|0x77feef) == 0x77feef);
+                        APP_ASSERT((anim.flags|0x77feef) == 0x77feef);
                         ide->anims.push_back(anim);
                 } else if (section=="txdp" && strs.size()==2) {
                         TXDP txdp;
@@ -362,10 +362,10 @@ void read_ide (std::istream &f, struct ide *ide)
                         weap.txd = str_lcase_crop(strs[2]);
                         weap.type = str_lcase_crop(strs[3]);
                         weap.unk_one = get_ulong(strs[4],"Unknown");
-                        ASSERT(weap.unk_one==1);
+                        APP_ASSERT(weap.unk_one==1);
                         weap.unk_num = get_ulong(strs[5],"Unknown");
                         weap.unk_zero = get_ulong(strs[6],"Unknown");
-                        ASSERT(weap.unk_zero==0);
+                        APP_ASSERT(weap.unk_zero==0);
                         ide->weaps.push_back(weap);
                 } else if (section=="hier" && strs.size()==5) {
                 } else if (section=="peds" && strs.size()==14) {
@@ -409,15 +409,15 @@ void read_ide (std::istream &f, struct ide *ide)
                         vehicle.comp_rules = get_hex(strs[10],"CompRules");
                         // boats do not have the following:
                         if (strs.size()==15) {
-                                ASSERT(vehicle.type!="boat");
+                                APP_ASSERT(vehicle.type!="boat");
                                 // on bikes, 16 or 23, otherwise -1
                                 vehicle.unk1 = get_long(strs[11],"Unknown1");
-                                ASSERT(vehicle.type=="bike" ||
+                                APP_ASSERT(vehicle.type=="bike" ||
                                            vehicle.type=="bmx" ||
                                            vehicle.unk1==-1);
-                                ASSERT(vehicle.type!="bmx" ||
+                                APP_ASSERT(vehicle.type!="bmx" ||
                                            vehicle.unk1==16||vehicle.unk1==23);
-                                ASSERT(vehicle.type!="bike" ||
+                                APP_ASSERT(vehicle.type!="bike" ||
                                            vehicle.unk1==16||vehicle.unk1==23);
                                 vehicle.front_wheel_size =
                                         (float)strtod(strs[12].c_str(),NULL);
@@ -425,8 +425,8 @@ void read_ide (std::istream &f, struct ide *ide)
                                         (float)strtod(strs[13].c_str(),NULL);
                                 // -1 0 1 2 (on non-cars always -1)
                                 vehicle.unk2 = get_long(strs[14],"Unknown2");
-                                ASSERT(vehicle.unk2>=-1 && vehicle.unk2<=2);
-                                ASSERT(vehicle.type=="car" ||
+                                APP_ASSERT(vehicle.unk2>=-1 && vehicle.unk2<=2);
+                                APP_ASSERT(vehicle.type=="car" ||
                                            vehicle.unk2==-1);
                         }
                         ide->vehicles.push_back(vehicle);
@@ -470,6 +470,8 @@ void app_fatal()
 {
         abort();
 }
+
+void assert_triggered (void) { } 
 
 std::string fstr(unsigned int flags)
 {
@@ -519,12 +521,12 @@ int main(int argc, char *argv[])
                 } else {
                         filename = argv[1];
                         idefstream.open (filename.c_str());
-                        ASSERT_IO_SUCCESSFUL(idefstream,
+                        APP_ASSERT_IO_SUCCESSFUL(idefstream,
                                           "Opening ide: "+filename);
                         if (idefstream.fail() || idefstream.bad()) {
                                 std::stringstream ss;
                                 ss << filename << ": IO Error: " << strerror(errno) << "\n";
-                                IOS_EXCEPT(ss.str());
+                                GRIT_EXCEPT(ss.str());
                         }
                 }
 
@@ -558,9 +560,9 @@ int main(int argc, char *argv[])
                                              <<ide.txdps[i].txd2<<std::endl;
                 }
 
-        } catch (Exception &e) {
+        } catch (GritException &e) {
 
-                std::cerr << "ERROR: " << e.getFullDescription() << std::endl;
+                CERR << e << std::endl;
                 return EXIT_FAILURE;
 
         }

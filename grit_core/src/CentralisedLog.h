@@ -128,6 +128,7 @@ CVERB << "hello world" << std::endl;
 #define CERR CLog(__FILE__,__LINE__,true)
 #define CLOG CLog()
 #define CVERB CLog(__FILE__,__LINE__,false)
+#define CTRACE(x) CVERB << #x << " " << (x) << std::endl
 
 void assert_triggered (void);
 
@@ -170,7 +171,7 @@ struct GritException {
         int line;
 };
 
-inline std::ostream &operator << (std::ostream &o, GritException &e)
+inline std::ostream &operator << (std::ostream &o, const GritException &e)
 { o << e.msg; return o; }
 
 #if defined(_MSC_VER)

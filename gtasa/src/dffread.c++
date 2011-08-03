@@ -68,7 +68,7 @@ static void unrec (const std::string &p, unsigned long type,
     std::stringstream ss;
     ss << p << type << " 0x" << HEX(type)
        << " ("<<size<<"B) UNREC "<<word<<" EXT!";
-    IOS_EXCEPT(ss.str());
+    GRIT_EXCEPT(ss.str());
 }
 
 
@@ -99,7 +99,7 @@ static inline void check_spill_(std::ifstream &f,
     if (overspill) {
         std::stringstream msg;
         msg<<p<<"Read "<<abs(overspill)<<" bytes too "<<(overspill>0?"many":"few")<<", "<<did<<" not "<<should<<" ("<<src<<":"<<line<<").[0m"<<std::endl;
-        IOS_EXCEPT(msg.str());
+        GRIT_EXCEPT(msg.str());
     }
 }}}
 
@@ -111,32 +111,32 @@ static void ios_read_texture (int d, std::ifstream &f,
 {{{
     unsigned long type, tex_size;
     ios_read_header(f,&type,&tex_size,NULL,&file_version);
-    ASSERT(type==RW_TEXTURE);
+    APP_ASSERT(type==RW_TEXTURE);
     std::streamoff tex_start = f.tellg();
 
     unsigned long size;
     ios_read_header(f,&type,&size,NULL,&file_version);
-    ASSERT(type==RW_DATA);
-    ASSERT(size==4);
+    APP_ASSERT(type==RW_DATA);
+    APP_ASSERT(size==4);
     t->filter_flags = ios_read_u16(f);
     VBOS(3,p<<"filter_flags: "<<HEX(t->filter_flags));
     t->unk1 = ios_read_u16(f);
     VBOS(3,p<<"mysterious_flag: "<<HEX(t->unk1));
 
     ios_read_header(f,&type,&size,NULL,&file_version);
-    ASSERT(type==RW_STRING);
+    APP_ASSERT(type==RW_STRING);
     t->name = ios_read_fixedstr(f,size);
     VBOS(3,p<<"name: "<<t->name);
 
     ios_read_header(f,&type,&size,NULL,&file_version);
-    ASSERT(type==RW_STRING);
+    APP_ASSERT(type==RW_STRING);
     std::string alpha_str = ios_read_fixedstr(f,size);
     t->has_alpha = alpha_str!="";
     VBOS(3,p<<"has_alpha: "<<t->has_alpha);
 
     unsigned long totalsize;
     ios_read_header(f,&type,&totalsize,NULL,&file_version);
-    ASSERT(type==RW_EXT);
+    APP_ASSERT(type==RW_EXT);
 
     while (totalsize>0) {
         unsigned long size;
@@ -167,11 +167,11 @@ static void ios_read_material_effs (int d,std::ifstream &f,
     VBOS(3,p<<"mat_type2: "<<m->mat_type2);
     switch(m->mat_type1) {
     case MATBUMP1:
-        ASSERT(m->mat_type2 == MATBUMP2);
+        APP_ASSERT(m->mat_type2 == MATBUMP2);
         m->multiplier = ios_read_float(f);
         VBOS(3,p<<"multiplier: "<<m->multiplier);
         m->dest_blend_type = ios_read_u32(f);
-        ASSERT(m->dest_blend_type==0);
+        APP_ASSERT(m->dest_blend_type==0);
         m->num_effects_textures = ios_read_u32(f);
         VBOS(3,p<<"num_effects_textures: "<<m->num_effects_textures);
         m->effects_textures.resize(m->num_effects_textures);
@@ -184,11 +184,11 @@ static void ios_read_material_effs (int d,std::ifstream &f,
         ios_read_u32(f);// WHAT THE FUCK?
         break;
     case MATBUMPENV1:
-        ASSERT(m->mat_type2 == MATBUMP1);
+        APP_ASSERT(m->mat_type2 == MATBUMP1);
         m->multiplier = ios_read_float(f);
         VBOS(3,p<<"multiplier: "<<m->multiplier);
         m->dest_blend_type = ios_read_u32(f);
-        ASSERT(m->dest_blend_type==0);
+        APP_ASSERT(m->dest_blend_type==0);
         m->num_effects_textures = ios_read_u32(f);
         VBOS(3,p<<"num_effects_textures: "<<m->num_effects_textures);
         m->effects_textures.resize(m->num_effects_textures);
@@ -201,11 +201,11 @@ static void ios_read_material_effs (int d,std::ifstream &f,
 
         m->mat_type3 = ios_read_u32(f);
         VBOS(3,p<<"mat_type3: "<<m->mat_type3);
-        ASSERT(m->mat_type3 == MATENV1);
+        APP_ASSERT(m->mat_type3 == MATENV1);
         m->multiplier2 = ios_read_float(f);
         VBOS(3,p<<"multiplier2: "<<m->multiplier2);
         m->dest_blend_type2 = ios_read_u32(f);
-        ASSERT(m->dest_blend_type2==0);
+        APP_ASSERT(m->dest_blend_type2==0);
         m->num_effects_textures2 = ios_read_u32(f);
         VBOS(3,p<<"num_effects_textures2: "<<m->num_effects_textures2);
         m->effects_textures2.resize(m->num_effects_textures2);
@@ -217,11 +217,11 @@ static void ios_read_material_effs (int d,std::ifstream &f,
         }
         break;
     case MATUVTRANSFORM1:
-        ASSERT(m->mat_type2 == MATUVTRANSFORM2);
+        APP_ASSERT(m->mat_type2 == MATUVTRANSFORM2);
         ios_read_u32(f);// WHAT THE FUCK?
         break;
     case MATDUALPASS1:
-        ASSERT(m->mat_type2 == MATDUALPASS2);
+        APP_ASSERT(m->mat_type2 == MATDUALPASS2);
         m->src_blend_type = ios_read_u32(f);
         VBOS(3,p<<"src_blend_type: "<<m->src_blend_type);
         m->dest_blend_type = ios_read_u32(f);
@@ -238,7 +238,7 @@ static void ios_read_material_effs (int d,std::ifstream &f,
         ios_read_u32(f);// WHAT THE FUCK?
         break;
     case MATENV1:
-        ASSERT(m->mat_type2 == MATENV2);
+        APP_ASSERT(m->mat_type2 == MATENV2);
         m->multiplier = ios_read_float(f);
         VBOS(3,p<<"multiplier: "<<m->multiplier);
         m->src_blend_type = ios_read_u32(f);
@@ -258,7 +258,7 @@ static void ios_read_material_effs (int d,std::ifstream &f,
         std::stringstream ss;
         ss << p << m->mat_type1 << " 0x" << HEX(m->mat_type1)
            << "UNREC MATERIAL EFFECT!";
-        IOS_EXCEPT(ss.str());
+        GRIT_EXCEPT(ss.str());
     }
 }}}
 
@@ -270,13 +270,13 @@ static void ios_read_material (int d,
 {{{
     unsigned long type, material_size;
     ios_read_header(f,&type,&material_size,NULL,&file_version); 
-    ASSERT(type==RW_MATERIAL);
+    APP_ASSERT(type==RW_MATERIAL);
     std::streamoff material_start = f.tellg();
 
     ios_read_header(f,&type,NULL,NULL,&file_version);
-    ASSERT(type==RW_DATA);
+    APP_ASSERT(type==RW_DATA);
     unsigned long zero = ios_read_u32(f);
-    ASSERT(zero==zero);
+    APP_ASSERT(zero==zero);
     m->colour = ios_read_u32(f);
     m->unk2 = ios_read_u32(f);
     m->num_textures = ios_read_u32(f);
@@ -289,7 +289,7 @@ static void ios_read_material (int d,
     VBOS(3,p<<"num_textures: "<<m->num_textures);
     VBOS(3,p<<"mat_unk3: "<<m->unk3);
     VBOS(3,p<<"mat_unk4: "<<m->unk4);
-    ASSERT(m->unk5==1.0);
+    APP_ASSERT(m->unk5==1.0);
 
     m->textures.resize(m->num_textures);
     for (unsigned long i=0 ; i<m->num_textures ; i++) {
@@ -300,7 +300,7 @@ static void ios_read_material (int d,
 
     unsigned long totalsize;
     ios_read_header(f,&type,&totalsize,NULL,&file_version);
-    ASSERT(type==RW_EXT);
+    APP_ASSERT(type==RW_EXT);
 
     while (totalsize>0) {
         unsigned long size;
@@ -309,7 +309,7 @@ static void ios_read_material (int d,
         totalsize -= size + 12;
         switch (type) {
         case RW_REFLECTION_MATERIAL:
-            ASSERT(size==24);
+            APP_ASSERT(size==24);
             m->reflection_material.unk1 = ios_read_float(f);
             m->reflection_material.unk2 = ios_read_float(f);
             m->reflection_material.unk3 = ios_read_float(f);
@@ -326,7 +326,7 @@ static void ios_read_material (int d,
                    <<m->reflection_material.unk4);
             VBOS(3,p<<"reflection_material.unk5: "
                    <<m->reflection_material.unk5);
-            ASSERT(m->reflection_material.unk6==0.0);
+            APP_ASSERT(m->reflection_material.unk6==0.0);
             break;
         case RW_MATERIAL_EFFECTS:
             ios_read_material_effs(d,f,file_version,m,p);
@@ -340,13 +340,13 @@ static void ios_read_material (int d,
         case RW_UV_ANIMATION:
             unsigned long anim_size;
             ios_read_header(f,&type,&anim_size,NULL,&file_version);
-            ASSERT(type==RW_DATA);
-            ASSERT(anim_size==36);
+            APP_ASSERT(type==RW_DATA);
+            APP_ASSERT(anim_size==36);
             VBOS(1,p<<"SKIPPING_OVER_ADC: "<<DECHEX(anim_size));
             ios_read_byte_array(f,NULL,anim_size);
             break;
         case RW_RIGHT_TO_RENDER:
-            ASSERT(size==8);
+            APP_ASSERT(size==8);
             m->rtr_unk1 = ios_read_u32(f);
             VBOS(3,p<<"rtr_unk1: "<<DECHEX(m->rtr_unk1));
             m->rtr_unk2 = ios_read_u32(f);
@@ -412,13 +412,13 @@ static void ios_read_geometry (int d,
 
     unsigned long type, geometry_size;
     ios_read_header(f,&type,&geometry_size,NULL,&file_version);
-    ASSERT(type==RW_GEOMETRY);
+    APP_ASSERT(type==RW_GEOMETRY);
     std::streamoff geometry_start = f.tellg();
 
     unsigned long struct_size;
     ios_read_header(f,&type,&struct_size,NULL,&file_version);
     std::streamoff struct_start = f.tellg();
-    ASSERT(type==RW_DATA);
+    APP_ASSERT(type==RW_DATA);
     g.flags = ios_read_u32(f);
     VBOS(3,p<<"geometry_struct_size: "<<struct_size);
     VBOS(3,p<<"geometry_flags: "<<HEX(g.flags)<<": "
@@ -443,7 +443,7 @@ static void ios_read_geometry (int d,
     tmp |= GEO_TEXCOORDS2;
     tmp |= GEO_UNKNOWN1;
     tmp |= GEO_UNKNOWN2;
-    ASSERT(tmp==(GEO_TRISTRIP|GEO_POSITIONS|GEO_TEXCOORDS|GEO_COLOURS|
+    APP_ASSERT(tmp==(GEO_TRISTRIP|GEO_POSITIONS|GEO_TEXCOORDS|GEO_COLOURS|
                GEO_NORMALS|GEO_LIGHTS|GEO_MODULATE|GEO_TEXCOORDS2|
                GEO_UNKNOWN1|GEO_UNKNOWN2));
     g.num_faces = ios_read_u32(f);
@@ -453,7 +453,7 @@ static void ios_read_geometry (int d,
     VBOS(3,p<<"num_vertexes: "<<g.num_vertexes);
     g.vertexes.resize(g.num_vertexes);
     g.num_frames = ios_read_u32(f);
-    ASSERT(g.num_frames==1);
+    APP_ASSERT(g.num_frames==1);
     if (file_version==0x1003FFFF) {
         g.ambient = ios_read_float(f);
         g.diffuse = ios_read_float(f);
@@ -538,16 +538,16 @@ static void ios_read_geometry (int d,
     check_spill(f,struct_start,struct_size,p);
 
     ios_read_header(f,&type,NULL,NULL,&file_version);
-    ASSERT(type==RW_MATERIAL_LIST);
+    APP_ASSERT(type==RW_MATERIAL_LIST);
 
     ios_read_header(f,&type,NULL,NULL,&file_version);
-    ASSERT(type==RW_DATA);
+    APP_ASSERT(type==RW_DATA);
     g.num_materials = ios_read_u32(f);
     g.materials.resize(g.num_materials);
     VBOS(4,p<<"num_materials: "<<g.num_materials);
     for (unsigned long i=0 ; i<g.num_materials ; i++) {
         unsigned long big = ios_read_u32(f);
-        ASSERT(big==ULONG_MAX);
+        APP_ASSERT(big==ULONG_MAX);
     }
 
     for (unsigned long i=0 ; i<g.num_materials ; i++) {
@@ -558,7 +558,7 @@ static void ios_read_geometry (int d,
 
     unsigned long totalsize;
     ios_read_header(f,&type,&totalsize,NULL,&file_version);
-    ASSERT(type==RW_EXT);
+    APP_ASSERT(type==RW_EXT);
 
     while (totalsize>0) {
         unsigned long size; 
@@ -618,7 +618,7 @@ static void ios_read_geometry (int d,
             if (fourcc) {
                 unsigned long one = ios_read_u32(f);
                 (void)one;
-                //ASSERT(one==1);
+                //APP_ASSERT(one==1);
                 unsigned long vcount = ios_read_u32(f);
                 unsigned long unk1 = ios_read_u32(f);
                 VBOS(3,p<<"meshext_unk1: "<<DECHEX(unk1));
@@ -773,10 +773,10 @@ static void ios_read_geometry (int d,
                     ios_read_byte_array(f,NULL,fx.sz);
                     break;
                     default:
-                    IOS_EXCEPT("Unknown 2DFX type!");
+                    GRIT_EXCEPT("Unknown 2DFX type!");
                 };
             }
-            ASSERT(counter==size);
+            APP_ASSERT(counter==size);
         } break;
         default:
             unrec(p,type,size,"GEOMETRY");
@@ -802,23 +802,23 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p,
     }
     std::streamoff dff_start = f.tellg();
 
-    ASSERT(type==RW_CHUNK);
+    APP_ASSERT(type==RW_CHUNK);
 
     ios_read_header(f,&type,&size,NULL,&file_version);
-    ASSERT(type==RW_DATA);
-    ASSERT(size==12);
+    APP_ASSERT(type==RW_DATA);
+    APP_ASSERT(size==12);
     unsigned long num_objects = ios_read_u32(f);
     VBOS(3,p<<"num_objects: "<<num_objects);
     unsigned long num_lights = ios_read_u32(f);
     VBOS(3,p<<"num_lights: "<<num_lights);
     unsigned long unk2 = ios_read_u32(f);
-    ASSERT(unk2==0);
+    APP_ASSERT(unk2==0);
 
     // frame list
     ios_read_header(f,&type,&size,NULL,&file_version);
-    ASSERT(type==RW_FRAME_LIST);
+    APP_ASSERT(type==RW_FRAME_LIST);
     ios_read_header(f,&type,&size,NULL,&file_version);
-    ASSERT(type==RW_DATA);
+    APP_ASSERT(type==RW_DATA);
     unsigned long num_frames = ios_read_u32(f);
     c->frames.resize(num_frames);
     VBOS(3,p<<"num_frames: "<<num_frames);
@@ -856,14 +856,14 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p,
         c->frames[i].geometry = -1;
         unsigned long total_size;
         ios_read_header(f,&type,&total_size,NULL,&file_version);
-        ASSERT(type==RW_EXT);
+        APP_ASSERT(type==RW_EXT);
         while (total_size>0) {
             ios_read_header(f,&type,&size,NULL,&file_version);
             total_size -= size + 12;
             switch(type) {
             case RW_BONE:
                 c->frames[i].bone_unk_flags = ios_read_u32(f);
-                ASSERT(c->frames[i].bone_unk_flags==0x100);
+                APP_ASSERT(c->frames[i].bone_unk_flags==0x100);
                 c->frames[i].bone_id = ios_read_u32(f);
                 VBOS(3,pref<<"bone_id: "<<c->frames[i].bone_id);
                 c->frames[i].num_bones = ios_read_u32(f);
@@ -904,9 +904,9 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p,
 
     // frame list
     ios_read_header(f,&type,&size,NULL,&file_version);
-    ASSERT(type==RW_GEOMETRY_LIST);
+    APP_ASSERT(type==RW_GEOMETRY_LIST);
     ios_read_header(f,&type,&size,NULL,&file_version);
-    ASSERT(type==RW_DATA);
+    APP_ASSERT(type==RW_DATA);
     unsigned long num_geometries = ios_read_u32(f);
     c->geometries.resize(num_geometries);
     VBOS(3,p<<"num_geometries: "<<num_geometries);
@@ -923,10 +923,10 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p,
         prefss<<p<<"object["<<i<<"].";
         std::string pref = prefss.str();
         ios_read_header(f,&type,&size,NULL,&file_version);
-        ASSERT(type==RW_ATOMIC);
+        APP_ASSERT(type==RW_ATOMIC);
         ios_read_header(f,&type,&size,NULL,&file_version);
-        ASSERT(type==RW_DATA);
-        ASSERT(size==16);
+        APP_ASSERT(type==RW_DATA);
+        APP_ASSERT(size==16);
         unsigned long frame_index = ios_read_u32(f);
         c->objects[i].frame_index = frame_index;
         VBOS(3,pref<<"frame_index: "<<frame_index);
@@ -934,25 +934,25 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p,
         c->objects[i].geometry_index = geometry_index;
         VBOS(3,pref<<"geometry_index: "<<geometry_index);
         unsigned long five = ios_read_u32(f);
-        ASSERT(five==5);
+        APP_ASSERT(five==5);
         unsigned long zero = ios_read_u32(f);
-        ASSERT(zero==0);
+        APP_ASSERT(zero==0);
 
-        ASSERT(c->frames[frame_index].geometry==-1);
+        APP_ASSERT(c->frames[frame_index].geometry==-1);
         c->frames[frame_index].geometry = geometry_index;
 
-        ASSERT(c->geometries[geometry_index].frame==-1);
+        APP_ASSERT(c->geometries[geometry_index].frame==-1);
         c->geometries[geometry_index].frame = (long)frame_index;
 
         unsigned long total_size;
         ios_read_header(f,&type,&total_size,NULL,&file_version);
-        ASSERT(type==RW_EXT);
+        APP_ASSERT(type==RW_EXT);
         while (total_size>0) {
             ios_read_header(f,&type,&size,NULL,&file_version);
             total_size -= size + 12;
             switch(type) {
             case RW_RIGHT_TO_RENDER:
-            ASSERT(size==8);
+            APP_ASSERT(size==8);
             c->objects[i].rtr_unk1 = ios_read_u32(f);
             VBOS(3,pref<<"rtr_unk1: "<<DECHEX(c->objects[i].rtr_unk1));
             c->objects[i].rtr_unk2 = ios_read_u32(f);
@@ -960,13 +960,13 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p,
             break;
 
             case RW_MATERIAL_EFFECTS: {
-                ASSERT(size==4);
+                APP_ASSERT(size==4);
                 unsigned long eff = ios_read_u32(f);
-                ASSERT(eff==1);
+                APP_ASSERT(eff==1);
             } break;
 
             case RW_UNKNOWN:
-            ASSERT(size==4);
+            APP_ASSERT(size==4);
             c->unk = ios_read_u32(f);
             VBOS(3,pref<<"obj_ext_unk: "<<c->unk);
             break;
@@ -992,19 +992,19 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p,
             totalsize = size;
             break;
         }
-        ASSERT(type==RW_DATA);
-        ASSERT(size==4);
+        APP_ASSERT(type==RW_DATA);
+        APP_ASSERT(size==4);
         unsigned long num = ios_read_u32(f);
         (void)num;
-        //ASSERT(num==counter+1);
+        //APP_ASSERT(num==counter+1);
 
         ios_read_header(f,&type,&size,NULL,&file_version);
-        ASSERT(type==RW_LIGHT);
-        ASSERT(size==48);
+        APP_ASSERT(type==RW_LIGHT);
+        APP_ASSERT(size==48);
 
         ios_read_header(f,&type,&size,NULL,&file_version);
-        ASSERT(type==RW_DATA);
-        ASSERT(size==24);
+        APP_ASSERT(type==RW_DATA);
+        APP_ASSERT(size==24);
         light.unk1 = ios_read_float(f);
         VBOS(3,pref<<"unk1: "<<light.unk1);
         light.unk3 = ios_read_float(f);
@@ -1019,8 +1019,8 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p,
         VBOS(3,pref<<"flags: 0x"<<std::hex<<light.flags<<std::dec);
 
         ios_read_header(f,&type,&size,NULL,&file_version);
-        ASSERT(type==RW_EXT);
-        ASSERT(size==0);
+        APP_ASSERT(type==RW_EXT);
+        APP_ASSERT(size==0);
 
         c->lights.push_back(light);
         counter++;
@@ -1057,7 +1057,7 @@ void ios_read_dff (int d, std::ifstream &f, struct dff *c, const std::string &p,
 
     //everything has just one clump except clothing which seems to have 3...
     //unsigned char byte = ios_read_u8(f);
-    //ASSERT(byte==0);
+    //APP_ASSERT(byte==0);
 
 }}}
 
@@ -1092,7 +1092,7 @@ static float &lu(float (&rot)[9], int x, int y)
 }
 void reset_dff_frame (dff &dff, unsigned frame_id)
 {
-    ASSERT(frame_id<dff.frames.size());
+    APP_ASSERT(frame_id<dff.frames.size());
     frame &fr = dff.frames[frame_id];
 
     geometry &g = dff.geometries[fr.geometry];
@@ -1108,7 +1108,7 @@ void reset_dff_frame (dff &dff, unsigned frame_id)
     }
 
     for (unsigned long j=0 ; j<fr.children.size() ; ++j) {
-        ASSERT(j<dff.frames.size());
+        APP_ASSERT(j<dff.frames.size());
         frame &frc = dff.frames[frame_id];
         float x_ = lu(fr.rot,0,0)*frc.x + lu(fr.rot,1,0)*frc.y + lu(fr.rot,2,0)*frc.x;
         float y_ = lu(fr.rot,0,1)*frc.x + lu(fr.rot,1,1)*frc.y + lu(fr.rot,2,1)*frc.z;
@@ -1260,7 +1260,7 @@ export_or_provide_mat (const StringSet &texs,
 
     Strings textures;
 
-    ASSERT(m.num_textures==1  || m.num_textures==0);
+    APP_ASSERT(m.num_textures==1  || m.num_textures==0);
     for (unsigned int i=0 ; i<m.num_textures ; i++) {
         std::vector<std::string> txds = search_txds(obj.is_car, obj.txd, ide);
         bool found = false;
@@ -1392,14 +1392,14 @@ void generate_normals (struct geometry &g)
     const std::vector<vect> &positions = g.vertexes;
     std::vector<vect> &normals = g.normals;
     if (normals.size() > 0) {
-        ASSERT(positions.size() == normals.size());
+        APP_ASSERT(positions.size() == normals.size());
         // already has normals
         return;
     }
     normals.resize(positions.size()); // initialises to zero
     for (MatSplits::iterator s=g.mat_spls.begin(),s_=g.mat_spls.end() ; s!=s_ ; ++s) {
         const std::vector<unsigned long> &mindexes = s->indexes2;
-        ASSERT(mindexes.size() % 3 == 0);
+        APP_ASSERT(mindexes.size() % 3 == 0);
         for (size_t f=0 ; f<mindexes.size() ; f+=3) {
             unsigned long index1=mindexes[f+0], index2=mindexes[f+1], index3=mindexes[f+2];
             add_face_normal(normals[index1], positions[index1],positions[index2],positions[index3]);
@@ -1427,7 +1427,7 @@ void export_xml (const StringSet &texs,
 
     std::ofstream f;
     f.open(fname.c_str(), std::ios::binary);
-    ASSERT_IO_SUCCESSFUL(f, "opening "+fname);
+    APP_ASSERT_IO_SUCCESSFUL(f, "opening "+fname);
 
 
     ind(f,0);f<<"<mesh>\n";
@@ -1437,8 +1437,8 @@ void export_xml (const StringSet &texs,
     int colours_diffuse = g.vertex_cols.size();
     int texture_coords = g.tex_coords.size() ? 1 : 0;
     int texture_coords2 = g.tex_coords2.size() ? 1 : 0;
-    ASSERT(obj.id==14825 || obj.id==18009 || obj.id==18036 || !texture_coords || !texture_coords2);
-    ASSERT(!texture_coords2 || texture_coords);
+    APP_ASSERT(obj.id==14825 || obj.id==18009 || obj.id==18036 || !texture_coords || !texture_coords2);
+    APP_ASSERT(!texture_coords2 || texture_coords);
     ind(f,2);f<<"<vertexbuffer positions=\""
               <<(positions?"true":"false")<<"\" "
               <<"normals=\""<<(normals?"true":"false")<<"\" "
@@ -1505,9 +1505,9 @@ void export_xml (const StringSet &texs,
             unsigned long v1 = s->indexes2[3*tri + 0];
             unsigned long v2 = s->indexes2[3*tri + 1];
             unsigned long v3 = s->indexes2[3*tri + 2];
-            ASSERT(v1 < g.vertexes.size());
-            ASSERT(v2 < g.vertexes.size());
-            ASSERT(v3 < g.vertexes.size());
+            APP_ASSERT(v1 < g.vertexes.size());
+            APP_ASSERT(v2 < g.vertexes.size());
+            APP_ASSERT(v3 < g.vertexes.size());
             f<<"<face v1=\""<<v1<<"\" "
                     "v2=\""<<v2<<"\" "
                     "v3=\""<<v3<<"\"/>\n";
@@ -1574,11 +1574,11 @@ void export_mesh (const StringSet &texs,
 
     if (!day_colours) night_colours = 0;
 
-    ASSERT(positions>0);
-    ASSERT(!normals || normals==positions);
-    ASSERT(!day_colours || day_colours==positions);
-    ASSERT(!night_colours || night_colours==positions);
-    ASSERT(!texture_coords || texture_coords==positions);
+    APP_ASSERT(positions>0);
+    APP_ASSERT(!normals || normals==positions);
+    APP_ASSERT(!day_colours || day_colours==positions);
+    APP_ASSERT(!night_colours || night_colours==positions);
+    APP_ASSERT(!texture_coords || texture_coords==positions);
 
     size_t offset = 0;
     if (positions) {
@@ -1708,9 +1708,9 @@ void export_mesh (const StringSet &texs,
             unsigned short v1 = s->indexes2[3*tri + 0];
             unsigned short v2 = s->indexes2[3*tri + 1];
             unsigned short v3 = s->indexes2[3*tri + 2];
-            ASSERT(v1 < g.vertexes.size());
-            ASSERT(v2 < g.vertexes.size());
-            ASSERT(v3 < g.vertexes.size());
+            APP_ASSERT(v1 < g.vertexes.size());
+            APP_ASSERT(v2 < g.vertexes.size());
+            APP_ASSERT(v3 < g.vertexes.size());
             *(ibuf_next++) = v1;
             *(ibuf_next++) = v2;
             *(ibuf_next++) = v3;
@@ -1827,6 +1827,8 @@ void app_fatal()
 {
         abort();
 }
+
+void assert_triggered (void) { } 
 
 #define VERSION "1.1"
 
@@ -1947,12 +1949,12 @@ int main(int argc, char **argv)
             init_ogre();
             std::string s = oname+".lua";
             lua_file.open(s.c_str(), std::ios::binary);
-            ASSERT_IO_SUCCESSFUL(lua_file, "opening "+s);
+            APP_ASSERT_IO_SUCCESSFUL(lua_file, "opening "+s);
         }
 
         std::ifstream f;
         f.open(file_name.c_str(), std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(f,"opening "+file_name);
+        APP_ASSERT_IO_SUCCESSFUL(f,"opening "+file_name);
         VBOS(0,"reading dff: "<<file_name<<"\n");
 
         struct dff dff;
@@ -2039,18 +2041,18 @@ int main(int argc, char **argv)
                     dff.tcol.mass = 1000;
 
                     if (!dff.tcol.usingCompound && !dff.tcol.usingTriMesh) {
-                            IOS_EXCEPT("Collision data had no compound or trimesh");
+                            GRIT_EXCEPT("Collision data had no compound or trimesh");
                     /*
                     } else if (binary) {
                             col_name += ".bcol";
-                            IOS_EXCEPT("Writing bcol not implemented.");
+                            GRIT_EXCEPT("Writing bcol not implemented.");
                     */
                     } else {
                             col_name += ".tcol";
 
                             std::ofstream out;
                             out.open(col_name.c_str(), std::ios::binary);
-                            ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
+                            APP_ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
 
                             pretty_print_tcol(out,dff.tcol);
                     }
@@ -2078,9 +2080,8 @@ int main(int argc, char **argv)
             }
         }
 
-    } catch (Exception &e) {
-        std::cerr << "ERROR: "
-                  << e.getFullDescription() << std::endl;
+    } catch (GritException &e) {
+        CERR << e << std::endl;
 
         return EXIT_FAILURE;
     }

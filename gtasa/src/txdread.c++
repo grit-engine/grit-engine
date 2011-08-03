@@ -94,18 +94,18 @@ void Txd::readTx (std::istream &f,
 
         unsigned long type, texsize;
         ios_read_header(f,&type,&texsize,NULL,&file_ver);
-        ASSERT(type==RWTEX);
+        APP_ASSERT(type==RWTEX);
 
 
         unsigned long size;
         ios_read_header(f,&type,&size,NULL,&file_ver);
-        ASSERT(type==RWDATA);
+        APP_ASSERT(type==RWDATA);
 
         unsigned long vers = ios_read_u32(f);
-        ASSERT(vers==8 || vers==9); // always the case in gta_sa
+        APP_ASSERT(vers==8 || vers==9); // always the case in gta_sa
 
         unsigned long filter_flags = ios_read_u32(f);
-        ASSERT(filter_flags==0x1101 || filter_flags==0x1102 ||
+        APP_ASSERT(filter_flags==0x1101 || filter_flags==0x1102 ||
                filter_flags==0x1106 || filter_flags==0x1206 ||
                filter_flags==0x2106 ||
                filter_flags==0 // gos_town
@@ -120,7 +120,7 @@ void Txd::readTx (std::istream &f,
 
         unsigned long alpha_flags = ios_read_u32(f);
         // don't know what these mean
-        ASSERT(alpha_flags==0x100 || alpha_flags==0x200 ||
+        APP_ASSERT(alpha_flags==0x100 || alpha_flags==0x200 ||
                alpha_flags==0x300 || alpha_flags==0x500 ||
                alpha_flags==0x600 || alpha_flags==0x2600 ||
                alpha_flags==0x8200);
@@ -129,7 +129,7 @@ void Txd::readTx (std::istream &f,
         // 0 is unknown, 0x15 and 0x16 are raw with/without alpha
         // the other two are DXT1 and DXT3 (code is ascii DWORD)
         // 1 is gostown unknown
-        ASSERT(d3d_tex_format==0 || d3d_tex_format==0x15 || d3d_tex_format==0x16
+        APP_ASSERT(d3d_tex_format==0 || d3d_tex_format==0x15 || d3d_tex_format==0x16
             || d3d_tex_format==0x31545844 || d3d_tex_format==0x33545844
             || d3d_tex_format==0x1);
 
@@ -140,17 +140,17 @@ void Txd::readTx (std::istream &f,
 
         unsigned char depth = ios_read_u8(f);
         // no 24 bit textures in gta sa
-        ASSERT(depth==8 || depth==16 || depth==32);
+        APP_ASSERT(depth==8 || depth==16 || depth==32);
 
         unsigned char levels = ios_read_u8(f);
-        ASSERT(levels>0);
+        APP_ASSERT(levels>0);
 
         unsigned char tex_code_type = ios_read_u8(f);
-        ASSERT(tex_code_type==4); // don't know what this means
+        APP_ASSERT(tex_code_type==4); // don't know what this means
 
         unsigned char flags = ios_read_u8(f);
         // bit 1 = has alpha, bit 3 = compressed
-        ASSERT(flags==0x0 || flags==0x1 || flags==0x8 || flags==0x9
+        APP_ASSERT(flags==0x0 || flags==0x1 || flags==0x8 || flags==0x9
                || flags==0x3);  //gostown
 
         unsigned char palette_r[256];
@@ -170,26 +170,26 @@ void Txd::readTx (std::istream &f,
         // http://msdn2.microsoft.com/en-us/library/bb172993.aspx
 
         if (d3d_tex_format==0) {
-                ASSERT(vers==8);
+                APP_ASSERT(vers==8);
                 if (depth==16) {
-                        ASSERT(flags==0x1);
+                        APP_ASSERT(flags==0x1);
                         d3d_tex_format = 0x31545844; //dxt1
                         compressed = true;
                 } else if (depth==32) {
-                        ASSERT(flags==0x0);
+                        APP_ASSERT(flags==0x0);
                         d3d_tex_format = 0x15;
                 } else {
-                        IOS_EXCEPT("unrecognised file type");
+                        GRIT_EXCEPT("unrecognised file type");
                 }
         }
 
         if (d3d_tex_format==1) {
                 //gostown
-                ASSERT(vers==8);
-                ASSERT(flags==0x3);
-                ASSERT(depth==16);
-                ASSERT(filter_flags==0x1106);
-                ASSERT(alpha_flags==0x300);
+                APP_ASSERT(vers==8);
+                APP_ASSERT(flags==0x3);
+                APP_ASSERT(depth==16);
+                APP_ASSERT(filter_flags==0x1106);
+                APP_ASSERT(alpha_flags==0x300);
                 d3d_tex_format = 0x33545844; //dxt3
                 compressed = true;
         }
@@ -200,8 +200,8 @@ void Txd::readTx (std::istream &f,
                         ios_read_byte_array(f, NULL, imgsize);
                 }
                 ios_read_header(f,&type,&size,NULL,&file_ver);
-                ASSERT(type==RWEXT);
-                ASSERT(size==0);
+                APP_ASSERT(type==RWEXT);
+                APP_ASSERT(size==0);
                 return;
         }
 
@@ -210,7 +210,7 @@ void Txd::readTx (std::istream &f,
         std::ofstream ddsf;
         std::string ddsname = dest_dir + "/" + tex_name + ".dds";
         ddsf.open(ddsname.c_str(),std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(ddsf,"creating new dds file: \""+ddsname+"\"");
+        APP_ASSERT_IO_SUCCESSFUL(ddsf,"creating new dds file: \""+ddsname+"\"");
 
         bool has_alpha = flags&1;
 
@@ -239,7 +239,7 @@ void Txd::readTx (std::istream &f,
                 // will convert to 32 bit later
                 ios_write_u32(ddsf,32);
         } else {
-                ASSERT(depth==16 || depth==32);
+                APP_ASSERT(depth==16 || depth==32);
                 ios_write_u32(ddsf,compressed?0:depth);
         }
         if (compressed) {
@@ -285,7 +285,7 @@ void Txd::readTx (std::istream &f,
                         mmwidth = (mmwidth+3)/4;
                         mmheight = (mmheight+3)/4;
                         unsigned long blocks = mmwidth * mmheight;
-                        ASSERT(mmwidth==1 || mmheight==1);
+                        APP_ASSERT(mmwidth==1 || mmheight==1);
 
                         // The following code generate black mipmap levels but
                         // this was not a good idea, it results in far off
@@ -359,8 +359,8 @@ void Txd::readTx (std::istream &f,
 
         // these 3 lines are duplicated at the early return, above
         ios_read_header(f,&type,&size,NULL,&file_ver);
-        ASSERT(type==RWEXT);
-        ASSERT(size==0);
+        APP_ASSERT(type==RWEXT);
+        APP_ASSERT(size==0);
 
 }
 
@@ -369,11 +369,11 @@ Txd::Txd (std::istream &f, const std::string &dest_dir, bool output)
 {
         unsigned long type, txdsize, file_ver;
         ios_read_header(f,&type,&txdsize,&file_ver,NULL);
-        ASSERT(type==RWTEXDICT);
+        APP_ASSERT(type==RWTEXDICT);
 
         unsigned long size;
         ios_read_header(f,&type,&size,NULL,&file_ver);
-        ASSERT(type==RWDATA);
+        APP_ASSERT(type==RWDATA);
 
         unsigned long num_files = ios_read_u16(f);
         ios_read_u16(f);
@@ -383,8 +383,8 @@ Txd::Txd (std::istream &f, const std::string &dest_dir, bool output)
         }
 
         ios_read_header(f,&type,&size,NULL,&file_ver);
-        ASSERT(type==RWEXT);
-        ASSERT(size==0);
+        APP_ASSERT(type==RWEXT);
+        APP_ASSERT(size==0);
 
 }
 
@@ -508,7 +508,7 @@ int main(int argc, char **argv)
         if (txdname != "") {
             std::ifstream f;
             f.open(txdname.c_str(), std::ios::binary);
-            ASSERT_IO_SUCCESSFUL(f,"opening "+txdname);
+            APP_ASSERT_IO_SUCCESSFUL(f,"opening "+txdname);
             VBOS(0,"reading txd: "<<txdname<<"\n");
 
             Txd txd(f, dest_dir, true);

@@ -66,7 +66,7 @@ void read_csv (std::istream &f, Csv &csv)
                         in_section = true;
                         section_line_counter = 0;
                         if (csv.find(section)!=csv.end()) {
-                            IOS_EXCEPT("Already seen section \""+section+"\"  in this file");
+                            GRIT_EXCEPT("Already seen section \""+section+"\"  in this file");
                         } else {
                                 CsvSection &s = csv[section];
                                 s.section_name = section;
@@ -97,10 +97,10 @@ void read_csv (std::istream &f, Csv &csv)
         }
         if (in_section) {
                 if (csv.filename != "") {
-                        IOS_EXCEPT("CSV file did not close section \""+section+"\" with 'end'");
+                        GRIT_EXCEPT("CSV file did not close section \""+section+"\" with 'end'");
                 } else {
                 }
-                        IOS_EXCEPT("CSV file \""+csv.filename+"\" did not close section \""
+                        GRIT_EXCEPT("CSV file \""+csv.filename+"\" did not close section \""
                                    +section+"\" with 'end'");
         }
 }
@@ -138,6 +138,8 @@ void app_fatal()
         abort();
 }
 
+void assert_triggered (void) { } 
+
 int main(int argc, char *argv[])
 {
         if (argc!=2) {
@@ -157,12 +159,12 @@ int main(int argc, char *argv[])
                 } else {
                         filename = argv[1];
                         csvfstream.open (filename.c_str());
-                        ASSERT_IO_SUCCESSFUL(csvfstream,
+                        APP_ASSERT_IO_SUCCESSFUL(csvfstream,
                                           "Opening csv: "+filename);
                         if (csvfstream.fail() || csvfstream.bad()) {
                                 std::stringstream ss;
                                 ss << filename << ": IO Error: " << strerror(errno) << "\n";
-                                IOS_EXCEPT(ss.str());
+                                GRIT_EXCEPT(ss.str());
                         }
                 }
 
@@ -174,7 +176,7 @@ int main(int argc, char *argv[])
                         const std::string section = i->first;
                         const CsvSection &lines = i->second;
 
-                        ASSERT(section == i->second.section_name);
+                        APP_ASSERT(section == i->second.section_name);
 
                         if (section=="nosection" && lines.size()==0) continue;
 
@@ -197,9 +199,9 @@ int main(int argc, char *argv[])
                         std::cout << "end" << std::endl;
                 }
 
-        } catch (Exception &e) {
+        } catch (GritException &e) {
 
-                std::cerr << "ERROR: " << e.getFullDescription() << std::endl;
+                CERR << e << std::endl;
                 return EXIT_FAILURE;
 
         }

@@ -12,7 +12,7 @@ void read_procobj (Csv &csv, ProcObjData &data)
         const CsvSection &s = csv["nosection"];
         for (unsigned i=0 ; i<s.size() ; ++i) {
                 const CsvLine &line = s[i];
-                ASSERT(line.size()==14);
+                APP_ASSERT(line.size()==14);
 
                 ProcObj v;
                 v.name = line[0];
@@ -44,6 +44,8 @@ void read_procobj (Csv &csv, ProcObjData &data)
 #ifdef _PROCOBJ_EXEC
 
 #include "console_colour.h"
+
+void assert_triggered (void) { }
 
 void app_verbose(char const* file, int line, const std::string& msg)
 {
@@ -93,12 +95,12 @@ int main(int argc, char *argv[])
                 } else {
                         filename = argv[1];
                         procobjfstream.open (filename.c_str());
-                        ASSERT_IO_SUCCESSFUL(procobjfstream,
+                        APP_ASSERT_IO_SUCCESSFUL(procobjfstream,
                                           "Opening procobj: "+filename);
                         if (procobjfstream.fail() || procobjfstream.bad()) {
                                 std::stringstream ss;
                                 ss << filename << ": IO Error: " << strerror(errno) << "\n";
-                                IOS_EXCEPT(ss.str());
+                                GRIT_EXCEPT(ss.str());
                         }
                 }
 
@@ -114,16 +116,17 @@ int main(int argc, char *argv[])
                         for (unsigned j=0 ; j<i->second.size() ; ++j) {
                                 const ProcObj &v = *i->second[j];
 
-                                ASSERT(name == v.name);
+                                APP_ASSERT(name == v.name);
                                 std::cout << (j==0?"":", ") << v.object_name;
 
                         }
                         std::cout << std::endl;
                 }
 
-        } catch (Exception &e) {
+        } catch (GritException &e) {
 
-                std::cerr << "ERROR: " << e.getFullDescription() << std::endl;
+                CERR << e << std::endl;
+ 
                 return EXIT_FAILURE;
 
         }

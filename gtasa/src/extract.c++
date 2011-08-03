@@ -57,6 +57,8 @@
 
 CentralisedLog clog;
 void app_fatal (void) { abort(); }
+void assert_triggered (void) { } 
+
 
 // I think we never actually call this as we never read a tcol
 std::string pwd_full (const std::string &, const std::string &)
@@ -68,7 +70,7 @@ static void open_file (std::ostream &out, std::ifstream &f,
     (void)out;
     //out << "Opening: \""+fname+"\"" << std::endl;
     f.open(fname.c_str(), std::ios::binary);
-    ASSERT_IO_SUCCESSFUL(f,"opening "+fname);
+    APP_ASSERT_IO_SUCCESSFUL(f,"opening "+fname);
 }
 
 struct ImgHandle {
@@ -193,7 +195,7 @@ static void addFullIPL (std::ostream &out,
     std::ifstream text_f;
     //out << "Opening text IPL: \"" << name << "\"" << std::endl;
     text_f.open(name.c_str(),std::ios::binary);
-    ASSERT_IO_SUCCESSFUL(text_f,"opening text IPL: "+name);
+    APP_ASSERT_IO_SUCCESSFUL(text_f,"opening text IPL: "+name);
     
     ipl.addMore(text_f);
 
@@ -293,7 +295,7 @@ void process_cols (std::ostream &out,
 
                 std::ofstream f;
                 f.open(name.c_str(), std::ios::binary);
-                ASSERT_IO_SUCCESSFUL(f,"opening tcol for writing");
+                APP_ASSERT_IO_SUCCESSFUL(f,"opening tcol for writing");
 
                 pretty_print_tcol(f, tcol);
             }
@@ -344,7 +346,7 @@ void extract (const Config &cfg, std::ostream &out)
         std::ofstream carcols_lua;
         carcols_lua.open((dest_dir+"/"+cfg.modname+"/carcols.lua").c_str(),
                   std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(carcols_lua, "opening carcols.lua");
+        APP_ASSERT_IO_SUCCESSFUL(carcols_lua, "opening carcols.lua");
 
         carcols_lua << "print(\"Loading carcols\")\n";
         carcols.filename = gta_dir+"/data/carcols.dat";
@@ -359,14 +361,14 @@ void extract (const Config &cfg, std::ostream &out)
                 // there is one case where a decimal point
                 //is used instead of a comma
                 size_t n = line[0].find(".");
-                ASSERT(n<line[0].npos-1);
+                APP_ASSERT(n<line[0].npos-1);
                 std::string p1 = line[0].substr(0,n);
                 std::string p2 = line[0].substr(n+1,line[0].npos);
                 r = strtod(p1.c_str(), NULL)/255;
                 g = strtod(p2.c_str(), NULL)/255;
                 b = strtod(line[1].c_str(), NULL)/255;
             } else {
-                ASSERT(line.size()==3);
+                APP_ASSERT(line.size()==3);
                 r = strtod(line[0].c_str(), NULL)/255;
                 g = strtod(line[1].c_str(), NULL)/255;
                 b = strtod(line[2].c_str(), NULL)/255;
@@ -377,7 +379,7 @@ void extract (const Config &cfg, std::ostream &out)
         const CsvSection &col2defs = carcols["car"];
         for (unsigned i=0 ; i<col2defs.size() ; ++i) {
             const CsvLine &line = col2defs[i];
-            ASSERT(line.size()>=1);
+            APP_ASSERT(line.size()>=1);
             for (unsigned j=1 ; j<(line.size()-1)/2*2+1 ; ++j) {
                 carcols_2[line[0]].push_back(strtol(line[j].c_str(), NULL, 10));
             }
@@ -385,8 +387,8 @@ void extract (const Config &cfg, std::ostream &out)
         const CsvSection &col4defs = carcols["car4"];
         for (unsigned i=0 ; i<col4defs.size() ; ++i) {
             const CsvLine &line = col4defs[i];
-            ASSERT(line.size()>=1);
-            ASSERT(line.size()%4==1);
+            APP_ASSERT(line.size()>=1);
+            APP_ASSERT(line.size()%4==1);
             for (unsigned j=1 ; j<(line.size()-1)/4*4+1 ; ++j) {
                 carcols_4[line[0]].push_back(strtol(line[j].c_str(), NULL, 10));
             }
@@ -411,7 +413,7 @@ void extract (const Config &cfg, std::ostream &out)
         std::ofstream physmats_lua;
         physmats_lua.open((dest_dir+"/"+cfg.modname+"/phys_mats.lua").c_str(),
                   std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(physmats_lua, "opening physmats.lua");
+        APP_ASSERT_IO_SUCCESSFUL(physmats_lua, "opening physmats.lua");
 
         Csv surfinfo_csv;
         surfinfo_csv.filename = gta_dir+"/data/surfinfo.dat";
@@ -449,7 +451,7 @@ void extract (const Config &cfg, std::ostream &out)
                 rtf = 0.3;
                 ortf = 0.6;
             } else {
-                IOS_EXCEPT("Unrecognised adhesion group: "+surf.adhesion_group);
+                GRIT_EXCEPT("Unrecognised adhesion group: "+surf.adhesion_group);
             }
             physmats_lua<<"    roadTyreFriction="<<rtf<<";"<<std::endl;
             physmats_lua<<"    offRoadTyreFriction="<<ortf<<";"<<std::endl;
@@ -488,7 +490,7 @@ void extract (const Config &cfg, std::ostream &out)
         std::string name = cfg.txds[i].second;
         std::ifstream txd_f;
         txd_f.open(fname.c_str(), std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(txd_f,"opening "+fname);
+        APP_ASSERT_IO_SUCCESSFUL(txd_f,"opening "+fname);
         //out<<"Extracting: "<<fname<<std::endl;
         process_txd (out, texs, name, dest_dir, cfg.modname+"/", txd_f);
 
@@ -535,7 +537,7 @@ void extract (const Config &cfg, std::ostream &out)
             if (imgs.find(img)==imgs.end()) {
                 std::stringstream ss;
                 ss << "ERROR: no such IMG \""<<img<<"\"";
-                IOS_EXCEPT(ss.str());
+                GRIT_EXCEPT(ss.str());
             }
             addFullIPL(out, gta_dir, ipls, base, *imgs[img], bin, num);
         }
@@ -575,13 +577,13 @@ void extract (const Config &cfg, std::ostream &out)
 
         classes.open((dest_dir+"/"+cfg.modname+"/classes.lua").c_str(),
                  std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(classes, "opening classes.lua");
+        APP_ASSERT_IO_SUCCESSFUL(classes, "opening classes.lua");
 
         classes << "print(\"Loading classes\")\n";
 
         materials_lua.open((dest_dir+"/"+cfg.modname+"/materials.lua").c_str(),
                    std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(materials_lua, "opening materials.lua");
+        APP_ASSERT_IO_SUCCESSFUL(materials_lua, "opening materials.lua");
 
         for (Objs::iterator i=objs.begin(),i_=objs.end() ; i!=i_ ; ++i) {
             Obj &o = *i;
@@ -610,7 +612,7 @@ void extract (const Config &cfg, std::ostream &out)
             img->open_file_img(out,dff_name);
             ios_read_dff(1,img->f,&dff,img->name+"/"+dff_name+"/","../",db);
         
-            ASSERT(dff.geometries.size()==1 || dff.geometries.size()==2);
+            APP_ASSERT(dff.geometries.size()==1 || dff.geometries.size()==2);
 
             typedef std::vector<std::string> Strs;
 
@@ -622,15 +624,15 @@ void extract (const Config &cfg, std::ostream &out)
                     continue;
 
                 if (o.flags & OBJ_FLAG_2CLUMP) {
-                    ASSERT(dff.geometries.size()==2);
-                    ASSERT(j==1 || j==2);
+                    APP_ASSERT(dff.geometries.size()==2);
+                    APP_ASSERT(j==1 || j==2);
                     // j==1 is the damaged version
                     // j==2 is the undamaged version
                     if (j==1) continue;
-                    ASSERT(fr.geometry==1);
+                    APP_ASSERT(fr.geometry==1);
                 } else {
-                    ASSERT(fr.geometry==0);
-                    ASSERT(dff.geometries.size()==1);
+                    APP_ASSERT(fr.geometry==0);
+                    APP_ASSERT(dff.geometries.size()==1);
                 }
 
                 geometry &g = dff.geometries[fr.geometry];
@@ -731,7 +733,7 @@ void extract (const Config &cfg, std::ostream &out)
     std::ofstream vehicles_lua;
     std::string s = dest_dir+"/"+cfg.modname+"/vehicles.lua";
     vehicles_lua.open(s.c_str(), std::ios::binary);
-    ASSERT_IO_SUCCESSFUL(vehicles_lua, "opening "+s);
+    APP_ASSERT_IO_SUCCESSFUL(vehicles_lua, "opening "+s);
     for (Vehicles::iterator i=vehicles.begin(),i_=vehicles.end() ; i!=i_ ; ++i) {
         Vehicle &v = *i;
         out << "Exporting vehicle:  " << v.dff << std::endl;
@@ -745,7 +747,7 @@ void extract (const Config &cfg, std::ostream &out)
         std::ofstream lua_file;
         std::string s = vehicle_dir+"/init.lua";
         lua_file.open(s.c_str(), std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(lua_file, "opening "+s);
+        APP_ASSERT_IO_SUCCESSFUL(lua_file, "opening "+s);
 
         vehicles_lua << "include \""<<vname<<"/init.lua\"" << std::endl;
             
@@ -770,7 +772,7 @@ void extract (const Config &cfg, std::ostream &out)
         ios_read_dff(1,img->f,&dff,img->name+"/"+dff_name+"/","../",db);
 
         VehicleData *vdata = handling[v.handling_id];
-        ASSERT(vdata!=NULL);
+        APP_ASSERT(vdata!=NULL);
         
         // account for centre of gravity by adjusting entire mesh
         offset_dff(dff, -vdata->com_x, -vdata->com_y, -vdata->com_z);
@@ -865,17 +867,17 @@ void extract (const Config &cfg, std::ostream &out)
             tcol_triangles_to_hulls(dff.tcol, 0.04, 0.04);
 
             if (!dff.tcol.usingCompound && !dff.tcol.usingTriMesh) {
-                IOS_EXCEPT("Collision data had no compound or trimesh");
+                GRIT_EXCEPT("Collision data had no compound or trimesh");
                 /*
                 } else if (binary) {
                     col_name += ".bcol";
-                    IOS_EXCEPT("Writing bcol not implemented.");
+                    GRIT_EXCEPT("Writing bcol not implemented.");
                 */
             } else {
 
                 std::ofstream out;
                 out.open((vehicle_dir+"/chassis.tcol").c_str(), std::ios::binary);
-                ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
+                APP_ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
 
                 pretty_print_tcol(out,dff.tcol);
             }
@@ -911,10 +913,10 @@ void extract (const Config &cfg, std::ostream &out)
                             << (vdata->no_handbrake?"":"handbrake = true;")
                             << "mu = "<<3*vdata->traction_mult<<";";
                 
-                ASSERT(fr_wheel_lf!=NULL);
-                ASSERT(fr_wheel_lb!=NULL);
-                ASSERT(fr_wheel_rf!=NULL);
-                ASSERT(fr_wheel_rb!=NULL);
+                APP_ASSERT(fr_wheel_lf!=NULL);
+                APP_ASSERT(fr_wheel_lb!=NULL);
+                APP_ASSERT(fr_wheel_rf!=NULL);
+                APP_ASSERT(fr_wheel_rb!=NULL);
                 float x,y,z;
                 
                 x = fr_wheel_lf->x; y = fr_wheel_lf->y; z = fr_wheel_lf->z + vdata->susp_upper;
@@ -946,8 +948,8 @@ void extract (const Config &cfg, std::ostream &out)
                 lua_file << "    colourSpec = {\n";
                 std::vector<int> cols2 = carcols_2[vname];
                 std::vector<int> cols4 = carcols_4[vname];
-                ASSERT(cols2.size()%2==0);
-                ASSERT(cols4.size()%4==0);
+                APP_ASSERT(cols2.size()%2==0);
+                APP_ASSERT(cols4.size()%4==0);
                 for (unsigned i=0 ; i<cols2.size() ; i+=2) {
                     int c1 = cols2[i], c2 = cols2[i+1];
                     lua_file << "            {  {\"gtasa"<<c1<<"\"}, {\"gtasa"<<c2<<"\"} },\n";
@@ -970,8 +972,8 @@ void extract (const Config &cfg, std::ostream &out)
                 lua_file << "    colourSpec = {\n";
                 std::vector<int> cols2 = carcols_2[vname];
                 std::vector<int> cols4 = carcols_4[vname];
-                ASSERT(cols2.size()%2==0);
-                ASSERT(cols4.size()%4==0);
+                APP_ASSERT(cols2.size()%2==0);
+                APP_ASSERT(cols4.size()%4==0);
                 for (unsigned i=0 ; i<cols2.size() ; i+=2) {
                     int c1 = cols2[i], c2 = cols2[i+1];
                     lua_file << "            {  {\"gtasa"<<c1<<"\"}, {\"gtasa"<<c2<<"\"} },\n";
@@ -1005,7 +1007,7 @@ void extract (const Config &cfg, std::ostream &out)
         std::ofstream map;
         map.open((dest_dir+"/"+cfg.modname+"/map.lua").c_str(),
              std::ios::binary);
-        ASSERT_IO_SUCCESSFUL(map, "opening map.lua");
+        APP_ASSERT_IO_SUCCESSFUL(map, "opening map.lua");
         map.precision(25);
 
         map << "print(\"Loading world\")\n";
@@ -1403,9 +1405,8 @@ int main(int argc, char **argv)
                  <<argv[1]<<"\""<<std::endl;
             return EXIT_FAILURE;
         }
-    } catch (Exception &e) {
-        std::cerr << "ERROR: "
-              << e.getFullDescription() << std::endl;
+    } catch (GritException &e) {
+        CERR << e << std::endl;
 
         return EXIT_FAILURE;
     }

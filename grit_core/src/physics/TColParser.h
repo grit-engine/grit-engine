@@ -27,9 +27,7 @@
 
 struct TColFile;
 
-void parse_tcol_1_0 (const std::string &name,
-                     quex::TColLexer* qlex,
-                     TColFile &file);
+void parse_tcol_1_0 (const std::string &name, quex::TColLexer* qlex, TColFile &file);
 
 void pretty_print_tcol (std::ostream &o, TColFile &f);
 
@@ -40,89 +38,89 @@ typedef std::vector<Vector3> Vertexes;
 #define TColParser_h
 
 
-struct HasMargin {
+struct TColHasMargin {
         float margin;
 };
 
-struct HasMaterial {
-        HasMaterial () { }
-        HasMaterial (const std::string &material_) : material(material_) { }
+struct TColHasMaterial {
+        TColHasMaterial () { }
+        TColHasMaterial (const std::string &material_) : material(material_) { }
         std::string material;
 };
 
-struct Hull : public HasMargin, public HasMaterial {
+struct TColHull : public TColHasMargin, public TColHasMaterial {
         Vertexes vertexes;
 };
-typedef std::vector<Hull> Hulls;
+typedef std::vector<TColHull> TColHulls;
 
 
-struct Box : public HasMargin, public HasMaterial {
+struct TColBox : public TColHasMargin, public TColHasMaterial {
         float px, py, pz;
         float qw, qx, qy, qz;
         float dx, dy, dz;
 };
-typedef std::vector<Box> Boxes;
+typedef std::vector<TColBox> TColBoxes;
 
 
-struct Cylinder : public HasMargin, public HasMaterial {
+struct TColCylinder : public TColHasMargin, public TColHasMaterial {
         float px, py, pz;
         float qw, qx, qy, qz;
         float dx, dy, dz;
 };
-typedef std::vector<Cylinder> Cylinders;
+typedef std::vector<TColCylinder> TColCylinders;
 
 
-struct Cone : public HasMargin, public HasMaterial {
+struct TColCone : public TColHasMargin, public TColHasMaterial {
         float px, py, pz;
         float qw, qx, qy, qz;
         float radius;
         float height;
 };
-typedef std::vector<Cone> Cones;
+typedef std::vector<TColCone> TColCones;
 
 
-struct Plane : public HasMaterial {
+struct TColPlane : public TColHasMaterial {
         float nx, ny, nz, d;
 };
-typedef std::vector<Plane> Planes;
+typedef std::vector<TColPlane> TColPlanes;
 
 
-struct Sphere : public HasMaterial {
+struct TColSphere : public TColHasMaterial {
         float px, py, pz;
         float radius;
 };
-typedef std::vector<Sphere> Spheres;
+typedef std::vector<TColSphere> TColSpheres;
 
 
-struct Compound {
-        Hulls hulls;
-        Boxes boxes;
-        Cylinders cylinders;
-        Cones cones;
-        Planes planes;
-        Spheres spheres;
+struct TColCompound {
+        TColHulls hulls;
+        TColBoxes boxes;
+        TColCylinders cylinders;
+        TColCones cones;
+        TColPlanes planes;
+        TColSpheres spheres;
 };
 
 
-struct Face : HasMaterial {
-        Face (int v1_, int v2_, int v3_, const std::string &material_)
-              : HasMaterial(material_), v1(v1_), v2(v2_), v3(v3_) { }
+struct TColFace : TColHasMaterial {
+        TColFace (int v1_, int v2_, int v3_, const std::string &material_)
+              : TColHasMaterial(material_), v1(v1_), v2(v2_), v3(v3_) { }
         int v1, v2, v3;
 };
-typedef std::vector<Face> Faces;
+typedef std::vector<TColFace> TColFaces;
 
 
-struct TriMesh {
+struct TColTriMesh {
         float margin;
-        Radian maxEdgeAngleThreshold;
         float edgeDistanceThreshold;
         Vertexes vertexes;
-        Faces faces;
+        TColFaces faces;
 };
 
 
 struct TColFile {
         float mass;
+        bool hasInertia;
         float inertia_x;
         float inertia_y;
         float inertia_z;
@@ -134,8 +132,8 @@ struct TColFile {
         float ccdSweptSphereRadius;
         bool usingCompound;
         bool usingTriMesh;
-        Compound compound;
-        TriMesh triMesh;
+        TColCompound compound;
+        TColTriMesh triMesh;
 };
 
 // useful help with using a different centre of mass

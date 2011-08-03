@@ -61,6 +61,7 @@ std::string next_arg(int& so_far, int argc, char **argv)
 CentralisedLog clog;
 void app_fatal (void) { abort(); }
 
+void assert_triggered (void) { } 
 
 int main(int argc, char **argv)
 {
@@ -109,10 +110,8 @@ int main(int argc, char **argv)
         }
 
         if (!output_binary_specified) {
-                if (output_filename.length()>=5 && output_filename.substr(output_filename.length()-5)==".bcol")
-                        output_binary = true;
-                else
-                        output_binary = false;
+                output_binary = output_filename.length()>=5 &&
+                                output_filename.substr(output_filename.length()-5)==".bcol";
         }
 
         std::istream *in = NULL;
@@ -128,12 +127,12 @@ int main(int argc, char **argv)
                         std::ifstream *in_ = new std::ifstream();
                         in = in_;
                         in_->open(input_filename.c_str(), std::ios::binary);
-                        ASSERT_IO_SUCCESSFUL(*in_,
+                        APP_ASSERT_IO_SUCCESSFUL(*in_,
                                              "opening "+input_filename);
                 }
 
                 unsigned long fourcc = ios_peek_u32(*in);
-                ASSERT_IO_SUCCESSFUL(*in,"reading fourcc");
+                APP_ASSERT_IO_SUCCESSFUL(*in,"reading fourcc");
 
                 if (fourcc==0x4c4f4354) { //TCOL
 
@@ -151,7 +150,7 @@ int main(int argc, char **argv)
                                 out = out_;
                                 out_->open(output_filename.c_str(),
                                            std::ios::binary);
-                                ASSERT_IO_SUCCESSFUL(*out_,
+                                APP_ASSERT_IO_SUCCESSFUL(*out_,
                                                     "opening "+output_filename);
                         }
                         if (output_binary) {
@@ -161,7 +160,7 @@ int main(int argc, char **argv)
                         }
 
                 } else if (fourcc==0x4c4f4342) { //BCOL
-                        IOS_EXCEPT("Reading bcol not implemented.");
+                        GRIT_EXCEPT("Reading bcol not implemented.");
                 } else if (fourcc==0x4c4c4f43) { // COLL
                                 dump_all_cols(*in,output_binary,mat_prefix,global_db,debug_level);
                 } else if (fourcc==0x324c4f43) { // COL2
@@ -169,13 +168,13 @@ int main(int argc, char **argv)
                 } else if (fourcc==0x334c4f43) { // COL3
                                 dump_all_cols(*in,output_binary,mat_prefix,global_db,debug_level);
                 } else {
-                        IOS_EXCEPT("Unrecognised fourcc tag.");
+                        GRIT_EXCEPT("Unrecognised fourcc tag.");
                 }
 
 
-        } catch (Exception& e) {
+        } catch (GritException &e) {
 
-                std::cerr << "ERROR: " << e.getFullDescription() << std::endl;
+                CERR << e << std::endl;
 
                 if (in!=&std::cin) delete in;
                 if (out!=&std::cout) delete out;

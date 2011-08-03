@@ -274,13 +274,13 @@ void parse_col (std::string &name,
                         version = 3;
                         break;
                 default:
-                        IOS_EXCEPT("This is not a col file.");
+                        GRIT_EXCEPT("This is not a col file.");
         }
 
         if (debug_level>0)
                 std::cout << "Version: " << version << std::endl;
 
-        ASSERT(version==3 || version==2);
+        APP_ASSERT(version==3 || version==2);
 
         name = ios_read_fixedstr(in,24);
         strlower(name);
@@ -306,7 +306,7 @@ void parse_col (std::string &name,
                 //bool non_empty = flags & 2;
                 //bool has_face_groups = flags & 8;
                 //bool has_shadow_mesh = flags & 16;
-                ASSERT((flags | 2 | 8 | 16) == 26);
+                APP_ASSERT((flags | 2 | 8 | 16) == 26);
                 unsigned long offset_spheres = ios_read_u32(in);
                 (void) offset_spheres;
                 if (debug_level>2)
@@ -316,7 +316,7 @@ void parse_col (std::string &name,
                 if (debug_level>2)
                     std::cout<<"offset_boxes: "<<offset_boxes<<std::endl;
                 unsigned long unknown = ios_read_u32(in);
-                ASSERT(unknown==0);
+                APP_ASSERT(unknown==0);
                 unsigned long offset_vertexes = ios_read_u32(in);
                 if (debug_level>2)
                     std::cout<<"offset_vertexes: "<<offset_vertexes<<std::endl;
@@ -324,7 +324,7 @@ void parse_col (std::string &name,
                 if (debug_level>2)
                     std::cout<<"offset_faces: "<<offset_faces<<std::endl;
                 unsigned long unknown2 = ios_read_u32(in);
-                ASSERT(unknown2==0);
+                APP_ASSERT(unknown2==0);
 
                 unsigned long num_shadow_faces = 0;
                 unsigned long offset_shadow_vertexes = 0;
@@ -349,7 +349,7 @@ void parse_col (std::string &name,
                 tcol.usingTriMesh = num_faces > 0;
 
                 for (int i=0 ; i<num_spheres ; ++i) {
-                        Sphere sphere;
+                        TColSphere sphere;
                         sphere.px = ios_read_float(in);
                         sphere.py = ios_read_float(in);
                         sphere.pz = ios_read_float(in);
@@ -375,7 +375,7 @@ void parse_col (std::string &name,
                         float xM = ios_read_float(in);
                         float yM = ios_read_float(in);
                         float zM = ios_read_float(in);
-                        Box box;
+                        TColBox box;
                         box.px = (xm+xM)/2;
                         box.py = (ym+yM)/2;
                         box.pz = (zm+zM)/2;
@@ -432,13 +432,13 @@ void parse_col (std::string &name,
                         //std::cout<<"face mat: "<<(int)mat<<std::endl;
                         //std::cout<<"face light: "<<(int)light<<std::endl;
                         (void) light; // not used yet
-                        tcol.triMesh.faces.push_back(Face(a,b,c,phys_mat_pref+db[mat]));
+                        tcol.triMesh.faces.push_back(TColFace(a,b,c,phys_mat_pref+db[mat]));
                 }
 
                 if (num_faces > 0) {
                         if (debug_level>1)
                             std::cout<<"max_vertex: "<<max_vertex<<std::endl;
-                        ASSERT(max_vertex<num_vertexes);
+                        APP_ASSERT(max_vertex<num_vertexes);
                         tcol.triMesh.vertexes.resize(max_vertex+1);
                 }
 
@@ -449,7 +449,7 @@ void parse_col (std::string &name,
 
         } else {
 
-                ASSERT(false);
+                APP_ASSERT(false);
 /*
                 unsigned long num_spheres = ios_read_u32(in);
                 // spheres
@@ -480,13 +480,13 @@ void dump_all_cols (std::istream &in, bool binary, const std::string &phys_mat_p
                         // skip empty cols.  They are pure lol.
                 } else if (binary) {
                         name += ".bcol";
-                        IOS_EXCEPT("Writing bcol not implemented.");
+                        GRIT_EXCEPT("Writing bcol not implemented.");
                 } else {
                         name += ".tcol";
 
                         std::ofstream out;
                         out.open(name.c_str(), std::ios::binary);
-                        ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
+                        APP_ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
 
                         pretty_print_tcol(out,tcol);
                 }

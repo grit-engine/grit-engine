@@ -60,7 +60,7 @@ static std::string& str_lcase_crop (std::string& str)
 void IPL::addBinary (std::istream &f)
 {
         unsigned long fourcc = ios_read_u32(f);
-        ASSERT(fourcc==0x79726e62); // "bnry"
+        APP_ASSERT(fourcc==0x79726e62); // "bnry"
         unsigned long num_insts = ios_read_u32(f);
         unsigned long num_unk1 = ios_read_u32(f);
         unsigned long num_unk2 = ios_read_u32(f);
@@ -70,24 +70,24 @@ void IPL::addBinary (std::istream &f)
 
         unsigned long inst_offset = ios_read_u32(f);
         unsigned long zero = ios_read_u32(f);
-        ASSERT(zero==0);
+        APP_ASSERT(zero==0);
         unsigned long unk1_offset = ios_read_u32(f);
         zero = ios_read_u32(f);
-        ASSERT(zero==0);
+        APP_ASSERT(zero==0);
         unsigned long unk2_offset = ios_read_u32(f);
         zero = ios_read_u32(f);
-        ASSERT(zero==0);
+        APP_ASSERT(zero==0);
         unsigned long unk3_offset = ios_read_u32(f);
         zero = ios_read_u32(f);
-        ASSERT(zero==0);
+        APP_ASSERT(zero==0);
         unsigned long vehicles_offset = ios_read_u32(f);
         zero = ios_read_u32(f);
-        ASSERT(zero==0);
+        APP_ASSERT(zero==0);
         unsigned long unk4_offset = ios_read_u32(f);
         zero = ios_read_u32(f);
-        ASSERT(zero==0);
+        APP_ASSERT(zero==0);
 
-        ASSERT(inst_offset==76);
+        APP_ASSERT(inst_offset==76);
 
         (void) num_unk1;
         (void) num_unk2;
@@ -115,7 +115,7 @@ void IPL::addBinary (std::istream &f)
                 inst.id = ios_read_u32(f);
                 inst.interior = ios_read_u32(f);
                 inst.near_for = ios_read_u32(f);
-                //ASSERT(inst.near_for==0);
+                //APP_ASSERT(inst.near_for==0);
                 insts.push_back(inst);
         }
 
@@ -336,6 +336,8 @@ void IPL::addMore(std::istream &f)
 size_t amount_read = 0;
 size_t amount_seeked = 0;
 
+void assert_triggered (void) { } 
+
 int main(int argc, char *argv[])
 {
         if (argc<2) {
@@ -352,7 +354,7 @@ int main(int argc, char *argv[])
 
                         std::ifstream f;
                         f.open(name.c_str(),std::ios::binary);
-                        ASSERT_IO_SUCCESSFUL(f,"opening IPL: "+name);
+                        APP_ASSERT_IO_SUCCESSFUL(f,"opening IPL: "+name);
 
                         ipl.setName(name);
                         ipl.addMore(f);
@@ -395,8 +397,8 @@ int main(int argc, char *argv[])
                                   <<std::endl;
                 }
 
-        } catch (Exception &e) {
-                std::cerr<<e.getFullDescription()<<std::endl;
+        } catch (GritException &e) {
+                CERR<<e<<std::endl;
                 return EXIT_FAILURE;
         }
 

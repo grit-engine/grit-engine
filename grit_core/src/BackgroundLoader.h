@@ -24,8 +24,6 @@
 
 class BackgroundLoader;
 class Demand;
-class DiskResource;
-typedef std::vector<DiskResource*> DiskResources;
 typedef fast_erase_vector<Demand*> Demands;
 
 #ifndef BackgroundLoader_h
@@ -40,17 +38,8 @@ typedef fast_erase_vector<Demand*> Demands;
 
 
 #include "CentralisedLog.h"
+#include "DiskResource.h"
 
-
-extern bool disk_resource_verbose_loads;
-extern bool disk_resource_verbose_incs;
-
-int disk_resource_num (void);
-int disk_resource_num_loaded (void);
-DiskResources disk_resource_all (void);
-DiskResources disk_resource_all_loaded (void);
-DiskResource *disk_resource_get_or_make (const std::string &rn);
-DiskResource *disk_resource_get (const std::string &rn);
 
 template<typename T> class LRUQueue {
 
@@ -111,91 +100,6 @@ template<typename T> class LRUQueue {
 };
 
 
-
-// each DiskResource can be in a loaded or unloaded state.
-// the predicates 'users>0' and 'loaded' are unrelated by logic
-// Example of users>0 && !loaded: demand placed in queue, not yet loaded
-// Example of users==0 && loaded: resource in LRU queue, no pressure to unload yet
-// !loaded => dependencies.size()==0
-// loaded  => forall d in dependencies: d.loaded
-// users>0 => forall d in dependencies: d.users > 0
-class DiskResource {
-
-    public:
-
-        DiskResource (void) : loaded(false), users(0) { }
-
-        virtual std::string getName (void) const = 0;
-
-        bool isLoaded (void) { return loaded; }
-
-        int getUsers (void) { return users; }
-
-        bool noUsers() { return users == 0; }
-
-    protected:
-
-        virtual void load (void);
-
-        virtual void unload (void);
-
-        // if returns true, will get added to gpu death row list when no-longer required
-        virtual bool isGPUResource (void)
-        {
-                return false;
-        }
-
-        // called as 'this' is loaded
-        void addDependency (const std::string &name)
-        {
-                APP_ASSERT(name!="");
-                DiskResource *dep = disk_resource_get_or_make(name);
-                dependencies.push_back(dep);
-                dep->increment();
-                dep->load();
-        }
-
-    private:
-
-        void increment (void)
-        {
-                if (disk_resource_verbose_incs)
-                        CVERB << "++ " << getName() << std::endl;
-                users++;
-        }
-
-        bool decrement (void)
-        {
-                if (disk_resource_verbose_incs)
-                        CVERB << "-- " << getName() << std::endl;
-                users--;
-                // do not unload at this time, will be added to LRU queue by caller
-                return users == 0;
-        }
-
-        DiskResources dependencies;
-
-        bool loaded;
-        int users;
-
-
-        friend class Demand;
-        friend class BackgroundLoader;
-};
-
-inline std::ostream &operator << (std::ostream &o, const DiskResource &dr)
-{
-        return o << dr.getName();
-}
-
-inline std::ostream &operator << (std::ostream &o, const DiskResources &dr)
-{
-        o << "[";
-        for (unsigned i=0 ; i<dr.size() ; ++i) {
-                o << (i==0?" ":", ") << (*dr[i]);
-        }
-        return o << (dr.size()==0?"]":" ]");
-}
 
 class Demand : public fast_erase_index {
     public:

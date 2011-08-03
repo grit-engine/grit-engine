@@ -26,6 +26,7 @@
 #include "../gfx/Clutter.h"
 #include "../lua_wrappers_gritobj.h"
 #include "../main.h"
+#include "../path_util.h"
 
 #include "../gfx/gfx.h"
 #include "../gfx/lua_wrappers_scnmgr.h"
@@ -219,7 +220,7 @@ TRY_START
         unsigned seed       = check_t<unsigned>(L,11);
 
         std::vector<Transform> r;
-        self->colMesh->scatter(self->world->getMaterial(mat).id,
+        self->colMesh->scatter(phys_mats.getMaterial(mat)->id,
                                world_trans, density, min_slope, max_slope, min_elevation,
                                max_elevation, no_z, rotate, align_slope, seed,
                                r);
@@ -282,7 +283,7 @@ TRY_START
         RangedClutter *ranged_r =
                 static_cast<RangedClutter*>(sm.createMovableObject(name, "RangedClutter", &ps));
         ranged_r->setNextMesh(mesh);
-        self->colMesh->scatter(self->world->getMaterial(mat).id,
+        self->colMesh->scatter(phys_mats.getMaterial(mat)->id,
                                world_trans, density, min_slope, max_slope, min_elevation,
                                max_elevation, no_z, rotate, align_slope, seed,
                                *ranged_r);
@@ -438,15 +439,14 @@ TRY_END
 }
 
 
-static void push_sweep_result (lua_State *L, const SweepResult &r, float len,
-                               const PhysicsWorld &world)
+static void push_sweep_result (lua_State *L, const SweepResult &r, float len)
 {
         lua_pushnumber(L,r.dist * len);
         push_rbody(L,r.rb->getPtr());
         // normal is documented as being object space but is actually world space
         Vector3 normal = /*r.rb->getOrientation()* */r.n.normalisedCopy();
         push_v3(L, normal);
-        lua_pushstring(L, world.getMaterial(r.material).name.c_str());
+        lua_pushstring(L, phys_mats.getMaterial(r.material)->name.c_str());
 }
 
 static int cast (lua_State *L)
@@ -536,12 +536,12 @@ TRY_START
                 if (nearest_only) {
                         if (r.dist<nearest.dist) nearest = r;
                 } else {
-                        push_sweep_result(L, r, len, *world);
+                        push_sweep_result(L, r, len);
                 }
         }
         if (nearest_only) {
                 // push nearest
-                push_sweep_result(L, nearest, len, *world);
+                push_sweep_result(L, nearest, len);
                 return 4;
         }
         return lcb.results.size() * 4;
@@ -663,7 +663,7 @@ TRY_START
                 self->colMesh->getProcObjMaterials(mats);
                 lua_createtable(L, mats.size(), 0);
                 for (size_t j=0 ; j<mats.size(); ++j) {
-                        lua_pushstring(L, self->world->getMaterial(mats[j]).name.c_str());
+                        lua_pushstring(L, phys_mats.getMaterial(mats[j])->name.c_str());
                         lua_rawseti(L, -2, j+LUA_ARRAY_BASE);
                 }
         } else if (!::strcmp(key,"scatter")) {
@@ -887,8 +887,7 @@ class LuaTestCallback : public PhysicsWorld::TestCallback {
                 resultMap[body].push_back(Result(pos,wpos,normal,penetration,m));
         }
 
-        void pushResults (lua_State *L, const PhysicsWorldPtr &world,
-                          int func_index, int err_handler)
+        void pushResults (lua_State *L, int func_index, int err_handler)
         {
                 for (ResultMap::iterator i=resultMap.begin(),i_=resultMap.end() ; i!=i_ ; ++i) {
                         RigidBody *body = i->first;
@@ -902,7 +901,7 @@ class LuaTestCallback : public PhysicsWorld::TestCallback {
                                 push_v3(L,j->wpos);
                                 push_v3(L,j->normal);
                                 lua_pushnumber(L,j->penetration);
-                                lua_pushstring(L,world->getMaterial(j->m).name.c_str());
+                                lua_pushstring(L,phys_mats.getMaterial(j->m)->name.c_str());
                                 int status = lua_pcall(L,7,0,err_handler);
                                 if (status) {
                                         lua_pop(L,1); // error message, already printed
@@ -947,7 +946,7 @@ TRY_START
                         my_lua_error(L,"Parameter 4 should be a function.");
 
                 world->testSphere(radius,pos,only_dyn,lcb);
-                lcb.pushResults(L, world, 5, error_handler);
+                lcb.pushResults(L, 5, error_handler);
         } else {
                 check_args(L,7);
                 GET_UD_MACRO(PhysicsWorldPtr,world,1,PWORLD_TAG);
@@ -959,7 +958,7 @@ TRY_START
                         my_lua_error(L,"Parameter 5 should be a function.");
 
                 world->test(col_mesh,pos,quat,only_dyn,lcb);
-                lcb.pushResults(L, world, 6, error_handler);
+                lcb.pushResults(L, 6, error_handler);
         }
         lua_pop(L,1); // error handler
         return 0;
@@ -998,7 +997,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
         CollisionMeshPtr cmp;
-        std::string name = luaL_checkstring(L,2);
+        std::string name = pwd_full(L, luaL_checkstring(L,2));
         cmp = self->createFromFile(name);
         push_colmesh(L,cmp);
         return 1;
@@ -1012,7 +1011,7 @@ static int pworld_get_mesh (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        std::string name = luaL_checkstring(L,2);
+        std::string name = pwd_full(L, luaL_checkstring(L,2));
         CollisionMeshPtr cmp = self->getMesh(name);
         push_colmesh(L,cmp);
         return 1;
@@ -1026,7 +1025,7 @@ static int pworld_remove_mesh (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        std::string name = luaL_checkstring(L,2);
+        std::string name = pwd_full(L, luaL_checkstring(L,2));
         self->deleteMesh(name);
         return 0;
 TRY_END
@@ -1039,9 +1038,9 @@ static int pworld_reload_mesh_by_name (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        std::string name = luaL_checkstring(L,2);
+        std::string name = pwd_full(L, luaL_checkstring(L,2));
         CollisionMeshPtr cmp = self->getMesh(name);
-        cmp->reload(self->getMaterialDB());
+        cmp->reload();
         return 0;
 TRY_END
 }
@@ -1049,10 +1048,9 @@ TRY_END
 static int pworld_reload_mesh (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        GET_UD_MACRO(CollisionMeshPtr,cmp,2,COLMESH_TAG);
-        cmp->reload(self->getMaterialDB());
+        check_args(L,1);
+        GET_UD_MACRO(CollisionMeshPtr,cmp,1,COLMESH_TAG);
+        cmp->reload();
         return 0;
 TRY_END
 }
@@ -1119,91 +1117,6 @@ TRY_START
         RigidBodyPtr rbp = (new RigidBody(self,cmp,pos,quat))->getPtr();
         push_rbody(L,rbp);
         return 1;
-TRY_END
-}
-
-static int pworld_set_material (lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        std::string name = luaL_checkstring(L,2);
-        unsigned char interaction_group = check_t<unsigned char>(L,3);
-        self->setMaterial(name, interaction_group);
-        return 0;
-TRY_END
-}
-
-static int pworld_get_material (lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        std::string name = luaL_checkstring(L,2);
-        const PhysicsMaterial &m = self->getMaterial(name);
-        lua_pushnumber(L, m.interactionGroup);
-        return 1;
-TRY_END
-}
-
-static int pworld_set_interaction_groups (lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        if (!lua_istable(L,2))
-                my_lua_error(L,"Second parameter should be a table");
-        if (!lua_istable(L,3))
-                my_lua_error(L,"Third parameter should be a table");
-
-        int counter1 = 0;
-        for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
-                counter1++;
-        }
-        int counter2 = 0;
-        for (lua_pushnil(L) ; lua_next(L,3)!=0 ; lua_pop(L,1)) {
-                counter2++;
-        }
-
-        if (counter1 != counter2) {
-                my_lua_error(L,"Tables were of different sizes");
-        }
-
-        int counter = counter1;
-
-        int num = int(sqrtf(counter)+0.5f);
-        if (num*num != counter) {
-                my_lua_error(L,"Table was not a square (e.g. 4, 16, 25, etc, elements)");
-        }
-        
-        std::vector<std::pair<float,float> > v;
-        v.resize(counter);
-        counter = 0;
-        for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
-                float f = (float)luaL_checknumber(L,-1);
-                v[counter].first = f;
-                counter++;
-        }
-        counter = 0;
-        for (lua_pushnil(L) ; lua_next(L,3)!=0 ; lua_pop(L,1)) {
-                float f = (float)luaL_checknumber(L,-1);
-                v[counter].second = f;
-                counter++;
-        }
-
-        // reflect the other half of the square into place
-        for (int ig0=0 ; ig0<num ; ++ig0) {
-                for (int ig1=ig0+1 ; ig1<num ; ++ig1) {
-                        int code_from = ig1*num + ig0;
-                        int code_to = ig0*num + ig1;
-                        v[code_to].first = v[code_from].first;
-                        v[code_to].second = v[code_from].second;
-                }
-        }
-
-        self->setInteractionGroups(num, v);
-
-        return 0;
 TRY_END
 }
 
@@ -1282,12 +1195,6 @@ TRY_START
                 lua_pushboolean(L,self->verboseCasts);
         } else if (!::strcmp(key,"errorContacts")) {
                 lua_pushboolean(L,self->errorContacts);
-        } else if (!::strcmp(key,"setMaterial")) {
-                push_cfunction(L,pworld_set_material);
-        } else if (!::strcmp(key,"getMaterial")) {
-                push_cfunction(L,pworld_get_material);
-        } else if (!::strcmp(key,"setInteractionGroups")) {
-                push_cfunction(L,pworld_set_interaction_groups);
         } else if (!::strcmp(key,"solverDamping")) {
                 lua_pushnumber(L,self->getSolverDamping());
         } else if (!::strcmp(key,"solverIterations")) {
@@ -1471,6 +1378,87 @@ TRY_END
 }
 
 
+static int global_physics_set_material (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        std::string name = luaL_checkstring(L,1);
+        unsigned char interaction_group = check_t<unsigned char>(L,2);
+        phys_mats.setMaterial(name, interaction_group);
+        return 0;
+TRY_END
+}
+
+static int global_physics_get_material (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        std::string name = luaL_checkstring(L,1);
+        lua_pushnumber(L, phys_mats.getMaterial(name)->interactionGroup);
+        return 1;
+TRY_END
+}
+
+static int global_physics_set_interaction_groups (lua_State *L)
+{
+TRY_START
+        check_args(L,2);
+        if (!lua_istable(L,1))
+                my_lua_error(L,"Second parameter should be a table");
+        if (!lua_istable(L,2))
+                my_lua_error(L,"Third parameter should be a table");
+
+        int counter1 = 0;
+        for (lua_pushnil(L) ; lua_next(L,1)!=0 ; lua_pop(L,1)) {
+                counter1++;
+        }
+        int counter2 = 0;
+        for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
+                counter2++;
+        }
+
+        if (counter1 != counter2) {
+                my_lua_error(L,"Tables were of different sizes");
+        }
+
+        int counter = counter1;
+
+        int num = int(sqrtf(counter)+0.5f);
+        if (num*num != counter) {
+                my_lua_error(L,"Table was not a square (e.g. 4, 16, 25, etc, elements)");
+        }
+        
+        Interactions v;
+        v.resize(counter);
+        counter = 0;
+        for (lua_pushnil(L) ; lua_next(L,1)!=0 ; lua_pop(L,1)) {
+                float f = (float)luaL_checknumber(L,-1);
+                v[counter].friction = f;
+                counter++;
+        }
+        counter = 0;
+        for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
+                float f = (float)luaL_checknumber(L,-1);
+                v[counter].restitution = f;
+                counter++;
+        }
+
+        // reflect the other half of the square into place
+        for (int ig0=0 ; ig0<num ; ++ig0) {
+                for (int ig1=ig0+1 ; ig1<num ; ++ig1) {
+                        int code_from = ig1*num + ig0;
+                        int code_to = ig0*num + ig1;
+                        v[code_to].friction = v[code_from].friction;
+                        v[code_to].restitution = v[code_from].restitution;
+                }
+        }
+
+        phys_mats.setInteractionGroups(num, v);
+
+        return 0;
+TRY_END
+}
+
 
 
 
@@ -1479,6 +1467,9 @@ static const luaL_reg global[] = {
         {"get_pw",global_get_pw},
         {"set_physics_debug" ,global_set_physics_debug},
         {"get_physics_debug" ,global_get_physics_debug},
+        {"physics_get_material" ,global_physics_get_material},
+        {"physics_set_material" ,global_physics_set_material},
+        {"physics_set_interaction_groups" ,global_physics_set_interaction_groups},
         {NULL, NULL}
 };
 

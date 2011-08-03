@@ -28,13 +28,7 @@
 #include "TColLexer"
 #include "TColParser.h"
 
-#define DEFAULT_MARGIN 0.04f
-#define DEFAULT_LINEAR_DAMPING 0.5f
-#define DEFAULT_ANGULAR_DAMPING 0.5f
-#define DEFAULT_LINEAR_SLEEP_THRESHOLD 1.0f
-#define DEFAULT_ANGULAR_SLEEP_THRESHOLD 0.8f
-#define DEFAULT_CCD_MOTION_THRESHOLD 0.0f
-#define DEFAULT_CCD_SWEPT_SPHERE_RADIUS 0.0f
+#include "col_defaults.h"
 
 static inline bool fnear(const float x, const float y)
 {
@@ -483,7 +477,7 @@ static inline T &vecnext (std::vector<T> &vec)
 
 static void parse_hull (const std::string &name,
                         quex::TColLexer* qlex,
-                        Hull &hull)
+                        TColHull &hull)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
@@ -548,7 +542,7 @@ static void parse_hull (const std::string &name,
 
 static void parse_box (const std::string &name,
                        quex::TColLexer* qlex,
-                       Box &box)
+                       TColBox &box)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         box.margin = DEFAULT_MARGIN;
@@ -620,7 +614,7 @@ static void parse_box (const std::string &name,
 
 static void parse_cylinder (const std::string &name,
                             quex::TColLexer* qlex,
-                            Cylinder &cylinder)
+                            TColCylinder &cylinder)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         cylinder.margin = DEFAULT_MARGIN;
@@ -692,7 +686,7 @@ static void parse_cylinder (const std::string &name,
 
 static void parse_cone (const std::string &name,
                         quex::TColLexer* qlex,
-                        Cone &cone)
+                        TColCone &cone)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         cone.margin = DEFAULT_MARGIN;
@@ -772,7 +766,7 @@ static void parse_cone (const std::string &name,
 
 static void parse_plane (const std::string &name,
                          quex::TColLexer* qlex,
-                         Plane &plane)
+                         TColPlane &plane)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         ensure_token(name,qlex,QUEX_TKN_MATERIAL);
@@ -792,7 +786,7 @@ static void parse_plane (const std::string &name,
 
 static void parse_sphere (const std::string &name,
                           quex::TColLexer* qlex,
-                          Sphere &sphere)
+                          TColSphere &sphere)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         ensure_token(name,qlex,QUEX_TKN_MATERIAL);
@@ -812,7 +806,7 @@ static void parse_sphere (const std::string &name,
 
 static void parse_compound_shape (const std::string &name,
                                   quex::TColLexer* qlex,
-                                  Compound &compound)
+                                  TColCompound &compound)
 {
 
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
@@ -860,7 +854,7 @@ static void parse_compound_shape (const std::string &name,
 static void parse_faces (const std::string &name,
                          quex::TColLexer* qlex,
                          size_t num_vertexes,
-                         Faces &faces)
+                         TColFaces &faces)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
         int v1, v2, v3;
@@ -874,7 +868,7 @@ static void parse_faces (const std::string &name,
                         v2 = parse_int(name,qlex,num_vertexes);
                         v3 = parse_int(name,qlex,num_vertexes);
                         material = parse_material(name, qlex);
-                        faces.push_back(Face(v1,v2,v3,material));
+                        faces.push_back(TColFace(v1,v2,v3,material));
                         if (!more_to_come(name,qlex)) break;
                         continue;
 
@@ -892,13 +886,11 @@ static void parse_faces (const std::string &name,
 
 static void parse_static_trimesh_shape (const std::string &name,
                                         quex::TColLexer* qlex,
-                                        TriMesh &triMesh)
+                                        TColTriMesh &triMesh)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
         triMesh.margin = 0.00;
-        bool have_max_edge_angle_threshold = false;
-        triMesh.maxEdgeAngleThreshold = Degree(22.5);
         bool have_edge_distance_threshold = false;
         triMesh.edgeDistanceThreshold = 0.001;
 
@@ -906,14 +898,6 @@ static void parse_static_trimesh_shape (const std::string &name,
                 quex::Token t; qlex->get_token(&t);
                 switch (t.type_id()) {
                         
-                        case QUEX_TKN_MAX_EDGE_ANGLE_THRESHOLD:
-                        if (have_max_edge_angle_threshold)
-                                err3(name,qlex,"Already have max_edge_angle_threshold");
-                        have_max_edge_angle_threshold = true;
-                        triMesh.maxEdgeAngleThreshold = Degree(parse_positive_real(name,qlex));
-                        ensure_token(name,qlex,QUEX_TKN_SEMI);
-                        continue;
-
                         case QUEX_TKN_EDGE_DISTANCE_THRESHOLD:
                         if (have_edge_distance_threshold)
                                 err3(name,qlex,"Already have edge_distance_threshold");
@@ -926,7 +910,7 @@ static void parse_static_trimesh_shape (const std::string &name,
                         break;
                         
                         default:
-                        err4(name,qlex,t,"max_edge_angle_threshold, edge_distance_threshold, vertexes");
+                        err4(name,qlex,t,"edge_distance_threshold, vertexes");
                 }
                 break;
         } while (true);
@@ -944,11 +928,12 @@ static void parse_static_trimesh_shape (const std::string &name,
 
 static void parse_dynamic_trimesh_shape (const std::string &name,
                                          quex::TColLexer* qlex,
-                                         TriMesh &triMesh)
+                                         TColTriMesh &triMesh)
 {
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
         triMesh.margin = DEFAULT_MARGIN;
+        triMesh.edgeDistanceThreshold = 0.001;
 
         quex::Token t; qlex->get_token(&t);
         switch (t.type_id()) {
@@ -1097,6 +1082,7 @@ void parse_tcol_1_0 (const std::string &name,
 
         file.usingTriMesh = false;
         file.usingCompound = false;
+        file.hasInertia = have_inertia;
 
         quex::Token t; qlex->get_token(&t);
         switch (t.type_id()) {
@@ -1125,17 +1111,17 @@ void parse_tcol_1_0 (const std::string &name,
 
 }
 
-void pretty_print_material (std::ostream &o, const std::string &material)
+static void pretty_print_material (std::ostream &o, const std::string &material)
 {
         o << "\"" << material << "\"";
 }
 
-void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
+static void pretty_print_compound (std::ostream &o, TColCompound &c, const std::string &in)
 {
         o << in << "compound {\n";
 
         for (size_t i=0 ; i<c.hulls.size() ; ++i) {
-                Hull &h = c.hulls[i];
+                TColHull &h = c.hulls[i];
                 o<<in<<"\t"<<"hull {\n";
                 o<<in<<"\t\t"<<"material "; pretty_print_material(o, h.material); o<<";\n";
                 if (ffar(h.margin,DEFAULT_MARGIN)) {
@@ -1151,7 +1137,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         }
 
         for (size_t i=0 ; i<c.boxes.size() ; ++i) {
-                Box &b = c.boxes[i];
+                TColBox &b = c.boxes[i];
                 o<<in<<"\t"<<"box {\n";
                 o<<in<<"\t\t"<<"material "; pretty_print_material(o, b.material); o<<";\n";
                 if (ffar(b.margin,DEFAULT_MARGIN)) {
@@ -1170,7 +1156,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         }
 
         for (size_t i=0 ; i<c.cylinders.size() ; ++i) {
-                Cylinder &cyl = c.cylinders[i];
+                TColCylinder &cyl = c.cylinders[i];
                 o<<in<<"\t"<<"cylinder {\n";
                 o<<in<<"\t\t"<<"material "; pretty_print_material(o, cyl.material); o<<";\n";
                 if (ffar(cyl.margin,DEFAULT_MARGIN)) {
@@ -1189,7 +1175,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         }
 
         for (size_t i=0 ; i<c.cones.size() ; ++i) {
-                Cone &cone = c.cones[i];
+                TColCone &cone = c.cones[i];
                 o<<in<<"\t"<<"cone {\n";
                 o<<in<<"\t\t"<<"material "; pretty_print_material(o, cone.material); o<<";\n";
                 if (ffar(cone.margin,DEFAULT_MARGIN)) {
@@ -1208,7 +1194,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         }
 
         for (size_t i=0 ; i<c.planes.size() ; ++i) {
-                Plane &p = c.planes[i];
+                TColPlane &p = c.planes[i];
                 o<<in<<"\t"<<"plane {\n";
                 o<<in<<"\t\t"<<"material "; pretty_print_material(o, p.material); o<<";\n";
                 o<<in<<"\t\t"<<"normal "<<p.nx<<" "<<p.ny<<" "<<p.nz<<";\n";
@@ -1217,7 +1203,7 @@ void pretty_print_compound (std::ostream &o, Compound &c, const std::string &in)
         }
 
         for (size_t i=0 ; i<c.spheres.size() ; ++i) {
-                Sphere &s = c.spheres[i];
+                TColSphere &s = c.spheres[i];
                 o<<in<<"\t"<<"sphere {\n";
                 o<<in<<"\t\t"<<"material "; pretty_print_material(o, s.material); o<<";\n";
                 o<<in<<"\t\t"<<"centre "<<s.px<<" "<<s.py<<" "<<s.pz<<";\n";
@@ -1274,7 +1260,7 @@ void pretty_print_tcol (std::ostream &os, TColFile &f)
                 o << "\t}\n";
                 o << "\tfaces {\n";
                 for (unsigned i=0 ; i<f.triMesh.faces.size() ; ++i) {
-                        Face &face = f.triMesh.faces[i];
+                        TColFace &face = f.triMesh.faces[i];
                         o<<"\t\t"<<face.v1<<" "<<face.v2<<" "<<face.v3<<" ";
                         pretty_print_material(o, face.material);
                         o<<";"<<"\n";
@@ -1288,9 +1274,9 @@ void pretty_print_tcol (std::ostream &os, TColFile &f)
 void tcol_offset (TColFile &f, float x, float y, float z)
 {
         if (f.usingCompound) {
-                Compound c = f.compound;
+                TColCompound c = f.compound;
                 for (size_t i=0 ; i<c.hulls.size() ; ++i) {
-                        Hull &h = c.hulls[i];
+                        TColHull &h = c.hulls[i];
                         for (unsigned i=0 ; i<h.vertexes.size() ; ++i) {
                                 Vector3 &v = h.vertexes[i];
                                 v.x += x;
@@ -1300,34 +1286,34 @@ void tcol_offset (TColFile &f, float x, float y, float z)
                 }
 
                 for (size_t i=0 ; i<c.boxes.size() ; ++i) {
-                        Box &b = c.boxes[i];
+                        TColBox &b = c.boxes[i];
                         b.px += x;
                         b.py += y;
                         b.pz += z;
                 }
 
                 for (size_t i=0 ; i<c.cylinders.size() ; ++i) {
-                        Cylinder &cyl = c.cylinders[i];
+                        TColCylinder &cyl = c.cylinders[i];
                         cyl.px += x;
                         cyl.py += y;
                         cyl.pz += z;
                 }
 
                 for (size_t i=0 ; i<c.cones.size() ; ++i) {
-                        Cone &cone = c.cones[i];
+                        TColCone &cone = c.cones[i];
                         cone.px += x;
                         cone.py += y;
                         cone.pz += z;
                 }
 
                 for (size_t i=0 ; i<c.planes.size() ; ++i) {
-                        Plane &p = c.planes[i];
+                        TColPlane &p = c.planes[i];
                         // The maths here may not actually be accurate
                         p.d += p.nx*x + p.ny*y + p.nz*z;
                 }
 
                 for (size_t i=0 ; i<c.spheres.size() ; ++i) {
-                        Sphere &s = c.spheres[i];
+                        TColSphere &s = c.spheres[i];
                         s.px += x;
                         s.py += y;
                         s.pz += z;
@@ -1348,7 +1334,7 @@ void tcol_triangles_to_hulls (TColFile &tcol, float extrude_by, float margin)
 {
         if (tcol.usingTriMesh) {
                 for (unsigned i=0 ; i<tcol.triMesh.faces.size() ; ++i) {
-                        Face &f = tcol.triMesh.faces[i];
+                        TColFace &f = tcol.triMesh.faces[i];
                         Vector3 v1 = tcol.triMesh.vertexes[f.v1];
                         Vector3 v2 = tcol.triMesh.vertexes[f.v2];
                         Vector3 v3 = tcol.triMesh.vertexes[f.v3];
@@ -1360,7 +1346,7 @@ void tcol_triangles_to_hulls (TColFile &tcol, float extrude_by, float margin)
                         Vector3 v2_ex = v2 + extrude_by*n;
                         Vector3 v3_ex = v3 + extrude_by*n;
 
-                        Hull &hull = vecnext(tcol.compound.hulls);
+                        TColHull &hull = vecnext(tcol.compound.hulls);
                         hull.vertexes.push_back(v1);
                         hull.vertexes.push_back(v2);
                         hull.vertexes.push_back(v3);

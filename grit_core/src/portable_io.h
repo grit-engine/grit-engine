@@ -19,10 +19,17 @@
  * THE SOFTWARE.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
+#ifndef portable_io_h
+#define portable_io_h
+
+#include <cstdlib>
+#include <cstdio>
+#include <cassert>
+#include <cstring>
+
+#include <string>
+#include <iostream>
+#include <fstream>
 
 #ifdef _MSC_VER
         typedef unsigned char uint8_t;
@@ -33,241 +40,166 @@
         #include <stdint.h>
 #endif
 
-#include <string>
+#include "CentralisedLog.h"
 
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef int16_t s16;
-typedef uint32_t u32;
-typedef float f32;
 
-////////////////////////////////////////////////////////////////////////////////
-
-#ifndef portable_io_h
-#define portable_io_h
-
-#define rassert(x) if (!(x)) { \
-        if (feof(f)) { \
-                fprintf(stderr,"EOF on read!"); \
+#define APP_ASSERT_IO_SUCCESSFUL(in,doing) if (!(in).good()) { \
+        if ((in).eof()) { \
+                GRIT_EXCEPT(std::string("EOF while ")+doing); \
         } else { \
-                perror("Read error"); \
+                GRIT_EXCEPT(std::string(strerror(errno))+std::string(" while ")+doing); \
         } \
-        fprintf(stderr,"%s:%d\n", __FILE__,__LINE__);  \
-        fflush(stderr); \
 }
 
-#define wassert(x) if (!(x)) { \
-        if (feof(f)) { \
-                fprintf(stderr,"EOF on write!"); \
-        } else { \
-                perror("Write error"); \
-        } \
-        fprintf(stderr,"%s:%d\n", __FILE__,__LINE__);  \
-        fflush(stderr); \
-}
+/* the following routines do IO on little endian files.  The host system can be
+ * any endian. */
 
-//extern size_t amount_read;
-//extern size_t amount_seeked;
-
-/* the following routines do FILE* io, where the file is little endian, and the
- * host system can be any endian. */
-
-static inline void fread_u32_(FILE *f, u32 *ptr)
+static inline unsigned long ios_read_u32(std::istream &in)
 {{{
-#ifdef OGRE_CONFIG_BIG_ENDIAN
-        //amount_read+=4;
         unsigned char raw[4];
-        size_t r=fread(raw,sizeof raw, 1, f);
-        rassert(r==1);
-        if (ptr) {
-                *ptr = raw[0];
-                *ptr += raw[1] << 8;
-                *ptr += raw[2] << 16;
-                *ptr += raw[3] << 24;
-        }
-#else
-        if (ptr) {
-                //amount_read+=4;
-                size_t r=fread(ptr,sizeof *ptr, 1, f);
-                rassert(r==1);
-        } else {
-                //amount_seeked+=4;
-                fseek(f,4,SEEK_CUR);
-        }
-#endif
+        in.read((char*)raw,sizeof raw);
+        APP_ASSERT_IO_SUCCESSFUL(in,"reading uint32");
+        return raw[3]<<24ul | raw[2]<<16ul | raw[1]<<8ul | raw[0];
 }}}
 
-static inline void fread_u16_(FILE *f, u16 *ptr)
+static inline unsigned long ios_read_s32(std::istream &in)
 {{{
-        //amount_read+=2;
+        unsigned char raw[4];
+        in.read((char*)raw,sizeof raw);
+        APP_ASSERT_IO_SUCCESSFUL(in,"reading int32");
+        long r = (raw[3]&0x7f)<<24ul | raw[2]<<16ul | raw[1]<<8ul | raw[0];
+        if (raw[3]&0x80) r -= 0x80000000;
+        return r;
+}}}
+
+static inline unsigned long ios_peek_u32(std::istream &in)
+{{{
+        char raw[4];
+        in.read(raw,sizeof raw);
+        in.putback(raw[3]);
+        in.putback(raw[2]);
+        in.putback(raw[1]);
+        in.putback(raw[0]);
+        return raw[3]<<24ul | raw[2]<<16ul | raw[1]<<8ul | raw[0];
+}}}
+
+static inline unsigned short ios_read_u16(std::istream &in)
+{{{
         unsigned char raw[2];
-        size_t r=fread(raw,sizeof raw, 1, f);
-        rassert(r==1);
-        if (ptr) {
-                *ptr = raw[0];
-                *ptr += raw[1] << 8;
-        }
+        in.read((char*)raw,sizeof raw);
+        APP_ASSERT_IO_SUCCESSFUL(in,"reading uint16");
+        return raw[1]<<8ul | raw[0];
 }}}
 
-static inline void fread_s16_(FILE *f, s16 *ptr)
+static inline signed short ios_read_s16(std::istream &in)
 {{{
-        //amount_read+=2;
         unsigned char raw[2];
-        size_t r=fread(raw,sizeof raw, 1, f);
-        rassert(r==1);
-        if (ptr) {
-                *ptr = raw[0];
-                if (raw[1]&0x80) {
-                        *ptr -= 0x8000;
-                }
-                *ptr += (raw[1]&0x7F) << 8;
-        }
+        in.read((char*)raw,sizeof raw);
+        APP_ASSERT_IO_SUCCESSFUL(in,"reading int16");
+        short r = raw[0];
+        r += (((int)raw[1]&0x7F)<<8);
+        if (raw[1]&0x80) r -= 0x8000;
+        return r;
 }}}
 
-static inline void fread_u8_(FILE *f, u8 *ptr)
+static inline unsigned char ios_read_u8(std::istream &in)
 {{{
-        if (ptr) {
-                //amount_read+=1;
-                size_t r=fread(ptr,sizeof *ptr, 1, f);
-                rassert(r==1);
+        unsigned char raw[1];
+        in.read((char*)raw,sizeof raw);
+        APP_ASSERT_IO_SUCCESSFUL(in,"reading uint8");
+        return raw[0];
+}}}
+
+static inline float ios_read_float(std::istream &in)
+{{{
+        union floatint {
+                unsigned long i;
+                float f;
+        };
+        floatint val;
+        val.i = ios_read_u32(in);
+        return val.f;
+}}}
+
+static inline void ios_read_byte_array(std::istream &in,
+                                       unsigned char *raw,size_t sz)
+{{{
+        if (raw) {
+                in.read((char*)raw,sz);
+                APP_ASSERT_IO_SUCCESSFUL(in,"reading byte array");
         } else {
-                //amount_seeked+=1;
-                fseek(f,1,SEEK_CUR);
+                in.seekg(sz,std::ios_base::cur);
         }
 }}}
 
-
-static inline void fwrite_u32(FILE *f, u32 v)
-{{{
-        size_t r=fwrite(&v,sizeof v, 1, f);
-        wassert(r==1);
-}}}
-
-static inline void fwrite_u16(FILE *f, u16 v)
-{{{
-        size_t r=fwrite(&v,sizeof v, 1, f);
-        wassert(r==1);
-}}}
-
-static inline void fwrite_u8(FILE *f, u8 v)
-{{{
-        size_t r=fwrite(&v,sizeof v, 1, f);
-        wassert(r==1);
-}}}
-
-
-static inline void fread_bytearray(FILE *f, u8 *ptr, size_t sz)
-{{{
-        if (ptr) {
-                //amount_read+=sz;
-                size_t r = fread(ptr, sizeof *ptr, sz, f);
-                rassert(r==sz);
-        } else {
-                //amount_seeked+=sz;
-                int r = fseek(f, sz, SEEK_CUR);
-                rassert (r==0);
-        }
-}}}
-
-
-static inline std::string fread_fixedstr(FILE *f, size_t n)
+static inline std::string ios_read_fixedstr(std::istream &in, size_t sz)
 {{{
         //amount_read+=n;
-        std::string s;
-        s.reserve(n+1);
-        char *buf = (char*)malloc(n+1);
-        memset(buf,0,n+1);
-        size_t r = fread(buf,n, 1, f);
-        rassert(r==1);
-        s += buf;
-        free(buf);
+        char *raw = new char[sz+1];
+        memset(raw,0,sz+1);
+        in.read(raw,sz);
+        APP_ASSERT_IO_SUCCESSFUL(in,"reading string");
+        std::string s(raw);
+        delete [] raw;
         return s;
 }}}
 
-static inline void fwrite_fixedstr(FILE *f, const std::string& str, size_t n)
+static inline void ios_write_u32(std::ostream &out, unsigned long v)
 {{{
-        size_t len = str.size() + 1;
-        wassert(len<=n);
-        size_t r = fwrite(str.c_str(),len, 1, f);
-        wassert(r==1);
-        while (n>len) {
-                const u8 zero = 0;
-                r = fwrite(&zero,1, 1, f);
-                wassert(r==1);
-                len++;
-        }
+        out << (unsigned char)((v & 0x000000FF) >> 0);
+        APP_ASSERT_IO_SUCCESSFUL(out,"writing uint32");
+        out << (unsigned char)((v & 0x0000FF00) >> 8);
+        APP_ASSERT_IO_SUCCESSFUL(out,"writing uint32");
+        out << (unsigned char)((v & 0x00FF0000) >> 16);
+        APP_ASSERT_IO_SUCCESSFUL(out,"writing uint32");
+        out << (unsigned char)((v & 0xFF000000) >> 24);
+        APP_ASSERT_IO_SUCCESSFUL(out,"writing uint32");
 }}}
 
-static inline void fwrite_str(FILE *f, const std::string& str)
+static inline void ios_write_u16(std::ostream &out, unsigned short v)
 {{{
-        size_t len = str.size() + 1;
-        fwrite_u32(f,len);
-        fwrite_fixedstr(f,str,len);
+        out << (unsigned char)((v & 0x00FF) >> 0);
+        APP_ASSERT_IO_SUCCESSFUL(out,"writing uint16");
+        out << (unsigned char)((v & 0xFF00) >> 8);
+        APP_ASSERT_IO_SUCCESSFUL(out,"writing uint16");
 }}}
 
-
-static inline u8 fread_u8(FILE *f)
+static inline void ios_write_u8(std::ostream &out, unsigned char v)
 {{{
-        //amount_read+=1;
-        u8 data;
-        size_t r=fread(&data,sizeof data, 1, f);
-        rassert(r==1);
-        return data;
+        out << (unsigned char)((v & 0x00FF) >> 0);
+        APP_ASSERT_IO_SUCCESSFUL(out,"writing uint8");
 }}}
 
-static inline u16 fread_u16(FILE *f)
-{ u16 data; fread_u16_(f,&data); return data; }
-
-static inline s16 fread_s16(FILE *f)
-{ s16 data; fread_s16_(f,&data); return data; }
-
-static inline u32 fread_u32(FILE *f)
-{ u32 data; fread_u32_(f,&data); return data; }
-
-
-static inline void fread_f32_(FILE *f, f32 *ptr)
+static inline void ios_write_float(std::ostream &out, float v)
 {{{
-        // assumes 
-        if (ptr) {
-                #ifdef OGRE_CONFIG_BIG_ENDIAN
-                        u32 val = fread_u32(f);
-                        memcpy(ptr,&val,4);
-                #else
-                        //amount_read+=4;
-                        size_t r=fread(ptr,sizeof *ptr, 1, f);
-                        rassert(r==1);
-                #endif
-        } else {
-                //amount_seeked+=4;
-                fseek(f,4,SEEK_CUR);
-        }
+        union floatint {
+                unsigned long i;
+                float f;
+        };
+        floatint val;
+        val.f = v;
+        ios_write_u32(out, val.i);
 }}}
 
-static inline f32 fread_f32(FILE *f)
-{ f32 data; fread_f32_(f,&data); return data; }
-
-
-#define fread_header(f,type,size,ver,vercheck) \
-        fread_header_(f,type,size,ver,vercheck,__FILE__,__LINE__)
-
-static inline void fread_header_(FILE *f, u32 *type, u32 *size,
-                                 u32 *ver, u32 *vercheck,
-                                 const char* file, int line)
+static inline void ios_write_str(std::ostream &out, const std::string &s)
 {{{
-        fread_u32_(f,type);
-        fread_u32_(f,size);
-        u32 ver2 = fread_u32(f);
-        if (ver) *ver=ver2;
-        //printf("[0;34mversion: %d (0x%x)[0m\n",ver2,ver2);
-        if(vercheck && ver2!=*vercheck) {
-                fprintf(stderr,"Expected version %d (0x%x), "
-                               "got version %d (0x%x), at %s:%d.\n",
-                               *vercheck,*vercheck,ver2,ver2,file,line);
-        }
+        ios_write_u32(out,s.length());
+        out << s;
+        APP_ASSERT_IO_SUCCESSFUL(out,"writing string");
 }}}
 
-static inline size_t ftell_(FILE *f)
-{ return ftell(f); }
+static inline void ios_write_byte_array(std::ostream &out, const unsigned char *raw,size_t sz)
+{{{
+        out.write((char*)raw,sz);
+        APP_ASSERT_IO_SUCCESSFUL(out,"writing byte array");
+}}}
+
+static inline void ios_write_byte_array(std::ostream &out, const char *raw,size_t sz)
+{{{
+        out.write(raw,sz);
+        APP_ASSERT_IO_SUCCESSFUL(out,"writing byte array");
+}}}
+
 
 #endif
 

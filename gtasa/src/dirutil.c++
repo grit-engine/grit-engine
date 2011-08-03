@@ -19,6 +19,8 @@
  * THE SOFTWARE.
  */
 
+#include <cerrno>
+
 #ifdef WIN32
 #include <windows.h>
 #else
@@ -26,7 +28,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
-#include <errno.h>
 
 #include "dirutil.h"
 #include "ios_util.h"
@@ -45,12 +46,12 @@ void ensuredir (const std::string &path)
                                 ensuredir(prefix);
                                 ensuredir(path); // hopefully this won't loop horribly
                         } else {
-                                IOS_EXCEPT(std::string(
+                                GRIT_EXCEPT(std::string(
                                     "root dir doesn't exist(?), "
                                     "making: \""+path+"\""));
                         }
                 } else if (GetLastError()!=ERROR_ALREADY_EXISTS) {
-                        IOS_EXCEPT(std::string("error while making dir: "
+                        GRIT_EXCEPT(std::string("error while making dir: "
                                                "\""+path+"\""));
                 }
         }
@@ -63,7 +64,7 @@ void ensuredir (const std::string &path)
         int err = stat(path.c_str(),&stat_results);
         if (!err) return; // dir exists already
         if (err && errno!=ENOENT && errno!=ENOTDIR)
-                IOS_EXCEPT(std::string(strerror(errno))+
+                GRIT_EXCEPT(std::string(strerror(errno))+
                            "while making dir: \""+path+"\"");
 
         // dir doesn't exist, check prefix exists
