@@ -7,7 +7,7 @@ ROOT=../..
 
 include $(ROOT)/common.mk
 
-TARGETS=grit.x11 matbin
+TARGETS=../media/Grit.x11 grit.x11.stripped grit_col_conv
 
 grit: ../media/Grit.x11 grit.x11.stripped
 
