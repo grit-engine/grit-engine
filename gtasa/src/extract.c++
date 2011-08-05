@@ -363,14 +363,14 @@ void extract (const Config &cfg, std::ostream &out)
                 APP_ASSERT(n<line[0].npos-1);
                 std::string p1 = line[0].substr(0,n);
                 std::string p2 = line[0].substr(n+1,line[0].npos);
-                r = strtod(p1.c_str(), NULL)/255;
-                g = strtod(p2.c_str(), NULL)/255;
-                b = strtod(line[1].c_str(), NULL)/255;
+                r = (float) strtod(p1.c_str(), NULL)/255;
+                g = (float) strtod(p2.c_str(), NULL)/255;
+                b = (float) strtod(line[1].c_str(), NULL)/255;
             } else {
                 APP_ASSERT(line.size()==3);
-                r = strtod(line[0].c_str(), NULL)/255;
-                g = strtod(line[1].c_str(), NULL)/255;
-                b = strtod(line[2].c_str(), NULL)/255;
+                r = (float) strtod(line[0].c_str(), NULL)/255;
+                g = (float) strtod(line[1].c_str(), NULL)/255;
+                b = (float) strtod(line[2].c_str(), NULL)/255;
             }
             carcols_lua<<"carcols.gtasa"<<i<<" = { { "<<r<<", "<<g<<", "<<b<<" } }"
                    <<std::endl;
@@ -431,24 +431,24 @@ void extract (const Config &cfg, std::ostream &out)
                 ortf = 1;
             } else if (surf.adhesion_group=="HARD") {
                 physmats_lua<<"    interactionGroup=SmoothHardGroup;"<<std::endl;
-                rtf = 0.9;
-                ortf = 0.7;
+                rtf = 0.9f;
+                ortf = 0.7f;
             } else if (surf.adhesion_group=="ROAD") {
                 physmats_lua<<"    interactionGroup=RoughGroup;"<<std::endl;
                 rtf = 1;
-                ortf = 0.8;
+                ortf = 0.8f;
             } else if (surf.adhesion_group=="LOOSE") {
                 physmats_lua<<"    interactionGroup=DeformGroup;"<<std::endl;
-                rtf = 0.7;
+                rtf = 0.7f;
                 ortf = 1;
             } else if (surf.adhesion_group=="SAND") {
                 physmats_lua<<"    interactionGroup=DeformGroup;"<<std::endl;
-                rtf = 0.4;
+                rtf = 0.4f;
                 ortf = 1;
             } else if (surf.adhesion_group=="WET") {
                 physmats_lua<<"    interactionGroup=SlipperyGroup;"<<std::endl;
-                rtf = 0.3;
-                ortf = 0.6;
+                rtf = 0.3f;
+                ortf = 0.6f;
             } else {
                 GRIT_EXCEPT("Unrecognised adhesion group: "+surf.adhesion_group);
             }
@@ -691,7 +691,7 @@ void extract (const Config &cfg, std::ostream &out)
                 for (unsigned i=0 ; i<dff.geometries[0].twodfxs.size() ; ++i) {
                     twodfx &fx = dff.geometries[0].twodfxs[i];
                     if (fx.type != TWODFX_LIGHT) continue;
-                    float r=fx.light.r/255.0, g=fx.light.g/255.0, b=fx.light.b/255.0;
+                    float r=fx.light.r/255.0f, g=fx.light.g/255.0f, b=fx.light.b/255.0f;
                     float R=std::max(fx.light.outer_range,fx.light.size);
                     lights_field << prefix << "{ "
                                  << "pos=vector3("<<fx.x<<","<<fx.y<<","<<fx.z<<"), "
@@ -861,9 +861,9 @@ void extract (const Config &cfg, std::ostream &out)
 */
 
             dff.tcol.mass = vdata->mass;
-            dff.tcol.linearDamping = 0.15;
+            dff.tcol.linearDamping = 0.15f;
 
-            tcol_triangles_to_hulls(dff.tcol, 0.04, 0.04);
+            tcol_triangles_to_hulls(dff.tcol, 0.04f, 0.04f);
 
             if (!dff.tcol.usingCompound && !dff.tcol.usingTriMesh) {
                 GRIT_EXCEPT("Collision data had no compound or trimesh");
@@ -888,7 +888,7 @@ void extract (const Config &cfg, std::ostream &out)
                 lua_file << "    colMesh = \""<<vname<<"/chassis.gcol\";\n";
                 lua_file << "    placementZOffset=0.4;\n";
                 lua_file << "    powerPlots = {\n";
-                float torque = vdata->mass * vdata->engine_accel * v.rear_wheel_size/2 * 0.5; // 0.75 is a fudge factor
+                float torque = vdata->mass * vdata->engine_accel * v.rear_wheel_size/2 * 0.5f; // 0.75 is a fudge factor
                 lua_file << "        [-1] = { [0] = -"<<torque<<"; [10] = -"<<torque<<"; [25] = -"<<torque<<"; [40] = 0; };\n";
                 lua_file << "        [0] = {};\n";
                 lua_file << "        [1] = { [0] = "<<torque<<"; [10] = "<<torque<<"; [25] = "<<torque<<"; [60] = "<<torque<<"; };\n";

@@ -199,7 +199,7 @@ void CollisionMesh::load (void)
     if (fourcc==0x4c4f4342) { //BCOL
 
         Ogre::MemoryDataStreamPtr mem = 
-            Ogre::DataStreamPtr(OGRE_NEW Ogre::MemoryDataStream(name,file));
+            Ogre::MemoryDataStreamPtr(OGRE_NEW Ogre::MemoryDataStream(name,file));
 
         BColFile &bcol = *reinterpret_cast<BColFile*>(mem->getPtr());
 

@@ -34,23 +34,21 @@ void write_tcol_as_bcol (std::ostream &o, TColFile &f);
 #include <vector>
 
 #ifdef _MSC_VER
-        typedef unsigned long uint32_t;
+        typedef unsigned __int32 uint32_t;
 #else
         #include <stdint.h>
 #endif
 
 #ifdef _MSC_VER
-        #define GRIT_PACKED_BEFORE #pragma pack (push,1)
-        #define GRIT_PACKED_AFTER #pragma pack (pop)
         #define GRIT_PACKED_ATTR
 #else
-        #define GRIT_PACKED_BEFORE
-        #define GRIT_PACKED_AFTER
         #define GRIT_PACKED_ATTR __attribute__((__packed__))
 #endif
 
 
-GRIT_PACKED_BEFORE
+#ifdef _MSC_VER
+#pragma pack (push,1)
+#endif
 
 struct OffsetBase {
     template<class T> T *offset (size_t n, size_t e=0)
@@ -175,7 +173,9 @@ struct BColFile : OffsetBase {
     static size_t size (void) { return 33*4; }
 } GRIT_PACKED_ATTR;
 
-GRIT_PACKED_AFTER
+#ifdef _MSC_VER
+#pragma pack (pop)
+#endif
 
 typedef std::vector<BColFace> BColFaces;
 typedef std::vector<BColVert> BColVerts;

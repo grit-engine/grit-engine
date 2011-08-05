@@ -1705,9 +1705,9 @@ void export_mesh (const StringSet &texs,
         s->surrogate = mname;
 
         for (int tri=0 ; tri<tris ; ++tri) {
-            unsigned short v1 = s->indexes2[3*tri + 0];
-            unsigned short v2 = s->indexes2[3*tri + 1];
-            unsigned short v3 = s->indexes2[3*tri + 2];
+            unsigned short v1 = (unsigned short) s->indexes2[3*tri + 0];
+            unsigned short v2 = (unsigned short) s->indexes2[3*tri + 1];
+            unsigned short v3 = (unsigned short) s->indexes2[3*tri + 2];
             APP_ASSERT(v1 < g.vertexes.size());
             APP_ASSERT(v2 < g.vertexes.size());
             APP_ASSERT(v3 < g.vertexes.size());

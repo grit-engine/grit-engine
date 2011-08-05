@@ -254,7 +254,7 @@ void parse_col (std::string &name,
         tcol.linearDamping = 0;
         tcol.angularDamping = 0.5;
         tcol.linearSleepThreshold = 1;
-        tcol.angularSleepThreshold = 0.8;
+        tcol.angularSleepThreshold = 0.8f;
         tcol.ccdMotionThreshold = 0;
         tcol.ccdSweptSphereRadius = 0;
 
@@ -386,7 +386,7 @@ void parse_col (std::string &name,
                         box.qx = 0;
                         box.qy = 0;
                         box.qz = 0;
-                        box.margin = 0.04;
+                        box.margin = 0.04f;
                         box.material = phys_mat_pref+db[ios_read_u8(in)];
                         unsigned char flag = ios_read_u8(in);
                         unsigned char unk = ios_read_u8(in);
@@ -409,9 +409,9 @@ void parse_col (std::string &name,
                 if (debug_level>3)
                         std::cout<<"remainder: "<<remainder << std::endl;
                 for (int i=0 ; i<num_vertexes ; ++i) {
-                        float x = ios_read_s16(in)/128.0;
-                        float y = ios_read_s16(in)/128.0;
-                        float z = ios_read_s16(in)/128.0;
+                        float x = ios_read_s16(in)/128.0f;
+                        float y = ios_read_s16(in)/128.0f;
+                        float z = ios_read_s16(in)/128.0f;
                         tcol.triMesh.vertexes.push_back(Vector3(x,y,z));
                 }
 

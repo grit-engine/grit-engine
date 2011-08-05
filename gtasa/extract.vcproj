@@ -187,6 +187,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\grit_core\src\physics\BColParser.c++"
+				>
+			</File>
+			<File
 				RelativePath=".\src\ColParser.c++"
 				>
 			</File>
