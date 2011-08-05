@@ -312,13 +312,13 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
 
                 local errors = 0
                 for f = 1 to tmesh.numfaces do (
-                    -- tcol indexes are zero-based so subtract 1
+                    -- gcol indexes are zero-based so subtract 1
                     local face = (getFace tmesh f) - 1 + initial_vertex_offset
                     local mat = get_phys_mat obj (getFaceMatId tmesh f) suppress:(errors>0)
                     if mat == undefined then
                         errors = errors + 1
                     -- 'as integer' suppresses the trailing .0 on the output numbers
-                    -- (as that would not be correct tcol syntax)
+                    -- (as that would not be correct gcol syntax)
                     format "        % % % \"%\";\n" (face[1] as integer) (face[2] as integer) (face[3] as integer) (get_mat_name mat) to:savetcol
                 )
                 initial_vertex_offset = initial_vertex_offset + tmesh.numverts
@@ -349,7 +349,7 @@ Rollout GritRolloutTcolMain "Main" -- {{{
     group "" (
 		bitmap IMGEXP fileName:"ui/export.bmp"
         button chooseDir "Browse save Dir" toolTip:"Choose directory where files are written" across:2
-        --button imp "Import tcol"
+        --button imp "Import gcol"
         button exp "Export Selection" toolTip:"Write TCOL file"
         edittext editDir ""
     )
@@ -552,11 +552,11 @@ Rollout GritRolloutTcolMain "Main" -- {{{
 
         for obj in getCurrentSelection() do (
             local name = obj.name
-            local index = findString name "tcol_"
+            local index = findString name "gcol_"
             if index == 1 then (
                 name = substring name 6 -1
             )
-            local out_file = editDir.text + "\\" + name + ".tcol"
+            local out_file = editDir.text + "\\" + name + ".gcol"
             if obj.children.count == 0 then (
                 local children = #(obj)
                 grit_tcol_export out_file obj children
@@ -570,7 +570,7 @@ Rollout GritRolloutTcolMain "Main" -- {{{
     -- {{{ Importing
     on imp pressed do
     (
-        colopenname = getOpenFileName caption:"Open TCOL" types:"Open Grit collision file (*.tcol)|*.tcol|"
+        colopenname = getOpenFileName caption:"Open TCOL" types:"Open Grit collision file (*.gcol)|*.gcol|"
         colStream = undefined
         if colopenname != undefined then
             colStream = openfile colopenname
@@ -832,14 +832,14 @@ callbacks.addScript #selectionSetChanged "GritRolloutTcolMain.update()" id:#Grit
 macroScript showGritTCOLExporter
     category:"Grit Tools"
     internalCategory:"Grit Tools"
-    buttonText:"Grit .tcol Exporter"
-    tooltip:"Grit .tcol Exporter"
+    buttonText:"Grit .gcol Exporter"
+    tooltip:"Grit .gcol Exporter"
     Icon:#("Grit",2)
 (
     if grit_current_tcol_floater != undefined then (
         closeRolloutFloater grit_current_tcol_floater
     )
-    grit_current_tcol_floater = newRolloutFloater "Grit .tcol Exporter" 320 500
+    grit_current_tcol_floater = newRolloutFloater "Grit .gcol Exporter" 320 500
 
     addRollout GritRolloutTcolMain grit_current_tcol_floater
 
