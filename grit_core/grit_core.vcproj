@@ -153,7 +153,7 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\icu\lib&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Dependencies\lib\Release&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)$(TargetName).pdb"
+				ProgramDatabaseFile="$(OutDir)\$(TargetName).pdb"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

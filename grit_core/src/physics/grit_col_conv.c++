@@ -28,7 +28,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/mman.h> /* mmap() is defined in this header */
+#include <sys/mman.h>
 #include <fcntl.h>
 
 #include "../portable_io.h"
