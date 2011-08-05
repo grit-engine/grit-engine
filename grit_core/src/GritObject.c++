@@ -124,6 +124,13 @@ void GritObject::activate (lua_State *L,
         // can call in from lua after destroyed by deleteObject
         if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
 
+        if (!demand.loaded()) {
+                // If it's not loaded yet then we must have been activated explicitly
+                // i.e. not via the streamer, which waits until the demand is loaded.
+                // Since it's an explicit activation, we better make sure it will work.
+                demand.immediateLoad();
+        }
+
         STACK_BASE;
         //stack is empty
 

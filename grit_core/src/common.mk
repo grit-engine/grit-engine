@@ -1845,11 +1845,7 @@ CollisionMesh.o: ../src/physics/PhysicalMaterial.h
 PhysicalMaterial.o: ../src/physics/PhysicalMaterial.h
 PhysicalMaterial.o: ../depend_stubs/vector
 PhysicalMaterial.o: ../depend_stubs/string
-PhysicalMaterial.o: ../src/CentralisedLog.h
-PhysicalMaterial.o: ../depend_stubs/iostream
-PhysicalMaterial.o: ../depend_stubs/sstream
-PhysicalMaterial.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-PhysicalMaterial.o: ../src/console_colour.h ../src/path_util.h
+PhysicalMaterial.o: ../src/CentralisedLog.h ../src/path_util.h
 PhysicsWorld.o: ../depend_stubs/BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h
 PhysicsWorld.o: ../depend_stubs/BulletCollision/CollisionDispatch/btInternalEdgeUtility.h
 PhysicsWorld.o: ../src/GritObject.h ../depend_stubs/map

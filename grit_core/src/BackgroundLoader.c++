@@ -38,7 +38,6 @@ bool Demand::requestLoad (float dist)
                 if (mInBackgroundQueue) return false;
         }
 
-        bool all_loaded = true;
         if (!incremented) {
                 //CVERB << "Incrementing resources: " << resources << std::endl;
                 for (unsigned i=0 ; i<resources.size() ; ++i) {
@@ -48,13 +47,8 @@ bool Demand::requestLoad (float dist)
                 incremented = true;
         }
 
-        //CVERB << "Checking if resources are loaded: " << resources << std::endl;
-        for (unsigned i=0 ; i<resources.size() ; ++i) {
-                if (!resources[i]->isLoaded()) all_loaded = false;
-        }
-
         // if all the resources are in a loaded state then return true
-        if (!all_loaded) {
+        if (!loaded()) {
                 //CVERB << "Requesting background load: " << resources << std::endl;
                 // else get the bgl to do the right thing and return false
                 bgl->checkRAMHost();
@@ -63,6 +57,32 @@ bool Demand::requestLoad (float dist)
         }
 
         return true;
+}
+
+bool Demand::loaded (void)
+{
+        //CVERB << "Checking if resources are loaded: " << resources << std::endl;
+        for (unsigned i=0 ; i<resources.size() ; ++i) {
+                if (!resources[i]->isLoaded()) {
+                        return false;
+                }
+        }
+        return true;
+}
+
+void Demand::immediateLoad (void)
+{
+        CVERB << "Immediate load" << std::endl;
+        SYNCHRONISED2(bgl);
+        if (!incremented) {
+                for (unsigned i=0 ; i<resources.size() ; ++i) {
+                        resources[i]->increment();
+                }
+                incremented = true;
+        }
+        for (unsigned i=0 ; i<resources.size() ; ++i) {
+                if (!resources[i]->isLoaded()) resources[i]->load();
+        }
 }
 
 // called by main thread only

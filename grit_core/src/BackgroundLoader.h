@@ -133,6 +133,14 @@ class Demand : public fast_erase_index {
         // is removed from the background queue (may also be partially loaded at this point)
         void finishedWith (void);
 
+        // Load resources in the foreground thread, block until complete
+        // called usually as a result of debug commands from the console
+        // Obviously, this will cause a frame rate stall.
+        void immediateLoad (void);
+
+        // Are the resources in this Demand loaded yet?
+        bool loaded (void);
+
     private:
         volatile bool mInBackgroundQueue; // is it in the bgl's queue
         DiskResources resources;

@@ -300,15 +300,16 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
 
                 // consider background loading
                 if (o->requestLoad(new_pos)) {
+                        // this means we weren't already in the queue.
+                        // we may still not be in the queue, if all resources are loaded
+
                         // note 'loaded' includes things which have started
                         // but not finished loading...
                         loaded.push_back(o);
                 }
                 if (o->isInBackgroundQueue()) {
-                        // technically not always true because the background thread
-                        // may have loaded it very quickly, in which case we will simply
-                        // wait until next time
-                        //APP_ASSERT(o->isInBackgroundQueue());
+                        // if we're in the queue we probably have to wait longer
+                        // before all the resources are loaded
                         continue;
                 }
 

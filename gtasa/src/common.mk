@@ -269,11 +269,13 @@ extract.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 extract.o: ../depend_stubs/quex/code_base/template/misc.i
 extract.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 extract.o: ../depend_stubs/quex/code_base/template/Analyser.i
-extract.o: ../src/ColParser.h ../src/txdread.h ../src/ios_util.h
+extract.o: ../src/ColParser.h ../src/txdread.h
+extract.o: ../../grit_core/src/physics/BColParser.h
+extract.o: ../depend_stubs/stdint.h ../src/ios_util.h
 extract.o: ../depend_stubs/cstring ../depend_stubs/cerrno
 extract.o: ../../grit_core/src/portable_io.h ../depend_stubs/cassert
-extract.o: ../depend_stubs/stdint.h ../src/dirutil.h ../src/csvread.h
-extract.o: ../src/handling.h ../src/surfinfo.h ../src/procobj.h
+extract.o: ../src/dirutil.h ../src/csvread.h ../src/handling.h
+extract.o: ../src/surfinfo.h ../src/procobj.h
 handling.o: ../depend_stubs/cstdlib ../depend_stubs/iostream
 handling.o: ../depend_stubs/fstream ../depend_stubs/algorithm
 handling.o: ../depend_stubs/locale ../src/handling.h
