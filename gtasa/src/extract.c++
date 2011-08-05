@@ -33,6 +33,7 @@
 #include "dffread.h"
 #include "txdread.h"
 #include "physics/TColParser.h"
+#include "physics/BColParser.h"
 #include "ColParser.h"
 
 #include "ios_util.h"
@@ -55,14 +56,12 @@
 #undef max
 #endif
 
+
 CentralisedLog clog;
 void app_fatal (void) { abort(); }
 void assert_triggered (void) { } 
 
 
-// I think we never actually call this as we never read a tcol
-std::string pwd_full (const std::string &, const std::string &)
-{ abort(); return std::string(); }
 
 static void open_file (std::ostream &out, std::ifstream &f,
                const std::string fname)
@@ -283,21 +282,21 @@ void process_cols (std::ostream &out,
             // the materials are in gtasa/ but imgs are behind another dir so prefix ../
             parse_col(name,img.f,tcol, "../", db);
 
-            std::string tcolname = img.name+"/"+name+".tcol";
+            std::string gcolname = img.name+"/"+name+".gcol";
 
-            cols_including_empty.insert(tcolname);
+            cols_including_empty.insert(gcolname);
 
             if (tcol.usingCompound || tcol.usingTriMesh) {
 
-                cols.insert(tcolname);
+                cols.insert(gcolname);
 
-                name = dest_dir+"/"+modname+"/"+tcolname;
+                name = dest_dir+"/"+modname+"/"+gcolname;
 
                 std::ofstream f;
                 f.open(name.c_str(), std::ios::binary);
                 APP_ASSERT_IO_SUCCESSFUL(f,"opening tcol for writing");
 
-                pretty_print_tcol(f, tcol);
+                write_tcol_as_bcol(f, tcol);
             }
 
             next = img.f.peek();
@@ -665,25 +664,25 @@ void extract (const Config &cfg, std::ostream &out)
             std::stringstream lights_field;
             std::string cls = "BaseClass";
 
-            std::string tcol_name = img->name+"/"+o.dff+".tcol";
+            std::string gcol_name = img->name+"/"+o.dff+".gcol";
             bool use_col = true;
 
             // once only
-            if (cols_i.find(tcol_name)==cols_i.end()) {
+            if (cols_i.find(gcol_name)==cols_i.end()) {
                 //if (!(o.flags & OBJ_FLAG_NO_COL))
-                //    out<<"Couldn't find col \""<<tcol_name<<"\" "
+                //    out<<"Couldn't find col \""<<gcol_name<<"\" "
                 //       <<"referenced from "<<o.id<<std::endl;
                 use_col = false;
             }
-            if (cols.find(tcol_name)==cols.end()) {
-                //out<<"Skipping empty col \""<<tcol_name<<"\" "
+            if (cols.find(gcol_name)==cols.end()) {
+                //out<<"Skipping empty col \""<<gcol_name<<"\" "
                 //   <<"referenced from "<<o.id<<std::endl;
                 use_col = false;
             }
             if (use_col) {
-                //out<<"col: \""<<tcol_name<<"\" "<<std::endl;
+                //out<<"col: \""<<gcol_name<<"\" "<<std::endl;
                 // add col to grit class
-                col_field << ",colMesh=\""<<tcol_name<<"\"";
+                col_field << ",colMesh=\""<<gcol_name<<"\"";
                 cls = "ColClass";
             }
             if (dff.geometries.size()==1) {
@@ -768,7 +767,7 @@ void extract (const Config &cfg, std::ostream &out)
         }
 
         img->open_file_img(out,dff_name);
-        // use a ../ prefix because the car tcol lives in its own directory
+        // use a ../ prefix because the car gcol lives in its own directory
         ios_read_dff(1,img->f,&dff,img->name+"/"+dff_name+"/","../",db);
 
         VehicleData *vdata = handling[v.handling_id];
@@ -876,17 +875,17 @@ void extract (const Config &cfg, std::ostream &out)
             } else {
 
                 std::ofstream out;
-                out.open((vehicle_dir+"/chassis.tcol").c_str(), std::ios::binary);
-                APP_ASSERT_IO_SUCCESSFUL(out,"opening tcol for writing");
+                out.open((vehicle_dir+"/chassis.gcol").c_str(), std::ios::binary);
+                APP_ASSERT_IO_SUCCESSFUL(out,"opening gcol for writing");
 
-                pretty_print_tcol(out,dff.tcol);
+                write_tcol_as_bcol(out, dff.tcol);
             }
 
             if (v.type == "car") {
                 lua_file << "streamer:addClass(\"../"<<vname<<"\", extends(Vehicle) {\n";
                 lua_file << "    castShadows = true;\n";
                 lua_file << "    gfxMesh = \""<<vname<<"/chassis.mesh\";\n";
-                lua_file << "    colMesh = \""<<vname<<"/chassis.tcol\";\n";
+                lua_file << "    colMesh = \""<<vname<<"/chassis.gcol\";\n";
                 lua_file << "    placementZOffset=0.4;\n";
                 lua_file << "    powerPlots = {\n";
                 float torque = vdata->mass * vdata->engine_accel * v.rear_wheel_size/2 * 0.5; // 0.75 is a fudge factor
@@ -967,7 +966,7 @@ void extract (const Config &cfg, std::ostream &out)
                 lua_file << std::endl;
                 lua_file << "class \"../"<<vname<<"\" (ColClass) {\n";
                 lua_file << "    gfxMesh=\""<<vname<<"/chassis.mesh\";\n";
-                lua_file << "    colMesh=\""<<vname<<"/chassis.tcol\";\n";
+                lua_file << "    colMesh=\""<<vname<<"/chassis.gcol\";\n";
                 lua_file << "    castShadows = true;\n";
                 lua_file << "    colourSpec = {\n";
                 std::vector<int> cols2 = carcols_2[vname];

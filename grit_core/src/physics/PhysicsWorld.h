@@ -57,7 +57,6 @@ class DynamicsWorld;
 
 class PhysicsWorld {
 
-    friend class CollisionMesh;
     friend class RigidBody;
 
     public:
@@ -71,26 +70,6 @@ class PhysicsWorld {
     void setGravity (const Vector3 &);
     Vector3 getGravity (void) const;
 
-    CollisionMeshPtr createFromFile (const std::string &fileName);
-
-    bool hasMesh (const std::string &name) const
-    { return colMeshes.find(name) != colMeshes.end(); }
-
-    CollisionMeshPtr getMesh (const std::string &name)
-    {
-        CollisionMeshMap::iterator i = colMeshes.find(name);
-        if (i==colMeshes.end())
-            return createFromFile(name);
-        return i->second;
-    }
-
-    void deleteMesh (const std::string &name);
-
-    void clearMeshes (void)
-    { colMeshes.clear(); }
-
-    static const CollisionMeshMap &getMeshes (void) { return colMeshes; }
-
     // to be extended by lua wrapper or whatever
     class SweepCallback {
         public:
@@ -103,12 +82,12 @@ class PhysicsWorld {
           float radius=0) const;
 
 
-    void sweep (const CollisionMeshPtr &col_mesh,
-            const Vector3 &startp,
-            const Quaternion &startq,
-            const Vector3 &endp,
-            const Quaternion &endq,
-            SweepCallback &scb) const;
+    void sweep (const CollisionMesh *col_mesh,
+                const Vector3 &startp,
+                const Quaternion &startq,
+                const Vector3 &endp,
+                const Quaternion &endq,
+                SweepCallback &scb) const;
 
     class TestCallback {
         public:
@@ -116,8 +95,8 @@ class PhysicsWorld {
                      const Vector3 &normal, float penetration, int m) = 0;
     };
 
-    void test (const CollisionMeshPtr &col_mesh,
-           const Vector3 &pos, const Quaternion &quat, bool dyn_only, TestCallback &cb);
+    void test (const CollisionMesh *col_mesh, const Vector3 &pos, const Quaternion &quat,
+               bool dyn_only, TestCallback &cb);
 
     void testSphere (float rad, const Vector3 &pos, bool dyn_only, TestCallback &cb);
 
@@ -198,13 +177,11 @@ class PhysicsWorld {
 
     btScalar extrapolate;
 
-    static CollisionMeshMap colMeshes;
-
     lua_State *last_L;
 
 };
 
-class RigidBody : public btMotionState {
+class RigidBody : public btMotionState, public CollisionMesh::ReloadWatcher {
 
     friend class PhysicsWorld;
     friend class CollisionMesh;
@@ -212,9 +189,9 @@ class RigidBody : public btMotionState {
     public:
 
     RigidBody (const PhysicsWorldPtr &world,
-           const CollisionMeshPtr &col_mesh,
-           const Vector3 &pos,
-           const Quaternion &quat);
+               const std::string &col_mesh,
+               const Vector3 &pos,
+               const Quaternion &quat);
 
 
     ~RigidBody (void);
@@ -288,11 +265,11 @@ class RigidBody : public btMotionState {
 
     const PhysicsWorldPtr world;
 
-    const CollisionMeshPtr colMesh;
+    CollisionMesh * colMesh;
 
     GritObjectPtr owner;
 
-    void notifyMeshReloaded (void)
+    void notifyReloaded (void)
     {
         removeFromWorld();
         addToWorld();

@@ -721,6 +721,7 @@ TRY_START
         const char *meshname = luaL_checkstring(L,1);
         push_gfxbody(L, GfxBody::make(meshname));
     } else {
+        // map the materials?
         check_args(L,2);
         const char *meshname = luaL_checkstring(L,1);
         if (lua_isnil(L,2)) {

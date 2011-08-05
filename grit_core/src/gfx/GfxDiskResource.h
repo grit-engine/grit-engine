@@ -19,6 +19,8 @@
  * THE SOFTWARE.
  */
 
+class GfxDiskResource;
+
 #ifndef GFX_DISK_RESOURCE_H
 #define GFX_DISK_RESOURCE_H
 
@@ -30,7 +32,7 @@
 class GfxDiskResource : public DiskResource {
 
   public:
-    GfxDiskResource (std::string name, const std::string &ext);
+    GfxDiskResource (const std::string &name, const std::string &ext);
 
     virtual void load (void);
 
@@ -38,10 +40,14 @@ class GfxDiskResource : public DiskResource {
 
     virtual bool isGPUResource (void);
 
-    virtual std::string getName (void) const;
+    virtual const std::string &getName (void) const { return name; }
+
+    const Ogre::ResourcePtr &getOgreResourcePtr (void) { return rp; }
 
   private:
     Ogre::ResourcePtr rp;
+
+    const std::string name;
 
 };
 

@@ -193,8 +193,8 @@ static void fix_parent (const btCollisionShape *shape, const btCollisionShape *&
     parent = new_parent;
 }
 
-int get_material (const CollisionMeshPtr &cmesh, const btCollisionShape *shape,
-                  int id, bool *err, bool verb)
+static int get_material (const CollisionMesh *cmesh, const btCollisionShape *shape,
+                         int id, bool *err, bool verb)
 {
     // * when one gimpact shape hits another (not in compounds), we don't get the triangle
     // we get the whole gimpact shape for some reason
@@ -230,8 +230,9 @@ int get_material (const CollisionMeshPtr &cmesh, const btCollisionShape *shape,
     }
 }
 
-void get_shape_and_parent(const btCollisionObject* colObj,
-              const btCollisionShape *&shape, const btCollisionShape *&parent)
+static void get_shape_and_parent(const btCollisionObject* colObj,
+                                 const btCollisionShape *&shape,
+                                 const btCollisionShape *&parent)
 {
     shape  = colObj->getCollisionShape();
     parent = colObj->getRootCollisionShape();
@@ -256,7 +257,7 @@ bool contact_added_callback (btManifoldPoint& cp,
 
     const PhysicsWorldPtr &world = body0->world;
 
-    CollisionMeshPtr cmesh0 = body0->colMesh, cmesh1 = body1->colMesh;
+    const CollisionMesh *cmesh0 = body0->colMesh, *cmesh1 = body1->colMesh;
 
     const btCollisionShape *shape0, *parent0, *shape1, *parent1;
 
@@ -653,24 +654,6 @@ void PhysicsWorld::setSolverCacheFriendly (bool v)
 { set_flag(world->getSolverInfo().m_solverMode,SOLVER_CACHE_FRIENDLY,v); } 
 
 
-CollisionMeshPtr PhysicsWorld::createFromFile (const std::string &name)
-{
-    if (hasMesh(name))
-        GRIT_EXCEPT("Collision mesh \""+name+"\" already exists.");
-    CollisionMeshPtr cmp = CollisionMeshPtr(new CollisionMesh(name));
-    colMeshes[name] = cmp;
-    cmp->load();
-    return cmp;
-}
-
-void PhysicsWorld::deleteMesh (const std::string &name)
-{
-    CollisionMeshMap::iterator i = colMeshes.find(name);
-    if (i==colMeshes.end())
-        GRIT_EXCEPT("Collision mesh \""+name+"\" doesn't exist.");
-    colMeshes.erase(i);
-}
-
 class BulletRayCallback : public btCollisionWorld::RayResultCallback {
     public:
     BulletRayCallback (PhysicsWorld::SweepCallback &scb_) : scb(scb_) { }
@@ -770,12 +753,12 @@ void PhysicsWorld::ray (const Vector3 &start,
     }
 }
 
-void PhysicsWorld::sweep (const CollisionMeshPtr &col_mesh,
-              const Vector3 &startp,
-              const Quaternion &startq,
-              const Vector3 &endp,
-              const Quaternion &endq,
-              SweepCallback &scb) const
+void PhysicsWorld::sweep (const CollisionMesh *col_mesh,
+                          const Vector3 &startp,
+                          const Quaternion &startq,
+                          const Vector3 &endp,
+                          const Quaternion &endq,
+                          SweepCallback &scb) const
 {
     BulletSweepCallback bscb(scb);
     btTransform start(to_bullet(startq),to_bullet(startp));
@@ -826,7 +809,7 @@ class BulletTestCallback : public btCollisionWorld::ContactResultCallback {
 
         if (body->getMass()==0 && dynOnly) return 0;
 
-        CollisionMeshPtr cmesh = body->colMesh;
+        CollisionMesh *cmesh = body->colMesh;
 
         const btCollisionShape *shape, *parent;
 
@@ -849,8 +832,7 @@ class BulletTestCallback : public btCollisionWorld::ContactResultCallback {
     bool dynOnly;
 };
 
-void PhysicsWorld::test (const CollisionMeshPtr &col_mesh,
-                         const Vector3 &pos, const Quaternion &quat,
+void PhysicsWorld::test (const CollisionMesh *col_mesh, const Vector3 &pos, const Quaternion &quat,
                          bool dyn_only, TestCallback &cb_)
 {
     btCollisionObject encroacher;
@@ -901,18 +883,20 @@ void PhysicsWorld::draw (void)
 
 
 
-CollisionMeshMap PhysicsWorld::colMeshes;
-
 
 
 RigidBody::RigidBody (const PhysicsWorldPtr &world_,
-              const CollisionMeshPtr &col_mesh,
-              const Vector3 &pos,
-              const Quaternion &quat)
-      : world(world_), colMesh(col_mesh),
-    lastXform(to_bullet(quat),to_bullet(pos))
+                      const std::string &col_mesh,
+                      const Vector3 &pos,
+                      const Quaternion &quat)
+      : world(world_), lastXform(to_bullet(quat),to_bullet(pos))
 {
-    colMesh->registerUser(this);
+    DiskResource *dr = disk_resource_get_or_make(col_mesh);
+    colMesh = dynamic_cast<CollisionMesh*>(dr);
+    if (colMesh==NULL) GRIT_EXCEPT("Not a collision mesh: \""+col_mesh+"\"");
+    if (!colMesh->isLoaded()) GRIT_EXCEPT("Not loaded: \""+col_mesh+"\"");
+
+    colMesh->registerReloadWatcher(this);
     body = NULL;
     addToWorld();
 
@@ -988,7 +972,7 @@ void RigidBody::removeFromWorld (void)
 
 void RigidBody::destroy (lua_State *L)
 {
-    colMesh->unregisterUser(this);
+    colMesh->unregisterReloadWatcher(this);
     if (body==NULL) return;
     removeFromWorld();
     stepCallbackPtr.setNil(L);
@@ -1003,7 +987,7 @@ void RigidBody::destroy (lua_State *L)
 
 RigidBody::~RigidBody (void)
 {
-    colMesh->unregisterUser(this);
+    colMesh->unregisterReloadWatcher(this);
     if (body==NULL) return;
     CERR << "destructing RigidBody: destroy() was not called" << std::endl;
     // just leak stuff, this is not meant to happen

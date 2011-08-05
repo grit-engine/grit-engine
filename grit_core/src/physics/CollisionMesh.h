@@ -19,53 +19,51 @@
  * THE SOFTWARE.
  */
 
-#include <map>
-#include <string>
-
-#include "../SharedPtr.h"
-
 class CollisionMesh;
-typedef SharedPtr<CollisionMesh> CollisionMeshPtr;
-
-typedef std::map<std::string,CollisionMeshPtr> CollisionMeshMap;
 
 #ifndef CollisionMesh_h
 #define CollisionMesh_h
 
+class btCompoundShape;
+
+#include <string>
+
 #include <OgreDataStream.h>
 
-#include <btBulletCollisionCommon.h>
-
 #include "../CentralisedLog.h"
+#include "../DiskResource.h"
 #include "../sleep.h"
 #include "../SharedPtr.h"
 
 #include "TColParser.h"
 #include "BColParser.h"
 #include "LooseEnd.h"
-#include "PhysicsWorld.h"
 #include "PhysicalMaterial.h"
 
-class RigidBody;
-
-class CollisionMesh {
-
-    friend class PhysicsWorld;
+class CollisionMesh : public DiskResource {
 
     public:
 
-    ~CollisionMesh (void)
-    {
-        unload();
-        APP_ASSERT(users.size()==0);
-    }
+    CollisionMesh (const std::string &name)
+          : name(name),
+            masterShape(NULL),
+            inertia(0.0f, 0.0f, 0.0f),
+            mass(0.0f),
+            ccdMotionThreshold(0.0f),
+            ccdSweptSphereRadius(0.0f),
+            linearDamping(0.0f),
+            angularDamping(0.0f),
+            linearSleepThreshold(0.0f),
+            angularSleepThreshold(0.0f),
+            friction(0.0f),
+            restitution(0.0f)
+    { }
 
     btCompoundShape *getMasterShape (void) const { return masterShape; }
 
     void load (void);
 
-    const std::string &getName (void) const
-    { return name; }
+    const std::string &getName (void) const { return name; }
 
     float getMass (void) const { return mass; }
     void setMass (float v) { mass = v; }
@@ -101,22 +99,10 @@ class CollisionMesh {
     void setAngularSleepThreshold (float r)
     { angularSleepThreshold = r; }
 
-    PhysicalMaterial *getMaterialFromPart (unsigned int id);
-    PhysicalMaterial *getMaterialFromFace (unsigned int id);
+    PhysicalMaterial *getMaterialFromPart (unsigned int id) const;
+    PhysicalMaterial *getMaterialFromFace (unsigned int id) const;
 
     typedef std::vector<PhysicalMaterial*> Materials;
-
-    void reload ();
-
-    void registerUser (RigidBody *u)
-    {
-        users.insert(u);
-    }
-
-    void unregisterUser (RigidBody *u)
-    {
-        users.erase(u);
-    }
 
     struct ProcObjFace {
         Vector3 A;
@@ -141,8 +127,8 @@ class CollisionMesh {
     };
     typedef std::map<int,ProcObjFaceDBEntry> ProcObjFaceDB;
 
-    void getProcObjMaterials (std::vector<int> &r) {
-        typedef ProcObjFaceDB::iterator I;
+    void getProcObjMaterials (std::vector<int> &r) const {
+        typedef ProcObjFaceDB::const_iterator I;
         for (I i=procObjFaceDB.begin(),i_=procObjFaceDB.end() ; i!=i_ ; ++i)
             r.push_back(i->first);
     }
@@ -156,14 +142,17 @@ class CollisionMesh {
                   float min_elevation, float max_elevation,
                   bool no_z, bool rotate, bool align_slope,
                   unsigned seed,
-                  T &r)
+                  T &r) const
     {
         float left_overs = 0; // fractional samples carried over to the next triangle
         float min_slope_sin = gritsin(Degree(90-max_slope));
         float max_slope_sin = gritsin(Degree(90-min_slope));
         float range_slope_sin = (max_slope_sin-min_slope_sin);
 
-        const ProcObjFaceDBEntry &ent = procObjFaceDB[mat];
+        ProcObjFaceDB::const_iterator ent_ = procObjFaceDB.find(mat);
+        if (ent_ == procObjFaceDB.end())
+            GRIT_EXCEPT("Collision mesh cannot scatter to that physical material");
+        const ProcObjFaceDBEntry &ent = ent_->second;
         const ProcObjFaces &mat_faces = ent.faces;
         const ProcObjFaceAreas &mat_face_areas = ent.areas;
         //const ProcObjFaceAreas &mat_face_areas10 = ent.areas10;
@@ -253,21 +242,8 @@ class CollisionMesh {
     }
     protected:
 
-    CollisionMesh (const std::string &name_)
-          : name(name_),
-        linearDamping(0.0f),
-        angularDamping(0.5f),
-        linearSleepThreshold(1.0f),
-        angularSleepThreshold(0.8f),
-        friction(0.5f),
-        restitution(0.0f)
-    { }
-
     const std::string name;
     btCompoundShape *masterShape;
-
-    typedef std::set<RigidBody*> Users;
-    Users users;
 
     Vector3 inertia;
     float mass;

@@ -241,6 +241,7 @@ void write_tcol_as_bcol (std::ostream &o, TColFile &f)
     ios_write_u32(o, c.cones.size()); ios_write_u32(o, cone_start); // cone
     ios_write_u32(o, c.planes.size()); ios_write_u32(o, plane_start); // plane
     ios_write_u32(o, c.spheres.size()); ios_write_u32(o, sphere_start); // sphere
+    ios_write_u32(o, 0); ios_write_u32(o, 0); // sphere
     ios_write_float(o,t.margin);
     ios_write_float(o,t.edgeDistanceThreshold);
     ios_write_u32(o, t.vertexes.size()); ios_write_u32(o, trimesh_vert_start); // verts

@@ -28,6 +28,7 @@
 #include <OgreResourceGroupManager.h>
 
 #include <LinearMath/btGeometryUtil.h>
+#include <btBulletCollisionCommon.h>
 #include <BulletCollision/Gimpact/btGImpactShape.h>
 #include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
 //#include <../Extras/GIMPACTUtils/btGImpactConvexDecompositionShape.h>
@@ -36,9 +37,6 @@
 #include "../path_util.h"
 
 #include "CollisionMesh.h"
-#include "TColParser.h"
-#include "BColParser.h"
-#include "PhysicsWorld.h"
 
 
 #ifndef M_PI
@@ -175,6 +173,8 @@ static inline Vector3 to_v3(BColVert &v) { return Vector3(v.x, v.y, v.z); }
 
 void CollisionMesh::load (void)
 {
+    APP_ASSERT(masterShape==NULL);
+
     Ogre::DataStreamPtr file =
         Ogre::ResourceGroupManager::getSingleton().openResource(name.substr(1),"GRIT");
 
@@ -513,6 +513,7 @@ void CollisionMesh::load (void)
         }
     }
 
+    DiskResource::load();
 }
 
 void CollisionMesh::unload (void)
@@ -527,8 +528,6 @@ void CollisionMesh::unload (void)
     bcolFaces.clear();
     bcolVerts.clear();
 
-    if (masterShape == NULL) return;
-
     int num_children = masterShape->getNumChildShapes();
     for (int i=num_children-1 ; i>=0 ; --i) {
         btCollisionShape *s =  masterShape->getChildShape(i);
@@ -537,24 +536,17 @@ void CollisionMesh::unload (void)
     }
     delete masterShape;
     masterShape = NULL;
+
+    DiskResource::unload();
 }
 
-void CollisionMesh::reload (void)
-{
-    unload();
-    load();
-    for (Users::iterator i=users.begin(),i_=users.end() ; i!=i_ ; ++i) {
-        (*i)->notifyMeshReloaded();
-    }
-}
-
-PhysicalMaterial *CollisionMesh::getMaterialFromPart (unsigned int id)
+PhysicalMaterial *CollisionMesh::getMaterialFromPart (unsigned int id) const
 {
     if (id >= partMaterials.size()) return 0;
     return partMaterials[id];
 }
 
-PhysicalMaterial *CollisionMesh::getMaterialFromFace (unsigned int id)
+PhysicalMaterial *CollisionMesh::getMaterialFromFace (unsigned int id) const
 {
     if (id >= faceMaterials.size()) return 0;
     return faceMaterials[id];

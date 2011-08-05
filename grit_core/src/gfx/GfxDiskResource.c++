@@ -45,16 +45,17 @@ size_t gfx_gpu_ram_used (void)
 }
 
 
-GfxDiskResource::GfxDiskResource (std::string name, const std::string &ext)
+GfxDiskResource::GfxDiskResource (const std::string &name, const std::string &ext)
+    : name(name)
 {
-    name = name.substr(1);
     try {
+        std::string ogre_name = name.substr(1);
         if (ext == "mesh") {
             Ogre::HardwareBuffer::Usage u = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
             rp = Ogre::MeshManager::getSingleton()
-                    .createOrRetrieve(name,"GRIT", false,0, 0, u,u,false,false).first;
+                    .createOrRetrieve(ogre_name,"GRIT", false,0, 0, u,u,false,false).first;
         } else {
-            rp = Ogre::TextureManager::getSingleton().createOrRetrieve(name,"GRIT").first;
+            rp = Ogre::TextureManager::getSingleton().createOrRetrieve(ogre_name,"GRIT").first;
         }
     } catch (Ogre::Exception &e) { 
         GRIT_EXCEPT2(e.getFullDescription(), "Looking for a graphics resource");
@@ -250,9 +251,4 @@ void GfxDiskResource::unload(void)
 bool GfxDiskResource::isGPUResource (void)
 {
     return true;
-}
-
-std::string GfxDiskResource::getName (void) const
-{
-    return "/"+rp->getName();
 }

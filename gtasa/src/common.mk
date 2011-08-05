@@ -32,7 +32,7 @@ ifpread: ../src/ifpread.c++
 	@$(LINKING)
 	@$(COMPILER) -D_IFPREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
 
-extract: ../src/extract.c++ ColParser.o TColParser.o ideread.o imgread.o dffread.o tex_dups.o iplread.o txdread.o dirutil.o csvread.o handling.o surfinfo.o procobj.o
+extract: ../src/extract.c++ ColParser.o BColParser.o TColParser.o ideread.o imgread.o dffread.o tex_dups.o iplread.o txdread.o dirutil.o csvread.o handling.o surfinfo.o procobj.o
 	@$(LINKING)
 	@$(COMPILER) $^ -o $@ $(CLDFLAGS)
 

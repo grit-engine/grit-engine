@@ -40,6 +40,7 @@
 #endif
 
 #include "gfx.h"
+#include "GfxDiskResource.h"
 #include "HUD.h"
 #include "Clutter.h"
 #include "../path_util.h"
@@ -1542,21 +1543,31 @@ static void validate_mesh (const Ogre::MeshPtr &mesh, const GfxStringMap &gsm)
     }
 }
 
-GfxBody::GfxBody (const std::string &mesh_name, const GfxStringMap &sm, const GfxBodyPtr &par_)
+GfxBodyPtr GfxBody::make (const std::string &mesh_name,
+                          const GfxStringMap &sm,
+                          const GfxBodyPtr &par_)
+{
+    DiskResource *dr = disk_resource_get(mesh_name);
+    if (dr==NULL) GRIT_EXCEPT("No such resource: \""+mesh_name+"\"");
+
+    if (!dr->isLoaded()) GRIT_EXCEPT("Resource not yet loaded: \""+mesh_name+"\"");
+
+    GfxDiskResource *gdr = dynamic_cast<GfxDiskResource*>(dr);
+    if (gdr==NULL) GRIT_EXCEPT("Resource is not a mesh: \""+mesh_name+"\"");
+
+    return GfxBodyPtr(new GfxBody(gdr, sm, par_));
+}
+
+GfxBody::GfxBody (GfxDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr &par_)
   : GfxNode(par_), initialMaterialMap(sm)
 {
-    memset(colours, 0, sizeof(colours));
-    std::string ogre_name = mesh_name.substr(1);
+    const Ogre::ResourcePtr &rp = gdr->getOgreResourcePtr();
 
-    mesh = Ogre::MeshManager::getSingleton().getByName(ogre_name,RESGRP);
-    if (mesh.isNull()) {
-        mesh = Ogre::MeshManager::getSingleton().load(ogre_name,RESGRP);
-        CVERB << "Ogre::Mesh was not created yet: \""<<mesh->getName()<<"\"" << std::endl;
-    }
-    if (!mesh->isPrepared() && !mesh->isLoaded()) {
-        CVERB << "Ogre::Mesh was not prepared yet: \""<<mesh->getName()<<"\"" << std::endl;
-    }
+    mesh = rp;
+
     mesh->load();
+
+    memset(colours, 0, sizeof(colours));
 
     ent = NULL;
     entEmissive = NULL;

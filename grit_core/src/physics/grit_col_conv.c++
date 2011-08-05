@@ -114,8 +114,12 @@ int main (int argc, char **argv)
     }
 
     if (!output_binary_specified) {
-        output_binary = output_filename.length()>=5 &&
-                        output_filename.substr(output_filename.length()-5)==".bcol";
+        if (output_filename.length()>=5) {
+            std::string ext = output_filename.substr(output_filename.length()-5);
+            output_binary = ext==".bcol" || ext==".gcol";
+        } else {
+            output_binary = false;
+        }
     }
 
     std::istream *in = NULL;

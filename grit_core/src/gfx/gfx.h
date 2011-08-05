@@ -53,6 +53,8 @@ struct GfxParticle;
 #include "../vect_util.h"
 #include "../math_util.h"
 
+#include "GfxDiskResource.h"
+
 struct GfxCallback {
     virtual ~GfxCallback (void) { }
     virtual void clickedClose (void) = 0;
@@ -423,7 +425,7 @@ class GfxBody : public GfxNode, public fast_erase_index {
     std::vector<bool> manualBones;
     GfxStringMap initialMaterialMap;
 
-    GfxBody (const std::string &mesh_name, const GfxStringMap &sm, const GfxBodyPtr &par_);
+    GfxBody (GfxDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr &par_);
     GfxBody (const GfxBodyPtr &par_);
     ~GfxBody ();
 
@@ -431,8 +433,7 @@ class GfxBody : public GfxNode, public fast_erase_index {
     public:
     static GfxBodyPtr make (const std::string &mesh_name,
                             const GfxStringMap &sm=gfx_empty_string_map,
-                            const GfxBodyPtr &par_=GfxBodyPtr(NULL))
-    { return GfxBodyPtr(new GfxBody(mesh_name, sm, par_)); }
+                            const GfxBodyPtr &par_=GfxBodyPtr(NULL));
 
     static GfxBodyPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
     { return GfxBodyPtr(new GfxBody(par_)); }

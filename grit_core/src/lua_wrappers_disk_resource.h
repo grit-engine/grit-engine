@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2010
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2011
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,13 +19,13 @@
  * THE SOFTWARE.
  */
 
-#include "PhysicsWorld.h"
 
-void push_colmesh (lua_State *L, CollisionMesh *self);
-void push_pworld (lua_State *L, const PhysicsWorldPtr &self);
-void push_rbody (lua_State *L, const RigidBodyPtr &self);
+extern "C" {
+#include "lua.h"
+}
 
-void physics_lua_init (lua_State *L);
+#include "DiskResource.h"
 
+bool disk_resource_index (lua_State *L, DiskResource &self, const char *key);
 
-// vim: shiftwidth=8:tabstop=8:expandtab
+void disk_resource_lua_init (lua_State *L);

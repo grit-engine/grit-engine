@@ -20,12 +20,17 @@
  */
 
 #include <vector>
+#include <set>
 
 class DiskResource;
 typedef std::vector<DiskResource*> DiskResources;
 
 #ifndef DiskResource_h
 #define DiskResource_h
+
+#include <string>
+
+#include "CentralisedLog.h"
 
 extern bool disk_resource_verbose_loads;
 extern bool disk_resource_verbose_incs;
@@ -48,9 +53,11 @@ class DiskResource {
 
     public:
 
+        struct ReloadWatcher { virtual void notifyReloaded (void) = 0; };
+
         DiskResource (void) : loaded(false), users(0) { }
 
-        virtual std::string getName (void) const = 0;
+        virtual const std::string &getName (void) const = 0;
 
         bool isLoaded (void) { return loaded; }
 
@@ -58,51 +65,58 @@ class DiskResource {
 
         bool noUsers() { return users == 0; }
 
+        void registerReloadWatcher (ReloadWatcher *u) { reloadWatchers.insert(u); }
+        void unregisterReloadWatcher (ReloadWatcher *u) { reloadWatchers.erase(u); }
+
+        // if returns true, will get added to gpu death row list when no-longer required
+        virtual bool isGPUResource (void)
+        {
+            return false;
+        }
+
+        void increment (void)
+        {
+            if (disk_resource_verbose_incs)
+                CVERB << "++ " << getName() << std::endl;
+            users++;
+        }
+
+        bool decrement (void)
+        {
+            if (disk_resource_verbose_incs)
+                CVERB << "-- " << getName() << std::endl;
+            users--;
+            // do not unload at this time, will be added to LRU queue by caller
+            return users == 0;
+        }
+
+        void reload (void) { unload(); load(); }
+
     protected:
+
+        // called as 'this' is loaded
+        void addDependency (const std::string &name)
+        {
+            APP_ASSERT(name!="");
+            DiskResource *dep = disk_resource_get_or_make(name);
+            dependencies.push_back(dep);
+            dep->increment();
+            dep->load();
+        }
 
         virtual void load (void);
 
         virtual void unload (void);
 
-        // if returns true, will get added to gpu death row list when no-longer required
-        virtual bool isGPUResource (void)
-        {
-                return false;
-        }
-
-        // called as 'this' is loaded
-        void addDependency (const std::string &name)
-        {
-                APP_ASSERT(name!="");
-                DiskResource *dep = disk_resource_get_or_make(name);
-                dependencies.push_back(dep);
-                dep->increment();
-                dep->load();
-        }
-
     private:
-
-        void increment (void)
-        {
-                if (disk_resource_verbose_incs)
-                        CVERB << "++ " << getName() << std::endl;
-                users++;
-        }
-
-        bool decrement (void)
-        {
-                if (disk_resource_verbose_incs)
-                        CVERB << "-- " << getName() << std::endl;
-                users--;
-                // do not unload at this time, will be added to LRU queue by caller
-                return users == 0;
-        }
 
         DiskResources dependencies;
 
         bool loaded;
         int users;
 
+        typedef std::set<ReloadWatcher*> ReloadWatcherSet;
+        ReloadWatcherSet reloadWatchers;
 
         friend class Demand;
         friend class BackgroundLoader;
@@ -110,16 +124,16 @@ class DiskResource {
 
 inline std::ostream &operator << (std::ostream &o, const DiskResource &dr)
 {
-        return o << dr.getName();
+    return o << dr.getName();
 }
 
 inline std::ostream &operator << (std::ostream &o, const DiskResources &dr)
 {
-        o << "[";
-        for (unsigned i=0 ; i<dr.size() ; ++i) {
-                o << (i==0?" ":", ") << (*dr[i]);
-        }
-        return o << (dr.size()==0?"]":" ]");
+    o << "[";
+    for (unsigned i=0 ; i<dr.size() ; ++i) {
+        o << (i==0?" ":", ") << (*dr[i]);
+    }
+    return o << (dr.size()==0?"]":" ]");
 }
 
 #endif

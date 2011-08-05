@@ -43,6 +43,7 @@
 #include "lua_wrappers_primitives.h"
 #include "path_util.h"
 #include "lua_wrappers_gritobj.h"
+#include "lua_wrappers_disk_resource.h"
 
 #include "gfx/lua_wrappers_gfx.h"
 #include "physics/lua_wrappers_physics.h"
@@ -305,169 +306,6 @@ TRY_START
         check_args(L,0);
         bgl->checkRAMHost();
         return 0;
-TRY_END
-}
-
-
-static int global_disk_resource_get_gfx_verbose_loads (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_pushboolean(L, gfx_disk_resource_verbose_loads);
-        return 1;
-TRY_END
-}
-
-static int global_disk_resource_set_gfx_verbose_loads (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        gfx_disk_resource_verbose_loads = check_bool(L,1);
-        return 0;
-TRY_END
-}
-
-static int global_disk_resource_get_verbose_loads (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_pushboolean(L, disk_resource_verbose_loads);
-        return 1;
-TRY_END
-}
-
-static int global_disk_resource_set_verbose_loads (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        disk_resource_verbose_loads = check_bool(L,1);
-        return 0;
-TRY_END
-}
-
-static int global_disk_resource_get_verbose_incs (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_pushboolean(L, disk_resource_verbose_incs);
-        return 1;
-TRY_END
-}
-
-static int global_disk_resource_set_verbose_incs (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        disk_resource_verbose_incs = check_bool(L,1);
-        return 0;
-TRY_END
-}
-
-static int global_disk_resource_loaded (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        std::string name = luaL_checkstring(L, 1);
-        DiskResource *r = disk_resource_get(name);
-        if (r==NULL) {
-                lua_pushnil(L);
-        } else {
-                lua_pushnumber(L, r->isLoaded());
-        }
-        return 1;
-TRY_END
-}
-
-static int global_disk_resource_users (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        std::string name = luaL_checkstring(L, 1);
-        DiskResource *r = disk_resource_get(name);
-        if (r==NULL) {
-                lua_pushnil(L);
-        } else {
-                lua_pushnumber(L, r->getUsers());
-        }
-        return 1;
-TRY_END
-}
-
-static int global_disk_resource_num (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_pushnumber(L,disk_resource_num());
-        return 1;
-TRY_END
-}
-
-static int global_disk_resource_num_loaded (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_pushnumber(L,disk_resource_num_loaded());
-        return 1;
-TRY_END
-}
-
-static int global_disk_resource_all (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        DiskResources drs = disk_resource_all();
-        lua_newtable(L);
-        int counter = 1;
-        for (DiskResources::iterator i=drs.begin(),i_=drs.end() ; i!=i_ ; ++i) {
-                lua_pushstring(L, (*i)->getName().c_str());
-                lua_rawseti(L, -2, counter++);
-        }
-        return 1;
-TRY_END
-}
-
-static int global_disk_resource_all_loaded (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        DiskResources drs = disk_resource_all_loaded();
-        lua_newtable(L);
-        int counter = 1;
-        for (DiskResources::iterator i=drs.begin(),i_=drs.end() ; i!=i_ ; ++i) {
-                lua_pushstring(L, (*i)->getName().c_str());
-                lua_rawseti(L, -2, counter++);
-        }
-        return 1;
-TRY_END
-}
-
-static int global_disk_resource_all_loaded_users (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        DiskResources drs = disk_resource_all_loaded();
-        lua_newtable(L);
-        for (DiskResources::iterator i=drs.begin(),i_=drs.end() ; i!=i_ ; ++i) {
-                lua_pushstring(L, (*i)->getName().c_str());
-                lua_pushnumber(L, (*i)->getUsers());
-                lua_rawset(L, -3);
-        }
-        return 1;
-TRY_END
-}
-
-static int global_disk_resource_all_users (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        DiskResources drs = disk_resource_all();
-        lua_newtable(L);
-        for (DiskResources::iterator i=drs.begin(),i_=drs.end() ; i!=i_ ; ++i) {
-                lua_pushstring(L, (*i)->getName().c_str());
-                lua_pushnumber(L, (*i)->getUsers());
-                lua_rawset(L, -3);
-        }
-        return 1;
 TRY_END
 }
 
@@ -1003,20 +841,6 @@ static const luaL_reg global[] = {
         {"handle_bastards" ,global_handle_bastards},
         {"check_ram_gpu" ,global_check_ram_gpu},
         {"check_ram_host" ,global_check_ram_host},
-        {"disk_resource_get_gfx_verbose_loads",global_disk_resource_get_gfx_verbose_loads},
-        {"disk_resource_set_gfx_verbose_loads",global_disk_resource_set_gfx_verbose_loads},
-        {"disk_resource_get_verbose_loads",global_disk_resource_get_verbose_loads},
-        {"disk_resource_set_verbose_loads",global_disk_resource_set_verbose_loads},
-        {"disk_resource_get_verbose_incs",global_disk_resource_get_verbose_incs},
-        {"disk_resource_set_verbose_incs",global_disk_resource_set_verbose_incs},
-        {"disk_resource_num",global_disk_resource_num},
-        {"disk_resource_num_loaded",global_disk_resource_num_loaded},
-        {"disk_resource_all",global_disk_resource_all},
-        {"disk_resource_all_loaded_users",global_disk_resource_all_loaded_users},
-        {"disk_resource_all_loaded",global_disk_resource_all_loaded},
-        {"disk_resource_all_users",global_disk_resource_all_users},
-        {"disk_resource_loaded",global_disk_resource_loaded},
-        {"disk_resource_users",global_disk_resource_users},
 
         {"mlockall" ,global_mlockall},
         {"munlockall" ,global_munlockall},
@@ -1112,6 +936,7 @@ lua_State *init_lua(const char *filename)
 
         gfx_lua_init(L);
         physics_lua_init(L);
+        disk_resource_lua_init(L);
 
         status = aux_include(L,filename);
         if (status) {

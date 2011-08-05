@@ -153,6 +153,7 @@ struct BColFile : OffsetBase {
     uint32_t coneNum, coneOff;
     uint32_t planeNum, planeOff;
     uint32_t sphereNum, sphereOff;
+    uint32_t capsuleNum, capsuleOff;
     float triMeshMargin;
     float triMeshEdgeDistanceThreshold;
     uint32_t triMeshVertNum, triMeshVertOff; // offset (relative to this) to BColVertex array
@@ -171,7 +172,7 @@ struct BColFile : OffsetBase {
     BColVert *triMeshVerts (int i=0) { return offset<BColVert>(triMeshVertOff,i); }
     BColFace *triMeshFaces (int i=0) { return offset<BColFace>(triMeshFaceOff,i); }
 
-    static size_t size (void) { return 31*4; }
+    static size_t size (void) { return 33*4; }
 } GRIT_PACKED_ATTR;
 
 GRIT_PACKED_AFTER
