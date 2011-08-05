@@ -22,6 +22,9 @@ all: $(TARGETS)
 ../../grit_core/linux/TColLexer-core-engine.o:
 	@echo "Run make in grit_core/linux first!" >&2
 	@false
+../../grit_core/linux/BColParser.o:
+	@echo "Run make in grit_core/linux first!" >&2
+	@false
 
 TColLexer.o: ../../grit_core/linux/TColLexer.o
 	ln -sf "$^" "$@"
@@ -30,6 +33,9 @@ TColParser.o: ../../grit_core/linux/TColParser.o
 	ln -sf "$^" "$@"
 
 TColLexer-core-engine.o: ../../grit_core/linux/TColLexer-core-engine.o
+	ln -sf "$^" "$@"
+
+BColParser.o: ../../grit_core/linux/BColParser.o
 	ln -sf "$^" "$@"
 
 depend:
