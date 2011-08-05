@@ -101,8 +101,7 @@ class MyMeshDeserializer : public Ogre::Serializer {
         mStream->seek(0);
 
         if (ver != mVersion) {
-            CERR << "Mesh \""<<pMesh->getName()<<"\" wrong version "<<ver<<std::endl;
-            return;
+            GRIT_EXCEPT("Mesh \""+pMesh->getName()+"\" wrong version "+ver);
         }
 
         readFileHeader(mStream);
@@ -179,7 +178,7 @@ class MyMeshDeserializer : public Ogre::Serializer {
 
 void GfxDiskResource::load (void)
 {
-    if (isLoaded()) return;
+    APP_ASSERT(!isLoaded());
     try {
         if (!rp->isLoaded()) {
             // do as much as we can, given that this is a background thread
@@ -231,13 +230,13 @@ void GfxDiskResource::load (void)
         }
         DiskResource::load();
     } catch (Ogre::Exception &e) {
-        CERR << e.getFullDescription() << std::endl;
+        GRIT_EXCEPT(e.getDescription());
     }
 }
 
 void GfxDiskResource::unload(void)
 {
-    if (!isLoaded()) return;
+    APP_ASSERT(isLoaded());
     if (gfx_disk_resource_verbose_loads)
         CVERB << "OGRE: Unloading: " << rp->getName() << std::endl;
     try {

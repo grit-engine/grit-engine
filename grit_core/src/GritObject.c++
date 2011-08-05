@@ -128,7 +128,16 @@ void GritObject::activate (lua_State *L,
                 // If it's not loaded yet then we must have been activated explicitly
                 // i.e. not via the streamer, which waits until the demand is loaded.
                 // Since it's an explicit activation, we better make sure it will work.
-                demand.immediateLoad();
+                try {
+                        demand.immediateLoad();
+                } catch (GritException &e) {
+                        CERR << e << std::endl;
+                        CERR << "Object: \"" << name << "\" raised an error on activation, so destroying it." << std::endl;
+                        // will deactivate us
+                        streamer->deleteObject(L,self);
+                        return;
+                }
+
         }
 
         STACK_BASE;

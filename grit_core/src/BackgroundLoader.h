@@ -103,7 +103,9 @@ template<typename T> class LRUQueue {
 
 class Demand : public fast_erase_index {
     public:
-        Demand() : mInBackgroundQueue(false), incremented(false) { }
+        Demand (void)
+            : mInBackgroundQueue(false), mDist(0.0f), incremented(false), causedError(false)
+        { }
 
         void addDiskResource (const std::string &rn)
         {
@@ -141,12 +143,16 @@ class Demand : public fast_erase_index {
         // Are the resources in this Demand loaded yet?
         bool loaded (void);
 
+        // did the background loading throw an exception at all?
+        bool errorOnLoad (void) { return causedError; }
+
     private:
-        volatile bool mInBackgroundQueue; // is it in the bgl's queue
+        bool mInBackgroundQueue; // is it in the bgl's queue
         DiskResources resources;
         volatile float mDist;
         friend class BackgroundLoader;
         bool incremented; // have we called increment() on required resources?
+        bool causedError;
 };
 
 

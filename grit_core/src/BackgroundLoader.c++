@@ -72,7 +72,7 @@ bool Demand::loaded (void)
 
 void Demand::immediateLoad (void)
 {
-        CVERB << "Immediate load" << std::endl;
+        //CVERB << "Immediate load" << std::endl;
         SYNCHRONISED2(bgl);
         if (!incremented) {
                 for (unsigned i=0 ; i<resources.size() ; ++i) {
@@ -147,6 +147,7 @@ void BackgroundLoader::add (Demand *d)
         SYNCHRONISED;
         mDemands.push_back(d);
         d->mInBackgroundQueue = true;
+        d->causedError = false;
         cVar.notify_one();
 }
 
@@ -188,6 +189,7 @@ void BackgroundLoader::operator() (void)
 {
         //APP_VERBOSE("BackgroundLoader: thread started");
         DiskResources pending;
+        bool caused_error = false;
         while (!mQuit) {
                 {
                         SYNCHRONISED;
@@ -196,6 +198,7 @@ void BackgroundLoader::operator() (void)
                                 // demand was not retracted while we were
                                 // processing it
                                 mCurrent->mInBackgroundQueue = false;
+                                mCurrent->causedError = caused_error;
                                 // cache in d to suppress compiler error
                                 Demand *d = mCurrent;
                                 mDemands.erase(d);
@@ -221,12 +224,18 @@ void BackgroundLoader::operator() (void)
                         pending = mCurrent->resources;
                 }
                 //APP_VERBOSE("BackgroundLoader: loading: "+name);
+                caused_error = false;
                 for (DiskResources::iterator i=pending.begin(), i_=pending.end() ; i!=i_ ; ++i) {
                         DiskResource *rp = *i;
-                        if (!rp->isLoaded()) {
-                                rp->load();
-                                mAllowance--;
-                                //CVERB << "Loaded a resource: " << *rp << std::endl;
+                        try {
+                                if (!rp->isLoaded()) {
+                                        rp->load();
+                                        mAllowance--;
+                                        //CVERB << "Loaded a resource: " << *rp << std::endl;
+                                }
+                        } catch (GritException &e) {
+                                CERR << e << std::endl;
+                                caused_error = true;
                         }
                 }
 

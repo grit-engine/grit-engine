@@ -101,7 +101,8 @@ class DiskResource {
             DiskResource *dep = disk_resource_get_or_make(name);
             dependencies.push_back(dep);
             dep->increment();
-            dep->load();
+            if (!dep->isLoaded())
+                dep->load();
         }
 
         virtual void load (void);

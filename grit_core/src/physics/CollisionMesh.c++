@@ -175,8 +175,12 @@ void CollisionMesh::load (void)
 {
     APP_ASSERT(masterShape==NULL);
 
-    Ogre::DataStreamPtr file =
-        Ogre::ResourceGroupManager::getSingleton().openResource(name.substr(1),"GRIT");
+    Ogre::DataStreamPtr file;
+    try {
+        file = Ogre::ResourceGroupManager::getSingleton().openResource(name.substr(1),"GRIT");
+    } catch (Ogre::Exception &e) {
+        GRIT_EXCEPT(e.getDescription());
+    }
 
     std::string ext = name.substr(name.length()-5);
 

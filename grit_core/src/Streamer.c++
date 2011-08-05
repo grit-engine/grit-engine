@@ -276,6 +276,8 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
         }
 
 
+        GObjPtrs must_kill;
+
         ////////////////////////////////////////////////////////////////////////
         // LOAD RESOURCES FOR APPROACHING GRIT OBJECTS /////////////////////////
         // AND... ACTIVATE ARRIVING GRIT OBJECTS ///////////////////////////////
@@ -299,6 +301,10 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                 //CVERB << "Preparing for activation: " << o->name << std::endl;
 
                 // consider background loading
+                if (o->backgroundLoadingCausedError()) {
+                        must_kill.push_back(o);
+                        continue;
+                }
                 if (o->requestLoad(new_pos)) {
                         // this means we weren't already in the queue.
                         // we may still not be in the queue, if all resources are loaded
@@ -310,6 +316,10 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                 if (o->isInBackgroundQueue()) {
                         // if we're in the queue we probably have to wait longer
                         // before all the resources are loaded
+                        continue;
+                }
+                if (o->backgroundLoadingCausedError()) {
+                        must_kill.push_back(o);
                         continue;
                 }
 
@@ -343,6 +353,11 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                 skip:;
         }
 
+        for (GObjPtrs::iterator i=must_kill.begin(),i_=must_kill.end() ; i!=i_ ; ++i) {
+                CERR << "Object: \"" << (*i)->name << "\" raised an error while background loading resources, so destroying it." << std::endl;
+                deleteObject(L, *i);
+        }
+
         bgl->handleBastards();
         bgl->checkRAMHost();
         bgl->checkRAMGPU();
@@ -350,6 +365,7 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
         for (UpdateHooks::iterator i=updateHooks.begin(),i_=updateHooks.end() ; i!=i_ ; ++i) {
                 (*i)->update(new_pos);
         }
+
 }
 
 void Streamer::list (const GritObjectPtr &o)

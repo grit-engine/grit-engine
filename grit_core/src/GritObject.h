@@ -111,6 +111,10 @@ class GritObject {
         {
                 return demand.isInBackgroundQueue();
         }
+        bool backgroundLoadingCausedError (void)
+        {
+                return demand.errorOnLoad();
+        }
 
 
 
