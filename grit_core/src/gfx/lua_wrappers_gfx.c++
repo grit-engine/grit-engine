@@ -1307,35 +1307,52 @@ TRY_START
 TRY_END
 }
 
+float particle_step_size = 0.01f;
+float particle_step_remainder= 0.0f;
+
 int global_gfx_particle_pump (lua_State *L)
 {
 TRY_START
     check_args(L,1);
     float elapsed = check_float(L,1);
 
+    elapsed += particle_step_remainder;
+
     push_cfunction(L, my_lua_error_handler);
     int error_handler = lua_gettop(L);
     // stack: err
 
-    for (size_t i=0 ; i<particles.size() ; ++i) {
-        LuaParticle *lp = particles[i];
-        bool destroy = lp->updateGraphics(L, elapsed, error_handler);
+    while (elapsed > particle_step_size) {
+        elapsed -= particle_step_size;
+        for (size_t i=0 ; i<particles.size() ; ++i) {
+            LuaParticle *lp = particles[i];
+            bool destroy = lp->updateGraphics(L, particle_step_size, error_handler);
 
-        if (destroy) {
+            if (destroy) {
+                // stack: err
+                APP_ASSERT(particles[i]==lp);
+                vect_remove_fast(particles, i);
+                lp->destroy(L);
+                delete lp;
+                --i;
+                continue;
+            }
             // stack: err
-            APP_ASSERT(particles[i]==lp);
-            vect_remove_fast(particles, i);
-            lp->destroy(L);
-            delete lp;
-            --i;
-            continue;
         }
-        // stack: err
     }
+    particle_step_remainder = elapsed;
+
     lua_pop(L,1);
 
     return 0;
 TRY_END
+}
+
+int global_gfx_particle_count (lua_State *L)
+{
+    check_args(L,0);
+        lua_pushnumber(L, particles.size());
+        return 1;
 }
 
 // }}}
@@ -2141,46 +2158,46 @@ TRY_END
 static int global_make_gpuprog (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
-        const char *name = luaL_checkstring(L,1);
-        const char *language = luaL_checkstring(L,2);
-        std::string typestr = luaL_checkstring(L,3);
-        Ogre::GpuProgramType type;
-        if (typestr=="FRAGMENT") {
-                type = Ogre::GPT_FRAGMENT_PROGRAM;
-        } else if (typestr=="VERTEX") {
-                type = Ogre::GPT_VERTEX_PROGRAM;
-        } else if (typestr=="GEOMETRY") {
-                type = Ogre::GPT_GEOMETRY_PROGRAM;
-        } else {
-                my_lua_error(L,"Unrecognised GPU Program type: "+typestr);
-        }
-        Ogre::HighLevelGpuProgramPtr t = Ogre::HighLevelGpuProgramManager::getSingleton()
-                                .createProgram(name,"GRIT", language, type);
-        push(L, new Ogre::HighLevelGpuProgramPtr(t),GPUPROG_TAG);
-        return 1;
+    check_args(L,3);
+    const char *name = luaL_checkstring(L,1);
+    const char *language = luaL_checkstring(L,2);
+    std::string typestr = luaL_checkstring(L,3);
+    Ogre::GpuProgramType type;
+    if (typestr=="FRAGMENT") {
+        type = Ogre::GPT_FRAGMENT_PROGRAM;
+    } else if (typestr=="VERTEX") {
+        type = Ogre::GPT_VERTEX_PROGRAM;
+    } else if (typestr=="GEOMETRY") {
+        type = Ogre::GPT_GEOMETRY_PROGRAM;
+    } else {
+        my_lua_error(L,"Unrecognised GPU Program type: "+typestr);
+    }
+    Ogre::HighLevelGpuProgramPtr t = Ogre::HighLevelGpuProgramManager::getSingleton()
+                            .createProgram(name,"GRIT", language, type);
+    push(L, new Ogre::HighLevelGpuProgramPtr(t),GPUPROG_TAG);
+    return 1;
 TRY_END
 }
 
 static int global_get_all_gpuprogs (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        Ogre::HighLevelGpuProgramManager::ResourceMapIterator rmi =
-                Ogre::HighLevelGpuProgramManager::getSingleton().getResourceIterator();
+    check_args(L,0);
+    Ogre::HighLevelGpuProgramManager::ResourceMapIterator rmi =
+            Ogre::HighLevelGpuProgramManager::getSingleton().getResourceIterator();
 
-        // doesn't seem to be possible to find out how many there are in advance
-        lua_createtable(L, 0, 0);
-        int counter = 0;
-        while (rmi.hasMoreElements()) {
-                const Ogre::HighLevelGpuProgramPtr &self = rmi.getNext();
-                lua_pushnumber(L,counter+LUA_ARRAY_BASE);
-                push(L, new Ogre::HighLevelGpuProgramPtr(self), GPUPROG_TAG);
-                lua_settable(L,-3);
-                counter++;
-        }
+    // doesn't seem to be possible to find out how many there are in advance
+    lua_createtable(L, 0, 0);
+    int counter = 0;
+    while (rmi.hasMoreElements()) {
+        const Ogre::HighLevelGpuProgramPtr &self = rmi.getNext();
+        lua_pushnumber(L,counter+LUA_ARRAY_BASE);
+        push(L, new Ogre::HighLevelGpuProgramPtr(self), GPUPROG_TAG);
+        lua_settable(L,-3);
+        counter++;
+    }
 
-        return 1;
+    return 1;
 TRY_END
 }
 
@@ -2188,113 +2205,111 @@ TRY_END
 static int global_get_gpuprog (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        const char *name = luaL_checkstring(L,1);
-        Ogre::HighLevelGpuProgramPtr m =
-                Ogre::HighLevelGpuProgramManager::getSingleton().getByName(name);
-        if (m.isNull()) {
-                lua_pushnil(L);
-                return 1;
-        }
-        push(L,new Ogre::HighLevelGpuProgramPtr(m),GPUPROG_TAG);
+    check_args(L,1);
+    const char *name = luaL_checkstring(L,1);
+    Ogre::HighLevelGpuProgramPtr m = Ogre::HighLevelGpuProgramManager::getSingleton().getByName(name);
+    if (m.isNull()) {
+        lua_pushnil(L);
         return 1;
+    }
+    push(L,new Ogre::HighLevelGpuProgramPtr(m),GPUPROG_TAG);
+    return 1;
 TRY_END
 }
 
 static int global_get_gpuprog_budget (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        lua_pushnumber(L,Ogre::GpuProgramManager::getSingleton().getMemoryBudget());
-        return 1;
+    check_args(L,0);
+    lua_pushnumber(L,Ogre::GpuProgramManager::getSingleton().getMemoryBudget());
+    return 1;
 TRY_END
 }
 
 static int global_set_gpuprog_budget (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        size_t n = check_t<size_t>(L,1);
-        Ogre::GpuProgramManager::getSingleton().setMemoryBudget(n);
-        return 0;
+    check_args(L,1);
+    size_t n = check_t<size_t>(L,1);
+    Ogre::GpuProgramManager::getSingleton().setMemoryBudget(n);
+    return 0;
 TRY_END
 }
 
 static int global_get_gpuprog_usage (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        lua_pushnumber(L,Ogre::GpuProgramManager::getSingleton().getMemoryUsage());
-        return 1;
+    check_args(L,0);
+    lua_pushnumber(L,Ogre::GpuProgramManager::getSingleton().getMemoryUsage());
+    return 1;
 TRY_END
 }
 
 static int global_unload_all_gpuprogs (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        Ogre::GpuProgramManager::getSingleton().unloadAll();
-        return 0;
+    check_args(L,0);
+    Ogre::GpuProgramManager::getSingleton().unloadAll();
+    return 0;
 TRY_END
 }
 
 static int global_unload_unused_gpuprogs (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        Ogre::GpuProgramManager::getSingleton().unloadUnreferencedResources();
-        return 0;
+    check_args(L,0);
+    Ogre::GpuProgramManager::getSingleton().unloadUnreferencedResources();
+    return 0;
 TRY_END
 }
 
 static int global_remove_gpuprog (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        const char *name = luaL_checkstring(L,1);
-        Ogre::GpuProgramManager::getSingleton().remove(name);
-        return 0;
+    check_args(L,1);
+    const char *name = luaL_checkstring(L,1);
+    Ogre::GpuProgramManager::getSingleton().remove(name);
+    return 0;
 TRY_END
 }
 
 static int global_get_gpuprog_verbose (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        lua_pushboolean(L,Ogre::GpuProgramManager::getSingleton().getVerbose());
-        return 1;
+    check_args(L,0);
+    lua_pushboolean(L,Ogre::GpuProgramManager::getSingleton().getVerbose());
+    return 1;
 TRY_END
 }
 
 static int global_set_gpuprog_verbose (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        bool b = check_bool(L,1);
-        Ogre::GpuProgramManager::getSingleton().setVerbose(b);
-        return 0;
+    check_args(L,1);
+    bool b = check_bool(L,1);
+    Ogre::GpuProgramManager::getSingleton().setVerbose(b);
+    return 0;
 TRY_END
 }
 
 static int global_get_rt (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        const char *name = luaL_checkstring(L,1);
-        Ogre::RenderTarget *rt =
-                ogre_root->getRenderSystem()->getRenderTarget(name);
-        if (rt==NULL) {
-                lua_pushnil(L);
-                return 1;
-        }
-        if (dynamic_cast<Ogre::RenderWindow*>(rt)) {
-                push_rwin(L, static_cast<Ogre::RenderWindow*>(rt));
-        } else if (dynamic_cast<Ogre::RenderTexture*>(rt)) {
-                push_rtex(L, static_cast<Ogre::RenderTexture*>(rt));
-        } else {
-                my_lua_error(L,"Unrecognised Render Target");
-        }
+    check_args(L,1);
+    const char *name = luaL_checkstring(L,1);
+    Ogre::RenderTarget *rt = ogre_root->getRenderSystem()->getRenderTarget(name);
+    if (rt==NULL) {
+        lua_pushnil(L);
         return 1;
+    }
+    if (dynamic_cast<Ogre::RenderWindow*>(rt)) {
+        push_rwin(L, static_cast<Ogre::RenderWindow*>(rt));
+    } else if (dynamic_cast<Ogre::RenderTexture*>(rt)) {
+        push_rtex(L, static_cast<Ogre::RenderTexture*>(rt));
+    } else {
+        my_lua_error(L,"Unrecognised Render Target");
+    }
+    return 1;
 TRY_END
 }
 
@@ -2302,10 +2317,10 @@ TRY_END
 static int global_get_scnmgr (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        const char *name = luaL_checkstring(L,1);
-        push_scnmgr(L, ogre_root->getSceneManager(name));
-        return 1;
+    check_args(L,1);
+    const char *name = luaL_checkstring(L,1);
+    push_scnmgr(L, ogre_root->getSceneManager(name));
+    return 1;
 TRY_END
 }
 
@@ -2313,129 +2328,125 @@ TRY_END
 static int global_get_main_win (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        push_rwin(L,ogre_win);
-        return 1;
+    check_args(L,0);
+    push_rwin(L,ogre_win);
+    return 1;
 TRY_END
 }
 
 static int global_get_hud_root (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        push(L,new HUD::RootPtr(hud),PANE_TAG);
-        return 1;
+    check_args(L,0);
+    push(L,new HUD::RootPtr(hud),PANE_TAG);
+    return 1;
 TRY_END
 }
 
 static int global_text_width (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
-        const char *text = luaL_checkstring(L,1);
-        std::string font_name = luaL_checkstring(L,2);
-        lua_Number height = luaL_checknumber(L,3);
-        Ogre::FontPtr fp =
-                Ogre::FontManager::getSingleton().getByName(font_name);
-        if (fp.isNull()) {
-                my_lua_error(L,"No such font: "+font_name);
-        }
+    check_args(L,3);
+    const char *text = luaL_checkstring(L,1);
+    std::string font_name = luaL_checkstring(L,2);
+    lua_Number height = luaL_checknumber(L,3);
+    Ogre::FontPtr fp = Ogre::FontManager::getSingleton().getByName(font_name);
+    if (fp.isNull()) {
+        my_lua_error(L,"No such font: "+font_name);
+    }
 
-        Ogre::DisplayString str = text;
-        lua_pushnumber(L,HUD::text_width(str,fp,height));
-        return 1;
+    Ogre::DisplayString str = text;
+    lua_pushnumber(L,HUD::text_width(str,fp,height));
+    return 1;
 TRY_END
 }
 
 static int global_text_pixel_substr (lua_State *L)
 {
 TRY_START
-        check_args(L,5);
-        const char *text = luaL_checkstring(L,1);
-        std::string font_name = luaL_checkstring(L,2);
-        lua_Number height = luaL_checknumber(L,3);
-        lua_Number width = luaL_checknumber(L,4);
-        bool wordwrap = check_bool(L,5);
-        Ogre::FontPtr fp =
-                Ogre::FontManager::getSingleton().getByName(font_name);
-        if (fp.isNull()) {
-                my_lua_error(L,"No such font: "+font_name);
-        }
-        Ogre::DisplayString rest;
-        Ogre::DisplayString str =
-                HUD::pixel_substr(text,fp,height,width,&rest,wordwrap);
-        lua_pushstring(L,str.asUTF8_c_str());
-        if (rest=="")
-                lua_pushnil(L);
-        else
-                lua_pushstring(L,rest.asUTF8_c_str());
-        return 2;
+    check_args(L,5);
+    const char *text = luaL_checkstring(L,1);
+    std::string font_name = luaL_checkstring(L,2);
+    lua_Number height = luaL_checknumber(L,3);
+    lua_Number width = luaL_checknumber(L,4);
+    bool wordwrap = check_bool(L,5);
+    Ogre::FontPtr fp = Ogre::FontManager::getSingleton().getByName(font_name);
+    if (fp.isNull()) {
+        my_lua_error(L,"No such font: "+font_name);
+    }
+    Ogre::DisplayString rest;
+    Ogre::DisplayString str =
+            HUD::pixel_substr(text,fp,height,width,&rest,wordwrap);
+    lua_pushstring(L,str.asUTF8_c_str());
+    if (rest=="")
+        lua_pushnil(L);
+    else
+        lua_pushstring(L,rest.asUTF8_c_str());
+    return 2;
 TRY_END
 }
 
 static int global_text_wrap (lua_State *L)
 {
 TRY_START
-        check_args(L,9);
-        const char *input = luaL_checkstring(L,1);
-        lua_Number width = luaL_checknumber(L,2);
-        unsigned lines = check_t<unsigned>(L,3);
-        bool word_wrap = check_bool(L,4);
-        bool chop_top = check_bool(L,5);
-        unsigned tabs = check_t<unsigned>(L,6);
-        bool codes = check_bool(L,7);
-        std::string font_name = luaL_checkstring(L,8);
-        lua_Number char_height = luaL_checknumber(L,9);
-        Ogre::FontPtr fp =
-                Ogre::FontManager::getSingleton().getByName(font_name);
-        if (fp.isNull())
-                my_lua_error(L,"No such font: "+font_name);
-        HUD::DStr after_exp;
-        if (tabs>0)
-                HUD::expand_tabs(input,tabs,codes,after_exp);
-        else
-                after_exp.append(input);
-        HUD::DStr offcut, output;
-        HUD::wrap(after_exp,width,lines,word_wrap,chop_top,codes,fp,char_height,
-                  output, &offcut);
-        lua_pushstring(L,output.asUTF8_c_str());
-        lua_pushstring(L,offcut.asUTF8_c_str());
-        return 2;
+    check_args(L,9);
+    const char *input = luaL_checkstring(L,1);
+    lua_Number width = luaL_checknumber(L,2);
+    unsigned lines = check_t<unsigned>(L,3);
+    bool word_wrap = check_bool(L,4);
+    bool chop_top = check_bool(L,5);
+    unsigned tabs = check_t<unsigned>(L,6);
+    bool codes = check_bool(L,7);
+    std::string font_name = luaL_checkstring(L,8);
+    lua_Number char_height = luaL_checknumber(L,9);
+    Ogre::FontPtr fp =
+            Ogre::FontManager::getSingleton().getByName(font_name);
+    if (fp.isNull())
+            my_lua_error(L,"No such font: "+font_name);
+    HUD::DStr after_exp;
+    if (tabs>0)
+            HUD::expand_tabs(input,tabs,codes,after_exp);
+    else
+            after_exp.append(input);
+    HUD::DStr offcut, output;
+    HUD::wrap(after_exp,width,lines,word_wrap,chop_top,codes,fp,char_height,
+              output, &offcut);
+    lua_pushstring(L,output.asUTF8_c_str());
+    lua_pushstring(L,offcut.asUTF8_c_str());
+    return 2;
 TRY_END
 }
 
 static int global_resource_exists (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        const char *name = luaL_checkstring(L,1);
-        bool b = Ogre::ResourceGroupManager::getSingleton().
-                resourceExists("GRIT",name);
-        lua_pushboolean(L,b);
-        return 1;
+    check_args(L,1);
+    const char *name = luaL_checkstring(L,1);
+    bool b = Ogre::ResourceGroupManager::getSingleton().
+            resourceExists("GRIT",name);
+    lua_pushboolean(L,b);
+    return 1;
 TRY_END
 }
 
 static int global_add_resource_location (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
-        const char *resource = luaL_checkstring(L,1);
-        const char *ext = luaL_checkstring(L,2);
-        bool recursive = check_bool(L,3);
-        Ogre::ResourceGroupManager::getSingleton().
-                addResourceLocation(resource,ext,"GRIT",recursive);
-        return 0;
+    check_args(L,3);
+    const char *resource = luaL_checkstring(L,1);
+    const char *ext = luaL_checkstring(L,2);
+    bool recursive = check_bool(L,3);
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(resource,ext,"GRIT",recursive);
+    return 0;
 TRY_END
 }
 
 static int global_init_all_resource_groups (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        Ogre::ResourceGroupManager::getSingleton().
-                initialiseAllResourceGroups();
-        return 0;
+    check_args(L,0);
+    Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+    return 0;
 TRY_END
 }
 
@@ -2444,212 +2455,213 @@ TRY_END
 static int global_add_font (lua_State *L)
 {
 TRY_START
-        check_args(L,5);
-        const char *name = luaL_checkstring(L,1);
-        const char *file = luaL_checkstring(L,2);
-        lua_Number tex_width = check_t<unsigned>(L,3);
-        lua_Number tex_height = check_t<unsigned>(L,4);
-        luaL_checktype(L,5,LUA_TTABLE);
+    check_args(L,5);
+    const char *name = luaL_checkstring(L,1);
+    const char *file = luaL_checkstring(L,2);
+    lua_Number tex_width = check_t<unsigned>(L,3);
+    lua_Number tex_height = check_t<unsigned>(L,4);
+    luaL_checktype(L,5,LUA_TTABLE);
 
 
-        // get or create font of the right name
-        Ogre::FontPtr fntptr =Ogre::FontManager::getSingleton().getByName(name);
-        if (fntptr.isNull()) {
-                fntptr = Ogre::FontManager::getSingleton().create(name,"GRIT");
-                fntptr->setType(Ogre::FT_IMAGE);
-                fntptr->setSource(file);
-        }
+    // get or create font of the right name
+    Ogre::FontPtr fntptr =Ogre::FontManager::getSingleton().getByName(name);
+    if (fntptr.isNull()) {
+        fntptr = Ogre::FontManager::getSingleton().create(name,"GRIT");
+        fntptr->setType(Ogre::FT_IMAGE);
+        fntptr->setSource(file);
+    }
 
-        // iterate through codepoints
-        for (lua_pushnil(L) ; lua_next(L,5) ; lua_pop(L,1)) {
-                lua_Number codepoint = check_t<unsigned>(L,-2);
-                lua_rawgeti(L, -1, 1);
-                lua_Number x = check_t<unsigned>(L,-1);
-                lua_pop(L,1);
-                lua_rawgeti(L, -1, 2);
-                lua_Number y = check_t<unsigned>(L,-1);
-                lua_pop(L,1);
-                lua_rawgeti(L, -1, 3);
-                lua_Number w = check_t<unsigned>(L,-1);
-                lua_pop(L,1);
-                lua_rawgeti(L, -1, 4);
-                lua_Number h = check_t<unsigned>(L,-1);
-                lua_pop(L,1);
+    // iterate through codepoints
+    for (lua_pushnil(L) ; lua_next(L,5) ; lua_pop(L,1)) {
+        lua_Number codepoint = check_t<unsigned>(L,-2);
+        lua_rawgeti(L, -1, 1);
+        lua_Number x = check_t<unsigned>(L,-1);
+        lua_pop(L,1);
+        lua_rawgeti(L, -1, 2);
+        lua_Number y = check_t<unsigned>(L,-1);
+        lua_pop(L,1);
+        lua_rawgeti(L, -1, 3);
+        lua_Number w = check_t<unsigned>(L,-1);
+        lua_pop(L,1);
+        lua_rawgeti(L, -1, 4);
+        lua_Number h = check_t<unsigned>(L,-1);
+        lua_pop(L,1);
 
-                double u1 = x/tex_width;
-                double v1 = y/tex_height;
-                double u2 = u1 + w/tex_width;
-                double v2 = v1 + h/tex_height;
-                fntptr->setGlyphTexCoords ((Ogre::Font::CodePoint)codepoint,
-                                           u1,v1,u2,v2,tex_width/tex_height);
-        }
+        double u1 = x/tex_width;
+        double v1 = y/tex_height;
+        double u2 = u1 + w/tex_width;
+        double v2 = v1 + h/tex_height;
+        fntptr->setGlyphTexCoords ((Ogre::Font::CodePoint)codepoint,
+                                   u1,v1,u2,v2,tex_width/tex_height);
+    }
 
 
-        return 0;
+    return 0;
 TRY_END
 }
 
 static int global_get_rendersystem (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        lua_pushstring(L,ogre_root->getRenderSystem()->getName().c_str());
-        return 1;
+    check_args(L,0);
+    lua_pushstring(L,ogre_root->getRenderSystem()->getName().c_str());
+    return 1;
 TRY_END
 }
 
 
 static const luaL_reg global[] = {
 
-        {"gfx_render",global_gfx_render},
-        {"gfx_screenshot",global_gfx_screenshot},
-        {"gfx_option",global_gfx_option},
-        {"gfx_body_make",global_gfx_body_make},
-        {"gfx_light_make",global_gfx_light_make},
-        {"gfx_sun_get_diffuse",global_gfx_sun_get_diffuse},
-        {"gfx_sun_set_diffuse",global_gfx_sun_set_diffuse},
-        {"gfx_sun_get_specular",global_gfx_sun_get_specular},
-        {"gfx_sun_set_specular",global_gfx_sun_set_specular},
-        {"gfx_sun_get_direction",global_gfx_sun_get_direction},
-        {"gfx_sun_set_direction",global_gfx_sun_set_direction},
-        {"gfx_fog_get_colour",global_gfx_fog_get_colour},
-        {"gfx_fog_set_colour",global_gfx_fog_set_colour},
-        {"gfx_fog_get_density",global_gfx_fog_get_density},
-        {"gfx_fog_set_density",global_gfx_fog_set_density},
-        {"gfx_get_scene_ambient",global_gfx_get_scene_ambient},
-        {"gfx_set_scene_ambient",global_gfx_set_scene_ambient},
-        {"gfx_get_celestial_orientation",global_gfx_get_celestial_orientation},
-        {"gfx_set_celestial_orientation",global_gfx_set_celestial_orientation},
-        {"gfx_particle_define",global_gfx_particle_define},
-        {"gfx_particle_emit",global_gfx_particle_emit},
-        {"gfx_particle_pump",global_gfx_particle_pump},
-        {"gfx_reload_mesh",global_gfx_reload_mesh},
-        {"gfx_reload_texture",global_gfx_reload_texture},
+    {"gfx_render",global_gfx_render},
+    {"gfx_screenshot",global_gfx_screenshot},
+    {"gfx_option",global_gfx_option},
+    {"gfx_body_make",global_gfx_body_make},
+    {"gfx_light_make",global_gfx_light_make},
+    {"gfx_sun_get_diffuse",global_gfx_sun_get_diffuse},
+    {"gfx_sun_set_diffuse",global_gfx_sun_set_diffuse},
+    {"gfx_sun_get_specular",global_gfx_sun_get_specular},
+    {"gfx_sun_set_specular",global_gfx_sun_set_specular},
+    {"gfx_sun_get_direction",global_gfx_sun_get_direction},
+    {"gfx_sun_set_direction",global_gfx_sun_set_direction},
+    {"gfx_fog_get_colour",global_gfx_fog_get_colour},
+    {"gfx_fog_set_colour",global_gfx_fog_set_colour},
+    {"gfx_fog_get_density",global_gfx_fog_get_density},
+    {"gfx_fog_set_density",global_gfx_fog_set_density},
+    {"gfx_get_scene_ambient",global_gfx_get_scene_ambient},
+    {"gfx_set_scene_ambient",global_gfx_set_scene_ambient},
+    {"gfx_get_celestial_orientation",global_gfx_get_celestial_orientation},
+    {"gfx_set_celestial_orientation",global_gfx_set_celestial_orientation},
+    {"gfx_particle_define",global_gfx_particle_define},
+    {"gfx_particle_emit",global_gfx_particle_emit},
+    {"gfx_particle_pump",global_gfx_particle_pump},
+    {"gfx_particle_count",global_gfx_particle_count},
+    {"gfx_reload_mesh",global_gfx_reload_mesh},
+    {"gfx_reload_texture",global_gfx_reload_texture},
 
-        {"get_rendersystem",global_get_rendersystem},
+    {"get_rendersystem",global_get_rendersystem},
 
-        {"get_hud_root",global_get_hud_root},
-        {"get_main_win" ,global_get_main_win},
+    {"get_hud_root",global_get_hud_root},
+    {"get_main_win" ,global_get_main_win},
 
-        {"load_material" ,global_load_material},
-        {"get_all_materials",global_get_all_materials},
-        {"get_material",global_get_material},
-        {"get_material_budget" ,global_get_material_budget},
-        {"set_material_budget" ,global_set_material_budget},
-        {"get_material_usage" ,global_get_material_usage},
-        {"unload_all_materials" ,global_unload_all_materials},
-        {"unload_unused_materials" ,global_unload_unused_materials},
-        {"remove_material",global_remove_material},
+    {"load_material" ,global_load_material},
+    {"get_all_materials",global_get_all_materials},
+    {"get_material",global_get_material},
+    {"get_material_budget" ,global_get_material_budget},
+    {"set_material_budget" ,global_set_material_budget},
+    {"get_material_usage" ,global_get_material_usage},
+    {"unload_all_materials" ,global_unload_all_materials},
+    {"unload_unused_materials" ,global_unload_unused_materials},
+    {"remove_material",global_remove_material},
 
-        {"load_texture" ,global_load_tex},
-        {"get_all_textures" ,global_get_all_texs},
-        {"get_texture" ,global_get_tex},
-        {"get_texture_verbose" ,global_get_texture_verbose},
-        {"set_texture_verbose" ,global_set_texture_verbose},
-        {"get_texture_budget" ,global_get_texture_budget},
-        {"set_texture_budget" ,global_set_texture_budget},
-        {"get_texture_usage" ,global_get_texture_usage},
-        {"unload_all_textures" ,global_unload_all_textures},
-        {"unload_unused_textures" ,global_unload_unused_textures},
-        {"remove_texture" ,global_remove_tex},
+    {"load_texture" ,global_load_tex},
+    {"get_all_textures" ,global_get_all_texs},
+    {"get_texture" ,global_get_tex},
+    {"get_texture_verbose" ,global_get_texture_verbose},
+    {"set_texture_verbose" ,global_set_texture_verbose},
+    {"get_texture_budget" ,global_get_texture_budget},
+    {"set_texture_budget" ,global_set_texture_budget},
+    {"get_texture_usage" ,global_get_texture_usage},
+    {"unload_all_textures" ,global_unload_all_textures},
+    {"unload_unused_textures" ,global_unload_unused_textures},
+    {"remove_texture" ,global_remove_tex},
 
-        {"load_mesh" ,global_load_mesh},
-        {"get_all_meshes" ,global_get_all_meshes},
-        {"get_mesh" ,global_get_mesh},
-        {"get_mesh_verbose" ,global_get_mesh_verbose},
-        {"set_mesh_verbose" ,global_set_mesh_verbose},
-        {"get_mesh_budget" ,global_get_mesh_budget},
-        {"set_mesh_budget" ,global_set_mesh_budget},
-        {"get_mesh_usage" ,global_get_mesh_usage},
-        {"unload_all_meshes" ,global_unload_all_meshes},
-        {"unload_unused_meshes" ,global_unload_unused_meshes},
-        {"remove_mesh" ,global_remove_mesh},
+    {"load_mesh" ,global_load_mesh},
+    {"get_all_meshes" ,global_get_all_meshes},
+    {"get_mesh" ,global_get_mesh},
+    {"get_mesh_verbose" ,global_get_mesh_verbose},
+    {"set_mesh_verbose" ,global_set_mesh_verbose},
+    {"get_mesh_budget" ,global_get_mesh_budget},
+    {"set_mesh_budget" ,global_set_mesh_budget},
+    {"get_mesh_usage" ,global_get_mesh_usage},
+    {"unload_all_meshes" ,global_unload_all_meshes},
+    {"unload_unused_meshes" ,global_unload_unused_meshes},
+    {"remove_mesh" ,global_remove_mesh},
 
-        {"load_skeleton" ,global_load_skel},
-        {"get_all_skeletons" ,global_get_all_skels},
-        {"get_skeleton" ,global_get_skel},
-        {"get_skeleton_verbose" ,global_get_skel_verbose},
-        {"set_skeleton_verbose" ,global_set_skel_verbose},
-        {"get_skeleton_budget" ,global_get_skel_budget},
-        {"set_skeleton_budget" ,global_set_skel_budget},
-        {"get_skeleton_usage" ,global_get_skel_usage},
-        {"unload_all_skeletons" ,global_unload_all_skels},
-        {"unload_unused_skeletones" ,global_unload_unused_skels},
-        {"remove_skeleton" ,global_remove_skel},
+    {"load_skeleton" ,global_load_skel},
+    {"get_all_skeletons" ,global_get_all_skels},
+    {"get_skeleton" ,global_get_skel},
+    {"get_skeleton_verbose" ,global_get_skel_verbose},
+    {"set_skeleton_verbose" ,global_set_skel_verbose},
+    {"get_skeleton_budget" ,global_get_skel_budget},
+    {"set_skeleton_budget" ,global_set_skel_budget},
+    {"get_skeleton_usage" ,global_get_skel_usage},
+    {"unload_all_skeletons" ,global_unload_all_skels},
+    {"unload_unused_skeletones" ,global_unload_unused_skels},
+    {"remove_skeleton" ,global_remove_skel},
 
-        {"make_gpuprog" ,global_make_gpuprog},
-        {"get_all_gpuprogs" ,global_get_all_gpuprogs},
-        {"get_gpuprog" ,global_get_gpuprog},
-        {"get_gpuprog_verbose" ,global_get_gpuprog_verbose},
-        {"set_gpuprog_verbose" ,global_set_gpuprog_verbose},
-        {"get_gpuprog_budget" ,global_get_gpuprog_budget},
-        {"set_gpuprog_budget" ,global_set_gpuprog_budget},
-        {"get_gpuprog_usage" ,global_get_gpuprog_usage},
-        {"unload_all_gpuprogs" ,global_unload_all_gpuprogs},
-        {"unload_unused_gpuprogs" ,global_unload_unused_gpuprogs},
-        {"remove_gpuprog" ,global_remove_gpuprog},
+    {"make_gpuprog" ,global_make_gpuprog},
+    {"get_all_gpuprogs" ,global_get_all_gpuprogs},
+    {"get_gpuprog" ,global_get_gpuprog},
+    {"get_gpuprog_verbose" ,global_get_gpuprog_verbose},
+    {"set_gpuprog_verbose" ,global_set_gpuprog_verbose},
+    {"get_gpuprog_budget" ,global_get_gpuprog_budget},
+    {"set_gpuprog_budget" ,global_set_gpuprog_budget},
+    {"get_gpuprog_usage" ,global_get_gpuprog_usage},
+    {"unload_all_gpuprogs" ,global_unload_all_gpuprogs},
+    {"unload_unused_gpuprogs" ,global_unload_unused_gpuprogs},
+    {"remove_gpuprog" ,global_remove_gpuprog},
 
-        {"register_material" ,global_register_material},
-        {"dump_registered_material" ,global_dump_registered_material},
-        {"registered_material_get" ,global_registered_material_get},
-        {"reprocess_all_registered_materials" ,global_reprocess_all_registered_materials},
+    {"register_material" ,global_register_material},
+    {"dump_registered_material" ,global_dump_registered_material},
+    {"registered_material_get" ,global_registered_material_get},
+    {"reprocess_all_registered_materials" ,global_reprocess_all_registered_materials},
 
-        {"add_font",global_add_font},
-        {"text_width",global_text_width},
-        {"text_pixel_substr",global_text_pixel_substr},
-        {"text_wrap",global_text_wrap},
+    {"add_font",global_add_font},
+    {"text_width",global_text_width},
+    {"text_pixel_substr",global_text_pixel_substr},
+    {"text_wrap",global_text_wrap},
 
-        {"Material" ,global_make_material},
-        {"Texture" ,global_make_tex},
+    {"Material" ,global_make_material},
+    {"Texture" ,global_make_tex},
 
-        {"get_sm" ,global_get_sm},
-        {"get_scene_manager" ,global_get_scnmgr},
-        {"get_render_target" ,global_get_rt},
+    {"get_sm" ,global_get_sm},
+    {"get_scene_manager" ,global_get_scnmgr},
+    {"get_render_target" ,global_get_rt},
 
-        {"add_resource_location",global_add_resource_location},
-        {"initialise_all_resource_groups",global_init_all_resource_groups},
-        {"resource_exists",global_resource_exists},
+    {"add_resource_location",global_add_resource_location},
+    {"initialise_all_resource_groups",global_init_all_resource_groups},
+    {"resource_exists",global_resource_exists},
 
-        {NULL, NULL}
+    {NULL, NULL}
 };
 
 
 
 void gfx_lua_init (lua_State *L)
 {
-        #define ADD_MT_MACRO(name,tag) do {\
-        luaL_newmetatable(L, tag); \
-        luaL_register(L, NULL, name##_meta_table); \
-        lua_pop(L,1); } while(0)
+    #define ADD_MT_MACRO(name,tag) do {\
+    luaL_newmetatable(L, tag); \
+    luaL_register(L, NULL, name##_meta_table); \
+    lua_pop(L,1); } while(0)
 
-        ADD_MT_MACRO(gfxbody,GFXBODY_TAG);
-        ADD_MT_MACRO(gfxlight,GFXLIGHT_TAG);
+    ADD_MT_MACRO(gfxbody,GFXBODY_TAG);
+    ADD_MT_MACRO(gfxlight,GFXLIGHT_TAG);
 
-        ADD_MT_MACRO(scnmgr,SCNMGR_TAG);
-        ADD_MT_MACRO(node,NODE_TAG);
-        ADD_MT_MACRO(cam,CAM_TAG);
-        ADD_MT_MACRO(entity,ENTITY_TAG);
-        ADD_MT_MACRO(manobj,MANOBJ_TAG);
-        ADD_MT_MACRO(light,LIGHT_TAG);
-        ADD_MT_MACRO(clutter,CLUTTER_TAG);
-        ADD_MT_MACRO(rclutter,RCLUTTER_TAG);
-        ADD_MT_MACRO(viewport,VIEWPORT_TAG);
-        ADD_MT_MACRO(statgeo,STATGEO_TAG);
-        ADD_MT_MACRO(instgeo,INSTGEO_TAG);
-        ADD_MT_MACRO(pane,PANE_TAG);
-        ADD_MT_MACRO(text,TEXT_TAG);
-        ADD_MT_MACRO(mat,MAT_TAG);
-        ADD_MT_MACRO(tex,TEX_TAG);
-        ADD_MT_MACRO(mesh,MESH_TAG);
-        ADD_MT_MACRO(skel,SKEL_TAG);
-        ADD_MT_MACRO(gpuprog,GPUPROG_TAG);
-        ADD_MT_MACRO(rtex,RTEX_TAG);
-        ADD_MT_MACRO(rwin,RWIN_TAG);
+    ADD_MT_MACRO(scnmgr,SCNMGR_TAG);
+    ADD_MT_MACRO(node,NODE_TAG);
+    ADD_MT_MACRO(cam,CAM_TAG);
+    ADD_MT_MACRO(entity,ENTITY_TAG);
+    ADD_MT_MACRO(manobj,MANOBJ_TAG);
+    ADD_MT_MACRO(light,LIGHT_TAG);
+    ADD_MT_MACRO(clutter,CLUTTER_TAG);
+    ADD_MT_MACRO(rclutter,RCLUTTER_TAG);
+    ADD_MT_MACRO(viewport,VIEWPORT_TAG);
+    ADD_MT_MACRO(statgeo,STATGEO_TAG);
+    ADD_MT_MACRO(instgeo,INSTGEO_TAG);
+    ADD_MT_MACRO(pane,PANE_TAG);
+    ADD_MT_MACRO(text,TEXT_TAG);
+    ADD_MT_MACRO(mat,MAT_TAG);
+    ADD_MT_MACRO(tex,TEX_TAG);
+    ADD_MT_MACRO(mesh,MESH_TAG);
+    ADD_MT_MACRO(skel,SKEL_TAG);
+    ADD_MT_MACRO(gpuprog,GPUPROG_TAG);
+    ADD_MT_MACRO(rtex,RTEX_TAG);
+    ADD_MT_MACRO(rwin,RWIN_TAG);
 
-        luaL_register(L, "_G", global);
+    luaL_register(L, "_G", global);
 
 }
 
 
 
-// vim: shiftwidth=8:tabstop=8:expandtab
+// vim: shiftwidth=4:tabstop=4:expandtab

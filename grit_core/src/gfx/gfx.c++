@@ -2843,7 +2843,9 @@ struct LogListener : Ogre::LogListener {
     virtual void messageLogged (const std::string &message,
                                 Ogre::LogMessageLevel lml,
                                 bool maskDebug,
-                                const std::string &logName)
+                                const std::string &logName,
+                                bool& skipThisMessage )
+
     {
         (void)lml;
         (void)logName;

@@ -21,14 +21,6 @@
 
 #include <cmath>
 
-#include <OgreException.h>
-#include <OgreSceneNode.h>
-#include <OgreMeshManager.h>
-#include <OgreTextureManager.h>
-#include <OgreMaterialManager.h>
-#include <OgreTexture.h>
-#include <OgreSubMesh.h>
-
 #include "main.h"
 #include "GritObject.h"
 
