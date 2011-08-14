@@ -1310,6 +1310,24 @@ TRY_END
 float particle_step_size = 0.01f;
 float particle_step_remainder= 0.0f;
 
+int global_gfx_particle_step_size_get (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    lua_pushnumber(L, particle_step_size);
+    return 0;
+TRY_END
+}
+
+int global_gfx_particle_step_size_set (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    particle_step_size = float(luaL_checknumber(L,2));
+    return 0;
+TRY_END
+}
+
 int global_gfx_particle_pump (lua_State *L)
 {
 TRY_START
@@ -2535,6 +2553,8 @@ static const luaL_reg global[] = {
     {"gfx_particle_emit",global_gfx_particle_emit},
     {"gfx_particle_pump",global_gfx_particle_pump},
     {"gfx_particle_count",global_gfx_particle_count},
+    {"gfx_particle_step_size_set",global_gfx_particle_step_size_set},
+    {"gfx_particle_step_size_get",global_gfx_particle_step_size_get},
     {"gfx_reload_mesh",global_gfx_reload_mesh},
     {"gfx_reload_texture",global_gfx_reload_texture},
 
