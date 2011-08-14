@@ -2226,13 +2226,13 @@ class GfxParticleSystem {
     void setWidth (void *bb_, float v)
     {
         Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        bb->setDimensions(bb->getOwnWidth(), v);
+        bb->setDimensions(v, bb->getOwnHeight());
     }
 
     void setHeight (void *bb_, float v)
     {
         Ogre::Billboard *bb = static_cast<Ogre::Billboard*>(bb_);
-        bb->setDimensions(v, bb->getOwnHeight());
+        bb->setDimensions(bb->getOwnWidth(), v);
     }
 
     void setDepth (void *bb_, float v)
