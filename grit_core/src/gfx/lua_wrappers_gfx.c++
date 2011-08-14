@@ -1315,7 +1315,7 @@ int global_gfx_particle_step_size_get (lua_State *L)
 TRY_START
     check_args(L,0);
     lua_pushnumber(L, particle_step_size);
-    return 0;
+    return 1;
 TRY_END
 }
 
@@ -1323,7 +1323,9 @@ int global_gfx_particle_step_size_set (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    particle_step_size = float(luaL_checknumber(L,2));
+    float v = float(luaL_checknumber(L,1));
+    if (v<=0) my_lua_error(L, "Step size must not be 0 or below");
+    particle_step_size = v;
     return 0;
 TRY_END
 }

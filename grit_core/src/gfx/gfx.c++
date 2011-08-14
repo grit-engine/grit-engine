@@ -2112,7 +2112,7 @@ static void reset_particle_material (const Ogre::MaterialPtr &mat, std::string t
         gpuprog_name = "A";
         break;
         case GFX_PARTICLE_ADD:
-        pass->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
+        pass->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE);
         pass->setDepthWriteEnabled(false);
         gpuprog_name = "L";
         break;
@@ -2849,6 +2849,7 @@ struct LogListener : Ogre::LogListener {
     {
         (void)lml;
         (void)logName;
+        (void)skipThisMessage;
         if (!maskDebug) gfx_cb->messageLogged(message);
     }
 } ll;
