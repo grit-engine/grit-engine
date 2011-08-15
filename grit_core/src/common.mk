@@ -367,13 +367,7 @@ GritClass.o: ../src/CentralisedLog.h ../depend_stubs/iostream
 GritClass.o: ../depend_stubs/sstream
 GritClass.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 GritClass.o: ../src/console_colour.h
-GritObject.o: ../depend_stubs/cmath ../depend_stubs/OgreException.h
-GritObject.o: ../depend_stubs/OgreSceneNode.h
-GritObject.o: ../depend_stubs/OgreMeshManager.h
-GritObject.o: ../depend_stubs/OgreTextureManager.h
-GritObject.o: ../depend_stubs/OgreMaterialManager.h
-GritObject.o: ../depend_stubs/OgreTexture.h
-GritObject.o: ../depend_stubs/OgreSubMesh.h ../src/main.h
+GritObject.o: ../depend_stubs/cmath ../src/main.h
 GritObject.o: ../depend_stubs/lua.h ../src/Mouse.h
 GritObject.o: ../depend_stubs/vector ../src/Keyboard.h
 GritObject.o: ../depend_stubs/string ../src/BackgroundLoader.h
@@ -451,6 +445,7 @@ GritObject.o: ../depend_stubs/stdint.h ../src/physics/LooseEnd.h
 GritObject.o: ../src/physics/PhysicalMaterial.h ../src/GritObject.h
 GritObject.o: ../src/LuaPtr.h ../src/lua_wrappers_gritobj.h
 GritObject.o: ../src/lua_wrappers_common.h
+GritObject.o: ../depend_stubs/OgreException.h
 Streamer.o: ../src/Streamer.h ../src/main.h ../depend_stubs/lua.h
 Streamer.o: ../src/Mouse.h ../depend_stubs/vector ../src/Keyboard.h
 Streamer.o: ../depend_stubs/string ../src/BackgroundLoader.h

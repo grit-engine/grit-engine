@@ -158,7 +158,7 @@ struct GfxParticle {
     void release (void);
 };
 
-enum GfxParticleSceneBlend { GFX_PARTICLE_OPAQUE, GFX_PARTICLE_ALPHA, GFX_PARTICLE_ADD };
+enum GfxParticleSceneBlend { GFX_PARTICLE_OPAQUE, GFX_PARTICLE_ALPHA, GFX_PARTICLE_ADD, GFX_PARTICLE_OCCLUDE_ADD };
 
 void gfx_particle_define (const std::string &pname, const std::string &tex_name,
                           GfxParticleSceneBlend blend, float alpha_rej, bool emissive);

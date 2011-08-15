@@ -1153,6 +1153,8 @@ TRY_START
             blend = GFX_PARTICLE_ALPHA;
         } else if (blending=="ADD") {
             blend = GFX_PARTICLE_ADD;
+        } else if (blending=="OCCLUDE_ADD") {
+            blend = GFX_PARTICLE_OCCLUDE_ADD;
         } else {
             my_lua_error(L, "Particle blending must be OPAQUE / ALPHA / ADD.");
             blend = GFX_PARTICLE_OPAQUE; // to shut up the compiler
@@ -1270,6 +1272,8 @@ TRY_START
     lua_setfield(L,-2,"position");
     push_v3(L, vel);
     lua_setfield(L,-2,"velocity");
+    lua_pushstring(L, name.c_str());
+    lua_setfield(L,-2,"name");
 
     // stack: particle
     for (lua_pushnil(L) ; lua_next(L,4)!=0 ; lua_pop(L,1)) {
@@ -2441,9 +2445,9 @@ static int global_resource_exists (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
+    std::string name = pwd_full(L,luaL_checkstring(L,1));
     bool b = Ogre::ResourceGroupManager::getSingleton().
-            resourceExists("GRIT",name);
+            resourceExists("GRIT",name.substr(1));
     lua_pushboolean(L,b);
     return 1;
 TRY_END
