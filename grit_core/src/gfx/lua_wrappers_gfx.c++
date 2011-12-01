@@ -110,6 +110,20 @@ TRY_START
 TRY_END
 }
 
+static int gfxbody_set_all_materials (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    const char *mname = luaL_checkstring(L,2);
+    GfxMaterial *m = gfx_material_get(mname);
+    for (unsigned i=0 ; i<self->getBatches() ; ++i) {
+        self->setMaterial(i,m);
+    }
+    return 0;
+TRY_END
+}
+
 static int gfxbody_get_paint_colour (lua_State *L)
 {
 TRY_START
@@ -375,6 +389,8 @@ TRY_START
         push_cfunction(L,gfxbody_get_material);
     } else if (!::strcmp(key,"setMaterial")) {
         push_cfunction(L,gfxbody_set_material);
+    } else if (!::strcmp(key,"setAllMaterials")) {
+        push_cfunction(L,gfxbody_set_all_materials);
     } else if (!::strcmp(key,"getEmissiveEnabled")) {
         push_cfunction(L,gfxbody_get_emissive_enabled);
     } else if (!::strcmp(key,"setEmissiveEnabled")) {
@@ -2073,7 +2089,7 @@ TRY_START
         gfxmat->setEmissiveMap(emissive_map);
 
         std::string paint_map;
-        lua_Number paint_colour;
+        lua_Number paint_colour = 0; // silence compiler
         if (t.get("paintColour", paint_colour)) {
                 if (paint_colour == 1) {
                         gfxmat->setPaintMode(GFX_MATERIAL_PAINT_1);
