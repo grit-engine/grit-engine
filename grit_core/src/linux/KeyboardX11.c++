@@ -150,6 +150,8 @@ void KeyboardX11::add_key (Keyboard::Presses &keys, XEvent ev, int kind)
 
         // There is a list of specific keysyms that I want to map to strings myself
         KeySym key = XLookupKeysym(&ev.xkey, 0);
+        if (key == NoSymbol) return; // key is not bound in X
+
         if (myKeyMap.find(key) != myKeyMap.end()) {
                 keystr = myKeyMap[key];
         } else {
