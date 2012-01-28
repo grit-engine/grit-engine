@@ -1269,11 +1269,10 @@ namespace {
 int global_gfx_particle_emit (lua_State *L)
 {
 TRY_START
-    check_args(L,4);
+    check_args(L,3);
     std::string name = pwd_full(L, luaL_checkstring(L,1));
     Vector3 pos = check_v3(L,2);
-    Vector3 vel = check_v3(L,3);
-    if (!lua_istable(L,4)) my_lua_error(L,"Parameter 4 must be a table.");
+    if (!lua_istable(L,3)) my_lua_error(L,"Parameter 3 must be a table.");
 
     ParticleDefinition *pd = particle_defs[name];
 
@@ -1286,13 +1285,11 @@ TRY_START
 
     push_v3(L, pos);
     lua_setfield(L,-2,"position");
-    push_v3(L, vel);
-    lua_setfield(L,-2,"velocity");
     lua_pushstring(L, name.c_str());
     lua_setfield(L,-2,"name");
 
     // stack: particle
-    for (lua_pushnil(L) ; lua_next(L,4)!=0 ; lua_pop(L,1)) {
+    for (lua_pushnil(L) ; lua_next(L,3)!=0 ; lua_pop(L,1)) {
         // stack: particle, key, val
         lua_pushvalue(L,-2);
         // stack: particle, key, val, key
