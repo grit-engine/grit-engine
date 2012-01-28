@@ -127,7 +127,7 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\Direct3D9\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\CgProgramManager\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Dependencies\include&quot;;&quot;$(SolutionDir)\dependencies\icu\include&quot;;&quot;$(SolutionDir)\dependencies&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\Direct3D9\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\CgProgramManager\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre_dependencies\include&quot;;&quot;$(SolutionDir)\dependencies\icu\include&quot;;&quot;$(SolutionDir)\dependencies&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NO_PLUGINS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -148,10 +148,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib cg.lib icudt.lib icuin.lib icuuc.lib"
+				AdditionalDependencies="FreeImage.lib freetype2311.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib cg.lib icudt.lib icuin.lib icuuc.lib"
 				OutputFile="$(SolutionDir)\grit_core\media\Grit.dat"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\icu\lib&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Dependencies\lib\Release&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\icu\lib&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre_dependencies\lib\Release&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\$(TargetName).pdb"
 				SubSystem="1"

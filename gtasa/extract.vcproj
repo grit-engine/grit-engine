@@ -144,10 +144,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib freetype235.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib"
+				AdditionalDependencies="FreeImage.lib freetype2311.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib"
 				OutputFile="$(SolutionDir)\grit_core\media\Tools\extract.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\grit_ogre\Dependencies\lib\Release&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletmath&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletcollision&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\grit_ogre_dependencies\lib\Release&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\lib&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletmath&quot;;&quot;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletcollision&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\$(TargetName).pdb"
 				SubSystem="1"
