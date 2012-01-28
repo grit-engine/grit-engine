@@ -560,7 +560,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         Vector3 a = check_v3(L, 2);
-        Vector3 result = self->getOrientation().inverse() * (a - self->getPosition());
+        Vector3 result = self->getOrientation().inverse() * a - self->getPosition();
         push_v3(L, result);
         return 1;
 TRY_END
