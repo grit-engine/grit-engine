@@ -1,3 +1,10 @@
+# TODO
+# 'create class at cursor'
+# 'instantiate class at cursor'
+# move object stuff to side panel
+# 
+
+
 bl_info = {
     "name": "Grit Exporter",
     "description": "Exporter for Grit Game Engine",
@@ -146,8 +153,30 @@ def export_objects (scene, objs):
             if obj.grit_promotion == 'CLASS':
                 class_name = obj.name
                 if class_name[0] == '!': class_name = class_name[1:]
-                interior = " "
-                f.write("class \""+class_name+"\" (BaseClass) {"+interior+"}\n")
+                meshes = []
+                cols = []
+                for c in obj.children:
+                    if c.grit_promotion == 'MESH':
+                        meshes.append(c)
+                    if c.grit_promotion == 'GCOL':
+                        cols.append(c)
+                if len(meshes) == 0:
+                    append_error("Class does not have a mesh: \""+obj.name+"\"\n")
+                    continue
+                if len(meshes) > 1:
+                    append_error("Class has "+len(meshes)+" meshes (should have 1): \""+obj.name+"\"\n")
+                    continue
+                mesh = meshes[0]
+                mesh_name = mesh.name
+                if class_name + ".mesh" == mesh_name: mesh_name = False
+                if len(cols) == 0:
+                    interior = " "
+                    f.write("class \""+class_name+"\" (BaseClass) {"+interior+"}\n")
+                else:
+                    if len(cols) > 1:
+                        append_error("Class has "+len(meshes)+" cols (should have 0 or 1): \""+obj.name+"\"\n")
+                        continue
+                    f.write("class \""+class_name+"\" (BaseClass) {"+interior+"}\n")
 
         f.close()
 
