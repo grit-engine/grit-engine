@@ -85,6 +85,16 @@ void push_colmesh (lua_State *L, CollisionMesh *self)
                 push(L,self,COLMESH_TAG);
 }
 
+static int colmesh_reload (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(CollisionMesh,self,1,COLMESH_TAG);
+        self.reload();
+        return 0;
+TRY_END
+}
+
 static int colmesh_gc (lua_State *L)
 {
 TRY_START
@@ -123,6 +133,8 @@ TRY_START
                 lua_pushnumber(L,self.getAngularSleepThreshold());
         } else if (!::strcmp(key,"name")) {
                 lua_pushstring(L,self.getName().c_str());
+        } else if (!::strcmp(key,"reload")) {
+                push_cfunction(L,colmesh_reload);
         } else {
                 my_lua_error(L,"Not a readable CollisionMesh member: "+std::string(key));
         }

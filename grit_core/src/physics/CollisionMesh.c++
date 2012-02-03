@@ -520,6 +520,12 @@ void CollisionMesh::load (void)
     DiskResource::load();
 }
 
+void CollisionMesh::reload (void)
+{
+    unload();
+    load();
+}
+
 void CollisionMesh::unload (void)
 {
     //compound of shapes, recursive

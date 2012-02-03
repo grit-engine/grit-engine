@@ -62,6 +62,7 @@ class CollisionMesh : public DiskResource {
     btCompoundShape *getMasterShape (void) const { return masterShape; }
 
     void load (void);
+    void reload (void);
 
     const std::string &getName (void) const { return name; }
 
