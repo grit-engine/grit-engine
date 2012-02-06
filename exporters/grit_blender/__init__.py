@@ -1,8 +1,5 @@
 # TODO
 # 'create class at cursor'
-# 'instantiate class at cursor'
-# move object stuff to side panel
-# 
 
 
 bl_info = {
@@ -17,30 +14,177 @@ bl_info = {
     "category": "Import-Export"
 }
 
-if "bpy" in locals():
-    import imp
-    print("Grit exporter: reload")
-    #imp.reload(export_mesh_xml)
-else:
-    print("Grit exporter: load for the first time")
-    #from export_mesh_xml import export_obj_to_mesh_xml
-    #from export_mesh_xml import *
-    #from . import export_mesh_xml
-
 import bpy
-
 from bpy.props import *
-
-
 from mathutils import Quaternion
 
+
+def strip_leading_exc(x):
+    if x[0] == '!':
+        return x[1:]
+
+
+# {{{ export xml utility
+
+def float_eq (x, y):
+    # no reason to handle rounding errors at this point
+    return x == y
+
+def uv_eq (x, y):
+    return float_eq(x[0], y[0]) and float_eq(x[1], y[1])
+
+def export_mesh_xml(mesh, filename):
+    num_uv = len(mesh.uv_textures)
+
+    class Empty: pass
+
+    # list of vertexes with their attributes
+    vertexes = []
+
+    # table mapping material name to a list of face triples
+    faces = { }
+
+    counter = 0
+
+    for fi, f in enumerate(mesh.faces):
+
+        matname = mesh.materials[f.material_index].name
+
+        triangles = [[f.vertices[0], f.vertices[1], f.vertices[2]]] 
+        if len(f.vertices) == 4:
+            triangles.append([f.vertices[0], f.vertices[2], f.vertices[3]])
+
+        for triangle in triangles:
+            face = [0,0,0]
+            for fvi, vi in enumerate(triangle):
+                v = mesh.vertices[vi]
+                vert = Empty()
+                vert.pos =  v.co
+                vert.normal = v.normal
+                if (num_uv > 0):
+                    vert.uv = mesh.uv_textures[0].data[fi].uv[fvi]
+                else:
+                    vert.uv = [0,0]
+
+                # see if we already hvae a vertex that is close enough
+                duplicate = False
+                for evi, evert in enumerate(vertexes): #existing vertex id
+                    if (evert.pos - vert.pos).length < 0.00001 and \
+                       (evert.normal - vert.normal).length < 0.00001 and \
+                       uv_eq(evert.uv, vert.uv):
+                        duplicate = evi
+                        break
+
+                if duplicate:
+                    face[fvi] = duplicate
+                else:
+                    vertexes.append(vert)
+                    face[fvi] = counter
+                    counter += 1
+            if not matname in faces.keys():
+                # first face we have seen of this material
+                faces[matname] = []
+            faces[matname].append(face)
+
+
+    #actually write the file
+    file = open(filename, "w")
+    file.write("<mesh>\n")
+    file.write("    <sharedgeometry>\n")
+    file.write("        <vertexbuffer positions=\"true\" normals=\"true\" texture_coord_dimensions_0=\"float2\" texture_coords=\"1\">\n")
+    for v in vertexes:
+        file.write("            <vertex>\n")
+        file.write("                <position x=\""+str(v.pos.x)+"\" y=\""+str(v.pos.y)+"\" z=\""+str(v.pos.z)+"\" />\n")
+        file.write("                <normal x=\""+str(v.normal.x)+"\" y=\""+str(v.normal.y)+"\" z=\""+str(v.normal.z)+"\" />\n")
+        file.write("                <texcoord u=\""+str(v.uv[0])+"\" v=\""+str(v.uv[1])+"\" />\n")
+        file.write("            </vertex>\n")
+    file.write("        </vertexbuffer>\n")
+    file.write("    </sharedgeometry>\n")
+    file.write("    <submeshes>\n")
+    for m in faces.keys():
+        file.write("        <submesh material=\""+m+"\" usesharedvertices=\"true\" use32bitindexes=\"false\" operationtype=\"triangle_list\">\n")
+        file.write("            <faces>\n")
+        for f in faces[m]:
+            file.write("                <face v1=\""+str(f[0])+"\" v2=\""+str(f[1])+"\" v3=\""+str(f[2])+"\" />\n")
+        file.write("            </faces>\n")
+        file.write("        </submesh>\n")
+    file.write("    </submeshes>\n")
+    file.write("</mesh>\n")
+    file.close()
+
+def export_mesh_tcol(mesh, filename):
+
+    #actually write the file
+    file = open(filename, "w")
+    file.write("TCOL1.0\n")
+    file.write("\n")
+    file.write("attributes {\n")
+    file.write("    static;\n")
+    file.write("}\n")
+    file.write("\n")
+    file.write("compound {\n")
+    file.write("}\n")
+    file.close()
+
+# }}} 
+
+
+#{{{ Scene stuff             
+
+promotion_enum_items = [
+    ('NONE','No Export','Not promoted'),
+    ('OBJECT','Object','Grit Object'),
+    ('CLASS','Class','Grit Class'),
+    ('MESH','.mesh','Grit .mesh'),
+    ('GCOL','col','Grit col'),
+]
+
+bpy.types.Scene.grit_mesh_exporter = StringProperty(name=".mesh tool", description="Location of OgreXMLConverter executable", maxlen= 1024, default= "//", subtype="FILE_PATH")
+bpy.types.Scene.grit_gcol_exporter = StringProperty(name=".gcol tool", description="Location of grit_col_conv executable", maxlen= 1024, default= "//", subtype="FILE_PATH")
+bpy.types.Scene.grit_selected_promotion = bpy.props.EnumProperty(name='Grit Object Promotion', default='NONE', items=promotion_enum_items)
+
+bpy.types.Scene.grit_map_file = StringProperty(name="Grit map path", description="Path of object placements lua file", maxlen= 1024, default= "map.lua")
+bpy.types.Scene.grit_map_export = BoolProperty(name="Export map", description="Whether or not to emit an object placements lua file", default=True)
+bpy.types.Scene.grit_classes_file = StringProperty(name="Grit classes path", description="Path of class definitions lua file", maxlen=1024, default= "classes.lua")
+bpy.types.Scene.grit_classes_export = BoolProperty(name="Export classes", description="Whether or not to emit a class definitions lua file", default=True)
+bpy.types.Scene.grit_meshes_export = BoolProperty(name="Export .mesh", description="Whether or not to generate Grit .mesh files", default=True)
+bpy.types.Scene.grit_meshes_convert = BoolProperty(name="Convert mesh.xml -> mesh", description="Whether or not to run the external tool", default=True)
+bpy.types.Scene.grit_gcols_export = BoolProperty(name="Export .gcol", description="Whether or not to generate Grit .gcol files", default=True)
+bpy.types.Scene.grit_gcols_convert = BoolProperty(name="Convert tcol -> gcol", description="Whether or not to run the external tool", default=True)
+
+class SceneSummaryPanel(bpy.types.Panel): 
+    bl_label = "Grit Exportables Summary"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+
+    def draw(self, context):
+        box = self.layout.box()
+        func1 = lambda prom, objs: str(len([o for o in objs if o.grit_promotion == prom]))
+        func = lambda prom: func1(prom, context.selected_objects) + " of " + func1(prom, context.scene.objects)
+        summary = box.row(align=True)
+        summary.label("selected objects")
+        summary.label(func('OBJECT'))
+        summary = box.row(align=True)
+        summary.label("selected classes")
+        summary.label(func('CLASS'))
+        summary = box.row(align=True)
+        summary.label("selected meshes")
+        summary.label(func('MESH'))
+        summary = box.row(align=True)
+        summary.label("selected gcols")
+        summary.label(func('GCOL'))
+        summary = box.row(align=True)
+        summary.label("selected unpromoted")
+        summary.label(func('NONE'))
+
+
+#}}}
 
 # {{{ additional object metadata
 
 
-bpy.types.Scene.grit_selected_promotion = bpy.props.EnumProperty(name='Grit Object Promotion', default='NONE', items=[('NONE','NONE','Not promoted'),('OBJECT','OBJECT','Grit Object'),('CLASS','CLASS','Grit Class'),('MESH','MESH','Grit .mesh'),('GCOL','GCOL','Grit col')])
-
-bpy.types.Object.grit_promotion = bpy.props.EnumProperty(name='Promotion', default='NONE', items=[('NONE','NONE','Not promoted'),('OBJECT','OBJECT','Grit Object'),('CLASS','CLASS','Grit Class'),('MESH','MESH','Grit .mesh'),('GCOL','GCOL','Grit col')])
+bpy.types.Object.grit_promotion = bpy.props.EnumProperty(name='Promotion', default='NONE', items=promotion_enum_items)
 bpy.types.Object.grit_object_class_name = bpy.props.StringProperty(name='Class', default="")
 
 # piles
@@ -67,62 +211,50 @@ class PromoteSelected(bpy.types.Operator):
     def execute(self, context):
         for o in context.selected_objects:
             o.grit_promotion = context.scene.grit_selected_promotion
+            #o.grit_promotion = self.promotion
         return {'FINISHED'}
 
+class InstantiateSelected(bpy.types.Operator):
+    '''Instantiate the Grit Class (active object) at cursor'''
+    bl_idname = "grit.instantiate"
+    bl_label = "Instantiate Class"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object != None and context.active_object.grit_promotion == "CLASS"
+
+    def execute(self, context):
+        class_obj = context.active_object
+
+        meshes = [c for c in class_obj.children if c.grit_promotion == 'MESH']
+
+        if len(meshes) == 0:
+            self.report({'ERROR_INVALID_INPUT'}, "Class has no graphical representation (mesh)")
+            return {'FINISHED'}
+        if len(meshes) > 1:
+            self.report({'ERROR_INVALID_INPUT'}, "Class has more than 1 graphical representation (mesh)")
+            return {'FINISHED'}
+
+        child = meshes[0]
+
+        me = child.data
+
+        bpy.ops.object.add(type="MESH", location=context.scene.cursor_location)
+        ob = context.active_object
+        old_data = ob.data
+        ob.data = me
+        bpy.data.meshes.remove(old_data)
+
+        ob.grit_promotion = "OBJECT"
+        ob.grit_object_class_name = strip_leading_exc(class_obj.name)
+
+        # TODO: copy modifiers
+
+        bpy.ops.object.select_all(action="DESELECT")
+        ob.select = True
+        return {'FINISHED'}
 #}}}
 
-
-
-
-def export_selected_to_mesh_xml(filepath, scene, obj):
-    scene = bpy.context.scene
-    for o in bpy.context.selected_objects:
-        if o.type == 'MESH':
-            export_mesh_xml.export_obj(filepath, scene, o)
-
-
-
-             
-
-bpy.types.Scene.grit_mesh_exporter = StringProperty(name=".mesh tool", description="Location of OgreXMLConverter executable", maxlen= 1024, default= "//", subtype="FILE_PATH")
-bpy.types.Scene.grit_gcol_exporter = StringProperty(name=".gcol tool", description="Location of grit_col_conv executable", maxlen= 1024, default= "//", subtype="FILE_PATH")
-
-bpy.types.Scene.grit_map_file = StringProperty(name="Grit map path", description="Path of object placements lua file", maxlen= 1024, default= "map.lua")
-bpy.types.Scene.grit_map_export = BoolProperty(name="Export map", description="Whether or not to emit an object placements lua file", default=True)
-bpy.types.Scene.grit_classes_file = StringProperty(name="Grit classes path", description="Path of class definitions lua file", maxlen=1024, default= "classes.lua")
-bpy.types.Scene.grit_classes_export = BoolProperty(name="Export classes", description="Whether or not to emit a class definitions lua file", default=True)
-bpy.types.Scene.grit_meshes_export = BoolProperty(name="Export .mesh", description="Whether or not to generate Grit .mesh files", default=True)
-bpy.types.Scene.grit_meshes_convert = BoolProperty(name="Convert mesh.xml -> mesh", description="Whether or not to run the external tool", default=True)
-bpy.types.Scene.grit_gcols_export = BoolProperty(name="Export .gcol", description="Whether or not to generate Grit .gcol files", default=True)
-bpy.types.Scene.grit_gcols_convert = BoolProperty(name="Convert tcol -> gcol", description="Whether or not to run the external tool", default=True)
-
-class SceneSummaryPanel(bpy.types.Panel): # {{{
-    bl_idname = "SCENE_PT_grit_summary"
-    bl_label = "Grit Exportables Summary"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "scene"
-
-    def draw(self, context):
-        box = self.layout.box()
-        func1 = lambda prom, objs: str(len([o for o in objs if o.grit_promotion == prom]))
-        func = lambda prom: func1(prom, context.selected_objects) + " of " + func1(prom, context.scene.objects)
-        summary = box.row(align=True)
-        summary.label("selected objects")
-        summary.label(func('OBJECT'))
-        summary = box.row(align=True)
-        summary.label("selected classes")
-        summary.label(func('CLASS'))
-        summary = box.row(align=True)
-        summary.label("selected meshes")
-        summary.label(func('MESH'))
-        summary = box.row(align=True)
-        summary.label("selected gcols")
-        summary.label(func('GCOL'))
-        summary = box.row(align=True)
-        summary.label("selected unpromoted")
-        summary.label(func('NONE'))
-#}}}
 
 def to_lua (v):
     if v == True: return "true"
@@ -133,13 +265,6 @@ def to_lua (v):
 
 def export_objects (scene, objs):
     errors = []
-    def append_error (msg):
-        nonlocal errors
-        if num_errors == 5:
-            error_msg = (error_msg or "") + "...\n"
-        elif num_errors < 5:
-            error_msg = (error_msg or "") + msg + "\n"
-        num_errors += 1
 
     if scene.grit_map_export:
         f = open(scene.grit_map_file, "w")
@@ -147,7 +272,6 @@ def export_objects (scene, objs):
         f.write("-- WARNING: If you modify this file, your changes will be lost if it is subsequently re-exported from blender\n\n")
 
         for obj in objs:
-            # should we do something for this blender object?
             if obj.grit_promotion == 'OBJECT':
                 if  obj.grit_object_class_name == "":
                     errors.append("Object without class: \""+obj.name+"\"")
@@ -166,19 +290,12 @@ def export_objects (scene, objs):
         f.write("-- WARNING: If you modify this file, your changes will be lost if it is subsequently re-exported from blender\n\n")
 
         for obj in objs:
-            # should we do something for this blender object?
             if obj.grit_promotion == 'CLASS':
-                class_name = obj.name
-                if class_name[0] == '!': class_name = class_name[1:]
+                class_name = strip_leading_exc(obj.name)
 
-                meshes = []
-                cols = []
+                meshes = [c for c in obj.children if c.grit_promotion == 'MESH']
+                cols = [c for c in obj.children if c.grit_promotion == 'GCOL']
 
-                for c in obj.children:
-                    if c.grit_promotion == 'MESH':
-                        meshes.append(c)
-                    if c.grit_promotion == 'GCOL':
-                        cols.append(c)
                 if len(meshes) == 0:
                     errors.append("Class does not have a mesh: \""+obj.name+"\"\n")
                     continue
@@ -212,13 +329,24 @@ def export_objects (scene, objs):
 
         f.close()
 
+    for obj in objs:
+        if obj.grit_promotion == 'MESH':
+            filename = obj.name+".xml"
+            the_mesh = obj.to_mesh(scene, True, "PREVIEW")
+            export_mesh_xml(the_mesh, filename)
+        if obj.grit_promotion == 'GCOL':
+            filename = obj.name
+            the_mesh = obj.to_mesh(scene, True, "PREVIEW")
+            export_mesh_tcol(the_mesh, filename)
+
     # clip errors at a max to avoid filling the screen with crap
     max_errors = 20
     if len(errors) > max_errors: errors = errors[:max_errors] + ["..."]
     if len(errors) > 0: return "\n".join(errors)
 
+
+
 class ScenePanel(bpy.types.Panel): #{{{
-    bl_idname = "SCENE_PT_grit"
     bl_label = "Grit Export Settings"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -267,8 +395,6 @@ class ExportScene(bpy.types.Operator):
         scene = bpy.context.scene
         objs = scene.objects
         err = export_objects(scene, objs)
-        print(err)
-        print(type(err))
         if err != None: self.report({'ERROR_INVALID_INPUT'}, err)
         return {'FINISHED'}
 
@@ -286,8 +412,6 @@ class ExportSelected(bpy.types.Operator):
         scene = bpy.context.scene
         objs = bpy.context.selected_objects
         err = export_objects(scene, objs)
-        print(err)
-        print(type(err))
         if err != None: self.report({'ERROR_INVALID_INPUT'}, err)
         return {'FINISHED'}
 
@@ -313,35 +437,61 @@ class ApplyClassToAllSelected(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class ObjectPanel(bpy.types.Panel):
-    bl_idname = "OBJECT_PT_grit_object_properties"
+class MyProps:
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_context = "objectmode"
+
+class ObjectPanel(bpy.types.Panel, MyProps):
     bl_label = "Grit Object Properties"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
 
     def draw(self, context):
         obj = context.active_object
+        if obj == None: return
         row = self.layout
-        row.prop(obj, "grit_object_class_name")
-        if obj == None or obj.grit_promotion != "OBJECT":
+
+        if obj.grit_promotion != "OBJECT":
             row.enabled = False
+
+        row.prop(obj, "grit_object_class_name")
         row.operator("grit.apply_class")
+
+class ClassPanel(bpy.types.Panel, MyProps):
+    bl_label = "Grit Class Properties"
+
+    def draw(self, context):
+        obj = context.active_object
+        if obj == None: return
+        row = self.layout
+
+        if obj.grit_promotion != "CLASS":
+            row.enabled = False
+
+        #row.template_list(context.scene, "objects", context.scene, "blah")
+
+        row.prop(obj, "grit_class_rendering_distance")
+        row.prop(obj, "grit_class_cast_shadows")
+        row.prop(obj, "grit_class_place_z_off")
+        row.prop(obj, "grit_class_place_rnd_rot")
+
+        row.operator("grit.instantiate")
         
 
 class SelectedPanel(bpy.types.Panel):
-    bl_idname = "OBJECT_PT_grit_selected"
-    bl_label = "Grit Selection Tools"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
+    bl_label = "Apply to selected"
+    #bl_space_type = 'PROPERTIES'
+    #bl_region_type = 'WINDOW'
+    #bl_context = "object"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_context = "objectmode"
 
     def draw(self, context):
         sel_objs = context.selected_objects
 
-        row = self.layout.row()
+        row = self.layout.row(align=True)
         row.alignment = "EXPAND"
-        row.operator("grit.promote", text="Promote selected to:")
+        op = row.operator("grit.promote", text="Promotion")
         row.prop(context.scene, "grit_selected_promotion", text="")
 
 
