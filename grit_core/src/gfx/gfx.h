@@ -422,6 +422,7 @@ class GfxBody : public GfxNode, public fast_erase_index {
     std::vector<bool> emissiveEnabled;
     GfxPaintColour colours[4];
     bool enabled;
+    bool castShadows;
     std::vector<bool> manualBones;
     GfxStringMap initialMaterialMap;
 

@@ -1701,6 +1701,8 @@ void GfxBody::updateProperties (void)
 
     if (ent==NULL) return;
 
+    ent->setCastShadows(castShadows);
+
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
 
         Ogre::SubEntity *se = ent->getSubEntity(i);
@@ -1899,14 +1901,13 @@ void GfxBody::setFade (float f)
 
 bool GfxBody::getCastShadows (void)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
-    return ent->getCastShadows();
+    return castShadows;
 }
 void GfxBody::setCastShadows (bool v)
 {
     if (dead) THROW_DEAD(className);
     if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    castShadows = v;
     ent->setCastShadows(v);
 }
 
