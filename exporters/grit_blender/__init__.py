@@ -15,6 +15,10 @@ bl_info = {
 }
 
 import bpy
+import bpy.path
+import os.path
+import inspect
+import subprocess
 from bpy.props import *
 from mathutils import Quaternion
 
@@ -36,6 +40,8 @@ def uv_eq (x, y):
 def export_mesh_xml(mesh, filename):
     num_uv = len(mesh.uv_textures)
 
+
+
     class Empty: pass
 
     # list of vertexes with their attributes
@@ -50,19 +56,24 @@ def export_mesh_xml(mesh, filename):
 
         matname = mesh.materials[f.material_index].name
 
-        triangles = [[f.vertices[0], f.vertices[1], f.vertices[2]]] 
+        triangles = []
+
+        tri = ([f.vertices[0], f.vertices[1], f.vertices[2]], [0,1,2])
+        triangles.append(tri)
+
         if len(f.vertices) == 4:
-            triangles.append([f.vertices[0], f.vertices[2], f.vertices[3]])
+            tri = ([f.vertices[0], f.vertices[2], f.vertices[3]], [0,2,3])
+            triangles.append(tri)
 
         for triangle in triangles:
             face = [0,0,0]
-            for fvi, vi in enumerate(triangle):
+            for fvi, vi in enumerate(triangle[0]):
                 v = mesh.vertices[vi]
                 vert = Empty()
                 vert.pos =  v.co
                 vert.normal = v.normal
                 if (num_uv > 0):
-                    vert.uv = mesh.uv_textures[0].data[fi].uv[fvi]
+                    vert.uv = mesh.uv_textures[0].data[fi].uv[triangle[1][fvi]]
                 else:
                     vert.uv = [0,0]
 
@@ -112,6 +123,10 @@ def export_mesh_xml(mesh, filename):
     file.write("</mesh>\n")
     file.close()
 
+    current_py = inspect.getfile(inspect.currentframe())
+    exporter = os.path.abspath(os.path.dirname(current_py) + "/OgreXMLConverter")
+    subprocess.call([exporter, "-e", "-t", filename])
+
 def export_mesh_tcol(mesh, filename):
 
     #actually write the file
@@ -139,8 +154,6 @@ promotion_enum_items = [
     ('GCOL','col','Grit col'),
 ]
 
-bpy.types.Scene.grit_mesh_exporter = StringProperty(name=".mesh tool", description="Location of OgreXMLConverter executable", maxlen= 1024, default= "//", subtype="FILE_PATH")
-bpy.types.Scene.grit_gcol_exporter = StringProperty(name=".gcol tool", description="Location of grit_col_conv executable", maxlen= 1024, default= "//", subtype="FILE_PATH")
 bpy.types.Scene.grit_selected_promotion = bpy.props.EnumProperty(name='Grit Object Promotion', default='NONE', items=promotion_enum_items)
 
 bpy.types.Scene.grit_map_file = StringProperty(name="Grit map path", description="Path of object placements lua file", maxlen= 1024, default= "map.lua")
@@ -358,8 +371,6 @@ class ScenePanel(bpy.types.Panel): #{{{
 
     def draw(self, context):
         box = self.layout
-        box.prop(context.scene, "grit_mesh_exporter", icon="FILE_SCRIPT")
-        box.prop(context.scene, "grit_gcol_exporter", icon="FILE_SCRIPT")
         row = box.row()
         row.alignment = "LEFT"
         row.prop(context.scene, "grit_map_export")
