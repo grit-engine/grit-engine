@@ -88,6 +88,7 @@ static const char * what2 (QUEX_TOKEN_ID_TYPE tid)
                 case QUEX_TKN_CCD_SWEPT_SPHERE_RADIUS:
                         return "ccd_swept_sphere_radius";
 
+                case QUEX_TKN_MATERIAL: return "material";
                 case QUEX_TKN_MARGIN: return "margin";
                 case QUEX_TKN_SHRINK: return "shrink";
                 case QUEX_TKN_CENTRE: return "centre";
