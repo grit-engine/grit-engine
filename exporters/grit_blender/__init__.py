@@ -16,6 +16,9 @@
 # * colour specification (for paint)
 # * explodes, explodeRadius, explodeDeactivate?
 # * material maps
+#
+# xml import:
+# * http://docs.python.org/library/xml.etree.elementtree.html
 
 bl_info = {
     "name": "Grit Exporter",
