@@ -1537,7 +1537,7 @@ static void validate_mesh (const Ogre::MeshPtr &mesh, const GfxStringMap &gsm)
         if (!gfx_material_has(matname)) {
             CERR << "Mesh \"/"<<mesh->getName()<<"\" references non-existing material "
                  << "\""<<matname<<"\""<<std::endl;
-            matname = "/BaseWhite";
+            matname = "/system/FallbackMaterial";
             sm->setMaterialName(matname);
         }
     }

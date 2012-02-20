@@ -56,7 +56,7 @@ static Ogre::MaterialPtr mat_from_submesh (const Ogre::MeshPtr &mesh,
                 CERR << "Material not found: \"" << sm->getMaterialName() << "\" "
                      << "in mesh \"" << mesh->getName() << "\"" << std::endl;
             }
-            m = Ogre::MaterialManager::getSingleton().getByName("/BaseWhite&", "GRIT");
+            m = Ogre::MaterialManager::getSingleton().getByName("/system/FallbackMaterial&", "GRIT");
         }
         return m;
 }

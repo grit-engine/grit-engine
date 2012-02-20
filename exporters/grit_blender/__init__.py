@@ -7,10 +7,6 @@
 # vertex painting (ambient)
 # vertex painting (diffuse)
 # vertex painting (blend)
-# rename class
-#
-# BUGS
-# * export to the correct dir //blah.mesh.xml
 #
 # special classes:
 # * piles
@@ -41,12 +37,55 @@ bl_info = {
 import bpy
 import bpy.path
 import os.path
+import os
 import inspect
 import subprocess
 from bpy.props import *
 from mathutils import Quaternion, Vector
 
-executable_suffix = ""
+executable_suffix = ".exe" if os.pathsep == "\\" else ""
+
+def my_abspath(x):
+    return os.path.abspath(bpy.path.abspath(x))
+
+def path_to_os(x):
+    return x.replace("/",os.pathsep).replace("\\",os.pathsep)
+
+def path_to_grit(x):
+    return x.replace("\\","/")
+
+def grit_path_from_data(scene, data):
+    if data.library == None: return data.name
+    return grit_path(scene, data.library.filepath, data.name)
+
+# assuming grit_root_dir is ../..
+# takes e.g. "//../../common/lib.blend" and "mat/White"
+# returns "/common/mat/White"
+# or takes e.g. "//../base.blend" "Fish"
+# returns "../Fish"
+def grit_path(scene, remote_blend, remote_resource_name):
+    root = my_abspath("//"+scene.grit_root_dir)
+    this_blend_dir = my_abspath("//")
+    that_blend = my_abspath(remote_blend)
+    that_blend_dir = os.path.dirname(that_blend)
+    if not this_blend_dir.startswith(root):
+        error_msg("Invalid root directory: \""+scene.grit_root_dir+"\"\n(expands to \""+root+"\")\n does not contain \""+this_blend_dir+"\"")
+        return "UNKNOWN"
+    if not that_blend_dir.startswith(root):
+        error_msg("Invalid root directory: \""+scene.grit_root_dir+"\"\n(expands to \""+root+"\")\n does not contain \""+that_blend+"\"")
+        return "UNKNOWN"
+
+    # make paths use game's root
+    this_blend_dir = this_blend_dir[len(root):]
+    that_blend_dir = that_blend_dir[len(root):]
+    pref = os.path.commonprefix([this_blend_dir, that_blend_dir])
+
+    if pref == "":
+        # use absolute grit path, e.g. "/common/mat/White"
+        return path_to_grit(that_blend_dir+"/"+remote_resource_name)
+    else:
+        # use path relative to current blend file,  e.g. "../Fish"
+        return path_to_grit(os.path.relpath(that_blend_dir, this_blend_dir)+"/"+remote_resource_name)
 
 def strip_leading_exc(x):
     return x[1:] if x[0]=='!' else x
@@ -87,7 +126,7 @@ def uv_eq (x, y):
     return float_eq(x[0], y[0]) and float_eq(x[1], y[1])
 
 
-def get_vertexes_faces(mesh, no_normals, default_material):
+def get_vertexes_faces(scene, mesh, no_normals, default_material):
     num_uv = len(mesh.uv_textures)
     class Empty: pass
 
@@ -100,7 +139,7 @@ def get_vertexes_faces(mesh, no_normals, default_material):
 
     for fi, f in enumerate(mesh.faces):
 
-        matname = default_material if (len(mesh.materials)==0 or mesh.materials[f.material_index] == None) else mesh.materials[f.material_index].name
+        matname = default_material if (len(mesh.materials)==0 or mesh.materials[f.material_index] == None) else grit_path_from_data(scene, mesh.materials[f.material_index])
 
         triangles = []
 
@@ -166,10 +205,12 @@ promotion_enum_items = [
     ('HULL','col hull','Grit col hull'),
 ]
 
-bpy.types.Scene.grit_map_prefix = StringProperty(name="Map obj prefix", description="This will be prepended to all of your object names, useful to avoid clashes between different blend files", maxlen= 1024, default= "my_")
+
+bpy.types.Scene.grit_root_dir = StringProperty(name="Grit root dir", description="The root of the game directory (where Grit.exe lives)", maxlen= 1024, default= "..")
 
 bpy.types.Scene.grit_map_export = BoolProperty(name="Export map", description="Whether or not to emit an object placements lua file", default=True)
 bpy.types.Scene.grit_map_file = StringProperty(name="Grit map path", description="Path of object placements lua file", maxlen= 1024, default= "map.lua")
+bpy.types.Scene.grit_map_prefix = StringProperty(name="Map obj prefix", description="This will be prepended to all of your object names, useful to avoid clashes between different blend files", maxlen= 1024, default= "my_")
 
 bpy.types.Scene.grit_classes_export = BoolProperty(name="Export classes", description="Whether or not to emit a class definitions lua file", default=True)
 bpy.types.Scene.grit_classes_file = StringProperty(name="Grit classes path", description="Path of class definitions lua file", maxlen=1024, default= "classes.lua")
@@ -178,7 +219,7 @@ bpy.types.Scene.grit_meshes_export = BoolProperty(name="Export .mesh", descripti
 bpy.types.Scene.grit_meshes_convert = BoolProperty(name="Convert mesh.xml -> mesh", description="Whether or not to run the external tool", default=True)
 
 bpy.types.Scene.grit_gcols_export = BoolProperty(name="Export .gcol", description="Whether or not to generate Grit .gcol files", default=True)
-#bpy.types.Scene.grit_gcols_convert = BoolProperty(name="Convert tcol -> gcol", description="Whether or not to run the external tool", default=True)
+bpy.types.Scene.grit_gcols_convert = BoolProperty(name="Convert tcol -> gcol", description="Whether or not to run the external tool", default=True)
 
 class SceneSummaryPanel(bpy.types.Panel): 
     bl_label = "Grit Exportables Summary"
@@ -312,6 +353,65 @@ class NewClass(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class RenameClass(bpy.types.Operator):
+    '''Rename the selected class'''
+    bl_idname = "grit.rename_class"
+    bl_label = "Rename Class"
+
+    class_name = bpy.props.StringProperty(name="Class name", default="")
+    rename_mesh = BoolProperty(name=".mesh follows class name", description="Whether to also rename the .mesh object after the class", default=True)
+    rename_gcol = BoolProperty(name=".gcol follows class name", description="Whether to also rename the .gcol object after the class", default=True)
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=500)
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object != None and context.active_object.grit_promotion == "CLASS"
+
+    def execute(self, context):
+        class_obj = context.active_object
+
+        old_class_name = strip_leading_exc(class_obj.name)
+
+        class_name = self.class_name
+        mesh_name = self.class_name + ".mesh"
+        gcol_name = self.class_name + ".gcol"
+
+        rename_gcol = False
+        for c in class_obj.children:
+            if c.grit_promotion == "GCOL": rename_gcol = True
+        rename_gcol = rename_gcol and self.rename_gcol
+
+        if class_name == "":
+            error_msg("Must give name of class")
+            return {'FINISHED'}
+
+        if context.scene.objects.get('!'+class_name) != None:
+            error_msg("Object already exists with name \""+'!'+class_name+"\"")
+            return {'FINISHED'}
+
+        if self.rename_mesh and context.scene.objects.get(mesh_name) != None:
+            error_msg("Object already exists with name \""+mesh_name+"\"")
+            return {'FINISHED'}
+
+        if rename_gcol and context.scene.objects.get(gcol_name) != None:
+            error_msg("Object already exists with name \""+gcol_name+"\"")
+            return {'FINISHED'}
+
+        for c in class_obj.children:
+            if c.grit_promotion == "GCOL" and rename_gcol: c.name = gcol_name
+            if c.grit_promotion == "MESH" and self.rename_mesh: c.name = mesh_name
+
+        class_obj.name = '!'+class_name
+
+        for obj in context.scene.objects:
+            if obj.grit_promotion == "OBJECT" and obj.grit_object_class_name == old_class_name:
+                obj.grit_object_class_name = class_name
+
+        return {'FINISHED'}
+
 class NewPrimitive(bpy.types.Operator):
     '''Create a new class at the cursor'''
     bl_idname = "grit.new_primitive"
@@ -385,11 +485,14 @@ def to_lua (v):
 def export_objects (scene, objs):
     errors = []
 
+    if bpy.path.abspath("//") == "":
+        return "You must save your .blend file first.\nI do not know what the output directory is.\n"
+
     grit_objects = [ x for x in objs if x.grit_promotion == 'OBJECT' ]
     grit_classes = [ x for x in objs if x.grit_promotion == 'CLASS' ]
 
     if scene.grit_map_export and len(grit_objects) > 0:
-        filename = bpy.path.abspath("//" + scene.grit_map_file)
+        filename = my_abspath("//" + scene.grit_map_file)
         f = open(filename, "w")
         f.write("-- Lua file generated by Blender map export script.\n")
         f.write("-- WARNING: If you modify this file, your changes will be lost if it is subsequently re-exported from blender\n\n")
@@ -401,13 +504,14 @@ def export_objects (scene, objs):
                 pos = obj.location
                 rot = obj.rotation_euler.to_quaternion()
                 rot_str = rot == Quaternion((1,0,0,0)) and "" or "rot=quat("+str(rot.w)+", "+str(rot.x)+", "+str(rot.y)+", "+str(rot.z)+"), "
+                #TODO: handle classes in other directories
                 class_name = obj.grit_object_class_name
                 f.write("object \""+class_name+"\" ("+str(pos.x)+", "+str(pos.y)+", "+str(pos.z)+") { "+rot_str+"name=\""+scene.grit_map_prefix+obj.name+"\" }\n")
 
         f.close()
 
     if scene.grit_classes_export and len(grit_classes) > 0:
-        filename = bpy.path.abspath("//" + scene.grit_classes_file)
+        filename = my_abspath("//" + scene.grit_classes_file)
         f = open(filename, "w")
         f.write("-- Lua file generated by Blender class export script.\n")
         f.write("-- WARNING: If you modify this file, your changes will be lost if it is subsequently re-exported from blender\n\n")
@@ -431,6 +535,7 @@ def export_objects (scene, objs):
             attributes.append(("placementZOffset", obj.grit_class_place_z_off))
             attributes.append(("placementRandomRotation", obj.grit_class_place_rnd_rot))
 
+            #TODO: allow .mesh .gcol in subdirectories, other blend files, etc
             if class_name + ".mesh" != meshes[0].name: attributes.append(("gfxMesh", meshes[0].name))
             parent_class_name = ""
             if len(cols) == 0:
@@ -464,9 +569,9 @@ def export_objects (scene, objs):
                 if m == None:
                     errors.append("Grit mesh \""+obj.name+"\" has an undefined material")
 
-            (vertexes, faces) = get_vertexes_faces(mesh, False, "/common/mat/White")
+            (vertexes, faces) = get_vertexes_faces(scene, mesh, False, "/system/FallbackMaterial")
 
-            filename = bpy.path.abspath("//" + obj.name+".xml")
+            filename = my_abspath("//" + obj.name+".xml")
             file = open(filename, "w")
             file.write("<mesh>\n")
             file.write("    <sharedgeometry>\n")
@@ -505,7 +610,7 @@ def export_objects (scene, objs):
             bpy.data.meshes.remove(mesh)
 
         if obj.grit_promotion == 'GCOL':
-            filename = bpy.path.abspath("//" + obj.name)
+            filename = my_abspath("//" + obj.name)
             file = open(filename, "w")
             file.write("TCOL1.0\n")
             file.write("\n")
@@ -531,16 +636,16 @@ def export_objects (scene, objs):
                 pos = c.matrix_local.to_translation()
                 rot = c.matrix_local.to_quaternion()
                 scale = c.matrix_local.to_scale()
-                mat = "/common/UNDEFINED"
+                mat = "/system/FallbackPhysicalMaterial"
                 if len(c.material_slots) == 0:
                     errors.append("Part \""+c.name+"\" under \""+obj.name+"\" has no materials)")
                 else:
                     mat = c.material_slots[0].material
                     if mat == None:
-                        mat = "/common/UNDEFINED"
+                        mat = "/system/FallbackPhysicalMaterial"
                         errors.append("Part \""+c.name+"\" under \""+obj.name+"\" has undefined material")
                     else:
-                        mat = mat.name
+                        mat = grit_path_from_data(scene, mat)
                     if len(c.material_slots) > 1:
                         errors.append("Part \""+c.name+"\" under \""+obj.name+"\" must have 1 material (has "+str(len(c.material_slots))+")")
                 marg = c.grit_gcol_prim_margin
@@ -578,7 +683,7 @@ def export_objects (scene, objs):
                     file.write("    }\n")
                 else:
                     mesh = c.to_mesh(scene, True, "PREVIEW")
-                    (vertexes, faces) = get_vertexes_faces(mesh, True, "UNDEFINED")
+                    (vertexes, faces) = get_vertexes_faces(scene, mesh, True, "/system/FallbackPhysicalMaterial")
                     file.write("    hull {\n")
                     file.write("        material \""+mat+"\";\n")
                     file.write("        margin "+str(marg)+";\n")
@@ -601,9 +706,9 @@ def export_objects (scene, objs):
 
                 for m in mesh.materials:
                     if m == None:
-                        errors.append("Part \""+c.name+"\" under \""+obj.name+"\" has undefined material")
+                        errors.append("Grit .gcol \""+obj.name+"\" has undefined material")
 
-                (vertexes, faces) = get_vertexes_faces(mesh, True, "/common/Stone")
+                (vertexes, faces) = get_vertexes_faces(scene, mesh, True, "/common/Stone")
 
                 file.write("trimesh {\n")
                 file.write("    vertexes {\n")
@@ -641,26 +746,32 @@ class ScenePanel(bpy.types.Panel): #{{{
         box = self.layout
         col = box.column(align=True)
         row = col.row(align=True)
-        row.alignment = "LEFT"
-        row.label("Prefix")
-        row.prop(context.scene, "grit_map_prefix", text="", expand=True)
+        row.alignment = "EXPAND"
+        row.label("Game root")
+        row.prop(context.scene, "grit_root_dir", text="", expand=True)
         row = col.row(align=True)
-        row.alignment = "LEFT"
+        row.alignment = "EXPAND"
         row.prop(context.scene, "grit_map_export", text="Export?")
         row.prop(context.scene, "grit_map_file", text="", expand=True)
         row = col.row(align=True)
-        row.alignment = "LEFT"
+        row.alignment = "EXPAND"
+        row.label("Obj prefix")
+        row.prop(context.scene, "grit_map_prefix", text="", expand=True)
+        row = col.row(align=True)
+        row.alignment = "EXPAND"
         row.prop(context.scene, "grit_classes_export", text="Export?")
         row.prop(context.scene, "grit_classes_file", text="", expand=True)
         row = col.row(align=True)
-        row.alignment = "LEFT"
+        row.alignment = "EXPAND"
         row.prop(context.scene, "grit_meshes_export")
         row.prop(context.scene, "grit_meshes_convert", text="Convert", expand=True)
         row = col.row(align=True)
-        row.alignment = "LEFT"
+        row.alignment = "EXPAND"
         row.prop(context.scene, "grit_gcols_export")
-        #row.prop(context.scene, "grit_gcols_convert", text="Convert", expand=True)
-        #row = box.row()
+        row = row.row()
+        row.prop(context.scene, "grit_gcols_convert", text="Convert", expand=True)
+        row.enabled = False
+        row = box.row()
         col.operator("grit.export_selected", icon="SCRIPT")
         col.operator("grit.export_all", icon="SCRIPT")
 #}}}
@@ -734,6 +845,7 @@ class ToolsPanel(bpy.types.Panel):
         column = root.column(align=True)
         column.alignment = "EXPAND"
         op = column.operator("grit.new_class")
+        op = column.operator("grit.rename_class")
         op = column.operator("grit.new_object")
         op = column.operator("grit.new_primitive")
 
@@ -802,7 +914,10 @@ class ToolsPanel(bpy.types.Panel):
         if obj.type == "MESH" and obj.data.name == "GritPhysicsSphere": r.enabled = False
         r = root.row()
         r.prop(obj, "grit_gcol_prim_shrink")
-        if obj.type == "MESH" and obj.data.name != "GritPhysicsHull": r.enabled = False
+        if obj.type == "MESH" and obj.data.name == "GritPhysicsHull": r.enabled = False
+        if obj.type == "MESH" and obj.data.name == "GritPhysicsSphere": r.enabled = False
+        if obj.type == "MESH" and obj.data.name == "GritPhysicsBox": r.enabled = False
+        if obj.type == "MESH" and obj.data.name == "GritPhysicsCone": r.enabled = False
         
 def register():
     bpy.utils.register_module(__name__)
