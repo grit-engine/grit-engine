@@ -3,7 +3,6 @@
 # instantiate external class
 # point to an existing .mesh
 # point to an existing .tcol
-# prepend prefix to all names
 # vertex painting (ambient)
 # vertex painting (diffuse)
 # vertex painting (blend)
