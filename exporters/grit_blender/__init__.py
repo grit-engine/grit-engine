@@ -434,6 +434,25 @@ class NewPrimitive(bpy.types.Operator):
 
         return {'FINISHED'}
 
+def instantiate_class(mesh_ob, class_name, context):
+    ob = mesh_ob.copy()
+    for i in ob.keys(): del ob[i]
+    ob.parent = None
+    ob.name = "obj"
+    context.scene.objects.link(ob)
+
+    if mesh_ob.library != None:
+        class_name = class_name
+
+    ob.grit_promotion = "OBJECT"
+    ob.grit_object_class_name = class_name
+    ob.location = context.scene.cursor_location
+
+    bpy.ops.object.select_all(action="DESELECT")
+    ob.select = True
+    context.scene.objects.active = ob
+
+
 class InstantiateSelected(bpy.types.Operator):
     '''Instantiate the Grit Class (active object) at cursor'''
     bl_idname = "grit.new_object"
@@ -445,6 +464,7 @@ class InstantiateSelected(bpy.types.Operator):
 
     def execute(self, context):
         class_obj = context.active_object
+        class_name = strip_leading_exc(class_obj.name)
 
         meshes = [c for c in class_obj.children if c.grit_promotion == 'MESH']
 
@@ -455,21 +475,10 @@ class InstantiateSelected(bpy.types.Operator):
             error_msg("Class has more than 1 graphical representation (mesh)")
             return {'FINISHED'}
 
-        child = meshes[0]
+        mesh_ob = meshes[0]
 
-        ob = child.copy()
-        for i in ob.keys(): del ob[i]
-        ob.parent = None
-        ob.name = "obj"
-        context.scene.objects.link(ob)
+        instantiate_class(mesh_ob, class_name, context)
 
-        ob.grit_promotion = "OBJECT"
-        ob.grit_object_class_name = strip_leading_exc(class_obj.name)
-        ob.location = context.scene.cursor_location
-
-        bpy.ops.object.select_all(action="DESELECT")
-        ob.select = True
-        context.scene.objects.active = ob
         return {'FINISHED'}
 #}}}
 
@@ -810,26 +819,6 @@ class ExportSelected(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class ApplyClassToAllSelected(bpy.types.Operator):
-    '''Make all selected objects' Grit classes like the active object's'''
-    bl_idname = "grit.apply_class"
-    bl_label = "Apply to selection"
-
-    @classmethod
-    def poll(cls, context):
-        if context.active_object == None: return False
-        if len(context.selected_objects) == 0: return False
-        if context.active_object.grit_promotion != "OBJECT": return False
-        if any(x.grit_promotion != 'OBJECT' for x in context.selected_objects): return False
-        if all(x.grit_object_class_name == context.active_object.grit_object_class_name for x in context.selected_objects): return False
-        return True
-
-    def execute(self, context):
-        for o in context.selected_objects:
-            if o.grit_promotion == "OBJECT":
-                o.grit_object_class_name = context.active_object.grit_object_class_name
-        return {'FINISHED'}
-
 class ToolsPanel(bpy.types.Panel):
     bl_label = "Grit Tools"
     bl_space_type = 'VIEW_3D'
@@ -843,58 +832,52 @@ class ToolsPanel(bpy.types.Panel):
         root.label("New at cursor", icon="NEW")
         column = root.column(align=True)
         column.alignment = "EXPAND"
-        op = column.operator("grit.new_class")
-        op = column.operator("grit.rename_class")
-        op = column.operator("grit.new_object")
-        op = column.operator("grit.new_primitive")
+        column.operator("grit.new_class")
+        column.operator("grit.new_object")
+        column.operator("grit.new_primitive")
 
         obj = context.active_object
         if obj == None: return
 
         root = self.layout.box()
-        root.label("Object", icon="OBJECT_DATAMODE")
-        root = root.column()
+        root.label("Object"+(" \""+obj.name+"\"" if obj.grit_promotion == "OBJECT" else ""), icon="OBJECT_DATAMODE")
+        root = root.column(align=True)
         if obj.grit_promotion != "OBJECT":
             root.enabled = False
         root.prop(obj, "grit_object_class_name")
-        root.operator("grit.apply_class", icon="HAND")
 
         root = self.layout.box()
-        root.label("Class", icon="VIEW3D")
-        root = root.column()
+        root.label("Class"+(" \""+strip_leading_exc(obj.name)+"\"" if obj.grit_promotion == "CLASS" else ""), icon="VIEW3D")
+        column = root.column(align=False)
         if obj.grit_promotion != "CLASS":
-            root.enabled = False
-        #root.template_list(context.scene, "objects", context.scene, "blah")
-        root.prop(obj, "grit_class_rendering_distance")
-        root.prop(obj, "grit_class_cast_shadows")
-        root.prop(obj, "grit_class_place_z_off")
-        root.prop(obj, "grit_class_place_rnd_rot")
+            column.enabled = False
+        column.operator("grit.rename_class")
+        column2 = column.column(align=True)
+        column2.prop(obj, "grit_class_rendering_distance")
+        column2.prop(obj, "grit_class_place_z_off")
+        column2.prop(obj, "grit_class_place_rnd_rot")
+        column2.prop(obj, "grit_class_cast_shadows")
 
         root = self.layout.box()
-        root.label(".mesh", icon="EDITMODE_HLT")
-        root = root.column()
+        root.label(".mesh"+(" \""+obj.name+"\"" if obj.grit_promotion == "MESH" else ""), icon="EDITMODE_HLT")
+        column = root.column(align=True)
         if obj.grit_promotion != "MESH":
-            root.enabled = False
-        root.prop(obj, "grit_mesh_tangents")
+            column.enabled = False
+        column.prop(obj, "grit_mesh_tangents")
         
         root = self.layout.box()
-        root.label(".gcol", icon="PHYSICS")
-        root = root.column()
+        root.label(".gcol"+(" \""+obj.name+"\"" if obj.grit_promotion == "GCOL" else ""), icon="PHYSICS")
+        column = root.column(align=True)
         if obj.grit_promotion != "GCOL":
-            root.enabled = False
-        #root.template_list(context.scene, "objects", context.scene, "blah")
-        root.prop(obj, "grit_gcol_static")
-        r = root.column()
-        r.prop(obj, "grit_gcol_mass")
-        if obj.grit_gcol_static: r.enabled = False
-        r.prop(obj, "grit_gcol_linear_damping")
-        if obj.grit_gcol_static: r.enabled = False
-        r.prop(obj, "grit_gcol_angular_damping")
-        if obj.grit_gcol_static: r.enabled = False
-        r.prop(obj, "grit_gcol_linear_sleep_thresh")
-        if obj.grit_gcol_static: r.enabled = False
-        r.prop(obj, "grit_gcol_angular_sleep_thresh")
-        if obj.grit_gcol_static: r.enabled = False
+            column.enabled = False
+        column.prop(obj, "grit_gcol_static")
+        column2 = column.column(align=True)
+        if obj.grit_gcol_static: column2.enabled = False
+        column2.prop(obj, "grit_gcol_mass")
+        column2.prop(obj, "grit_gcol_linear_damping")
+        column2.prop(obj, "grit_gcol_angular_damping")
+        column2.prop(obj, "grit_gcol_linear_sleep_thresh")
+        column2.prop(obj, "grit_gcol_angular_sleep_thresh")
         
         root = self.layout.box()
         mapping = dict()
@@ -903,8 +886,8 @@ class ToolsPanel(bpy.types.Panel):
         mapping["GritPhysicsCone"] = " (cone)"
         mapping["GritPhysicsCylinder"] = " (cylinder)"
         extra = obj.type == "MESH" and obj.grit_promotion == "PRIM" and (mapping.get(obj.data.name) or " (hull)") or ""
-        root.label(".gcol prim"+extra, icon="PHYSICS")
-        root = root.column()
+        root.label(".gcol prim"+(" \""+obj.name+"\"" if obj.grit_promotion == "PRIM" else "")+extra, icon="PHYSICS")
+        root = root.column(align=True)
         if obj.grit_promotion != "PRIM":
             root.enabled = False
         #root.template_list(context.scene, "objects", context.scene, "blah")
@@ -913,10 +896,7 @@ class ToolsPanel(bpy.types.Panel):
         if obj.type == "MESH" and obj.data.name == "GritPhysicsSphere": r.enabled = False
         r = root.row()
         r.prop(obj, "grit_gcol_prim_shrink")
-        if obj.type == "MESH" and obj.data.name == "GritPhysicsHull": r.enabled = False
-        if obj.type == "MESH" and obj.data.name == "GritPhysicsSphere": r.enabled = False
-        if obj.type == "MESH" and obj.data.name == "GritPhysicsBox": r.enabled = False
-        if obj.type == "MESH" and obj.data.name == "GritPhysicsCone": r.enabled = False
+        if obj.type == "MESH" and mapping.get(obj.data.name): r.enabled = False
         
 def register():
     bpy.utils.register_module(__name__)
