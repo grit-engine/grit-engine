@@ -7,6 +7,10 @@
 # vertex painting (ambient)
 # vertex painting (diffuse)
 # vertex painting (blend)
+# rename class
+#
+# BUGS
+# * export to the correct dir //blah.mesh.xml
 #
 # special classes:
 # * piles
@@ -16,6 +20,8 @@
 # * colour specification (for paint)
 # * explodes, explodeRadius, explodeDeactivate?
 # * material maps
+# * lights
+# * LOD
 #
 # xml import:
 # * http://docs.python.org/library/xml.etree.elementtree.html
@@ -40,6 +46,7 @@ import subprocess
 from bpy.props import *
 from mathutils import Quaternion, Vector
 
+executable_suffix = ""
 
 def strip_leading_exc(x):
     return x[1:] if x[0]=='!' else x
@@ -57,7 +64,7 @@ class MessageOperator(bpy.types.Operator):
  
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_popup(self)
+        return wm.invoke_popup(self, width=500)
  
     def draw(self, context):
         row = self.layout.row()
@@ -93,7 +100,7 @@ def get_vertexes_faces(mesh, no_normals, default_material):
 
     for fi, f in enumerate(mesh.faces):
 
-        matname = default_material if len(mesh.materials)==0 else mesh.materials[f.material_index].name
+        matname = default_material if (len(mesh.materials)==0 or mesh.materials[f.material_index] == None) else mesh.materials[f.material_index].name
 
         triangles = []
 
@@ -159,14 +166,17 @@ promotion_enum_items = [
     ('HULL','col hull','Grit col hull'),
 ]
 
-bpy.types.Scene.grit_selected_promotion = bpy.props.EnumProperty(name='Grit Object Promotion', default='NONE', items=promotion_enum_items)
+bpy.types.Scene.grit_map_prefix = StringProperty(name="Map obj prefix", description="This will be prepended to all of your object names, useful to avoid clashes between different blend files", maxlen= 1024, default= "my_")
 
-bpy.types.Scene.grit_map_file = StringProperty(name="Grit map path", description="Path of object placements lua file", maxlen= 1024, default= "map.lua")
 bpy.types.Scene.grit_map_export = BoolProperty(name="Export map", description="Whether or not to emit an object placements lua file", default=True)
-bpy.types.Scene.grit_classes_file = StringProperty(name="Grit classes path", description="Path of class definitions lua file", maxlen=1024, default= "classes.lua")
+bpy.types.Scene.grit_map_file = StringProperty(name="Grit map path", description="Path of object placements lua file", maxlen= 1024, default= "map.lua")
+
 bpy.types.Scene.grit_classes_export = BoolProperty(name="Export classes", description="Whether or not to emit a class definitions lua file", default=True)
+bpy.types.Scene.grit_classes_file = StringProperty(name="Grit classes path", description="Path of class definitions lua file", maxlen=1024, default= "classes.lua")
+
 bpy.types.Scene.grit_meshes_export = BoolProperty(name="Export .mesh", description="Whether or not to generate Grit .mesh files", default=True)
 bpy.types.Scene.grit_meshes_convert = BoolProperty(name="Convert mesh.xml -> mesh", description="Whether or not to run the external tool", default=True)
+
 bpy.types.Scene.grit_gcols_export = BoolProperty(name="Export .gcol", description="Whether or not to generate Grit .gcol files", default=True)
 #bpy.types.Scene.grit_gcols_convert = BoolProperty(name="Convert tcol -> gcol", description="Whether or not to run the external tool", default=True)
 
@@ -205,42 +215,27 @@ class SceneSummaryPanel(bpy.types.Panel):
 # {{{ additional object metadata
 
 
-bpy.types.Object.grit_promotion = bpy.props.EnumProperty(name='Promotion', default='NONE', items=promotion_enum_items)
-bpy.types.Object.grit_object_class_name = bpy.props.StringProperty(name='Class', default="")
+bpy.types.Object.grit_promotion = bpy.props.EnumProperty(name='Promotion', default='NONE', items=promotion_enum_items, description="The special role within the Grit engine that this Blender object represents")
+bpy.types.Object.grit_object_class_name = bpy.props.StringProperty(name='Class', default="", description="Name of the class (without the !) of which this Grit object is an instance")
 
 # piles
 
-bpy.types.Object.grit_class_rendering_distance = bpy.props.FloatProperty(name='Rendering Distance', default=100)
-bpy.types.Object.grit_class_cast_shadows = bpy.props.BoolProperty(name='Casts Shadows?', default=False)
-bpy.types.Object.grit_class_place_z_off = bpy.props.FloatProperty(name='Placement Z Offset', default=0.0)
-bpy.types.Object.grit_class_place_rnd_rot = bpy.props.BoolProperty(name='Placement Random Z Rotate?', default=False)
+bpy.types.Object.grit_class_rendering_distance = bpy.props.FloatProperty(name='Rendering Distance', default=100, description="Distance at which the object is deactivated, e.g. no-longer rendered or generating collisions")
+bpy.types.Object.grit_class_cast_shadows = bpy.props.BoolProperty(name='Casts Shadows?', default=False, description="Does the graphical representation of the object cast shadows within Grit")
+bpy.types.Object.grit_class_place_z_off = bpy.props.FloatProperty(name='Placement Z Offset', default=0.0, description="When placing objects on the map using place(), the distance above ground to spawn (to avoid violent intersection)")
+bpy.types.Object.grit_class_place_rnd_rot = bpy.props.BoolProperty(name='Placement Random Z Rotate?', default=False, description="When placing objects on the map using place(), whether a random rotation about Z is used (to introduce some variety)")
 
-bpy.types.Object.grit_mesh_tangents = bpy.props.BoolProperty(name='Support normal map?', default=False)
+bpy.types.Object.grit_mesh_tangents = bpy.props.BoolProperty(name='Tangents?', default=False, description="Whether or not to generate tangents in the mesh file (takes more disk & memory but required when using normal maps)")
 
-bpy.types.Object.grit_gcol_static = bpy.props.BoolProperty(name='Static?', default=True)
-bpy.types.Object.grit_gcol_mass = bpy.props.FloatProperty(name='Mass', default=100.0)
-bpy.types.Object.grit_gcol_linear_damping = bpy.props.FloatProperty(name='Linear damping', default=0.5)
-bpy.types.Object.grit_gcol_angular_damping = bpy.props.FloatProperty(name='Angular damping', default=0.5)
-bpy.types.Object.grit_gcol_linear_sleep_thresh = bpy.props.FloatProperty(name='Linear sleep thresh.', default=1)
-bpy.types.Object.grit_gcol_angular_sleep_thresh = bpy.props.FloatProperty(name='Angular sleep thresh.', default=0.8)
-bpy.types.Object.grit_gcol_prim_material = bpy.props.StringProperty(name='Material', default="/common/Stone")
-bpy.types.Object.grit_gcol_prim_margin = bpy.props.FloatProperty(name='Margin', default=0.04)
-bpy.types.Object.grit_gcol_prim_shrink = bpy.props.FloatProperty(name='Shrink', default=0.04)
+bpy.types.Object.grit_gcol_static = bpy.props.BoolProperty(name='Static?', default=True, description="Whether or not objects using this gcol are fixed in place (like a wall)")
+bpy.types.Object.grit_gcol_mass = bpy.props.FloatProperty(name='Mass', default=100.0, description="The mass of the object in kilograms")
+bpy.types.Object.grit_gcol_linear_damping = bpy.props.FloatProperty(name='Linear damping', default=0.5, description="Proportion of linear velocity lost per second due to drag / friction")
+bpy.types.Object.grit_gcol_angular_damping = bpy.props.FloatProperty(name='Angular damping', default=0.5, description="Proportion of angular velocity lost per second due to drag / friction")
+bpy.types.Object.grit_gcol_linear_sleep_thresh = bpy.props.FloatProperty(name='Linear sleep thresh.', default=1, description="Linear velocity below which object will sleep")
+bpy.types.Object.grit_gcol_angular_sleep_thresh = bpy.props.FloatProperty(name='Angular sleep thresh.', default=0.8, description="Angular velocity below which object will sleep")
+bpy.types.Object.grit_gcol_prim_margin = bpy.props.FloatProperty(name='Margin', default=0.04, description="Collsion margin -- distance after which a different collision resolution algorithm is used.  For hulls, forms an invisible shell around the object")
+bpy.types.Object.grit_gcol_prim_shrink = bpy.props.FloatProperty(name='Shrink', default=0.04, description="For hulls, a distance the hull should be shrunk inwards along face normals to compensate for the margin")
 
-class PromoteSelected(bpy.types.Operator):
-    '''Make the blender object(s) export to Grit in a particular way'''
-    bl_idname = "grit.promote"
-    bl_label = "Promote Selected"
-
-    @classmethod
-    def poll(cls, context):
-        return any(o.grit_promotion != context.scene.grit_selected_promotion for o in context.selected_objects)
-
-    def execute(self, context):
-        for o in context.selected_objects:
-            o.grit_promotion = context.scene.grit_selected_promotion
-            #o.grit_promotion = self.promotion
-        return {'FINISHED'}
 
 def set_parent(context, child, parent):
     bpy.ops.object.select_all(action="DESELECT")
@@ -263,7 +258,7 @@ class NewClass(bpy.types.Operator):
 
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_props_dialog(self)
+        return wm.invoke_props_dialog(self, width=500)
 
     def execute(self, context):
 
@@ -275,8 +270,8 @@ class NewClass(bpy.types.Operator):
             error_msg("Must give name of class")
             return {'FINISHED'}
 
-        if context.scene.objects.get(class_name) != None:
-            error_msg("Object already exists with name \""+class_name+"\"")
+        if context.scene.objects.get('!'+class_name) != None:
+            error_msg("Object already exists with name \""+'!'+class_name+"\"")
             return {'FINISHED'}
 
         if context.scene.objects.get(mesh_name) != None:
@@ -394,7 +389,8 @@ def export_objects (scene, objs):
     grit_classes = [ x for x in objs if x.grit_promotion == 'CLASS' ]
 
     if scene.grit_map_export and len(grit_objects) > 0:
-        f = open(scene.grit_map_file, "w")
+        filename = bpy.path.abspath("//" + scene.grit_map_file)
+        f = open(filename, "w")
         f.write("-- Lua file generated by Blender map export script.\n")
         f.write("-- WARNING: If you modify this file, your changes will be lost if it is subsequently re-exported from blender\n\n")
 
@@ -406,12 +402,13 @@ def export_objects (scene, objs):
                 rot = obj.rotation_euler.to_quaternion()
                 rot_str = rot == Quaternion((1,0,0,0)) and "" or "rot=quat("+str(rot.w)+", "+str(rot.x)+", "+str(rot.y)+", "+str(rot.z)+"), "
                 class_name = obj.grit_object_class_name
-                f.write("object \""+class_name+"\" ("+str(pos.x)+", "+str(pos.y)+", "+str(pos.z)+") { "+rot_str+"name=\""+obj.name+"\" }\n")
+                f.write("object \""+class_name+"\" ("+str(pos.x)+", "+str(pos.y)+", "+str(pos.z)+") { "+rot_str+"name=\""+scene.grit_map_prefix+obj.name+"\" }\n")
 
         f.close()
 
     if scene.grit_classes_export and len(grit_classes) > 0:
-        f = open(scene.grit_classes_file, "w")
+        filename = bpy.path.abspath("//" + scene.grit_classes_file)
+        f = open(filename, "w")
         f.write("-- Lua file generated by Blender class export script.\n")
         f.write("-- WARNING: If you modify this file, your changes will be lost if it is subsequently re-exported from blender\n\n")
 
@@ -442,7 +439,7 @@ def export_objects (scene, objs):
             else:
                 parent_class_name = "ColClass"
                 if len(cols) > 1:
-                    errors.append("Class has "+len(meshes)+" cols (should have 0 or 1): \""+obj.name+"\"")
+                    errors.append("Class has "+str(len(meshes))+" cols (should have 0 or 1): \""+obj.name+"\"")
                     continue
                 if class_name + ".gcol" != cols[0].name: attributes.append(("colMesh", cols[0].name))
 
@@ -458,14 +455,18 @@ def export_objects (scene, objs):
 
     for obj in objs:
         if obj.grit_promotion == 'MESH':
-            filename = obj.name+".xml"
             mesh = obj.to_mesh(scene, True, "PREVIEW")
 
             if len(mesh.materials) == 0:
                 errors.append("Grit mesh \""+obj.name+"\" has no materials")
 
-            (vertexes, faces) = get_vertexes_faces(mesh, False, "/common/White")
+            for m in mesh.materials:
+                if m == None:
+                    errors.append("Grit mesh \""+obj.name+"\" has an undefined material")
 
+            (vertexes, faces) = get_vertexes_faces(mesh, False, "/common/mat/White")
+
+            filename = bpy.path.abspath("//" + obj.name+".xml")
             file = open(filename, "w")
             file.write("<mesh>\n")
             file.write("    <sharedgeometry>\n")
@@ -492,12 +493,19 @@ def export_objects (scene, objs):
 
             if scene.grit_meshes_convert:
                 current_py = inspect.getfile(inspect.currentframe())
-                exporter = os.path.abspath(os.path.dirname(current_py) + "/OgreXMLConverter")
-                subprocess.call([exporter, "-e", "-t", "-ts", "4", filename])
+                exporter = os.path.abspath(os.path.join(os.path.dirname(current_py), "OgreXMLConverter" + executable_suffix))
+                args = [exporter, "-e"]
+                if obj.grit_mesh_tangents:
+                    args.append("-t")
+                    args.append("-ts")
+                    args.append("4")
+                args.append(filename)
+                subprocess.call(args)
+
+            bpy.data.meshes.remove(mesh)
 
         if obj.grit_promotion == 'GCOL':
-            filename = obj.name
-
+            filename = bpy.path.abspath("//" + obj.name)
             file = open(filename, "w")
             file.write("TCOL1.0\n")
             file.write("\n")
@@ -515,12 +523,26 @@ def export_objects (scene, objs):
 
             file.write("compound {\n")
             for c in obj.children:
+                if c.type == "EMPTY":
+                    errors.append("Part \""+c.name+"\" under \""+obj.name+"\" is an Empty)")
+                    continue
                 file.write("    // "+c.name+"\n")
                 mesh = c.data
                 pos = c.matrix_local.to_translation()
                 rot = c.matrix_local.to_quaternion()
                 scale = c.matrix_local.to_scale()
-                mat = c.grit_gcol_prim_material
+                mat = "/common/UNDEFINED"
+                if len(c.material_slots) == 0:
+                    errors.append("Part \""+c.name+"\" under \""+obj.name+"\" has no materials)")
+                else:
+                    mat = c.material_slots[0].material
+                    if mat == None:
+                        mat = "/common/UNDEFINED"
+                        errors.append("Part \""+c.name+"\" under \""+obj.name+"\" has undefined material")
+                    else:
+                        mat = mat.name
+                    if len(c.material_slots) > 1:
+                        errors.append("Part \""+c.name+"\" under \""+obj.name+"\" must have 1 material (has "+str(len(c.material_slots))+")")
                 marg = c.grit_gcol_prim_margin
                 shrink = c.grit_gcol_prim_shrink
                 if mesh.name == "GritPhysicsBox":
@@ -556,7 +578,7 @@ def export_objects (scene, objs):
                     file.write("    }\n")
                 else:
                     mesh = c.to_mesh(scene, True, "PREVIEW")
-                    (vertexes, faces) = get_vertexes_faces(mesh, True, "DEFAULT")
+                    (vertexes, faces) = get_vertexes_faces(mesh, True, "UNDEFINED")
                     file.write("    hull {\n")
                     file.write("        material \""+mat+"\";\n")
                     file.write("        margin "+str(marg)+";\n")
@@ -567,6 +589,7 @@ def export_objects (scene, objs):
                         file.write("            "+str(p.x)+" "+str(p.y)+" "+str(p.z)+";\n")
                     file.write("        }\n")
                     file.write("    }\n")
+                    bpy.data.meshes.remove(mesh)
             file.write("}\n")
 
             if obj.type == "MESH":
@@ -576,7 +599,12 @@ def export_objects (scene, objs):
                 if len(mesh.materials) == 0:
                     errors.append("Grit gcol \""+obj.name+"\" has no materials")
 
+                for m in mesh.materials:
+                    if m == None:
+                        errors.append("Part \""+c.name+"\" under \""+obj.name+"\" has undefined material")
+
                 (vertexes, faces) = get_vertexes_faces(mesh, True, "/common/Stone")
+
                 file.write("trimesh {\n")
                 file.write("    vertexes {\n")
                 for v in vertexes:
@@ -588,6 +616,8 @@ def export_objects (scene, objs):
                         file.write("        "+str(f[0])+" "+str(f[1])+" "+str(f[2])+" \""+m+"\";\n")
                 file.write("    }\n")
                 file.write("}\n")
+
+                bpy.data.meshes.remove(mesh)
 
             file.close()
 
@@ -610,19 +640,23 @@ class ScenePanel(bpy.types.Panel): #{{{
     def draw(self, context):
         box = self.layout
         col = box.column(align=True)
-        row = col.row()
+        row = col.row(align=True)
+        row.alignment = "LEFT"
+        row.label("Prefix")
+        row.prop(context.scene, "grit_map_prefix", text="", expand=True)
+        row = col.row(align=True)
         row.alignment = "LEFT"
         row.prop(context.scene, "grit_map_export", text="Export?")
         row.prop(context.scene, "grit_map_file", text="", expand=True)
-        row = col.row()
+        row = col.row(align=True)
         row.alignment = "LEFT"
         row.prop(context.scene, "grit_classes_export", text="Export?")
         row.prop(context.scene, "grit_classes_file", text="", expand=True)
-        row = col.row()
+        row = col.row(align=True)
         row.alignment = "LEFT"
         row.prop(context.scene, "grit_meshes_export")
         row.prop(context.scene, "grit_meshes_convert", text="Convert", expand=True)
-        row = col.row()
+        row = col.row(align=True)
         row.alignment = "LEFT"
         row.prop(context.scene, "grit_gcols_export")
         #row.prop(context.scene, "grit_gcols_convert", text="Convert", expand=True)
@@ -726,6 +760,13 @@ class ToolsPanel(bpy.types.Panel):
         root.prop(obj, "grit_class_place_rnd_rot")
 
         root = self.layout.box()
+        root.label(".mesh", icon="EDITMODE_HLT")
+        root = root.column()
+        if obj.grit_promotion != "MESH":
+            root.enabled = False
+        root.prop(obj, "grit_mesh_tangents")
+        
+        root = self.layout.box()
         root.label(".gcol", icon="PHYSICS")
         root = root.column()
         if obj.grit_promotion != "GCOL":
@@ -756,7 +797,6 @@ class ToolsPanel(bpy.types.Panel):
         if obj.grit_promotion != "PRIM":
             root.enabled = False
         #root.template_list(context.scene, "objects", context.scene, "blah")
-        root.prop(obj, "grit_gcol_prim_material")
         r = root.row()
         r.prop(obj, "grit_gcol_prim_margin")
         if obj.type == "MESH" and obj.data.name == "GritPhysicsSphere": r.enabled = False
