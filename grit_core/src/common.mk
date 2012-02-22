@@ -80,11 +80,11 @@ COMMON_OBJ=\
 LINUX_OBJ=$(COMMON_OBJ) MouseX11.o KeyboardX11.o posix_sleep.o x11_clipboard.o
 WIN32_OBJ=$(COMMON_OBJ) MouseDirectInput8.o KeyboardDirectInput8.o KeyboardWinAPI.o win32_clipboard.o win32_sleep.o
 
-grit.x11: $(LINUX_OBJ) $(DEPENDENT_LIBS)
+Grit.linux.x86: $(LINUX_OBJ) $(DEPENDENT_LIBS)
 	@$(LINKING)
 	@$(COMPILER) $(LINUX_OBJ) -o $@ $(LDFLAGS)
 
-grit.exe: $(WIN32_OBJ) $(DEPENDENT_LIBS)
+Grit.exe: $(WIN32_OBJ) $(DEPENDENT_LIBS)
 	@$(LINKING)
 	@$(COMPILER) $(WIN32_OBJ) -o $@ $(LDFLAGS)
 
