@@ -7,15 +7,21 @@ ROOT=../..
 
 include $(ROOT)/common.mk
 
-TARGETS=../media/Grit.x11 grit.x11.stripped grit_col_conv
+GRIT_BLENDER_DIR=../../exporters/blender_scripts/addons/grit_blender
 
-grit: ../media/Grit.x11 grit.x11.stripped
+TARGETS=../media/Grit.linux.x86 Grit.linux.x86.stripped grit_col_conv $(GRIT_BLENDER_DIR)/grit_col_conv
+
+grit: $(TARGETS)
 
 %.stripped: %
 	strip -s $< -o $@
 
-../media/Grit.x11: grit.x11.stripped
+../media/Grit.linux.x86: Grit.linux.x86.stripped
 	cp $< $@
+
+$(GRIT_BLENDER_DIR)/grit_col_conv: grit_col_conv
+	cp grit_col_conv $(GRIT_BLENDER_DIR)/grit_col_conv/grit_blender
+
 
 all: $(TARGETS)
 
