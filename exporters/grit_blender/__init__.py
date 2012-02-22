@@ -63,10 +63,11 @@ def grit_path_from_data(scene, data):
 # or takes e.g. "//../base.blend" "Fish"
 # returns "../Fish"
 def grit_path(scene, remote_blend, remote_resource_name):
-    root = my_abspath("//"+scene.grit_root_dir)
+    root = my_abspath("//"+scene.grit_root_dir)+"/"
     this_blend_dir = my_abspath("//")
     that_blend = my_abspath(remote_blend)
     that_blend_dir = os.path.dirname(that_blend)
+    #print(root, this_blend_dir, that_blend_dir)
     if not this_blend_dir.startswith(root):
         error_msg("Invalid root directory: \""+scene.grit_root_dir+"\"\n(expands to \""+root+"\")\n does not contain \""+this_blend_dir+"\"")
         return "UNKNOWN"
@@ -81,7 +82,7 @@ def grit_path(scene, remote_blend, remote_resource_name):
 
     if pref == "":
         # use absolute grit path, e.g. "/common/mat/White"
-        return path_to_grit(that_blend_dir+"/"+remote_resource_name)
+        return path_to_grit("/"+that_blend_dir+"/"+remote_resource_name)
     else:
         # use path relative to current blend file,  e.g. "../Fish"
         return path_to_grit(os.path.relpath(that_blend_dir, this_blend_dir)+"/"+remote_resource_name)
@@ -434,36 +435,64 @@ class NewPrimitive(bpy.types.Operator):
 
         return {'FINISHED'}
 
-def instantiate_class(mesh_ob, class_name, context):
-    ob = mesh_ob.copy()
-    for i in ob.keys(): del ob[i]
-    ob.parent = None
-    ob.name = "obj"
-    context.scene.objects.link(ob)
 
-    if mesh_ob.library != None:
-        class_name = class_name
+items = []
+lookup = {}
 
-    ob.grit_promotion = "OBJECT"
-    ob.grit_object_class_name = class_name
-    ob.location = context.scene.cursor_location
+bpy.types.Scene.grit_object_chooser = EnumProperty(name='Class to instantiate', default='0', items=[("0","None","None")])
 
-    bpy.ops.object.select_all(action="DESELECT")
-    ob.select = True
-    context.scene.objects.active = ob
+def all_classes():
+    return [ o for o in bpy.data.objects if o.grit_promotion=="CLASS" ]
+
+def reset_grit_object_chooser():
+    global items
+    global lookup
+    lookup = {}
+    items = []
+
+    for c in all_classes():
+        name = strip_leading_exc(c.name)
+        if c.library != None:
+            name =  grit_path(bpy.context.scene, c.library.filepath, name)
+        items.append((name, name, "unused"))
+        lookup[name] = c
+    items.sort()
+
+    bpy.types.Scene.grit_object_chooser = EnumProperty(name='Class to instantiate', default=items[0][0], items=items)
 
 
-class InstantiateSelected(bpy.types.Operator):
-    '''Instantiate the Grit Class (active object) at cursor'''
-    bl_idname = "grit.new_object"
+class InstantiateExternalClass(bpy.types.Operator):
+    '''Instantiate a class from another scene at the cursor'''
+    bl_idname = "grit.new_object2"
     bl_label = "Instantiate Class"
 
     @classmethod
     def poll(cls, context):
-        return context.active_object != None and context.active_object.grit_promotion == "CLASS"
+        return len(all_classes()) > 0
+
+    def invoke(self, context, event):
+        reset_grit_object_chooser()
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=500, height=100)
+
+    def draw(self, context):
+        self.layout.prop(context.scene, "grit_object_chooser", text="")
+        col = self.layout.column()
+        col.label("To see more classes here, link in a scene")
+        col.label("from another .blend file within the Grit tree.")
+        col.label("The classes from that scene will then be")
+        col.label("available here.")
 
     def execute(self, context):
-        class_obj = context.active_object
+
+        global lookup
+        global items
+
+        class_obj = lookup[context.scene.grit_object_chooser]
+
+        lookup = {}
+        items = []
+
         class_name = strip_leading_exc(class_obj.name)
 
         meshes = [c for c in class_obj.children if c.grit_promotion == 'MESH']
@@ -477,9 +506,25 @@ class InstantiateSelected(bpy.types.Operator):
 
         mesh_ob = meshes[0]
 
-        instantiate_class(mesh_ob, class_name, context)
+        ob = mesh_ob.copy()
+        for i in ob.keys(): del ob[i]
+        ob.parent = None
+        ob.name = "obj"
+        context.scene.objects.link(ob)
+
+        if mesh_ob.library != None:
+            class_name = grit_path(context.scene, mesh_ob.library.filepath, class_name)
+
+        ob.grit_promotion = "OBJECT"
+        ob.grit_object_class_name = class_name
+        ob.location = context.scene.cursor_location
+
+        bpy.ops.object.select_all(action="DESELECT")
+        ob.select = True
+        context.scene.objects.active = ob
 
         return {'FINISHED'}
+
 #}}}
 
 
@@ -833,7 +878,8 @@ class ToolsPanel(bpy.types.Panel):
         column = root.column(align=True)
         column.alignment = "EXPAND"
         column.operator("grit.new_class")
-        column.operator("grit.new_object")
+        #column.operator("grit.new_object")
+        column.operator("grit.new_object2")
         column.operator("grit.new_primitive")
 
         obj = context.active_object
