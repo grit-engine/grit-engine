@@ -89,6 +89,7 @@ lua_Number check_int (lua_State *l, int stack_index,
                       lua_Number min, lua_Number max);
 
 float check_float (lua_State *l, int stack_index);
+const char* check_string (lua_State *l, int stack_index);
 
 template <typename T>
 T check_t (lua_State *l, int stack_index,

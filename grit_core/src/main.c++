@@ -42,6 +42,8 @@
 
 #include "physics/PhysicsWorld.h"
 
+#include "audio/audio.h"
+
 
 
 CentralisedLog clog;
@@ -131,6 +133,8 @@ int main(int argc, const char **argv)
                 physics_world = PhysicsWorldPtr(new PhysicsWorld());
 
                 streamer = new Streamer();
+
+				audio_init();
 
                 core_L = init_lua("/system/init.lua");
 

@@ -64,7 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ogre.lib FreeImaged.lib freetype235_D.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OpenEXR.lib zlibd.lib zziplibd.lib bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib $(InputDir)src\win32\Resources.res cg.lib icudt.lib icuin.lib icuuc.lib"
+				AdditionalDependencies="ogre.lib FreeImaged.lib freetype235_D.lib LibJPEG.lib LibMNG.lib LibOpenJPEG.lib LibPNG.lib LibTIFF.lib dxguid.lib dinput8.lib OpenEXR.lib zlibd.lib zziplibd.lib bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib $(InputDir)src\win32\Resources.res cg.lib icudt.lib icuin.lib icuuc.lib openal32.lib"
 				OutputFile="$(OutDir)\Grit_$(ConfigurationName).exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\grit_ogre\Dependencies\lib\Debug&quot;;&quot;$(SolutionDir)\dependencies\icu\lib&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
@@ -127,7 +127,7 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\Direct3D9\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\CgProgramManager\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre_dependencies\include&quot;;&quot;$(SolutionDir)\dependencies\icu\include&quot;;&quot;$(SolutionDir)\dependencies&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\dependencies\openal\include&quot;;&quot;$(SolutionDir)\dependencies\bullet\src&quot;;&quot;$(SolutionDir)\dependencies\quex-0.34.1&quot;;&quot;$(SolutionDir)\dependencies\lua-5.1.4&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\OctreeSceneManager\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\ParticleFX\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\src\GLSL\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\Direct3D9\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre\Plugins\CgProgramManager\include&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre_dependencies\include&quot;;&quot;$(SolutionDir)\dependencies\icu\include&quot;;&quot;$(SolutionDir)\dependencies&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NO_PLUGINS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -148,10 +148,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib freetype2311.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib cg.lib icudt.lib icuin.lib icuuc.lib"
+				AdditionalDependencies="FreeImage.lib freetype2311.lib dxguid.lib dinput8.lib ogre.lib zlib.lib zziplib.lib $(InputDir)src\win32\Resources.res bullet.lib OPENGL32.lib GLU32.lib d3d9.lib d3dx9.lib dxerr.lib cg.lib icudt.lib icuin.lib icuuc.lib openal32.lib"
 				OutputFile="$(SolutionDir)\grit_core\media\Grit.dat"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\icu\lib&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre_dependencies\lib\Release&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)\dependencies\openal\lib\win32&quot;;&quot;$(SolutionDir)\dependencies\icu\lib&quot;;&quot;$(SolutionDir)\dependencies\grit_ogre_dependencies\lib\Release&quot;;&quot;$(OutDir)&quot;;$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\$(TargetName).pdb"
 				SubSystem="1"
@@ -191,6 +191,14 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
+			<File
+				RelativePath=".\src\audio\audio.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\audio\AudioResource.cpp"
+				>
+			</File>
 			<File
 				RelativePath=".\src\BackgroundLoader.c++"
 				>
@@ -253,6 +261,10 @@
 			</File>
 			<File
 				RelativePath=".\src\lua_util.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\audio\lua_wrappers_audio.cpp"
 				>
 			</File>
 			<File
@@ -378,6 +390,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\audio\audio.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\audio\AudioResource.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\BackgroundMeshLoader.h"
 				>
 			</File>
@@ -483,6 +503,10 @@
 			</File>
 			<File
 				RelativePath=".\src\lua_util.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\audio\lua_wrappers_audio.h"
 				>
 			</File>
 			<File

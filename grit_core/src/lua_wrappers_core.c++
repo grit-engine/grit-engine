@@ -46,6 +46,7 @@
 #include "lua_wrappers_disk_resource.h"
 
 #include "gfx/lua_wrappers_gfx.h"
+#include "audio/lua_wrappers_audio.h"
 #include "physics/lua_wrappers_physics.h"
 
 
@@ -936,6 +937,7 @@ lua_State *init_lua(const char *filename)
 
         gfx_lua_init(L);
         physics_lua_init(L);
+		audio_lua_init(L);
         disk_resource_lua_init(L);
 
         status = aux_include(L,filename);

@@ -21,6 +21,7 @@
 
 
 #include "gfx/GfxDiskResource.h"
+#include "audio/AudioResource.h"
 #include "main.h"
 
 bool disk_resource_verbose_loads = false;
@@ -91,7 +92,7 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
     } else if (suffix == "tcol" || suffix == "gcol" || suffix == "bcol") {
         dr = new CollisionMesh(rn);
     } else if (suffix == "wav" || suffix == "ogg" || suffix == "mp3") {
-        // TODO: sound
+        dr = new AudioResource(rn);
     } else {
         for (unsigned i=0 ; i<num_texture_formats ; ++i) {
             if (suffix == texture_formats[i]) {
