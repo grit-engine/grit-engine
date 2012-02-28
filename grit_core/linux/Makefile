@@ -20,7 +20,7 @@ grit: $(TARGETS)
 	cp $< $@
 
 $(GRIT_BLENDER_DIR)/grit_col_conv: grit_col_conv
-	cp grit_col_conv $(GRIT_BLENDER_DIR)/grit_col_conv/grit_blender
+	cp grit_col_conv $@
 
 
 all: $(TARGETS)

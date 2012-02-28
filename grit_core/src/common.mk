@@ -19,6 +19,10 @@ LINKING=echo "Linking: [1;32m$@[0m"
 	@$(COMPILING)
 	@$(COMPILER) -c $< -o $@ $(CFLAGS)
 
+%.o: ../src/audio/%.cpp
+	@$(COMPILING)
+	@$(COMPILER) -c $< -o $@ $(CFLAGS)
+
 %.o: ../src/physics/%.c++
 	@$(COMPILING)
 	@$(COMPILER) -c $< -o $@ $(CFLAGS)
@@ -34,6 +38,8 @@ QUEX_PATH2 = ../$(QUEX_PATH)
 
 
 COMMON_OBJ=\
+        AudioResource.o \
+        audio.o \
         BackgroundLoader.o \
         BColParser.o \
         BulletDebugDrawer.o \
@@ -50,6 +56,7 @@ COMMON_OBJ=\
         HUD.o \
         ldbglue.o \
         lua_util.o \
+        lua_wrappers_audio.o \
         lua_wrappers_core.o \
         lua_wrappers_disk_resource.o \
         lua_wrappers_gfx.o \
@@ -268,10 +275,12 @@ DiskResource.o: ../src/vect_util.h ../depend_stubs/algorithm
 DiskResource.o: ../src/CentralisedLog.h ../depend_stubs/iostream
 DiskResource.o: ../depend_stubs/sstream
 DiskResource.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-DiskResource.o: ../src/console_colour.h ../src/main.h
-DiskResource.o: ../depend_stubs/lua.h ../src/Mouse.h ../src/Keyboard.h
-DiskResource.o: ../depend_stubs/string ../src/BackgroundLoader.h
-DiskResource.o: ../depend_stubs/list
+DiskResource.o: ../src/console_colour.h ../src/audio/AudioResource.h
+DiskResource.o: ../depend_stubs/AL/al.h
+DiskResource.o: ../depend_stubs/OgreResourceGroupManager.h
+DiskResource.o: ../src/main.h ../depend_stubs/lua.h ../src/Mouse.h
+DiskResource.o: ../src/Keyboard.h ../depend_stubs/string
+DiskResource.o: ../src/BackgroundLoader.h ../depend_stubs/list
 DiskResource.o: ../depend_stubs/boost/thread/thread.hpp
 DiskResource.o: ../depend_stubs/boost/thread/condition.hpp
 DiskResource.o: ../src/DiskResource.h ../depend_stubs/set
@@ -642,6 +651,8 @@ lua_wrappers_core.o: ../src/gfx/GfxDiskResource.h
 lua_wrappers_core.o: ../depend_stubs/OgreRoot.h
 lua_wrappers_core.o: ../depend_stubs/OgreOctreeSceneManager.h
 lua_wrappers_core.o: ../depend_stubs/OgreRenderWindow.h
+lua_wrappers_core.o: ../src/audio/lua_wrappers_audio.h
+lua_wrappers_core.o: ../src/audio/audio.h ../depend_stubs/AL/al.h
 lua_wrappers_core.o: ../src/physics/lua_wrappers_physics.h
 lua_wrappers_core.o: ../src/physics/PhysicsWorld.h
 lua_wrappers_disk_resource.o: ../src/gfx/GfxDiskResource.h
@@ -913,7 +924,8 @@ main.o: ../src/gfx/HUD.h ../src/vect_util.h
 main.o: ../src/gfx/GfxDiskResource.h ../depend_stubs/OgreResource.h
 main.o: ../src/BackgroundLoader.h ../depend_stubs/OgreRoot.h
 main.o: ../depend_stubs/OgreOctreeSceneManager.h
-main.o: ../depend_stubs/OgreRenderWindow.h
+main.o: ../depend_stubs/OgreRenderWindow.h ../src/audio/audio.h
+main.o: ../depend_stubs/AL/al.h
 path_util.o: ../src/CentralisedLog.h ../depend_stubs/iostream
 path_util.o: ../depend_stubs/sstream
 path_util.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
