@@ -39,6 +39,8 @@ import os.path
 import os
 import inspect
 import subprocess
+import xml.etree.ElementTree
+
 from bpy.props import *
 from mathutils import Quaternion, Vector
 
@@ -527,13 +529,13 @@ class InstantiateExternalClass(bpy.types.Operator):
 
 #}}}
 
-
 def to_lua (v):
     if v == True: return "true"
     if v == False: return "false"
     if type(v) == type("a string"): return repr(v)
     return str(v)
 
+# {{{ export_objects
 
 def export_objects (scene, objs):
     errors = []
@@ -784,6 +786,8 @@ def export_objects (scene, objs):
     if len(errors) > max_errors: errors = errors[:max_errors] + ["..."]
     if len(errors) > 0: return "\n".join(errors)
 
+#}}}
+
 
 
 class ScenePanel(bpy.types.Panel): #{{{
@@ -824,7 +828,7 @@ class ScenePanel(bpy.types.Panel): #{{{
         row = row.row()
         row.prop(context.scene, "grit_gcols_convert", text="Convert", expand=True)
         row.enabled = False
-        row = box.row()
+        col.operator("grit.import_xml", icon="SCRIPT")
         col.operator("grit.export_selected", icon="SCRIPT")
         col.operator("grit.export_all", icon="SCRIPT")
 #}}}
@@ -861,6 +865,76 @@ class ExportSelected(bpy.types.Operator):
         objs = bpy.context.selected_objects
         err = export_objects(scene, objs)
         error_msg(err)
+        return {'FINISHED'}
+
+class ImportXML(bpy.types.Operator):
+    '''Import from a .mesh.xml file'''
+    bl_idname = "grit.import_xml"
+    bl_label = "Import XML"
+
+    filepath = StringProperty(subtype='FILE_PATH')
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+        wm.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        tree = xml.etree.ElementTree.parse(self.filepath)
+        root = tree.getroot()
+
+        sharedgeometry = root.find("sharedgeometry")
+        if sharedgeometry == None:
+            error_msg("Can only import mesh.xml with shared geometry")
+            return {'FINISHED'}
+        blender_verts = []
+        blender_uvs = []
+        for vertexbuffer in sharedgeometry.iterfind("vertexbuffer"):
+            for vert in vertexbuffer.iterfind("vertex"):
+                x = float(vert.find("position").get("x"))
+                y = float(vert.find("position").get("y"))
+                z = float(vert.find("position").get("z"))
+                blender_verts.append((x,y,z))
+                u = float(vert.find("texcoord").get("u"))
+                v = float(vert.find("texcoord").get("v"))
+                blender_uvs.append((u,1-v))
+
+        submeshes = root.find("submeshes")
+        if submeshes == None:
+            error_msg("Could not find submeshes element in .mesh.xml")
+
+        blender_faces = []
+        blender_materials = []
+        blender_face_materials = []
+        for submesh in submeshes.iterfind("submesh"):
+            matname = submesh.get("material")
+            mat = bpy.data.materials.get(matname, None)
+            if mat == None:
+                mat = bpy.data.materials.new(matname)
+            blender_materials.append(mat)
+            for faces in submesh.iterfind("faces"):
+                for face in faces.iterfind("face"):
+                    v1 = int(face.get("v1"))
+                    v2 = int(face.get("v2"))
+                    v3 = int(face.get("v3"))
+                    blender_faces.append((v1,v2,v3))
+                    blender_face_materials.append(len(blender_materials)-1)
+
+        meshname = bpy.path.basename(self.filepath)
+        mesh = bpy.data.meshes.new(meshname)
+        for mat in blender_materials:
+            mesh.materials.append(mat)
+
+        mesh.from_pydata(blender_verts, [], blender_faces)
+        mesh.uv_textures.new()
+        for fi in range(0,len(blender_faces)-1):
+            f = blender_faces[fi]
+            mesh.uv_textures[0].data[fi].uv1 = blender_uvs[f[0]]
+            mesh.uv_textures[0].data[fi].uv2 = blender_uvs[f[1]]
+            mesh.uv_textures[0].data[fi].uv3 = blender_uvs[f[2]]
+            mesh.faces[fi].material_index = blender_face_materials[fi]
+        mesh.update()
+        
         return {'FINISHED'}
 
 
