@@ -130,6 +130,7 @@ def uv_eq (x, y):
 
 def get_vertexes_faces(scene, mesh, no_normals, default_material):
     num_uv = len(mesh.uv_textures)
+    ambient_colour = mesh.vertex_colors.get("GritAmbient", None)
     class Empty: pass
 
     # list of vertexes with their attributes
@@ -155,9 +156,11 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material):
         for triangle in triangles:
             face = [0,0,0]
             for fvi, vi in enumerate(triangle[0]):
+                fvi2 = triangle[1][fvi]
                 v = mesh.vertices[vi]
                 vert = Empty()
                 vert.pos =  v.co
+                vert.ambient = 1
                 if no_normals:
                     vert.normal = Vector((0,0,0))
                 else:
@@ -165,7 +168,16 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material):
                 if num_uv == 0:
                     vert.uv = [0,0]
                 else:
-                    vert.uv = mesh.uv_textures[0].data[fi].uv[triangle[1][fvi]]
+                    vert.uv = mesh.uv_textures[0].data[fi].uv[fvi2]
+                if ambient_colour != None:
+                    if fvi2 == 0:
+                        vert.ambient = ambient_colour.data[fi].color1.r
+                    elif fvi2 == 1:
+                        vert.ambient = ambient_colour.data[fi].color2.r
+                    elif fvi2 == 2:
+                        vert.ambient = ambient_colour.data[fi].color3.r
+                    elif fvi2 == 3:
+                        vert.ambient = ambient_colour.data[fi].color4.r
 
                 def tostr (v):
                     return "(pos="+str(v.pos) + ", normal="+str(v.normal)+", uv="+str(v.uv)+")"
@@ -175,6 +187,7 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material):
                 for evi, evert in enumerate(vertexes): #existing vertex id
                     if (evert.pos - vert.pos).length < 0.00001 and \
                        (evert.normal - vert.normal).length < 0.00001 and \
+                       float_eq(evert.ambient, vert.ambient) and \
                        uv_eq(evert.uv, vert.uv):
                         duplicate = evi
                         break
@@ -625,17 +638,21 @@ def export_objects (scene, objs):
                     errors.append("Grit mesh \""+obj.name+"\" has an undefined material")
 
             (vertexes, faces) = get_vertexes_faces(scene, mesh, False, "/system/FallbackMaterial")
+            ambient = mesh.vertex_colors.get("GritAmbient", None) 
 
             filename = my_abspath("//" + obj.name+".xml")
             file = open(filename, "w")
             file.write("<mesh>\n")
             file.write("    <sharedgeometry>\n")
-            file.write("        <vertexbuffer positions=\"true\" normals=\"true\" texture_coord_dimensions_0=\"float2\" texture_coords=\"1\">\n")
+            file.write("        <vertexbuffer positions=\"true\" normals=\"true\" colours_diffuse=\""+("false" if ambient == None else "true")+"\" texture_coord_dimensions_0=\"float2\" texture_coords=\"1\">\n")
             for v in vertexes:
                 file.write("            <vertex>\n")
                 file.write("                <position x=\""+str(v.pos.x)+"\" y=\""+str(v.pos.y)+"\" z=\""+str(v.pos.z)+"\" />\n")
                 file.write("                <normal x=\""+str(v.normal.x)+"\" y=\""+str(v.normal.y)+"\" z=\""+str(v.normal.z)+"\" />\n")
                 file.write("                <texcoord u=\""+str(v.uv[0])+"\" v=\""+str(-v.uv[1])+"\" />\n")
+                if ambient != None:
+                    col = str(v.ambient)+" 0.0 0.0 1.0"
+                    file.write("                <colour_diffuse value=\""+col+"\" />\n")
                 file.write("            </vertex>\n")
             file.write("        </vertexbuffer>\n")
             file.write("    </sharedgeometry>\n")
