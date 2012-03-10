@@ -1,9 +1,5 @@
 # TODO
 #
-# instantiate external class
-# point to an existing .mesh
-# point to an existing .tcol
-# vertex painting (ambient)
 # vertex painting (diffuse)
 # vertex painting (blend)
 #
@@ -217,7 +213,7 @@ promotion_enum_items = [
     ('MESH','.mesh','Grit .mesh'),
     ('GCOL','col','Grit col'),              # for dummies or mesh (trimesh)
     ('PRIM','col primitive','Grit col primitive'),
-    ('HULL','col hull','Grit col hull'),
+    ('GCOL_EXT','external col','External Grit col'), #for dummies
 ]
 
 
@@ -262,6 +258,9 @@ class SceneSummaryPanel(bpy.types.Panel):
         summary.label("selected gcol parts")
         summary.label(func('PRIM'))
         summary = box.row(align=True)
+        summary.label("selected external .gcol")
+        summary.label(func('GCOL_EXT'))
+        summary = box.row(align=True)
         summary.label("selected unpromoted")
         summary.label(func('NONE'))
 
@@ -272,7 +271,12 @@ class SceneSummaryPanel(bpy.types.Panel):
 
 
 bpy.types.Object.grit_promotion = bpy.props.EnumProperty(name='Promotion', default='NONE', items=promotion_enum_items, description="The special role within the Grit engine that this Blender object represents")
+bpy.types.Object.grit_export = bpy.props.BoolProperty(name='Export', default=True, description="Whether to export this Grit asset")
+
 bpy.types.Object.grit_object_class_name = bpy.props.StringProperty(name='Class', default="", description="Name of the class (without the !) of which this Grit object is an instance")
+
+
+bpy.types.Object.grit_gcol_ext_name = bpy.props.StringProperty(name='External gcol', default="Foo.gcol", description="Name of the external .gcol file to use")
 
 # piles
 
@@ -282,6 +286,7 @@ bpy.types.Object.grit_class_place_z_off = bpy.props.FloatProperty(name='Placemen
 bpy.types.Object.grit_class_place_rnd_rot = bpy.props.BoolProperty(name='Placement Random Z Rotate?', default=False, description="When placing objects on the map using place(), whether a random rotation about Z is used (to introduce some variety)")
 
 bpy.types.Object.grit_mesh_tangents = bpy.props.BoolProperty(name='Tangents?', default=False, description="Whether or not to generate tangents in the mesh file (takes more disk & memory but required when using normal maps)")
+bpy.types.Object.grit_mesh_ext_name = bpy.props.StringProperty(name='External mesh', default="", description="If set, use the existing named mesh file instead")
 
 bpy.types.Object.grit_gcol_static = bpy.props.BoolProperty(name='Static?', default=True, description="Whether or not objects using this gcol are fixed in place (like a wall)")
 bpy.types.Object.grit_gcol_mass = bpy.props.FloatProperty(name='Mass', default=100.0, description="The mass of the object in kilograms")
@@ -305,10 +310,11 @@ class NewClass(bpy.types.Operator):
     bl_label = "New Class"
 
     class_name = bpy.props.StringProperty(name="Class name", default="")
-    collision = bpy.props.EnumProperty(name='Has .gcol?', default='MESH', items=[
+    collision = bpy.props.EnumProperty(name='.gcol type', default='MESH', items=[
         ('NONE','No .gcol','No .gcol'),
         ('EMPTY','Empty .gcol (e.g. for dynamic)','No collision mesh, only child parts / hulls'),
         ('MESH','Trimesh .gcol (mainly for static)','Has collision mesh, and optional child parts / hull'),
+        ('EXT','External .gcol','A .gcol that already exists on disk'),
     ])
 
 
@@ -355,11 +361,16 @@ class NewClass(bpy.types.Operator):
             if self.collision=="EMPTY":
                 bpy.ops.object.add(type="EMPTY", location=pos+Vector((-5,0,0)))
                 the_gcol = context.active_object
-            else:
+                the_gcol.grit_promotion = "GCOL"
+            elif self.collision=="MESH":
                 bpy.ops.mesh.primitive_cube_add(location=pos+Vector((-5,0,0)))
                 the_gcol = context.active_object
+                the_gcol.grit_promotion = "GCOL"
+            else:
+                bpy.ops.object.add(type="EMPTY", location=pos+Vector((-5,0,0)))
+                the_gcol = context.active_object
+                the_gcol.grit_promotion = "GCOL_EXT"
             the_gcol.name = gcol_name
-            the_gcol.grit_promotion = "GCOL"
             set_parent(context, the_gcol, the_class)
         
         bpy.ops.object.select_all(action="DESELECT")
@@ -418,6 +429,7 @@ class RenameClass(bpy.types.Operator):
         for c in class_obj.children:
             if c.grit_promotion == "GCOL" and rename_gcol: c.name = gcol_name
             if c.grit_promotion == "MESH" and self.rename_mesh: c.name = mesh_name
+            if c.grit_promotion == "GCOL_EXT" and rename_gcol: c.name = gcol_name
 
         class_obj.name = '!'+class_name
 
@@ -588,7 +600,7 @@ def export_objects (scene, objs):
             class_name = strip_leading_exc(obj.name)
 
             meshes = [c for c in obj.children if c.grit_promotion == 'MESH']
-            cols = [c for c in obj.children if c.grit_promotion == 'GCOL']
+            cols = [c for c in obj.children if c.grit_promotion == 'GCOL' or c.grit_promotion == 'GCOL_EXT']
 
             if len(meshes) == 0:
                 errors.append("Class does not have a mesh: \""+obj.name+"\"\n")
@@ -614,7 +626,10 @@ def export_objects (scene, objs):
                 if len(cols) > 1:
                     errors.append("Class has "+str(len(meshes))+" cols (should have 0 or 1): \""+obj.name+"\"")
                     continue
-                if class_name + ".gcol" != cols[0].name: attributes.append(("colMesh", cols[0].name))
+                col_name = cols[0].name
+                if cols[0].grit_promotion == 'GCOL_EXT':
+                    col_name = cols[0].grit_gcol_ext_name
+                if class_name + ".gcol" != col_name: attributes.append(("colMesh", col_name))
 
             interior = ""
             if len(attributes) == 0:
@@ -852,7 +867,7 @@ class ScenePanel(bpy.types.Panel): #{{{
 
 
 class ExportScene(bpy.types.Operator):
-    '''Export scene to grit files'''
+    '''Export scene to grit files (excluding Blender objects with export turned off)'''
     bl_idname = "grit.export_all"
     bl_label = "Export Whole Scene"
 
@@ -862,7 +877,7 @@ class ExportScene(bpy.types.Operator):
 
     def execute(self, context):
         scene = bpy.context.scene
-        objs = scene.objects
+        objs = [ x for x in scene.objects if x.grit_export ]
         err = export_objects(scene, objs)
         error_msg(err)
         return {'FINISHED'}
@@ -1017,6 +1032,13 @@ class ToolsPanel(bpy.types.Panel):
         column2.prop(obj, "grit_gcol_angular_sleep_thresh")
         
         root = self.layout.box()
+        root.label("External .gcol"+(" \""+obj.name+"\"" if obj.grit_promotion == "GCOL_EXT" else ""), icon="PHYSICS")
+        column = root.column(align=True)
+        if obj.grit_promotion != "GCOL_EXT":
+            column.enabled = False
+        column.prop(obj, "grit_gcol_ext_name")
+        
+        root = self.layout.box()
         mapping = dict()
         mapping["GritPhysicsSphere"] = " (sphere)"
         mapping["GritPhysicsBox"] = " (box)"
@@ -1034,6 +1056,9 @@ class ToolsPanel(bpy.types.Panel):
         r = root.row()
         r.prop(obj, "grit_gcol_prim_shrink")
         if obj.type == "MESH" and mapping.get(obj.data.name): r.enabled = False
+
+        self.layout.prop(obj, "grit_export", text="Export this object")
+
         
 def register():
     bpy.utils.register_module(__name__)
