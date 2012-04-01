@@ -123,6 +123,16 @@ def float_eq (x, y):
 def uv_eq (x, y):
     return float_eq(x[0], y[0]) and float_eq(x[1], y[1])
 
+def groups_eq (x, y):
+    if x.groups == y.groups: return True
+    if x.groups == None or y.groups == None: return False
+    if len(x.groups) != len(y.groups): return False
+    for i, g in enumerate(x.groups):
+        if y.groups(i) != g: return False
+    for i, g in enumerate(y.groups):
+        if x.groups(i) != g: return False
+    return True
+
 
 def get_vertexes_faces(scene, mesh, no_normals, default_material):
     num_uv = len(mesh.uv_textures)
@@ -137,6 +147,8 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material):
     counter = 0
 
     for fi, f in enumerate(mesh.faces):
+
+        #print("face: "+str(fi))
 
         matname = default_material if (len(mesh.materials)==0 or mesh.materials[f.material_index] == None) else grit_path_from_data(scene, mesh.materials[f.material_index])
 
@@ -155,16 +167,17 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material):
                 fvi2 = triangle[1][fvi]
                 v = mesh.vertices[vi]
                 vert = Empty()
-                vert.pos =  v.co
+                vert.pos =  (v.co.x, v.co.y, v.co.z)
                 vert.ambient = 1
                 if no_normals:
-                    vert.normal = Vector((0,0,0))
+                    vert.normal = (0,0,0)
                 else:
-                    vert.normal = v.normal
+                    vert.normal = (v.normal.x, v.normal.y, v.normal.z)
                 if num_uv == 0:
-                    vert.uv = [0,0]
+                    vert.uv = (0,0)
                 else:
-                    vert.uv = mesh.uv_textures[0].data[fi].uv[fvi2]
+                    the_uv = mesh.uv_textures[0].data[fi].uv[fvi2]
+                    vert.uv = (the_uv[0], the_uv[1])
                 if ambient_colour != None:
                     if fvi2 == 0:
                         vert.ambient = ambient_colour.data[fi].color1.r
@@ -174,6 +187,12 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material):
                         vert.ambient = ambient_colour.data[fi].color3.r
                     elif fvi2 == 3:
                         vert.ambient = ambient_colour.data[fi].color4.r
+                vert.groups = None
+                if len(v.groups) > 0:
+                    vert.groups = []
+                    for gi, g in enumerate(v.groups):
+                        vert.groups.append((g.group,g.weight))
+                        
 
                 def tostr (v):
                     return "(pos="+str(v.pos) + ", normal="+str(v.normal)+", uv="+str(v.uv)+")"
@@ -181,10 +200,11 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material):
                 # see if we already hvae a vertex that is close enough
                 duplicate = None
                 for evi, evert in enumerate(vertexes): #existing vertex id
-                    if (evert.pos - vert.pos).length < 0.00001 and \
-                       (evert.normal - vert.normal).length < 0.00001 and \
-                       float_eq(evert.ambient, vert.ambient) and \
-                       uv_eq(evert.uv, vert.uv):
+                    if evert.pos == vert.pos and \
+                       evert.normal == vert.normal and \
+                       evert.ambient == vert.ambient and \
+                       evert.uv == vert.uv and \
+                       groups_eq(evert, vert):
                         duplicate = evi
                         break
 
@@ -192,6 +212,7 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material):
                     face[fvi] = duplicate
                 else:
                     vertexes.append(vert)
+                    print("vertexes now: "+str(len(vertexes)))
                     face[fvi] = counter
                     counter += 1
             if not matname in faces.keys():
@@ -643,6 +664,16 @@ def export_objects (scene, objs):
 
     for obj in objs:
         if obj.grit_promotion == 'MESH':
+            armature = None
+            if obj.type == "ARMATURE":
+                if len(obj.children)==0:
+                    errors.append("Armature has no children: \""+obj+"\"")
+                    continue
+                if len(obj.children)>1:
+                    errors.append("Armature has more than 1 child: \""+obj+"\"")
+                    continue
+                armature = obj
+                obj = armature.children[0]
             mesh = obj.to_mesh(scene, True, "PREVIEW")
 
             if len(mesh.materials) == 0:
@@ -652,18 +683,19 @@ def export_objects (scene, objs):
                 if m == None:
                     errors.append("Grit mesh \""+obj.name+"\" has an undefined material")
 
+                filename = my_abspath("//" + obj.name+".xml")
+
             (vertexes, faces) = get_vertexes_faces(scene, mesh, False, "/system/FallbackMaterial")
             ambient = mesh.vertex_colors.get("GritAmbient", None) 
 
-            filename = my_abspath("//" + obj.name+".xml")
             file = open(filename, "w")
             file.write("<mesh>\n")
             file.write("    <sharedgeometry>\n")
             file.write("        <vertexbuffer positions=\"true\" normals=\"true\" colours_diffuse=\""+("false" if ambient == None else "true")+"\" texture_coord_dimensions_0=\"float2\" texture_coords=\"1\">\n")
             for v in vertexes:
                 file.write("            <vertex>\n")
-                file.write("                <position x=\""+str(v.pos.x)+"\" y=\""+str(v.pos.y)+"\" z=\""+str(v.pos.z)+"\" />\n")
-                file.write("                <normal x=\""+str(v.normal.x)+"\" y=\""+str(v.normal.y)+"\" z=\""+str(v.normal.z)+"\" />\n")
+                file.write("                <position x=\""+str(v.pos[0])+"\" y=\""+str(v.pos[1])+"\" z=\""+str(v.pos[2])+"\" />\n")
+                file.write("                <normal x=\""+str(v.normal[0])+"\" y=\""+str(v.normal[1])+"\" z=\""+str(v.normal[2])+"\" />\n")
                 file.write("                <texcoord u=\""+str(v.uv[0])+"\" v=\""+str(-v.uv[1])+"\" />\n")
                 if ambient != None:
                     col = str(v.ambient)+" 0.0 0.0 1.0"
@@ -671,6 +703,14 @@ def export_objects (scene, objs):
                 file.write("            </vertex>\n")
             file.write("        </vertexbuffer>\n")
             file.write("    </sharedgeometry>\n")
+            if armature!=None:
+                file.write("    <boneassignments>\n")
+                for vi, v in enumerate(vertexes):
+                    for g in v.groups:
+                        bone_index = armature.pose.bones.find(obj.vertex_groups[g[0]].name)
+                        file.write("        <vertexboneassignment vertexindex=\""+str(vi)+"\" boneindex=\""+str(bone_index)+"\" weight=\""+str(g[1])+"\" />\n")
+                file.write("    </boneassignments>\n");
+
             file.write("    <submeshes>\n")
             for m in faces.keys():
                 file.write("        <submesh material=\""+m+"\" usesharedvertices=\"true\" use32bitindexes=\"false\" operationtype=\"triangle_list\">\n")
@@ -680,8 +720,40 @@ def export_objects (scene, objs):
                 file.write("            </faces>\n")
                 file.write("        </submesh>\n")
             file.write("    </submeshes>\n")
+            if armature!=None:
+                file.write("    <skeletonlink name=\""+armature.name+"\" />\n")
             file.write("</mesh>\n")
             file.close()
+
+            if armature != None:
+                skel_filename = my_abspath("//" + armature.name+".xml")
+                file = open(skel_filename, "w")
+                file.write("<skeleton blendmode=\"average\">\n")
+                file.write("    <bones>\n")
+                for bi, b in enumerate(armature.pose.bones):
+                    file.write("        <bone id=\""+str(bi)+"\" name=\""+b.name+"\">\n")
+                    mat = b.matrix
+                    b_parent = b.parent
+                    if b_parent != None:
+                        print("b_parent.name = "+b_parent.name)
+                        mat = b_parent.matrix.inverted() * mat
+                    pos = mat.translation
+                    file.write("            <position x=\""+str(pos.x)+"\" y=\""+str(pos.y)+"\" z=\""+str(pos.z)+"\" />\n")
+                    rot = mat.to_quaternion()
+                    file.write("            <rotation angle=\""+str(rot.angle)+"\">\n")
+                    file.write("                <axis x=\""+str(rot.axis.x)+"\" y=\""+str(rot.axis.y)+"\" z=\""+str(rot.axis.z)+"\" />\n")
+                    file.write("            </rotation>\n")
+                    file.write("        </bone>\n")
+                file.write("    </bones>\n")
+                file.write("    <bonehierarchy>\n")
+                for bi, b in enumerate(armature.pose.bones):
+                    if b.parent != None:
+                        file.write("        <boneparent bone=\""+b.name+"\" parent=\""+b.parent.name+"\" />\n")
+
+                file.write("    </bonehierarchy>\n")
+                file.write("    <animations />\n")
+                file.write("</skeleton>\n")
+                file.close()
 
             if scene.grit_meshes_convert:
                 current_py = inspect.getfile(inspect.currentframe())
@@ -693,6 +765,10 @@ def export_objects (scene, objs):
                     args.append("4")
                 args.append(filename)
                 subprocess.call(args)
+                if armature != None:
+                    args = [exporter]
+                    args.append(skel_filename)
+                    subprocess.call(args)
 
             bpy.data.meshes.remove(mesh)
 
@@ -777,7 +853,7 @@ def export_objects (scene, objs):
                     file.write("        shrink "+str(shrink)+";\n")
                     file.write("        vertexes {\n")
                     for v in vertexes:
-                        p = c.matrix_local * v.pos
+                        p = c.matrix_local * Vector(v.pos)
                         file.write("            "+str(p.x)+" "+str(p.y)+" "+str(p.z)+";\n")
                     file.write("        }\n")
                     file.write("    }\n")
@@ -800,7 +876,7 @@ def export_objects (scene, objs):
                 file.write("trimesh {\n")
                 file.write("    vertexes {\n")
                 for v in vertexes:
-                    file.write("        "+str(v.pos.x)+" "+str(v.pos.y)+" "+str(v.pos.z)+";\n")
+                    file.write("        "+str(v.pos[0])+" "+str(v.pos[1])+" "+str(v.pos[2])+";\n")
                 file.write("    }\n")
                 file.write("    faces {\n")
                 for m in faces.keys():
