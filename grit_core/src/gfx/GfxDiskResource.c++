@@ -29,6 +29,8 @@
 #include "GfxDiskResource.h"
 #include "gfx.h"
 
+extern fast_erase_vector<GfxBody*> gfx_all_bodies;
+
 
 bool gfx_disk_resource_verbose_loads = false;
 
@@ -176,7 +178,7 @@ class MyMeshDeserializer : public Ogre::Serializer {
     Ogre::MeshSerializerListener *mListener;
 };
 
-void GfxDiskResource::load (void)
+void GfxDiskResource::loadImpl (void)
 {
     APP_ASSERT(!isLoaded());
     try {
@@ -228,20 +230,36 @@ void GfxDiskResource::load (void)
         } else {
             CVERB << "Loaded in OGRE, unloaded in GRIT: \"" << getName() << "\"" << std::endl;
         }
-        DiskResource::load();
     } catch (Ogre::Exception &e) {
         GRIT_EXCEPT(e.getDescription());
     }
 }
 
-void GfxDiskResource::unload(void)
+void GfxDiskResource::reloadImpl(void)
 {
-    APP_ASSERT(isLoaded());
+    if (gfx_disk_resource_verbose_loads)
+        CVERB << "OGRE: Reloading: " << rp->getName() << std::endl;
+    try {
+        rp->reload();
+        if (rp->getCreator() == Ogre::MeshManager::getSingletonPtr()) {
+            Ogre::MeshPtr ptr = rp;
+            if (ptr->hasSkeleton()) ptr->getSkeleton()->reload();
+            for (unsigned long i=0 ; i<gfx_all_bodies.size() ; ++i) {
+                GfxBody *b = gfx_all_bodies[i];
+                if (b->mesh == ptr) b->reinitialise();
+            }
+        }
+    } catch (Ogre::Exception &e) {
+        CERR << e.getFullDescription() << std::endl;
+    }       
+}  
+
+void GfxDiskResource::unloadImpl(void)
+{
     if (gfx_disk_resource_verbose_loads)
         CVERB << "OGRE: Unloading: " << rp->getName() << std::endl;
     try {
         rp->unload();
-        DiskResource::unload();
     } catch (Ogre::Exception &e) {
         CERR << e.getFullDescription() << std::endl;
     }       

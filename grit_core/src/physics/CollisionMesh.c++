@@ -171,7 +171,7 @@ namespace {
 
 static inline Vector3 to_v3(BColVert &v) { return Vector3(v.x, v.y, v.z); }
 
-void CollisionMesh::load (void)
+void CollisionMesh::loadImpl (void)
 {
     APP_ASSERT(masterShape==NULL);
 
@@ -516,17 +516,9 @@ void CollisionMesh::load (void)
             setInertia(from_bullet(i));
         }
     }
-
-    DiskResource::load();
 }
 
-void CollisionMesh::reload (void)
-{
-    unload();
-    load();
-}
-
-void CollisionMesh::unload (void)
+void CollisionMesh::unloadImpl (void)
 {
     //compound of shapes, recursive
 
@@ -546,8 +538,6 @@ void CollisionMesh::unload (void)
     }
     delete masterShape;
     masterShape = NULL;
-
-    DiskResource::unload();
 }
 
 PhysicalMaterial *CollisionMesh::getMaterialFromPart (unsigned int id) const

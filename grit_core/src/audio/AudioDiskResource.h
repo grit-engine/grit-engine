@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-class AudioResource;
+class AudioDiskResource;
 
 #ifndef AUDIO_DISK_RESOURCE_H
 #define AUDIO_DISK_RESOURCE_H
@@ -31,10 +31,10 @@ class AudioResource;
 
 #include <OgreResourceGroupManager.h>
 
-class AudioResource : public DiskResource {
+class AudioDiskResource : public DiskResource {
 
 public:
-	AudioResource (const std::string &name)
+	AudioDiskResource (const std::string &name)
 		: name(name)
 	{
 	}

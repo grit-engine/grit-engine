@@ -19,11 +19,11 @@
  * THE SOFTWARE.
  */
 
-#include "AudioResource.h"
+#include "AudioDiskResource.h"
 #include "audio.h"
 #include "../portable_io.h"
 
-void AudioResource::load (void)
+void AudioDiskResource::load (void)
 {
 	// head radio. because your head NEEDS IT.
 
@@ -74,7 +74,7 @@ struct wave_format
 	uint16_t size;
 };
 
-void AudioResource::loadWAV(Ogre::DataStreamPtr &file)
+void AudioDiskResource::loadWAV(Ogre::DataStreamPtr &file)
 {
 	riff_header header;
 	file->read(&header, sizeof(header));
@@ -139,7 +139,7 @@ void AudioResource::loadWAV(Ogre::DataStreamPtr &file)
 	{
 		alFormat = (fmt.bitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
 	}
-	else if (fmt.channels == 2)
+	else if (fmt.channels == 2 || true) // do we have quad?  is there any option other than 1 and 2?  if so, what do we do?
 	{
 		alFormat = (fmt.bitsPerSample == 8) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
 	}
@@ -153,12 +153,12 @@ void AudioResource::loadWAV(Ogre::DataStreamPtr &file)
 	file->close();
 }
 
-void AudioResource::unload (void)
+void AudioDiskResource::unload (void)
 {
 	alDeleteBuffers(1, &alBuffer);
 }
 
-bool AudioResource::isGPUResource (void)
+bool AudioDiskResource::isGPUResource (void)
 {
 	return false;
 }

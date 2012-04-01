@@ -1395,27 +1395,6 @@ int global_gfx_particle_count (lua_State *L)
 // }}}
 
 
-int global_gfx_reload_mesh (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
-    gfx_reload_mesh(name);
-    return 0;
-TRY_END
-}
-
-int global_gfx_reload_texture (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
-    gfx_reload_texture(name);
-    return 0;
-TRY_END
-}
-
-
 
 
 #include <OgreFont.h>
@@ -2574,8 +2553,6 @@ static const luaL_reg global[] = {
     {"gfx_particle_count",global_gfx_particle_count},
     {"gfx_particle_step_size_set",global_gfx_particle_step_size_set},
     {"gfx_particle_step_size_get",global_gfx_particle_step_size_get},
-    {"gfx_reload_mesh",global_gfx_reload_mesh},
-    {"gfx_reload_texture",global_gfx_reload_texture},
 
     {"get_rendersystem",global_get_rendersystem},
 

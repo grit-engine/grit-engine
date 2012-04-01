@@ -196,7 +196,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\audio\AudioResource.cpp"
+				RelativePath=".\src\audio\AudioDiskResource.cpp"
 				>
 			</File>
 			<File
@@ -394,7 +394,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\audio\AudioResource.h"
+				RelativePath=".\src\audio\AudioDiskResource.h"
 				>
 			</File>
 			<File

@@ -179,11 +179,29 @@ TRY_START
 TRY_END
 }
 
+static int global_audio_master_volume (lua_State *L)
+{
+TRY_START
+    if (lua_gettop(L) == 0) {
+        lua_pushnumber(L, audio_master_volume());
+        return 1;
+    } else if (lua_gettop(L) == 1) {
+        float f= check_float(L, 1);
+        audio_master_volume(f);
+        return 0;
+    } else {
+        my_lua_error(L, "Function requires either 0 or 1 arguments");
+    }
+	return 0;
+TRY_END
+}
+
 static const luaL_reg global[] = {
 	{"audio_source_make",global_audio_source_make},
 	{"audio_play",global_audio_play},
 	{"audio_set_listener",global_audio_set_listener},
 	{"audio_update",global_audio_update},
+	{"audio_master_volume",global_audio_master_volume},
 	{NULL,NULL}
 };
 

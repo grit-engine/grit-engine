@@ -75,114 +75,6 @@ void push_pworld (lua_State *L, const PhysicsWorldPtr &self);
 #define RBODY_TAG "Grit/RigidBody"
 
 
-// COLMESH ================================================================= {{{
-
-void push_colmesh (lua_State *L, CollisionMesh *self)
-{
-        if (self == NULL)
-                lua_pushnil(L);
-        else
-                push(L,self,COLMESH_TAG);
-}
-
-static int colmesh_reload (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(CollisionMesh,self,1,COLMESH_TAG);
-        self.reload();
-        return 0;
-TRY_END
-}
-
-static int colmesh_gc (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        return 0;
-TRY_END
-}
-
-
-TOSTRING_GETNAME_MACRO (colmesh,CollisionMesh,.getName(),COLMESH_TAG)
-
-
-
-static int colmesh_index (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(CollisionMesh,self,1,COLMESH_TAG);
-        const char *key = luaL_checkstring(L,2);
-        bool parent_trap = disk_resource_index(L, self, key);
-        if (parent_trap) {
-                return 1;
-        } else if (!::strcmp(key,"mass")) {
-                lua_pushnumber(L,self.getMass());
-        } else if (!::strcmp(key,"ccdMotionThreshold")) {
-                lua_pushnumber(L,self.getCCDMotionThreshold());
-        } else if (!::strcmp(key,"ccdSweptSphereRadius")) {
-                lua_pushnumber(L,self.getCCDSweptSphereRadius());
-        } else if (!::strcmp(key,"linearDamping")) {
-                lua_pushnumber(L,self.getLinearDamping());
-        } else if (!::strcmp(key,"angularDamping")) {
-                lua_pushnumber(L,self.getAngularDamping());
-        } else if (!::strcmp(key,"linearSleepThreshold")) {
-                lua_pushnumber(L,self.getLinearSleepThreshold());
-        } else if (!::strcmp(key,"angularSleepThreshold")) {
-                lua_pushnumber(L,self.getAngularSleepThreshold());
-        } else if (!::strcmp(key,"name")) {
-                lua_pushstring(L,self.getName().c_str());
-        } else if (!::strcmp(key,"reload")) {
-                push_cfunction(L,colmesh_reload);
-        } else {
-                my_lua_error(L,"Not a readable CollisionMesh member: "+std::string(key));
-        }
-        return 1;
-TRY_END
-}
-
-static int colmesh_newindex (lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(CollisionMesh,self,1,COLMESH_TAG);
-        const char *key = luaL_checkstring(L,2);
-        if (!::strcmp(key,"mass")) {
-                float v = luaL_checknumber(L,3);
-                self.setMass(v);
-        } else if (!::strcmp(key,"ccdMotionThreshold")) {
-                float v = luaL_checknumber(L,3);
-                self.setCCDMotionThreshold(v);
-        } else if (!::strcmp(key,"ccdSweptSphereRadius")) {
-                float v = luaL_checknumber(L,3);
-                self.setCCDSweptSphereRadius(v);
-        } else if (!::strcmp(key,"linearDamping")) {
-                float v = luaL_checknumber(L,3);
-                self.setLinearDamping(v);
-        } else if (!::strcmp(key,"angularDamping")) {
-                float v = luaL_checknumber(L,3);
-                self.setAngularDamping(v);
-        } else if (!::strcmp(key,"linearSleepThreshold")) {
-                float v = luaL_checknumber(L,3);
-                self.setLinearSleepThreshold(v);
-        } else if (!::strcmp(key,"angularSleepThreshold")) {
-                float v = luaL_checknumber(L,3);
-                self.setAngularSleepThreshold(v);
-        } else {
-               my_lua_error(L,"Not a writeable CollisionMesh member: "+std::string(key));
-        }
-        return 0;
-TRY_END
-}
-
-EQ_PTR_MACRO(CollisionMesh,colmesh,COLMESH_TAG)
-
-MT_MACRO_NEWINDEX(colmesh);
-
-//}}}
-
-
 // RIGID_BODY ============================================================== {{{
 
 void push_rbody (lua_State *L, const RigidBodyPtr &self)
@@ -742,8 +634,6 @@ TRY_START
         } else if (!::strcmp(key,"setPartOrientationOffset")) {
                 push_cfunction(L,rbody_set_part_orientation_offset);
 
-        } else if (!::strcmp(key,"mesh")) {
-                push_colmesh(L,self->colMesh);
         } else if (!::strcmp(key,"world")) {
                 push_pworld(L,self->world);
 
@@ -1366,7 +1256,6 @@ void physics_lua_init (lua_State *L)
 
         ADD_MT_MACRO(pworld,PWORLD_TAG);
         ADD_MT_MACRO(rbody,RBODY_TAG);
-        ADD_MT_MACRO(colmesh,COLMESH_TAG);
 
         luaL_register(L, "_G", global);
 

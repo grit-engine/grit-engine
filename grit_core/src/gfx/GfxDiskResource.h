@@ -34,10 +34,6 @@ class GfxDiskResource : public DiskResource {
   public:
     GfxDiskResource (const std::string &name, const std::string &ext);
 
-    virtual void load (void);
-
-    virtual void unload (void);
-
     virtual bool isGPUResource (void);
 
     virtual const std::string &getName (void) const { return name; }
@@ -48,6 +44,10 @@ class GfxDiskResource : public DiskResource {
     Ogre::ResourcePtr rp;
 
     const std::string name;
+
+    virtual void loadImpl (void);
+    virtual void reloadImpl (void);
+    virtual void unloadImpl (void);
 
 };
 

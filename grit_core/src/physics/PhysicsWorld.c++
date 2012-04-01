@@ -538,7 +538,7 @@ int PhysicsWorld::pump (lua_State *L, float elapsed)
         }
         // chuck them out if they have misbehaved
         for (unsigned int i=0 ; i<nan_bodies.size() ; ++i) {
-            nan_bodies[i]->removeFromWorld();
+            nan_bodies[i]->destroy(L);
         }
 
         // call the stabilise callbacks
@@ -925,6 +925,8 @@ static btCompoundShape *clone_compound (btCompoundShape *master)
 /* The intention is that the object is always in the world.  The exceptions are when it is created,
  * after it has been destroyed, and in the brief moments when it is pulled out and put back in again
  * in response to a CollisionMesh reload. */
+
+// Another exception:  When it has been polluted by a NaN and must be pulled out
 
 void RigidBody::addToWorld (void)
 {

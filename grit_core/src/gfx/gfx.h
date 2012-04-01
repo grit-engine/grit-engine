@@ -503,7 +503,7 @@ class GfxBody : public GfxNode, public fast_erase_index {
 
 
     friend class SharedPtr<GfxBody>;
-    friend void gfx_reload_mesh (const std::string &name);
+    friend class GfxDiskResource;
 };
 
 class GfxLight : public GfxNode, public fast_erase_index {
@@ -654,5 +654,4 @@ static inline Degree from_ogre (const Ogre::Degree &v)
 { return Degree(v.valueDegrees()); }
 static inline Radian from_ogre (const Ogre::Radian &v)
 { return Radian(v.valueRadians()); }
-
 #endif 

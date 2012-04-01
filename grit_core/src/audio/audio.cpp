@@ -19,11 +19,13 @@
  * THE SOFTWARE.
  */
 
-#include "audio.h"
-#include "AudioResource.h"
-
 #include <AL/al.h>
 #include <AL/alc.h>
+
+#include "../CentralisedLog.h"
+
+#include "audio.h"
+#include "AudioDiskResource.h"
 
 ALCdevice* alDevice;
 ALCcontext* alContext;
@@ -69,6 +71,7 @@ void audio_play (const std::string& filename, const Vector3& position)
 
 	// create an audio source object
 	AudioSource* source = new AudioSource(filename);
+    source->setPosition(position);
 	source->play();
 
 	// add it to the one-shot list
@@ -97,6 +100,17 @@ void audio_update (void)
 	{
 		oneShotSounds.remove(*iter);
 	}
+}
+
+static float master_volume;
+
+void audio_master_volume (float f) {
+    master_volume = f;
+	alListenerfv(AL_GAIN, &f);
+}
+
+float audio_master_volume (void) {
+    return master_volume;
 }
 
 AudioSource::AudioSource (const std::string &filename)
@@ -148,7 +162,7 @@ bool AudioSource::playing (void)
 
 void AudioSource::play (void)
 {
-	AudioResource* resource = (AudioResource*)disk_resource_get(resourceName);
+	AudioDiskResource* resource = (AudioDiskResource*)disk_resource_get(resourceName);
 
 	if (!resource)
 	{

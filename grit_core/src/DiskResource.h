@@ -41,9 +41,10 @@ DiskResources disk_resource_all (void);
 DiskResources disk_resource_all_loaded (void);
 DiskResource *disk_resource_get_or_make (const std::string &rn);
 DiskResource *disk_resource_get (const std::string &rn);
+bool disk_resource_has (const std::string &rn);
 
 // each DiskResource can be in a loaded or unloaded state.
-// the predicates 'users>0' and 'loaded' are unrelated by logic
+// the predicates 'users>0' and 'loaded' are logically unrelated
 // Example of users>0 && !loaded: demand placed in queue, not yet loaded
 // Example of users==0 && loaded: resource in LRU queue, no pressure to unload yet
 // !loaded => dependencies.size()==0
@@ -68,6 +69,8 @@ class DiskResource {
         void registerReloadWatcher (ReloadWatcher *u) { reloadWatchers.insert(u); }
         void unregisterReloadWatcher (ReloadWatcher *u) { reloadWatchers.erase(u); }
 
+        void callReloadWatchers ();
+
         // if returns true, will get added to gpu death row list when no-longer required
         virtual bool isGPUResource (void)
         {
@@ -90,7 +93,12 @@ class DiskResource {
             return users == 0;
         }
 
-        void reload (void) { unload(); load(); }
+        // at no point is it actually loaded, but it may change its internal state during this
+        void reload (void);
+
+        void load (void);
+
+        void unload (void);
 
     protected:
 
@@ -105,9 +113,11 @@ class DiskResource {
                 dep->load();
         }
 
-        virtual void load (void);
+        virtual void reloadImpl (void) { loadImpl(); unloadImpl(); }
 
-        virtual void unload (void);
+        virtual void loadImpl (void) { }
+
+        virtual void unloadImpl (void) { }
 
     private:
 

@@ -38,7 +38,7 @@ QUEX_PATH2 = ../$(QUEX_PATH)
 
 
 COMMON_OBJ=\
-        AudioResource.o \
+        AudioDiskResource.o \
         audio.o \
         BackgroundLoader.o \
         BColParser.o \
@@ -275,7 +275,8 @@ DiskResource.o: ../src/vect_util.h ../depend_stubs/algorithm
 DiskResource.o: ../src/CentralisedLog.h ../depend_stubs/iostream
 DiskResource.o: ../depend_stubs/sstream
 DiskResource.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-DiskResource.o: ../src/console_colour.h ../src/audio/AudioResource.h
+DiskResource.o: ../src/console_colour.h
+DiskResource.o: ../src/audio/AudioDiskResource.h
 DiskResource.o: ../depend_stubs/AL/al.h
 DiskResource.o: ../depend_stubs/OgreResourceGroupManager.h
 DiskResource.o: ../src/main.h ../depend_stubs/lua.h ../src/Mouse.h

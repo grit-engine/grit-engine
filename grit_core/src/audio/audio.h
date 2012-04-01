@@ -37,6 +37,9 @@ void audio_set_listener (const Vector3& position, const Vector3& velocity, const
 void audio_play (const std::string& filename, const Vector3& position);
 void audio_update (void);
 
+void audio_master_volume (float v);
+float audio_master_volume (void);
+
 class AudioSource
 {
 	private:

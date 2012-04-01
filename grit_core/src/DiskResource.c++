@@ -21,14 +21,22 @@
 
 
 #include "gfx/GfxDiskResource.h"
-#include "audio/AudioResource.h"
+#include "audio/AudioDiskResource.h"
 #include "main.h"
 
 bool disk_resource_verbose_loads = false;
 bool disk_resource_verbose_incs = false;
 
+// should map nothing to NULL
 typedef std::map<std::string, DiskResource*> DiskResourceMap;
 DiskResourceMap disk_resource_map;
+
+bool disk_resource_has (const std::string &n)
+{
+    DiskResourceMap::iterator it = disk_resource_map.find(n);
+    if (it == disk_resource_map.end()) return false;
+    return true;
+}
 
 int disk_resource_num(void)
 {
@@ -68,12 +76,13 @@ DiskResources disk_resource_all_loaded (void)
  
 DiskResource *disk_resource_get (const std::string &rn)
 {
+    if (!disk_resource_has(rn)) return NULL;
     return disk_resource_map[rn];
 }
 
 DiskResource *disk_resource_get_or_make (const std::string &rn)
 {
-    DiskResource *dr = disk_resource_map[rn];
+    DiskResource *dr = disk_resource_get(rn);
     if (dr != NULL) return dr;
 
     const char *texture_formats[] = { "bmp", "jpg", "jpeg", "png", "tga", "targa",
@@ -92,7 +101,7 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
     } else if (suffix == "tcol" || suffix == "gcol" || suffix == "bcol") {
         dr = new CollisionMesh(rn);
     } else if (suffix == "wav" || suffix == "ogg" || suffix == "mp3") {
-        dr = new AudioResource(rn);
+        dr = new AudioDiskResource(rn);
     } else {
         for (unsigned i=0 ; i<num_texture_formats ; ++i) {
             if (suffix == texture_formats[i]) {
@@ -110,33 +119,48 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
     return dr;
 }
 
-
-void DiskResource::load (void)
+void DiskResource::callReloadWatchers (void)
 {
-    APP_ASSERT(!loaded);
-
-    if (disk_resource_verbose_loads)
-            CVERB << "LOAD " << getName() << std::endl;
-    loaded = true;
-
     typedef ReloadWatcherSet::iterator I;
     for (I i=reloadWatchers.begin(),i_=reloadWatchers.end() ; i!=i_ ; ++i) {
         (*i)->notifyReloaded();
     }
 }
 
+
+void DiskResource::reload (void)
+{
+    APP_ASSERT(loaded);
+    reloadImpl();
+    callReloadWatchers();
+}
+
+void DiskResource::load (void)
+{
+    APP_ASSERT(!loaded);
+
+    loadImpl();
+
+    if (disk_resource_verbose_loads)
+            CVERB << "LOAD " << getName() << std::endl;
+    loaded = true;
+
+    callReloadWatchers();
+}
+
 void DiskResource::unload (void)
 {
     APP_ASSERT(loaded);
+    APP_ASSERT(noUsers());
 
     if (disk_resource_verbose_loads)
         CVERB << "FREE " << getName() << std::endl;
-    APP_ASSERT(noUsers());
     for (unsigned i=0 ; i<dependencies.size() ; ++i) {
         dependencies[i]->decrement();
         bgl->finishedWith(dependencies[i]);
     }
     dependencies.clear();
+    unloadImpl();
     loaded = false;
 }
 

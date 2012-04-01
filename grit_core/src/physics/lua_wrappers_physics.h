@@ -21,7 +21,6 @@
 
 #include "PhysicsWorld.h"
 
-void push_colmesh (lua_State *L, CollisionMesh *self);
 void push_pworld (lua_State *L, const PhysicsWorldPtr &self);
 void push_rbody (lua_State *L, const RigidBodyPtr &self);
 

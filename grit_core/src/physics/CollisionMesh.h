@@ -61,9 +61,6 @@ class CollisionMesh : public DiskResource {
 
     btCompoundShape *getMasterShape (void) const { return masterShape; }
 
-    void load (void);
-    void reload (void);
-
     const std::string &getName (void) const { return name; }
 
     float getMass (void) const { return mass; }
@@ -257,7 +254,9 @@ class CollisionMesh : public DiskResource {
     float friction;
     float restitution;
 
-    void unload (void);
+    void loadImpl (void);
+    void unloadImpl (void);
+
 
     ProcObjFaceDB procObjFaceDB;
 

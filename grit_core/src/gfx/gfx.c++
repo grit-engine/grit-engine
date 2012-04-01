@@ -1352,7 +1352,7 @@ float gfx_option (GfxFloatOption o)
 // }}}
 
 
-static fast_erase_vector<GfxBody*> all_bodies;
+fast_erase_vector<GfxBody*> gfx_all_bodies;
 static fast_erase_vector<GfxLight*> all_lights;
 
 // {{{ GFX_NODE
@@ -1576,7 +1576,7 @@ GfxBody::GfxBody (GfxDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr
 
     reinitialise();
 
-    all_bodies.push_back(this);
+    gfx_all_bodies.push_back(this);
 }
 
 void GfxBody::updateMaterials (void)
@@ -1760,7 +1760,7 @@ GfxBody::GfxBody (const GfxBodyPtr &par_)
     fade = 1;
     enabled = true;
 
-    all_bodies.push_back(this);
+    gfx_all_bodies.push_back(this);
 }
 
 GfxBody::~GfxBody (void)
@@ -1779,7 +1779,7 @@ void GfxBody::destroy (void)
     ent = NULL;
     if (entEmissive) ogre_sm->destroyEntity(entEmissive);
     entEmissive = NULL;
-    all_bodies.erase(this);
+    gfx_all_bodies.erase(this);
     GfxNode::destroy();
 }
 
@@ -1935,6 +1935,7 @@ unsigned GfxBody::getBoneId (const std::string name)
     if (dead) THROW_DEAD(className);
     if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     if (!skel->hasBone(name)) GRIT_EXCEPT("GfxBody has no bone \""+name+"\"");
     return skel->getBone(name)->getHandle();
 }
@@ -1955,6 +1956,7 @@ const std::string &GfxBody::getBoneName (unsigned n)
     if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     return skel->getBone(n)->getName();
 }
 
@@ -1991,6 +1993,7 @@ Vector3 GfxBody::getBoneInitialPosition (unsigned n)
     if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->getInitialPosition());
 }
@@ -2001,6 +2004,7 @@ Vector3 GfxBody::getBoneWorldPosition (unsigned n)
     if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->_getDerivedPosition());
 }
@@ -2011,6 +2015,7 @@ Vector3 GfxBody::getBoneLocalPosition (unsigned n)
     if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->getPosition());
 }
@@ -2021,6 +2026,7 @@ Quaternion GfxBody::getBoneInitialOrientation (unsigned n)
     if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->getInitialOrientation());
 }
@@ -2031,6 +2037,7 @@ Quaternion GfxBody::getBoneWorldOrientation (unsigned n)
     if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->_getDerivedOrientation());
 }
@@ -2041,6 +2048,7 @@ Quaternion GfxBody::getBoneLocalOrientation (unsigned n)
     if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     return from_ogre(bone->getOrientation());
 }
@@ -2052,6 +2060,7 @@ void GfxBody::setBoneLocalPosition (unsigned n, const Vector3 &v)
     if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     bone->setPosition(to_ogre(v));
 }
@@ -2062,6 +2071,7 @@ void GfxBody::setBoneLocalOrientation (unsigned n, const Quaternion &v)
     if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
     Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     bone->setOrientation(to_ogre(v));
 }
@@ -2530,8 +2540,8 @@ static void handle_dirty_materials (void)
 {
     if (dirty_mats.empty()) return;
 
-    for (unsigned long i=0 ; i<all_bodies.size() ; ++i) {
-        GfxBody *b = all_bodies[i];
+    for (unsigned long i=0 ; i<gfx_all_bodies.size() ; ++i) {
+        GfxBody *b = gfx_all_bodies[i];
         bool needs_update = false;
         for (unsigned j=0 ; j<b->getNumSubMeshes() ; ++j) {
             GfxMaterial *m = b->getMaterial(j);
@@ -2782,26 +2792,6 @@ GfxRunningFrameStats gfx_running_frame_stats (void)
 {
     GfxRunningFrameStats r;
     return r;
-}
-
-void gfx_reload_mesh (const std::string &name)
-{
-    Ogre::MeshPtr ptr = Ogre::MeshManager::getSingleton().getByName(name.substr(1), RESGRP);
-    if (ptr.isNull()) GRIT_EXCEPT("Could not find mesh \""+name+"\"");
-    // old skeleton may become unlinked now, may be important for resource management in future
-    ptr->reload();
-    if (ptr->hasSkeleton()) ptr->getSkeleton()->reload();
-    for (unsigned long i=0 ; i<all_bodies.size() ; ++i) {
-        GfxBody *b = all_bodies[i];
-        if (b->mesh == ptr) b->reinitialise();
-    }
-}
-
-void gfx_reload_texture (const std::string &name)
-{
-    Ogre::TexturePtr ptr = Ogre::TextureManager::getSingleton().getByName(name.substr(1), RESGRP);
-    if (ptr.isNull()) GRIT_EXCEPT("Could not find texture \""+name+"\"");
-    ptr->reload();
 }
 
 
