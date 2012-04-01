@@ -40,9 +40,9 @@ public:
 	}
 
 
-	virtual void load (void);
+	virtual void loadImpl (void);
 
-	virtual void unload (void);
+	virtual void unloadImpl (void);
 
 	virtual bool isGPUResource (void);
 

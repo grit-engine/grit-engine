@@ -23,7 +23,7 @@
 #include "audio.h"
 #include "../portable_io.h"
 
-void AudioDiskResource::load (void)
+void AudioDiskResource::loadImpl (void)
 {
 	// head radio. because your head NEEDS IT.
 
@@ -48,7 +48,6 @@ void AudioDiskResource::load (void)
 		GRIT_EXCEPT("Unknown audio file format in " + name);
 	}
 
-	DiskResource::load();
 }
 
 struct chunk_header
@@ -153,7 +152,7 @@ void AudioDiskResource::loadWAV(Ogre::DataStreamPtr &file)
 	file->close();
 }
 
-void AudioDiskResource::unload (void)
+void AudioDiskResource::unloadImpl (void)
 {
 	alDeleteBuffers(1, &alBuffer);
 }

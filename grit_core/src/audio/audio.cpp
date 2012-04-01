@@ -43,6 +43,8 @@ void audio_init (void)
 	alcMakeContextCurrent(alContext);
 }
 
+static float master_volume;
+
 void audio_set_listener (const Vector3& position, const Vector3& velocity, const Quaternion& rotation)
 {
 	ALfloat pos[] = { position.x, position.y, position.z };
@@ -57,6 +59,7 @@ void audio_set_listener (const Vector3& position, const Vector3& velocity, const
 	alListenerfv(AL_POSITION, pos);
 	alListenerfv(AL_VELOCITY, vel);
 	alListenerfv(AL_ORIENTATION, ori);
+	alListenerfv(AL_GAIN, &master_volume);
 	alcProcessContext(alContext);
 }
 
@@ -65,9 +68,11 @@ static std::list<AudioSource*> oneShotSounds;
 void audio_play (const std::string& filename, const Vector3& position)
 {
 	// TEMP HACK until we get manual disk resource loading
-	Demand demand;
-	demand.addDiskResource(filename);
-	demand.immediateLoad();
+	//Demand demand;
+	//demand.addDiskResource(filename);
+	//demand.immediateLoad();
+    DiskResource *dr = disk_resource_get_or_make(filename);
+    if (!dr->isLoaded()) dr->load();
 
 	// create an audio source object
 	AudioSource* source = new AudioSource(filename);
@@ -102,11 +107,8 @@ void audio_update (void)
 	}
 }
 
-static float master_volume;
-
 void audio_master_volume (float f) {
     master_volume = f;
-	alListenerfv(AL_GAIN, &f);
 }
 
 float audio_master_volume (void) {
