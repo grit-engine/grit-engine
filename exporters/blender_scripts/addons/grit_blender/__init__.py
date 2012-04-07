@@ -212,7 +212,7 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material):
                     face[fvi] = duplicate
                 else:
                     vertexes.append(vert)
-                    print("vertexes now: "+str(len(vertexes)))
+                    # print("vertexes now: "+str(len(vertexes)))
                     face[fvi] = counter
                     counter += 1
             if not matname in faces.keys():
@@ -583,6 +583,249 @@ def to_lua (v):
 
 # {{{ export_objects
 
+def errors_to_string (errors):
+    # clip errors at a max to avoid filling the screen with crap
+    max_errors = 20
+    if len(errors) > max_errors: errors = errors[:max_errors] + ["..."]
+    if len(errors) > 0: return "\n".join(errors)
+
+def export_as_mesh (scene, obj, tangents, filename):
+    errors = []
+    export_mesh_internal (scene, obj, tangents, filename, errors)
+    return errors_to_string (errors)
+
+def export_mesh_internal (scene, obj, tangents, filename, errors):
+    armature = None
+    if obj.type == "ARMATURE":
+        if len(obj.children)==0:
+            errors.append("Armature has no children: \""+obj+"\"")
+            return
+        if len(obj.children)>1:
+            errors.append("Armature has more than 1 child: \""+obj+"\"")
+            return
+        armature = obj
+        obj = armature.children[0]
+    mesh = obj.to_mesh(scene, True, "PREVIEW")
+
+    if len(mesh.materials) == 0:
+        errors.append("Grit mesh \""+obj.name+"\" has no materials")
+
+    for m in mesh.materials:
+        if m == None:
+            errors.append("Grit mesh \""+obj.name+"\" has an undefined material")
+
+        filename = my_abspath("//" + filename+".xml")
+
+    (vertexes, faces) = get_vertexes_faces(scene, mesh, False, "/system/FallbackMaterial")
+    ambient = mesh.vertex_colors.get("GritAmbient", None) 
+
+    file = open(filename, "w")
+    file.write("<mesh>\n")
+    file.write("    <sharedgeometry>\n")
+    file.write("        <vertexbuffer positions=\"true\" normals=\"true\" colours_diffuse=\""+("false" if ambient == None else "true")+"\" texture_coord_dimensions_0=\"float2\" texture_coords=\"1\">\n")
+    for v in vertexes:
+        file.write("            <vertex>\n")
+        file.write("                <position x=\""+str(v.pos[0])+"\" y=\""+str(v.pos[1])+"\" z=\""+str(v.pos[2])+"\" />\n")
+        file.write("                <normal x=\""+str(v.normal[0])+"\" y=\""+str(v.normal[1])+"\" z=\""+str(v.normal[2])+"\" />\n")
+        file.write("                <texcoord u=\""+str(v.uv[0])+"\" v=\""+str(-v.uv[1])+"\" />\n")
+        if ambient != None:
+            col = str(v.ambient)+" 0.0 0.0 1.0"
+            file.write("                <colour_diffuse value=\""+col+"\" />\n")
+        file.write("            </vertex>\n")
+    file.write("        </vertexbuffer>\n")
+    file.write("    </sharedgeometry>\n")
+    if armature!=None:
+        file.write("    <boneassignments>\n")
+        for vi, v in enumerate(vertexes):
+            for g in v.groups:
+                bone_index = armature.pose.bones.find(obj.vertex_groups[g[0]].name)
+                file.write("        <vertexboneassignment vertexindex=\""+str(vi)+"\" boneindex=\""+str(bone_index)+"\" weight=\""+str(g[1])+"\" />\n")
+        file.write("    </boneassignments>\n");
+
+    file.write("    <submeshes>\n")
+    for m in faces.keys():
+        file.write("        <submesh material=\""+m+"\" usesharedvertices=\"true\" use32bitindexes=\"false\" operationtype=\"triangle_list\">\n")
+        file.write("            <faces>\n")
+        for f in faces[m]:
+            file.write("                <face v1=\""+str(f[0])+"\" v2=\""+str(f[1])+"\" v3=\""+str(f[2])+"\" />\n")
+        file.write("            </faces>\n")
+        file.write("        </submesh>\n")
+    file.write("    </submeshes>\n")
+    if armature!=None:
+        file.write("    <skeletonlink name=\""+armature.name+"\" />\n")
+    file.write("</mesh>\n")
+    file.close()
+
+    if armature != None:
+        skel_filename = my_abspath("//" + armature.name+".xml")
+        file = open(skel_filename, "w")
+        file.write("<skeleton blendmode=\"average\">\n")
+        file.write("    <bones>\n")
+        for bi, b in enumerate(armature.pose.bones):
+            file.write("        <bone id=\""+str(bi)+"\" name=\""+b.name+"\">\n")
+            mat = b.matrix
+            b_parent = b.parent
+            if b_parent != None:
+                print("b_parent.name = "+b_parent.name)
+                mat = b_parent.matrix.inverted() * mat
+            pos = mat.translation
+            file.write("            <position x=\""+str(pos.x)+"\" y=\""+str(pos.y)+"\" z=\""+str(pos.z)+"\" />\n")
+            rot = mat.to_quaternion()
+            file.write("            <rotation angle=\""+str(rot.angle)+"\">\n")
+            file.write("                <axis x=\""+str(rot.axis.x)+"\" y=\""+str(rot.axis.y)+"\" z=\""+str(rot.axis.z)+"\" />\n")
+            file.write("            </rotation>\n")
+            file.write("        </bone>\n")
+        file.write("    </bones>\n")
+        file.write("    <bonehierarchy>\n")
+        for bi, b in enumerate(armature.pose.bones):
+            if b.parent != None:
+                file.write("        <boneparent bone=\""+b.name+"\" parent=\""+b.parent.name+"\" />\n")
+
+        file.write("    </bonehierarchy>\n")
+        file.write("    <animations />\n")
+        file.write("</skeleton>\n")
+        file.close()
+
+    if scene.grit_meshes_convert:
+        current_py = inspect.getfile(inspect.currentframe())
+        exporter = os.path.abspath(os.path.join(os.path.dirname(current_py), "OgreXMLConverter" + executable_suffix))
+        args = [exporter, "-e"]
+        if tangents:
+            args.append("-t")
+            args.append("-ts")
+            args.append("4")
+        args.append(filename)
+        subprocess.call(args)
+        if armature != None:
+            args = [exporter]
+            args.append(skel_filename)
+            subprocess.call(args)
+
+    bpy.data.meshes.remove(mesh)
+
+def export_as_gcol (scene, obj, gcol_static, mass, linear_damping, angular_damping, linear_sleep_thresh, angular_sleep_thresh, filename):
+    errors = []
+    export_gcol_internal (scene, obj, gcol_static, mass, linear_damping, angular_damping, linear_sleep_thresh, angular_sleep_thresh, filename, errors)
+    return errors_to_string (errors)
+
+def export_gcol_internal (scene, obj, gcol_static, mass, linear_damping, angular_damping, linear_sleep_thresh, angular_sleep_thresh, filename, errors):
+    filename = my_abspath("//" + filename)
+    file = open(filename, "w")
+    file.write("TCOL1.0\n")
+    file.write("\n")
+    file.write("attributes {\n")
+    if gcol_static:
+        file.write("    static;\n")
+    else:
+        file.write("    mass "+str(mass)+";\n")
+    file.write("    linear_damping "+str(linear_damping)+";\n")
+    file.write("    angular_damping "+str(angular_damping)+";\n")
+    file.write("    linear_sleep_threshold "+str(linear_sleep_thresh)+";\n")
+    file.write("    angular_sleep_threshold "+str(angular_sleep_thresh)+";\n")
+    file.write("}\n")
+    file.write("\n")
+
+    file.write("compound {\n")
+    for c in obj.children:
+        if c.type == "EMPTY":
+            errors.append("Part \""+c.name+"\" under \""+obj.name+"\" is an Empty)")
+            continue
+        file.write("    // "+c.name+"\n")
+        mesh = c.data
+        pos = c.matrix_local.to_translation()
+        rot = c.matrix_local.to_quaternion()
+        scale = c.matrix_local.to_scale()
+        mat = "/system/FallbackPhysicalMaterial"
+        if len(c.material_slots) == 0:
+            errors.append("Part \""+c.name+"\" under \""+obj.name+"\" has no materials)")
+        else:
+            mat = c.material_slots[0].material
+            if mat == None:
+                mat = "/system/FallbackPhysicalMaterial"
+                errors.append("Part \""+c.name+"\" under \""+obj.name+"\" has undefined material")
+            else:
+                mat = grit_path_from_data(scene, mat)
+            if len(c.material_slots) > 1:
+                errors.append("Part \""+c.name+"\" under \""+obj.name+"\" must have 1 material (has "+str(len(c.material_slots))+")")
+        marg = c.grit_gcol_prim_margin
+        shrink = c.grit_gcol_prim_shrink
+        if mesh.name == "GritPhysicsBox":
+            file.write("    box {\n")
+            file.write("        material \""+mat+"\";\n")
+            file.write("        centre "+str(pos.x)+" "+str(pos.y)+" "+str(pos.z)+";\n")
+            file.write("        orientation "+str(rot.w)+" "+str(rot.x)+" "+str(rot.y)+" "+str(rot.z)+";\n")
+            file.write("        dimensions "+str(scale.x)+" "+str(scale.y)+" "+str(scale.z)+";\n")
+            file.write("        margin "+str(marg)+";\n")
+            file.write("    }\n")
+        elif mesh.name == "GritPhysicsSphere":
+            file.write("    sphere {\n")
+            file.write("        material \""+mat+"\";\n")
+            file.write("        centre "+str(pos.x)+" "+str(pos.y)+" "+str(pos.z)+";\n")
+            file.write("        radius "+str((scale.x+scale.y+scale.z)/3)+";\n")
+            file.write("    }\n")
+        elif mesh.name == "GritPhysicsCylinder":
+            file.write("    cylinder {\n")
+            file.write("        material \""+mat+"\";\n")
+            file.write("        centre "+str(pos.x)+" "+str(pos.y)+" "+str(pos.z)+";\n")
+            file.write("        orientation "+str(rot.w)+" "+str(rot.x)+" "+str(rot.y)+" "+str(rot.z)+";\n")
+            file.write("        dimensions "+str(scale.x)+" "+str(scale.y)+" "+str(scale.z)+";\n")
+            file.write("        margin "+str(marg)+";\n")
+            file.write("    }\n")
+        elif mesh.name == "GritPhysicsCone":
+            file.write("    cone {\n")
+            file.write("        material \""+mat+"\";\n")
+            file.write("        centre "+str(pos.x)+" "+str(pos.y)+" "+str(pos.z)+";\n")
+            file.write("        orientation "+str(rot.w)+" "+str(rot.x)+" "+str(rot.y)+" "+str(rot.z)+";\n")
+            file.write("        height "+str(scale.z)+";\n")
+            file.write("        radius "+str((scale.x+scale.y)/2)+";\n")
+            file.write("        margin "+str(marg)+";\n")
+            file.write("    }\n")
+        else:
+            mesh = c.to_mesh(scene, True, "PREVIEW")
+            (vertexes, faces) = get_vertexes_faces(scene, mesh, True, "/system/FallbackPhysicalMaterial")
+            file.write("    hull {\n")
+            file.write("        material \""+mat+"\";\n")
+            file.write("        margin "+str(marg)+";\n")
+            file.write("        shrink "+str(shrink)+";\n")
+            file.write("        vertexes {\n")
+            for v in vertexes:
+                p = c.matrix_local * Vector(v.pos)
+                file.write("            "+str(p.x)+" "+str(p.y)+" "+str(p.z)+";\n")
+            file.write("        }\n")
+            file.write("    }\n")
+            bpy.data.meshes.remove(mesh)
+    file.write("}\n")
+
+    if obj.type == "MESH":
+        # triangles to add
+        mesh = obj.to_mesh(scene, True, "PREVIEW")
+
+        if len(mesh.materials) == 0:
+            errors.append("Grit gcol \""+obj.name+"\" has no materials")
+
+        for m in mesh.materials:
+            if m == None:
+                errors.append("Grit .gcol \""+obj.name+"\" has undefined material")
+
+        (vertexes, faces) = get_vertexes_faces(scene, mesh, True, "/common/Stone")
+
+        file.write("trimesh {\n")
+        file.write("    vertexes {\n")
+        for v in vertexes:
+            file.write("        "+str(v.pos[0])+" "+str(v.pos[1])+" "+str(v.pos[2])+";\n")
+        file.write("    }\n")
+        file.write("    faces {\n")
+        for m in faces.keys():
+            for f in faces[m]:
+                file.write("        "+str(f[0])+" "+str(f[1])+" "+str(f[2])+" \""+m+"\";\n")
+        file.write("    }\n")
+        file.write("}\n")
+
+        bpy.data.meshes.remove(mesh)
+
+    file.close()
+
+
 def export_objects (scene, objs):
     errors = []
 
@@ -664,235 +907,12 @@ def export_objects (scene, objs):
 
     for obj in objs:
         if obj.grit_promotion == 'MESH':
-            armature = None
-            if obj.type == "ARMATURE":
-                if len(obj.children)==0:
-                    errors.append("Armature has no children: \""+obj+"\"")
-                    continue
-                if len(obj.children)>1:
-                    errors.append("Armature has more than 1 child: \""+obj+"\"")
-                    continue
-                armature = obj
-                obj = armature.children[0]
-            mesh = obj.to_mesh(scene, True, "PREVIEW")
-
-            if len(mesh.materials) == 0:
-                errors.append("Grit mesh \""+obj.name+"\" has no materials")
-
-            for m in mesh.materials:
-                if m == None:
-                    errors.append("Grit mesh \""+obj.name+"\" has an undefined material")
-
-                filename = my_abspath("//" + obj.name+".xml")
-
-            (vertexes, faces) = get_vertexes_faces(scene, mesh, False, "/system/FallbackMaterial")
-            ambient = mesh.vertex_colors.get("GritAmbient", None) 
-
-            file = open(filename, "w")
-            file.write("<mesh>\n")
-            file.write("    <sharedgeometry>\n")
-            file.write("        <vertexbuffer positions=\"true\" normals=\"true\" colours_diffuse=\""+("false" if ambient == None else "true")+"\" texture_coord_dimensions_0=\"float2\" texture_coords=\"1\">\n")
-            for v in vertexes:
-                file.write("            <vertex>\n")
-                file.write("                <position x=\""+str(v.pos[0])+"\" y=\""+str(v.pos[1])+"\" z=\""+str(v.pos[2])+"\" />\n")
-                file.write("                <normal x=\""+str(v.normal[0])+"\" y=\""+str(v.normal[1])+"\" z=\""+str(v.normal[2])+"\" />\n")
-                file.write("                <texcoord u=\""+str(v.uv[0])+"\" v=\""+str(-v.uv[1])+"\" />\n")
-                if ambient != None:
-                    col = str(v.ambient)+" 0.0 0.0 1.0"
-                    file.write("                <colour_diffuse value=\""+col+"\" />\n")
-                file.write("            </vertex>\n")
-            file.write("        </vertexbuffer>\n")
-            file.write("    </sharedgeometry>\n")
-            if armature!=None:
-                file.write("    <boneassignments>\n")
-                for vi, v in enumerate(vertexes):
-                    for g in v.groups:
-                        bone_index = armature.pose.bones.find(obj.vertex_groups[g[0]].name)
-                        file.write("        <vertexboneassignment vertexindex=\""+str(vi)+"\" boneindex=\""+str(bone_index)+"\" weight=\""+str(g[1])+"\" />\n")
-                file.write("    </boneassignments>\n");
-
-            file.write("    <submeshes>\n")
-            for m in faces.keys():
-                file.write("        <submesh material=\""+m+"\" usesharedvertices=\"true\" use32bitindexes=\"false\" operationtype=\"triangle_list\">\n")
-                file.write("            <faces>\n")
-                for f in faces[m]:
-                    file.write("                <face v1=\""+str(f[0])+"\" v2=\""+str(f[1])+"\" v3=\""+str(f[2])+"\" />\n")
-                file.write("            </faces>\n")
-                file.write("        </submesh>\n")
-            file.write("    </submeshes>\n")
-            if armature!=None:
-                file.write("    <skeletonlink name=\""+armature.name+"\" />\n")
-            file.write("</mesh>\n")
-            file.close()
-
-            if armature != None:
-                skel_filename = my_abspath("//" + armature.name+".xml")
-                file = open(skel_filename, "w")
-                file.write("<skeleton blendmode=\"average\">\n")
-                file.write("    <bones>\n")
-                for bi, b in enumerate(armature.pose.bones):
-                    file.write("        <bone id=\""+str(bi)+"\" name=\""+b.name+"\">\n")
-                    mat = b.matrix
-                    b_parent = b.parent
-                    if b_parent != None:
-                        print("b_parent.name = "+b_parent.name)
-                        mat = b_parent.matrix.inverted() * mat
-                    pos = mat.translation
-                    file.write("            <position x=\""+str(pos.x)+"\" y=\""+str(pos.y)+"\" z=\""+str(pos.z)+"\" />\n")
-                    rot = mat.to_quaternion()
-                    file.write("            <rotation angle=\""+str(rot.angle)+"\">\n")
-                    file.write("                <axis x=\""+str(rot.axis.x)+"\" y=\""+str(rot.axis.y)+"\" z=\""+str(rot.axis.z)+"\" />\n")
-                    file.write("            </rotation>\n")
-                    file.write("        </bone>\n")
-                file.write("    </bones>\n")
-                file.write("    <bonehierarchy>\n")
-                for bi, b in enumerate(armature.pose.bones):
-                    if b.parent != None:
-                        file.write("        <boneparent bone=\""+b.name+"\" parent=\""+b.parent.name+"\" />\n")
-
-                file.write("    </bonehierarchy>\n")
-                file.write("    <animations />\n")
-                file.write("</skeleton>\n")
-                file.close()
-
-            if scene.grit_meshes_convert:
-                current_py = inspect.getfile(inspect.currentframe())
-                exporter = os.path.abspath(os.path.join(os.path.dirname(current_py), "OgreXMLConverter" + executable_suffix))
-                args = [exporter, "-e"]
-                if obj.grit_mesh_tangents:
-                    args.append("-t")
-                    args.append("-ts")
-                    args.append("4")
-                args.append(filename)
-                subprocess.call(args)
-                if armature != None:
-                    args = [exporter]
-                    args.append(skel_filename)
-                    subprocess.call(args)
-
-            bpy.data.meshes.remove(mesh)
+            export_mesh_internal(scene, obj, obj.grit_mesh_tangents, obj.name, errors)
 
         if obj.grit_promotion == 'GCOL':
-            filename = my_abspath("//" + obj.name)
-            file = open(filename, "w")
-            file.write("TCOL1.0\n")
-            file.write("\n")
-            file.write("attributes {\n")
-            if obj.grit_gcol_static:
-                file.write("    static;\n")
-            else:
-                file.write("    mass "+str(obj.grit_gcol_mass)+";\n")
-            file.write("    linear_damping "+str(obj.grit_gcol_linear_damping)+";\n")
-            file.write("    angular_damping "+str(obj.grit_gcol_angular_damping)+";\n")
-            file.write("    linear_sleep_threshold "+str(obj.grit_gcol_linear_sleep_thresh)+";\n")
-            file.write("    angular_sleep_threshold "+str(obj.grit_gcol_angular_sleep_thresh)+";\n")
-            file.write("}\n")
-            file.write("\n")
+            export_gcol_internal(scene, obj, obj.grit_gcol_static, obj.grit_gcol_mass, obj.grit_gcol_linear_damping, obj.grit_gcol_angular_damping, obj.grit_gcol_linear_sleep_thresh, obj.grit_gcol_angular_sleep_thresh, obj.name, errors)
 
-            file.write("compound {\n")
-            for c in obj.children:
-                if c.type == "EMPTY":
-                    errors.append("Part \""+c.name+"\" under \""+obj.name+"\" is an Empty)")
-                    continue
-                file.write("    // "+c.name+"\n")
-                mesh = c.data
-                pos = c.matrix_local.to_translation()
-                rot = c.matrix_local.to_quaternion()
-                scale = c.matrix_local.to_scale()
-                mat = "/system/FallbackPhysicalMaterial"
-                if len(c.material_slots) == 0:
-                    errors.append("Part \""+c.name+"\" under \""+obj.name+"\" has no materials)")
-                else:
-                    mat = c.material_slots[0].material
-                    if mat == None:
-                        mat = "/system/FallbackPhysicalMaterial"
-                        errors.append("Part \""+c.name+"\" under \""+obj.name+"\" has undefined material")
-                    else:
-                        mat = grit_path_from_data(scene, mat)
-                    if len(c.material_slots) > 1:
-                        errors.append("Part \""+c.name+"\" under \""+obj.name+"\" must have 1 material (has "+str(len(c.material_slots))+")")
-                marg = c.grit_gcol_prim_margin
-                shrink = c.grit_gcol_prim_shrink
-                if mesh.name == "GritPhysicsBox":
-                    file.write("    box {\n")
-                    file.write("        material \""+mat+"\";\n")
-                    file.write("        centre "+str(pos.x)+" "+str(pos.y)+" "+str(pos.z)+";\n")
-                    file.write("        orientation "+str(rot.w)+" "+str(rot.x)+" "+str(rot.y)+" "+str(rot.z)+";\n")
-                    file.write("        dimensions "+str(scale.x)+" "+str(scale.y)+" "+str(scale.z)+";\n")
-                    file.write("        margin "+str(marg)+";\n")
-                    file.write("    }\n")
-                elif mesh.name == "GritPhysicsSphere":
-                    file.write("    sphere {\n")
-                    file.write("        material \""+mat+"\";\n")
-                    file.write("        centre "+str(pos.x)+" "+str(pos.y)+" "+str(pos.z)+";\n")
-                    file.write("        radius "+str((scale.x+scale.y+scale.z)/3)+";\n")
-                    file.write("    }\n")
-                elif mesh.name == "GritPhysicsCylinder":
-                    file.write("    cylinder {\n")
-                    file.write("        material \""+mat+"\";\n")
-                    file.write("        centre "+str(pos.x)+" "+str(pos.y)+" "+str(pos.z)+";\n")
-                    file.write("        orientation "+str(rot.w)+" "+str(rot.x)+" "+str(rot.y)+" "+str(rot.z)+";\n")
-                    file.write("        dimensions "+str(scale.x)+" "+str(scale.y)+" "+str(scale.z)+";\n")
-                    file.write("        margin "+str(marg)+";\n")
-                    file.write("    }\n")
-                elif mesh.name == "GritPhysicsCone":
-                    file.write("    cone {\n")
-                    file.write("        material \""+mat+"\";\n")
-                    file.write("        centre "+str(pos.x)+" "+str(pos.y)+" "+str(pos.z)+";\n")
-                    file.write("        orientation "+str(rot.w)+" "+str(rot.x)+" "+str(rot.y)+" "+str(rot.z)+";\n")
-                    file.write("        height "+str(scale.z)+";\n")
-                    file.write("        radius "+str((scale.x+scale.y)/2)+";\n")
-                    file.write("        margin "+str(marg)+";\n")
-                    file.write("    }\n")
-                else:
-                    mesh = c.to_mesh(scene, True, "PREVIEW")
-                    (vertexes, faces) = get_vertexes_faces(scene, mesh, True, "/system/FallbackPhysicalMaterial")
-                    file.write("    hull {\n")
-                    file.write("        material \""+mat+"\";\n")
-                    file.write("        margin "+str(marg)+";\n")
-                    file.write("        shrink "+str(shrink)+";\n")
-                    file.write("        vertexes {\n")
-                    for v in vertexes:
-                        p = c.matrix_local * Vector(v.pos)
-                        file.write("            "+str(p.x)+" "+str(p.y)+" "+str(p.z)+";\n")
-                    file.write("        }\n")
-                    file.write("    }\n")
-                    bpy.data.meshes.remove(mesh)
-            file.write("}\n")
-
-            if obj.type == "MESH":
-                # triangles to add
-                mesh = obj.to_mesh(scene, True, "PREVIEW")
-
-                if len(mesh.materials) == 0:
-                    errors.append("Grit gcol \""+obj.name+"\" has no materials")
-
-                for m in mesh.materials:
-                    if m == None:
-                        errors.append("Grit .gcol \""+obj.name+"\" has undefined material")
-
-                (vertexes, faces) = get_vertexes_faces(scene, mesh, True, "/common/Stone")
-
-                file.write("trimesh {\n")
-                file.write("    vertexes {\n")
-                for v in vertexes:
-                    file.write("        "+str(v.pos[0])+" "+str(v.pos[1])+" "+str(v.pos[2])+";\n")
-                file.write("    }\n")
-                file.write("    faces {\n")
-                for m in faces.keys():
-                    for f in faces[m]:
-                        file.write("        "+str(f[0])+" "+str(f[1])+" "+str(f[2])+" \""+m+"\";\n")
-                file.write("    }\n")
-                file.write("}\n")
-
-                bpy.data.meshes.remove(mesh)
-
-            file.close()
-
-    # clip errors at a max to avoid filling the screen with crap
-    max_errors = 20
-    if len(errors) > max_errors: errors = errors[:max_errors] + ["..."]
-    if len(errors) > 0: return "\n".join(errors)
+    return errors_to_string(errors)
 
 #}}}
 
@@ -937,10 +957,57 @@ class ScenePanel(bpy.types.Panel): #{{{
         row.prop(context.scene, "grit_gcols_convert", text="Convert", expand=True)
         row.enabled = False
         col.operator("grit.import_xml", icon="SCRIPT")
+        col.operator("grit.export_as_gcol", icon="SCRIPT")
+        col.operator("grit.export_as_mesh", icon="SCRIPT")
+        col = box.column(align = True)
         col.operator("grit.export_selected", icon="SCRIPT")
         col.operator("grit.export_all", icon="SCRIPT")
 #}}}
 
+
+class ExportAsMesh(bpy.types.Operator):
+    '''Simple export: active object to .mesh file'''
+    bl_idname = "grit.export_as_mesh"
+    bl_label = "Export As .mesh"
+
+    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+    tangents = bpy.props.BoolProperty(name="Normal map (tangents)?")
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object != None
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        scene = bpy.context.scene
+        err = export_as_mesh(scene, context.active_object, self.tangents, self.filepath)
+        error_msg(err)
+        return {'FINISHED'}
+
+class ExportAsGcol(bpy.types.Operator):
+    '''Simple export: active object to .gcol file'''
+    bl_idname = "grit.export_as_gcol"
+    bl_label = "Export As static .gcol"
+
+    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object != None
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        scene = bpy.context.scene
+        objs = [ x for x in scene.objects if x.grit_export ]
+        err = export_as_gcol(scene, context.active_object, True, 0, 0, 0, 0, 0, self.filepath)
+        error_msg(err)
+        return {'FINISHED'}
 
 class ExportScene(bpy.types.Operator):
     '''Export scene to grit files (excluding Blender objects with export turned off)'''
