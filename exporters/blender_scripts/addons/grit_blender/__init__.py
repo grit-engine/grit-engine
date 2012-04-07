@@ -614,7 +614,7 @@ def export_mesh_internal (scene, obj, tangents, filename, errors):
         if m == None:
             errors.append("Grit mesh \""+obj.name+"\" has an undefined material")
 
-        filename = my_abspath("//" + filename+".xml")
+    filename = my_abspath("//" + filename+".xml")
 
     (vertexes, faces) = get_vertexes_faces(scene, mesh, False, "/system/FallbackMaterial")
     ambient = mesh.vertex_colors.get("GritAmbient", None) 
