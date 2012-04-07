@@ -83,16 +83,16 @@ TRY_START
 TRY_END
 }
 
-static int gfxbody_get_material (lua_State *L)
+static int gfxbody_get_materials (lua_State *L)
 {
 TRY_START
-    check_args(L,2);
+    check_args(L,1);
     GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    const std::string &n = luaL_checkstring(L,2);
-    unsigned n2 = self->getSubMeshByOriginalMaterialName(n);
-    GfxMaterial *m = self->getMaterial(n2);
-    lua_pushstring(L, m->name.c_str());
-    return 1;
+    for (unsigned i=0 ; i<self->getNumSubMeshes() ; ++i) {
+        GfxMaterial *m = self->getMaterial(i);
+        lua_pushstring(L, m->name.c_str());
+    }
+    return self->getNumSubMeshes() ;
 TRY_END
 }
 
@@ -385,8 +385,8 @@ TRY_START
         lua_pushnumber(L, self->getTriangles());
     } else if (!::strcmp(key,"trianglesWithChildren")) {
         lua_pushnumber(L, self->getTrianglesWithChildren());
-    } else if (!::strcmp(key,"getMaterial")) {
-        push_cfunction(L,gfxbody_get_material);
+    } else if (!::strcmp(key,"getMaterials")) {
+        push_cfunction(L,gfxbody_get_materials);
     } else if (!::strcmp(key,"setMaterial")) {
         push_cfunction(L,gfxbody_set_material);
     } else if (!::strcmp(key,"setAllMaterials")) {
