@@ -1201,6 +1201,7 @@ class ToolsPanel(bpy.types.Panel):
         if obj.type == "MESH" and mapping.get(obj.data.name): r.enabled = False
 
         self.layout.prop(obj, "grit_export", text="Export this object")
+        self.layout.prop(obj, "grit_promotion", text="Promotion")
 
         
 def register():
