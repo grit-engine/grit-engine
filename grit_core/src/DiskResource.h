@@ -113,7 +113,7 @@ class DiskResource {
                 dep->load();
         }
 
-        virtual void reloadImpl (void) { loadImpl(); unloadImpl(); }
+        virtual void reloadImpl (void) { unloadImpl(); loadImpl(); }
 
         virtual void loadImpl (void) { }
 
