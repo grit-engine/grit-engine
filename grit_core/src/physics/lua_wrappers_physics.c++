@@ -426,6 +426,7 @@ TRY_START
         if (lcb.results.size()==0) return 0;
         SweepResult nearest;
         nearest.dist = FLT_MAX;
+        if (!nearest_only) lua_checkstack(L, lcb.results.size()*4);
         for (size_t i=0 ; i<lcb.results.size() ; ++i) {
                 SweepResult &r = lcb.results[i];
                 if (nearest_only) {
