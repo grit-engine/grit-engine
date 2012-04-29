@@ -21,6 +21,11 @@ Rollout GritRolloutClass "Classes" -- {{{
 		button EOCLASS "Export selected classes to a file" width:156 align:#center
 		label CE3 "Exports selected classes to a *.lua file"
 		label BLN1 " "
+		button ELLIGHT "Export selected lights to listener" width:156 align:#center
+		label CE4 "Exports selected lights (only omni and "
+		label CE5 "free spot) to listener."
+		label CE6 "Remember to have lights linked to a parent!"
+		label BLN2 " "
 		bitmap IMGPROP fileName:"ui/Properties.bmp"
 		edittext mpath "Folder Path" fieldWidth:139 align:#center
 		edittext mnpath "Mesh name" fieldWidth:140 align:#center
@@ -42,52 +47,119 @@ Rollout GritRolloutClass "Classes" -- {{{
 	PBCEXP.value = 0
 	)
 	on ECLASS pressed do
-	(
-	format "\nExporting class...\n" to:listener
+		(
+		format "\nExporting class...\n" to:listener
 		if $ != undefined then
 		--PBCNMB = $.count / 100
 		for objs in $ do
 		(
-		--PBCEXP.value = (PBCEXP.value + PBCNMB)
-		mdir = getUserProp objs "obmpath"
-		mname = getUserProp objs "obmnpath" 
-		mdrawd = getUserProp objs "obdrawd"
-		mctype = getUserProp objs "obctype"
+			--PBCEXP.value = (PBCEXP.value + PBCNMB)
+			mdir = getUserProp objs "obmpath"
+			mname = getUserProp objs "obmnpath" 
+			mdrawd = getUserProp objs "obdrawd"
+			mctype = getUserProp objs "obctype"
 		
-		format "class \"%%\" (%) {" mdir mname mctype to:listener
-		format "renderingDistance=%" mdrawd to:listener
-		format "}\n" to:listener
+			format "class \"%%\" (%) {" mdir mname mctype to:listener
+			format "renderingDistance=%" mdrawd to:listener
+			format "}\n" to:listener
 		)
-	PBCEXP.value = 0
-	format "\nFinished\n" to:listener
-	)
-		on EOCLASS pressed do
-	(
-	format "\nStarting exporting classes\n" to:listener
-	objfl = getSaveFileName types:"LUA File (*.lua)|*.lua|" 
-		if objfl != undefined then
-		(		
-			objfl = createFile (objfl)
-			format "--lua file generated with JostVice's GritMap script\n--Classes\n" to:objfl
-			if $ != undefined then
-			--PBCNMB = $.count / 100
-			for objs in $ do
-			(
-				--PBCEXP.value = (PBCEXP.value + PBCNMB)
-				mdir = getUserProp objs "obmpath"
-				mname = getUserProp objs "obmnpath" 
-				mdrawd = getUserProp objs "obdrawd"
-				mctype = getUserProp objs "obctype"
-					
-				format "class \"%%\" (%) {" mdir mname mctype to:objfl
-				format "renderingDistance=%" mdrawd to:objfl
-				format "}\n" to:objfl
-			)
 		PBCEXP.value = 0
-		format "Finished!\n" to:listener
-		close objfl
+		format "\nFinished\n" to:listener
 		)
-	)
+		on EOCLASS pressed do
+		(
+		format "\nStarting exporting classes\n" to:listener
+		objfl = getSaveFileName types:"LUA File (*.lua)|*.lua|" 
+		if objfl != undefined then
+			(		
+				objfl = createFile (objfl)
+				format "--lua file generated with JostVice's GritMap script\n--Classes\n" to:objfl
+				if $ != undefined then
+				--PBCNMB = $.count / 100
+				for objs in $ do
+				(
+					--PBCEXP.value = (PBCEXP.value + PBCNMB)
+					mdir = getUserProp objs "obmpath"
+					mname = getUserProp objs "obmnpath" 
+					mdrawd = getUserProp objs "obdrawd"
+					mctype = getUserProp objs "obctype"
+						
+					format "class \"%%\" (%) {" mdir mname mctype to:objfl
+					format "renderingDistance=%" mdrawd to:objfl
+					format "}\n" to:objfl
+				)
+				PBCEXP.value = 0
+				format "Finished!\n" to:listener
+				close objfl
+			)
+		)
+		on ELLIGHT pressed do
+		(
+			PBCEXP.value = 0
+			format "\nExporting lights...\n" to:listener
+			if $ != undefined then
+			for lightsz in $ do
+			--(lightsz as array).count = totallights
+			(
+			if lightsz.type == #omni do (
+				--format "\nexporting omni lights\n" to:listener	
+				X = (in coordsys parent lightsz.pos.x )
+				Y = (in coordsys parent lightsz.pos.y )
+				Z = (in coordsys parent lightsz.pos.z )
+
+				lname = lightsz.name 
+				lcolor = lightsz.rgb
+				
+				lcolorred= (lcolor.red / 255)
+				lcolorgreen= (lcolor.green / 255)
+				lcolorblue= (lcolor.blue / 255)
+				
+				lspec = lightsz.rgb
+				
+				lspecred= (lspec.red / 255)
+				lspecgreen= (lspec.green / 255)
+				lspecblue= (lspec.blue / 255)
+				
+				lrange = lightsz.DecayRadius
+				
+				format "\n{ pos=vector3(%, %, %), diff=vector3(%,%,%), spec=vector3(%,%,%), range=% }" X Y Z lcolorred lcolorgreen lcolorblue lspecred lspecgreen lspecblue lrange to:listener
+			)
+			PBCEXP.value = 50
+			if lightsz.type == #freeSpot do (
+				--format "\nexporting spot lights\n" to:listener	
+				X = (in coordsys parent lightsz.pos.x )
+				Y = (in coordsys parent lightsz.pos.y )
+				Z = (in coordsys parent lightsz.pos.z )
+				RX = (in coordsys parent lightsz.rotation.x)
+				RY = (in coordsys parent lightsz.rotation.y )
+				RZ = (in coordsys parent lightsz.rotation.z )
+				RW = (in coordsys parent lightsz.rotation.w )
+				
+				lname = lightsz.name 
+				lcolor = lightsz.rgb
+				
+				lcolorred= (lcolor.red / 255)
+				lcolorgreen= (lcolor.green / 255)
+				lcolorblue= (lcolor.blue / 255)
+				
+				lspec = lightsz.rgb
+				
+				lspecred= (lspec.red / 255)
+				lspecgreen= (lspec.green / 255)
+				lspecblue= (lspec.blue / 255)
+				
+				lrange = lightsz.DecayRadius
+				loangle = lightsz.falloff
+				liangle = lightsz.hotspot
+				
+				format "\n{ pos=vector3(%, %, %), diff=vector3(%,%,%), spec=vector3(%,%,%), range=%, iangle=%, oangle=%, aim=quat(%,%,%,%)) }" X Y Z lcolorred lcolorgreen lcolorblue lspecred lspecgreen lspecblue lrange liangle loangle RW RX RY RZ to:listener
+				)
+			)
+			PBCEXP.value = 100
+			format "\nfinishedlights...\n" to:listener	 
+			PBCEXP.value = 0
+		)
+	
 	
 	-- User properties, sets and retrieve
 	on SCLASS pressed do
