@@ -98,6 +98,7 @@ Rollout GritRolloutClass "Classes" -- {{{
 			PBCEXP.value = 0
 			format "\nExporting lights...\n" to:listener
 			if $ != undefined then
+			format "\nlights = {" to:listener
 			for lightsz in $ do
 			--(lightsz as array).count = totallights
 			(
@@ -122,7 +123,7 @@ Rollout GritRolloutClass "Classes" -- {{{
 				
 				lrange = lightsz.DecayRadius
 				
-				format "\n{ pos=vector3(%, %, %), diff=vector3(%,%,%), spec=vector3(%,%,%), range=% }" X Y Z lcolorred lcolorgreen lcolorblue lspecred lspecgreen lspecblue lrange to:listener
+				format "\n{ pos=vector3(%, %, %), diff=vector3(%,%,%), spec=vector3(%,%,%), range=% }," X Y Z lcolorred lcolorgreen lcolorblue lspecred lspecgreen lspecblue lrange to:listener
 			)
 			PBCEXP.value = 50
 			if lightsz.type == #freeSpot do (
@@ -152,11 +153,11 @@ Rollout GritRolloutClass "Classes" -- {{{
 				loangle = lightsz.falloff
 				liangle = lightsz.hotspot
 				
-				format "\n{ pos=vector3(%, %, %), diff=vector3(%,%,%), spec=vector3(%,%,%), range=%, iangle=%, oangle=%, aim=quat(%,%,%,%)) }" X Y Z lcolorred lcolorgreen lcolorblue lspecred lspecgreen lspecblue lrange liangle loangle RW RX RY RZ to:listener
+				format "\n{ pos=vector3(%, %, %), diff=vector3(%,%,%), spec=vector3(%,%,%), range=%, iangle=%, oangle=%, aim=quat(%,%,%,%) }," X Y Z lcolorred lcolorgreen lcolorblue lspecred lspecgreen lspecblue lrange liangle loangle RX RY RZ RW to:listener
 				)
 			)
 			PBCEXP.value = 100
-			format "\nfinishedlights...\n" to:listener	 
+			format "\n}\nfinished lights...\n" to:listener	 
 			PBCEXP.value = 0
 		)
 	
