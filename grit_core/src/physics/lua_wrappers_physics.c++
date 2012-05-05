@@ -44,7 +44,7 @@
 struct SweepResult { RigidBody *rb; float dist; Vector3 n; int material; };
 typedef std::vector<SweepResult> SweepResults;
 
-class LuaSweepCallback : public PhysicsWorld::SweepCallback {
+class LuaSweepCallback : public SweepCallback {
     public:           
         LuaSweepCallback (bool ignore_dynamic)
               : ignoreDynamic(ignore_dynamic)
@@ -66,11 +66,6 @@ class LuaSweepCallback : public PhysicsWorld::SweepCallback {
 
 // }}}
 
-
-#define PWORLD_TAG "Grit/PhysicsWorld"
-void push_pworld (lua_State *L, const PhysicsWorldPtr &self);
-
-#define COLMESH_TAG "Grit/CollisionMesh"
 
 #define RBODY_TAG "Grit/RigidBody"
 
@@ -351,13 +346,8 @@ TRY_START
 
         // use pointers because we want to assign them later
         RigidBody *body = NULL;
-        PhysicsWorld *world;
         if (has_tag(L,1,RBODY_TAG)) {
                 body = &***static_cast<RigidBodyPtr**>(lua_touserdata(L, 1));
-                world = &*(body->world);
-        } else {
-                GET_UD_MACRO(PhysicsWorldPtr,world_,1,PWORLD_TAG);
-                world = &*world_;
         }
         // one or other of col_mesh or radius will be used
         CollisionMesh *col_mesh = NULL;
@@ -365,8 +355,11 @@ TRY_START
         if (lua_type(L,2) == LUA_TNUMBER) {
                 radius = lua_tonumber(L,2);
         } else {
-                GET_UD_MACRO(CollisionMesh,col_mesh_,2,COLMESH_TAG);
-                col_mesh = &col_mesh_;
+                std::string col_mesh_name = luaL_checkstring(L,2);
+                DiskResource *dr = disk_resource_get_or_make(col_mesh_name);
+                col_mesh = dynamic_cast<CollisionMesh*>(dr);
+                if (col_mesh==NULL) my_lua_error(L, "Not a collision mesh: \""+col_mesh_name+"\"");
+                if (!col_mesh->isLoaded()) my_lua_error(L, "Not loaded: \""+col_mesh_name+"\"");
         }
 
         Vector3 start, end;
@@ -419,9 +412,9 @@ TRY_START
         }
 
         if (col_mesh != NULL) {
-                world->sweep(col_mesh,start,startq,end,endq,lcb);
+                physics_sweep(col_mesh,start,startq,end,endq,lcb);
         } else {
-                world->ray(start,end,lcb,radius);
+                physics_ray(start,end,lcb,radius);
         }
         if (lcb.results.size()==0) return 0;
         SweepResult nearest;
@@ -635,9 +628,6 @@ TRY_START
         } else if (!::strcmp(key,"setPartOrientationOffset")) {
                 push_cfunction(L,rbody_set_part_orientation_offset);
 
-        } else if (!::strcmp(key,"world")) {
-                push_pworld(L,self->world);
-
         } else if (!::strcmp(key,"owner")) {
                 if (self->owner.isNull()) {
                         lua_pushnil(L);
@@ -734,45 +724,16 @@ MT_MACRO_NEWINDEX(rbody);
 
 // PHYSICS WORLD =========================================================== {{{
 
-void push_pworld (lua_State *L, const PhysicsWorldPtr &self)
-{
-        if (self.isNull())
-                lua_pushnil(L);
-        else
-                push(L,new PhysicsWorldPtr(self),PWORLD_TAG);
-}
-
-int pworld_make(lua_State *L)
+static int global_physics_draw (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        push_pworld (L, PhysicsWorldPtr(new PhysicsWorld()));
-        return 1;
-TRY_END
-}
-
-static int pworld_gc(lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO_OFFSET(PhysicsWorldPtr,self,1,PWORLD_TAG,0);
-        delete self;
+        physics_draw();
         return 0;
 TRY_END
 }
 
-
-static int pworld_draw (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        self->draw();
-        return 0;
-TRY_END
-}
-
-class LuaTestCallback : public PhysicsWorld::TestCallback {
+class LuaTestCallback : public TestCallback {
     public:
 
         void result (RigidBody *body, const Vector3 &pos, const Vector3 &wpos,
@@ -825,329 +786,122 @@ class LuaTestCallback : public PhysicsWorld::TestCallback {
         ResultMap resultMap;
 };
 
-static int pworld_test (lua_State *L)
+static int global_physics_test (lua_State *L)
 {
 TRY_START
         LuaTestCallback lcb;
         push_cfunction(L, my_lua_error_handler);
         int error_handler = lua_gettop(L);
-        if (lua_gettop(L)==6) {
-                GET_UD_MACRO(PhysicsWorldPtr,world,1,PWORLD_TAG);
-                float radius = lua_tonumber(L,2);
-                Vector3 pos = check_v3(L,3);
-                bool only_dyn = check_bool(L,4);
-                if (lua_type(L,5) != LUA_TFUNCTION)
+        if (lua_gettop(L)==5) {
+                float radius = lua_tonumber(L,1);
+                Vector3 pos = check_v3(L,2);
+                bool only_dyn = check_bool(L,3);
+                if (lua_type(L,4) != LUA_TFUNCTION)
                         my_lua_error(L,"Parameter 4 should be a function.");
 
-                world->testSphere(radius,pos,only_dyn,lcb);
-                lcb.pushResults(L, 5, error_handler);
+                physics_test_sphere(radius,pos,only_dyn,lcb);
+                lcb.pushResults(L, 4, error_handler);
         } else {
-                check_args(L,7);
-                GET_UD_MACRO(PhysicsWorldPtr,world,1,PWORLD_TAG);
-                GET_UD_MACRO(CollisionMesh,col_mesh,2,COLMESH_TAG);
-                Vector3 pos = check_v3(L,3);
-                Quaternion quat = check_quat(L,4);
-                bool only_dyn = check_bool(L,5);
-                if (lua_type(L,6) != LUA_TFUNCTION)
+                check_args(L,6);
+                std::string col_mesh_name = luaL_checkstring(L,1);
+                DiskResource *col_mesh_ = disk_resource_get_or_make(col_mesh_name);
+                CollisionMesh *col_mesh = dynamic_cast<CollisionMesh*>(col_mesh_);
+                if (col_mesh==NULL) my_lua_error(L, "Not a collision mesh: \""+col_mesh_name+"\"");
+                if (!col_mesh->isLoaded()) my_lua_error(L, "Not loaded: \""+col_mesh_name+"\"");
+                Vector3 pos = check_v3(L,2);
+                Quaternion quat = check_quat(L,3);
+                bool only_dyn = check_bool(L,4);
+                if (lua_type(L,5) != LUA_TFUNCTION)
                         my_lua_error(L,"Parameter 5 should be a function.");
 
-                world->test(&col_mesh,pos,quat,only_dyn,lcb);
-                lcb.pushResults(L, 6, error_handler);
+                physics_test(col_mesh,pos,quat,only_dyn,lcb);
+                lcb.pushResults(L, 5, error_handler);
         }
         lua_pop(L,1); // error handler
         return 0;
 TRY_END
 }
 
-static int pworld_pump (lua_State *L)
+static int global_physics_pump (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        float time_step = luaL_checknumber(L,2);
-        int iterations = self->pump(L,time_step);
+        check_args(L,1);
+        float time_step = luaL_checknumber(L,1);
+        int iterations = physics_pump(L,time_step);
         lua_pushnumber(L,iterations);
         return 1;
 TRY_END
 }
 
-
-
-static int pworld_update_graphics (lua_State *L)
+static int global_physics_update_graphics (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        self->updateGraphics(L);
+        check_args(L,0);
+        physics_update_graphics(L);
         return 0;
 TRY_END
 }
 
-
-
-static int pworld_get_gravity (lua_State *L)
+static int global_physics_body_make (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        push_v3(L, self->getGravity());
-        return 1;
-TRY_END
-}
-
-static int pworld_set_gravity (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        Vector3 gravity = check_v3(L, 2);
-        self->setGravity(gravity);
-        return 0;
-TRY_END
-}
-
-
-static int pworld_add_rigid_body (lua_State *L)
-{
-TRY_START
-        check_args(L,4);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        std::string n = luaL_checkstring(L,2);
-        Vector3 pos = check_v3(L,3);
-        Quaternion quat = check_quat(L,4);
-        RigidBodyPtr rbp = (new RigidBody(self,n,pos,quat))->getPtr();
+        check_args(L,3);
+        std::string n = luaL_checkstring(L,1);
+        Vector3 pos = check_v3(L,2);
+        Quaternion quat = check_quat(L,3);
+        RigidBodyPtr rbp = (new RigidBody(n,pos,quat))->getPtr();
         push_rbody(L,rbp);
         return 1;
 TRY_END
 }
 
-
-
-
-TOSTRING_SMART_PTR_MACRO(pworld,PhysicsWorldPtr,PWORLD_TAG)
-
-static int pworld_index(lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        const char *key = luaL_checkstring(L,2);
-        if (!::strcmp(key,"cast")) {
-                push_cfunction(L,cast);
-        } else if (!::strcmp(key,"test")) {
-                push_cfunction(L,pworld_test);
-        } else if (!::strcmp(key,"pump")) {
-                push_cfunction(L,pworld_pump);
-        } else if (!::strcmp(key,"updateGraphics")) {
-                push_cfunction(L,pworld_update_graphics);
-        } else if (!::strcmp(key,"addRigidBody")) {
-                push_cfunction(L,pworld_add_rigid_body);
-        } else if (!::strcmp(key,"gravity")) {
-                push_v3(L, self->getGravity());
-        } else if (!::strcmp(key,"setGravity")) {
-                push_cfunction(L,pworld_set_gravity);
-        } else if (!::strcmp(key,"getGravity")) {
-                push_cfunction(L,pworld_get_gravity);
-        } else if (!::strcmp(key,"stepSize")) {
-                lua_pushnumber(L,self->getStepSize());
-        } else if (!::strcmp(key,"maxSteps")) {
-                lua_pushnumber(L,self->getMaxSteps());
-        } else if (!::strcmp(key,"contactBreakingThreshold")) {
-                lua_pushnumber(L,self->getContactBreakingThreshold());
-        } else if (!::strcmp(key,"deactivationTime")) {
-                lua_pushnumber(L,self->getDeactivationTime());
-        } else if (!::strcmp(key,"gimpactOneWayMeshHack")) {
-                lua_pushboolean(L,self->gimpactOneWayMeshHack);
-        } else if (!::strcmp(key,"bumpyTriangleMeshHack")) {
-                lua_pushboolean(L,self->bumpyTriangleMeshHack);
-        } else if (!::strcmp(key,"useTriangleEdgeInfo")) {
-                lua_pushboolean(L,self->useTriangleEdgeInfo);
-        } else if (!::strcmp(key,"verboseContacts")) {
-                lua_pushboolean(L,self->verboseContacts);
-        } else if (!::strcmp(key,"verboseCasts")) {
-                lua_pushboolean(L,self->verboseCasts);
-        } else if (!::strcmp(key,"errorContacts")) {
-                lua_pushboolean(L,self->errorContacts);
-        } else if (!::strcmp(key,"solverDamping")) {
-                lua_pushnumber(L,self->getSolverDamping());
-        } else if (!::strcmp(key,"solverIterations")) {
-                lua_pushnumber(L,self->getSolverIterations());
-        } else if (!::strcmp(key,"solverErp")) {
-                lua_pushnumber(L,self->getSolverErp());
-        } else if (!::strcmp(key,"solverErp2")) {
-                lua_pushnumber(L,self->getSolverErp2());
-        } else if (!::strcmp(key,"solverSplitImpulseThreshold")) {
-                lua_pushnumber(L,self->getSolverSplitImpulseThreshold());
-        } else if (!::strcmp(key,"solverLinearSlop")) {
-                lua_pushnumber(L,self->getSolverLinearSlop());
-        } else if (!::strcmp(key,"solverWarmStartingFactor")) {
-                lua_pushnumber(L,self->getSolverWarmStartingFactor());
-        } else if (!::strcmp(key,"solverSplitImpulse")) {
-                lua_pushboolean(L,self->getSolverSplitImpulse());
-        } else if (!::strcmp(key,"solverRandomiseOrder")) {
-                lua_pushboolean(L,self->getSolverRandomiseOrder());
-        } else if (!::strcmp(key,"solverFrictionSeparate")) {
-                lua_pushboolean(L,self->getSolverFrictionSeparate());
-        } else if (!::strcmp(key,"solverUseWarmStarting")) {
-                lua_pushboolean(L,self->getSolverUseWarmStarting());
-        } else if (!::strcmp(key,"solverCacheFriendly")) {
-                lua_pushboolean(L,self->getSolverCacheFriendly());
-        } else if (!::strcmp(key,"draw")) {
-                push_cfunction(L,pworld_draw);
-        } else {
-                my_lua_error(L,"Not a valid PhysicsWorld member: "+std::string(key));
-        }
-        return 1;
-TRY_END
-}
-
-static int pworld_newindex(lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(PhysicsWorldPtr,self,1,PWORLD_TAG);
-        const char *key = luaL_checkstring(L,2);
-        if (!::strcmp(key,"gravity")) {
-                Vector3 v = check_v3(L,3);
-                self->setGravity(v);
-        } else if (!::strcmp(key,"maxSteps")) {
-                int v = check_t<int>(L,3);
-                self->setMaxSteps(v);
-        } else if (!::strcmp(key,"stepSize")) {
-                float v = luaL_checknumber(L,3);
-                self->setStepSize(v);
-        } else if (!::strcmp(key,"contactBreakingThreshold")) {
-                float v = luaL_checknumber(L,3);
-                self->setContactBreakingThreshold(v);
-        } else if (!::strcmp(key,"deactivationTime")) {
-                float v = luaL_checknumber(L,3);
-                self->setDeactivationTime(v);
-        } else if (!::strcmp(key,"gimpactOneWayMeshHack")) {
-                bool v = check_bool(L,3);
-                self->gimpactOneWayMeshHack = v;
-        } else if (!::strcmp(key,"bumpyTriangleMeshHack")) {
-                bool v = check_bool(L,3);
-                self->bumpyTriangleMeshHack = v;
-        } else if (!::strcmp(key,"useTriangleEdgeInfo")) {
-                bool v = check_bool(L,3);
-                self->useTriangleEdgeInfo = v;
-        } else if (!::strcmp(key,"verboseContacts")) {
-                bool v = check_bool(L,3);
-                self->verboseContacts = v;
-        } else if (!::strcmp(key,"verboseCasts")) {
-                bool v = check_bool(L,3);
-                self->verboseCasts = v;
-        } else if (!::strcmp(key,"errorContacts")) {
-                bool v = check_bool(L,3);
-                self->errorContacts = v;
-        } else if (!::strcmp(key,"solverDamping")) {
-                float v = luaL_checknumber(L,3);
-                self->setSolverDamping(v);
-        } else if (!::strcmp(key,"solverIterations")) {
-                int v = check_t<int>(L,3);
-                self->setSolverIterations(v);
-        } else if (!::strcmp(key,"solverErp")) {
-                float v = luaL_checknumber(L,3);
-                self->setSolverErp(v);
-        } else if (!::strcmp(key,"solverErp2")) {
-                float v = luaL_checknumber(L,3);
-                self->setSolverErp2(v);
-        } else if (!::strcmp(key,"solverSplitImpulseThreshold")) {
-                float v = luaL_checknumber(L,3);
-                self->setSolverSplitImpulseThreshold(v);
-        } else if (!::strcmp(key,"solverLinearSlop")) {
-                float v = luaL_checknumber(L,3);
-                self->setSolverLinearSlop(v);
-        } else if (!::strcmp(key,"solverWarmStartingFactor")) {
-                float v = luaL_checknumber(L,3);
-                self->setSolverWarmStartingFactor(v);
-        } else if (!::strcmp(key,"solverSplitImpulse")) {
-                bool v = check_bool(L,3);
-                self->setSolverSplitImpulse(v);
-        } else if (!::strcmp(key,"solverRandomiseOrder")) {
-                bool v = check_bool(L,3);
-                self->setSolverRandomiseOrder(v);
-        } else if (!::strcmp(key,"solverFrictionSeparate")) {
-                bool v = check_bool(L,3);
-                self->setSolverFrictionSeparate(v);
-        } else if (!::strcmp(key,"solverUseWarmStarting")) {
-                bool v = check_bool(L,3);
-                self->setSolverUseWarmStarting(v);
-        } else if (!::strcmp(key,"solverCacheFriendly")) {
-                bool v = check_bool(L,3);
-                self->setSolverCacheFriendly(v);
-        } else {
-                my_lua_error(L,"Not a valid PhysicsWorld member: "+std::string(key));
-        }
-        return 0;
-TRY_END
-}
-
-EQ_PTR_MACRO(PhysicsWorld,pworld,PWORLD_TAG)
-
-MT_MACRO_NEWINDEX(pworld);
-
-//}}}
-
-
-
-static int global_get_pw (lua_State *L)
+static int global_physics_get_gravity (lua_State *L)
 {
 TRY_START
         check_args(L,0);
-        push_pworld(L, physics_world);
+        Vector3 gravity = Vector3(physics_option(PHYSICS_GRAVITY_X), physics_option(PHYSICS_GRAVITY_Y), physics_option(PHYSICS_GRAVITY_Z));
+        push_v3(L, gravity);
         return 1;
 TRY_END
 }
 
 
-BulletDebugDrawer::DebugDrawModes ddm_from_string (lua_State *L, const std::string &str)
-{
-        if (str=="DrawWireframe") return BulletDebugDrawer::DBG_DrawWireframe;
-        else if (str=="DrawAabb") return BulletDebugDrawer::DBG_DrawAabb;
-        else if (str=="DrawFeaturesText") return BulletDebugDrawer::DBG_DrawFeaturesText;
-        else if (str=="DrawContactPoints") return BulletDebugDrawer::DBG_DrawContactPoints;
-        else if (str=="NoDeactivation") return BulletDebugDrawer::DBG_NoDeactivation;
-        else if (str=="NoHelpText") return BulletDebugDrawer::DBG_NoHelpText;
-        else if (str=="DrawText") return BulletDebugDrawer::DBG_DrawText;
-        else if (str=="ProfileTimings") return BulletDebugDrawer::DBG_ProfileTimings;
-        else if (str=="EnableSatComparison") return BulletDebugDrawer::DBG_EnableSatComparison;
-        else if (str=="DisableBulletLCP") return BulletDebugDrawer::DBG_DisableBulletLCP;
-        else if (str=="EnableCCD") return BulletDebugDrawer::DBG_EnableCCD;
-        else if (str=="DrawConstraints") return BulletDebugDrawer::DBG_DrawConstraints;
-        else if (str=="DrawConstraintLimits") return BulletDebugDrawer::DBG_DrawConstraintLimits;
-        else if (str=="FastWireframe") return BulletDebugDrawer::DBG_FastWireframe;
-        else {
-                my_lua_error(L, "Did not recognise Bullet DebugDrawMode: "+str);
-                return BulletDebugDrawer::DBG_NoDebug; // avoid compiler warning
-        }       
-}       
-
-
-static int global_set_physics_debug (lua_State *L)
+int global_physics_option (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        const char *str = luaL_checkstring(L,1);
-        bool b = check_bool(L,2);
-        BulletDebugDrawer::DebugDrawModes modes = (BulletDebugDrawer::DebugDrawModes)debug_drawer->getDebugMode();
-        BulletDebugDrawer::DebugDrawModes mode = ddm_from_string(L, str);
-        int new_modes = (modes & ~mode) | (b ? mode : BulletDebugDrawer::DBG_NoDebug);
-        debug_drawer->setDebugMode(new_modes); 
+    if (lua_gettop(L)==2) {
+        std::string opt = luaL_checkstring(L,1);
+        int t;
+        PhysicsBoolOption o0;
+        PhysicsIntOption o1;
+        PhysicsFloatOption o2;
+        physics_option_from_string(opt, t, o0, o1, o2);
+        switch (t) {
+            case -1: my_lua_error(L,"Unrecognised physics option: \""+opt+"\"");
+            case 0: physics_option(o0, check_bool(L,2)); break;
+            case 1: physics_option(o1, check_t<int>(L,2)); break;
+            case 2: physics_option(o2, luaL_checknumber(L,2)); break;
+            default: my_lua_error(L,"Unrecognised type from physics_option_from_string");
+        }
         return 0;
-TRY_END 
-}
-
-static int global_get_physics_debug (lua_State *L)
-{
-TRY_START
+    } else {
         check_args(L,1);
-        const char *str = luaL_checkstring(L,1);
-        BulletDebugDrawer::DebugDrawModes modes = (BulletDebugDrawer::DebugDrawModes)debug_drawer->getDebugMode();
-        BulletDebugDrawer::DebugDrawModes mode = ddm_from_string(L, str);
-        lua_pushboolean(L, modes & mode); 
+        std::string opt = luaL_checkstring(L,1);
+        int t;
+        PhysicsBoolOption o0;
+        PhysicsIntOption o1;
+        PhysicsFloatOption o2;
+        physics_option_from_string(opt, t, o0, o1, o2);
+        switch (t) {
+            case -1: my_lua_error(L,"Unrecognised physics option: \""+opt+"\"");
+            case 0: lua_pushboolean(L,physics_option(o0)); break;
+            case 1: lua_pushnumber(L,physics_option(o1)); break;
+            case 2: lua_pushnumber(L,physics_option(o2)); break;
+            default: my_lua_error(L,"Unrecognised type from physics_option_from_string");
+        }
         return 1;
-TRY_END 
+    }
+TRY_END
 }
 
 
@@ -1236,13 +990,17 @@ TRY_END
 
 
 static const luaL_reg global[] = {
-        {"PhysicsWorld",pworld_make},
-        {"get_pw",global_get_pw},
-        {"set_physics_debug" ,global_set_physics_debug},
-        {"get_physics_debug" ,global_get_physics_debug},
         {"physics_get_material" ,global_physics_get_material},
         {"physics_set_material" ,global_physics_set_material},
         {"physics_set_interaction_groups" ,global_physics_set_interaction_groups},
+        {"physics_draw" ,global_physics_draw},
+        {"physics_test" ,global_physics_test},
+        {"physics_pump" ,global_physics_pump},
+        {"physics_update_graphics" ,global_physics_update_graphics},
+        {"physics_body_make" ,global_physics_body_make},
+        {"physics_get_gravity" ,global_physics_get_gravity},
+        {"physics_option" ,global_physics_option},
+        {"physics_cast", cast},
         {NULL, NULL}
 };
 
@@ -1255,7 +1013,6 @@ void physics_lua_init (lua_State *L)
         luaL_register(L, NULL, name##_meta_table); \
         lua_pop(L,1); } while(0)
 
-        ADD_MT_MACRO(pworld,PWORLD_TAG);
         ADD_MT_MACRO(rbody,RBODY_TAG);
 
         luaL_register(L, "_G", global);

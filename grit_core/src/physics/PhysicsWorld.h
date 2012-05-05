@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2010
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2012
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,84 @@
 #include "../CentralisedLog.h"
 #include "../SharedPtr.h"
 
-class PhysicsWorld;
-typedef SharedPtr<PhysicsWorld> PhysicsWorldPtr;
-
 class RigidBody;
 typedef SharedPtr<RigidBody> RigidBodyPtr;
 
-#ifndef PhysicsWorld_h
-#define PhysicsWorld_h
+#ifndef physics_h
+#define physics_h
+
+enum PhysicsBoolOption {
+    PHYSICS_AUTOUPDATE,
+
+    PHYSICS_GIMPACT_ONE_WAY_MESH_HACK,
+    PHYSICS_BUMPY_TRIANGLE_MESH_HACK,
+    PHYSICS_USE_TRIANGLE_EDGE_INFO,
+    PHYSICS_VERBOSE_CONTACTS,
+    PHYSICS_VERBOSE_CASTS,
+    PHYSICS_ERROR_CONTACTS,
+    PHYSICS_ERROR_CASTS,
+    PHYSICS_SOLVER_SPLIT_IMPULSE,
+    PHYSICS_SOLVER_RANDOMISE_ORDER,
+    PHYSICS_SOLVER_FRICTION_SEPARATE,
+    PHYSICS_SOLVER_USE_WARM_STARTING,
+    PHYSICS_SOLVER_CACHE_FRIENDLY,
+
+    PHYSICS_DEBUG_WIREFRAME,
+    PHYSICS_DEBUG_AABB,
+    PHYSICS_DEBUG_FEATURES_TEXT,
+    PHYSICS_DEBUG_CONTACT_POINTS,
+    PHYSICS_DEBUG_CONSTRAINTS,
+    PHYSICS_DEBUG_CONSTRAINTS_LIMITS,
+
+    PHYSICS_DEBUG_NO_DEACTIVATION,
+    PHYSICS_DEBUG_NO_HELP_TEXT,
+    PHYSICS_DEBUG_DRAW_TEXT,
+    PHYSICS_DEBUG_PROFILE_TIMINGS,
+    PHYSICS_DEBUG_ENABLE_SAT_COMPARISON,
+    PHYSICS_DEBUG_DISABLE_BULLET_LCP,
+    PHYSICS_DEBUG_ENABLE_CCD,
+    PHYSICS_DEBUG_FAST_WIREFRAME
+
+};
+
+enum PhysicsIntOption {
+    PHYSICS_MAX_STEPS,
+    PHYSICS_SOLVER_ITERATIONS
+};
+
+enum PhysicsFloatOption {
+    PHYSICS_GRAVITY_X,
+    PHYSICS_GRAVITY_Y,
+    PHYSICS_GRAVITY_Z,
+    PHYSICS_STEP_SIZE,
+    PHYSICS_CONTACT_BREAKING_THRESHOLD,
+    PHYSICS_DEACTIVATION_TIME,
+    PHYSICS_SOLVER_DAMPING,
+    PHYSICS_SOLVER_ERP,
+    PHYSICS_SOLVER_ERP2,
+    PHYSICS_SOLVER_SPLIT_IMPULSE_THRESHOLD,
+    PHYSICS_SOLVER_LINEAR_SLOP,
+    PHYSICS_SOLVER_WARM_STARTING_FACTOR
+};
+
+std::string physics_option_to_string (PhysicsBoolOption o);
+std::string physics_option_to_string (PhysicsIntOption o);
+std::string physics_option_to_string (PhysicsFloatOption o);
+
+// set's t to either 0,1,2 and fills in the approriate argument
+void physics_option_from_string (const std::string &s,
+                                 int &t,
+                                 PhysicsBoolOption &o0,
+                                 PhysicsIntOption &o1,
+                                 PhysicsFloatOption &o2);
+
+void physics_option (PhysicsBoolOption o, bool v);
+bool physics_option (PhysicsBoolOption o);
+void physics_option (PhysicsIntOption o, int v);
+int physics_option (PhysicsIntOption o);
+void physics_option (PhysicsFloatOption o, float v);
+float physics_option (PhysicsFloatOption o);
+
 
 #include <btBulletDynamicsCommon.h>
 
@@ -55,141 +125,50 @@ extern "C" {
 // a class that extends a bullet class
 class DynamicsWorld;
 
-class PhysicsWorld {
+int physics_pump (lua_State *L, float time_step);
 
-    friend class RigidBody;
-
+// to be extended by lua wrapper or whatever
+class SweepCallback {
     public:
-
-    PhysicsWorld (void);
-
-    ~PhysicsWorld (void);
-
-    int pump (lua_State *L, float time_step);
-
-    void setGravity (const Vector3 &);
-    Vector3 getGravity (void) const;
-
-    // to be extended by lua wrapper or whatever
-    class SweepCallback {
-        public:
-        virtual void result (RigidBody &body, float d, const Vector3 &normal, int m) = 0;
-    };
-
-    void ray (const Vector3 &start,
-          const Vector3 &end,
-          SweepCallback &rcb,
-          float radius=0) const;
-
-
-    void sweep (const CollisionMesh *col_mesh,
-                const Vector3 &startp,
-                const Quaternion &startq,
-                const Vector3 &endp,
-                const Quaternion &endq,
-                SweepCallback &scb) const;
-
-    class TestCallback {
-        public:
-        virtual void result (RigidBody *body, const Vector3 &pos, const Vector3 &wpos,
-                     const Vector3 &normal, float penetration, int m) = 0;
-    };
-
-    void test (const CollisionMesh *col_mesh, const Vector3 &pos, const Quaternion &quat,
-               bool dyn_only, TestCallback &cb);
-
-    void testSphere (float rad, const Vector3 &pos, bool dyn_only, TestCallback &cb);
-
-    float getDeactivationTime (void) const;
-    void setDeactivationTime (float);
-
-    float getContactBreakingThreshold (void) const;
-    void setContactBreakingThreshold (float);
-
-    float getSolverDamping (void) const;
-    void setSolverDamping (float);
-
-    int getSolverIterations (void) const;
-    void setSolverIterations (int);
-
-    float getSolverErp (void) const;
-    void setSolverErp (float);
-
-    float getSolverErp2 (void) const;
-    void setSolverErp2 (float);
-
-    float getSolverLinearSlop (void) const;
-    void setSolverLinearSlop (float);
-
-    float getSolverWarmStartingFactor (void) const;
-    void setSolverWarmStartingFactor (float);
-
-    bool getSolverRandomiseOrder (void) const;
-    void setSolverRandomiseOrder (bool);
-
-    bool getSolverFrictionSeparate (void) const;
-    void setSolverFrictionSeparate (bool);
-
-    bool getSolverUseWarmStarting (void) const;
-    void setSolverUseWarmStarting (bool);
-
-    bool getSolverCacheFriendly (void) const;
-    void setSolverCacheFriendly (bool);
-
-    bool getSolverSplitImpulse (void) const;
-    void setSolverSplitImpulse (bool);
-
-    float getSolverSplitImpulseThreshold (void) const;
-    void setSolverSplitImpulseThreshold (float);
-
-    btScalar getStepSize (void) const;
-    void setStepSize (btScalar v);
-
-    btScalar getMaxSteps (void) const;
-    void setMaxSteps (btScalar v);
-
-    void draw (void);
-
-    bool verboseContacts;
-    bool errorContacts;
-    bool verboseCasts;
-    bool errorCasts;
-    bool bumpyTriangleMeshHack;
-    bool useTriangleEdgeInfo;
-    bool gimpactOneWayMeshHack;
-
-    void updateGraphics (lua_State *L);
-
-    protected:
-
-    bool needsGraphicsUpdate;
-
-    btDefaultCollisionConfiguration *colConf;
-    btCollisionDispatcher *colDisp;
-
-    btBroadphaseInterface *broadphase;
-
-    btConstraintSolver *conSolver;
-
-    DynamicsWorld *world;
-
-    btScalar maxSteps;
-
-    btScalar extrapolate;
-
-    lua_State *last_L;
-
+    virtual void result (RigidBody &body, float d, const Vector3 &normal, int m) = 0;
 };
+
+void physics_ray (const Vector3 &start,
+                  const Vector3 &end,
+                  SweepCallback &rcb,
+                  float radius=0);
+
+
+void physics_sweep (const CollisionMesh *col_mesh,
+                        const Vector3 &startp,
+                        const Quaternion &startq,
+                        const Vector3 &endp,
+                        const Quaternion &endq,
+                        SweepCallback &scb);
+
+class TestCallback {
+    public:
+    virtual void result (RigidBody *body, const Vector3 &pos, const Vector3 &wpos,
+                 const Vector3 &normal, float penetration, int m) = 0;
+};
+
+void physics_test (const CollisionMesh *col_mesh, const Vector3 &pos, const Quaternion &quat,
+                   bool dyn_only, TestCallback &cb);
+
+void physics_test_sphere (float rad, const Vector3 &pos, bool dyn_only, TestCallback &cb);
+
+void physics_draw (void);
+
+void physics_update_graphics (lua_State *L);
+
 
 class RigidBody : public btMotionState, public CollisionMesh::ReloadWatcher {
 
-    friend class PhysicsWorld;
     friend class CollisionMesh;
 
     public:
 
-    RigidBody (const PhysicsWorldPtr &world,
-               const std::string &col_mesh,
+    RigidBody (const std::string &col_mesh,
                const Vector3 &pos,
                const Quaternion &quat);
 
@@ -263,8 +242,6 @@ class RigidBody : public btMotionState, public CollisionMesh::ReloadWatcher {
 
     RigidBodyPtr getPtr (void) const { return self; }
 
-    const PhysicsWorldPtr world;
-
     CollisionMesh * colMesh;
 
     GritObjectPtr owner;
@@ -321,6 +298,8 @@ class RigidBody : public btMotionState, public CollisionMesh::ReloadWatcher {
     void updateCollisionFlags (void);
 };
 
+void physics_init (void);
+void physics_shutdown (void);
 
 #endif
 

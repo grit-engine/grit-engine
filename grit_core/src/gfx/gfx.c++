@@ -45,6 +45,7 @@
 #include "Clutter.h"
 #include "../path_util.h"
 #include "../math_util.h"
+#include "../option.h"
 
 
 bool use_hwgamma = false; //getenv("GRIT_NOHWGAMMA")==NULL;
@@ -795,50 +796,6 @@ static std::map<GfxBoolOption,bool> new_options_bool;
 static std::map<GfxIntOption,int> new_options_int;
 static std::map<GfxFloatOption,float> new_options_float;
 
-template<class T> struct ValidOption {
-    virtual ~ValidOption (void) { }
-    virtual bool isValid (T v) = 0;
-    virtual void err (std::ostream &o) = 0;
-    virtual void maybeThrow (T v)
-    {
-        if (!isValid(v)) {
-            std::stringstream ss;
-            ss << "Graphics option: new value " << v << ": ";
-            err(ss);
-            GRIT_EXCEPT(ss.str());
-        }
-    }
-};
-
-template<class T> struct ValidOptionRange : ValidOption<T> {
-    T min, max;
-    ValidOptionRange (T min_, T max_) : min(min_), max(max_) { }
-    virtual bool isValid (T v) { return v>=min && v<=max; }
-    virtual void err (std::ostream &o) { o << "must be between "<<min<<" and "<<max; }
-};
-
-template<class T, class A> struct ValidOptionList : ValidOption<T> {
-    A list;
-    ValidOptionList (A &list_)
-    {
-        for (unsigned i=0 ; i<sizeof(A)/sizeof(T) ; ++i)
-            list[i] = list_[i];
-    }
-    virtual bool isValid (T v)
-    {
-        for (unsigned i=0 ; i<sizeof(A)/sizeof(T) ; ++i)
-            if (v==list[i]) return true;
-        return false;
-    }
-    virtual void err (std::ostream &o)
-    {
-        o << "must be one of [";
-        for (unsigned i=0 ; i<sizeof(A)/sizeof(T) ; ++i)
-            o << (i==0?"":", ") << list[i];
-        o << "]";
-    }
-};
-
 static std::map<GfxBoolOption,ValidOption<bool>*> valid_option_bool;
 static std::map<GfxIntOption,ValidOption<int>*> valid_option_int;
 static std::map<GfxFloatOption,ValidOption<float>*> valid_option_float;
@@ -1306,7 +1263,7 @@ static void init_options (void)
 
 void gfx_option (GfxBoolOption o, bool v)
 {
-    valid_option_bool[o]->maybeThrow(v);
+    valid_option_bool[o]->maybeThrow("Graphics", v);
     try {
         new_options_bool[o] = v;
         if (new_options_bool[GFX_AUTOUPDATE]) options_update(false);
@@ -1321,7 +1278,7 @@ bool gfx_option (GfxBoolOption o)
 
 void gfx_option (GfxIntOption o, int v)
 {
-    valid_option_int[o]->maybeThrow(v);
+    valid_option_int[o]->maybeThrow("Graphics", v);
     try {
         new_options_int[o] = v;
         if (new_options_bool[GFX_AUTOUPDATE]) options_update(false);
@@ -1336,7 +1293,7 @@ int gfx_option (GfxIntOption o)
 
 void gfx_option (GfxFloatOption o, float v)
 {
-    valid_option_float[o]->maybeThrow(v);
+    valid_option_float[o]->maybeThrow("Graphics", v);
     try {
         new_options_float[o] = v;
         if (new_options_bool[GFX_AUTOUPDATE]) options_update(false);

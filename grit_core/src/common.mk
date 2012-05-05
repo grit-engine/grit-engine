@@ -1262,7 +1262,7 @@ gfx.o: ../src/BackgroundLoader.h ../depend_stubs/list
 gfx.o: ../depend_stubs/boost/thread/thread.hpp
 gfx.o: ../depend_stubs/boost/thread/condition.hpp
 gfx.o: ../src/DiskResource.h ../src/CacheFriendlyRangeSpaceSIMD.h
-gfx.o: ../src/path_util.h
+gfx.o: ../src/path_util.h ../src/option.h
 lua_wrappers_gfx.o: ../src/main.h ../depend_stubs/lua.h
 lua_wrappers_gfx.o: ../src/Mouse.h ../depend_stubs/vector
 lua_wrappers_gfx.o: ../src/Keyboard.h ../depend_stubs/string
@@ -1941,7 +1941,8 @@ PhysicsWorld.o: ../src/physics/BColParser.h
 PhysicsWorld.o: ../depend_stubs/stdint.h
 PhysicsWorld.o: ../src/physics/LooseEnd.h
 PhysicsWorld.o: ../src/physics/PhysicalMaterial.h
-PhysicsWorld.o: ../src/LuaPtr.h ../src/physics/PhysicsWorld.h
+PhysicsWorld.o: ../src/LuaPtr.h ../src/option.h
+PhysicsWorld.o: ../src/physics/PhysicsWorld.h
 PhysicsWorld.o: ../src/physics/lua_wrappers_physics.h
 TColParser.o: ../depend_stubs/iostream ../depend_stubs/cstdlib
 TColParser.o: ../src/math_util.h ../depend_stubs/cmath

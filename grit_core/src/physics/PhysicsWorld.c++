@@ -34,10 +34,506 @@
 #include "../GritObject.h"
 #include "../main.h"
 #include "../CentralisedLog.h"
+#include "../option.h"
 
 #include "PhysicsWorld.h"
 #include "lua_wrappers_physics.h"
 
+static float extrapolate = 0;
+static bool needs_graphics_update = false;
+
+static btDefaultCollisionConfiguration *col_conf;
+static btCollisionDispatcher *col_disp;
+
+static btBroadphaseInterface *broadphase;
+
+static btConstraintSolver *con_solver;
+
+static DynamicsWorld *world;
+
+
+// {{{ get access to some protected members in btDiscreteDynamicsWorld
+
+class DynamicsWorld : public btDiscreteDynamicsWorld {
+    public:
+    DynamicsWorld (btCollisionDispatcher *colDisp,
+               btBroadphaseInterface *broadphase,
+               btConstraintSolver *conSolver,
+               btCollisionConfiguration *colConf)
+          : btDiscreteDynamicsWorld(colDisp,broadphase,conSolver,colConf), dirty(false)
+    { }
+
+    void step (float step_size)
+    {
+        if (!dirty) {
+            saveKinematicState(step_size);
+            applyGravity();
+            dirty = true;
+        }
+        internalSingleStepSimulation(step_size);
+    }
+
+    void end (void)
+    {
+        dirty = false;
+        clearForces();
+    }
+
+    protected:
+
+    bool dirty;
+};
+
+// }}}
+
+
+// {{{ PHYSICS OPTION
+
+static PhysicsBoolOption option_keys_bool[] = {
+    PHYSICS_AUTOUPDATE,
+
+    PHYSICS_GIMPACT_ONE_WAY_MESH_HACK,
+    PHYSICS_BUMPY_TRIANGLE_MESH_HACK,
+    PHYSICS_USE_TRIANGLE_EDGE_INFO,
+    PHYSICS_VERBOSE_CONTACTS,
+    PHYSICS_VERBOSE_CASTS,
+    PHYSICS_ERROR_CONTACTS,
+    PHYSICS_ERROR_CASTS,
+    PHYSICS_SOLVER_SPLIT_IMPULSE,
+    PHYSICS_SOLVER_RANDOMISE_ORDER,
+    PHYSICS_SOLVER_FRICTION_SEPARATE,
+    PHYSICS_SOLVER_USE_WARM_STARTING,
+    PHYSICS_SOLVER_CACHE_FRIENDLY,
+
+    PHYSICS_DEBUG_WIREFRAME,
+    PHYSICS_DEBUG_AABB,
+    PHYSICS_DEBUG_FEATURES_TEXT,
+    PHYSICS_DEBUG_CONTACT_POINTS,
+    PHYSICS_DEBUG_CONSTRAINTS,
+    PHYSICS_DEBUG_CONSTRAINTS_LIMITS,
+
+    PHYSICS_DEBUG_NO_DEACTIVATION,
+    PHYSICS_DEBUG_NO_HELP_TEXT,
+    PHYSICS_DEBUG_DRAW_TEXT,
+    PHYSICS_DEBUG_PROFILE_TIMINGS,
+    PHYSICS_DEBUG_ENABLE_SAT_COMPARISON,
+    PHYSICS_DEBUG_DISABLE_BULLET_LCP,
+    PHYSICS_DEBUG_ENABLE_CCD,
+    PHYSICS_DEBUG_FAST_WIREFRAME
+};
+
+static PhysicsIntOption option_keys_int[] = {
+    PHYSICS_MAX_STEPS,
+    PHYSICS_SOLVER_ITERATIONS
+};
+
+static PhysicsFloatOption option_keys_float[] = {
+    PHYSICS_GRAVITY_X,
+    PHYSICS_GRAVITY_Y,
+    PHYSICS_GRAVITY_Z,
+    PHYSICS_STEP_SIZE,
+    PHYSICS_CONTACT_BREAKING_THRESHOLD,
+    PHYSICS_DEACTIVATION_TIME,
+    PHYSICS_SOLVER_DAMPING,
+    PHYSICS_SOLVER_ERP,
+    PHYSICS_SOLVER_ERP2,
+    PHYSICS_SOLVER_SPLIT_IMPULSE_THRESHOLD,
+    PHYSICS_SOLVER_LINEAR_SLOP,
+    PHYSICS_SOLVER_WARM_STARTING_FACTOR
+};
+
+static std::map<PhysicsBoolOption,bool> options_bool;
+static std::map<PhysicsIntOption,int> options_int;
+static std::map<PhysicsFloatOption,float> options_float;
+static std::map<PhysicsBoolOption,bool> new_options_bool;
+static std::map<PhysicsIntOption,int> new_options_int;
+static std::map<PhysicsFloatOption,float> new_options_float;
+
+static std::map<PhysicsBoolOption,ValidOption<bool>*> valid_option_bool;
+static std::map<PhysicsIntOption,ValidOption<int>*> valid_option_int;
+static std::map<PhysicsFloatOption,ValidOption<float>*> valid_option_float;
+
+static void valid_option (PhysicsBoolOption o, ValidOption<bool> *v) { valid_option_bool[o] = v; }
+static void valid_option (PhysicsIntOption o, ValidOption<int> *v) { valid_option_int[o] = v; }
+static void valid_option (PhysicsFloatOption o, ValidOption<float> *v) { valid_option_float[o] = v; }
+
+static bool truefalse_[] = { false, true };
+static ValidOptionList<bool,bool[2]> *truefalse = new ValidOptionList<bool,bool[2]>(truefalse_);
+
+std::string physics_option_to_string (PhysicsBoolOption o)
+{
+    switch (o) {
+        case PHYSICS_AUTOUPDATE: return "GIMPACT_AUTOUPDATE";
+        case PHYSICS_GIMPACT_ONE_WAY_MESH_HACK: return "GIMPACT_ONE_WAY_MESH_HACK";
+        case PHYSICS_BUMPY_TRIANGLE_MESH_HACK: return "BUMPY_TRIANGLE_MESH_HACK";
+        case PHYSICS_USE_TRIANGLE_EDGE_INFO: return "USE_TRIANGLE_EDGE_INFO";
+        case PHYSICS_VERBOSE_CONTACTS: return "VERBOSE_CONTACTS";
+        case PHYSICS_VERBOSE_CASTS: return "VERBOSE_CASTS";
+        case PHYSICS_ERROR_CONTACTS: return "ERROR_CONTACTS";
+        case PHYSICS_ERROR_CASTS: return "ERROR_CASTS";
+        case PHYSICS_SOLVER_SPLIT_IMPULSE: return "SOLVER_SPLIT_IMPULSE";
+        case PHYSICS_SOLVER_RANDOMISE_ORDER: return "SOLVER_RANDOMISE_ORDER";
+        case PHYSICS_SOLVER_FRICTION_SEPARATE: return "SOLVER_FRICTION_SEPARATE";
+        case PHYSICS_SOLVER_USE_WARM_STARTING: return "SOLVER_USE_WARM_STARTING";
+        case PHYSICS_SOLVER_CACHE_FRIENDLY: return "SOLVER_CACHE_FRIENDLY";
+        case PHYSICS_DEBUG_WIREFRAME: return "DEBUG_WIREFRAME";
+        case PHYSICS_DEBUG_AABB: return "DEBUG_AABB";
+        case PHYSICS_DEBUG_FEATURES_TEXT: return "DEBUG_FEATURES_TEXT";
+        case PHYSICS_DEBUG_CONTACT_POINTS: return "DEBUG_CONTACT_POINTS";
+        case PHYSICS_DEBUG_CONSTRAINTS: return "DEBUG_CONSTRAINTS";
+        case PHYSICS_DEBUG_CONSTRAINTS_LIMITS: return "DEBUG_CONSTRAINTS_LIMITS";
+        case PHYSICS_DEBUG_NO_DEACTIVATION: return "DEBUG_NO_DEACTIVATION";
+        case PHYSICS_DEBUG_NO_HELP_TEXT: return "DEBUG_NO_HELP_TEXT";
+        case PHYSICS_DEBUG_DRAW_TEXT: return "DEBUG_DRAW_TEXT";
+        case PHYSICS_DEBUG_PROFILE_TIMINGS: return "DEBUG_PROFILE_TIMINGS";
+        case PHYSICS_DEBUG_ENABLE_SAT_COMPARISON: return "DEBUG_ENABLE_SAT_COMPARISON";
+        case PHYSICS_DEBUG_DISABLE_BULLET_LCP: return "DEBUG_DISABLE_BULLET_LCP";
+        case PHYSICS_DEBUG_ENABLE_CCD: return "DEBUG_ENABLE_CCD";
+        case PHYSICS_DEBUG_FAST_WIREFRAME: return "DEBUG_FAST_WIREFRAME";
+    }
+    return "UNKNOWN_BOOL_OPTION";
+}
+std::string physics_option_to_string (PhysicsIntOption o)
+{
+    switch (o) {
+        case PHYSICS_MAX_STEPS: return "MAX_STEPS";
+        case PHYSICS_SOLVER_ITERATIONS: return "SOLVER_ITERATIONS";
+    }
+    return "UNKNOWN_INT_OPTION";
+}
+std::string physics_option_to_string (PhysicsFloatOption o)
+{
+    switch (o) {
+        case PHYSICS_GRAVITY_X: return "GRAVITY_X";
+        case PHYSICS_GRAVITY_Y: return "GRAVITY_Y";
+        case PHYSICS_GRAVITY_Z: return "GRAVITY_Z";
+        case PHYSICS_STEP_SIZE: return "STEP_SIZE";
+        case PHYSICS_CONTACT_BREAKING_THRESHOLD: return "CONTACT_BREAKING_THRESHOLD";
+        case PHYSICS_DEACTIVATION_TIME: return "DEACTIVATION_TIME";
+        case PHYSICS_SOLVER_DAMPING: return "SOLVER_DAMPING";
+        case PHYSICS_SOLVER_ERP: return "SOLVER_ERP";
+        case PHYSICS_SOLVER_ERP2: return "SOLVER_ERP2";
+        case PHYSICS_SOLVER_SPLIT_IMPULSE_THRESHOLD: return "SOLVER_SPLIT_IMPULSE_THRESHOLD";
+        case PHYSICS_SOLVER_LINEAR_SLOP: return "SOLVER_LINEAR_SLOP";
+        case PHYSICS_SOLVER_WARM_STARTING_FACTOR: return "WARM_STARTING_FACTOR";
+    }
+    return "UNKNOWN_FLOAT_OPTION";
+}
+
+// set's t to either 0,1,2 and fills in the approriate argument
+void physics_option_from_string (const std::string &s,
+                                 int &t,
+                                 PhysicsBoolOption &o0,
+                                 PhysicsIntOption &o1,
+                                 PhysicsFloatOption &o2)
+{
+    if (s=="AUTOUPDATE") { t = 0; o0 = PHYSICS_AUTOUPDATE; }
+
+    else if (s=="GIMPACT_ONE_WAY_MESH_HACK") { t = 0 ; o0 = PHYSICS_GIMPACT_ONE_WAY_MESH_HACK; }
+    else if (s=="BUMPY_TRIANGLE_MESH_HACK") { t = 0 ; o0 = PHYSICS_BUMPY_TRIANGLE_MESH_HACK; }
+    else if (s=="USE_TRIANGLE_EDGE_INFO") { t = 0 ; o0 = PHYSICS_USE_TRIANGLE_EDGE_INFO; }
+    else if (s=="VERBOSE_CONTACTS") { t = 0 ; o0 = PHYSICS_VERBOSE_CONTACTS; }
+    else if (s=="VERBOSE_CASTS") { t = 0 ; o0 = PHYSICS_VERBOSE_CASTS; }
+    else if (s=="ERROR_CONTACTS") { t = 0 ; o0 = PHYSICS_ERROR_CONTACTS; }
+    else if (s=="ERROR_CASTS") { t = 0 ; o0 = PHYSICS_ERROR_CASTS; }
+    else if (s=="SOLVER_SPLIT_IMPULSE") { t = 0 ; o0 = PHYSICS_SOLVER_SPLIT_IMPULSE; }
+    else if (s=="SOLVER_RANDOMISE_ORDER") { t = 0 ; o0 = PHYSICS_SOLVER_RANDOMISE_ORDER; }
+    else if (s=="SOLVER_FRICTION_SEPARATE") { t = 0 ; o0 = PHYSICS_SOLVER_FRICTION_SEPARATE; }
+    else if (s=="SOLVER_USE_WARM_STARTING") { t = 0 ; o0 = PHYSICS_SOLVER_USE_WARM_STARTING; }
+    else if (s=="SOLVER_CACHE_FRIENDLY") { t = 0 ; o0 = PHYSICS_SOLVER_CACHE_FRIENDLY; }
+    else if (s=="DEBUG_WIREFRAME") { t = 0 ; o0 = PHYSICS_DEBUG_WIREFRAME; }
+    else if (s=="DEBUG_AABB") { t = 0 ; o0 = PHYSICS_DEBUG_AABB; }
+    else if (s=="DEBUG_FEATURES_TEXT") { t = 0 ; o0 = PHYSICS_DEBUG_FEATURES_TEXT; }
+    else if (s=="DEBUG_CONTACT_POINTS") { t = 0 ; o0 = PHYSICS_DEBUG_CONTACT_POINTS; }
+    else if (s=="DEBUG_CONSTRAINTS") { t = 0 ; o0 = PHYSICS_DEBUG_CONSTRAINTS; }
+    else if (s=="DEBUG_CONSTRAINTS_LIMITS") { t = 0 ; o0 = PHYSICS_DEBUG_CONSTRAINTS_LIMITS; }
+    else if (s=="DEBUG_NO_DEACTIVATION") { t = 0 ; o0 = PHYSICS_DEBUG_NO_DEACTIVATION; }
+    else if (s=="DEBUG_NO_HELP_TEXT") { t = 0 ; o0 = PHYSICS_DEBUG_NO_HELP_TEXT; }
+    else if (s=="DEBUG_DRAW_TEXT") { t = 0 ; o0 = PHYSICS_DEBUG_DRAW_TEXT; }
+    else if (s=="DEBUG_PROFILE_TIMINGS") { t = 0 ; o0 = PHYSICS_DEBUG_PROFILE_TIMINGS; }
+    else if (s=="DEBUG_ENABLE_SAT_COMPARISON") { t = 0 ; o0 = PHYSICS_DEBUG_ENABLE_SAT_COMPARISON; }
+    else if (s=="DEBUG_DISABLE_BULLET_LCP") { t = 0 ; o0 = PHYSICS_DEBUG_DISABLE_BULLET_LCP; }
+    else if (s=="DEBUG_ENABLE_CCD") { t = 0 ; o0 = PHYSICS_DEBUG_ENABLE_CCD; }
+    else if (s=="DEBUG_FAST_WIREFRAME") { t = 0 ; o0 = PHYSICS_DEBUG_FAST_WIREFRAME; }
+
+    else if (s=="MAX_STEPS") { t = 1 ; o1 = PHYSICS_MAX_STEPS; }
+    else if (s=="SOLVER_ITERATIONS") { t = 1 ; o1 = PHYSICS_SOLVER_ITERATIONS; }
+
+    else if (s=="GRAVITY_X") { t = 2 ; o2 = PHYSICS_GRAVITY_X; }
+    else if (s=="GRAVITY_Y") { t = 2 ; o2 = PHYSICS_GRAVITY_Y; }
+    else if (s=="GRAVITY_Z") { t = 2 ; o2 = PHYSICS_GRAVITY_Z; }
+    else if (s=="STEP_SIZE") { t = 2 ; o2 = PHYSICS_STEP_SIZE; }
+    else if (s=="CONTACT_BREAKING_THRESHOLD") { t = 2 ; o2 = PHYSICS_CONTACT_BREAKING_THRESHOLD; }
+    else if (s=="DEACTIVATION_TIME") { t = 2 ; o2 = PHYSICS_DEACTIVATION_TIME; }
+    else if (s=="SOLVER_DAMPING") { t = 2 ; o2 = PHYSICS_SOLVER_DAMPING; }
+    else if (s=="SOLVER_ERP") { t = 2 ; o2 = PHYSICS_SOLVER_ERP; }
+    else if (s=="SOLVER_ERP2") { t = 2 ; o2 = PHYSICS_SOLVER_ERP2; }
+    else if (s=="SOLVER_SPLIT_IMPULSE_THRESHOLD") { t = 2 ; o2 = PHYSICS_SOLVER_SPLIT_IMPULSE_THRESHOLD; }
+    else if (s=="SOLVER_LINEAR_SLOP") { t = 2 ; o2 = PHYSICS_SOLVER_LINEAR_SLOP; }
+    else if (s=="WARM_STARTING_FACTOR") { t = 2 ; o2 = PHYSICS_SOLVER_WARM_STARTING_FACTOR; }
+
+    else t = -1;
+}
+
+
+
+
+
+static void options_update (bool flush)
+{
+    bool reset_gravity = flush;
+    bool reset_solver_mode = flush;
+    bool reset_debug_drawer = flush;
+
+    for (unsigned i=0 ; i<sizeof(option_keys_bool)/sizeof(*option_keys_bool) ; ++i) {
+        PhysicsBoolOption o = option_keys_bool[i];
+        bool v_old = options_bool[o];
+        bool v_new = new_options_bool[o];
+        if (v_old == v_new) continue;
+        switch (o) {
+            case PHYSICS_AUTOUPDATE: break;
+
+            case PHYSICS_GIMPACT_ONE_WAY_MESH_HACK:
+            case PHYSICS_BUMPY_TRIANGLE_MESH_HACK:
+            case PHYSICS_USE_TRIANGLE_EDGE_INFO:
+            case PHYSICS_VERBOSE_CONTACTS:
+            case PHYSICS_VERBOSE_CASTS:
+            case PHYSICS_ERROR_CONTACTS:
+            case PHYSICS_ERROR_CASTS:
+            break;
+
+            case PHYSICS_SOLVER_SPLIT_IMPULSE:
+            world->getSolverInfo().m_splitImpulse = v_new;
+            break;
+
+            case PHYSICS_SOLVER_RANDOMISE_ORDER:
+            case PHYSICS_SOLVER_FRICTION_SEPARATE:
+            case PHYSICS_SOLVER_USE_WARM_STARTING:
+            case PHYSICS_SOLVER_CACHE_FRIENDLY:
+            reset_solver_mode = true;
+            break;
+
+            case PHYSICS_DEBUG_WIREFRAME:
+            case PHYSICS_DEBUG_AABB:
+            case PHYSICS_DEBUG_FEATURES_TEXT:
+            case PHYSICS_DEBUG_CONTACT_POINTS:
+            case PHYSICS_DEBUG_CONSTRAINTS:
+            case PHYSICS_DEBUG_CONSTRAINTS_LIMITS:
+            case PHYSICS_DEBUG_NO_DEACTIVATION:
+            case PHYSICS_DEBUG_NO_HELP_TEXT:
+            case PHYSICS_DEBUG_DRAW_TEXT:
+            case PHYSICS_DEBUG_PROFILE_TIMINGS:
+            case PHYSICS_DEBUG_ENABLE_SAT_COMPARISON:
+            case PHYSICS_DEBUG_DISABLE_BULLET_LCP:
+            case PHYSICS_DEBUG_ENABLE_CCD:
+            case PHYSICS_DEBUG_FAST_WIREFRAME:
+            reset_debug_drawer = true;
+            break;
+        }
+    }
+    for (unsigned i=0 ; i<sizeof(option_keys_int)/sizeof(*option_keys_int) ; ++i) {
+        PhysicsIntOption o = option_keys_int[i];
+        int v_old = options_int[o];
+        int v_new = new_options_int[o];
+        if (v_old == v_new) continue;
+        switch (o) {
+            case PHYSICS_MAX_STEPS:
+            break;
+            case PHYSICS_SOLVER_ITERATIONS:
+            world->getSolverInfo().m_numIterations = v_new;
+            break;
+        }
+    }
+    for (unsigned i=0 ; i<sizeof(option_keys_float)/sizeof(*option_keys_float) ; ++i) {
+        PhysicsFloatOption o = option_keys_float[i];
+        float v_old = options_float[o];
+        float v_new = new_options_float[o];
+        if (v_old == v_new) continue;
+        switch (o) {
+            case PHYSICS_STEP_SIZE:
+            break;
+            case PHYSICS_GRAVITY_X:
+            case PHYSICS_GRAVITY_Y:
+            case PHYSICS_GRAVITY_Z:
+            reset_gravity = true;
+            break;
+            case PHYSICS_DEACTIVATION_TIME:
+            gDeactivationTime = v_new;
+            break;
+            case PHYSICS_CONTACT_BREAKING_THRESHOLD:
+            gContactBreakingThreshold = v_new;
+            break;
+            case PHYSICS_SOLVER_DAMPING:
+            world->getSolverInfo().m_damping = v_new;
+            break;
+            case PHYSICS_SOLVER_ERP:
+            world->getSolverInfo().m_erp = v_new;
+            break;
+            case PHYSICS_SOLVER_ERP2:
+            world->getSolverInfo().m_erp2 = v_new;
+            break;
+            case PHYSICS_SOLVER_LINEAR_SLOP:
+            world->getSolverInfo().m_linearSlop = v_new;
+            break;
+            case PHYSICS_SOLVER_WARM_STARTING_FACTOR:
+            world->getSolverInfo().m_warmstartingFactor = v_new;
+            break;
+            case PHYSICS_SOLVER_SPLIT_IMPULSE_THRESHOLD:
+            world->getSolverInfo().m_splitImpulsePenetrationThreshold = v_new;
+            break;
+        }
+    }
+
+    options_bool = new_options_bool;
+    options_int = new_options_int;
+    options_float = new_options_float;
+
+
+    if (reset_gravity) {
+        world->setGravity(btVector3(physics_option(PHYSICS_GRAVITY_X), physics_option(PHYSICS_GRAVITY_Y), physics_option(PHYSICS_GRAVITY_Z)));
+    }
+
+    if (reset_solver_mode) {
+        world->getSolverInfo().m_solverMode = 0
+          | (physics_option(PHYSICS_SOLVER_RANDOMISE_ORDER) ? SOLVER_RANDMIZE_ORDER : 0)
+          | (physics_option(PHYSICS_SOLVER_FRICTION_SEPARATE) ? SOLVER_FRICTION_SEPARATE : 0)
+          | (physics_option(PHYSICS_SOLVER_USE_WARM_STARTING) ? SOLVER_USE_WARMSTARTING : 0)
+          | (physics_option(PHYSICS_SOLVER_CACHE_FRIENDLY) ? SOLVER_CACHE_FRIENDLY : 0);
+    }
+    
+    if (reset_debug_drawer) {
+        debug_drawer->setDebugMode(0
+            | (physics_option(PHYSICS_DEBUG_WIREFRAME) ? BulletDebugDrawer::DBG_DrawWireframe : 0)
+            | (physics_option(PHYSICS_DEBUG_AABB) ? BulletDebugDrawer::DBG_DrawAabb : 0)
+            | (physics_option(PHYSICS_DEBUG_FEATURES_TEXT) ? BulletDebugDrawer::DBG_DrawFeaturesText : 0)
+            | (physics_option(PHYSICS_DEBUG_CONTACT_POINTS) ? BulletDebugDrawer::DBG_DrawContactPoints : 0)
+            | (physics_option(PHYSICS_DEBUG_NO_DEACTIVATION) ? BulletDebugDrawer::DBG_NoDeactivation : 0)
+            | (physics_option(PHYSICS_DEBUG_NO_HELP_TEXT) ? BulletDebugDrawer::DBG_NoHelpText : 0)
+            | (physics_option(PHYSICS_DEBUG_DRAW_TEXT) ? BulletDebugDrawer::DBG_DrawText : 0)
+            | (physics_option(PHYSICS_DEBUG_PROFILE_TIMINGS) ? BulletDebugDrawer::DBG_ProfileTimings : 0)
+//            | (physics_option(PHYSICS_DEBUG_ENABLE_SET_COMPARISON) ? BulletDebugDrawer::DBG_EnableSetComparison : 0)
+            | (physics_option(PHYSICS_DEBUG_DISABLE_BULLET_LCP) ? BulletDebugDrawer::DBG_DisableBulletLCP : 0)
+            | (physics_option(PHYSICS_DEBUG_ENABLE_CCD) ? BulletDebugDrawer::DBG_EnableCCD : 0)
+            | (physics_option(PHYSICS_DEBUG_CONSTRAINTS) ? BulletDebugDrawer::DBG_DrawConstraints : 0)
+            | (physics_option(PHYSICS_DEBUG_CONSTRAINTS_LIMITS) ? BulletDebugDrawer::DBG_DrawConstraintLimits : 0)
+            | (physics_option(PHYSICS_DEBUG_FAST_WIREFRAME) ? BulletDebugDrawer::DBG_FastWireframe : 0)
+        );
+    }
+}
+
+static void init_options (void)
+{
+
+    for (unsigned i=0 ; i < sizeof(option_keys_bool) / sizeof(*option_keys_bool) ; ++i) {
+        valid_option(option_keys_bool[i], truefalse);
+
+    }
+
+    valid_option(PHYSICS_MAX_STEPS, new ValidOptionRange<int>(1,1000));
+    valid_option(PHYSICS_SOLVER_ITERATIONS, new ValidOptionRange<int>(0,1000));
+
+    valid_option(PHYSICS_GRAVITY_X, new ValidOptionRange<float>(-1000, 1000));
+    valid_option(PHYSICS_GRAVITY_Y, new ValidOptionRange<float>(-1000, 1000));
+    valid_option(PHYSICS_GRAVITY_Z, new ValidOptionRange<float>(-1000, 1000));
+    valid_option(PHYSICS_STEP_SIZE, new ValidOptionRange<float>(0.00001,100));
+    valid_option(PHYSICS_CONTACT_BREAKING_THRESHOLD, new ValidOptionRange<float>(0.00001,100));
+    valid_option(PHYSICS_DEACTIVATION_TIME, new ValidOptionRange<float>(0.00001,1000));
+    valid_option(PHYSICS_SOLVER_DAMPING, new ValidOptionRange<float>(0.00001,1000));
+    valid_option(PHYSICS_SOLVER_ERP, new ValidOptionRange<float>(0.00001,1000));
+    valid_option(PHYSICS_SOLVER_ERP2, new ValidOptionRange<float>(0.00001,1000));
+    valid_option(PHYSICS_SOLVER_SPLIT_IMPULSE_THRESHOLD, new ValidOptionRange<float>(-1000,1000));
+    valid_option(PHYSICS_SOLVER_WARM_STARTING_FACTOR, new ValidOptionRange<float>(0.00001,1000));
+
+    physics_option(PHYSICS_AUTOUPDATE, false);
+
+    physics_option(PHYSICS_GIMPACT_ONE_WAY_MESH_HACK, true);
+    physics_option(PHYSICS_BUMPY_TRIANGLE_MESH_HACK, false);
+    physics_option(PHYSICS_USE_TRIANGLE_EDGE_INFO, false);
+    physics_option(PHYSICS_VERBOSE_CONTACTS, false);
+    physics_option(PHYSICS_VERBOSE_CASTS, false);
+    physics_option(PHYSICS_ERROR_CONTACTS, true);
+    physics_option(PHYSICS_ERROR_CASTS, true);
+    physics_option(PHYSICS_SOLVER_SPLIT_IMPULSE, false);
+    physics_option(PHYSICS_SOLVER_RANDOMISE_ORDER, false);
+    physics_option(PHYSICS_SOLVER_FRICTION_SEPARATE, false);
+    physics_option(PHYSICS_SOLVER_USE_WARM_STARTING, true);
+    physics_option(PHYSICS_SOLVER_CACHE_FRIENDLY, false);
+
+    physics_option(PHYSICS_DEBUG_WIREFRAME, false);
+    physics_option(PHYSICS_DEBUG_AABB, false);
+    physics_option(PHYSICS_DEBUG_FEATURES_TEXT, false);
+    physics_option(PHYSICS_DEBUG_CONTACT_POINTS, false);
+    physics_option(PHYSICS_DEBUG_CONSTRAINTS, false);
+    physics_option(PHYSICS_DEBUG_CONSTRAINTS_LIMITS, false);
+    physics_option(PHYSICS_DEBUG_NO_DEACTIVATION, false);
+    physics_option(PHYSICS_DEBUG_NO_HELP_TEXT, false);
+    physics_option(PHYSICS_DEBUG_DRAW_TEXT, false);
+    physics_option(PHYSICS_DEBUG_PROFILE_TIMINGS, false);
+    physics_option(PHYSICS_DEBUG_ENABLE_SAT_COMPARISON, false);
+    physics_option(PHYSICS_DEBUG_DISABLE_BULLET_LCP, false);
+    physics_option(PHYSICS_DEBUG_ENABLE_CCD, false);
+    physics_option(PHYSICS_DEBUG_FAST_WIREFRAME, false);
+
+    physics_option(PHYSICS_MAX_STEPS, 20);
+    physics_option(PHYSICS_SOLVER_ITERATIONS, 10);
+
+    physics_option(PHYSICS_GRAVITY_X, 0.0f);
+    physics_option(PHYSICS_GRAVITY_Y, 0.0f);
+    physics_option(PHYSICS_GRAVITY_Z, -9.981f);
+    physics_option(PHYSICS_STEP_SIZE, 1/200.0f);
+    physics_option(PHYSICS_CONTACT_BREAKING_THRESHOLD, 0.02f);
+    physics_option(PHYSICS_DEACTIVATION_TIME, 2.0f);
+    physics_option(PHYSICS_SOLVER_DAMPING, 1.0f);
+    physics_option(PHYSICS_SOLVER_ERP, 0.2f);
+    physics_option(PHYSICS_SOLVER_ERP2, 0.1f);
+    physics_option(PHYSICS_SOLVER_SPLIT_IMPULSE_THRESHOLD, -0.02f);
+    physics_option(PHYSICS_SOLVER_WARM_STARTING_FACTOR, 0.85f);
+
+    options_update(true);
+
+    physics_option(PHYSICS_AUTOUPDATE, true);
+
+}
+
+void physics_option (PhysicsBoolOption o, bool v)
+{
+    valid_option_bool[o]->maybeThrow("Physics", v);
+    new_options_bool[o] = v;
+    if (new_options_bool[PHYSICS_AUTOUPDATE]) options_update(false);
+}
+bool physics_option (PhysicsBoolOption o)
+{
+    return options_bool[o];
+}
+
+void physics_option (PhysicsIntOption o, int v)
+{
+    valid_option_int[o]->maybeThrow("Physics", v);
+    new_options_int[o] = v;
+    if (new_options_bool[PHYSICS_AUTOUPDATE]) options_update(false);
+}
+int physics_option (PhysicsIntOption o)
+{
+    return options_int[o];
+}
+
+void physics_option (PhysicsFloatOption o, float v)
+{
+    valid_option_float[o]->maybeThrow("Physics", v);
+    new_options_float[o] = v;
+    if (new_options_bool[PHYSICS_AUTOUPDATE]) options_update(false);
+}
+float physics_option (PhysicsFloatOption o)
+{
+    return options_float[o];
+}
+
+
+
+// }}}
+
+
+// {{{ conversion and nan checking utilities
 
 static inline btVector3 check_nan_ (const btVector3 &v, const char *file, int line)
 {
@@ -89,45 +585,11 @@ static inline btQuaternion to_bullet (const Quaternion &from)
 
 #define check_nan(x) check_nan_(x,__FILE__,__LINE__)
 
-class DynamicsWorld : public btDiscreteDynamicsWorld {
-    public:
-    DynamicsWorld (btCollisionDispatcher *colDisp,
-               btBroadphaseInterface *broadphase,
-               btConstraintSolver *conSolver,
-               btCollisionConfiguration *colConf)
-          : btDiscreteDynamicsWorld(colDisp,broadphase,conSolver,colConf),
-        stepSize(1.0f/60.0f),
-        dirty(false)
-    { }
-
-    void step (void);
-    void end (void);
-
-    btScalar getStepSize (void) const { return stepSize; }
-    void setStepSize (btScalar v) { stepSize = v; }
-
-    protected:
-
-    btScalar stepSize;
-    bool dirty;
-};
-
-void DynamicsWorld::step (void)
-{
-    if (!dirty) {
-        saveKinematicState(stepSize);
-        applyGravity();
-        dirty = true;
-    }
-    internalSingleStepSimulation(stepSize);
-}
+// }}}
 
 
-void DynamicsWorld::end ()
-{
-    dirty = false;
-    clearForces();
-}
+
+// {{{ Handling contacts, materials, etc
 
 bool physics_verbose_contacts = false;
 
@@ -255,8 +717,6 @@ bool contact_added_callback (btManifoldPoint& cp,
     APP_ASSERT(body0!=NULL);
     APP_ASSERT(body1!=NULL);
 
-    const PhysicsWorldPtr &world = body0->world;
-
     const CollisionMesh *cmesh0 = body0->colMesh, *cmesh1 = body1->colMesh;
 
     const btCollisionShape *shape0, *parent0, *shape1, *parent1;
@@ -265,7 +725,8 @@ bool contact_added_callback (btManifoldPoint& cp,
     get_shape_and_parent(colObj1, shape1, parent1);
 
     bool err = false;
-    bool verb = world->errorContacts;
+    bool verb = physics_option(PHYSICS_ERROR_CONTACTS);
+    bool verb_contacts = physics_option(PHYSICS_VERBOSE_CONTACTS);
 
     int mat0 = get_material(cmesh0, shape0, index0, &err, verb);
     int mat1 = get_material(cmesh1, shape1, index1, &err, verb);
@@ -277,7 +738,7 @@ bool contact_added_callback (btManifoldPoint& cp,
 
     phys_mats.getFrictionRestitution(mat0, mat1, cp.m_combinedFriction, cp.m_combinedRestitution);
 
-    if (err || world->verboseContacts) {
+    if (err || verb_contacts) {
         CLOG << mat0 << "[" << shape_str(shape0->getShapeType()) << "]"
              << "(" << shape_str(parent0->getShapeType()) << ")"
              << " " << part0 << " " << index0
@@ -313,9 +774,9 @@ bool contact_added_callback (btManifoldPoint& cp,
         }
 
 
-        if (world->useTriangleEdgeInfo) {
+        if (physics_option(PHYSICS_USE_TRIANGLE_EDGE_INFO)) {
             btAdjustInternalEdgeContacts(cp,sta_body, dyn_body, part1,index1);
-            if (world->verboseContacts) {
+            if (verb_contacts) {
                 CLOG << cp.m_lifeTime << " " << cp.m_positionWorldOnA
                               << " " << cp.m_positionWorldOnB
                      << " " << cp.m_normalWorldOnB << " " << cp.m_distance1
@@ -331,7 +792,7 @@ bool contact_added_callback (btManifoldPoint& cp,
             }
         }
 
-        if (world->bumpyTriangleMeshHack) {
+        if (physics_option(PHYSICS_BUMPY_TRIANGLE_MESH_HACK)) {
             const btTriangleShape *tshape =
                    static_cast<const btTriangleShape*>(sta_body->getCollisionShape());
 
@@ -367,7 +828,7 @@ bool contact_added_callback (btManifoldPoint& cp,
             gim_body = bbody1;
         }
 
-        if (world->gimpactOneWayMeshHack) {
+        if (physics_option(PHYSICS_GIMPACT_ONE_WAY_MESH_HACK)) {
             const btTriangleShape *tshape =
                    static_cast<const btTriangleShape*>(gim_body->getCollisionShape());
 
@@ -389,55 +850,10 @@ bool contact_added_callback (btManifoldPoint& cp,
 
 extern ContactAddedCallback gContactAddedCallback;
 
-PhysicsWorld::PhysicsWorld (void)
-      : verboseContacts(false), errorContacts(true), verboseCasts(false), errorCasts(true),
-    bumpyTriangleMeshHack(false), useTriangleEdgeInfo(true),
-    gimpactOneWayMeshHack(true), needsGraphicsUpdate(false), maxSteps(5), extrapolate(0)
-{
-    colConf = new btDefaultCollisionConfiguration();
-    colDisp = new btCollisionDispatcher(colConf);
-
-    broadphase = new btDbvtBroadphase();
-
-    conSolver = new btSequentialImpulseConstraintSolver();
-
-    world = new DynamicsWorld(colDisp,broadphase,conSolver,colConf);
+// }}}
 
 
-    btGImpactCollisionAlgorithm::registerAlgorithm(colDisp);
-
-    gContactAddedCallback = contact_added_callback;
-    
-    world->setGravity(btVector3(0.0f,0.0f,-9.8f));
-
-    world->setDebugDrawer(debug_drawer);
-}
-
-PhysicsWorld::~PhysicsWorld ()
-{
-
-    // they should probably all be gone by now but just in case some
-    // aren't linked to RigidBodies, this will clean them up
-    for (int i=world->getNumCollisionObjects()-1 ; i>=0 ; --i) {
-
-        btCollisionObject* victim = world->getCollisionObjectArray()[i];
-
-        btRigidBody* victim2 = btRigidBody::upcast(victim);
-
-        if (victim2)
-            world->removeRigidBody(victim2);
-
-        delete victim;
-    }
-
-
-    delete world;
-    delete conSolver;
-    delete broadphase;
-    delete colDisp;
-    delete colConf;
-}
-
+// C++ requires this to not be a local class
 namespace {
     struct Info {
         RigidBodyPtr body, other;
@@ -446,16 +862,17 @@ namespace {
         Vector3 pos, posOther, norm;
     };
 }
-int PhysicsWorld::pump (lua_State *L, float elapsed)
+
+int physics_pump (lua_State *L, float elapsed)
 {
-    last_L = L;
-    float step_size = world->getStepSize();
+    float step_size = physics_option(PHYSICS_STEP_SIZE);
+    int max_steps = physics_option(PHYSICS_MAX_STEPS);
     int counter = 0;
-    for (; counter<maxSteps ; counter++) {
+    for (; counter<max_steps ; counter++) {
         if (elapsed<step_size) break;
         elapsed -= step_size;
-        world->step();
-        needsGraphicsUpdate = true;
+        world->step(step_size);
+        needs_graphics_update = true;
         extrapolate = elapsed;
 
         std::vector<Info> infos;
@@ -555,10 +972,10 @@ int PhysicsWorld::pump (lua_State *L, float elapsed)
     return counter;
 }
 
-void PhysicsWorld::updateGraphics (lua_State *L)
+void physics_update_graphics (lua_State *L)
 {
-    if (!needsGraphicsUpdate) return;
-    needsGraphicsUpdate = false;
+    if (!needs_graphics_update) return;
+    needs_graphics_update = false;
 
     // to handle errors raised by the lua callback
     push_cfunction(L, my_lua_error_handler);
@@ -575,88 +992,9 @@ void PhysicsWorld::updateGraphics (lua_State *L)
     lua_pop(L,1); // error handler
 }
 
-float PhysicsWorld::getDeactivationTime (void) const
-{ return gDeactivationTime; }
-void PhysicsWorld::setDeactivationTime (float v)
-{ gDeactivationTime = v; }
-
-float PhysicsWorld::getContactBreakingThreshold (void) const
-{ return gContactBreakingThreshold; }
-void PhysicsWorld::setContactBreakingThreshold (float v)
-{ gContactBreakingThreshold = v; }
-
-Vector3 PhysicsWorld::getGravity (void) const
-{ return from_bullet(world->getGravity()); }
-void PhysicsWorld::setGravity (const Vector3 &gravity)
-{ world->setGravity(to_bullet(gravity)); }
-
-float PhysicsWorld::getSolverDamping (void) const
-{ return world->getSolverInfo().m_damping; }
-void PhysicsWorld::setSolverDamping (float v)
-{ world->getSolverInfo().m_damping = v; }
-
-int PhysicsWorld::getSolverIterations (void) const
-{ return world->getSolverInfo().m_numIterations; }
-void PhysicsWorld::setSolverIterations (int v)
-{ world->getSolverInfo().m_numIterations = v; }
-
-float PhysicsWorld::getSolverErp (void) const
-{ return world->getSolverInfo().m_erp; } 
-void PhysicsWorld::setSolverErp (float v)
-{ world->getSolverInfo().m_erp = v; } 
-
-float PhysicsWorld::getSolverErp2 (void) const
-{ return world->getSolverInfo().m_erp2; } 
-void PhysicsWorld::setSolverErp2 (float v)
-{ world->getSolverInfo().m_erp2 = v; } 
-
-float PhysicsWorld::getSolverLinearSlop (void) const
-{ return world->getSolverInfo().m_linearSlop; } 
-void PhysicsWorld::setSolverLinearSlop (float v)
-{ world->getSolverInfo().m_linearSlop = v; } 
-
-float PhysicsWorld::getSolverWarmStartingFactor (void) const
-{ return world->getSolverInfo().m_warmstartingFactor; } 
-void PhysicsWorld::setSolverWarmStartingFactor (float v)
-{ world->getSolverInfo().m_warmstartingFactor = v; } 
-
-bool PhysicsWorld::getSolverSplitImpulse (void) const
-{ return 0!=world->getSolverInfo().m_splitImpulse; } 
-void PhysicsWorld::setSolverSplitImpulse (bool v)
-{ world->getSolverInfo().m_splitImpulse = v; } 
-
-float PhysicsWorld::getSolverSplitImpulseThreshold (void) const
-{ return world->getSolverInfo().m_splitImpulsePenetrationThreshold; } 
-void PhysicsWorld::setSolverSplitImpulseThreshold (float v)
-{ world->getSolverInfo().m_splitImpulsePenetrationThreshold = v; } 
-
-static inline int set_flag (int &var, int flag, bool val)
-{ return var = (var & ~flag) | (val?flag:0); }
-
-bool PhysicsWorld::getSolverRandomiseOrder (void) const
-{ return 0!=(world->getSolverInfo().m_solverMode & SOLVER_RANDMIZE_ORDER); } 
-void PhysicsWorld::setSolverRandomiseOrder (bool v)
-{ set_flag(world->getSolverInfo().m_solverMode,SOLVER_RANDMIZE_ORDER,v); } 
-
-bool PhysicsWorld::getSolverFrictionSeparate (void) const
-{ return 0!=(world->getSolverInfo().m_solverMode & SOLVER_FRICTION_SEPARATE); } 
-void PhysicsWorld::setSolverFrictionSeparate (bool v)
-{ set_flag(world->getSolverInfo().m_solverMode,SOLVER_FRICTION_SEPARATE,v); } 
-
-bool PhysicsWorld::getSolverUseWarmStarting (void) const
-{ return 0!=(world->getSolverInfo().m_solverMode & SOLVER_USE_WARMSTARTING); } 
-void PhysicsWorld::setSolverUseWarmStarting (bool v)
-{ set_flag(world->getSolverInfo().m_solverMode,SOLVER_USE_WARMSTARTING,v); } 
-
-bool PhysicsWorld::getSolverCacheFriendly (void) const
-{ return 0!=(world->getSolverInfo().m_solverMode & SOLVER_CACHE_FRIENDLY); } 
-void PhysicsWorld::setSolverCacheFriendly (bool v)
-{ set_flag(world->getSolverInfo().m_solverMode,SOLVER_CACHE_FRIENDLY,v); } 
-
-
 class BulletRayCallback : public btCollisionWorld::RayResultCallback {
     public:
-    BulletRayCallback (PhysicsWorld::SweepCallback &scb_) : scb(scb_) { }
+    BulletRayCallback (SweepCallback &scb_) : scb(scb_) { }
     virtual btScalar addSingleResult (btCollisionWorld::LocalRayResult&r, bool)
     {
         btRigidBody *body = btRigidBody::upcast(r.m_collisionObject);
@@ -678,10 +1016,10 @@ class BulletRayCallback : public btCollisionWorld::RayResultCallback {
         const btCollisionShape *shape, *parent;
         get_shape_and_parent(body, shape, parent);
 
-        bool verb = rb->world->errorCasts;
+        bool verb = physics_option(PHYSICS_ERROR_CASTS);
         int m = get_material(rb->colMesh, shape, index, &err, verb);
 
-        if (err || rb->world->verboseCasts) {
+        if (err || physics_option(PHYSICS_VERBOSE_CASTS)) {
             CLOG << "RAY HIT  " << m << "[" << shape_str(shape->getShapeType()) << "]"
                  << "(" << shape_str(parent->getShapeType()) << ")"
                  << " " << part << " " << index << std::endl;
@@ -693,12 +1031,12 @@ class BulletRayCallback : public btCollisionWorld::RayResultCallback {
         return r.m_hitFraction;
     }
     protected:
-    PhysicsWorld::SweepCallback &scb;
+    SweepCallback &scb;
 };
 
 class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
     public:
-    BulletSweepCallback (PhysicsWorld::SweepCallback &scb_) : scb(scb_) { }
+    BulletSweepCallback (SweepCallback &scb_) : scb(scb_) { }
     virtual btScalar addSingleResult (btCollisionWorld::LocalConvexResult&r, bool)
     {
         btRigidBody *body = btRigidBody::upcast(r.m_hitCollisionObject);
@@ -720,10 +1058,10 @@ class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
         const btCollisionShape *shape, *parent;
         get_shape_and_parent(body, shape, parent);
 
-        bool verb = rb->world->errorCasts;
+        bool verb = physics_option(PHYSICS_ERROR_CASTS);
         int m = get_material(rb->colMesh, shape, index, &err, verb);
 
-        if (err || rb->world->verboseCasts) {
+        if (err || physics_option(PHYSICS_VERBOSE_CASTS)) {
             CLOG << "SWEEP HIT  " << m << "[" << shape_str(shape->getShapeType()) << "]"
                  << "(" << shape_str(parent->getShapeType()) << ")"
                  << " " << part << " " << index << std::endl;
@@ -733,13 +1071,13 @@ class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
         return r.m_hitFraction;
     }
     protected:
-    PhysicsWorld::SweepCallback &scb;
+    SweepCallback &scb;
 };
 
-void PhysicsWorld::ray (const Vector3 &start,
-            const Vector3 &end,
-            SweepCallback &scb,
-            float radius) const
+void physics_ray (const Vector3 &start,
+                  const Vector3 &end,
+                  SweepCallback &scb,
+                  float radius)
 {
     if (radius<0) {
         BulletRayCallback brcb(scb);
@@ -753,12 +1091,12 @@ void PhysicsWorld::ray (const Vector3 &start,
     }
 }
 
-void PhysicsWorld::sweep (const CollisionMesh *col_mesh,
-                          const Vector3 &startp,
-                          const Quaternion &startq,
-                          const Vector3 &endp,
-                          const Quaternion &endq,
-                          SweepCallback &scb) const
+void physics_sweep (const CollisionMesh *col_mesh,
+                    const Vector3 &startp,
+                    const Quaternion &startq,
+                    const Vector3 &endp,
+                    const Quaternion &endq,
+                    SweepCallback &scb)
 {
     BulletSweepCallback bscb(scb);
     btTransform start(to_bullet(startq),to_bullet(startp));
@@ -775,9 +1113,9 @@ class BulletTestCallback : public btCollisionWorld::ContactResultCallback {
     /*! You may also want to set m_collisionFilterGroup and m_collisionFilterMask
      *  (supplied by the superclass) for needsCollision() */
     BulletTestCallback (btCollisionObject& obj_,
-                        PhysicsWorld::TestCallback &tcb_,
-                        PhysicsWorld &world_, bool dyn_only)
-        : obj(obj_), tcb(tcb_), world(world_), dynOnly(dyn_only) { }
+                        TestCallback &tcb_,
+                        bool dyn_only)
+        : obj(obj_), tcb(tcb_), dynOnly(dyn_only) { }
     
     virtual btScalar addSingleResult (btManifoldPoint& cp,
         const btCollisionObject* colObj0,int,int index0,
@@ -816,7 +1154,7 @@ class BulletTestCallback : public btCollisionWorld::ContactResultCallback {
         get_shape_and_parent(colObj, shape, parent);
 
         bool err = false;
-        bool verb = world.errorContacts;
+        bool verb = physics_option(PHYSICS_ERROR_CONTACTS);
 
         int mat = get_material(cmesh, shape, index, &err, verb);
 
@@ -827,55 +1165,36 @@ class BulletTestCallback : public btCollisionWorld::ContactResultCallback {
 
     public:
     btCollisionObject &obj;
-    PhysicsWorld::TestCallback &tcb;
-    PhysicsWorld &world;
+    TestCallback &tcb;
     bool dynOnly;
 };
 
-void PhysicsWorld::test (const CollisionMesh *col_mesh, const Vector3 &pos, const Quaternion &quat,
+void physics_test (const CollisionMesh *col_mesh, const Vector3 &pos, const Quaternion &quat,
                          bool dyn_only, TestCallback &cb_)
 {
     btCollisionObject encroacher;
     encroacher.setCollisionShape(col_mesh->getMasterShape());
     encroacher.setWorldTransform(btTransform(to_bullet(quat), to_bullet(pos)));
     
-    BulletTestCallback cb(encroacher,cb_,*this,dyn_only);
+    BulletTestCallback cb(encroacher,cb_,dyn_only);
     world->contactTest(&encroacher,cb);
 }
 
 
-void PhysicsWorld::testSphere (float rad, const Vector3 &pos, bool dyn_only, TestCallback &cb_)
+void physics_test_sphere (float rad, const Vector3 &pos, bool dyn_only, TestCallback &cb_)
 {
     btCollisionObject encroacher;
     btSphereShape sphere(rad);
     encroacher.setCollisionShape(&sphere);
     encroacher.setWorldTransform(btTransform(btQuaternion(0,0,0,1), to_bullet(pos)));
     
-    BulletTestCallback cb(encroacher,cb_,*this,dyn_only);
+    BulletTestCallback cb(encroacher,cb_,dyn_only);
     world->contactTest(&encroacher,cb);
 }
 
 
 
-btScalar PhysicsWorld::getStepSize (void) const
-{
-    return world->getStepSize();
-}
-void PhysicsWorld::setStepSize (btScalar v)
-{
-    world->setStepSize(v);
-}
-
-btScalar PhysicsWorld::getMaxSteps (void) const
-{
-    return maxSteps;
-}
-void PhysicsWorld::setMaxSteps (btScalar v)
-{
-    maxSteps = v;
-}
-
-void PhysicsWorld::draw (void)
+void physics_draw (void)
 {
     world->debugDrawWorld();
 }
@@ -883,13 +1202,12 @@ void PhysicsWorld::draw (void)
 
 
 
+// {{{ RigidBody
 
-
-RigidBody::RigidBody (const PhysicsWorldPtr &world_,
-                      const std::string &col_mesh,
+RigidBody::RigidBody (const std::string &col_mesh,
                       const Vector3 &pos,
                       const Quaternion &quat)
-      : world(world_), lastXform(to_bullet(quat),to_bullet(pos))
+      : lastXform(to_bullet(quat),to_bullet(pos))
 {
     DiskResource *dr = disk_resource_get_or_make(col_mesh);
     colMesh = dynamic_cast<CollisionMesh*>(dr);
@@ -954,7 +1272,7 @@ void RigidBody::addToWorld (void)
     APP_ASSERT(body==NULL);
     body = new btRigidBody(info);
 
-    world->world->addRigidBody(body);
+    world->addRigidBody(body);
 
     // Only do CCD if speed of body exceeeds this
     body->setCcdMotionThreshold(colMesh->getCCDMotionThreshold());
@@ -966,7 +1284,7 @@ void RigidBody::addToWorld (void)
 void RigidBody::removeFromWorld (void)
 {
     lastXform = body->getCenterOfMassTransform();
-    world->world->removeRigidBody(body);
+    world->removeRigidBody(body);
     delete body;
     delete shape;
     body = NULL;
@@ -1014,7 +1332,7 @@ void RigidBody::updateGraphicsCallback (lua_State *L)
         body->getInterpolationWorldTransform(),
         body->getInterpolationLinearVelocity(),
         body->getInterpolationAngularVelocity(),
-        world->extrapolate*body->getHitFraction(),
+        extrapolate*body->getHitFraction(),
         current_xform);
 
 
@@ -1048,12 +1366,13 @@ void RigidBody::updateGraphicsCallback (lua_State *L)
 
 void RigidBody::stepCallback (lua_State *L)
 {
+    float step_size = physics_option(PHYSICS_STEP_SIZE);
     if (body->getInvMass()==0) {
         btTransform after;
         btTransformUtil::integrateTransform(body->getCenterOfMassTransform(),
                             body->getLinearVelocity(),
                             body->getInterpolationAngularVelocity(),
-                            world->getStepSize(),
+                            step_size,
                             after);
         body->proceedToTransform(after);
     }
@@ -1067,9 +1386,10 @@ void RigidBody::stepCallback (lua_State *L)
 
     // get callback
     stepCallbackPtr.push(L);
+    lua_pushnumber(L, step_size);
 
     // call callback (no args, no return values)
-    int status = lua_pcall(L,0,0,error_handler);
+    int status = lua_pcall(L,1,0,error_handler);
     if (status) {
         lua_pop(L,1);
         stepCallbackPtr.setNil(L);
@@ -1144,7 +1464,7 @@ void RigidBody::stabiliseCallback (lua_State *L)
 void RigidBody::force (const Vector3 &force)
 {
     if (body==NULL) return;
-    body->applyCentralImpulse(to_bullet(force*world->getStepSize()));
+    body->applyCentralImpulse(to_bullet(force*physics_option(PHYSICS_STEP_SIZE)));
     body->activate();
 }
 
@@ -1152,7 +1472,7 @@ void RigidBody::force (const Vector3 &force,
                const Vector3 &rel_pos)
 {
     if (body==NULL) return;
-    body->applyImpulse(to_bullet(force*world->getStepSize()),
+    body->applyImpulse(to_bullet(force*physics_option(PHYSICS_STEP_SIZE)),
                to_bullet(rel_pos));
     body->activate();
 }
@@ -1175,7 +1495,7 @@ void RigidBody::impulse (const Vector3 &impulse,
 void RigidBody::torque (const Vector3 &torque)
 {
     if (body==NULL) return;
-    body->applyTorqueImpulse(to_bullet(torque*world->getStepSize()));
+    body->applyTorqueImpulse(to_bullet(torque*physics_option(PHYSICS_STEP_SIZE)));
     body->activate();
 }
 
@@ -1349,8 +1669,8 @@ void RigidBody::setElementEnabled (int i, bool v)
         shape->addChildShape(t,s);
     } else {
         int i2 = get_child_index(shape, colMesh->getMasterShape()->getChildShape(i));
-        world->world->getBroadphase()->getOverlappingPairCache()
-            ->cleanProxyFromPairs(body->getBroadphaseHandle(), world->world->getDispatcher());
+        world->getBroadphase()->getOverlappingPairCache()
+            ->cleanProxyFromPairs(body->getBroadphaseHandle(), world->getDispatcher());
         shape->removeChildShapeByIndex(i2);
     }
 }
@@ -1443,6 +1763,53 @@ void RigidBody::updateCollisionFlags (void)
       | (mass == 0 ? btCollisionObject::CF_STATIC_OBJECT : 0)
     );
     body->activate();
+}
+
+// }}}
+
+
+void physics_init (void)
+{
+    col_conf = new btDefaultCollisionConfiguration();
+    col_disp = new btCollisionDispatcher(col_conf);
+
+    broadphase = new btDbvtBroadphase();
+
+    con_solver = new btSequentialImpulseConstraintSolver();
+
+    world = new DynamicsWorld(col_disp,broadphase,con_solver,col_conf);
+
+    btGImpactCollisionAlgorithm::registerAlgorithm(col_disp);
+
+    gContactAddedCallback = contact_added_callback;
+    
+    world->setDebugDrawer(debug_drawer);
+
+    init_options();
+}
+
+void physics_shutdown (void)
+{
+    // they should probably all be gone by now but just in case some
+    // aren't linked to RigidBodies, this will clean them up
+    for (int i=world->getNumCollisionObjects()-1 ; i>=0 ; --i) {
+
+        btCollisionObject* victim = world->getCollisionObjectArray()[i];
+
+        btRigidBody* victim2 = btRigidBody::upcast(victim);
+
+        if (victim2)
+            world->removeRigidBody(victim2);
+
+        delete victim;
+    }
+
+
+    delete world;
+    delete con_solver;
+    delete broadphase;
+    delete col_disp;
+    delete col_conf;
 }
 
 // vim: shiftwidth=4:tabstop=4:expandtab:tw=100

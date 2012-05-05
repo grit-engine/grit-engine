@@ -53,7 +53,6 @@ Keyboard *keyboard = NULL;
 lua_State *core_L = NULL;
 UserDataTables user_data_tables;
 Streamer *streamer = NULL;
-PhysicsWorldPtr physics_world;
 BulletDebugDrawer *debug_drawer = NULL;
 std::stringstream gfx_msg_buffer;
 HUD::RootPtr hud;
@@ -130,11 +129,11 @@ int main(int argc, const char **argv)
                 keyboard = new KeyboardX11(winid);
                 #endif
 
-                physics_world = PhysicsWorldPtr(new PhysicsWorld());
+                physics_init();
 
                 streamer = new Streamer();
 
-				audio_init();
+                audio_init();
 
                 core_L = init_lua("/system/init.lua");
 
@@ -187,12 +186,12 @@ int main(int argc, const char **argv)
                 bgl->shutdown();
 
                 delete streamer;
-                if (debug_drawer) delete debug_drawer;
-                physics_world.setNull();
                 if (mouse) delete mouse;
                 if (keyboard) delete keyboard;
                 if (core_L) shutdown_lua(core_L);
                 hud.setNull();
+                physics_shutdown();
+                if (debug_drawer) delete debug_drawer;
                 gfx_shutdown();
 
                 delete bgl;

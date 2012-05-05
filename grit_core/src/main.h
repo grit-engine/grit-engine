@@ -41,7 +41,6 @@ extern Keyboard *keyboard;
 extern lua_State *core_L;
 extern UserDataTables user_data_tables;
 extern Streamer *streamer;
-extern PhysicsWorldPtr physics_world;
 extern BulletDebugDrawer *debug_drawer;
 extern HUD::RootPtr hud;
 extern BackgroundLoader *bgl;
