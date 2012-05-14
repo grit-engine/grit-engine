@@ -965,7 +965,7 @@ int physics_pump (lua_State *L, float elapsed)
             btRigidBody* victim2 = btRigidBody::upcast(victim);
             if (victim2==NULL) continue;
             RigidBody *rb = static_cast<RigidBody*>(victim2->getMotionState());
-            rb->stabiliseCallback(L);
+            rb->stabiliseCallback(L, elapsed);
         }
     }
     world->end();
@@ -1436,7 +1436,7 @@ void RigidBody::collisionCallback (lua_State *L, int lifetime, float impulse,
     STACK_CHECK;
 }
 
-void RigidBody::stabiliseCallback (lua_State *L)
+void RigidBody::stabiliseCallback (lua_State *L, float elapsed)
 {
     if (stabiliseCallbackPtr.isNil()) return;
 
@@ -1449,8 +1449,10 @@ void RigidBody::stabiliseCallback (lua_State *L)
     // get callback
     stabiliseCallbackPtr.push(L);
 
+    lua_pushnumber(L, elapsed);
+
     // call callback (no args, no return values)
-    int status = lua_pcall(L,0,0,error_handler);
+    int status = lua_pcall(L,1,0,error_handler);
     if (status) {
         lua_pop(L,1);
         stabiliseCallbackPtr.setNil(L);

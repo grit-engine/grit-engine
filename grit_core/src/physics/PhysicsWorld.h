@@ -196,7 +196,7 @@ class RigidBody : public btMotionState, public CollisionMesh::ReloadWatcher {
                 const RigidBodyPtr &other,
                 int m, int m2, float penetration,
                 const Vector3 &pos, const Vector3 &pos2, const Vector3 &wnormal);
-    void stabiliseCallback (lua_State *L);
+    void stabiliseCallback (lua_State *L, float elapsed);
     void updateGraphicsCallback (lua_State *L);
 
     void activate (void);
