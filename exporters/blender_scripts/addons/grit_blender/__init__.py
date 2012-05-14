@@ -134,7 +134,7 @@ def groups_eq (x, y):
     return True
 
 
-def get_vertexes_faces(scene, mesh, no_normals, default_material):
+def get_vertexes_faces(scene, mesh, no_normals, default_material, scale):
     num_uv = len(mesh.uv_textures)
     ambient_colour = mesh.vertex_colors.get("GritAmbient", None)
     class Empty: pass
@@ -167,7 +167,7 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material):
                 fvi2 = triangle[1][fvi]
                 v = mesh.vertices[vi]
                 vert = Empty()
-                vert.pos =  (v.co.x, v.co.y, v.co.z)
+                vert.pos =  (v.co.x * scale.x, v.co.y * scale.y, v.co.z * scale.z)
                 vert.ambient = 1
                 if no_normals:
                     vert.normal = (0,0,0)
@@ -616,7 +616,7 @@ def export_mesh_internal (scene, obj, tangents, filename, errors):
 
     filename = my_abspath("//" + filename+".xml")
 
-    (vertexes, faces) = get_vertexes_faces(scene, mesh, False, "/system/FallbackMaterial")
+    (vertexes, faces) = get_vertexes_faces(scene, mesh, False, "/system/FallbackMaterial", obj.scale)
     ambient = mesh.vertex_colors.get("GritAmbient", None) 
 
     file = open(filename, "w")
@@ -782,7 +782,7 @@ def export_gcol_internal (scene, obj, gcol_static, mass, linear_damping, angular
             file.write("    }\n")
         else:
             mesh = c.to_mesh(scene, True, "PREVIEW")
-            (vertexes, faces) = get_vertexes_faces(scene, mesh, True, "/system/FallbackPhysicalMaterial")
+            (vertexes, faces) = get_vertexes_faces(scene, mesh, True, "/system/FallbackPhysicalMaterial", c.scale)
             file.write("    hull {\n")
             file.write("        material \""+mat+"\";\n")
             file.write("        margin "+str(marg)+";\n")
@@ -807,7 +807,7 @@ def export_gcol_internal (scene, obj, gcol_static, mass, linear_damping, angular
             if m == None:
                 errors.append("Grit .gcol \""+obj.name+"\" has undefined material")
 
-        (vertexes, faces) = get_vertexes_faces(scene, mesh, True, "/common/Stone")
+        (vertexes, faces) = get_vertexes_faces(scene, mesh, True, "/common/Stone", obj.scale)
 
         file.write("trimesh {\n")
         file.write("    vertexes {\n")
