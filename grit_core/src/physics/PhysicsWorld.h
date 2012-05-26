@@ -135,16 +135,26 @@ class SweepCallback {
 
 void physics_ray (const Vector3 &start,
                   const Vector3 &end,
-                  SweepCallback &rcb,
-                  float radius=0);
+                  SweepCallback &rcb);
+
+void physics_sweep_sphere (const Vector3 &start, const Vector3 &end,
+                           SweepCallback &scb, float radius);
+
+void physics_sweep_cylinder (const Vector3 &start, const Quaternion &startq,
+                             const Vector3 &end,
+                             SweepCallback &scb, float radius, float height);
 
 
-void physics_sweep (const CollisionMesh *col_mesh,
-                        const Vector3 &startp,
-                        const Quaternion &startq,
-                        const Vector3 &endp,
-                        const Quaternion &endq,
-                        SweepCallback &scb);
+void physics_sweep_box (const Vector3 &start, const Quaternion &startq,
+                        const Vector3 &end,
+                        SweepCallback &scb, const Vector3 &size);
+
+void physics_sweep_colmesh (const Vector3 &startp,
+                            const Quaternion &startq,
+                            const Vector3 &endp,
+                            const Quaternion &endq,
+                            SweepCallback &scb,
+                            const CollisionMesh *col_mesh);
 
 class TestCallback {
     public:

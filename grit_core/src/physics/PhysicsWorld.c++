@@ -1076,27 +1076,47 @@ class BulletSweepCallback : public btCollisionWorld::ConvexResultCallback {
 
 void physics_ray (const Vector3 &start,
                   const Vector3 &end,
-                  SweepCallback &scb,
-                  float radius)
+                  SweepCallback &scb)
 {
-    if (radius<0) {
-        BulletRayCallback brcb(scb);
-        world->rayTest(to_bullet(start),to_bullet(end),brcb);
-    } else {
-        BulletSweepCallback bscb(scb);
-        btSphereShape tmpSphere(radius);
-        btTransform from(btQuaternion(0,0,0,1),to_bullet(start));
-        btTransform to(btQuaternion(0,0,0,1),to_bullet(end));
-        world->convexSweepTest(&tmpSphere,from,to,bscb);
-    }
+    BulletRayCallback brcb(scb);
+    world->rayTest(to_bullet(start),to_bullet(end),brcb);
 }
 
-void physics_sweep (const CollisionMesh *col_mesh,
-                    const Vector3 &startp,
-                    const Quaternion &startq,
-                    const Vector3 &endp,
-                    const Quaternion &endq,
-                    SweepCallback &scb)
+void physics_sweep_sphere (const Vector3 &start, const Vector3 &end,
+                           SweepCallback &scb, float radius)
+{
+    BulletSweepCallback bscb(scb);
+    btSphereShape tmpShape(radius);
+    btTransform from(btQuaternion(0,0,0,1),to_bullet(start));
+    btTransform to(btQuaternion(0,0,0,1),to_bullet(end));
+    world->convexSweepTest(&tmpShape,from,to,bscb);
+}
+
+void physics_sweep_box (const Vector3 &start, const Quaternion &startq,
+                        const Vector3 &end,
+                        SweepCallback &scb, const Vector3 &size)
+{
+    BulletSweepCallback bscb(scb);
+    btBoxShape tmpShape(to_bullet(size/2));
+    btTransform from(to_bullet(startq),to_bullet(start));
+    btTransform to(to_bullet(startq),to_bullet(end));
+    world->convexSweepTest(&tmpShape,from,to,bscb);
+}
+
+void physics_sweep_cylinder (const Vector3 &start, const Quaternion &startq,
+                             const Vector3 &end,
+                             SweepCallback &scb, float radius, float height)
+{
+    BulletSweepCallback bscb(scb);
+    btCylinderShapeZ tmpShape(btVector3(radius, radius, height/2));
+    btTransform from(to_bullet(startq),to_bullet(start));
+    btTransform to(to_bullet(startq),to_bullet(end));
+    world->convexSweepTest(&tmpShape,from,to,bscb);
+}
+
+void physics_sweep_colmesh (const Vector3 &startp, const Quaternion &startq,
+                            const Vector3 &endp, const Quaternion &endq,
+                            SweepCallback &scb, const CollisionMesh *col_mesh)
 {
     BulletSweepCallback bscb(scb);
     btTransform start(to_bullet(startq),to_bullet(startp));

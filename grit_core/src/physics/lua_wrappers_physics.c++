@@ -46,8 +46,8 @@ typedef std::vector<SweepResult> SweepResults;
 
 class LuaSweepCallback : public SweepCallback {
     public:           
-        LuaSweepCallback (bool ignore_dynamic)
-              : ignoreDynamic(ignore_dynamic)
+        LuaSweepCallback (unsigned long flags)
+              : ignoreDynamic((flags & 0x1) != 0)
         { }
         virtual void result (RigidBody &rb, float dist, const Vector3 &n, int m) {
                 if (ignoreDynamic && rb.getMass()>0) return;
@@ -329,9 +329,9 @@ TRY_END
 }
 
 
-static void push_sweep_result (lua_State *L, const SweepResult &r, float len)
+static void push_sweep_result (lua_State *L, const SweepResult &r)
 {
-        lua_pushnumber(L,r.dist * len);
+        lua_pushnumber(L,r.dist);
         push_rbody(L,r.rb->getPtr());
         // normal is documented as being object space but is actually world space
         Vector3 normal = /*r.rb->getOrientation()* */r.n.normalisedCopy();
@@ -339,101 +339,128 @@ static void push_sweep_result (lua_State *L, const SweepResult &r, float len)
         lua_pushstring(L, phys_mats.getMaterial(r.material)->name.c_str());
 }
 
-static int cast (lua_State *L)
+static int push_cast_results (lua_State *L, const LuaSweepCallback &lcb, bool nearest_only)
 {
-TRY_START
-        check_args_min(L,7);
-
-        // use pointers because we want to assign them later
-        RigidBody *body = NULL;
-        if (has_tag(L,1,RBODY_TAG)) {
-                body = &***static_cast<RigidBodyPtr**>(lua_touserdata(L, 1));
-        }
-        // one or other of col_mesh or radius will be used
-        CollisionMesh *col_mesh = NULL;
-        float radius = 0;
-        if (lua_type(L,2) == LUA_TNUMBER) {
-                radius = lua_tonumber(L,2);
-        } else {
-                std::string col_mesh_name = luaL_checkstring(L,2);
-                DiskResource *dr = disk_resource_get_or_make(col_mesh_name);
-                col_mesh = dynamic_cast<CollisionMesh*>(dr);
-                if (col_mesh==NULL) my_lua_error(L, "Not a collision mesh: \""+col_mesh_name+"\"");
-                if (!col_mesh->isLoaded()) my_lua_error(L, "Not loaded: \""+col_mesh_name+"\"");
-        }
-
-        Vector3 start, end;
-        {
-                Vector3 start_ = check_v3(L,3);
-                Vector3 end_ = check_v3(L,4);
-                start = start_;
-                end = end_;
-        }
-        float len = luaL_checknumber(L,5);
-
-        if (len>0) {
-                // 'end' is actually a direction
-                end = start + len * end;
-        } else {
-                len = 1;
-        }
-
-        int base_line = 5;
-        Quaternion startq(1,0,0,0);
-        Quaternion endq(1,0,0,0);
-
-        if (col_mesh) {
-                check_args_min(L,9);
-                base_line += 2;
-                Quaternion startq_ = check_quat(L,6);
-                Quaternion endq_ = check_quat(L,7);
-                startq = startq_;
-                endq = endq_;
-        }
-
-        bool nearest_only = check_bool(L,base_line+1);
-        bool ignore_dynamic = check_bool(L,base_line+2);
-
-        base_line += 2;
-
-        if (body) {
-                start = body->getOrientation()*start + body->getPosition();
-                end = body->getOrientation()*end + body->getPosition();
-                startq = body->getOrientation() * startq;
-                endq = body->getOrientation() * endq;
-        }
-
-        int blacklist_number = lua_gettop(L) - base_line;
-
-        LuaSweepCallback lcb(ignore_dynamic);
-        for (int i=1 ; i<=blacklist_number ; ++i) {
-                GET_UD_MACRO(RigidBodyPtr,black,base_line+i,RBODY_TAG);
-                lcb.blacklist.insert(&*black);
-        }
-
-        if (col_mesh != NULL) {
-                physics_sweep(col_mesh,start,startq,end,endq,lcb);
-        } else {
-                physics_ray(start,end,lcb,radius);
-        }
         if (lcb.results.size()==0) return 0;
+
         SweepResult nearest;
         nearest.dist = FLT_MAX;
         if (!nearest_only) lua_checkstack(L, lcb.results.size()*4);
         for (size_t i=0 ; i<lcb.results.size() ; ++i) {
-                SweepResult &r = lcb.results[i];
+                const SweepResult &r = lcb.results[i];
                 if (nearest_only) {
                         if (r.dist<nearest.dist) nearest = r;
                 } else {
-                        push_sweep_result(L, r, len);
+                        push_sweep_result(L, r);
                 }
         }
         if (nearest_only) {
                 // push nearest
-                push_sweep_result(L, nearest, len);
+                push_sweep_result(L, nearest);
                 return 4;
         }
         return lcb.results.size() * 4;
+}
+
+static void init_cast_blacklist (lua_State *L, int base_line, LuaSweepCallback &lcb)
+{
+        int blacklist_number = lua_gettop(L) - base_line;
+        for (int i=1 ; i<=blacklist_number ; ++i) {
+                GET_UD_MACRO(RigidBodyPtr,black,base_line+i,RBODY_TAG);
+                lcb.blacklist.insert(&*black);
+        }
+}
+
+static int global_physics_cast_ray (lua_State *L)
+{
+TRY_START
+        int base_line = 4;
+        check_args_min(L, base_line);
+
+        Vector3 start = check_v3(L,1);
+        Vector3 ray = check_v3(L,2);
+        bool nearest_only = check_bool(L,3);
+        unsigned long flags = check_t<unsigned long>(L,4);
+
+        LuaSweepCallback lcb(flags);
+        init_cast_blacklist(L, base_line, lcb);
+
+        physics_ray(start, start+ray, lcb);
+
+        return push_cast_results(L, lcb, nearest_only);
+
+TRY_END
+}
+
+
+static int global_physics_sweep_sphere (lua_State *L)
+{
+TRY_START
+        int base_line = 5;
+        check_args_min(L, base_line);
+
+        float radius = luaL_checknumber(L,1);
+        Vector3 start = check_v3(L,2);
+        Vector3 ray = check_v3(L,3);
+        bool nearest_only = check_bool(L,4);
+        unsigned long flags = check_t<unsigned long>(L,5);
+
+        LuaSweepCallback lcb(flags);
+        init_cast_blacklist(L, base_line, lcb);
+
+        physics_sweep_sphere(start, start+ray, lcb, radius);
+
+        return push_cast_results(L, lcb, nearest_only);
+
+TRY_END
+}
+
+
+static int global_physics_sweep_box (lua_State *L)
+{
+TRY_START
+        int base_line = 6;
+        check_args_min(L, base_line);
+
+        Vector3 size = check_v3(L,1);
+        Quaternion q = check_quat(L,2);
+        Vector3 start = check_v3(L,3);
+        Vector3 ray = check_v3(L,4);
+        bool nearest_only = check_bool(L,5);
+        unsigned long flags = check_t<unsigned long>(L,6);
+
+        LuaSweepCallback lcb(flags);
+        init_cast_blacklist(L, base_line, lcb);
+
+        physics_sweep_box(start, q, start+ray, lcb, size);
+
+        return push_cast_results(L, lcb, nearest_only);
+
+TRY_END
+}
+
+
+static int global_physics_sweep_cylinder (lua_State *L)
+{
+TRY_START
+        int base_line = 7;
+        check_args_min(L, base_line);
+
+        float radius = luaL_checknumber(L,1);
+        float height = luaL_checknumber(L,2);
+        Quaternion q = check_quat(L,3);
+        Vector3 start = check_v3(L,4);
+        Vector3 ray = check_v3(L,5);
+        bool nearest_only = check_bool(L,6);
+        unsigned long flags = check_t<unsigned long>(L,7);
+
+        LuaSweepCallback lcb(flags);
+        init_cast_blacklist(L, base_line, lcb);
+
+        physics_sweep_cylinder(start, q, start+ray, lcb, radius, height);
+
+        return push_cast_results(L, lcb, nearest_only);
+
 TRY_END
 }
 
@@ -559,9 +586,6 @@ TRY_START
                 push_cfunction(L,rbody_scatter);
         } else if (!::strcmp(key,"rangedScatter")) {
                 push_cfunction(L,rbody_ranged_scatter);
-
-        } else if (!::strcmp(key,"cast")) {
-                push_cfunction(L,cast);
 
         } else if (!::strcmp(key,"activate")) {
                 push_cfunction(L,rbody_activate);
@@ -1000,7 +1024,10 @@ static const luaL_reg global[] = {
         {"physics_body_make" ,global_physics_body_make},
         {"physics_get_gravity" ,global_physics_get_gravity},
         {"physics_option" ,global_physics_option},
-        {"physics_cast", cast},
+        {"physics_cast", global_physics_cast_ray},
+        {"physics_sweep_sphere", global_physics_sweep_sphere},
+        {"physics_sweep_cylinder", global_physics_sweep_cylinder},
+        {"physics_sweep_box", global_physics_sweep_box},
         {NULL, NULL}
 };
 
