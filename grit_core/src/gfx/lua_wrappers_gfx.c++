@@ -414,6 +414,8 @@ TRY_START
         lua_pushnumber(L, self->getFade());
     } else if (!::strcmp(key,"castShadows")) {
         lua_pushboolean(L, self->getCastShadows());
+    } else if (!::strcmp(key,"enabled")) {
+        lua_pushboolean(L, self->isEnabled());
 
     } else if (!::strcmp(key,"getPaintColour")) {
         push_cfunction(L,gfxbody_get_paint_colour);
