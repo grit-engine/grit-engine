@@ -37,6 +37,15 @@ class ClutterFactory;
 #include "../CacheFriendlyRangeSpaceSIMD.h"
 #include "../Streamer.h"
 
+// Provides an interface whereby a fixed size vertex buffer is used to render a
+// number of instances in a batch.  The instances can be added / removed and
+// moved about arbitrarily.
+
+// There are two kinds of instance -- geometry (an entire mesh) and quads (just
+// a quad).  By reserving an instance, you get a 'ticket' which can then be
+// used to update that instance (e.g. position, fade), or release it (i.e. stop
+// using it).
+
 class ClutterBuffer {
 
     public:
@@ -122,7 +131,7 @@ class ClutterBuffer {
             void reserveTriangles (unsigned triangles, unsigned &off, unsigned &len);
             void releaseTriangles (unsigned off, unsigned len);
                     
-        };      
+        };
 
         struct QTicket {
             Ogre::MaterialPtr m; // used as key to get the right Section
@@ -196,6 +205,9 @@ class ClutterBuffer {
 
 
 
+// Mainly for testing, wraps ClutterBuffer but provides a MovableObject
+// interface for Ogre's scenegraph, although it only has the identity transform
+// and its bounds are infinite
 
 class MovableClutter : public Ogre::MovableObject {
 

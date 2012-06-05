@@ -1409,7 +1409,7 @@ void RigidBody::stepCallback (lua_State *L)
     lua_pushnumber(L, step_size);
 
     // call callback (no args, no return values)
-    int status = lua_pcall(L,1,0,error_handler);
+    int status = lua_pcall(L,2,0,error_handler);
     if (status) {
         lua_pop(L,1);
         stepCallbackPtr.setNil(L);
