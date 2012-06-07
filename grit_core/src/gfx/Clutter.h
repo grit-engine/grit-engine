@@ -46,6 +46,16 @@ class ClutterFactory;
 // used to update that instance (e.g. position, fade), or release it (i.e. stop
 // using it).
 
+// Current implementation: ?
+// ClutterBuffer manages a section for each material involved
+// fowards update calls to relevant sections
+// Section stores vertex buffers, also usage (records which triangle is used) -- sparse representation
+// data stores the data to be copied to the gpu (longer than usage by factor of 3 * vertex size)
+
+// New implementation:
+// use octree to cull aggressively?  Issues with multiple frusta -- shadow / reflection renders
+// rebuild buffer every frame ignoring frustum?
+
 class ClutterBuffer {
 
     public:
