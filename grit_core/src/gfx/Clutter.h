@@ -53,8 +53,16 @@ class ClutterFactory;
 // data stores the data to be copied to the gpu (longer than usage by factor of 3 * vertex size)
 
 // New implementation:
-// use octree to cull aggressively?  Issues with multiple frusta -- shadow / reflection renders
-// rebuild buffer every frame ignoring frustum?
+// -------------------
+
+// Use octree to cull aggressively?  No.  Issues with multiple frusta -- shadow
+// / reflection renders.  Would be necessary to build several buffers or union
+// the frusta.  Can't be bothered and probably would not be a great reduction
+// in polys anyway.
+
+// Rebuild buffer every frame ignoring frustum?
+
+// TODO: also need to play nice with the disk_resource subsystem
 
 class ClutterBuffer {
 
