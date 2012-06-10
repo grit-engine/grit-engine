@@ -1,5 +1,9 @@
 # TODO
 #
+# bones
+# * can only update if set to 'rest' mode, or transformed bone positions will be output
+# * armature position not taken into account (evo armature was not at 0,0,0 which caused artifacts)
+#
 # vertex painting (diffuse)
 # vertex painting (blend)
 #
