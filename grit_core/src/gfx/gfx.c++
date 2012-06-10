@@ -2844,7 +2844,7 @@ size_t gfx_init (GfxCallback &cb_)
 
             #ifdef WIN32
             if (use_d3d9) {
-                Ogre::D3D9Plugin *d3d9 = OGRE_NEW Ogre::D3D9Plugin();
+                d3d9 = OGRE_NEW Ogre::D3D9Plugin();
                 ogre_root->installPlugin(d3d9);
             }
             #endif
