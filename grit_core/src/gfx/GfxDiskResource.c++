@@ -27,9 +27,9 @@
 #include <OgreMeshFileFormat.h>
 
 #include "GfxDiskResource.h"
-#include "gfx.h"
-
-extern fast_erase_vector<GfxBody*> gfx_all_bodies;
+#include "gfx_internal.h"
+#include "GfxMaterial.h"
+#include "GfxBody.h"
 
 
 bool gfx_disk_resource_verbose_loads = false;

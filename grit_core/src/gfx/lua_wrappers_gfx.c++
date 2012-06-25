@@ -25,6 +25,10 @@
 #include "../path_util.h"
 
 #include "gfx.h"
+#include "GfxBody.h"
+#include "GfxMaterial.h"
+#include "GfxLight.h"
+#include "gfx_option.h"
 #include "lua_wrappers_gfx.h"
 #include "../lua_wrappers_primitives.h"
 #include "lua_wrappers_scnmgr.h"
@@ -385,6 +389,10 @@ TRY_START
         lua_pushnumber(L, self->getTriangles());
     } else if (!::strcmp(key,"trianglesWithChildren")) {
         lua_pushnumber(L, self->getTrianglesWithChildren());
+    } else if (!::strcmp(key,"vertexes")) {
+        lua_pushnumber(L, self->getVertexes());
+    } else if (!::strcmp(key,"vertexesWithChildren")) {
+        lua_pushnumber(L, self->getVertexesWithChildren());
     } else if (!::strcmp(key,"getMaterials")) {
         push_cfunction(L,gfxbody_get_materials);
     } else if (!::strcmp(key,"setMaterial")) {

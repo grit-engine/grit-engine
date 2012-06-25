@@ -19,9 +19,12 @@
  * THE SOFTWARE.
  */
 
-#ifndef Option_h
+#include <string>
+#include <sstream>
+#include <ostream>
 
-#define Option_h
+#ifndef OPTION_H
+#define OPTION_H
 
 template<class T> struct ValidOption {
     virtual ~ValidOption (void) { }
