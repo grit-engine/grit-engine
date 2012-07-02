@@ -208,27 +208,19 @@ void GfxDiskResource::loadImpl (void)
 
                 // sync with main thread to get texture names
                 for (unsigned i=0 ; i<mat_names.size() ; ++i) {
-                    if (gfx_material_has(mat_names[i])) {
-                        GfxMaterial *gfxmat = gfx_material_get(mat_names[i]);
-                        if (gfxmat->hasEmissiveMap())
-                            addDependency(gfxmat->getEmissiveMap());
-                        if (gfxmat->hasPaintMap())
-                            addDependency(gfxmat->getPaintMap());
-                        for (unsigned j=0 ; j<gfxmat->getNumTextureBlends() ; ++j) {
-                            GfxMaterialTextureBlendUnit &u = gfxmat->texBlends[j];
-                            if (gfxmat->hasDiffuseMap())
-                                addDependency(u.getDiffuseMap());
-                            if (gfxmat->hasNormalMap())
-                                addDependency(u.getNormalMap());
-                            if (gfxmat->hasSpecularMap())
-                                addDependency(u.getSpecularMap());
-                        }
+                    if (gfx_material_has_any(mat_names[i])) {
+                        gfx_material_add_dependencies(mat_names[i], this);
+                    } else {
+                        // Mesh references non-existing material, so silently ignore.
+                        // When it is later used, an error will be raised then.
+                        // This is actually better, as the error is raised at the point of use...
+                        // Rather than asynchronously, in advance of use.
                     }
                 }
                 
             }
         } else {
-            CVERB << "Loaded in OGRE, unloaded in GRIT: \"" << getName() << "\"" << std::endl;
+            CVERB << "Internal warning: Loaded in OGRE, unloaded in GRIT: \"" << getName() << "\"" << std::endl;
         }
     } catch (Ogre::Exception &e) {
         GRIT_EXCEPT(e.getDescription());

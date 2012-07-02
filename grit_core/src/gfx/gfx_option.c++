@@ -40,7 +40,6 @@ GfxBoolOption gfx_bool_options[] = {
     GFX_CROSS_EYE,
     GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST,
     GFX_SHADOW_AGGRESSIVE_FOCUS_REGION,
-    GFX_SKY,
 };  
 
 GfxIntOption gfx_int_options[] = {
@@ -110,7 +109,6 @@ std::string gfx_option_to_string (GfxBoolOption o)
         case GFX_CROSS_EYE: return "GFX_CROSS_EYE";
         case GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST: return "SHADOW_SIMPLE_OPTIMAL_ADJUST";
         case GFX_SHADOW_AGGRESSIVE_FOCUS_REGION: return "SHADOW_AGGRESSIVE_FOCUS_REGION";
-        case GFX_SKY: return "SKY";
     }
     return "UNKNOWN_BOOL_OPTION";
 }
@@ -174,7 +172,6 @@ void gfx_option_from_string (const std::string &s,
     else if (s=="CROSS_EYE") { t = 0; o0 = GFX_CROSS_EYE; }
     else if (s=="SHADOW_SIMPLE_OPTIMAL_ADJUST") { t = 0; o0 = GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST; }
     else if (s=="SHADOW_AGGRESSIVE_FOCUS_REGION") { t = 0; o0 = GFX_SHADOW_AGGRESSIVE_FOCUS_REGION; }
-    else if (s=="SKY") { t = 0; o0 = GFX_SKY; }
     else if (s=="FULLSCREEN_WIDTH") { t = 1; o1 = GFX_FULLSCREEN_WIDTH; }
     else if (s=="FULLSCREEN_HEIGHT") { t = 1; o1 = GFX_FULLSCREEN_HEIGHT; }
     else if (s=="SHADOW_RES") { t = 1; o1 = GFX_SHADOW_RES; }
@@ -251,9 +248,6 @@ static void options_update (bool flush)
             break;
             case GFX_SHADOW_AGGRESSIVE_FOCUS_REGION:
             reset_pcss = true;
-            break;
-            case GFX_SKY:
-            ogre_sky_ent->setVisible(v_new);
             break;
         }
     }
@@ -462,7 +456,6 @@ void gfx_option_init (void)
     valid_option(GFX_CROSS_EYE, truefalse);
     valid_option(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST, truefalse);
     valid_option(GFX_SHADOW_AGGRESSIVE_FOCUS_REGION, truefalse);
-    valid_option(GFX_SKY, truefalse);
 
     valid_option(GFX_FULLSCREEN_WIDTH, new ValidOptionRange<int>(1,10000));
     valid_option(GFX_FULLSCREEN_HEIGHT, new ValidOptionRange<int>(1,10000));
@@ -535,7 +528,6 @@ void gfx_option_init (void)
     gfx_option(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST, true);
     gfx_option(GFX_SHADOW_PADDING, 0.8);
     gfx_option(GFX_SHADOW_AGGRESSIVE_FOCUS_REGION, true);
-    gfx_option(GFX_SKY, true);
     gfx_option(GFX_ANAGLYPH_DESATURATION, 0.5);
     gfx_option(GFX_ANAGLYPH_LEFT_RED_MASK, 1);
     gfx_option(GFX_ANAGLYPH_LEFT_GREEN_MASK, 0);

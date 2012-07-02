@@ -26,7 +26,9 @@
 
 #include "gfx.h"
 #include "GfxBody.h"
+#include "GfxSkyBody.h"
 #include "GfxMaterial.h"
+#include "GfxSkyMaterial.h"
 #include "GfxLight.h"
 #include "gfx_option.h"
 #include "lua_wrappers_gfx.h"
@@ -35,7 +37,7 @@
 #include "lua_wrappers_mobj.h"
 
 #define GFXBODY_TAG "Grit/GfxBody"
-//MT_MACRO_DECLARE(gfxbody);
+#define GFXSKYBODY_TAG "Grit/GfxSkyBody"
 
 #define GFXLIGHT_TAG "Grit/GfxLight"
 //MT_MACRO_DECLARE(gfxlight);
@@ -527,6 +529,92 @@ MT_MACRO_NEWINDEX(gfxbody);
 //}}}
 
 
+// GFXSKYBODY ============================================================== {{{
+
+void push_gfxskybody (lua_State *L, const GfxSkyBodyPtr &self)
+{
+    if (self.isNull())
+        lua_pushnil(L);
+    else
+        push(L,new GfxSkyBodyPtr(self),GFXSKYBODY_TAG);
+}
+
+GC_MACRO(GfxSkyBodyPtr,gfxskybody,GFXSKYBODY_TAG)
+
+static int gfxskybody_destroy (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(GfxSkyBodyPtr,self,1,GFXSKYBODY_TAG);
+    self->destroy();
+    return 0;
+TRY_END
+}
+
+
+
+TOSTRING_SMART_PTR_MACRO (gfxskybody,GfxSkyBodyPtr,GFXSKYBODY_TAG)
+
+
+static int gfxskybody_index (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxSkyBodyPtr,self,1,GFXSKYBODY_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"orientation")) {
+        push_quat(L, self->getOrientation());
+    } else if (!::strcmp(key,"zOrder")) {
+        lua_pushnumber(L, self->getZOrder());
+    } else if (!::strcmp(key,"nodeHACK")) {
+        push_node(L, self->node);
+    } else if (!::strcmp(key,"entHACK")) {
+        push_entity(L, self->ent);
+
+    } else if (!::strcmp(key,"enabled")) {
+        lua_pushboolean(L, self->isEnabled());
+
+    } else if (!::strcmp(key,"destroyed")) {
+        lua_pushboolean(L,self->destroyed());
+    } else if (!::strcmp(key,"destroy")) {
+        push_cfunction(L,gfxskybody_destroy);
+    } else {
+        my_lua_error(L,"Not a readable GfxSkyBody member: "+std::string(key));
+    }
+    return 1;
+TRY_END
+}
+
+
+static int gfxskybody_newindex (lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(GfxSkyBodyPtr,self,1,GFXSKYBODY_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"orientation")) {
+        Quaternion v = check_quat(L,3);
+        self->setOrientation(v);
+    } else if (!::strcmp(key,"zOrder")) {
+        unsigned char v = check_int(L,3,0,255);
+        self->setZOrder(v);
+    } else if (!::strcmp(key,"enabled")) {
+        bool v = check_bool(L,3);
+        self->setEnabled(v);
+    } else {
+           my_lua_error(L,"Not a writeable GfxSkyBody member: "+std::string(key));
+    }
+    return 0;
+TRY_END
+}
+
+EQ_MACRO(GfxBodyPtr,gfxskybody,GFXSKYBODY_TAG)
+
+MT_MACRO_NEWINDEX(gfxskybody);
+
+//}}}
+
+
 // GFXLIGHT ============================================================== {{{
 
 void push_gfxlight (lua_State *L, const GfxLightPtr &self)
@@ -743,7 +831,6 @@ TRY_START
     if (lua_gettop(L)==0) {
         push_gfxbody(L, GfxBody::make());
     } else if (lua_gettop(L)==1) {
-        push_gfxbody(L, GfxBody::make());
         const char *meshname = luaL_checkstring(L,1);
         push_gfxbody(L, GfxBody::make(meshname));
     } else {
@@ -770,6 +857,16 @@ TRY_START
             push_gfxbody(L, GfxBody::make(meshname, sm));
         }
     }
+    return 1;
+TRY_END
+}
+
+int global_gfx_sky_body_make (lua_State *L)
+{
+TRY_START
+    const char *meshname = luaL_checkstring(L,1);
+    short z_order = check_t<short>(L,2);
+    push_gfxskybody(L, GfxSkyBody::make(meshname, z_order));
     return 1;
 TRY_END
 }
@@ -896,27 +993,6 @@ TRY_START
     return 0;
 TRY_END
 }
-
-int global_gfx_get_celestial_orientation (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    Quaternion d = gfx_get_celestial_orientation();
-    push_quat(L, d);
-    return 1;
-TRY_END
-}
-
-int global_gfx_set_celestial_orientation (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    Quaternion d = check_quat(L,1);
-    gfx_set_celestial_orientation(d);
-    return 0;
-TRY_END
-}
-
 
 // {{{ Particles
 
@@ -2179,6 +2255,37 @@ TRY_END
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// sky material interface
+
+static int global_register_sky_material (lua_State *L)
+{
+TRY_START
+
+        check_args(L,2);
+        const char *name = luaL_checkstring(L,1);
+        if (!lua_istable(L,2))
+                my_lua_error(L,"Second parameter should be a table");
+
+        ExternalTable t;
+        t.takeTableFromLuaStack(L,2);
+
+        GFX_MAT_SYNC;
+        GfxSkyMaterial *gfxskymat = gfx_sky_material_add_or_get(name);
+
+        std::string emissive_map;
+        t.get("emissiveMap", emissive_map, std::string(""));
+        gfxskymat->setEmissiveMap(emissive_map);
+
+        bool special;
+        t.get("special", special, false);
+        gfxskymat->setSpecial(special);
+
+        return 0;
+TRY_END
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 // make
 
 static int global_make_gpuprog (lua_State *L)
@@ -2542,6 +2649,7 @@ static const luaL_reg global[] = {
     {"gfx_screenshot",global_gfx_screenshot},
     {"gfx_option",global_gfx_option},
     {"gfx_body_make",global_gfx_body_make},
+    {"gfx_sky_body_make",global_gfx_sky_body_make},
     {"gfx_light_make",global_gfx_light_make},
     {"gfx_sun_get_diffuse",global_gfx_sun_get_diffuse},
     {"gfx_sun_set_diffuse",global_gfx_sun_set_diffuse},
@@ -2555,8 +2663,6 @@ static const luaL_reg global[] = {
     {"gfx_fog_set_density",global_gfx_fog_set_density},
     {"gfx_get_scene_ambient",global_gfx_get_scene_ambient},
     {"gfx_set_scene_ambient",global_gfx_set_scene_ambient},
-    {"gfx_get_celestial_orientation",global_gfx_get_celestial_orientation},
-    {"gfx_set_celestial_orientation",global_gfx_set_celestial_orientation},
     {"gfx_particle_define",global_gfx_particle_define},
     {"gfx_particle_emit",global_gfx_particle_emit},
     {"gfx_particle_pump",global_gfx_particle_pump},
@@ -2628,6 +2734,7 @@ static const luaL_reg global[] = {
     {"remove_gpuprog" ,global_remove_gpuprog},
 
     {"register_material" ,global_register_material},
+    {"register_sky_material" ,global_register_sky_material},
     {"dump_registered_material" ,global_dump_registered_material},
     {"registered_material_get" ,global_registered_material_get},
     {"reprocess_all_registered_materials" ,global_reprocess_all_registered_materials},
@@ -2661,6 +2768,7 @@ void gfx_lua_init (lua_State *L)
     lua_pop(L,1); } while(0)
 
     ADD_MT_MACRO(gfxbody,GFXBODY_TAG);
+    ADD_MT_MACRO(gfxskybody,GFXSKYBODY_TAG);
     ADD_MT_MACRO(gfxlight,GFXLIGHT_TAG);
 
     ADD_MT_MACRO(scnmgr,SCNMGR_TAG);

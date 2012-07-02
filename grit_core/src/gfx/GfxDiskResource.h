@@ -49,6 +49,10 @@ class GfxDiskResource : public DiskResource {
     virtual void reloadImpl (void);
     virtual void unloadImpl (void);
 
+    friend class GfxBaseMaterial;
+    friend class GfxMaterial;
+    friend class GfxSkyMaterial;
+
 };
 
 // Dependent resources are only known when the resource is loaded.  In the case

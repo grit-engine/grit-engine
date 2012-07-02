@@ -776,3 +776,4 @@ void GfxBody::setEnabled (bool v)
     updateVisibility();
 }
 
+// }}}

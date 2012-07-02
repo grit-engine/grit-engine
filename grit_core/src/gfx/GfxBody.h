@@ -24,6 +24,7 @@
 class GfxBody;
 typedef SharedPtr<GfxBody> GfxBodyPtr;
 
+extern fast_erase_vector<GfxBody*> gfx_all_bodies;
 
 #ifndef GfxBody_h
 #define GfxBody_h

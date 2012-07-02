@@ -27,6 +27,9 @@
 #include "gfx_option.h"
 #include "Clutter.h"
 #include "GfxMaterial.h"
+#include "GfxBody.h"
+#include "GfxSkyMaterial.h"
+#include "GfxSkyBody.h"
 
 Ogre::Root *ogre_root;
 Ogre::OctreeSceneManager *ogre_sm;
@@ -34,9 +37,7 @@ Ogre::SceneNode *ogre_root_node;
 Ogre::Camera *left_eye;
 Ogre::Camera *right_eye;
 Ogre::Light *ogre_sun;
-Ogre::SceneNode *ogre_celestial;
 Ogre::SceneNode *ogre_sky_node;
-Ogre::Entity *ogre_sky_ent;
 Ogre::Viewport *overlay_vp;
 Ogre::Viewport *left_vp;
 Ogre::Viewport *right_vp;
@@ -52,6 +53,7 @@ Ogre::RenderWindow *ogre_win;
 #endif
 
 
+GfxMaterialDB material_db;
 
 bool use_hwgamma = false; //getenv("GRIT_NOHWGAMMA")==NULL;
 
@@ -574,6 +576,8 @@ public:
     }
 };
         
+// The deferred lights are not just a screen space quad
+// so use a custom composition pass to render them
 class DeferredLightsPass : public Ogre::CustomCompositionPass {   
     virtual ~DeferredLightsPass() { }
 
@@ -758,17 +762,6 @@ void gfx_fog_set_density (float v)
     ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour), fog_density, 0, 0);
 }
 
-
-Quaternion gfx_get_celestial_orientation (void)
-{
-    return from_ogre(ogre_celestial->getOrientation());
-}
-
-void gfx_set_celestial_orientation (const Quaternion &v)
-{
-    ogre_celestial->setOrientation(to_ogre(v));
-}
-
 // }}}
 
 
@@ -783,7 +776,6 @@ static void position_camera (bool left, const Vector3 &cam_pos, const Quaternion
     cam->setOrientation(to_ogre(cam_dir*Quaternion(Degree(90),Vector3(1,0,0))));
 }
 
-void handle_dirty_materials (void);
 void update_coronas (const Vector3 &cam_pos);
 
 void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir)
@@ -794,6 +786,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
         update_coronas(cam_pos);
 
         handle_dirty_materials();
+        handle_dirty_sky_materials();
 
         position_camera(true, cam_pos, cam_dir);
         if (stereoscopic())
@@ -1009,14 +1002,7 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_sun = ogre_sm->createLight("Sun");
         ogre_sun->setType(Ogre::Light::LT_DIRECTIONAL);
 
-        Ogre::MeshManager::getSingleton().load(SKY_MESH,RESGRP)
-            ->_setBounds(Ogre::AxisAlignedBox::BOX_INFINITE);
         ogre_sky_node = ogre_sm->getSkyCustomNode();
-        ogre_celestial = ogre_sky_node->createChildSceneNode();
-        ogre_sky_ent = ogre_sm->createEntity("SkyEntity", SKY_MESH);
-        ogre_celestial->attachObject(ogre_sky_ent);
-        ogre_sky_ent->setCastShadows(false);
-        ogre_sky_ent->setRenderQueueGroup(RQ_SKY);
         
         Ogre::WindowEventUtilities::addWindowEventListener(ogre_win, &wel);
 
@@ -1035,12 +1021,34 @@ HUD::RootPtr gfx_init_hud (void)
     return HUD::RootPtr(new HUD::Root(ogre_win->getWidth(),ogre_win->getHeight()));
 }
 
+GfxMaterialType gfx_material_type (const std::string &name)
+{
+    GFX_MAT_SYNC;
+    if (!gfx_material_has_any(name)) GRIT_EXCEPT("Non-existent material: \""+name+"\"");
+    GfxBaseMaterial *mat = material_db[name];
+    if (dynamic_cast<GfxMaterial*>(mat) != NULL) return GFX_MATERIAL;
+    if (dynamic_cast<GfxSkyMaterial*>(mat) != NULL) return GFX_SKY_MATERIAL;
+    GRIT_EXCEPT("Internal error: unrecognised kind of material");
+    return GFX_MATERIAL; // never get here
+}
+
+bool gfx_material_has_any (const std::string &name)
+{
+    GFX_MAT_SYNC;
+    return material_db.find(name) != material_db.end();
+}
+
+void gfx_material_add_dependencies (const std::string &name, GfxDiskResource *into)
+{
+    if (!gfx_material_has_any(name)) GRIT_EXCEPT("Non-existent material: \""+name+"\"");
+    material_db[name]->addDependencies(into);
+}
+
 void gfx_shutdown (void)
 {
     try {
         if (shutting_down) return;
         shutting_down = true;
-        gfx_material_shutdown();
         clean_compositors();
         anaglyph_fb.setNull();
         if (ogre_sm && ogre_root) ogre_root->destroySceneManager(ogre_sm);

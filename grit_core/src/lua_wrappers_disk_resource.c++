@@ -151,6 +151,7 @@ TRY_START
     const char *name = luaL_checkstring(L,1);
     DiskResource *dr = disk_resource_get(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
+    if (!dr->isLoaded()) my_lua_error(L, "Resource not loaded: \""+std::string(name)+"\"");
     dr->reload();
     return 0;
 TRY_END
@@ -163,8 +164,26 @@ TRY_START
     const char *name = luaL_checkstring(L,1);
     DiskResource *dr = disk_resource_get(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
+    if (dr->isLoaded()) my_lua_error(L, "Resource already loaded: \""+std::string(name)+"\"");
     dr->load();
     return 0;
+TRY_END
+}
+
+static int global_disk_resource_ensure_loaded (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    const char *name = luaL_checkstring(L,1);
+    DiskResource *dr = disk_resource_get(name);
+    if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
+    if (dr->isLoaded()) {
+        lua_pushboolean(L, false);
+    } else {
+        lua_pushboolean(L, true);
+        dr->load();
+    }
+    return 1;
 TRY_END
 }
 
@@ -175,6 +194,7 @@ TRY_START
     const char *name = luaL_checkstring(L,1);
     DiskResource *dr = disk_resource_get(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
+    if (!dr->isLoaded()) my_lua_error(L, "Resource not loaded: \""+std::string(name)+"\"");
     dr->unload();
     return 0;
 TRY_END
@@ -185,8 +205,7 @@ static int global_disk_resource_add (lua_State *L)
 TRY_START
     check_args(L,1);
     const char *name = luaL_checkstring(L,1);
-    DiskResource *dr = disk_resource_get_or_make(name);
-    (void)dr;
+    disk_resource_get_or_make(name);
     return 0;
 TRY_END
 }
@@ -202,7 +221,7 @@ TRY_START
 TRY_END
 }
 
-static int global_disk_resource_is_loaded (lua_State *L)
+static int global_disk_resource_loaded (lua_State *L)
 {
 TRY_START
     check_args(L,1);
@@ -272,8 +291,9 @@ static const luaL_reg global[] = {
     {"disk_resource_add",global_disk_resource_add},
     {"disk_resource_has",global_disk_resource_has},
     {"disk_resource_users",global_disk_resource_users},
-    {"disk_resource_is_loaded",global_disk_resource_is_loaded},
+    {"disk_resource_loaded",global_disk_resource_loaded},
     {"disk_resource_load",global_disk_resource_load},
+    {"disk_resource_ensure_loaded",global_disk_resource_ensure_loaded},
     {"disk_resource_unload",global_disk_resource_unload},
     {"disk_resource_reload",global_disk_resource_reload},
     {"disk_resource_acquire",global_disk_resource_acquire},

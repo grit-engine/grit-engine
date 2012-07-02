@@ -48,8 +48,6 @@
 #define ANAGLYPH_FB_TEXTURE "system/AnaglyphFB"
 #define ANAGLYPH_COMPOSITOR_MATERIAL "system/AnaglyphCompositorMaterialDesaturated"
 
-#define SKY_MESH "system/SkyCube.mesh"
-
 #define DEFERRED_COMPOSITOR "/system/CoreCompositor"
 #define DEFERRED_AMBIENT_SUN_MATERIAL "/system/DeferredAmbientSun"
 #define DEFERRED_POINT_LIGHT_MATERIAL "/system/DeferredLights"
@@ -59,13 +57,15 @@
 
 #define RESGRP "GRIT"
 
-// render queues
-#define RQ_GBUFFER_OPAQUE 50
-#define RQ_FORWARD_OPAQUE 51
-#define RQ_SKY 60
-#define RQ_FORWARD_EMISSIVE 61
-#define RQ_FORWARD_ALPHA_DEPTH 94
-#define RQ_FORWARD_ALPHA 95
+// render queues (also baked into system/Core.program)
+// also hardcoded for ranged clutter in pbats common/map_classes
+#define RQ_GBUFFER_OPAQUE 10
+#define RQ_FORWARD_OPAQUE 20
+#define RQ_SKY 30
+#define RQ_FORWARD_EMISSIVE 40
+#define RQ_SKY_ALPHA 50
+#define RQ_FORWARD_ALPHA_DEPTH 60
+#define RQ_FORWARD_ALPHA 70
 
 #ifndef GFX_INTERNAL_H
 #define GFX_INTERNAL_H
@@ -110,6 +110,27 @@ std::string freshname (void);
 void clean_compositors (void);
 void do_reset_framebuffer (void);
 void do_reset_compositors (void);
+
+// API consumers should not see this
+class GfxBaseMaterial {
+
+    public:
+
+    virtual ~GfxBaseMaterial (void) { }
+
+    virtual void addDependencies (GfxDiskResource *into) = 0;
+
+};
+
+typedef std::map<std::string,GfxBaseMaterial*> GfxMaterialDB;
+
+extern GfxMaterialDB material_db;
+
+void gfx_material_add_dependencies (const std::string &name, GfxDiskResource *into);
+
+void handle_dirty_materials (void);
+void handle_dirty_sky_materials (void);
+
 
 #endif
 

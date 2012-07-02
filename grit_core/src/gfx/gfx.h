@@ -20,7 +20,6 @@
  */
 
 /* TODO:
- * sky node
  * clutter / rclutter
  * shaders
  * materials
@@ -35,12 +34,11 @@ struct GfxLastRenderStats;
 struct GfxLastFrameStats;
 struct GfxRunningFrameStats;
 struct GfxPaintColour;
-class GfxBody;
 
 typedef std::map<std::string, std::string> GfxStringMap;
-extern const GfxStringMap gfx_empty_string_map;
 
-extern fast_erase_vector<GfxBody*> gfx_all_bodies;
+// Used as a default param in some calls
+extern const GfxStringMap gfx_empty_string_map;
 
 #ifndef gfx_h
 #define gfx_h
@@ -61,7 +59,6 @@ struct GfxCallback {
     virtual void windowResized (int width, int height) = 0;
     virtual void messageLogged (const std::string &msg) = 0;
 };
-
 
 
 size_t gfx_init (GfxCallback &cb);
@@ -102,8 +99,6 @@ void gfx_fog_set_colour (const Vector3 &v);
 float gfx_fog_get_density (void);
 void gfx_fog_set_density (float v);
 
-Quaternion gfx_get_celestial_orientation (void);
-void gfx_set_celestial_orientation (const Quaternion &v);
 
 void gfx_screenshot (const std::string &filename);
 
@@ -143,6 +138,16 @@ void gfx_reload_mesh (const std::string &name);
 void gfx_reload_texture (const std::string &name);
 
 HUD::RootPtr gfx_init_hud (void);
+
+enum GfxMaterialType {
+    GFX_MATERIAL,
+    GFX_SKY_MATERIAL
+};
+
+GfxMaterialType gfx_material_type (const std::string &name);
+
+bool gfx_material_has_any (const std::string &name);
+
 
 void gfx_shutdown (void);
 

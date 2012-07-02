@@ -64,6 +64,19 @@ GfxMaterial::GfxMaterial (const std::string &name_)
 {
 }
     
+void GfxMaterial::addDependencies (GfxDiskResource *into)
+{
+    if (hasEmissiveMap()) into->addDependency(getEmissiveMap());
+    if (hasPaintMap()) into->addDependency(getPaintMap());
+    for (unsigned j=0 ; j<getNumTextureBlends() ; ++j) {
+        GfxMaterialTextureBlendUnit &u = texBlends[j];
+        if (hasDiffuseMap()) into->addDependency(u.getDiffuseMap());
+        if (hasNormalMap()) into->addDependency(u.getNormalMap());
+        if (hasSpecularMap()) into->addDependency(u.getSpecularMap());
+    }
+
+}
+
 // FIXME: certain updates to material properties need to be propagated to the GfxBodies that use them...
 
 void GfxMaterial::setSceneBlend (GfxMaterialSceneBlend v)
@@ -93,13 +106,10 @@ void GfxMaterial::setEmissiveColour (const Vector3 &v)
     dirty_mats.insert(this);
 }   
     
-typedef std::map<std::string,GfxMaterial*> GfxMaterialDB;
-static GfxMaterialDB material_db;
-
 GfxMaterial *gfx_material_add (const std::string &name)
 {
     GFX_MAT_SYNC;
-    if (gfx_material_has(name)) GRIT_EXCEPT("Material already exists: \""+name+"\"");
+    if (gfx_material_has_any(name)) GRIT_EXCEPT("Material already exists: \""+name+"\"");
     GfxMaterial *r = new GfxMaterial(name);
     material_db[name] = r;
     return r;
@@ -108,24 +118,29 @@ GfxMaterial *gfx_material_add (const std::string &name)
 GfxMaterial *gfx_material_add_or_get (const std::string &name)
 {
     GFX_MAT_SYNC;
-    if (gfx_material_has(name)) return gfx_material_get(name);
+    if (gfx_material_has_any(name)) {
+        GfxMaterial *mat = dynamic_cast<GfxMaterial*>(material_db[name]);
+        if (mat==NULL) GRIT_EXCEPT("Material already exists but is the wrong kind: \""+name+"\"");
+        return mat;
+    }    
     return gfx_material_add(name);
 }
 
 GfxMaterial *gfx_material_get (const std::string &name)
 {
     GFX_MAT_SYNC;
-    if (!gfx_material_has(name)) GRIT_EXCEPT("Material does not exist: \""+name+"\"");
-    return material_db[name];
+    if (!gfx_material_has_any(name)) GRIT_EXCEPT("Material does not exist: \""+name+"\"");
+    GfxMaterial *mat = dynamic_cast<GfxMaterial*>(material_db[name]);
+    if (mat==NULL) GRIT_EXCEPT("Wrong kind of material: \""+name+"\"");
+    return mat;
 }
+
 
 bool gfx_material_has (const std::string &name)
 {
     GFX_MAT_SYNC;
-    return material_db.find(name) != material_db.end();
+    GfxMaterialDB::iterator it = material_db.find(name);
+    if (it == material_db.end()) return false;
+    return dynamic_cast<GfxMaterial*>(it->second) != NULL;
 }
 
-void gfx_material_shutdown (void)
-{
-    material_db.clear();
-}

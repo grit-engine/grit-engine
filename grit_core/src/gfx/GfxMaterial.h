@@ -25,9 +25,11 @@ struct GfxPaintColour;
 #ifndef GFX_MATERIAL_H
 #define GFX_MATERIAL_H
 
+#include <OgreMaterial.h>
+
 #include "gfx.h"
 
-#include <OgreMaterial.h>
+#include "gfx_internal.h"
 
 typedef std::vector<GfxMaterial*> GfxMaterials;
 
@@ -115,7 +117,7 @@ enum GfxMaterialPaintMode {
     GFX_MATERIAL_PAINT_MAP
 };
 
-class GfxMaterial {
+class GfxMaterial : public GfxBaseMaterial {
     public: // hack
     Ogre::MaterialPtr regularMat;     // no suffix
     Ogre::MaterialPtr fadingMat;      // ' can be NULL
@@ -202,6 +204,8 @@ class GfxMaterial {
         GFX_MAT_SYNC;
         return paintMode == GFX_MATERIAL_PAINT_MAP;
     }
+    
+    void addDependencies (GfxDiskResource *into);
 
     const std::string name;
 
@@ -215,13 +219,13 @@ GfxMaterial *gfx_material_add_or_get (const std::string &name);
 
 GfxMaterial *gfx_material_get (const std::string &name);
 
+bool gfx_material_has_any (const std::string &name);
+
 bool gfx_material_has (const std::string &name);
 
 struct GfxPaintColour {
     Vector3 diff, spec;
     float met; // metallic paint (0 -> 1)
 };
-
-void gfx_material_shutdown (void);
 
 #endif
