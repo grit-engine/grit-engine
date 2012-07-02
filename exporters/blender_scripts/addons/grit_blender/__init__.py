@@ -631,7 +631,7 @@ def export_mesh_internal (scene, obj, tangents, filename, errors):
         file.write("            <vertex>\n")
         file.write("                <position x=\""+str(v.pos[0])+"\" y=\""+str(v.pos[1])+"\" z=\""+str(v.pos[2])+"\" />\n")
         file.write("                <normal x=\""+str(v.normal[0])+"\" y=\""+str(v.normal[1])+"\" z=\""+str(v.normal[2])+"\" />\n")
-        file.write("                <texcoord u=\""+str(v.uv[0])+"\" v=\""+str(-v.uv[1])+"\" />\n")
+        file.write("                <texcoord u=\""+str(v.uv[0])+"\" v=\""+str(1-v.uv[1])+"\" />\n")
         if ambient != None:
             col = str(v.ambient)+" 0.0 0.0 1.0"
             file.write("                <colour_diffuse value=\""+col+"\" />\n")
