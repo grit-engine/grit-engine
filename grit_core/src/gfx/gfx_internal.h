@@ -37,6 +37,7 @@
 #  include "OgreGLPlugin.h"
 #  include "OgreCgPlugin.h"
 #  ifdef WIN32
+#    define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) // workaround for main.h preventing d3d9.h from including properly
 #    include "OgreD3D9Plugin.h"
 #  endif
 #endif

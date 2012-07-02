@@ -236,7 +236,39 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\gfx\gfx_option.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\gfx\GfxBody.c++"
+				>
+			</File>
+			<File
 				RelativePath=".\src\gfx\GfxDiskResource.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\gfx\GfxInstances.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\gfx\GfxLight.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\gfx\GfxMaterial.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\gfx\GfxParticleSystem.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\gfx\GfxSkyBody.c++"
+				>
+			</File>
+			<File
+				RelativePath=".\src\gfx\GfxSkyMaterial.c++"
 				>
 			</File>
 			<File
