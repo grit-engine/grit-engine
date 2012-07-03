@@ -485,24 +485,12 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         Vector3 a = check_v3(L, 2);
-        Vector3 result = self->getOrientation().inverse() * a - self->getPosition();
+        Vector3 result = self->getOrientation().inverse() * (a - self->getPosition());
         push_v3(L, result);
         return 1;
 TRY_END
 }
 
-
-static int rbody_local_pos (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        Vector3 local_pos = check_v3(L,2);
-        Vector3 result = self->getPosition() + self->getOrientation() * local_pos;
-        push_v3(L, result);
-        return 1;
-TRY_END
-}
 
 static int rbody_local_vel (lua_State *L)
 {
@@ -613,8 +601,6 @@ TRY_START
                 push_v3(L, self->getLinearVelocity());
         } else if (!::strcmp(key,"angularVelocity")) {
                 push_v3(L, self->getAngularVelocity());
-        } else if (!::strcmp(key,"getLocalPosition")) {
-                push_cfunction(L,rbody_local_pos);
         } else if (!::strcmp(key,"getLocalVelocity")) {
                 push_cfunction(L,rbody_local_vel);
 
