@@ -30,6 +30,7 @@
 #include "gfx_internal.h"
 #include "GfxMaterial.h"
 #include "GfxBody.h"
+#include "GfxSkyBody.h"
 
 
 bool gfx_disk_resource_verbose_loads = false;
@@ -238,6 +239,10 @@ void GfxDiskResource::reloadImpl(void)
             if (ptr->hasSkeleton()) ptr->getSkeleton()->reload();
             for (unsigned long i=0 ; i<gfx_all_bodies.size() ; ++i) {
                 GfxBody *b = gfx_all_bodies[i];
+                if (b->mesh == ptr) b->reinitialise();
+            }
+            for (unsigned long i=0 ; i<gfx_all_sky_bodies.size() ; ++i) {
+                GfxSkyBody *b = gfx_all_sky_bodies[i];
                 if (b->mesh == ptr) b->reinitialise();
             }
         }

@@ -79,9 +79,12 @@ class GfxSkyBody : public fast_erase_index {
     bool isEnabled (void);
     void setEnabled (bool v);
 
+    void reinitialise (void);
+
     void updateProperties (void);
 
     friend class GfxSkyMaterial;
+    friend class GfxDiskResource;
 
 };
 

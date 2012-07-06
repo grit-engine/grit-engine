@@ -26,7 +26,7 @@ $(GRIT_BLENDER_DIR)/grit_col_conv: grit_col_conv
 all: $(TARGETS)
 
 depend:
-	makedepend -Y -f ../src/common.mk ../src/*.c++ ../src/linux/*.c++ ../src/win32/*.c++ ../src/gfx/*.c++ ../src/physics/*.c++ -I ../depend_stubs
+	makedepend -Y -f ../src/common.mk ../src/*.cpp ../src/linux/*.cpp ../src/win32/*.cpp ../src/gfx/*.cpp ../src/physics/*.cpp -I ../depend_stubs
 	sed -i 's_^[.][.]/src/linux/\([^.]*[.]o:\)_\1_g' ../src/common.mk
 	sed -i 's_^[.][.]/src/win32/\([^.]*[.]o:\)_\1_g' ../src/common.mk
 	sed -i 's_^[.][.]/src/gfx/\([^.]*[.]o:\)_\1_g' ../src/common.mk

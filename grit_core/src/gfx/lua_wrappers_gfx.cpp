@@ -2257,6 +2257,41 @@ TRY_END
 
 // sky material interface
 
+static GfxSkyMaterialSceneBlend skymat_scene_blend_from_string (lua_State *L, const std::string& factor)
+{
+        if (factor=="OPAQUE") {
+                return GFX_SKY_MATERIAL_OPAQUE;
+        } else if (factor=="ALPHA") {
+                return GFX_SKY_MATERIAL_ALPHA;
+        } else if (factor=="ADD") {
+                return GFX_SKY_MATERIAL_ADD;
+        } else {
+                std::string msg = "Unknown sky material scene blend: ";
+                msg += factor;
+                my_lua_error(L,msg);
+                return GFX_SKY_MATERIAL_OPAQUE; // never happens
+        }
+}
+
+/*
+static void skymat_push_string_from_scene_blend (lua_State *L, GfxSkyMaterialSceneBlend factor)
+{
+        switch (factor) {
+                case GFX_SKY_MATERIAL_OPAQUE:
+                lua_pushstring(L,"OPAQUE");
+                break;
+                case GFX_SKY_MATERIAL_ALPHA:
+                lua_pushstring(L,"ALPHA");
+                break;
+                case GFX_SKY_MATERIAL_ADD:
+                lua_pushstring(L,"ADD");
+                break;
+                default:
+                my_lua_error(L,"Unknown sky material blend");
+        }
+}
+*/
+
 static int global_register_sky_material (lua_State *L)
 {
 TRY_START
@@ -2272,13 +2307,28 @@ TRY_START
         GFX_MAT_SYNC;
         GfxSkyMaterial *gfxskymat = gfx_sky_material_add_or_get(name);
 
-        std::string emissive_map;
-        t.get("emissiveMap", emissive_map, std::string(""));
-        gfxskymat->setEmissiveMap(emissive_map);
+        bool b;
+        lua_Number f;
+        std::string s;
+        Vector3 v;
 
-        bool special;
-        t.get("special", special, false);
-        gfxskymat->setSpecial(special);
+        t.get("special", b, false);
+        gfxskymat->setSpecial(b);
+
+        t.get("alpha", f, 1.0);
+        gfxskymat->setAlpha(f);
+
+        t.get("alphaRejectThreshold", f, 0.0);
+        gfxskymat->setAlphaRejectThreshold(f);
+
+        t.get("emissiveMap", s, std::string(""));
+        gfxskymat->setEmissiveMap(s);
+
+        t.get("emissiveColour", v, Vector3(1,1,1));
+        gfxskymat->setEmissiveColour(v);
+
+        t.get("sceneBlend", s, std::string("OPAQUE"));
+        gfxskymat->setSceneBlend(skymat_scene_blend_from_string(L, s));
 
         return 0;
 TRY_END

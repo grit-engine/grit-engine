@@ -89,8 +89,10 @@ bool gfx_sky_material_has (const std::string &name)
 }
 
 GfxSkyMaterial::GfxSkyMaterial (const std::string &name_)
-  : alpha(1),
+  : special(false),
+    alpha(1),
     alphaRejectThreshold(0.5),
+    emissiveColour(Vector3(1,1,1)),
     sceneBlend(GFX_SKY_MATERIAL_OPAQUE),
     name(name_)
 {
@@ -98,26 +100,37 @@ GfxSkyMaterial::GfxSkyMaterial (const std::string &name_)
     updateInternalMat();
 }
 
+template<class T> void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
+                                               const char *name, const T &v)
+{
+    try {
+        p->setNamedConstant(name,v);
+    } catch (const Ogre::Exception &e) {
+        if (e.getNumber() != Ogre::Exception::ERR_INVALIDPARAMS) {
+            throw e;
+        } else {
+            // silently ignore
+        }
+    }
+}   
+
 void GfxSkyMaterial::updateInternalMat (void)
 {
     Ogre::Pass *p = mat->getTechnique(0)->getPass(0);
     p->setPolygonModeOverrideable(false);
     p->removeAllTextureUnitStates();
 
+    p->setDepthWriteEnabled(false);
     switch (sceneBlend) {
         case GFX_SKY_MATERIAL_OPAQUE:
         p->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
-        p->setDepthWriteEnabled(true);
         break;
         case GFX_SKY_MATERIAL_ALPHA:
         p->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
-        p->setDepthWriteEnabled(false);
         break;
         case GFX_SKY_MATERIAL_ADD:
         p->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
-        p->setDepthWriteEnabled(false);
         break;
-
     }
 
     if (special) {
@@ -148,8 +161,9 @@ void GfxSkyMaterial::updateInternalMat (void)
             t->setTextureFiltering(Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_ANISOTROPIC);
         }
         
-        p->getFragmentProgramParameters()->setNamedConstant("alpha_reject_threshold", alphaRejectThreshold);
-        p->getFragmentProgramParameters()->setNamedConstant("alpha", alpha);
+        try_set_named_constant(p->getFragmentProgramParameters(), "alpha_reject_threshold", alphaRejectThreshold);
+        try_set_named_constant(p->getFragmentProgramParameters(), "alpha", alpha);
+        try_set_named_constant(p->getFragmentProgramParameters(), "emissive_colour", to_ogre(emissiveColour));
     }
 }
 

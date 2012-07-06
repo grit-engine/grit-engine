@@ -6,11 +6,11 @@
 // NOTE: This file has been created automatically by a
 //       quex program.
 //
-// DATE: Sat Apr 30 12:59:34 2011
+// DATE: Fri Jul  6 18:36:55 2012
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-#ifndef __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2011y4m30d_12h59m34s__
-#define __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2011y4m30d_12h59m34s__
+#ifndef __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2012y7m6d_18h36m55s__
+#define __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2012y7m6d_18h36m55s__
 
 #include<cstdio> // for: 'std::sprintf'
 #include<map>    // for: 'token-id' <-> 'name map'

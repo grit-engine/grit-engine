@@ -46,19 +46,30 @@ static void validate_sky_mesh (const Ogre::MeshPtr &mesh)
 
 
 GfxSkyBody::GfxSkyBody (GfxDiskResource *gdr, short z_order)
+  : dead(false),
+    enabled(true),
+    zOrder(z_order),
+    ent(NULL),
+    node(NULL)
 {
-    dead = false;
-    zOrder = z_order;
-
     const Ogre::ResourcePtr &rp = gdr->getOgreResourcePtr();
 
     mesh = rp;
 
+    reinitialise();
+
+    gfx_all_sky_bodies.push_back(this);
+}
+
+void GfxSkyBody::reinitialise()
+{
+    if (node != NULL) ogre_sm->destroySceneNode(node->getName());
     node = ogre_sky_node->createChildSceneNode();
 
+    if (ent != NULL) ogre_sm->destroyEntity(ent);
     ent = ogre_sm->createEntity(freshname(), mesh->getName());
-    node->attachObject(ent);
     ent->setCastShadows(false);
+    node->attachObject(ent);
 
     // must set materials here!
     validate_sky_mesh(mesh);
@@ -70,10 +81,7 @@ GfxSkyBody::GfxSkyBody (GfxDiskResource *gdr, short z_order)
     }
 
     updateProperties();
-
-    gfx_all_sky_bodies.push_back(this);
 }
-
 
 GfxSkyBody::~GfxSkyBody (void)
 {
@@ -152,9 +160,9 @@ void GfxSkyBody::updateProperties (void)
         Ogre::SubEntity *se = ent->getSubEntity(i);
         se->setMaterial(mat->mat);
         if (mat->getSceneBlend() != GFX_SKY_MATERIAL_OPAQUE) {
-            se->setRenderQueueGroupAndPriority(RQ_SKY_ALPHA, 256 - short(zOrder));
+            se->setRenderQueueGroupAndPriority(RQ_SKY, 65535-short(zOrder));
         } else {
-            se->setRenderQueueGroupAndPriority(RQ_SKY, short(zOrder));
+            se->setRenderQueueGroupAndPriority(RQ_SKY, 65535-short(zOrder));
         }
         se->setCustomParameter(0, Ogre::Vector4(zOrder,0,0,0));
     }

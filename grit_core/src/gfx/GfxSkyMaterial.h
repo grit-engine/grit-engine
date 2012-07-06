@@ -55,6 +55,10 @@ class GfxSkyMaterial : public GfxBaseMaterial {
     public: std::string getEmissiveMap (void) const { GFX_MAT_SYNC; return emissiveMap; }
     public: void setEmissiveMap (const std::string &v) { GFX_MAT_SYNC; emissiveMap = v; updateInternalMat(); }
 
+    private: Vector3 emissiveColour;
+    public: Vector3 getEmissiveColour (void) const { GFX_MAT_SYNC; return emissiveColour; }
+    public: void setEmissiveColour (const Vector3 &v) { GFX_MAT_SYNC; emissiveColour = v; updateInternalMat(); }
+
     private: GfxSkyMaterialSceneBlend sceneBlend;
     public: GfxSkyMaterialSceneBlend getSceneBlend (void) const { GFX_MAT_SYNC; return sceneBlend; }
     public: void setSceneBlend (GfxSkyMaterialSceneBlend v);
