@@ -155,7 +155,7 @@ class CollisionMesh : public DiskResource {
         const ProcObjFaceAreas &mat_face_areas = ent.areas;
         //const ProcObjFaceAreas &mat_face_areas10 = ent.areas10;
         float total_area = ent.totalArea;
-        int max_samples = total_area * density;
+        int max_samples = int(total_area * density);
 
         r.reserve(r.size() + max_samples);
 
@@ -166,7 +166,7 @@ class CollisionMesh : public DiskResource {
 
             float area = mat_face_areas[i];
             float samples_f = area * density + left_overs;
-            int samples = samples_f;
+            int samples = int(samples_f);
             left_overs = samples_f - samples;
             if (samples==0) continue;
 
@@ -181,7 +181,7 @@ class CollisionMesh : public DiskResource {
             if (n.z > max_slope_sin) continue;
             if (no_z) {
                 samples_f *= 1 - (max_slope_sin-n.z)/range_slope_sin;
-                samples = samples_f;
+                samples = int(samples_f);
                 if (samples == 0) continue;
             }
             //float density = float(rand())/RAND_MAX * density;

@@ -44,8 +44,8 @@ GritObject::GritObject (const std::string &name_,
 void GritObject::destroy (lua_State *L, const GritObjectPtr &self)
 {
         if (gritClass==NULL) return;;
-        setNear(self,GritObjectPtr());
-        setFar(self,GritObjectPtr());
+        setNearObj(self,GritObjectPtr());
+        setFarObj(self,GritObjectPtr());
         deactivate(L,self);
         gritClass->release(L);
         gritClass = NULL;
@@ -211,8 +211,9 @@ void GritObject::activate (lua_State *L,
 float GritObject::calcFade (const float range2, bool &overlap)
 {
 
-        const GritObjectPtr &near = getNear();
-        const GritObjectPtr &far = getFar();
+		// windows prohibits use of near and far
+        const GritObjectPtr &the_near = getNearObj();
+        const GritObjectPtr &the_far = getFarObj();
 
         const float out = streamer->fadeOutFactor;
 
@@ -223,11 +224,11 @@ float GritObject::calcFade (const float range2, bool &overlap)
 
         float fade = 1.0;
         // if near is not activated, farfade will be out of date
-        if (!near.isNull() && near->isActivated()) {
-                fade = near->getImposedFarFade();
+        if (!the_near.isNull() && the_near->isActivated()) {
+                fade = the_near->getImposedFarFade();
                 if (fade<1) overlap = true;
         }
-        if (far.isNull()) {
+        if (the_far.isNull()) {
                 if (range > out) {
                         fade = (1-range) / (1-out);
                 }

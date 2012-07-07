@@ -43,20 +43,6 @@
 #include "surfinfo.h"
 #include "procobj.h"
 
-#ifdef near
-#undef near
-#endif
-#ifdef far
-#undef far
-#endif
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
-
-
 CentralisedLog clog;
 void app_fatal (void) { abort(); }
 void assert_triggered (void) { } 

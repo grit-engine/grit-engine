@@ -435,14 +435,14 @@ static void init_options (void)
     valid_option(PHYSICS_GRAVITY_X, new ValidOptionRange<float>(-1000, 1000));
     valid_option(PHYSICS_GRAVITY_Y, new ValidOptionRange<float>(-1000, 1000));
     valid_option(PHYSICS_GRAVITY_Z, new ValidOptionRange<float>(-1000, 1000));
-    valid_option(PHYSICS_STEP_SIZE, new ValidOptionRange<float>(0.00001,100));
-    valid_option(PHYSICS_CONTACT_BREAKING_THRESHOLD, new ValidOptionRange<float>(0.00001,100));
-    valid_option(PHYSICS_DEACTIVATION_TIME, new ValidOptionRange<float>(0.00001,1000));
-    valid_option(PHYSICS_SOLVER_DAMPING, new ValidOptionRange<float>(0.00001,1000));
-    valid_option(PHYSICS_SOLVER_ERP, new ValidOptionRange<float>(0.00001,1000));
-    valid_option(PHYSICS_SOLVER_ERP2, new ValidOptionRange<float>(0.00001,1000));
+    valid_option(PHYSICS_STEP_SIZE, new ValidOptionRange<float>(0.00001f,100));
+    valid_option(PHYSICS_CONTACT_BREAKING_THRESHOLD, new ValidOptionRange<float>(0.00001f,100));
+    valid_option(PHYSICS_DEACTIVATION_TIME, new ValidOptionRange<float>(0.00001f,1000));
+    valid_option(PHYSICS_SOLVER_DAMPING, new ValidOptionRange<float>(0.00001f,1000));
+    valid_option(PHYSICS_SOLVER_ERP, new ValidOptionRange<float>(0.00001f,1000));
+    valid_option(PHYSICS_SOLVER_ERP2, new ValidOptionRange<float>(0.00001f,1000));
     valid_option(PHYSICS_SOLVER_SPLIT_IMPULSE_THRESHOLD, new ValidOptionRange<float>(-1000,1000));
-    valid_option(PHYSICS_SOLVER_WARM_STARTING_FACTOR, new ValidOptionRange<float>(0.00001,1000));
+    valid_option(PHYSICS_SOLVER_WARM_STARTING_FACTOR, new ValidOptionRange<float>(0.00001f,1000));
 
     physics_option(PHYSICS_AUTOUPDATE, false);
 

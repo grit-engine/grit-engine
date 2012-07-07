@@ -33,8 +33,8 @@ extern "C" {
         #include <lualib.h>
 }
 
-
 #include "GritClass.h"
+
 #include "GritObject.h"
 #include "CacheFriendlyRangeSpaceSIMD.h"
 

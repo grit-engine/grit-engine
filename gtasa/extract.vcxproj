@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Normal|Win32">
+      <Configuration>Normal</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6753DB1A-C006-4C70-9FA0-97390152AC43}</ProjectGuid>
+    <RootNamespace>extract</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)int\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">$(SolutionDir)$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">$(OutDir)int\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">false</LinkIncremental>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DXSDK_DIR)\Lib\x86;$(BOOST_ROOT)\bin.v2\libs\date_time\build\msvc-10.0\debug\link-static\threading-multi;$(BOOST_ROOT)\bin.v2\libs\thread\build\msvc-10.0\debug\link-static\threading-multi;$(BOOST_ROOT)\bin.v2\libs\system\build\msvc-10.0\debug\link-static\threading-multi;$(BOOST_ROOT)\bin.v2\libs\chrono\build\msvc-10.0\debug\link-static\threading-multi;$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(BOOST_ROOT);$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <BuildLog />
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(SolutionDir)\dependencies\bullet\src;$(SolutionDir)\dependencies\quex-0.34.1;$(SolutionDir)\grit_core\src;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include;$(SolutionDir)\dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NO_PLUGINS;QUEX_OPTION_ASSERTS_WARNING_MESSAGE_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>FreeImaged.lib;freetype2311_D.lib;dxguid.lib;dinput8.lib;zlibd.lib;zziplibd.lib;OPENGL32.lib;GLU32.lib;d3d9.lib;d3dx9.lib;dxerr.lib;$(ProjectDir)src\Resources.res;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\dependencies\grit_ogre_dependencies\lib\Debug;$(SolutionDir)\dependencies\grit_ogre\lib;$(SolutionDir)\dependencies\bullet\out\debug_dll8\build\libbulletmath;$(SolutionDir)\dependencies\bullet\out\debug_dll8\build\libbulletcollision;$(OutDir)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <BuildLog />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">
+    <BuildLog />
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>$(SolutionDir)\dependencies\bullet\src;$(SolutionDir)\dependencies\quex-0.34.1;$(SolutionDir)\grit_core\src;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include;$(SolutionDir)\dependencies;$(SolutionDir)\dependencies\lua-5.1.4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NO_PLUGINS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>FreeImage.lib;freetype2311.lib;dxguid.lib;dinput8.lib;ogre.lib;zlib.lib;zziplib.lib;$(ProjectDir)src\Resources.res;bullet.lib;OPENGL32.lib;GLU32.lib;d3d9.lib;d3dx9.lib;dxerr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\dependencies\grit_ogre_dependencies\lib\Release;$(SolutionDir)\dependencies\grit_ogre\lib;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletmath;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletcollision;$(OutDir)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <BuildLog />
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="src\ColParser.h" />
+    <ClInclude Include="src\dffread.h" />
+    <ClInclude Include="src\dirutil.h" />
+    <ClInclude Include="src\ideread.h" />
+    <ClInclude Include="src\imgread.h" />
+    <ClInclude Include="src\ios_util.h" />
+    <ClInclude Include="src\iplread.h" />
+    <ClInclude Include="src\tex_dups.h" />
+    <ClInclude Include="src\txdread.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\dependencies\bullet.vcxproj">
+      <Project>{589b7665-3757-4fd2-a33b-008e4af0e5db}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\dependencies\ogre.vcxproj">
+      <Project>{25549847-21c8-47eb-842d-6392f7e3fb77}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\grit_core\src\physics\BColParser.cpp" />
+    <ClCompile Include="..\grit_core\src\physics\TColParser.cpp" />
+    <ClCompile Include="src\ColParser.cpp" />
+    <ClCompile Include="src\csvread.cpp" />
+    <ClCompile Include="src\dffread.cpp" />
+    <ClCompile Include="src\dirutil.cpp" />
+    <ClCompile Include="src\extract.cpp" />
+    <ClCompile Include="src\handling.cpp" />
+    <ClCompile Include="src\ideread.cpp" />
+    <ClCompile Include="src\ifpread.cpp" />
+    <ClCompile Include="src\imgread.cpp" />
+    <ClCompile Include="src\iplread.cpp" />
+    <ClCompile Include="src\procobj.cpp" />
+    <ClCompile Include="src\surfinfo.cpp" />
+    <ClCompile Include="src\tex_dups.cpp" />
+    <ClCompile Include="src\txdread.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

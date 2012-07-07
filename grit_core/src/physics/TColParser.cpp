@@ -893,7 +893,7 @@ static void parse_static_trimesh_shape (const std::string &name,
 
         triMesh.margin = 0.00;
         bool have_edge_distance_threshold = false;
-        triMesh.edgeDistanceThreshold = 0.001;
+        triMesh.edgeDistanceThreshold = 0.001f;
 
         do {
                 quex::Token t; qlex->get_token(&t);
@@ -934,7 +934,7 @@ static void parse_dynamic_trimesh_shape (const std::string &name,
         ensure_token(name,qlex,QUEX_TKN_LBRACE);
 
         triMesh.margin = DEFAULT_MARGIN;
-        triMesh.edgeDistanceThreshold = 0.001;
+        triMesh.edgeDistanceThreshold = 0.001f;
 
         quex::Token t; qlex->get_token(&t);
         switch (t.type_id()) {

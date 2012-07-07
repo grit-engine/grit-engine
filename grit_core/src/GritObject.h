@@ -40,13 +40,6 @@ typedef std::set<GritObjectPtr> GObjSet;
 #include "ExternalTable.h"
 #include "BackgroundLoader.h"
 
-#ifdef near
-#undef near
-#endif
-#ifdef far
-#undef far
-#endif
-
 class GritObject {
 
     public:
@@ -140,59 +133,59 @@ class GritObject {
         Vector3 getPos() const { return pos; }
         float getR() const { return r; }
                 
-        const GritObjectPtr &getNear (void) const { return near; }
-        void setNear (const GritObjectPtr &self, const GritObjectPtr &v)
+        const GritObjectPtr &getNearObj (void) const { return nearObj; }
+        void setNearObj (const GritObjectPtr &self, const GritObjectPtr &v)
         {
                 // this function is recursive and mutually recursive
                 // but always terminates due to the early return below
-                if (near==v) return;
-                if (near.isNull()) {
+                if (nearObj==v) return;
+                if (nearObj.isNull()) {
                         // note that v cannot be null since near!=v
                         // adding a near
-                        near = v;
-                        near->setFar(near,self);
+                        nearObj = v;
+                        nearObj->setFarObj(nearObj,self);
                 } else {
                         if (v.isNull()) {
                                 // removing near
-                                GritObjectPtr tmp = near;
-                                near.setNull();
-                                tmp->setFar(tmp,near);
+                                GritObjectPtr tmp = nearObj;
+                                nearObj.setNull();
+                                tmp->setFarObj(tmp,nearObj);
                         } else {
-                                // changing near
+                                // changing nearObj
                                 // first set to null
-                                GritObjectPtr tmp = near;
-                                near.setNull();
-                                tmp->setFar(tmp,near);
+                                GritObjectPtr tmp = nearObj;
+                                nearObj.setNull();
+                                tmp->setFarObj(tmp,nearObj);
                                 // then set to new value
-                                setNear(self,v);
+                                setNearObj(self,v);
                         }
                 }
         }
 
-        const GritObjectPtr &getFar (void) const { return far; }
-        void setFar (const GritObjectPtr &self, const GritObjectPtr &v)
+        const GritObjectPtr &getFarObj (void) const { return farObj; }
+        void setFarObj (const GritObjectPtr &self, const GritObjectPtr &v)
         {
                 // this function is recursive and mutually recursive
                 // but always terminates due to the early return below
-                if (far==v) return;
-                if (far.isNull()) {
+                if (farObj==v) return;
+                if (farObj.isNull()) {
                         // adding a far
-                        far = v;
-                        far->setNear(far,self);
+                        farObj = v;
+                        farObj->setNearObj(farObj,self);
                 } else {
                         if (v.isNull()) {
                                 // removing far
-                                GritObjectPtr tmp = far;
-                                far.setNull();
-                                tmp->setNear(tmp,far);
+                                GritObjectPtr tmp = farObj;
+                                farObj.setNull();
+                                tmp->setNearObj(tmp,farObj);
                         } else {
                                 // changing far
                                 // first set to null
-                                GritObjectPtr tmp = far;
-                                far.setNull();
-                                tmp->setNear(tmp,far);
+                                GritObjectPtr tmp = farObj;
+                                farObj.setNull();
+                                tmp->setNearObj(tmp,farObj);
                                 // then set to new value
-                                setFar(self,v);
+                                setFarObj(self,v);
                         }
                 }
         }
@@ -227,7 +220,7 @@ class GritObject {
 
         bool needsFrameCallbacks;
 
-        GritObjectPtr near, far;
+        GritObjectPtr nearObj, farObj;
                 
         bool demandRegistered;
         Demand demand;

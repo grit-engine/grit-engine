@@ -211,9 +211,9 @@ TRY_START
         } else if (key=="activated") {
                 lua_pushboolean(L,self->isActivated());
         } else if (key=="near") {
-                push_gritobj(L,self->getNear());
+                push_gritobj(L,self->getNearObj());
         } else if (key=="far") {
-                push_gritobj(L,self->getFar());
+                push_gritobj(L,self->getFarObj());
         } else if (key=="fade") {
                 lua_pushnumber(L,self->getFade());
         } else if (key=="updateSphere") {
@@ -275,17 +275,17 @@ TRY_START
                 my_lua_error(L,"Not a writeable GritObject member: "+key);
         } else if (key=="near") {
                 if (lua_isnil(L,3)) {
-                        self->setNear(self,GritObjectPtr());
+                        self->setNearObj(self,GritObjectPtr());
                 } else {
                         GET_UD_MACRO(GritObjectPtr,v,3,GRITOBJ_TAG);
-                        self->setNear(self,v);
+                        self->setNearObj(self,v);
                 }
         } else if (key=="far") {
                 if (lua_isnil(L,3)) {
-                        self->setNear(self,GritObjectPtr());
+                        self->setNearObj(self,GritObjectPtr());
                 } else {
                         GET_UD_MACRO(GritObjectPtr,v,3,GRITOBJ_TAG);
-                        self->setFar(self,v);
+                        self->setFarObj(self,v);
                 }
         } else if (key=="fade") {
                 my_lua_error(L,"Not a writeable GritObject member: "+key);
@@ -472,8 +472,8 @@ TRY_START
         lua_getfield(L,table_index,"near");
         if (!lua_isnil(L,-1)) {
                 if (is_userdata(L,-1,GRITOBJ_TAG)) {
-                        GET_UD_MACRO(GritObjectPtr,near,-1,GRITOBJ_TAG);
-                        o->setNear(o, near);
+                        GET_UD_MACRO(GritObjectPtr,the_near,-1,GRITOBJ_TAG);
+                        o->setNearObj(o, the_near);
                 } else {
                         my_lua_error(L,"Field 'near' must be a grit object.");
                 }
@@ -483,8 +483,8 @@ TRY_START
         lua_getfield(L,table_index,"far");
         if (!lua_isnil(L,-1)) {
                 if (is_userdata(L,-1,GRITOBJ_TAG)) {
-                        GET_UD_MACRO(GritObjectPtr,far,-1,GRITOBJ_TAG);
-                        o->setFar(o, far);
+                        GET_UD_MACRO(GritObjectPtr,the_far,-1,GRITOBJ_TAG);
+                        o->setFarObj(o, the_far);
                 } else {
                         my_lua_error(L,"Field 'far' must be a grit object.");
                 }

@@ -60,7 +60,7 @@ unsigned long long micros (void)
                 // http://support.microsoft.com/kb/274323
                 unsigned long long elapsed_ticks_us = this_tick_count_us - last_tick_count_us;
                 unsigned long long elapsed_perf_us = this_perf_us - last_perf_us;
-                int error_us = ((long long)(elapsed_perf_us)) - ((long long)(elapsed_ticks_us));
+                int error_us = int(((long long)(elapsed_perf_us)) - ((long long)(elapsed_ticks_us)));
                 if (error_us > 500000) {
                         unsigned long long adj_ticks = error_us*freq;
                         adjust_ticks += adj_ticks;

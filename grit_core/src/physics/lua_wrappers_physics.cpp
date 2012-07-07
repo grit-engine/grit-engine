@@ -157,7 +157,7 @@ TRY_START
         bool rotate         = check_bool(L,12);
         bool align_slope    = check_bool(L,13);
         unsigned seed       = check_t<unsigned>(L,14);
-        unsigned triangles  = check_int(L,15,0,65535);
+        unsigned triangles  = check_t<unsigned>(L,15);
         bool tangents       = check_bool(L,16);
 
         Transform world_trans;
@@ -238,7 +238,7 @@ static int rbody_get_part_enabled (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        int i = (int)check_int(L, 2, 0, self->getNumElements()-1);
         lua_pushboolean(L, self->getElementEnabled(i));
         return 1;
 TRY_END
@@ -249,7 +249,7 @@ static int rbody_set_part_enabled (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        int i = (int)check_int(L, 2, 0, self->getNumElements()-1);
         bool b = check_bool(L, 3);
         self->setElementEnabled(i, b);
         return 0;
@@ -261,7 +261,7 @@ static int rbody_get_part_position_initial (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        int i = (int)check_int(L, 2, 0, self->getNumElements()-1);
         Vector3 v = self->getElementPositionMaster(i);
         lua_pushnumber(L,v.x); lua_pushnumber(L,v.y); lua_pushnumber(L,v.z);
         return 3;
@@ -273,7 +273,7 @@ static int rbody_get_part_position_offset (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        int i = (int)check_int(L, 2, 0, self->getNumElements()-1);
         Vector3 v = self->getElementPositionOffset(i);
         lua_pushnumber(L,v.x); lua_pushnumber(L,v.y); lua_pushnumber(L,v.z);
         return 3;
@@ -285,7 +285,7 @@ static int rbody_set_part_position_offset (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        int i = (int)check_int(L, 2, 0, self->getNumElements()-1);
         Vector3 v = check_v3(L,3);
         self->setElementPositionOffset(i, v);
         return 0;
@@ -297,7 +297,7 @@ static int rbody_get_part_orientation_initial (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        int i = (int)check_int(L, 2, 0, self->getNumElements()-1);
         Quaternion q = self->getElementOrientationMaster(i);
         lua_pushnumber(L,q.w); lua_pushnumber(L,q.x); lua_pushnumber(L,q.y); lua_pushnumber(L,q.z);
         return 4;
@@ -309,7 +309,7 @@ static int rbody_get_part_orientation_offset (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        int i = (int)check_int(L, 2, 0, self->getNumElements()-1);
         Quaternion q = self->getElementOrientationOffset(i);
         lua_pushnumber(L,q.w); lua_pushnumber(L,q.x); lua_pushnumber(L,q.y); lua_pushnumber(L,q.z);
         return 4;
@@ -321,7 +321,7 @@ static int rbody_set_part_orientation_offset (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        int i = check_int(L, 2, 0, self->getNumElements()-1);
+        int i = (int)check_int(L, 2, 0, self->getNumElements()-1);
         Quaternion q = check_quat(L,3);
         self->setElementOrientationOffset(i, q);
         return 0;
@@ -399,7 +399,7 @@ TRY_START
         int base_line = 5;
         check_args_min(L, base_line);
 
-        float radius = luaL_checknumber(L,1);
+        float radius = (float)luaL_checknumber(L,1);
         Vector3 start = check_v3(L,2);
         Vector3 ray = check_v3(L,3);
         bool nearest_only = check_bool(L,4);
@@ -446,8 +446,8 @@ TRY_START
         int base_line = 7;
         check_args_min(L, base_line);
 
-        float radius = luaL_checknumber(L,1);
-        float height = luaL_checknumber(L,2);
+        float radius = (float)luaL_checknumber(L,1);
+        float height = (float)luaL_checknumber(L,2);
         Quaternion q = check_quat(L,3);
         Vector3 start = check_v3(L,4);
         Vector3 ray = check_v3(L,5);
@@ -679,22 +679,22 @@ TRY_START
                 Quaternion v = check_quat(L, 3);
                 self->setOrientation(v);
         } else if (!::strcmp(key,"contactProcessingThreshold")) {
-                float v = luaL_checknumber(L,3);
+                float v = (float)luaL_checknumber(L,3);
                 self->setContactProcessingThreshold(v);
         } else if (!::strcmp(key,"linearDamping")) {
-                float v = luaL_checknumber(L,3);
+                float v = (float)luaL_checknumber(L,3);
                 self->setLinearDamping(v);
         } else if (!::strcmp(key,"angularDamping")) {
-                float v = luaL_checknumber(L,3);
+                float v = (float)luaL_checknumber(L,3);
                 self->setAngularDamping(v);
         } else if (!::strcmp(key,"linearSleepThreshold")) {
-                float v = luaL_checknumber(L,3);
+                float v = (float)luaL_checknumber(L,3);
                 self->setLinearSleepThreshold(v);
         } else if (!::strcmp(key,"angularSleepThreshold")) {
-                float v = luaL_checknumber(L,3);
+                float v = (float)luaL_checknumber(L,3);
                 self->setAngularSleepThreshold(v);
         } else if (!::strcmp(key,"mass")) {
-                float v = luaL_checknumber(L,3);
+                float v = (float)luaL_checknumber(L,3);
                 self->setMass(v);
         } else if (!::strcmp(key,"ghost")) {
                 bool v = check_bool(L,3);
@@ -836,7 +836,7 @@ static int global_physics_pump (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        float time_step = luaL_checknumber(L,1);
+        float time_step = (float)luaL_checknumber(L,1);
         int iterations = physics_pump(L,time_step);
         lua_pushnumber(L,iterations);
         return 1;
@@ -890,7 +890,7 @@ TRY_START
             case -1: my_lua_error(L,"Unrecognised physics option: \""+opt+"\"");
             case 0: physics_option(o0, check_bool(L,2)); break;
             case 1: physics_option(o1, check_t<int>(L,2)); break;
-            case 2: physics_option(o2, luaL_checknumber(L,2)); break;
+            case 2: physics_option(o2, (float)luaL_checknumber(L,2)); break;
             default: my_lua_error(L,"Unrecognised type from physics_option_from_string");
         }
         return 0;
@@ -960,7 +960,7 @@ TRY_START
 
         int counter = counter1;
 
-        int num = int(sqrtf(counter)+0.5f);
+        int num = int(sqrtf(float(counter))+0.5f);
         if (num*num != counter) {
                 my_lua_error(L,"Table was not a square (e.g. 4, 16, 25, etc, elements)");
         }

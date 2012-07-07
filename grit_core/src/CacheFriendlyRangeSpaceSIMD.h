@@ -35,11 +35,8 @@ template <typename T> class CacheFriendlyRangeSpaceSIMD;
 #endif
 
 #include "SSEAllocator.h"
-#include "CentralisedLog.h"
 
-#ifdef near
-#undef near
-#endif
+#include "CentralisedLog.h"
 
 class SIMDVector4 {
 
@@ -178,9 +175,9 @@ class CacheFriendlyRangeSpace {
         // only meaningful if the radius is stored in pos.d and
         // other.d is 0, thus the subtraction and squaring
         // yields d^2
-        static inline bool near (const SIMDVector4 &pos,
-                                 const SIMDVector4 &centre,
-                                 const float factor2)
+        static inline bool isNear (const SIMDVector4 &pos,
+                                   const SIMDVector4 &centre,
+                                   const float factor2)
         {
                 SIMDVector4 diff;
                 diff = pos - centre;
@@ -214,7 +211,7 @@ class CacheFriendlyRangeSpace {
                 home.updateAll(x,y,z,0);
                 for (SIMDVector4s::size_type i=0 ; i<num ; ++i) {
                         SIMDVector4 &pos = positions[iter];
-                        if (near(home,pos,factor2)) {
+                        if (isNear(home,pos,factor2)) {
                                 found.push_back(cargo[iter]);
                         }
                         iter++;

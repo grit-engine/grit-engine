@@ -32,10 +32,13 @@ class ClutterFactory;
 #include <OgreMaterial.h>
 #include <OgreMesh.h>
 
+
 #include "../math_util.h"
 
 #include "../CacheFriendlyRangeSpaceSIMD.h"
+
 #include "../Streamer.h"
+
 
 // Provides an interface whereby a fixed size vertex buffer is used to render a
 // number of instances in a batch.  The instances can be added / removed and

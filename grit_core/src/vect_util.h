@@ -30,7 +30,11 @@
 template<class T> void vect_remove_fast (std::vector<T> &vect, size_t index)
 {
     APP_ASSERT(index < vect.size());
-    std::swap<T>(vect[index],vect[vect.size()-1]);
+	// I would use std::swap at this point, but apparently that makes visual studio crash...
+	if (index != vect.size()-1) {
+		T tmp = vect[vect.size()-1];
+		vect[index] = tmp;
+	}
     vect.pop_back();
 }
 

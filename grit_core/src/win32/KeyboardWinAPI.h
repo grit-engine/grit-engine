@@ -24,9 +24,7 @@
 
 #include <windows.h>
 
-
 #include "../Keyboard.h"
-
 
 class KeyboardWinAPI : public Keyboard {
 

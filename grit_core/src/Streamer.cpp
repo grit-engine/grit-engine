@@ -232,22 +232,22 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                 // so just skip them
                 if (o->getClass()==NULL) continue;
                 o->notifyRange2(L,o,range2);
-                const GritObjectPtr &far = o->getFar();
-                if (!far.isNull()) {
+                const GritObjectPtr &the_far = o->getFarObj();
+                if (!the_far.isNull()) {
                         // update the far (perhaps for a second time this frame)
                         // to make sure it has picked up the fade imposed by o
-                        float range2 = far->range2(new_pos) / vis2;
-                        far->notifyRange2(L,far,range2);
+                        float range2 = the_far->range2(new_pos) / vis2;
+                        the_far->notifyRange2(L,the_far,range2);
                 }
                 if (range2 > 1) {
                         // now out of range
                         const GritObjectPtr &o = *i;
-                        const GritObjectPtr &far = o->getFar();
+                        const GritObjectPtr &the_far = o->getFarObj();
                         bool killme = o->deactivate(L,o);
-                        if (!far.isNull()) {
+                        if (!the_far.isNull()) {
                                 // we're deactivating and we have a far,
                                 // so make sure it gets considered this frame
-                                fnd.push_back(far);
+                                fnd.push_back(the_far);
                         }
                         if (killme) {
                                 deleteObject(L,o);
@@ -325,10 +325,10 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
 
                 // if we get this far, we should be displayed but there might be
                 // a near object in the way
-                GritObjectPtr near = o->getNear();
-                while (!near.isNull()) {
-                        if (near->withinRange(new_pos,visibility * fadeOverlapFactor)) {
-                                if (near->isActivated()) {
+                GritObjectPtr the_near = o->getNearObj();
+                while (!the_near.isNull()) {
+                        if (the_near->withinRange(new_pos,visibility * fadeOverlapFactor)) {
+                                if (the_near->isActivated()) {
                                         // why deactivate?
                                         // we already ensured it is not activated above...
                                         o->deactivate(L,o);
@@ -337,7 +337,7 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                                         goto skip;
                                 }
                         }
-                        near = near->getNear();
+                        the_near = the_near->getNearObj();
                 }
       
 

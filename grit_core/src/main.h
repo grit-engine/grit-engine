@@ -30,7 +30,9 @@ extern "C" {
 #include "BulletDebugDrawer.h"
 
 #include "gfx/lua_userdata_dependency_tracker.h"
+
 #include "gfx/HUD.h"
+
 
 #include "physics/PhysicsWorld.h"
 
