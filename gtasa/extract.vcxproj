@@ -44,6 +44,8 @@
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">false</LinkIncremental>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DXSDK_DIR)\Lib\x86;$(BOOST_ROOT)\bin.v2\libs\date_time\build\msvc-10.0\debug\link-static\threading-multi;$(BOOST_ROOT)\bin.v2\libs\thread\build\msvc-10.0\debug\link-static\threading-multi;$(BOOST_ROOT)\bin.v2\libs\system\build\msvc-10.0\debug\link-static\threading-multi;$(BOOST_ROOT)\bin.v2\libs\chrono\build\msvc-10.0\debug\link-static\threading-multi;$(LibraryPath)</LibraryPath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(BOOST_ROOT);$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">$(BOOST_ROOT);$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">$(BOOST_ROOT)bin.v2\libs\thread\build\msvc-10.0\release\link-static\threading-multi;$(BOOST_ROOT)bin.v2\libs\date_time\build\msvc-10.0\release\link-static\threading-multi;$(BOOST_ROOT)bin.v2\libs\system\build\msvc-10.0\release\link-static\threading-multi;$(BOOST_ROOT)bin.v2\libs\chrono\build\msvc-10.0\release\link-static\threading-multi;$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <BuildLog />
@@ -87,7 +89,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>FreeImage.lib;freetype2311.lib;dxguid.lib;dinput8.lib;ogre.lib;zlib.lib;zziplib.lib;$(ProjectDir)src\Resources.res;bullet.lib;OPENGL32.lib;GLU32.lib;d3d9.lib;d3dx9.lib;dxerr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>FreeImage.lib;freetype2311.lib;dxguid.lib;dinput8.lib;zlib.lib;zziplib.lib;$(ProjectDir)src\Resources.res;OPENGL32.lib;GLU32.lib;d3d9.lib;d3dx9.lib;dxerr.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\dependencies\grit_ogre_dependencies\lib\Release;$(SolutionDir)\dependencies\grit_ogre\lib;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletmath;$(SolutionDir)\dependencies\bullet\out\release_dll8\build\libbulletcollision;$(OutDir)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>

@@ -93,6 +93,9 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <BuildLog />
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "$(SolutionDir)grit_core\media\Grit.exe"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="launcher.cpp" />
