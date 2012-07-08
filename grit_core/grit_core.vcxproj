@@ -84,7 +84,7 @@
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>$(SolutionDir)\dependencies\openal\include;$(SolutionDir)\dependencies\bullet\src;$(SolutionDir)\dependencies\quex-0.34.1;$(SolutionDir)\dependencies\lua-5.1.4;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\OctreeSceneManager\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\ParticleFX\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\src\GLSL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\Direct3D9\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\CgProgramManager\include;$(SolutionDir)\dependencies\grit_ogre_dependencies\include;$(SolutionDir)\dependencies\icu\include;$(SolutionDir)\dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NO_PLUGINS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NO_PLUGINS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
@@ -93,6 +93,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4355;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>FreeImage.lib;freetype2311.lib;dxguid.lib;dinput8.lib;zlib.lib;zziplib.lib;$(ProjectDir)src\win32\Resources.res;OPENGL32.lib;GLU32.lib;d3d9.lib;d3dx9.lib;dxerr.lib;cg.lib;icudt.lib;icuin.lib;icuuc.lib;openal32.lib;%(AdditionalDependencies)</AdditionalDependencies>

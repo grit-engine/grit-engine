@@ -43,6 +43,10 @@
 #include "surfinfo.h"
 #include "procobj.h"
 
+#ifdef far
+#undef far
+#endif
+
 CentralisedLog clog;
 void app_fatal (void) { abort(); }
 void assert_triggered (void) { } 
