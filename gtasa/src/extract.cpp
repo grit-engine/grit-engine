@@ -805,6 +805,7 @@ void extract (const Config &cfg, std::ostream &out)
                 fr_chassis = &fr;
             }
         }
+        (void) fr_chassis; // suppress new gcc warning
 
         for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
             frame &fr = dff.frames[j];
