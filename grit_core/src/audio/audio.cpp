@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2010
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2012
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -293,6 +293,12 @@ void audio_update (const Vector3& position, const Vector3& velocity, const Quate
 }
 
 AudioSource::AudioSource (const std::string &filename)
+      : position(Vector3(0,0,0)),
+        velocity(Vector3(0,0,0)),
+        looping(false),
+        pitch(1.0f),
+        volume(1.0f)
+
 {
     DiskResource *dr = disk_resource_get(filename);
     if (dr == NULL) GRIT_EXCEPT("Resource not found: \""+filename+"\"");
@@ -322,20 +328,22 @@ void AudioSource::setVelocity (const Vector3& v)
 	alSource3f(alSource, AL_VELOCITY, v.x, v.y, v.z);
 }
 
-void AudioSource::setLoop (bool v)
+void AudioSource::setLooping (bool v)
 {
 	looping = v;
 	alSourcei(alSource, AL_LOOPING, v);
 }
 
-void AudioSource::setVolume (float volume)
+void AudioSource::setVolume (float v)
 {
-	alSourcef(alSource, AL_GAIN, volume);
+    volume = v;
+	alSourcef(alSource, AL_GAIN, v);
 }
 
-void AudioSource::setPitch (float pitch)
+void AudioSource::setPitch (float v)
 {
-	alSourcef(alSource, AL_PITCH, pitch);
+    pitch = v;
+	alSourcef(alSource, AL_PITCH, v);
 }
 
 bool AudioSource::playing (void)

@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2010
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2012
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -76,11 +76,11 @@ class AudioSource
 		Demand demand;
 		AudioDiskResource *resource;
 
-		bool hasFile;
-
 		Vector3 position;
 		Vector3 velocity;
 		bool looping;
+        float pitch;
+        float volume;
 
 		ALuint alSource;
 
@@ -92,15 +92,21 @@ class AudioSource
 		static AudioSourcePtr make (const std::string &filename)
 		{ return AudioSourcePtr(new AudioSource(filename)); }
 
-		Vector3 getPosition (void) { return position; }
-		Vector3 getVelocity (void) { return velocity; }
-		bool getLoop (void) { return looping; }
 
-		void setPosition (const Vector3& position);
-		void setVelocity (const Vector3& velocity);
-		void setLoop (bool looping);
-		void setVolume (float volume);
-		void setPitch (float pitch);
+		Vector3 getPosition (void) { return position; }
+		void setPosition (const Vector3& v);
+
+		Vector3 getVelocity (void) { return velocity; }
+		void setVelocity (const Vector3& v);
+
+		bool getLooping (void) { return looping; }
+		void setLooping (bool v);
+
+		float getVolume (void) { return volume; }
+		void setVolume (float v);
+
+		float getPitch (void) { return pitch; }
+		void setPitch (float v);
 
 		bool playing (void);
 		void play (void);

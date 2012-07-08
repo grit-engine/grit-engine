@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2010
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2012
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -92,7 +92,11 @@ TRY_START
     } else if (!::strcmp(key,"velocity")) {
         push_v3(L, self->getVelocity());
     } else if (!::strcmp(key,"looping")) {
-        lua_pushboolean(L, self->getLoop());
+        lua_pushboolean(L, self->getLooping());
+    } else if (!::strcmp(key,"pitch")) {
+        lua_pushboolean(L, self->getPitch());
+    } else if (!::strcmp(key,"volume")) {
+        lua_pushboolean(L, self->getVolume());
     } else if (!::strcmp(key,"playing")) {
         lua_pushboolean(L, self->playing());
 	} else if (!::strcmp(key,"play")) {
@@ -131,7 +135,7 @@ TRY_START
 		self->setVolume(f);
     } else if (!::strcmp(key,"looping")) {
         bool b = check_bool(L,3);
-		self->setLoop(b);
+		self->setLooping(b);
     } else {
         my_lua_error(L,"Not a writable AudioSource member: "+std::string(key));
     }
