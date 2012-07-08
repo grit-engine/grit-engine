@@ -435,6 +435,7 @@ TRY_END
 static int global_object_add (lua_State *L)
 {
 TRY_START
+        if (lua_gettop(L)==2) lua_newtable(L);
         check_args(L,3);
         std::string className = luaL_checkstring(L,1);
         Vector3 spawnPos = check_v3(L, 2);

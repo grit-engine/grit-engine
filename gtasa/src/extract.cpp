@@ -997,7 +997,7 @@ void extract (const Config &cfg, std::ostream &out)
         map.precision(25);
 
         map << "print(\"Loading world\")\n";
-        map << "objects_all_del()\n";
+        map << "object_all_del()\n";
 
         map << "local last\n";
 
