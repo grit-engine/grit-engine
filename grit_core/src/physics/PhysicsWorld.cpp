@@ -35,6 +35,7 @@
 #include "../main.h"
 #include "../CentralisedLog.h"
 #include "../option.h"
+#include "../lua_util.h"
 
 #include "PhysicsWorld.h"
 #include "lua_wrappers_physics.h"
@@ -906,14 +907,14 @@ int physics_pump (lua_State *L, float elapsed)
                 int mat1 = p.m_partId1;
                 Info infoA = {
                     rb_a->getPtr(), rb_b->getPtr(), 
-                    p.getLifeTime(), p.getAppliedImpulse(), -p.getDistance(),
+                    (float)p.getLifeTime(), p.getAppliedImpulse(), -p.getDistance(),
                     mat0, mat1, from_bullet(p.m_positionWorldOnA),
                     from_bullet(p.m_positionWorldOnB), -from_bullet(p.m_normalWorldOnB)
                 };
                 infos.push_back(infoA);
                 Info infoB = {
                     rb_b->getPtr(), rb_a->getPtr(), 
-                    p.getLifeTime(), p.getAppliedImpulse(), p.getDistance(),
+                    (float)p.getLifeTime(), p.getAppliedImpulse(), p.getDistance(),
                     mat1, mat0, from_bullet(p.m_positionWorldOnB),
                     from_bullet(p.m_positionWorldOnA), from_bullet(p.m_normalWorldOnB)
                 };

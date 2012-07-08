@@ -50,7 +50,7 @@ enum AudioIntOption {
 
 void audio_init (void);
 void audio_update (const Vector3& position, const Vector3& velocity, const Quaternion& rotation);
-void audio_play (const std::string& filename, float pitch, bool ambient, const Vector3& position);
+void audio_play (const std::string& filename, float pitch, float volume, bool ambient, const Vector3& position);
 
 std::string audio_option_to_string (AudioBoolOption o);
 std::string audio_option_to_string (AudioIntOption o);

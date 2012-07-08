@@ -19,4 +19,4 @@
  * THE SOFTWARE.
  */
 
-void lua_utf8_init (lua_State *L);
+void utf8_lua_init (lua_State *L);

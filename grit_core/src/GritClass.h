@@ -19,7 +19,11 @@
  * THE SOFTWARE.
  */
 
+#include <string>
+#include <map>
+
 class GritClass;
+typedef std::map<std::string,GritClass*> GritClassMap;
 
 #ifndef GritClass_h
 #define GritClass_h
@@ -116,6 +120,21 @@ class GritClass {
         ExternalTable table;
 
 };
+
+extern GritClassMap classes;
+
+GritClass *class_add (lua_State *L, const std::string& name);
+void class_del (lua_State *L, GritClass *c);
+
+GritClass *class_get (const std::string &name);
+bool class_has (const std::string &name);
+        
+void class_all_del (lua_State *L);
+
+void class_all (GritClassMap::iterator &begin, GritClassMap::iterator &end);
+
+size_t class_count (void);
+
 
 #endif
 

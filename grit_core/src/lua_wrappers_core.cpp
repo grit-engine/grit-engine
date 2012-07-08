@@ -312,15 +312,6 @@ TRY_END
 }
 
 
-static int global_get_streamer (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        push_streamer(L,streamer);
-        return 1;
-TRY_END
-}
-
 static int global_clicked_close (lua_State *L)
 {
 TRY_START
@@ -850,8 +841,6 @@ static const luaL_reg global[] = {
         {"profiler_start" ,global_profiler_start},
         {"profiler_stop" ,global_profiler_stop},
 
-        {"get_streamer",global_get_streamer},
-
         {"PlotV3",plot_v3_make},
         {"Plot",plot_make},
         {"StringDB",stringdb_make},
@@ -922,9 +911,6 @@ lua_State *init_lua(const char *filename)
         luaL_register(L, NULL, name##_meta_table); \
         lua_pop(L,1); } while(0)
 
-        ADD_MT_MACRO(streamer,STREAMER_TAG);
-        ADD_MT_MACRO(gritcls,GRITCLS_TAG);
-        ADD_MT_MACRO(gritobj,GRITOBJ_TAG);
         ADD_MT_MACRO(plot,PLOT_TAG);
         ADD_MT_MACRO(plot_v3,PLOT_V3_TAG);
         ADD_MT_MACRO(stringdb,STRINGDB_TAG);
@@ -932,13 +918,12 @@ lua_State *init_lua(const char *filename)
         luaL_register(L, "_G", global);
 
         lua_pushthread(L); lua_setglobal(L,"MAIN_STATE");
-        push_streamer(L, streamer); lua_setglobal(L,"streamer");
 
-        lua_utf8_init(L);
-
+        utf8_lua_init(L);
+        gritobj_lua_init(L);
         gfx_lua_init(L);
         physics_lua_init(L);
-		audio_lua_init(L);
+        audio_lua_init(L);
         disk_resource_lua_init(L);
 
         status = aux_include(L,filename);

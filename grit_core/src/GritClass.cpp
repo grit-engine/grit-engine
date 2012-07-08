@@ -21,3 +21,75 @@
 
 #include "GritClass.h"
 
+GritClassMap classes;
+
+GritClass *class_add (lua_State *L, const std::string& name)
+{
+    GritClass *gcp;
+    GritClassMap::iterator i = classes.find(name);
+    
+    if (i!=classes.end()) {
+        gcp = i->second;
+        int index = lua_gettop(L);
+        for (lua_pushnil(L) ; lua_next(L,index)!=0 ; lua_pop(L,1)) {
+            gcp->set(L);
+        }       
+        lua_pop(L,1); // the table we just iterated through
+        gcp->setParent(L);
+    } else {
+        // add it and return it
+        gcp = new GritClass(L,name);
+        classes[name] = gcp;
+    }
+    return gcp;
+}
+
+
+static void class_erase (const std::string &name)
+{
+        // anything using this class keeps using it
+        classes.erase(name);
+        // class gets deleted properly when everything stops using it
+}
+
+
+
+void class_del (lua_State *L, GritClass *c)
+{
+    class_erase(c->name);
+    c->release(L);
+}
+
+
+GritClass *class_get (const std::string &name)
+{
+    GritClassMap::iterator i = classes.find(name);
+    if (i==classes.end())
+        GRIT_EXCEPT("GritClass does not exist: "+name);
+    return i->second;
+}
+
+bool class_has (const std::string &name)
+{
+    return classes.find(name)!=classes.end();
+}
+
+        
+void class_all_del (lua_State *L)
+{
+    GritClassMap m = classes;
+    for (GritClassMap::iterator i=m.begin(),i_=m.end() ; i!=i_ ; ++i) {
+        class_del(L, i->second);
+    }       
+}
+
+void class_all (GritClassMap::iterator &begin, GritClassMap::iterator &end)
+{
+    begin = classes.begin();
+    end = classes.end();
+}
+
+size_t class_count (void)
+{
+    return classes.size();
+}

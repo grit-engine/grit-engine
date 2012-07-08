@@ -19,8 +19,7 @@
  * THE SOFTWARE.
  */
 
-class Streamer;
-
+class GritClass;
 
 #ifndef Streamer_h
 #define Streamer_h
@@ -33,159 +32,71 @@ extern "C" {
         #include <lualib.h>
 }
 
-#include "GritClass.h"
-
 #include "GritObject.h"
-#include "CacheFriendlyRangeSpaceSIMD.h"
+#include "math_util.h"
 
-typedef std::map<std::string,GritClass*> GritClassMap;
+extern float streamer_visibility;
+extern float streamer_prepare_distance_factor;
+extern float streamer_fade_out_factor;
+extern float streamer_fade_overlap_factor;
 
-class Streamer {
-
-    public:
-
-        Streamer (void);
-
-        ~Streamer (void);
-
-        void doShutdown (lua_State *L);
-
-        void clearClasses (lua_State *L);
-
-        void clearObjects (lua_State *L);
-        void clearAnonymousObjects (lua_State *L);
-
-
-        // GLOBAL STUFF
-
-        void setBounds (lua_State *L, const Vector3 &bounds_min, const Vector3 &bounds_max);
-
-        // CLASS STUFF
-
-        GritClass *addClass (lua_State *L, const std::string& name);
-
-        GritClass *getClass (const std::string &name);
-
-
-        bool hasClass (const std::string &name) { return classes.find(name)!=classes.end(); }
-
-        void deleteClass (lua_State *L, GritClass *c)
-        {
-                eraseClass(c->name);
-                c->release(L);
-        }
-
-        void getClasses (GritClassMap::iterator &begin,
-                         GritClassMap::iterator &end)
-        {
-                begin = classes.begin();
-                end = classes.end();
-        }
-
-        void getClasses (GritClassMap::const_iterator &begin,
-                         GritClassMap::const_iterator &end) const
-        {
-                begin = classes.begin();
-                end = classes.end();
-        }
-
-        int numClasses (void) { return classes.size(); }
-
-
-        // OBJECT STUFF
-
-        GritObjectPtr addObject (lua_State *L,
-                                 std::string name,
-                                 GritClass *grit_class);
-
-        const GritObjectPtr &getObject (const std::string &name);
-
-        void getObjects (GObjMap::iterator &begin,
-                         GObjMap::iterator &end)
-        {
-                begin = gObjs.begin();
-                end = gObjs.end();
-        }
-
-        void getObjects (GObjMap::const_iterator &begin,
-                         GObjMap::const_iterator &end) const
-        {
-                begin = gObjs.begin();
-                end = gObjs.end();
-        }
-
-        int numObjects (void) { return gObjs.size(); }
-
-        bool hasObject (const std::string &name)
-        { return gObjs.find(name)!=gObjs.end(); }
-
-        void deleteObject (lua_State *L, const GritObjectPtr &o);
-
-
-        // FRAME CALLBACK
-
-        void frameCallbacks (lua_State *L, float elapsed);
-        void setNeedsFrameCallbacks (const GritObjectPtr &ptr, bool v);
-
-        
-        // ACTIVATION STUFF
-
-        float prepareDistanceFactor;
-        float fadeOutFactor;
-        float fadeOverlapFactor;
-
-        float visibility;
-
-        // called every frame with new camera position, to govern streaming
-        void centre (lua_State *L, const Vector3 &new_pos);
-
-        // called by objects when they change position or rendering distance
-        inline void updateSphere (size_t index, const Vector3 &pos, float d)
-        {
-                rs.updateSphere(index,pos.x,pos.y,pos.z,d);
-        }
-        
-        size_t stepSize;
-
-        void list (const GritObjectPtr &o);
-
-        void unlist (const GritObjectPtr &o);
-
-        int numActivated (void) { return activated.size(); }
-
-        typedef CacheFriendlyRangeSpace<GritObjectPtr> Space;
-
-        // ACTIVATION UPDATE CALLBACK
-
-        struct UpdateHook {
-                virtual void update(const Vector3 &new_pos) = 0;
-        };
-
-        void registerUpdateHook (UpdateHook *rc);
-
-        void unregisterUpdateHook (UpdateHook *rc);
-
-    protected:
-
-        void eraseClass (const std::string &name);
-
-        GritClassMap classes;
-
-        GObjMap gObjs;
-        Space rs;
-        GObjPtrs activated;
-        GObjPtrs needFrameCallbacks;
-        GObjPtrs loaded;
-        GObjPtrs fresh; // just been added - skip the queue for activation
-
-        size_t nameGenerationCounter;
-
-        bool shutdown;
-
-        typedef std::vector<UpdateHook*> UpdateHooks;
-        UpdateHooks updateHooks;
-
+enum CoreBoolOption {
+    CORE_AUTOUPDATE
 };
+
+enum CoreFloatOption {
+    CORE_VISIBILITY,
+    CORE_PREPARE_DISTANCE_FACTOR,
+    CORE_FADE_OUT_FACTOR,
+    CORE_FADE_OVERLAP_FACTOR
+};
+
+enum CoreIntOption {
+    CORE_STEP_SIZE
+};
+
+// set's t to either 0,1,2 and fills in the approriate argument
+void core_option_from_string (const std::string &s,
+                             int &t,
+                             CoreBoolOption &o0,
+                             CoreIntOption &o1,
+                             CoreFloatOption &o2);
+
+void core_option (CoreBoolOption o, bool v);
+bool core_option (CoreBoolOption o);
+void core_option (CoreIntOption o, int v);
+int core_option (CoreIntOption o);
+void core_option (CoreFloatOption o, float v);
+float core_option (CoreFloatOption o);
+
+void streamer_init();
+
+void streamer_centre (lua_State *L, const Vector3 &new_pos);
+
+// called by objects when they change position or rendering distance
+void streamer_update_sphere (size_t index, const Vector3 &pos, float d);
+        
+void streamer_list (const GritObjectPtr &o);
+
+void streamer_unlist (const GritObjectPtr &o);
+
+void streamer_list_as_activated (const GritObjectPtr &o);
+
+void streamer_unlist_as_activated (const GritObjectPtr &o);
+
+void streamer_object_activated (GObjPtrs::iterator &begin, GObjPtrs::iterator &end);
+
+int streamer_object_activated_count (void);
+
+
+
+struct StreamerCallback {
+        virtual void update(const Vector3 &new_pos) = 0;
+};
+
+void streamer_callback_register (StreamerCallback *rc);
+
+void streamer_callback_unregister (StreamerCallback *rc);
 
 #endif
 

@@ -230,6 +230,20 @@ class GritObject {
         float lastFade;
 };
 
+GritObjectPtr object_add (lua_State *L, std::string name, GritClass *grit_class);
+void object_del (lua_State *L, const GritObjectPtr &o);
+
+const GritObjectPtr &object_get (const std::string &name);
+bool object_has (const std::string &name);
+    
+void object_all (GObjMap::iterator &begin, GObjMap::iterator &end);
+
+void object_all_del (lua_State *L);
+
+int object_count (void);
+
+void object_do_frame_callbacks (lua_State *L, float elapsed);
+
 #endif
 
 // vim: shiftwidth=8:tabstop=8:expandtab

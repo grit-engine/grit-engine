@@ -546,7 +546,7 @@ static int lua_utf8_gsub (lua_State *L)
 
 // CALLED DURING INIT OF APP
 
-void lua_utf8_init (lua_State *L)
+void utf8_lua_init (lua_State *L)
 {
         lua_getglobal(L, "string");
 

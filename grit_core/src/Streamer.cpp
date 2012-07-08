@@ -21,194 +21,243 @@
 
 #include "Streamer.h"
 #include "main.h"
+#include "option.h"
+#include "GritClass.h"
 
-Streamer::Streamer (void)
-      : prepareDistanceFactor(1.3f),
-        fadeOutFactor(.7f),
-        fadeOverlapFactor(.7f),
-        visibility(1.0f),
-        stepSize(20000),
-        nameGenerationCounter(0), shutdown(false)
-{
-}
+float streamer_visibility;
+float streamer_prepare_distance_factor;
+float streamer_fade_out_factor;
+float streamer_fade_overlap_factor;
 
-Streamer::~Streamer (void)
-{
-        if (!shutdown)
-                CERR<<"Streamer: not shutdown cleanly"<<std::endl;
-}
+static CoreBoolOption option_keys_bool[] = {
+    CORE_AUTOUPDATE
+};
 
-void Streamer::doShutdown (lua_State *L)
-{
-        // if lua has not been initialised yet then nothing to do
-        if (L) {
-                clearClasses(L);
-                clearObjects(L);
-        }
-        shutdown = true;
-}
+static CoreFloatOption option_keys_float[] = {
+    CORE_VISIBILITY,
+    CORE_PREPARE_DISTANCE_FACTOR,
+    CORE_FADE_OUT_FACTOR,
+    CORE_FADE_OVERLAP_FACTOR
+};
 
-void Streamer::clearClasses (lua_State *L)
-{
-        GritClassMap m = classes;
-        for (GritClassMap::iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
-                deleteClass(L,i->second);
-        }
-}
-
-void Streamer::clearObjects (lua_State *L)
-{
-        GObjMap m = gObjs;
-        for (GObjMap::iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
-                deleteObject(L,i->second);
-        }
-}
-
-void Streamer::clearAnonymousObjects (lua_State *L)
-{
-        GObjMap m = gObjs;
-        for (GObjMap::iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
-                if (i->second->anonymous) deleteObject(L,i->second);
-        }
-}
+static CoreIntOption option_keys_int[] = {
+    CORE_STEP_SIZE
+};
 
 
-GritClass *Streamer::addClass (lua_State *L, const std::string& name)
-{
-        GritClass *gcp;
-        GritClassMap::iterator i = classes.find(name);
+static std::map<CoreBoolOption,bool> options_bool;
+static std::map<CoreIntOption,int> options_int;
+static std::map<CoreFloatOption,float> options_float;
+static std::map<CoreBoolOption,bool> new_options_bool;
+static std::map<CoreIntOption,int> new_options_int;
+static std::map<CoreFloatOption,float> new_options_float;
+
+static std::map<CoreBoolOption,ValidOption<bool>*> valid_option_bool;
+static std::map<CoreIntOption,ValidOption<int>*> valid_option_int;
+static std::map<CoreFloatOption,ValidOption<float>*> valid_option_float;
+
+static void valid_option (CoreBoolOption o, ValidOption<bool> *v) { valid_option_bool[o] = v; }
+static void valid_option (CoreIntOption o, ValidOption<int> *v) { valid_option_int[o] = v; }
+static void valid_option (CoreFloatOption o, ValidOption<float> *v) { valid_option_float[o] = v; }
+    
+static bool truefalse_[] = { false, true };
+static ValidOptionList<bool,bool[2]> *truefalse = new ValidOptionList<bool,bool[2]>(truefalse_);
+
         
-        if (i!=classes.end()) {
-                gcp = i->second;
-                int index = lua_gettop(L);
-                for (lua_pushnil(L) ; lua_next(L,index)!=0 ; lua_pop(L,1)) {
-                        gcp->set(L);
-                }
-                lua_pop(L,1); // the table we just iterated through
-                gcp->setParent(L);
-        } else {
-                // add it and return it
-                gcp = new GritClass(L,name);
-                classes[name] = gcp;
+std::string core_option_to_string (CoreBoolOption o)
+{       
+    switch (o) {
+        case CORE_AUTOUPDATE: return "AUTOUPDATE";
+    }
+    return "UNKNOWN_BOOL_OPTION";
+}       
+std::string core_option_to_string (CoreIntOption o)
+{   
+    switch (o) {
+        case CORE_STEP_SIZE: return "STEP_SIZE";
+    }   
+    return "UNKNOWN_INT_OPTION";
+}
+std::string core_option_to_string (CoreFloatOption o)
+{       
+    switch (o) {
+        case CORE_VISIBILITY: return "VISIBILITY";
+        case CORE_PREPARE_DISTANCE_FACTOR: return "PREPARE_DISTANCE_FACTOR";
+        case CORE_FADE_OUT_FACTOR: return "FADE_OUT_FACTOR";
+        case CORE_FADE_OVERLAP_FACTOR: return "FADE_OVERLAP_FACTOR";
+    }   
+    return "UNKNOWN_FLOAT_OPTION";
+}
+
+void core_option_from_string (const std::string &s,
+                               int &t,
+                               CoreBoolOption &o0,
+                               CoreIntOption &o1,
+                               CoreFloatOption &o2)
+{
+    if (s=="AUTOUPDATE") { t = 0; o0 = CORE_AUTOUPDATE; }
+
+    else if (s=="STEP_SIZE") { t = 1 ; o1 = CORE_STEP_SIZE; }
+
+    else if (s=="VISIBILITY") { t = 2 ; o2 = CORE_VISIBILITY; }
+    else if (s=="PREPARE_DISTANCE_FACTOR") { t = 2 ; o2 = CORE_PREPARE_DISTANCE_FACTOR; }
+    else if (s=="FADE_OUT_FACTOR") { t = 2 ; o2 = CORE_FADE_OUT_FACTOR; }
+    else if (s=="FADE_OVERLAP_FACTOR") { t = 2 ; o2 = CORE_FADE_OVERLAP_FACTOR; }
+
+    else t = -1;
+}
+
+static void options_update (bool flush)
+{
+    (void) flush;
+
+    for (unsigned i=0 ; i<sizeof(option_keys_bool)/sizeof(*option_keys_bool) ; ++i) {
+        CoreBoolOption o = option_keys_bool[i];
+        bool v_old = options_bool[o];
+        bool v_new = new_options_bool[o];
+        if (v_old == v_new) continue;
+        switch (o) {
+            case CORE_AUTOUPDATE: break;
+            break;
         }
-        return gcp;
-}
-
-GritClass *Streamer::getClass (const std::string &name)
-{
-        GritClassMap::iterator i = classes.find(name);
-        if (i==classes.end())
-                GRIT_EXCEPT("GritClass does not exist: "+name);
-        return i->second;
-}
-
-
-void Streamer::eraseClass (const std::string &name)
-{
-        // anything using this class keeps using it
-        classes.erase(name);
-        // class gets deleted properly when everything stops using it
-}
-
-
-
-
-
-GritObjectPtr Streamer::addObject (
-        lua_State *L,
-        std::string name,
-        GritClass *grit_class)
-{
-        (void) L; // may need this again some day
-        bool anonymous = false;
-        if (name=="") {
-                anonymous = true;
-                do {
-                        std::stringstream ss;
-                        ss << "Unnamed:" << grit_class->name
-                           << ":" << nameGenerationCounter++;
-                        name = ss.str();
-                } while (gObjs.find(name)!=gObjs.end());
+    }
+    for (unsigned i=0 ; i<sizeof(option_keys_int)/sizeof(*option_keys_int) ; ++i) {
+        CoreIntOption o = option_keys_int[i];
+        int v_old = options_int[o];
+        int v_new = new_options_int[o];
+        if (v_old == v_new) continue;
+        switch (o) {
+            case CORE_STEP_SIZE:
+            break;
         }
-                        
-        GObjMap::iterator i = gObjs.find(name);
-
-        if (i!=gObjs.end()) {
-                deleteObject(L,i->second);
+    }
+    for (unsigned i=0 ; i<sizeof(option_keys_float)/sizeof(*option_keys_float) ; ++i) {
+        CoreFloatOption o = option_keys_float[i];
+        float v_old = options_float[o];
+        float v_new = new_options_float[o];
+        if (v_old == v_new) continue;
+        switch (o) {
+            case CORE_VISIBILITY:
+            streamer_visibility = v_new;
+            break;
+            case CORE_PREPARE_DISTANCE_FACTOR:
+            streamer_prepare_distance_factor = v_new;
+            break;
+            case CORE_FADE_OUT_FACTOR:
+            streamer_fade_out_factor = v_new;
+            break;
+            case CORE_FADE_OVERLAP_FACTOR:
+            streamer_fade_overlap_factor = v_new;
+            break;
         }
+    }
 
-        GritObjectPtr self = GritObjectPtr(new GritObject(name,grit_class));
-        self->anonymous = anonymous;
-        gObjs[name] = self;
-        rs.add(self);
-        fresh.push_back(self);
-
-        return self;
+    options_bool = new_options_bool;
+    options_int = new_options_int;
+    options_float = new_options_float;
 }
 
 
-
-const GritObjectPtr &Streamer::getObject (const std::string &name)
+static void init_options (void)
 {
-        GObjMap::iterator i = gObjs.find(name);
-        if (i==gObjs.end())
-                GRIT_EXCEPT("GritObject does not exist: "+name);
 
-        return i->second;
+    for (unsigned i=0 ; i < sizeof(option_keys_bool) / sizeof(*option_keys_bool) ; ++i) {
+        valid_option(option_keys_bool[i], truefalse);
+
+    }
+
+    valid_option(CORE_STEP_SIZE, new ValidOptionRange<int>(0,20000));
+
+    valid_option(CORE_VISIBILITY, new ValidOptionRange<float>(0, 10));
+    valid_option(CORE_PREPARE_DISTANCE_FACTOR, new ValidOptionRange<float>(1, 3));
+    valid_option(CORE_FADE_OUT_FACTOR, new ValidOptionRange<float>(0, 1));
+    valid_option(CORE_FADE_OVERLAP_FACTOR, new ValidOptionRange<float>(0, 1));
+
+
+    core_option(CORE_AUTOUPDATE, false);
+
+    core_option(CORE_STEP_SIZE, 20000);
+
+    core_option(CORE_VISIBILITY, 1.0f);
+    core_option(CORE_PREPARE_DISTANCE_FACTOR, 1.3f);
+    core_option(CORE_FADE_OUT_FACTOR, 0.7f);
+    core_option(CORE_FADE_OVERLAP_FACTOR, 0.7f);
+
+    options_update(true);
+
+    core_option(CORE_AUTOUPDATE, true);
+
 }
 
+
+void core_option (CoreBoolOption o, bool v)
+{
+    valid_option_bool[o]->maybeThrow("Core", v);
+    new_options_bool[o] = v;
+    if (new_options_bool[CORE_AUTOUPDATE]) options_update(false);
+}
+bool core_option (CoreBoolOption o)
+{
+    return options_bool[o];
+}
+
+void core_option (CoreIntOption o, int v)
+{
+    valid_option_int[o]->maybeThrow("Core", v);
+    new_options_int[o] = v;
+    if (new_options_bool[CORE_AUTOUPDATE]) options_update(false);
+}
+int core_option (CoreIntOption o)
+{
+    return options_int[o];
+}
+
+void core_option (CoreFloatOption o, float v)
+{
+    valid_option_float[o]->maybeThrow("Core", v);
+    new_options_float[o] = v;
+    if (new_options_bool[CORE_AUTOUPDATE]) options_update(false);
+}
+float core_option (CoreFloatOption o)
+{
+    return options_float[o];
+}
+
+
+typedef CacheFriendlyRangeSpace<GritObjectPtr> Space;
+static Space rs;
+
+static GObjPtrs activated;
+static GObjPtrs loaded;
+static GObjPtrs fresh; // just been added - skip the queue for activation
+
+typedef std::vector<StreamerCallback*> StreamerCallbacks;
+StreamerCallbacks streamer_callbacks;
 
 static void remove_if_exists (GObjPtrs &list, const GritObjectPtr &o)
 {
-        GObjPtrs::iterator iter = find(list.begin(),list.end(),o);
-        if (iter!=list.end()) {
-                size_t offset = iter - list.begin();
-                list[offset] = list[list.size()-1];
-                list.pop_back();
-        }
+    GObjPtrs::iterator iter = find(list.begin(),list.end(),o);
+    if (iter!=list.end()) {
+        size_t offset = iter - list.begin();
+        list[offset] = list[list.size()-1];
+        list.pop_back();
+    }
 }
 
-void Streamer::deleteObject (lua_State *L, const GritObjectPtr &o)
+void streamer_init (void)
 {
-        o->destroy(L,o);
-        rs.remove(o);
-        remove_if_exists(fresh, o);
-        remove_if_exists(needFrameCallbacks, o);
-
-        GObjMap::iterator i = gObjs.find(o->name);
-        // Since object deactivation can trigger other objects to be destroyed,
-        // sometimes when quitting, due to the order in which the objects are destroyed,
-        // we destroy an object that is already dead...
-        if (i!=gObjs.end()) gObjs.erase(o->name);
+    init_options();
 }
 
-void Streamer::frameCallbacks (lua_State *L, float elapsed)
-{
-        GObjPtrs victims = needFrameCallbacks;
-        typedef GObjPtrs::iterator I;
-        for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
-                if (!(*i)->getNeedsFrameCallbacks()) continue;
-                if (!(*i)->frameCallback(L, *i, elapsed)) {
-                        (*i)->setNeedsFrameCallbacks(*i, false);
-                }
-        }
-}
 
-void Streamer::setNeedsFrameCallbacks (const GritObjectPtr & ptr, bool v)
-{
-        remove_if_exists(needFrameCallbacks, ptr);
-        if (v) {
-                if (ptr->isActivated())
-                        needFrameCallbacks.push_back(ptr);
-        }
-}
-
-void Streamer::centre (lua_State *L, const Vector3 &new_pos)
+void streamer_centre (lua_State *L, const Vector3 &new_pos)
 {
         Space::Cargo fnd = fresh;
         fresh.clear();
 
-        const float pF = prepareDistanceFactor;
+        const float visibility = streamer_visibility;
+
+        const float pF = streamer_prepare_distance_factor;
         const float tpF = pF * visibility; // prepare and visibility factors
         const float vis2 = visibility * visibility;
 
@@ -250,7 +299,7 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                                 fnd.push_back(the_far);
                         }
                         if (killme) {
-                                deleteObject(L,o);
+                                object_del(L,o);
                         }
                 }
         }
@@ -284,7 +333,7 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
         ////////////////////////////////////////////////////////////////////////
         // note: since fnd is prepopulated by new objects and the lods of deactivated objects
         // it may have duplicates after the rangespace has gone through
-        rs.getPresent(new_pos.x,new_pos.y,new_pos.z,stepSize,tpF,fnd);
+        rs.getPresent(new_pos.x,new_pos.y,new_pos.z,core_option(CORE_STEP_SIZE),tpF,fnd);
         for (Space::Cargo::iterator i=fnd.begin(),i_=fnd.end() ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = *i;
 
@@ -327,7 +376,7 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
                 // a near object in the way
                 GritObjectPtr the_near = o->getNearObj();
                 while (!the_near.isNull()) {
-                        if (the_near->withinRange(new_pos,visibility * fadeOverlapFactor)) {
+                        if (the_near->withinRange(new_pos,visibility * streamer_fade_overlap_factor)) {
                                 if (the_near->isActivated()) {
                                         // why deactivate?
                                         // we already ensured it is not activated above...
@@ -355,57 +404,82 @@ void Streamer::centre (lua_State *L, const Vector3 &new_pos)
 
         for (GObjPtrs::iterator i=must_kill.begin(),i_=must_kill.end() ; i!=i_ ; ++i) {
                 CERR << "Object: \"" << (*i)->name << "\" raised an error while background loading resources, so destroying it." << std::endl;
-                deleteObject(L, *i);
+                object_del(L, *i);
         }
 
         bgl->handleBastards();
         bgl->checkRAMHost();
         bgl->checkRAMGPU();
 
-        for (UpdateHooks::iterator i=updateHooks.begin(),i_=updateHooks.end() ; i!=i_ ; ++i) {
+        for (StreamerCallbacks::iterator i=streamer_callbacks.begin(),i_=streamer_callbacks.end() ; i!=i_ ; ++i) {
                 (*i)->update(new_pos);
         }
 
 }
 
-void Streamer::list (const GritObjectPtr &o)
+void streamer_update_sphere (size_t index, const Vector3 &pos, float d)
 {
-        GObjPtrs::iterator begin = activated.begin(), end = activated.end();
-        GObjPtrs::iterator iter  = find(begin,end,o);
-        if (iter!=end) return;
-        activated.push_back(o);
-        if (o->getNeedsFrameCallbacks())
-                needFrameCallbacks.push_back(o);
+        rs.updateSphere(index,pos.x,pos.y,pos.z,d);
 }
 
-void Streamer::unlist (const GritObjectPtr &o)
+void streamer_object_activated (GObjPtrs::iterator &begin, GObjPtrs::iterator &end)
 {
-        GObjPtrs::iterator begin = activated.begin(), end = activated.end();
-        GObjPtrs::iterator iter  = find(begin,end,o);
-        if (iter==end) return;
-        size_t index = iter - begin;
-        activated[index] = activated[activated.size()-1];
-        activated.pop_back();
-        if (o->getNeedsFrameCallbacks())
-                remove_if_exists(needFrameCallbacks, o);
+    begin = activated.begin();
+    end = activated.end();
 }
 
-void Streamer::registerUpdateHook (UpdateHook *o)
+int streamer_object_activated_count (void)
 {
-        UpdateHooks::iterator begin = updateHooks.begin(), end = updateHooks.end();
-        UpdateHooks::iterator iter  = find(begin,end,o);
-        if (iter!=end) return;
-        updateHooks.push_back(o);
+    return activated.size();
 }
 
-void Streamer::unregisterUpdateHook (UpdateHook *o)
+void streamer_list(const GritObjectPtr &o)
 {
-        UpdateHooks::iterator begin = updateHooks.begin(), end = updateHooks.end();
-        UpdateHooks::iterator iter  = find(begin,end,o);
-        if (iter==end) return;
-        size_t index = iter - begin;
-        updateHooks[index] = updateHooks[updateHooks.size()-1];
-        updateHooks.pop_back();
+    rs.add(o);
+    fresh.push_back(o);
 }
 
-// vim: shiftwidth=8:tabstop=8:expandtab
+void streamer_unlist(const GritObjectPtr &o)
+{
+    rs.remove(o);
+    remove_if_exists(fresh, o);
+}
+
+void streamer_list_as_activated (const GritObjectPtr &o)
+{
+    GObjPtrs::iterator begin = activated.begin(), end = activated.end();
+    GObjPtrs::iterator iter  = find(begin,end,o);
+    if (iter!=end) return;
+    activated.push_back(o);
+}
+
+void streamer_unlist_as_activated (const GritObjectPtr &o)
+{
+    GObjPtrs::iterator begin = activated.begin(), end = activated.end();
+    GObjPtrs::iterator iter  = find(begin,end,o);
+    if (iter==end) return;
+    size_t index = iter - begin;
+    activated[index] = activated[activated.size()-1];
+    activated.pop_back();
+}
+
+
+void streamer_callback_register (StreamerCallback *rc)
+{
+    StreamerCallbacks::iterator begin = streamer_callbacks.begin(), end = streamer_callbacks.end();
+    StreamerCallbacks::iterator iter  = find(begin,end,rc);
+    if (iter!=end) return;
+    streamer_callbacks.push_back(rc);
+}
+
+void streamer_callback_unregister (StreamerCallback *rc)
+{
+    StreamerCallbacks::iterator begin = streamer_callbacks.begin(), end = streamer_callbacks.end();
+    StreamerCallbacks::iterator iter  = find(begin,end,rc);
+    if (iter==end) return;
+    size_t index = iter - begin;
+    streamer_callbacks[index] = streamer_callbacks[streamer_callbacks.size()-1];
+    streamer_callbacks.pop_back();
+}
+
+// vim: shiftwidth=4:tabstop=4:expandtab

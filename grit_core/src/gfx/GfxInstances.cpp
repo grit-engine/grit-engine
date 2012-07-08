@@ -68,26 +68,32 @@ unsigned int GfxInstances::add (void)
 
 void GfxInstances::update (unsigned int index, const Vector3 &pos, const Quaternion &q, float fade)
 {
+    (void) index;
+    (void) pos;
+    (void) q;
+    (void) fade;
     //instances[index].update(
 }
 
 void GfxInstances::remove (unsigned int index)
 {
+    (void) index;
 }
 
 
 void GfxInstances::registerMe (void)
 {
-    streamer->registerUpdateHook(this);
+    streamer_callback_register(this);
 }
 
 void GfxInstances::unregisterMe (void)
 {
-    streamer->unregisterUpdateHook(this);
+    streamer_callback_unregister(this);
 }
 
 void GfxInstances::update (const Vector3 &new_pos)
 {
+    (void) new_pos;
 }
 
 

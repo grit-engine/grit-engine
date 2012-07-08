@@ -59,7 +59,6 @@ Mouse *mouse = NULL;
 Keyboard *keyboard = NULL;
 lua_State *core_L = NULL;
 UserDataTables user_data_tables;
-Streamer *streamer = NULL;
 BulletDebugDrawer *debug_drawer = NULL;
 std::stringstream gfx_msg_buffer;
 HUD::RootPtr hud;
@@ -138,7 +137,7 @@ int main(int argc, const char **argv)
 
                 physics_init();
 
-                streamer = new Streamer();
+                streamer_init();
 
                 audio_init();
 
@@ -185,14 +184,12 @@ int main(int argc, const char **argv)
 
                 // lua returns - we quit
 
-
-                streamer->doShutdown(core_L); // will remove all demands from bgl
+                object_all_del(core_L); // will remove all demands from bgl
 
                 hud->removeAllChildren(); // will avoid any lua callbacks during destruction
 
                 bgl->shutdown();
 
-                delete streamer;
                 if (mouse) delete mouse;
                 if (keyboard) delete keyboard;
                 if (core_L) shutdown_lua(core_L);

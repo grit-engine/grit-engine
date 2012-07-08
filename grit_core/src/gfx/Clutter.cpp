@@ -519,7 +519,7 @@ typedef ClutterBuffer::SectionMap::const_iterator I;
 
 float RangedClutter::Item::calcFade (float range2)
 {
-    const float out = streamer->fadeOutFactor;
+    const float out = streamer_fade_out_factor;
     float range = ::sqrtf(range2);
                     
     float fade = 1.0;       
@@ -541,12 +541,12 @@ void RangedClutter::visitRenderables (Ogre::Renderable::Visitor *visitor, bool d
 
 void RangedClutter::registerMe (void)
 {
-    streamer->registerUpdateHook(this);
+    streamer_callback_register(this);
 }
 
 void RangedClutter::unregisterMe (void)
 {
-    streamer->unregisterUpdateHook(this);
+    streamer_callback_unregister(this);
 }
 
 void RangedClutter::_updateRenderQueue (Ogre::RenderQueue *queue)

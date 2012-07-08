@@ -20,6 +20,7 @@
  */
 
 #include "GritObject.h"
+#include "GritClass.h"
 #include "main.h"
 
 #include "lua_wrappers_gritobj.h"
@@ -125,7 +126,7 @@ static int gritobj_destroy (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        streamer->deleteObject(L,self);
+        object_del(L,self);
         return 0;
 TRY_END
 }
@@ -340,106 +341,103 @@ MT_MACRO_NEWINDEX(gritobj);
 
 // STREAMER ================================================================ {{{
 
-void push_streamer (lua_State *L, Streamer *self)
-{
-        void **ud = static_cast<void**>(lua_newuserdata(L, sizeof(*ud)));
-        ud[0] = static_cast<void*> (self);
-        luaL_getmetatable(L, STREAMER_TAG);
-        lua_setmetatable(L, -2);
-}
-
-static int streamer_gc (lua_State *L)
+static int global_streamer_centre (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        GET_UD_MACRO_OFFSET(Streamer,self,1,STREAMER_TAG,0);
-        if (self==NULL) return 0;
+        Vector3 pos = check_v3(L,1);
+        streamer_centre(L, pos);
         return 0;
 TRY_END
 }
 
-
-static int streamer_centre (lua_State *L)
+static int global_class_add (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        Vector3 pos = check_v3(L,2);
-        self.centre(L, pos);
-        return 0;
-TRY_END
-}
-
-static int streamer_frame_callbacks (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        float t = luaL_checknumber(L,2);
-        self.frameCallbacks(L,t);
-        return 0;
-TRY_END
-}
-
-static int streamer_add_class (lua_State *L)
-{
-TRY_START
-        check_args(L,4);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        const char *name = lua_tostring(L,2);
+        check_args(L,3);
+        const char *name = lua_tostring(L,1);
         if (name==NULL)
                 my_lua_error(L,"Could not process the name of the new class");
-        std::string fqname = pwd_full(L, name);
-        if (!lua_istable(L,3))
+        if (!lua_istable(L,2))
                 my_lua_error(L,"Second parameter should be a table");
-        if (!lua_istable(L,4))
+        if (!lua_istable(L,3))
                 my_lua_error(L,"Third parameter should be a table");
-        self.addClass(L, fqname);
+        class_add(L, name);
         return 1;
 TRY_END
 }
 
-static int streamer_get_class (lua_State *L)
+static int global_class_get (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        std::string name = pwd_full(L, luaL_checkstring(L,2));
-        push_gritcls(L,self.getClass(name));
+        check_args(L,1);
+        std::string name = luaL_checkstring(L,1);
+        push_gritcls(L,class_get(name));
         return 1;
 TRY_END
 }
 
-static int streamer_has_class (lua_State *L)
+static int global_class_has (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        std::string name = pwd_full(L, luaL_checkstring(L,2));
-        lua_pushboolean(L,self.hasClass(name));
+        check_args(L,1);
+        std::string name = luaL_checkstring(L,1);
+        lua_pushboolean(L,class_has(name));
         return 1;
 TRY_END
 }
 
-static int streamer_remove_class (lua_State *L)
+static int global_class_del (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        std::string name = pwd_full(L, luaL_checkstring(L,2));
-        self.deleteClass(L,self.getClass(name));
+        check_args(L,1);
+        std::string name = luaL_checkstring(L,1);
+        class_del(L,class_get(name));
         return 0;
 TRY_END
 }
 
-static int streamer_add_object (lua_State *L)
+static int global_class_all_del (lua_State *L)
 {
 TRY_START
-        if (lua_gettop(L)==3) lua_newtable(L);
-        check_args(L,4);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        std::string className = pwd_full(L, luaL_checkstring(L,2));
-        Vector3 spawnPos = check_v3(L, 3);
+        check_args(L,0);
+        class_all_del(L);
+        return 0;
+TRY_END
+}
+
+static int global_class_count (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushnumber(L, class_count());
+        return 1;
+TRY_END
+}
+
+static int global_class_all (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_newtable(L);
+        unsigned int c = 0;
+        GritClassMap::iterator i, i_;
+        for (class_all(i,i_) ; i!=i_ ; ++i) {
+                push_gritcls(L,i->second);
+                lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                c++;                 
+        }       
+        return 1;
+TRY_END
+}
+
+
+static int global_object_add (lua_State *L)
+{
+TRY_START
+        check_args(L,3);
+        std::string className = luaL_checkstring(L,1);
+        Vector3 spawnPos = check_v3(L, 2);
         int table_index = lua_gettop(L);
         if (!lua_istable(L,table_index)) my_lua_error(L,"Last parameter should be a table");
         lua_getfield(L,table_index,"name");
@@ -452,16 +450,16 @@ TRY_START
         }
         lua_pop(L,1);
 
-        GritObjectPtr o = self.addObject(L,name,self.getClass(className));
+        GritObjectPtr o = object_add(L,name,class_get(className));
         o->userValues.set("spawnPos", spawnPos);
         o->getClass()->get(L,"renderingDistance");
         if (lua_isnil(L,-1)) {
-                self.deleteObject(L,o);
+                object_del(L,o);
                 my_lua_error(L,"no renderingDistance in class \""
                                +className+"\"");
         }
         if (lua_type(L,-1)!=LUA_TNUMBER) {
-                self.deleteObject(L,o);
+                object_del(L,o);
                 my_lua_error(L,"renderingDistance not a number in class \""
                                +className+"\"");
         }
@@ -494,7 +492,7 @@ TRY_START
         // scan through table adding lua data to o
         for (lua_pushnil(L) ; lua_next(L,table_index)!=0 ; lua_pop(L,1)) {
                 if (lua_type(L,-2)!=LUA_TSTRING) {
-                        self.deleteObject(L,o);
+                        object_del(L,o);
                         my_lua_error(L,"user value key was not a string");
                 }
                 std::string key = luaL_checkstring(L,-2);
@@ -504,7 +502,7 @@ TRY_START
                 if (key=="far") continue;
                 const char *err = o->userValues.luaSet(L);
                 if (err) {
-                        self.deleteObject(L,o);
+                        object_del(L,o);
                         my_lua_error(L, err);
                 }
         }
@@ -514,13 +512,24 @@ TRY_START
 TRY_END
 }
 
-static int streamer_get_object (lua_State *L)
+static int global_object_del (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        std::string name = luaL_checkstring(L,2);
-        GritObjectPtr o = self.getObject(name);
+        check_args(L,1);
+        GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
+        object_del(L,self);
+        return 0;
+TRY_END
+}
+
+
+
+static int global_object_get (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        std::string name = luaL_checkstring(L,1);
+        GritObjectPtr o = object_get(name);
         if (o.isNull()) {
                 lua_pushnil(L);
         } else {
@@ -530,69 +539,60 @@ TRY_START
 TRY_END
 }
 
-static int streamer_has_object (lua_State *L)
+static int global_object_has (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        std::string name = luaL_checkstring(L,2);
-        lua_pushboolean(L,self.hasObject(name));
+        check_args(L,1);
+        std::string name = luaL_checkstring(L,1);
+        lua_pushboolean(L,object_has(name));
         return 1;
 TRY_END
 }
 
-static int streamer_remove_object (lua_State *L)
+
+
+static int global_object_all (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        std::string name = luaL_checkstring(L,2);
-        self.deleteObject(L,self.getObject(name));
-        return 0;
-TRY_END
-}
-
-
-
-static int streamer_clear_objects (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        self.clearObjects(L);
-        return 0;
-TRY_END
-}
-
-static int streamer_clear_anonymous_objects (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        self.clearAnonymousObjects(L);
-        return 0;
-TRY_END
-}
-
-
-
-static int streamer_clear_classes (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        self.clearClasses(L);
-        return 0;
-TRY_END
-}
-
-static int streamer_deactivate_all (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
+        check_args(L,0);
+        lua_newtable(L);
+        unsigned int c = 0;
         GObjMap::iterator i, i_;
-        for (self.getObjects(i,i_) ; i!=i_ ; ++i) {
+        for (object_all(i,i_) ; i!=i_ ; ++i) {
+                const GritObjectPtr &o = i->second;
+                push_gritobj(L,o);
+                lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                c++;                 
+        }       
+        return 1;
+TRY_END
+}
+
+static int global_object_all_del (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        object_all_del(L);
+        return 0;
+TRY_END
+}
+
+static int global_object_count (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushnumber(L, object_count());
+        return 1;
+TRY_END
+}
+
+
+static int global_object_all_deactivate (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        GObjMap::iterator i, i_;
+        for (object_all(i,i_) ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = i->second;
                 o->deactivate(L,o);
         }       
@@ -600,16 +600,41 @@ TRY_START
 TRY_END
 }
 
-static int streamer_all_of_class (lua_State *L)
+static int global_object_all_activated (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        std::string cls = luaL_checkstring(L,2);
+        check_args(L,0);
+        lua_newtable(L);
+        unsigned int c = 0;
+        GObjPtrs::iterator i, i_;
+        for (streamer_object_activated(i,i_) ; i!=i_ ; ++i) {
+                const GritObjectPtr &o = *i;
+                push_gritobj(L,o);
+                lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                c++;                 
+        }       
+        return 1;
+TRY_END
+}
+
+static int global_object_count_activated (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushnumber(L, streamer_object_activated_count());
+        return 1;
+TRY_END
+}
+
+static int global_object_all_of_class (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        std::string cls = luaL_checkstring(L,1);
         lua_newtable(L);
         unsigned int c = 0;
         GObjMap::iterator i, i_;
-        for (self.getObjects(i,i_) ; i!=i_ ; ++i) {
+        for (object_all(i,i_) ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = i->second;
                 GritClass *oc = o->getClass();
                 if (oc==NULL) continue; // object destroyed
@@ -622,132 +647,112 @@ TRY_START
 TRY_END
 }
 
-
-TOSTRING_ADDR_MACRO (streamer,Streamer,STREAMER_TAG)
-
-
-static int streamer_index (lua_State *L)
+static int global_object_count_of_class (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        const char *key = luaL_checkstring(L,2);
-        if (!::strcmp(key,"stepSize")) {
-                lua_pushnumber(L,self.stepSize);
-        } else if (!::strcmp(key,"visibility")) {
-                lua_pushnumber(L,self.visibility);
-        } else if (!::strcmp(key,"centre")) {
-                push_cfunction(L,streamer_centre);
-        } else if (!::strcmp(key,"frameCallbacks")) {
-                push_cfunction(L,streamer_frame_callbacks);
-        } else if (!::strcmp(key,"addClass")) {
-                push_cfunction(L,streamer_add_class);
-        } else if (!::strcmp(key,"getClass")) {
-                push_cfunction(L,streamer_get_class);
-        } else if (!::strcmp(key,"hasClass")) {
-                push_cfunction(L,streamer_has_class);
-        } else if (!::strcmp(key,"removeClass")) {
-                push_cfunction(L,streamer_remove_class);
-        } else if (!::strcmp(key,"classes")) {
-                lua_newtable(L);
-                unsigned int c = 0;
-                GritClassMap::iterator i, i_;
-                for (self.getClasses(i,i_) ; i!=i_ ; ++i) {
-                        push_gritcls(L,i->second);
-                        lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
-                        c++;                 
-                }       
-        } else if (!::strcmp(key,"numClasses")) {
-                lua_pushnumber(L,self.numClasses());
-        } else if (!::strcmp(key,"addObject")) {
-                push_cfunction(L,streamer_add_object);
-        } else if (!::strcmp(key,"getObject")) {
-                push_cfunction(L,streamer_get_object);
-        } else if (!::strcmp(key,"hasObject")) {
-                push_cfunction(L,streamer_has_object);
-        } else if (!::strcmp(key,"removeObject")) {
-                push_cfunction(L,streamer_remove_object);
-        } else if (!::strcmp(key,"numObjects")) {
-                lua_pushnumber(L,self.numObjects());
-        } else if (!::strcmp(key,"numActivated")) {
-                lua_pushnumber(L,self.numActivated());
-        } else if (!::strcmp(key,"clearObjects")) {
-                push_cfunction(L,streamer_clear_objects);
-        } else if (!::strcmp(key,"clearAnonymousObjects")) {
-                push_cfunction(L,streamer_clear_anonymous_objects);
-        } else if (!::strcmp(key,"clearClasses")) {
-                push_cfunction(L,streamer_clear_classes);
-        } else if (!::strcmp(key,"deactivateAll")) {
-                push_cfunction(L,streamer_deactivate_all);
-        } else if (!::strcmp(key,"allOfClass")) {
-                push_cfunction(L,streamer_all_of_class);
-        } else if (!::strcmp(key,"prepareDistanceFactor")) {
-                lua_pushnumber(L,self.prepareDistanceFactor);
-        } else if (!::strcmp(key,"fadeOverlapFactor")) {
-                lua_pushnumber(L,self.fadeOverlapFactor);
-        } else if (!::strcmp(key,"fadeOutFactor")) {
-                lua_pushnumber(L,self.fadeOutFactor);
-        } else if (!::strcmp(key,"objects")) {
-                lua_newtable(L);
-                unsigned int c = 0;
-                GObjMap::iterator i, i_;
-                for (self.getObjects(i,i_) ; i!=i_ ; ++i) {
-                        const GritObjectPtr &o = i->second;
-                        push_gritobj(L,o);
-                        lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
-                        c++;                 
-                }       
-        } else if (!::strcmp(key,"activated")) {
-                lua_newtable(L);
-                unsigned int c = 0;
-                GObjMap::iterator i, i_;
-                for (self.getObjects(i,i_) ; i!=i_ ; ++i) {
-                        const GritObjectPtr &o = i->second;
-                        if (!o->isActivated()) continue;
-                        push_gritobj(L,o);
-                        lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
-                        c++;                 
-                }       
-        } else {
-                my_lua_error(L,"Not a readable Streamer member: "+std::string(key));
-        }
+        check_args(L,1);
+        std::string cls = luaL_checkstring(L,1);
+        unsigned counter = 0;
+        GObjMap::iterator i, i_;
+        for (object_all(i,i_) ; i!=i_ ; ++i) {
+                const GritObjectPtr &o = i->second;
+                GritClass *oc = o->getClass();
+                if (oc==NULL) continue; // object destroyed
+                if (oc->name != cls) continue; // wrong class
+                counter++;
+        }       
         return 1;
 TRY_END
 }
 
-static int streamer_newindex (lua_State *L)
+static int global_object_do_frame_callbacks (lua_State *L)
 {
 TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(Streamer,self,1,STREAMER_TAG);
-        std::string key = luaL_checkstring(L,2);
-        if (key=="stepSize") {
-                size_t v = check_t<size_t>(L,3);
-                self.stepSize = v;
-        } else if (key=="visibility") {
-                float v = luaL_checknumber(L,3);
-                self.visibility = v;
-        } else if (key=="prepareDistanceFactor") {
-                float v = luaL_checknumber(L,3);
-                self.prepareDistanceFactor = v;
-        } else if (key=="fadeOverlapFactor") {
-                float v = luaL_checknumber(L,3);
-                self.fadeOverlapFactor = v;
-        } else if (key=="fadeOutFactor") {
-                float v = luaL_checknumber(L,3);
-                self.fadeOutFactor = v;
-        } else {
-               my_lua_error(L,"Not a writeable Streamer member: "+key);
-        }
+        check_args(L,1);
+        float elapsed = check_float(L, 1);
+        object_do_frame_callbacks(L, elapsed);
         return 0;
 TRY_END
 }
 
-EQ_PTR_MACRO(Streamer,streamer,STREAMER_TAG)
 
-MT_MACRO_NEWINDEX(streamer);
 
-//}}}
+int global_core_option (lua_State *L)
+{
+TRY_START
+    if (lua_gettop(L)==2) {
+        std::string opt = luaL_checkstring(L,1);
+        int t;
+        CoreBoolOption o0;
+        CoreIntOption o1;
+        CoreFloatOption o2;
+        core_option_from_string(opt, t, o0, o1, o2);
+        switch (t) {
+            case -1: my_lua_error(L,"Unrecognised core option: \""+opt+"\"");
+            case 0: core_option(o0, check_bool(L,2)); break;
+            case 1: core_option(o1, check_t<int>(L,2)); break;
+            case 2: core_option(o2, (float)luaL_checknumber(L,2)); break;
+            default: my_lua_error(L,"Unrecognised type from core_option_from_string");
+        }
+        return 0;
+    } else {
+        check_args(L,1);
+        std::string opt = luaL_checkstring(L,1);
+        int t;
+        CoreBoolOption o0;
+        CoreIntOption o1;
+        CoreFloatOption o2;
+        core_option_from_string(opt, t, o0, o1, o2);
+        switch (t) {
+            case -1: my_lua_error(L,"Unrecognised core option: \""+opt+"\"");
+            case 0: lua_pushboolean(L,core_option(o0)); break;
+            case 1: lua_pushnumber(L,core_option(o1)); break;
+            case 2: lua_pushnumber(L,core_option(o2)); break;
+            default: my_lua_error(L,"Unrecognised type from core_option_from_string");
+        }
+        return 1;
+    }
+TRY_END
+}
+
+static const luaL_reg global[] = {
+    {"streamer_centre",global_streamer_centre},
+    {"core_option",global_core_option},
+    {"class_add",global_class_add},
+    {"class_del",global_class_del},
+    {"class_all_del",global_class_all_del},
+    {"class_get",global_class_get},
+    {"class_has",global_class_has},
+    {"class_all",global_class_all},
+    {"class_count",global_class_count},
+    {"object_add",global_object_add},
+    {"object_del",global_object_del},
+    {"object_all_del",global_object_all_del},
+    {"object_get",global_object_get},
+    {"object_has",global_object_has},
+    {"object_all",global_object_all},
+    {"object_count",global_object_count},
+    {"object_all_activated",global_object_all_activated},
+    {"object_count_activated",global_object_count_activated},
+    {"object_all_of_class",global_object_all_of_class},
+    {"object_count_of_class",global_object_count_of_class},
+    {"object_all_deactivate",global_object_all_deactivate},
+    {"object_do_frame_callbacks",global_object_do_frame_callbacks},
+    {NULL,NULL}
+};
+
+void gritobj_lua_init (lua_State *L)
+{
+#define ADD_MT_MACRO(name,tag) do {\
+    luaL_newmetatable(L, tag); \
+    luaL_register(L, NULL, name##_meta_table); \
+    lua_pop(L,1); } while(0)
+
+    ADD_MT_MACRO(gritcls,GRITCLS_TAG);
+    ADD_MT_MACRO(gritobj,GRITOBJ_TAG);
+    
+    luaL_register(L, "_G", global);
+}
 
 
 

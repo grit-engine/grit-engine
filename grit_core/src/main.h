@@ -42,7 +42,6 @@ extern Mouse *mouse;
 extern Keyboard *keyboard;
 extern lua_State *core_L;
 extern UserDataTables user_data_tables;
-extern Streamer *streamer;
 extern BulletDebugDrawer *debug_drawer;
 extern HUD::RootPtr hud;
 extern BackgroundLoader *bgl;

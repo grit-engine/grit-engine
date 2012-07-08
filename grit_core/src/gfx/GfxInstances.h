@@ -32,7 +32,7 @@ typedef SharedPtr<GfxInstances> GfxInstancesPtr;
 
 #include "GfxBody.h"
 
-class GfxInstances : public GfxNode, public fast_erase_index, public Streamer::UpdateHook {
+class GfxInstances : public GfxNode, public fast_erase_index, public StreamerCallback {
     protected:
     class Instance;
 

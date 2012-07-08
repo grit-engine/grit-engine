@@ -229,7 +229,7 @@ void audio_init (void)
 
 static std::vector<ALuint> one_shot_sounds;
 
-void audio_play (const std::string& filename, float pitch, bool ambient, const Vector3& position)
+void audio_play (const std::string& filename, float pitch, float volume, bool ambient, const Vector3& position)
 {
     DiskResource *dr = disk_resource_get(filename);
     if (dr == NULL) GRIT_EXCEPT("Resource not found: \""+filename+"\"");
@@ -243,6 +243,7 @@ void audio_play (const std::string& filename, float pitch, bool ambient, const V
 
 	alGenSources(1, &src);
 	alSourcei(src, AL_BUFFER, resource->getALBuffer());
+	alSourcef(src, AL_GAIN, volume);
 	alSourcef(src, AL_PITCH, pitch);
     if (ambient) {
         alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);

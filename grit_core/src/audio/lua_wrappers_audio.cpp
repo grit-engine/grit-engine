@@ -159,8 +159,8 @@ TRY_END
 static int global_audio_play_ambient (lua_State *L)
 {
 TRY_START
-	check_args(L, 2);
-	audio_play(check_string(L, 1), (float)luaL_checknumber(L,2), true, Vector3(0,0,0));
+	check_args(L, 3);
+	audio_play(check_string(L, 1), (float)luaL_checknumber(L,2), (float)luaL_checknumber(L,3), true, Vector3(0,0,0));
 	return 0;
 TRY_END
 }
@@ -168,8 +168,8 @@ TRY_END
 static int global_audio_play (lua_State *L)
 {
 TRY_START
-	check_args(L, 3);
-	audio_play(check_string(L, 1), (float)luaL_checknumber(L,2), false, check_v3(L, 3));
+	check_args(L, 4);
+	audio_play(check_string(L, 1), (float)luaL_checknumber(L,2), (float)luaL_checknumber(L,3), false, check_v3(L, 4));
 	return 0;
 TRY_END
 }

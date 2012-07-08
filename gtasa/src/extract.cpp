@@ -695,8 +695,8 @@ void extract (const Config &cfg, std::ostream &out)
             if ((o.flags & OBJ_FLAG_ALPHA1) && (o.flags & OBJ_FLAG_NO_SHADOW))
                 cast_shadow = false;
 
-            classes<<"streamer:addClass("
-                   <<"\""<<o.id<<"\","
+            classes<<"class_add("
+                   <<"\"/gtasa/"<<o.id<<"\","
                    <<cls<<",{"
                    <<"castShadows="<<(cast_shadow?"true":"false")
                    <<",renderingDistance="<<(o.draw_distance+rad)
@@ -869,7 +869,7 @@ void extract (const Config &cfg, std::ostream &out)
             }
 
             if (v.type == "car") {
-                lua_file << "streamer:addClass(\"../"<<vname<<"\", extends(Vehicle) {\n";
+                lua_file << "class_add(\"/gtasa/"<<vname<<"\", extends(Vehicle) {\n";
                 lua_file << "    castShadows = true;\n";
                 lua_file << "    gfxMesh = \""<<vname<<"/chassis.mesh\";\n";
                 lua_file << "    colMesh = \""<<vname<<"/chassis.gcol\";\n";
@@ -997,7 +997,7 @@ void extract (const Config &cfg, std::ostream &out)
         map.precision(25);
 
         map << "print(\"Loading world\")\n";
-        map << "streamer:clearObjects()\n";
+        map << "objects_all_del()\n";
 
         map << "local last\n";
 
@@ -1010,7 +1010,7 @@ void extract (const Config &cfg, std::ostream &out)
                 if (inst.is_low_detail) continue;
                 if (!ids_written_out[inst.id]) continue;
                 if (inst.near_for==-1) {
-                    map<<"streamer:addObject(\""<<inst.id<<"\","
+                    map<<"object_add(\"/gtasa/"<<inst.id<<"\","
                        <<"vector3("<<inst.x<<","<<inst.y<<","<<inst.z<<")";
                     if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
                         map<<",{rot=quat("
@@ -1020,7 +1020,7 @@ void extract (const Config &cfg, std::ostream &out)
                     map<<")\n";
                 } else {
                     const Inst &far_inst = insts[inst.near_for];
-                    map<<"last=streamer:addObject(\""<<inst.id<<"\","
+                    map<<"last=object_add(\"/gtasa/"<<inst.id<<"\","
                        <<"vector3("<<inst.x<<","<<inst.y<<","<<inst.z<<")";
                     if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
                         map<<",{rot=quat("
@@ -1028,7 +1028,7 @@ void extract (const Config &cfg, std::ostream &out)
                            <<inst.ry<<","<<inst.rz<<")}";
                     }
                     map<<")\n";
-                    map<<"streamer:addObject(\""<<far_inst.id<<"\","
+                    map<<"object_add(\"/gtasa/"<<far_inst.id<<"\","
                        <<"vector3("<<far_inst.x<<","<<far_inst.y<<","<<far_inst.z<<")";
                     map<<",{";
                     if (far_inst.rx!=0 || far_inst.ry!=0 || far_inst.rz!=0) {

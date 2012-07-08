@@ -307,7 +307,7 @@ class MovableClutterFactory : public Ogre::MovableObjectFactory {
 // RangedClutter mobj created, initialised using scatter query
 // attached to same node as object entity
 // added to a table in streamer that updates it every frame
-class RangedClutter : public Ogre::MovableObject, public Streamer::UpdateHook {
+class RangedClutter : public Ogre::MovableObject, public StreamerCallback {
 
     public:
 
