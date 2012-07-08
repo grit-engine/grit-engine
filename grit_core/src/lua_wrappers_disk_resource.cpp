@@ -248,7 +248,7 @@ TRY_END
 static int global_disk_resource_acquire (lua_State *L)
 {
 TRY_START
-    check_args(L,0);
+    check_args(L,1);
     const char *name = luaL_checkstring(L,1);
     DiskResource *dr = disk_resource_get_or_make(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
@@ -260,7 +260,7 @@ TRY_END
 static int global_disk_resource_release (lua_State *L)
 {
 TRY_START
-    check_args(L,0);
+    check_args(L,1);
     const char *name = luaL_checkstring(L,1);
     DiskResource *dr = disk_resource_get_or_make(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");

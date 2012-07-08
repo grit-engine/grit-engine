@@ -32,19 +32,49 @@ typedef SharedPtr<AudioSource> AudioSourcePtr;
 #include "../math_util.h"
 #include "../BackgroundLoader.h"
 
-void audio_init (void);
-void audio_set_listener (const Vector3& position, const Vector3& velocity, const Quaternion& rotation);
-void audio_play (const std::string& filename, const Vector3& position);
-void audio_update (void);
+#include "AudioDiskResource.h"
 
-void audio_master_volume (float v);
-float audio_master_volume (void);
+enum AudioBoolOption {
+    AUDIO_AUTOUPDATE,
+    AUDIO_DOPPLER_ENABLED,
+    AUDIO_MUTE
+};
+
+enum AudioFloatOption {
+    AUDIO_MASTER_VOLUME
+};
+
+enum AudioIntOption {
+    AUDIO_MAX_SOUNDS
+};
+
+void audio_init (void);
+void audio_update (const Vector3& position, const Vector3& velocity, const Quaternion& rotation);
+void audio_play (const std::string& filename, float pitch, bool ambient, const Vector3& position);
+
+std::string audio_option_to_string (AudioBoolOption o);
+std::string audio_option_to_string (AudioIntOption o);
+std::string audio_option_to_string (AudioFloatOption o);
+
+// set's t to either 0,1,2 and fills in the approriate argument
+void audio_option_from_string (const std::string &s,
+                               int &t,
+                               AudioBoolOption &o0,
+                               AudioIntOption &o1,
+                               AudioFloatOption &o2);
+
+void audio_option (AudioBoolOption o, bool v);
+bool audio_option (AudioBoolOption o);
+void audio_option (AudioIntOption o, int v);
+int audio_option (AudioIntOption o);
+void audio_option (AudioFloatOption o, float v);
+float audio_option (AudioFloatOption o);
 
 class AudioSource
 {
 	private:
 		Demand demand;
-		std::string resourceName;
+		AudioDiskResource *resource;
 
 		bool hasFile;
 
@@ -53,9 +83,11 @@ class AudioSource
 		bool looping;
 
 		ALuint alSource;
-	public:
+
 		AudioSource (const std::string &filename);
 		~AudioSource () { };
+
+	public:
 
 		static AudioSourcePtr make (const std::string &filename)
 		{ return AudioSourcePtr(new AudioSource(filename)); }

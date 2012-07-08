@@ -28,6 +28,7 @@ void AudioDiskResource::loadImpl (void)
 	// head radio. because your head NEEDS IT.
 
 	// why using OGRE anyways? I'm just following CollisionMesh.c++'s example and doing so here
+    // [DC] we are still using ogre's IO code, that understands putting files in zips etc.
 	Ogre::DataStreamPtr file;
     try {
         file = Ogre::ResourceGroupManager::getSingleton().openResource(name.substr(1),"GRIT");
@@ -41,7 +42,7 @@ void AudioDiskResource::loadImpl (void)
 	if (fourcc == 0x46464952) // RIFF
 	{
 		file->seek(0);
-		this->loadWAV(file);
+		loadWAV(file);
 	}
 	else
 	{

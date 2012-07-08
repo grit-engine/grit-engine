@@ -152,20 +152,20 @@ TRY_START
 TRY_END
 }
 
-static int global_audio_play (lua_State *L)
+static int global_audio_play_ambient (lua_State *L)
 {
 TRY_START
 	check_args(L, 2);
-	audio_play(check_string(L, 1), check_v3(L, 2));
+	audio_play(check_string(L, 1), (float)luaL_checknumber(L,2), true, Vector3(0,0,0));
 	return 0;
 TRY_END
 }
 
-static int global_audio_set_listener (lua_State *L)
+static int global_audio_play (lua_State *L)
 {
 TRY_START
 	check_args(L, 3);
-	audio_set_listener(check_v3(L, 1), check_v3(L, 2), check_quat(L, 3));
+	audio_play(check_string(L, 1), (float)luaL_checknumber(L,2), false, check_v3(L, 3));
 	return 0;
 TRY_END
 }
@@ -173,35 +173,56 @@ TRY_END
 static int global_audio_update (lua_State *L)
 {
 TRY_START
-	check_args(L, 0);
-	audio_update();
+	check_args(L, 3);
+	audio_update(check_v3(L, 1), check_v3(L, 2), check_quat(L, 3));
 	return 0;
 TRY_END
 }
 
-static int global_audio_master_volume (lua_State *L)
+int global_audio_option (lua_State *L)
 {
 TRY_START
-    if (lua_gettop(L) == 0) {
-        lua_pushnumber(L, audio_master_volume());
-        return 1;
-    } else if (lua_gettop(L) == 1) {
-        float f= check_float(L, 1);
-        audio_master_volume(f);
+    if (lua_gettop(L)==2) {
+        std::string opt = luaL_checkstring(L,1);
+        int t;
+        AudioBoolOption o0;
+        AudioIntOption o1;
+        AudioFloatOption o2;
+        audio_option_from_string(opt, t, o0, o1, o2);
+        switch (t) {
+            case -1: my_lua_error(L,"Unrecognised audio option: \""+opt+"\"");
+            case 0: audio_option(o0, check_bool(L,2)); break;
+            case 1: audio_option(o1, check_t<int>(L,2)); break;
+            case 2: audio_option(o2, (float)luaL_checknumber(L,2)); break;
+            default: my_lua_error(L,"Unrecognised type from audio_option_from_string");
+        }
         return 0;
     } else {
-        my_lua_error(L, "Function requires either 0 or 1 arguments");
+        check_args(L,1);
+        std::string opt = luaL_checkstring(L,1);
+        int t;
+        AudioBoolOption o0;
+        AudioIntOption o1;
+        AudioFloatOption o2;
+        audio_option_from_string(opt, t, o0, o1, o2);
+        switch (t) {
+            case -1: my_lua_error(L,"Unrecognised audio option: \""+opt+"\"");
+            case 0: lua_pushboolean(L,audio_option(o0)); break;
+            case 1: lua_pushnumber(L,audio_option(o1)); break;
+            case 2: lua_pushnumber(L,audio_option(o2)); break;
+            default: my_lua_error(L,"Unrecognised type from audio_option_from_string");
+        }
+        return 1;
     }
-	return 0;
 TRY_END
 }
 
 static const luaL_reg global[] = {
 	{"audio_source_make",global_audio_source_make},
 	{"audio_play",global_audio_play},
-	{"audio_set_listener",global_audio_set_listener},
+	{"audio_play_ambient",global_audio_play_ambient},
 	{"audio_update",global_audio_update},
-	{"audio_master_volume",global_audio_master_volume},
+	{"audio_option",global_audio_option},
 	{NULL,NULL}
 };
 

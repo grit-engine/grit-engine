@@ -238,6 +238,7 @@ GfxBody::GfxBody (GfxDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr
     entEmissive = NULL;
     fade = 1;
     enabled = true;
+    castShadows = false;
 
     reinitialise();
 
