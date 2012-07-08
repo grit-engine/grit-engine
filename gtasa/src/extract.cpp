@@ -43,10 +43,6 @@
 #include "surfinfo.h"
 #include "procobj.h"
 
-#ifdef far
-#undef far
-#endif
-
 CentralisedLog clog;
 void app_fatal (void) { abort(); }
 void assert_triggered (void) { } 
@@ -1023,7 +1019,7 @@ void extract (const Config &cfg, std::ostream &out)
                     }
                     map<<")\n";
                 } else {
-                    const Inst &far = insts[inst.near_for];
+                    const Inst &far_inst = insts[inst.near_for];
                     map<<"last=streamer:addObject(\""<<inst.id<<"\","
                        <<"vector3("<<inst.x<<","<<inst.y<<","<<inst.z<<")";
                     if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
@@ -1032,13 +1028,13 @@ void extract (const Config &cfg, std::ostream &out)
                            <<inst.ry<<","<<inst.rz<<")}";
                     }
                     map<<")\n";
-                    map<<"streamer:addObject(\""<<far.id<<"\","
-                       <<"vector3("<<far.x<<","<<far.y<<","<<far.z<<")";
+                    map<<"streamer:addObject(\""<<far_inst.id<<"\","
+                       <<"vector3("<<far_inst.x<<","<<far_inst.y<<","<<far_inst.z<<")";
                     map<<",{";
-                    if (far.rx!=0 || far.ry!=0 || far.rz!=0) {
+                    if (far_inst.rx!=0 || far_inst.ry!=0 || far_inst.rz!=0) {
                         map<<"rot=quat("
-                           <<far.rw<<","<<far.rx<<","
-                           <<far.ry<<","<<far.rz<<"),";
+                           <<far_inst.rw<<","<<far_inst.rx<<","
+                           <<far_inst.ry<<","<<far_inst.rz<<"),";
                     }
                     map<<"near=last}";
                     map<<")\n";
