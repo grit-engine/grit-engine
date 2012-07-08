@@ -98,6 +98,9 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <BuildLog />
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "$(SolutionDir)grit_core\media\tools"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\ColParser.h" />
