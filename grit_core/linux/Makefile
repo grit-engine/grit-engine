@@ -32,6 +32,7 @@ depend:
 	sed -i 's_^[.][.]/src/win32/\([^.]*[.]o:\)_\1_g' ../src/common.mk
 	sed -i 's_^[.][.]/src/gfx/\([^.]*[.]o:\)_\1_g' ../src/common.mk
 	sed -i 's_^[.][.]/src/physics/\([^.]*[.]o:\)_\1_g' ../src/common.mk
+	sed -i 's_^[.][.]/src/audio/\([^.]*[.]o:\)_\1_g' ../src/common.mk
 	sed -i 's_^[.][.]/src/\([^.]*[.]o:\)_\1_g' ../src/common.mk
 
 
