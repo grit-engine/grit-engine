@@ -73,65 +73,65 @@ float audio_option (AudioFloatOption o);
 
 class AudioSource : public DiskResource::ReloadWatcher
 {
-	private:
-		Demand demand;
-		AudioDiskResource *resource;
+    private:
+        Demand demand;
+        AudioDiskResource *resource;
 
-		Vector3 position;
-		Vector3 velocity;
-		bool looping;
+        Vector3 position;
+        Vector3 velocity;
+        bool looping;
         float pitch;
         float volume;
         bool ambient;
         float referenceDistance;
         float rollOff;
 
-		ALuint alSource;
+        ALuint alSource;
 
-		AudioSource (const std::string &filename, bool ambient);
-		~AudioSource (void);
+        AudioSource (const std::string &filename, bool ambient);
+        ~AudioSource (void);
 
         void reinitialise (void);
 
         void notifyReloaded (DiskResource *dr);
 
-	public:
+    public:
 
-		static AudioSourcePtr make (const std::string &filename, bool ambient)
-		{ return AudioSourcePtr(new AudioSource(filename, ambient)); }
+        static AudioSourcePtr make (const std::string &filename, bool ambient)
+        { return AudioSourcePtr(new AudioSource(filename, ambient)); }
 
 
-		Vector3 getPosition (void) { return position; }
-		void setPosition (const Vector3& v);
+        Vector3 getPosition (void) { return position; }
+        void setPosition (const Vector3& v);
 
-		Vector3 getVelocity (void) { return velocity; }
-		void setVelocity (const Vector3& v);
+        Vector3 getVelocity (void) { return velocity; }
+        void setVelocity (const Vector3& v);
 
-		bool getLooping (void) { return looping; }
-		void setLooping (bool v);
+        bool getLooping (void) { return looping; }
+        void setLooping (bool v);
 
-		float getVolume (void) { return volume; }
-		void setVolume (float v);
+        float getVolume (void) { return volume; }
+        void setVolume (float v);
 
-		float getPitch (void) { return pitch; }
-		void setPitch (float v);
+        float getPitch (void) { return pitch; }
+        void setPitch (float v);
 
-		float getReferenceDistance (void) { return referenceDistance; }
-		void setReferenceDistance (float v);
+        float getReferenceDistance (void) { return referenceDistance; }
+        void setReferenceDistance (float v);
 
-		float getRollOff (void) { return rollOff; }
-		void setRollOff (float v);
+        float getRollOff (void) { return rollOff; }
+        void setRollOff (float v);
 
-		bool getAmbient (void) { return ambient; }
+        bool getAmbient (void) { return ambient; }
 
-		bool playing (void);
-		void play (void);
-		void pause (void);
-		void stop (void);
+        bool playing (void);
+        void play (void);
+        void pause (void);
+        void stop (void);
 
-		void destroy (void);
+        void destroy (void);
 
-		friend class SharedPtr<AudioSource>;
+        friend class SharedPtr<AudioSource>;
 };
 
 

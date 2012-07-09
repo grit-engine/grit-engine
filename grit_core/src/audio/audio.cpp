@@ -216,15 +216,15 @@ void audio_init (void)
 {
     init_options();
 
-	alDevice = alcOpenDevice(NULL);
+    alDevice = alcOpenDevice(NULL);
 
-	if (!alDevice)
-	{
-		GRIT_EXCEPT("Couldn't initialize the OpenAL device.");
-	}
+    if (!alDevice)
+    {
+        GRIT_EXCEPT("Couldn't initialize the OpenAL device.");
+    }
 
-	alContext = alcCreateContext(alDevice, NULL);
-	alcMakeContextCurrent(alContext);
+    alContext = alcCreateContext(alDevice, NULL);
+    alcMakeContextCurrent(alContext);
 }
 
 static std::vector<ALuint> one_shot_sounds;
@@ -233,53 +233,53 @@ void audio_play (const std::string& filename, bool ambient, const Vector3& posit
 {
     DiskResource *dr = disk_resource_get(filename);
     if (dr == NULL) GRIT_EXCEPT("Resource not found: \""+filename+"\"");
-	AudioDiskResource *resource = dynamic_cast<AudioDiskResource*>(dr);
+    AudioDiskResource *resource = dynamic_cast<AudioDiskResource*>(dr);
     if (resource == NULL) GRIT_EXCEPT("Not an audio resource: \""+filename+"\"");
     if (!resource->isLoaded()) {
-		GRIT_EXCEPT("Cannot play an unloaded audio resource: " + resource->getName());
+        GRIT_EXCEPT("Cannot play an unloaded audio resource: " + resource->getName());
     }
     if (!ambient && resource->getAmbientOnly()) {
-		GRIT_EXCEPT("Can only play a stereo audio resource as ambient sound: " + resource->getName());
+        GRIT_EXCEPT("Can only play a stereo audio resource as ambient sound: " + resource->getName());
     }
     
-	one_shot_sounds.push_back(ALuint());
+    one_shot_sounds.push_back(ALuint());
     ALuint &src = one_shot_sounds[one_shot_sounds.size()-1];
 
-	alGenSources(1, &src);
-	alSourcei(src, AL_BUFFER, resource->getALBuffer());
-	alSourcef(src, AL_GAIN, volume);
-	alSourcef(src, AL_PITCH, pitch);
-	alSourcef(src, AL_REFERENCE_DISTANCE, ref_dist);
-	alSourcef(src, AL_ROLLOFF_FACTOR, roll_off);
+    alGenSources(1, &src);
+    alSourcei(src, AL_BUFFER, resource->getALBuffer());
+    alSourcef(src, AL_GAIN, volume);
+    alSourcef(src, AL_PITCH, pitch);
+    alSourcef(src, AL_REFERENCE_DISTANCE, ref_dist);
+    alSourcef(src, AL_ROLLOFF_FACTOR, roll_off);
     if (ambient) {
         alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
     } else {
         alSource3f(src, AL_POSITION, position.x, position.y, position.z);
     }
-	alSourcePlay(src);
+    alSourcePlay(src);
 }
 
 void audio_update (const Vector3& position, const Vector3& velocity, const Quaternion& rotation)
 {
-	ALfloat pos[] = { position.x, position.y, position.z };
-	ALfloat vel[] = { velocity.x, velocity.y, velocity.z };
-	ALfloat zeros[] = { 0.0f, 0.0f, 0.0f };
+    ALfloat pos[] = { position.x, position.y, position.z };
+    ALfloat vel[] = { velocity.x, velocity.y, velocity.z };
+    ALfloat zeros[] = { 0.0f, 0.0f, 0.0f };
 
-	Vector3 at = rotation * Vector3(0.0f, 1.0f, 0.0f);
-	Vector3 up = rotation * Vector3(0.0f, 0.0f, 1.0f);
+    Vector3 at = rotation * Vector3(0.0f, 1.0f, 0.0f);
+    Vector3 up = rotation * Vector3(0.0f, 0.0f, 1.0f);
 
-	ALfloat ori[] = { at.x, at.y, at.z, up.x, up.y, up.z };
+    ALfloat ori[] = { at.x, at.y, at.z, up.x, up.y, up.z };
 
-	alcSuspendContext(alContext);
-	alListenerfv(AL_POSITION, pos);
+    alcSuspendContext(alContext);
+    alListenerfv(AL_POSITION, pos);
     alListenerfv(AL_VELOCITY, audio_option(AUDIO_DOPPLER_ENABLED) ? vel : zeros);
-	alListenerfv(AL_ORIENTATION, ori);
+    alListenerfv(AL_ORIENTATION, ori);
     float volume = audio_option(AUDIO_MUTE) ? 0 : audio_option(AUDIO_MASTER_VOLUME);
-	alListenerfv(AL_GAIN, &volume);
-	alcProcessContext(alContext);
+    alListenerfv(AL_GAIN, &volume);
+    alcProcessContext(alContext);
 
-	// destroy any one-shot sounds that finished playing
-	// NOTE: this won't account for cases where there's still a sound playing when the game exits
+    // destroy any one-shot sounds that finished playing
+    // NOTE: this won't account for cases where there's still a sound playing when the game exits
 
     for (unsigned i=0 ; i<one_shot_sounds.size() ; ++i) {
         ALuint &src = one_shot_sounds[i];
@@ -287,7 +287,7 @@ void audio_update (const Vector3& position, const Vector3& velocity, const Quate
         ALint playing;
         alGetSourcei(src, AL_SOURCE_STATE, &playing);
 
-		if (playing != AL_PLAYING) {
+        if (playing != AL_PLAYING) {
 
             alDeleteSources(1, &src);
 
@@ -295,7 +295,7 @@ void audio_update (const Vector3& position, const Vector3& velocity, const Quate
             one_shot_sounds.pop_back();
             i--; // re-examine index i again, next iteration
 
-		}
+        }
     }
 }
 
@@ -315,12 +315,12 @@ AudioSource::AudioSource (const std::string &filename, bool ambient)
         GRIT_EXCEPT("Resource not found: \""+filename+"\"");
     }
 
-	resource = dynamic_cast<AudioDiskResource*>(dr);
+    resource = dynamic_cast<AudioDiskResource*>(dr);
     if (resource == NULL) {
         GRIT_EXCEPT("Not an audio resource: \""+filename+"\"");
     }
 
-	alGenSources(1, &alSource);
+    alGenSources(1, &alSource);
 
     reinitialise();
 
@@ -348,87 +348,88 @@ void AudioSource::notifyReloaded (DiskResource *r)
 
 void AudioSource::reinitialise (void)
 {
-	alSourcei(alSource, AL_BUFFER, AL_NONE); // in case there is an error, this will be the result
+    alSourcei(alSource, AL_BUFFER, AL_NONE); // in case there is an error, this will be the result
     if (!resource->isLoaded()) {
-		CERR << "Cannot create an AudioSource for an unloaded audio resource: " + resource->getName() << std::endl;
+        CERR << "Cannot create an AudioSource for an unloaded audio resource: " + resource->getName() << std::endl;
         return;
     }
     if (!ambient && resource->getAmbientOnly()) {
-		CERR << "Can only play a stereo audio resource as ambient sound: " + resource->getName() << std::endl;
+        CERR << "Can only play a stereo audio resource as ambient sound: " + resource->getName() << std::endl;
         return;
     }
 
     // use the sound from the resource
-	alSourcei(alSource, AL_BUFFER, resource->getALBuffer());
+    alSourcei(alSource, AL_BUFFER, resource->getALBuffer());
 }
 
 void AudioSource::destroy (void)
 {
-	alDeleteSources(1, &alSource);
+    alDeleteSources(1, &alSource);
 }
 
 void AudioSource::setPosition (const Vector3& v)
 {
-	position = v;
-	alSource3f(alSource, AL_POSITION, v.x, v.y, v.z);
+    if (ambient) return;
+    position = v;
+    alSource3f(alSource, AL_POSITION, v.x, v.y, v.z);
 }
 
 void AudioSource::setVelocity (const Vector3& v)
 {
-	velocity = v;
-	alSource3f(alSource, AL_VELOCITY, v.x, v.y, v.z);
+    velocity = v;
+    alSource3f(alSource, AL_VELOCITY, v.x, v.y, v.z);
 }
 
 void AudioSource::setLooping (bool v)
 {
-	looping = v;
-	alSourcei(alSource, AL_LOOPING, v);
+    looping = v;
+    alSourcei(alSource, AL_LOOPING, v);
 }
 
 void AudioSource::setVolume (float v)
 {
     volume = v;
-	alSourcef(alSource, AL_GAIN, v);
+    alSourcef(alSource, AL_GAIN, v);
 }
 
 void AudioSource::setPitch (float v)
 {
     pitch = v;
-	alSourcef(alSource, AL_PITCH, v);
+    alSourcef(alSource, AL_PITCH, v);
 }
 
 void AudioSource::setReferenceDistance (float v)
 {
     referenceDistance = v;
-	alSourcef(alSource, AL_REFERENCE_DISTANCE, v);
+    alSourcef(alSource, AL_REFERENCE_DISTANCE, v);
 }
 
 void AudioSource::setRollOff (float v)
 {
     rollOff = v;
-	alSourcef(alSource, AL_ROLLOFF_FACTOR, v);
+    alSourcef(alSource, AL_ROLLOFF_FACTOR, v);
 }
 
 bool AudioSource::playing (void)
 {
-	ALint value;
-	alGetSourcei(alSource, AL_SOURCE_STATE, &value);
+    ALint value;
+    alGetSourcei(alSource, AL_SOURCE_STATE, &value);
 
-	return (value == AL_PLAYING);
+    return (value == AL_PLAYING);
 }
 
 void AudioSource::play (void)
 {
-	alSourcePlay(alSource);
+    alSourcePlay(alSource);
 }
 
 void AudioSource::pause (void)
 {
-	// I guess we should check if the source is actually playing, but whatever
-	alSourcePause(alSource);
+    // I guess we should check if the source is actually playing, but whatever
+    alSourcePause(alSource);
 }
 
 void AudioSource::stop (void)
 {
-	alSourceStop(alSource);
+    alSourceStop(alSource);
 }
