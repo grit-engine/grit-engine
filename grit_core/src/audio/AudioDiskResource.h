@@ -35,7 +35,7 @@ class AudioDiskResource : public DiskResource {
 
 public:
 	AudioDiskResource (const std::string &name)
-		: name(name)
+		: name(name), ambientOnly(false)
 	{
 	}
 
@@ -50,6 +50,8 @@ public:
 
 	ALuint getALBuffer(void) { return alBuffer; }
 
+    bool getAmbientOnly (void) { return ambientOnly; }
+
 private:
 
 	void loadWAV (Ogre::DataStreamPtr &file);
@@ -57,6 +59,8 @@ private:
 	const std::string name;
 
 	ALuint alBuffer;
+
+    bool ambientOnly;
 
 };
 

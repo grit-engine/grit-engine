@@ -238,6 +238,10 @@ void audio_play (const std::string& filename, float pitch, float volume, bool am
     if (!resource->isLoaded()) {
 		GRIT_EXCEPT("Cannot play an unloaded audio resource: " + resource->getName());
     }
+    if (!ambient && resource->getAmbientOnly()) {
+		GRIT_EXCEPT("Can only play a stereo audio resource as ambient sound: " + resource->getName());
+    }
+    
 	one_shot_sounds.push_back(ALuint());
     ALuint &src = one_shot_sounds[one_shot_sounds.size()-1];
 

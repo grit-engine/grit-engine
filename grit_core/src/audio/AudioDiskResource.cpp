@@ -135,6 +135,8 @@ void AudioDiskResource::loadWAV(Ogre::DataStreamPtr &file)
 
 	ALenum alFormat;
 
+    ambientOnly = fmt.channels > 1;
+
 	if (fmt.channels == 1)
 	{
 		alFormat = (fmt.bitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
