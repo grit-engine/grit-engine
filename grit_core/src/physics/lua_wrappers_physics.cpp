@@ -399,7 +399,7 @@ TRY_START
         int base_line = 5;
         check_args_min(L, base_line);
 
-        float radius = (float)luaL_checknumber(L,1);
+        float radius = check_float(L,1);
         Vector3 start = check_v3(L,2);
         Vector3 ray = check_v3(L,3);
         bool nearest_only = check_bool(L,4);
@@ -446,8 +446,8 @@ TRY_START
         int base_line = 7;
         check_args_min(L, base_line);
 
-        float radius = (float)luaL_checknumber(L,1);
-        float height = (float)luaL_checknumber(L,2);
+        float radius = check_float(L,1);
+        float height = check_float(L,2);
         Quaternion q = check_quat(L,3);
         Vector3 start = check_v3(L,4);
         Vector3 ray = check_v3(L,5);
@@ -679,22 +679,22 @@ TRY_START
                 Quaternion v = check_quat(L, 3);
                 self->setOrientation(v);
         } else if (!::strcmp(key,"contactProcessingThreshold")) {
-                float v = (float)luaL_checknumber(L,3);
+                float v = check_float(L,3);
                 self->setContactProcessingThreshold(v);
         } else if (!::strcmp(key,"linearDamping")) {
-                float v = (float)luaL_checknumber(L,3);
+                float v = check_float(L,3);
                 self->setLinearDamping(v);
         } else if (!::strcmp(key,"angularDamping")) {
-                float v = (float)luaL_checknumber(L,3);
+                float v = check_float(L,3);
                 self->setAngularDamping(v);
         } else if (!::strcmp(key,"linearSleepThreshold")) {
-                float v = (float)luaL_checknumber(L,3);
+                float v = check_float(L,3);
                 self->setLinearSleepThreshold(v);
         } else if (!::strcmp(key,"angularSleepThreshold")) {
-                float v = (float)luaL_checknumber(L,3);
+                float v = check_float(L,3);
                 self->setAngularSleepThreshold(v);
         } else if (!::strcmp(key,"mass")) {
-                float v = (float)luaL_checknumber(L,3);
+                float v = check_float(L,3);
                 self->setMass(v);
         } else if (!::strcmp(key,"ghost")) {
                 bool v = check_bool(L,3);
@@ -836,7 +836,7 @@ static int global_physics_pump (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        float time_step = (float)luaL_checknumber(L,1);
+        float time_step = check_float(L,1);
         int iterations = physics_pump(L,time_step);
         lua_pushnumber(L,iterations);
         return 1;
@@ -890,7 +890,7 @@ TRY_START
             case -1: my_lua_error(L,"Unrecognised physics option: \""+opt+"\"");
             case 0: physics_option(o0, check_bool(L,2)); break;
             case 1: physics_option(o1, check_t<int>(L,2)); break;
-            case 2: physics_option(o2, (float)luaL_checknumber(L,2)); break;
+            case 2: physics_option(o2, check_float(L,2)); break;
             default: my_lua_error(L,"Unrecognised type from physics_option_from_string");
         }
         return 0;
@@ -969,13 +969,13 @@ TRY_START
         v.resize(counter);
         counter = 0;
         for (lua_pushnil(L) ; lua_next(L,1)!=0 ; lua_pop(L,1)) {
-                float f = (float)luaL_checknumber(L,-1);
+                float f = check_float(L,-1);
                 v[counter].friction = f;
                 counter++;
         }
         counter = 0;
         for (lua_pushnil(L) ; lua_next(L,2)!=0 ; lua_pop(L,1)) {
-                float f = (float)luaL_checknumber(L,-1);
+                float f = check_float(L,-1);
                 v[counter].restitution = f;
                 counter++;
         }

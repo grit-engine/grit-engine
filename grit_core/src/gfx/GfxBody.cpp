@@ -37,7 +37,7 @@ GfxNode::GfxNode (const GfxBodyPtr &par_)
 
 GfxNode::~GfxNode (void)
 {
-    if (!dead) CERR << className+" has not been destroyed properly." << std::endl;
+    if (!dead) destroy();
 }
     
 void GfxNode::destroy (void)

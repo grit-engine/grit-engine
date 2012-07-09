@@ -147,7 +147,7 @@ TRY_START
         check_args(L,3);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
         Vector3 pos = check_v3(L,2);
-        float r = luaL_checknumber(L,3);
+        float r = check_float(L,3);
         self->updateSphere(pos, r);
         return 0;
 TRY_END
@@ -295,7 +295,7 @@ TRY_START
         } else if (key=="pos") {
                 self->updateSphere(check_v3(L,3));
         } else if (key=="renderingDistance") {
-                self->updateSphere(luaL_checknumber(L,3));
+                self->updateSphere(check_float(L,3));
         } else if (key=="getSphere") {
                 my_lua_error(L,"Not a writeable GritObject member: "+key);
         } else if (key=="activated") {
@@ -692,7 +692,7 @@ TRY_START
             case -1: my_lua_error(L,"Unrecognised core option: \""+opt+"\"");
             case 0: core_option(o0, check_bool(L,2)); break;
             case 1: core_option(o1, check_t<int>(L,2)); break;
-            case 2: core_option(o2, (float)luaL_checknumber(L,2)); break;
+            case 2: core_option(o2, check_float(L,2)); break;
             default: my_lua_error(L,"Unrecognised type from core_option_from_string");
         }
         return 0;

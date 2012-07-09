@@ -31,6 +31,7 @@ typedef SharedPtr<AudioSource> AudioSourcePtr;
 
 #include "../math_util.h"
 #include "../BackgroundLoader.h"
+#include "../DiskResource.h"
 
 #include "AudioDiskResource.h"
 
@@ -50,7 +51,7 @@ enum AudioIntOption {
 
 void audio_init (void);
 void audio_update (const Vector3& position, const Vector3& velocity, const Quaternion& rotation);
-void audio_play (const std::string& filename, float pitch, float volume, bool ambient, const Vector3& position);
+void audio_play (const std::string& filename, bool ambient, const Vector3& position, float volume, float ref_dist, float roll_off, float pitch);
 
 std::string audio_option_to_string (AudioBoolOption o);
 std::string audio_option_to_string (AudioIntOption o);
@@ -70,7 +71,7 @@ int audio_option (AudioIntOption o);
 void audio_option (AudioFloatOption o, float v);
 float audio_option (AudioFloatOption o);
 
-class AudioSource
+class AudioSource : public DiskResource::ReloadWatcher
 {
 	private:
 		Demand demand;
@@ -81,16 +82,23 @@ class AudioSource
 		bool looping;
         float pitch;
         float volume;
+        bool ambient;
+        float referenceDistance;
+        float rollOff;
 
 		ALuint alSource;
 
-		AudioSource (const std::string &filename);
-		~AudioSource () { };
+		AudioSource (const std::string &filename, bool ambient);
+		~AudioSource (void);
+
+        void reinitialise (void);
+
+        void notifyReloaded (DiskResource *dr);
 
 	public:
 
-		static AudioSourcePtr make (const std::string &filename)
-		{ return AudioSourcePtr(new AudioSource(filename)); }
+		static AudioSourcePtr make (const std::string &filename, bool ambient)
+		{ return AudioSourcePtr(new AudioSource(filename, ambient)); }
 
 
 		Vector3 getPosition (void) { return position; }
@@ -107,6 +115,14 @@ class AudioSource
 
 		float getPitch (void) { return pitch; }
 		void setPitch (float v);
+
+		float getReferenceDistance (void) { return referenceDistance; }
+		void setReferenceDistance (float v);
+
+		float getRollOff (void) { return rollOff; }
+		void setRollOff (float v);
+
+		bool getAmbient (void) { return ambient; }
 
 		bool playing (void);
 		void play (void);

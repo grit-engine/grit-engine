@@ -54,7 +54,7 @@ class DiskResource {
 
     public:
 
-        struct ReloadWatcher { virtual void notifyReloaded (void) = 0; };
+        struct ReloadWatcher { virtual void notifyReloaded (DiskResource *dr) = 0; };
 
         DiskResource (void) : loaded(false), users(0) { }
 

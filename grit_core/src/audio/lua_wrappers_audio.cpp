@@ -97,6 +97,12 @@ TRY_START
         lua_pushboolean(L, self->getPitch());
     } else if (!::strcmp(key,"volume")) {
         lua_pushboolean(L, self->getVolume());
+    } else if (!::strcmp(key,"ambient")) {
+        lua_pushboolean(L, self->getAmbient());
+    } else if (!::strcmp(key,"referenceDistance")) {
+        lua_pushnumber(L, self->getReferenceDistance());
+    } else if (!::strcmp(key,"rollOff")) {
+        lua_pushnumber(L, self->getRollOff());
     } else if (!::strcmp(key,"playing")) {
         lua_pushboolean(L, self->playing());
 	} else if (!::strcmp(key,"play")) {
@@ -133,6 +139,12 @@ TRY_START
 	} else if (!::strcmp(key,"volume")) {
 		float f = check_float(L, 3);
 		self->setVolume(f);
+	} else if (!::strcmp(key,"referenceDistance")) {
+		float f = check_float(L, 3);
+		self->setReferenceDistance(f);
+	} else if (!::strcmp(key,"rollOff")) {
+		float f = check_float(L, 3);
+		self->setRollOff(f);
     } else if (!::strcmp(key,"looping")) {
         bool b = check_bool(L,3);
 		self->setLooping(b);
@@ -151,7 +163,16 @@ static int global_audio_source_make (lua_State *L)
 {
 TRY_START
 	check_args(L, 1);
-	push_audiosource(L, AudioSource::make(check_string(L, 1)));
+	push_audiosource(L, AudioSource::make(check_string(L, 1),false));
+	return 1;
+TRY_END
+}
+
+static int global_audio_source_make_ambient (lua_State *L)
+{
+TRY_START
+	check_args(L, 1);
+	push_audiosource(L, AudioSource::make(check_string(L, 1),true));
 	return 1;
 TRY_END
 }
@@ -159,8 +180,14 @@ TRY_END
 static int global_audio_play_ambient (lua_State *L)
 {
 TRY_START
-	check_args(L, 3);
-	audio_play(check_string(L, 1), (float)luaL_checknumber(L,2), (float)luaL_checknumber(L,3), true, Vector3(0,0,0));
+	check_args(L, 6);
+    std::string res = check_string(L,1);
+    Vector3 pos = check_v3(L,2);
+    float volume = check_float(L,3);
+    float ref_dist = check_float(L,4);
+    float roll_off = check_float(L,5);
+    float pitch = check_float(L,6);
+	audio_play(res, true, pos, volume, ref_dist, roll_off, pitch);
 	return 0;
 TRY_END
 }
@@ -168,8 +195,14 @@ TRY_END
 static int global_audio_play (lua_State *L)
 {
 TRY_START
-	check_args(L, 4);
-	audio_play(check_string(L, 1), (float)luaL_checknumber(L,2), (float)luaL_checknumber(L,3), false, check_v3(L, 4));
+	check_args(L, 6);
+    std::string res = check_string(L,1);
+    Vector3 pos = check_v3(L,2);
+    float volume = check_float(L,3);
+    float ref_dist = check_float(L,4);
+    float roll_off = check_float(L,5);
+    float pitch = check_float(L,6);
+	audio_play(res, false, pos, volume, ref_dist, roll_off, pitch);
 	return 0;
 TRY_END
 }
@@ -197,7 +230,7 @@ TRY_START
             case -1: my_lua_error(L,"Unrecognised audio option: \""+opt+"\"");
             case 0: audio_option(o0, check_bool(L,2)); break;
             case 1: audio_option(o1, check_t<int>(L,2)); break;
-            case 2: audio_option(o2, (float)luaL_checknumber(L,2)); break;
+            case 2: audio_option(o2, check_float(L,2)); break;
             default: my_lua_error(L,"Unrecognised type from audio_option_from_string");
         }
         return 0;
@@ -223,6 +256,7 @@ TRY_END
 
 static const luaL_reg global[] = {
 	{"audio_source_make",global_audio_source_make},
+	{"audio_source_make_ambient",global_audio_source_make_ambient},
 	{"audio_play",global_audio_play},
 	{"audio_play_ambient",global_audio_play_ambient},
 	{"audio_update",global_audio_update},

@@ -277,7 +277,7 @@ static int global_give_queue_allowance (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        float amount = luaL_checknumber(L,1);
+        float amount = check_float(L,1);
         bgl->setAllowance(amount);
         return 0;
 TRY_END

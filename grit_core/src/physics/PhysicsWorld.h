@@ -256,8 +256,9 @@ class RigidBody : public btMotionState, public CollisionMesh::ReloadWatcher {
 
     GritObjectPtr owner;
 
-    void notifyReloaded (void)
+    void notifyReloaded (DiskResource *r)
     {
+        (void) r;
         removeFromWorld();
         addToWorld();
     }

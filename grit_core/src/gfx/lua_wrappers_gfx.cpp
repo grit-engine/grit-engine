@@ -152,7 +152,7 @@ TRY_START
     int i = check_int(L,2,0,3);
     GfxPaintColour col;
     col.diff = check_v3(L,3);
-    col.met    = luaL_checknumber(L,4);
+    col.met    = check_float(L,4);
     col.spec = check_v3(L,5);
     self->setPaintColour(i, col);
     return 0;
@@ -721,7 +721,7 @@ TRY_START
         Vector3 v = check_v3(L,3);
         self->setSpecularColour(v);
     } else if (!::strcmp(key,"coronaSize")) {
-        float v = luaL_checknumber(L,3);
+        float v = check_float(L,3);
         self->setCoronaSize(v);
     } else if (!::strcmp(key,"coronaLocalPosition")) {
         Vector3 v = check_v3(L,3);
@@ -769,7 +769,7 @@ int global_gfx_render (lua_State *L)
 {
 TRY_START
     check_args(L,3);
-    float elapsed = luaL_checknumber(L,1);
+    float elapsed = check_float(L,1);
     Vector3 cam_pos = check_v3(L,2);
     Quaternion cam_dir = check_quat(L,3);
     gfx_render(elapsed, cam_pos, cam_dir);
@@ -801,7 +801,7 @@ TRY_START
             case -1: my_lua_error(L,"Unrecognised graphics option: \""+opt+"\"");
             case 0: gfx_option(o0, check_bool(L,2)); break;
             case 1: gfx_option(o1, check_t<int>(L,2)); break;
-            case 2: gfx_option(o2, luaL_checknumber(L,2)); break;
+            case 2: gfx_option(o2, check_float(L,2)); break;
             default: my_lua_error(L,"Unrecognised type from gfx_option_from_string");
         }
         return 0;
@@ -988,7 +988,7 @@ int global_gfx_fog_set_density (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    float d = luaL_checknumber(L,1);
+    float d = check_float(L,1);
     gfx_fog_set_density(d);
     return 0;
 TRY_END
@@ -1080,7 +1080,7 @@ namespace {
                     CERR << "Particle width was not a number." << std::endl;
                     destroy = true;
                 } else {
-                    p.setWidth(luaL_checknumber(L,-1));
+                    p.setWidth(check_float(L,-1));
                 }
                 lua_pop(L,1);
 
@@ -1091,7 +1091,7 @@ namespace {
                     CERR << "Particle height was not a number." << std::endl;
                     destroy = true;
                 } else {
-                    p.setHeight(luaL_checknumber(L,-1));
+                    p.setHeight(check_float(L,-1));
                 }
                 lua_pop(L,1);
 
@@ -1102,7 +1102,7 @@ namespace {
                     CERR << "Particle depth was not a number." << std::endl;
                     destroy = true;
                 } else {
-                    p.setDepth(luaL_checknumber(L,-1));
+                    p.setDepth(check_float(L,-1));
                 }
                 lua_pop(L,1);
 
@@ -1124,7 +1124,7 @@ namespace {
                     CERR << "Particle alpha was not a number." << std::endl;
                     destroy = true;
                 } else {
-                    p.setAlpha(luaL_checknumber(L,-1));
+                    p.setAlpha(check_float(L,-1));
                 }
                 lua_pop(L,1);
 
@@ -1135,7 +1135,7 @@ namespace {
                     CERR << "Particle angle was not a number." << std::endl;
                     destroy = true;
                 } else {
-                    p.setAngle(luaL_checknumber(L,-1));
+                    p.setAngle(check_float(L,-1));
                 }
                 lua_pop(L,1);
 
@@ -1426,7 +1426,7 @@ int global_gfx_particle_step_size_set (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    float v = float(luaL_checknumber(L,1));
+    float v = check_float(L,1);
     if (v<=0) my_lua_error(L, "Step size must not be 0 or below");
     particle_step_size = v;
     return 0;

@@ -123,7 +123,7 @@ void DiskResource::callReloadWatchers (void)
 {
     typedef ReloadWatcherSet::iterator I;
     for (I i=reloadWatchers.begin(),i_=reloadWatchers.end() ; i!=i_ ; ++i) {
-        (*i)->notifyReloaded();
+        (*i)->notifyReloaded(this);
     }
 }
 

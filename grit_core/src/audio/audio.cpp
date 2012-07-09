@@ -229,7 +229,7 @@ void audio_init (void)
 
 static std::vector<ALuint> one_shot_sounds;
 
-void audio_play (const std::string& filename, float pitch, float volume, bool ambient, const Vector3& position)
+void audio_play (const std::string& filename, bool ambient, const Vector3& position, float volume, float ref_dist, float roll_off, float pitch)
 {
     DiskResource *dr = disk_resource_get(filename);
     if (dr == NULL) GRIT_EXCEPT("Resource not found: \""+filename+"\"");
@@ -249,6 +249,8 @@ void audio_play (const std::string& filename, float pitch, float volume, bool am
 	alSourcei(src, AL_BUFFER, resource->getALBuffer());
 	alSourcef(src, AL_GAIN, volume);
 	alSourcef(src, AL_PITCH, pitch);
+	alSourcef(src, AL_REFERENCE_DISTANCE, ref_dist);
+	alSourcef(src, AL_ROLLOFF_FACTOR, roll_off);
     if (ambient) {
         alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
     } else {
@@ -297,22 +299,66 @@ void audio_update (const Vector3& position, const Vector3& velocity, const Quate
     }
 }
 
-AudioSource::AudioSource (const std::string &filename)
-      : position(Vector3(0,0,0)),
+AudioSource::AudioSource (const std::string &filename, bool ambient)
+      : resource(NULL),
+        position(Vector3(0,0,0)),
         velocity(Vector3(0,0,0)),
         looping(false),
         pitch(1.0f),
-        volume(1.0f)
-
+        volume(1.0f),
+        ambient(ambient),
+        referenceDistance(1),
+        rollOff(1)
 {
     DiskResource *dr = disk_resource_get(filename);
-    if (dr == NULL) GRIT_EXCEPT("Resource not found: \""+filename+"\"");
-	resource = dynamic_cast<AudioDiskResource*>(dr);
-    if (resource == NULL) GRIT_EXCEPT("Not an audio resource: \""+filename+"\"");
-    if (!resource->isLoaded()) {
-		GRIT_EXCEPT("Cannot create an AudioSource for an unloaded audio resource: " + resource->getName());
+    if (dr == NULL) {
+        GRIT_EXCEPT("Resource not found: \""+filename+"\"");
     }
+
+	resource = dynamic_cast<AudioDiskResource*>(dr);
+    if (resource == NULL) {
+        GRIT_EXCEPT("Not an audio resource: \""+filename+"\"");
+    }
+
 	alGenSources(1, &alSource);
+
+    reinitialise();
+
+    resource->registerReloadWatcher(this);
+
+}
+
+AudioSource::~AudioSource (void)
+{
+    if (resource == NULL) return;
+    resource->unregisterReloadWatcher(this);
+}
+
+void AudioSource::notifyReloaded (DiskResource *r)
+{
+    (void) r;
+    if (playing()) {
+        stop();
+        reinitialise();
+        play();
+    } else {
+        reinitialise();
+    }
+}
+
+void AudioSource::reinitialise (void)
+{
+	alSourcei(alSource, AL_BUFFER, AL_NONE); // in case there is an error, this will be the result
+    if (!resource->isLoaded()) {
+		CERR << "Cannot create an AudioSource for an unloaded audio resource: " + resource->getName() << std::endl;
+        return;
+    }
+    if (!ambient && resource->getAmbientOnly()) {
+		CERR << "Can only play a stereo audio resource as ambient sound: " + resource->getName() << std::endl;
+        return;
+    }
+
+    // use the sound from the resource
 	alSourcei(alSource, AL_BUFFER, resource->getALBuffer());
 }
 
@@ -349,6 +395,18 @@ void AudioSource::setPitch (float v)
 {
     pitch = v;
 	alSourcef(alSource, AL_PITCH, v);
+}
+
+void AudioSource::setReferenceDistance (float v)
+{
+    referenceDistance = v;
+	alSourcef(alSource, AL_REFERENCE_DISTANCE, v);
+}
+
+void AudioSource::setRollOff (float v)
+{
+    rollOff = v;
+	alSourcef(alSource, AL_ROLLOFF_FACTOR, v);
 }
 
 bool AudioSource::playing (void)
