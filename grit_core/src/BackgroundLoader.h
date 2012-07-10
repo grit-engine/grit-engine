@@ -140,6 +140,11 @@ class Demand : public fast_erase_index {
         // Obviously, this will cause a frame rate stall.
         void immediateLoad (void);
 
+        // Reload resources in the foreground thread, block until complete
+        // called usually as a result of debug commands from the console
+        // Obviously, this will cause a frame rate stall.
+        void immediateReload (void);
+
         // Are the resources in this Demand loaded yet?
         bool loaded (void);
 

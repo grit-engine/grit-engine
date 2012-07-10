@@ -85,6 +85,15 @@ void Demand::immediateLoad (void)
         }
 }
 
+void Demand::immediateReload (void)
+{
+        //CVERB << "Immediate load" << std::endl;
+        SYNCHRONISED2(bgl);
+        for (unsigned i=0 ; i<resources.size() ; ++i) {
+                if (resources[i]->isLoaded()) resources[i]->reload();
+        }
+}
+
 // called by main thread only
 void Demand::finishedWith (void)
 {

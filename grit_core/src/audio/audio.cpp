@@ -337,18 +337,15 @@ AudioSource::~AudioSource (void)
 void AudioSource::notifyReloaded (DiskResource *r)
 {
     (void) r;
-    if (playing()) {
-        stop();
-        reinitialise();
-        play();
-    } else {
-        reinitialise();
-    }
+    bool was_playing = playing();
+    if (was_playing) stop();
+    reinitialise();
+    if (was_playing) play();
 }
 
 void AudioSource::reinitialise (void)
 {
-    alSourcei(alSource, AL_BUFFER, AL_NONE); // in case there is an error, this will be the result
+    alSourcei(alSource, AL_BUFFER, AL_NONE);
     if (!resource->isLoaded()) {
         CERR << "Cannot create an AudioSource for an unloaded audio resource: " + resource->getName() << std::endl;
         return;

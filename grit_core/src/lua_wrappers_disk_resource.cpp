@@ -148,7 +148,7 @@ static int global_disk_resource_reload (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
+    std::string name = check_path(L,1);
     DiskResource *dr = disk_resource_get(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
     if (!dr->isLoaded()) my_lua_error(L, "Resource not loaded: \""+std::string(name)+"\"");
@@ -161,7 +161,7 @@ static int global_disk_resource_load (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
+    std::string name = check_path(L,1);
     DiskResource *dr = disk_resource_get(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
     if (dr->isLoaded()) my_lua_error(L, "Resource already loaded: \""+std::string(name)+"\"");
@@ -174,9 +174,8 @@ static int global_disk_resource_ensure_loaded (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
-    DiskResource *dr = disk_resource_get(name);
-    if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
+    std::string name = check_path(L,1);
+    DiskResource *dr = disk_resource_get_or_make(name);
     if (dr->isLoaded()) {
         lua_pushboolean(L, false);
     } else {
@@ -191,7 +190,7 @@ static int global_disk_resource_unload (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
+    std::string name = check_path(L,1);
     DiskResource *dr = disk_resource_get(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
     if (!dr->isLoaded()) my_lua_error(L, "Resource not loaded: \""+std::string(name)+"\"");
@@ -204,7 +203,7 @@ static int global_disk_resource_add (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
+    std::string name = check_path(L,1);
     disk_resource_get_or_make(name);
     return 0;
 TRY_END
@@ -214,7 +213,7 @@ static int global_disk_resource_has (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
+    std::string name = check_path(L,1);
     DiskResource *dr = disk_resource_get(name);
     lua_pushboolean(L, dr!=NULL);
     return 1;
@@ -225,7 +224,7 @@ static int global_disk_resource_loaded (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
+    std::string name = check_path(L,1);
     DiskResource *dr = disk_resource_get(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
     lua_pushboolean(L, dr->isLoaded());
@@ -237,7 +236,7 @@ static int global_disk_resource_users (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
+    std::string name = check_path(L,1);
     DiskResource *dr = disk_resource_get(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
     lua_pushnumber(L, dr->getUsers());
@@ -249,8 +248,8 @@ static int global_disk_resource_acquire (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
-    DiskResource *dr = disk_resource_get_or_make(name);
+    std::string name = check_path(L,1);
+    DiskResource *dr = disk_resource_get(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
     dr->increment();
     return 0;
@@ -261,8 +260,8 @@ static int global_disk_resource_release (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
-    DiskResource *dr = disk_resource_get_or_make(name);
+    std::string name = check_path(L,1);
+    DiskResource *dr = disk_resource_get(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
     dr->decrement();
     return 0;
@@ -305,7 +304,7 @@ static const luaL_reg global[] = {
 
 void disk_resource_lua_init (lua_State *L)
 {
-    luaL_register(L, "_G", global);
+    register_lua_globals(L, global);
 }
 
 // vim: ts=4:sw=4:et

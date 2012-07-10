@@ -24,6 +24,7 @@
 #include "main.h"
 #include "GritObject.h"
 #include "GritClass.h"
+#include "path_util.h"
 
 #include "lua_util.h"
 #include "lua_wrappers_gritobj.h"
@@ -97,11 +98,13 @@ void GritObject::notifyFade (lua_State *L,
 
     //stack: err,class,callback
     // we now have the callback to play with
-
+    
     push_gritobj(L,self); // persistent grit obj
     lua_pushnumber(L,fade); // fade
     //stack: err,class,callback,persistent, fade
+    pwd_push_dir(gritClass->dir);
     int status = lua_pcall(L,2,0,error_handler);
+    pwd_pop();
     if (status) {
         //stack: err,class,msg
         // pop the error message since the error handler will
@@ -189,7 +192,9 @@ void GritObject::activate (lua_State *L,
     STACK_CHECK_N(5);
 
     // call (2 args), pops function too
+    pwd_push_dir(gritClass->dir);
     int status = lua_pcall(L,2,0,error_handler);
+    pwd_pop();
     if (status) {
         STACK_CHECK_N(3);
         //stack: err,class,error
@@ -304,7 +309,9 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
 
     push_gritobj(L,self); // persistent grit obj
     //stack: err,class,callback
+    pwd_push_dir(gritClass->dir);
     int status = lua_pcall(L,1,1,error_handler);
+    pwd_pop();
     if (status) {
         //stack: err,class,msg
         // pop the error message since the error handler will
@@ -364,7 +371,9 @@ void GritObject::init (lua_State *L, const GritObjectPtr &self)
     lua_checkstack(L,2);
     push_gritobj(L,self); // persistent grit obj
     //stack: err,class,callback,persistent
+    pwd_push_dir(gritClass->dir);
     int status = lua_pcall(L,1,0,error_handler);
+    pwd_pop();
     if (status) {
         //stack: err,class,msg
         // pop the error message since the error handler will
@@ -414,7 +423,9 @@ bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, float e
     push_gritobj(L,self); // persistent grit obj
     lua_pushnumber(L, elapsed); // time since last frame
     //stack: err,class,callback,instance,elapsed
+    pwd_push_dir(gritClass->dir);
     int status = lua_pcall(L,2,0,error_handler);
+    pwd_pop();
     if (status) {
         //stack: err,class,msg
         // pop the error message since the error handler will

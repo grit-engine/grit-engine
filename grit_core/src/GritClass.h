@@ -39,13 +39,14 @@ extern "C" {
 #include "ExternalTable.h"
 #include "lua_util.h"
 #include "LuaPtr.h"
+#include "path_util.h"
 
 class GritClass {
 
     public:
 
         GritClass (lua_State *L, const std::string &name_)
-              : name(name_), refCount(1)
+              : name(name_), dir(grit_dirname(name_)), refCount(1)
         {
                 int index = lua_gettop(L);
                 for (lua_pushnil(L) ; lua_next(L,index)!=0 ; lua_pop(L,1)) {
@@ -110,6 +111,7 @@ class GritClass {
         }
 
         const std::string name;
+        const std::string dir;
 
     protected:
 

@@ -341,8 +341,8 @@ TRY_START
     } else {
         check_args(L,2);
         GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-        const char *meshname = luaL_checkstring(L,2);
-        push_gfxbody(L, GfxBody::make(meshname, gfx_empty_string_map, self));
+        std::string mesh_name = check_path(L,2);
+        push_gfxbody(L, GfxBody::make(mesh_name, gfx_empty_string_map, self));
     }
     return 1;
 TRY_END
@@ -831,12 +831,12 @@ TRY_START
     if (lua_gettop(L)==0) {
         push_gfxbody(L, GfxBody::make());
     } else if (lua_gettop(L)==1) {
-        const char *meshname = luaL_checkstring(L,1);
+        std::string meshname = check_path(L,1);
         push_gfxbody(L, GfxBody::make(meshname));
     } else {
         // map the materials?
         check_args(L,2);
-        const char *meshname = luaL_checkstring(L,1);
+        std::string meshname = check_path(L,1);
         if (lua_isnil(L,2)) {
             push_gfxbody(L, GfxBody::make(meshname));
         } else {
@@ -864,7 +864,7 @@ TRY_END
 int global_gfx_sky_body_make (lua_State *L)
 {
 TRY_START
-    const char *meshname = luaL_checkstring(L,1);
+    std::string meshname = check_path(L,1);
     short z_order = check_t<short>(L,2);
     push_gfxskybody(L, GfxSkyBody::make(meshname, z_order));
     return 1;
@@ -1229,14 +1229,13 @@ int global_gfx_particle_define (lua_State *L)
 {
 TRY_START
     check_args(L,2);
-    std::string name = luaL_checkstring(L,1);
-    name = pwd_full(L, name);
+    std::string name = check_path(L,1);
     if (!lua_istable(L,2)) my_lua_error(L,"Parameter 2 must be a table.");
 
     lua_getfield(L, 2, "map");
     if (!lua_isstring(L,-1)) my_lua_error(L,"Particle map must be a string.");
     std::string texture = lua_tostring(L,-1);
-    texture = pwd_full(L, texture);
+    texture = pwd_full(L, texture); // TODO: should use particle dir, not current dir
     lua_pop(L,1);
     lua_pushnil(L);
     lua_setfield(L, 2, "map");
@@ -1356,7 +1355,7 @@ int global_gfx_particle_emit (lua_State *L)
 {
 TRY_START
     check_args(L,3);
-    std::string name = pwd_full(L, luaL_checkstring(L,1));
+    std::string name = check_path(L,1);
     Vector3 pos = check_v3(L,2);
     if (!lua_istable(L,3)) my_lua_error(L,"Parameter 3 must be a table.");
 
@@ -2108,7 +2107,7 @@ static int global_register_material (lua_State *L)
 TRY_START
 
         check_args(L,2);
-        const char *name = luaL_checkstring(L,1);
+        std::string name = check_path(L,1);
         if (!lua_istable(L,2))
                 my_lua_error(L,"Second parameter should be a table");
 
@@ -2214,7 +2213,7 @@ static int global_dump_registered_material (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        const char *name = luaL_checkstring(L,1);
+        std::string name = check_path(L,1);
         if (mat_map.find(name) == mat_map.end())
                 my_lua_error(L, "Material does not exist: \""+std::string(name)+"\"");
         ExternalTable &t = mat_map[name];
@@ -2227,7 +2226,7 @@ static int global_registered_material_get (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        const char *name = luaL_checkstring(L,1);
+        std::string name = check_path(L,1);
         const char *key = luaL_checkstring(L,2);
         if (mat_map.find(name) == mat_map.end())
                 my_lua_error(L, "Material does not exist: \""+std::string(name)+"\"");
@@ -2297,7 +2296,7 @@ static int global_register_sky_material (lua_State *L)
 TRY_START
 
         check_args(L,2);
-        const char *name = luaL_checkstring(L,1);
+        std::string name = check_path(L,1);
         if (!lua_istable(L,2))
                 my_lua_error(L,"Second parameter should be a table");
 
@@ -2604,7 +2603,7 @@ static int global_resource_exists (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    std::string name = pwd_full(L,luaL_checkstring(L,1));
+    std::string name = check_path(L,1);
     bool b = Ogre::ResourceGroupManager::getSingleton().
             resourceExists("GRIT",name.substr(1));
     lua_pushboolean(L,b);
@@ -2812,11 +2811,6 @@ static const luaL_reg global[] = {
 
 void gfx_lua_init (lua_State *L)
 {
-    #define ADD_MT_MACRO(name,tag) do {\
-    luaL_newmetatable(L, tag); \
-    luaL_register(L, NULL, name##_meta_table); \
-    lua_pop(L,1); } while(0)
-
     ADD_MT_MACRO(gfxbody,GFXBODY_TAG);
     ADD_MT_MACRO(gfxskybody,GFXSKYBODY_TAG);
     ADD_MT_MACRO(gfxlight,GFXLIGHT_TAG);
@@ -2842,7 +2836,7 @@ void gfx_lua_init (lua_State *L)
     ADD_MT_MACRO(rtex,RTEX_TAG);
     ADD_MT_MACRO(rwin,RWIN_TAG);
 
-    luaL_register(L, "_G", global);
+    register_lua_globals(L, global);
 
 }
 

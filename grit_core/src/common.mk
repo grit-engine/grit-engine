@@ -384,7 +384,7 @@ GritClass.o: ../depend_stubs/limits ../depend_stubs/vector
 GritClass.o: ../src/CentralisedLog.h ../depend_stubs/iostream
 GritClass.o: ../depend_stubs/sstream
 GritClass.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-GritClass.o: ../src/console_colour.h
+GritClass.o: ../src/console_colour.h ../src/path_util.h
 GritObject.o: ../depend_stubs/cmath ../src/main.h
 GritObject.o: ../depend_stubs/lua.h ../src/Mouse.h
 GritObject.o: ../depend_stubs/vector ../src/Keyboard.h
@@ -457,7 +457,8 @@ GritObject.o: ../src/sleep.h ../src/physics/BColParser.h
 GritObject.o: ../depend_stubs/stdint.h ../src/physics/LooseEnd.h
 GritObject.o: ../src/physics/PhysicalMaterial.h ../src/GritObject.h
 GritObject.o: ../src/LuaPtr.h ../src/GritClass.h ../src/lua_util.h
-GritObject.o: ../depend_stubs/limits ../src/lua_wrappers_gritobj.h
+GritObject.o: ../depend_stubs/limits ../src/path_util.h
+GritObject.o: ../src/lua_wrappers_gritobj.h
 GritObject.o: ../src/lua_wrappers_common.h
 GritObject.o: ../depend_stubs/OgreException.h
 Streamer.o: ../src/Streamer.h ../src/main.h ../depend_stubs/lua.h
@@ -531,7 +532,7 @@ Streamer.o: ../depend_stubs/stdint.h ../src/physics/LooseEnd.h
 Streamer.o: ../src/physics/PhysicalMaterial.h ../src/GritObject.h
 Streamer.o: ../src/LuaPtr.h ../src/option.h ../depend_stubs/ostream
 Streamer.o: ../src/GritClass.h ../src/lua_util.h
-Streamer.o: ../depend_stubs/limits
+Streamer.o: ../depend_stubs/limits ../src/path_util.h
 ldbglue.o: ../depend_stubs/lua.h
 lua_utf8.o: ../depend_stubs/cstdlib ../depend_stubs/cstdio
 lua_utf8.o: ../depend_stubs/cassert ../depend_stubs/iostream
@@ -546,14 +547,15 @@ lua_utf8.o: ../src/CentralisedLog.h ../depend_stubs/sstream
 lua_utf8.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 lua_utf8.o: ../src/console_colour.h ../src/math_util.h
 lua_util.o: ../depend_stubs/cstdlib ../depend_stubs/cmath
-lua_util.o: ../depend_stubs/map ../depend_stubs/sstream
-lua_util.o: ../src/lua_util.h ../depend_stubs/string
+lua_util.o: ../depend_stubs/string ../depend_stubs/map
+lua_util.o: ../depend_stubs/sstream ../src/lua_util.h
 lua_util.o: ../depend_stubs/limits ../depend_stubs/vector
 lua_util.o: ../depend_stubs/lua.h ../depend_stubs/lauxlib.h
 lua_util.o: ../depend_stubs/lualib.h ../src/CentralisedLog.h
 lua_util.o: ../depend_stubs/iostream
 lua_util.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 lua_util.o: ../src/console_colour.h ../src/math_util.h ../src/LuaPtr.h
+lua_util.o: ../src/path_util.h
 lua_wrappers_core.o: ../depend_stubs/limits.h
 lua_wrappers_core.o: ../depend_stubs/sys/mman.h ../src/Keyboard.h
 lua_wrappers_core.o: ../depend_stubs/string ../depend_stubs/vector
@@ -734,8 +736,8 @@ lua_wrappers_gritobj.o: ../depend_stubs/boost/thread/thread.hpp
 lua_wrappers_gritobj.o: ../depend_stubs/boost/thread/condition.hpp
 lua_wrappers_gritobj.o: ../src/DiskResource.h ../src/GritClass.h
 lua_wrappers_gritobj.o: ../depend_stubs/lualib.h ../src/lua_util.h
-lua_wrappers_gritobj.o: ../depend_stubs/limits ../src/main.h
-lua_wrappers_gritobj.o: ../src/Mouse.h ../src/Keyboard.h
+lua_wrappers_gritobj.o: ../depend_stubs/limits ../src/path_util.h
+lua_wrappers_gritobj.o: ../src/main.h ../src/Mouse.h ../src/Keyboard.h
 lua_wrappers_gritobj.o: ../src/BulletDebugDrawer.h
 lua_wrappers_gritobj.o: ../depend_stubs/OgreFrameListener.h
 lua_wrappers_gritobj.o: ../depend_stubs/OgreManualObject.h
@@ -800,7 +802,7 @@ lua_wrappers_gritobj.o: ../src/lua_wrappers_gritobj.h
 lua_wrappers_gritobj.o: ../src/lua_wrappers_common.h
 lua_wrappers_gritobj.o: ../depend_stubs/OgreException.h
 lua_wrappers_gritobj.o: ../src/lua_wrappers_primitives.h
-lua_wrappers_gritobj.o: ../src/lua_wrappers_core.h ../src/path_util.h
+lua_wrappers_gritobj.o: ../src/lua_wrappers_core.h
 lua_wrappers_primitives.o: ../depend_stubs/algorithm
 lua_wrappers_primitives.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_primitives.o: ../src/lua_wrappers_common.h

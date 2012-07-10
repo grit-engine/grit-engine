@@ -906,16 +906,11 @@ lua_State *init_lua(const char *filename)
 */
 
 
-        #define ADD_MT_MACRO(name,tag) do {\
-        luaL_newmetatable(L, tag); \
-        luaL_register(L, NULL, name##_meta_table); \
-        lua_pop(L,1); } while(0)
-
         ADD_MT_MACRO(plot,PLOT_TAG);
         ADD_MT_MACRO(plot_v3,PLOT_V3_TAG);
         ADD_MT_MACRO(stringdb,STRINGDB_TAG);
 
-        luaL_register(L, "_G", global);
+        register_lua_globals(L, global);
 
         lua_pushthread(L); lua_setglobal(L,"MAIN_STATE");
 

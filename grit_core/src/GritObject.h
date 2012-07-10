@@ -109,6 +109,11 @@ class GritObject {
                 return demand.errorOnLoad();
         }
 
+        void reloadDiskResources(void)
+        {
+                demand.immediateReload();
+        }
+
 
 
         GritClass *getClass (void) { return gritClass; }

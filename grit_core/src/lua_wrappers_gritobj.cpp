@@ -158,8 +158,18 @@ static int gritobj_add_disk_resource (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        std::string name = luaL_checkstring(L,2);
+        std::string name = check_path(L,2);
         self->addDiskResource(name);
+        return 0;
+TRY_END
+}
+
+static int gritobj_reload_disk_resource (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
+        self->reloadDiskResources();
         return 0;
 TRY_END
 }
@@ -231,6 +241,8 @@ TRY_START
                 self->pushLuaTable(L);
         } else if (key=="addDiskResource") {
                 push_cfunction(L,gritobj_add_disk_resource);
+        } else if (key=="reloadDiskResources") {
+                push_cfunction(L,gritobj_reload_disk_resource);
 /*
         } else if (key=="getAdvancePrepareHints") {
                 push_cfunction(L,gritobj_get_advance_prepare_hints);
@@ -355,9 +367,7 @@ static int global_class_add (lua_State *L)
 {
 TRY_START
         check_args(L,3);
-        const char *name = lua_tostring(L,1);
-        if (name==NULL)
-                my_lua_error(L,"Could not process the name of the new class");
+        std::string name = check_path(L,1);
         if (!lua_istable(L,2))
                 my_lua_error(L,"Second parameter should be a table");
         if (!lua_istable(L,3))
@@ -371,7 +381,7 @@ static int global_class_get (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        std::string name = luaL_checkstring(L,1);
+        std::string name = check_path(L,1);
         push_gritcls(L,class_get(name));
         return 1;
 TRY_END
@@ -381,7 +391,7 @@ static int global_class_has (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        std::string name = luaL_checkstring(L,1);
+        std::string name = check_path(L,1);
         lua_pushboolean(L,class_has(name));
         return 1;
 TRY_END
@@ -391,7 +401,7 @@ static int global_class_del (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        std::string name = luaL_checkstring(L,1);
+        std::string name = check_path(L,1);
         class_del(L,class_get(name));
         return 0;
 TRY_END
@@ -437,7 +447,7 @@ static int global_object_add (lua_State *L)
 TRY_START
         if (lua_gettop(L)==2) lua_newtable(L);
         check_args(L,3);
-        std::string className = luaL_checkstring(L,1);
+        std::string className = check_path(L,1);
         Vector3 spawnPos = check_v3(L, 2);
         int table_index = lua_gettop(L);
         if (!lua_istable(L,table_index)) my_lua_error(L,"Last parameter should be a table");
@@ -631,7 +641,7 @@ static int global_object_all_of_class (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        std::string cls = luaL_checkstring(L,1);
+        std::string cls = check_path(L,1);
         lua_newtable(L);
         unsigned int c = 0;
         GObjMap::iterator i, i_;
@@ -652,7 +662,7 @@ static int global_object_count_of_class (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        std::string cls = luaL_checkstring(L,1);
+        std::string cls = check_path(L,1);
         unsigned counter = 0;
         GObjMap::iterator i, i_;
         for (object_all(i,i_) ; i!=i_ ; ++i) {
@@ -744,15 +754,9 @@ static const luaL_reg global[] = {
 
 void gritobj_lua_init (lua_State *L)
 {
-#define ADD_MT_MACRO(name,tag) do {\
-    luaL_newmetatable(L, tag); \
-    luaL_register(L, NULL, name##_meta_table); \
-    lua_pop(L,1); } while(0)
-
     ADD_MT_MACRO(gritcls,GRITCLS_TAG);
     ADD_MT_MACRO(gritobj,GRITOBJ_TAG);
-    
-    luaL_register(L, "_G", global);
+    register_lua_globals(L, global);
 }
 
 

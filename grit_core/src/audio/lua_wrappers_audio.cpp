@@ -94,9 +94,9 @@ TRY_START
     } else if (!::strcmp(key,"looping")) {
         lua_pushboolean(L, self->getLooping());
     } else if (!::strcmp(key,"pitch")) {
-        lua_pushboolean(L, self->getPitch());
+        lua_pushnumber(L, self->getPitch());
     } else if (!::strcmp(key,"volume")) {
-        lua_pushboolean(L, self->getVolume());
+        lua_pushnumber(L, self->getVolume());
     } else if (!::strcmp(key,"ambient")) {
         lua_pushboolean(L, self->getAmbient());
     } else if (!::strcmp(key,"referenceDistance")) {
@@ -266,12 +266,6 @@ static const luaL_reg global[] = {
 
 void audio_lua_init (lua_State *L)
 {
-#define ADD_MT_MACRO(name,tag) do {\
-	luaL_newmetatable(L, tag); \
-	luaL_register(L, NULL, name##_meta_table); \
-	lua_pop(L,1); } while(0)
-
 	ADD_MT_MACRO(audiosource,AUDIOSOURCE_TAG);
-
-	luaL_register(L, "_G", global);
+    register_lua_globals(L, global);
 }

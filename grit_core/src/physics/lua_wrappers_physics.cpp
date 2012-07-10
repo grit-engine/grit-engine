@@ -95,7 +95,7 @@ static int rbody_scatter (lua_State *L)
 TRY_START
         check_args(L,11);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        const char *mat = luaL_checkstring(L,2);
+        std::string mat = check_path(L,2);
         Transform world_trans;
         world_trans.p = self->getPosition();
         world_trans.r = self->getOrientation();
@@ -145,7 +145,7 @@ TRY_START
         check_args(L,16);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         GET_UD_MACRO(Ogre::SceneManager,sm,2,SCNMGR_TAG);
-        const char *mat    = luaL_checkstring(L,3);
+        std::string mat    = check_path(L,3);
         const char *name    = luaL_checkstring(L,4);
         GET_UD_MACRO(Ogre::MeshPtr,mesh,5,MESH_TAG);
         float density       = check_float(L,6);
@@ -732,8 +732,6 @@ MT_MACRO_NEWINDEX(rbody);
 //}}}
 
 
-// PHYSICS WORLD =========================================================== {{{
-
 static int global_physics_draw (lua_State *L)
 {
 TRY_START
@@ -813,7 +811,7 @@ TRY_START
                 lcb.pushResults(L, 4, error_handler);
         } else {
                 check_args(L,6);
-                std::string col_mesh_name = luaL_checkstring(L,1);
+                std::string col_mesh_name = check_path(L,1);
                 DiskResource *col_mesh_ = disk_resource_get_or_make(col_mesh_name);
                 CollisionMesh *col_mesh = dynamic_cast<CollisionMesh*>(col_mesh_);
                 if (col_mesh==NULL) my_lua_error(L, "Not a collision mesh: \""+col_mesh_name+"\"");
@@ -856,7 +854,7 @@ static int global_physics_body_make (lua_State *L)
 {
 TRY_START
         check_args(L,3);
-        std::string n = luaL_checkstring(L,1);
+        std::string n = check_path(L,1);
         Vector3 pos = check_v3(L,2);
         Quaternion quat = check_quat(L,3);
         RigidBodyPtr rbp = (new RigidBody(n,pos,quat))->getPtr();
@@ -919,7 +917,7 @@ static int global_physics_set_material (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        std::string name = luaL_checkstring(L,1);
+        std::string name = check_path(L,1);
         unsigned char interaction_group = check_t<unsigned char>(L,2);
         phys_mats.setMaterial(name, interaction_group);
         return 0;
@@ -930,7 +928,7 @@ static int global_physics_get_material (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        std::string name = luaL_checkstring(L,1);
+        std::string name = check_path(L,1);
         lua_pushnumber(L, phys_mats.getMaterial(name)->interactionGroup);
         return 1;
 TRY_END
@@ -1021,15 +1019,8 @@ static const luaL_reg global[] = {
 
 void physics_lua_init (lua_State *L)
 {
-        #define ADD_MT_MACRO(name,tag) do {\
-        luaL_newmetatable(L, tag); \
-        luaL_register(L, NULL, name##_meta_table); \
-        lua_pop(L,1); } while(0)
-
-        ADD_MT_MACRO(rbody,RBODY_TAG);
-
-        luaL_register(L, "_G", global);
-
+    ADD_MT_MACRO(rbody,RBODY_TAG);
+    register_lua_globals(L, global);
 }
 
-// vim: shiftwidth=8:tabstop=8:expandtab
+// vim: shiftwidth=4:tabstop=4:expandtab
