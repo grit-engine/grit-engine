@@ -282,12 +282,11 @@ CentralisedLog.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 CentralisedLog.o: ../src/console_colour.h
 DiskResource.o: ../src/gfx/GfxDiskResource.h
 DiskResource.o: ../depend_stubs/OgreResource.h ../src/CentralisedLog.h
-DiskResource.o: ../src/BackgroundLoader.h ../depend_stubs/vector
-DiskResource.o: ../src/vect_util.h ../depend_stubs/algorithm
-DiskResource.o: ../src/CentralisedLog.h ../depend_stubs/iostream
-DiskResource.o: ../depend_stubs/sstream
+DiskResource.o: ../depend_stubs/iostream ../depend_stubs/sstream
 DiskResource.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-DiskResource.o: ../src/console_colour.h
+DiskResource.o: ../src/console_colour.h ../src/BackgroundLoader.h
+DiskResource.o: ../depend_stubs/vector ../src/vect_util.h
+DiskResource.o: ../depend_stubs/algorithm ../src/CentralisedLog.h
 DiskResource.o: ../src/audio/AudioDiskResource.h
 DiskResource.o: ../depend_stubs/AL/al.h
 DiskResource.o: ../depend_stubs/OgreResourceGroupManager.h
@@ -655,15 +654,15 @@ lua_wrappers_core.o: ../src/physics/PhysicsWorld.h
 lua_wrappers_disk_resource.o: ../src/gfx/GfxDiskResource.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreResource.h
 lua_wrappers_disk_resource.o: ../src/CentralisedLog.h
+lua_wrappers_disk_resource.o: ../depend_stubs/iostream
+lua_wrappers_disk_resource.o: ../depend_stubs/sstream
+lua_wrappers_disk_resource.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+lua_wrappers_disk_resource.o: ../src/console_colour.h
 lua_wrappers_disk_resource.o: ../src/BackgroundLoader.h
 lua_wrappers_disk_resource.o: ../depend_stubs/vector
 lua_wrappers_disk_resource.o: ../src/vect_util.h
 lua_wrappers_disk_resource.o: ../depend_stubs/algorithm
 lua_wrappers_disk_resource.o: ../src/CentralisedLog.h
-lua_wrappers_disk_resource.o: ../depend_stubs/iostream
-lua_wrappers_disk_resource.o: ../depend_stubs/sstream
-lua_wrappers_disk_resource.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-lua_wrappers_disk_resource.o: ../src/console_colour.h
 lua_wrappers_disk_resource.o: ../src/physics/CollisionMesh.h
 lua_wrappers_disk_resource.o: ../depend_stubs/string
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreDataStream.h
@@ -924,11 +923,16 @@ KeyboardX11.o: ../depend_stubs/map ../depend_stubs/X11/Xlib.h
 KeyboardX11.o: ../depend_stubs/X11/Xutil.h
 KeyboardX11.o: ../depend_stubs/X11/keysym.h ../src/Keyboard.h
 KeyboardX11.o: ../depend_stubs/string ../depend_stubs/vector
-KeyboardX11.o: ../src/CentralisedLog.h ../src/unicode_util.h
+KeyboardX11.o: ../src/CentralisedLog.h
+KeyboardX11.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+KeyboardX11.o: ../src/console_colour.h ../src/unicode_util.h
 KeyboardX11.o: ../depend_stubs/cstdlib
 MouseX11.o: ../depend_stubs/sstream ../src/linux/MouseX11.h
 MouseX11.o: ../depend_stubs/X11/Xlib.h ../src/Mouse.h
 MouseX11.o: ../depend_stubs/vector ../src/CentralisedLog.h
+MouseX11.o: ../depend_stubs/iostream
+MouseX11.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+MouseX11.o: ../src/console_colour.h
 posix_sleep.o: ../depend_stubs/time.h ../depend_stubs/assert.h
 posix_sleep.o: ../depend_stubs/stdio.h
 x11_clipboard.o: ../depend_stubs/cstdlib ../depend_stubs/string
@@ -940,13 +944,19 @@ KeyboardDirectInput8.o: ../depend_stubs/dinput.h
 KeyboardDirectInput8.o: ../src/Keyboard.h ../depend_stubs/string
 KeyboardDirectInput8.o: ../depend_stubs/vector
 KeyboardDirectInput8.o: ../src/CentralisedLog.h
+KeyboardDirectInput8.o: ../depend_stubs/sstream
+KeyboardDirectInput8.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+KeyboardDirectInput8.o: ../src/console_colour.h
 KeyboardWinAPI.o: ../depend_stubs/assert.h
 KeyboardWinAPI.o: ../depend_stubs/iostream
 KeyboardWinAPI.o: ../src/win32/KeyboardWinAPI.h
 KeyboardWinAPI.o: ../depend_stubs/map ../depend_stubs/set
 KeyboardWinAPI.o: ../depend_stubs/windows.h ../src/Keyboard.h
 KeyboardWinAPI.o: ../depend_stubs/string ../depend_stubs/vector
-KeyboardWinAPI.o: ../src/CentralisedLog.h ../src/unicode_util.h
+KeyboardWinAPI.o: ../src/CentralisedLog.h
+KeyboardWinAPI.o: ../depend_stubs/sstream
+KeyboardWinAPI.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+KeyboardWinAPI.o: ../src/console_colour.h ../src/unicode_util.h
 KeyboardWinAPI.o: ../depend_stubs/cstdlib
 MouseDirectInput8.o: ../depend_stubs/assert.h
 MouseDirectInput8.o: ../depend_stubs/iostream
@@ -954,6 +964,9 @@ MouseDirectInput8.o: ../src/win32/MouseDirectInput8.h
 MouseDirectInput8.o: ../depend_stubs/dinput.h ../src/Mouse.h
 MouseDirectInput8.o: ../depend_stubs/vector
 MouseDirectInput8.o: ../src/CentralisedLog.h
+MouseDirectInput8.o: ../depend_stubs/sstream
+MouseDirectInput8.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+MouseDirectInput8.o: ../src/console_colour.h
 win32_clipboard.o: ../depend_stubs/cstdlib
 win32_clipboard.o: ../depend_stubs/string
 win32_clipboard.o: ../depend_stubs/windows.h
@@ -1064,14 +1077,14 @@ GfxDiskResource.o: ../depend_stubs/OgreMeshFileFormat.h
 GfxDiskResource.o: ../src/gfx/GfxDiskResource.h
 GfxDiskResource.o: ../depend_stubs/OgreResource.h
 GfxDiskResource.o: ../src/CentralisedLog.h
-GfxDiskResource.o: ../src/BackgroundLoader.h
-GfxDiskResource.o: ../depend_stubs/vector ../src/vect_util.h
-GfxDiskResource.o: ../depend_stubs/algorithm
-GfxDiskResource.o: ../src/CentralisedLog.h
 GfxDiskResource.o: ../depend_stubs/iostream
 GfxDiskResource.o: ../depend_stubs/sstream
 GfxDiskResource.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 GfxDiskResource.o: ../src/console_colour.h
+GfxDiskResource.o: ../src/BackgroundLoader.h
+GfxDiskResource.o: ../depend_stubs/vector ../src/vect_util.h
+GfxDiskResource.o: ../depend_stubs/algorithm
+GfxDiskResource.o: ../src/CentralisedLog.h
 GfxDiskResource.o: ../src/gfx/gfx_internal.h
 GfxDiskResource.o: ../depend_stubs/string ../depend_stubs/Ogre.h
 GfxDiskResource.o: ../depend_stubs/OgreFontManager.h
@@ -1262,7 +1275,10 @@ GfxSkyBody.o: ../src/CentralisedLog.h ../src/BackgroundLoader.h
 GfxSkyBody.o: ../src/vect_util.h ../src/gfx/GfxSkyMaterial.h
 GfxSkyBody.o: ../depend_stubs/OgreMaterial.h
 GfxSkyMaterial.o: ../depend_stubs/string ../depend_stubs/map
-GfxSkyMaterial.o: ../src/CentralisedLog.h
+GfxSkyMaterial.o: ../src/CentralisedLog.h ../depend_stubs/iostream
+GfxSkyMaterial.o: ../depend_stubs/sstream
+GfxSkyMaterial.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+GfxSkyMaterial.o: ../src/console_colour.h
 GfxSkyMaterial.o: ../src/gfx/gfx_internal.h ../depend_stubs/Ogre.h
 GfxSkyMaterial.o: ../depend_stubs/OgreFontManager.h
 GfxSkyMaterial.o: ../depend_stubs/OgreMeshManager.h
@@ -1275,10 +1291,7 @@ GfxSkyMaterial.o: ../depend_stubs/OgreCompositor.h
 GfxSkyMaterial.o: ../src/gfx/gfx.h ../src/SharedPtr.h
 GfxSkyMaterial.o: ../src/vect_util.h ../depend_stubs/vector
 GfxSkyMaterial.o: ../depend_stubs/algorithm
-GfxSkyMaterial.o: ../src/CentralisedLog.h ../depend_stubs/iostream
-GfxSkyMaterial.o: ../depend_stubs/sstream
-GfxSkyMaterial.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-GfxSkyMaterial.o: ../src/console_colour.h ../src/gfx/gfx_option.h
+GfxSkyMaterial.o: ../src/CentralisedLog.h ../src/gfx/gfx_option.h
 GfxSkyMaterial.o: ../src/gfx/GfxSkyMaterial.h
 GfxSkyMaterial.o: ../depend_stubs/OgreMaterial.h
 GfxSkyMaterial.o: ../src/gfx/GfxSkyBody.h
@@ -1301,6 +1314,9 @@ HUD.o: ../src/gfx/TextListOverlayElement.h
 HUD.o: ../depend_stubs/OgrePrerequisites.h
 HUD.o: ../depend_stubs/OgreOverlayElement.h
 HUD.o: ../depend_stubs/OgreFont.h ../src/CentralisedLog.h
+HUD.o: ../depend_stubs/iostream ../depend_stubs/sstream
+HUD.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+HUD.o: ../src/console_colour.h
 TextListOverlayElement.o: ../depend_stubs/OgreStableHeaders.h
 TextListOverlayElement.o: ../depend_stubs/OgreRoot.h
 TextListOverlayElement.o: ../depend_stubs/OgreLogManager.h
@@ -1966,7 +1982,10 @@ CollisionMesh.o: ../depend_stubs/LinearMath/btGeometryUtil.h
 CollisionMesh.o: ../depend_stubs/btBulletCollisionCommon.h
 CollisionMesh.o: ../depend_stubs/BulletCollision/Gimpact/btGImpactShape.h
 CollisionMesh.o: ../depend_stubs/BulletCollision/CollisionDispatch/btInternalEdgeUtility.h
-CollisionMesh.o: ../src/CentralisedLog.h ../src/path_util.h
+CollisionMesh.o: ../src/CentralisedLog.h
+CollisionMesh.o: ../depend_stubs/sstream
+CollisionMesh.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+CollisionMesh.o: ../src/console_colour.h ../src/path_util.h
 CollisionMesh.o: ../depend_stubs/vector ../depend_stubs/string
 CollisionMesh.o: ../src/physics/CollisionMesh.h
 CollisionMesh.o: ../depend_stubs/OgreDataStream.h
@@ -1976,9 +1995,6 @@ CollisionMesh.o: ../src/physics/TColParser.h
 CollisionMesh.o: ../src/math_util.h ../depend_stubs/cmath
 CollisionMesh.o: ../depend_stubs/cfloat
 CollisionMesh.o: ../src/CentralisedLog.h
-CollisionMesh.o: ../depend_stubs/sstream
-CollisionMesh.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-CollisionMesh.o: ../src/console_colour.h
 CollisionMesh.o: ../src/physics/TColLexer ../depend_stubs/map
 CollisionMesh.o: ../depend_stubs/istream
 CollisionMesh.o: ../depend_stubs/quex/code_base/compatibility/inttypes.h
@@ -2010,7 +2026,11 @@ CollisionMesh.o: ../src/physics/PhysicalMaterial.h
 PhysicalMaterial.o: ../src/physics/PhysicalMaterial.h
 PhysicalMaterial.o: ../depend_stubs/vector
 PhysicalMaterial.o: ../depend_stubs/string
-PhysicalMaterial.o: ../src/CentralisedLog.h ../src/path_util.h
+PhysicalMaterial.o: ../src/CentralisedLog.h
+PhysicalMaterial.o: ../depend_stubs/iostream
+PhysicalMaterial.o: ../depend_stubs/sstream
+PhysicalMaterial.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+PhysicalMaterial.o: ../src/console_colour.h ../src/path_util.h
 PhysicsWorld.o: ../depend_stubs/BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h
 PhysicsWorld.o: ../depend_stubs/BulletCollision/CollisionDispatch/btInternalEdgeUtility.h
 PhysicsWorld.o: ../src/GritObject.h ../depend_stubs/map
@@ -2360,14 +2380,14 @@ lua_wrappers_physics.o: ../src/physics/lua_wrappers_physics.h
 AudioDiskResource.o: ../src/audio/AudioDiskResource.h
 AudioDiskResource.o: ../depend_stubs/AL/al.h
 AudioDiskResource.o: ../src/CentralisedLog.h
-AudioDiskResource.o: ../src/BackgroundLoader.h
-AudioDiskResource.o: ../depend_stubs/vector ../src/vect_util.h
-AudioDiskResource.o: ../depend_stubs/algorithm
-AudioDiskResource.o: ../src/CentralisedLog.h
 AudioDiskResource.o: ../depend_stubs/iostream
 AudioDiskResource.o: ../depend_stubs/sstream
 AudioDiskResource.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 AudioDiskResource.o: ../src/console_colour.h
+AudioDiskResource.o: ../src/BackgroundLoader.h
+AudioDiskResource.o: ../depend_stubs/vector ../src/vect_util.h
+AudioDiskResource.o: ../depend_stubs/algorithm
+AudioDiskResource.o: ../src/CentralisedLog.h
 AudioDiskResource.o: ../depend_stubs/OgreResourceGroupManager.h
 AudioDiskResource.o: ../src/audio/audio.h ../src/SharedPtr.h
 AudioDiskResource.o: ../src/math_util.h ../depend_stubs/cmath
@@ -2382,12 +2402,12 @@ AudioDiskResource.o: ../depend_stubs/string
 AudioDiskResource.o: ../depend_stubs/fstream
 AudioDiskResource.o: ../depend_stubs/stdint.h
 audio.o: ../depend_stubs/AL/al.h ../depend_stubs/AL/alc.h
-audio.o: ../src/CentralisedLog.h ../src/vect_util.h
-audio.o: ../depend_stubs/vector ../depend_stubs/algorithm
 audio.o: ../src/CentralisedLog.h ../depend_stubs/iostream
 audio.o: ../depend_stubs/sstream
 audio.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-audio.o: ../src/console_colour.h ../src/option.h
+audio.o: ../src/console_colour.h ../src/vect_util.h
+audio.o: ../depend_stubs/vector ../depend_stubs/algorithm
+audio.o: ../src/CentralisedLog.h ../src/option.h
 audio.o: ../depend_stubs/string ../depend_stubs/ostream
 audio.o: ../src/audio/audio.h ../src/SharedPtr.h
 audio.o: ../src/math_util.h ../depend_stubs/cmath

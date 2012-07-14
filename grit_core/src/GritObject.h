@@ -74,6 +74,10 @@ class GritObject {
                             const GritObjectPtr &self,
                             const float time);
 
+        bool stepCallback (lua_State *L,
+                           const GritObjectPtr &self,
+                           const float time);
+
         void notifyFade (lua_State *L,
                          const GritObjectPtr &self,
                          const float fade);
@@ -122,6 +126,9 @@ class GritObject {
 
         bool getNeedsFrameCallbacks (void) const { return needsFrameCallbacks; }
         void setNeedsFrameCallbacks (const GritObjectPtr &self, bool v);
+
+        bool getNeedsStepCallbacks (void) const { return needsStepCallbacks; }
+        void setNeedsStepCallbacks (const GritObjectPtr &self, bool v);
 
 
         const std::string name;
@@ -224,6 +231,7 @@ class GritObject {
         int index;
 
         bool needsFrameCallbacks;
+        bool needsStepCallbacks;
 
         GritObjectPtr nearObj, farObj;
                 
@@ -248,6 +256,8 @@ void object_all_del (lua_State *L);
 int object_count (void);
 
 void object_do_frame_callbacks (lua_State *L, float elapsed);
+
+void object_do_step_callbacks (lua_State *L, float elapsed);
 
 #endif
 

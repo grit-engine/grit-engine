@@ -830,22 +830,21 @@ TRY_START
 TRY_END
 }
 
-static int global_physics_pump (lua_State *L)
+static int global_physics_update (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        float time_step = check_float(L,1);
-        int iterations = physics_pump(L,time_step);
-        lua_pushnumber(L,iterations);
-        return 1;
+        check_args(L,0);
+        physics_update(L);
+        return 0;
 TRY_END
 }
 
 static int global_physics_update_graphics (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        physics_update_graphics(L);
+        check_args(L,1);
+        float extrapolate = check_float(L,1);
+        physics_update_graphics(L, extrapolate);
         return 0;
 TRY_END
 }
@@ -1003,8 +1002,10 @@ static const luaL_reg global[] = {
         {"physics_set_interaction_groups" ,global_physics_set_interaction_groups},
         {"physics_draw" ,global_physics_draw},
         {"physics_test" ,global_physics_test},
-        {"physics_pump" ,global_physics_pump},
+
+        {"physics_update" ,global_physics_update},
         {"physics_update_graphics" ,global_physics_update_graphics},
+
         {"physics_body_make" ,global_physics_body_make},
         {"physics_get_gravity" ,global_physics_get_gravity},
         {"physics_option" ,global_physics_option},

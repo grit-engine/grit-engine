@@ -65,7 +65,6 @@ enum PhysicsBoolOption {
 };
 
 enum PhysicsIntOption {
-    PHYSICS_MAX_STEPS,
     PHYSICS_SOLVER_ITERATIONS
 };
 
@@ -125,7 +124,7 @@ extern "C" {
 // a class that extends a bullet class
 class DynamicsWorld;
 
-int physics_pump (lua_State *L, float time_step);
+void physics_update (lua_State *L);
 
 // to be extended by lua wrapper or whatever
 class SweepCallback {
@@ -169,7 +168,7 @@ void physics_test_sphere (float rad, const Vector3 &pos, bool dyn_only, TestCall
 
 void physics_draw (void);
 
-void physics_update_graphics (lua_State *L);
+void physics_update_graphics (lua_State *L, float extrapolate);
 
 
 class RigidBody : public btMotionState, public CollisionMesh::ReloadWatcher {
@@ -201,13 +200,13 @@ class RigidBody : public btMotionState, public CollisionMesh::ReloadWatcher {
 
     void setOrientation (const Quaternion &q);
 
-    void stepCallback (lua_State *L);
+    void stepCallback (lua_State *L, float step_size);
     void collisionCallback (lua_State *L, int lifetime, float impulse,
                 const RigidBodyPtr &other,
                 int m, int m2, float penetration,
                 const Vector3 &pos, const Vector3 &pos2, const Vector3 &wnormal);
     void stabiliseCallback (lua_State *L, float elapsed);
-    void updateGraphicsCallback (lua_State *L);
+    void updateGraphicsCallback (lua_State *L, float extrapolate);
 
     void activate (void);
     void deactivate (void);

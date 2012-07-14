@@ -261,6 +261,8 @@ TRY_START
                 lua_pushstring(L,self->name.c_str());
         } else if (key=="needsFrameCallbacks") {
                 lua_pushboolean(L,self->getNeedsFrameCallbacks());
+        } else if (key=="needsStepCallbacks") {
+                lua_pushboolean(L,self->getNeedsStepCallbacks());
         } else if (key=="dump") {
                 self->userValues.dump(L);
         } else {
@@ -332,6 +334,8 @@ TRY_START
                 my_lua_error(L,"Not a writeable GritObject member: "+key);
         } else if (key=="needsFrameCallbacks") {
                 self->setNeedsFrameCallbacks(self, check_bool(L,3));
+        } else if (key=="needsStepCallbacks") {
+                self->setNeedsStepCallbacks(self, check_bool(L,3));
         } else {
                 GritClass *c = self->getClass();
                 if (c==NULL) my_lua_error(L,"GritObject destroyed");
@@ -686,6 +690,16 @@ TRY_START
 TRY_END
 }
 
+static int global_object_do_step_callbacks (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        float elapsed = check_float(L, 1);
+        object_do_step_callbacks(L, elapsed);
+        return 0;
+TRY_END
+}
+
 
 
 int global_core_option (lua_State *L)
@@ -749,6 +763,7 @@ static const luaL_reg global[] = {
     {"object_count_of_class",global_object_count_of_class},
     {"object_all_deactivate",global_object_all_deactivate},
     {"object_do_frame_callbacks",global_object_do_frame_callbacks},
+    {"object_do_step_callbacks",global_object_do_step_callbacks},
     {NULL,NULL}
 };
 

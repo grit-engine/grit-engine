@@ -32,6 +32,7 @@
 
 static GObjMap objs;
 static GObjSet objs_needing_frame_callbacks;
+static GObjSet objs_needing_step_callbacks;
 static GObjPtrs loaded;
 static unsigned long long name_generation_counter;
 
@@ -42,6 +43,7 @@ GritObject::GritObject (const std::string &name_,
     gritClass(gritClass_),
     lua(LUA_NOREF),
     needsFrameCallbacks(false),
+    needsStepCallbacks(false),
     demandRegistered(false),
     imposedFarFade(1.0),
     lastFade(-1)
@@ -54,6 +56,9 @@ void GritObject::destroy (lua_State *L, const GritObjectPtr &self)
     if (gritClass==NULL) return;;
     if (needsFrameCallbacks) {
         objs_needing_frame_callbacks.erase(self);
+    }
+    if (needsStepCallbacks) {
+        objs_needing_step_callbacks.erase(self);
     }
     setNearObj(self,GritObjectPtr());
     setFarObj(self,GritObjectPtr());
@@ -442,6 +447,59 @@ bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, float e
     return status==0;
 }
 
+bool GritObject::stepCallback (lua_State *L, const GritObjectPtr &self, float elapsed)
+{
+    if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
+
+    STACK_BASE;
+    //stack is empty
+
+    push_cfunction(L, my_lua_error_handler);
+    int error_handler = lua_gettop(L);
+
+    //stack: err
+
+    // could get the init function from the object itself, but
+    // this would only lead to pulling the function from the class
+    // indirectly which is a waste of time, may as well get it straight
+    // from the class
+    push_gritcls(L,gritClass);
+    //stack: err,class
+    gritClass->get(L,"stepCallback");
+    //stack: err,class,callback
+    if (lua_isnil(L,-1)) {
+        lua_pop(L,3);
+        //stack is empty
+        STACK_CHECK;
+        return false;
+    }
+
+    //stack: err,class,callback
+    // we now have the callback to play with
+
+    lua_checkstack(L,2);
+    push_gritobj(L,self); // persistent grit obj
+    lua_pushnumber(L, elapsed); // time since last frame
+    //stack: err,class,callback,instance,elapsed
+    pwd_push_dir(gritClass->dir);
+    int status = lua_pcall(L,2,0,error_handler);
+    pwd_pop();
+    if (status) {
+        //stack: err,class,msg
+        // pop the error message since the error handler will
+        // have already printed it out
+        lua_pop(L,1);
+        //stack: err,class
+    }
+    //stack: err,class
+
+    lua_pop(L,2);
+    //stack is empty
+    STACK_CHECK;
+
+    return status==0;
+}
+
 void GritObject::updateSphere (const Vector3 &pos_, float r_)
 {
     if (index==-1) return;
@@ -470,6 +528,19 @@ void GritObject::setNeedsFrameCallbacks (const GritObjectPtr &self, bool v)
         objs_needing_frame_callbacks.erase(self);
     } else {
         objs_needing_frame_callbacks.insert(self);
+    }
+}
+
+void GritObject::setNeedsStepCallbacks (const GritObjectPtr &self, bool v)
+{
+    if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
+    if (v == needsStepCallbacks) return;
+    needsStepCallbacks = v;
+
+    if (!v) {
+        objs_needing_step_callbacks.erase(self);
+    } else {
+        objs_needing_step_callbacks.insert(self);
     }
 }
 
@@ -556,6 +627,17 @@ void object_do_frame_callbacks (lua_State *L, float elapsed)
         for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
                 if (!(*i)->frameCallback(L, *i, elapsed)) {
                         (*i)->setNeedsFrameCallbacks(*i, false);
+                }
+        }
+}
+
+void object_do_step_callbacks (lua_State *L, float elapsed)
+{
+        GObjSet victims = objs_needing_step_callbacks;
+        typedef GObjSet::iterator I;
+        for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
+                if (!(*i)->stepCallback(L, *i, elapsed)) {
+                        (*i)->setNeedsStepCallbacks(*i, false);
                 }
         }
 }
