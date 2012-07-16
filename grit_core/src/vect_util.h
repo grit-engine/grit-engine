@@ -80,6 +80,9 @@ template<class T> class fast_erase_vector {
 
     void clear (void) { vect.clear(); }
 
+    void reserve (size_t n) { vect.reserve(n); }
+    size_t capacity (void) const { return vect.capacity(); }
+
     T &operator[] (size_t i) { return vect[i]; }
 
     private:

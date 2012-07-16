@@ -22,6 +22,7 @@
 #include "../SharedPtr.h"
 
 class GfxInstances;
+class GfxInstance;
 typedef SharedPtr<GfxInstances> GfxInstancesPtr;
 
 
@@ -30,19 +31,30 @@ typedef SharedPtr<GfxInstances> GfxInstancesPtr;
 
 #include "../Streamer.h"
 
+#include "OgreMovableObject.h"
+
 #include "GfxBody.h"
 
-class GfxInstances : public GfxNode, public fast_erase_index, public StreamerCallback {
-    protected:
-    class Instance;
+class GfxInstances : public GfxNode, public fast_erase_index, public StreamerCallback, public Ogre::MovableObject {
 
-    std::vector<Instance> instances;
+    protected:
+
+    unsigned capacity;
+    fast_erase_vector<GfxInstance*> instances;
     static const std::string className;
 
-    std::string meshName;
-    Ogre::MovableObject *mobj;
+    class Section;
 
-    GfxInstances (const std::string &mesh, const GfxBodyPtr &par_);
+    unsigned numSections;
+    Section **sections;
+
+    Ogre::MeshPtr mesh;
+    Ogre::VertexData *sharedVertexData;
+    Ogre::HardwareVertexBufferSharedPtr instBuf;
+    std::vector<float> instBufRaw;
+    bool dirty;
+
+    GfxInstances (GfxDiskResource *mesh, const GfxBodyPtr &par_);
     ~GfxInstances ();
 
     void registerMe (void);
@@ -50,15 +62,53 @@ class GfxInstances : public GfxNode, public fast_erase_index, public StreamerCal
     void update (const Vector3 &new_pos);
 
     public:
-    static GfxInstancesPtr make (const std::string &mesh, const GfxBodyPtr &par_=GfxBodyPtr(NULL))
-    { return GfxInstancesPtr(new GfxInstances(mesh, par_)); }
+    static GfxInstancesPtr make (const std::string &mesh, const GfxBodyPtr &par_=GfxBodyPtr(NULL));
 
-    unsigned int add (void);
+    GfxInstance *add (const Vector3 &pos, const Quaternion &q, float fade);
     // in future, perhaps 3d scale, skew, or general 3x3 matrix?
-    void update (unsigned int index, const Vector3 &pos, const Quaternion &q, float fade);
-    void remove (unsigned int index);
-    
+    void update (GfxInstance *inst, const Vector3 &pos, const Quaternion &q, float fade);
+    void remove (GfxInstance *inst);
+
+    void reserve (unsigned new_capacity);
+
     void destroy (void);
+
+
+    // Stuff for Ogre::MovableObject
+
+    protected:
+
+    Ogre::AxisAlignedBox mBoundingBox;
+    Ogre::Real mBoundingRadius;
+
+    void copyToGPU ();
+    void copyToGPU (unsigned from, unsigned to, bool discard);
+
+    public:
+
+    virtual const Ogre::String& getMovableType (void) const
+    {
+        static const Ogre::String type = "GfxInstances";
+        return type;
+    }
+
+    virtual const Ogre::AxisAlignedBox& getBoundingBox (void) const
+    { return mBoundingBox; }
+
+    virtual Ogre::Real getBoundingRadius (void) const
+    { return mBoundingRadius; }
+
+    virtual void setBoundingBox (const Ogre::AxisAlignedBox &b)
+    { mBoundingBox = b; }
+
+    virtual void setBoundingRadius (Ogre::Real v)
+    { mBoundingRadius = v; }
+
+    virtual void visitRenderables(Ogre::Renderable::Visitor *v, bool b);
+
+    virtual void _updateRenderQueue(Ogre::RenderQueue *q);
+
+
 
     friend class SharedPtr<GfxInstances>;
 };
