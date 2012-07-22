@@ -466,13 +466,13 @@ namespace HUD {
 
                 mpFont = fp;
                 mpFont->load();
-                mpMaterial = mpFont->getMaterial();
+                mMaterial = mpFont->getMaterial();
 
                 // the font should surely do this for itself?
-                mpMaterial->setDepthCheckEnabled(false);
+                mMaterial->setDepthCheckEnabled(false);
 
                 // we supply our own lighting, which this presumably overrides
-                mpMaterial->setLightingEnabled(false);
+                mMaterial->setLightingEnabled(false);
 
                 mDimensionsOutOfDate = true;
                 _positionsOutOfDate();
