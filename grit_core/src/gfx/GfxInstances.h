@@ -35,7 +35,8 @@ typedef SharedPtr<GfxInstances> GfxInstancesPtr;
 
 #include "GfxBody.h"
 
-class GfxInstances : public GfxNode, public fast_erase_index, public StreamerCallback, public Ogre::MovableObject {
+//class GfxInstances : public GfxNode, public fast_erase_index, public StreamerCallback, public Ogre::MovableObject {
+class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::MovableObject {
 
     protected:
 
@@ -57,9 +58,9 @@ class GfxInstances : public GfxNode, public fast_erase_index, public StreamerCal
     GfxInstances (GfxDiskResource *mesh, const GfxBodyPtr &par_);
     ~GfxInstances ();
 
-    void registerMe (void);
-    void unregisterMe (void);
-    void update (const Vector3 &new_pos);
+    //void registerMe (void);
+    //void unregisterMe (void);
+    //void update (const Vector3 &new_pos);
 
     public:
     static GfxInstancesPtr make (const std::string &mesh, const GfxBodyPtr &par_=GfxBodyPtr(NULL));

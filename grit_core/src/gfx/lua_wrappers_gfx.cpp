@@ -30,6 +30,7 @@
 #include "GfxMaterial.h"
 #include "GfxSkyMaterial.h"
 #include "GfxLight.h"
+#include "GfxInstances.h"
 #include "gfx_option.h"
 #include "lua_wrappers_gfx.h"
 #include "../lua_wrappers_primitives.h"
@@ -38,9 +39,9 @@
 
 #define GFXBODY_TAG "Grit/GfxBody"
 #define GFXSKYBODY_TAG "Grit/GfxSkyBody"
-
+#define GFXINSTANCES_TAG "Grit/GfxInstances"
 #define GFXLIGHT_TAG "Grit/GfxLight"
-//MT_MACRO_DECLARE(gfxlight);
+
 
 // GFXBODY ============================================================== {{{
 
@@ -529,6 +530,85 @@ MT_MACRO_NEWINDEX(gfxbody);
 //}}}
 
 
+// GFXINSTANCES ============================================================== {{{
+
+void push_gfxinstances (lua_State *L, const GfxInstancesPtr &self)
+{
+    if (self.isNull())
+        lua_pushnil(L);
+    else
+        push(L,new GfxInstancesPtr(self),GFXINSTANCES_TAG);
+}
+
+GC_MACRO(GfxInstancesPtr,gfxinstances,GFXINSTANCES_TAG)
+
+static int gfxinstances_destroy (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(GfxInstancesPtr,self,1,GFXINSTANCES_TAG);
+    self->destroy();
+    return 0;
+TRY_END
+}
+
+
+
+TOSTRING_SMART_PTR_MACRO (gfxinstances,GfxInstancesPtr,GFXINSTANCES_TAG)
+
+
+static int gfxinstances_index (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxInstancesPtr,self,1,GFXINSTANCES_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"castShadows")) {
+        lua_pushboolean(L, self->getCastShadows());
+    } else if (!::strcmp(key,"destroyed")) {
+        lua_pushboolean(L,self->destroyed());
+    } else if (!::strcmp(key,"destroy")) {
+        push_cfunction(L,gfxinstances_destroy);
+    } else if (!::strcmp(key,"parent")) {
+        push_gfxbody(L, self->getParent());
+    } else {
+        my_lua_error(L,"Not a readable GfxInstance member: "+std::string(key));
+    }
+    return 1;
+TRY_END
+}
+
+
+static int gfxinstances_newindex (lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(GfxInstancesPtr,self,1,GFXINSTANCES_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"castShadows")) {
+        bool v = check_bool(L,3);
+        self->setCastShadows(v);
+    } else if (!::strcmp(key,"parent")) {
+        if (lua_isnil(L,3)) {
+            self->setParent(GfxBodyPtr(NULL));
+        } else {
+            GET_UD_MACRO(GfxBodyPtr,par,3,GFXBODY_TAG);
+            self->setParent(par);
+        }
+    } else {
+           my_lua_error(L,"Not a writeable GfxInstance member: "+std::string(key));
+    }
+    return 0;
+TRY_END
+}
+
+EQ_MACRO(GfxInstancesPtr,gfxinstances,GFXINSTANCES_TAG)
+
+MT_MACRO_NEWINDEX(gfxinstances);
+
+//}}}
+
+
 // GFXSKYBODY ============================================================== {{{
 
 void push_gfxskybody (lua_State *L, const GfxSkyBodyPtr &self)
@@ -822,6 +902,16 @@ TRY_START
         }
         return 1;
     }
+TRY_END
+}
+
+int global_gfx_instances_make (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    std::string meshname = check_path(L,1);
+    push_gfxinstances(L, GfxInstances::make(meshname));
+    return 1;
 TRY_END
 }
 
@@ -2698,6 +2788,7 @@ static const luaL_reg global[] = {
     {"gfx_screenshot",global_gfx_screenshot},
     {"gfx_option",global_gfx_option},
     {"gfx_body_make",global_gfx_body_make},
+    {"gfx_instances_make",global_gfx_instances_make},
     {"gfx_sky_body_make",global_gfx_sky_body_make},
     {"gfx_light_make",global_gfx_light_make},
     {"gfx_sun_get_diffuse",global_gfx_sun_get_diffuse},
@@ -2718,6 +2809,11 @@ static const luaL_reg global[] = {
     {"gfx_particle_count",global_gfx_particle_count},
     {"gfx_particle_step_size_set",global_gfx_particle_step_size_set},
     {"gfx_particle_step_size_get",global_gfx_particle_step_size_get},
+
+    {NULL, NULL}
+};
+
+static const luaL_reg global_ogre_debug[] = {
 
     {"get_rendersystem",global_get_rendersystem},
 
@@ -2814,6 +2910,7 @@ void gfx_lua_init (lua_State *L)
     ADD_MT_MACRO(gfxbody,GFXBODY_TAG);
     ADD_MT_MACRO(gfxskybody,GFXSKYBODY_TAG);
     ADD_MT_MACRO(gfxlight,GFXLIGHT_TAG);
+    ADD_MT_MACRO(gfxinstances,GFXINSTANCES_TAG);
 
     ADD_MT_MACRO(scnmgr,SCNMGR_TAG);
     ADD_MT_MACRO(node,NODE_TAG);
@@ -2837,6 +2934,7 @@ void gfx_lua_init (lua_State *L)
     ADD_MT_MACRO(rwin,RWIN_TAG);
 
     register_lua_globals(L, global);
+    register_lua_globals(L, global_ogre_debug);
 
 }
 

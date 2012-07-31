@@ -133,7 +133,7 @@ GfxInstances::GfxInstances (GfxDiskResource *gdr, const GfxBodyPtr &par_)
     }
 
     //gfx_all_bodies.push_back(this);
-    registerMe();
+    //registerMe();
 }   
     
 void GfxInstances::reserve (unsigned new_capacity)
@@ -177,7 +177,7 @@ void GfxInstances::copyToGPU (unsigned from, unsigned to, bool discard)
 GfxInstances::~GfxInstances (void)
 {
     if (!dead) destroy();
-    unregisterMe();
+    //unregisterMe();
     OGRE_DELETE sharedVertexData;
     delete [] sections;
 }
@@ -225,6 +225,7 @@ void GfxInstances::remove (GfxInstance *inst)
 }
 
 
+/*
 void GfxInstances::registerMe (void)
 {
     streamer_callback_register(this);
@@ -239,6 +240,7 @@ void GfxInstances::update (const Vector3 &new_pos)
 {
     (void) new_pos;
 }
+*/
 
 
 void GfxInstances::visitRenderables(Ogre::Renderable::Visitor *visitor, bool debug)
