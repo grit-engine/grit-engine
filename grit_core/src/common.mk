@@ -1104,12 +1104,12 @@ GfxDiskResource.o: ../depend_stubs/OgreSceneNode.h
 GfxDiskResource.o: ../src/math_util.h ../depend_stubs/cmath
 GfxDiskResource.o: ../depend_stubs/cfloat
 GfxDiskResource.o: ../src/gfx/GfxSkyMaterial.h
-GfxInstances.o: ../src/main.h ../depend_stubs/lua.h ../src/Mouse.h
+GfxInstances.o: ../depend_stubs/algorithm ../src/main.h
+GfxInstances.o: ../depend_stubs/lua.h ../src/Mouse.h
 GfxInstances.o: ../depend_stubs/vector ../src/Keyboard.h
 GfxInstances.o: ../depend_stubs/string ../src/BackgroundLoader.h
-GfxInstances.o: ../src/vect_util.h ../depend_stubs/algorithm
-GfxInstances.o: ../src/CentralisedLog.h ../depend_stubs/iostream
-GfxInstances.o: ../depend_stubs/sstream
+GfxInstances.o: ../src/vect_util.h ../src/CentralisedLog.h
+GfxInstances.o: ../depend_stubs/iostream ../depend_stubs/sstream
 GfxInstances.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 GfxInstances.o: ../src/console_colour.h ../depend_stubs/list
 GfxInstances.o: ../depend_stubs/boost/thread/thread.hpp
@@ -1569,6 +1569,7 @@ lua_wrappers_gfx.o: ../depend_stubs/OgreResource.h
 lua_wrappers_gfx.o: ../src/BackgroundLoader.h
 lua_wrappers_gfx.o: ../src/gfx/GfxSkyMaterial.h
 lua_wrappers_gfx.o: ../src/gfx/GfxLight.h
+lua_wrappers_gfx.o: ../src/gfx/GfxInstances.h
 lua_wrappers_gfx.o: ../src/gfx/lua_wrappers_gfx.h
 lua_wrappers_gfx.o: ../src/lua_wrappers_common.h
 lua_wrappers_gfx.o: ../src/lua_wrappers_primitives.h
