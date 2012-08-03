@@ -99,7 +99,7 @@ GfxInstances::GfxInstances (GfxDiskResource *gdr, const GfxBodyPtr &par_)
 
     reinitialise();
 
-    reserve(0);
+    reserveSpace(0);
 
     //gfx_all_bodies.push_back(this);
     //registerMe();
@@ -146,7 +146,7 @@ void GfxInstances::reinitialise (void)
     updateProperties();
 }
     
-void GfxInstances::reserve (unsigned new_capacity)
+void GfxInstances::reserveSpace (unsigned new_capacity)
 {
     if (new_capacity < sparseIndexes.size()) new_capacity = sparseIndexes.size();
 
@@ -205,9 +205,18 @@ void GfxInstances::destroy (void)
     GfxNode::destroy();
 }
 
+void GfxInstances::rangeCheck (unsigned sparse_index)
+{
+    if (sparse_index >= denseIndexes.size() || denseIndexes[sparse_index] == 0xFFFF) {
+        std::stringstream ss;
+        ss << "Instance out of range: " << sparse_index;
+        GRIT_EXCEPT(ss.str());
+    }
+}
+
 unsigned GfxInstances::add (const Vector3 &pos, const Quaternion &q, float fade)
 {
-    if (sparseIndexes.size()+1 > capacity) reserve(std::max(128u, unsigned(capacity * 1.3)));
+    if (sparseIndexes.size() >= capacity) reserveSpace(std::max(128u, unsigned(capacity * 1.3)));
     unsigned sparse_index = freeList[freeList.size()-1];
     freeList.pop_back();
     unsigned dense_index = sparseIndexes.size();
@@ -221,6 +230,7 @@ unsigned GfxInstances::add (const Vector3 &pos, const Quaternion &q, float fade)
 
 void GfxInstances::update (unsigned sparse_index, const Vector3 &pos, const Quaternion &q, float fade)
 {
+    rangeCheck(sparse_index);
     unsigned dense_index = denseIndexes[sparse_index];
     float *base = &instBufRaw[dense_index * instance_data_floats];
     Ogre::Matrix3 rot;
@@ -236,41 +246,31 @@ void GfxInstances::update (unsigned sparse_index, const Vector3 &pos, const Quat
     dirty = true;
 }
 
-void GfxInstances::remove (unsigned sparse_index)
+void GfxInstances::del (unsigned sparse_index)
 {
+    rangeCheck(sparse_index);
     unsigned dense_index = denseIndexes[sparse_index];
     unsigned last = sparseIndexes.size()-1;
 
-    // reorganise buffers to move last instance into the position of the one just removed
-    sparseIndexes[dense_index] = sparseIndexes[last];
-    for (unsigned i=0 ; i<instance_data_floats ; ++i) {
-        instBufRaw[dense_index * instance_data_floats + i] = instBufRaw[last * instance_data_floats + i];
+    if (dense_index != last) {
+        // reorganise buffers to move last instance into the position of the one just removed
+        sparseIndexes[dense_index] = sparseIndexes[last];
+        for (unsigned i=0 ; i<instance_data_floats ; ++i) {
+            instBufRaw[dense_index * instance_data_floats + i] = instBufRaw[last * instance_data_floats + i];
+        }
+        denseIndexes[sparseIndexes[last]] = dense_index;
     }
 
     sparseIndexes.resize(last);
     instBufRaw.resize(instance_data_floats * last);
+    for (unsigned i=0 ; i<numSections ; ++i) sections[i]->setNumInstances(last);
 
-    sparseIndexes[sparse_index] = 0xFFFF;
+    denseIndexes[sparse_index] = 0xFFFF;
     freeList.push_back(sparse_index);
+
+    dirty = true;
 }
 
-
-/*
-void GfxInstances::registerMe (void)
-{
-    streamer_callback_register(this);
-}
-
-void GfxInstances::unregisterMe (void)
-{
-    streamer_callback_unregister(this);
-}
-
-void GfxInstances::update (const Vector3 &new_pos)
-{
-    (void) new_pos;
-}
-*/
 
 // Currently needs to be updated when these material properties change:
 // getSceneBlend

@@ -53,6 +53,7 @@ COMMON_OBJ=\
         GfxBody.o \
         GfxDiskResource.o \
         GfxInstances.o \
+        GfxRangedInstances.o \
         GfxLight.o \
         GfxMaterial.o \
         gfx_option.o \
@@ -1249,6 +1250,99 @@ GfxParticleSystem.o: ../depend_stubs/sstream
 GfxParticleSystem.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 GfxParticleSystem.o: ../src/console_colour.h
 GfxParticleSystem.o: ../src/gfx/gfx_option.h
+GfxRangedInstances.o: ../depend_stubs/algorithm ../src/main.h
+GfxRangedInstances.o: ../depend_stubs/lua.h ../src/Mouse.h
+GfxRangedInstances.o: ../depend_stubs/vector ../src/Keyboard.h
+GfxRangedInstances.o: ../depend_stubs/string
+GfxRangedInstances.o: ../src/BackgroundLoader.h ../src/vect_util.h
+GfxRangedInstances.o: ../src/CentralisedLog.h
+GfxRangedInstances.o: ../depend_stubs/iostream
+GfxRangedInstances.o: ../depend_stubs/sstream
+GfxRangedInstances.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+GfxRangedInstances.o: ../src/console_colour.h ../depend_stubs/list
+GfxRangedInstances.o: ../depend_stubs/boost/thread/thread.hpp
+GfxRangedInstances.o: ../depend_stubs/boost/thread/condition.hpp
+GfxRangedInstances.o: ../src/DiskResource.h ../depend_stubs/set
+GfxRangedInstances.o: ../src/BulletDebugDrawer.h
+GfxRangedInstances.o: ../depend_stubs/OgreFrameListener.h
+GfxRangedInstances.o: ../depend_stubs/OgreManualObject.h
+GfxRangedInstances.o: ../depend_stubs/btBulletCollisionCommon.h
+GfxRangedInstances.o: ../src/gfx/lua_userdata_dependency_tracker.h
+GfxRangedInstances.o: ../depend_stubs/OgreStaticGeometry.h
+GfxRangedInstances.o: ../depend_stubs/OgreInstancedGeometry.h
+GfxRangedInstances.o: ../src/gfx/Clutter.h ../depend_stubs/cfloat
+GfxRangedInstances.o: ../depend_stubs/OgreMovableObject.h
+GfxRangedInstances.o: ../depend_stubs/OgreVertexIndexData.h
+GfxRangedInstances.o: ../depend_stubs/OgreMaterial.h
+GfxRangedInstances.o: ../depend_stubs/OgreMesh.h
+GfxRangedInstances.o: ../src/math_util.h ../depend_stubs/cmath
+GfxRangedInstances.o: ../src/CacheFriendlyRangeSpaceSIMD.h
+GfxRangedInstances.o: ../depend_stubs/map ../src/SSEAllocator.h
+GfxRangedInstances.o: ../src/Streamer.h ../depend_stubs/lauxlib.h
+GfxRangedInstances.o: ../depend_stubs/lualib.h ../src/GritObject.h
+GfxRangedInstances.o: ../src/SharedPtr.h ../depend_stubs/cstdlib
+GfxRangedInstances.o: ../depend_stubs/functional ../src/Streamer.h
+GfxRangedInstances.o: ../src/ExternalTable.h ../src/math_util.h
+GfxRangedInstances.o: ../src/LuaPtr.h ../src/SplineTable.h
+GfxRangedInstances.o: ../src/gfx/HUD.h ../depend_stubs/climits
+GfxRangedInstances.o: ../depend_stubs/OgrePanelOverlayElement.h
+GfxRangedInstances.o: ../depend_stubs/OgreOverlayElementFactory.h
+GfxRangedInstances.o: ../depend_stubs/OgreOverlay.h
+GfxRangedInstances.o: ../depend_stubs/OgreOverlayManager.h
+GfxRangedInstances.o: ../src/gfx/TextListOverlayElement.h
+GfxRangedInstances.o: ../depend_stubs/OgrePrerequisites.h
+GfxRangedInstances.o: ../depend_stubs/OgreOverlayElement.h
+GfxRangedInstances.o: ../depend_stubs/OgreFont.h
+GfxRangedInstances.o: ../src/physics/PhysicsWorld.h
+GfxRangedInstances.o: ../src/CentralisedLog.h ../src/SharedPtr.h
+GfxRangedInstances.o: ../depend_stubs/btBulletDynamicsCommon.h
+GfxRangedInstances.o: ../src/physics/TColParser.h
+GfxRangedInstances.o: ../src/physics/TColLexer
+GfxRangedInstances.o: ../depend_stubs/istream
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/compatibility/inttypes.h
+GfxRangedInstances.o: ../src/physics/TColLexer-token_ids
+GfxRangedInstances.o: ../depend_stubs/cstdio
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/Token
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/definitions
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/buffer/Buffer
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/buffer/plain/BufferFiller_Plain
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/QuexMode
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/Analyser
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/Counter
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/Accumulator
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/temporary_macros_on
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/temporary_macros_off
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/constructor.i
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/Counter.i
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/Accumulator.i
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/mode_handling.i
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/misc.i
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/buffer_access.i
+GfxRangedInstances.o: ../depend_stubs/quex/code_base/template/Analyser.i
+GfxRangedInstances.o: ../src/physics/CollisionMesh.h
+GfxRangedInstances.o: ../depend_stubs/OgreDataStream.h
+GfxRangedInstances.o: ../src/DiskResource.h ../src/sleep.h
+GfxRangedInstances.o: ../src/physics/BColParser.h
+GfxRangedInstances.o: ../depend_stubs/stdint.h
+GfxRangedInstances.o: ../src/physics/LooseEnd.h
+GfxRangedInstances.o: ../src/physics/PhysicalMaterial.h
+GfxRangedInstances.o: ../src/GritObject.h ../src/LuaPtr.h
+GfxRangedInstances.o: ../src/gfx/gfx_internal.h
+GfxRangedInstances.o: ../depend_stubs/Ogre.h
+GfxRangedInstances.o: ../depend_stubs/OgreFontManager.h
+GfxRangedInstances.o: ../depend_stubs/OgreMeshManager.h
+GfxRangedInstances.o: ../depend_stubs/OgreOctreeSceneManager.h
+GfxRangedInstances.o: ../depend_stubs/OgreVector3.h
+GfxRangedInstances.o: ../depend_stubs/OgreQuaternion.h
+GfxRangedInstances.o: ../depend_stubs/OgreCustomCompositionPass.h
+GfxRangedInstances.o: ../depend_stubs/OgreCompositor.h
+GfxRangedInstances.o: ../src/gfx/gfx.h ../src/vect_util.h
+GfxRangedInstances.o: ../src/gfx/gfx_option.h
+GfxRangedInstances.o: ../src/gfx/GfxInstances.h
+GfxRangedInstances.o: ../src/gfx/GfxBody.h
+GfxRangedInstances.o: ../src/gfx/GfxMaterial.h
 GfxSkyBody.o: ../depend_stubs/OgreMeshManager.h
 GfxSkyBody.o: ../src/gfx/gfx_internal.h ../depend_stubs/string
 GfxSkyBody.o: ../depend_stubs/Ogre.h

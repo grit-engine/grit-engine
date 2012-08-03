@@ -31,6 +31,7 @@
 #include "GfxSkyMaterial.h"
 #include "GfxLight.h"
 #include "GfxInstances.h"
+#include "GfxRangedInstances.h"
 #include "gfx_option.h"
 #include "lua_wrappers_gfx.h"
 #include "../lua_wrappers_primitives.h"
@@ -40,6 +41,7 @@
 #define GFXBODY_TAG "Grit/GfxBody"
 #define GFXSKYBODY_TAG "Grit/GfxSkyBody"
 #define GFXINSTANCES_TAG "Grit/GfxInstances"
+#define GFXRANGEDINSTANCES_TAG "Grit/GfxRangedInstances"
 #define GFXLIGHT_TAG "Grit/GfxLight"
 
 
@@ -530,6 +532,142 @@ MT_MACRO_NEWINDEX(gfxbody);
 //}}}
 
 
+// GFXRANGEDINSTANCES ============================================================== {{{
+
+void push_gfxrangedinstances (lua_State *L, const GfxRangedInstancesPtr &self)
+{
+    if (self.isNull())
+        lua_pushnil(L);
+    else
+        push(L,new GfxRangedInstancesPtr(self),GFXRANGEDINSTANCES_TAG);
+}
+
+GC_MACRO(GfxRangedInstancesPtr,gfxrangedinstances,GFXRANGEDINSTANCES_TAG)
+
+static int gfxrangedinstances_destroy (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(GfxRangedInstancesPtr,self,1,GFXRANGEDINSTANCES_TAG);
+    self->destroy();
+    return 0;
+TRY_END
+}
+
+static int gfxrangedinstances_add (lua_State *L)
+{
+TRY_START
+    check_args(L,4);
+    GET_UD_MACRO(GfxRangedInstancesPtr,self,1,GFXRANGEDINSTANCES_TAG);
+    Vector3 v = check_v3(L,2);
+    Quaternion q = check_quat(L,3);
+    float f = check_float(L,4);
+    unsigned index = self->add(v, q, f);
+    lua_pushnumber(L, index);
+    return 1;
+TRY_END
+}
+
+static int gfxrangedinstances_update (lua_State *L)
+{
+TRY_START
+    check_args(L,5);
+    GET_UD_MACRO(GfxRangedInstancesPtr,self,1,GFXRANGEDINSTANCES_TAG);
+    unsigned index = check_t<unsigned>(L, 2);
+    Vector3 v = check_v3(L,3);
+    Quaternion q = check_quat(L,4);
+    float f = check_float(L,5);
+    self->update(index, v, q, f);
+    return 0;
+TRY_END
+}
+
+static int gfxrangedinstances_del (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxRangedInstancesPtr,self,1,GFXRANGEDINSTANCES_TAG);
+    unsigned index = check_t<unsigned>(L, 2);
+    self->del(index);
+    return 0;
+TRY_END
+}
+
+
+
+TOSTRING_SMART_PTR_MACRO (gfxrangedinstances,GfxRangedInstancesPtr,GFXRANGEDINSTANCES_TAG)
+
+
+static int gfxrangedinstances_index (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxRangedInstancesPtr,self,1,GFXRANGEDINSTANCES_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"castShadows")) {
+        lua_pushboolean(L, self->getCastShadows());
+    } else if (!::strcmp(key,"destroyed")) {
+        lua_pushboolean(L,self->destroyed());
+    } else if (!::strcmp(key,"destroy")) {
+        push_cfunction(L,gfxrangedinstances_destroy);
+    } else if (!::strcmp(key,"parent")) {
+        push_gfxbody(L, self->getParent());
+    } else if (!::strcmp(key,"add")) {
+        push_cfunction(L,gfxrangedinstances_add);
+    } else if (!::strcmp(key,"update")) {
+        push_cfunction(L,gfxrangedinstances_update);
+    } else if (!::strcmp(key,"del")) {
+        push_cfunction(L,gfxrangedinstances_del);
+    } else if (!::strcmp(key,"enabled")) {
+        lua_pushboolean(L, self->isEnabled());
+    } else if (!::strcmp(key,"castShadows")) {
+        lua_pushboolean(L, self->getCastShadows());
+    } else if (!::strcmp(key,"nodeHACK")) {
+        push_node(L, self->node);
+    } else {
+        my_lua_error(L,"Not a readable GfxRangedInstance member: "+std::string(key));
+    }
+    return 1;
+TRY_END
+}
+
+
+static int gfxrangedinstances_newindex (lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(GfxRangedInstancesPtr,self,1,GFXRANGEDINSTANCES_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"castShadows")) {
+        bool v = check_bool(L,3);
+        self->setCastShadows(v);
+    } else if (!::strcmp(key,"parent")) {
+        if (lua_isnil(L,3)) {
+            self->setParent(GfxBodyPtr(NULL));
+        } else {
+            GET_UD_MACRO(GfxBodyPtr,par,3,GFXBODY_TAG);
+            self->setParent(par);
+        }
+    } else if (!::strcmp(key,"enabled")) {
+        bool v = check_bool(L,3);
+        self->setEnabled(v);
+    } else if (!::strcmp(key,"castShadows")) {
+        bool v = check_bool(L,3);
+        self->setCastShadows(v);
+    } else {
+           my_lua_error(L,"Not a writeable GfxRangedInstance member: "+std::string(key));
+    }
+    return 0;
+TRY_END
+}
+
+EQ_MACRO(GfxRangedInstancesPtr,gfxrangedinstances,GFXRANGEDINSTANCES_TAG)
+
+MT_MACRO_NEWINDEX(gfxrangedinstances);
+
+//}}}
+
+
 // GFXINSTANCES ============================================================== {{{
 
 void push_gfxinstances (lua_State *L, const GfxInstancesPtr &self)
@@ -580,13 +718,13 @@ TRY_START
 TRY_END
 }
 
-static int gfxinstances_remove (lua_State *L)
+static int gfxinstances_del (lua_State *L)
 {
 TRY_START
     check_args(L,2);
     GET_UD_MACRO(GfxInstancesPtr,self,1,GFXINSTANCES_TAG);
     unsigned index = check_t<unsigned>(L, 2);
-    self->remove(index);
+    self->del(index);
     return 0;
 TRY_END
 }
@@ -614,8 +752,8 @@ TRY_START
         push_cfunction(L,gfxinstances_add);
     } else if (!::strcmp(key,"update")) {
         push_cfunction(L,gfxinstances_update);
-    } else if (!::strcmp(key,"remove")) {
-        push_cfunction(L,gfxinstances_remove);
+    } else if (!::strcmp(key,"del")) {
+        push_cfunction(L,gfxinstances_del);
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self->isEnabled());
     } else if (!::strcmp(key,"castShadows")) {
@@ -968,6 +1106,16 @@ TRY_START
     check_args(L,1);
     std::string meshname = check_path(L,1);
     push_gfxinstances(L, GfxInstances::make(meshname));
+    return 1;
+TRY_END
+}
+
+int global_gfx_ranged_instances_make (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    std::string meshname = check_path(L,1);
+    push_gfxrangedinstances(L, GfxRangedInstances::make(meshname));
     return 1;
 TRY_END
 }
@@ -2847,6 +2995,7 @@ static const luaL_reg global[] = {
     {"gfx_option",global_gfx_option},
     {"gfx_body_make",global_gfx_body_make},
     {"gfx_instances_make",global_gfx_instances_make},
+    {"gfx_ranged_instances_make",global_gfx_ranged_instances_make},
     {"gfx_sky_body_make",global_gfx_sky_body_make},
     {"gfx_light_make",global_gfx_light_make},
     {"gfx_sun_get_diffuse",global_gfx_sun_get_diffuse},
@@ -2969,6 +3118,7 @@ void gfx_lua_init (lua_State *L)
     ADD_MT_MACRO(gfxskybody,GFXSKYBODY_TAG);
     ADD_MT_MACRO(gfxlight,GFXLIGHT_TAG);
     ADD_MT_MACRO(gfxinstances,GFXINSTANCES_TAG);
+    ADD_MT_MACRO(gfxrangedinstances,GFXRANGEDINSTANCES_TAG);
 
     ADD_MT_MACRO(scnmgr,SCNMGR_TAG);
     ADD_MT_MACRO(node,NODE_TAG);

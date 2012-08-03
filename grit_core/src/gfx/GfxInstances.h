@@ -28,13 +28,10 @@ typedef SharedPtr<GfxInstances> GfxInstancesPtr;
 #ifndef GFX_INSTANCES_H
 #define GFX_INSTANCES_H
 
-#include "../Streamer.h"
-
 #include "OgreMovableObject.h"
 
 #include "GfxBody.h"
 
-//class GfxInstances : public GfxNode, public fast_erase_index, public StreamerCallback, public Ogre::MovableObject {
 class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::MovableObject {
 
     protected:
@@ -52,9 +49,8 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
     // the sparseIndexes index by looking up an instance in denseIndexes.
     // Looking up an index from the free list in denseIndexes gets you 0xFFFF
 
-    // CLASS INVARIANT: freeLise.size() + sparseIndexes.size() == denseIndexes.size()
-    // CLASS INVARIANT: denseIndexes.size() < capacity
-    // CLASS INVARIANT: instBufRaw.size() == 13 * denseIndexes.size()
+    // CLASS INVARIANT: freeList.size() + sparseIndexes.size() == denseIndexes.size() == capacity
+    // CLASS INVARIANT: instBufRaw.size() == 13 * sparseIndexes.size() == hw buffer length
 
     std::vector<unsigned int> sparseIndexes;
     std::vector<unsigned int> denseIndexes;
@@ -76,19 +72,16 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
     GfxInstances (GfxDiskResource *mesh, const GfxBodyPtr &par_);
     ~GfxInstances ();
 
-    //void registerMe (void);
-    //void unregisterMe (void);
-    //void update (const Vector3 &new_pos);
-
     public:
     static GfxInstancesPtr make (const std::string &mesh, const GfxBodyPtr &par_=GfxBodyPtr(NULL));
 
     unsigned int add (const Vector3 &pos, const Quaternion &q, float fade);
     // in future, perhaps 3d scale, skew, or general 3x3 matrix?
     void update (unsigned int inst, const Vector3 &pos, const Quaternion &q, float fade);
-    void remove (unsigned int inst);
+    void del (unsigned int inst);
 
-    void reserve (unsigned new_capacity);
+    // don't call this reserve because a subclass wants to call its member function reserve
+    void reserveSpace (unsigned new_capacity);
 
     void destroy (void);
 
@@ -98,26 +91,29 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
     void setCastShadows (bool v) { castShadows = v; }
     bool getCastShadows (void) { return castShadows; updateProperties(); }
 
-    // Stuff for Ogre::MovableObject
 
     protected:
+
+    void rangeCheck (unsigned index);
 
     void updateSections (void);
     void updateProperties (void);
     void reinitialise (void);
 
-    Ogre::AxisAlignedBox mBoundingBox;
-    Ogre::Real mBoundingRadius;
-
     void copyToGPU ();
     void copyToGPU (unsigned from, unsigned to, bool discard);
+
+
+    // Stuff for Ogre::MovableObject
+
+    Ogre::AxisAlignedBox mBoundingBox;
+    Ogre::Real mBoundingRadius;
 
     public:
 
     virtual const Ogre::String& getMovableType (void) const
     {
-        static const Ogre::String type = "GfxInstances";
-        return type;
+        return className;
     }
 
     virtual const Ogre::AxisAlignedBox &getBoundingBox (void) const
