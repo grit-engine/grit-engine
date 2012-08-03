@@ -552,6 +552,45 @@ TRY_START
 TRY_END
 }
 
+static int gfxinstances_add (lua_State *L)
+{
+TRY_START
+    check_args(L,4);
+    GET_UD_MACRO(GfxInstancesPtr,self,1,GFXINSTANCES_TAG);
+    Vector3 v = check_v3(L,2);
+    Quaternion q = check_quat(L,3);
+    float f = check_float(L,4);
+    unsigned index = self->add(v, q, f);
+    lua_pushnumber(L, index);
+    return 1;
+TRY_END
+}
+
+static int gfxinstances_update (lua_State *L)
+{
+TRY_START
+    check_args(L,5);
+    GET_UD_MACRO(GfxInstancesPtr,self,1,GFXINSTANCES_TAG);
+    unsigned index = check_t<unsigned>(L, 2);
+    Vector3 v = check_v3(L,3);
+    Quaternion q = check_quat(L,4);
+    float f = check_float(L,5);
+    self->update(index, v, q, f);
+    return 0;
+TRY_END
+}
+
+static int gfxinstances_remove (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxInstancesPtr,self,1,GFXINSTANCES_TAG);
+    unsigned index = check_t<unsigned>(L, 2);
+    self->remove(index);
+    return 0;
+TRY_END
+}
+
 
 
 TOSTRING_SMART_PTR_MACRO (gfxinstances,GfxInstancesPtr,GFXINSTANCES_TAG)
@@ -571,6 +610,18 @@ TRY_START
         push_cfunction(L,gfxinstances_destroy);
     } else if (!::strcmp(key,"parent")) {
         push_gfxbody(L, self->getParent());
+    } else if (!::strcmp(key,"add")) {
+        push_cfunction(L,gfxinstances_add);
+    } else if (!::strcmp(key,"update")) {
+        push_cfunction(L,gfxinstances_update);
+    } else if (!::strcmp(key,"remove")) {
+        push_cfunction(L,gfxinstances_remove);
+    } else if (!::strcmp(key,"enabled")) {
+        lua_pushboolean(L, self->isEnabled());
+    } else if (!::strcmp(key,"castShadows")) {
+        lua_pushboolean(L, self->getCastShadows());
+    } else if (!::strcmp(key,"nodeHACK")) {
+        push_node(L, self->node);
     } else {
         my_lua_error(L,"Not a readable GfxInstance member: "+std::string(key));
     }
@@ -595,6 +646,12 @@ TRY_START
             GET_UD_MACRO(GfxBodyPtr,par,3,GFXBODY_TAG);
             self->setParent(par);
         }
+    } else if (!::strcmp(key,"enabled")) {
+        bool v = check_bool(L,3);
+        self->setEnabled(v);
+    } else if (!::strcmp(key,"castShadows")) {
+        bool v = check_bool(L,3);
+        self->setCastShadows(v);
     } else {
            my_lua_error(L,"Not a writeable GfxInstance member: "+std::string(key));
     }
@@ -2230,6 +2287,7 @@ TRY_START
 
         gfxmat->regularMat = Ogre::MaterialManager::getSingleton().getByName(name,"GRIT");
         gfxmat->fadingMat = gfxmat->regularMat;
+        gfxmat->worldMat = Ogre::MaterialManager::getSingleton().getByName(name+"&","GRIT");
 
         Vector3 emissive_colour;
         t.get("emissiveColour",emissive_colour,Vector3(0,0,0));

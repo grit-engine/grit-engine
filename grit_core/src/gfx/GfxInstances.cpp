@@ -31,22 +31,19 @@ const std::string GfxInstances::className = "GfxInstances";
 const unsigned instance_data_floats = 13;
 const unsigned instance_data_bytes = instance_data_floats*4;
 
-class GfxInstance : public fast_erase_index {
-    
-};
-
 // One of these for each amterial in the original mesh
 class GfxInstances::Section : public Ogre::Renderable {
 
     GfxInstances *parent;
-    Ogre::MaterialPtr mat;
+    GfxMaterial *mat;
+    Ogre::MaterialPtr omat;
     Ogre::RenderOperation op;
     Ogre::VertexData vdata;
 
     public:
 
-    Section (GfxInstances *parent, Ogre::MaterialPtr mat, Ogre::SubMesh *sm)
-      : parent(parent), mat(mat)
+    Section (GfxInstances *parent, GfxMaterial *mat, Ogre::SubMesh *sm)
+      : parent(parent), mat(mat), queueID(0), queuePriority(0)
     {
         sm->_getRenderOperation(op, 0);
         op.vertexData = parent->sharedVertexData;
@@ -55,9 +52,16 @@ class GfxInstances::Section : public Ogre::Renderable {
 
     void setNumInstances (unsigned v) { op.numberOfInstances = v; }
 
+    // Ogre has already used the name setMaterial so be explicit for this one
+    GfxMaterial *getGritMaterial (void) { return mat; }
+
+    unsigned char queueID;
+    unsigned short queuePriority;
     // Renderable stuff
 
-    const Ogre::MaterialPtr& getMaterial (void) const { return mat; }
+    void setMaterial (const Ogre::MaterialPtr &m) { omat = m; }
+
+    const Ogre::MaterialPtr& getMaterial (void) const { return omat; }
     void getRenderOperation (Ogre::RenderOperation& o) { o = op; }
     void getWorldTransforms (Ogre::Matrix4* xform) const
     { xform[0] = Ogre::Matrix4::IDENTITY; }
@@ -80,32 +84,29 @@ GfxInstancesPtr GfxInstances::make (const std::string &mesh_name, const GfxBodyP
     return GfxInstancesPtr(new GfxInstances(gdr, par_));
 }
 
-static Ogre::MaterialPtr mat_from_submesh (const Ogre::MeshPtr &mesh, Ogre::SubMesh *sm)
-{
-    std::string name = sm->getMaterialName();
-
-    // TODO: look up name GfxMaterial database and pull out OGRE material
-
-    name += "&"; // use a different material (in order to get a different shader)
-    Ogre::MaterialPtr m = Ogre::MaterialManager::getSingleton().getByName(name, "GRIT");
-
-    if (m.isNull()) {
-        CERR << "Material not found: \"" << sm->getMaterialName() << "\" "
-             << "in mesh \"" << mesh->getName() << "\"" << std::endl;
-        m = Ogre::MaterialManager::getSingleton().getByName("/system/FallbackMaterial&", "GRIT");
-    }
-    return m;
-}
-
 GfxInstances::GfxInstances (GfxDiskResource *gdr, const GfxBodyPtr &par_)
   : GfxNode(par_),
     dirty(false),
+    enabled(true),
+    castShadows(true),
     mBoundingBox(Ogre::AxisAlignedBox::BOX_INFINITE),
     mBoundingRadius(std::numeric_limits<float>::max())
 {   
     const Ogre::ResourcePtr &rp = gdr->getOgreResourcePtr();
     mesh = rp;
 
+    node->attachObject(this);
+
+    reinitialise();
+
+    reserve(0);
+
+    //gfx_all_bodies.push_back(this);
+    //registerMe();
+}   
+
+void GfxInstances::updateSections (void)
+{
     mesh->load();
 
     APP_ASSERT(mesh->sharedVertexData != NULL);
@@ -121,35 +122,43 @@ GfxInstances::GfxInstances (GfxDiskResource *gdr, const GfxBodyPtr &par_)
     vdecl_inst_sz += vdecl.addElement(1, vdecl_inst_sz, Ogre::VET_FLOAT1, Ogre::VES_TEXTURE_COORDINATES, 5).getSize();
     APP_ASSERT(vdecl_inst_sz == instance_data_bytes);
 
-    reserve(0);
-
     numSections = mesh->getNumSubMeshes();
     sections = new Section*[numSections];
 
     for (unsigned i=0 ; i<numSections ; ++i) {
         Ogre::SubMesh *sm = mesh->getSubMesh(i);
-        Ogre::MaterialPtr mat = mat_from_submesh(mesh, sm);
-        sections[i] = new Section(this, mat, sm);
+        std::string matname = sm->getMaterialName();
+        if (!gfx_material_has(matname)) {
+            CERR << "Mesh \"/"<<mesh->getName()<<"\" references non-existing material "
+                 << "\""<<matname<<"\""<<std::endl;
+            matname = "/system/FallbackMaterial";
+            sm->setMaterialName(matname);
+        }
+
+        sections[i] = new Section(this, gfx_material_get(matname), sm);
     }
 
-    //gfx_all_bodies.push_back(this);
-    //registerMe();
-}   
+}
+
+void GfxInstances::reinitialise (void)
+{
+    updateSections();
+    updateProperties();
+}
     
 void GfxInstances::reserve (unsigned new_capacity)
 {
-    if (new_capacity < instances.size()) new_capacity = instances.size();
-    capacity = new_capacity;
+    if (new_capacity < sparseIndexes.size()) new_capacity = sparseIndexes.size();
 
-    instBufRaw.reserve(capacity * instance_data_floats);
+    instBufRaw.reserve(new_capacity * instance_data_floats);
 
-    if (capacity == 0) {
+    if (new_capacity == 0) {
         instBuf.setNull();
     } else {
         Ogre::HardwareVertexBufferSharedPtr old = instBuf;
         instBuf = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
                         instance_data_bytes,
-                        capacity,
+                        new_capacity,
                         Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
         instBuf->setIsInstanceData(true);
         instBuf->setInstanceDataStepRate(1);
@@ -157,16 +166,24 @@ void GfxInstances::reserve (unsigned new_capacity)
     }
 
     sharedVertexData->vertexBufferBinding->setBinding(1, instBuf);
-    instances.reserve(capacity);
+    sparseIndexes.reserve(new_capacity);
+    freeList.reserve(new_capacity);
+    denseIndexes.resize(new_capacity);
+    for (unsigned i=capacity ; i<new_capacity ; ++i) {
+        denseIndexes[i] = 0xFFFF;
+        freeList.push_back(i);
+    }
+    capacity = new_capacity;
 }
 
 void GfxInstances::copyToGPU (void)
 {
-    copyToGPU(0, instances.size(), true);
+    copyToGPU(0, sparseIndexes.size(), true);
 }
 
 void GfxInstances::copyToGPU (unsigned from, unsigned to, bool discard)
 {
+    if (to - from == 0) return;
     unsigned offset = from * instance_data_bytes;
     unsigned len = (to - from) * instance_data_bytes;
     void *data = &instBufRaw[from * instance_data_floats];
@@ -188,20 +205,24 @@ void GfxInstances::destroy (void)
     GfxNode::destroy();
 }
 
-GfxInstance *GfxInstances::add (const Vector3 &pos, const Quaternion &q, float fade)
+unsigned GfxInstances::add (const Vector3 &pos, const Quaternion &q, float fade)
 {
-    if (instances.size()+1 > capacity) reserve(std::max(128u, unsigned(capacity * 1.3)));
-    GfxInstance *nu = new GfxInstance();
-    instances.push_back(nu);
+    if (sparseIndexes.size()+1 > capacity) reserve(std::max(128u, unsigned(capacity * 1.3)));
+    unsigned sparse_index = freeList[freeList.size()-1];
+    freeList.pop_back();
+    unsigned dense_index = sparseIndexes.size();
+    denseIndexes[sparse_index] = dense_index;
+    sparseIndexes.push_back(sparse_index);
     instBufRaw.resize(instBufRaw.size() + instance_data_floats);
-    for (unsigned i=0 ; i<numSections ; ++i) sections[i]->setNumInstances(instances.size());
-    update(nu, pos, q, fade);
-    return nu;
+    for (unsigned i=0 ; i<numSections ; ++i) sections[i]->setNumInstances(sparseIndexes.size());
+    update(sparse_index, pos, q, fade);
+    return sparse_index;
 }
 
-void GfxInstances::update (GfxInstance *inst, const Vector3 &pos, const Quaternion &q, float fade)
+void GfxInstances::update (unsigned sparse_index, const Vector3 &pos, const Quaternion &q, float fade)
 {
-    float *base = &instBufRaw[inst->_index * instance_data_floats];
+    unsigned dense_index = denseIndexes[sparse_index];
+    float *base = &instBufRaw[dense_index * instance_data_floats];
     Ogre::Matrix3 rot;
     to_ogre(q).ToRotationMatrix(rot);
     float *rot_base = rot[0];
@@ -215,13 +236,22 @@ void GfxInstances::update (GfxInstance *inst, const Vector3 &pos, const Quaterni
     dirty = true;
 }
 
-void GfxInstances::remove (GfxInstance *inst)
+void GfxInstances::remove (unsigned sparse_index)
 {
-    unsigned index = inst->_index;
-    instances.erase(inst);
-    (void) index;
-    // reorganise instance_buffer to move last 13 into this position
-    delete inst;
+    unsigned dense_index = denseIndexes[sparse_index];
+    unsigned last = sparseIndexes.size()-1;
+
+    // reorganise buffers to move last instance into the position of the one just removed
+    sparseIndexes[dense_index] = sparseIndexes[last];
+    for (unsigned i=0 ; i<instance_data_floats ; ++i) {
+        instBufRaw[dense_index * instance_data_floats + i] = instBufRaw[last * instance_data_floats + i];
+    }
+
+    sparseIndexes.resize(last);
+    instBufRaw.resize(instance_data_floats * last);
+
+    sparseIndexes[sparse_index] = 0xFFFF;
+    freeList.push_back(sparse_index);
 }
 
 
@@ -242,6 +272,37 @@ void GfxInstances::update (const Vector3 &new_pos)
 }
 */
 
+// Currently needs to be updated when these material properties change:
+// getSceneBlend
+// getStipple
+void GfxInstances::updateProperties (void)
+{
+    GFX_MAT_SYNC;
+
+    setCastShadows(castShadows);
+
+    for (unsigned i=0 ; i<numSections ; ++i) {
+
+        Section *s = sections[i];
+
+        GfxMaterial *gfx_material = s->getGritMaterial();
+
+        s->setMaterial(gfx_material->worldMat);
+
+        switch (gfx_material->getSceneBlend()) {
+            case GFX_MATERIAL_OPAQUE:
+            s->queueID = RQ_GBUFFER_OPAQUE;
+            break;
+            case GFX_MATERIAL_ALPHA:
+            s->queueID = RQ_FORWARD_ALPHA;
+            break;
+            case GFX_MATERIAL_ALPHA_DEPTH:
+            s->queueID = RQ_FORWARD_ALPHA_DEPTH;
+            break;
+        }
+
+    }
+}
 
 void GfxInstances::visitRenderables(Ogre::Renderable::Visitor *visitor, bool debug)
 {
@@ -252,6 +313,8 @@ void GfxInstances::visitRenderables(Ogre::Renderable::Visitor *visitor, bool deb
 
 void GfxInstances::_updateRenderQueue(Ogre::RenderQueue *queue)
 {
+    if (sparseIndexes.size() == 0) return;
+    if (!enabled) return;
     if (dirty) {
         copyToGPU();
         dirty = false;
@@ -259,16 +322,6 @@ void GfxInstances::_updateRenderQueue(Ogre::RenderQueue *queue)
     for (unsigned i=0 ; i<numSections ; ++i) {
         Section *s = sections[i];
 
-        if (mRenderQueuePrioritySet) {
-            assert(mRenderQueueIDSet == true);
-            queue->addRenderable(s, mRenderQueueID,
-                                    mRenderQueuePriority);
-        } else if (mRenderQueueIDSet) {
-            queue->addRenderable(s, mRenderQueueID,
-                                    queue->getDefaultRenderablePriority());
-        } else {
-            queue->addRenderable(s, queue->getDefaultQueueGroup(),
-                                    queue->getDefaultRenderablePriority());
-        }
+        queue->addRenderable(s, s->queueID, s->queuePriority);
     }
 }

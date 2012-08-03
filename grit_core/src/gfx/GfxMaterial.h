@@ -123,7 +123,7 @@ class GfxMaterial : public GfxBaseMaterial {
     Ogre::MaterialPtr fadingMat;      // ' can be NULL
     Ogre::MaterialPtr emissiveMat;
     //Ogre::MaterialPtr shadowMat;      // ! can be simply a link to the default
-    //Ogre::MaterialPtr worldMat;       // & 
+    Ogre::MaterialPtr worldMat;       // & 
     //Ogre::MaterialPtr worldShadowMat; // % can be simply a link to the default
 
 

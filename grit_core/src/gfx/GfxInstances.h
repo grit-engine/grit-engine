@@ -22,7 +22,6 @@
 #include "../SharedPtr.h"
 
 class GfxInstances;
-class GfxInstance;
 typedef SharedPtr<GfxInstances> GfxInstancesPtr;
 
 
@@ -40,9 +39,26 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
 
     protected:
 
-    unsigned capacity;
-    fast_erase_vector<GfxInstance*> instances;
     static const std::string className;
+
+    // sizing of the buffers
+    unsigned capacity;
+
+    // The ordering of instances within sparseIndexes changes all the time,
+    // but it never has any 'holes'. On the other hand, the denseIndexes
+    // array has indexes that are not currently in use, and which are retained
+    // in a free list for future use.  A given index into denseIndexes will
+    // retain the same meaning until that instance is removed.  One can obtain
+    // the sparseIndexes index by looking up an instance in denseIndexes.
+    // Looking up an index from the free list in denseIndexes gets you 0xFFFF
+
+    // CLASS INVARIANT: freeLise.size() + sparseIndexes.size() == denseIndexes.size()
+    // CLASS INVARIANT: denseIndexes.size() < capacity
+    // CLASS INVARIANT: instBufRaw.size() == 13 * denseIndexes.size()
+
+    std::vector<unsigned int> sparseIndexes;
+    std::vector<unsigned int> denseIndexes;
+    std::vector<unsigned int> freeList;
 
     class Section;
 
@@ -54,6 +70,8 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
     Ogre::HardwareVertexBufferSharedPtr instBuf;
     std::vector<float> instBufRaw;
     bool dirty;
+    bool enabled;
+    bool castShadows;
 
     GfxInstances (GfxDiskResource *mesh, const GfxBodyPtr &par_);
     ~GfxInstances ();
@@ -65,19 +83,28 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
     public:
     static GfxInstancesPtr make (const std::string &mesh, const GfxBodyPtr &par_=GfxBodyPtr(NULL));
 
-    GfxInstance *add (const Vector3 &pos, const Quaternion &q, float fade);
+    unsigned int add (const Vector3 &pos, const Quaternion &q, float fade);
     // in future, perhaps 3d scale, skew, or general 3x3 matrix?
-    void update (GfxInstance *inst, const Vector3 &pos, const Quaternion &q, float fade);
-    void remove (GfxInstance *inst);
+    void update (unsigned int inst, const Vector3 &pos, const Quaternion &q, float fade);
+    void remove (unsigned int inst);
 
     void reserve (unsigned new_capacity);
 
     void destroy (void);
 
+    void setEnabled (bool v) { enabled = v; }
+    bool isEnabled (void) { return enabled; }
+
+    void setCastShadows (bool v) { castShadows = v; }
+    bool getCastShadows (void) { return castShadows; updateProperties(); }
 
     // Stuff for Ogre::MovableObject
 
     protected:
+
+    void updateSections (void);
+    void updateProperties (void);
+    void reinitialise (void);
 
     Ogre::AxisAlignedBox mBoundingBox;
     Ogre::Real mBoundingRadius;
@@ -93,7 +120,7 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
         return type;
     }
 
-    virtual const Ogre::AxisAlignedBox& getBoundingBox (void) const
+    virtual const Ogre::AxisAlignedBox &getBoundingBox (void) const
     { return mBoundingBox; }
 
     virtual Ogre::Real getBoundingRadius (void) const
