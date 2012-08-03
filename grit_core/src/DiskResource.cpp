@@ -85,14 +85,10 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
     DiskResource *dr = disk_resource_get(rn);
     if (dr != NULL) return dr;
 
-    const char *texture_formats[] = { "bmp", "jpg", "jpeg", "png", "tga", "targa",
-                                      "tif", "tiff", "gif", "hdr", "dds" };
-    unsigned num_texture_formats = sizeof(texture_formats)/sizeof(*texture_formats);
     size_t pos = rn.rfind('.');
     if (pos == rn.npos) {
-        CERR << "Ignoring resource \""<<rn<<"\" as "
-             << "it does not have a file extension." << std::endl;
-        return dr;
+        GRIT_EXCEPT("Ignoring resource \""+rn+"\" as "
+                    "it does not have a file extension.");
     }
     std::string suffix(rn, pos+1);
 
@@ -103,6 +99,9 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
     } else if (suffix == "wav" || suffix == "ogg" || suffix == "mp3") {
         dr = new AudioDiskResource(rn);
     } else {
+        const char *texture_formats[] = { "bmp", "jpg", "jpeg", "png", "tga", "targa",
+                                          "tif", "tiff", "gif", "hdr", "dds" };
+        unsigned num_texture_formats = sizeof(texture_formats)/sizeof(*texture_formats);
         for (unsigned i=0 ; i<num_texture_formats ; ++i) {
             if (suffix == texture_formats[i]) {
                 dr = new GfxDiskResource(rn,suffix);
@@ -111,9 +110,8 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
         }
     }
     if (dr == NULL) {
-        CERR << "Ignoring resource \""<<rn<<"\" as "
-             << "its file extension was not recognised." << std::endl;
-        return dr;
+        GRIT_EXCEPT("Ignoring resource \""+rn+"\" as "
+                    "its file extension was not recognised.");
     }
     disk_resource_map[rn] = dr;
     return dr;
