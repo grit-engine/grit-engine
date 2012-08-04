@@ -193,6 +193,9 @@ void clean_compositors (void)
 typedef Ogre::CompositorInstance CI;
 typedef Ogre::CompositionPass CP;
 
+CI *left_ci = NULL;
+CI *right_ci = NULL;
+
 // {{{ Multiple small lights
 
 #ifdef WIN32
@@ -603,9 +606,11 @@ static void add_deferred_compositor (bool left)
     Ogre::Viewport *vp = left ? left_vp : right_vp;
     CI *def_comp = Ogre::CompositorManager::getSingleton()
         .addCompositor(vp,DEFERRED_COMPOSITOR);
+    (left ? left_ci : right_ci) = def_comp;
     APP_ASSERT(def_comp!=NULL);
     def_comp->setEnabled(true);
     def_comp->addListener(left ? &left_dasl : &right_dasl);
+    
     Ogre::CompositionTechnique *t = def_comp->getTechnique();
     size_t np = t->getNumTargetPasses();
     Ogre::CompositionTargetPass *tp = np<=1 ? t->getOutputTargetPass() : t->getTargetPass(1);
@@ -815,15 +820,25 @@ static GfxLastRenderStats stats_from_rt (Ogre::RenderTarget *rt)
 GfxLastFrameStats gfx_last_frame_stats (void)
 {
     GfxLastFrameStats r;
+
+    r.left_deferred = stats_from_rt(ogre_win);
+    if (gfx_option(GFX_DEFERRED)) {
+        r.left_gbuffer = stats_from_rt(left_ci->getRenderTarget("fat_fb"));
+    }
+
     if (stereoscopic()) {
-        r.left = stats_from_rt(ogre_win);
-        r.right = stats_from_rt(anaglyph_fb->getBuffer()->getRenderTarget());
-    } else {
-        r.left = stats_from_rt(ogre_win);
+        r.right_deferred = stats_from_rt(anaglyph_fb->getBuffer()->getRenderTarget());
+        if (gfx_option(GFX_DEFERRED)) {
+            r.right_gbuffer = stats_from_rt(right_ci->getRenderTarget("fat_fb"));
+        }
     }
-    for (int i=0 ; i<3 ; ++i) {
-        r.shadow[i] = stats_from_rt(ogre_sm->getShadowTexture(i)->getBuffer()->getRenderTarget());
+
+    if (gfx_option(GFX_SHADOW_CAST)) {
+        for (int i=0 ; i<3 ; ++i) {
+            r.shadow[i] = stats_from_rt(ogre_sm->getShadowTexture(i)->getBuffer()->getRenderTarget());
+        }
     }
+
     return r;
 }
 

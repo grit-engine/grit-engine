@@ -1032,7 +1032,7 @@ MT_MACRO_NEWINDEX(gfxlight);
 //}}}
 
 
-int global_gfx_render (lua_State *L)
+static int global_gfx_render (lua_State *L)
 {
 TRY_START
     check_args(L,3);
@@ -1044,7 +1044,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_screenshot (lua_State *L)
+static int global_gfx_screenshot (lua_State *L)
 {
 TRY_START
     check_args(L,1);
@@ -1054,7 +1054,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_option (lua_State *L)
+static int global_gfx_option (lua_State *L)
 {
 TRY_START
     if (lua_gettop(L)==2) {
@@ -1092,7 +1092,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_instances_make (lua_State *L)
+static int global_gfx_instances_make (lua_State *L)
 {
 TRY_START
     check_args(L,1);
@@ -1102,7 +1102,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_ranged_instances_make (lua_State *L)
+static int global_gfx_ranged_instances_make (lua_State *L)
 {
 TRY_START
     check_args(L,1);
@@ -1112,7 +1112,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_body_make (lua_State *L)
+static int global_gfx_body_make (lua_State *L)
 {
 TRY_START
     if (lua_gettop(L)==0) {
@@ -1148,7 +1148,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_sky_body_make (lua_State *L)
+static int global_gfx_sky_body_make (lua_State *L)
 {
 TRY_START
     std::string meshname = check_path(L,1);
@@ -1158,7 +1158,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_light_make (lua_State *L)
+static int global_gfx_light_make (lua_State *L)
 {
 TRY_START
     check_args(L,0);
@@ -1167,7 +1167,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_sun_get_diffuse (lua_State *L)
+static int global_gfx_sun_get_diffuse (lua_State *L)
 {
 TRY_START
     check_args(L,0);
@@ -1176,7 +1176,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_sun_set_diffuse (lua_State *L)
+static int global_gfx_sun_set_diffuse (lua_State *L)
 {
 TRY_START
     check_args(L,1);
@@ -1186,7 +1186,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_sun_get_specular (lua_State *L)
+static int global_gfx_sun_get_specular (lua_State *L)
 {
 TRY_START
     check_args(L,0);
@@ -1195,7 +1195,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_sun_set_specular (lua_State *L)
+static int global_gfx_sun_set_specular (lua_State *L)
 {
 TRY_START
     check_args(L,1);
@@ -1205,7 +1205,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_sun_get_direction (lua_State *L)
+static int global_gfx_sun_get_direction (lua_State *L)
 {
 TRY_START
     check_args(L,0);
@@ -1214,7 +1214,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_sun_set_direction (lua_State *L)
+static int global_gfx_sun_set_direction (lua_State *L)
 {
 TRY_START
     check_args(L,1);
@@ -1225,7 +1225,7 @@ TRY_END
 }
 
 
-int global_gfx_get_scene_ambient (lua_State *L)
+static int global_gfx_get_scene_ambient (lua_State *L)
 {
 TRY_START
     check_args(L,0);
@@ -1234,7 +1234,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_set_scene_ambient (lua_State *L)
+static int global_gfx_set_scene_ambient (lua_State *L)
 {
 TRY_START
     check_args(L,1);
@@ -1244,7 +1244,7 @@ TRY_END
 }
 
 
-int global_gfx_fog_get_colour (lua_State *L)
+static int global_gfx_fog_get_colour (lua_State *L)
 {
 TRY_START
     check_args(L,0);
@@ -1253,7 +1253,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_fog_set_colour (lua_State *L)
+static int global_gfx_fog_set_colour (lua_State *L)
 {
 TRY_START
     check_args(L,1);
@@ -1262,7 +1262,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_fog_get_density (lua_State *L)
+static int global_gfx_fog_get_density (lua_State *L)
 {
 TRY_START
     check_args(L,0);
@@ -1271,13 +1271,37 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_fog_set_density (lua_State *L)
+static int global_gfx_fog_set_density (lua_State *L)
 {
 TRY_START
     check_args(L,1);
     float d = check_float(L,1);
     gfx_fog_set_density(d);
     return 0;
+TRY_END
+}
+
+static void push_stat (lua_State *L, GfxLastRenderStats &s)
+{
+    lua_pushnumber(L, s.batches);
+    lua_pushnumber(L, s.triangles);
+    lua_pushnumber(L, s.micros);
+}
+
+static int global_gfx_last_frame_stats (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    GfxLastFrameStats s = gfx_last_frame_stats();
+    lua_checkstack(L,30); // we're going to push a lot of stuff...
+    push_stat(L, s.shadow[0]);
+    push_stat(L, s.shadow[1]);
+    push_stat(L, s.shadow[2]);
+    push_stat(L, s.left_gbuffer);
+    push_stat(L, s.left_deferred);
+    push_stat(L, s.right_gbuffer);
+    push_stat(L, s.right_deferred);
+    return 3*7;
 TRY_END
 }
 
@@ -3008,6 +3032,7 @@ static const luaL_reg global[] = {
     {"gfx_particle_count",global_gfx_particle_count},
     {"gfx_particle_step_size_set",global_gfx_particle_step_size_set},
     {"gfx_particle_step_size_get",global_gfx_particle_step_size_get},
+    {"gfx_last_frame_stats",global_gfx_last_frame_stats},
 
     {NULL, NULL}
 };

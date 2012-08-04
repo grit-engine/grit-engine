@@ -121,8 +121,10 @@ struct GfxLastRenderStats {
 
 struct GfxLastFrameStats {
     GfxLastRenderStats shadow[3];
-    GfxLastRenderStats left;
-    GfxLastRenderStats right;
+    GfxLastRenderStats left_gbuffer;
+    GfxLastRenderStats left_deferred;
+    GfxLastRenderStats right_gbuffer;
+    GfxLastRenderStats right_deferred;
 };
 
 struct GfxRunningFrameStats {
@@ -133,9 +135,6 @@ struct GfxRunningFrameStats {
 
 GfxLastFrameStats gfx_last_frame_stats (void);
 GfxRunningFrameStats gfx_running_frame_stats (void);
-
-void gfx_reload_mesh (const std::string &name);
-void gfx_reload_texture (const std::string &name);
 
 HUD::RootPtr gfx_init_hud (void);
 
