@@ -170,12 +170,13 @@ TRY_START
 TRY_END
 }
 
-static int global_disk_resource_ensure_loaded (lua_State *L)
+static int global_disk_resource_load_indefinitely (lua_State *L)
 {
 TRY_START
     check_args(L,1);
     std::string name = check_path(L,1);
     DiskResource *dr = disk_resource_get_or_make(name);
+    dr->increment();
     if (dr->isLoaded()) {
         lua_pushboolean(L, false);
     } else {
@@ -292,7 +293,7 @@ static const luaL_reg global[] = {
     {"disk_resource_users",global_disk_resource_users},
     {"disk_resource_loaded",global_disk_resource_loaded},
     {"disk_resource_load",global_disk_resource_load},
-    {"disk_resource_ensure_loaded",global_disk_resource_ensure_loaded},
+    {"disk_resource_load_indefinitely",global_disk_resource_load_indefinitely},
     {"disk_resource_unload",global_disk_resource_unload},
     {"disk_resource_reload",global_disk_resource_reload},
     {"disk_resource_acquire",global_disk_resource_acquire},
