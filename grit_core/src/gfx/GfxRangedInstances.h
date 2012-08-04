@@ -29,6 +29,7 @@ typedef SharedPtr<GfxRangedInstances> GfxRangedInstancesPtr;
 #define GFX_RANGED_INSTANCES_H
 
 #include "../Streamer.h"
+#include "../CacheFriendlyRangeSpaceSIMD.h"
 
 #include "GfxInstances.h"
 
@@ -86,6 +87,7 @@ class GfxRangedInstances : public GfxInstances, public StreamerCallback {
         items.reserve(s);
         mSpace.reserve(s);
     };  
+    size_t size (void) { return items.size(); }
 
     void registerMe (void);
     void unregisterMe (void);

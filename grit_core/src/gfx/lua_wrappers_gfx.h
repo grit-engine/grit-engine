@@ -23,6 +23,20 @@
 
 #include "gfx.h"
 
+#include "GfxBody.h"
+#include "GfxSkyBody.h"
+#include "GfxMaterial.h"
+#include "GfxSkyMaterial.h"
+#include "GfxLight.h"
+#include "GfxInstances.h"
+#include "GfxRangedInstances.h"
+
 void gfx_lua_init (lua_State *L);
+
+void push_gfxbody (lua_State *L, const GfxBodyPtr &self);
+void push_gfxrangedinstances (lua_State *L, const GfxRangedInstancesPtr &self);
+void push_gfxinstances (lua_State *L, const GfxInstancesPtr &self);
+void push_gfxskybody (lua_State *L, const GfxSkyBodyPtr &self);
+void push_gfxlight (lua_State *L, const GfxLightPtr &self);
 
 // vim: shiftwidth=8:tabstop=8:expandtab

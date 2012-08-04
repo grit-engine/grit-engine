@@ -645,7 +645,23 @@ lua_wrappers_core.o: ../src/lua_wrappers_gritobj.h
 lua_wrappers_core.o: ../src/lua_wrappers_disk_resource.h
 lua_wrappers_core.o: ../src/gfx/lua_wrappers_gfx.h
 lua_wrappers_core.o: ../src/lua_wrappers_common.h ../src/gfx/gfx.h
-lua_wrappers_core.o: ../src/vect_util.h
+lua_wrappers_core.o: ../src/vect_util.h ../src/gfx/GfxBody.h
+lua_wrappers_core.o: ../src/gfx/GfxMaterial.h
+lua_wrappers_core.o: ../src/gfx/gfx_internal.h ../depend_stubs/Ogre.h
+lua_wrappers_core.o: ../depend_stubs/OgreFontManager.h
+lua_wrappers_core.o: ../depend_stubs/OgreMeshManager.h
+lua_wrappers_core.o: ../depend_stubs/OgreOctreeSceneManager.h
+lua_wrappers_core.o: ../depend_stubs/OgreVector3.h
+lua_wrappers_core.o: ../depend_stubs/OgreQuaternion.h
+lua_wrappers_core.o: ../depend_stubs/OgreCustomCompositionPass.h
+lua_wrappers_core.o: ../depend_stubs/OgreCompositor.h
+lua_wrappers_core.o: ../src/gfx/gfx_option.h ../src/gfx/GfxSkyBody.h
+lua_wrappers_core.o: ../depend_stubs/OgreEntity.h
+lua_wrappers_core.o: ../depend_stubs/OgreSceneNode.h
+lua_wrappers_core.o: ../src/gfx/GfxDiskResource.h
+lua_wrappers_core.o: ../src/gfx/GfxSkyMaterial.h ../src/gfx/GfxLight.h
+lua_wrappers_core.o: ../src/gfx/GfxInstances.h
+lua_wrappers_core.o: ../src/gfx/GfxRangedInstances.h
 lua_wrappers_core.o: ../src/audio/lua_wrappers_audio.h
 lua_wrappers_core.o: ../src/audio/audio.h ../depend_stubs/AL/al.h
 lua_wrappers_core.o: ../src/audio/AudioDiskResource.h
@@ -715,6 +731,41 @@ lua_wrappers_disk_resource.o: ../src/DiskResource.h
 lua_wrappers_disk_resource.o: ../src/gfx/lua_wrappers_gfx.h
 lua_wrappers_disk_resource.o: ../src/lua_wrappers_common.h
 lua_wrappers_disk_resource.o: ../src/gfx/gfx.h ../src/vect_util.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxBody.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxMaterial.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreMaterial.h
+lua_wrappers_disk_resource.o: ../src/gfx/gfx_internal.h
+lua_wrappers_disk_resource.o: ../depend_stubs/Ogre.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreFontManager.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreMeshManager.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreOverlayElementFactory.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreOctreeSceneManager.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreVector3.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreQuaternion.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreCustomCompositionPass.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreCompositor.h
+lua_wrappers_disk_resource.o: ../src/gfx/gfx_option.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreMesh.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxSkyBody.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreEntity.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreSceneNode.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxDiskResource.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxSkyMaterial.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxLight.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxInstances.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreMovableObject.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxRangedInstances.h
+lua_wrappers_disk_resource.o: ../src/Streamer.h ../src/GritObject.h
+lua_wrappers_disk_resource.o: ../src/SharedPtr.h
+lua_wrappers_disk_resource.o: ../depend_stubs/functional
+lua_wrappers_disk_resource.o: ../src/Streamer.h ../src/ExternalTable.h
+lua_wrappers_disk_resource.o: ../src/LuaPtr.h ../src/SplineTable.h
+lua_wrappers_disk_resource.o: ../src/BackgroundLoader.h
+lua_wrappers_disk_resource.o: ../depend_stubs/list
+lua_wrappers_disk_resource.o: ../depend_stubs/boost/thread/thread.hpp
+lua_wrappers_disk_resource.o: ../depend_stubs/boost/thread/condition.hpp
+lua_wrappers_disk_resource.o: ../src/CacheFriendlyRangeSpaceSIMD.h
+lua_wrappers_disk_resource.o: ../src/SSEAllocator.h
 lua_wrappers_disk_resource.o: ../src/physics/lua_wrappers_physics.h
 lua_wrappers_disk_resource.o: ../src/physics/PhysicsWorld.h
 lua_wrappers_gritobj.o: ../src/GritObject.h ../depend_stubs/map
@@ -1340,6 +1391,7 @@ GfxRangedInstances.o: ../depend_stubs/OgreCustomCompositionPass.h
 GfxRangedInstances.o: ../depend_stubs/OgreCompositor.h
 GfxRangedInstances.o: ../src/gfx/gfx.h ../src/vect_util.h
 GfxRangedInstances.o: ../src/gfx/gfx_option.h
+GfxRangedInstances.o: ../src/gfx/GfxRangedInstances.h
 GfxRangedInstances.o: ../src/gfx/GfxInstances.h
 GfxRangedInstances.o: ../src/gfx/GfxBody.h
 GfxRangedInstances.o: ../src/gfx/GfxMaterial.h
@@ -1643,8 +1695,10 @@ lua_wrappers_gfx.o: ../src/physics/LooseEnd.h
 lua_wrappers_gfx.o: ../src/physics/PhysicalMaterial.h
 lua_wrappers_gfx.o: ../src/GritObject.h ../src/LuaPtr.h
 lua_wrappers_gfx.o: ../src/ExternalTable.h ../src/path_util.h
-lua_wrappers_gfx.o: ../src/gfx/gfx.h ../src/vect_util.h
-lua_wrappers_gfx.o: ../src/gfx/GfxBody.h ../src/gfx/GfxMaterial.h
+lua_wrappers_gfx.o: ../src/gfx/lua_wrappers_gfx.h
+lua_wrappers_gfx.o: ../src/lua_wrappers_common.h ../src/gfx/gfx.h
+lua_wrappers_gfx.o: ../src/vect_util.h ../src/gfx/GfxBody.h
+lua_wrappers_gfx.o: ../src/gfx/GfxMaterial.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_internal.h
 lua_wrappers_gfx.o: ../depend_stubs/Ogre.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreFontManager.h
@@ -1664,8 +1718,7 @@ lua_wrappers_gfx.o: ../src/BackgroundLoader.h
 lua_wrappers_gfx.o: ../src/gfx/GfxSkyMaterial.h
 lua_wrappers_gfx.o: ../src/gfx/GfxLight.h
 lua_wrappers_gfx.o: ../src/gfx/GfxInstances.h
-lua_wrappers_gfx.o: ../src/gfx/lua_wrappers_gfx.h
-lua_wrappers_gfx.o: ../src/lua_wrappers_common.h
+lua_wrappers_gfx.o: ../src/gfx/GfxRangedInstances.h
 lua_wrappers_gfx.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_gfx.o: ../src/lua_wrappers_common.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreException.h
@@ -2344,30 +2397,14 @@ grit_col_conv.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 grit_col_conv.o: ../depend_stubs/quex/code_base/template/Analyser.i
 grit_col_conv.o: ../src/physics/BColParser.h
 lua_wrappers_physics.o: ../depend_stubs/limits
-lua_wrappers_physics.o: ../depend_stubs/OgreSceneManager.h
-lua_wrappers_physics.o: ../src/gfx/Clutter.h
-lua_wrappers_physics.o: ../depend_stubs/cfloat
-lua_wrappers_physics.o: ../depend_stubs/OgreMovableObject.h
-lua_wrappers_physics.o: ../depend_stubs/OgreVertexIndexData.h
-lua_wrappers_physics.o: ../depend_stubs/OgreMaterial.h
-lua_wrappers_physics.o: ../depend_stubs/OgreMesh.h
-lua_wrappers_physics.o: ../src/math_util.h
-lua_wrappers_physics.o: ../depend_stubs/cmath
-lua_wrappers_physics.o: ../src/CentralisedLog.h
-lua_wrappers_physics.o: ../depend_stubs/iostream
-lua_wrappers_physics.o: ../depend_stubs/sstream
-lua_wrappers_physics.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-lua_wrappers_physics.o: ../src/console_colour.h
-lua_wrappers_physics.o: ../src/CacheFriendlyRangeSpaceSIMD.h
+lua_wrappers_physics.o: ../src/gfx/GfxRangedInstances.h
+lua_wrappers_physics.o: ../src/SharedPtr.h ../src/Streamer.h
 lua_wrappers_physics.o: ../depend_stubs/map
-lua_wrappers_physics.o: ../depend_stubs/vector
-lua_wrappers_physics.o: ../depend_stubs/algorithm
-lua_wrappers_physics.o: ../src/SSEAllocator.h
-lua_wrappers_physics.o: ../src/Streamer.h
 lua_wrappers_physics.o: ../depend_stubs/lua.h
 lua_wrappers_physics.o: ../depend_stubs/lauxlib.h
 lua_wrappers_physics.o: ../depend_stubs/lualib.h
 lua_wrappers_physics.o: ../src/GritObject.h
+lua_wrappers_physics.o: ../depend_stubs/vector
 lua_wrappers_physics.o: ../depend_stubs/set
 lua_wrappers_physics.o: ../depend_stubs/string
 lua_wrappers_physics.o: ../src/SharedPtr.h
@@ -2379,10 +2416,37 @@ lua_wrappers_physics.o: ../src/math_util.h ../src/LuaPtr.h
 lua_wrappers_physics.o: ../src/SplineTable.h
 lua_wrappers_physics.o: ../src/BackgroundLoader.h
 lua_wrappers_physics.o: ../src/vect_util.h
+lua_wrappers_physics.o: ../depend_stubs/algorithm
+lua_wrappers_physics.o: ../src/CentralisedLog.h
+lua_wrappers_physics.o: ../depend_stubs/iostream
+lua_wrappers_physics.o: ../depend_stubs/sstream
+lua_wrappers_physics.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+lua_wrappers_physics.o: ../src/console_colour.h
 lua_wrappers_physics.o: ../depend_stubs/list
 lua_wrappers_physics.o: ../depend_stubs/boost/thread/thread.hpp
 lua_wrappers_physics.o: ../depend_stubs/boost/thread/condition.hpp
 lua_wrappers_physics.o: ../src/DiskResource.h
+lua_wrappers_physics.o: ../src/CacheFriendlyRangeSpaceSIMD.h
+lua_wrappers_physics.o: ../depend_stubs/cmath
+lua_wrappers_physics.o: ../src/SSEAllocator.h
+lua_wrappers_physics.o: ../src/gfx/GfxInstances.h
+lua_wrappers_physics.o: ../depend_stubs/OgreMovableObject.h
+lua_wrappers_physics.o: ../src/gfx/GfxBody.h ../src/gfx/gfx.h
+lua_wrappers_physics.o: ../src/vect_util.h
+lua_wrappers_physics.o: ../src/gfx/GfxMaterial.h
+lua_wrappers_physics.o: ../depend_stubs/OgreMaterial.h
+lua_wrappers_physics.o: ../src/gfx/gfx_internal.h
+lua_wrappers_physics.o: ../depend_stubs/Ogre.h
+lua_wrappers_physics.o: ../depend_stubs/OgreFontManager.h
+lua_wrappers_physics.o: ../depend_stubs/OgreMeshManager.h
+lua_wrappers_physics.o: ../depend_stubs/OgreOverlayElementFactory.h
+lua_wrappers_physics.o: ../depend_stubs/OgreOctreeSceneManager.h
+lua_wrappers_physics.o: ../depend_stubs/OgreVector3.h
+lua_wrappers_physics.o: ../depend_stubs/OgreQuaternion.h
+lua_wrappers_physics.o: ../depend_stubs/OgreCustomCompositionPass.h
+lua_wrappers_physics.o: ../depend_stubs/OgreCompositor.h
+lua_wrappers_physics.o: ../src/gfx/gfx_option.h
+lua_wrappers_physics.o: ../depend_stubs/OgreMesh.h
 lua_wrappers_physics.o: ../src/lua_wrappers_gritobj.h
 lua_wrappers_physics.o: ../src/lua_wrappers_common.h
 lua_wrappers_physics.o: ../depend_stubs/OgreException.h
@@ -2395,10 +2459,12 @@ lua_wrappers_physics.o: ../depend_stubs/btBulletCollisionCommon.h
 lua_wrappers_physics.o: ../src/gfx/lua_userdata_dependency_tracker.h
 lua_wrappers_physics.o: ../depend_stubs/OgreStaticGeometry.h
 lua_wrappers_physics.o: ../depend_stubs/OgreInstancedGeometry.h
-lua_wrappers_physics.o: ../src/gfx/Clutter.h ../src/gfx/HUD.h
+lua_wrappers_physics.o: ../src/gfx/Clutter.h
+lua_wrappers_physics.o: ../depend_stubs/cfloat
+lua_wrappers_physics.o: ../depend_stubs/OgreVertexIndexData.h
+lua_wrappers_physics.o: ../src/math_util.h ../src/gfx/HUD.h
 lua_wrappers_physics.o: ../depend_stubs/climits
 lua_wrappers_physics.o: ../depend_stubs/OgrePanelOverlayElement.h
-lua_wrappers_physics.o: ../depend_stubs/OgreOverlayElementFactory.h
 lua_wrappers_physics.o: ../depend_stubs/OgreOverlay.h
 lua_wrappers_physics.o: ../depend_stubs/OgreOverlayManager.h
 lua_wrappers_physics.o: ../src/gfx/TextListOverlayElement.h
@@ -2407,7 +2473,6 @@ lua_wrappers_physics.o: ../depend_stubs/OgreOverlayElement.h
 lua_wrappers_physics.o: ../depend_stubs/OgreFont.h
 lua_wrappers_physics.o: ../src/physics/PhysicsWorld.h
 lua_wrappers_physics.o: ../src/CentralisedLog.h
-lua_wrappers_physics.o: ../src/SharedPtr.h
 lua_wrappers_physics.o: ../depend_stubs/btBulletDynamicsCommon.h
 lua_wrappers_physics.o: ../src/physics/TColParser.h
 lua_wrappers_physics.o: ../src/physics/TColLexer
@@ -2444,32 +2509,22 @@ lua_wrappers_physics.o: ../src/physics/PhysicalMaterial.h
 lua_wrappers_physics.o: ../src/GritObject.h ../src/LuaPtr.h
 lua_wrappers_physics.o: ../src/path_util.h
 lua_wrappers_physics.o: ../src/lua_wrappers_disk_resource.h
-lua_wrappers_physics.o: ../src/gfx/gfx.h ../src/vect_util.h
+lua_wrappers_physics.o: ../src/gfx/gfx.h
 lua_wrappers_physics.o: ../src/gfx/GfxDiskResource.h
 lua_wrappers_physics.o: ../depend_stubs/OgreResource.h
 lua_wrappers_physics.o: ../src/BackgroundLoader.h
-lua_wrappers_physics.o: ../src/gfx/GfxBody.h ../src/gfx/gfx.h
-lua_wrappers_physics.o: ../src/gfx/GfxMaterial.h
-lua_wrappers_physics.o: ../src/gfx/gfx_internal.h
-lua_wrappers_physics.o: ../depend_stubs/Ogre.h
-lua_wrappers_physics.o: ../depend_stubs/OgreFontManager.h
-lua_wrappers_physics.o: ../depend_stubs/OgreMeshManager.h
-lua_wrappers_physics.o: ../depend_stubs/OgreOctreeSceneManager.h
-lua_wrappers_physics.o: ../depend_stubs/OgreVector3.h
-lua_wrappers_physics.o: ../depend_stubs/OgreQuaternion.h
-lua_wrappers_physics.o: ../depend_stubs/OgreCustomCompositionPass.h
-lua_wrappers_physics.o: ../depend_stubs/OgreCompositor.h
-lua_wrappers_physics.o: ../src/gfx/gfx_option.h
 lua_wrappers_physics.o: ../src/gfx/GfxParticleSystem.h
 lua_wrappers_physics.o: ../src/gfx/HUD.h
 lua_wrappers_physics.o: ../depend_stubs/OgreRoot.h
 lua_wrappers_physics.o: ../depend_stubs/OgreRenderWindow.h
-lua_wrappers_physics.o: ../src/gfx/lua_wrappers_scnmgr.h
-lua_wrappers_physics.o: ../depend_stubs/OgrePixelFormat.h
+lua_wrappers_physics.o: ../src/gfx/lua_wrappers_gfx.h
 lua_wrappers_physics.o: ../src/lua_wrappers_common.h
-lua_wrappers_physics.o: ../src/gfx/lua_wrappers_mesh.h
-lua_wrappers_physics.o: ../src/gfx/lua_wrappers_mobj.h
-lua_wrappers_physics.o: ../depend_stubs/OgreLight.h
+lua_wrappers_physics.o: ../src/gfx/GfxSkyBody.h
+lua_wrappers_physics.o: ../depend_stubs/OgreEntity.h
+lua_wrappers_physics.o: ../depend_stubs/OgreSceneNode.h
+lua_wrappers_physics.o: ../src/gfx/GfxSkyMaterial.h
+lua_wrappers_physics.o: ../src/gfx/GfxLight.h
+lua_wrappers_physics.o: ../src/gfx/GfxRangedInstances.h
 lua_wrappers_physics.o: ../src/physics/PhysicsWorld.h
 lua_wrappers_physics.o: ../src/physics/lua_wrappers_physics.h
 AudioDiskResource.o: ../src/audio/AudioDiskResource.h

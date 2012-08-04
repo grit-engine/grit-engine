@@ -21,18 +21,14 @@
 
 #include <limits>
 
-#include <OgreSceneManager.h>
-
-#include "../gfx/Clutter.h"
+#include "../gfx/GfxRangedInstances.h"
 #include "../lua_wrappers_gritobj.h"
 #include "../main.h"
 #include "../path_util.h"
 #include "../lua_wrappers_disk_resource.h"
 
 #include "../gfx/gfx.h"
-#include "../gfx/lua_wrappers_scnmgr.h"
-#include "../gfx/lua_wrappers_mesh.h"
-#include "../gfx/lua_wrappers_mobj.h"
+#include "../gfx/lua_wrappers_gfx.h"
 
 #include "PhysicsWorld.h"
 #include "CollisionMesh.h"
@@ -142,43 +138,31 @@ TRY_END
 static int rbody_ranged_scatter (lua_State *L)
 {
 TRY_START
-        check_args(L,16);
+        check_args(L,12);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
-        GET_UD_MACRO(Ogre::SceneManager,sm,2,SCNMGR_TAG);
-        std::string mat    = check_path(L,3);
-        const char *name    = luaL_checkstring(L,4);
-        GET_UD_MACRO(Ogre::MeshPtr,mesh,5,MESH_TAG);
-        float density       = check_float(L,6);
-        float min_slope     = check_float(L,7);
-        float max_slope     = check_float(L,8);
-        float min_elevation = check_float(L,9);
-        float max_elevation = check_float(L,10);
-        bool no_z           = check_bool(L,11);
-        bool rotate         = check_bool(L,12);
-        bool align_slope    = check_bool(L,13);
-        unsigned seed       = check_t<unsigned>(L,14);
-        unsigned triangles  = check_t<unsigned>(L,15);
-        bool tangents       = check_bool(L,16);
+        std::string mat    = check_path(L,2);
+        std::string mesh = luaL_checkstring(L,3);
+        float density       = check_float(L,4);
+        float min_slope     = check_float(L,5);
+        float max_slope     = check_float(L,6);
+        float min_elevation = check_float(L,7);
+        float max_elevation = check_float(L,8);
+        bool no_z           = check_bool(L,9);
+        bool rotate         = check_bool(L,10);
+        bool align_slope    = check_bool(L,11);
+        unsigned seed       = check_t<unsigned>(L,12);
 
         Transform world_trans;
         world_trans.p = self->getPosition();
         world_trans.r = self->getOrientation();
 
-        std::stringstream triangles_;
-        triangles_ << triangles;
-
-        Ogre::NameValuePairList ps;
-        ps["triangles"] = triangles_.str();
-        ps["tangents"] = (tangents?"true":"false");
-        RangedClutter *ranged_r =
-                static_cast<RangedClutter*>(sm.createMovableObject(name, "RangedClutter", &ps));
-        ranged_r->setNextMesh(mesh);
+        GfxRangedInstancesPtr gri = GfxRangedInstances::make(mesh);
         self->colMesh->scatter(phys_mats.getMaterial(mat)->id,
                                world_trans, density, min_slope, max_slope, min_elevation,
                                max_elevation, no_z, rotate, align_slope, seed,
-                               *ranged_r);
+                               *gri);
 
-        push_rclutter(L, ranged_r);
+        push_gfxrangedinstances(L, gri);
         return 1;
 TRY_END
 }
