@@ -186,5 +186,8 @@
     <ClCompile Include="src\audio\lua_wrappers_audio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\gfx\GfxRangedInstances.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
