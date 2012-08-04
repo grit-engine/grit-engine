@@ -86,6 +86,7 @@ GfxInstancesPtr GfxInstances::make (const std::string &mesh_name, const GfxBodyP
 
 GfxInstances::GfxInstances (GfxDiskResource *gdr, const GfxBodyPtr &par_)
   : GfxNode(par_),
+    capacity(0),
     dirty(false),
     enabled(true),
     castShadows(true),
