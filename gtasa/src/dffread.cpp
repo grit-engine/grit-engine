@@ -1312,7 +1312,7 @@ export_or_provide_mat (const StringSet &texs,
     
     lua_file << "material \"" << mname.str() << "\" { ";
     if (g.vertex_cols.size() > 0) {
-            lua_file << "vertexAmbient=true, ";
+            lua_file << "vertexDiffuse=true, ";
             lua_file << "vertexAlpha=true, ";
     }
     if (has_alpha || decal) lua_file << "alpha=true, ";
