@@ -33,19 +33,25 @@ GfxBoolOption gfx_bool_options[] = {
     GFX_SHADOW_CAST,
     GFX_VSYNC,
     GFX_FULLSCREEN,
+
     GFX_FOG,
     GFX_DEFERRED,
     GFX_WIREFRAME,
     GFX_ANAGLYPH,
     GFX_CROSS_EYE,
+
     GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST,
     GFX_SHADOW_AGGRESSIVE_FOCUS_REGION,
+    GFX_SHADOW_FILTER_DITHER,
+    GFX_SHADOW_FILTER_DITHER_TEXTURE,
+    GFX_SHADOW_EMULATE_PCF,
 };  
 
 GfxIntOption gfx_int_options[] = {
     GFX_FULLSCREEN_WIDTH,
     GFX_FULLSCREEN_HEIGHT,
     GFX_SHADOW_RES,
+    GFX_SHADOW_FILTER_TAPS,
     GFX_RAM,
 };      
         
@@ -55,21 +61,31 @@ GfxFloatOption gfx_float_options[] = {
     GFX_FAR_CLIP,
     GFX_EYE_SEPARATION,
     GFX_MONITOR_HEIGHT,
+
     GFX_MONITOR_EYE_DISTANCE,
     GFX_MIN_PERCEIVED_DEPTH,
     GFX_MAX_PERCEIVED_DEPTH,
     GFX_SHADOW_START,
     GFX_SHADOW_END0,
+
     GFX_SHADOW_END1,
     GFX_SHADOW_END2,
+    GFX_SHADOW_FADE_START,
+    GFX_SHADOW_FILTER_SIZE,
     GFX_SHADOW_OPTIMAL_ADJUST0,
+
     GFX_SHADOW_OPTIMAL_ADJUST1,
     GFX_SHADOW_OPTIMAL_ADJUST2,
     GFX_SHADOW_LIGHT_DIRECTION_THRESHOLD,
     GFX_SHADOW_PADDING,
+    GFX_SHADOW_SPREAD_FACTOR0,
+
+    GFX_SHADOW_SPREAD_FACTOR1,
+    GFX_SHADOW_SPREAD_FACTOR2,
     GFX_ANAGLYPH_LEFT_RED_MASK,
     GFX_ANAGLYPH_LEFT_GREEN_MASK,
     GFX_ANAGLYPH_LEFT_BLUE_MASK,
+
     GFX_ANAGLYPH_RIGHT_RED_MASK,
     GFX_ANAGLYPH_RIGHT_GREEN_MASK,
     GFX_ANAGLYPH_RIGHT_BLUE_MASK,
@@ -94,64 +110,87 @@ static void valid_option (GfxFloatOption o, ValidOption<float> *v) { valid_optio
 static bool truefalse_[] = { false, true };
 static ValidOptionList<bool,bool[2]> *truefalse = new ValidOptionList<bool,bool[2]>(truefalse_);
 
+#define TO_STRING_MACRO(x) case x: return (&#x[4])
+
 std::string gfx_option_to_string (GfxBoolOption o)
 {
     switch (o) {
-        case GFX_AUTOUPDATE: return "GFX_AUTOUPDATE";
-        case GFX_SHADOW_RECEIVE: return "GFX_SHADOW_RECEIVE";
-        case GFX_SHADOW_CAST: return "GFX_SHADOW_CAST";
-        case GFX_VSYNC: return "GFX_VSYNC";
-        case GFX_FULLSCREEN: return "GFX_FULLSCREEN";
-        case GFX_FOG: return "GFX_FOG";
-        case GFX_DEFERRED: return "GFX_DEFERRED";
-        case GFX_WIREFRAME: return "GFX_WIREFRAME";
-        case GFX_ANAGLYPH: return "GFX_ANAGLYPH";
-        case GFX_CROSS_EYE: return "GFX_CROSS_EYE";
-        case GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST: return "SHADOW_SIMPLE_OPTIMAL_ADJUST";
-        case GFX_SHADOW_AGGRESSIVE_FOCUS_REGION: return "SHADOW_AGGRESSIVE_FOCUS_REGION";
+        TO_STRING_MACRO(GFX_AUTOUPDATE);
+        TO_STRING_MACRO(GFX_SHADOW_RECEIVE);
+        TO_STRING_MACRO(GFX_SHADOW_CAST);
+        TO_STRING_MACRO(GFX_VSYNC);
+        TO_STRING_MACRO(GFX_FULLSCREEN);
+
+        TO_STRING_MACRO(GFX_FOG);
+        TO_STRING_MACRO(GFX_DEFERRED);
+        TO_STRING_MACRO(GFX_WIREFRAME);
+        TO_STRING_MACRO(GFX_ANAGLYPH);
+        TO_STRING_MACRO(GFX_CROSS_EYE);
+
+        TO_STRING_MACRO(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST);
+        TO_STRING_MACRO(GFX_SHADOW_AGGRESSIVE_FOCUS_REGION);
+        TO_STRING_MACRO(GFX_SHADOW_FILTER_DITHER);
+        TO_STRING_MACRO(GFX_SHADOW_FILTER_DITHER_TEXTURE);
+        TO_STRING_MACRO(GFX_SHADOW_EMULATE_PCF);
     }
     return "UNKNOWN_BOOL_OPTION";
 }
 std::string gfx_option_to_string (GfxIntOption o)
 {
     switch (o) {
-        case GFX_FULLSCREEN_WIDTH: return "GFX_FULLSCREEN_WIDTH";
-        case GFX_FULLSCREEN_HEIGHT: return "GFX_FULLSCREEN_HEIGHT";
-        case GFX_SHADOW_RES: return "GFX_SHADOW_RES";
-        case GFX_RAM: return "GFX_RAM";
+        TO_STRING_MACRO(GFX_FULLSCREEN_WIDTH);
+        TO_STRING_MACRO(GFX_FULLSCREEN_HEIGHT);
+        TO_STRING_MACRO(GFX_SHADOW_RES);
+        TO_STRING_MACRO(GFX_SHADOW_FILTER_TAPS);
+        TO_STRING_MACRO(GFX_RAM);
     }
     return "UNKNOWN_INT_OPTION";
 }
 std::string gfx_option_to_string (GfxFloatOption o)
 {
     switch (o) {
-        case GFX_FOV: return "FOV";
-        case GFX_NEAR_CLIP: return "NEAR_CLIP";
-        case GFX_FAR_CLIP: return "FAR_CLIP";
-        case GFX_EYE_SEPARATION: return "EYE_SEPARATION";
-        case GFX_MONITOR_HEIGHT: return "MONITOR_HEIGHT";
-        case GFX_MONITOR_EYE_DISTANCE: return "MONITOR_EYE_DISTANCE";
-        case GFX_MIN_PERCEIVED_DEPTH: return "MIN_PERCEIVED_DEPTH";
-        case GFX_MAX_PERCEIVED_DEPTH: return "MAX_PERCEIVED_DEPTH";
-        case GFX_SHADOW_START: return "SHADOW_START";
-        case GFX_SHADOW_END0: return "SHADOW_END0";
-        case GFX_SHADOW_END1: return "SHADOW_END1";
-        case GFX_SHADOW_END2: return "SHADOW_END2";
-        case GFX_SHADOW_OPTIMAL_ADJUST0: return "SHADOW_OPTIMAL_ADJUST0";
-        case GFX_SHADOW_OPTIMAL_ADJUST1: return "SHADOW_OPTIMAL_ADJUST1";
-        case GFX_SHADOW_OPTIMAL_ADJUST2: return "SHADOW_OPTIMAL_ADJUST2";
-        case GFX_SHADOW_LIGHT_DIRECTION_THRESHOLD: return "SHADOW_LIGHT_DIRECTION_THRESHOLD";
-        case GFX_SHADOW_PADDING: return "SHADOW_PADDING";
-        case GFX_ANAGLYPH_LEFT_RED_MASK: return "ANAGLYPH_LEFT_RED_MASK";
-        case GFX_ANAGLYPH_LEFT_GREEN_MASK: return "ANAGLYPH_LEFT_GREEN_MASK";
-        case GFX_ANAGLYPH_LEFT_BLUE_MASK: return "ANAGLYPH_LEFT_BLUE_MASK";
-        case GFX_ANAGLYPH_RIGHT_RED_MASK: return "ANAGLYPH_RIGHT_RED_MASK";
-        case GFX_ANAGLYPH_RIGHT_GREEN_MASK: return "ANAGLYPH_RIGHT_GREEN_MASK";
-        case GFX_ANAGLYPH_RIGHT_BLUE_MASK: return "ANAGLYPH_RIGHT_BLUE_MASK";
-        case GFX_ANAGLYPH_DESATURATION: return "ANAGLYPH_DESATURATION";
+        TO_STRING_MACRO(GFX_FOV);
+        TO_STRING_MACRO(GFX_NEAR_CLIP);
+        TO_STRING_MACRO(GFX_FAR_CLIP);
+        TO_STRING_MACRO(GFX_EYE_SEPARATION);
+        TO_STRING_MACRO(GFX_MONITOR_HEIGHT);
+
+        TO_STRING_MACRO(GFX_MONITOR_EYE_DISTANCE);
+        TO_STRING_MACRO(GFX_MIN_PERCEIVED_DEPTH);
+        TO_STRING_MACRO(GFX_MAX_PERCEIVED_DEPTH);
+        TO_STRING_MACRO(GFX_SHADOW_START);
+        TO_STRING_MACRO(GFX_SHADOW_END0);
+
+        TO_STRING_MACRO(GFX_SHADOW_END1);
+        TO_STRING_MACRO(GFX_SHADOW_END2);
+        TO_STRING_MACRO(GFX_SHADOW_FADE_START);
+        TO_STRING_MACRO(GFX_SHADOW_FILTER_SIZE);
+        TO_STRING_MACRO(GFX_SHADOW_OPTIMAL_ADJUST0);
+
+        TO_STRING_MACRO(GFX_SHADOW_OPTIMAL_ADJUST1);
+        TO_STRING_MACRO(GFX_SHADOW_OPTIMAL_ADJUST2);
+        TO_STRING_MACRO(GFX_SHADOW_LIGHT_DIRECTION_THRESHOLD);
+        TO_STRING_MACRO(GFX_SHADOW_PADDING);
+        TO_STRING_MACRO(GFX_SHADOW_SPREAD_FACTOR0);
+
+        TO_STRING_MACRO(GFX_SHADOW_SPREAD_FACTOR1);
+        TO_STRING_MACRO(GFX_SHADOW_SPREAD_FACTOR2);
+        TO_STRING_MACRO(GFX_ANAGLYPH_LEFT_RED_MASK);
+        TO_STRING_MACRO(GFX_ANAGLYPH_LEFT_GREEN_MASK);
+        TO_STRING_MACRO(GFX_ANAGLYPH_LEFT_BLUE_MASK);
+
+        TO_STRING_MACRO(GFX_ANAGLYPH_RIGHT_RED_MASK);
+        TO_STRING_MACRO(GFX_ANAGLYPH_RIGHT_GREEN_MASK);
+        TO_STRING_MACRO(GFX_ANAGLYPH_RIGHT_BLUE_MASK);
+        TO_STRING_MACRO(GFX_ANAGLYPH_DESATURATION);
     }
     return "UNKNOWN_FLOAT_OPTION";
 }
+
+#define FROM_STRING_MACRO(x,var,type) else if (s==(&#x[4])) { t = type; var = x; }
+#define FROM_STRING_BOOL_MACRO(x) FROM_STRING_MACRO(x,o0,0)
+#define FROM_STRING_INT_MACRO(x) FROM_STRING_MACRO(x,o1,1)
+#define FROM_STRING_FLOAT_MACRO(x) FROM_STRING_MACRO(x,o2,2)
 
 // set's t to either 0,1,2 and fills in the approriate argument
 void gfx_option_from_string (const std::string &s,
@@ -161,45 +200,67 @@ void gfx_option_from_string (const std::string &s,
                              GfxFloatOption &o2)
 {
     if (s=="AUTOUPDATE") { t = 0; o0 = GFX_AUTOUPDATE; }
-    else if (s=="SHADOW_RECEIVE") { t = 0; o0 = GFX_SHADOW_RECEIVE; }
-    else if (s=="SHADOW_CAST") { t = 0; o0 = GFX_SHADOW_CAST; }
-    else if (s=="VSYNC") { t = 0; o0 = GFX_VSYNC; }
-    else if (s=="FULLSCREEN") { t = 0; o0 = GFX_FULLSCREEN; }
-    else if (s=="FOG") { t = 0; o0 = GFX_FOG; }
-    else if (s=="DEFERRED") { t = 0; o0 = GFX_DEFERRED; }
-    else if (s=="WIREFRAME") { t = 0; o0 = GFX_WIREFRAME; }
-    else if (s=="ANAGLYPH") { t = 0; o0 = GFX_ANAGLYPH; }
-    else if (s=="CROSS_EYE") { t = 0; o0 = GFX_CROSS_EYE; }
-    else if (s=="SHADOW_SIMPLE_OPTIMAL_ADJUST") { t = 0; o0 = GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST; }
-    else if (s=="SHADOW_AGGRESSIVE_FOCUS_REGION") { t = 0; o0 = GFX_SHADOW_AGGRESSIVE_FOCUS_REGION; }
-    else if (s=="FULLSCREEN_WIDTH") { t = 1; o1 = GFX_FULLSCREEN_WIDTH; }
-    else if (s=="FULLSCREEN_HEIGHT") { t = 1; o1 = GFX_FULLSCREEN_HEIGHT; }
-    else if (s=="SHADOW_RES") { t = 1; o1 = GFX_SHADOW_RES; }
-    else if (s=="RAM") { t = 1; o1 = GFX_RAM; }
-    else if (s=="FOV") { t = 2; o2 = GFX_FOV; }
-    else if (s=="NEAR_CLIP") { t = 2; o2 = GFX_NEAR_CLIP; }
-    else if (s=="FAR_CLIP") { t = 2; o2 = GFX_FAR_CLIP; }
-    else if (s=="EYE_SEPARATION") { t = 2; o2 = GFX_EYE_SEPARATION; }
-    else if (s=="MONITOR_HEIGHT") { t = 2; o2 = GFX_MONITOR_HEIGHT; }
-    else if (s=="MONITOR_EYE_DISTANCE") { t = 2; o2 = GFX_MONITOR_EYE_DISTANCE; }
-    else if (s=="MIN_PERCEIVED_DEPTH") { t = 2; o2 = GFX_MIN_PERCEIVED_DEPTH; }
-    else if (s=="MAX_PERCEIVED_DEPTH") { t = 2; o2 = GFX_MAX_PERCEIVED_DEPTH; }
-    else if (s=="SHADOW_START") { t = 2; o2 = GFX_SHADOW_START; }
-    else if (s=="SHADOW_END0") { t = 2; o2 = GFX_SHADOW_END0; }
-    else if (s=="SHADOW_END1") { t = 2; o2 = GFX_SHADOW_END1; }
-    else if (s=="SHADOW_END2") { t = 2; o2 = GFX_SHADOW_END2; }
-    else if (s=="SHADOW_OPTIMAL_ADJUST0") { t = 2; o2 = GFX_SHADOW_OPTIMAL_ADJUST0; }
-    else if (s=="SHADOW_OPTIMAL_ADJUST1") { t = 2; o2 = GFX_SHADOW_OPTIMAL_ADJUST1; }
-    else if (s=="SHADOW_OPTIMAL_ADJUST2") { t = 2; o2 = GFX_SHADOW_OPTIMAL_ADJUST2; }
-    else if (s=="SHADOW_LIGHT_DIRECTION_THRESHOLD") { t = 2; o2 = GFX_SHADOW_LIGHT_DIRECTION_THRESHOLD; }
-    else if (s=="SHADOW_PADDING") { t = 2; o2 = GFX_SHADOW_PADDING; }
-    else if (s=="ANAGLYPH_LEFT_RED_MASK") { t = 2; o2 = GFX_ANAGLYPH_LEFT_RED_MASK; }
-    else if (s=="ANAGLYPH_LEFT_GREEN_MASK") { t = 2; o2 = GFX_ANAGLYPH_LEFT_GREEN_MASK; }
-    else if (s=="ANAGLYPH_LEFT_BLUE_MASK") { t = 2; o2 = GFX_ANAGLYPH_LEFT_BLUE_MASK; }
-    else if (s=="ANAGLYPH_RIGHT_RED_MASK") { t = 2; o2 = GFX_ANAGLYPH_RIGHT_RED_MASK; }
-    else if (s=="ANAGLYPH_RIGHT_GREEN_MASK") { t = 2; o2 = GFX_ANAGLYPH_RIGHT_GREEN_MASK; }
-    else if (s=="ANAGLYPH_RIGHT_BLUE_MASK") { t = 2; o2 = GFX_ANAGLYPH_RIGHT_BLUE_MASK; }
-    else if (s=="ANAGLYPH_DESATURATION") { t = 2; o2 = GFX_ANAGLYPH_DESATURATION; }
+    FROM_STRING_BOOL_MACRO(GFX_SHADOW_RECEIVE)
+    FROM_STRING_BOOL_MACRO(GFX_SHADOW_RECEIVE)
+    FROM_STRING_BOOL_MACRO(GFX_SHADOW_CAST)
+    FROM_STRING_BOOL_MACRO(GFX_VSYNC)
+    FROM_STRING_BOOL_MACRO(GFX_FULLSCREEN)
+
+    FROM_STRING_BOOL_MACRO(GFX_FOG)
+    FROM_STRING_BOOL_MACRO(GFX_DEFERRED)
+    FROM_STRING_BOOL_MACRO(GFX_WIREFRAME)
+    FROM_STRING_BOOL_MACRO(GFX_ANAGLYPH)
+    FROM_STRING_BOOL_MACRO(GFX_CROSS_EYE)
+
+    FROM_STRING_BOOL_MACRO(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST)
+    FROM_STRING_BOOL_MACRO(GFX_SHADOW_AGGRESSIVE_FOCUS_REGION)
+    FROM_STRING_BOOL_MACRO(GFX_SHADOW_FILTER_DITHER)
+    FROM_STRING_BOOL_MACRO(GFX_SHADOW_FILTER_DITHER_TEXTURE)
+    FROM_STRING_BOOL_MACRO(GFX_SHADOW_EMULATE_PCF)
+
+
+    FROM_STRING_INT_MACRO(GFX_FULLSCREEN_WIDTH)
+    FROM_STRING_INT_MACRO(GFX_FULLSCREEN_HEIGHT)
+    FROM_STRING_INT_MACRO(GFX_SHADOW_RES)
+    FROM_STRING_INT_MACRO(GFX_SHADOW_FILTER_TAPS)
+    FROM_STRING_INT_MACRO(GFX_RAM)
+
+
+    FROM_STRING_FLOAT_MACRO(GFX_FOV)
+    FROM_STRING_FLOAT_MACRO(GFX_NEAR_CLIP)
+    FROM_STRING_FLOAT_MACRO(GFX_FAR_CLIP)
+    FROM_STRING_FLOAT_MACRO(GFX_EYE_SEPARATION)
+    FROM_STRING_FLOAT_MACRO(GFX_MONITOR_HEIGHT)
+
+    FROM_STRING_FLOAT_MACRO(GFX_MONITOR_EYE_DISTANCE)
+    FROM_STRING_FLOAT_MACRO(GFX_MIN_PERCEIVED_DEPTH)
+    FROM_STRING_FLOAT_MACRO(GFX_MAX_PERCEIVED_DEPTH)
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_START)
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_END0)
+
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_END1)
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_END2)
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_FADE_START)
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_FILTER_SIZE)
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_OPTIMAL_ADJUST0)
+
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_OPTIMAL_ADJUST1)
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_OPTIMAL_ADJUST2)
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_LIGHT_DIRECTION_THRESHOLD)
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_PADDING)
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_SPREAD_FACTOR0)
+
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_SPREAD_FACTOR1)
+    FROM_STRING_FLOAT_MACRO(GFX_SHADOW_SPREAD_FACTOR2)
+    FROM_STRING_FLOAT_MACRO(GFX_ANAGLYPH_LEFT_RED_MASK)
+    FROM_STRING_FLOAT_MACRO(GFX_ANAGLYPH_LEFT_GREEN_MASK)
+    FROM_STRING_FLOAT_MACRO(GFX_ANAGLYPH_LEFT_BLUE_MASK)
+
+    FROM_STRING_FLOAT_MACRO(GFX_ANAGLYPH_RIGHT_RED_MASK)
+    FROM_STRING_FLOAT_MACRO(GFX_ANAGLYPH_RIGHT_GREEN_MASK)
+    FROM_STRING_FLOAT_MACRO(GFX_ANAGLYPH_RIGHT_BLUE_MASK)
+    FROM_STRING_FLOAT_MACRO(GFX_ANAGLYPH_DESATURATION)
+
     else t = -1;
 }
 
@@ -249,6 +310,9 @@ static void options_update (bool flush)
             case GFX_SHADOW_AGGRESSIVE_FOCUS_REGION:
             reset_pcss = true;
             break;
+            case GFX_SHADOW_FILTER_DITHER: break;
+            case GFX_SHADOW_FILTER_DITHER_TEXTURE: break;
+            case GFX_SHADOW_EMULATE_PCF: break;
         }
     }
     for (unsigned i=0 ; i<sizeof(gfx_int_options)/sizeof(*gfx_int_options) ; ++i) {
@@ -268,6 +332,7 @@ static void options_update (bool flush)
             case GFX_SHADOW_RES:
             reset_shadowmaps = true;
             break;
+            case GFX_SHADOW_FILTER_TAPS: break;
         }
     }
     for (unsigned i=0 ; i<sizeof(gfx_float_options)/sizeof(*gfx_float_options) ; ++i) {
@@ -309,6 +374,11 @@ static void options_update (bool flush)
             case GFX_SHADOW_PADDING:
             reset_pcss = true;
             break;
+            case GFX_SHADOW_SPREAD_FACTOR0: break;
+            case GFX_SHADOW_SPREAD_FACTOR1: break;
+            case GFX_SHADOW_SPREAD_FACTOR2: break;
+            case GFX_SHADOW_FADE_START: break;
+            case GFX_SHADOW_FILTER_SIZE: break;
             case GFX_ANAGLYPH_LEFT_RED_MASK:
             case GFX_ANAGLYPH_LEFT_GREEN_MASK:
             case GFX_ANAGLYPH_LEFT_BLUE_MASK:
@@ -443,53 +513,52 @@ static void options_update (bool flush)
 
 void gfx_option_init (void)
 {
-    valid_option(GFX_AUTOUPDATE, truefalse);
-
-    valid_option(GFX_SHADOW_RECEIVE, truefalse);
-    valid_option(GFX_SHADOW_CAST, truefalse);
-    valid_option(GFX_VSYNC, truefalse);
-    valid_option(GFX_FULLSCREEN, truefalse);
-    valid_option(GFX_FOG, truefalse);
-    valid_option(GFX_DEFERRED, truefalse);
-    valid_option(GFX_WIREFRAME, truefalse);
-    valid_option(GFX_ANAGLYPH, truefalse);
-    valid_option(GFX_CROSS_EYE, truefalse);
-    valid_option(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST, truefalse);
-    valid_option(GFX_SHADOW_AGGRESSIVE_FOCUS_REGION, truefalse);
+    for (unsigned i=0 ; i<sizeof(gfx_bool_options)/sizeof(gfx_bool_options[0]) ; ++i)
+        valid_option(gfx_bool_options[i], truefalse);
 
     valid_option(GFX_FULLSCREEN_WIDTH, new ValidOptionRange<int>(1,10000));
     valid_option(GFX_FULLSCREEN_HEIGHT, new ValidOptionRange<int>(1,10000));
     int res_list[] = {512,1024,2048,4096};
     valid_option(GFX_SHADOW_RES, new ValidOptionList<int,int[4]>(res_list));
+    int filter_taps_list[] = {1,4,9,16,36};
+    valid_option(GFX_SHADOW_FILTER_TAPS, new ValidOptionList<int,int[5]>(filter_taps_list));
     valid_option(GFX_RAM, new ValidOptionRange<int>(0,16384));
+
 
     valid_option(GFX_FOV, new ValidOptionRange<float>(0.0000001f,179.0f));
     valid_option(GFX_NEAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
     valid_option(GFX_FAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
     valid_option(GFX_EYE_SEPARATION, new ValidOptionRange<float>(0.0f,0.5f));
     valid_option(GFX_MONITOR_HEIGHT, new ValidOptionRange<float>(0.01f,1000.0f));
+
     valid_option(GFX_MONITOR_EYE_DISTANCE, new ValidOptionRange<float>(0.01f,1000.0f));
     valid_option(GFX_MIN_PERCEIVED_DEPTH, new ValidOptionRange<float>(0.01f,1000.0f));
     valid_option(GFX_MAX_PERCEIVED_DEPTH, new ValidOptionRange<float>(0.01f,1000.0f));
-
     valid_option(GFX_SHADOW_START, new ValidOptionRange<float>(0.0f,10000.0f));
     valid_option(GFX_SHADOW_END0, new ValidOptionRange<float>(0.0f,10000.0f));
+
     valid_option(GFX_SHADOW_END1, new ValidOptionRange<float>(0.0f,10000.0f));
     valid_option(GFX_SHADOW_END2, new ValidOptionRange<float>(0.0f,10000.0f));
+    valid_option(GFX_SHADOW_FADE_START, new ValidOptionRange<float>(0.0f,10000.0f));
+    valid_option(GFX_SHADOW_FILTER_SIZE, new ValidOptionRange<float>(0.0f,40.0f));
     valid_option(GFX_SHADOW_OPTIMAL_ADJUST0, new ValidOptionRange<float>(0.0f,10000.0f));
+
     valid_option(GFX_SHADOW_OPTIMAL_ADJUST1, new ValidOptionRange<float>(0.0f,10000.0f));
     valid_option(GFX_SHADOW_OPTIMAL_ADJUST2, new ValidOptionRange<float>(0.0f,10000.0f));
+    valid_option(GFX_SHADOW_SPREAD_FACTOR0, new ValidOptionRange<float>(0.0f,20.0f));
+    valid_option(GFX_SHADOW_SPREAD_FACTOR1, new ValidOptionRange<float>(0.0f,20.0f));
+    valid_option(GFX_SHADOW_SPREAD_FACTOR2, new ValidOptionRange<float>(0.0f,20.0f));
+
     valid_option(GFX_SHADOW_LIGHT_DIRECTION_THRESHOLD, new ValidOptionRange<float>(0.0f,10000.0f));
     valid_option(GFX_SHADOW_PADDING, new ValidOptionRange<float>(0.0f,100.0f));
     valid_option(GFX_ANAGLYPH_DESATURATION, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_LEFT_RED_MASK, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_LEFT_GREEN_MASK, new ValidOptionRange<float>(0.0f,1.0f));
+
     valid_option(GFX_ANAGLYPH_LEFT_BLUE_MASK, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_RIGHT_RED_MASK, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_RIGHT_GREEN_MASK, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_RIGHT_BLUE_MASK, new ValidOptionRange<float>(0.0f,1.0f));
-
-    valid_option(GFX_AUTOUPDATE, truefalse);
 
 
     gfx_option(GFX_AUTOUPDATE, false);
