@@ -141,7 +141,7 @@ TRY_START
         check_args(L,12);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         std::string mat    = check_path(L,2);
-        std::string mesh = luaL_checkstring(L,3);
+        GET_UD_MACRO(GfxRangedInstancesPtr,gri,3,GFXRANGEDINSTANCES_TAG);
         float density       = check_float(L,4);
         float min_slope     = check_float(L,5);
         float max_slope     = check_float(L,6);
@@ -156,14 +156,12 @@ TRY_START
         world_trans.p = self->getPosition();
         world_trans.r = self->getOrientation();
 
-        GfxRangedInstancesPtr gri = GfxRangedInstances::make(mesh);
         self->colMesh->scatter(phys_mats.getMaterial(mat)->id,
                                world_trans, density, min_slope, max_slope, min_elevation,
                                max_elevation, no_z, rotate, align_slope, seed,
                                *gri);
 
-        push_gfxrangedinstances(L, gri);
-        return 1;
+        return 0;
 TRY_END
 }
 

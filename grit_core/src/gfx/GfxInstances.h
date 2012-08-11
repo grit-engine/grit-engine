@@ -91,6 +91,10 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
     void setCastShadows (bool v) { castShadows = v; }
     bool getCastShadows (void) { return castShadows; updateProperties(); }
 
+    unsigned getCapacity (void) { return capacity; }
+    unsigned getInstances (void) { return sparseIndexes.size(); }
+    unsigned getTrianglesPerInstance (void);
+    unsigned getBatches (void);
 
     protected:
 
@@ -133,6 +137,7 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
     virtual void _updateRenderQueue(Ogre::RenderQueue *q);
 
 
+    const std::string &getMeshName (void);
 
     friend class SharedPtr<GfxInstances>;
 };

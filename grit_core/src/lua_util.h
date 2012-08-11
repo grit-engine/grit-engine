@@ -77,6 +77,9 @@ static inline Quaternion check_quat (lua_State *L, int idx)
 static inline void push_quat (lua_State *L, const Quaternion &v)
 { lua_pushquat(L, v.w, v.x, v.y, v.z); }
 
+static inline void push_string (lua_State *L, const std::string &v)
+{ lua_pushstring(L, v.c_str()); }
+
 void my_lua_error(lua_State *l, const std::string &msg) NORETURN;
 void my_lua_error(lua_State *l, const std::string &msg, unsigned long level) NORETURN;
 void my_lua_error(lua_State *l, const char *) NORETURN;

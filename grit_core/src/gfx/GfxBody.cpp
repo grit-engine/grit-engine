@@ -777,4 +777,9 @@ void GfxBody::setEnabled (bool v)
     updateVisibility();
 }
 
+const std::string &GfxBody::getMeshName (void)
+{
+    return mesh.isNull() ? "" : mesh->getName();
+}
+
 // }}}

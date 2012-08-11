@@ -177,6 +177,20 @@ void GfxInstances::reserveSpace (unsigned new_capacity)
     capacity = new_capacity;
 }
 
+unsigned GfxInstances::getTrianglesPerInstance (void)
+{
+    unsigned total = 0;
+    for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
+        total += mesh->getSubMesh(i)->indexData->indexCount/3;
+    }
+    return total;
+}
+
+unsigned GfxInstances::getBatches (void)
+{
+    return mesh->getNumSubMeshes();
+}
+
 void GfxInstances::copyToGPU (void)
 {
     copyToGPU(0, sparseIndexes.size(), true);
@@ -326,3 +340,9 @@ void GfxInstances::_updateRenderQueue(Ogre::RenderQueue *queue)
         queue->addRenderable(s, s->queueID, s->queuePriority);
     }
 }
+
+const std::string &GfxInstances::getMeshName (void)
+{   
+    return mesh.isNull() ? "" : mesh->getName();
+}
+

@@ -30,12 +30,6 @@
 #include "lua_wrappers_scnmgr.h"
 #include "lua_wrappers_mobj.h"
 
-#define GFXBODY_TAG "Grit/GfxBody"
-#define GFXSKYBODY_TAG "Grit/GfxSkyBody"
-#define GFXINSTANCES_TAG "Grit/GfxInstances"
-#define GFXRANGEDINSTANCES_TAG "Grit/GfxRangedInstances"
-#define GFXLIGHT_TAG "Grit/GfxLight"
-
 
 // GFXBODY ============================================================== {{{
 
@@ -465,6 +459,9 @@ TRY_START
     } else if (!::strcmp(key,"setBoneLocalOrientationOffset")) {
         push_cfunction(L,gfxbody_set_bone_local_orientation_offset);
 
+    } else if (!::strcmp(key,"meshName")) {
+        push_string(L,self->getMeshName());
+
     } else if (!::strcmp(key,"makeChild")) {
         push_cfunction(L,gfxbody_make_child);
     } else if (!::strcmp(key,"destroyed")) {
@@ -614,8 +611,18 @@ TRY_START
         lua_pushboolean(L, self->isEnabled());
     } else if (!::strcmp(key,"castShadows")) {
         lua_pushboolean(L, self->getCastShadows());
+    } else if (!::strcmp(key,"instances")) {
+        lua_pushnumber(L, self->getInstances());
+    } else if (!::strcmp(key,"trianglesPerInstance")) {
+        lua_pushnumber(L, self->getTrianglesPerInstance());
+    } else if (!::strcmp(key,"triangles")) {
+        lua_pushnumber(L, self->getTrianglesPerInstance() * self->getInstances());
+    } else if (!::strcmp(key,"batches")) {
+        lua_pushnumber(L, self->getBatches());
     } else if (!::strcmp(key,"nodeHACK")) {
         push_node(L, self->node);
+    } else if (!::strcmp(key,"meshName")) {
+        push_string(L,self->getMeshName());
     } else {
         my_lua_error(L,"Not a readable GfxRangedInstance member: "+std::string(key));
     }
@@ -750,8 +757,19 @@ TRY_START
         lua_pushboolean(L, self->isEnabled());
     } else if (!::strcmp(key,"castShadows")) {
         lua_pushboolean(L, self->getCastShadows());
+    } else if (!::strcmp(key,"instances")) {
+        lua_pushnumber(L, self->getInstances());
+    } else if (!::strcmp(key,"trianglesPerInstance")) {
+        lua_pushnumber(L, self->getTrianglesPerInstance());
+    } else if (!::strcmp(key,"triangles")) {
+        lua_pushnumber(L, self->getTrianglesPerInstance() * self->getInstances());
+    } else if (!::strcmp(key,"batches")) {
+        lua_pushnumber(L, self->getBatches());
     } else if (!::strcmp(key,"nodeHACK")) {
         push_node(L, self->node);
+    } else if (!::strcmp(key,"meshName")) {
+        push_string(L,self->getMeshName());
+
     } else {
         my_lua_error(L,"Not a readable GfxInstance member: "+std::string(key));
     }

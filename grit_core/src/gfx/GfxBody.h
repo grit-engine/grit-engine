@@ -176,6 +176,7 @@ class GfxBody : public GfxNode, public fast_erase_index {
 
     bool hasGraphics (void) const { return ent!=NULL; }
 
+    const std::string &getMeshName (void);
 
     friend class SharedPtr<GfxBody>;
     friend class GfxDiskResource;

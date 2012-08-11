@@ -31,6 +31,12 @@
 #include "GfxInstances.h"
 #include "GfxRangedInstances.h"
 
+#define GFXBODY_TAG "Grit/GfxBody"
+#define GFXSKYBODY_TAG "Grit/GfxSkyBody"
+#define GFXINSTANCES_TAG "Grit/GfxInstances"
+#define GFXRANGEDINSTANCES_TAG "Grit/GfxRangedInstances"
+#define GFXLIGHT_TAG "Grit/GfxLight"
+
 void gfx_lua_init (lua_State *L);
 
 void push_gfxbody (lua_State *L, const GfxBodyPtr &self);
