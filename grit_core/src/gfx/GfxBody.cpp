@@ -779,7 +779,8 @@ void GfxBody::setEnabled (bool v)
 
 const std::string &GfxBody::getMeshName (void)
 {
-    return mesh.isNull() ? "" : mesh->getName();
+    static std::string empty_string = "";
+    return mesh.isNull() ? empty_string : mesh->getName();
 }
 
 // }}}
