@@ -65,6 +65,9 @@ float cam_separation = 0;
 Vector3 fog_colour;
 float fog_density;
 
+float shadow_strength = 1;
+Vector3 sky_light_colour(0,0,0);
+
 
 // {{{ utilities
 
@@ -750,10 +753,15 @@ Vector3 gfx_fog_get_colour (void)
     return fog_colour;
 }
 
+static void set_ogre_fog (void)
+{
+    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour), fog_density, shadow_strength, 0);
+}
+
 void gfx_fog_set_colour (const Vector3 &v)
 {
     fog_colour = v;
-    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour), fog_density, 0, 0);
+    set_ogre_fog();
 }
 
 float gfx_fog_get_density (void)
@@ -764,8 +772,31 @@ float gfx_fog_get_density (void)
 void gfx_fog_set_density (float v)
 {
     fog_density = v;
-    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour), fog_density, 0, 0);
+    set_ogre_fog();
 }
+
+float gfx_shadow_get_strength (void)
+{
+    return shadow_strength;
+}
+
+void gfx_shadow_set_strength (float v)
+{
+    shadow_strength = v;
+    set_ogre_fog();
+}
+
+Vector3 gfx_sky_light_get_colour (void)
+{
+    return sky_light_colour;
+}
+
+void gfx_sky_light_set_colour (const Vector3 &v)
+{
+    sky_light_colour = v;
+    ogre_sm->setShadowColour(to_ogre_cv(sky_light_colour));
+}
+
 
 // }}}
 

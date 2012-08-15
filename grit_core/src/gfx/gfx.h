@@ -99,6 +99,10 @@ void gfx_fog_set_colour (const Vector3 &v);
 float gfx_fog_get_density (void);
 void gfx_fog_set_density (float v);
 
+float gfx_shadow_get_strength (void);
+void gfx_shadow_set_strength (float v);
+Vector3 gfx_sky_light_get_colour (void);
+void gfx_sky_light_set_colour (const Vector3 &v);
 
 void gfx_screenshot (const std::string &filename);
 

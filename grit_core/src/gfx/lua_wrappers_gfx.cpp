@@ -1299,6 +1299,50 @@ TRY_START
 TRY_END
 }
 
+static int global_gfx_sky_light_get_colour (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    Vector3 v = gfx_sky_light_get_colour();
+    lua_pushnumber(L, v.x);
+    lua_pushnumber(L, v.y);
+    lua_pushnumber(L, v.z);
+    return 3;
+TRY_END
+}
+
+static int global_gfx_sky_light_set_colour (lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    float r = check_float(L,1);
+    float g = check_float(L,2);
+    float b = check_float(L,3);
+    gfx_sky_light_set_colour(Vector3(r,g,b));
+    return 0;
+TRY_END
+}
+
+static int global_gfx_shadow_get_strength (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    float r = gfx_shadow_get_strength();
+    lua_pushnumber(L, r);
+    return 0;
+TRY_END
+}
+
+static int global_gfx_shadow_set_strength (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    float r = check_float(L,1);
+    gfx_shadow_set_strength(r);
+    return 0;
+TRY_END
+}
+
 static void push_stat (lua_State *L, GfxLastRenderStats &s)
 {
     lua_pushnumber(L, s.batches);
@@ -3032,24 +3076,34 @@ static const luaL_reg global[] = {
     {"gfx_ranged_instances_make",global_gfx_ranged_instances_make},
     {"gfx_sky_body_make",global_gfx_sky_body_make},
     {"gfx_light_make",global_gfx_light_make},
+
     {"gfx_sun_get_diffuse",global_gfx_sun_get_diffuse},
     {"gfx_sun_set_diffuse",global_gfx_sun_set_diffuse},
     {"gfx_sun_get_specular",global_gfx_sun_get_specular},
     {"gfx_sun_set_specular",global_gfx_sun_set_specular},
     {"gfx_sun_get_direction",global_gfx_sun_get_direction},
     {"gfx_sun_set_direction",global_gfx_sun_set_direction},
+
     {"gfx_fog_get_colour",global_gfx_fog_get_colour},
     {"gfx_fog_set_colour",global_gfx_fog_set_colour},
     {"gfx_fog_get_density",global_gfx_fog_get_density},
     {"gfx_fog_set_density",global_gfx_fog_set_density},
+
     {"gfx_get_scene_ambient",global_gfx_get_scene_ambient},
     {"gfx_set_scene_ambient",global_gfx_set_scene_ambient},
+
+    {"gfx_sky_light_get_colour",global_gfx_sky_light_get_colour},
+    {"gfx_sky_light_set_colour",global_gfx_sky_light_set_colour},
+    {"gfx_shadow_get_strength",global_gfx_shadow_get_strength},
+    {"gfx_shadow_set_strength",global_gfx_shadow_set_strength},
+
     {"gfx_particle_define",global_gfx_particle_define},
     {"gfx_particle_emit",global_gfx_particle_emit},
     {"gfx_particle_pump",global_gfx_particle_pump},
     {"gfx_particle_count",global_gfx_particle_count},
     {"gfx_particle_step_size_set",global_gfx_particle_step_size_set},
     {"gfx_particle_step_size_get",global_gfx_particle_step_size_get},
+
     {"gfx_last_frame_stats",global_gfx_last_frame_stats},
 
     {NULL, NULL}
