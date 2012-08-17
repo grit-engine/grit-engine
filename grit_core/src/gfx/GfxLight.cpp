@@ -45,7 +45,9 @@ GfxLight::GfxLight (const GfxBodyPtr &par_)
     coronaColour(1,1,1),
     diffuse(1,1,1),
     specular(1,1,1),
-    aim(1,0,0,0)
+    aim(1,0,0,0),
+    coronaInnerAngle(Degree(180)),
+    coronaOuterAngle(Degree(180))
 {
     light = ogre_sm->createLight();
     node->attachObject(light);
@@ -92,8 +94,8 @@ void GfxLight::updateCorona (const Vector3 &cam_pos)
     Vector3 light_aim_ws_ = getWorldOrientation() * Vector3(0,1,0);
 
     float angle = light_aim_ws_.dot(light_dir_ws);
-    float inner = Ogre::Math::Cos(light->getSpotlightInnerAngle());
-    float outer = Ogre::Math::Cos(light->getSpotlightOuterAngle());
+    float inner = gritcos(coronaInnerAngle);
+    float outer = gritcos(coronaOuterAngle);
     if (outer != inner) {
             float occlusion = std::min(std::max((angle-inner)/(outer-inner), 0.0f), 1.0f);
             col *= (1-occlusion);
@@ -196,6 +198,30 @@ void GfxLight::setOuterAngle (Degree v)
 {
     if (dead) THROW_DEAD(className);
     light->setSpotlightOuterAngle(to_ogre(v));
+}
+
+Degree GfxLight::getCoronaInnerAngle (void)
+{
+    if (dead) THROW_DEAD(className);
+    return coronaInnerAngle;
+}
+
+void GfxLight::setCoronaInnerAngle (Degree v)
+{
+    if (dead) THROW_DEAD(className);
+    coronaInnerAngle = v;
+}
+
+Degree GfxLight::getCoronaOuterAngle (void)
+{
+    if (dead) THROW_DEAD(className);
+    return coronaOuterAngle;
+}
+
+void GfxLight::setCoronaOuterAngle (Degree v)
+{
+    if (dead) THROW_DEAD(className);
+    coronaOuterAngle = v;
 }
 
 bool GfxLight::isEnabled (void)

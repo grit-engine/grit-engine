@@ -963,6 +963,10 @@ TRY_START
         lua_pushnumber(L, self->getInnerAngle().inDegrees());
     } else if (!::strcmp(key,"outerAngle")) {
         lua_pushnumber(L, self->getOuterAngle().inDegrees());
+    } else if (!::strcmp(key,"coronaInnerAngle")) {
+        lua_pushnumber(L, self->getCoronaInnerAngle().inDegrees());
+    } else if (!::strcmp(key,"coronaOuterAngle")) {
+        lua_pushnumber(L, self->getCoronaOuterAngle().inDegrees());
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self->isEnabled());
     } else if (!::strcmp(key,"parent")) {
@@ -1026,6 +1030,12 @@ TRY_START
     } else if (!::strcmp(key,"outerAngle")) {
         float v = check_float(L,3);
         self->setOuterAngle(Degree(v));
+    } else if (!::strcmp(key,"coronaInnerAngle")) {
+        float v = check_float(L,3);
+        self->setCoronaInnerAngle(Degree(v));
+    } else if (!::strcmp(key,"coronaOuterAngle")) {
+        float v = check_float(L,3);
+        self->setCoronaOuterAngle(Degree(v));
     } else if (!::strcmp(key,"enabled")) {
         bool v = check_bool(L,3);
         self->setEnabled(v);

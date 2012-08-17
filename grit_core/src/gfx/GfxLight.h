@@ -41,6 +41,8 @@ class GfxLight : public GfxNode, public fast_erase_index {
     Vector3 specular;
     GfxParticle corona;
     Quaternion aim;
+    Radian coronaInnerAngle;
+    Radian coronaOuterAngle;
     public: // HACK
     Ogre::Light *light;
     protected:
@@ -64,6 +66,11 @@ class GfxLight : public GfxNode, public fast_erase_index {
     void setInnerAngle (Degree v);
     Degree getOuterAngle (void);
     void setOuterAngle (Degree v);
+
+    Degree getCoronaInnerAngle (void);
+    void setCoronaInnerAngle (Degree v);
+    Degree getCoronaOuterAngle (void);
+    void setCoronaOuterAngle (Degree v);
 
     bool isEnabled (void);
     void setEnabled (bool v);
