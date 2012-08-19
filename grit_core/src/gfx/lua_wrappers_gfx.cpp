@@ -1253,20 +1253,40 @@ TRY_END
 }
 
 
-static int global_gfx_get_scene_ambient (lua_State *L)
+static int global_gfx_env_cube_set (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    std::string v = check_string(L,1);
+    gfx_env_cube_set(v);
+    return 0;
+TRY_END
+}
+
+static int global_gfx_env_cube_get (lua_State *L)
 {
 TRY_START
     check_args(L,0);
-    push_v3(L, gfx_get_scene_ambient());
+    push_string(L, gfx_env_cube_get());
     return 1;
 TRY_END
 }
 
-static int global_gfx_set_scene_ambient (lua_State *L)
+
+static int global_gfx_particle_ambient_get (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    push_v3(L, gfx_particle_ambient_get());
+    return 1;
+TRY_END
+}
+
+static int global_gfx_particle_ambient_set (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    gfx_set_scene_ambient(check_v3(L,1));
+    gfx_particle_ambient_set(check_v3(L,1));
     return 0;
 TRY_END
 }
@@ -1305,50 +1325,6 @@ TRY_START
     check_args(L,1);
     float d = check_float(L,1);
     gfx_fog_set_density(d);
-    return 0;
-TRY_END
-}
-
-static int global_gfx_sky_light_get_colour (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    Vector3 v = gfx_sky_light_get_colour();
-    lua_pushnumber(L, v.x);
-    lua_pushnumber(L, v.y);
-    lua_pushnumber(L, v.z);
-    return 3;
-TRY_END
-}
-
-static int global_gfx_sky_light_set_colour (lua_State *L)
-{
-TRY_START
-    check_args(L,3);
-    float r = check_float(L,1);
-    float g = check_float(L,2);
-    float b = check_float(L,3);
-    gfx_sky_light_set_colour(Vector3(r,g,b));
-    return 0;
-TRY_END
-}
-
-static int global_gfx_shadow_get_strength (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    float r = gfx_shadow_get_strength();
-    lua_pushnumber(L, r);
-    return 0;
-TRY_END
-}
-
-static int global_gfx_shadow_set_strength (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    float r = check_float(L,1);
-    gfx_shadow_set_strength(r);
     return 0;
 TRY_END
 }
@@ -2445,7 +2421,7 @@ static void process_tex_blend (GfxMaterial *gfxmat, ExternalTable &src, GfxMater
         dst.setNormalMap(normal_map);
 
         std::string specular_map;
-        src.get("specularMap", specular_map, std::string(""));
+        src.get("glossMap", specular_map, std::string(""));
         dst.setSpecularMap(specular_map);
         if (specular_map.length() > 0)
                 gfxmat->setSpecularMode(GFX_MATERIAL_SPEC_MAP);
@@ -3094,18 +3070,13 @@ static const luaL_reg global[] = {
     {"gfx_sun_get_direction",global_gfx_sun_get_direction},
     {"gfx_sun_set_direction",global_gfx_sun_set_direction},
 
+    {"gfx_env_cube_get",global_gfx_env_cube_get},
+    {"gfx_env_cube_set",global_gfx_env_cube_set},
+
     {"gfx_fog_get_colour",global_gfx_fog_get_colour},
     {"gfx_fog_set_colour",global_gfx_fog_set_colour},
     {"gfx_fog_get_density",global_gfx_fog_get_density},
     {"gfx_fog_set_density",global_gfx_fog_set_density},
-
-    {"gfx_get_scene_ambient",global_gfx_get_scene_ambient},
-    {"gfx_set_scene_ambient",global_gfx_set_scene_ambient},
-
-    {"gfx_sky_light_get_colour",global_gfx_sky_light_get_colour},
-    {"gfx_sky_light_set_colour",global_gfx_sky_light_set_colour},
-    {"gfx_shadow_get_strength",global_gfx_shadow_get_strength},
-    {"gfx_shadow_set_strength",global_gfx_shadow_set_strength},
 
     {"gfx_particle_define",global_gfx_particle_define},
     {"gfx_particle_emit",global_gfx_particle_emit},
@@ -3113,6 +3084,8 @@ static const luaL_reg global[] = {
     {"gfx_particle_count",global_gfx_particle_count},
     {"gfx_particle_step_size_set",global_gfx_particle_step_size_set},
     {"gfx_particle_step_size_get",global_gfx_particle_step_size_get},
+    {"gfx_particle_ambient_get",global_gfx_particle_ambient_get},
+    {"gfx_particle_ambient_set",global_gfx_particle_ambient_set},
 
     {"gfx_last_frame_stats",global_gfx_last_frame_stats},
 

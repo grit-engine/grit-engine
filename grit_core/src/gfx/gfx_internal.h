@@ -55,6 +55,8 @@
 #define DEFERRED_LIGHTS_CUSTOM_PASS "DeferredLights"
 #define CORONAS_CUSTOM_PASS "Coronas"
 
+#define ENV_CUBE_TEXTURE "system/EnvCube"
+
 #define RESGRP "GRIT"
 
 // render queues (also baked into system/Core.program)

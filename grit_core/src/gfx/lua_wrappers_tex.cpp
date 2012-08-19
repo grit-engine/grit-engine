@@ -116,6 +116,8 @@ TRY_START
                 lua_pushstring(L, pixel_format_to_string(L,self->getFormat()));
         } else if (key=="srcFormat") {
                 lua_pushstring(L, pixel_format_to_string(L,self->getSrcFormat()));
+        } else if (key=="numFaces") {
+                lua_pushnumber(L,self->getNumFaces());
         } else if (key=="mipmapsHardwareGenerated") {
                 lua_pushboolean(L,self->getMipmapsHardwareGenerated());
         } else if (key=="numMipmaps") {

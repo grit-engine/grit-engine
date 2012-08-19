@@ -52,21 +52,26 @@ Ogre::RenderWindow *ogre_win;
     #endif
 #endif
 
-
-GfxMaterialDB material_db;
-
-bool use_hwgamma = false; //getenv("GRIT_NOHWGAMMA")==NULL;
+// For default parameters of functions that take GfxStringMap
+const GfxStringMap gfx_empty_string_map;
 
 
 GfxCallback *gfx_cb;
 bool shutting_down = false;
+bool use_hwgamma = false; //getenv("GRIT_NOHWGAMMA")==NULL;
 float cam_separation = 0;
 
 Vector3 fog_colour;
 float fog_density;
-
 float shadow_strength = 1;
 Vector3 sky_light_colour(0,0,0);
+
+std::string env_cube_name;
+Ogre::TexturePtr env_cube_tex;
+
+
+GfxMaterialDB material_db;
+fast_erase_vector<GfxBody*> gfx_all_bodies;
 
 
 // {{{ utilities
@@ -88,9 +93,6 @@ template<class T> bool between (T x, T m, T M) { return std::less<T>()(m,x)&&std
 
 // }}}
 
-const GfxStringMap gfx_empty_string_map;
-
-fast_erase_vector<GfxBody*> gfx_all_bodies;
 
 // {{{ FRAMEBUFFER / COMPOSITOR
 
@@ -738,15 +740,76 @@ void gfx_sun_set_direction (const Vector3 &v)
     ogre_sun->setDirection(to_ogre(v));
 }
 
-Vector3 gfx_get_scene_ambient (void)
+Vector3 gfx_particle_ambient_get (void)
 {
     return from_ogre_cv(ogre_sm->getAmbientLight());
 }
 
-void gfx_set_scene_ambient (const Vector3 &v)
+void gfx_particle_ambient_set (const Vector3 &v)
 {
     ogre_sm->setAmbientLight(to_ogre_cv(v));
 }
+
+std::string gfx_env_cube_get (void)
+{
+    return env_cube_name;
+}
+
+void gfx_env_cube_set (const std::string &v)
+{
+    Ogre::Image disk;
+    Ogre::Image img;
+    if (v == "") {
+        // Prepare texture (6(1x1) RGB8)
+        uint8_t raw_tex[] = {
+            0xff, 0x7f, 0x7f,
+            0x00, 0x7f, 0x7f,
+            0x7f, 0xff, 0x7f,
+            0x7f, 0x00, 0x7f,
+            0x7f, 0x7f, 0xff,
+            0x7f, 0x7f, 0x00
+        };
+        // Load raw byte array into an Image
+        img.loadDynamicImage(raw_tex, 1, 1, 1, Ogre::PF_B8G8R8, false, 6, 0);
+    } else if (v.substr(v.length()-4) == ".dds") {
+        // Reorganise into 
+        img.load (v, RESGRP);
+    } else {
+        // Reorganise into 
+        disk.load (v, RESGRP);
+        if (disk.getWidth() != disk.getHeight()*6) {
+            GRIT_EXCEPT("Environment map has incorrect dimensions: "+v);
+        }
+        unsigned sz = disk.getHeight();
+        if (sz & (sz-1) ) {
+            GRIT_EXCEPT("Environment map dimensions not a power of 2: "+v);
+        }
+        uint8_t *raw_tex = new uint8_t[disk.getSize()];
+        img.loadDynamicImage(raw_tex, sz, sz, 1, disk.getFormat(), true, 6, 0);
+        // copy faces across
+        Ogre::PixelBox from = disk.getPixelBox();
+        for (unsigned face=0 ; face<6 ; ++face) {
+            Ogre::PixelBox to = img.getPixelBox(face,0);
+            for (unsigned y=0 ; y<sz ; ++y) {
+                for (unsigned x=0 ; x<sz ; ++x) {
+                    to.setColourAt(from.getColourAt(face*sz + x, y, 0), x, y, 0);
+                }
+            }
+        }
+    }
+
+    // Create texture based on img
+    if (env_cube_tex.isNull()) {
+        env_cube_tex = Ogre::TextureManager::getSingleton().loadImage(ENV_CUBE_TEXTURE, RESGRP, img, Ogre::TEX_TYPE_CUBE_MAP);
+    } else {
+        env_cube_tex->unload();
+        env_cube_tex->setTextureType(Ogre::TEX_TYPE_CUBE_MAP);
+        env_cube_tex->loadImage(img);
+    }
+
+    env_cube_name = v;
+}
+
 
 Vector3 gfx_fog_get_colour (void)
 {
@@ -773,28 +836,6 @@ void gfx_fog_set_density (float v)
 {
     fog_density = v;
     set_ogre_fog();
-}
-
-float gfx_shadow_get_strength (void)
-{
-    return shadow_strength;
-}
-
-void gfx_shadow_set_strength (float v)
-{
-    shadow_strength = v;
-    set_ogre_fog();
-}
-
-Vector3 gfx_sky_light_get_colour (void)
-{
-    return sky_light_colour;
-}
-
-void gfx_sky_light_set_colour (const Vector3 &v)
-{
-    sky_light_colour = v;
-    ogre_sm->setShadowColour(to_ogre_cv(sky_light_colour));
 }
 
 
@@ -1055,6 +1096,7 @@ size_t gfx_init (GfxCallback &cb_)
         gfx_option_init();
 
  
+        gfx_env_cube_set("");
 
         return winid;
     } catch (Ogre::Exception &e) {
@@ -1095,6 +1137,7 @@ void gfx_shutdown (void)
     try {
         if (shutting_down) return;
         shutting_down = true;
+        env_cube_tex.setNull();
         clean_compositors();
         anaglyph_fb.setNull();
         if (ogre_sm && ogre_root) ogre_root->destroySceneManager(ogre_sm);

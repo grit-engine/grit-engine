@@ -65,25 +65,6 @@ size_t gfx_init (GfxCallback &cb);
 
 void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir);
 
-/*
-class GfxInstances : public GfxNode, public fast_erase_index {
-    protected:
-    static const std::string className;
-
-    GfxInstances (const GfxBodyPtr &par_);
-    ~GfxInstances ();
-
-    public:
-    static GfxInstancedPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
-    { return GfxInstancedPtr(new GfxInstances(par_)); }
-    
-    void destroy (void);
-
-    friend class SharedPtr<GfxInstances>;
-};
-*/
-
-
 Vector3 gfx_sun_get_diffuse (void);
 void gfx_sun_set_diffuse (const Vector3 &v);
 Vector3 gfx_sun_get_specular (void);
@@ -91,18 +72,16 @@ void gfx_sun_set_specular (const Vector3 &v);
 Vector3 gfx_sun_get_direction (void);
 void gfx_sun_set_direction (const Vector3 &v);
 
-Vector3 gfx_get_scene_ambient (void);
-void gfx_set_scene_ambient (const Vector3 &v);
+Vector3 gfx_particle_ambient_get (void);
+void gfx_particle_ambient_set (const Vector3 &v);
+
+std::string gfx_env_cube_get (void);
+void gfx_env_cube_set (const std::string &);
 
 Vector3 gfx_fog_get_colour (void);
 void gfx_fog_set_colour (const Vector3 &v);
 float gfx_fog_get_density (void);
 void gfx_fog_set_density (float v);
-
-float gfx_shadow_get_strength (void);
-void gfx_shadow_set_strength (float v);
-Vector3 gfx_sky_light_get_colour (void);
-void gfx_sky_light_set_colour (const Vector3 &v);
 
 void gfx_screenshot (const std::string &filename);
 
