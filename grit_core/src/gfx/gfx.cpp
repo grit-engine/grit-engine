@@ -1,5 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2012
- *
+global_exposure/* Copyright (c) David Cunningham and the Grit Game Engine project 2012 *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -31,18 +30,6 @@
 #include "GfxSkyMaterial.h"
 #include "GfxSkyBody.h"
 
-Ogre::Root *ogre_root;
-Ogre::OctreeSceneManager *ogre_sm;
-Ogre::SceneNode *ogre_root_node;
-Ogre::Camera *left_eye;
-Ogre::Camera *right_eye;
-Ogre::Light *ogre_sun;
-Ogre::SceneNode *ogre_sky_node;
-Ogre::Viewport *overlay_vp;
-Ogre::Viewport *left_vp;
-Ogre::Viewport *right_vp;
-Ogre::TexturePtr anaglyph_fb;
-Ogre::RenderWindow *ogre_win;
 #ifdef NO_PLUGINS
     Ogre::GLPlugin *gl;
     Ogre::OctreePlugin *octree;
@@ -52,22 +39,68 @@ Ogre::RenderWindow *ogre_win;
     #endif
 #endif
 
-// For default parameters of functions that take GfxStringMap
-const GfxStringMap gfx_empty_string_map;
-
+Ogre::TexturePtr anaglyph_fb; // render the right eye into this, finally additively blend over real fb
+Ogre::RenderWindow *ogre_win;
+Ogre::Root *ogre_root;
+Ogre::OctreeSceneManager *ogre_sm;
+Ogre::SceneNode *ogre_root_node;
+Ogre::Light *ogre_sun;
+Ogre::SceneNode *ogre_sky_node;
 
 GfxCallback *gfx_cb;
 bool shutting_down = false;
 bool use_hwgamma = false; //getenv("GRIT_NOHWGAMMA")==NULL;
 float cam_separation = 0;
 
+struct Eye {
+    Ogre::Viewport *vp;
+    Ogre::Camera *cam;
+    Ogre::MultiRenderTarget *gbuffer;
+    Ogre::RenderTarget *gBuffer
+    Ogre::RenderTexturePtr gBufferElement[4];
+
+    // maybe constructor should take just rt's viewport?
+    Eye (const std::string &name, Ogre::RenderTarget *rt)
+    {
+        unsigned width = rt->getWidth(), height = rt->getHeight();
+        gBuffer = new Ogre::MultiRenderTarget(name+":G");
+        // make textures for it
+        char *el_names = { ":G0", ":G1", ":G2", ":G3" };
+        for (unsigned i=0 ; i<3 ; ++i) {
+            gBufferElement[i] =
+                Ogre::TextureManager::getSingleton().createManual(
+                    name+el_names[i], RESGRP, Ogre::TEX_TYPE_2D,
+                    width, height, 1,
+                    0,
+                    Ogre::PF_A8R8G8B8,
+                    Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE | Ogre::TU_RENDERTARGET,
+                    NULL,
+                    use_hwgamma);
+            gbuffer->bindSurface(i, *&gBufferElement[i]);
+        }
+
+    }
+};
+
+// For default parameters of functions that take GfxStringMap
+const GfxStringMap gfx_empty_string_map;
+
+
 Vector3 fog_colour;
 float fog_density;
-float shadow_strength = 1;
 Vector3 sky_light_colour(0,0,0);
 
 std::string env_cube_name;
 Ogre::TexturePtr env_cube_tex;
+float env_brightness = 1;
+float global_exposure = 1;
+float global_contrast = 0;
+
+// abuse ogre fog params to store several things
+static void set_ogre_fog (void)
+{
+    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour), fog_density, env_brightness, global_exposure);
+}
 
 
 GfxMaterialDB material_db;
@@ -635,9 +668,7 @@ void do_reset_compositors (void)
 {
     if (gfx_option(GFX_DEFERRED)) {
         add_deferred_compositor(true);
-        if (gfx_option(GFX_CROSS_EYE)) {
-            add_deferred_compositor(false);
-        } else if (gfx_option(GFX_ANAGLYPH)) {
+        if (gfx_option(GFX_CROSS_EYE) || gfx_option(GFX_ANAGLYPH)) {
             add_deferred_compositor(false);
         }
     }
@@ -810,15 +841,44 @@ void gfx_env_cube_set (const std::string &v)
     env_cube_name = v;
 }
 
+float gfx_env_brightness_get (void)
+{
+    return env_brightness;
+}
+
+void gfx_env_brightness_set (float v)
+{
+    env_brightness = v;
+    set_ogre_fog();
+}
+    
+float gfx_global_contrast_get (void)
+{
+    return global_contrast;
+}
+
+void gfx_global_contrast_set (float v)
+{
+    global_contrast = v;
+    set_ogre_fog();
+}
+    
+float gfx_global_exposure_get (void)
+{
+    return global_exposure;
+}
+
+void gfx_global_exposure_set (float v)
+{
+    global_exposure = v;
+    set_ogre_fog();
+}
+    
+
 
 Vector3 gfx_fog_get_colour (void)
 {
     return fog_colour;
-}
-
-static void set_ogre_fog (void)
-{
-    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour), fog_density, shadow_strength, 0);
 }
 
 void gfx_fog_set_colour (const Vector3 &v)
@@ -837,7 +897,6 @@ void gfx_fog_set_density (float v)
     fog_density = v;
     set_ogre_fog();
 }
-
 
 // }}}
 

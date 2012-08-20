@@ -1272,6 +1272,64 @@ TRY_START
 TRY_END
 }
 
+static int global_gfx_env_brightness_set (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    float v = check_float(L,1);
+    gfx_env_brightness_set(v);
+    return 0;
+TRY_END
+}
+
+static int global_gfx_env_brightness_get (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    lua_pushnumber(L, gfx_env_brightness_get());
+    return 1;
+TRY_END
+}
+
+
+static int global_gfx_global_contrast_set (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    float v = check_float(L,1);
+    gfx_global_contrast_set(v);
+    return 0;
+TRY_END
+}
+
+static int global_gfx_global_contrast_get (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    lua_pushnumber(L, gfx_global_contrast_get());
+    return 1;
+TRY_END
+}
+
+static int global_gfx_global_exposure_set (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    float v = check_float(L,1);
+    gfx_global_exposure_set(v);
+    return 0;
+TRY_END
+}
+
+static int global_gfx_global_exposure_get (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    lua_pushnumber(L, gfx_global_exposure_get());
+    return 1;
+TRY_END
+}
+
 
 static int global_gfx_particle_ambient_get (lua_State *L)
 {
@@ -3072,6 +3130,13 @@ static const luaL_reg global[] = {
 
     {"gfx_env_cube_get",global_gfx_env_cube_get},
     {"gfx_env_cube_set",global_gfx_env_cube_set},
+    {"gfx_env_brightness_get",global_gfx_env_brightness_get},
+    {"gfx_env_brightness_set",global_gfx_env_brightness_set},
+
+    {"gfx_global_contrast_get",global_gfx_global_contrast_get},
+    {"gfx_global_contrast_set",global_gfx_global_contrast_set},
+    {"gfx_global_exposure_get",global_gfx_global_exposure_get},
+    {"gfx_global_exposure_set",global_gfx_global_exposure_set},
 
     {"gfx_fog_get_colour",global_gfx_fog_get_colour},
     {"gfx_fog_set_colour",global_gfx_fog_set_colour},

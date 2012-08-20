@@ -77,6 +77,13 @@ void gfx_particle_ambient_set (const Vector3 &v);
 
 std::string gfx_env_cube_get (void);
 void gfx_env_cube_set (const std::string &);
+float gfx_env_brightness_get (void);
+void gfx_env_brightness_set (float);
+
+float gfx_global_contrast_get (void);
+void gfx_global_contrast_set (float);
+float gfx_global_exposure_get (void);
+void gfx_global_exposure_set (float);
 
 Vector3 gfx_fog_get_colour (void);
 void gfx_fog_set_colour (const Vector3 &v);
