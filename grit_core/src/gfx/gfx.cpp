@@ -1,4 +1,4 @@
-global_exposure/* Copyright (c) David Cunningham and the Grit Game Engine project 2012 *
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2012 *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -47,40 +47,15 @@ Ogre::SceneNode *ogre_root_node;
 Ogre::Light *ogre_sun;
 Ogre::SceneNode *ogre_sky_node;
 
+Ogre::Camera *left_eye;
+Ogre::Camera *right_eye;
+Ogre::Viewport *left_vp;
+Ogre::Viewport *right_vp;
+
 GfxCallback *gfx_cb;
 bool shutting_down = false;
 bool use_hwgamma = false; //getenv("GRIT_NOHWGAMMA")==NULL;
 float cam_separation = 0;
-
-struct Eye {
-    Ogre::Viewport *vp;
-    Ogre::Camera *cam;
-    Ogre::MultiRenderTarget *gbuffer;
-    Ogre::RenderTarget *gBuffer
-    Ogre::RenderTexturePtr gBufferElement[4];
-
-    // maybe constructor should take just rt's viewport?
-    Eye (const std::string &name, Ogre::RenderTarget *rt)
-    {
-        unsigned width = rt->getWidth(), height = rt->getHeight();
-        gBuffer = new Ogre::MultiRenderTarget(name+":G");
-        // make textures for it
-        char *el_names = { ":G0", ":G1", ":G2", ":G3" };
-        for (unsigned i=0 ; i<3 ; ++i) {
-            gBufferElement[i] =
-                Ogre::TextureManager::getSingleton().createManual(
-                    name+el_names[i], RESGRP, Ogre::TEX_TYPE_2D,
-                    width, height, 1,
-                    0,
-                    Ogre::PF_A8R8G8B8,
-                    Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE | Ogre::TU_RENDERTARGET,
-                    NULL,
-                    use_hwgamma);
-            gbuffer->bindSurface(i, *&gBufferElement[i]);
-        }
-
-    }
-};
 
 // For default parameters of functions that take GfxStringMap
 const GfxStringMap gfx_empty_string_map;
