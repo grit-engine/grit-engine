@@ -320,7 +320,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
         // various camera and lighting things
         Ogre::Matrix4 view = cam->getViewMatrix();
         Ogre::Matrix4 proj = cam->getProjectionMatrixRS();
-        Ogre::Matrix4 proj_view = proj*view;
+        Ogre::Matrix4 view_proj = proj*view;
         Ogre::Vector3 sun_pos_ws = ogre_sun->getDirection();
         Ogre::ColourValue sun_diffuse = ogre_sun->getDiffuseColour();
         Ogre::ColourValue sun_specular = ogre_sun->getSpecularColour();
@@ -361,7 +361,9 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
             // actually we need only the z and w rows but this is just one renderable per frame so
             // not a big deal
-            try_set_named_constant(das_fp_params, "view_proj", proj_view);
+            Ogre::Matrix4 special_proj = cam->getProjectionMatrix();
+            Ogre::Matrix4 special_view_proj = special_proj*view;
+            try_set_named_constant(das_fp_params, "view_proj", special_view_proj);
             try_set_named_constant(das_fp_params, "sun_pos_ws", -sun_pos_ws);
             try_set_named_constant(das_fp_params, "sun_diffuse", sun_diffuse);
             try_set_named_constant(das_fp_params, "sun_specular", sun_specular);
@@ -515,7 +517,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
                 const Ogre::GpuProgramParametersSharedPtr &dl_vp_params = dl_vp->getDefaultParameters();
                 const Ogre::GpuProgramParametersSharedPtr &dl_fp_params = dl_fp->getDefaultParameters();
-                try_set_named_constant(dl_vp_params, "view_proj", proj_view);
+                try_set_named_constant(dl_vp_params, "view_proj", view_proj);
                 try_set_named_constant(dl_vp_params, "render_target_flipping", render_target_flipping);
 
                 try_set_named_constant(dl_fp_params, "top_left_ray", top_left_ray);
