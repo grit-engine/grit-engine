@@ -402,19 +402,21 @@ class GfxParticleSystem {
         ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, dl_fp_params, Ogre::GPV_ALL);
         ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, dl_vp_params, Ogre::GPV_ALL);
 
+        ogre_rs->_setCullingMode(Ogre::CULL_NONE);
         if (alphaBlend) {
-            ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
             ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
+            ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
         } else {
-            ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
             ogre_rs->_setDepthBufferParams(true, true, Ogre::CMPF_LESS_EQUAL);
+            ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
         }
-
-        ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
+        ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+        ogre_rs->setStencilCheckEnabled(false);
+    
         ogre_rs->_render(outside.getRenderOperation());
 
-        ogre_rs->_setTexture(0, false, Ogre::StringUtil::BLANK);
-        ogre_rs->_setTexture(1, false, Ogre::StringUtil::BLANK);
+        ogre_rs->_disableTextureUnit(0);
+        ogre_rs->_disableTextureUnit(1);
 
     }
 

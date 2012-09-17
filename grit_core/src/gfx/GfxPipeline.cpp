@@ -378,10 +378,6 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             }
 
 
-            ogre_rs->_setCullingMode(Ogre::CULL_NONE);
-
-            //ogre_rs->_setDepthBufferParams(true, true, Ogre::CMPF_LESS_EQUAL);
-
             unsigned tex_index = 0;
             for (unsigned i=0 ; i<3 ; ++i) {
                 ogre_rs->_setTexture(tex_index++, true, pipe->getGBufferTexture(i));
@@ -402,6 +398,11 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIP, Ogre::FO_LINEAR);
             tex_index++;
 
+            ogre_rs->_setCullingMode(Ogre::CULL_NONE);
+            ogre_rs->_setDepthBufferParams(true, true, Ogre::CMPF_LESS_EQUAL);
+            ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
+            ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+            ogre_rs->setStencilCheckEnabled(false);
 
             // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
             ogre_rs->bindGpuProgram(das_vp->_getBindingDelegate());
@@ -418,7 +419,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             ogre_rs->_render(op);
 
             for (unsigned i=0 ; i<tex_index ; ++i) {
-                ogre_rs->_setTexture(i, false, Ogre::StringUtil::BLANK);
+                ogre_rs->_disableTextureUnit(i);
             }
 
         } catch (const Ogre::Exception &e) {
@@ -546,22 +547,27 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                 ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, dl_fp_params, Ogre::GPV_ALL);
                 ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, dl_vp_params, Ogre::GPV_ALL);
 
-                ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
 
                 if (mdl.indexesUsed() > 0) {
                     ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
                     ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
+                    ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
+                    ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+                    ogre_rs->setStencilCheckEnabled(false);
                     ogre_rs->_render(mdl.getRenderOperation());
                 }
 
                 if (mdlInside.indexesUsed() > 0) {
                     ogre_rs->_setCullingMode(Ogre::CULL_ANTICLOCKWISE);
                     ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_GREATER_EQUAL);
+                    ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
+                    ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+                    ogre_rs->setStencilCheckEnabled(false);
                     ogre_rs->_render(mdlInside.getRenderOperation());
                 }
 
                 for (unsigned i=0 ; i<tex_index ; ++i) {
-                    ogre_rs->_setTexture(i, false, Ogre::StringUtil::BLANK);
+                    ogre_rs->_disableTextureUnit(i);
                 }
             }
 
@@ -803,7 +809,11 @@ void GfxPipeline::render (const Vector3 &cam_pos, const Quaternion &cam_dir)
         ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fp_params, Ogre::GPV_ALL);
         ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vp_params, Ogre::GPV_ALL);
 
+        ogre_rs->_setCullingMode(Ogre::CULL_NONE);
+        ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
         ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
+        ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+        ogre_rs->setStencilCheckEnabled(false);
 
         // render the instances
         Ogre::RenderOperation op;
@@ -812,7 +822,7 @@ void GfxPipeline::render (const Vector3 &cam_pos, const Quaternion &cam_dir)
         op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
         ogre_rs->_render(op);
 
-        ogre_rs->_setTexture(0, false, Ogre::StringUtil::BLANK);
+        ogre_rs->_disableTextureUnit(0);
 
         ogre_rs->_endFrame();
 
