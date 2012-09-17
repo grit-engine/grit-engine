@@ -457,7 +457,7 @@ struct SceneManagerListener : Ogre::SceneManager::Listener {
         APP_ASSERT(iteration < 3);
         //CVERB << "shadowTextureCasterPreViewProj: " << light->getName() << " " << cam->getName() <<  " " << iteration << std::endl;
         Ogre::Matrix4 view = cam->getViewMatrix();
-        Ogre::Matrix4 proj = cam->getProjectionMatrixWithRSDepth();
+        Ogre::Matrix4 proj = cam->getProjectionMatrix();
         static const Ogre::Matrix4 to_uv_space( 0.5,    0,    0,  0.5, 0,   -0.5,    0,  0.5, 0,      0,    1,    0, 0,      0,    0,    1);
         Ogre::Matrix4 view_proj = to_uv_space*proj*view;
         shadow_view_proj[iteration] = view_proj;
