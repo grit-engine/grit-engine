@@ -349,7 +349,7 @@ GfxLastFrameStats gfx_last_frame_stats (void)
     GfxLastFrameStats r;
 
     r.left_deferred = eye_left->getDeferredStats();
-    r.left_gbuffer = eye_left->getDeferredStats();
+    r.left_gbuffer = eye_left->getGBufferStats();
 
     if (stereoscopic()) {
         r.right_deferred = eye_right->getGBufferStats();

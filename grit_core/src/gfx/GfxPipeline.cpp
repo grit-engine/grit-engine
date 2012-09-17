@@ -21,6 +21,7 @@
 #include <OgreString.h>
 
 #include "../math_util.h"
+#include "../sleep.h"
 
 #include "GfxPipeline.h"
 #include "GfxParticleSystem.h"
@@ -752,12 +753,22 @@ void GfxPipeline::render (const Vector3 &cam_pos, const Quaternion &cam_dir)
     cam->setOrientation(to_ogre(viewDir*Quaternion(Degree(90),Vector3(1,0,0))));
 
     // populate gbuffer
+    
+    unsigned long long micros_before = micros();
     gBufferViewport->setCamera(cam);
     gBufferViewport->update();
+    unsigned long long micros_after_gbuffer = micros();
+    gBufferStats.batches = ogre_rs->_getBatchCount();
+    gBufferStats.triangles = ogre_rs->_getFaceCount();;
+    gBufferStats.micros = micros_after_gbuffer - micros_before;
 
     // render gbuffer and alpha, sky, etc into hdr viewport
     hdrFbViewport->setCamera(cam);
     hdrFbViewport->update();
+    unsigned long long micros_after_deferred = micros();
+    deferredStats.batches = ogre_rs->_getBatchCount();
+    deferredStats.triangles = ogre_rs->_getFaceCount();
+    deferredStats.micros = micros_after_deferred - micros_after_gbuffer;
 
     // tonemap onto screen
     try {
