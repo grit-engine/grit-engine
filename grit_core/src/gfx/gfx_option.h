@@ -30,7 +30,6 @@ enum GfxBoolOption {
     GFX_FULLSCREEN,
 
     GFX_FOG,
-    GFX_DEFERRED,
     GFX_WIREFRAME,
     GFX_ANAGLYPH,
     GFX_CROSS_EYE,

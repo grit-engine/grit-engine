@@ -20,42 +20,55 @@
  */
 
 class GfxParticleSystem;
-struct GfxParticle;
+class GfxParticle;
+class GfxPipeline;
 
 
 #ifndef GfxParticleSystem_h
 #define GfxParticleSystem_h
 
+#include <utility>
+
 #include "../vect_util.h"
 #include "../math_util.h"
 
-struct GfxParticle {
+// Modify particle attributes whenever you want
+class GfxParticle : public fast_erase_index {
+protected:
     GfxParticleSystem *sys;
-    void *internal;
+public:
+    Vector3 pos;
+    Vector3 dimensions;
+    Vector3 colour;
+    float alpha;
+    float angle;
+    float u1, v1, u2, v2;
 
-    GfxParticle (void) { }
+    // these guys computed at rending time
+    Vector3 fromCamNorm;
+    float fromCamDist;
+    // by this function
+    void preProcess (const Vector3 &cam_pos);
 
     GfxParticle (GfxParticleSystem *sys);
 
-    GfxParticle &operator= (const GfxParticle &other);
-
-    void setPosition (const Vector3 &v);
-    void setAmbient (const Vector3 &v);
-    void setAlpha (float v);
-    void setAngle (float v);
-    void setUV (float u1, float v1, float u2, float v2);
+    std::pair<unsigned,unsigned> getTextureSize (void);
     void setDefaultUV (void);
-    void setWidth (float v);
-    void setHeight (float v);
-    void setDepth (float v);
-
     void release (void);
+    bool inside (const Vector3 &v);
 };
 
-enum GfxParticleSceneBlend { GFX_PARTICLE_OPAQUE, GFX_PARTICLE_ALPHA, GFX_PARTICLE_ADD, GFX_PARTICLE_OCCLUDE_ADD };
+// called once during program init
+void gfx_particle_init (void);
 
+// set up a new particle system
 void gfx_particle_define (const std::string &pname, const std::string &tex_name,
-                          GfxParticleSceneBlend blend, float alpha_rej, bool emissive);
-GfxParticle gfx_particle_emit (const std::string &pname);
+                          bool alpha_blend, float alpha_rej, bool emissive);
+
+// create a new particle in a given system (get rid of it by calling particle->release())
+GfxParticle *gfx_particle_emit (const std::string &pname);
+
+// called every frame
+void gfx_particle_render (GfxPipeline *p, bool alpha_blend);
 
 #endif

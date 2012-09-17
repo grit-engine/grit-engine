@@ -38,7 +38,6 @@ class GfxInstances::Section : public Ogre::Renderable {
     GfxMaterial *mat;
     Ogre::MaterialPtr omat;
     Ogre::RenderOperation op;
-    Ogre::VertexData vdata;
 
     public:
 
@@ -86,10 +85,8 @@ GfxInstancesPtr GfxInstances::make (const std::string &mesh_name, const GfxBodyP
 
 GfxInstances::GfxInstances (GfxDiskResource *gdr, const GfxBodyPtr &par_)
   : GfxNode(par_),
-    capacity(0),
     dirty(false),
     enabled(true),
-    castShadows(true),
     mBoundingBox(Ogre::AxisAlignedBox::BOX_INFINITE),
     mBoundingRadius(std::numeric_limits<float>::max())
 {   
@@ -146,35 +143,25 @@ void GfxInstances::reinitialise (void)
     updateSections();
     updateProperties();
 }
-    
+
 void GfxInstances::reserveSpace (unsigned new_capacity)
 {
-    if (new_capacity < sparseIndexes.size()) new_capacity = sparseIndexes.size();
+    new_capacity = indexes.reserve(new_capacity);
 
     instBufRaw.reserve(new_capacity * instance_data_floats);
 
-    if (new_capacity == 0) {
-        instBuf.setNull();
-    } else {
-        Ogre::HardwareVertexBufferSharedPtr old = instBuf;
+    instBuf.setNull();
+    if (new_capacity > 0) {
         instBuf = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
                         instance_data_bytes,
                         new_capacity,
                         Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
         instBuf->setIsInstanceData(true);
         instBuf->setInstanceDataStepRate(1);
-        dirty = true;
+        dirty = true; // will be lazily copied from host
     }
-
     sharedVertexData->vertexBufferBinding->setBinding(1, instBuf);
-    sparseIndexes.reserve(new_capacity);
-    freeList.reserve(new_capacity);
-    denseIndexes.resize(new_capacity);
-    for (unsigned i=capacity ; i<new_capacity ; ++i) {
-        denseIndexes[i] = 0xFFFF;
-        freeList.push_back(i);
-    }
-    capacity = new_capacity;
+
 }
 
 unsigned GfxInstances::getTrianglesPerInstance (void)
@@ -193,7 +180,7 @@ unsigned GfxInstances::getBatches (void)
 
 void GfxInstances::copyToGPU (void)
 {
-    copyToGPU(0, sparseIndexes.size(), true);
+    copyToGPU(0, indexes.size(), true);
 }
 
 void GfxInstances::copyToGPU (unsigned from, unsigned to, bool discard)
@@ -220,33 +207,21 @@ void GfxInstances::destroy (void)
     GfxNode::destroy();
 }
 
-void GfxInstances::rangeCheck (unsigned sparse_index)
-{
-    if (sparse_index >= denseIndexes.size() || denseIndexes[sparse_index] == 0xFFFF) {
-        std::stringstream ss;
-        ss << "Instance out of range: " << sparse_index;
-        GRIT_EXCEPT(ss.str());
-    }
-}
-
 unsigned GfxInstances::add (const Vector3 &pos, const Quaternion &q, float fade)
 {
-    if (sparseIndexes.size() >= capacity) reserveSpace(std::max(128u, unsigned(capacity * 1.3)));
-    unsigned sparse_index = freeList[freeList.size()-1];
-    freeList.pop_back();
-    unsigned dense_index = sparseIndexes.size();
-    denseIndexes[sparse_index] = dense_index;
-    sparseIndexes.push_back(sparse_index);
+    if (indexes.size() >= indexes.capacity()) reserveSpace(std::max(128u, unsigned(indexes.capacity() * 1.3)));
+    unsigned sparse_index = indexes.newSparseIndex();
     instBufRaw.resize(instBufRaw.size() + instance_data_floats);
-    for (unsigned i=0 ; i<numSections ; ++i) sections[i]->setNumInstances(sparseIndexes.size());
+    for (unsigned i=0 ; i<numSections ; ++i) sections[i]->setNumInstances(indexes.size());
     update(sparse_index, pos, q, fade);
     return sparse_index;
 }
 
 void GfxInstances::update (unsigned sparse_index, const Vector3 &pos, const Quaternion &q, float fade)
 {
-    rangeCheck(sparse_index);
-    unsigned dense_index = denseIndexes[sparse_index];
+    indexes.sparseIndexValid(sparse_index);
+    unsigned dense_index = indexes.denseIndex(sparse_index);
+
     float *base = &instBufRaw[dense_index * instance_data_floats];
     Ogre::Matrix3 rot;
     to_ogre(q).ToRotationMatrix(rot);
@@ -263,25 +238,21 @@ void GfxInstances::update (unsigned sparse_index, const Vector3 &pos, const Quat
 
 void GfxInstances::del (unsigned sparse_index)
 {
-    rangeCheck(sparse_index);
-    unsigned dense_index = denseIndexes[sparse_index];
-    unsigned last = sparseIndexes.size()-1;
+    indexes.sparseIndexValid(sparse_index);
+    unsigned dense_index = indexes.denseIndex(sparse_index);
+    unsigned last = indexes.size()-1;
+    indexes.delSparseIndex(sparse_index);
 
     if (dense_index != last) {
-        // reorganise buffers to move last instance into the position of the one just removed
-        sparseIndexes[dense_index] = sparseIndexes[last];
+        // reorganise buffer to move last instance into the position of the one just removed
         for (unsigned i=0 ; i<instance_data_floats ; ++i) {
             instBufRaw[dense_index * instance_data_floats + i] = instBufRaw[last * instance_data_floats + i];
         }
-        denseIndexes[sparseIndexes[last]] = dense_index;
     }
 
-    sparseIndexes.resize(last);
+
     instBufRaw.resize(instance_data_floats * last);
     for (unsigned i=0 ; i<numSections ; ++i) sections[i]->setNumInstances(last);
-
-    denseIndexes[sparse_index] = 0xFFFF;
-    freeList.push_back(sparse_index);
 
     dirty = true;
 }
@@ -293,8 +264,6 @@ void GfxInstances::del (unsigned sparse_index)
 void GfxInstances::updateProperties (void)
 {
     GFX_MAT_SYNC;
-
-    setCastShadows(castShadows);
 
     for (unsigned i=0 ; i<numSections ; ++i) {
 
@@ -328,7 +297,7 @@ void GfxInstances::visitRenderables(Ogre::Renderable::Visitor *visitor, bool deb
 
 void GfxInstances::_updateRenderQueue(Ogre::RenderQueue *queue)
 {
-    if (sparseIndexes.size() == 0) return;
+    if (indexes.size() == 0) return;
     if (!enabled) return;
     if (dirty) {
         copyToGPU();

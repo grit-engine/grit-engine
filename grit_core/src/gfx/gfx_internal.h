@@ -32,28 +32,27 @@
 #include <OgreQuaternion.h>
 #include <OgreCustomCompositionPass.h>
 #include <OgreCompositor.h>
-#ifdef NO_PLUGINS
-#  include "OgreOctreePlugin.h"
-#  include "OgreGLPlugin.h"
-#  include "OgreCgPlugin.h"
-#  ifdef WIN32
-#    include "OgreD3D9Plugin.h"
-#  endif
+#include <OgreOctreePlugin.h>
+#include <OgreCgPlugin.h>
+#include <OgreRenderSystem.h>
+#include <OgreGLRenderSystem.h>
+#ifdef WIN32
+#  include <OgreD3D9RenderSystem.h>
 #endif
 
 #include "gfx.h"
 #include "gfx_option.h"
 
-#define ANAGLYPH_COMPOSITOR "system/AnaglyphCompositor"
-#define ANAGLYPH_FB_TEXTURE "system/AnaglyphFB"
-#define ANAGLYPH_COMPOSITOR_MATERIAL "system/AnaglyphCompositorMaterialDesaturated"
+//#define ANAGLYPH_COMPOSITOR "system/AnaglyphCompositor"
+//#define ANAGLYPH_FB_TEXTURE "system/AnaglyphFB"
+//#define ANAGLYPH_COMPOSITOR_MATERIAL "system/AnaglyphCompositorMaterialDesaturated"
 
-#define DEFERRED_COMPOSITOR "/system/CoreCompositor"
+//#define DEFERRED_COMPOSITOR "/system/CoreCompositor"
 #define DEFERRED_AMBIENT_SUN_MATERIAL "/system/DeferredAmbientSun"
 #define DEFERRED_POINT_LIGHT_MATERIAL "/system/DeferredLights"
 #define DEFERRED_POINT_LIGHT_INSIDE_MATERIAL "/system/DeferredLightsInside"
-#define DEFERRED_LIGHTS_CUSTOM_PASS "DeferredLights"
-#define CORONAS_CUSTOM_PASS "Coronas"
+//#define DEFERRED_LIGHTS_CUSTOM_PASS "DeferredLights"
+//#define CORONAS_CUSTOM_PASS "Coronas"
 
 #define ENV_CUBE_TEXTURE "system/EnvCube"
 
@@ -72,28 +71,17 @@
 #ifndef GFX_INTERNAL_H
 #define GFX_INTERNAL_H
 
+extern bool d3d9;
 extern Ogre::Root *ogre_root;
+extern Ogre::RenderWindow *ogre_win;
+extern Ogre::RenderSystem *ogre_rs;
+
 extern Ogre::OctreeSceneManager *ogre_sm;
 extern Ogre::SceneNode *ogre_root_node;
-extern Ogre::Camera *left_eye;
-extern Ogre::Camera *right_eye;
-extern Ogre::Light *ogre_sun;
-extern Ogre::SceneNode *ogre_celestial;
 extern Ogre::SceneNode *ogre_sky_node;
-extern Ogre::Entity *ogre_sky_ent;
-extern Ogre::Viewport *overlay_vp;
-extern Ogre::Viewport *left_vp;
-extern Ogre::Viewport *right_vp;
-extern Ogre::TexturePtr anaglyph_fb;
-extern Ogre::RenderWindow *ogre_win;
-#ifdef NO_PLUGINS
-    extern Ogre::GLPlugin *gl;
-    extern Ogre::OctreePlugin *octree;
-    extern Ogre::CgPlugin *cg;
-    #ifdef WIN32
-        extern Ogre::D3D9Plugin *d3d9;
-    #endif
-#endif
+extern Ogre::Light *ogre_sun;
+extern Ogre::TexturePtr env_cube_tex;
+extern Ogre::Matrix4 shadow_view_proj[3];
 
 static inline bool stereoscopic (void)
 { return gfx_option(GFX_CROSS_EYE) || gfx_option(GFX_ANAGLYPH); }
@@ -101,10 +89,12 @@ static inline bool stereoscopic (void)
 extern bool use_hwgamma;
 extern GfxCallback *gfx_cb;
 extern bool shutting_down;
-extern float cam_separation;
 
 extern Vector3 fog_colour;
 extern float fog_density;
+extern float env_brightness;
+extern float global_exposure;
+extern float global_contrast;
 
 std::string freshname (const std::string &prefix);
 std::string freshname (void);
@@ -132,6 +122,28 @@ void gfx_material_add_dependencies (const std::string &name, GfxDiskResource *in
 
 void handle_dirty_materials (void);
 void handle_dirty_sky_materials (void);
+
+inline bool load_and_validate_shader (const std::string &kind, const std::string &name, Ogre::HighLevelGpuProgramPtr &prog)
+{
+    if (prog.isNull()) {
+        CERR << kind << " program not found: \"" << name << "\"" << std::endl;
+        return false;
+    }
+
+    prog->load();
+
+    if (!prog->isLoaded()) {
+        CERR << kind << " program not loaded: \"" << name << "\"" << std::endl;
+        return false;
+    }
+
+    if (prog->_getBindingDelegate() == NULL) {
+        CERR << kind << " program cannot be bound: \"" << name << "\"" << std::endl;
+        return false;
+    }
+
+    return true;
+}
 
 
 #endif

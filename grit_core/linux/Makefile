@@ -18,10 +18,10 @@ grit: $(TARGETS)
 	strip -s $< -o $@
 
 ../media/Grit.linux.x86: Grit.linux.x86.stripped
-	cp $< $@
+	cp -f $< $@
 
 $(GRIT_BLENDER_DIR)/grit_col_conv: grit_col_conv
-	cp grit_col_conv $@
+	cp -f grit_col_conv $@
 
 
 all: $(TARGETS)

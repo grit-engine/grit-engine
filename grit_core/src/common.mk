@@ -48,16 +48,18 @@ COMMON_OBJ=\
         CollisionMesh.o \
         CentralisedLog.o \
         DiskResource.o \
+        DenseIndexMap.o \
         ExternalTable.o \
         gfx.o \
+        gfx_option.o \
         GfxBody.o \
         GfxDiskResource.o \
         GfxInstances.o \
-        GfxRangedInstances.o \
         GfxLight.o \
         GfxMaterial.o \
-        gfx_option.o \
         GfxParticleSystem.o \
+        GfxPipeline.o \
+        GfxRangedInstances.o \
         GfxSkyBody.o \
         GfxSkyMaterial.o \
         GritClass.o \
@@ -227,9 +229,14 @@ BulletDebugDrawer.o: ../depend_stubs/OgreVector3.h
 BulletDebugDrawer.o: ../depend_stubs/OgreQuaternion.h
 BulletDebugDrawer.o: ../depend_stubs/OgreCustomCompositionPass.h
 BulletDebugDrawer.o: ../depend_stubs/OgreCompositor.h
+BulletDebugDrawer.o: ../depend_stubs/OgreOctreePlugin.h
+BulletDebugDrawer.o: ../depend_stubs/OgreCgPlugin.h
+BulletDebugDrawer.o: ../depend_stubs/OgreRenderSystem.h
+BulletDebugDrawer.o: ../depend_stubs/OgreGLRenderSystem.h
 BulletDebugDrawer.o: ../src/gfx/gfx_option.h
 BulletDebugDrawer.o: ../depend_stubs/OgreMesh.h
-BulletDebugDrawer.o: ../src/gfx/GfxParticleSystem.h ../src/gfx/HUD.h
+BulletDebugDrawer.o: ../src/gfx/GfxParticleSystem.h
+BulletDebugDrawer.o: ../depend_stubs/utility ../src/gfx/HUD.h
 BulletDebugDrawer.o: ../depend_stubs/climits
 BulletDebugDrawer.o: ../depend_stubs/OgrePanelOverlayElement.h
 BulletDebugDrawer.o: ../depend_stubs/OgreOverlay.h
@@ -281,6 +288,11 @@ CentralisedLog.o: ../src/CentralisedLog.h ../depend_stubs/iostream
 CentralisedLog.o: ../depend_stubs/sstream
 CentralisedLog.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 CentralisedLog.o: ../src/console_colour.h
+DenseIndexMap.o: ../depend_stubs/sstream ../src/DenseIndexMap.h
+DenseIndexMap.o: ../depend_stubs/vector ../src/CentralisedLog.h
+DenseIndexMap.o: ../depend_stubs/iostream
+DenseIndexMap.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+DenseIndexMap.o: ../src/console_colour.h
 DiskResource.o: ../src/gfx/GfxDiskResource.h
 DiskResource.o: ../depend_stubs/OgreResource.h ../src/CentralisedLog.h
 DiskResource.o: ../depend_stubs/iostream ../depend_stubs/sstream
@@ -655,12 +667,18 @@ lua_wrappers_core.o: ../depend_stubs/OgreVector3.h
 lua_wrappers_core.o: ../depend_stubs/OgreQuaternion.h
 lua_wrappers_core.o: ../depend_stubs/OgreCustomCompositionPass.h
 lua_wrappers_core.o: ../depend_stubs/OgreCompositor.h
+lua_wrappers_core.o: ../depend_stubs/OgreOctreePlugin.h
+lua_wrappers_core.o: ../depend_stubs/OgreCgPlugin.h
+lua_wrappers_core.o: ../depend_stubs/OgreRenderSystem.h
+lua_wrappers_core.o: ../depend_stubs/OgreGLRenderSystem.h
 lua_wrappers_core.o: ../src/gfx/gfx_option.h ../src/gfx/GfxSkyBody.h
 lua_wrappers_core.o: ../depend_stubs/OgreEntity.h
 lua_wrappers_core.o: ../depend_stubs/OgreSceneNode.h
 lua_wrappers_core.o: ../src/gfx/GfxDiskResource.h
 lua_wrappers_core.o: ../src/gfx/GfxSkyMaterial.h ../src/gfx/GfxLight.h
-lua_wrappers_core.o: ../src/gfx/GfxInstances.h
+lua_wrappers_core.o: ../src/gfx/GfxParticleSystem.h
+lua_wrappers_core.o: ../depend_stubs/utility ../src/gfx/GfxInstances.h
+lua_wrappers_core.o: ../src/DenseIndexMap.h
 lua_wrappers_core.o: ../src/gfx/GfxRangedInstances.h
 lua_wrappers_core.o: ../src/audio/lua_wrappers_audio.h
 lua_wrappers_core.o: ../src/audio/audio.h ../depend_stubs/AL/al.h
@@ -744,6 +762,10 @@ lua_wrappers_disk_resource.o: ../depend_stubs/OgreVector3.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreQuaternion.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreCustomCompositionPass.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreCompositor.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreOctreePlugin.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreCgPlugin.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreRenderSystem.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreGLRenderSystem.h
 lua_wrappers_disk_resource.o: ../src/gfx/gfx_option.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreMesh.h
 lua_wrappers_disk_resource.o: ../src/gfx/GfxSkyBody.h
@@ -752,8 +774,11 @@ lua_wrappers_disk_resource.o: ../depend_stubs/OgreSceneNode.h
 lua_wrappers_disk_resource.o: ../src/gfx/GfxDiskResource.h
 lua_wrappers_disk_resource.o: ../src/gfx/GfxSkyMaterial.h
 lua_wrappers_disk_resource.o: ../src/gfx/GfxLight.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxParticleSystem.h
+lua_wrappers_disk_resource.o: ../depend_stubs/utility
 lua_wrappers_disk_resource.o: ../src/gfx/GfxInstances.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreMovableObject.h
+lua_wrappers_disk_resource.o: ../src/DenseIndexMap.h
 lua_wrappers_disk_resource.o: ../src/gfx/GfxRangedInstances.h
 lua_wrappers_disk_resource.o: ../src/Streamer.h ../src/GritObject.h
 lua_wrappers_disk_resource.o: ../src/SharedPtr.h
@@ -952,11 +977,15 @@ main.o: ../depend_stubs/OgreMeshManager.h
 main.o: ../depend_stubs/OgreOctreeSceneManager.h
 main.o: ../depend_stubs/OgreVector3.h ../depend_stubs/OgreQuaternion.h
 main.o: ../depend_stubs/OgreCustomCompositionPass.h
-main.o: ../depend_stubs/OgreCompositor.h ../src/gfx/gfx_option.h
-main.o: ../src/gfx/GfxParticleSystem.h ../src/gfx/HUD.h
-main.o: ../depend_stubs/OgreRoot.h ../depend_stubs/OgreRenderWindow.h
-main.o: ../src/audio/audio.h ../depend_stubs/AL/al.h
-main.o: ../src/audio/AudioDiskResource.h
+main.o: ../depend_stubs/OgreCompositor.h
+main.o: ../depend_stubs/OgreOctreePlugin.h
+main.o: ../depend_stubs/OgreCgPlugin.h
+main.o: ../depend_stubs/OgreRenderSystem.h
+main.o: ../depend_stubs/OgreGLRenderSystem.h ../src/gfx/gfx_option.h
+main.o: ../src/gfx/GfxParticleSystem.h ../depend_stubs/utility
+main.o: ../src/gfx/HUD.h ../depend_stubs/OgreRoot.h
+main.o: ../depend_stubs/OgreRenderWindow.h ../src/audio/audio.h
+main.o: ../depend_stubs/AL/al.h ../src/audio/AudioDiskResource.h
 main.o: ../depend_stubs/OgreResourceGroupManager.h
 path_util.o: ../src/CentralisedLog.h ../depend_stubs/iostream
 path_util.o: ../depend_stubs/sstream
@@ -1110,7 +1139,11 @@ GfxBody.o: ../depend_stubs/OgreOctreeSceneManager.h
 GfxBody.o: ../depend_stubs/OgreVector3.h
 GfxBody.o: ../depend_stubs/OgreQuaternion.h
 GfxBody.o: ../depend_stubs/OgreCustomCompositionPass.h
-GfxBody.o: ../depend_stubs/OgreCompositor.h ../src/gfx/gfx.h
+GfxBody.o: ../depend_stubs/OgreCompositor.h
+GfxBody.o: ../depend_stubs/OgreOctreePlugin.h
+GfxBody.o: ../depend_stubs/OgreCgPlugin.h
+GfxBody.o: ../depend_stubs/OgreRenderSystem.h
+GfxBody.o: ../depend_stubs/OgreGLRenderSystem.h ../src/gfx/gfx.h
 GfxBody.o: ../src/SharedPtr.h ../src/vect_util.h
 GfxBody.o: ../depend_stubs/vector ../depend_stubs/algorithm
 GfxBody.o: ../src/CentralisedLog.h ../depend_stubs/iostream
@@ -1146,6 +1179,10 @@ GfxDiskResource.o: ../depend_stubs/OgreVector3.h
 GfxDiskResource.o: ../depend_stubs/OgreQuaternion.h
 GfxDiskResource.o: ../depend_stubs/OgreCustomCompositionPass.h
 GfxDiskResource.o: ../depend_stubs/OgreCompositor.h
+GfxDiskResource.o: ../depend_stubs/OgreOctreePlugin.h
+GfxDiskResource.o: ../depend_stubs/OgreCgPlugin.h
+GfxDiskResource.o: ../depend_stubs/OgreRenderSystem.h
+GfxDiskResource.o: ../depend_stubs/OgreGLRenderSystem.h
 GfxDiskResource.o: ../src/gfx/gfx.h ../src/SharedPtr.h
 GfxDiskResource.o: ../src/vect_util.h ../src/gfx/gfx_option.h
 GfxDiskResource.o: ../src/gfx/GfxMaterial.h
@@ -1238,9 +1275,14 @@ GfxInstances.o: ../depend_stubs/OgreOctreeSceneManager.h
 GfxInstances.o: ../depend_stubs/OgreVector3.h
 GfxInstances.o: ../depend_stubs/OgreQuaternion.h
 GfxInstances.o: ../depend_stubs/OgreCustomCompositionPass.h
-GfxInstances.o: ../depend_stubs/OgreCompositor.h ../src/gfx/gfx.h
-GfxInstances.o: ../src/vect_util.h ../src/gfx/gfx_option.h
-GfxInstances.o: ../src/gfx/GfxInstances.h ../src/gfx/GfxBody.h
+GfxInstances.o: ../depend_stubs/OgreCompositor.h
+GfxInstances.o: ../depend_stubs/OgreOctreePlugin.h
+GfxInstances.o: ../depend_stubs/OgreCgPlugin.h
+GfxInstances.o: ../depend_stubs/OgreRenderSystem.h
+GfxInstances.o: ../depend_stubs/OgreGLRenderSystem.h
+GfxInstances.o: ../src/gfx/gfx.h ../src/vect_util.h
+GfxInstances.o: ../src/gfx/gfx_option.h ../src/gfx/GfxInstances.h
+GfxInstances.o: ../src/DenseIndexMap.h ../src/gfx/GfxBody.h
 GfxInstances.o: ../src/gfx/GfxMaterial.h
 GfxLight.o: ../src/gfx/gfx_internal.h ../depend_stubs/string
 GfxLight.o: ../depend_stubs/Ogre.h
@@ -1251,7 +1293,11 @@ GfxLight.o: ../depend_stubs/OgreOctreeSceneManager.h
 GfxLight.o: ../depend_stubs/OgreVector3.h
 GfxLight.o: ../depend_stubs/OgreQuaternion.h
 GfxLight.o: ../depend_stubs/OgreCustomCompositionPass.h
-GfxLight.o: ../depend_stubs/OgreCompositor.h ../src/gfx/gfx.h
+GfxLight.o: ../depend_stubs/OgreCompositor.h
+GfxLight.o: ../depend_stubs/OgreOctreePlugin.h
+GfxLight.o: ../depend_stubs/OgreCgPlugin.h
+GfxLight.o: ../depend_stubs/OgreRenderSystem.h
+GfxLight.o: ../depend_stubs/OgreGLRenderSystem.h ../src/gfx/gfx.h
 GfxLight.o: ../src/SharedPtr.h ../src/vect_util.h
 GfxLight.o: ../depend_stubs/vector ../depend_stubs/algorithm
 GfxLight.o: ../src/CentralisedLog.h ../depend_stubs/iostream
@@ -1262,6 +1308,9 @@ GfxLight.o: ../src/gfx/GfxLight.h ../src/gfx/GfxBody.h
 GfxLight.o: ../src/gfx/GfxMaterial.h
 GfxLight.o: ../depend_stubs/OgreMaterial.h
 GfxLight.o: ../depend_stubs/OgreMesh.h
+GfxLight.o: ../src/gfx/GfxParticleSystem.h ../depend_stubs/utility
+GfxLight.o: ../src/math_util.h ../depend_stubs/cmath
+GfxLight.o: ../depend_stubs/cfloat
 GfxMaterial.o: ../depend_stubs/set ../src/gfx/gfx_internal.h
 GfxMaterial.o: ../depend_stubs/string ../depend_stubs/Ogre.h
 GfxMaterial.o: ../depend_stubs/OgreFontManager.h
@@ -1271,17 +1320,30 @@ GfxMaterial.o: ../depend_stubs/OgreOctreeSceneManager.h
 GfxMaterial.o: ../depend_stubs/OgreVector3.h
 GfxMaterial.o: ../depend_stubs/OgreQuaternion.h
 GfxMaterial.o: ../depend_stubs/OgreCustomCompositionPass.h
-GfxMaterial.o: ../depend_stubs/OgreCompositor.h ../src/gfx/gfx.h
-GfxMaterial.o: ../src/SharedPtr.h ../src/vect_util.h
-GfxMaterial.o: ../depend_stubs/vector ../depend_stubs/algorithm
-GfxMaterial.o: ../src/CentralisedLog.h ../depend_stubs/iostream
-GfxMaterial.o: ../depend_stubs/sstream
+GfxMaterial.o: ../depend_stubs/OgreCompositor.h
+GfxMaterial.o: ../depend_stubs/OgreOctreePlugin.h
+GfxMaterial.o: ../depend_stubs/OgreCgPlugin.h
+GfxMaterial.o: ../depend_stubs/OgreRenderSystem.h
+GfxMaterial.o: ../depend_stubs/OgreGLRenderSystem.h
+GfxMaterial.o: ../src/gfx/gfx.h ../src/SharedPtr.h
+GfxMaterial.o: ../src/vect_util.h ../depend_stubs/vector
+GfxMaterial.o: ../depend_stubs/algorithm ../src/CentralisedLog.h
+GfxMaterial.o: ../depend_stubs/iostream ../depend_stubs/sstream
 GfxMaterial.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 GfxMaterial.o: ../src/console_colour.h ../src/gfx/gfx_option.h
 GfxMaterial.o: ../src/gfx/GfxMaterial.h
 GfxMaterial.o: ../depend_stubs/OgreMaterial.h ../src/gfx/GfxBody.h
 GfxMaterial.o: ../depend_stubs/OgreMesh.h
-GfxParticleSystem.o: ../depend_stubs/string ../depend_stubs/map
+GfxParticleSystem.o: ../depend_stubs/string
+GfxParticleSystem.o: ../depend_stubs/algorithm ../depend_stubs/map
+GfxParticleSystem.o: ../src/vect_util.h ../depend_stubs/vector
+GfxParticleSystem.o: ../src/CentralisedLog.h
+GfxParticleSystem.o: ../depend_stubs/iostream
+GfxParticleSystem.o: ../depend_stubs/sstream
+GfxParticleSystem.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+GfxParticleSystem.o: ../src/console_colour.h ../src/math_util.h
+GfxParticleSystem.o: ../depend_stubs/cmath ../depend_stubs/cfloat
+GfxParticleSystem.o: ../src/gfx/gfx.h ../src/SharedPtr.h
 GfxParticleSystem.o: ../src/gfx/gfx_internal.h
 GfxParticleSystem.o: ../depend_stubs/Ogre.h
 GfxParticleSystem.o: ../depend_stubs/OgreFontManager.h
@@ -1292,15 +1354,39 @@ GfxParticleSystem.o: ../depend_stubs/OgreVector3.h
 GfxParticleSystem.o: ../depend_stubs/OgreQuaternion.h
 GfxParticleSystem.o: ../depend_stubs/OgreCustomCompositionPass.h
 GfxParticleSystem.o: ../depend_stubs/OgreCompositor.h
-GfxParticleSystem.o: ../src/gfx/gfx.h ../src/SharedPtr.h
-GfxParticleSystem.o: ../src/vect_util.h ../depend_stubs/vector
-GfxParticleSystem.o: ../depend_stubs/algorithm
-GfxParticleSystem.o: ../src/CentralisedLog.h
-GfxParticleSystem.o: ../depend_stubs/iostream
-GfxParticleSystem.o: ../depend_stubs/sstream
-GfxParticleSystem.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-GfxParticleSystem.o: ../src/console_colour.h
+GfxParticleSystem.o: ../depend_stubs/OgreOctreePlugin.h
+GfxParticleSystem.o: ../depend_stubs/OgreCgPlugin.h
+GfxParticleSystem.o: ../depend_stubs/OgreRenderSystem.h
+GfxParticleSystem.o: ../depend_stubs/OgreGLRenderSystem.h
 GfxParticleSystem.o: ../src/gfx/gfx_option.h
+GfxParticleSystem.o: ../src/gfx/GfxParticleSystem.h
+GfxParticleSystem.o: ../depend_stubs/utility
+GfxParticleSystem.o: ../src/gfx/GfxPipeline.h
+GfxPipeline.o: ../depend_stubs/OgreString.h ../src/math_util.h
+GfxPipeline.o: ../depend_stubs/cmath ../depend_stubs/cfloat
+GfxPipeline.o: ../src/CentralisedLog.h ../depend_stubs/iostream
+GfxPipeline.o: ../depend_stubs/sstream
+GfxPipeline.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+GfxPipeline.o: ../src/console_colour.h ../src/gfx/GfxPipeline.h
+GfxPipeline.o: ../src/SharedPtr.h ../src/vect_util.h
+GfxPipeline.o: ../depend_stubs/vector ../depend_stubs/algorithm
+GfxPipeline.o: ../src/gfx/gfx_internal.h ../depend_stubs/string
+GfxPipeline.o: ../depend_stubs/Ogre.h
+GfxPipeline.o: ../depend_stubs/OgreFontManager.h
+GfxPipeline.o: ../depend_stubs/OgreMeshManager.h
+GfxPipeline.o: ../depend_stubs/OgreOverlayElementFactory.h
+GfxPipeline.o: ../depend_stubs/OgreOctreeSceneManager.h
+GfxPipeline.o: ../depend_stubs/OgreVector3.h
+GfxPipeline.o: ../depend_stubs/OgreQuaternion.h
+GfxPipeline.o: ../depend_stubs/OgreCustomCompositionPass.h
+GfxPipeline.o: ../depend_stubs/OgreCompositor.h
+GfxPipeline.o: ../depend_stubs/OgreOctreePlugin.h
+GfxPipeline.o: ../depend_stubs/OgreCgPlugin.h
+GfxPipeline.o: ../depend_stubs/OgreRenderSystem.h
+GfxPipeline.o: ../depend_stubs/OgreGLRenderSystem.h
+GfxPipeline.o: ../src/gfx/gfx.h ../src/gfx/gfx_option.h
+GfxPipeline.o: ../src/gfx/GfxParticleSystem.h
+GfxPipeline.o: ../depend_stubs/utility
 GfxRangedInstances.o: ../depend_stubs/algorithm ../src/main.h
 GfxRangedInstances.o: ../depend_stubs/lua.h ../src/Mouse.h
 GfxRangedInstances.o: ../depend_stubs/vector ../src/Keyboard.h
@@ -1389,11 +1475,15 @@ GfxRangedInstances.o: ../depend_stubs/OgreVector3.h
 GfxRangedInstances.o: ../depend_stubs/OgreQuaternion.h
 GfxRangedInstances.o: ../depend_stubs/OgreCustomCompositionPass.h
 GfxRangedInstances.o: ../depend_stubs/OgreCompositor.h
+GfxRangedInstances.o: ../depend_stubs/OgreOctreePlugin.h
+GfxRangedInstances.o: ../depend_stubs/OgreCgPlugin.h
+GfxRangedInstances.o: ../depend_stubs/OgreRenderSystem.h
+GfxRangedInstances.o: ../depend_stubs/OgreGLRenderSystem.h
 GfxRangedInstances.o: ../src/gfx/gfx.h ../src/vect_util.h
 GfxRangedInstances.o: ../src/gfx/gfx_option.h
 GfxRangedInstances.o: ../src/gfx/GfxRangedInstances.h
 GfxRangedInstances.o: ../src/gfx/GfxInstances.h
-GfxRangedInstances.o: ../src/gfx/GfxBody.h
+GfxRangedInstances.o: ../src/DenseIndexMap.h ../src/gfx/GfxBody.h
 GfxRangedInstances.o: ../src/gfx/GfxMaterial.h
 GfxSkyBody.o: ../depend_stubs/OgreMeshManager.h
 GfxSkyBody.o: ../src/gfx/gfx_internal.h ../depend_stubs/string
@@ -1404,11 +1494,15 @@ GfxSkyBody.o: ../depend_stubs/OgreOctreeSceneManager.h
 GfxSkyBody.o: ../depend_stubs/OgreVector3.h
 GfxSkyBody.o: ../depend_stubs/OgreQuaternion.h
 GfxSkyBody.o: ../depend_stubs/OgreCustomCompositionPass.h
-GfxSkyBody.o: ../depend_stubs/OgreCompositor.h ../src/gfx/gfx.h
-GfxSkyBody.o: ../src/SharedPtr.h ../src/vect_util.h
-GfxSkyBody.o: ../depend_stubs/vector ../depend_stubs/algorithm
-GfxSkyBody.o: ../src/CentralisedLog.h ../depend_stubs/iostream
-GfxSkyBody.o: ../depend_stubs/sstream
+GfxSkyBody.o: ../depend_stubs/OgreCompositor.h
+GfxSkyBody.o: ../depend_stubs/OgreOctreePlugin.h
+GfxSkyBody.o: ../depend_stubs/OgreCgPlugin.h
+GfxSkyBody.o: ../depend_stubs/OgreRenderSystem.h
+GfxSkyBody.o: ../depend_stubs/OgreGLRenderSystem.h
+GfxSkyBody.o: ../src/gfx/gfx.h ../src/SharedPtr.h
+GfxSkyBody.o: ../src/vect_util.h ../depend_stubs/vector
+GfxSkyBody.o: ../depend_stubs/algorithm ../src/CentralisedLog.h
+GfxSkyBody.o: ../depend_stubs/iostream ../depend_stubs/sstream
 GfxSkyBody.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 GfxSkyBody.o: ../src/console_colour.h ../src/gfx/gfx_option.h
 GfxSkyBody.o: ../src/gfx/GfxSkyBody.h ../depend_stubs/OgreEntity.h
@@ -1434,6 +1528,10 @@ GfxSkyMaterial.o: ../depend_stubs/OgreVector3.h
 GfxSkyMaterial.o: ../depend_stubs/OgreQuaternion.h
 GfxSkyMaterial.o: ../depend_stubs/OgreCustomCompositionPass.h
 GfxSkyMaterial.o: ../depend_stubs/OgreCompositor.h
+GfxSkyMaterial.o: ../depend_stubs/OgreOctreePlugin.h
+GfxSkyMaterial.o: ../depend_stubs/OgreCgPlugin.h
+GfxSkyMaterial.o: ../depend_stubs/OgreRenderSystem.h
+GfxSkyMaterial.o: ../depend_stubs/OgreGLRenderSystem.h
 GfxSkyMaterial.o: ../src/gfx/gfx.h ../src/SharedPtr.h
 GfxSkyMaterial.o: ../src/vect_util.h ../depend_stubs/vector
 GfxSkyMaterial.o: ../depend_stubs/algorithm
@@ -1568,14 +1666,18 @@ gfx.o: ../depend_stubs/OgreOctreeSceneManager.h
 gfx.o: ../depend_stubs/OgreVector3.h
 gfx.o: ../depend_stubs/OgreQuaternion.h
 gfx.o: ../depend_stubs/OgreCustomCompositionPass.h
-gfx.o: ../depend_stubs/OgreCompositor.h ../src/gfx/gfx.h
+gfx.o: ../depend_stubs/OgreCompositor.h
+gfx.o: ../depend_stubs/OgreOctreePlugin.h
+gfx.o: ../depend_stubs/OgreCgPlugin.h
+gfx.o: ../depend_stubs/OgreRenderSystem.h
+gfx.o: ../depend_stubs/OgreGLRenderSystem.h ../src/gfx/gfx.h
 gfx.o: ../src/SharedPtr.h ../src/vect_util.h
 gfx.o: ../depend_stubs/algorithm ../src/CentralisedLog.h
 gfx.o: ../depend_stubs/iostream
 gfx.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx.o: ../src/console_colour.h ../src/gfx/gfx_option.h
-gfx.o: ../src/gfx/Clutter.h ../depend_stubs/cfloat
-gfx.o: ../depend_stubs/OgreMovableObject.h
+gfx.o: ../src/gfx/GfxPipeline.h ../src/gfx/Clutter.h
+gfx.o: ../depend_stubs/cfloat ../depend_stubs/OgreMovableObject.h
 gfx.o: ../depend_stubs/OgreVertexIndexData.h
 gfx.o: ../depend_stubs/OgreMaterial.h ../depend_stubs/OgreMesh.h
 gfx.o: ../src/math_util.h ../depend_stubs/cmath
@@ -1606,15 +1708,19 @@ gfx_option.o: ../depend_stubs/OgreOctreeSceneManager.h
 gfx_option.o: ../depend_stubs/OgreVector3.h
 gfx_option.o: ../depend_stubs/OgreQuaternion.h
 gfx_option.o: ../depend_stubs/OgreCustomCompositionPass.h
-gfx_option.o: ../depend_stubs/OgreCompositor.h ../src/gfx/gfx.h
-gfx_option.o: ../src/SharedPtr.h ../src/vect_util.h
-gfx_option.o: ../depend_stubs/vector ../depend_stubs/algorithm
-gfx_option.o: ../src/CentralisedLog.h ../depend_stubs/iostream
-gfx_option.o: ../depend_stubs/sstream
+gfx_option.o: ../depend_stubs/OgreCompositor.h
+gfx_option.o: ../depend_stubs/OgreOctreePlugin.h
+gfx_option.o: ../depend_stubs/OgreCgPlugin.h
+gfx_option.o: ../depend_stubs/OgreRenderSystem.h
+gfx_option.o: ../depend_stubs/OgreGLRenderSystem.h
+gfx_option.o: ../src/gfx/gfx.h ../src/SharedPtr.h
+gfx_option.o: ../src/vect_util.h ../depend_stubs/vector
+gfx_option.o: ../depend_stubs/algorithm ../src/CentralisedLog.h
+gfx_option.o: ../depend_stubs/iostream ../depend_stubs/sstream
 gfx_option.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx_option.o: ../src/console_colour.h ../src/gfx/gfx_option.h
-gfx_option.o: ../src/option.h ../depend_stubs/ostream
-gfx_option.o: ../src/CentralisedLog.h
+gfx_option.o: ../src/gfx/GfxPipeline.h ../src/option.h
+gfx_option.o: ../depend_stubs/ostream ../src/CentralisedLog.h
 lua_wrappers_gfx.o: ../src/main.h ../depend_stubs/lua.h
 lua_wrappers_gfx.o: ../src/Mouse.h ../depend_stubs/vector
 lua_wrappers_gfx.o: ../src/Keyboard.h ../depend_stubs/string
@@ -1708,6 +1814,10 @@ lua_wrappers_gfx.o: ../depend_stubs/OgreVector3.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreQuaternion.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreCustomCompositionPass.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreCompositor.h
+lua_wrappers_gfx.o: ../depend_stubs/OgreOctreePlugin.h
+lua_wrappers_gfx.o: ../depend_stubs/OgreCgPlugin.h
+lua_wrappers_gfx.o: ../depend_stubs/OgreRenderSystem.h
+lua_wrappers_gfx.o: ../depend_stubs/OgreGLRenderSystem.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_option.h
 lua_wrappers_gfx.o: ../src/gfx/GfxSkyBody.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreEntity.h
@@ -1717,7 +1827,10 @@ lua_wrappers_gfx.o: ../depend_stubs/OgreResource.h
 lua_wrappers_gfx.o: ../src/BackgroundLoader.h
 lua_wrappers_gfx.o: ../src/gfx/GfxSkyMaterial.h
 lua_wrappers_gfx.o: ../src/gfx/GfxLight.h
+lua_wrappers_gfx.o: ../src/gfx/GfxParticleSystem.h
+lua_wrappers_gfx.o: ../depend_stubs/utility
 lua_wrappers_gfx.o: ../src/gfx/GfxInstances.h
+lua_wrappers_gfx.o: ../src/DenseIndexMap.h
 lua_wrappers_gfx.o: ../src/gfx/GfxRangedInstances.h
 lua_wrappers_gfx.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_gfx.o: ../src/lua_wrappers_common.h
@@ -2431,6 +2544,7 @@ lua_wrappers_physics.o: ../depend_stubs/cmath
 lua_wrappers_physics.o: ../src/SSEAllocator.h
 lua_wrappers_physics.o: ../src/gfx/GfxInstances.h
 lua_wrappers_physics.o: ../depend_stubs/OgreMovableObject.h
+lua_wrappers_physics.o: ../src/DenseIndexMap.h
 lua_wrappers_physics.o: ../src/gfx/GfxBody.h ../src/gfx/gfx.h
 lua_wrappers_physics.o: ../src/vect_util.h
 lua_wrappers_physics.o: ../src/gfx/GfxMaterial.h
@@ -2445,6 +2559,10 @@ lua_wrappers_physics.o: ../depend_stubs/OgreVector3.h
 lua_wrappers_physics.o: ../depend_stubs/OgreQuaternion.h
 lua_wrappers_physics.o: ../depend_stubs/OgreCustomCompositionPass.h
 lua_wrappers_physics.o: ../depend_stubs/OgreCompositor.h
+lua_wrappers_physics.o: ../depend_stubs/OgreOctreePlugin.h
+lua_wrappers_physics.o: ../depend_stubs/OgreCgPlugin.h
+lua_wrappers_physics.o: ../depend_stubs/OgreRenderSystem.h
+lua_wrappers_physics.o: ../depend_stubs/OgreGLRenderSystem.h
 lua_wrappers_physics.o: ../src/gfx/gfx_option.h
 lua_wrappers_physics.o: ../depend_stubs/OgreMesh.h
 lua_wrappers_physics.o: ../src/lua_wrappers_gritobj.h
@@ -2514,6 +2632,7 @@ lua_wrappers_physics.o: ../src/gfx/GfxDiskResource.h
 lua_wrappers_physics.o: ../depend_stubs/OgreResource.h
 lua_wrappers_physics.o: ../src/BackgroundLoader.h
 lua_wrappers_physics.o: ../src/gfx/GfxParticleSystem.h
+lua_wrappers_physics.o: ../depend_stubs/utility
 lua_wrappers_physics.o: ../src/gfx/HUD.h
 lua_wrappers_physics.o: ../depend_stubs/OgreRoot.h
 lua_wrappers_physics.o: ../depend_stubs/OgreRenderWindow.h

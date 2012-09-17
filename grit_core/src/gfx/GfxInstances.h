@@ -30,6 +30,8 @@ typedef SharedPtr<GfxInstances> GfxInstancesPtr;
 
 #include "OgreMovableObject.h"
 
+#include "../DenseIndexMap.h"
+
 #include "GfxBody.h"
 
 class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::MovableObject {
@@ -38,23 +40,7 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
 
     static const std::string className;
 
-    // sizing of the buffers
-    unsigned capacity;
-
-    // The ordering of instances within sparseIndexes changes all the time,
-    // but it never has any 'holes'. On the other hand, the denseIndexes
-    // array has indexes that are not currently in use, and which are retained
-    // in a free list for future use.  A given index into denseIndexes will
-    // retain the same meaning until that instance is removed.  One can obtain
-    // the sparseIndexes index by looking up an instance in denseIndexes.
-    // Looking up an index from the free list in denseIndexes gets you 0xFFFF
-
-    // CLASS INVARIANT: freeList.size() + sparseIndexes.size() == denseIndexes.size() == capacity
-    // CLASS INVARIANT: instBufRaw.size() == 13 * sparseIndexes.size() == hw buffer length
-
-    std::vector<unsigned int> sparseIndexes;
-    std::vector<unsigned int> denseIndexes;
-    std::vector<unsigned int> freeList;
+    DenseIndexMap indexes;
 
     class Section;
 
@@ -67,7 +53,6 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
     std::vector<float> instBufRaw;
     bool dirty;
     bool enabled;
-    bool castShadows;
 
     GfxInstances (GfxDiskResource *mesh, const GfxBodyPtr &par_);
     ~GfxInstances ();
@@ -88,17 +73,12 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
     void setEnabled (bool v) { enabled = v; }
     bool isEnabled (void) { return enabled; }
 
-    void setCastShadows (bool v) { castShadows = v; }
-    bool getCastShadows (void) { return castShadows; updateProperties(); }
-
-    unsigned getCapacity (void) { return capacity; }
-    unsigned getInstances (void) { return sparseIndexes.size(); }
+    unsigned getCapacity (void) { return indexes.capacity(); }
+    unsigned getInstances (void) { return indexes.size(); }
     unsigned getTrianglesPerInstance (void);
     unsigned getBatches (void);
 
     protected:
-
-    void rangeCheck (unsigned index);
 
     void updateSections (void);
     void updateProperties (void);

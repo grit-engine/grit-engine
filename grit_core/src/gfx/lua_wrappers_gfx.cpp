@@ -1435,11 +1435,11 @@ namespace {
     struct LuaParticle {
 
         LuaPtr state;
-        GfxParticle p;
+        GfxParticle *p;
         ParticleDefinition *pd;
 
-        LuaParticle (lua_State *L, const GfxParticle &p_, ParticleDefinition *pd_)
-          : p(p_), pd(pd_)
+        LuaParticle (lua_State *L, GfxParticle *p, ParticleDefinition *pd)
+          : p(p), pd(pd)
         {
             state.set(L);
         }
@@ -1447,7 +1447,7 @@ namespace {
         void destroy (lua_State *L)
         {
             state.setNil(L);
-            p.release();
+            p->release();
         }
 
         bool updateGraphics (lua_State *L, float elapsed, int error_handler)
@@ -1486,73 +1486,51 @@ namespace {
                     CERR << "Particle position was not a vector3." << std::endl;
                     destroy = true;
                 } else {
-                    p.setPosition(check_v3(L,-1));
+                    p->pos = check_v3(L,-1);
                 }
                 lua_pop(L,1);
 
-                lua_getfield(L, -1, "width");
+                lua_getfield(L, -1, "dimensions");
                 if (lua_isnil(L,-1)) {
-                    p.setWidth(1);
-                } else if (!lua_isnumber(L,-1)) {
-                    CERR << "Particle width was not a number." << std::endl;
+                    p->dimensions = Vector3(1,1,1);
+                } else if (!lua_isvector3(L,-1)) {
+                    CERR << "Particle dimensions was not a number." << std::endl;
                     destroy = true;
                 } else {
-                    p.setWidth(check_float(L,-1));
-                }
-                lua_pop(L,1);
-
-                lua_getfield(L, -1, "height");
-                if (lua_isnil(L,-1)) {
-                    p.setHeight(1);
-                } else if (!lua_isnumber(L,-1)) {
-                    CERR << "Particle height was not a number." << std::endl;
-                    destroy = true;
-                } else {
-                    p.setHeight(check_float(L,-1));
-                }
-                lua_pop(L,1);
-
-                lua_getfield(L, -1, "depth");
-                if (lua_isnil(L,-1)) {
-                    p.setDepth(1);
-                } else if (!lua_isnumber(L,-1)) {
-                    CERR << "Particle depth was not a number." << std::endl;
-                    destroy = true;
-                } else {
-                    p.setDepth(check_float(L,-1));
+                    p->dimensions = check_v3(L,-1);
                 }
                 lua_pop(L,1);
 
                 lua_getfield(L, -1, "colour");
                 if (lua_isnil(L,-1)) {
-                    p.setAmbient(Vector3(1,1,1));
+                    p->colour = Vector3(1,1,1);
                 } else if (!lua_isvector3(L,-1)) {
                     CERR << "Particle colour was not a vector3." << std::endl;
                     destroy = true;
                 } else {
-                    p.setAmbient(check_v3(L,-1));
+                    p->colour = check_v3(L,-1);
                 }
                 lua_pop(L,1);
 
                 lua_getfield(L, -1, "alpha");
                 if (lua_isnil(L,-1)) {
-                    p.setAlpha(1);
+                    p->alpha = 1;
                 } else if (!lua_isnumber(L,-1)) {
                     CERR << "Particle alpha was not a number." << std::endl;
                     destroy = true;
                 } else {
-                    p.setAlpha(check_float(L,-1));
+                    p->alpha = check_float(L,-1);
                 }
                 lua_pop(L,1);
 
                 lua_getfield(L, -1, "angle");
                 if (lua_isnil(L,-1)) {
-                    p.setAngle(0);
+                    p->angle = 0;
                 } else if (!lua_isnumber(L,-1)) {
                     CERR << "Particle angle was not a number." << std::endl;
                     destroy = true;
                 } else {
-                    p.setAngle(check_float(L,-1));
+                    p->angle = check_float(L,-1);
                 }
                 lua_pop(L,1);
 
@@ -1568,7 +1546,10 @@ namespace {
                     float frame_ = lua_tonumber(L,-1);
                     unsigned frame = unsigned(frame_);
                     UVRect &uvr = pd->frames[frame % pd->frames.size()];
-                    p.setUV(uvr.u1, uvr.v1, uvr.u2, uvr.v2);
+                    p->u1 = uvr.u1;
+                    p->v1 = uvr.v1;
+                    p->u2 = uvr.u2;
+                    p->v2 = uvr.v2;
                 }
                 lua_pop(L,1);
 
@@ -1584,35 +1565,42 @@ namespace {
                 } else {
                     has_uvs = true;
                     lua_rawgeti(L, -1, 1);
-                    if (!lua_isnumber(L,-1))
-                        CERR << "Texture ordinate was not a number." << std::endl;
-                    float u1 = lua_tonumber(L,-1);
+                    if (!lua_isnumber(L,-1)) {
+                        CERR << "Texture ordinate u1 was not a number." << std::endl;
+                        destroy = true;
+                    }
+                    p->u1 = lua_tonumber(L,-1);
                     lua_pop(L,1);
 
                     lua_rawgeti(L, -1, 1);
-                    if (!lua_isnumber(L,-1))
-                        CERR << "Texture ordinate was not a number." << std::endl;
-                    float v1 = lua_tonumber(L,-1);
+                    if (!lua_isnumber(L,-1)) {
+                        CERR << "Texture ordinate v1 was not a number." << std::endl;
+                        destroy = true;
+                    }
+                    p->v1 = lua_tonumber(L,-1);
                     lua_pop(L,1);
 
 
                     lua_rawgeti(L, -1, 1);
-                    if (!lua_isnumber(L,-1))
-                        CERR << "Texture ordinate was not a number." << std::endl;
-                    float u2 = lua_tonumber(L,-1);
+                    if (!lua_isnumber(L,-1)) {
+                        CERR << "Texture ordinate u2 was not a number." << std::endl;
+                        destroy = true;
+                    }
+                    p->u2 = lua_tonumber(L,-1);
                     lua_pop(L,1);
 
                     lua_rawgeti(L, -1, 1);
-                    if (!lua_isnumber(L,-1))
-                        CERR << "Texture ordinate was not a number." << std::endl;
-                    float v2 = lua_tonumber(L,-1);
+                    if (!lua_isnumber(L,-1)) {
+                        CERR << "Texture ordinate v2 was not a number." << std::endl;
+                        destroy = true;
+                    }
+                    p->v2 = lua_tonumber(L,-1);
                     lua_pop(L,1);
 
-                    p.setUV(u1, v1, u2, v2);
                 }
                 lua_pop(L,1);
                 if (!has_frame && !has_uvs) {
-                    p.setDefaultUV();
+                    p->setDefaultUV();
                 }
                 // stack: err, tab
             }
@@ -1657,35 +1645,23 @@ TRY_START
     lua_pushnil(L);
     lua_setfield(L, 2, "map");
 
-    lua_getfield(L, 2, "blending");
-    GfxParticleSceneBlend blend;
+    lua_getfield(L, 2, "alphaBlend");
+    bool alpha_blend;
     if (lua_isnil(L,-1)) {
-        blend = GFX_PARTICLE_OPAQUE;
-    } else if (!lua_isstring(L,-1)) {
-        my_lua_error(L,"Particle blending must be a string.");
+        alpha_blend = false;
+    } else if (!lua_isboolean(L,-1)) {
+        my_lua_error(L,"Particle alphaBlend must be a boolean.");
     } else {
-        std::string blending = lua_tostring(L,-1);
-        if (blending=="OPAQUE") {
-            blend = GFX_PARTICLE_OPAQUE;
-        } else if (blending=="ALPHA") {
-            blend = GFX_PARTICLE_ALPHA;
-        } else if (blending=="ADD") {
-            blend = GFX_PARTICLE_ADD;
-        } else if (blending=="OCCLUDE_ADD") {
-            blend = GFX_PARTICLE_OCCLUDE_ADD;
-        } else {
-            my_lua_error(L, "Particle blending must be OPAQUE / ALPHA / ADD.");
-            blend = GFX_PARTICLE_OPAQUE; // to shut up the compiler
-        }
+        alpha_blend = lua_toboolean(L,-1);
     }
     lua_pop(L,1);
     lua_pushnil(L);
-    lua_setfield(L, 2, "blending");
+    lua_setfield(L, 2, "alphaBlend");
 
     float alpha_rej;
     lua_getfield(L, 2, "alphaReject");
     if (lua_isnil(L,-1)) {
-        alpha_rej = blend==GFX_PARTICLE_OPAQUE ? 127 : 0;
+        alpha_rej = alpha_blend ? 0 : 127;
     } else if (!lua_isnumber(L,-1)) {
         my_lua_error(L,"Particle alphaReject must be a number.");
     } else {
@@ -1760,7 +1736,7 @@ TRY_START
 
     ParticleDefinition *newpd = new ParticleDefinition(name, frames, L, 2);
     pd = newpd;
-    gfx_particle_define(name, texture, blend, alpha_rej, emissive); // will invalidate 
+    gfx_particle_define(name, texture, alpha_blend, alpha_rej, emissive); // will invalidate 
     return 0;
 TRY_END
 }

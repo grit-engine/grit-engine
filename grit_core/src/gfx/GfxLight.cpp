@@ -30,7 +30,7 @@ static void ensure_coronas_init (void)
 {
     if (have_init_coronas) return;
     // this only happens once
-    gfx_particle_define("/system/Coronas", "/system/Corona.bmp", GFX_PARTICLE_ADD, 0, true);
+    gfx_particle_define("/system/Coronas", "/system/Corona.png", true, 0, true);
     have_init_coronas = true;
 }
 
@@ -59,9 +59,9 @@ GfxLight::GfxLight (const GfxBodyPtr &par_)
     all_lights.push_back(this);
     ensure_coronas_init();
     corona = gfx_particle_emit("/system/Coronas");
-    corona.setDefaultUV();
-    corona.setAlpha(1);
-    corona.setAngle(0);
+    corona->setDefaultUV();
+    corona->alpha = 1;
+    corona->angle = 0;
     updateCorona(Vector3(0,0,0));
 }
 
@@ -76,7 +76,7 @@ void GfxLight::destroy (void)
     if (light) ogre_sm->destroyLight(light);
     light = NULL;
     all_lights.erase(this);
-    corona.release();
+    corona->release();
     GfxNode::destroy();
 }
 
@@ -84,11 +84,9 @@ void GfxLight::updateCorona (const Vector3 &cam_pos)
 {
     if (dead) THROW_DEAD(className);
     coronaPos = transformPositionParent(coronaLocalPos);
-    corona.setPosition(coronaPos);
+    corona->pos = coronaPos;
     Vector3 col = enabled ? fade * coronaColour : Vector3(0,0,0);
-    corona.setWidth(coronaSize);
-    corona.setHeight(coronaSize);
-    corona.setDepth(coronaSize);
+    corona->dimensions = Vector3(coronaSize, coronaSize, coronaSize);
 
     Vector3 light_dir_ws = (cam_pos - getWorldPosition()).normalisedCopy();
     Vector3 light_aim_ws_ = getWorldOrientation() * Vector3(0,1,0);
@@ -100,7 +98,7 @@ void GfxLight::updateCorona (const Vector3 &cam_pos)
             float occlusion = std::min(std::max((angle-inner)/(outer-inner), 0.0f), 1.0f);
             col *= (1-occlusion);
     }
-    corona.setAmbient(col);
+    corona->colour = col;
 }
 
 float GfxLight::getCoronaSize (void)

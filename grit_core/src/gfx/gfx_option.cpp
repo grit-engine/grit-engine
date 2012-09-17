@@ -23,6 +23,7 @@
 #include <map>
 
 #include "gfx_internal.h"
+#include "GfxPipeline.h"
 #include "gfx_option.h"
 #include "../option.h"
 #include "../CentralisedLog.h"
@@ -35,7 +36,6 @@ GfxBoolOption gfx_bool_options[] = {
     GFX_FULLSCREEN,
 
     GFX_FOG,
-    GFX_DEFERRED,
     GFX_WIREFRAME,
     GFX_ANAGLYPH,
     GFX_CROSS_EYE,
@@ -122,7 +122,6 @@ std::string gfx_option_to_string (GfxBoolOption o)
         TO_STRING_MACRO(GFX_FULLSCREEN);
 
         TO_STRING_MACRO(GFX_FOG);
-        TO_STRING_MACRO(GFX_DEFERRED);
         TO_STRING_MACRO(GFX_WIREFRAME);
         TO_STRING_MACRO(GFX_ANAGLYPH);
         TO_STRING_MACRO(GFX_CROSS_EYE);
@@ -207,7 +206,6 @@ void gfx_option_from_string (const std::string &s,
     FROM_STRING_BOOL_MACRO(GFX_FULLSCREEN)
 
     FROM_STRING_BOOL_MACRO(GFX_FOG)
-    FROM_STRING_BOOL_MACRO(GFX_DEFERRED)
     FROM_STRING_BOOL_MACRO(GFX_WIREFRAME)
     FROM_STRING_BOOL_MACRO(GFX_ANAGLYPH)
     FROM_STRING_BOOL_MACRO(GFX_CROSS_EYE)
@@ -271,8 +269,7 @@ static void options_update (bool flush)
     bool reset_shadows = flush;
     bool reset_pcss = flush;
     bool reset_framebuffer = flush;
-    bool reset_compositors = flush;
-    bool reset_vr_cams = flush;
+    bool reset_eyes = flush;
     bool reset_anaglyph_params = flush;
 
     for (unsigned i=0 ; i<sizeof(gfx_bool_options)/sizeof(*gfx_bool_options) ; ++i) {
@@ -284,10 +281,7 @@ static void options_update (bool flush)
             case GFX_AUTOUPDATE: break;
             case GFX_CROSS_EYE:
             case GFX_ANAGLYPH:
-            reset_vr_cams = true;
-            case GFX_DEFERRED:
             reset_framebuffer = true;
-            reset_compositors = true;
             break;
             case GFX_SHADOW_RECEIVE:
             break;
@@ -342,26 +336,20 @@ static void options_update (bool flush)
         if (v_old == v_new) continue;
         switch (o) {
             case GFX_FOV:
-            left_eye->setFOVy(Ogre::Degree(v_new));
-            right_eye->setFOVy(Ogre::Degree(v_new));
-            reset_vr_cams = true;
+            reset_eyes = true;
             break;
             case GFX_NEAR_CLIP:
-            left_eye->setNearClipDistance(v_new);
-            right_eye->setNearClipDistance(v_new);
-            reset_vr_cams = true;
+            reset_eyes = true;
             break;
             case GFX_FAR_CLIP:
-            left_eye->setFarClipDistance(v_new);
-            right_eye->setFarClipDistance(v_new);
-            reset_vr_cams = true;
+            reset_eyes = true;
             break;
             case GFX_EYE_SEPARATION:
             case GFX_MONITOR_HEIGHT:
             case GFX_MONITOR_EYE_DISTANCE:
             case GFX_MIN_PERCEIVED_DEPTH:
             case GFX_MAX_PERCEIVED_DEPTH:
-            reset_vr_cams = true;
+            reset_eyes = true;
             break;
             case GFX_SHADOW_START:
             case GFX_SHADOW_END0:
@@ -387,7 +375,6 @@ static void options_update (bool flush)
             case GFX_ANAGLYPH_RIGHT_BLUE_MASK:
             case GFX_ANAGLYPH_DESATURATION:
             reset_anaglyph_params = true;
-            reset_compositors = true;
             break;
         }
     }
@@ -454,35 +441,16 @@ static void options_update (bool flush)
         }
     }
 
-    if (reset_vr_cams) {
-        if (stereoscopic()) {
-            float FOV = gfx_option(GFX_FOV);
-            float monitor_height = gfx_option(GFX_MONITOR_HEIGHT);
-            float distance = gfx_option(GFX_MONITOR_EYE_DISTANCE);
-            float eye_separation = gfx_option(GFX_EYE_SEPARATION);
-            float min = gfx_option(GFX_MIN_PERCEIVED_DEPTH);
-            float max = gfx_option(GFX_MAX_PERCEIVED_DEPTH);
+    if (reset_framebuffer) {
+        do_reset_framebuffer();
+    }
 
-            float s = 2*tan((FOV/2)/180*M_PI)/monitor_height * (eye_separation * (1-distance/max));
-            left_eye->setFrustumOffset(s/2);
-            right_eye->setFrustumOffset(-s/2);
-            left_eye->setFocalLength(1);
-            right_eye->setFocalLength(1);
-
-            float c = 2*tan((FOV/2)/180*M_PI)/monitor_height * (eye_separation * (1-distance/min));
-            c = gfx_option(GFX_NEAR_CLIP) * (s - c);
-            cam_separation = c;
-        } else {
-            left_eye->setFrustumOffset(0);
-            right_eye->setFrustumOffset(0);
-            left_eye->setFocalLength(1);
-            right_eye->setFocalLength(1);
-            cam_separation = 0;
-        }
-
+    if (reset_eyes) {
+        do_reset_eyes();
     }
 
     if (reset_anaglyph_params) {
+/*
         Ogre::MaterialPtr rtt_mat = Ogre::MaterialManager::getSingleton()
             .getByName(ANAGLYPH_COMPOSITOR_MATERIAL);
         rtt_mat->load();
@@ -498,17 +466,10 @@ static void options_update (bool flush)
             ->setNamedConstant("desaturation",gfx_option(GFX_ANAGLYPH_DESATURATION));
         p->getFragmentProgramParameters()->setNamedConstant("left_mask",left_mask);
         p->getFragmentProgramParameters()->setNamedConstant("right_mask",right_mask);
+*/
 
     }
 
-    if (reset_compositors) clean_compositors();
-
-    if (reset_framebuffer) {
-        APP_ASSERT(reset_compositors);
-        do_reset_framebuffer();
-    }
-
-    if (reset_compositors) do_reset_compositors();
 }
 
 void gfx_option_init (void)
@@ -568,7 +529,6 @@ void gfx_option_init (void)
     gfx_option(GFX_VSYNC, true);
     gfx_option(GFX_FULLSCREEN, false);
     gfx_option(GFX_FOG, true);
-    gfx_option(GFX_DEFERRED, false);
     gfx_option(GFX_WIREFRAME, false);
     gfx_option(GFX_ANAGLYPH, false);
     gfx_option(GFX_CROSS_EYE, false);

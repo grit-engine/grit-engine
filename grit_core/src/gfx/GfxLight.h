@@ -27,6 +27,7 @@ typedef SharedPtr<GfxLight> GfxLightPtr;
 
 #include "gfx.h"
 #include "GfxBody.h"
+#include "GfxParticleSystem.h"
 
 class GfxLight : public GfxNode, public fast_erase_index {
     protected:
@@ -39,7 +40,7 @@ class GfxLight : public GfxNode, public fast_erase_index {
     Vector3 coronaColour;
     Vector3 diffuse;
     Vector3 specular;
-    GfxParticle corona;
+    GfxParticle *corona;
     Quaternion aim;
     Radian coronaInnerAngle;
     Radian coronaOuterAngle;

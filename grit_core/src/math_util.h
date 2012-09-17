@@ -42,6 +42,10 @@ struct Vector3;
 #define M_PI 3.1415926535897932385f
 #endif
 
+
+template<class T> bool between (T x, T m, T M) { return std::less<T>()(m,x)&&std::less<T>()(x,M); }
+
+
 // {{{ Degree & Radian
 
 struct Radian {
