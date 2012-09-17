@@ -383,7 +383,7 @@ class GfxParticleSystem {
         try_set_named_constant(dl_fp_params, "far_clip_distance", cam->getFarClipDistance());
         try_set_named_constant(dl_fp_params, "camera_pos_ws", to_ogre(cam_pos));
         if (d3d9) {
-            Ogre::Vector4 viewport_size(  viewport->getActualWidth(),   viewport->getActualHeight(),
+            Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
                                         1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());
             try_set_named_constant(dl_fp_params, "viewport_size",viewport_size);
         }
