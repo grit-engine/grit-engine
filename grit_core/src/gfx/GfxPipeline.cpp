@@ -319,7 +319,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
         // various camera and lighting things
         Ogre::Matrix4 view = cam->getViewMatrix();
-        Ogre::Matrix4 proj = cam->getProjectionMatrixRS();
+        Ogre::Matrix4 proj = cam->getProjectionMatrixWithRSDepth();
         Ogre::Matrix4 view_proj = proj*view;
         Ogre::Vector3 sun_pos_ws = ogre_sun->getDirection();
         Ogre::ColourValue sun_diffuse = ogre_sun->getDiffuseColour();

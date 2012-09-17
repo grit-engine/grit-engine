@@ -338,7 +338,7 @@ class GfxParticleSystem {
         // various camera and lighting things
         Ogre::Camera *cam = pipe->getCamera();
         Ogre::Matrix4 view = cam->getViewMatrix();
-        Ogre::Matrix4 proj = cam->getProjectionMatrixRS();
+        Ogre::Matrix4 proj = cam->getProjectionMatrixWithRSDepth();
         Ogre::Matrix4 proj_view = proj*view;
 
         // corners mapping for worldspace fragment position reconstruction:
