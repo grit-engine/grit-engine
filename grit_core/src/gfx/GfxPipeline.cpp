@@ -62,16 +62,15 @@ void gfx_pipeline_init (void)
             vdecl_size, 6, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
     screen_quad_vdata->vertexBufferBinding->setBinding(0, screen_quad_vbuf);
 
-    struct VDataRaw { float p[2]; }; // careful with padding here, all prims are 4 bytes long
-    VDataRaw vdata_raw[] = {
-        { { -1, -1 } }, // bottom left
-        { {  1, -1 } }, // bottom right
-        { { -1,  1 } }, // top left
-        { {  1,  1 } }, // top right
-        { {  1, -1 } }, // bottom right
-        { { -1,  1 } }, // top left
+    float vdata_raw[] = {
+        -1, -1, // bottom left
+         1, -1, // bottom right
+        -1,  1, // top left
+         1,  1, // top right
+         1, -1, // bottom right
+        -1,  1 // top left
     };
-    screen_quad_vbuf->writeData(screen_quad_vdata->vertexStart, screen_quad_vdata->vertexCount*vdecl_size, &vdata_raw[0]);
+    screen_quad_vbuf->writeData(screen_quad_vdata->vertexStart, screen_quad_vdata->vertexCount*vdecl_size, vdata_raw);
 }
 
 
