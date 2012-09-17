@@ -793,8 +793,8 @@ void GfxPipeline::render (const Vector3 &cam_pos, const Quaternion &cam_dir)
         float render_target_flipping = target->requiresTextureFlipping() ? -1.0f : 1.0f;
         try_set_named_constant(vp_params, "render_target_flipping", render_target_flipping);
         if (d3d9) {
-            Ogre::Vector4 viewport_size(  targetViewport->getActualWidth(),   targetViewport->getActualHeight(),
-                                        1/targetViewport->getActualWidth(), 1/targetViewport->getActualHeight());
+            Ogre::Vector4 viewport_size(     targetViewport->getActualWidth(),      targetViewport->getActualHeight(),
+                                        1.0f/targetViewport->getActualWidth(), 1.0f/targetViewport->getActualHeight());
             try_set_named_constant(vp_params, "viewport_size",viewport_size);
         }
 
