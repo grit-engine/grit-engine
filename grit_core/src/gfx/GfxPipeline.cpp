@@ -316,6 +316,8 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
         Ogre::Viewport *viewport = ogre_sm->getCurrentViewport();
         Ogre::RenderTarget *render_target = viewport->getTarget();
         float render_target_flipping = render_target->requiresTextureFlipping() ? -1 : 1;
+        Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
+                                    1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());
 
         // various camera and lighting things
         Ogre::Matrix4 view = cam->getViewMatrix();
@@ -354,6 +356,9 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             try_set_named_constant(das_vp_params, "bottom_left_ray", bottom_left_ray);
             try_set_named_constant(das_vp_params, "bottom_right_ray", bottom_right_ray);
             try_set_named_constant(das_vp_params, "render_target_flipping", render_target_flipping);
+            if (d3d9) {
+                try_set_named_constant(das_vp_params, "viewport_size",viewport_size);
+            }
 
             //try_set_named_constant(f_params, "near_clip_distance", cam->getNearClipDistance());
             try_set_named_constant(das_fp_params, "far_clip_distance", cam->getFarClipDistance());
@@ -530,8 +535,6 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                 try_set_named_constant(dl_fp_params, "far_clip_distance", cam->getFarClipDistance());
                 try_set_named_constant(dl_fp_params, "camera_pos_ws", cam_pos);
                 if (d3d9) {
-                    Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
-                                                1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());
                     try_set_named_constant(dl_fp_params, "viewport_size",viewport_size);
                 }
 
