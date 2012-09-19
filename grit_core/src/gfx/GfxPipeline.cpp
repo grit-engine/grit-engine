@@ -659,96 +659,138 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::RenderTarget *target, b
     if (gfx_option(GFX_CROSS_EYE)) width /= 2;
     unsigned height = target->getHeight();
 
-    {
-        gBuffer = ogre_rs->createMultiRenderTarget(name+":G");
-        // make textures for it
-        const char *el_names[] = { ":G0", ":G1", ":G2", ":G3" };
-        for (unsigned i=0 ; i<3 ; ++i) {
-            gBufferElements[i] =
-                Ogre::TextureManager::getSingleton().createManual(
-                    name+el_names[i], RESGRP, Ogre::TEX_TYPE_2D,
-                    width, height, 1,
-                    0,
-                    Ogre::PF_A8R8G8B8,
-                    Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE | Ogre::TU_RENDERTARGET,
-                    NULL,
-                    use_hwgamma);
-            gBuffer->bindSurface(i, gBufferElements[i]->getBuffer()->getRenderTarget());
-        }
-
-        gBufferViewport = gBuffer->addViewport(NULL);
-        gBufferViewport->setAutoUpdated(false);
-        gBufferViewport->setOverlaysEnabled(false);
-        gBufferViewport->setShadowsEnabled(true);
-        // white here makes sure that the depth (remember that it is 3 bytes) is maximal
-        gBufferViewport->setBackgroundColour(Ogre::ColourValue::White);
-
-        rqisGbuffer = ogre_root->createRenderQueueInvocationSequence(name+":gbuffer");
-        rqisGbuffer->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_GBUFFER_OPAQUE));
-        gBufferViewport->setRenderQueueInvocationSequenceName(name+":gbuffer");
+    gBuffer = ogre_rs->createMultiRenderTarget(name+":G");
+    // make textures for it
+    const char *gbuffer_el_names[] = { ":G0", ":G1", ":G2", ":G3" };
+    for (unsigned i=0 ; i<3 ; ++i) {
+        gBufferElements[i] =
+            Ogre::TextureManager::getSingleton().createManual(
+                name+gbuffer_el_names[i], RESGRP, Ogre::TEX_TYPE_2D,
+                width, height, 1,
+                0,
+                Ogre::PF_A8R8G8B8,
+                Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE | Ogre::TU_RENDERTARGET,
+                NULL,
+                use_hwgamma);
+        gBuffer->bindSurface(i, gBufferElements[i]->getBuffer()->getRenderTarget());
     }
 
-    {
-        hdrFb = Ogre::TextureManager::getSingleton().createManual(
-                    name+":hdrFb", RESGRP, Ogre::TEX_TYPE_2D,
-                    width, height, 1,
-                    0,
-                    Ogre::PF_FLOAT16_RGB,
-                    Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE | Ogre::TU_RENDERTARGET,
-                    NULL,
-                    false);
-        hdrFbTarget = hdrFb->getBuffer()->getRenderTarget();
 
-        hdrFbViewport = hdrFbTarget->addViewport(NULL);
-        hdrFbViewport->setAutoUpdated(false);
-        hdrFbViewport->setOverlaysEnabled(left); // FIXME: should be on the target, but never mind
-        hdrFbViewport->setShadowsEnabled(false);
+    hdrFb1 = Ogre::TextureManager::getSingleton().createManual(
+                name+":hdrFb1", RESGRP, Ogre::TEX_TYPE_2D,
+                width, height, 1,
+                0,
+                Ogre::PF_FLOAT16_RGB,
+                Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE | Ogre::TU_RENDERTARGET,
+                NULL,
+                false);
 
-        rqisDeferred = ogre_root->createRenderQueueInvocationSequence(name+":deferred");
-        rqisDeferred->add(new DeferredLightingPasses(this));
-        rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_OPAQUE));
-        rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_SKY));
-        rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_EMISSIVE));
-        rqisDeferred->add(new ParticlesPasses(this, false)); // opaque
-        rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_SKY_ALPHA));
-        rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH));
-        rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA));
-        rqisDeferred->add(new ParticlesPasses(this, true)); // alpha
-        rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(Ogre::RENDER_QUEUE_OVERLAY));
-        hdrFbViewport->setRenderQueueInvocationSequenceName(name+":deferred");
-    }
 
-    {
-        float norm_left_side = gfx_option(GFX_CROSS_EYE) && !left ? 0.5 : 0;
-        float norm_width = gfx_option(GFX_CROSS_EYE) ? 0.5 : 1;
-        targetViewport = target->addViewport(NULL, 0,  norm_left_side, 0, norm_width, 1);
-        targetViewport->setAutoUpdated(false);
-        targetViewport->setOverlaysEnabled(false);
-        targetViewport->setShadowsEnabled(false);
+    hdrFb2 = Ogre::TextureManager::getSingleton().createManual(
+                name+":hdrFb2", RESGRP, Ogre::TEX_TYPE_2D,
+                width/2, height/2, 1,
+                0,
+                Ogre::PF_FLOAT16_RGB,
+                Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE | Ogre::TU_RENDERTARGET,
+                NULL,
+                false);
 
-        // we just render a quad into this guy, so no need for a render queue invocation sequence
-    }
+    float norm_left_side = gfx_option(GFX_CROSS_EYE) && !left ? 0.5 : 0;
+    float norm_width = gfx_option(GFX_CROSS_EYE) ? 0.5 : 1;
+    targetViewport = target->addViewport(NULL, 0,  norm_left_side, 0, norm_width, 1);
+    targetViewport->setAutoUpdated(false);
+    targetViewport->setOverlaysEnabled(false);
+    targetViewport->setShadowsEnabled(false);
 
     cam = ogre_sm->createCamera(name+":cam");
     cam->setAutoAspectRatio(true);
 
+    rqisGbuffer = ogre_root->createRenderQueueInvocationSequence(name+":gbuffer");
+    rqisGbuffer->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_GBUFFER_OPAQUE));
+
+    rqisDeferred = ogre_root->createRenderQueueInvocationSequence(name+":deferred");
+    rqisDeferred->add(new DeferredLightingPasses(this));
+    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_OPAQUE));
+    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_SKY));
+    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_EMISSIVE));
+    rqisDeferred->add(new ParticlesPasses(this, false)); // opaque
+    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_SKY_ALPHA));
+    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH));
+    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA));
+    rqisDeferred->add(new ParticlesPasses(this, true)); // alpha
+    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(Ogre::RENDER_QUEUE_OVERLAY));
 }
 
 GfxPipeline::~GfxPipeline (void) {
     ogre_sm->destroyCamera(cam);
 
-    gBuffer->removeViewport(gBufferViewport->getZOrder());
+    // destroy MRT
     ogre_rs->destroyRenderTarget(gBuffer->getName());
-    ogre_root->destroyRenderQueueInvocationSequence(rqisGbuffer->getName());
     for (unsigned i=0 ; i<3 ; ++i) {
          Ogre::TextureManager::getSingleton().remove(gBufferElements[i]->getName());
     }
 
     target->removeViewport(targetViewport->getZOrder());
 
-    hdrFbTarget->removeViewport(hdrFbViewport->getZOrder());
+    Ogre::TextureManager::getSingleton().remove(hdrFb1->getName());
+    Ogre::TextureManager::getSingleton().remove(hdrFb2->getName());
+
+    ogre_root->destroyRenderQueueInvocationSequence(rqisGbuffer->getName());
     ogre_root->destroyRenderQueueInvocationSequence(rqisDeferred->getName());
-    Ogre::TextureManager::getSingleton().remove(hdrFb->getName());
+}
+
+template<unsigned n>
+static void render_quad (Ogre::Viewport *viewport, const Ogre::HighLevelGpuProgramPtr &fp, const Ogre::TexturePtr (&texs)[n],
+    Ogre::SceneBlendFactor target_blend = Ogre::SBF_ZERO)
+{
+        ogre_rs->_setViewport(viewport);
+        ogre_rs->_beginFrame();
+
+        Ogre::HighLevelGpuProgramPtr vp = Ogre::HighLevelGpuProgramManager::getSingleton().getByName("compositor_v", RESGRP);
+        load_and_validate_shader("Compositor_v","compositor_v",vp);
+
+        float render_target_flipping = viewport->getTarget()->requiresTextureFlipping() ? -1.0f : 1.0f;
+        try_set_named_constant(vp->getDefaultParameters(), "render_target_flipping", render_target_flipping);
+        if (d3d9) {
+            Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
+                                        1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());
+            try_set_named_constant(vp->getDefaultParameters(), "viewport_size", viewport_size);
+        }
+
+        ogre_rs->_setCullingMode(Ogre::CULL_NONE);
+        ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
+
+        for (unsigned i=0 ; i<n ; ++i) {
+            ogre_rs->_setTexture(i, true, texs[i]);
+            ogre_rs->_setTextureUnitFiltering(i, Ogre::FT_MIN, Ogre::FO_LINEAR);
+            ogre_rs->_setTextureUnitFiltering(i, Ogre::FT_MAG, Ogre::FO_LINEAR);
+            ogre_rs->_setTextureUnitFiltering(i, Ogre::FT_MIP, Ogre::FO_NONE);
+        }
+
+        // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
+        ogre_rs->bindGpuProgram(vp->_getBindingDelegate());
+        ogre_rs->bindGpuProgram(fp->_getBindingDelegate());
+
+        ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fp->getDefaultParameters(), Ogre::GPV_ALL);
+        ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vp->getDefaultParameters(), Ogre::GPV_ALL);
+
+        ogre_rs->_setCullingMode(Ogre::CULL_NONE);
+        ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
+        ogre_rs->_setSceneBlending(Ogre::SBF_ONE, target_blend);
+        ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+        ogre_rs->setStencilCheckEnabled(false);
+
+        // render the quad
+        Ogre::RenderOperation op;
+        op.useIndexes = false;
+        op.vertexData = screen_quad_vdata;
+        op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+        ogre_rs->_render(op);
+
+        for (unsigned i=0 ; i<n ; ++i) ogre_rs->_disableTextureUnit(0);
+
+        ogre_rs->_endFrame();
+
 }
 
 
@@ -762,82 +804,76 @@ void GfxPipeline::render (const Vector3 &cam_pos, const Quaternion &cam_dir)
     // Ogre cameras point towards Z whereas in Grit the convention is that 'unrotated' means pointing towards y (north)
     cam->setOrientation(to_ogre(viewDir*Quaternion(Degree(90),Vector3(1,0,0))));
 
+    Ogre::Viewport *vp;
+
     // populate gbuffer
-    
+    vp = gBuffer->addViewport(cam);
+    vp->setAutoUpdated(false);
+    vp->setOverlaysEnabled(false);
+    vp->setShadowsEnabled(true);
+    // white here makes sure that the depth (remember that it is 3 bytes) is maximal
+    vp->setBackgroundColour(Ogre::ColourValue::White);
+    vp->setRenderQueueInvocationSequenceName(rqisGbuffer->getName());
     unsigned long long micros_before = micros();
-    gBufferViewport->setCamera(cam);
-    gBufferViewport->update();
+    vp->update();
     unsigned long long micros_after_gbuffer = micros();
+    gBuffer->removeViewport(vp->getZOrder());
     gBufferStats.batches = ogre_rs->_getBatchCount();
     gBufferStats.triangles = ogre_rs->_getFaceCount();;
     gBufferStats.micros = micros_after_gbuffer - micros_before;
 
     // render gbuffer and alpha, sky, etc into hdr viewport
-    hdrFbViewport->setCamera(cam);
-    hdrFbViewport->update();
+    vp = hdrFb1->getBuffer()->getRenderTarget()->addViewport(cam);
+    vp->setAutoUpdated(false);
+    vp->setOverlaysEnabled(left); // want to do it in the last pass but this seems... difficult
+    vp->setShadowsEnabled(false);
+    // white here makes sure that the depth (remember that it is 3 bytes) is maximal
+    vp->setBackgroundColour(Ogre::ColourValue::White);
+    vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
+    vp->update();
     unsigned long long micros_after_deferred = micros();
     deferredStats.batches = ogre_rs->_getBatchCount();
     deferredStats.triangles = ogre_rs->_getFaceCount();
     deferredStats.micros = micros_after_deferred - micros_after_gbuffer;
+    hdrFb1->getBuffer()->getRenderTarget()->removeViewport(vp->getZOrder());
 
-    // tonemap onto screen
-    try {
-
-        
-        ogre_rs->_setViewport(targetViewport);
-        ogre_rs->_beginFrame();
-
-        Ogre::HighLevelGpuProgramPtr vp = Ogre::HighLevelGpuProgramManager::getSingleton().getByName("tonemap_v", RESGRP);
-        load_and_validate_shader("Tonemap","tonemap_v",vp);
-        Ogre::HighLevelGpuProgramPtr fp = Ogre::HighLevelGpuProgramManager::getSingleton().getByName("tonemap_f", RESGRP);
-        load_and_validate_shader("Tonemap","tonemap_f",fp);
-
-        const Ogre::GpuProgramParametersSharedPtr &vp_params = vp->getDefaultParameters();
-        const Ogre::GpuProgramParametersSharedPtr &fp_params = fp->getDefaultParameters();
-
-        float render_target_flipping = target->requiresTextureFlipping() ? -1.0f : 1.0f;
-        try_set_named_constant(vp_params, "render_target_flipping", render_target_flipping);
-        if (d3d9) {
-            Ogre::Vector4 viewport_size(     targetViewport->getActualWidth(),      targetViewport->getActualHeight(),
-                                        1.0f/targetViewport->getActualWidth(), 1.0f/targetViewport->getActualHeight());
-            try_set_named_constant(vp_params, "viewport_size",viewport_size);
+    unsigned iterations = gfx_option(GFX_BLOOM_ITERATIONS);
+    for (unsigned i=0 ; i<iterations ; ++i) {
+        // bloom1
+        {
+            Ogre::HighLevelGpuProgramPtr fp = Ogre::HighLevelGpuProgramManager::getSingleton().getByName("bloom_horz_f", RESGRP);
+            load_and_validate_shader("Bloom","bloom_horz_f",fp);
+            vp = hdrFb2->getBuffer()->getRenderTarget()->addViewport(cam);
+            Ogre::Vector4 viewport_size(     vp->getActualWidth(),      vp->getActualHeight(),
+                                        1.0f/vp->getActualWidth(), 1.0f/vp->getActualHeight());
+            try_set_named_constant(fp->getDefaultParameters(), "viewport_size", viewport_size);
+            const Ogre::TexturePtr texs[] = { hdrFb1 };
+            render_quad(vp, fp, texs);
+            hdrFb2->getBuffer()->getRenderTarget()->removeViewport(vp->getZOrder());
         }
 
-        try_set_named_constant(fp_params, "global_exposure", global_exposure);
-        try_set_named_constant(fp_params, "global_contrast", global_contrast);
+        // bloom2
+        {
+            Ogre::HighLevelGpuProgramPtr fp = Ogre::HighLevelGpuProgramManager::getSingleton().getByName("bloom_vert_recombine_f", RESGRP);
+            load_and_validate_shader("Bloom","bloom_vert_recombine_f",fp);
+            vp = hdrFb1->getBuffer()->getRenderTarget()->addViewport(cam);
+            Ogre::Vector4 viewport_size(     vp->getActualWidth(),      vp->getActualHeight(),
+                                        1.0f/vp->getActualWidth(), 1.0f/vp->getActualHeight());
+            try_set_named_constant(fp->getDefaultParameters(), "viewport_size", viewport_size);
+            try_set_named_constant(fp->getDefaultParameters(), "bloom_iterations", float(iterations));
+            const Ogre::TexturePtr texs[] = { hdrFb2 };
+            render_quad(vp, fp, texs, Ogre::SBF_ONE);
+            hdrFb1->getBuffer()->getRenderTarget()->removeViewport(vp->getZOrder());
+        }
+    }
 
-        ogre_rs->_setCullingMode(Ogre::CULL_NONE);
-        ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
-
-        ogre_rs->_setTexture(0, true, hdrFb);
-
-        // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
-        ogre_rs->bindGpuProgram(vp->_getBindingDelegate());
-        ogre_rs->bindGpuProgram(fp->_getBindingDelegate());
-
-        ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fp_params, Ogre::GPV_ALL);
-        ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vp_params, Ogre::GPV_ALL);
-
-        ogre_rs->_setCullingMode(Ogre::CULL_NONE);
-        ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
-        ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
-        ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
-        ogre_rs->setStencilCheckEnabled(false);
-
-        // render the instances
-        Ogre::RenderOperation op;
-        op.useIndexes = false;
-        op.vertexData = screen_quad_vdata;
-        op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
-        ogre_rs->_render(op);
-
-        ogre_rs->_disableTextureUnit(0);
-
-        ogre_rs->_endFrame();
-
-    } catch (const Ogre::Exception &e) {
-
-        CERR << "Rendering tone map compositor, got: " << e.getDescription() << std::endl;
+    // tonemap onto screen
+    {
+        Ogre::HighLevelGpuProgramPtr fp = Ogre::HighLevelGpuProgramManager::getSingleton().getByName("tonemap_f", RESGRP);
+        load_and_validate_shader("Tonemap","tonemap_f",fp);
+        try_set_named_constant(fp->getDefaultParameters(), "global_exposure", global_exposure);
+        try_set_named_constant(fp->getDefaultParameters(), "global_contrast", global_contrast);
+        const Ogre::TexturePtr texs[] = { hdrFb1 };
+        render_quad(targetViewport, fp, texs);
     }
 }
-

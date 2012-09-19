@@ -20,6 +20,7 @@
  */
 
 #include <string>
+#include <sstream>
 
 #define THROW_DEAD(name) do { GRIT_EXCEPT(name+" has been destroyed."); } while (0)
 
@@ -125,21 +126,22 @@ void handle_dirty_sky_materials (void);
 
 inline bool load_and_validate_shader (const std::string &kind, const std::string &name, Ogre::HighLevelGpuProgramPtr &prog)
 {
+    std::stringstream ss;
     if (prog.isNull()) {
-        CERR << kind << " program not found: \"" << name << "\"" << std::endl;
-        return false;
+        ss << kind << " program not found: \"" << name << "\"";
+        GRIT_EXCEPT(ss.str());
     }
 
     prog->load();
 
     if (!prog->isLoaded()) {
-        CERR << kind << " program not loaded: \"" << name << "\"" << std::endl;
-        return false;
+        ss << kind << " program not loaded: \"" << name << "\"";
+        GRIT_EXCEPT(ss.str());
     }
 
     if (prog->_getBindingDelegate() == NULL) {
-        CERR << kind << " program cannot be bound: \"" << name << "\"" << std::endl;
-        return false;
+        ss << kind << " program cannot be bound: \"" << name << "\"";
+        GRIT_EXCEPT(ss.str());
     }
 
     return true;

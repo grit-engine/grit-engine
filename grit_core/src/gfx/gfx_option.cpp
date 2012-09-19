@@ -52,6 +52,7 @@ GfxIntOption gfx_int_options[] = {
     GFX_FULLSCREEN_HEIGHT,
     GFX_SHADOW_RES,
     GFX_SHADOW_FILTER_TAPS,
+    GFX_BLOOM_ITERATIONS,
     GFX_RAM,
 };      
         
@@ -141,6 +142,7 @@ std::string gfx_option_to_string (GfxIntOption o)
         TO_STRING_MACRO(GFX_FULLSCREEN_HEIGHT);
         TO_STRING_MACRO(GFX_SHADOW_RES);
         TO_STRING_MACRO(GFX_SHADOW_FILTER_TAPS);
+        TO_STRING_MACRO(GFX_BLOOM_ITERATIONS);
         TO_STRING_MACRO(GFX_RAM);
     }
     return "UNKNOWN_INT_OPTION";
@@ -221,6 +223,7 @@ void gfx_option_from_string (const std::string &s,
     FROM_STRING_INT_MACRO(GFX_FULLSCREEN_HEIGHT)
     FROM_STRING_INT_MACRO(GFX_SHADOW_RES)
     FROM_STRING_INT_MACRO(GFX_SHADOW_FILTER_TAPS)
+    FROM_STRING_INT_MACRO(GFX_BLOOM_ITERATIONS)
     FROM_STRING_INT_MACRO(GFX_RAM)
 
 
@@ -327,6 +330,7 @@ static void options_update (bool flush)
             reset_shadowmaps = true;
             break;
             case GFX_SHADOW_FILTER_TAPS: break;
+            case GFX_BLOOM_ITERATIONS: break;
         }
     }
     for (unsigned i=0 ; i<sizeof(gfx_float_options)/sizeof(*gfx_float_options) ; ++i) {
@@ -483,6 +487,7 @@ void gfx_option_init (void)
     valid_option(GFX_SHADOW_RES, new ValidOptionList<int,int[4]>(res_list));
     int filter_taps_list[] = {1,4,9,16,36};
     valid_option(GFX_SHADOW_FILTER_TAPS, new ValidOptionList<int,int[5]>(filter_taps_list));
+    valid_option(GFX_BLOOM_ITERATIONS, new ValidOptionRange<int>(0,255));
     valid_option(GFX_RAM, new ValidOptionRange<int>(0,16384));
 
 
@@ -536,6 +541,8 @@ void gfx_option_init (void)
     gfx_option(GFX_FULLSCREEN_WIDTH, 800);
     gfx_option(GFX_FULLSCREEN_HEIGHT, 600);
     gfx_option(GFX_SHADOW_RES, 1024);
+    gfx_option(GFX_BLOOM_ITERATIONS, 0);
+    gfx_option(GFX_SHADOW_FILTER_TAPS, 4);
     gfx_option(GFX_RAM, 128);
 
     gfx_option(GFX_FOV, 55.0f);

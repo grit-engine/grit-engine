@@ -327,7 +327,9 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 
 
     } catch (Ogre::Exception &e) {
-        GRIT_EXCEPT2(e.getFullDescription(), "Rendering a frame");
+        CERR << e.getFullDescription() << std::endl;
+    } catch (GritException &e) {
+        CERR << e.msg << std::endl;
     }
 }
 
