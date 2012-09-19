@@ -409,6 +409,8 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                 ogre_rs->_disableTextureUnit(i);
             }
 
+        } catch (GritException &e) {
+            CERR << "Rendering deferred sun, got: " << e.msg << std::endl;
         } catch (const Ogre::Exception &e) {
             CERR << "Rendering deferred sun, got: " << e.getDescription() << std::endl;
         }
@@ -543,6 +545,8 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                 }
             }
 
+        } catch (GritException &e) {
+            CERR << "Rendering deferred point lights, got: " << e.msg << std::endl;
         } catch (const Ogre::Exception &e) {
             CERR << "Rendering deferred point lights, got: " << e.getDescription() << std::endl;
         }

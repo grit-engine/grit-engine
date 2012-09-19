@@ -317,88 +317,94 @@ class GfxParticleSystem {
         outside.endParticles();
 
 
-
         // ISSUE RENDER COMMANDS
+        try {
 
 
-        // various camera and lighting things
-        Ogre::Camera *cam = pipe->getCamera();
-        Ogre::Matrix4 view = cam->getViewMatrix();
-        Ogre::Matrix4 proj = cam->getProjectionMatrixWithRSDepth();
-        Ogre::Matrix4 proj_view = proj*view;
+            // various camera and lighting things
+            Ogre::Camera *cam = pipe->getCamera();
+            Ogre::Matrix4 view = cam->getViewMatrix();
+            Ogre::Matrix4 proj = cam->getProjectionMatrixWithRSDepth();
+            Ogre::Matrix4 proj_view = proj*view;
 
-        // corners mapping for worldspace fragment position reconstruction:
-        // top-right near, top-left near, bottom-left near, bottom-right near,
-        // top-right far, top-left far, bottom-left far, bottom-right far. 
-        Ogre::Vector3 top_right_ray = cam->getWorldSpaceCorners()[4] - to_ogre(cam_pos);
-        Ogre::Vector3 top_left_ray = cam->getWorldSpaceCorners()[5] - to_ogre(cam_pos);
-        Ogre::Vector3 bottom_left_ray = cam->getWorldSpaceCorners()[6] - to_ogre(cam_pos);
-        Ogre::Vector3 bottom_right_ray = cam->getWorldSpaceCorners()[7] - to_ogre(cam_pos);
+            // corners mapping for worldspace fragment position reconstruction:
+            // top-right near, top-left near, bottom-left near, bottom-right near,
+            // top-right far, top-left far, bottom-left far, bottom-right far. 
+            Ogre::Vector3 top_right_ray = cam->getWorldSpaceCorners()[4] - to_ogre(cam_pos);
+            Ogre::Vector3 top_left_ray = cam->getWorldSpaceCorners()[5] - to_ogre(cam_pos);
+            Ogre::Vector3 bottom_left_ray = cam->getWorldSpaceCorners()[6] - to_ogre(cam_pos);
+            Ogre::Vector3 bottom_right_ray = cam->getWorldSpaceCorners()[7] - to_ogre(cam_pos);
 
-        static const std::string suffixes[] = { "a_e", "a_E", "A_e", "A_E" };
+            static const std::string suffixes[] = { "a_e", "a_E", "A_e", "A_E" };
 
-        int suff_index = int(emissive) + 2*int(alphaBlend);
+            int suff_index = int(emissive) + 2*int(alphaBlend);
 
-        const std::string vp_name = "particle_v:"+suffixes[suff_index];
-        const std::string fp_name = "particle_f:"+suffixes[suff_index];
+            const std::string vp_name = "particle_v:"+suffixes[suff_index];
+            const std::string fp_name = "particle_f:"+suffixes[suff_index];
 
-        Ogre::HighLevelGpuProgramPtr dl_vp = load_and_validate_shader(vp_name);
-        Ogre::HighLevelGpuProgramPtr dl_fp = load_and_validate_shader(fp_name);
+            Ogre::HighLevelGpuProgramPtr dl_vp = load_and_validate_shader(vp_name);
+            Ogre::HighLevelGpuProgramPtr dl_fp = load_and_validate_shader(fp_name);
 
-        try_set_named_constant(dl_vp, "view_proj", proj_view);
-        float render_target_flipping = render_target->requiresTextureFlipping() ? -1.0f : 1.0f;
-        try_set_named_constant(dl_vp, "render_target_flipping", render_target_flipping);
-        if (!emissive) {
-            try_set_named_constant(dl_vp, "particle_ambient", to_ogre(gfx_particle_ambient_get()));
+            try_set_named_constant(dl_vp, "view_proj", proj_view);
+            float render_target_flipping = render_target->requiresTextureFlipping() ? -1.0f : 1.0f;
+            try_set_named_constant(dl_vp, "render_target_flipping", render_target_flipping);
+            if (!emissive) {
+                try_set_named_constant(dl_vp, "particle_ambient", to_ogre(gfx_particle_ambient_get()));
+            }
+            try_set_named_constant(dl_vp, "camera_pos_ws", to_ogre(cam_pos));
+
+            try_set_named_constant(dl_fp, "top_left_ray", top_left_ray);
+            try_set_named_constant(dl_fp, "top_right_ray", top_right_ray);
+            try_set_named_constant(dl_fp, "bottom_left_ray", bottom_left_ray);
+            try_set_named_constant(dl_fp, "bottom_right_ray", bottom_right_ray);
+
+
+            Ogre::Vector3 the_fog_params(fog_density, env_brightness, global_exposure);
+            try_set_named_constant(dl_fp, "the_fog_params", the_fog_params);
+            try_set_named_constant(dl_fp, "the_fog_colour", to_ogre(fog_colour));
+            try_set_named_constant(dl_fp, "far_clip_distance", cam->getFarClipDistance());
+            try_set_named_constant(dl_fp, "camera_pos_ws", to_ogre(cam_pos));
+            if (d3d9) {
+                Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
+                                            1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());
+                try_set_named_constant(dl_fp, "viewport_size",viewport_size);
+            }
+            try_set_named_constant(dl_fp, "alpha_rej", alphaRej);
+
+            ogre_rs->_setTexture(0, true, pipe->getGBufferTexture(0));
+            ogre_rs->_setTexture(1, true, tex);
+            ogre_rs->_setTextureUnitFiltering(1, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
+            ogre_rs->_setTextureUnitFiltering(1, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
+            ogre_rs->_setTextureUnitFiltering(1, Ogre::FT_MIP, Ogre::FO_LINEAR);
+
+            // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
+            ogre_rs->bindGpuProgram(dl_vp->_getBindingDelegate());
+            ogre_rs->bindGpuProgram(dl_fp->_getBindingDelegate());
+
+            ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, dl_fp->getDefaultParameters(), Ogre::GPV_ALL);
+            ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, dl_vp->getDefaultParameters(), Ogre::GPV_ALL);
+
+            ogre_rs->_setCullingMode(Ogre::CULL_NONE);
+            if (alphaBlend) {
+                ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
+                ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+            } else {
+                ogre_rs->_setDepthBufferParams(true, true, Ogre::CMPF_LESS_EQUAL);
+                ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
+            }
+            ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+            ogre_rs->setStencilCheckEnabled(false);
+        
+            ogre_rs->_render(outside.getRenderOperation());
+
+            ogre_rs->_disableTextureUnit(0);
+            ogre_rs->_disableTextureUnit(1);
+
+        } catch (GritException &e) {
+            CERR << "Rendering particles, got: " << e.msg << std::endl;
+        } catch (const Ogre::Exception &e) {
+            CERR << "Rendering particles, got: " << e.getDescription() << std::endl;
         }
-        try_set_named_constant(dl_vp, "camera_pos_ws", to_ogre(cam_pos));
-
-        try_set_named_constant(dl_fp, "top_left_ray", top_left_ray);
-        try_set_named_constant(dl_fp, "top_right_ray", top_right_ray);
-        try_set_named_constant(dl_fp, "bottom_left_ray", bottom_left_ray);
-        try_set_named_constant(dl_fp, "bottom_right_ray", bottom_right_ray);
-
-
-        Ogre::Vector3 the_fog_params(fog_density, env_brightness, global_exposure);
-        try_set_named_constant(dl_fp, "the_fog_params", the_fog_params);
-        try_set_named_constant(dl_fp, "the_fog_colour", to_ogre(fog_colour));
-        try_set_named_constant(dl_fp, "far_clip_distance", cam->getFarClipDistance());
-        try_set_named_constant(dl_fp, "camera_pos_ws", to_ogre(cam_pos));
-        if (d3d9) {
-            Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
-                                        1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());
-            try_set_named_constant(dl_fp, "viewport_size",viewport_size);
-        }
-        try_set_named_constant(dl_fp, "alpha_rej", alphaRej);
-
-        ogre_rs->_setTexture(0, true, pipe->getGBufferTexture(0));
-        ogre_rs->_setTexture(1, true, tex);
-        ogre_rs->_setTextureUnitFiltering(1, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
-        ogre_rs->_setTextureUnitFiltering(1, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
-        ogre_rs->_setTextureUnitFiltering(1, Ogre::FT_MIP, Ogre::FO_LINEAR);
-
-        // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
-        ogre_rs->bindGpuProgram(dl_vp->_getBindingDelegate());
-        ogre_rs->bindGpuProgram(dl_fp->_getBindingDelegate());
-
-        ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, dl_fp->getDefaultParameters(), Ogre::GPV_ALL);
-        ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, dl_vp->getDefaultParameters(), Ogre::GPV_ALL);
-
-        ogre_rs->_setCullingMode(Ogre::CULL_NONE);
-        if (alphaBlend) {
-            ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
-            ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
-        } else {
-            ogre_rs->_setDepthBufferParams(true, true, Ogre::CMPF_LESS_EQUAL);
-            ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
-        }
-        ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
-        ogre_rs->setStencilCheckEnabled(false);
-    
-        ogre_rs->_render(outside.getRenderOperation());
-
-        ogre_rs->_disableTextureUnit(0);
-        ogre_rs->_disableTextureUnit(1);
 
     }
 
