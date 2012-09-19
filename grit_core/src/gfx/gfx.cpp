@@ -558,7 +558,10 @@ size_t gfx_init (GfxCallback &cb_)
         Ogre::ResourceGroupManager::getSingleton().addResourceLocation(".","FileSystem",RESGRP,true);
         Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
         
-        ftcv = Ogre::ControllerManager::getSingleton().getFrameTimeSource().staticCast<Ogre::FrameTimeControllerValue>();
+        ftcv = Ogre::ControllerManager::getSingleton().getFrameTimeSource().dynamicCast<Ogre::FrameTimeControllerValue>();
+        if (ftcv.isNull()) {
+            CERR << "While initialising Grit, Ogre::FrameControllerValue could not be found!" << std::endl;
+        }
         ogre_sm = static_cast<Ogre::OctreeSceneManager*>(ogre_root->createSceneManager("OctreeSceneManager"));
         ogre_sm->addListener(&ogre_sm_listener);
         ogre_root_node = ogre_sm->getRootSceneNode();

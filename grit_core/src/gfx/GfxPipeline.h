@@ -55,13 +55,7 @@ class GfxPipeline {
     Ogre::MultiRenderTarget *gBuffer;
     Ogre::RenderQueueInvocationSequence *rqisGbuffer;
 
-    // hdr target
-    Ogre::TexturePtr hdrFb1;
-    Ogre::RenderTarget *hdrFb1Target;
-
-    // hdr target2 (bloom target, but then mapped back to hdr target1)
-    Ogre::TexturePtr hdrFb2;
-    Ogre::RenderTarget *hdrFb2Target;
+    Ogre::TexturePtr hdrFb[3];
 
     // ultimate target
     Ogre::RenderTarget *target;

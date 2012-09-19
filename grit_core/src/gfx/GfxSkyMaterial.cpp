@@ -100,20 +100,6 @@ GfxSkyMaterial::GfxSkyMaterial (const std::string &name_)
     updateInternalMat();
 }
 
-template<class T> void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
-                                               const char *name, const T &v)
-{
-    try {
-        p->setNamedConstant(name,v);
-    } catch (const Ogre::Exception &e) {
-        if (e.getNumber() != Ogre::Exception::ERR_INVALIDPARAMS) {
-            throw e;
-        } else {
-            // silently ignore
-        }
-    }
-}   
-
 void GfxSkyMaterial::updateInternalMat (void)
 {
     Ogre::Pass *p = mat->getTechnique(0)->getPass(0);

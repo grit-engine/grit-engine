@@ -91,6 +91,7 @@ GfxFloatOption gfx_float_options[] = {
     GFX_ANAGLYPH_RIGHT_GREEN_MASK,
     GFX_ANAGLYPH_RIGHT_BLUE_MASK,
     GFX_ANAGLYPH_DESATURATION,
+    GFX_BLOOM_THRESHOLD,
 };
 
 static std::map<GfxBoolOption,bool> options_bool;
@@ -184,6 +185,7 @@ std::string gfx_option_to_string (GfxFloatOption o)
         TO_STRING_MACRO(GFX_ANAGLYPH_RIGHT_GREEN_MASK);
         TO_STRING_MACRO(GFX_ANAGLYPH_RIGHT_BLUE_MASK);
         TO_STRING_MACRO(GFX_ANAGLYPH_DESATURATION);
+        TO_STRING_MACRO(GFX_BLOOM_THRESHOLD);
     }
     return "UNKNOWN_FLOAT_OPTION";
 }
@@ -261,6 +263,7 @@ void gfx_option_from_string (const std::string &s,
     FROM_STRING_FLOAT_MACRO(GFX_ANAGLYPH_RIGHT_GREEN_MASK)
     FROM_STRING_FLOAT_MACRO(GFX_ANAGLYPH_RIGHT_BLUE_MASK)
     FROM_STRING_FLOAT_MACRO(GFX_ANAGLYPH_DESATURATION)
+    FROM_STRING_FLOAT_MACRO(GFX_BLOOM_THRESHOLD)
 
     else t = -1;
 }
@@ -379,6 +382,8 @@ static void options_update (bool flush)
             case GFX_ANAGLYPH_RIGHT_BLUE_MASK:
             case GFX_ANAGLYPH_DESATURATION:
             reset_anaglyph_params = true;
+            break;
+            case GFX_BLOOM_THRESHOLD:
             break;
         }
     }
@@ -517,14 +522,15 @@ void gfx_option_init (void)
 
     valid_option(GFX_SHADOW_LIGHT_DIRECTION_THRESHOLD, new ValidOptionRange<float>(0.0f,10000.0f));
     valid_option(GFX_SHADOW_PADDING, new ValidOptionRange<float>(0.0f,100.0f));
-    valid_option(GFX_ANAGLYPH_DESATURATION, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_LEFT_RED_MASK, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_LEFT_GREEN_MASK, new ValidOptionRange<float>(0.0f,1.0f));
-
     valid_option(GFX_ANAGLYPH_LEFT_BLUE_MASK, new ValidOptionRange<float>(0.0f,1.0f));
+
     valid_option(GFX_ANAGLYPH_RIGHT_RED_MASK, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_RIGHT_GREEN_MASK, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_RIGHT_BLUE_MASK, new ValidOptionRange<float>(0.0f,1.0f));
+    valid_option(GFX_ANAGLYPH_DESATURATION, new ValidOptionRange<float>(0.0f,1.0f));
+    valid_option(GFX_BLOOM_THRESHOLD, new ValidOptionRange<float>(0.0f,255.0f));
 
 
     gfx_option(GFX_AUTOUPDATE, false);
@@ -564,13 +570,14 @@ void gfx_option_init (void)
     gfx_option(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST, true);
     gfx_option(GFX_SHADOW_PADDING, 0.8f);
     gfx_option(GFX_SHADOW_AGGRESSIVE_FOCUS_REGION, true);
-    gfx_option(GFX_ANAGLYPH_DESATURATION, 0.5f);
     gfx_option(GFX_ANAGLYPH_LEFT_RED_MASK, 1.0f);
     gfx_option(GFX_ANAGLYPH_LEFT_GREEN_MASK, 0.0f);
     gfx_option(GFX_ANAGLYPH_LEFT_BLUE_MASK, 0.0f);
     gfx_option(GFX_ANAGLYPH_RIGHT_RED_MASK, 0.0f);
     gfx_option(GFX_ANAGLYPH_RIGHT_GREEN_MASK, 1.0f);
     gfx_option(GFX_ANAGLYPH_RIGHT_BLUE_MASK, 1.0f);
+    gfx_option(GFX_ANAGLYPH_DESATURATION, 0.5f);
+    gfx_option(GFX_BLOOM_THRESHOLD, 1.0f);
 
     options_update(true);
 

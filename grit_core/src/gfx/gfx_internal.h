@@ -124,29 +124,50 @@ void gfx_material_add_dependencies (const std::string &name, GfxDiskResource *in
 void handle_dirty_materials (void);
 void handle_dirty_sky_materials (void);
 
-inline bool load_and_validate_shader (const std::string &kind, const std::string &name, Ogre::HighLevelGpuProgramPtr &prog)
+inline Ogre::HighLevelGpuProgramPtr load_and_validate_shader (const std::string &name)
 {
+    Ogre::HighLevelGpuProgramPtr prog = Ogre::HighLevelGpuProgramManager::getSingleton().getByName(name, RESGRP);
     std::stringstream ss;
     if (prog.isNull()) {
-        ss << kind << " program not found: \"" << name << "\"";
+        ss << "Program not found: \"" << name << "\"";
         GRIT_EXCEPT(ss.str());
     }
 
     prog->load();
 
     if (!prog->isLoaded()) {
-        ss << kind << " program not loaded: \"" << name << "\"";
+        ss << "Program not loaded: \"" << name << "\"";
         GRIT_EXCEPT(ss.str());
     }
 
     if (prog->_getBindingDelegate() == NULL) {
-        ss << kind << " program cannot be bound: \"" << name << "\"";
+        ss << "Program cannot be bound: \"" << name << "\"";
         GRIT_EXCEPT(ss.str());
     }
 
-    return true;
+    return prog;
 }
 
-
+template<class T> void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
+                                               const char *name, const T &v, bool silent_fail=false)
+{
+    try {
+        p->setNamedConstant(name,v);
+    } catch (const Ogre::Exception &e) {
+        if (e.getNumber() == Ogre::Exception::ERR_INVALIDPARAMS) {
+            if (!silent_fail)
+                CLOG << "WARNING: " << e.getDescription() << std::endl;
+        } else {
+            throw e;
+        }
+    }
+}   
+    
+template<class T> void try_set_named_constant (const Ogre::HighLevelGpuProgramPtr &p,
+                                               const char *name, const T &v, bool silent_fail=false)
+{
+    try_set_named_constant(p->getDefaultParameters(), name, v, silent_fail);
+}   
+    
 #endif
 

@@ -31,20 +31,6 @@
 #include "GfxParticleSystem.h"
 #include "GfxPipeline.h"
 
-template<class T> void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
-                                               const char *name, const T &v)
-{
-    try {
-        p->setNamedConstant(name,v);
-    } catch (const Ogre::Exception &e) {
-        if (e.getNumber() == Ogre::Exception::ERR_INVALIDPARAMS) {
-            CLOG << "WARNING: " << e.getDescription() << std::endl;
-        } else {
-            throw e;
-        }
-    }
-}   
-
 const unsigned cube_vertexes = 8;
 static Ogre::HardwareVertexBufferSharedPtr cubeVertexBuffer;
 static Ogre::IndexData cubeIndexData;
@@ -356,38 +342,34 @@ class GfxParticleSystem {
         const std::string vp_name = "particle_v:"+suffixes[suff_index];
         const std::string fp_name = "particle_f:"+suffixes[suff_index];
 
-        Ogre::HighLevelGpuProgramPtr dl_vp = Ogre::HighLevelGpuProgramManager::getSingleton().getByName(vp_name, RESGRP);
-        load_and_validate_shader("Particle",vp_name,dl_vp);
-        Ogre::HighLevelGpuProgramPtr dl_fp = Ogre::HighLevelGpuProgramManager::getSingleton().getByName(fp_name, RESGRP);
-        load_and_validate_shader("Particle",fp_name,dl_fp);
+        Ogre::HighLevelGpuProgramPtr dl_vp = load_and_validate_shader(vp_name);
+        Ogre::HighLevelGpuProgramPtr dl_fp = load_and_validate_shader(fp_name);
 
-        const Ogre::GpuProgramParametersSharedPtr &dl_vp_params = dl_vp->getDefaultParameters();
-        const Ogre::GpuProgramParametersSharedPtr &dl_fp_params = dl_fp->getDefaultParameters();
-        try_set_named_constant(dl_vp_params, "view_proj", proj_view);
+        try_set_named_constant(dl_vp, "view_proj", proj_view);
         float render_target_flipping = render_target->requiresTextureFlipping() ? -1.0f : 1.0f;
-        try_set_named_constant(dl_vp_params, "render_target_flipping", render_target_flipping);
+        try_set_named_constant(dl_vp, "render_target_flipping", render_target_flipping);
         if (!emissive) {
-            try_set_named_constant(dl_vp_params, "particle_ambient", to_ogre(gfx_particle_ambient_get()));
+            try_set_named_constant(dl_vp, "particle_ambient", to_ogre(gfx_particle_ambient_get()));
         }
-        try_set_named_constant(dl_vp_params, "camera_pos_ws", to_ogre(cam_pos));
+        try_set_named_constant(dl_vp, "camera_pos_ws", to_ogre(cam_pos));
 
-        try_set_named_constant(dl_fp_params, "top_left_ray", top_left_ray);
-        try_set_named_constant(dl_fp_params, "top_right_ray", top_right_ray);
-        try_set_named_constant(dl_fp_params, "bottom_left_ray", bottom_left_ray);
-        try_set_named_constant(dl_fp_params, "bottom_right_ray", bottom_right_ray);
+        try_set_named_constant(dl_fp, "top_left_ray", top_left_ray);
+        try_set_named_constant(dl_fp, "top_right_ray", top_right_ray);
+        try_set_named_constant(dl_fp, "bottom_left_ray", bottom_left_ray);
+        try_set_named_constant(dl_fp, "bottom_right_ray", bottom_right_ray);
 
 
         Ogre::Vector3 the_fog_params(fog_density, env_brightness, global_exposure);
-        try_set_named_constant(dl_fp_params, "the_fog_params", the_fog_params);
-        try_set_named_constant(dl_fp_params, "the_fog_colour", to_ogre(fog_colour));
-        try_set_named_constant(dl_fp_params, "far_clip_distance", cam->getFarClipDistance());
-        try_set_named_constant(dl_fp_params, "camera_pos_ws", to_ogre(cam_pos));
+        try_set_named_constant(dl_fp, "the_fog_params", the_fog_params);
+        try_set_named_constant(dl_fp, "the_fog_colour", to_ogre(fog_colour));
+        try_set_named_constant(dl_fp, "far_clip_distance", cam->getFarClipDistance());
+        try_set_named_constant(dl_fp, "camera_pos_ws", to_ogre(cam_pos));
         if (d3d9) {
             Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
                                         1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());
-            try_set_named_constant(dl_fp_params, "viewport_size",viewport_size);
+            try_set_named_constant(dl_fp, "viewport_size",viewport_size);
         }
-        try_set_named_constant(dl_fp_params, "alpha_rej", alphaRej);
+        try_set_named_constant(dl_fp, "alpha_rej", alphaRej);
 
         ogre_rs->_setTexture(0, true, pipe->getGBufferTexture(0));
         ogre_rs->_setTexture(1, true, tex);
@@ -399,8 +381,8 @@ class GfxParticleSystem {
         ogre_rs->bindGpuProgram(dl_vp->_getBindingDelegate());
         ogre_rs->bindGpuProgram(dl_fp->_getBindingDelegate());
 
-        ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, dl_fp_params, Ogre::GPV_ALL);
-        ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, dl_vp_params, Ogre::GPV_ALL);
+        ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, dl_fp->getDefaultParameters(), Ogre::GPV_ALL);
+        ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, dl_vp->getDefaultParameters(), Ogre::GPV_ALL);
 
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);
         if (alphaBlend) {
