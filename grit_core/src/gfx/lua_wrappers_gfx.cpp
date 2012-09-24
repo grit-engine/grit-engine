@@ -1292,6 +1292,25 @@ TRY_END
 }
 
 
+static int global_gfx_global_saturation_set (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    float v = check_float(L,1);
+    gfx_global_saturation_set(v);
+    return 0;
+TRY_END
+}
+
+static int global_gfx_global_saturation_get (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    lua_pushnumber(L, gfx_global_saturation_get());
+    return 1;
+TRY_END
+}
+
 static int global_gfx_global_contrast_set (lua_State *L)
 {
 TRY_START
@@ -3109,6 +3128,8 @@ static const luaL_reg global[] = {
     {"gfx_env_brightness_get",global_gfx_env_brightness_get},
     {"gfx_env_brightness_set",global_gfx_env_brightness_set},
 
+    {"gfx_global_saturation_get",global_gfx_global_saturation_get},
+    {"gfx_global_saturation_set",global_gfx_global_saturation_set},
     {"gfx_global_contrast_get",global_gfx_global_contrast_get},
     {"gfx_global_contrast_set",global_gfx_global_contrast_set},
     {"gfx_global_exposure_get",global_gfx_global_exposure_get},

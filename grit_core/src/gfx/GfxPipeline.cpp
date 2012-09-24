@@ -583,53 +583,12 @@ class ParticlesPasses : public Ogre::RenderQueueInvocation {
 
 
 
-float eye_separation = 0.0f;
-GfxPipeline *eye_left = NULL, *eye_right = NULL;
-
-void do_reset_eyes (void)
-{
-        eye_left->setFOVy(gfx_option(GFX_FOV));
-        eye_left->setNearClipDistance(gfx_option(GFX_NEAR_CLIP));
-        eye_left->setFarClipDistance(gfx_option(GFX_FAR_CLIP));
-    
-        if (stereoscopic()) {
-
-            eye_right->setFOVy(gfx_option(GFX_FOV));
-            eye_right->setNearClipDistance(gfx_option(GFX_NEAR_CLIP));
-            eye_right->setFarClipDistance(gfx_option(GFX_FAR_CLIP));
-
-            float FOV = gfx_option(GFX_FOV);
-            float monitor_height = gfx_option(GFX_MONITOR_HEIGHT);
-            float distance = gfx_option(GFX_MONITOR_EYE_DISTANCE);
-            float eye_separation = gfx_option(GFX_EYE_SEPARATION);
-            float min = gfx_option(GFX_MIN_PERCEIVED_DEPTH);
-            float max = gfx_option(GFX_MAX_PERCEIVED_DEPTH);
-
-            float s = 2*tan((FOV/2)/180*M_PI)/monitor_height * (eye_separation * (1-distance/max));
-            eye_left->setFrustumOffset(s/2);
-            eye_right->setFrustumOffset(-s/2);
-            eye_left->setFocalLength(1);
-            eye_right->setFocalLength(1);
-    
-            float c = 2*tan((FOV/2)/180*M_PI)/monitor_height * (eye_separation * (1-distance/min));
-            c = gfx_option(GFX_NEAR_CLIP) * (s - c);
-            eye_separation = c;
-        } else {
-            eye_left->setFrustumOffset(0);
-            eye_left->setFocalLength(1);
-            eye_separation = 0;
-        }
-
-}
-
-
-GfxPipeline::GfxPipeline (const std::string &name, Ogre::RenderTarget *target, bool left)
-  : left(left), target(target)
+GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewport)
+  : targetViewport(target_viewport)
 {
 
-    unsigned width = target->getWidth();
-    if (gfx_option(GFX_CROSS_EYE)) width /= 2;
-    unsigned height = target->getHeight();
+    unsigned width = targetViewport->getActualWidth();
+    unsigned height = targetViewport->getActualHeight();
 
     gBuffer = ogre_rs->createMultiRenderTarget(name+":G");
     // make textures for it
@@ -660,13 +619,6 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::RenderTarget *target, b
                     false);
     }
 
-    float norm_left_side = gfx_option(GFX_CROSS_EYE) && !left ? 0.5 : 0;
-    float norm_width = gfx_option(GFX_CROSS_EYE) ? 0.5 : 1;
-    targetViewport = target->addViewport(NULL, 0,  norm_left_side, 0, norm_width, 1);
-    targetViewport->setAutoUpdated(false);
-    targetViewport->setOverlaysEnabled(false);
-    targetViewport->setShadowsEnabled(false);
-
     cam = ogre_sm->createCamera(name+":cam");
     cam->setAutoAspectRatio(true);
 
@@ -694,8 +646,6 @@ GfxPipeline::~GfxPipeline (void) {
     for (unsigned i=0 ; i<3 ; ++i) {
          Ogre::TextureManager::getSingleton().remove(gBufferElements[i]->getName());
     }
-
-    target->removeViewport(targetViewport->getZOrder());
 
     for (unsigned i=0 ; i<sizeof(hdrFb)/sizeof(*hdrFb) ; ++i) {
         Ogre::TextureManager::getSingleton().remove(hdrFb[i]->getName());
@@ -798,21 +748,23 @@ static void clear_rt (Ogre::RenderTarget *rt)
 }
 
 
-void GfxPipeline::render (const Vector3 &cam_pos, const Quaternion &cam_dir)
+void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
 {
+    opts = cam_opts;
 
-    viewPos = cam_pos + cam_dir * Vector3((left?-1:1) * eye_separation/2,0,0);
-    viewDir = cam_dir;
- 
-    cam->setPosition(to_ogre(viewPos));
+    cam->setPosition(to_ogre(opts.pos));
     // Ogre cameras point towards Z whereas in Grit the convention is that 'unrotated' means pointing towards y (north)
-    cam->setOrientation(to_ogre(viewDir*Quaternion(Degree(90),Vector3(1,0,0))));
+    cam->setOrientation(to_ogre(opts.dir*Quaternion(Degree(90),Vector3(1,0,0))));
+    cam->setFOVy(Ogre::Degree(opts.fovY));
+    cam->setNearClipDistance(opts.nearClip);
+    cam->setFarClipDistance(opts.farClip);
+    cam->setFrustumOffset(opts.frustumOffset);
+    cam->setFocalLength(1);
 
     Ogre::Viewport *vp;
 
     // populate gbuffer
     vp = gBuffer->addViewport(cam);
-    vp->setAutoUpdated(false);
     vp->setOverlaysEnabled(false);
     vp->setShadowsEnabled(true);
     // white here makes sure that the depth (remember that it is 3 bytes) is maximal
@@ -828,8 +780,7 @@ void GfxPipeline::render (const Vector3 &cam_pos, const Quaternion &cam_dir)
 
     // render gbuffer and alpha, sky, etc into hdr viewport
     vp = hdrFb[0]->getBuffer()->getRenderTarget()->addViewport(cam);
-    vp->setAutoUpdated(false);
-    vp->setOverlaysEnabled(left); // want to do it in the last pass but this seems... difficult
+    vp->setOverlaysEnabled(true); // want to do it in the last pass but this seems... difficult
     vp->setShadowsEnabled(false);
     // white here makes sure that the depth (remember that it is 3 bytes) is maximal
     vp->setBackgroundColour(Ogre::ColourValue::White);
@@ -841,13 +792,17 @@ void GfxPipeline::render (const Vector3 &cam_pos, const Quaternion &cam_dir)
     deferredStats.micros = micros_after_deferred - micros_after_gbuffer;
     hdrFb[0]->getBuffer()->getRenderTarget()->removeViewport(vp->getZOrder());
 
+
+    Ogre::SceneBlendFactor target_blend = additive ? Ogre::SBF_ONE : Ogre::SBF_ZERO;
+
     unsigned bloom_iterations = gfx_option(GFX_BLOOM_ITERATIONS);
     if (bloom_iterations == 0) {
 
         Ogre::HighLevelGpuProgramPtr tonemap = load_and_validate_shader("tonemap");
         try_set_named_constant(tonemap, "global_contrast", global_contrast);
-        try_set_named_constant(tonemap, "global_exposure", global_exposure);
-        render_quad(targetViewport, RenderQuadParams<1>(tonemap).tex(hdrFb[0]));
+        try_set_named_constant(tonemap, "global_exposure", to_ogre(global_exposure*opts.mask));
+        try_set_named_constant(tonemap, "global_saturation", global_saturation*opts.saturationMask);
+        render_quad(targetViewport, RenderQuadParams<1>(tonemap, target_blend).tex(hdrFb[0]));
 
     } else {
 
@@ -862,7 +817,8 @@ void GfxPipeline::render (const Vector3 &cam_pos, const Quaternion &cam_dir)
 
         Ogre::HighLevelGpuProgramPtr bloom_vert_blur_combine_and_tonemap = load_and_validate_shader("bloom_vert_blur_combine_and_tonemap");
         try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_contrast", global_contrast);
-        try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_exposure", global_exposure);
+        try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_exposure", to_ogre(global_exposure*opts.mask));
+        try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_saturation", global_saturation*opts.saturationMask);
 
         // half_bloom = filter_then_horz_blur(raw)
         // loop 1..n-1 {
@@ -888,6 +844,6 @@ void GfxPipeline::render (const Vector3 &cam_pos, const Quaternion &cam_dir)
         Ogre::Vector4 viewport_size(     targetViewport->getActualWidth(),      targetViewport->getActualHeight(),
                                     1.0f/targetViewport->getActualWidth(), 1.0f/targetViewport->getActualHeight());
         try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "viewport_size", viewport_size);
-        render_quad(targetViewport, RenderQuadParams<2>(bloom_vert_blur_combine_and_tonemap).tex(hdrFb[1]).tex(hdrFb[0]));
+        render_quad(targetViewport, RenderQuadParams<2>(bloom_vert_blur_combine_and_tonemap, target_blend).tex(hdrFb[1]).tex(hdrFb[0]));
     }
 }

@@ -36,17 +36,21 @@ class GfxPipeline;
 
 #include "gfx_internal.h"
 
-extern float eye_separation;
-
 void gfx_pipeline_init (void);
 
-void do_reset_eyes (void);
+struct CameraOpts {
+    float fovY, nearClip, farClip;
+    float frustumOffset;
+    float saturationMask;
+    Vector3 mask; // colour
+    Vector3 pos;
+    Quaternion dir;
+    CameraOpts (void)
+      : fovY(55), nearClip(0.3f), farClip(800), frustumOffset(0), saturationMask(1), mask(1,1,1), pos(0,0,0), dir(0,0,0,1) { }
+};
 
 class GfxPipeline {
-    bool left;
     Ogre::Camera *cam;
-    Vector3 viewPos;
-    Quaternion viewDir;
     GfxLastRenderStats gBufferStats;
     GfxLastRenderStats deferredStats;
 
@@ -58,38 +62,24 @@ class GfxPipeline {
     Ogre::TexturePtr hdrFb[3];
 
     // ultimate target
-    Ogre::RenderTarget *target;
     Ogre::Viewport *targetViewport;
     Ogre::RenderQueueInvocationSequence *rqisDeferred;
 
+    CameraOpts opts;
 
     public:
-    GfxPipeline (const std::string &name, Ogre::RenderTarget *target, bool left);
+    GfxPipeline (const std::string &name, Ogre::Viewport *target_viewport);
 
     ~GfxPipeline (void);
 
-    void render (const Vector3 &cam_pos, const Quaternion &cam_dir);
-
-    void setNearClipDistance (float v) { cam->setNearClipDistance(v); }
-
-    void setFarClipDistance (float v) { cam->setFarClipDistance(v); }
-
-    void setFOVy (float v) { cam->setFOVy(Ogre::Degree(v)); }
-
-    void setFrustumOffset (float v) { cam->setFrustumOffset(v); }
-    void setFocalLength (float v) { cam->setFocalLength(v); }
+    void render (const CameraOpts &opts, bool additive=false);
 
     const GfxLastRenderStats &getGBufferStats (void) { return gBufferStats; }
     const GfxLastRenderStats &getDeferredStats (void) { return deferredStats; }
-    const Vector3 &getViewPos (void) { return viewPos; }
-    const Quaternion &getViewDir (void) { return viewDir; }
 
-    Ogre::Camera *getCamera (void) { return cam; }
-    Ogre::RenderTarget *getTarget (void) { return target; }
-    Ogre::Viewport *getTargetViewport (void) { return targetViewport; }
+    const CameraOpts &getCameraOpts (void) const { return opts; }
+    Ogre::Camera *getCamera (void) const { return cam; }
     const Ogre::TexturePtr &getGBufferTexture (unsigned i) { return gBufferElements[i]; }
 };
-
-extern GfxPipeline *eye_left, *eye_right;
 
 #endif 

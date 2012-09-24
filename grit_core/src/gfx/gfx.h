@@ -80,6 +80,8 @@ void gfx_env_cube_set (const std::string &);
 float gfx_env_brightness_get (void);
 void gfx_env_brightness_set (float);
 
+float gfx_global_saturation_get (void);
+void gfx_global_saturation_set (float);
 float gfx_global_contrast_get (void);
 void gfx_global_contrast_set (float);
 float gfx_global_exposure_get (void);

@@ -96,6 +96,7 @@ extern float fog_density;
 extern float env_brightness;
 extern float global_exposure;
 extern float global_contrast;
+extern float global_saturation;
 
 std::string freshname (const std::string &prefix);
 std::string freshname (void);

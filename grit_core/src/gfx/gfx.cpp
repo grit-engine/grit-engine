@@ -71,11 +71,12 @@ Ogre::TexturePtr env_cube_tex;
 float env_brightness = 1;
 float global_exposure = 1;
 float global_contrast = 0;
+float global_saturation = 1;
 
 // abuse ogre fog params to store several things
 static void set_ogre_fog (void)
 {
-    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour), fog_density, env_brightness, global_exposure);
+    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour), fog_density, env_brightness, 0);
 }
 
 
@@ -101,24 +102,39 @@ std::string freshname (void)
 // }}}
 
 
+Ogre::Viewport *eye_left_vp = NULL;
+Ogre::Viewport *eye_right_vp = NULL;
+GfxPipeline *eye_left = NULL;
+GfxPipeline *eye_right = NULL;
 
 void do_reset_framebuffer (void)
 {
     // get rid of everything that might be set up already
 
+    if (eye_left_vp) ogre_win->removeViewport(eye_left_vp->getZOrder());
     delete eye_left;
     eye_left = NULL;
+    if (eye_right_vp) ogre_win->removeViewport(eye_right_vp->getZOrder());
     delete eye_right;
     eye_right = NULL;
 
     // set things up again
-    eye_left = new GfxPipeline("EyeLeft", ogre_win, true);
-
     if (stereoscopic()) {
-        eye_right = new GfxPipeline("EyeRight", ogre_win, false);
+        if (gfx_option(GFX_CROSS_EYE)) {
+            eye_left_vp = ogre_win->addViewport(NULL, 0, 0, 0, 0.5, 1);
+            eye_left = new GfxPipeline("EyeLeft", eye_left_vp);
+            eye_right_vp = ogre_win->addViewport(NULL, 1, 0.5, 0, 0.5, 1);
+            eye_right = new GfxPipeline("EyeRight", eye_right_vp);
+        } else {
+            eye_left_vp = ogre_win->addViewport(NULL, 0, 0, 0, 1, 1);
+            eye_left = new GfxPipeline("EyeLeft", eye_left_vp);
+            eye_right_vp = ogre_win->addViewport(NULL, 1, 0, 0, 1, 1);
+            eye_right = new GfxPipeline("EyeRight", eye_right_vp);
+        }
+    } else {
+        eye_left_vp = ogre_win->addViewport(NULL, 0, 0, 0, 1, 1);
+        eye_left = new GfxPipeline("EyeLeft", eye_left_vp);
     }
-
-    do_reset_eyes();
 
 }
 
@@ -251,6 +267,17 @@ void gfx_global_contrast_set (float v)
     set_ogre_fog();
 }
     
+float gfx_global_saturation_get (void)
+{
+    return global_saturation;
+}
+
+void gfx_global_saturation_set (float v)
+{
+    global_saturation = v;
+    set_ogre_fog();
+}
+    
 float gfx_global_exposure_get (void)
 {
     return global_exposure;
@@ -315,9 +342,51 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
         // something with elapsed, for texture animation, etc
 
         if (ogre_win->isActive()) {
-            eye_left->render(cam_pos, cam_dir);
-            if (stereoscopic())
-                eye_right->render(cam_pos, cam_dir);
+            CameraOpts opts_left;
+            opts_left.fovY = gfx_option(GFX_FOV);
+            opts_left.nearClip = gfx_option(GFX_NEAR_CLIP);
+            opts_left.farClip = gfx_option(GFX_FAR_CLIP);
+            opts_left.pos = cam_pos;
+            opts_left.dir = cam_dir;
+            if (stereoscopic()) {
+
+                float FOV = gfx_option(GFX_FOV);
+                float monitor_height = gfx_option(GFX_MONITOR_HEIGHT);
+                float distance = gfx_option(GFX_MONITOR_EYE_DISTANCE);
+                float eye_separation = gfx_option(GFX_EYE_SEPARATION);
+                float min = gfx_option(GFX_MIN_PERCEIVED_DEPTH);
+                float max = gfx_option(GFX_MAX_PERCEIVED_DEPTH);
+
+                CameraOpts opts_right = opts_left;
+
+                float s = 2*tan((FOV/2)/180*M_PI)/monitor_height * (eye_separation * (1-distance/max));
+                opts_left.frustumOffset = s/2;
+                opts_right.frustumOffset = -s/2;
+        
+                // cam separation -- different than eye separation because we want to control the perceived depth
+                float c = 2*tan((FOV/2)/180*M_PI)/monitor_height * (eye_separation * (1-distance/min));
+                c = gfx_option(GFX_NEAR_CLIP) * (s - c);
+
+                opts_left.pos = cam_pos + c/2 * (cam_dir*Vector3(-1,0,0));
+                opts_right.pos = cam_pos + c/2 * (cam_dir*Vector3(1,0,0));
+
+                if (gfx_option(GFX_ANAGLYPH)) {
+                    opts_left.mask = Vector3(gfx_option(GFX_ANAGLYPH_LEFT_RED_MASK),
+                                             gfx_option(GFX_ANAGLYPH_LEFT_GREEN_MASK),
+                                             gfx_option(GFX_ANAGLYPH_LEFT_BLUE_MASK));
+                    opts_right.mask = Vector3(gfx_option(GFX_ANAGLYPH_RIGHT_RED_MASK),
+                                              gfx_option(GFX_ANAGLYPH_RIGHT_GREEN_MASK),
+                                              gfx_option(GFX_ANAGLYPH_RIGHT_BLUE_MASK));
+                    opts_left.saturationMask = opts_right.saturationMask = 1 - gfx_option(GFX_ANAGLYPH_DESATURATION);
+
+                }
+
+                eye_left->render(opts_left);
+                eye_right->render(opts_right, gfx_option(GFX_ANAGLYPH));
+
+            } else {
+                eye_left->render(opts_left);
+            }
 
             ogre_rs->_swapAllRenderTargetBuffers(true);
         } else {
@@ -348,7 +417,7 @@ static GfxLastRenderStats stats_from_rt (Ogre::RenderTarget *rt)
 
 GfxLastFrameStats gfx_last_frame_stats (void)
 {
-    GfxLastFrameStats r;
+    GfxLastFrameStats r; 
 
     r.left_deferred = eye_left->getDeferredStats();
     r.left_gbuffer = eye_left->getGBufferStats();

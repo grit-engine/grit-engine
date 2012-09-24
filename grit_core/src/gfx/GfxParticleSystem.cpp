@@ -284,9 +284,9 @@ class GfxParticleSystem {
 
     void render (GfxPipeline *pipe)
     {
-
-        const Vector3 &cam_pos = pipe->getViewPos();
-        const Vector3 &cam_up = pipe->getViewDir() * Vector3(0,0,1);
+        const CameraOpts &cam_opts = pipe->getCameraOpts();
+        const Vector3 &cam_pos = cam_opts.pos;
+        const Vector3 &cam_up = cam_opts.dir * Vector3(0,0,1);
         Ogre::Viewport *viewport = ogre_sm->getCurrentViewport();
         Ogre::RenderTarget *render_target = viewport->getTarget();
 

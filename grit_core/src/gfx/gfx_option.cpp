@@ -275,7 +275,6 @@ static void options_update (bool flush)
     bool reset_shadows = flush;
     bool reset_pcss = flush;
     bool reset_framebuffer = flush;
-    bool reset_eyes = flush;
     bool reset_anaglyph_params = flush;
 
     for (unsigned i=0 ; i<sizeof(gfx_bool_options)/sizeof(*gfx_bool_options) ; ++i) {
@@ -342,21 +341,15 @@ static void options_update (bool flush)
         float v_new = new_options_float[o];
         if (v_old == v_new) continue;
         switch (o) {
+            // the following read every frame
             case GFX_FOV:
-            reset_eyes = true;
-            break;
             case GFX_NEAR_CLIP:
-            reset_eyes = true;
-            break;
             case GFX_FAR_CLIP:
-            reset_eyes = true;
-            break;
             case GFX_EYE_SEPARATION:
             case GFX_MONITOR_HEIGHT:
             case GFX_MONITOR_EYE_DISTANCE:
             case GFX_MIN_PERCEIVED_DEPTH:
             case GFX_MAX_PERCEIVED_DEPTH:
-            reset_eyes = true;
             break;
             case GFX_SHADOW_START:
             case GFX_SHADOW_END0:
@@ -452,10 +445,6 @@ static void options_update (bool flush)
 
     if (reset_framebuffer) {
         do_reset_framebuffer();
-    }
-
-    if (reset_eyes) {
-        do_reset_eyes();
     }
 
     if (reset_anaglyph_params) {
