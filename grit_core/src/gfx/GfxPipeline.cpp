@@ -778,72 +778,86 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
     gBufferStats.triangles = ogre_rs->_getFaceCount();;
     gBufferStats.micros = micros_after_gbuffer - micros_before;
 
-    // render gbuffer and alpha, sky, etc into hdr viewport
-    vp = hdrFb[0]->getBuffer()->getRenderTarget()->addViewport(cam);
-    vp->setOverlaysEnabled(true); // want to do it in the last pass but this seems... difficult
-    vp->setShadowsEnabled(false);
-    // white here makes sure that the depth (remember that it is 3 bytes) is maximal
-    vp->setBackgroundColour(Ogre::ColourValue::White);
-    vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
-    vp->update();
-    unsigned long long micros_after_deferred = micros();
-    deferredStats.batches = ogre_rs->_getBatchCount();
-    deferredStats.triangles = ogre_rs->_getFaceCount();
-    deferredStats.micros = micros_after_deferred - micros_after_gbuffer;
-    hdrFb[0]->getBuffer()->getRenderTarget()->removeViewport(vp->getZOrder());
+    if (!opts.bloomAndToneMap) {
 
-
-    Ogre::SceneBlendFactor target_blend = additive ? Ogre::SBF_ONE : Ogre::SBF_ZERO;
-
-    unsigned bloom_iterations = gfx_option(GFX_BLOOM_ITERATIONS);
-    if (bloom_iterations == 0) {
-
-        Ogre::HighLevelGpuProgramPtr tonemap = load_and_validate_shader("tonemap");
-        try_set_named_constant(tonemap, "global_contrast", global_contrast);
-        try_set_named_constant(tonemap, "global_exposure", to_ogre(global_exposure*opts.mask));
-        try_set_named_constant(tonemap, "global_saturation", global_saturation*opts.saturationMask);
-        render_quad(targetViewport, RenderQuadParams<1>(tonemap, target_blend).tex(hdrFb[0]));
+        // render gbuffer and alpha, sky, etc into hdr viewport
+        vp = targetViewport;
+        vp->setOverlaysEnabled(false);
+        vp->setShadowsEnabled(false);
+        vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
+        vp->update();
+        unsigned long long micros_after_deferred = micros();
+        deferredStats.batches = ogre_rs->_getBatchCount();
+        deferredStats.triangles = ogre_rs->_getFaceCount();
+        deferredStats.micros = micros_after_deferred - micros_after_gbuffer;
 
     } else {
 
-        float bloom_threshold = gfx_option(GFX_BLOOM_THRESHOLD);
+        // render gbuffer and alpha, sky, etc into hdr viewport
+        vp = hdrFb[0]->getBuffer()->getRenderTarget()->addViewport(cam);
+        vp->setOverlaysEnabled(true); // want to do it in the last pass but this seems... difficult
+        vp->setShadowsEnabled(false);
+        vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
+        vp->update();
+        unsigned long long micros_after_deferred = micros();
+        deferredStats.batches = ogre_rs->_getBatchCount();
+        deferredStats.triangles = ogre_rs->_getFaceCount();
+        deferredStats.micros = micros_after_deferred - micros_after_gbuffer;
+        hdrFb[0]->getBuffer()->getRenderTarget()->removeViewport(vp->getZOrder());
 
-        Ogre::HighLevelGpuProgramPtr bloom_filter_then_horz_blur = load_and_validate_shader("bloom_filter_then_horz_blur");
-        try_set_named_constant(bloom_filter_then_horz_blur, "bloom_threshold", bloom_threshold/global_exposure);
 
-        Ogre::HighLevelGpuProgramPtr bloom_vert_blur = load_and_validate_shader("bloom_vert_blur");
+        Ogre::SceneBlendFactor target_blend = additive ? Ogre::SBF_ONE : Ogre::SBF_ZERO;
 
-        Ogre::HighLevelGpuProgramPtr bloom_horz_blur = load_and_validate_shader("bloom_horz_blur");
+        unsigned bloom_iterations = gfx_option(GFX_BLOOM_ITERATIONS);
+        if (bloom_iterations == 0) {
 
-        Ogre::HighLevelGpuProgramPtr bloom_vert_blur_combine_and_tonemap = load_and_validate_shader("bloom_vert_blur_combine_and_tonemap");
-        try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_contrast", global_contrast);
-        try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_exposure", to_ogre(global_exposure*opts.mask));
-        try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_saturation", global_saturation*opts.saturationMask);
+            Ogre::HighLevelGpuProgramPtr tonemap = load_and_validate_shader("tonemap");
+            try_set_named_constant(tonemap, "global_contrast", global_contrast);
+            try_set_named_constant(tonemap, "global_exposure", to_ogre(global_exposure*opts.mask));
+            try_set_named_constant(tonemap, "global_saturation", global_saturation*opts.saturationMask);
+            render_quad(targetViewport, RenderQuadParams<1>(tonemap, target_blend).tex(hdrFb[0]));
 
-        // half_bloom = filter_then_horz_blur(raw)
-        // loop 1..n-1 {
-        //     bloom = vert_blur(half_bloom);
-        //     half_bloom = scale_then_horz_blur(bloom);
-        // }
-        // fb = vert_blur_combine_and_tonemap(raw, half_bloom) 
+        } else {
 
-        Ogre::Vector4 vp_dim(0,0,1,1);
+            float bloom_threshold = gfx_option(GFX_BLOOM_THRESHOLD);
 
-        try_set_named_constant(bloom_filter_then_horz_blur, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
-        render_quad(hdrFb[1], vp_dim, true, RenderQuadParams<1>(bloom_filter_then_horz_blur).tex(hdrFb[0]));
-        for (unsigned i=1 ; i<bloom_iterations ; ++i) {
-            try_set_named_constant(bloom_vert_blur, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
-            clear_rt(hdrFb[2]->getBuffer()->getRenderTarget());
-            render_quad(hdrFb[2], vp_dim, true, RenderQuadParams<1>(bloom_vert_blur).tex(hdrFb[1]));
-            try_set_named_constant(bloom_horz_blur, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
-            vp_dim /= 2;
-            clear_rt(hdrFb[1]->getBuffer()->getRenderTarget());
-            render_quad(hdrFb[1], vp_dim, true, RenderQuadParams<1>(bloom_horz_blur).tex(hdrFb[2]));
+            Ogre::HighLevelGpuProgramPtr bloom_filter_then_horz_blur = load_and_validate_shader("bloom_filter_then_horz_blur");
+            try_set_named_constant(bloom_filter_then_horz_blur, "bloom_threshold", bloom_threshold/global_exposure);
+
+            Ogre::HighLevelGpuProgramPtr bloom_vert_blur = load_and_validate_shader("bloom_vert_blur");
+
+            Ogre::HighLevelGpuProgramPtr bloom_horz_blur = load_and_validate_shader("bloom_horz_blur");
+
+            Ogre::HighLevelGpuProgramPtr bloom_vert_blur_combine_and_tonemap = load_and_validate_shader("bloom_vert_blur_combine_and_tonemap");
+            try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_contrast", global_contrast);
+            try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_exposure", to_ogre(global_exposure*opts.mask));
+            try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_saturation", global_saturation*opts.saturationMask);
+
+            // half_bloom = filter_then_horz_blur(raw)
+            // loop 1..n-1 {
+            //     bloom = vert_blur(half_bloom);
+            //     half_bloom = scale_then_horz_blur(bloom);
+            // }
+            // fb = vert_blur_combine_and_tonemap(raw, half_bloom) 
+
+            Ogre::Vector4 vp_dim(0,0,1,1);
+
+            try_set_named_constant(bloom_filter_then_horz_blur, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
+            render_quad(hdrFb[1], vp_dim, true, RenderQuadParams<1>(bloom_filter_then_horz_blur).tex(hdrFb[0]));
+            for (unsigned i=1 ; i<bloom_iterations ; ++i) {
+                try_set_named_constant(bloom_vert_blur, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
+                clear_rt(hdrFb[2]->getBuffer()->getRenderTarget());
+                render_quad(hdrFb[2], vp_dim, true, RenderQuadParams<1>(bloom_vert_blur).tex(hdrFb[1]));
+                try_set_named_constant(bloom_horz_blur, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
+                vp_dim /= 2;
+                clear_rt(hdrFb[1]->getBuffer()->getRenderTarget());
+                render_quad(hdrFb[1], vp_dim, true, RenderQuadParams<1>(bloom_horz_blur).tex(hdrFb[2]));
+            }
+            try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
+            Ogre::Vector4 viewport_size(     targetViewport->getActualWidth(),      targetViewport->getActualHeight(),
+                                        1.0f/targetViewport->getActualWidth(), 1.0f/targetViewport->getActualHeight());
+            try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "viewport_size", viewport_size);
+            render_quad(targetViewport, RenderQuadParams<2>(bloom_vert_blur_combine_and_tonemap, target_blend).tex(hdrFb[1]).tex(hdrFb[0]));
         }
-        try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
-        Ogre::Vector4 viewport_size(     targetViewport->getActualWidth(),      targetViewport->getActualHeight(),
-                                    1.0f/targetViewport->getActualWidth(), 1.0f/targetViewport->getActualHeight());
-        try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "viewport_size", viewport_size);
-        render_quad(targetViewport, RenderQuadParams<2>(bloom_vert_blur_combine_and_tonemap, target_blend).tex(hdrFb[1]).tex(hdrFb[0]));
     }
 }

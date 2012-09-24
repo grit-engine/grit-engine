@@ -404,8 +404,8 @@ void GfxBody::updateProperties (void)
         // car paint
         for (int k=0 ; k<4 ; ++k) {
             const GfxPaintColour &c = colours[k];
-            se->setCustomParameter(2*k+1,Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, c.met));
-            se->setCustomParameter(2*k+2,  Ogre::Vector4(c.spec.x, c.spec.y, c.spec.z, 0));
+            se->setCustomParameter(2*k+1, Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, c.met));
+            se->setCustomParameter(2*k+2, Ogre::Vector4(c.spec.x, c.spec.y, c.spec.z, 0.0f));
         }
     }
 

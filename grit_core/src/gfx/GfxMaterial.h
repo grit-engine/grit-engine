@@ -224,7 +224,8 @@ bool gfx_material_has_any (const std::string &name);
 bool gfx_material_has (const std::string &name);
 
 struct GfxPaintColour {
-    Vector3 diff, spec;
+    Vector3 diff;
+    Vector3 spec; // spec, unused, gloss
     float met; // metallic paint (0 -> 1)
 };
 

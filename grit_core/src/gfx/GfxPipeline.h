@@ -43,10 +43,11 @@ struct CameraOpts {
     float frustumOffset;
     float saturationMask;
     Vector3 mask; // colour
+    bool bloomAndToneMap;
     Vector3 pos;
     Quaternion dir;
     CameraOpts (void)
-      : fovY(55), nearClip(0.3f), farClip(800), frustumOffset(0), saturationMask(1), mask(1,1,1), pos(0,0,0), dir(0,0,0,1) { }
+      : fovY(55), nearClip(0.3f), farClip(800), frustumOffset(0), saturationMask(1), mask(1,1,1), bloomAndToneMap(true), pos(0,0,0), dir(0,0,0,1) { }
 };
 
 class GfxPipeline {
