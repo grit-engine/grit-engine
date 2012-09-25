@@ -593,6 +593,17 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_rs->setConfigOption("sRGB Gamma Conversion",use_hwgamma?"Yes":"No");
         ogre_rs->setConfigOption("Full Screen","No");
         ogre_rs->setConfigOption("VSync","Yes");
+
+        Ogre::ConfigOptionMap &config_opts = ogre_rs->getConfigOptions();
+        CLOG << "Rendersystem options:" << std::endl;
+        for (Ogre::ConfigOptionMap::iterator i=config_opts.begin(),i_=config_opts.end() ; i!=i_ ; ++i) {
+            const Ogre::StringVector &sv = i->second.possibleValues;
+            CLOG << "    " << i->second.name << " (" << (i->second.immutable ? "immutable" : "mutable") << ")  {";
+            for (unsigned j=0 ; j<sv.size() ; ++j) {
+                CLOG << (j==0?" ":", ") << sv[j];
+            }
+            CLOG << " }" << std::endl;
+        }
         ogre_root->setRenderSystem(ogre_rs);
 
         ogre_root->initialise(true,"Grit Game Window");
