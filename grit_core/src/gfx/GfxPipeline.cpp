@@ -661,6 +661,7 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA));
     rqisDeferred->add(new ParticlesPasses(this, true)); // alpha
+    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_BULLET_DEBUG_DRAWER));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(Ogre::RENDER_QUEUE_OVERLAY));
 }
 

@@ -23,6 +23,8 @@
 #include <OgreAutoParamDataSource.h>
 
 #include "../path_util.h"
+#include "../sleep.h"
+#include "../main.h"
 
 #include "gfx_internal.h"
 #include "GfxPipeline.h"
@@ -32,7 +34,6 @@
 #include "GfxBody.h"
 #include "GfxSkyMaterial.h"
 #include "GfxSkyBody.h"
-#include "../sleep.h"
 
 #ifdef WIN32
 bool d3d9 = getenv("GRIT_GL")==NULL;
@@ -326,6 +327,10 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 {
     time_since_started_rendering += elapsed;
 
+    Ogre::FrameEvent fev;
+
+    debug_drawer->frameStarted(fev);
+
     try {
         // This pumps ogre's texture animation and probably other things
         ftcv->setValue(elapsed);
@@ -404,6 +409,8 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
     } catch (GritException &e) {
         CERR << e.msg << std::endl;
     }
+
+    debug_drawer->frameEnded(fev);
 }
 
 // }}}
