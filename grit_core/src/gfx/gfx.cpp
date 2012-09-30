@@ -348,6 +348,10 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
             opts_left.farClip = gfx_option(GFX_FAR_CLIP);
             opts_left.pos = cam_pos;
             opts_left.dir = cam_dir;
+            opts_left.bloomAndToneMap = gfx_option(GFX_POST_PROCESSING);
+            opts_left.particles = gfx_option(GFX_RENDER_PARTICLES);
+            opts_left.pointLights = gfx_option(GFX_POINT_LIGHTS);
+            opts_left.sky = gfx_option(GFX_RENDER_SKY);
             if (stereoscopic()) {
 
                 float FOV = gfx_option(GFX_FOV);

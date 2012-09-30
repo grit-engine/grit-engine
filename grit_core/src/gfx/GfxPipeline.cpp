@@ -416,6 +416,8 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
         }
 
 
+        if (!pipe->getCameraOpts().pointLights) return;
+
         try {
 
             /////////////////////
@@ -574,7 +576,31 @@ class ParticlesPasses : public Ogre::RenderQueueInvocation {
 
     void invoke (Ogre::RenderQueueGroup *, Ogre::SceneManager *)
     {
-        gfx_particle_render(pipe, alphaBlend);
+        if (pipe->getCameraOpts().particles) gfx_particle_render(pipe, alphaBlend);
+    }
+    
+};
+
+// }}}
+
+
+
+// {{{ Sky passes 
+
+class SkyPasses : public Ogre::RenderQueueInvocation {
+    GfxPipeline *pipe;
+    bool alpha;
+
+    public:
+    SkyPasses (GfxPipeline *pipe, bool alpha)
+      : Ogre::RenderQueueInvocation(alpha?RQ_SKY_ALPHA:RQ_SKY, Ogre::StringUtil::BLANK), pipe(pipe)
+    {
+        setSuppressShadows(true);
+    }
+
+    void invoke (Ogre::RenderQueueGroup *rqg, Ogre::SceneManager *sm)
+    {
+        if (pipe->getCameraOpts().sky) Ogre::RenderQueueInvocation::invoke(rqg,sm);
     }
     
 };
@@ -628,10 +654,10 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
     rqisDeferred = ogre_root->createRenderQueueInvocationSequence(name+":deferred");
     rqisDeferred->add(new DeferredLightingPasses(this));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_OPAQUE));
-    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_SKY));
+    rqisDeferred->add(new SkyPasses(this, false)); // opaque
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_EMISSIVE));
     rqisDeferred->add(new ParticlesPasses(this, false)); // opaque
-    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_SKY_ALPHA));
+    rqisDeferred->add(new SkyPasses(this, true)); // opaque
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA));
     rqisDeferred->add(new ParticlesPasses(this, true)); // alpha
@@ -782,7 +808,8 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
 
         // render gbuffer and alpha, sky, etc into hdr viewport
         vp = targetViewport;
-        vp->setOverlaysEnabled(false);
+        vp->setCamera(cam);
+        vp->setOverlaysEnabled(true);
         vp->setShadowsEnabled(false);
         vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
         vp->update();
