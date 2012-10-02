@@ -190,10 +190,13 @@ std::string gfx_env_cube_get (void)
 
 void gfx_env_cube_set (const std::string &v)
 {
+    if (v == env_cube_name) return;
+    APP_ASSERT(v[0] == '/');
+
     Ogre::Image disk;
     Ogre::Image img;
     uint8_t *raw_tex = NULL;
-    if (v == "") {
+    if (v == "/") {
         // Prepare texture (6(1x1) RGB8)
         uint8_t raw_tex_stack[] = {
             0xff, 0x7f, 0x7f,
@@ -205,12 +208,9 @@ void gfx_env_cube_set (const std::string &v)
         };
         // Load raw byte array into an Image
         img.loadDynamicImage(raw_tex_stack, 1, 1, 1, Ogre::PF_B8G8R8, false, 6, 0);
-    } else if (v.substr(v.length()-4) == ".dds") {
-        // Reorganise into 
-        img.load (v, RESGRP);
     } else {
         // Reorganise into 
-        disk.load (v, RESGRP);
+        disk.load (v.substr(1), RESGRP);
         if (disk.getWidth() != disk.getHeight()*6) {
             GRIT_EXCEPT("Environment map has incorrect dimensions: "+v);
         }
@@ -327,9 +327,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 {
     time_since_started_rendering += elapsed;
 
-    Ogre::FrameEvent fev;
-
-    debug_drawer->frameStarted(fev);
+    debug_drawer->frameStarted();
 
     try {
         // This pumps ogre's texture animation and probably other things
@@ -410,10 +408,93 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
         CERR << e.msg << std::endl;
     }
 
-    debug_drawer->frameEnded(fev);
+    debug_drawer->frameEnded();
 }
 
 // }}}
+
+void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector3 &cam_pos, float saturation, const Vector3 &ambient)
+{
+    if ((size & (size-1)) != 0) GRIT_EXCEPT("Can only bake env cubes with power of 2 size");
+
+    // make texture
+    Ogre::TexturePtr cube = Ogre::TextureManager::getSingleton().createManual("env_cube_bake", RESGRP, Ogre::TEX_TYPE_2D,
+                    6 * size, size, 1,
+                    0,
+                    Ogre::PF_FLOAT32_RGB,
+                    Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE | Ogre::TU_RENDERTARGET,
+                    NULL,
+                    false);
+    Ogre::RenderTarget *rt = cube->getBuffer()->getRenderTarget();
+
+    // these are correct assuming the end image is going to be flipped about y
+    Quaternion cube_orientations[6] = {
+        Quaternion(Degree(90), Vector3(0,1,0)) * Quaternion(Degree(90), Vector3(1,0,0)), // lean your head back to look up, then lean to the right
+        Quaternion(Degree(90), Vector3(0,-1,0)) * Quaternion(Degree(90), Vector3(1,0,0)), // lean your head back to look up, then lean to the left
+        Quaternion(1,0,0,0), // looking north
+        Quaternion(Degree(180), Vector3(1,0,0)), // lean your head back until you are looking south
+        Quaternion(Degree(90), Vector3(1,0,0)), // lean your head back to look up
+        Quaternion(Degree(90), Vector3(1,0,0)) * Quaternion(Degree(180), Vector3(0,0,1)), // turn to face south, then look down
+    };
+
+    // create 6 viewports and 6 pipelines
+    for (unsigned i=0 ; i<6 ; ++i) {
+        Ogre::Viewport *vp = rt->addViewport(NULL, 0, i/6.0, 0, 1.0/6, 1);
+
+        GfxPipeline pipe("env_cube_bake_pipe", vp);
+
+        CameraOpts opts;
+        opts.fovY = 90;
+        opts.nearClip = 0.3;
+        opts.farClip = 1200;
+        opts.pos = cam_pos;
+        opts.dir = cube_orientations[i];
+        opts.bloomAndToneMap = false;
+        opts.particles = false;
+        opts.pointLights = false;
+        opts.sky = true;
+        opts.hud = false;
+        opts.sun = false;
+
+        pipe.render(opts);
+
+        rt->removeViewport(vp->getZOrder());
+    }
+
+    // read back onto cpu
+    Ogre::Image img_raw;
+    unsigned char *img_raw_buf = OGRE_ALLOC_T(unsigned char, 6*size*size*3*4, Ogre::MEMCATEGORY_GENERAL);
+    img_raw.loadDynamicImage(img_raw_buf, size*6, size, 1, Ogre::PF_FLOAT32_RGB, true);
+    rt->copyContentsToMemory(img_raw.getPixelBox());
+    Ogre::PixelBox img_raw_box = img_raw.getPixelBox();
+
+    // clean up texture
+    Ogre::TextureManager::getSingleton().remove(cube->getName());
+    rt = NULL;
+
+    // make an image that is a target for the conversion process
+    Ogre::Image img_conv;
+    unsigned char *img_conv_buf = OGRE_ALLOC_T(unsigned char, 6*size*size*3*2, Ogre::MEMCATEGORY_GENERAL);
+    img_conv.loadDynamicImage(img_conv_buf, size*6, size, 1, Ogre::PF_SHORT_RGB, true);
+    Ogre::PixelBox img_conv_box = img_conv.getPixelBox();
+
+    // do conversion (flip y, gamma, hdr range up to 16)
+    for (unsigned y=0 ; y<size ; y++) {
+        for (unsigned x=0 ; x<size*6 ; x++) {
+            Ogre::ColourValue cv = img_raw.getColourAt(x,y,0);
+            cv = cv + Ogre::ColourValue(ambient.x, ambient.y, ambient.z);
+            float grey = (cv.r + cv.g + cv.b)/3;
+            cv = saturation * cv + (1-saturation) * Ogre::ColourValue(grey, grey, grey, 1);
+            cv = cv / 16;
+            cv = Ogre::ColourValue(powf(cv.r,1/2.2), powf(cv.g,1/2.2), powf(cv.b,1/2.2), 1.0f);
+            img_conv.setColourAt(cv,x,size - y - 1,0);
+        }
+    }
+
+    // write out to file
+    img_conv.save(filename);
+
+}
 
 
 void gfx_screenshot (const std::string &filename) { ogre_win->writeContentsToFile(filename); }

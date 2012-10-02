@@ -65,6 +65,8 @@ size_t gfx_init (GfxCallback &cb);
 
 void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir);
 
+void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector3 &cam_pos, float saturation, const Vector3 &ambient);
+
 Vector3 gfx_sun_get_diffuse (void);
 void gfx_sun_set_diffuse (const Vector3 &v);
 Vector3 gfx_sun_get_specular (void);

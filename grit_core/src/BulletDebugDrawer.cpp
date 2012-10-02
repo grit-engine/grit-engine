@@ -81,12 +81,10 @@ BulletDebugDrawer::BulletDebugDrawer (Ogre::SceneManager *sm)
 
     mDebugModes = (DebugDrawModes) DBG_NoDebug;
 
-    Ogre::Root::getSingleton().addFrameListener(this);
 }
 
 BulletDebugDrawer::~BulletDebugDrawer (void)
 {
-    Ogre::Root::getSingleton().removeFrameListener(this);
     delete mLines;
     delete mTriangles;
 }
@@ -121,15 +119,15 @@ void BulletDebugDrawer::drawContactPoint (const btVector3 &PointOnB, const btVec
     ContactPoint p = mContactPoints->back();
     p.from = to_ogre(from_bullet(PointOnB));
     p.to = p.from + to_ogre(from_bullet(normalOnB)) * distance;
-    p.dieTime = Ogre::Root::getSingleton().getTimer()->getMilliseconds() + lifeTime;
+    p.dieTime = micros() + lifeTime*1000;
     p.color.r = color.x();
     p.color.g = color.y();
     p.color.b = color.z();
 }
 
-bool BulletDebugDrawer::frameStarted (const Ogre::FrameEvent&)
+bool BulletDebugDrawer::frameStarted (void)
 {
-    size_t now = Ogre::Root::getSingleton().getTimer()->getMilliseconds();
+    size_t now = micros();
     std::vector<ContactPoint> *newCP = mContactPoints == &mContactPoints1 ? &mContactPoints2 : &mContactPoints1;
     for ( std::vector<ContactPoint>::iterator i = mContactPoints->begin(); i < mContactPoints->end(); i++ ){
         ContactPoint &cp = *i;
@@ -148,7 +146,7 @@ bool BulletDebugDrawer::frameStarted (const Ogre::FrameEvent&)
     return true;
 }
 
-bool BulletDebugDrawer::frameEnded (const Ogre::FrameEvent&)
+bool BulletDebugDrawer::frameEnded (void)
 {
     mLines->beginUpdate(0);
     mTriangles->beginUpdate(0);
@@ -157,7 +155,7 @@ bool BulletDebugDrawer::frameEnded (const Ogre::FrameEvent&)
 
 void BulletDebugDrawer::reportErrorWarning (const char *warningString)
 {
-    Ogre::LogManager::getSingleton().getDefaultLog()->logMessage(warningString);
+    CVERB << warningString << std::endl;
 }
 
 void BulletDebugDrawer::draw3dText (const btVector3 &location, const char *textString)

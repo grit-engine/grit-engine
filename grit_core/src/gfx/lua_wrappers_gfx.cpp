@@ -1072,6 +1072,20 @@ TRY_START
 TRY_END
 }
 
+static int global_gfx_bake_env_cube (lua_State *L)
+{
+TRY_START
+    check_args(L,5);
+    std::string name = check_string(L,1);
+    unsigned size = check_t<unsigned>(L,2);
+    Vector3 cam_pos = check_v3(L,3);
+    float saturation = check_float(L,4);
+    Vector3 ambient = check_v3(L,5);
+    gfx_bake_env_cube(name, size, cam_pos, saturation, ambient);
+    return 0;
+TRY_END
+}
+
 static int global_gfx_screenshot (lua_State *L)
 {
 TRY_START
@@ -1258,6 +1272,7 @@ static int global_gfx_env_cube_set (lua_State *L)
 TRY_START
     check_args(L,1);
     std::string v = check_string(L,1);
+    v = pwd_full(L, v);
     gfx_env_cube_set(v);
     return 0;
 TRY_END
@@ -3108,6 +3123,7 @@ TRY_END
 static const luaL_reg global[] = {
 
     {"gfx_render",global_gfx_render},
+    {"gfx_bake_env_cube",global_gfx_bake_env_cube},
     {"gfx_screenshot",global_gfx_screenshot},
     {"gfx_option",global_gfx_option},
     {"gfx_body_make",global_gfx_body_make},

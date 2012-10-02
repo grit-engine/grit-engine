@@ -810,7 +810,7 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
         // render gbuffer and alpha, sky, etc into hdr viewport
         vp = targetViewport;
         vp->setCamera(cam);
-        vp->setOverlaysEnabled(true);
+        vp->setOverlaysEnabled(opts.hud);
         vp->setShadowsEnabled(false);
         vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
         vp->update();
@@ -823,7 +823,7 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
 
         // render gbuffer and alpha, sky, etc into hdr viewport
         vp = hdrFb[0]->getBuffer()->getRenderTarget()->addViewport(cam);
-        vp->setOverlaysEnabled(true); // want to do it in the last pass but this seems... difficult
+        vp->setOverlaysEnabled(opts.hud); // want to do it in the last pass but this seems... difficult
         vp->setShadowsEnabled(false);
         vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
         vp->update();
