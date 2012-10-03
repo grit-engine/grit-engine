@@ -315,6 +315,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
         // various camera and lighting things
         Ogre::Matrix4 view = cam->getViewMatrix();
+        Ogre::Matrix4 inv_view = view.inverse();
         Ogre::Matrix4 proj = cam->getProjectionMatrixWithRSDepth();
         Ogre::Matrix4 view_proj = proj*view;
         Ogre::Vector3 sun_pos_ws = ogre_sun->getDirection();
@@ -357,6 +358,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             Ogre::Matrix4 special_proj = cam->getProjectionMatrix();
             Ogre::Matrix4 special_view_proj = special_proj*view;
             try_set_named_constant(das_fp, "view_proj", special_view_proj);
+            try_set_named_constant(das_fp, "inv_view", inv_view);
             try_set_named_constant(das_fp, "sun_pos_ws", -sun_pos_ws);
             try_set_named_constant(das_fp, "sun_diffuse", sun_diffuse);
             try_set_named_constant(das_fp, "sun_specular", sun_specular);
@@ -506,6 +508,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                 try_set_named_constant(dl_vp, "view_proj", view_proj);
                 try_set_named_constant(dl_vp, "render_target_flipping", render_target_flipping);
 
+                try_set_named_constant(dl_fp, "inv_view", inv_view);
                 try_set_named_constant(dl_fp, "top_left_ray", top_left_ray);
                 try_set_named_constant(dl_fp, "top_right_ray", top_right_ray);
                 try_set_named_constant(dl_fp, "bottom_left_ray", bottom_left_ray);
