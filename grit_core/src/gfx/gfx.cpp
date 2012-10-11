@@ -794,10 +794,8 @@ void gfx_shutdown (void)
         ftcv.setNull();
         if (ogre_sm && ogre_root) ogre_root->destroySceneManager(ogre_sm);
         if (ogre_root) OGRE_DELETE ogre_root; // internally deletes ogre_rs
-        #ifdef NO_PLUGINS
-            OGRE_DELETE octree;
-            OGRE_DELETE cg;
-        #endif
+        OGRE_DELETE octree;
+        OGRE_DELETE cg;
     } catch (Ogre::Exception &e) {
         GRIT_EXCEPT2(e.getFullDescription(), "Shutting down graphics subsystem");
     }
