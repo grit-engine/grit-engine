@@ -1,12 +1,16 @@
 # (c) David Cunningham and the Grit Game Engine project 2012
 # Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
 
+ROOT=../..
+
+-include $(ROOT)/common.mk
+
 COMPILING=echo "Compiling: [32m$<[0m"
 LINKING=echo "Linking: [1;32m$@[0m"
 
 %.o: ../src/win32/%.cpp
 	@$(COMPILING)
-	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
+	@@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
 %.o: ../src/linux/%.cpp
 	@$(COMPILING)
@@ -14,7 +18,7 @@ LINKING=echo "Linking: [1;32m$@[0m"
 
 %.o: ../src/%.cpp
 	@$(COMPILING)
-	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
+	$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
 %.o: ../src/gfx/%.cpp
 	@$(COMPILING)

@@ -1,5 +1,9 @@
 # (c) David Cunningham 2011, Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
 
+ROOT=../..
+
+-include $(ROOT)/common.mk
+
 COMPILING=echo "Compiling: [32m$<[0m"
 LINKING=echo "Linking: [1;32m$@[0m"
 
@@ -19,7 +23,7 @@ ifpread: ../src/ifpread.cpp
 
 extract: ../src/extract.cpp ColParser.o BColParser.o TColParser.o ideread.o imgread.o dffread.o tex_dups.o iplread.o txdread.o dirutil.o csvread.o handling.o surfinfo.o procobj.o
 	@$(LINKING)
-	@$(CXX) -pedantic $^ -o $@ $(CLDFLAGS)
+	@$(CXX) -pedantic $^ -o $@ $(ALL_OPTS)
 
 ideread: ../src/ideread.cpp csvread.o
 	@$(LINKING)
@@ -37,7 +41,7 @@ iplread: ../src/iplread.cpp csvread.o
 	@$(LINKING)
 	@$(CXX) -pedantic -D_IPLREAD_EXEC $^ -o $@ $(ALL_OPTS)
 
-colread: colread.o ColParser.o TColParser.o TColLexer.o $TColLexercore-engine.o 
+colread: colread.o ColParser.o TColParser.o TColLexer.o TColLexer-core-engine.o 
 	@$(LINKING)
 	@$(CXX) -pedantic $^ -o $@ $(ALL_OPTS)
 
