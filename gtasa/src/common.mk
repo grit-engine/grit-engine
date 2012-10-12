@@ -3,62 +3,59 @@
 COMPILING=echo "Compiling: [32m$<[0m"
 LINKING=echo "Linking: [1;32m$@[0m"
 
+ALL_OPTS=$(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
+
 %.o: ../src/%.cpp
 	@$(COMPILING)
-	@$(COMPILER) -c $< -o $@ $(CFLAGS)
-
-LEXER=TColLexer
-../src/$(LEXER): ../src/physics/$(LEXER).qx
-	cd ../src && quex -i $< --engine $(LEXER) --token-queue 
-
+	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
 imgread: ../src/imgread.cpp 
 	@$(LINKING)
-	@$(COMPILER) -D_IMGREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+	@$(CXX) -pedantic -D_IMGREAD_EXEC $^ -o $@ $(ALL_OPTS)
 
 ifpread: ../src/ifpread.cpp
 	@$(LINKING)
-	@$(COMPILER) -D_IFPREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+	@$(CXX) -pedantic -D_IFPREAD_EXEC $^ -o $@ $(ALL_OPTS)
 
 extract: ../src/extract.cpp ColParser.o BColParser.o TColParser.o ideread.o imgread.o dffread.o tex_dups.o iplread.o txdread.o dirutil.o csvread.o handling.o surfinfo.o procobj.o
 	@$(LINKING)
-	@$(COMPILER) $^ -o $@ $(CLDFLAGS)
+	@$(CXX) -pedantic $^ -o $@ $(CLDFLAGS)
 
 ideread: ../src/ideread.cpp csvread.o
 	@$(LINKING)
-	@$(COMPILER) -D_IDEREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+	@$(CXX) -pedantic -D_IDEREAD_EXEC $^ -o $@ $(ALL_OPTS)
 
 dffread: ../src/dffread.cpp tex_dups.o ColParser.o TColParser.o
 	@$(LINKING)
-	@$(COMPILER) -D_DFFREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+	@$(CXX) -pedantic -D_DFFREAD_EXEC $^ -o $@ $(ALL_OPTS)
 
 txdread: ../src/txdread.cpp
 	@$(LINKING)
-	@$(COMPILER) -D_TXDREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+	@$(CXX) -pedantic -D_TXDREAD_EXEC $^ -o $@ $(ALL_OPTS)
 
 iplread: ../src/iplread.cpp csvread.o
 	@$(LINKING)
-	@$(COMPILER) -D_IPLREAD_EXEC $^ -o $@ $(CFLAGS) $(CMDLINE_LDFLAGS)
+	@$(CXX) -pedantic -D_IPLREAD_EXEC $^ -o $@ $(ALL_OPTS)
 
-colread: colread.o ColParser.o TColParser.o $(LEXER).o $(LEXER)-core-engine.o 
+colread: colread.o ColParser.o TColParser.o TColLexer.o $TColLexercore-engine.o 
 	@$(LINKING)
-	@$(COMPILER) $^ -o $@ $(CLDFLAGS)
+	@$(CXX) -pedantic $^ -o $@ $(ALL_OPTS)
 
 csvread: ../src/csvread.cpp
 	@$(LINKING)
-	@$(COMPILER) -D_CSVREAD_EXEC $^ -o $@ $(CLDFLAGS)
+	@$(CXX) -pedantic -D_CSVREAD_EXEC $^ -o $@ $(ALL_OPTS)
 
 handling: ../src/handling.cpp csvread.o
 	@$(LINKING)
-	@$(COMPILER) -D_HANDLING_EXEC $^ -o $@ $(CLDFLAGS)
+	@$(CXX) -pedantic -D_HANDLING_EXEC $^ -o $@ $(ALL_OPTS)
 
 surfinfo: ../src/surfinfo.cpp csvread.o
 	@$(LINKING)
-	@$(COMPILER) -D_SURFINFO_EXEC $^ -o $@ $(CLDFLAGS)
+	@$(CXX) -pedantic -D_SURFINFO_EXEC $^ -o $@ $(ALL_OPTS)
 
 procobj: ../src/procobj.cpp csvread.o
 	@$(LINKING)
-	@$(COMPILER) -D_PROCOBJ_EXEC $^ -o $@ $(CLDFLAGS)
+	@$(CXX) -pedantic -D_PROCOBJ_EXEC $^ -o $@ $(ALL_OPTS)
 
 
 clean:

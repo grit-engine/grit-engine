@@ -6,36 +6,33 @@ LINKING=echo "Linking: [1;32m$@[0m"
 
 %.o: ../src/win32/%.cpp
 	@$(COMPILING)
-	@$(COMPILER) -c $< -o $@ $(CFLAGS)
+	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
 %.o: ../src/linux/%.cpp
 	@$(COMPILING)
-	@$(COMPILER) -c $< -o $@ $(CFLAGS)
+	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
 %.o: ../src/%.cpp
 	@$(COMPILING)
-	@$(COMPILER) -c $< -o $@ $(CFLAGS)
+	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
 %.o: ../src/gfx/%.cpp
 	@$(COMPILING)
-	@$(COMPILER) -c $< -o $@ $(CFLAGS)
+	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
 %.o: ../src/audio/%.cpp
 	@$(COMPILING)
-	@$(COMPILER) -c $< -o $@ $(CFLAGS)
+	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
 %.o: ../src/physics/%.cpp
 	@$(COMPILING)
-	@$(COMPILER) -c $< -o $@ $(CFLAGS)
+	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
-QUEX_PATH2 = ../$(QUEX_PATH)
-../src/physics/TColLexer: ../src/physics/TColLexer.qx
-	cd ../src/physics && QUEX_PATH=$(QUEX_PATH2) $(QUEX_PATH2)/quex-exe.py -i TColLexer.qx --engine TColLexer
-
+#These two can't be compiled with pedantic (quex generated files)
 TColLexer-core-engine.o: ../src/physics/TColLexer-core-engine.cpp
 TColLexer.o: ../src/physics/TColLexer.cpp
 	@$(COMPILING)
-	@$(WEAKCOMPILER) -c $< -o $@ $(CFLAGS)
+	@$(CXX) -c $< -o $@ $(CXXFLAGS)
 
 
 COMMON_OBJ=\
@@ -97,21 +94,18 @@ COMMON_OBJ=\
 
 
 LINUX_OBJ=$(COMMON_OBJ) MouseX11.o KeyboardX11.o posix_sleep.o x11_clipboard.o
-WIN32_OBJ=$(COMMON_OBJ) MouseDirectInput8.o KeyboardDirectInput8.o KeyboardWinAPI.o win32_clipboard.o win32_sleep.o
+
+DEPENDENT_LIBS=$(OGRE_ARCHIVES) $(BULLET_ARCHIVES) $(LUA_ARCHIVES) $(ICU_ARCHIVES)
 
 Grit.linux.x86: $(LINUX_OBJ) $(DEPENDENT_LIBS)
 	@$(LINKING)
-	@$(COMPILER) $(LINUX_OBJ) -o $@ $(LDFLAGS)
-
-Grit.exe: $(WIN32_OBJ) $(DEPENDENT_LIBS)
-	@$(LINKING)
-	@$(COMPILER) $(WIN32_OBJ) -o $@ $(LDFLAGS)
+	@$(CXX) $(LINUX_OBJ) -o $@ $(LDFLAGS) $(LDLIBS)
 
 COL_CONV_OBJ=grit_col_conv.o BColParser.o TColParser.o TColLexer.o TColLexer-core-engine.o CentralisedLog.o
 
 grit_col_conv: $(COL_CONV_OBJ) $(DEPENDENT_LIBS)
 	@$(LINKING)
-	@$(COMPILER) $(COL_CONV_OBJ) -o $@ $(LDFLAGS)
+	@$(CXX) $(COL_CONV_OBJ) -o $@ $(LDFLAGS) $(LDLIBS)
 
 clean:
 	rm -fv $(TARGETS) *.o

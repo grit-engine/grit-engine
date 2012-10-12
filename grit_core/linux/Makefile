@@ -8,23 +8,23 @@ ROOT=../..
 
 include $(ROOT)/common.mk
 
-GRIT_BLENDER_DIR=../../exporters/blender_scripts/addons/grit_blender
+GRIT_BLENDER_DIR=$(ROOT)/exporters/blender_scripts/addons/grit_blender
 
-TARGETS=../media/Grit.linux.x86 Grit.linux.x86.stripped grit_col_conv $(GRIT_BLENDER_DIR)/grit_col_conv
+TARGETS=$(ROOT)/grit_core/media/Grit.linux.x86 \
+        Grit.linux.x86.stripped \
+        $(GRIT_BLENDER_DIR)/grit_col_conv \
 
-grit: $(TARGETS)
+all: $(TARGETS)
 
 %.stripped: %
 	strip -s $< -o $@
 
-../media/Grit.linux.x86: Grit.linux.x86.stripped
+$(ROOT)/grit_core/media/Grit.linux.x86: Grit.linux.x86.stripped
 	cp -f $< $@
 
 $(GRIT_BLENDER_DIR)/grit_col_conv: grit_col_conv
 	cp -f grit_col_conv $@
 
-
-all: $(TARGETS)
 
 depend:
 	makedepend -Y -f ../src/common.mk ../src/*.cpp ../src/linux/*.cpp ../src/win32/*.cpp ../src/gfx/*.cpp ../src/physics/*.cpp ../src/audio/*.cpp -I ../depend_stubs
