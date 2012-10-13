@@ -89,7 +89,7 @@ bool gfx_sky_material_has (const std::string &name)
 }
 
 GfxSkyMaterial::GfxSkyMaterial (const std::string &name_)
-  : special(false),
+  : shader("/system/SkyDefault"),
     alpha(1),
     alphaRejectThreshold(0.5),
     emissiveColour(Vector3(1,1,1)),
@@ -119,9 +119,25 @@ void GfxSkyMaterial::updateInternalMat (void)
         break;
     }
 
-    if (special) {
-        p->setVertexProgram("/system/SkyProgram_v");
-        p->setFragmentProgram("/system/SkyProgram_f");
+    p->setVertexProgram(shader+"_v");
+    p->setFragmentProgram(shader+"_f");
+
+    if (shader=="/system/SkyProgram") {
+
+        Ogre::TextureUnitState *t;
+
+        t = p->createTextureUnitState();
+        t->setTextureName("system/starfield.dds");
+        t->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
+        t->setTextureFiltering(Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_ANISOTROPIC);
+
+        t = p->createTextureUnitState();
+        t->setTextureName("system/PerlinNoise.bmp");
+
+        t = p->createTextureUnitState();
+        t->setTextureName("system/PerlinNoiseN.bmp");
+
+    } else if (shader=="/system/SkyClouds") {
 
         Ogre::TextureUnitState *t;
 
@@ -137,8 +153,6 @@ void GfxSkyMaterial::updateInternalMat (void)
         t->setTextureName("system/PerlinNoiseN.bmp");
 
     } else {
-        p->setVertexProgram("/system/SkyDefault_v");
-        p->setFragmentProgram("/system/SkyDefault_f");
 
         if (hasEmissiveMap()) {
             Ogre::TextureUnitState *t = p->createTextureUnitState();

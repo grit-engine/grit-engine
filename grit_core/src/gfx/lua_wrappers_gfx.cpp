@@ -2739,8 +2739,8 @@ TRY_START
         std::string s;
         Vector3 v;
 
-        t.get("special", b, false);
-        gfxskymat->setSpecial(b);
+        t.get("shader", s, std::string("/system/SkyDefault"));
+        gfxskymat->setShader(s);
 
         t.get("alpha", f, 1.0);
         gfxskymat->setAlpha(f);

@@ -39,9 +39,9 @@ class GfxSkyMaterial : public GfxBaseMaterial {
         
     GfxSkyMaterial (const std::string &name);
     
-    private: bool special;
-    public: bool getSpecial (void) const { GFX_MAT_SYNC; return special; }
-    public: void setSpecial (bool v) { GFX_MAT_SYNC; special = v; updateInternalMat(); }
+    private: std::string shader;
+    public: const std::string &getShader (void) const { GFX_MAT_SYNC; return shader; }
+    public: void setShader (const std::string &v) { GFX_MAT_SYNC; shader = v; updateInternalMat(); }
 
     private: float alpha;
     public: float getAlpha (void) const { GFX_MAT_SYNC; return alpha; }
