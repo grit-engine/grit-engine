@@ -65,7 +65,7 @@ import xml.etree.ElementTree
 from bpy.props import *
 from mathutils import Quaternion, Vector
 
-executable_suffix = ".exe" if os.pathsep == "\\" else ""
+executable_suffix = ".exe" if os.pathsep == "\\" else "/linux.x86"
 
 def my_abspath(x):
     return os.path.abspath(bpy.path.abspath(x))

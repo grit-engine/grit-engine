@@ -1,8 +1,5 @@
 # (c) David Cunningham 2011, Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
 
-# this Makefile is just used to set up some variables, the muscle is in
-# ../src/common.mk which is used by both linux and win32 builds
-
 ROOT=../..
 
 include $(ROOT)/common.mk
@@ -10,38 +7,86 @@ include $(ROOT)/common.mk
 
 TARGETS=extract colread imgread ideread iplread ifpread dffread csvread handling surfinfo procobj
 
-
 all: $(TARGETS)
 
-../../grit_core/linux/TColLexer.o:
-	@echo "Run make in grit_core/linux first!" >&2
-	@false
-../../grit_core/linux/TColParser.o:
-	@echo "Run make in grit_core/linux first!" >&2
-	@false
-../../grit_core/linux/TColLexer-core-engine.o:
-	@echo "Run make in grit_core/linux first!" >&2
-	@false
-../../grit_core/linux/BColParser.o:
+CXXFLAGS += $(GRIT_BASE_CXXFLAGS) $(OGRE_CXXFLAGS) $(QUEX_CXXFLAGS)
+LDFLAGS  += $(GRIT_BASE_LDFLAGS) $(OGRE_LDFLAGS) $(QUEX_LDFLAGS)
+LDLIBS   += $(GRIT_BASE_LDLIBS) $(OGRE_LDLIBS) $(QUEX_LDLIBS)
+
+ALL_OPTS=$(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
+
+
+
+../../grit_core/linux/TColLexer.o ../../grit_core/linux/TColParser.o ../../grit_core/linux/TColLexer-core-engine.o ../../grit_core/linux/BColParser.o:
 	@echo "Run make in grit_core/linux first!" >&2
 	@false
 
-TColLexer.o: ../../grit_core/linux/TColLexer.o
-	ln -sf "$^" "$@"
 
-TColParser.o: ../../grit_core/linux/TColParser.o
-	ln -sf "$^" "$@"
+%.o: ../../grit_core/linux/%.o
+	ln -sf "$<" "$@"
 
-TColLexer-core-engine.o: ../../grit_core/linux/TColLexer-core-engine.o
-	ln -sf "$^" "$@"
 
-BColParser.o: ../../grit_core/linux/BColParser.o
-	ln -sf "$^" "$@"
+%.o: ../src/%.cpp
+	@$(COMPILING)
+	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
+
+imgread: ../src/imgread.cpp 
+	@$(LINKING)
+	@$(CXX) -pedantic -D_IMGREAD_EXEC $^ -o $@ $(ALL_OPTS)
+
+ifpread: ../src/ifpread.cpp
+	@$(LINKING)
+	@$(CXX) -pedantic -D_IFPREAD_EXEC $^ -o $@ $(ALL_OPTS)
+
+extract: ../src/extract.cpp ColParser.o BColParser.o TColParser.o ideread.o imgread.o dffread.o tex_dups.o iplread.o txdread.o dirutil.o csvread.o handling.o surfinfo.o procobj.o
+	@$(LINKING)
+	@$(CXX) -pedantic $^ -o $@ $(ALL_OPTS)
+
+ideread: ../src/ideread.cpp csvread.o
+	@$(LINKING)
+	@$(CXX) -pedantic -D_IDEREAD_EXEC $^ -o $@ $(ALL_OPTS)
+
+dffread: ../src/dffread.cpp tex_dups.o ColParser.o TColParser.o
+	@$(LINKING)
+	@$(CXX) -pedantic -D_DFFREAD_EXEC $^ -o $@ $(ALL_OPTS)
+
+txdread: ../src/txdread.cpp
+	@$(LINKING)
+	@$(CXX) -pedantic -D_TXDREAD_EXEC $^ -o $@ $(ALL_OPTS)
+
+iplread: ../src/iplread.cpp csvread.o
+	@$(LINKING)
+	@$(CXX) -pedantic -D_IPLREAD_EXEC $^ -o $@ $(ALL_OPTS)
+
+colread: colread.o ColParser.o TColParser.o TColLexer.o TColLexer-core-engine.o 
+	@$(LINKING)
+	@$(CXX) -pedantic $^ -o $@ $(ALL_OPTS)
+
+csvread: ../src/csvread.cpp
+	@$(LINKING)
+	@$(CXX) -pedantic -D_CSVREAD_EXEC $^ -o $@ $(ALL_OPTS)
+
+handling: ../src/handling.cpp csvread.o
+	@$(LINKING)
+	@$(CXX) -pedantic -D_HANDLING_EXEC $^ -o $@ $(ALL_OPTS)
+
+surfinfo: ../src/surfinfo.cpp csvread.o
+	@$(LINKING)
+	@$(CXX) -pedantic -D_SURFINFO_EXEC $^ -o $@ $(ALL_OPTS)
+
+procobj: ../src/procobj.cpp csvread.o
+	@$(LINKING)
+	@$(CXX) -pedantic -D_PROCOBJ_EXEC $^ -o $@ $(ALL_OPTS)
+
+
+clean:
+	rm -fv $(TARGETS) *.o
+
 
 depend:
-	makedepend -Y -f ../src/common.mk -I ../../grit_core/src -I ../depend_stubs ../src/*.c++
-	sed -i 's_^[.][.]/src/\([^.]*.o:\)_\1_g' ../src/common.mk
+	makedepend -Y -f Makefile -I ../../grit_core/src -I ../depend_stubs ../src/*.c++
+	sed -i 's_^[.][.]/src/\([^.]*.o:\)_\1_g' Makefile
 
-include ../src/common.mk
+
 
 # vim: shiftwidth=8:tabstop=8:noexpandtab
