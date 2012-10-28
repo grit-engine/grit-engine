@@ -51,7 +51,6 @@ Ogre::OctreeSceneManager *ogre_sm = NULL;
 Ogre::SceneNode *ogre_root_node = NULL;
 Ogre::SharedPtr<Ogre::FrameTimeControllerValue> ftcv;
 
-Ogre::SceneNode *ogre_sky_node = NULL;
 Ogre::Light *ogre_sun = NULL;
 
 GfxCallback *gfx_cb = NULL;
@@ -63,13 +62,28 @@ const GfxStringMap gfx_empty_string_map;
 
 Ogre::Matrix4 shadow_view_proj[3];
 
+Vector3 particle_ambient;
 Vector3 fog_colour;
 float fog_density;
-Vector3 sky_light_colour(0,0,0);
+
+Vector3 sun_direction;
+Vector3 sun_colour;
+float sun_alpha;
+float sun_size;
+float sun_falloff_distance;
+float sky_glare_sun_distance;
+float sky_glare_horizon_elevation;
+float sky_divider[4];
+Vector3 sky_colour[6];
+Vector3 sky_sun_colour[5];
+float sky_alpha[6];
+float sky_sun_alpha[5];
+Vector3 sky_cloud_colour;
+float sky_cloud_coverage;
+Vector3 hell_colour;
 
 std::string env_cube_name;
 Ogre::TexturePtr env_cube_tex;
-float env_brightness = 1;
 float global_exposure = 1;
 float global_contrast = 0;
 float global_saturation = 1;
@@ -77,10 +91,11 @@ float global_saturation = 1;
 // abuse ogre fog params to store several things
 static void set_ogre_fog (void)
 {
-    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour), fog_density, env_brightness, 0);
+    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour), fog_density, 1, 0);
 }
 
 
+GfxShaderDB shader_db;
 GfxMaterialDB material_db;
 fast_erase_vector<GfxBody*> gfx_all_bodies;
 
@@ -143,52 +158,54 @@ void do_reset_framebuffer (void)
 
 // {{{ SCENE PROPERTIES
 
-Vector3 gfx_sun_get_diffuse (void)
+// lighting parameters
+
+Vector3 gfx_sunlight_diffuse (void)
 {
     return from_ogre_cv(ogre_sun->getDiffuseColour());;
 }
 
-void gfx_sun_set_diffuse (const Vector3 &v)
+void gfx_sunlight_diffuse (const Vector3 &v)
 {
     ogre_sun->setDiffuseColour(to_ogre_cv(v));
 }
 
-Vector3 gfx_sun_get_specular (void)
+Vector3 gfx_sunlight_specular (void)
 {
     return from_ogre_cv(ogre_sun->getSpecularColour());;
 }
 
-void gfx_sun_set_specular (const Vector3 &v)
+void gfx_sunlight_specular (const Vector3 &v)
 {
     ogre_sun->setSpecularColour(to_ogre_cv(v));
 }
 
-Vector3 gfx_sun_get_direction (void)
+Vector3 gfx_sunlight_direction (void)
 {
     return from_ogre(ogre_sun->getDirection());
 }
 
-void gfx_sun_set_direction (const Vector3 &v)
+void gfx_sunlight_direction (const Vector3 &v)
 {
     ogre_sun->setDirection(to_ogre(v));
 }
 
-Vector3 gfx_particle_ambient_get (void)
+Vector3 gfx_particle_ambient (void)
 {
-    return from_ogre_cv(ogre_sm->getAmbientLight());
+    return particle_ambient;
 }
 
-void gfx_particle_ambient_set (const Vector3 &v)
+void gfx_particle_ambient (const Vector3 &v)
 {
-    ogre_sm->setAmbientLight(to_ogre_cv(v));
+    particle_ambient = v;
 }
 
-std::string gfx_env_cube_get (void)
+std::string gfx_env_cube (void)
 {
     return env_cube_name;
 }
 
-void gfx_env_cube_set (const std::string &v)
+void gfx_env_cube (const std::string &v)
 {
     if (v == env_cube_name) return;
     APP_ASSERT(v[0] == '/');
@@ -246,45 +263,34 @@ void gfx_env_cube_set (const std::string &v)
     delete [] raw_tex;
 }
 
-float gfx_env_brightness_get (void)
-{
-    return env_brightness;
-}
-
-void gfx_env_brightness_set (float v)
-{
-    env_brightness = v;
-    set_ogre_fog();
-}
-    
-float gfx_global_contrast_get (void)
+float gfx_global_contrast (void)
 {
     return global_contrast;
 }
 
-void gfx_global_contrast_set (float v)
+void gfx_global_contrast (float v)
 {
     global_contrast = v;
     set_ogre_fog();
 }
     
-float gfx_global_saturation_get (void)
+float gfx_global_saturation (void)
 {
     return global_saturation;
 }
 
-void gfx_global_saturation_set (float v)
+void gfx_global_saturation (float v)
 {
     global_saturation = v;
     set_ogre_fog();
 }
     
-float gfx_global_exposure_get (void)
+float gfx_global_exposure (void)
 {
     return global_exposure;
 }
 
-void gfx_global_exposure_set (float v)
+void gfx_global_exposure (float v)
 {
     global_exposure = v;
     set_ogre_fog();
@@ -292,26 +298,187 @@ void gfx_global_exposure_set (float v)
     
 
 
-Vector3 gfx_fog_get_colour (void)
+Vector3 gfx_fog_colour (void)
 {
     return fog_colour;
 }
 
-void gfx_fog_set_colour (const Vector3 &v)
+void gfx_fog_colour (const Vector3 &v)
 {
     fog_colour = v;
     set_ogre_fog();
 }
 
-float gfx_fog_get_density (void)
+float gfx_fog_density (void)
 {
     return fog_density;
 }
 
-void gfx_fog_set_density (float v)
+void gfx_fog_density (float v)
 {
     fog_density = v;
     set_ogre_fog();
+}
+
+
+float gfx_sun_size (void)
+{
+    return sun_size;
+}
+
+void gfx_sun_size (float v)
+{
+    sun_size = v;
+}
+
+float gfx_sun_falloff_distance (void)
+{
+    return sun_falloff_distance;
+}
+
+void gfx_sun_falloff_distance (float v)
+{
+    sun_falloff_distance = v;
+}
+
+Vector3 gfx_sky_cloud_colour (void)
+{
+    return sky_cloud_colour;
+}
+
+void gfx_sky_cloud_colour (const Vector3 &v)
+{
+    sky_cloud_colour = v;
+}
+
+float gfx_sky_cloud_coverage (void)
+{
+    return sky_cloud_coverage;
+}
+
+void gfx_sky_cloud_coverage (float v)
+{
+    sky_cloud_coverage = v;
+}
+
+Vector3 gfx_hell_colour (void)
+{
+    return hell_colour;
+}
+
+void gfx_hell_colour (const Vector3 &v)
+{
+    hell_colour = v;
+}
+
+Vector3 gfx_sun_direction (void)
+{
+    return sun_direction;
+}
+
+void gfx_sun_direction (const Vector3 &v)
+{
+    sun_direction = v;
+}
+
+Vector3 gfx_sun_colour (void)
+{
+    return sun_colour;
+}
+
+void gfx_sun_colour (const Vector3 &v)
+{
+    sun_colour = v;
+}
+
+float gfx_sun_alpha (void)
+{
+    return sun_alpha;
+}
+
+void gfx_sun_alpha (float v)
+{
+    sun_alpha = v;
+}
+
+float gfx_sky_glare_sun_distance (void)
+{
+    return sky_glare_sun_distance;
+}
+
+void gfx_sky_glare_sun_distance (float v)
+{
+    sky_glare_sun_distance = v;
+}
+
+float gfx_sky_glare_horizon_elevation (void)
+{
+    return sky_glare_horizon_elevation;
+}
+
+void gfx_sky_glare_horizon_elevation (float v)
+{
+    sky_glare_horizon_elevation = v;
+}
+
+float gfx_sky_divider (unsigned i)
+{
+    APP_ASSERT(i < 4);
+    return sky_divider[i];
+}
+
+void gfx_sky_divider (unsigned i, float v)
+{
+    APP_ASSERT(i < 4);
+    sky_divider[i] = v;
+}
+
+Vector3 gfx_sky_colour (unsigned i)
+{
+    APP_ASSERT(i < 6);
+    return sky_colour[i];
+}
+
+void gfx_sky_colour (unsigned i, const Vector3 &v)
+{
+    APP_ASSERT(i < 6);
+    sky_colour[i] = v;
+}
+
+Vector3 gfx_sky_sun_colour (unsigned i)
+{
+    APP_ASSERT(i < 5);
+    return sky_sun_colour[i];
+}
+
+void gfx_sky_sun_colour (unsigned i, const Vector3 &v)
+{
+    APP_ASSERT(i < 5);
+    sky_sun_colour[i] = v;
+}
+
+float gfx_sky_alpha (unsigned i)
+{
+    APP_ASSERT(i < 6);
+    return sky_alpha[i];
+}
+
+void gfx_sky_alpha (unsigned i, float v)
+{
+    APP_ASSERT(i < 6);
+    sky_alpha[i] = v;
+}
+
+float gfx_sky_sun_alpha (unsigned i)
+{
+    APP_ASSERT(i < 5);
+    return sky_sun_alpha[i];
+}
+
+void gfx_sky_sun_alpha (unsigned i, float v)
+{
+    APP_ASSERT(i < 5);
+    sky_sun_alpha[i] = v;
 }
 
 // }}}
@@ -321,11 +488,14 @@ void gfx_fog_set_density (float v)
 
 void update_coronas (const Vector3 &cam_pos);
 
+float anim_time = 0;
+
 static float time_since_started_rendering = 0;
 
 void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir)
 {
     time_since_started_rendering += elapsed;
+    anim_time = fmodf(anim_time+elapsed, ANIM_TIME_MAX);
 
     debug_drawer->frameStarted();
 
@@ -339,7 +509,6 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
         update_coronas(cam_pos);
 
         handle_dirty_materials();
-        handle_dirty_sky_materials();
 
         (void) elapsed;
         // something with elapsed, for texture animation, etc
@@ -741,13 +910,12 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_sm->setShadowTextureSelfShadow(true);
         ogre_sun = ogre_sm->createLight("Sun");
         ogre_sun->setType(Ogre::Light::LT_DIRECTIONAL);
-        ogre_sky_node = ogre_sm->getSkyCustomNode();
 
         gfx_pipeline_init();
         gfx_option_init();
         gfx_particle_init();
  
-        gfx_env_cube_set("");
+        gfx_env_cube("");
 
         return winid;
     } catch (Ogre::Exception &e) {

@@ -25,6 +25,7 @@
 
 #include "GfxPipeline.h"
 #include "GfxParticleSystem.h"
+#include "GfxSkyBody.h"
 
 static void render_with_progs (const Ogre::HighLevelGpuProgramPtr &vp, const Ogre::HighLevelGpuProgramPtr &fp, const Ogre::RenderOperation &op)
 {
@@ -363,7 +364,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             try_set_named_constant(das_fp, "sun_diffuse", sun_diffuse);
             try_set_named_constant(das_fp, "sun_specular", sun_specular);
 
-            Ogre::Vector3 the_fog_params(fog_density, env_brightness, 0);
+            Ogre::Vector3 the_fog_params(fog_density, 1, 0);
             try_set_named_constant(das_fp, "the_fog_params", the_fog_params);
             try_set_named_constant(das_fp, "the_fog_colour", ogre_sm->getFogColour());
 
@@ -514,7 +515,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                 try_set_named_constant(dl_fp, "bottom_left_ray", bottom_left_ray);
                 try_set_named_constant(dl_fp, "bottom_right_ray", bottom_right_ray);
 
-                Ogre::Vector3 the_fog_params(fog_density, env_brightness, 0);
+                Ogre::Vector3 the_fog_params(fog_density, 1, 0);
                 try_set_named_constant(dl_fp, "the_fog_params", the_fog_params);
                 try_set_named_constant(dl_fp, "far_clip_distance", cam->getFarClipDistance());
                 try_set_named_constant(dl_fp, "camera_pos_ws", cam_pos);
@@ -592,18 +593,23 @@ class ParticlesPasses : public Ogre::RenderQueueInvocation {
 
 class SkyPasses : public Ogre::RenderQueueInvocation {
     GfxPipeline *pipe;
-    bool alpha;
 
     public:
-    SkyPasses (GfxPipeline *pipe, bool alpha)
-      : Ogre::RenderQueueInvocation(alpha?RQ_SKY_ALPHA:RQ_SKY, Ogre::StringUtil::BLANK), pipe(pipe)
+    SkyPasses (GfxPipeline *pipe)
+      : Ogre::RenderQueueInvocation(0), pipe(pipe)
     {
         setSuppressShadows(true);
     }
 
-    void invoke (Ogre::RenderQueueGroup *rqg, Ogre::SceneManager *sm)
+    void invoke (Ogre::RenderQueueGroup *, Ogre::SceneManager *)
     {
-        if (pipe->getCameraOpts().sky) Ogre::RenderQueueInvocation::invoke(rqg,sm);
+        try {
+            if (pipe->getCameraOpts().sky) gfx_sky_render(pipe);
+        } catch (Ogre::Exception &e) {
+            CERR << "While rendering skies: " << e.getDescription() << std::endl;
+        } catch (GritException &e) {
+            CERR << "While rendering skies: " << e << std::endl;
+        }
     }
     
 };
@@ -657,10 +663,9 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
     rqisDeferred = ogre_root->createRenderQueueInvocationSequence(name+":deferred");
     rqisDeferred->add(new DeferredLightingPasses(this));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_OPAQUE));
-    rqisDeferred->add(new SkyPasses(this, false)); // opaque
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_EMISSIVE));
     rqisDeferred->add(new ParticlesPasses(this, false)); // opaque
-    rqisDeferred->add(new SkyPasses(this, true)); // opaque
+    rqisDeferred->add(new SkyPasses(this));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA));
     rqisDeferred->add(new ParticlesPasses(this, true)); // alpha

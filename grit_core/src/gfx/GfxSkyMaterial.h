@@ -19,8 +19,12 @@
  * THE SOFTWARE.
  */
 
+#include <vector>
+
 class GfxSkyMaterial;
+class GfxSkyShader;
 typedef std::vector<GfxSkyMaterial*> GfxSkyMaterials;
+typedef std::vector<GfxSkyShader*> GfxSkyShaders;
 
 #ifndef GFX_SKY_MATERIAL_H
 #define GFX_SKY_MATERIAL_H
@@ -29,43 +33,90 @@ typedef std::vector<GfxSkyMaterial*> GfxSkyMaterials;
 
 #include "gfx_internal.h"
 
-enum GfxSkyMaterialSceneBlend { GFX_SKY_MATERIAL_OPAQUE, GFX_SKY_MATERIAL_ALPHA, GFX_SKY_MATERIAL_ADD };
-            
-class GfxSkyMaterial : public GfxBaseMaterial {
+typedef std::vector<std::string> GfxSkyShaderVariation;
 
-    Ogre::MaterialPtr mat; // internal ogre material
+enum GfxSkyShaderUniformKind {
+    GFX_SHADER_UNIFORM_KIND_PARAM_TEXTURE2D,
+    GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT1,
+    //GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT2,
+    GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT3,
+    GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT4
+};
 
-    void updateInternalMat (void);
-        
-    GfxSkyMaterial (const std::string &name);
-    
-    private: std::string shader;
-    public: const std::string &getShader (void) const { GFX_MAT_SYNC; return shader; }
-    public: void setShader (const std::string &v) { GFX_MAT_SYNC; shader = v; updateInternalMat(); }
+struct GfxSkyShaderUniform {
+    GfxSkyShaderUniformKind kind;
+    std::vector<float> defaults;
 
-    private: float alpha;
-    public: float getAlpha (void) const { GFX_MAT_SYNC; return alpha; }
-    public: void setAlpha (float v) { GFX_MAT_SYNC; alpha = v; updateInternalMat(); }
+    // texture-specific stuff
+    Vector3 defaultColour;
+    float defaultAlpha;
+};
 
-    private: float alphaRejectThreshold;
-    public: float getAlphaRejectThreshold (void) const { GFX_MAT_SYNC; return alphaRejectThreshold; }
-    public: void setAlphaRejectThreshold (float v) { GFX_MAT_SYNC; alphaRejectThreshold = v; updateInternalMat(); }
-    
-    private: std::string emissiveMap;
-    public: std::string getEmissiveMap (void) const { GFX_MAT_SYNC; return emissiveMap; }
-    public: void setEmissiveMap (const std::string &v) { GFX_MAT_SYNC; emissiveMap = v; updateInternalMat(); }
+typedef std::map<std::string, GfxSkyShaderUniform> GfxSkyShaderUniformMap;
 
-    private: Vector3 emissiveColour;
-    public: Vector3 getEmissiveColour (void) const { GFX_MAT_SYNC; return emissiveColour; }
-    public: void setEmissiveColour (const Vector3 &v) { GFX_MAT_SYNC; emissiveColour = v; updateInternalMat(); }
-
-    private: GfxSkyMaterialSceneBlend sceneBlend;
-    public: GfxSkyMaterialSceneBlend getSceneBlend (void) const { GFX_MAT_SYNC; return sceneBlend; }
-    public: void setSceneBlend (GfxSkyMaterialSceneBlend v);
+class GfxSkyShader {
+    std::string vertexCode;
+    std::string fragmentCode;
+    Ogre::HighLevelGpuProgramPtr vp, fp;
+    std::vector<GfxSkyShaderVariation> variations;
+    GfxSkyShaderUniformMap uniforms;
 
     public:
+    const std::string name;
+    GfxSkyShader (const std::string &name);
 
-    bool hasEmissiveMap() { return emissiveMap.length() > 0; }
+    void reset (const std::string &new_vertex_source,
+                const std::string &new_fragment_source,
+                const std::vector<GfxSkyShaderVariation> &new_variations,
+                const GfxSkyShaderUniformMap &new_uniforms);
+    const Ogre::HighLevelGpuProgramPtr &getFP() { return fp; }
+    const Ogre::HighLevelGpuProgramPtr &getVP() { return vp; }
+
+    const GfxSkyShaderUniformMap &getUniforms (void) { return uniforms; }
+
+};
+            
+GfxSkyShader *gfx_sky_shader_add (const std::string &name);
+
+GfxSkyShader *gfx_sky_shader_add_or_get (const std::string &name);
+
+GfxSkyShader *gfx_sky_shader_get (const std::string &name);
+    
+bool gfx_sky_shader_has (const std::string &name);
+
+
+
+struct GfxSkyMaterialUniform {
+    GfxSkyShaderUniformKind kind;
+    std::vector<float> values;
+    
+    GfxDiskResource *texture;
+    bool clamp;
+    int anisotropy;
+};
+
+typedef std::map<std::string, GfxSkyMaterialUniform> GfxSkyMaterialUniformMap;
+
+
+enum GfxSkyMaterialSceneBlend { GFX_SKY_MATERIAL_OPAQUE, GFX_SKY_MATERIAL_ALPHA, GFX_SKY_MATERIAL_ADD };
+
+class GfxSkyMaterial : public GfxBaseMaterial {
+
+    GfxSkyMaterial (const std::string &name);
+
+    private: GfxSkyMaterialUniformMap uniforms;
+    public: const GfxSkyMaterialUniformMap &getUniforms (void) { return uniforms; } // take MAT_SYNC when iterating through this stuff
+    public: void setUniforms (const GfxSkyMaterialUniformMap &v) { GFX_MAT_SYNC; uniforms = v; /*TODO: check this stuff*/ }
+    
+    private: GfxSkyShader *shader;
+    public: GfxSkyShader *getShader (void) const { return shader; }
+    public: void setShader (GfxSkyShader *v) { GFX_MAT_SYNC; shader = v; uniforms.clear(); }
+
+    private: GfxSkyMaterialSceneBlend sceneBlend;
+    public: GfxSkyMaterialSceneBlend getSceneBlend (void) const { return sceneBlend; }
+    public: void setSceneBlend (GfxSkyMaterialSceneBlend v) { sceneBlend = v; }
+
+    public:
 
     void addDependencies (GfxDiskResource *into);
 

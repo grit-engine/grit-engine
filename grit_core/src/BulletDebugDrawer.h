@@ -54,6 +54,7 @@ private:
     DebugDrawModes             mDebugModes;
     Ogre::ManualObject        *mLines;
     Ogre::ManualObject        *mTriangles;
+    Ogre::MaterialPtr          mat;
     std::vector<ContactPoint> *mContactPoints;
     std::vector<ContactPoint>  mContactPoints1;
     std::vector<ContactPoint>  mContactPoints2;

@@ -331,12 +331,22 @@ class ExternalTable {
                 LuaPtr func;
         };
 
-    protected:
-
         typedef std::map<std::string,Value> StringMap;
-        StringMap fields;
+
+        typedef StringMap::iterator KeyIterator;
+        KeyIterator begin (void) { return fields.begin(); }
+        KeyIterator end (void) { return fields.end(); }
+
+        typedef StringMap::const_iterator ConstKeyIterator;
+        ConstKeyIterator begin (void) const { return fields.begin(); }
+        ConstKeyIterator end (void) const { return fields.end(); }
 
         typedef std::map<lua_Number,Value> NumberMap;
+
+    protected:
+
+        StringMap fields;
+
         NumberMap elements;
 
 };

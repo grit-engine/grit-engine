@@ -1428,7 +1428,15 @@ GfxPipeline.o: ../depend_stubs/OgreRenderSystem.h
 GfxPipeline.o: ../depend_stubs/OgreGLRenderSystem.h
 GfxPipeline.o: ../src/gfx/gfx.h ../src/gfx/gfx_option.h
 GfxPipeline.o: ../src/gfx/GfxParticleSystem.h
-GfxPipeline.o: ../depend_stubs/utility
+GfxPipeline.o: ../depend_stubs/utility ../src/gfx/GfxSkyBody.h
+GfxPipeline.o: ../depend_stubs/OgreEntity.h
+GfxPipeline.o: ../depend_stubs/OgreMesh.h
+GfxPipeline.o: ../depend_stubs/OgreSceneNode.h
+GfxPipeline.o: ../src/gfx/GfxDiskResource.h
+GfxPipeline.o: ../depend_stubs/OgreResource.h
+GfxPipeline.o: ../src/CentralisedLog.h ../src/BackgroundLoader.h
+GfxPipeline.o: ../src/vect_util.h ../src/gfx/GfxSkyMaterial.h
+GfxPipeline.o: ../depend_stubs/OgreMaterial.h
 GfxRangedInstances.o: ../depend_stubs/algorithm ../src/main.h
 GfxRangedInstances.o: ../depend_stubs/lua.h ../src/Mouse.h
 GfxRangedInstances.o: ../depend_stubs/vector ../src/Keyboard.h
@@ -1556,7 +1564,9 @@ GfxSkyBody.o: ../depend_stubs/OgreResource.h
 GfxSkyBody.o: ../src/CentralisedLog.h ../src/BackgroundLoader.h
 GfxSkyBody.o: ../src/vect_util.h ../src/gfx/GfxSkyMaterial.h
 GfxSkyBody.o: ../depend_stubs/OgreMaterial.h
+GfxSkyBody.o: ../src/gfx/GfxPipeline.h
 GfxSkyMaterial.o: ../depend_stubs/string ../depend_stubs/map
+GfxSkyMaterial.o: ../depend_stubs/OgreCgProgram.h
 GfxSkyMaterial.o: ../src/CentralisedLog.h ../depend_stubs/iostream
 GfxSkyMaterial.o: ../depend_stubs/sstream
 GfxSkyMaterial.o: ../depend_stubs/boost/thread/recursive_mutex.hpp

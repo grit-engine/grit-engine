@@ -107,6 +107,12 @@ class DiskResource {
         {
             APP_ASSERT(name!="");
             DiskResource *dep = disk_resource_get_or_make(name);
+            addDependency(dep);
+        }
+
+        // called as 'this' is loaded
+        void addDependency (DiskResource *dep)
+        {
             dependencies.push_back(dep);
             dep->increment();
             if (!dep->isLoaded())

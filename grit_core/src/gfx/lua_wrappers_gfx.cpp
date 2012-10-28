@@ -851,10 +851,6 @@ TRY_START
         push_quat(L, self->getOrientation());
     } else if (!::strcmp(key,"zOrder")) {
         lua_pushnumber(L, self->getZOrder());
-    } else if (!::strcmp(key,"nodeHACK")) {
-        push_node(L, self->node);
-    } else if (!::strcmp(key,"entHACK")) {
-        push_entity(L, self->ent);
 
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self->isEnabled());
@@ -1209,215 +1205,515 @@ TRY_START
 TRY_END
 }
 
-static int global_gfx_sun_get_diffuse (lua_State *L)
+static int global_gfx_sunlight_diffuse (lua_State *L)
 {
 TRY_START
-    check_args(L,0);
-    push_v3(L, gfx_sun_get_diffuse());
-    return 1;
+    switch (lua_gettop(L)) {
+        case 0: {
+            push_v3(L, gfx_sunlight_diffuse());
+            return 1;
+        }
+        case 1: {
+            Vector3 v = check_v3(L,1);
+            gfx_sunlight_diffuse(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
-static int global_gfx_sun_set_diffuse (lua_State *L)
+static int global_gfx_sunlight_specular (lua_State *L)
 {
 TRY_START
-    check_args(L,1);
-    Vector3 c = check_v3(L,1);
-    gfx_sun_set_diffuse(c);
-    return 0;
+    switch (lua_gettop(L)) {
+        case 0: {
+            push_v3(L, gfx_sunlight_specular());
+            return 1;
+        }
+        case 1: {
+            Vector3 v = check_v3(L,1);
+            gfx_sunlight_specular(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
-static int global_gfx_sun_get_specular (lua_State *L)
+static int global_gfx_sunlight_direction (lua_State *L)
 {
 TRY_START
-    check_args(L,0);
-    push_v3(L, gfx_sun_get_specular());
-    return 1;
+    switch (lua_gettop(L)) {
+        case 0: {
+            push_v3(L, gfx_sunlight_direction());
+            return 1;
+        }
+        case 1: {
+            Vector3 v = check_v3(L,1);
+            gfx_sunlight_direction(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
-static int global_gfx_sun_set_specular (lua_State *L)
+static int global_gfx_sun_direction (lua_State *L)
 {
 TRY_START
-    check_args(L,1);
-    Vector3 c = check_v3(L,1);
-    gfx_sun_set_specular(c);
-    return 0;
+    switch (lua_gettop(L)) {
+        case 0: {
+            push_v3(L, gfx_sun_direction());
+            return 1;
+        }
+        case 1: {
+            Vector3 v = check_v3(L,1);
+            gfx_sun_direction(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
-static int global_gfx_sun_get_direction (lua_State *L)
+static int global_gfx_hell_colour (lua_State *L)
 {
 TRY_START
-    check_args(L,0);
-    push_v3(L, gfx_sun_get_direction());
-    return 1;
+    switch (lua_gettop(L)) {
+        case 0: {
+            push_v3(L, gfx_hell_colour());
+            return 1;
+        }
+        case 1: {
+            Vector3 v = check_v3(L,1);
+            gfx_hell_colour(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
-static int global_gfx_sun_set_direction (lua_State *L)
+static int global_gfx_sun_colour (lua_State *L)
 {
 TRY_START
-    check_args(L,1);
-    Vector3 d = check_v3(L,1);
-    gfx_sun_set_direction(d);
-    return 0;
+    switch (lua_gettop(L)) {
+        case 0: {
+            push_v3(L, gfx_sun_colour());
+            return 1;
+        }
+        case 1: {
+            Vector3 v = check_v3(L,1);
+            gfx_sun_colour(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sun_alpha (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 0: {
+            lua_pushnumber(L, gfx_sun_alpha());
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            gfx_sun_alpha(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sun_size (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 0: {
+            lua_pushnumber(L, gfx_sun_size());
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            gfx_sun_size(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sun_falloff_distance (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 0: {
+            lua_pushnumber(L, gfx_sun_falloff_distance());
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            gfx_sun_falloff_distance(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sky_glare_sun_distance (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 0: {
+            lua_pushnumber(L, gfx_sky_glare_sun_distance());
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            gfx_sky_glare_sun_distance(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sky_glare_horizon_elevation (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 0: {
+            lua_pushnumber(L, gfx_sky_glare_horizon_elevation());
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            gfx_sky_glare_horizon_elevation(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sky_divider (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 1: {
+            unsigned index = check_int(L, 1, 0, 4);
+            lua_pushnumber(L, gfx_sky_divider(index));
+            return 1;
+        }
+        case 2: {
+            unsigned index = check_int(L, 1, 0, 4);
+            float v = check_float(L,2);
+            gfx_sky_divider(index, v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter with integer index: expected 1 or 2 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sky_colour (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 1: {
+            unsigned index = check_int(L, 1, 0, 5);
+            push_v3(L, gfx_sky_colour(index));
+            return 1;
+        }
+        case 2: {
+            unsigned index = check_int(L, 1, 0, 5);
+            Vector3 v = check_v3(L,2);
+            gfx_sky_colour(index, v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter with integer index: expected 1 or 2 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sky_sun_colour (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 1: {
+            unsigned index = check_int(L, 1, 0, 5);
+            push_v3(L, gfx_sky_sun_colour(index));
+            return 1;
+        }
+        case 2: {
+            unsigned index = check_int(L, 1, 0, 5);
+            Vector3 v = check_v3(L,2);
+            gfx_sky_sun_colour(index, v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter with integer index: expected 1 or 2 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sky_alpha (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 1: {
+            unsigned index = check_int(L, 1, 0, 5);
+            lua_pushnumber(L, gfx_sky_alpha(index));
+            return 1;
+        }
+        case 2: {
+            unsigned index = check_int(L, 1, 0, 5);
+            float v = check_float(L,2);
+            gfx_sky_alpha(index, v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter with integer index: expected 1 or 2 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sky_sun_alpha (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 1: {
+            unsigned index = check_int(L, 1, 0, 5);
+            lua_pushnumber(L, gfx_sky_alpha(index));
+            return 1;
+        }
+        case 2: {
+            unsigned index = check_int(L, 1, 0, 5);
+            float v = check_float(L,2);
+            gfx_sky_alpha(index, v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter with integer index: expected 1 or 2 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sky_cloud_colour (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 0: {
+            push_v3(L, gfx_sky_cloud_colour());
+            return 1;
+        }
+        case 1: {
+            Vector3 v = check_v3(L,1);
+            gfx_sky_cloud_colour(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_sky_cloud_coverage (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 0: {
+            lua_pushnumber(L, gfx_sky_cloud_coverage());
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            gfx_sky_cloud_coverage(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
 
-static int global_gfx_env_cube_set (lua_State *L)
+static int global_gfx_env_cube (lua_State *L)
 {
 TRY_START
-    check_args(L,1);
-    std::string v = check_string(L,1);
-    v = pwd_full(L, v);
-    gfx_env_cube_set(v);
-    return 0;
+    switch (lua_gettop(L)) {
+        case 0: {
+            push_string(L, gfx_env_cube());
+            return 1;
+        }
+        case 1: {
+            std::string v = check_string(L,1);
+            v = pwd_full(L, v);
+            gfx_env_cube(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
-static int global_gfx_env_cube_get (lua_State *L)
+static int global_gfx_global_saturation (lua_State *L)
 {
 TRY_START
-    check_args(L,0);
-    push_string(L, gfx_env_cube_get());
-    return 1;
+    switch (lua_gettop(L)) {
+        case 0: {
+            lua_pushnumber(L, gfx_global_saturation());
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            gfx_global_saturation(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
-static int global_gfx_env_brightness_set (lua_State *L)
+static int global_gfx_global_contrast (lua_State *L)
 {
 TRY_START
-    check_args(L,1);
-    float v = check_float(L,1);
-    gfx_env_brightness_set(v);
-    return 0;
+    switch (lua_gettop(L)) {
+        case 0: {
+            lua_pushnumber(L, gfx_global_contrast());
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            gfx_global_contrast(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
-static int global_gfx_env_brightness_get (lua_State *L)
+static int global_gfx_global_exposure (lua_State *L)
 {
 TRY_START
-    check_args(L,0);
-    lua_pushnumber(L, gfx_env_brightness_get());
-    return 1;
+    switch (lua_gettop(L)) {
+        case 0: {
+            lua_pushnumber(L, gfx_global_exposure());
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            gfx_global_exposure(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
-
-static int global_gfx_global_saturation_set (lua_State *L)
+static int global_gfx_particle_ambient (lua_State *L)
 {
 TRY_START
-    check_args(L,1);
-    float v = check_float(L,1);
-    gfx_global_saturation_set(v);
-    return 0;
+    switch (lua_gettop(L)) {
+        case 0: {
+            push_v3(L, gfx_particle_ambient());
+            return 1;
+        }
+        case 1: {
+            Vector3 v = check_v3(L,1);
+            gfx_particle_ambient(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
-static int global_gfx_global_saturation_get (lua_State *L)
+static int global_gfx_fog_colour (lua_State *L)
 {
 TRY_START
-    check_args(L,0);
-    lua_pushnumber(L, gfx_global_saturation_get());
-    return 1;
+    switch (lua_gettop(L)) {
+        case 0: {
+            push_v3(L, gfx_fog_colour());
+            return 1;
+        }
+        case 1: {
+            Vector3 v = check_v3(L,1);
+            gfx_fog_colour(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
-static int global_gfx_global_contrast_set (lua_State *L)
+static int global_gfx_fog_density (lua_State *L)
 {
 TRY_START
-    check_args(L,1);
-    float v = check_float(L,1);
-    gfx_global_contrast_set(v);
-    return 0;
-TRY_END
-}
-
-static int global_gfx_global_contrast_get (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    lua_pushnumber(L, gfx_global_contrast_get());
-    return 1;
-TRY_END
-}
-
-static int global_gfx_global_exposure_set (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    float v = check_float(L,1);
-    gfx_global_exposure_set(v);
-    return 0;
-TRY_END
-}
-
-static int global_gfx_global_exposure_get (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    lua_pushnumber(L, gfx_global_exposure_get());
-    return 1;
-TRY_END
-}
-
-
-static int global_gfx_particle_ambient_get (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    push_v3(L, gfx_particle_ambient_get());
-    return 1;
-TRY_END
-}
-
-static int global_gfx_particle_ambient_set (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    gfx_particle_ambient_set(check_v3(L,1));
-    return 0;
-TRY_END
-}
-
-
-static int global_gfx_fog_get_colour (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    push_v3(L, gfx_fog_get_colour());
-    return 1;
-TRY_END
-}
-
-static int global_gfx_fog_set_colour (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    gfx_fog_set_colour(check_v3(L,1));
-    return 0;
-TRY_END
-}
-
-static int global_gfx_fog_get_density (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    lua_pushnumber(L, gfx_fog_get_density());
-    return 3;
-TRY_END
-}
-
-static int global_gfx_fog_set_density (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    float d = check_float(L,1);
-    gfx_fog_set_density(d);
-    return 0;
+    switch (lua_gettop(L)) {
+        case 0: {
+            lua_pushnumber(L, gfx_fog_density());
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            gfx_fog_density(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
@@ -1839,23 +2135,24 @@ TRY_END
 float particle_step_size = 0.01f;
 float particle_step_remainder= 0.0f;
 
-int global_gfx_particle_step_size_get (lua_State *L)
+int global_gfx_particle_step_size (lua_State *L)
 {
 TRY_START
-    check_args(L,0);
-    lua_pushnumber(L, particle_step_size);
-    return 1;
-TRY_END
-}
-
-int global_gfx_particle_step_size_set (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    float v = check_float(L,1);
-    if (v<=0) my_lua_error(L, "Step size must not be 0 or below");
-    particle_step_size = v;
-    return 0;
+    switch (lua_gettop(L)) {
+        case 0: {
+            lua_pushnumber(L, particle_step_size);
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            if (v<=0) my_lua_error(L, "Step size must not be 0 or below");
+            particle_step_size = v;
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: Expected 0 or 1 arguments.");
+        return 0; // silence compiler
+    }
 TRY_END
 }
 
@@ -2723,41 +3020,209 @@ static int global_register_sky_material (lua_State *L)
 {
 TRY_START
 
-        check_args(L,2);
-        std::string name = check_path(L,1);
-        if (!lua_istable(L,2))
-                my_lua_error(L,"Second parameter should be a table");
+    check_args(L,2);
+    std::string name = check_path(L,1);
+    if (!lua_istable(L,2))
+            my_lua_error(L,"Second parameter should be a table");
 
-        ExternalTable t;
-        t.takeTableFromLuaStack(L,2);
+    ExternalTable t;
+    t.takeTableFromLuaStack(L,2);
 
-        GFX_MAT_SYNC;
-        GfxSkyMaterial *gfxskymat = gfx_sky_material_add_or_get(name);
+    std::string dir = grit_dirname(name);
 
-        bool b;
-        lua_Number f;
-        std::string s;
-        Vector3 v;
+    GFX_MAT_SYNC;
+    GfxSkyMaterial *gfxskymat = gfx_sky_material_add_or_get(name);
 
-        t.get("shader", s, std::string("/system/SkyDefault"));
-        gfxskymat->setShader(s);
 
-        t.get("alpha", f, 1.0);
-        gfxskymat->setAlpha(f);
+    std::string shader_name;
+    t.get("shader", shader_name, std::string("/system/SkyDefault"));
+    shader_name = pwd_full_ex(L, shader_name, dir);
+    GfxSkyShader *shader = gfx_sky_shader_get(shader_name);
 
-        t.get("alphaRejectThreshold", f, 0.0);
-        gfxskymat->setAlphaRejectThreshold(f);
+    std::string scene_blend;
+    t.get("sceneBlend", scene_blend, std::string("OPAQUE"));
 
-        t.get("emissiveMap", s, std::string(""));
-        gfxskymat->setEmissiveMap(s);
+    GfxSkyMaterialUniformMap uniforms;
+    std::vector<GfxSkyShaderVariation> variations;
 
-        t.get("emissiveColour", v, Vector3(1,1,1));
-        gfxskymat->setEmissiveColour(v);
+    typedef ExternalTable::KeyIterator KI;
+    for (KI i=t.begin(), i_=t.end() ; i!=i_ ; ++i) {
+        const std::string &key = i->first; 
+        if (key == "shader") continue;
+        if (key == "sceneBlend") continue;
 
-        t.get("sceneBlend", s, std::string("OPAQUE"));
-        gfxskymat->setSceneBlend(skymat_scene_blend_from_string(L, s));
+        // must be a texture or param
+        GfxSkyMaterialUniform uniform;
 
-        return 0;
+        SharedPtr<ExternalTable> tab;
+        if (!t.get(key, tab)) {
+            my_lua_error(L, "Uniform \""+key+"\" incorrectly defined");
+        }
+
+        std::string uniform_kind;
+        if (!tab->get("uniformKind", uniform_kind)) {
+            my_lua_error(L, "Uniform \""+key+"\" expected string 'uniformKind' field.");
+        }
+
+        if (uniform_kind == "PARAM") {
+            std::string value_kind; // type of the actual data (e.g. FLOAT)
+            if (!tab->get("valueKind", value_kind)) {
+                my_lua_error(L, "Uniform \""+key+"\" expected string 'valueKind' field.");
+            }
+
+            if (value_kind=="FLOAT") {
+                for (unsigned i=1 ; true ; ++i) {
+                    lua_Number def;
+                    if (tab->get(i, def)) {
+                        uniform.values.push_back(def);
+                    } else break;
+                }
+                switch (uniform.values.size()) {
+                    case 0: my_lua_error(L, "Uniform \""+key+"\" must have a default value");
+                    case 1: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT1; break;
+                    //case 2: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT2; break;
+                    case 3: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT3; break;
+                    case 4: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT4; break;
+                    default: my_lua_error(L, "Uniform \""+key+"\" unsupported number of default values");
+                }
+            } else {
+                my_lua_error(L, "Uniform \""+key+"\" unrecognised 'valueKind' field: \""+value_kind+"\"");
+            }
+
+        } else if (uniform_kind == "TEXTURE2D") {
+
+            uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_TEXTURE2D;
+/*
+    addrMode = "CLAMP";
+    minFilter = "LINEAR";
+    magFilter = "LINEAR";
+    mipFilter = "ANISOTROPIC";
+    anisotropy = 16;
+*/
+            std::string tex_name;
+
+            bool has_tex = tab->get("name", tex_name);
+            APP_ASSERT(has_tex);
+            tex_name = pwd_full_ex(L, tex_name, dir);
+            GfxDiskResource *tex = dynamic_cast<GfxDiskResource*>(disk_resource_get_or_make(tex_name));
+            if (tex == NULL) my_lua_error(L, "Resource is not a texture \""+tex_name+"\"");
+            uniform.texture = tex;
+
+        } else {
+            my_lua_error(L, "Did not understand 'uniformKind' value \""+uniform_kind+"\"");
+        }
+
+        uniforms[key] = uniform;
+    }
+
+    gfxskymat->setShader(shader);
+    gfxskymat->setSceneBlend(skymat_scene_blend_from_string(L, scene_blend));
+    gfxskymat->setUniforms(uniforms);
+
+    return 0;
+TRY_END
+}
+
+static std::string default_fragment_code = "out_COLOR.rgb = float3(1,0,0); out_COLOR.a = 1;\n";
+static std::string default_vertex_code = "out_POSITION = mul(su_worldViewProj, float4(in_POSITION.xyz,1));\n"
+                                         "// hack our way to maximum depth\n"
+                                         "// for both d3d9 and gl, 1 is the clipspace depth of the backplane\n"
+                                         "out_POSITION.z = out_POSITION.w;\n"
+                                         "// use slightly less than full distance, to avoid black lightning artifacts\n"
+                                         "out_POSITION.z *= 1 - 1.0f/256/256;\n"
+                                         "out_TEXCOORD0.xy = in_TEXCOORD0.xy;\n";
+
+
+static int global_register_sky_shader (lua_State *L)
+{
+TRY_START
+
+    check_args(L,2);
+    std::string name = check_path(L,1);
+    if (!lua_istable(L,2))
+            my_lua_error(L,"Second parameter should be a table");
+
+    ExternalTable t;
+    t.takeTableFromLuaStack(L,2);
+
+    std::string fragment_code;
+    std::string vertex_code;
+
+    t.get("fragmentCode", fragment_code, default_fragment_code);
+    t.get("vertexCode", vertex_code, default_vertex_code);
+
+    GfxSkyShaderUniformMap uniforms;
+    std::vector<GfxSkyShaderVariation> variations;
+
+    typedef ExternalTable::KeyIterator KI;
+    for (KI i=t.begin(), i_=t.end() ; i!=i_ ; ++i) {
+        const std::string &key = i->first; 
+        if (key == "variants") continue;
+        if (key == "fragmentCode") continue;
+        if (key == "vertexCode") continue;
+
+        // must be a texture or param
+        GfxSkyShaderUniform uniform;
+
+        SharedPtr<ExternalTable> tab;
+        if (!t.get(key, tab)) {
+            my_lua_error(L, "Uniform \""+key+"\" incorrectly defined");
+        }
+
+        std::string uniform_kind;
+        if (!tab->get("uniformKind", uniform_kind)) {
+            my_lua_error(L, "Uniform \""+key+"\" expected string 'uniformKind' field.");
+        }
+
+        if (uniform_kind == "PARAM") {
+            std::string value_kind; // type of the actual data (e.g. FLOAT)
+            if (!tab->get("valueKind", value_kind)) {
+                my_lua_error(L, "Uniform \""+key+"\" expected string 'valueKind' field.");
+            }
+
+            if (value_kind=="FLOAT") {
+                for (unsigned i=1 ; true ; ++i) {
+                    lua_Number def;
+                    if (tab->get(i, def)) {
+                        uniform.defaults.push_back(def);
+                    } else break;
+                }
+                switch (uniform.defaults.size()) {
+                    case 0: my_lua_error(L, "Uniform \""+key+"\" must have a default value");
+                    case 1: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT1; break;
+                    //case 2: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT2; break;
+                    case 3: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT3; break;
+                    case 4: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT4; break;
+                    default: my_lua_error(L, "Uniform \""+key+"\" unsupported number of default values");
+                }
+            } else {
+                my_lua_error(L, "Uniform \""+key+"\" unrecognised 'valueKind' field: \""+value_kind+"\"");
+            }
+
+        } else if (uniform_kind == "TEXTURE2D") {
+            Vector3 default_colour;
+            lua_Number default_alpha;
+
+            tab->get("defaultColour", default_colour, Vector3(1,1,1));
+            tab->get("defaultAlpha", default_alpha, 1.0);
+
+            uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_TEXTURE2D;
+            uniform.defaultColour = default_colour;
+            uniform.defaultAlpha = default_alpha;
+
+        } else {
+            my_lua_error(L, "Did not understand 'uniformKind' value \""+uniform_kind+"\"");
+        }
+
+        uniforms[key] = uniform;
+    }
+
+
+    GfxSkyShader *shader = gfx_sky_shader_add_or_get(name);
+
+    shader->reset(vertex_code, fragment_code, variations, uniforms);
+
+    return 0;
 TRY_END
 }
 
@@ -3132,38 +3597,41 @@ static const luaL_reg global[] = {
     {"gfx_sky_body_make",global_gfx_sky_body_make},
     {"gfx_light_make",global_gfx_light_make},
 
-    {"gfx_sun_get_diffuse",global_gfx_sun_get_diffuse},
-    {"gfx_sun_set_diffuse",global_gfx_sun_set_diffuse},
-    {"gfx_sun_get_specular",global_gfx_sun_get_specular},
-    {"gfx_sun_set_specular",global_gfx_sun_set_specular},
-    {"gfx_sun_get_direction",global_gfx_sun_get_direction},
-    {"gfx_sun_set_direction",global_gfx_sun_set_direction},
+    {"gfx_env_cube",global_gfx_env_cube},
+    {"gfx_particle_ambient",global_gfx_particle_ambient},
+    {"gfx_sunlight_diffuse",global_gfx_sunlight_diffuse},
+    {"gfx_sunlight_specular",global_gfx_sunlight_specular},
+    {"gfx_sunlight_direction",global_gfx_sunlight_direction},
 
-    {"gfx_env_cube_get",global_gfx_env_cube_get},
-    {"gfx_env_cube_set",global_gfx_env_cube_set},
-    {"gfx_env_brightness_get",global_gfx_env_brightness_get},
-    {"gfx_env_brightness_set",global_gfx_env_brightness_set},
+    {"gfx_fog_colour",global_gfx_fog_colour},
+    {"gfx_fog_density",global_gfx_fog_density},
+    {"gfx_hell_colour",global_gfx_hell_colour},
 
-    {"gfx_global_saturation_get",global_gfx_global_saturation_get},
-    {"gfx_global_saturation_set",global_gfx_global_saturation_set},
-    {"gfx_global_contrast_get",global_gfx_global_contrast_get},
-    {"gfx_global_contrast_set",global_gfx_global_contrast_set},
-    {"gfx_global_exposure_get",global_gfx_global_exposure_get},
-    {"gfx_global_exposure_set",global_gfx_global_exposure_set},
+    {"gfx_sun_direction",global_gfx_sun_direction},
+    {"gfx_sun_colour",global_gfx_sun_colour},
+    {"gfx_sun_alpha",global_gfx_sun_alpha},
+    {"gfx_sun_size",global_gfx_sun_size},
+    {"gfx_sun_falloff_distance",global_gfx_sun_falloff_distance},
 
-    {"gfx_fog_get_colour",global_gfx_fog_get_colour},
-    {"gfx_fog_set_colour",global_gfx_fog_set_colour},
-    {"gfx_fog_get_density",global_gfx_fog_get_density},
-    {"gfx_fog_set_density",global_gfx_fog_set_density},
+    {"gfx_sky_glare_sun_distance",global_gfx_sky_glare_sun_distance},
+    {"gfx_sky_glare_horizon_elevation",global_gfx_sky_glare_horizon_elevation},
+    {"gfx_sky_divider",global_gfx_sky_divider},
+    {"gfx_sky_colour",global_gfx_sky_colour},
+    {"gfx_sky_alpha",global_gfx_sky_alpha},
+    {"gfx_sky_sun_colour",global_gfx_sky_sun_colour},
+    {"gfx_sky_sun_alpha",global_gfx_sky_sun_alpha},
+    {"gfx_sky_cloud_colour",global_gfx_sky_cloud_colour},
+    {"gfx_sky_cloud_coverage",global_gfx_sky_cloud_coverage},
+
+    {"gfx_global_saturation",global_gfx_global_saturation},
+    {"gfx_global_contrast",global_gfx_global_contrast},
+    {"gfx_global_exposure",global_gfx_global_exposure},
 
     {"gfx_particle_define",global_gfx_particle_define},
     {"gfx_particle_emit",global_gfx_particle_emit},
     {"gfx_particle_pump",global_gfx_particle_pump},
     {"gfx_particle_count",global_gfx_particle_count},
-    {"gfx_particle_step_size_set",global_gfx_particle_step_size_set},
-    {"gfx_particle_step_size_get",global_gfx_particle_step_size_get},
-    {"gfx_particle_ambient_get",global_gfx_particle_ambient_get},
-    {"gfx_particle_ambient_set",global_gfx_particle_ambient_set},
+    {"gfx_particle_step_size",global_gfx_particle_step_size},
 
     {"gfx_last_frame_stats",global_gfx_last_frame_stats},
 
@@ -3237,6 +3705,7 @@ static const luaL_reg global_ogre_debug[] = {
 
     {"register_material" ,global_register_material},
     {"register_sky_material" ,global_register_sky_material},
+    {"register_sky_shader" ,global_register_sky_shader},
     {"dump_registered_material" ,global_dump_registered_material},
     {"registered_material_get" ,global_registered_material_get},
     {"reprocess_all_registered_materials" ,global_reprocess_all_registered_materials},

@@ -44,28 +44,14 @@
 #include "gfx.h"
 #include "gfx_option.h"
 
-//#define ANAGLYPH_COMPOSITOR "system/AnaglyphCompositor"
-//#define ANAGLYPH_FB_TEXTURE "system/AnaglyphFB"
-//#define ANAGLYPH_COMPOSITOR_MATERIAL "system/AnaglyphCompositorMaterialDesaturated"
-
-//#define DEFERRED_COMPOSITOR "/system/CoreCompositor"
-#define DEFERRED_AMBIENT_SUN_MATERIAL "/system/DeferredAmbientSun"
-#define DEFERRED_POINT_LIGHT_MATERIAL "/system/DeferredLights"
-#define DEFERRED_POINT_LIGHT_INSIDE_MATERIAL "/system/DeferredLightsInside"
-//#define DEFERRED_LIGHTS_CUSTOM_PASS "DeferredLights"
-//#define CORONAS_CUSTOM_PASS "Coronas"
-
 #define ENV_CUBE_TEXTURE "system/EnvCube"
 
 #define RESGRP "GRIT"
 
-// render queues (also baked into system/Core.program)
-// also hardcoded for ranged clutter in pbats common/map_classes
+// render queues, ordering now actually determined by GfxPipeline
 #define RQ_GBUFFER_OPAQUE 10
 #define RQ_FORWARD_OPAQUE 20
-#define RQ_SKY 30
 #define RQ_FORWARD_EMISSIVE 40
-#define RQ_SKY_ALPHA 50
 #define RQ_FORWARD_ALPHA_DEPTH 60
 #define RQ_FORWARD_ALPHA 70
 #define RQ_BULLET_DEBUG_DRAWER 75
@@ -80,7 +66,6 @@ extern Ogre::RenderSystem *ogre_rs;
 
 extern Ogre::OctreeSceneManager *ogre_sm;
 extern Ogre::SceneNode *ogre_root_node;
-extern Ogre::SceneNode *ogre_sky_node;
 extern Ogre::Light *ogre_sun;
 extern Ogre::TexturePtr env_cube_tex;
 extern Ogre::Matrix4 shadow_view_proj[3];
@@ -92,12 +77,32 @@ extern bool use_hwgamma;
 extern GfxCallback *gfx_cb;
 extern bool shutting_down;
 
+extern Vector3 particle_ambient;
 extern Vector3 fog_colour;
 extern float fog_density;
 extern float env_brightness;
 extern float global_exposure;
 extern float global_contrast;
 extern float global_saturation;
+
+extern Vector3 sun_direction;
+extern Vector3 sun_colour;
+extern float sun_alpha;
+extern float sun_size;
+extern float sun_falloff_distance;
+extern float sky_glare_sun_distance;
+extern float sky_glare_horizon_elevation;
+extern float sky_divider[4];
+extern Vector3 sky_colour[6];
+extern Vector3 sky_sun_colour[5];
+extern float sky_alpha[6];
+extern float sky_sun_alpha[5];
+extern Vector3 sky_cloud_colour;
+extern float sky_cloud_coverage;
+extern Vector3 hell_colour;
+
+#define ANIM_TIME_MAX 2310.0f
+extern float anim_time;
 
 std::string freshname (const std::string &prefix);
 std::string freshname (void);
@@ -124,7 +129,31 @@ extern GfxMaterialDB material_db;
 void gfx_material_add_dependencies (const std::string &name, GfxDiskResource *into);
 
 void handle_dirty_materials (void);
-void handle_dirty_sky_materials (void);
+
+
+class GfxSkyShader;
+
+typedef std::map<std::string,GfxSkyShader*> GfxShaderDB;
+
+extern GfxShaderDB shader_db;
+
+
+inline void load_and_validate_shader (const Ogre::HighLevelGpuProgramPtr &prog)
+{
+    prog->load();
+
+    if (!prog->isLoaded()) {
+        std::stringstream ss;
+        ss << "Program not loaded: \"" << prog->getName() << "\"";
+        GRIT_EXCEPT(ss.str());
+    }
+
+    if (prog->_getBindingDelegate() == NULL) {
+        std::stringstream ss;
+        ss << "Program cannot be bound: \"" << prog->getName() << "\"";
+        GRIT_EXCEPT(ss.str());
+    }
+}
 
 inline Ogre::HighLevelGpuProgramPtr load_and_validate_shader (const std::string &name)
 {
@@ -135,23 +164,12 @@ inline Ogre::HighLevelGpuProgramPtr load_and_validate_shader (const std::string 
         GRIT_EXCEPT(ss.str());
     }
 
-    prog->load();
-
-    if (!prog->isLoaded()) {
-        ss << "Program not loaded: \"" << name << "\"";
-        GRIT_EXCEPT(ss.str());
-    }
-
-    if (prog->_getBindingDelegate() == NULL) {
-        ss << "Program cannot be bound: \"" << name << "\"";
-        GRIT_EXCEPT(ss.str());
-    }
-
+    load_and_validate_shader(prog);
     return prog;
 }
 
 template<class T> void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
-                                               const char *name, const T &v, bool silent_fail=false)
+                                               const std::string &name, const T &v, bool silent_fail=false)
 {
     try {
         p->setNamedConstant(name,v);
@@ -166,7 +184,7 @@ template<class T> void try_set_named_constant (const Ogre::GpuProgramParametersS
 }   
     
 template<class T> void try_set_named_constant (const Ogre::HighLevelGpuProgramPtr &p,
-                                               const char *name, const T &v, bool silent_fail=false)
+                                               const std::string &name, const T &v, bool silent_fail=false)
 {
     try_set_named_constant(p->getDefaultParameters(), name, v, silent_fail);
 }   

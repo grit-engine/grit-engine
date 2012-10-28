@@ -43,6 +43,13 @@ enum GfxMaterialSpecularMode {
     GFX_MATERIAL_SPEC_MAP_WITH_GLOSS
 };  
 
+/* LOCKING STRATEGY:
+ *
+ * The background resource loading thread needs to know what dependent textures to load
+ * after loading a mesh referencing a particular set of materials.  This means it has
+ * to access the material database, which is also being accessed from the primary render
+ * thread.
+ */
 extern boost::recursive_mutex gfx_material_lock;
 #define GFX_MAT_SYNC boost::recursive_mutex::scoped_lock _scoped_lock(gfx_material_lock)
 

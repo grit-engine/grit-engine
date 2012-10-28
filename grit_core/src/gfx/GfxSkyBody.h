@@ -51,14 +51,14 @@ class GfxSkyBody : public fast_erase_index {
     bool enabled;
 
     unsigned char zOrder;
+    Quaternion orientation;
 
     Ogre::MeshPtr mesh;
     GfxSkyMaterials materials;
 
     GfxSkyBody (GfxDiskResource *gdr, short z_order);
+
   public:
-    Ogre::Entity *ent;
-    Ogre::SceneNode *node;
 
     ~GfxSkyBody (void);
 
@@ -81,11 +81,14 @@ class GfxSkyBody : public fast_erase_index {
 
     void reinitialise (void);
 
-    void updateProperties (void);
+    void render (GfxPipeline *p);
 
     friend class GfxSkyMaterial;
     friend class GfxDiskResource;
 
 };
+
+// called every frame
+void gfx_sky_render (GfxPipeline *p);
 
 #endif

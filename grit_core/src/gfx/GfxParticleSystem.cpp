@@ -349,7 +349,7 @@ class GfxParticleSystem {
             float render_target_flipping = render_target->requiresTextureFlipping() ? -1.0f : 1.0f;
             try_set_named_constant(dl_vp, "render_target_flipping", render_target_flipping);
             if (!emissive) {
-                try_set_named_constant(dl_vp, "particle_ambient", to_ogre(gfx_particle_ambient_get()));
+                try_set_named_constant(dl_vp, "particle_ambient", to_ogre(gfx_particle_ambient()));
             }
             try_set_named_constant(dl_vp, "camera_pos_ws", to_ogre(cam_pos));
 
@@ -359,7 +359,7 @@ class GfxParticleSystem {
             try_set_named_constant(dl_fp, "bottom_right_ray", bottom_right_ray);
 
 
-            Ogre::Vector3 the_fog_params(fog_density, env_brightness, global_exposure);
+            Ogre::Vector3 the_fog_params(fog_density, 1, global_exposure);
             try_set_named_constant(dl_fp, "the_fog_params", the_fog_params);
             try_set_named_constant(dl_fp, "the_fog_colour", to_ogre(fog_colour));
             try_set_named_constant(dl_fp, "far_clip_distance", cam->getFarClipDistance());

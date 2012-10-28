@@ -65,36 +65,95 @@ size_t gfx_init (GfxCallback &cb);
 
 void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir);
 
+void gfx_screenshot (const std::string &filename);
+
 void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector3 &cam_pos, float saturation, const Vector3 &ambient);
 
-Vector3 gfx_sun_get_diffuse (void);
-void gfx_sun_set_diffuse (const Vector3 &v);
-Vector3 gfx_sun_get_specular (void);
-void gfx_sun_set_specular (const Vector3 &v);
-Vector3 gfx_sun_get_direction (void);
-void gfx_sun_set_direction (const Vector3 &v);
 
-Vector3 gfx_particle_ambient_get (void);
-void gfx_particle_ambient_set (const Vector3 &v);
+// lighting parameters
+std::string gfx_env_cube (void);
+void gfx_env_cube (const std::string &);
 
-std::string gfx_env_cube_get (void);
-void gfx_env_cube_set (const std::string &);
-float gfx_env_brightness_get (void);
-void gfx_env_brightness_set (float);
+Vector3 gfx_particle_ambient (void);
+void gfx_particle_ambient (const Vector3 &v);
 
-float gfx_global_saturation_get (void);
-void gfx_global_saturation_set (float);
-float gfx_global_contrast_get (void);
-void gfx_global_contrast_set (float);
-float gfx_global_exposure_get (void);
-void gfx_global_exposure_set (float);
+Vector3 gfx_sunlight_diffuse (void);
+void gfx_sunlight_diffuse (const Vector3 &v);
 
-Vector3 gfx_fog_get_colour (void);
-void gfx_fog_set_colour (const Vector3 &v);
-float gfx_fog_get_density (void);
-void gfx_fog_set_density (float v);
+Vector3 gfx_sunlight_specular (void);
+void gfx_sunlight_specular (const Vector3 &v);
 
-void gfx_screenshot (const std::string &filename);
+Vector3 gfx_sunlight_direction (void);
+void gfx_sunlight_direction (const Vector3 &v);
+
+
+// fog
+Vector3 gfx_fog_colour (void);
+void gfx_fog_colour (const Vector3 &v);
+
+float gfx_fog_density (void);
+void gfx_fog_density (float v);
+
+
+// sun (as it appears as a disc in the sky)
+Vector3 gfx_sun_direction (void);
+void gfx_sun_direction (const Vector3 &v);
+
+Vector3 gfx_sun_colour (void);
+void gfx_sun_colour (const Vector3 &v);
+
+float gfx_sun_alpha (void);
+void gfx_sun_alpha (float v);
+
+float gfx_sun_size (void);
+void gfx_sun_size (float v);
+
+float gfx_sun_falloff_distance (void);
+void gfx_sun_falloff_distance (float v);
+
+
+// sky
+float gfx_sky_glare_sun_distance (void);
+void gfx_sky_glare_sun_distance (float v);
+
+float gfx_sky_glare_horizon_elevation (void);
+void gfx_sky_glare_horizon_elevation (float v);
+
+float gfx_sky_divider (unsigned i);
+void gfx_sky_divider (unsigned i, float v);
+
+Vector3 gfx_sky_colour (unsigned i);
+void gfx_sky_colour (unsigned i, const Vector3 &v);
+
+Vector3 gfx_sky_sun_colour (unsigned i);
+void gfx_sky_sun_colour (unsigned i, const Vector3 &v);
+
+float gfx_sky_alpha (unsigned i);
+void gfx_sky_alpha (unsigned i, float v);
+
+float gfx_sky_sun_alpha (unsigned i);
+void gfx_sky_sun_alpha (unsigned i, float v);
+
+Vector3 gfx_sky_cloud_colour (void);
+void gfx_sky_cloud_colour (const Vector3 &v);
+
+float gfx_sky_cloud_coverage (void);
+void gfx_sky_cloud_coverage (float v);
+
+Vector3 gfx_hell_colour (void);
+void gfx_hell_colour (const Vector3 &v);
+
+
+// tone mapping
+float gfx_global_saturation (void);
+void gfx_global_saturation (float);
+
+float gfx_global_contrast (void);
+void gfx_global_contrast (float);
+
+float gfx_global_exposure (void);
+void gfx_global_exposure (float);
+
 
 struct GfxLastRenderStats {
     float batches;

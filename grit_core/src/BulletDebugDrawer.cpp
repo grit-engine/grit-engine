@@ -62,16 +62,21 @@ BulletDebugDrawer::BulletDebugDrawer (Ogre::SceneManager *sm)
     mTriangles->setCastShadows(false);
     sm->getRootSceneNode()->attachObject(mTriangles);
     
-    const char *matName = "system/PhysicsDebug";
+    mat = Ogre::MaterialManager::getSingleton().create("/system/BulletDebugDrawer", RESGRP);
+    mat->getTechnique(0)->getPass(0)->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+    mat->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
+    mat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+    mat->getTechnique(0)->getPass(0)->createTextureUnitState();
+    mat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setColourOperationEx(Ogre::LBX_MODULATE, Ogre::LBS_DIFFUSE, Ogre::LBS_DIFFUSE);
 
-    mLines->begin(matName, Ogre::RenderOperation::OT_LINE_LIST);
+    mLines->begin(mat->getName(), Ogre::RenderOperation::OT_LINE_LIST);
     mLines->position(Ogre::Vector3::ZERO);
     mLines->colour(Ogre::ColourValue::Blue);
     mLines->position(Ogre::Vector3::ZERO);
     mLines->colour(Ogre::ColourValue::Blue);
 
 
-    mTriangles->begin(matName, Ogre::RenderOperation::OT_TRIANGLE_LIST);
+    mTriangles->begin(mat->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
     mTriangles->position(Ogre::Vector3::ZERO);
     mTriangles->colour(Ogre::ColourValue::Blue);
     mTriangles->position(Ogre::Vector3::ZERO);
