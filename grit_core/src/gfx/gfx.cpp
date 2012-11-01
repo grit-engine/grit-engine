@@ -894,9 +894,7 @@ size_t gfx_init (GfxCallback &cb_)
 
         Ogre::MeshManager::getSingleton().setListener(&mesh_serializer_listener);
         Ogre::WindowEventUtilities::addWindowEventListener(ogre_win, &window_event_listener);
-        //Ogre::CompositorManager::getSingleton()
-        //    .registerCustomCompositionPass(DEFERRED_LIGHTS_CUSTOM_PASS, new DeferredLightsPass());
-        Ogre::ResourceGroupManager::getSingleton().addResourceLocation(".","FileSystem",RESGRP,true);
+        Ogre::ResourceGroupManager::getSingleton().addResourceLocation(".","FileSystem",RESGRP,false);
         Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
         
         ftcv = Ogre::ControllerManager::getSingleton().getFrameTimeSource().dynamicCast<Ogre::FrameTimeControllerValue>();
