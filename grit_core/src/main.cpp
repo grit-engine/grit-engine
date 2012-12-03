@@ -139,7 +139,8 @@ int main(int argc, const char **argv)
 
                 streamer_init();
 
-                audio_init();
+                //audio_init(getenv("GRIT_AUDIO_DEV"));
+                audio_init(NULL);
 
                 core_L = init_lua("/system/init.lua");
 

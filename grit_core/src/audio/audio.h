@@ -49,7 +49,7 @@ enum AudioIntOption {
     AUDIO_MAX_SOUNDS
 };
 
-void audio_init (void);
+void audio_init (const char *devname);
 void audio_update (const Vector3& position, const Vector3& velocity, const Quaternion& rotation);
 void audio_play (const std::string& filename, bool ambient, const Vector3& position, float volume, float ref_dist, float roll_off, float pitch);
 
@@ -78,6 +78,8 @@ class AudioSource : public DiskResource::ReloadWatcher
         AudioDiskResource *resource;
 
         Vector3 position;
+        Quaternion orientation; // for stereo
+        float separation; // for stereo
         Vector3 velocity;
         bool looping;
         float pitch;
@@ -86,7 +88,8 @@ class AudioSource : public DiskResource::ReloadWatcher
         float referenceDistance;
         float rollOff;
 
-        ALuint alSource;
+        ALuint alSourceLeft;
+        ALuint alSourceRight;
 
         AudioSource (const std::string &filename, bool ambient);
         ~AudioSource (void);
@@ -94,6 +97,8 @@ class AudioSource : public DiskResource::ReloadWatcher
         void reinitialise (void);
 
         void notifyReloaded (DiskResource *dr);
+
+        void updatePositions (void);
 
     public:
 
@@ -103,6 +108,12 @@ class AudioSource : public DiskResource::ReloadWatcher
 
         Vector3 getPosition (void) { return position; }
         void setPosition (const Vector3& v);
+
+        Quaternion getOrientation (void) { return orientation; }
+        void setOrientation (const Quaternion& v);
+
+        float getSeparation (void) { return separation; }
+        void setSeparation (float v);
 
         Vector3 getVelocity (void) { return velocity; }
         void setVelocity (const Vector3& v);

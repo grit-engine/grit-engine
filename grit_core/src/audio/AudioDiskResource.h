@@ -35,7 +35,7 @@ class AudioDiskResource : public DiskResource {
 
 public:
 	AudioDiskResource (const std::string &name)
-		: name(name), ambientOnly(false)
+		: name(name), stereo(false)
 	{
 	}
 
@@ -48,9 +48,13 @@ public:
 
 	virtual const std::string &getName (void) const { return name; }
 
-	ALuint getALBuffer(void) { return alBuffer; }
+    // if getStereo() is false, returns the same thing as Left
+	ALuint getALBufferAll(void) { return stereo ? alBuffer : alBufferLeft; }
+	ALuint getALBufferLeft(void) { return alBufferLeft; }
+    // if getStereo() is false, returns 0
+	ALuint getALBufferRight(void) { return alBufferRight; }
 
-    bool getAmbientOnly (void) { return ambientOnly; }
+    bool getStereo (void) { return stereo; }
 
 private:
 
@@ -58,9 +62,11 @@ private:
 	
 	const std::string name;
 
-	ALuint alBuffer;
+	ALuint alBuffer; // 0 if not stereo
+	ALuint alBufferLeft;
+	ALuint alBufferRight;
 
-    bool ambientOnly;
+    bool stereo;
 
 };
 

@@ -127,26 +127,47 @@ void AudioDiskResource::loadWAV(Ogre::DataStreamPtr &file)
 		GRIT_EXCEPT("Second chunk in " + name + " wasn't 'data'.");
 	}
 
+    if (fmt.channels == 0) {
+        GRIT_EXCEPT("Wave file has zero channels: \""+name+"\"");
+    }
+
+    if (fmt.channels > 2) {
+        GRIT_EXCEPT("Wave file has too many channels: \""+name+"\"");
+    }
+
+    size_t bytes_per_sample = fmt.bitsPerSample/8;
+    size_t samples = dataHeader.size / fmt.channels / bytes_per_sample;
+
 	uint8_t* data = new uint8_t[dataHeader.size];
 	file->read(data, dataHeader.size);
 
 	// generate an AL buffer
-	alGenBuffers(1, &alBuffer);
 
-	ALenum alFormat;
+    alBufferLeft = 0;
+    alBufferRight = 0;
+    alBuffer = 0;
 
-    ambientOnly = fmt.channels > 1;
+    ALenum mono_format = (fmt.bitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
+    ALenum stereo_format = (fmt.bitsPerSample == 8) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
 
-	if (fmt.channels == 1)
-	{
-		alFormat = (fmt.bitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
-	}
-	else if (fmt.channels == 2 || true) // do we have quad?  is there any option other than 1 and 2?  if so, what do we do?
-	{
-		alFormat = (fmt.bitsPerSample == 8) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
-	}
+	if (fmt.channels == 1) {
+        stereo = false;
+        alGenBuffers(1, &alBufferLeft);
+        alBufferData(alBuffer, mono_format, data, dataHeader.size, fmt.samples);
+	} else {
+        stereo = true;
+        alGenBuffers(1, &alBuffer);
+        alBufferData(alBuffer, stereo_format, data, dataHeader.size, fmt.samples);
+        uint8_t* data1 = new uint8_t[dataHeader.size / 2];
+        for (size_t i=0 ; i<samples ; ++i) memcpy(&data1[i*bytes_per_sample], &data[2*i*bytes_per_sample], bytes_per_sample);
+        alGenBuffers(1, &alBufferLeft);
+        alBufferData(alBufferLeft, mono_format, data1, dataHeader.size/2, fmt.samples);
+        for (size_t i=0 ; i<samples ; ++i) memcpy(&data1[i*bytes_per_sample], &data[(2*i+1)*bytes_per_sample], bytes_per_sample);
+        alGenBuffers(1, &alBufferRight);
+        alBufferData(alBufferRight, mono_format, data1, dataHeader.size/2, fmt.samples);
+        delete[] data1;
+    }
 
-	alBufferData(alBuffer, alFormat, data, dataHeader.size, fmt.samples);
 
 	// free the data (as memory is in the AL buffer now)
 	delete[] data;
@@ -157,7 +178,9 @@ void AudioDiskResource::loadWAV(Ogre::DataStreamPtr &file)
 
 void AudioDiskResource::unloadImpl (void)
 {
-	alDeleteBuffers(1, &alBuffer);
+	if (alBuffer != 0) alDeleteBuffers(1, &alBuffer);
+	if (alBufferLeft != 0) alDeleteBuffers(1, &alBufferLeft);
+	if (alBufferRight != 0) alDeleteBuffers(1, &alBufferRight);
 }
 
 bool AudioDiskResource::isGPUResource (void)

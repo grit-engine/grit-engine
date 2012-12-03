@@ -89,6 +89,10 @@ TRY_START
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"position")) {
         push_v3(L, self->getPosition());
+    } else if (!::strcmp(key,"orientation")) {
+        push_quat(L, self->getOrientation());
+    } else if (!::strcmp(key,"separation")) {
+        lua_pushnumber(L, self->getSeparation());
     } else if (!::strcmp(key,"velocity")) {
         push_v3(L, self->getVelocity());
     } else if (!::strcmp(key,"looping")) {
@@ -130,6 +134,12 @@ TRY_START
     if (!::strcmp(key,"position")) {
         Vector3 v = check_v3(L,3);
         self->setPosition(v);
+    } else if (!::strcmp(key,"orientation")) {
+        Quaternion v = check_quat(L,3);
+		self->setOrientation(v);
+    } else if (!::strcmp(key,"separation")) {
+        float v = check_float(L,3);
+		self->setSeparation(v);
     } else if (!::strcmp(key,"velocity")) {
         Vector3 v = check_v3(L,3);
 		self->setVelocity(v);
