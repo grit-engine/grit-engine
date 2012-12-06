@@ -41,6 +41,14 @@ bool d3d9 = getenv("GRIT_GL")==NULL;
 bool d3d9 = false;
 #endif
 
+extern "C" { 
+#ifdef WIN32
+    _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+#else
+    unsigned int NvOptimusEnablement = 0x00000001;
+#endif
+}
+
 Ogre::OctreePlugin *octree;
 Ogre::CgPlugin *cg;
 
