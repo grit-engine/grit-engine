@@ -26,10 +26,22 @@
 #ifndef OPTION_H
 #define OPTION_H
 
+/** Abstract base class for an option (i.e. a configurable parameter of one of
+ * the Grit subsystems such as gfx_option) that defines the valid range of
+ * values. */
 template<class T> struct ValidOption {
+
     virtual ~ValidOption (void) { }
+
+    /** Returns whether or not the given value is part of the range. */
     virtual bool isValid (T v) = 0;
+
+    /** Writes to the stream a string of the form "must be <property of values
+     * that are valid in this range>" . */
     virtual void err (std::ostream &o) = 0;
+
+    /** Throws an error with an appropriate message including the name of the
+     * option if the given value is not valid. */
     virtual void maybeThrow (const std::string name, T v)
     {
         if (!isValid(v)) {
@@ -41,6 +53,7 @@ template<class T> struct ValidOption {
     }
 };
 
+/** An implementation of ValidOption that allows a dense range of values [min,max].  T must have <= and >= defined.*/
 template<class T> struct ValidOptionRange : ValidOption<T> {
     T min, max;
     ValidOptionRange (T min_, T max_) : min(min_), max(max_) { }
@@ -48,8 +61,10 @@ template<class T> struct ValidOptionRange : ValidOption<T> {
     virtual void err (std::ostream &o) { o << "must be between "<<min<<" and "<<max; }
 };
 
+/** An implementation of ValidOption that allows a defined list of values.  A must be of type T[n] for some literal n. */
 template<class T, class A> struct ValidOptionList : ValidOption<T> {
     A list;
+    /** The array of valid options is passed by reference. */
     ValidOptionList (A &list_)
     {
         for (unsigned i=0 ; i<sizeof(A)/sizeof(T) ; ++i)
@@ -74,4 +89,3 @@ template<class T, class A> struct ValidOptionList : ValidOption<T> {
 
 #endif
 
-// vim: shiftwidth=8:tabstop=8:expandtab

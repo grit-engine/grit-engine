@@ -27,6 +27,8 @@
 
 #include "CentralisedLog.h"
 
+/** Remove the element at index from the vector vect in O(1) time by popping it
+ * from the back. */
 template<class T> void vect_remove_fast (std::vector<T> &vect, size_t index)
 {
     APP_ASSERT(index < vect.size());
@@ -38,11 +40,14 @@ template<class T> void vect_remove_fast (std::vector<T> &vect, size_t index)
     vect.pop_back();
 }
 
+/** Inherit from this struct to get the index member variable required by
+ * fast_erase_vector. */
 struct fast_erase_index {
     size_t _index;
 };
 
 namespace {
+    /** A utility function to dereference a value if required. */
     template<class T> struct maybe_deref {
         static T &_ (T &v)
         {
@@ -50,6 +55,7 @@ namespace {
         }
     };
 
+    /** A utility function to dereference a value if required. */
     template<class T> struct maybe_deref<T*> {
         static T &_ (T *v)
         {
@@ -58,15 +64,22 @@ namespace {
     };
 }
 
+/** A class that has most of the useful functionality of std::vector but has
+ * O(1) removal time and no ordering guarantees.  The vector can only contain
+ * objects with a member variable called _index, which is updated to hold that
+ * objects index when it is moved.  Pointers to such objects are also allowed.
+ * */
 template<class T> class fast_erase_vector {
     public:
 
+    /** Add an object to the vector. */
     void push_back (const T &v)
     {
         maybe_deref<T>::_(v)._index = vect.size();
         vect.push_back(v);
     }
 
+    /** Remove an object from the vector. */
     void erase (const T &v)
     {
         size_t index = maybe_deref<T>::_(v)._index;
@@ -76,13 +89,19 @@ template<class T> class fast_erase_vector {
         maybe_deref<T>::_(vect[index])._index = index;
     }
 
+    /** Return the number of objects added. */
     size_t size (void) { return vect.size(); }
 
+    /** Remove all objects from the vector. */
     void clear (void) { vect.clear(); }
 
+    /** Prepare the vector for holding the given number of objects. */
     void reserve (size_t n) { vect.reserve(n); }
+
+    /** Return the number of objects this vector can hold before it must reallocate its internal memory. */
     size_t capacity (void) const { return vect.capacity(); }
 
+    /** Look up a particular index, this is not particularly useful because the indexes change during remove operations. */
     T &operator[] (size_t i) { return vect[i]; }
 
     private:

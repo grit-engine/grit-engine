@@ -286,7 +286,6 @@ void GfxSkyShader::reset (const std::string &new_vertex_code,
     fp->unload();
     fp->load();
 
-
     load_and_validate_shader(vp);
     load_and_validate_shader(fp);
 }
@@ -336,76 +335,6 @@ GfxSkyMaterial::GfxSkyMaterial (const std::string &name_)
 {
 }
 
-/*
-void GfxSkyMaterial::updateInternalMat (void)
-{
-    Ogre::Pass *p = mat->getTechnique(0)->getPass(0);
-    p->setPolygonModeOverrideable(false);
-    p->removeAllTextureUnitStates();
-
-    p->setDepthWriteEnabled(false);
-    switch (sceneBlend) {
-        case GFX_SKY_MATERIAL_OPAQUE:
-        p->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
-        break;
-        case GFX_SKY_MATERIAL_ALPHA:
-        p->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
-        break;
-        case GFX_SKY_MATERIAL_ADD:
-        p->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
-        break;
-    }
-
-    p->setVertexProgram(shader->getVP()->getName());
-    p->setFragmentProgram(shader->getFP()->getName());
-
-    if (shader->name=="/system/SkyProgram") {
-
-        Ogre::TextureUnitState *t;
-
-        t = p->createTextureUnitState();
-        t->setTextureName("system/starfield.dds");
-        t->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
-        t->setTextureFiltering(Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_ANISOTROPIC);
-
-        t = p->createTextureUnitState();
-        t->setTextureName("system/PerlinNoise.bmp");
-
-        t = p->createTextureUnitState();
-        t->setTextureName("system/PerlinNoiseN.bmp");
-
-    } else if (shader->name=="/system/SkyClouds") {
-
-        Ogre::TextureUnitState *t;
-
-        t = p->createTextureUnitState();
-        t->setTextureName("system/starfield.dds");
-        t->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
-        t->setTextureFiltering(Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_ANISOTROPIC);
-
-        t = p->createTextureUnitState();
-        t->setTextureName("system/PerlinNoise.bmp");
-
-        t = p->createTextureUnitState();
-        t->setTextureName("system/PerlinNoiseN.bmp");
-
-    } else {
-
-        if (hasEmissiveMap()) {
-            Ogre::TextureUnitState *t = p->createTextureUnitState();
-            t->setTextureName(emissiveMap.substr(1));
-            t->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
-            t->setTextureFiltering(Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_ANISOTROPIC);
-        }
-        
-        try_set_named_constant(p->getFragmentProgramParameters(), "mu_alphaRejectThreshold", alphaRejectThreshold);
-        try_set_named_constant(p->getFragmentProgramParameters(), "mu_alpha", alpha);
-        try_set_named_constant(p->getFragmentProgramParameters(), "mu_emissiveMask", to_ogre(emissiveColour));
-    }
-}
-*/
-
-    
 void GfxSkyMaterial::addDependencies (GfxDiskResource *into)
 {
     GFX_MAT_SYNC;

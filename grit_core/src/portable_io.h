@@ -42,7 +42,13 @@
 
 #include "CentralisedLog.h"
 
+/** \file The following routines do IO on little endian files.  The host system
+ * can be any endian.  There are versions for reading/writing signed (s)
+ * unsigned (u) integers of various bit widths, floating point, text, and
+ * arrays. */
 
+
+/** Centralise the handling of IO errors while reading. */
 #define APP_ASSERT_IO_SUCCESSFUL(in,doing) if (!(in).good()) { \
         if ((in).eof()) { \
                 GRIT_EXCEPT(std::string("EOF while ")+doing); \
@@ -50,9 +56,6 @@
                 GRIT_EXCEPT(std::string(strerror(errno))+std::string(" while ")+doing); \
         } \
 }
-
-/* the following routines do IO on little endian files.  The host system can be
- * any endian. */
 
 static inline unsigned long ios_read_u32(std::istream &in)
 {{{

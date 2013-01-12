@@ -27,11 +27,12 @@
 
 #include "math_util.h"
 
-// http://en.wikipedia.org/wiki/Cubic_Hermite_spline
-
+/** Specialised function for returning a zero value for a given type. */
 template<class T> inline T zero (void) { return 0; }
 template<> inline Vector3 zero<Vector3> (void) { return Vector3(0,0,0); }
+template<> inline Vector2 zero<Vector2> (void) { return Vector2(0,0); }
 
+/** Flatten out the tangent t to zero if the current value is outside the range of prev and next. */
 template<class T> inline T fix_tangent (T prev, T curr, T next, T t)
 {
         if (next==curr || prev==curr) return 0;
@@ -49,15 +50,34 @@ template<> inline Vector3 fix_tangent (Vector3 prev, Vector3 curr, Vector3 next,
         );
 }
 
+template<> inline Vector2 fix_tangent (Vector2 prev, Vector2 curr, Vector2 next, Vector2 t)
+{
+        return Vector2(
+                fix_tangent(prev.x, curr.x, next.x, t.x),
+                fix_tangent(prev.y, curr.y, next.y, t.y)
+        );
+}
+
+/** Class that allows defining a curve of values at given increments along a
+ * scalar x axis.  First points are added, then commit() is called.  Then the
+ * class will interpolate looked-up x values.
+ *
+ * See: http://en.wikipedia.org/wiki/Cubic_Hermite_spline
+ */
 template<class T> class SplineTable {
 
     public:
 
+        /** Define a new point in the spline.
+         */
         void addPoint (float x, T y)
         {
                 points[x] = y;
         }
 
+        /** Does all the precomputation that is require to interpolate lookups.
+         * This is essentially just computing tangents at all the points.
+         */
         void commit (void)
         {
                 // calculate tangents
@@ -114,17 +134,20 @@ template<class T> class SplineTable {
 
         }
 
+        /** Return the highest x value for which a point was defined. */
         float maxX (void) {
                 MI i = points.end();
                 i--;
                 return i->first;
         }
 
+        /** Return the lowest x value for which a point was defined. */
         float minX (void) {
                 MI i = points.begin();
                 return i->first;
         }
 
+        /** Return an interpolated value at the given x value. */
         T operator[] (float x) {
                 if (points.size()==0) return zero<T>();
                 if (points.size()==1) return points.begin()->second;
@@ -182,6 +205,7 @@ template<class T> class SplineTable {
 
 typedef SplineTable<float> Plot;
 typedef SplineTable<Vector3> PlotV3;
+typedef SplineTable<Vector2> PlotV2;
 
 
 #endif

@@ -35,69 +35,103 @@ extern "C" {
 #include "GritObject.h"
 #include "math_util.h"
 
-extern float streamer_visibility;
-extern float streamer_prepare_distance_factor;
+/** Single var cache of CORE_FADE_OUT_FACTOR. */
 extern float streamer_fade_out_factor;
+
+/** Single var cache of CORE_FADE_OVERLAP_FACTOR. */
 extern float streamer_fade_overlap_factor;
 
 enum CoreBoolOption {
+
+    /** Whether or not setting the next option will cause fresh option values to be
+     * processed (default true).  To update more than one option concurrently, set
+     * autoupdate to false, set the options, then set it to true.  */
     CORE_AUTOUPDATE
 };
 
 enum CoreFloatOption {
+    /** A factor that is globally applied to object rendering distances. */
     CORE_VISIBILITY,
+
+    /** The proportion of grit object rendering distance at which background
+     * loading of disk resources is triggered. */
     CORE_PREPARE_DISTANCE_FACTOR,
+
+    /** The proportion of rendering distance at which fading out begins. */
     CORE_FADE_OUT_FACTOR,
+
+    /** The proportion of rendering distance at which fading to the next lod level begins. */
     CORE_FADE_OVERLAP_FACTOR
 };
 
 enum CoreIntOption {
+    /** The number of objects per frame considered for streaming in. */
     CORE_STEP_SIZE
 };
 
-// set's t to either 0,1,2 and fills in the approriate argument
+/** Returns the enum value of the option described by s.  Only one of o0, o1,
+ * o2 is modified, and t is used to tell the caller which one. */
 void core_option_from_string (const std::string &s,
                              int &t,
                              CoreBoolOption &o0,
                              CoreIntOption &o1,
                              CoreFloatOption &o2);
 
+/** Set the option to a particular value. */
 void core_option (CoreBoolOption o, bool v);
+/** Return the current value of the option. */
 bool core_option (CoreBoolOption o);
+/** Set the option to a particular value. */
 void core_option (CoreIntOption o, int v);
+/** Return the current value of the option. */
 int core_option (CoreIntOption o);
+/** Set the option to a particular value. */
 void core_option (CoreFloatOption o, float v);
+/** Return the current value of the option. */
 float core_option (CoreFloatOption o);
 
+/** Call before anything else.  Sets up internal state of the subsystem. */
 void streamer_init();
 
+/** Called frequently to action streaming.  \param new_pos The player's position. */
 void streamer_centre (lua_State *L, const Vector3 &new_pos);
 
-// called by objects when they change position or rendering distance
+/** Called by objects when they change position or rendering distance.
+ * \param index The index of the object within the streamer.
+ * \param pos The new position of the object.
+ * \param d The new rendering distance of the object.
+ */
 void streamer_update_sphere (size_t index, const Vector3 &pos, float d);
         
+/** Add a new object to the 'map', i.e. set of objects considered for streaming in. */
 void streamer_list (const GritObjectPtr &o);
 
+/** Remove an object from the map. */
 void streamer_unlist (const GritObjectPtr &o);
 
+/** Add to the list of activated objects.  These are not streamed in when they
+ * come into range, and are streamed out when they go out of range. */
 void streamer_list_as_activated (const GritObjectPtr &o);
 
+/** Remove an object from the list of activated objects. */
 void streamer_unlist_as_activated (const GritObjectPtr &o);
 
+/** Fetch a list of currently activated objects (via a pair of iterators). */
 void streamer_object_activated (GObjPtrs::iterator &begin, GObjPtrs::iterator &end);
 
+/** Return the number of currently activated objects. */
 int streamer_object_activated_count (void);
 
 
-
+/** Called whenever someone calls streamer_centre. */
 struct StreamerCallback {
         virtual void update(const Vector3 &new_pos) = 0;
 };
 
+/** Register a StreamerCallback callback. */
 void streamer_callback_register (StreamerCallback *rc);
 
+/** Unregister a StreamerCallback callback. */
 void streamer_callback_unregister (StreamerCallback *rc);
 
 #endif
-
-// vim: shiftwidth=8:tabstop=8:expandtab

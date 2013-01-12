@@ -24,34 +24,53 @@
 
 #include <vector>
 
+/** Maximum number of buttons allowed on a mouse. */
 #define NUM_BUTTONS 8
 
+/** A class to be inheritted by a particular platform's implementation for
+ * signalling mouse input to the engine. */
 class Mouse {
 
 public:
 
+        /** The kind of mouse button being pressed. */
         enum Button
         {
                 MOUSE_LEFT = 1, MOUSE_RIGHT, MOUSE_MIDDLE,
                 MOUSE_SCROLL_UP, MOUSE_SCROLL_DOWN
         };
 
-        virtual ~Mouse() = 0;
+        /** Empty destructor. */
+        virtual ~Mouse() { }
 
+        /** Return the mouse events since the last call.  Should be called frequently (e.g. every graphics frame).
+         * \param clicks A list of mouse buttons pressed since the last call.
+         * \param x Returns the current x position of the mouse in window coordinates.
+         * \param y Returns the current y position of the mouse in window coordinates.
+         * \param rel_x Returns the change in x (can be used to calculate the velocity of the mouse).
+         * \param rel_y Returns the change in y (can be used to calculate the velocity of the mouse).
+         */
         virtual bool getEvents(std::vector<int> *clicks,
                                int *x, int *y, int *rel_x, int *rel_y) = 0;
 
+        /** Set the mouse position to the given window coordinates. */
         virtual void setPos(int x, int y) = 0;
 
+
+        /** Set whether or not the mouse cursor is hidden (invisible). */
         virtual void setHide(bool toggle) = 0;
+
+        /** Get whether or not the mouse cursor is hidden (invisible). */
         virtual bool getHide() = 0;
 
+
+        /** Get whether or not the mouse cursor is hidden (invisible). */
         virtual void setGrab(bool toggle) = 0;
+
+        /** Get whether or not the mouse cursor is hidden (invisible). */
         virtual bool getGrab() = 0;
 
 };
-
-inline Mouse::~Mouse() { }
 
 #endif
 

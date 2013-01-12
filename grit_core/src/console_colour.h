@@ -19,6 +19,8 @@
  * THE SOFTWARE.
  */
 
+/** ANSI terminal colour codes, used by the grit console to distinguish colours. */
+
 /*
 #ifndef CONSOLE_COLOUR
 #define RESET ""

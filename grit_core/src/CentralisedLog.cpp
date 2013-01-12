@@ -21,7 +21,5 @@
 
 #include "CentralisedLog.h"
 
-// place to hook a debugger to
 void assert_triggered (void) { } 
 
-//bool CLog::takenLock = false;

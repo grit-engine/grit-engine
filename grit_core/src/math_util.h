@@ -163,7 +163,7 @@ struct Quaternion {
 struct Vector3 {
     float x, y, z;
 
-    Vector3 () { }
+    Vector3 (void) { }
     Vector3 (float x_, float y_, float z_) : x(x_), y(y_), z(z_) { }
 
     Vector3& operator = (const Vector3& o)
@@ -226,17 +226,17 @@ struct Vector3 {
     friend Vector3 &operator /= (Vector3 &a, const float b)
     { a.x/=b, a.y/=b, a.z/=b; return a; }
 
-    float length2 () const { return this->dot(*this); }
-    float length () const { return ::sqrtf(length2()); }
+    float length2 (void) const { return this->dot(*this); }
+    float length (void) const { return ::sqrtf(length2()); }
 
-    float distance(const Vector3& o) const
+    float distance (const Vector3& o) const
     { return (*this - o).length(); }
-    float distance2(const Vector3& o) const
+    float distance2 (const Vector3& o) const
     { return (*this - o).length2(); }
 
-    float dot(const Vector3& o) const { return x*o.x + y*o.y + z*o.z; }
+    float dot (const Vector3& o) const { return x*o.x + y*o.y + z*o.z; }
 
-    float normalise() { float l=length(); *this /= l; return l; }
+    float normalise (void) { float l=length(); *this /= l; return l; }
 
     Vector3 cross (const Vector3& o) const
     { return Vector3(y*o.z - z*o.y,  z*o.x - x*o.z,  x*o.y - y*o.x); }
@@ -340,7 +340,7 @@ inline Vector3 operator * (const Quaternion &q, const Vector3& v)
     return v + uv + uuv;
 }
 
-inline Quaternion::Quaternion(const Radian& a, const Vector3& axis)
+inline Quaternion::Quaternion (const Radian& a, const Vector3& axis)
 {
     float ha ( 0.5f*a.inRadians() );
     float s = sinf(ha);
@@ -372,5 +372,117 @@ struct Transform {
 };
 
 // }}}
+
+
+// {{{ Vector2
+
+struct Vector2 {
+    float x, y;
+
+    Vector2 (void) { }
+    Vector2 (float x_, float y_) : x(x_), y(y_) { }
+
+    Vector2& operator = (const Vector2& o)
+    {
+        x = o.x; y = o.y;
+        return *this;
+    }
+
+    friend bool operator == (const Vector2 &a, const Vector2& b)
+    { return a.x==b.x && a.y==b.y; }
+    friend bool operator != (const Vector2 &a, const Vector2& b)
+    { return ! (a==b); }
+    friend bool operator < (const Vector2 &a, const Vector2& b)
+    { return a.x<b.x && a.y<b.y; }
+    friend bool operator > (const Vector2 &a, const Vector2& b)
+    { return a.x>b.x && a.y>b.y; }
+    friend bool operator <= (const Vector2 &a, const Vector2& b)
+    { return a.x<=b.x && a.y<=b.y; }
+    friend bool operator >= (const Vector2 &a, const Vector2& b)
+    { return a.x>=b.x && a.y>=b.y; }
+
+    friend Vector2 operator + (const Vector2 &a, const Vector2& b)
+    { return Vector2(a.x+b.x, a.y+b.y); }
+    friend Vector2 operator - (const Vector2 &a, const Vector2& b)
+    { return Vector2(a.x-b.x, a.y-b.y); }
+    friend Vector2 operator * (const Vector2 &a, const Vector2& b)
+    { return Vector2(a.x*b.x, a.y*b.y); }
+    friend Vector2 operator / (const Vector2 &a, const Vector2& b)
+    { return Vector2(a.x/b.x, a.y/b.y); }
+
+    friend Vector2 operator * (const float a, const Vector2& b)
+    { return Vector2(a*b.x, a*b.y); }
+    friend Vector2 operator * (const Vector2 &b, const float a)
+    { return Vector2(a*b.x, a*b.y); }
+
+    friend Vector2 operator / (const float a, const Vector2& b)
+    { return Vector2(a/b.x, a/b.y); }
+    friend Vector2 operator / (const Vector2 &a, const float b)
+    { return a * (1/b); }
+
+    friend const Vector2 &operator + (const Vector2& a)
+    { return a; }
+    friend Vector2 operator - (const Vector2& a)
+    { return Vector2(-a.x, -a.y); }
+
+    friend Vector2 &operator += (Vector2 &a, const Vector2& b)
+    { a.x+=b.x, a.y+=b.y; return a; }
+    friend Vector2 &operator += (Vector2 &a, const float b)
+    { a.x+=b, a.y+=b; return a; }
+    friend Vector2 &operator -= (Vector2 &a, const Vector2& b)
+    { a.x-=b.x, a.y-=b.y; return a; }
+    friend Vector2 &operator -= (Vector2 &a, const float b)
+    { a.x-=b, a.y-=b; return a; }
+    friend Vector2 &operator *= (Vector2 &a, const Vector2& b)
+    { a.x*=b.x, a.y*=b.y; return a; }
+    friend Vector2 &operator *= (Vector2 &a, const float b)
+    { a.x*=b, a.y*=b; return a; }
+    friend Vector2 &operator /= (Vector2 &a, const Vector2& b)
+    { a.x/=b.x, a.y/=b.y; return a; }
+    friend Vector2 &operator /= (Vector2 &a, const float b)
+    { a.x/=b, a.y/=b; return a; }
+
+    float length2 (void) const { return this->dot(*this); }
+    float length (void) const { return ::sqrtf(length2()); }
+
+    float distance (const Vector2& o) const
+    { return (*this - o).length(); }
+    float distance2 (const Vector2& o) const
+    { return (*this - o).length2(); }
+
+    float dot (const Vector2& o) const { return x*o.x + y*o.y; }
+
+    float normalise (void) { float l=length(); *this /= l; return l; }
+
+    // rotate clockwise by v
+    Vector2 rotateBy (const Radian &v) const
+    {
+        float sn = gritsin(v);
+        float cs = gritcos(v);
+        return Vector2(x*cs + y*sn, - x*sn + y*cs);
+    }
+
+    float cross (const Vector2& o) const
+    { return x*o.y - y*o.x; }
+
+    Vector2 midPoint (const Vector2& o) const
+    { return (*this+o)/2; }
+
+    Vector2 normalisedCopy (void) const
+    { return *this / this->length(); }
+
+    /// Check whether this vector contains valid values
+    bool isNaN (void) const
+    { return my_isnan(x) || my_isnan(y); }
+
+    friend std::ostream& operator << (std::ostream& o, const Vector2& v)
+    {
+        o << "Vector2(" << v.x << ", " << v.y << ")";
+        return o;
+    }
+};
+
+// }}}
+
 
 #endif

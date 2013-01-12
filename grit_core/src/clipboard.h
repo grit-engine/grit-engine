@@ -21,6 +21,9 @@
 
 #include <string>
 
+/** Platform portability wrapper:  Set the given text to the clipboard. */
 void clipboard_set (const std::string &s);
+
+/** Platform portability wrapper:  Retrieve text from the clipboard. */
 std::string clipboard_get (void);
 

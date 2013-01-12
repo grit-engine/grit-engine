@@ -482,6 +482,7 @@ TRY_START
         o->updateSphere(spawnPos, r);
         lua_pop(L,1);
 
+        // TODO move near and far into the loop below ('name' must remain above)
         lua_getfield(L,table_index,"near");
         if (!lua_isnil(L,-1)) {
                 if (is_userdata(L,-1,GRITOBJ_TAG)) {

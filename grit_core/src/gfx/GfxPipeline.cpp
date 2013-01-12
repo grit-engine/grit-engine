@@ -896,4 +896,5 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
             render_quad(targetViewport, RenderQuadParams<2>(bloom_vert_blur_combine_and_tonemap, target_blend).tex(hdrFb[1]).tex(hdrFb[0]));
         }
     }
+
 }

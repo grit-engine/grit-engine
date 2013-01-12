@@ -178,6 +178,7 @@ struct GfxLastFrameStats {
     GfxLastRenderStats left_deferred;
     GfxLastRenderStats right_gbuffer;
     GfxLastRenderStats right_deferred;
+    GfxLastRenderStats hud;
 };
 
 struct GfxRunningFrameStats {

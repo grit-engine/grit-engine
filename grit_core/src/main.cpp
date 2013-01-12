@@ -87,12 +87,14 @@ struct TheGfxCallback : GfxCallback {
 
 } cb;
 
+/*
 std::string poll_gfx_msg_buffer (void)
 {
         std::string r = gfx_msg_buffer.str();
         gfx_msg_buffer.str("");
         return r;
 }
+*/
 
 
 int already_fatal = 0;

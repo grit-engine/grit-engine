@@ -71,6 +71,7 @@ class GritClass {
         {
                 const char *err = table.luaGet(L, key);
                 if (err) my_lua_error(L,err);
+                // 
                 if (lua_isnil(L,-1)) {
                         lua_pop(L,1);
                         pushParent(L);
@@ -115,15 +116,13 @@ class GritClass {
 
     protected:
 
-        int refCount;
+        int refCount; // the number of objects using this class, +1 if it has not yet been 'deleted'
 
         LuaPtr parentClass;
 
         ExternalTable table;
 
 };
-
-extern GritClassMap classes;
 
 GritClass *class_add (lua_State *L, const std::string& name);
 void class_del (lua_State *L, GritClass *c);

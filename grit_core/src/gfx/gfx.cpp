@@ -34,6 +34,7 @@
 #include "GfxBody.h"
 #include "GfxSkyMaterial.h"
 #include "GfxSkyBody.h"
+#include "gfx_hud.h"
 
 #ifdef WIN32
 bool d3d9 = getenv("GRIT_GL")==NULL;
@@ -572,6 +573,8 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
                 eye_left->render(opts_left);
             }
 
+            gfx_hud_render();
+
             ogre_rs->_swapAllRenderTargetBuffers(true);
         } else {
             // corresponds to 100fps
@@ -920,6 +923,7 @@ size_t gfx_init (GfxCallback &cb_)
         gfx_pipeline_init();
         gfx_option_init();
         gfx_particle_init();
+        gfx_hud_init();
  
         gfx_env_cube("");
 
@@ -966,6 +970,7 @@ void gfx_shutdown (void)
         delete eye_right;
         env_cube_tex.setNull();
         ftcv.setNull();
+        gfx_hud_shutdown();
         if (ogre_sm && ogre_root) ogre_root->destroySceneManager(ogre_sm);
         if (ogre_root) OGRE_DELETE ogre_root; // internally deletes ogre_rs
         OGRE_DELETE octree;

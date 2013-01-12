@@ -37,6 +37,9 @@
 #define GFXRANGEDINSTANCES_TAG "Grit/GfxRangedInstances"
 #define GFXLIGHT_TAG "Grit/GfxLight"
 
+#define GFXHUDOBJECT_TAG "Grit/GfxHudObject"
+#define GFXHUDCLASS_TAG "Grit/GfxHudClass"
+
 void gfx_lua_init (lua_State *L);
 
 void push_gfxbody (lua_State *L, const GfxBodyPtr &self);

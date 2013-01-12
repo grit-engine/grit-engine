@@ -19,6 +19,10 @@
  * THE SOFTWARE.
  */
 
+/** Used to specify 16-byte aligned internal storage for c++ stdlib
+ * datastructures such as std::vector.  This implementation wastes between 1
+ * and 16 bytes (inclusive) for metadata in each allocation by storing the
+ * padding required to offset the pointer to 16-byte alignment. */
 template <class T> class SSEAllocator {
 
     public:

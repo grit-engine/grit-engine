@@ -20,8 +20,12 @@
  */
 
 
+/** Platform portability wrapper: sleep (with idle CPU) for the given number of
+ * microseconds. */
 void mysleep (long micros);
 
+/** Platform portability wrapper: Return the number of microseconds since some
+ * fixed epoch. */
 unsigned long long micros (void);
 
 

@@ -21,7 +21,7 @@
 
 #include "GritClass.h"
 
-GritClassMap classes;
+static GritClassMap classes;
 
 GritClass *class_add (lua_State *L, const std::string& name)
 {
@@ -45,18 +45,11 @@ GritClass *class_add (lua_State *L, const std::string& name)
 }
 
 
-static void class_erase (const std::string &name)
-{
-        // anything using this class keeps using it
-        classes.erase(name);
-        // class gets deleted properly when everything stops using it
-}
-
-
-
 void class_del (lua_State *L, GritClass *c)
 {
-    class_erase(c->name);
+    // anything using this class keeps using it
+    classes.erase(c->name);
+    // class gets deleted properly when everything stops using it
     c->release(L);
 }
 

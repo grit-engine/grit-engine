@@ -67,6 +67,11 @@ luaL_newmetatable(L, tag); \
 luaL_register(L, NULL, name##_meta_table); \
 lua_pop(L,1); } while(0)
 
+static inline Vector2 check_v2 (lua_State *L, int idx)
+{ Vector2 v; lua_checkvector2(L, idx, &v.x, &v.y); return v; } 
+static inline void push_v2 (lua_State *L, const Vector2 &v)
+{ lua_pushvector2(L, v.x, v.y); }
+
 static inline Vector3 check_v3 (lua_State *L, int idx)
 { Vector3 v; lua_checkvector3(L, idx, &v.x, &v.y, &v.z); return v; } 
 static inline void push_v3 (lua_State *L, const Vector3 &v)
