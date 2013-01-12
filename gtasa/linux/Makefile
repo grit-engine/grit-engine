@@ -5,7 +5,7 @@ ROOT=../..
 include $(ROOT)/common.mk
 
 
-TARGETS=extract colread imgread ideread iplread ifpread dffread csvread handling surfinfo procobj
+TARGETS=extract colread imgread ideread iplread ifpread dffread csvread handling surfinfo procobj txdread
 
 all: $(TARGETS)
 
