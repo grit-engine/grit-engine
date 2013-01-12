@@ -85,6 +85,7 @@ GRIT_OBJ=\
         gfx_option.o \
         GfxBody.o \
         GfxDiskResource.o \
+        gfx_hud.o \
         GfxInstances.o \
         GfxLight.o \
         GfxMaterial.o \
@@ -1797,7 +1798,38 @@ gfx.o: ../src/gfx/GfxBody.h ../src/gfx/GfxSkyMaterial.h
 gfx.o: ../src/gfx/GfxSkyBody.h ../depend_stubs/OgreEntity.h
 gfx.o: ../depend_stubs/OgreSceneNode.h
 gfx.o: ../src/gfx/GfxDiskResource.h ../depend_stubs/OgreResource.h
-gfx.o: ../src/BackgroundLoader.h
+gfx.o: ../src/BackgroundLoader.h ../src/gfx/gfx_hud.h
+gfx.o: ../src/ExternalTable.h ../src/lua_util.h
+gfx.o: ../depend_stubs/limits
+gfx_hud.o: ../depend_stubs/OgreHighLevelGpuProgramManager.h
+gfx_hud.o: ../depend_stubs/OgreCgProgram.h ../src/CentralisedLog.h
+gfx_hud.o: ../depend_stubs/iostream ../depend_stubs/sstream
+gfx_hud.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+gfx_hud.o: ../src/console_colour.h ../src/gfx/gfx_hud.h
+gfx_hud.o: ../depend_stubs/string ../depend_stubs/map
+gfx_hud.o: ../src/SharedPtr.h ../depend_stubs/lua.h
+gfx_hud.o: ../depend_stubs/lauxlib.h ../depend_stubs/lualib.h
+gfx_hud.o: ../src/ExternalTable.h ../src/lua_util.h
+gfx_hud.o: ../depend_stubs/limits ../depend_stubs/vector
+gfx_hud.o: ../src/CentralisedLog.h ../src/math_util.h
+gfx_hud.o: ../src/LuaPtr.h ../src/path_util.h ../src/math_util.h
+gfx_hud.o: ../depend_stubs/cmath ../depend_stubs/cfloat
+gfx_hud.o: ../src/vect_util.h ../depend_stubs/algorithm
+gfx_hud.o: ../src/gfx/GfxPipeline.h ../src/gfx/gfx_internal.h
+gfx_hud.o: ../depend_stubs/Ogre.h
+gfx_hud.o: ../depend_stubs/OgreFontManager.h
+gfx_hud.o: ../depend_stubs/OgreMeshManager.h
+gfx_hud.o: ../depend_stubs/OgreOverlayElementFactory.h
+gfx_hud.o: ../depend_stubs/OgreOctreeSceneManager.h
+gfx_hud.o: ../depend_stubs/OgreVector3.h
+gfx_hud.o: ../depend_stubs/OgreQuaternion.h
+gfx_hud.o: ../depend_stubs/OgreCustomCompositionPass.h
+gfx_hud.o: ../depend_stubs/OgreCompositor.h
+gfx_hud.o: ../depend_stubs/OgreOctreePlugin.h
+gfx_hud.o: ../depend_stubs/OgreCgPlugin.h
+gfx_hud.o: ../depend_stubs/OgreRenderSystem.h
+gfx_hud.o: ../depend_stubs/OgreGLRenderSystem.h ../src/gfx/gfx.h
+gfx_hud.o: ../src/gfx/gfx_option.h
 gfx_option.o: ../depend_stubs/string ../depend_stubs/map
 gfx_option.o: ../src/gfx/gfx_internal.h ../depend_stubs/sstream
 gfx_option.o: ../depend_stubs/Ogre.h
@@ -1940,6 +1972,8 @@ lua_wrappers_gfx.o: ../src/gfx/lua_wrappers_scnmgr.h
 lua_wrappers_gfx.o: ../depend_stubs/OgrePixelFormat.h
 lua_wrappers_gfx.o: ../src/gfx/lua_wrappers_mobj.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreLight.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_hud.h ../src/lua_util.h
+lua_wrappers_gfx.o: ../src/gfx/GfxPipeline.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreHighLevelGpuProgramManager.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreTextureManager.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreSkeletonManager.h
