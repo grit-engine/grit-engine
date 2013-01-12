@@ -462,6 +462,7 @@ std::string get_ext(const std::string& name, std::string *base_name)
         return r;
 }
 
+void assert_triggered (void) { }
 
 int main(int argc, char **argv)
 {
@@ -514,9 +515,9 @@ int main(int argc, char **argv)
             Txd txd(f, dest_dir, true);
         }
 
-    } catch (Exception &e) {
+    } catch (GritException &e) {
         std::cerr << "ERROR: "
-                  << e.getFullDescription() << std::endl;
+                  << e.longMessage() << std::endl;
 
         return EXIT_FAILURE;
     }
