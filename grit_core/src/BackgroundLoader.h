@@ -26,8 +26,8 @@ class BackgroundLoader;
 class Demand;
 typedef fast_erase_vector<Demand*> Demands;
 
-#ifndef BackgroundLoader_h
-#define BackgroundLoader_h
+#ifndef BACKGROUNDLOADER_H
+#define BACKGROUNDLOADER_H
 
 #include <list>
 #include <algorithm>
@@ -40,7 +40,12 @@ typedef fast_erase_vector<Demand*> Demands;
 #include "CentralisedLog.h"
 #include "DiskResource.h"
 
-
+/** A least recently used queue, used to select resources to unload in the
+ * event of memory pressure.  The basic idea is you push to the queue when you
+ * no-longer need something, and you pop if you need to free space.  If you
+ * start using something, you call removeIfPresent to mark it as being used
+ * again.
+ */
 template<typename T> class LRUQueue {
 
     protected:
@@ -52,10 +57,13 @@ template<typename T> class LRUQueue {
 
     public:
 
+        /** Create an empty queue. */
         LRUQueue () : mSize(0) { }
 
+        /** Destructor. */
         ~LRUQueue () { }
 
+        /** If v is in the queue, remove it, otherwise a no-op. */
         inline void removeIfPresent (const T &v)
         {
                 //if already in queue, remove
@@ -67,6 +75,7 @@ template<typename T> class LRUQueue {
                 }
         }
 
+        /** Add a new object v to the queue.  This means you're not intending to use it anymore, but it is the most recently used thing. */
         inline void push (const T &v)
         {
                 //it only gets pushed if it's not referenced anywhere
@@ -78,6 +87,7 @@ template<typename T> class LRUQueue {
                 mSize++;
         }
 
+        /** Retrieve the least-recently used thing, and remove it from the queue. */
         inline T pop ()
         {
                 //remove from old end of queue
@@ -87,15 +97,21 @@ template<typename T> class LRUQueue {
                 return v;
         }
 
+        /** Return the number of elements in the queue.  This is the number of
+         * resources that are loaded but not being used (i.e. it's a cache in case they
+         * need to be used again. */
         inline size_type size () const { return mSize; }
 
+        /** Make the queue empty. */
         inline void clear () { mQueue.clear() ; mSize=0; }
 
 
     protected:
 
+        /** Cache of the number of elements in the queue. */
         size_t mSize;
 
+        /** The queue itself, a linked list. */
         Queue mQueue;
 };
 
@@ -178,8 +194,8 @@ class Demand : public fast_erase_index {
     bool loaded (void);
 
     /** Did the background loading throw an exception at all?  If so, not all
-     * the resources are available.  It is suggested to call finishedWith() and
-     * proceed no further.  The error (probably a file not found or other I/O
+     * the disk resources are available.  It is suggested to call finishedWith()
+     * and proceed no further.  The error (probably a file not found or other I/O
      * error) will already have been reported to the user in the console.
      */
     bool errorOnLoad (void) { return causedError; }
@@ -198,7 +214,7 @@ class Demand : public fast_erase_index {
     /** Have we called increment on the resources yet? */
     bool incremented;
 
-    /** Was an error caused? */
+    /** Did an error occur in the background thread? */
     bool causedError;
 
     friend class BackgroundLoader;

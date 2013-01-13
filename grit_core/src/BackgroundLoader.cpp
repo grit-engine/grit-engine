@@ -29,9 +29,9 @@
 #define SYNCHRONISED boost::recursive_mutex::scoped_lock _scoped_lock(lock)
 #define SYNCHRONISED2(bgl) boost::recursive_mutex::scoped_lock _scoped_lock(bgl->lock)
 
-// called by main thread only
 bool Demand::requestLoad (float dist)
 {
+        // called by main thread only
         mDist = dist;
         {
                 SYNCHRONISED2(bgl);
