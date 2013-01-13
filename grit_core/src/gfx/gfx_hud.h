@@ -58,44 +58,42 @@ class GfxHudClass {
     GfxHudClass (lua_State *L, const std::string &name_)
           : name(name_), dir(grit_dirname(name_))
     {
-            int index = lua_gettop(L);
-            for (lua_pushnil(L) ; lua_next(L,index)!=0 ; lua_pop(L,1)) {
-                    const char *err = table.luaSet(L);
-                    if (err) my_lua_error(L, err);
-            }
-            lua_pop(L,1); // the table we just iterated through
+        int index = lua_gettop(L);
+        for (lua_pushnil(L) ; lua_next(L,index)!=0 ; lua_pop(L,1)) {
+            const char *err = table.luaSet(L);
+            if (err) my_lua_error(L, err);
+        }
+        lua_pop(L,1); // the table we just iterated through
     }
 
     void get (lua_State *L, const std::string &key)
     {
-            const char *err = table.luaGet(L, key);
-            if (err) my_lua_error(L,err);
-            if (lua_isnil(L,-1)) {
-                    lua_pop(L,1);
-                    lua_getfield(L, -1, key.c_str());
-                    lua_replace(L,-2); // pop the parent
-            }
+        const char *err = table.luaGet(L, key);
+        if (err) my_lua_error(L,err);
     } 
 
     void set (lua_State *L, const std::string &key)
     {
-            const char *err = table.luaSet(L, key);
-            if (err) my_lua_error(L,err);
+        const char *err = table.luaSet(L, key);
+        if (err) my_lua_error(L,err);
     }
     
     void set (lua_State *L)
     {   
-            const char *err = table.luaSet(L);
-            if (err) my_lua_error(L,err);
+        const char *err = table.luaSet(L);
+        if (err) my_lua_error(L,err);
     }
 
     void dump (lua_State *L)
     {
-            table.dump(L);
+        table.dump(L);
     }
 
     const std::string name;
     const std::string dir;
+
+    const ExternalTable &getTable (void) const { return table; }
+    ExternalTable &getTable (void) { return table; }
 
     protected:
 
@@ -177,6 +175,7 @@ class GfxHudObject : public GfxHudBase {
     { }
 
     void init (lua_State *L, const GfxHudObjectPtr &ptr);
+    void parentResized (lua_State *L, const GfxHudObjectPtr &ptr);
 
     float getAlpha (void) { assertAlive(); return alpha; }
     void setAlpha (float v) { assertAlive(); alpha = v; }
@@ -191,7 +190,7 @@ class GfxHudObject : public GfxHudBase {
     void setUV2 (const Vector2 &v) { assertAlive(); uv2 = v; }
 
     GfxDiskResource *getTexture (void) { assertAlive(); return texture; }
-    void setTexture (GfxDiskResource *v) { assertAlive(); texture = v; }
+    void setTexture (GfxDiskResource *v);
     
 };
 

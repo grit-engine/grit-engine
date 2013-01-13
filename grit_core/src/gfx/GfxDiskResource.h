@@ -29,24 +29,47 @@ class GfxDiskResource;
 #include "../CentralisedLog.h"
 #include "../BackgroundLoader.h"
 
+/** Representation for textures and meshes.  Textures have no dependencies.
+ * Meshes depend on textures via materials, so the material database is used
+ * while loading meshes to determine the textures used.  For background
+ * loading, this has concurrency implications.  Also, if the material changes
+ * to use a different texture, the list of dependencies may become stale.  This
+ * is not currently handled correctly.
+ *
+ * A loaded disk resource is only 'prepared' on Ogre parlance.  The actual Ogre
+ * load, i.e. the movement of data from system memory to GPU memory, is done on
+ * the render of the first frame where the resource is actually used.
+ */
 class GfxDiskResource : public DiskResource {
 
   public:
+    /** Use disk_resource_get_or_make to create a new disk resource. */
     GfxDiskResource (const std::string &name, const std::string &ext);
 
-    virtual bool isGPUResource (void);
+    /** Returns true. */
+    virtual bool isGPUResource (void) { return true; }
 
+    /** Return Grit name for the resource, e.g. "/system/blah.dds". */
     virtual const std::string &getName (void) const { return name; }
 
+    /** Get the Ogre representation of the resource. */
     const Ogre::ResourcePtr &getOgreResourcePtr (void) { return rp; }
 
+    /** Is it a texture or a mesh? */
+    const bool isMesh;
+
   private:
+    /** The ogre representaiton. */
     Ogre::ResourcePtr rp;
 
+    /** A cache of the Grit name, which is different to the Ogre name. */
     const std::string name;
 
+    /** Load via Ogre (i.e. prepare it in Ogre terminology). */
     virtual void loadImpl (void);
+    /** Reload from disk via Ogre calls. */
     virtual void reloadImpl (void);
+    /** Unload via Ogre. */
     virtual void unloadImpl (void);
 
     friend class GfxBaseMaterial;
@@ -55,28 +78,20 @@ class GfxDiskResource : public DiskResource {
 
 };
 
-// Dependent resources are only known when the resource is loaded.  In the case
-// of meshes and textures, once the mesh is loaded (i.e. prepared in Ogre
-// terminology) we sync with the main thread to get the textures for its
-// material.  There is an issue of what happens when the material changes and
-// the dependencies are stale.
-
-// Modifications to children at load or unload:
-
-// * at load, will set children from empty set to the correct set, and increment
-// * at unload, will set children to empty set, and decrement
-
-// Modifications to children due to material changes
-
+// Necessary modifications to children due to material changes
 // * When a material changes texture, iterate through all meshes to find users of this material
 // * For each mesh that uses the material:
 // * * calculate: New set of children, old set of children
 // * * new set of children are incremented, and loaded (foreground thread) if needed
 // * * old set of children are decremented
 
+/** How much RAM is available on the GPU.  This is actually a number provided by the user, via gfx_option(GFX_RAM). */
 size_t gfx_gpu_ram_available (void);
+
+/** How much RAM is used on the GPU. */
 size_t gfx_gpu_ram_used (void);
 
+/** Should additional log messages specifically about graphics resource loading/unloaded be emitted? */
 extern bool gfx_disk_resource_verbose_loads;
 
 #endif

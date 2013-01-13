@@ -100,67 +100,116 @@ template<typename T> class LRUQueue {
 };
 
 
-
+/** When a GritObject wants to load something, it registers a 'demand' with the
+ * BackgroundLoader.  This acts as a channel of communication.  The  object can
+ * communicate its changing position (the distance to the demand is used by the
+ * background loader to prioritise loads), and the list of resources needed.
+ * The BackgroundLoader communicates back when the loading is completed and
+ * whether any errors occured.
+ *
+ * Typical mode of operation is to have a Demand inline in your object,
+ * addDiskReource many times to build up the list of needed resources, call
+ * requestLoad to start the background loading, waiting for isInBackgroundQueue
+ * to return false.
+ *
+ * Note that when resources are loaded in this fashion, the loading and the
+ * increment/decrement aspects of the DiskResource are handled automatically.
+ */
 class Demand : public fast_erase_index {
+
     public:
-        Demand (void)
-            : mInBackgroundQueue(false), mDist(0.0f), incremented(false), causedError(false)
-        { }
 
-        void addDiskResource (const std::string &rn)
-        {
-                DiskResource *dr = disk_resource_get_or_make(rn);
-                if (dr == NULL) return;
-                resources.push_back(dr);
-        }
+    Demand (void)
+        : mInBackgroundQueue(false), mDist(0.0f), incremented(false), causedError(false)
+    { }
 
-        void clearDiskResources (void)
-        {
-                resources.clear();
-        }
+    /** Add a required disk resource (by absolute path to the file). */
+    void addDiskResource (const std::string &rn)
+    {
+        DiskResource *dr = disk_resource_get_or_make(rn);
+        if (dr == NULL) return;
+        resources.push_back(dr);
+    }
 
-        // called by the main thread to get resources loaded prior
-        // to activation of objects
-        // repeated calls update the distance of the object, used for prioritising
-        // the queue of demands
-        // as a convenience, returns !isInBackgroundQueue()
-        bool requestLoad (float dist);
+    /** Clear out the list, useful for reusing a Demand object. */
+    void clearDiskResources (void)
+    {
+        resources.clear();
+    }
 
-        // is the demand registered to be procesed by the background thread
-        // if returns true after a call to requestLoad, the resources should be loaded
-        bool isInBackgroundQueue (void) { return mInBackgroundQueue; }
+    /** Called by the main thread to get resources loaded prior to activation
+     * of objects.  Repeated calls update the distance of the object, used for
+     * prioritising the queue of demands.  Returns !isInBackgroundQueue() for
+     * convenience.
+     */
+    bool requestLoad (float dist);
 
-        // the object nolonger requires its resources, they may be unloaded if necessary
-        // may be called when isInBackgroundQueue()==true in which case the demand
-        // is removed from the background queue (may also be partially loaded at this point)
-        void finishedWith (void);
+    /** Is the demand registered to be procesed by the background thread?  If
+     * true, the background thread will (eventually,) process this demand.  If
+     * false, either 1) the demand has never been registered, 2) it was registered
+     * and the loading has already completed, or 3) it was registered and all the
+     * resources were actually loaded and there was no background loading to be
+     * done.  Either way, a return value of false following a requestLoad call
+     * means that the resources are loaded.
+     */
+    bool isInBackgroundQueue (void) { return mInBackgroundQueue; }
 
-        // Load resources in the foreground thread, block until complete
-        // called usually as a result of debug commands from the console
-        // Obviously, this will cause a frame rate stall.
-        void immediateLoad (void);
+    /* Cancel a requestLoad call, or indicate the resources are no-longer
+     * required.  They may be unloaded if necessary according to memory pressure.
+     * May be called when isInBackgroundQueue()==true in which case the demand is
+     * removed from the background queue and any partially completed loading is
+     * correctly undone.
+     */
+    void finishedWith (void);
 
-        // Reload resources in the foreground thread, block until complete
-        // called usually as a result of debug commands from the console
-        // Obviously, this will cause a frame rate stall.
-        void immediateReload (void);
+    /** Load resources in the foreground thread, block until complete.  Called
+     * usually as a result of debug commands from the console.  Obviously, this
+     * will cause a frame stall (a drop in fps) so is not advised for normal use.
+     */
+    void immediateLoad (void);
 
-        // Are the resources in this Demand loaded yet?
-        bool loaded (void);
+    /** Reload resources in the foreground thread, block until complete called
+     * usually as a result of debug commands from the console Obviously, this will
+     * cause a frame rate stall.
+     */
+    void immediateReload (void);
 
-        // did the background loading throw an exception at all?
-        bool errorOnLoad (void) { return causedError; }
+    /** Are the resources in this Demand loaded yet?  Simply tests each one's loaded status. */
+    bool loaded (void);
+
+    /** Did the background loading throw an exception at all?  If so, not all
+     * the resources are available.  It is suggested to call finishedWith() and
+     * proceed no further.  The error (probably a file not found or other I/O
+     * error) will already have been reported to the user in the console.
+     */
+    bool errorOnLoad (void) { return causedError; }
 
     private:
-        bool mInBackgroundQueue; // is it in the bgl's queue
-        DiskResources resources;
-        volatile float mDist;
-        friend class BackgroundLoader;
-        bool incremented; // have we called increment() on required resources?
-        bool causedError;
+
+    /** Did we add to the background queue yet? */
+    bool mInBackgroundQueue;
+
+    /** The vector of resources that are required. */
+    DiskResources resources;
+
+    /** Distance from the player to the user of these resources. */
+    volatile float mDist;
+
+    /** Have we called increment on the resources yet? */
+    bool incremented;
+
+    /** Was an error caused? */
+    bool causedError;
+
+    friend class BackgroundLoader;
 };
 
 
+/** Singleton class that managest the background loading of DiskResources using
+ * a system thread to block on the I/O involved.  The intent is to avoid stalls
+ * in the frame loop due to loading from disk.  Resources are loaded ahead of
+ * when they are needed, and when multiple resources are needed, the closest to
+ * the player is loaded first. */
 class BackgroundLoader {
 
     public:
@@ -228,4 +277,4 @@ class BackgroundLoader {
 
 #endif
 
-// vim: shiftwidth=8:tabstop=8:expandtab
+// vim: shiftwidth=4:tabstop=4:expandtab

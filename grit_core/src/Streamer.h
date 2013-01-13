@@ -93,7 +93,10 @@ float core_option (CoreFloatOption o);
 /** Call before anything else.  Sets up internal state of the subsystem. */
 void streamer_init();
 
-/** Called frequently to action streaming.  \param new_pos The player's position. */
+/** Called frequently to action streaming.
+ * \param L Lua state for calling object activation callbacks.
+ * \param new_pos The player's position.
+ */
 void streamer_centre (lua_State *L, const Vector3 &new_pos);
 
 /** Called by objects when they change position or rendering distance.

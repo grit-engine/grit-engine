@@ -91,6 +91,9 @@ static void push (lua_State *L, const ExternalTable::Value &v)
                 case 8:
                 v.func.push(L);
                 break;
+                case 9:
+                push_v2(L, v.v2);
+                break;
                 default:
                 CERR << "Unhandled ExternalTable type: " << v.type << std::endl;
         }
@@ -161,6 +164,9 @@ const char *ExternalTable::luaSet (lua_State *L, const std::string &key)
                 Value &v = fields[key];
                 v.func.setNoPop(L);
                 v.type = 8;
+        } else if (lua_type(L,-1)==LUA_TVECTOR2) {
+                Vector2 val = check_v2(L,-1);
+                set(key,val);
         } else {
                 return "type not supported";
         }
@@ -200,6 +206,9 @@ const char *ExternalTable::luaSet (lua_State *L, lua_Number key)
                 Value &v = elements[key];
                 v.func.setNoPop(L);
                 v.type = 8;
+        } else if (lua_type(L,-1)==LUA_TVECTOR2) {
+                Vector2 val = check_v2(L,-1);
+                set(key,val);
         } else {
                 return "type not supported";
         }

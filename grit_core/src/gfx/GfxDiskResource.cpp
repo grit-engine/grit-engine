@@ -49,11 +49,11 @@ size_t gfx_gpu_ram_used (void)
 
 
 GfxDiskResource::GfxDiskResource (const std::string &name, const std::string &ext)
-    : name(name)
+    : isMesh(ext == "mesh"), name(name)
 {
     try {
         std::string ogre_name = name.substr(1);
-        if (ext == "mesh") {
+        if (isMesh) {
             Ogre::HardwareBuffer::Usage u = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
             rp = Ogre::MeshManager::getSingleton()
                     .createOrRetrieve(ogre_name,"GRIT", false,0, 0, u,u,false,false).first;
@@ -262,7 +262,3 @@ void GfxDiskResource::unloadImpl(void)
     }       
 }  
 
-bool GfxDiskResource::isGPUResource (void)
-{
-    return true;
-}

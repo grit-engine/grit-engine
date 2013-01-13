@@ -47,7 +47,7 @@ GritObject::GritObject (const std::string &name_,
     demandRegistered(false),
     imposedFarFade(1.0),
     lastFade(-1)
-{       
+{
     gritClass->acquire();
 }       
 

@@ -51,8 +51,8 @@ class ExternalTable {
 
         void destroy (lua_State *L);
 
-        bool has (const std::string &key) { return fields.find(key)!=fields.end(); }
-        bool has (lua_Number key) { return elements.find(key)!=elements.end(); }
+        bool has (const std::string &key) const { return fields.find(key)!=fields.end(); }
+        bool has (lua_Number key) const { return elements.find(key)!=elements.end(); }
 
         template<class U> void get (const std::string &key, U &val, const U &def)
         {
@@ -130,6 +130,14 @@ class ExternalTable {
                 return true;
         }
 
+        bool get (const std::string &key, Vector2 &v)
+        {
+                if (!has(key)) return false;
+                if (fields[key].type != 9) return false;
+                v = fields[key].v2;
+                return true;
+        }
+
         bool get (lua_Number key, lua_Number &v)
         {
                 if (!has(key)) return false;
@@ -194,6 +202,14 @@ class ExternalTable {
                 return true;
         }
 
+        bool get (lua_Number key, Vector2 &v)
+        {
+                if (!has(key)) return false;
+                if (elements[key].type != 9) return false;
+                v = elements[key].v2;
+                return true;
+        }
+
 
         void set (const std::string &key, const lua_Number r)
         {
@@ -241,6 +257,12 @@ class ExternalTable {
         {
                 fields[key].type = 7;
                 fields[key].plot_v3 = plot_v3;
+        }
+
+        void set (const std::string &key, const Vector2 &v2)
+        {
+                fields[key].type = 9;
+                fields[key].v2 = v2;
         }
 
         void set (lua_Number key, const lua_Number r)
@@ -291,6 +313,12 @@ class ExternalTable {
                 elements[key].plot_v3 = plot_v3;
         }
 
+        void set (lua_Number &key, const Vector2 &v2)
+        {
+                elements[key].type = 9;
+                elements[key].v2 = v2;
+        }
+
         const char *luaGet (lua_State *L);
         const char *luaSet (lua_State *L);
 
@@ -329,6 +357,7 @@ class ExternalTable {
                 Plot plot;
                 PlotV3 plot_v3;
                 LuaPtr func;
+                Vector2 v2;
         };
 
         typedef std::map<std::string,Value> StringMap;

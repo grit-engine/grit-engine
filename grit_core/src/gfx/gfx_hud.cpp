@@ -79,6 +79,18 @@ void GfxHudObject::init (lua_State *L, const GfxHudObjectPtr &ptr)
     (void) L; (void) ptr;
 }
 
+void GfxHudObject::parentResized (lua_State *L, const GfxHudObjectPtr &ptr)
+{
+    (void) L; (void) ptr;
+}
+
+void GfxHudObject::setTexture (GfxDiskResource *v)
+{
+    assertAlive();
+    // maybe check it's valid at this point
+    // although it can always become unloaaded before actual rendering time
+    texture = v;
+}
 
 
 static Ogre::HighLevelGpuProgramPtr vp_tex, fp_tex;
@@ -87,19 +99,21 @@ static Ogre::VertexData *quad_vdata; // Must be allocated later because construc
 static Ogre::HardwareVertexBufferSharedPtr quad_vbuf;
 static unsigned quad_vdecl_size;
 
-static Ogre::HighLevelGpuProgramPtr make_shader (bool fragment, const std::string &code)
+enum VertOrFrag { VERT, FRAG };
+
+static Ogre::HighLevelGpuProgramPtr make_shader (VertOrFrag kind, const std::string &code)
 {
     Ogre::StringVector vp_profs, fp_profs;
     vp_profs.push_back("vs_3_0"); fp_profs.push_back("ps_3_0"); // d3d9
     vp_profs.push_back("gpu_vp"); fp_profs.push_back("gp4fp"); // gl
 
     Ogre::HighLevelGpuProgramPtr prog = Ogre::HighLevelGpuProgramManager::getSingleton()
-        .createProgram("hud_f", RESGRP, "cg", fragment ? Ogre::GPT_FRAGMENT_PROGRAM : Ogre::GPT_VERTEX_PROGRAM);
+        .createProgram("hud_f", RESGRP, "cg", kind==FRAG ? Ogre::GPT_FRAGMENT_PROGRAM : Ogre::GPT_VERTEX_PROGRAM);
     APP_ASSERT(!prog.isNull());
     Ogre::CgProgram *tmp_prog = static_cast<Ogre::CgProgram*>(&*prog);
     prog->setSource(code);
     tmp_prog->setEntryPoint("main");
-    tmp_prog->setProfiles(fragment ? fp_profs : vp_profs);
+    tmp_prog->setProfiles(kind==FRAG ? fp_profs : vp_profs);
     tmp_prog->setCompileArguments("-I. -O3");
     prog->unload();
     prog->load();
@@ -125,7 +139,7 @@ void gfx_hud_init (void)
 
     // Initialise vertex program
 
-    vp_solid = make_shader(false, 
+    vp_solid = make_shader(VERT, 
         "void main (\n"
         "    in float2 in_POSITION:POSITION,\n"
         "    out float4 out_POSITION:POSITION\n"
@@ -134,7 +148,7 @@ void gfx_hud_init (void)
         "}\n"
     );
 
-    fp_solid = make_shader(true, 
+    fp_solid = make_shader(FRAG, 
         "void main (\n"
         "    uniform float3 colour,\n"
         "    uniform float alpha,\n"
@@ -145,7 +159,7 @@ void gfx_hud_init (void)
         "}\n"
     );
     
-    vp_tex = make_shader(false, 
+    vp_tex = make_shader(VERT, 
         "void main (\n"
         "    in float2 in_POSITION:POSITION,\n"
         "    in float2 in_TEXCOORD0:TEXCOORD0,\n"
@@ -157,7 +171,7 @@ void gfx_hud_init (void)
         "}\n"
     );
 
-    fp_tex = make_shader(true, 
+    fp_tex = make_shader(FRAG, 
         "void main (\n"
         "    in float2 in_TEXCOORD0:TEXCOORD0,\n"
         "    uniform sampler2D texture,\n"
@@ -263,6 +277,11 @@ void gfx_hud_render (void)
                 //DiskResource *tex_ = disk_resource_get_or_make("/system/Crosshair.bmp");
                 //GfxDiskResource *tex = dynamic_cast<GfxDiskResource*>(tex_);
                 GfxDiskResource *tex = body->getTexture();
+                if (tex!=NULL && !tex->isLoaded()) {
+                    CERR << "Hud body using unloaded texture: \"" << (*tex) << "\"" << std::endl;
+                    body->setTexture(NULL);
+                    tex = NULL;
+                }
 
                 const Ogre::HighLevelGpuProgramPtr &vp = tex == NULL ? vp_solid : vp_tex;
                 const Ogre::HighLevelGpuProgramPtr &fp = tex == NULL ? fp_solid : fp_tex;
@@ -279,7 +298,8 @@ void gfx_hud_render (void)
 
                 set_vertex_data(body->getPosition(), body->getSize(), body->getOrientation(), body->getUV1(), body->getUV2());
 
-                try_set_named_constant(fp, "colour", to_ogre(body->getColour()));
+                // premultiply the colour by the alpha -- for convenience
+                try_set_named_constant(fp, "colour", to_ogre(body->getAlpha() * body->getColour()));
                 try_set_named_constant(fp, "alpha", body->getAlpha());
 
 

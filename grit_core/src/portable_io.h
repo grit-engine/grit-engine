@@ -42,10 +42,13 @@
 
 #include "CentralisedLog.h"
 
-/** \file The following routines do IO on little endian files.  The host system
+/** \file
+ *
+ * The following routines do IO on little endian files.  The host system
  * can be any endian.  There are versions for reading/writing signed (s)
  * unsigned (u) integers of various bit widths, floating point, text, and
- * arrays. */
+ * arrays.
+ */
 
 
 /** Centralise the handling of IO errors while reading. */

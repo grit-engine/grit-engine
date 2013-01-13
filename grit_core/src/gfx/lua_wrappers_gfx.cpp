@@ -1166,14 +1166,26 @@ TRY_START
         push_v2(L, self->getSize());
     } else if (!::strcmp(key,"zOrder")) {
         lua_pushnumber(L, self->getZOrder());
+
     } else if (!::strcmp(key,"colour")) {
         push_v3(L, self->getColour());
     } else if (!::strcmp(key,"alpha")) {
         lua_pushnumber(L, self->getAlpha());
+    } else if (!::strcmp(key,"texture")) {
+        GfxDiskResource *d = self->getTexture();
+        if (d==NULL) {
+            lua_pushnil(L);
+        } else {
+            push_string(L, d->getName());
+        }
 
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self->isEnabled());
 
+    } else if (!::strcmp(key,"class")) {
+        push_gfxhudclass(L, self->hudClass);
+    } else if (!::strcmp(key,"className")) {
+        push_string(L, self->hudClass->name);
     } else if (!::strcmp(key,"dump")) {
         self->userValues.dump(L);
 
@@ -1210,12 +1222,25 @@ TRY_START
     } else if (!::strcmp(key,"size")) {
         Vector2 v = check_v2(L,3);
         self->setSize(v);
+
     } else if (!::strcmp(key,"colour")) {
         Vector3 v = check_v3(L,3);
         self->setColour(v);
     } else if (!::strcmp(key,"alpha")) {
         float v = check_float(L,3);
         self->setAlpha(v);
+    } else if (!::strcmp(key,"texture")) {
+        if (lua_isnil(L,3)) {
+            self->setTexture(NULL);
+        } else {
+            const char *v = luaL_checkstring(L,3);
+            DiskResource *d = disk_resource_get(v);
+            if (d==NULL) my_lua_error(L, "Resource does not exist: \""+std::string(v)+"\"");
+            GfxDiskResource *d2 = dynamic_cast<GfxDiskResource*>(d);
+            if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+std::string(v)+"\"");
+            self->setTexture(d2);
+        }
+
     } else if (!::strcmp(key,"zOrder")) {
         unsigned char v = check_int(L,3,0,255);
         self->setZOrder(v);
@@ -1223,6 +1248,10 @@ TRY_START
         bool v = check_bool(L,3);
         self->setEnabled(v);
     } else if (!::strcmp(key,"dump")) {
+        my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+    } else if (!::strcmp(key,"class")) {
+        my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+    } else if (!::strcmp(key,"className")) {
         my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
     } else if (!::strcmp(key,"destroy")) {
         my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
@@ -1398,6 +1427,15 @@ TRY_START
     
     GfxHudObjectPtr self = GfxHudObjectPtr(new GfxHudObject(hud_class));
 
+    bool have_orientation = false;
+    bool have_position = false;
+    bool have_size = false;
+    bool have_colour = false;
+    bool have_alpha = false;
+    bool have_texture = false;
+    bool have_zorder = false;
+    bool have_enabled = false;
+
     // scan through table adding lua data to self
     for (lua_pushnil(L) ; lua_next(L,table_index)!=0 ; lua_pop(L,1)) {
         if (lua_type(L,-2)!=LUA_TSTRING) {
@@ -1409,6 +1447,7 @@ TRY_START
             if (lua_isnumber(L,-1)) {
                 float v = check_float(L,-1);
                 self->setOrientation(Degree(v));
+                have_orientation = true;
             } else {
                 my_lua_error(L, "Orientation must be a number.");
             }
@@ -1416,6 +1455,7 @@ TRY_START
             if (lua_isvector2(L,-1)) {
                 Vector2 v = check_v2(L,-1);
                 self->setPosition(v);
+                have_position = true;
             } else {
                 my_lua_error(L, "Position must be a vector2.");
             }
@@ -1423,6 +1463,7 @@ TRY_START
             if (lua_isvector2(L,-1)) {
                 Vector2 v = check_v2(L,-1);
                 self->setSize(v);
+                have_size = true;
             } else {
                 my_lua_error(L, "Size must be a vector2.");
             }
@@ -1430,6 +1471,7 @@ TRY_START
             if (lua_isvector3(L,-1)) {
                 Vector3 v = check_v3(L,-1);
                 self->setColour(v);
+                have_colour = true;
             } else {
                 my_lua_error(L, "Colour must be a vector3.");
             }
@@ -1437,17 +1479,30 @@ TRY_START
             if (lua_isnumber(L,-1)) {
                 float v = check_float(L,-1);
                 self->setAlpha(v);
+                have_alpha = true;
             } else {
                 my_lua_error(L, "Alpha must be a number.");
+            }
+        } else if (!::strcmp(key,"texture")) {
+            if (lua_isstring(L,-1)) {
+                const char *v = luaL_checkstring(L,-1);
+                DiskResource *d = disk_resource_get(v);
+                if (d==NULL) my_lua_error(L, "Resource does not exist: \""+std::string(v)+"\"");
+                GfxDiskResource *d2 = dynamic_cast<GfxDiskResource*>(d);
+                if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+std::string(v)+"\"");
+                self->setTexture(d2);
+                have_texture = true;
+            } else {
+                my_lua_error(L, "Texture must be a string.");
             }
         } else if (!::strcmp(key,"zOrder")) {
             if (lua_isnumber(L,-1)) {
                 lua_Number v = lua_tonumber(L,-1);
-                if (v==(unsigned char)(v)) {
-                    self->setZOrder((unsigned char)v);
-                } else {
-                    my_lua_error(L, "zOrder must be an integer between 0 and 255.");
+                if (v!=(unsigned char)(v)) {
+                    my_lua_error(L, "zOrder must be an integer between 0 and 255 inclusive.");
                 }
+                self->setZOrder((unsigned char)v);
+                have_zorder = true;
             } else {
                 my_lua_error(L, "zOrder must be a number.");
             }
@@ -1455,10 +1510,15 @@ TRY_START
             if (lua_isboolean(L,-1)) {
                 bool v = check_bool(L,-1);
                 self->setEnabled(v);
+                have_enabled = true;
             } else {
                 my_lua_error(L, "Enabled must be a boolean.");
             }
         } else if (!::strcmp(key,"dump")) {
+            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+        } else if (!::strcmp(key,"class")) {
+            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+        } else if (!::strcmp(key,"className")) {
             my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
         } else if (!::strcmp(key,"destroy")) {
             my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
@@ -1467,6 +1527,86 @@ TRY_START
         } else {
             const char *err = self->userValues.luaSet(L);
             if (err) my_lua_error(L, err);
+        }
+    }
+    ExternalTable &tab = hud_class->getTable();
+    if (!have_orientation) {
+        if (tab.has("orientation")) {
+            lua_Number v;
+            bool success = tab.get("orientation",v);
+            if (!success) my_lua_error(L, "Wrong type for orientation field in hud class \""+hud_class->name+"\".");
+            self->setOrientation(Degree(v));
+        }
+    }
+    if (!have_position) {
+        if (tab.has("position")) {
+            Vector2 v;
+            bool success = tab.get("position",v);
+            if (!success) my_lua_error(L, "Wrong type for position field in hud class \""+hud_class->name+"\".");
+            self->setPosition(v);
+        }
+    }
+    if (!have_size) {
+        if (tab.has("size")) {
+            Vector2 v;
+            bool success = tab.get("size",v);
+            if (!success) my_lua_error(L, "Wrong type for size field in hud class \""+hud_class->name+"\".");
+            self->setSize(v);
+        }
+    }
+    if (!have_colour) {
+        if (tab.has("colour")) {
+            Vector3 v;
+            bool success = tab.get("colour",v);
+            if (!success) my_lua_error(L, "Wrong type for colour field in hud class \""+hud_class->name+"\".");
+            self->setColour(v);
+        }
+    }
+    if (!have_alpha) {
+        if (tab.has("alpha")) {
+            lua_Number v;
+            bool success = tab.get("alpha",v);
+            if (!success) my_lua_error(L, "Wrong type for alpha field in hud class \""+hud_class->name+"\".");
+            self->setAlpha(v);
+        }
+    }
+    if (!have_texture) {
+        if (tab.has("texture")) {
+            std::string v;
+            bool success = tab.get("texture",v);
+            if (!success) my_lua_error(L, "Wrong type for texture field in hud class \""+hud_class->name+"\".");
+            DiskResource *d = disk_resource_get(v);
+            if (d==NULL) my_lua_error(L, "Resource does not exist: \""+std::string(v)+"\"");
+            GfxDiskResource *d2 = dynamic_cast<GfxDiskResource*>(d);
+            if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+std::string(v)+"\"");
+            self->setTexture(d2);
+        }
+    }
+    if (!have_zorder) {
+        if (tab.has("zOrder")) {
+            lua_Number v;
+            bool success = tab.get("zOrder",v);
+            if (!success) my_lua_error(L, "Wrong type for zOrder field in hud class \""+hud_class->name+"\".");
+            if ((unsigned char)(v) != v) my_lua_error(L, "zOrder must be an integer in range 0 to 255 in class \""+hud_class->name+"\".");
+            self->setZOrder((unsigned char)v);
+        }
+    }
+    if (!have_enabled) {
+        if (tab.has("enabled")) {
+            bool v;
+            bool success = tab.get("enabled",v);
+            if (!success) my_lua_error(L, "Wrong type for enabled field in hud class \""+hud_class->name+"\".");
+            self->setEnabled(v);
+        }
+    }
+    if (!have_size && self->getTexture()!=NULL) {
+        // set size from texture
+        GfxDiskResource *dr = self->getTexture();
+        if (!dr->isMesh) {
+            if (dr->isLoaded()) {
+                Ogre::TexturePtr tex = dr->getOgreResourcePtr();
+                self->setSize(Vector2(tex->getWidth(),tex->getHeight()));
+            }
         }
     }
     self->init(L,self);

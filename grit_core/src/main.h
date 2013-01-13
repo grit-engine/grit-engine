@@ -19,6 +19,19 @@
  * THE SOFTWARE.
  */
 
+/** \mainpage The Grit Game Engine
+ *
+ * \section intro Introduction
+ * 
+ * This is the intro
+ *
+ * \section toplevel Top Level Design
+ *
+ * Placeholder text.  Another sentence.
+ * 
+ * Another paragraph.
+ */
+
 extern "C" {
         #include "lua.h"
 }
