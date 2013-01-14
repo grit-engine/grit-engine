@@ -29,6 +29,16 @@
 #include "gfx_hud.h"
 #include "gfx_internal.h"
 
+static bool window_was_resized = false;
+static Vector2 win_size(0,0);
+
+void gfx_hud_window_resized (unsigned w, unsigned h)
+{
+    window_was_resized = true;
+    win_size = Vector2(float(w),float(h));
+}
+
+
 static GfxHudClassMap classes;
 
 GfxHudClass *gfx_hud_class_add (lua_State *L, const std::string& name)
@@ -182,7 +192,7 @@ void GfxHudObject::triggerInit (lua_State *L)
     STACK_CHECK;
 }
 
-void GfxHudObject::triggerParentResized (lua_State *L, const Vector2 &psize)
+void GfxHudObject::triggerParentResized (lua_State *L)
 {
     assertAlive();
     STACK_BASE;
@@ -210,7 +220,7 @@ void GfxHudObject::triggerParentResized (lua_State *L, const Vector2 &psize)
     STACK_CHECK_N(2);
 
     push_gfxhudobj(L, this);
-    push_v2(L, psize);
+    push_v2(L, win_size);
     //stack: err,callback,object,size
 
     STACK_CHECK_N(4);
@@ -488,6 +498,18 @@ void gfx_hud_render (Ogre::Viewport *vp)
                 //const Vector3 colour(1,1,1);
                 //const float alpha = 1;
 
+                Vector2 uv1 = body->getUV1();
+                Vector2 uv2 = body->getUV2();
+
+                if (tex != NULL && d3d9) {
+                    // Texel offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
+                    Ogre::TexturePtr ogre_tex = tex->getOgreResourcePtr();
+                    ogre_tex->load(); // otherwise width and height are 512!?
+                    Vector2 tex_size(ogre_tex->getWidth(),ogre_tex->getHeight());
+                    uv1 += 0.5 / tex_size;
+                    uv2 += 0.5 / tex_size;
+                }
+
                 set_vertex_data(body->getPosition(), body->getSize(), body->getOrientation(), body->getUV1(), body->getUV2());
 
                 // premultiply the colour by the alpha -- for convenience
@@ -551,15 +573,6 @@ void gfx_hud_render (Ogre::Viewport *vp)
 
 }
 
-static bool window_was_resized = false;
-static Vector2 win_size(0,0);
-
-void gfx_hud_window_resized (unsigned w, unsigned h)
-{
-    window_was_resized = true;
-    win_size = Vector2(float(w),float(h));
-}
-
 void gfx_hud_call_parent_resized (lua_State *L)
 {
     if (!window_was_resized) return;
@@ -568,7 +581,7 @@ void gfx_hud_call_parent_resized (lua_State *L)
         GfxHudBase *base = all_bodies[i];
         GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
         if (obj!=NULL && !obj->destroyed()) {
-            obj->triggerParentResized(L, win_size);
+            obj->triggerParentResized(L);
         }
     }
 

@@ -1624,6 +1624,7 @@ TRY_START
         }
     }
     self->triggerInit(L);
+    self->triggerParentResized(L);
     push_gfxhudobj(L,self);
 
     return 1;

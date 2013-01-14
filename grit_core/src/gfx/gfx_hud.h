@@ -176,7 +176,7 @@ class GfxHudObject : public GfxHudBase {
     void destroy (lua_State *L);
 
     void triggerInit (lua_State *L);
-    void triggerParentResized (lua_State *L, const Vector2 &psize);
+    void triggerParentResized (lua_State *L);
     void triggerDestroy (lua_State *L);
 
 
