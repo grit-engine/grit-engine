@@ -1060,7 +1060,7 @@ MT_MACRO_NEWINDEX(gfxlight);
 
 // GFXHUDCLASS ============================================================= {{{
 
-static void push_gfxhudclass (lua_State *L, GfxHudClass *self)
+void push_gfxhudclass (lua_State *L, GfxHudClass *self)
 {
         if (self == NULL) {
                 lua_pushnil(L);
@@ -1127,52 +1127,62 @@ MT_MACRO_NEWINDEX(gfxhudclass);
 
 // GFXHUDOBJECT ============================================================== {{{
 
-static void push_gfxhudobj (lua_State *L, const GfxHudObjectPtr &self)
+void push_gfxhudobj (lua_State *L, GfxHudObject *self)
 {
-    if (self.isNull())
+    if (self==NULL)
         lua_pushnil(L);
-    else
-        push(L,new GfxHudObjectPtr(self),GFXHUDOBJECT_TAG);
+    else {
+        self->incRefCount();
+        push(L,self,GFXHUDOBJECT_TAG);
+    }
 }
 
-GC_MACRO(GfxHudObjectPtr,gfxhudobj,GFXHUDOBJECT_TAG)
+static int gfxhudobj_gc (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
+    self.decRefCount(L);
+    return 0;
+TRY_END
+}
 
 static int gfxhudobj_destroy (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(GfxHudObjectPtr,self,1,GFXHUDOBJECT_TAG);
-    self->destroy();
+    GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
+    self.destroy(L);
     return 0;
 TRY_END
 }
 
 
 
-TOSTRING_SMART_PTR_MACRO (gfxhudobj,GfxHudObjectPtr,GFXHUDOBJECT_TAG)
+TOSTRING_ADDR_MACRO (gfxhudobj,GfxHudObject,GFXHUDOBJECT_TAG)
 
 
 static int gfxhudobj_index (lua_State *L)
 {
 TRY_START
     check_args(L,2);
-    GET_UD_MACRO(GfxHudObjectPtr,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"orientation")) {
-        lua_pushnumber(L, self->getOrientation().inDegrees());
+        lua_pushnumber(L, self.getOrientation().inDegrees());
     } else if (!::strcmp(key,"position")) {
-        push_v2(L, self->getPosition());
+        push_v2(L, self.getPosition());
     } else if (!::strcmp(key,"size")) {
-        push_v2(L, self->getSize());
+        push_v2(L, self.getSize());
     } else if (!::strcmp(key,"zOrder")) {
-        lua_pushnumber(L, self->getZOrder());
+        lua_pushnumber(L, self.getZOrder());
 
     } else if (!::strcmp(key,"colour")) {
-        push_v3(L, self->getColour());
+        push_v3(L, self.getColour());
     } else if (!::strcmp(key,"alpha")) {
-        lua_pushnumber(L, self->getAlpha());
+        lua_pushnumber(L, self.getAlpha());
     } else if (!::strcmp(key,"texture")) {
-        GfxDiskResource *d = self->getTexture();
+        GfxDiskResource *d = self.getTexture();
         if (d==NULL) {
             lua_pushnil(L);
         } else {
@@ -1180,27 +1190,27 @@ TRY_START
         }
 
     } else if (!::strcmp(key,"enabled")) {
-        lua_pushboolean(L, self->isEnabled());
+        lua_pushboolean(L, self.isEnabled());
 
     } else if (!::strcmp(key,"class")) {
-        push_gfxhudclass(L, self->hudClass);
+        push_gfxhudclass(L, self.hudClass);
     } else if (!::strcmp(key,"className")) {
-        push_string(L, self->hudClass->name);
+        push_string(L, self.hudClass->name);
     } else if (!::strcmp(key,"dump")) {
-        self->userValues.dump(L);
+        self.userValues.dump(L);
 
     } else if (!::strcmp(key,"destroyed")) {
-        lua_pushboolean(L,self->destroyed());
+        lua_pushboolean(L,self.destroyed());
     } else if (!::strcmp(key,"destroy")) {
         push_cfunction(L,gfxhudobj_destroy);
     } else {
-        if (self->destroyed()) my_lua_error(L,"GfxHudObject destroyed");
-        const char *err = self->userValues.luaGet(L);
+        if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
+        const char *err = self.userValues.luaGet(L);
         if (err) my_lua_error(L, err);
         if (!lua_isnil(L,-1)) return 1;
         lua_pop(L,1);
         // try class instead
-        self->hudClass->get(L,key);
+        self.hudClass->get(L,key);
     }
     return 1;
 TRY_END
@@ -1211,42 +1221,42 @@ static int gfxhudobj_newindex (lua_State *L)
 {
 TRY_START
     check_args(L,3);
-    GET_UD_MACRO(GfxHudObjectPtr,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"orientation")) {
         float v = check_float(L,3);
-        self->setOrientation(Degree(v));
+        self.setOrientation(Degree(v));
     } else if (!::strcmp(key,"position")) {
         Vector2 v = check_v2(L,3);
-        self->setPosition(v);
+        self.setPosition(v);
     } else if (!::strcmp(key,"size")) {
         Vector2 v = check_v2(L,3);
-        self->setSize(v);
+        self.setSize(v);
 
     } else if (!::strcmp(key,"colour")) {
         Vector3 v = check_v3(L,3);
-        self->setColour(v);
+        self.setColour(v);
     } else if (!::strcmp(key,"alpha")) {
         float v = check_float(L,3);
-        self->setAlpha(v);
+        self.setAlpha(v);
     } else if (!::strcmp(key,"texture")) {
         if (lua_isnil(L,3)) {
-            self->setTexture(NULL);
+            self.setTexture(NULL);
         } else {
-            const char *v = luaL_checkstring(L,3);
+            std::string v = check_path(L,3);
             DiskResource *d = disk_resource_get(v);
-            if (d==NULL) my_lua_error(L, "Resource does not exist: \""+std::string(v)+"\"");
+            if (d==NULL) my_lua_error(L, "Resource does not exist: \""+v+"\"");
             GfxDiskResource *d2 = dynamic_cast<GfxDiskResource*>(d);
-            if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+std::string(v)+"\"");
-            self->setTexture(d2);
+            if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+v+"\"");
+            self.setTexture(d2);
         }
 
     } else if (!::strcmp(key,"zOrder")) {
         unsigned char v = check_int(L,3,0,255);
-        self->setZOrder(v);
+        self.setZOrder(v);
     } else if (!::strcmp(key,"enabled")) {
         bool v = check_bool(L,3);
-        self->setEnabled(v);
+        self.setEnabled(v);
     } else if (!::strcmp(key,"dump")) {
         my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
     } else if (!::strcmp(key,"class")) {
@@ -1258,15 +1268,15 @@ TRY_START
     } else if (!::strcmp(key,"destroyed")) {
         my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
     } else {
-        if (self->destroyed()) my_lua_error(L,"GfxHudObject destroyed");
-        const char *err = self->userValues.luaSet(L);
+        if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
+        const char *err = self.userValues.luaSet(L);
         if (err) my_lua_error(L, err);
     }
     return 0;
 TRY_END
 }
 
-EQ_MACRO(GfxBodyPtr,gfxhudobj,GFXHUDOBJECT_TAG)
+EQ_PTR_MACRO(GfxBodyPtr,gfxhudobj,GFXHUDOBJECT_TAG)
 
 MT_MACRO_NEWINDEX(gfxhudobj);
 
@@ -1281,6 +1291,7 @@ TRY_START
     float elapsed = check_float(L,1);
     Vector3 cam_pos = check_v3(L,2);
     Quaternion cam_dir = check_quat(L,3);
+    gfx_hud_call_parent_resized(L);
     gfx_render(elapsed, cam_pos, cam_dir);
     return 0;
 TRY_END
@@ -1425,7 +1436,7 @@ TRY_START
     int table_index = lua_gettop(L);
     if (!lua_istable(L,table_index)) my_lua_error(L,"Last parameter should be a table");
     
-    GfxHudObjectPtr self = GfxHudObjectPtr(new GfxHudObject(hud_class));
+    GfxHudObject *self = new GfxHudObject(hud_class);
 
     bool have_orientation = false;
     bool have_position = false;
@@ -1485,11 +1496,11 @@ TRY_START
             }
         } else if (!::strcmp(key,"texture")) {
             if (lua_isstring(L,-1)) {
-                const char *v = luaL_checkstring(L,-1);
+                std::string v = check_path(L,-1);
                 DiskResource *d = disk_resource_get(v);
-                if (d==NULL) my_lua_error(L, "Resource does not exist: \""+std::string(v)+"\"");
+                if (d==NULL) my_lua_error(L, "Resource does not exist: \""+v+"\"");
                 GfxDiskResource *d2 = dynamic_cast<GfxDiskResource*>(d);
-                if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+std::string(v)+"\"");
+                if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+v+"\"");
                 self->setTexture(d2);
                 have_texture = true;
             } else {
@@ -1552,6 +1563,7 @@ TRY_START
             bool success = tab.get("size",v);
             if (!success) my_lua_error(L, "Wrong type for size field in hud class \""+hud_class->name+"\".");
             self->setSize(v);
+            have_size = true;
         }
     }
     if (!have_colour) {
@@ -1574,6 +1586,7 @@ TRY_START
         if (tab.has("texture")) {
             std::string v;
             bool success = tab.get("texture",v);
+            v = pwd_full_ex(L, v, hud_class->dir);
             if (!success) my_lua_error(L, "Wrong type for texture field in hud class \""+hud_class->name+"\".");
             DiskResource *d = disk_resource_get(v);
             if (d==NULL) my_lua_error(L, "Resource does not exist: \""+std::string(v)+"\"");
@@ -1605,11 +1618,12 @@ TRY_START
         if (!dr->isMesh) {
             if (dr->isLoaded()) {
                 Ogre::TexturePtr tex = dr->getOgreResourcePtr();
+                tex->load(); // otherwise width and height are 512!?
                 self->setSize(Vector2(tex->getWidth(),tex->getHeight()));
             }
         }
     }
-    self->init(L,self);
+    self->triggerInit(L);
     push_gfxhudobj(L,self);
 
     return 1;

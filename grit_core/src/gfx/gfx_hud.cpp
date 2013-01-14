@@ -23,7 +23,9 @@
 #include <OgreCgProgram.h>
 
 #include "../CentralisedLog.h"
+#include "../path_util.h"
 
+#include "lua_wrappers_gfx.h"
 #include "gfx_hud.h"
 #include "gfx_internal.h"
 
@@ -73,15 +75,229 @@ size_t gfx_hud_class_count (void)
 }
 
 
+static fast_erase_vector<GfxHudBase*> all_bodies;
 
-void GfxHudObject::init (lua_State *L, const GfxHudObjectPtr &ptr)
+GfxHudBase::GfxHudBase (void)
+  : dead(false), parent(NULL), zOrder(127), position(0,0), size(32,32), orientation(0), enabled(true)
 {
-    (void) L; (void) ptr;
+    all_bodies.push_back(this);
 }
 
-void GfxHudObject::parentResized (lua_State *L, const GfxHudObjectPtr &ptr)
+GfxHudBase::~GfxHudBase (void)
 {
-    (void) L; (void) ptr;
+    if (!dead) destroy();
+}
+
+void GfxHudBase::destroy (void)
+{
+    assertAlive();
+    dead = true;
+    all_bodies.erase(this);
+}
+
+
+void GfxHudBase::assertAlive (void)
+{
+    if (dead) GRIT_EXCEPT("Hud element destroyed.");
+}
+
+
+void GfxHudObject::incRefCount (void)
+{
+    refCount++;
+}
+
+void GfxHudObject::decRefCount (lua_State *L)
+{
+    refCount--;
+    if (refCount == 0) {
+        destroy(L);
+        delete this;
+    }
+}
+
+
+void GfxHudObject::destroy (lua_State *L)
+{
+    if (!dead) {
+        triggerDestroy(L);
+        GfxHudBase::destroy();
+    }
+}
+
+void GfxHudObject::triggerInit (lua_State *L)
+{
+    assertAlive();
+    STACK_BASE;
+    //stack is empty
+
+    // error handler in case there is a problem during 
+    // the callback
+    push_cfunction(L, my_lua_error_handler);
+    int error_handler = lua_gettop(L);
+
+    //stack: err
+
+    // get the function
+    hudClass->get(L,"init");
+    //stack: err,callback
+    if (lua_isnil(L,-1)) {
+        // no destroy callback -- our work is done
+        lua_pop(L,2);
+        STACK_CHECK;
+        return;
+    }
+
+
+    //stack: err,callback
+    STACK_CHECK_N(2);
+
+    push_gfxhudobj(L, this);
+    //stack: err,callback,object
+
+    STACK_CHECK_N(3);
+
+    // call (1 arg), pops function too
+    pwd_push_dir(hudClass->dir);
+    int status = lua_pcall(L,1,0,error_handler);
+    pwd_pop();
+    if (status) {
+        STACK_CHECK_N(2);
+        //stack: err,error
+        // pop the error message since the error handler will
+        // have already printed it out
+        lua_pop(L,1);
+        //stack: err
+        STACK_CHECK_N(1);
+    } else {
+        //stack: err
+        STACK_CHECK_N(1);
+    }
+
+    //stack: err
+    STACK_CHECK_N(1);
+    lua_pop(L,1);
+
+    //stack is empty
+    STACK_CHECK;
+}
+
+void GfxHudObject::triggerParentResized (lua_State *L, const Vector2 &psize)
+{
+    assertAlive();
+    STACK_BASE;
+    //stack is empty
+
+    // error handler in case there is a problem during 
+    // the callback
+    push_cfunction(L, my_lua_error_handler);
+    int error_handler = lua_gettop(L);
+
+    //stack: err
+
+    // get the function
+    hudClass->get(L,"parentResized");
+    //stack: err,callback
+    if (lua_isnil(L,-1)) {
+        // no parentResized callback -- our work is done
+        lua_pop(L,2);
+        STACK_CHECK;
+        return;
+    }
+
+
+    //stack: err,callback
+    STACK_CHECK_N(2);
+
+    push_gfxhudobj(L, this);
+    push_v2(L, psize);
+    //stack: err,callback,object,size
+
+    STACK_CHECK_N(4);
+
+    // call (1 arg), pops function too
+    pwd_push_dir(hudClass->dir);
+    int status = lua_pcall(L,2,0,error_handler);
+    pwd_pop();
+    if (status) {
+        STACK_CHECK_N(2);
+        //stack: err,error
+        // pop the error message since the error handler will
+        // have already printed it out
+        lua_pop(L,1);
+        CERR << "Hud object of class: \"" << hudClass->name << "\" raised an error on parent resize, destroying it." << std::endl;
+        // will call destroy callback
+        destroy(L);
+        //stack: err
+        STACK_CHECK_N(1);
+    } else {
+        //stack: err
+        STACK_CHECK_N(1);
+    }
+
+    //stack: err
+    STACK_CHECK_N(1);
+    lua_pop(L,1);
+
+    //stack is empty
+    STACK_CHECK;
+}
+
+void GfxHudObject::triggerDestroy (lua_State *L)
+{
+    assertAlive();
+    STACK_BASE;
+    //stack is empty
+
+    // error handler in case there is a problem during 
+    // the callback
+    push_cfunction(L, my_lua_error_handler);
+    int error_handler = lua_gettop(L);
+
+    //stack: err
+
+    // get the function
+    hudClass->get(L,"destroy");
+    //stack: err,callback
+    if (lua_isnil(L,-1)) {
+        // no destroy callback -- our work is done
+        lua_pop(L,2);
+        STACK_CHECK;
+        return;
+    }
+
+
+    //stack: err,callback
+    STACK_CHECK_N(2);
+
+    push_gfxhudobj(L, this);
+    //stack: err,callback,object
+
+    STACK_CHECK_N(3);
+
+    // call (1 arg), pops function too
+    pwd_push_dir(hudClass->dir);
+    int status = lua_pcall(L,1,0,error_handler);
+    pwd_pop();
+    if (status) {
+        STACK_CHECK_N(2);
+        //stack: err,error
+        // pop the error message since the error handler will
+        // have already printed it out
+        lua_pop(L,1);
+        //stack: err
+        STACK_CHECK_N(1);
+    } else {
+        //stack: err
+        STACK_CHECK_N(1);
+    }
+
+    //stack: err
+    STACK_CHECK_N(1);
+    lua_pop(L,1);
+
+    //stack is empty
+    STACK_CHECK;
 }
 
 void GfxHudObject::setTexture (GfxDiskResource *v)
@@ -205,8 +421,8 @@ static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radia
 
     const Vector2 halfsize = size/2;
 
-    float width = ogre_win->getWidth();
-    float height = ogre_win->getHeight();
+    float width = float(ogre_win->getWidth());
+    float height = float(ogre_win->getHeight());
 
     Vertex top_left= {
         (position + (Vector2(-1,1) * halfsize).rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
@@ -234,35 +450,11 @@ static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radia
     
 }
 
-static fast_erase_vector<GfxHudBase*> all_bodies;
 
-GfxHudBase::GfxHudBase (void)
-  : dead(false), parent(NULL), zOrder(127), position(0,0), size(32,32), orientation(0), enabled(true)
+void gfx_hud_render (Ogre::Viewport *vp)
 {
-    all_bodies.push_back(this);
-}
+    ogre_rs->_setViewport(vp);
 
-GfxHudBase::~GfxHudBase (void)
-{
-    if (!dead) destroy();
-}
-
-void GfxHudBase::assertAlive (void)
-{
-    if (dead) GRIT_EXCEPT("Hud element destroyed.");
-}
-
-
-void GfxHudBase::destroy (void)
-{
-    APP_ASSERT(!dead);
-    dead = true;
-    all_bodies.erase(this);
-    // do something with parents and children
-}
-
-void gfx_hud_render (void)
-{
     ogre_rs->_beginFrame();
 
     try {
@@ -270,7 +462,7 @@ void gfx_hud_render (void)
         for (unsigned i=0 ; i<all_bodies.size() ; ++i) {
 
             GfxHudBase *base = all_bodies[i];
-            if (!base->isEnabled()) continue;
+            if (!base->isEnabled() || base->destroyed()) continue;
 
             GfxHudObject *body = dynamic_cast<GfxHudObject*>(base);
             if (body!=NULL) {
@@ -357,5 +549,29 @@ void gfx_hud_render (void)
 
     ogre_rs->_endFrame();
 
+}
+
+static bool window_was_resized = false;
+static Vector2 win_size(0,0);
+
+void gfx_hud_window_resized (unsigned w, unsigned h)
+{
+    window_was_resized = true;
+    win_size = Vector2(float(w),float(h));
+}
+
+void gfx_hud_call_parent_resized (lua_State *L)
+{
+    if (!window_was_resized) return;
+
+    for (unsigned i=0 ; i<all_bodies.size() ; ++i) {
+        GfxHudBase *base = all_bodies[i];
+        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+        if (obj!=NULL && !obj->destroyed()) {
+            obj->triggerParentResized(L, win_size);
+        }
+    }
+
+    window_was_resized = false;
 }
 

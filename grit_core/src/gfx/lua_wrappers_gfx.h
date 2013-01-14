@@ -30,6 +30,7 @@
 #include "GfxLight.h"
 #include "GfxInstances.h"
 #include "GfxRangedInstances.h"
+#include "gfx_hud.h"
 
 #define GFXBODY_TAG "Grit/GfxBody"
 #define GFXSKYBODY_TAG "Grit/GfxSkyBody"
@@ -47,5 +48,8 @@ void push_gfxrangedinstances (lua_State *L, const GfxRangedInstancesPtr &self);
 void push_gfxinstances (lua_State *L, const GfxInstancesPtr &self);
 void push_gfxskybody (lua_State *L, const GfxSkyBodyPtr &self);
 void push_gfxlight (lua_State *L, const GfxLightPtr &self);
+
+void push_gfxhudclass (lua_State *L, GfxHudClass *self);
+void push_gfxhudobj (lua_State *L, GfxHudObject *self);
 
 // vim: shiftwidth=8:tabstop=8:expandtab

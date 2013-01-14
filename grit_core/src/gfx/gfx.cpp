@@ -129,6 +129,7 @@ std::string freshname (void)
 
 Ogre::Viewport *eye_left_vp = NULL;
 Ogre::Viewport *eye_right_vp = NULL;
+Ogre::Viewport *hud_vp = NULL;
 GfxPipeline *eye_left = NULL;
 GfxPipeline *eye_right = NULL;
 
@@ -139,9 +140,12 @@ void do_reset_framebuffer (void)
     if (eye_left_vp) ogre_win->removeViewport(eye_left_vp->getZOrder());
     delete eye_left;
     eye_left = NULL;
+
     if (eye_right_vp) ogre_win->removeViewport(eye_right_vp->getZOrder());
     delete eye_right;
     eye_right = NULL;
+
+    if (hud_vp) ogre_win->removeViewport(hud_vp->getZOrder());
 
     // set things up again
     if (stereoscopic()) {
@@ -161,6 +165,7 @@ void do_reset_framebuffer (void)
         eye_left = new GfxPipeline("EyeLeft", eye_left_vp);
     }
 
+    hud_vp = ogre_win->addViewport(NULL, 10, 0, 0, 1, 1);
 }
 
 
@@ -573,7 +578,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
                 eye_left->render(opts_left);
             }
 
-            gfx_hud_render();
+            gfx_hud_render(hud_vp);
 
             ogre_rs->_swapAllRenderTargetBuffers(true);
         } else {
@@ -742,6 +747,7 @@ struct WindowEventListener : Ogre::WindowEventListener {
         if (shutting_down) return;
         gfx_cb->windowResized(rw->getWidth(),rw->getHeight());
         do_reset_framebuffer();
+        gfx_hud_window_resized(rw->getWidth(),rw->getHeight());
     }
 
     void windowClosed (Ogre::RenderWindow *rw)

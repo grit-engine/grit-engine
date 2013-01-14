@@ -26,7 +26,6 @@
 
 class GfxHudBase;
 class GfxHudObject;
-typedef SharedPtr<GfxHudObject> GfxHudObjectPtr;
 class GfxHudText;
 
 class GfxHudClass;
@@ -43,10 +42,8 @@ extern "C" {
 
 #include "../ExternalTable.h"
 #include "../lua_util.h"
-#include "../LuaPtr.h"
-#include "../path_util.h"
 
-#include "../math_util.h"
+#include "../path_util.h"
 #include "../vect_util.h"
 
 #include "GfxPipeline.h"
@@ -171,11 +168,17 @@ class GfxHudObject : public GfxHudBase {
     public:
 
     GfxHudObject (GfxHudClass *hud_class)
-      : GfxHudBase(), hudClass(hud_class), texture(NULL), uv1(0,1), uv2(1,0), colour(1,1,1), alpha(1)
+      : GfxHudBase(), hudClass(hud_class), texture(NULL), uv1(0,1), uv2(1,0), colour(1,1,1), alpha(1), refCount(0)
     { }
 
-    void init (lua_State *L, const GfxHudObjectPtr &ptr);
-    void parentResized (lua_State *L, const GfxHudObjectPtr &ptr);
+    void incRefCount (void);
+    void decRefCount (lua_State *L);
+    void destroy (lua_State *L);
+
+    void triggerInit (lua_State *L);
+    void triggerParentResized (lua_State *L, const Vector2 &psize);
+    void triggerDestroy (lua_State *L);
+
 
     float getAlpha (void) { assertAlive(); return alpha; }
     void setAlpha (float v) { assertAlive(); alpha = v; }
@@ -191,6 +194,11 @@ class GfxHudObject : public GfxHudBase {
 
     GfxDiskResource *getTexture (void) { assertAlive(); return texture; }
     void setTexture (GfxDiskResource *v);
+
+
+    private:
+
+    unsigned refCount;
     
 };
 
@@ -198,10 +206,21 @@ class GfxHudText : public GfxHudBase {
 
 };
 
-void gfx_hud_render (void);
+/** Called in the frame loop by the graphics code to render the HUD on top of the 3d graphics. */
+void gfx_hud_render (Ogre::Viewport *vp);
 
+/** Set up internal state. */
 void gfx_hud_init (void);
 
+/** Called as the game engine exits to clean up internal state. */
 void gfx_hud_shutdown (void);
+
+/** Notify the hud objects of a window resize. */
+void gfx_hud_window_resized (unsigned w, unsigned h);
+
+/** Call the parentResized callbacks on the whole tree of hud elements.  This
+ * is to be called after a window resize, but before the gfx_hud_render call.
+ * */
+void gfx_hud_call_parent_resized (lua_State *L);
 
 #endif
