@@ -349,6 +349,8 @@ static Ogre::HighLevelGpuProgramPtr make_shader (VertOrFrag kind, const std::str
 
 void gfx_hud_init (void)
 {
+    win_size = Vector2(ogre_win->getWidth(), ogre_win->getHeight());
+
     // Prepare vertex buffer
     quad_vdata = new Ogre::VertexData();
     quad_vdata->vertexStart = 0;
@@ -505,9 +507,8 @@ void gfx_hud_render (Ogre::Viewport *vp)
                     // Texel offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
                     Ogre::TexturePtr ogre_tex = tex->getOgreResourcePtr();
                     ogre_tex->load(); // otherwise width and height are 512!?
-                    Vector2 tex_size(ogre_tex->getWidth(),ogre_tex->getHeight());
-                    uv1 += 0.5 / tex_size;
-                    uv2 += 0.5 / tex_size;
+                    uv1 += 0.5 / win_size;
+                    uv2 += 0.5 / win_size;
                 }
 
                 set_vertex_data(body->getPosition(), body->getSize(), body->getOrientation(), body->getUV1(), body->getUV2());
