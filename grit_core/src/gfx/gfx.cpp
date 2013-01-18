@@ -66,6 +66,8 @@ GfxCallback *gfx_cb = NULL;
 bool shutting_down = false;
 bool use_hwgamma = false; //getenv("GRIT_NOHWGAMMA")==NULL;
 
+static bool reset_frame_buffer_on_next_render = false;
+
 // For default parameters of functions that take GfxStringMap
 const GfxStringMap gfx_empty_string_map;
 
@@ -519,6 +521,11 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
         ftcv->setElapsedTime(time_since_started_rendering);
 
         Ogre::WindowEventUtilities::messagePump();
+		if (reset_frame_buffer_on_next_render) {
+            reset_frame_buffer_on_next_render = false;
+            do_reset_framebuffer();
+        }
+
 
         update_coronas(cam_pos);
 
@@ -746,7 +753,7 @@ struct WindowEventListener : Ogre::WindowEventListener {
     {
         if (shutting_down) return;
         gfx_cb->windowResized(rw->getWidth(),rw->getHeight());
-        do_reset_framebuffer();
+		reset_frame_buffer_on_next_render = true;
         gfx_hud_window_resized(rw->getWidth(),rw->getHeight());
     }
 
