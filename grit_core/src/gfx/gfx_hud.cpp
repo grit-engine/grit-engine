@@ -507,11 +507,13 @@ void gfx_hud_render (Ogre::Viewport *vp)
                     // Texel offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
                     Ogre::TexturePtr ogre_tex = tex->getOgreResourcePtr();
                     ogre_tex->load(); // otherwise width and height are 512!?
-                    uv1 += 0.5 / win_size;
-                    uv2 += 0.5 / win_size;
+                    Vector2 tex_size(ogre_tex->getWidth(), ogre_tex->getHeight());
+                    Vector2 uv_offset = Vector2(0.5, -0.5) / tex_size;
+                    uv1 += uv_offset;
+                    uv2 += uv_offset;
                 }
 
-                set_vertex_data(body->getPosition(), body->getSize(), body->getOrientation(), body->getUV1(), body->getUV2());
+                set_vertex_data(body->getPosition(), body->getSize(), body->getOrientation(), uv1, uv2);
 
                 // premultiply the colour by the alpha -- for convenience
                 try_set_named_constant(fp, "colour", to_ogre(body->getAlpha() * body->getColour()));

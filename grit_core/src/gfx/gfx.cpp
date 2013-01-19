@@ -535,6 +535,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
         // something with elapsed, for texture animation, etc
 
         if (ogre_win->isActive()) {
+            ogre_win->_beginUpdate();
             CameraOpts opts_left;
             opts_left.fovY = gfx_option(GFX_FOV);
             opts_left.nearClip = gfx_option(GFX_NEAR_CLIP);
@@ -586,6 +587,8 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
             }
 
             gfx_hud_render(hud_vp);
+
+            ogre_win->_endUpdate();
 
             ogre_rs->_swapAllRenderTargetBuffers(true);
         } else {
