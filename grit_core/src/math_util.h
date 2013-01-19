@@ -56,6 +56,7 @@ struct Radian {
     float inDegrees (void) const { return f / M_PI * 180; }
     float inRadians (void) const { return f; }
     Radian &operator = (const Radian &o) { f = o.inRadians(); return *this; }
+    Radian operator - (void) { return Radian(-f); }
     protected:
     float f;
 };
@@ -68,6 +69,7 @@ struct Degree {
     float inDegrees (void) const { return f; }
     float inRadians (void) const { return f * M_PI / 180; }
     Degree &operator = (const Degree &o) { f = o.inDegrees(); return *this; }
+    Degree operator - (void) { return Degree(-f); }
     protected:
     float f;
 };
