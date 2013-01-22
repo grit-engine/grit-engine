@@ -107,7 +107,10 @@ class DiskResource {
     public:
 
     /** A callback to tell you if this resource is reloaded. */
-    struct ReloadWatcher { virtual void notifyReloaded (DiskResource *dr) = 0; };
+    struct ReloadWatcher {
+        virtual ~ReloadWatcher (void) { };
+        virtual void notifyReloaded (DiskResource *dr) = 0;
+    };
 
     /** Do not use this, call the disk_resource_get function instead. */
     DiskResource (void) : loaded(false), users(0) { }

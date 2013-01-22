@@ -134,7 +134,7 @@ class AudioSource : public DiskResource::ReloadWatcher
         ALuint alSourceRight;
 
         AudioSource (const std::string &filename, bool ambient);
-        ~AudioSource (void);
+        virtual ~AudioSource (void);
 
         void reinitialise (void);
 
