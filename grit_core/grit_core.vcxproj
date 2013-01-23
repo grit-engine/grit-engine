@@ -126,6 +126,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\gfx\AnimationMixer.cpp" />
     <ClCompile Include="src\audio\audio.cpp" />
     <ClCompile Include="src\audio\AudioDiskResource.cpp" />
     <ClCompile Include="src\audio\lua_wrappers_audio.cpp" />

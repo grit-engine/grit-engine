@@ -22,6 +22,7 @@
 #include "gfx_internal.h"
 
 #include "GfxBody.h"
+#include "AnimationMixer.h"
 
 const std::string GfxNode::className = "GfxNode";
 
@@ -235,6 +236,7 @@ GfxBody::GfxBody (GfxDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr
     memset(colours, 0, sizeof(colours));
 
     ent = NULL;
+    anims = NULL;
     entEmissive = NULL;
     fade = 1;
     enabled = true;
@@ -423,6 +425,7 @@ GfxBody::GfxBody (const GfxBodyPtr &par_)
 
     ent = NULL;
     entEmissive = NULL;
+    anims = NULL;
     fade = 1;
     enabled = true;
 
@@ -447,6 +450,7 @@ void GfxBody::destroy (void)
     entEmissive = NULL;
     gfx_all_bodies.erase(this);
     GfxNode::destroy();
+    Animation::Delete(anims);
 }
 
 GfxMaterial *GfxBody::getMaterial (unsigned i)
@@ -762,6 +766,12 @@ void GfxBody::setBoneLocalOrientation (unsigned n, const Quaternion &v)
     if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::Bone *bone = skel->getBone(n);
     bone->setOrientation(to_ogre(v));
+}
+
+AnimationMixer *GfxBody::getMixer(void)
+{
+    if (!anims) anims = new AnimationMixer(ent);
+    return anims;
 }
 
 bool GfxBody::isEnabled (void)
