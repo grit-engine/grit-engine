@@ -516,10 +516,6 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
     debug_drawer->frameStarted();
 
     try {
-        // This pumps ogre's texture animation and probably other things
-        ftcv->setValue(elapsed);
-        ftcv->setElapsedTime(time_since_started_rendering);
-
         Ogre::WindowEventUtilities::messagePump();
 		if (reset_frame_buffer_on_next_render) {
             reset_frame_buffer_on_next_render = false;
@@ -531,8 +527,11 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 
         handle_dirty_materials();
 
-        (void) elapsed;
-        // something with elapsed, for texture animation, etc
+        // This pumps ogre's texture animation and probably other things
+        ftcv->setValue(elapsed);
+        ftcv->setElapsedTime(time_since_started_rendering);
+        // used for indicating that ogre internal data prepared for last frame is now invalid
+        ogre_root->setNextFrameNumber(ogre_root->getNextFrameNumber()+1);
 
         if (ogre_win->isActive()) {
             ogre_win->_beginUpdate();

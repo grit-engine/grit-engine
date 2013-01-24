@@ -72,6 +72,7 @@ TColLexer.o: ../src/physics/TColLexer.cpp
 GRIT_OBJ=\
         AudioDiskResource.o \
         audio.o \
+        AnimationMixer.o \
         BackgroundLoader.o \
         BColParser.o \
         BulletDebugDrawer.o \
