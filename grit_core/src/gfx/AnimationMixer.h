@@ -22,6 +22,7 @@
 #ifndef _ANIMATION_MIXER_H_
 #define _ANIMATION_MIXER_H_
 
+#include <cstdlib>
 #include <vector>
 #include <string>
 
