@@ -23,6 +23,7 @@
 #define _ANIMATION_MIXER_H_
 
 #include <vector>
+#include <string>
 
 namespace Ogre
 {
