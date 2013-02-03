@@ -22,7 +22,6 @@
 #include "gfx_internal.h"
 
 #include "GfxBody.h"
-#include "AnimationMixer.h"
 
 const std::string GfxNode::className = "GfxNode";
 
@@ -236,7 +235,6 @@ GfxBody::GfxBody (GfxDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr
     memset(colours, 0, sizeof(colours));
 
     ent = NULL;
-    anims = NULL;
     entEmissive = NULL;
     fade = 1;
     enabled = true;
@@ -425,7 +423,6 @@ GfxBody::GfxBody (const GfxBodyPtr &par_)
 
     ent = NULL;
     entEmissive = NULL;
-    anims = NULL;
     fade = 1;
     enabled = true;
 
@@ -450,7 +447,6 @@ void GfxBody::destroy (void)
     entEmissive = NULL;
     gfx_all_bodies.erase(this);
     GfxNode::destroy();
-    Animation::Delete(anims);
 }
 
 GfxMaterial *GfxBody::getMaterial (unsigned i)
@@ -768,10 +764,71 @@ void GfxBody::setBoneLocalOrientation (unsigned n, const Quaternion &v)
     bone->setOrientation(to_ogre(v));
 }
 
-AnimationMixer *GfxBody::getMixer(void)
+std::vector<std::string> GfxBody::getAnimationNames (void)
 {
-    if (!anims) anims = new AnimationMixer(ent);
-    return anims;
+    std::vector<std::string> r;
+
+    if (dead) THROW_DEAD(className);
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    
+    Ogre::AnimationStateIterator it = ent->getAllAnimationStates()->getAnimationStateIterator();
+
+    while (it.hasMoreElements()) r.push_back(it.getNext()->getAnimationName());
+
+    return r;
+}
+
+static Ogre::AnimationState *get_anim_state (Ogre::Entity *ent, const std::string &name)
+{
+    Ogre::Skeleton *skel = ent->getSkeleton();
+    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::AnimationStateSet *anim_set = ent->getAllAnimationStates();
+    if (anim_set == NULL) GRIT_EXCEPT("GfxBody has no animations");
+    Ogre::AnimationState *state = ent->getAnimationState(name);
+    if (state == NULL) GRIT_EXCEPT("GfxBody has no animation called \""+name+"\"");
+    return state;
+}
+
+float GfxBody::getAnimationLength (const std::string &name)
+{
+    if (dead) THROW_DEAD(className);
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    return get_anim_state(ent, name)->getLength();
+}
+
+float GfxBody::getAnimationPos (const std::string &name)
+{
+    if (dead) THROW_DEAD(className);
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    return get_anim_state(ent, name)->getTimePosition();
+}
+
+void GfxBody::setAnimationPos (const std::string &name, float v)
+{
+    if (dead) THROW_DEAD(className);
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    get_anim_state(ent, name)->setTimePosition(v);
+}
+
+float GfxBody::getAnimationMask (const std::string &name)
+{
+    if (dead) THROW_DEAD(className);
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    Ogre::AnimationState *state = get_anim_state(ent, name);
+    if (!state->getEnabled()) return 0.0f;
+    return state->getWeight();
+}
+
+void GfxBody::setAnimationMask (const std::string &name, float v)
+{
+    if (dead) THROW_DEAD(className);
+    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
+    Ogre::AnimationState *state = get_anim_state(ent, name);
+    state->setWeight(v);
+    state->setEnabled(v > 0.0f);
 }
 
 bool GfxBody::isEnabled (void)

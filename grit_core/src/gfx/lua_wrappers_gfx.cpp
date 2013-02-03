@@ -30,7 +30,6 @@
 #include "lua_wrappers_scnmgr.h"
 #include "lua_wrappers_mobj.h"
 #include "gfx_hud.h"
-#include "AnimationMixer.h"
 
 
 // GFXBODY ============================================================== {{{
@@ -323,69 +322,72 @@ TRY_START
 TRY_END
 }
 
-static int gfxbody_set_animation(lua_State *L)
-{
-TRY_START
-    check_args(L,3);
-    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    bool const looped = check_bool(L,3);
-
-    if (lua_type(L,2) == LUA_TNUMBER)
-    {
-        AnimId anim = (AnimId) check_int(L,2,0,self->getMixer()->GetAnims().size());
-        self->getMixer()->PlayAnimation(anim,looped);
-    }
-    else
-    {
-        char const *anim = check_string(L,2);
-        self->getMixer()->PlayAnimation(anim,looped);
-    }
-    return 0;
-TRY_END
-}
-
-static int gfxbody_get_animations(lua_State *L)
+static int gfxbody_get_all_animations(lua_State *L)
 {
 TRY_START
     check_args(L,1);
     GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    AnimationMixer *mixer = self->getMixer();
-
-    if (!mixer) return 0;
-    TStates const &states = mixer->GetAnims();
-    
-    int count(0);
-    for (unsigned int a=0; a<states.size(); ++a)
-    {
-        if (states[a])
-        {
-            count++;
-            lua_pushstring(L,states[a]->getAnimationName().c_str());
-        }
+    std::vector<std::string> names = self->getAnimationNames();
+    for (unsigned i=0 ; i<names.size() ; ++i) {
+        lua_pushstring(L, names[i].c_str());
     }
-    return count;
+    return names.size();
 TRY_END
 }
 
-static int gfxbody_find_animation(lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    char const *animName = check_string(L,2);
-    if (!self->getMixer()) lua_pushnumber(L,-1);
-    lua_pushnumber(L,self->getMixer()->FindAnimation(animName));
-    return 0;
-TRY_END
-}
-
-static int gfxbody_update_animation(lua_State *L)
+static int gfxbody_get_animation_length(lua_State *L)
 {
 TRY_START
     check_args(L,2);
     GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    float const deltaT = check_float(L,2);
-    if (self->getMixer()) self->getMixer()->Update(deltaT);
+    std::string anim = check_string(L,2);
+    lua_pushnumber(L, self->getAnimationLength(anim));
+    return 1;
+TRY_END
+}
+
+static int gfxbody_get_animation_pos(lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    std::string anim = check_string(L,2);
+    lua_pushnumber(L, self->getAnimationPos(anim));
+    return 1;
+TRY_END
+}
+
+static int gfxbody_set_animation_pos(lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    std::string anim = check_string(L,2);
+    float const t = check_float(L,3);
+    self->setAnimationPos(anim, t);
+    return 0;
+TRY_END
+}
+
+static int gfxbody_get_animation_mask(lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    std::string anim = check_string(L,2);
+    lua_pushnumber(L, self->getAnimationMask(anim));
+    return 0;
+TRY_END
+}
+
+static int gfxbody_set_animation_mask(lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    std::string anim = check_string(L,2);
+    float const t = check_float(L,3);
+    self->setAnimationMask(anim, t);
     return 0;
 TRY_END
 }
@@ -527,14 +529,29 @@ TRY_START
         push_cfunction(L,gfxbody_set_bone_local_position_offset);
     } else if (!::strcmp(key,"setBoneLocalOrientationOffset")) {
         push_cfunction(L,gfxbody_set_bone_local_orientation_offset);
+/*
     } else if (!::strcmp(key,"setAnimation")) {
         push_cfunction(L,gfxbody_set_animation);
     } else if (!::strcmp(key,"findAnimation")) {
         push_cfunction(L,gfxbody_find_animation);
-    } else if (!::strcmp(key,"getAnimations")) {
-        push_cfunction(L,gfxbody_get_animations);
     } else if (!::strcmp(key,"updateAnimation")) {
         push_cfunction(L,gfxbody_update_animation);
+*/
+
+    } else if (!::strcmp(key,"getAllAnimations")) {
+        push_cfunction(L,gfxbody_get_all_animations);
+
+    } else if (!::strcmp(key,"getAnimationLength")) {
+        push_cfunction(L,gfxbody_get_animation_length);
+    } else if (!::strcmp(key,"getAnimationPos")) {
+        push_cfunction(L,gfxbody_get_animation_pos);
+    } else if (!::strcmp(key,"setAnimationPos")) {
+        push_cfunction(L,gfxbody_set_animation_pos);
+    } else if (!::strcmp(key,"getAnimationMask")) {
+        push_cfunction(L,gfxbody_get_animation_mask);
+    } else if (!::strcmp(key,"setAnimationMask")) {
+        push_cfunction(L,gfxbody_set_animation_mask);
+
     } else if (!::strcmp(key,"meshName")) {
         push_string(L,self->getMeshName());
     } else if (!::strcmp(key,"makeChild")) {

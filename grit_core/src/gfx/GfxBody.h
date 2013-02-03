@@ -22,7 +22,6 @@
 #include "../SharedPtr.h"
 
 class GfxBody;
-class AnimationMixer;
 typedef SharedPtr<GfxBody> GfxBodyPtr;
 
 extern fast_erase_vector<GfxBody*> gfx_all_bodies;
@@ -89,7 +88,6 @@ class GfxBody : public GfxNode, public fast_erase_index {
     Ogre::MeshPtr mesh;
     Ogre::Entity *ent;
     Ogre::Entity *entEmissive;
-    AnimationMixer *anims;
     protected:
     float fade;
     GfxMaterials materials;
@@ -171,7 +169,12 @@ class GfxBody : public GfxNode, public fast_erase_index {
     void setBoneLocalPosition (unsigned n, const Vector3 &v);
     void setBoneLocalOrientation (unsigned n, const Quaternion &v);
 
-    AnimationMixer *getMixer();
+    std::vector<std::string> getAnimationNames (void);
+    float getAnimationLength (const std::string &name);
+    float getAnimationPos (const std::string &name);
+    void setAnimationPos (const std::string &name, float v);
+    float getAnimationMask (const std::string &name);
+    void setAnimationMask (const std::string &name, float v);
 
     bool isEnabled (void);
     void setEnabled (bool v);
