@@ -376,7 +376,7 @@ TRY_START
     GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
     std::string anim = check_string(L,2);
     lua_pushnumber(L, self->getAnimationMask(anim));
-    return 0;
+    return 1;
 TRY_END
 }
 
