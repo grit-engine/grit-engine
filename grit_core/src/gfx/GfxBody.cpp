@@ -349,7 +349,17 @@ void GfxBody::updateEntEmissive (void)
         Ogre::SubEntity *se = entEmissive->getSubEntity(i);
         if (!gfx_material->emissiveMat.isNull() && emissiveEnabled[i]) {
             se->setMaterial(gfx_material->emissiveMat);
-            se->setRenderQueueGroup(RQ_FORWARD_EMISSIVE);
+            switch (gfx_material->getSceneBlend()) {
+                case GFX_MATERIAL_OPAQUE:
+                se->setRenderQueueGroup(RQ_FORWARD_OPAQUE_EMISSIVE);
+                break;
+                case GFX_MATERIAL_ALPHA:
+                se->setRenderQueueGroup(RQ_FORWARD_ALPHA_EMISSIVE);
+                break;
+                case GFX_MATERIAL_ALPHA_DEPTH:
+                se->setRenderQueueGroup(RQ_FORWARD_ALPHA_DEPTH_EMISSIVE);
+                break;
+            }
         } else {
             se->setVisible(false);
         }

@@ -51,9 +51,11 @@
 // render queues, ordering now actually determined by GfxPipeline
 #define RQ_GBUFFER_OPAQUE 10
 #define RQ_FORWARD_OPAQUE 20
-#define RQ_FORWARD_EMISSIVE 40
+#define RQ_FORWARD_OPAQUE_EMISSIVE 21
 #define RQ_FORWARD_ALPHA_DEPTH 60
+#define RQ_FORWARD_ALPHA_DEPTH_EMISSIVE 61
 #define RQ_FORWARD_ALPHA 70
+#define RQ_FORWARD_ALPHA_EMISSIVE 71
 #define RQ_BULLET_DEBUG_DRAWER 75
 
 #ifndef GFX_INTERNAL_H
