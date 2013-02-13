@@ -25,7 +25,7 @@
 # * armature position not taken into account (evo armature was not at 0,0,0 which caused artifacts)
 # * export everything did not work with bones, had to 'export as mesh'
 #
-# vertex painting (diffuse)
+# vertex painting (colour)
 # vertex painting (blend)
 #
 # special classes:
@@ -46,8 +46,8 @@ bl_info = {
     "name": "Grit Exporter",
     "description": "Exporter for Grit Game Engine",
     "author": "Dave Cunningham",
-    "version": (1, 0),
-    "blender": (2, 5, 8),
+    "version": (1, 1),
+    "blender": (2, 6, 3),
     "api": 31236,
     "location": "File > Import-Export > Grit",
     "warning": "",
@@ -63,6 +63,8 @@ import subprocess
 import xml.etree.ElementTree
 
 from bpy.props import *
+from bpy_extras.io_utils import unpack_list
+from bpy_extras.io_utils import unpack_face_list
 from mathutils import Quaternion, Vector
 
 executable_suffix = ".exe" if os.pathsep == "\\" else ".linux.x86"
@@ -160,8 +162,11 @@ def groups_eq (x, y):
 
 
 def get_vertexes_faces(scene, mesh, no_normals, default_material, scale):
-    num_uv = len(mesh.uv_textures)
-    ambient_colour = mesh.vertex_colors.get("GritAmbient", None)
+
+    mesh.update(calc_tessface=True)
+
+    num_uv = len(mesh.tessface_uv_textures)
+    diffuse_colour = mesh.tessface_vertex_colors.get("GritColour", None)
     class Empty: pass
 
     # list of vertexes with their attributes
@@ -171,7 +176,7 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material, scale):
 
     counter = 0
 
-    for fi, f in enumerate(mesh.faces):
+    for fi, f in enumerate(mesh.tessfaces):
 
         #print("face: "+str(fi))
 
@@ -193,7 +198,8 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material, scale):
                 v = mesh.vertices[vi]
                 vert = Empty()
                 vert.pos =  (v.co.x * scale.x, v.co.y * scale.y, v.co.z * scale.z)
-                vert.ambient = 1
+                vert.colour = (1,1,1)
+                vert.alpha = 1
                 if no_normals:
                     vert.normal = (0,0,0)
                 else:
@@ -201,17 +207,17 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material, scale):
                 if num_uv == 0:
                     vert.uv = (0,0)
                 else:
-                    the_uv = mesh.uv_textures[0].data[fi].uv[fvi2]
+                    the_uv = mesh.tessface_uv_textures[0].data[fi].uv[fvi2]
                     vert.uv = (the_uv[0], the_uv[1])
-                if ambient_colour != None:
+                if diffuse_colour != None:
                     if fvi2 == 0:
-                        vert.ambient = ambient_colour.data[fi].color1.r
+                        vert.colour = diffuse_colour.data[fi].color1
                     elif fvi2 == 1:
-                        vert.ambient = ambient_colour.data[fi].color2.r
+                        vert.colour = diffuse_colour.data[fi].color2
                     elif fvi2 == 2:
-                        vert.ambient = ambient_colour.data[fi].color3.r
+                        vert.colour = diffuse_colour.data[fi].color3
                     elif fvi2 == 3:
-                        vert.ambient = ambient_colour.data[fi].color4.r
+                        vert.colour = diffuse_colour.data[fi].color4
                 vert.groups = None
                 if len(v.groups) > 0:
                     vert.groups = []
@@ -227,7 +233,7 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material, scale):
                 for evi, evert in enumerate(vertexes): #existing vertex id
                     if evert.pos == vert.pos and \
                        evert.normal == vert.normal and \
-                       evert.ambient == vert.ambient and \
+                       evert.colour == vert.colour and \
                        evert.uv == vert.uv and \
                        groups_eq(evert, vert):
                         duplicate = evi
@@ -642,19 +648,19 @@ def export_mesh_internal (scene, obj, tangents, filename, errors):
     filename = my_abspath("//" + filename+".xml")
 
     (vertexes, faces) = get_vertexes_faces(scene, mesh, False, "/system/FallbackMaterial", obj.scale)
-    ambient = mesh.vertex_colors.get("GritAmbient", None) 
+    colour = mesh.tessface_vertex_colors.get("GritColour", None) 
 
     file = open(filename, "w")
     file.write("<mesh>\n")
     file.write("    <sharedgeometry>\n")
-    file.write("        <vertexbuffer positions=\"true\" normals=\"true\" colours_diffuse=\""+("false" if ambient == None else "true")+"\" texture_coord_dimensions_0=\"float2\" texture_coords=\"1\">\n")
+    file.write("        <vertexbuffer positions=\"true\" normals=\"true\" colours_diffuse=\""+("false" if colour == None else "true")+"\" texture_coord_dimensions_0=\"float2\" texture_coords=\"1\">\n")
     for v in vertexes:
         file.write("            <vertex>\n")
         file.write("                <position x=\""+str(v.pos[0])+"\" y=\""+str(v.pos[1])+"\" z=\""+str(v.pos[2])+"\" />\n")
         file.write("                <normal x=\""+str(v.normal[0])+"\" y=\""+str(v.normal[1])+"\" z=\""+str(v.normal[2])+"\" />\n")
         file.write("                <texcoord u=\""+str(v.uv[0])+"\" v=\""+str(1-v.uv[1])+"\" />\n")
-        if ambient != None:
-            col = str(v.ambient)+" 0.0 0.0 1.0"
+        if colour != None:
+            col = str(v.colour[0])+" "+str(v.colour[1])+" "+str(v.colour[2])+" 1.0"
             file.write("                <colour_diffuse value=\""+col+"\" />\n")
         file.write("            </vertex>\n")
     file.write("        </vertexbuffer>\n")
@@ -1125,14 +1131,27 @@ class ImportXML(bpy.types.Operator):
         for mat in blender_materials:
             mesh.materials.append(mat)
 
-        mesh.from_pydata(blender_verts, [], blender_faces)
-        mesh.uv_textures.new()
+
+        mesh.vertices.add(len(blender_verts))
+        mesh.vertices.foreach_set("co", unpack_list(blender_verts))
+
+        mesh.tessfaces.add(len(blender_faces))
+        mesh.tessfaces.foreach_set("vertices_raw", unpack_face_list(blender_faces))
+        mesh.tessfaces.foreach_set("material_index", blender_face_materials)
+
+        #for fi in range(0,len(blender_faces)-1):
+        #    mesh.tessfaces[fi].material_index = blender_face_materials[fi]
+
+        mesh.tessface_uv_textures.new()
+
         for fi in range(0,len(blender_faces)-1):
             f = blender_faces[fi]
-            mesh.uv_textures[0].data[fi].uv1 = blender_uvs[f[0]]
-            mesh.uv_textures[0].data[fi].uv2 = blender_uvs[f[1]]
-            mesh.uv_textures[0].data[fi].uv3 = blender_uvs[f[2]]
-            mesh.faces[fi].material_index = blender_face_materials[fi]
+            mesh.tessface_uv_textures[0].data[fi].uv1 = blender_uvs[f[0]]
+            mesh.tessface_uv_textures[0].data[fi].uv2 = blender_uvs[f[1]]
+            mesh.tessface_uv_textures[0].data[fi].uv3 = blender_uvs[f[2]]
+
+        #mesh.tessface_vertex_colors.new("GritColour")
+
         mesh.update()
         
         return {'FINISHED'}
