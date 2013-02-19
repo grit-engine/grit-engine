@@ -319,7 +319,11 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
         print editXMLconverter.text;
 
         if (not (doesFileExist editXMLconverter.text)) then (
-            MessageBox ("Could not find OgreXMLConverter at: "+editXMLConverter.text) title:"ERROR!"
+            if (editXMLConverter.text == "") then (
+                MessageBox ("Please specify the location of OgreXMLConverter.exe using this rollout dialog.  It is usually located in the SVN in grit_core/media/Tools") title:"ERROR!"
+            ) else (
+                MessageBox ("Could not find OgreXMLConverter at: "+editXMLConverter.text) title:"ERROR!"
+            )
             editXMLconverter.text = ""
         )
     )
@@ -366,24 +370,28 @@ rollout GritRolloutOgreMain "Main" width:272 -- {{{
         local selected_objs = selection as array
 
         for m in selected_objs do (
-            if (not (iskindof m GeometryClass)) then (
+
+            local out_file = editDir.text + "\\" + m.name
+            
+            local options = exportOptions exportAmbient:false exportAlpha:false blended:0
+            local exportingMeshDone = false
+            local exportingSkelDone = false
+
+            options.blended = dft (getUserProp m "gritMeshBlendedTextures") 1
+            options.exportAmbient = dft (getUserProp m "gritMeshExportColour") false
+            options.exportAlpha = dft (getUserProp m "gritMeshExportAlpha") false
+            local tangents = dft (getUserProp m "gritMeshGenerateTangents") false
+            local mirrored = dft (getUserProp m "gritMeshTangentsMirrored") false
+            local rotated = dft (getUserProp m "gritMeshTangentsRotated") false
+
+            options.exportHelpers = (GritRolloutOgreAnimation.CBexporthelpers.enabled and GritRolloutOgreAnimation.CBexporthelpers.checked);
+            
+            if (not (iskindof m GeometryClass or iskindof m Dummy)) then (
+
                 messageBox "You have to select some geometry for export.  Skipping an object."
+
             ) else (
-                local out_file = editDir.text + "\\" + m.name
-                
-                local options = exportOptions exportAmbient:false exportAlpha:false blended:0
-                local exportingMeshDone = false
-                local exportingSkelDone = false
 
-                options.blended = dft (getUserProp m "gritMeshBlendedTextures") 1
-                options.exportAmbient = dft (getUserProp m "gritMeshExportColour") false
-                options.exportAlpha = dft (getUserProp m "gritMeshExportAlpha") false
-                local tangents = dft (getUserProp m "gritMeshGenerateTangents") false
-                local mirrored = dft (getUserProp m "gritMeshTangentsMirrored") false
-                local rotated = dft (getUserProp m "gritMeshTangentsRotated") false
-
-                options.exportHelpers = (GritRolloutOgreAnimation.CBexporthelpers.enabled and GritRolloutOgreAnimation.CBexporthelpers.checked);
-                
                 if (GritRolloutOgreMesh.CBexportMesh.enabled and GritRolloutOgreMesh.CBexportMesh.checked) then
                 (
                     exportProgress.value = 0

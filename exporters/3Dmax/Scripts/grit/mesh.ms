@@ -411,6 +411,7 @@ function get_material m face = (
     )
 )
 
+-- selected is a single object
 function write_mesh_xml selected options out_name = -- {{{
 (
     local skin = getSkin selected
@@ -432,12 +433,44 @@ function write_mesh_xml selected options out_name = -- {{{
         --physiqueOps.setInitialPose selected true
     )
     
-    local cloned
-    maxops.clonenodes selected newNodes:&cloned
-    local m = cloned[1]
-    m.position = [0, 0, 0]
-    m.scale = [1, 1, 1]
-    m.rotation = Quat 0 0 0 1
+    -- clone it, then we can preprocess the clone as much as we want, deleting it at the end
+    local m
+
+    if (iskindof selected Dummy) then (
+		format "Dummy detected"
+
+        local cloned
+        maxops.clonenodes (#(selected) + selected.children) newNodes:&cloned
+        local the_dummy = cloned[1]
+        the_dummy.position = [0, 0, 0]
+        the_dummy.scale = [1, 1, 1]
+        the_dummy.rotation = Quat 0 0 0 1
+
+        local children = the_dummy.children
+        m = convertToPoly children[1]
+		format "children.count = %\n" children.count to:listener
+		m.parent = Undefined
+		while children.count > 0 do (
+			polyop.attach m children[1]
+		)
+
+		m.pivot = [0,0,0]
+		
+        delete the_dummy
+
+    ) else (
+
+        local cloned
+        maxops.clonenodes selected newNodes:&cloned
+        m = cloned[1]
+        -- reset transforms of clone
+        m.position = [0, 0, 0]
+        m.scale = [1, 1, 1]
+        m.rotation = Quat 0 0 0 1
+
+    )
+
+    -- convert it to mesh (i.e. triangulate it)
     m = convertToMesh m
 
     local texture = options.blended > 0 and meshop.getMapSupport m 1
