@@ -266,7 +266,7 @@ promotion_enum_items = [
     ('GCOL','col','Grit col'),              # for dummies or mesh (trimesh)
     ('PRIM','col primitive','Grit col primitive'),
     ('GCOL_EXT','external col','External Grit col'), #for dummies
-    ('SKELETON','.skeleton','Grit .skeleton'), #for armatures
+    ('MESH_EXT','external .mesh','External Grit .mesh'), #for dummies
 ]
 
 
@@ -623,10 +623,13 @@ def errors_to_string (errors):
 
 def export_as_mesh (scene, obj, tangents, filename):
     errors = []
-    export_mesh_internal (scene, obj, None, tangents, filename, None, errors)
+    export_mesh_internal (scene, obj, tangents, filename, errors)
     return errors_to_string (errors)
 
-def export_mesh_internal (scene, obj, armature, tangents, filename, armature_filename, errors):
+def export_mesh_internal (scene, obj, tangents, filename, errors):
+    armature = obj.modifiers['Armature'].object
+    armature_filename = armature.name
+
     mesh = obj.to_mesh(scene, True, "PREVIEW")
 
     if len(mesh.materials) == 0:
@@ -704,7 +707,25 @@ def export_mesh_internal (scene, obj, armature, tangents, filename, armature_fil
                 file.write("        <boneparent bone=\""+b.name+"\" parent=\""+b.parent.name+"\" />\n")
 
         file.write("    </bonehierarchy>\n")
-        file.write("    <animations />\n")
+        file.write("    <animations>\n")
+        if False:
+            anim = bpy.data.actions[0]
+            file.write("        <animation name=\""+anim.name+"\" length=\""+anim.length+"\">\n")
+            file.write("            <tracks>\n")
+            group = anim.groups['Back']
+            file.write("                <track bone=\""+group.name+"\">\n")
+            file.write("                    <keyframes>\n")
+            file.write("                        <keyframe time=\"0\">\n")
+            #channels[1].keyframe_points[1].co
+            file.write("                            <translate x=\"0\" y=\"0\" z=\"0\" />\n")
+            file.write("                            <rotate angle=\"0.398484\"> <axis x=\"-0.059237\" y=\"-0.054967\" z=\"-0.996729\" /> </rotate>\n")
+            file.write("                        </keyframe>\n")
+            file.write("                    </keyframes>\n")
+            file.write("                </track>\n")
+            file.write("            </tracks>\n")
+            file.write("        </animation>\n")
+        file.write("    </animations>\n")
+
         file.write("</skeleton>\n")
         file.close()
 
@@ -885,7 +906,7 @@ def export_objects (scene, objs):
         for obj in grit_classes:
             class_name = strip_leading_exc(obj.name)
 
-            meshes = [c for c in obj.children if c.grit_promotion == 'MESH' or c.grit_promotion == 'SKELETON']
+            meshes = [c for c in obj.children if c.grit_promotion == 'MESH' or c.grit_promotion == 'MESH_EXT']
             cols = [c for c in obj.children if c.grit_promotion == 'GCOL' or c.grit_promotion == 'GCOL_EXT']
 
             if len(meshes) == 0:
@@ -895,24 +916,16 @@ def export_objects (scene, objs):
                 errors.append("Class has "+len(meshes)+" meshes (should have 1): \""+obj.name+"\"\n")
                 continue
 
-            mesh = meshes[0]
-            if mesh.type == "ARMATURE":
-                if len(mesh.children)==0:
-                    errors.append("Armature has no children: \""+mesh+"\"")
-                    continue
-                if len(mesh.children)>1:
-                    errors.append("Armature has more than 1 child: \""+mesh+"\"")
-                    continue
-                mesh = mesh.children[0]
-
             attributes = []
             attributes.append(("renderingDistance", obj.grit_class_rendering_distance))
             attributes.append(("castShadows", obj.grit_class_cast_shadows))
             attributes.append(("placementZOffset", obj.grit_class_place_z_off))
             attributes.append(("placementRandomRotation", obj.grit_class_place_rnd_rot))
 
-            #TODO: allow .mesh .gcol in subdirectories, other blend files, etc
-            if class_name + ".mesh" != mesh.name: attributes.append(("gfxMesh", mesh.name))
+            mesh_name =  mesh.name
+            if meshes[0].grit_promotion == 'MESH_EXT':
+                mesh_name = meshes[0].grit_gcol_ext_name
+            if class_name + ".mesh" != mesh_name: attributes.append(("gfxMesh", mesh_name))
             parent_class_name = ""
             if len(cols) == 0:
                 parent_class_name = "BaseClass"
@@ -920,7 +933,7 @@ def export_objects (scene, objs):
             else:
                 parent_class_name = "ColClass"
                 if len(cols) > 1:
-                    errors.append("Class has "+str(len(meshes))+" cols (should have 0 or 1): \""+obj.name+"\"")
+                    errors.append("Class has "+str(len(cols))+" cols (should have 0 or 1): \""+obj.name+"\"")
                     continue
                 col_name = cols[0].name
                 if cols[0].grit_promotion == 'GCOL_EXT':
@@ -940,19 +953,8 @@ def export_objects (scene, objs):
 
 
     for obj in objs:
-        if obj.grit_promotion == 'SKELETON':
-            if len(obj.children)==0:
-                errors.append("Armature has no children: \""+obj+"\"")
-                return
-            if len(obj.children)>1:
-                errors.append("Armature has more than 1 child: \""+obj+"\"")
-                return
-            mesh = obj.children[0]
-            export_mesh_internal(scene, mesh, obj, mesh.grit_mesh_tangents, mesh.name, obj.name, errors)
-
         if obj.grit_promotion == 'MESH':
-            if obj.parent == None or obj.parent.grit_promotion != 'SKELETON':
-                export_mesh_internal(scene, obj, None, obj.grit_mesh_tangents, obj.name, None, errors)
+            export_mesh_internal(scene, obj, obj.grit_mesh_tangents, obj.name, errors)
 
         if obj.grit_promotion == 'GCOL':
             export_gcol_internal(scene, obj, obj.grit_gcol_static, obj.grit_gcol_mass, obj.grit_gcol_linear_damping, obj.grit_gcol_angular_damping, obj.grit_gcol_linear_sleep_thresh, obj.grit_gcol_angular_sleep_thresh, obj.name, errors)
