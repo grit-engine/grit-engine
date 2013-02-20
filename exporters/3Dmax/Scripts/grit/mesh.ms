@@ -446,13 +446,14 @@ function write_mesh_xml selected options out_name = -- {{{
         the_dummy.scale = [1, 1, 1]
         the_dummy.rotation = Quat 0 0 0 1
 
-        local children = the_dummy.children
-        m = convertToPoly children[1]
-		format "children.count = %\n" children.count to:listener
-		m.parent = Undefined
-		while children.count > 0 do (
-			polyop.attach m children[1]
-		)
+		local children = the_dummy.children
+        m = children[1]
+        m.parent = Undefined
+        ResetXForm m
+        m = convertToPoly m
+        while children.count > 0 do (
+        polyop.attach m children[1]
+        )
 
 		m.pivot = [0,0,0]
 		
