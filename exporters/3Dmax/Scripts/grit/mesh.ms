@@ -452,7 +452,7 @@ function write_mesh_xml selected options out_name = -- {{{
         ResetXForm m
         m = convertToPoly m
         while children.count > 0 do (
-        polyop.attach m children[1]
+			polyop.attach m children[1]
         )
 
 		m.pivot = [0,0,0]
@@ -464,11 +464,9 @@ function write_mesh_xml selected options out_name = -- {{{
         local cloned
         maxops.clonenodes selected newNodes:&cloned
         m = cloned[1]
-        -- reset transforms of clone
+        ResetXForm m
         m.position = [0, 0, 0]
-        m.scale = [1, 1, 1]
-        m.rotation = Quat 0 0 0 1
-
+ 
     )
 
     -- convert it to mesh (i.e. triangulate it)

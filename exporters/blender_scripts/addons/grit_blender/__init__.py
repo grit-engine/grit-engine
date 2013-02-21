@@ -627,8 +627,11 @@ def export_as_mesh (scene, obj, tangents, filename):
     return errors_to_string (errors)
 
 def export_mesh_internal (scene, obj, tangents, filename, errors):
-    armature = obj.modifiers['Armature'].object
-    armature_filename = armature.name
+    armature = None
+    armature_filename = None
+    if obj.modifiers.get('Armature') != None:
+        armature = obj.modifiers['Armature'].object
+        armature_filename = armature.name
 
     mesh = obj.to_mesh(scene, True, "PREVIEW")
 
@@ -922,7 +925,7 @@ def export_objects (scene, objs):
             attributes.append(("placementZOffset", obj.grit_class_place_z_off))
             attributes.append(("placementRandomRotation", obj.grit_class_place_rnd_rot))
 
-            mesh_name =  mesh.name
+            mesh_name =  meshes[0].name
             if meshes[0].grit_promotion == 'MESH_EXT':
                 mesh_name = meshes[0].grit_gcol_ext_name
             if class_name + ".mesh" != mesh_name: attributes.append(("gfxMesh", mesh_name))
