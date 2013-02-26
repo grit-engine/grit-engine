@@ -181,7 +181,7 @@ TRY_START
     unsigned i = check_t<unsigned>(L,2);
     bool v = self->getBoneManuallyControlled(i);
     lua_pushboolean(L,v);
-    return 0;
+    return 1;
 TRY_END
 }
 
