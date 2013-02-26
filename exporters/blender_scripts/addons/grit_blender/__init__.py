@@ -65,7 +65,7 @@ import xml.etree.ElementTree
 from bpy.props import *
 from bpy_extras.io_utils import unpack_list
 from bpy_extras.io_utils import unpack_face_list
-from mathutils import Quaternion, Vector
+from mathutils import Quaternion, Vector, Matrix
 
 executable_suffix = ".exe" if os.pathsep == "\\" else ".linux.x86"
 
@@ -691,12 +691,14 @@ def export_mesh_internal (scene, obj, tangents, filename, errors):
         file.write("    <bones>\n")
         for bi, b in enumerate(armature.pose.bones):
             file.write("        <bone id=\""+str(bi)+"\" name=\""+b.name+"\">\n")
-            mat = b.matrix
+            mat = b.bone.matrix_local
+            pos = b.bone.head_local
             b_parent = b.parent
             if b_parent != None:
-                print("b_parent.name = "+b_parent.name)
-                mat = b_parent.matrix.inverted() * mat
-            pos = mat.translation
+                mat = b_parent.bone.matrix_local.inverted() * mat
+            else:
+                mat = Matrix.Identity(4)
+                
             file.write("            <position x=\""+str(pos.x)+"\" y=\""+str(pos.y)+"\" z=\""+str(pos.z)+"\" />\n")
             rot = mat.to_quaternion()
             file.write("            <rotation angle=\""+str(rot.angle)+"\">\n")
@@ -711,20 +713,32 @@ def export_mesh_internal (scene, obj, tangents, filename, errors):
 
         file.write("    </bonehierarchy>\n")
         file.write("    <animations>\n")
-        if False:
-            anim = bpy.data.actions[0]
-            file.write("        <animation name=\""+anim.name+"\" length=\""+anim.length+"\">\n")
+        for anim in bpy.data.actions:
+
+            anim_data = { }
+
+            for group in anim.groups:
+                anim_data[group.name] = { }
+                for keyframe in group.channels[0].keyframe_points:
+                    time = keyframe.co[0]
+                    anim_data[group.name][time] = ((0,0,0), (0,1,0,0))
+
+            anim_length = 2
+
+            file.write("        <animation name=\""+anim.name+"\" length=\""+str(anim_length)+"\">\n")
             file.write("            <tracks>\n")
-            group = anim.groups['Back']
-            file.write("                <track bone=\""+group.name+"\">\n")
-            file.write("                    <keyframes>\n")
-            file.write("                        <keyframe time=\"0\">\n")
-            #channels[1].keyframe_points[1].co
-            file.write("                            <translate x=\"0\" y=\"0\" z=\"0\" />\n")
-            file.write("                            <rotate angle=\"0.398484\"> <axis x=\"-0.059237\" y=\"-0.054967\" z=\"-0.996729\" /> </rotate>\n")
-            file.write("                        </keyframe>\n")
-            file.write("                    </keyframes>\n")
-            file.write("                </track>\n")
+            for bone in anim_data:
+                file.write("                <track bone=\""+bone+"\">\n")
+                file.write("                    <keyframes>\n")
+                #channels[1].keyframe_points[1].co
+                for time in anim_data[bone]:
+                    (pos, rot) = anim_data[bone][time]
+                    file.write("                        <keyframe time=\""+str(time)+"\">\n")
+                    file.write("                            <translate x=\""+str(pos[0])+"\" y=\""+str(pos[1])+"\" z=\""+str(pos[2])+"\" />\n")
+                    file.write("                            <rotate angle=\""+str(rot[0])+"\"> <axis x=\""+str(rot[1])+"\" y=\""+str(rot[2])+"\" z=\""+str(rot[3])+"\" /> </rotate>\n")
+                    file.write("                        </keyframe>\n")
+                file.write("                    </keyframes>\n")
+                file.write("                </track>\n")
             file.write("            </tracks>\n")
             file.write("        </animation>\n")
         file.write("    </animations>\n")
