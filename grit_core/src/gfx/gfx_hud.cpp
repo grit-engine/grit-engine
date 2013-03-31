@@ -570,7 +570,7 @@ void gfx_render_hud_one (GfxHudBase *base)
             Ogre::TexturePtr ogre_tex = tex->getOgreResourcePtr();
             ogre_tex->load(); // otherwise width and height are 512!?
             Vector2 tex_size(ogre_tex->getWidth(), ogre_tex->getHeight());
-            Vector2 uv_offset = Vector2(0.5, -0.5) / obj->getSize();
+            Vector2 uv_offset = Vector2(0.5, 0.5) / obj->getSize();
             uv_offset = uv_offset.rotateBy(- obj->getDerivedOrientation());
             uv1 += uv_offset;
             uv2 += uv_offset;
