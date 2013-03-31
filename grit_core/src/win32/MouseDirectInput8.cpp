@@ -149,6 +149,11 @@ bool MouseDirectInput8::getEvents(std::vector<int> *clicks,
         DWORD num_elements = BUFFSZ;
         DIDEVICEOBJECTDATA buf[BUFFSZ];
 
+        // Get window size
+        RECT rect;
+        GetClientRect(win,&rect);
+        int win_height = rect.bottom - rect.top;
+
         HRESULT r;
         r = dev->GetDeviceData(sizeof(DIDEVICEOBJECTDATA),buf,&num_elements,0);
         if (r==DIERR_INPUTLOST || r==DIERR_NOTACQUIRED) {
@@ -165,7 +170,6 @@ bool MouseDirectInput8::getEvents(std::vector<int> *clicks,
                 for (DWORD i=0 ; i<num_elements ; i++) {
                         POINT p; GetCursorPos(&p);
                         ScreenToClient(win,&p);
-                        RECT rect; GetClientRect(win,&rect);
 
                         if (p.x<0 || p.x>=rect.right) continue;
                         if (p.y<0 || p.y>=rect.bottom) continue;
@@ -201,15 +205,22 @@ bool MouseDirectInput8::getEvents(std::vector<int> *clicks,
         }
 
         if (x) *x = current_x;
-        if (y) *y = current_y;
+        if (y) *y = win_height-current_y-1; // invert axis
         if (rel_x) *rel_x = rx;
-        if (rel_y) *rel_y = ry;
+        if (rel_y) *rel_y = -ry; // invert axis
 
         return moved;
 }
 
 void MouseDirectInput8::setPos(int x, int y)
 {
+        // Get window size
+        RECT rect;
+        GetClientRect(win,&rect);
+        int win_height = rect.bottom - rect.top;
+
+        y = win_height - y - 1;
+
         POINT p;
         p.x = x;
         p.y = y;

@@ -82,6 +82,10 @@ bool MouseX11::getEvents(std::vector<int> *clicks,
         int last_y = current_y;
         bool moved = false;
 
+        // fetch window size info
+        XWindowAttributes attr;
+        XGetWindowAttributes(display,win,&attr);
+
         //Poll x11 for events
         XEvent event;
         while (XPending(display)>0) {
@@ -126,8 +130,6 @@ bool MouseX11::getEvents(std::vector<int> *clicks,
                         moved = true;
 
                         if (requested_grab) {
-                                XWindowAttributes attr;
-                                XGetWindowAttributes(display,win,&attr);
                                 setPos(attr.width/2,attr.height/2);
                         }
 
@@ -160,15 +162,21 @@ bool MouseX11::getEvents(std::vector<int> *clicks,
         }
 
         if (x) *x = current_x;
-        if (y) *y = current_y;
+        if (y) *y = attr.height - current_y - 1; // flip axis
         if (rel_x) *rel_x = current_x - last_x;
-        if (rel_y) *rel_y = current_y - last_y;
+        if (rel_y) *rel_y = - (current_y - last_y); // flip axis
 
         return moved;
 }
 
 void MouseX11::setPos(int x, int y)
 {
+        // fetch window size info
+        XWindowAttributes attr;
+        XGetWindowAttributes(display,win,&attr);
+
+        y = attr.height - y - 1;
+
         XWarpPointer(display,None,win,0,0,0,0, x,y);
         warped_x = x;
         warped_y = y;

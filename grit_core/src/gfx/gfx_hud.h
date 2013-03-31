@@ -40,13 +40,15 @@ extern "C" {
         #include <lualib.h>
 }
 
-#include "../ExternalTable.h"
+#include "../LuaPtr.h"
 #include "../lua_util.h"
 
 #include "../path_util.h"
 #include "../vect_util.h"
 
 #include "GfxPipeline.h"
+
+#define GFX_HUD_ZORDER_MAX 7
 
 class GfxHudClass {
 
@@ -120,9 +122,14 @@ class GfxHudBase : public fast_erase_index {
 
     Vector2 position, size;
     Radian orientation;
+    bool inheritOrientation;
     bool enabled;
 
     GfxHudBase (void);
+
+    // maintain tree structure
+    void registerRemove (void);
+    void registerAdd (void);
 
     public:
 
@@ -134,20 +141,29 @@ class GfxHudBase : public fast_erase_index {
 
     bool destroyed (void) { return dead; }
 
-    void setEnabled (bool v) { assertAlive(); enabled = v; }
+    void setEnabled (bool v) { assertAlive(); registerRemove() ; enabled = v; registerAdd(); }
     bool isEnabled (void) { assertAlive(); return enabled; }
+
+    void setInheritOrientation (bool v) { assertAlive(); inheritOrientation = v; }
+    bool getInheritOrientation (void) { assertAlive(); return inheritOrientation; }
 
     void setOrientation (Radian v) { assertAlive(); orientation = v; }
     Radian getOrientation (void) { assertAlive(); return orientation; }
+    Radian getDerivedOrientation (void);
 
     void setPosition (const Vector2 &v) { assertAlive(); position = v; }
     Vector2 getPosition (void) { assertAlive(); return position; }
+    Vector2 getDerivedPosition (void);
 
     void setSize (const Vector2 &v) { assertAlive(); size = v; }
     Vector2 getSize (void) { assertAlive(); return size; }
 
+    void setParent (GfxHudObject *v) { assertAlive(); registerRemove(); parent = v; registerAdd(); }
+    GfxHudObject *getParent (void) { assertAlive(); return parent; }
+
+    void setZOrder (unsigned char v) { assertAlive(); registerRemove(); zOrder = v; registerAdd(); }
     unsigned char getZOrder (void) { assertAlive(); return zOrder; }
-    void setZOrder (unsigned char v) { assertAlive(); zOrder = v; }
+
 };
 
 class GfxHudObject : public GfxHudBase {
@@ -155,10 +171,10 @@ class GfxHudObject : public GfxHudBase {
     public:
 
     GfxHudClass * const hudClass;
-    ExternalTable userValues;
+    LuaPtr table;
 
     protected:
-    std::vector<GfxHudBase*> children;
+    fast_erase_vector<GfxHudBase*> children;
 
     GfxDiskResource *texture;
     Vector2 uv1, uv2;
@@ -167,9 +183,7 @@ class GfxHudObject : public GfxHudBase {
 
     public:
 
-    GfxHudObject (GfxHudClass *hud_class)
-      : GfxHudBase(), hudClass(hud_class), texture(NULL), uv1(0,1), uv2(1,0), colour(1,1,1), alpha(1), refCount(0)
-    { }
+    GfxHudObject (GfxHudClass *hud_class);
 
     void incRefCount (void);
     void decRefCount (lua_State *L);
@@ -179,6 +193,8 @@ class GfxHudObject : public GfxHudBase {
     void triggerParentResized (lua_State *L);
     void triggerDestroy (lua_State *L);
 
+    void notifyChildRemove (GfxHudBase *child);
+    void notifyChildAdd (GfxHudBase *child);
 
     float getAlpha (void) { assertAlive(); return alpha; }
     void setAlpha (float v) { assertAlive(); alpha = v; }
@@ -199,6 +215,9 @@ class GfxHudObject : public GfxHudBase {
     private:
 
     unsigned refCount;
+
+    // internal function
+    friend void gfx_render_hud_one (GfxHudBase *base);
     
 };
 
@@ -215,12 +234,18 @@ void gfx_hud_init (void);
 /** Called as the game engine exits to clean up internal state. */
 void gfx_hud_shutdown (void);
 
-/** Notify the hud objects of a window resize. */
-void gfx_hud_window_resized (unsigned w, unsigned h);
+/** Notify the hud system of the mouse location (called on a mouse move event). */
+void gfx_hud_signal_hover (unsigned x, unsigned y);
 
-/** Call the parentResized callbacks on the whole tree of hud elements.  This
- * is to be called after a window resize, but before the gfx_hud_render call.
- * */
+/** Notify the hud system of a mouse button event. */
+void gfx_hud_signal_button (const std::string &key);
+
+/** Notify the hud objects of a window resize. */
+void gfx_hud_signal_window_resized (unsigned w, unsigned h);
+
+/** To be called just before gfx_render, to notify hud objects of any parent
+ * resize events that may be pending.  The point is that this function has a lua state param, whereas the gfx_render call does not.
+ */
 void gfx_hud_call_parent_resized (lua_State *L);
 
 #endif

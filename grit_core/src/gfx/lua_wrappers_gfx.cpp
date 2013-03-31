@@ -1283,12 +1283,14 @@ TRY_START
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self.isEnabled());
 
+    } else if (!::strcmp(key,"parent")) {
+        push_gfxhudobj(L, self.getParent());
     } else if (!::strcmp(key,"class")) {
         push_gfxhudclass(L, self.hudClass);
     } else if (!::strcmp(key,"className")) {
         push_string(L, self.hudClass->name);
-    } else if (!::strcmp(key,"dump")) {
-        self.userValues.dump(L);
+    } else if (!::strcmp(key,"table")) {
+        self.table.push(L);
 
     } else if (!::strcmp(key,"destroyed")) {
         lua_pushboolean(L,self.destroyed());
@@ -1296,10 +1298,13 @@ TRY_START
         push_cfunction(L,gfxhudobj_destroy);
     } else {
         if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
-        const char *err = self.userValues.luaGet(L);
-        if (err) my_lua_error(L, err);
+        self.table.push(L);
+        lua_pushvalue(L, 2);
+        lua_rawget(L, -2);
+
         if (!lua_isnil(L,-1)) return 1;
         lua_pop(L,1);
+
         // try class instead
         self.hudClass->get(L,key);
     }
@@ -1342,13 +1347,20 @@ TRY_START
             self.setTexture(d2);
         }
 
+    } else if (!::strcmp(key,"parent")) {
+        if (lua_isnil(L,3)) {
+            self.setParent(NULL);
+        } else {
+            GET_UD_MACRO(GfxHudObject,v,3,GFXHUDOBJECT_TAG);
+            self.setParent(&v);
+        }
     } else if (!::strcmp(key,"zOrder")) {
-        unsigned char v = check_int(L,3,0,255);
+        unsigned char v = check_int(L,3,0,7);
         self.setZOrder(v);
     } else if (!::strcmp(key,"enabled")) {
         bool v = check_bool(L,3);
         self.setEnabled(v);
-    } else if (!::strcmp(key,"dump")) {
+    } else if (!::strcmp(key,"table")) {
         my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
     } else if (!::strcmp(key,"class")) {
         my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
@@ -1360,8 +1372,11 @@ TRY_START
         my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
     } else {
         if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
-        const char *err = self.userValues.luaSet(L);
-        if (err) my_lua_error(L, err);
+
+        self.table.push(L);
+        lua_pushvalue(L, 2);
+        lua_pushvalue(L, 3);
+        lua_rawset(L, -3);
     }
     return 0;
 TRY_END
@@ -1538,6 +1553,11 @@ TRY_START
     bool have_zorder = false;
     bool have_enabled = false;
 
+    lua_newtable(L);
+    int new_table_index = lua_gettop(L);
+
+    self->table.setNoPop(L);
+
     // scan through table adding lua data to self
     for (lua_pushnil(L) ; lua_next(L,table_index)!=0 ; lua_pop(L,1)) {
         if (lua_type(L,-2)!=LUA_TSTRING) {
@@ -1616,8 +1636,6 @@ TRY_START
             } else {
                 my_lua_error(L, "Enabled must be a boolean.");
             }
-        } else if (!::strcmp(key,"dump")) {
-            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
         } else if (!::strcmp(key,"class")) {
             my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
         } else if (!::strcmp(key,"className")) {
@@ -1627,8 +1645,9 @@ TRY_START
         } else if (!::strcmp(key,"destroyed")) {
             my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
         } else {
-            const char *err = self->userValues.luaSet(L);
-            if (err) my_lua_error(L, err);
+            lua_pushvalue(L, -2); // push key
+            lua_pushvalue(L, -2); // push value
+            lua_rawset(L, new_table_index);
         }
     }
     ExternalTable &tab = hud_class->getTable();
@@ -1703,6 +1722,7 @@ TRY_START
             self->setEnabled(v);
         }
     }
+    self->triggerInit(L);
     if (!have_size && self->getTexture()!=NULL) {
         // set size from texture
         GfxDiskResource *dr = self->getTexture();
@@ -1714,7 +1734,6 @@ TRY_START
             }
         }
     }
-    self->triggerInit(L);
     self->triggerParentResized(L);
     push_gfxhudobj(L,self);
 
