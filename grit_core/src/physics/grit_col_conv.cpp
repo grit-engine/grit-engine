@@ -38,7 +38,7 @@
 #define VERSION "1.0"
 
 const char *info =
-"grit_col_conv (c) Dave Cunningham 2011  (version: "VERSION")\n"
+"grit_col_conv (c) Dave Cunningham 2011  (version: " VERSION ")\n"
 "I convert between tcol and bcol files.  The process is not lossless:\n"
 "Some TCOL features are preprocessed on read, such as hull shrinking.\n\n";
 

@@ -60,7 +60,7 @@ class GfxSkyBody : public fast_erase_index {
 
   public:
 
-    ~GfxSkyBody (void);
+    virtual ~GfxSkyBody (void);
 
     static GfxSkyBodyPtr make (const std::string &mesh_name, short z_order);
 

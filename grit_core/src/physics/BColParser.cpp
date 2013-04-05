@@ -407,10 +407,10 @@ void write_tcol_as_bcol (std::ostream &o, TColFile &f)
 
 template<class T> static bool bcol_assert_struct_size_ok (const char *name)
 {
-    size_t is = sizeof(T);
-    size_t want = T::size();
+    unsigned is = sizeof(T);
+    unsigned want = T::size();
     if (is != want) {
-        fprintf(stderr,"Executable is broken: %s is %d bytes, need %d bytes.\n", name, is, want);
+        fprintf(stderr,"Executable is broken: %s is %u bytes, need %u bytes.\n", name, is, want);
         return false;
     }
     return true;

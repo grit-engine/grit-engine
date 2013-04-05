@@ -491,12 +491,12 @@ Ogre::MovableObject* MovableClutterFactory::createInstanceImpl (
 {
     Ogre::NameValuePairList::const_iterator ni;
 
-    if (params==0 || (ni = params->find("triangles"))==params->end())
+    if (params==NULL || (ni = params->find("triangles"))==params->end())
         GRIT_EXCEPT("Must give triangles when creating MovableClutter object");
     unsigned triangles = atoi(ni->second.c_str());
 
     bool tangents = false; // optional
-    if (params>0 && (ni = params->find("tangents"))!=params->end()) {
+    if (params!=NULL && (ni = params->find("tangents"))!=params->end()) {
         tangents = ni->second == "true";
     }
 
@@ -655,12 +655,12 @@ Ogre::MovableObject* RangedClutterFactory::createInstanceImpl (
 {
     Ogre::NameValuePairList::const_iterator ni;
 
-    if (params==0 || (ni = params->find("triangles"))==params->end())
+    if (params==NULL || (ni = params->find("triangles"))==params->end())
         GRIT_EXCEPT("Must give triangles when creating RangedClutter object");
     unsigned triangles = atoi(ni->second.c_str());
 
     bool tangents = false; // optional
-    if (params>0 && (ni = params->find("tangents"))!=params->end()) {
+    if (params!=NULL && (ni = params->find("tangents"))!=params->end()) {
         tangents = ni->second == "true";
     }
 
