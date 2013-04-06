@@ -104,6 +104,8 @@ template<class T> class fast_erase_vector {
     /** Look up a particular index, this is not particularly useful because the indexes change during remove operations. */
     T &operator[] (size_t i) { return vect[i]; }
 
+    const std::vector<T> &rawVector (void) { return vect; }
+
     private:
     std::vector<T> vect;
 };

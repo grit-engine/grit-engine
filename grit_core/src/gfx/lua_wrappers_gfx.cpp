@@ -1280,6 +1280,9 @@ TRY_START
             push_string(L, d->getName());
         }
 
+    } else if (!::strcmp(key,"needsInputCallbacks")) {
+        lua_pushboolean(L, self.getNeedsInputCallbacks());
+
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self.isEnabled());
 
@@ -1357,6 +1360,9 @@ TRY_START
     } else if (!::strcmp(key,"zOrder")) {
         unsigned char v = check_int(L,3,0,7);
         self.setZOrder(v);
+    } else if (!::strcmp(key,"needsInputCallbacks")) {
+        bool v = check_bool(L,3);
+        self.setNeedsInputCallbacks(v);
     } else if (!::strcmp(key,"enabled")) {
         bool v = check_bool(L,3);
         self.setEnabled(v);
@@ -1795,6 +1801,27 @@ TRY_START
         c++;
     }
     return 1;
+TRY_END
+}
+
+static int global_gfx_hud_signal_mouse_move (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    unsigned x = check_t<unsigned>(L,1);
+    unsigned y = check_t<unsigned>(L,2);
+    gfx_hud_signal_mouse_move(x,y);
+    return 0;
+TRY_END
+}
+
+static int global_gfx_hud_signal_button (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    const char *str = luaL_checkstring(L, 1);
+    gfx_hud_signal_button(str);
+    return 0;
 TRY_END
 }
 
@@ -4209,6 +4236,8 @@ static const luaL_reg global[] = {
     {"gfx_hud_class_has",global_gfx_hud_class_has},
     {"gfx_hud_class_all",global_gfx_hud_class_all},
     {"gfx_hud_class_count",global_gfx_hud_class_count},
+    {"gfx_hud_signal_mouse_move",global_gfx_hud_signal_mouse_move},
+    {"gfx_hud_signal_button",global_gfx_hud_signal_button},
 
     {"gfx_env_cube",global_gfx_env_cube},
     {"gfx_particle_ambient",global_gfx_particle_ambient},

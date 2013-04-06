@@ -181,6 +181,8 @@ class GfxHudObject : public GfxHudBase {
     Vector3 colour;
     float alpha;
 
+    bool needsInputCallbacks;
+
     public:
 
     GfxHudObject (GfxHudClass *hud_class);
@@ -211,6 +213,8 @@ class GfxHudObject : public GfxHudBase {
     GfxDiskResource *getTexture (void) { assertAlive(); return texture; }
     void setTexture (GfxDiskResource *v);
 
+    bool getNeedsInputCallbacks (void) { assertAlive(); return needsInputCallbacks; }
+    void setNeedsInputCallbacks (bool v) { assertAlive(); needsInputCallbacks = v; }
 
     private:
 
@@ -235,7 +239,7 @@ void gfx_hud_init (void);
 void gfx_hud_shutdown (void);
 
 /** Notify the hud system of the mouse location (called on a mouse move event). */
-void gfx_hud_signal_hover (unsigned x, unsigned y);
+void gfx_hud_signal_mouse_move (unsigned x, unsigned y);
 
 /** Notify the hud system of a mouse button event. */
 void gfx_hud_signal_button (const std::string &key);

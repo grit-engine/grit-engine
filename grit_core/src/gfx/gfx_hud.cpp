@@ -154,7 +154,9 @@ Vector2 GfxHudBase::getDerivedPosition (void)
 
 
 GfxHudObject::GfxHudObject (GfxHudClass *hud_class)
-  : GfxHudBase(), hudClass(hud_class), texture(NULL), uv1(0,0), uv2(1,1), colour(1,1,1), alpha(1), refCount(0)
+  : GfxHudBase(), hudClass(hud_class),
+    texture(NULL), uv1(0,0), uv2(1,1), colour(1,1,1), alpha(1), needsInputCallbacks(false),
+    refCount(0)
 {
 }
 
@@ -250,63 +252,81 @@ void GfxHudObject::triggerInit (lua_State *L)
 
 void GfxHudObject::triggerParentResized (lua_State *L)
 {
-    assertAlive();
-    STACK_BASE;
-    //stack is empty
+    do {
+        assertAlive();
+        STACK_BASE;
+        //stack is empty
 
-    // error handler in case there is a problem during 
-    // the callback
-    push_cfunction(L, my_lua_error_handler);
-    int error_handler = lua_gettop(L);
+        // error handler in case there is a problem during 
+        // the callback
+        push_cfunction(L, my_lua_error_handler);
+        int error_handler = lua_gettop(L);
 
-    //stack: err
+        //stack: err
 
-    // get the function
-    hudClass->get(L,"parentResized");
-    //stack: err,callback
-    if (lua_isnil(L,-1)) {
-        // no parentResized callback -- our work is done
-        lua_pop(L,2);
-        STACK_CHECK;
-        return;
-    }
+        // get the function
+        hudClass->get(L,"parentResized");
+        //stack: err,callback
+        if (lua_isnil(L,-1)) {
+            // no parentResized callback -- our work is done
+            lua_pop(L,2);
+            STACK_CHECK;
+            continue; // to children
+        }
 
 
-    //stack: err,callback
-    STACK_CHECK_N(2);
-
-    push_gfxhudobj(L, this);
-    push_v2(L, win_size);
-    //stack: err,callback,object,size
-
-    STACK_CHECK_N(4);
-
-    // call (1 arg), pops function too
-    pwd_push_dir(hudClass->dir);
-    int status = lua_pcall(L,2,0,error_handler);
-    pwd_pop();
-    if (status) {
+        //stack: err,callback
         STACK_CHECK_N(2);
-        //stack: err,error
-        // pop the error message since the error handler will
-        // have already printed it out
+
+        push_gfxhudobj(L, this);
+        push_v2(L, win_size);
+        //stack: err,callback,object,size
+
+        STACK_CHECK_N(4);
+
+        // call (1 arg), pops function too
+        pwd_push_dir(hudClass->dir);
+        int status = lua_pcall(L,2,0,error_handler);
+        pwd_pop();
+        if (status) {
+            STACK_CHECK_N(2);
+            //stack: err,error
+            // pop the error message since the error handler will
+            // have already printed it out
+            lua_pop(L,1);
+            CERR << "Hud object of class: \"" << hudClass->name << "\" raised an error on parent resize, destroying it." << std::endl;
+            // will call destroy callback
+            destroy(L);
+            //stack: err
+            STACK_CHECK_N(1);
+        } else {
+            //stack: err
+            STACK_CHECK_N(1);
+        }
+
+        //stack: err
+        STACK_CHECK_N(1);
         lua_pop(L,1);
-        CERR << "Hud object of class: \"" << hudClass->name << "\" raised an error on parent resize, destroying it." << std::endl;
-        // will call destroy callback
-        destroy(L);
-        //stack: err
-        STACK_CHECK_N(1);
-    } else {
-        //stack: err
-        STACK_CHECK_N(1);
+
+        //stack is empty
+        STACK_CHECK;
+
+    } while (0);
+
+    // note if we destroyed ourselves due to an error in the callback, children should be empty
+
+    // use local_children copy since callbacks can alter hierarchy
+    std::vector<GfxHudBase*> local_children = children.rawVector();
+
+    //TODO: iterate over local_children calling triggerParentSize on them
+    for (unsigned j=0 ; j<local_children.size() ; ++j) {
+        GfxHudBase *base = local_children[j];
+
+        if (base->destroyed()) continue;
+
+        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+        if (obj != NULL) obj->triggerParentResized(L);
     }
-
-    //stack: err
-    STACK_CHECK_N(1);
-    lua_pop(L,1);
-
-    //stack is empty
-    STACK_CHECK;
 }
 
 void GfxHudObject::notifyChildAdd (GfxHudBase *child)
@@ -665,6 +685,11 @@ void gfx_hud_render (Ogre::Viewport *vp)
 
 }
 
+// }}}
+
+
+// {{{ RESIZE
+
 // when true, triggers resize callbacks at the root
 static bool dirty_parent_size;
 
@@ -684,12 +709,35 @@ void gfx_hud_call_parent_resized (lua_State *L)
 
     dirty_parent_size = false;
 
-    for (unsigned j=0 ; j<root_elements.size() ; ++j) {
+    // make local copy because callbacks can destroy elements
+    std::vector<GfxHudBase*> local_root_elements = root_elements.rawVector();
+    
 
-        GfxHudBase *base = root_elements[j];
+    for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
+
+        GfxHudBase *base = local_root_elements[j];
+
+        if (base->destroyed()) continue;
 
         GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
         if (obj != NULL) obj->triggerParentResized(L);
 
     }
 }
+
+// }}}
+
+
+// {{{ INPUT
+
+void gfx_hud_signal_mouse_move (unsigned w, unsigned h)
+{
+    // iterate through tree (obeying enabled) calling callbacks
+}
+
+void gfx_hud_signal_button (const std::string &key)
+{
+    // iterate through tree (obeying enabled) calling callbacks
+}
+
+// }}}
