@@ -32,7 +32,7 @@
 #define VERSION "1.0"
 
 const char *info =
-"colread (c) Dave Cunningham 2007  (version: "VERSION")\n"
+"colread (c) Dave Cunningham 2007  (version: " VERSION ")\n"
 "I can read COLL COL2 COL3 TCOL and BCOL files.\n"
 "I can write TCOL and BCOL files.\n"
 "Some TCOL features are preprocessed on read, such as hull shrinking.\n\n";

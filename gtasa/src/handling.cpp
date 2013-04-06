@@ -250,20 +250,20 @@ void read_handling (Csv &csv, HandlingData &data)
 
 void app_verbose(char const* file, int line, const std::string& msg)
 {
-        std::cout<<BOLD GREEN"VERBOSE "RESET
-                 <<BOLD<<file<<NOBOLD":"BOLD<<line<<NOBOLD
-                 <<": \""BOLD BLUE<<msg<<RESET"\"";
+        std::cout<<BOLD<<GREEN<<"VERBOSE "<<RESET
+                 <<BOLD<<file<<NOBOLD<<":"<<BOLD<<line<<NOBOLD
+                 << ": \""<<BOLD<<BLUE<<msg<<RESET"\"";
         std::cout<<std::endl;
 }
 
 void app_error(char const* file, int line,
                const std::string& i_was, const std::string& msg)
 {
-        std::cout<<BOLD RED"ERROR "RESET
-                 <<BOLD<<file<<NOBOLD":"BOLD<<line<<NOBOLD
-                 <<": \""BOLD YELLOW<<msg<<RESET"\"";
+        std::cout<<BOLD RED"ERROR "<<RESET
+                 <<BOLD<<file<<NOBOLD<<":"<<BOLD<<line<<NOBOLD
+                 <<": \""<<BOLD<<YELLOW<<msg<<RESET<<"\"";
         if (i_was!="")
-                std::cout<<" ("BOLD YELLOW<<i_was<<RESET")";
+                std::cout<<" ("<<BOLD<<YELLOW<<i_was<<RESET<<")";
         std::cout<<std::endl;
 }
 
