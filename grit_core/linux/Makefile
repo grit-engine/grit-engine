@@ -40,7 +40,7 @@ endif
 
 %.o: ../src/win32/%.cpp
 	@$(COMPILING)
-	@@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
+	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
 %.o: ../src/linux/%.cpp
 	@$(COMPILING)
