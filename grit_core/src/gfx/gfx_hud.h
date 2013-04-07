@@ -181,7 +181,9 @@ class GfxHudObject : public GfxHudBase {
     Vector3 colour;
     float alpha;
 
+    bool needsParentResizedCallbacks;
     bool needsInputCallbacks;
+    bool needsFrameCallbacks;
 
     public:
 
@@ -193,6 +195,9 @@ class GfxHudObject : public GfxHudBase {
 
     void triggerInit (lua_State *L);
     void triggerParentResized (lua_State *L);
+    void triggerMouseMove (lua_State *L, int w, int h);
+    void triggerButton (lua_State *L, const std::string &key);
+    void triggerFrame (lua_State *L, float elapsed);
     void triggerDestroy (lua_State *L);
 
     void notifyChildRemove (GfxHudBase *child);
@@ -213,8 +218,17 @@ class GfxHudObject : public GfxHudBase {
     GfxDiskResource *getTexture (void) { assertAlive(); return texture; }
     void setTexture (GfxDiskResource *v);
 
+    void setSize (lua_State *L, const Vector2 &v);
+    void setParent (lua_State *L, GfxHudObject *v);
+
+    bool getNeedsParentResizedCallbacks (void) { assertAlive(); return needsParentResizedCallbacks; }
+    void setNeedsParentResizedCallbacks (bool v) { assertAlive(); needsParentResizedCallbacks = v; }
+
     bool getNeedsInputCallbacks (void) { assertAlive(); return needsInputCallbacks; }
     void setNeedsInputCallbacks (bool v) { assertAlive(); needsInputCallbacks = v; }
+
+    bool getNeedsFrameCallbacks (void) { assertAlive(); return needsFrameCallbacks; }
+    void setNeedsFrameCallbacks (bool v) { assertAlive(); needsFrameCallbacks = v; }
 
     private:
 
@@ -239,10 +253,10 @@ void gfx_hud_init (void);
 void gfx_hud_shutdown (void);
 
 /** Notify the hud system of the mouse location (called on a mouse move event). */
-void gfx_hud_signal_mouse_move (unsigned x, unsigned y);
+void gfx_hud_signal_mouse_move (lua_State *L, int x, int y);
 
 /** Notify the hud system of a mouse button event. */
-void gfx_hud_signal_button (const std::string &key);
+void gfx_hud_signal_button (lua_State *L, const std::string &key, int x, int y);
 
 /** Notify the hud objects of a window resize. */
 void gfx_hud_signal_window_resized (unsigned w, unsigned h);
@@ -250,6 +264,6 @@ void gfx_hud_signal_window_resized (unsigned w, unsigned h);
 /** To be called just before gfx_render, to notify hud objects of any parent
  * resize events that may be pending.  The point is that this function has a lua state param, whereas the gfx_render call does not.
  */
-void gfx_hud_call_parent_resized (lua_State *L);
+void gfx_hud_call_per_frame_callbacks (lua_State *L, float elapsed);
 
 #endif

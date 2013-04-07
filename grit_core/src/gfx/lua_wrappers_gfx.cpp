@@ -1282,6 +1282,10 @@ TRY_START
 
     } else if (!::strcmp(key,"needsInputCallbacks")) {
         lua_pushboolean(L, self.getNeedsInputCallbacks());
+    } else if (!::strcmp(key,"needsFrameCallbacks")) {
+        lua_pushboolean(L, self.getNeedsFrameCallbacks());
+    } else if (!::strcmp(key,"needsParentResizedCallbacks")) {
+        lua_pushboolean(L, self.getNeedsParentResizedCallbacks());
 
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self.isEnabled());
@@ -1330,7 +1334,7 @@ TRY_START
         self.setPosition(v);
     } else if (!::strcmp(key,"size")) {
         Vector2 v = check_v2(L,3);
-        self.setSize(v);
+        self.setSize(L, v);
 
     } else if (!::strcmp(key,"colour")) {
         Vector3 v = check_v3(L,3);
@@ -1352,17 +1356,25 @@ TRY_START
 
     } else if (!::strcmp(key,"parent")) {
         if (lua_isnil(L,3)) {
-            self.setParent(NULL);
+            self.setParent(L, NULL);
         } else {
             GET_UD_MACRO(GfxHudObject,v,3,GFXHUDOBJECT_TAG);
-            self.setParent(&v);
+            self.setParent(L, &v);
         }
     } else if (!::strcmp(key,"zOrder")) {
         unsigned char v = check_int(L,3,0,7);
         self.setZOrder(v);
+
     } else if (!::strcmp(key,"needsInputCallbacks")) {
         bool v = check_bool(L,3);
         self.setNeedsInputCallbacks(v);
+    } else if (!::strcmp(key,"needsFrameCallbacks")) {
+        bool v = check_bool(L,3);
+        self.setNeedsFrameCallbacks(v);
+    } else if (!::strcmp(key,"needsParentResizedCallbacks")) {
+        bool v = check_bool(L,3);
+        self.setNeedsParentResizedCallbacks(v);
+
     } else if (!::strcmp(key,"enabled")) {
         bool v = check_bool(L,3);
         self.setEnabled(v);
@@ -1403,7 +1415,7 @@ TRY_START
     float elapsed = check_float(L,1);
     Vector3 cam_pos = check_v3(L,2);
     Quaternion cam_dir = check_quat(L,3);
-    gfx_hud_call_parent_resized(L);
+    gfx_hud_call_per_frame_callbacks(L, elapsed);
     gfx_render(elapsed, cam_pos, cam_dir);
     return 0;
 TRY_END
@@ -1590,7 +1602,7 @@ TRY_START
         } else if (!::strcmp(key,"size")) {
             if (lua_isvector2(L,-1)) {
                 Vector2 v = check_v2(L,-1);
-                self->setSize(v);
+                self->setSize(L, v);
                 have_size = true;
             } else {
                 my_lua_error(L, "Size must be a vector2.");
@@ -1678,7 +1690,7 @@ TRY_START
             Vector2 v;
             bool success = tab.get("size",v);
             if (!success) my_lua_error(L, "Wrong type for size field in hud class \""+hud_class->name+"\".");
-            self->setSize(v);
+            self->setSize(L, v);
             have_size = true;
         }
     }
@@ -1736,7 +1748,7 @@ TRY_START
             if (dr->isLoaded()) {
                 Ogre::TexturePtr tex = dr->getOgreResourcePtr();
                 tex->load(); // otherwise width and height are 512!?
-                self->setSize(Vector2(tex->getWidth(),tex->getHeight()));
+                self->setSize(L, Vector2(tex->getWidth(),tex->getHeight()));
             }
         }
     }
@@ -1808,9 +1820,9 @@ static int global_gfx_hud_signal_mouse_move (lua_State *L)
 {
 TRY_START
     check_args(L,2);
-    unsigned x = check_t<unsigned>(L,1);
-    unsigned y = check_t<unsigned>(L,2);
-    gfx_hud_signal_mouse_move(x,y);
+    unsigned x = check_t<int>(L,1);
+    unsigned y = check_t<int>(L,2);
+    gfx_hud_signal_mouse_move(L, x,y);
     return 0;
 TRY_END
 }
@@ -1818,9 +1830,11 @@ TRY_END
 static int global_gfx_hud_signal_button (lua_State *L)
 {
 TRY_START
-    check_args(L,1);
+    check_args(L,3);
     const char *str = luaL_checkstring(L, 1);
-    gfx_hud_signal_button(str);
+    unsigned x = check_t<int>(L,2);
+    unsigned y = check_t<int>(L,3);
+    gfx_hud_signal_button(L, str, x, y);
     return 0;
 TRY_END
 }
@@ -2522,7 +2536,7 @@ namespace {
                 } else if (!lua_istable(L,-1)) {
                     CERR << "Particle uvs was not a table." << std::endl;
                     destroy = true;
-                } else if (!lua_objlen(L,-1) != 4) {
+                } else if (lua_objlen(L,-1) != 4) {
                     CERR << "Particle uvs did not have 4 elements." << std::endl;
                     destroy = true;
                 } else {
