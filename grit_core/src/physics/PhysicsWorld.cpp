@@ -1474,6 +1474,8 @@ void RigidBody::stabiliseCallback (lua_State *L, float elapsed)
 
 void RigidBody::force (const Vector3 &force)
 {
+    if (isnan(force.x) || isnan(force.y) || isnan(force.z))
+        GRIT_EXCEPT("RigidBody::force received NaN element in force vector");
     if (body==NULL) return;
     body->applyCentralImpulse(to_bullet(force*physics_option(PHYSICS_STEP_SIZE)));
     body->activate();
@@ -1482,6 +1484,10 @@ void RigidBody::force (const Vector3 &force)
 void RigidBody::force (const Vector3 &force,
                const Vector3 &rel_pos)
 {
+    if (isnan(force.x) || isnan(force.y) || isnan(force.z))
+        GRIT_EXCEPT("RigidBody::force received NaN element in force vector");
+    if (isnan(rel_pos.x) || isnan(rel_pos.y) || isnan(rel_pos.z))
+        GRIT_EXCEPT("RigidBody::force received NaN element in position vector");
     if (body==NULL) return;
     body->applyImpulse(to_bullet(force*physics_option(PHYSICS_STEP_SIZE)),
                to_bullet(rel_pos));
@@ -1490,6 +1496,8 @@ void RigidBody::force (const Vector3 &force,
 
 void RigidBody::impulse (const Vector3 &impulse)
 {
+    if (isnan(impulse.x) || isnan(impulse.y) || isnan(impulse.z))
+        GRIT_EXCEPT("RigidBody::impulse received NaN element in impulse vector");
     if (body==NULL) return;
     body->applyCentralImpulse(to_bullet(impulse));
     body->activate();
@@ -1498,6 +1506,10 @@ void RigidBody::impulse (const Vector3 &impulse)
 void RigidBody::impulse (const Vector3 &impulse,
              const Vector3 &rel_pos)
 {
+    if (isnan(impulse.x) || isnan(impulse.y) || isnan(impulse.z))
+        GRIT_EXCEPT("RigidBody::impulse received NaN element in impulse vector");
+    if (isnan(rel_pos.x) || isnan(rel_pos.y) || isnan(rel_pos.z))
+        GRIT_EXCEPT("RigidBody::impulse received NaN element in position vector");
     if (body==NULL) return;
     body->applyImpulse(to_bullet(impulse),to_bullet(rel_pos));
     body->activate();
@@ -1505,6 +1517,8 @@ void RigidBody::impulse (const Vector3 &impulse,
 
 void RigidBody::torque (const Vector3 &torque)
 {
+    if (isnan(torque.x) || isnan(torque.y) || isnan(torque.z))
+        GRIT_EXCEPT("RigidBody::torque received NaN element in torque vector");
     if (body==NULL) return;
     body->applyTorqueImpulse(to_bullet(torque*physics_option(PHYSICS_STEP_SIZE)));
     body->activate();
@@ -1512,6 +1526,8 @@ void RigidBody::torque (const Vector3 &torque)
 
 void RigidBody::torqueImpulse (const Vector3 &torque)
 {
+    if (isnan(torque.x) || isnan(torque.y) || isnan(torque.z))
+        GRIT_EXCEPT("RigidBody::torque received NaN element in torque vector");
     if (body==NULL) return;
     body->applyTorqueImpulse(to_bullet(torque));
     body->activate();
