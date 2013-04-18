@@ -34,6 +34,10 @@ typedef std::map<std::string,GfxHudClass*> GfxHudClassMap;
 #ifndef GFX_HUD_h
 #define GFX_HUD_h
 
+#include <OgreHardwareBufferManager.h>
+#include <OgreHardwareVertexBuffer.h>
+#include <OgreHardwareIndexBuffer.h>
+
 extern "C" {
         #include <lua.h>
         #include <lauxlib.h>
@@ -241,6 +245,18 @@ class GfxHudObject : public GfxHudBase {
 
 class GfxHudText : public GfxHudBase {
 
+    protected:
+
+    Ogre::HardwareVertexBufferSharedPtr vertexes;
+    Ogre::HardwareIndexBufferSharedPtr indexes;
+    Ogre::VertexData *quad_vdata;
+
+    std::string text;
+    
+
+    void setText (const std::string &v) { assertAlive(); text = v; }
+    void appendText (const std::string &v) { assertAlive(); text += v; }
+    const std::string &getText (void) { assertAlive(); return text; }
 };
 
 /** Called in the frame loop by the graphics code to render the HUD on top of the 3d graphics. */
