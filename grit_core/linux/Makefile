@@ -8,9 +8,8 @@ ROOT=../..
 
 include $(ROOT)/common.mk
 
-
-TARGETS=$(ROOT)/grit_core/media/Grit.linux.x86 \
-        $(ROOT)/exporters/blender_scripts/addons/grit_blender/grit_col_conv.linux.x86 \
+TARGETS=$(ROOT)/grit_core/media/Grit.$(GRIT_EXEC_SUFFIX) \
+        $(ROOT)/exporters/blender_scripts/addons/grit_blender/grit_col_conv.$(GRIT_EXEC_SUFFIX) \
 
 all: $(TARGETS)
 
@@ -132,10 +131,10 @@ GRIT_OBJ=\
         x11_clipboard.o \
 
 
-%/Grit.linux.x86: Grit.linux.x86
+%/Grit.$(GRIT_EXEC_SUFFIX): Grit.$(GRIT_EXEC_SUFFIX)
 	strip -s $< -o $@
 	
-Grit.linux.x86: $(GRIT_OBJ) $(OGRE_ARCHIVES) $(BULLET_ARCHIVES) $(LUA_ARCHIVES) $(ICU_ARCHIVES)
+Grit.$(GRIT_EXEC_SUFFIX): $(GRIT_OBJ) $(OGRE_ARCHIVES) $(BULLET_ARCHIVES) $(LUA_ARCHIVES) $(ICU_ARCHIVES)
 	@$(LINKING)
 	@$(CXX) $(GRIT_OBJ) -o $@ $(LDFLAGS) $(LDLIBS)
 
@@ -148,10 +147,10 @@ COL_CONV_OBJ = grit_col_conv.o \
                TColLexer-core-engine.o \
                CentralisedLog.o
 
-%/grit_col_conv.linux.x86: grit_col_conv
+%/grit_col_conv.$(GRIT_EXEC_SUFFIX): grit_col_conv.$(GRIT_EXEC_SUFFIX)
 	strip -s $< -o $@
 
-grit_col_conv: $(COL_CONV_OBJ)
+grit_col_conv.$(GRIT_EXEC_SUFFIX): $(COL_CONV_OBJ)
 	@$(LINKING)
 	@$(CXX) $(COL_CONV_OBJ) -o $@ $(LDFLAGS) $(LDLIBS)
 
