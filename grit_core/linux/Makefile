@@ -80,6 +80,7 @@ GRIT_OBJ=\
         DiskResource.o \
         DenseIndexMap.o \
         ExternalTable.o \
+        GfxFont.o \
         gfx.o \
         gfx_option.o \
         GfxBody.o \
