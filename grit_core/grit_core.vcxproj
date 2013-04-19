@@ -139,6 +139,7 @@
     <ClCompile Include="src\gfx\gfx.cpp" />
     <ClCompile Include="src\gfx\GfxBody.cpp" />
     <ClCompile Include="src\gfx\GfxDiskResource.cpp" />
+    <ClCompile Include="src\gfx\GfxFont.cpp" />
     <ClCompile Include="src\gfx\GfxInstances.cpp" />
     <ClCompile Include="src\gfx\GfxLight.cpp" />
     <ClCompile Include="src\gfx\GfxMaterial.cpp" />
