@@ -217,18 +217,17 @@ GfxBodyPtr GfxBody::make (const std::string &mesh_name,
 
     if (!dr->isLoaded()) GRIT_EXCEPT("Resource not yet loaded: \""+mesh_name+"\"");
 
-    GfxDiskResource *gdr = dynamic_cast<GfxDiskResource*>(dr);
+    GfxMeshDiskResource *gdr = dynamic_cast<GfxMeshDiskResource*>(dr);
     if (gdr==NULL) GRIT_EXCEPT("Resource is not a mesh: \""+mesh_name+"\"");
 
     return GfxBodyPtr(new GfxBody(gdr, sm, par_));
 }
 
-GfxBody::GfxBody (GfxDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr &par_)
+GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr &par_)
   : GfxNode(par_), initialMaterialMap(sm)
 {
-    const Ogre::ResourcePtr &rp = gdr->getOgreResourcePtr();
 
-    mesh = rp;
+    mesh = gdr->getOgreMeshPtr();
 
     mesh->load();
 

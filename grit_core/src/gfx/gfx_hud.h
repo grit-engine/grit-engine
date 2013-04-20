@@ -51,6 +51,7 @@ extern "C" {
 #include "../vect_util.h"
 
 #include "GfxPipeline.h"
+#include "GfxFont.h"
 
 #define GFX_HUD_ZORDER_MAX 7
 
@@ -180,7 +181,7 @@ class GfxHudObject : public GfxHudBase {
     protected:
     fast_erase_vector<GfxHudBase*> children;
 
-    GfxDiskResource *texture;
+    GfxTextureDiskResource *texture;
     Vector2 uv1, uv2;
     Vector3 colour;
     float alpha;
@@ -219,8 +220,8 @@ class GfxHudObject : public GfxHudBase {
     Vector2 getUV2 (void) { assertAlive(); return uv2; }
     void setUV2 (const Vector2 &v) { assertAlive(); uv2 = v; }
 
-    GfxDiskResource *getTexture (void) { assertAlive(); return texture; }
-    void setTexture (GfxDiskResource *v);
+    GfxTextureDiskResource *getTexture (void) { assertAlive(); return texture; }
+    void setTexture (GfxTextureDiskResource *v);
 
     void setSize (lua_State *L, const Vector2 &v);
     void setParent (lua_State *L, GfxHudObject *v);

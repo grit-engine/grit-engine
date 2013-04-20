@@ -90,7 +90,7 @@ struct GfxSkyMaterialUniform {
     GfxSkyShaderUniformKind kind;
     std::vector<float> values;
     
-    GfxDiskResource *texture;
+    GfxTextureDiskResource *texture;
     bool clamp;
     int anisotropy;
 };

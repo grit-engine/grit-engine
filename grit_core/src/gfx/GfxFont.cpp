@@ -19,5 +19,38 @@
  * THE SOFTWARE.
  */
 
+#include "GfxFont.h"
 
+typedef std::map<std::string, GfxFont *> FontMap;
+FontMap db;
 
+bool gfx_font_has (const std::string &name)
+{
+    FontMap::iterator it = db.find(name);
+    if (it == db.end()) return false;
+    return true;
+}
+
+GfxFont *gfx_font_get (const std::string &name)
+{
+    if (!gfx_font_has(name)) return NULL;
+    return db[name];
+}
+
+GfxFont *gfx_font_make (const std::string &name, GfxTextureDiskResource *dr)
+{
+    GfxFont *f = gfx_font_get(name);
+    if (f == NULL) {
+        f = new GfxFont(dr);
+        db[name] = f;
+    } else {
+        f->setTexture(dr);
+        f->clearCodePoints();
+    }
+    return f;
+}
+
+unsigned long gfx_font_num (void)
+{
+    return db.size();
+}

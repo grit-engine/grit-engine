@@ -77,21 +77,20 @@ GfxInstancesPtr GfxInstances::make (const std::string &mesh_name, const GfxBodyP
     
     if (!dr->isLoaded()) GRIT_EXCEPT("Resource not yet loaded: \""+mesh_name+"\"");
     
-    GfxDiskResource *gdr = dynamic_cast<GfxDiskResource*>(dr);
+    GfxMeshDiskResource *gdr = dynamic_cast<GfxMeshDiskResource*>(dr);
     if (gdr==NULL) GRIT_EXCEPT("Resource is not a mesh: \""+mesh_name+"\"");
 
     return GfxInstancesPtr(new GfxInstances(gdr, par_));
 }
 
-GfxInstances::GfxInstances (GfxDiskResource *gdr, const GfxBodyPtr &par_)
+GfxInstances::GfxInstances (GfxMeshDiskResource *gdr, const GfxBodyPtr &par_)
   : GfxNode(par_),
     dirty(false),
     enabled(true),
     mBoundingBox(Ogre::AxisAlignedBox::BOX_INFINITE),
     mBoundingRadius(std::numeric_limits<float>::max())
 {   
-    const Ogre::ResourcePtr &rp = gdr->getOgreResourcePtr();
-    mesh = rp;
+    mesh = gdr->getOgreMeshPtr();
 
     node->attachObject(this);
 

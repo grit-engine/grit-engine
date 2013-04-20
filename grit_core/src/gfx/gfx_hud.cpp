@@ -679,7 +679,7 @@ void GfxHudObject::triggerDestroy (lua_State *L)
     STACK_CHECK;
 }
 
-void GfxHudObject::setTexture (GfxDiskResource *v)
+void GfxHudObject::setTexture (GfxTextureDiskResource *v)
 {
     assertAlive();
     // maybe check it's valid at this point
@@ -844,7 +844,7 @@ void gfx_render_hud_one (GfxHudBase *base)
     if (obj!=NULL) {
         //DiskResource *tex_ = disk_resource_get_or_make("/system/Crosshair.bmp");
         //GfxDiskResource *tex = dynamic_cast<GfxDiskResource*>(tex_);
-        GfxDiskResource *tex = obj->getTexture();
+        GfxTextureDiskResource *tex = obj->getTexture();
         if (tex!=NULL && !tex->isLoaded()) {
             CERR << "Hud object using unloaded texture: \"" << (*tex) << "\"" << std::endl;
             obj->setTexture(NULL);
@@ -869,7 +869,7 @@ void gfx_render_hud_one (GfxHudBase *base)
 
         if (tex != NULL && d3d9) {
             // Texel offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
-            Ogre::TexturePtr ogre_tex = tex->getOgreResourcePtr();
+            const Ogre::TexturePtr &ogre_tex = tex->getOgreTexturePtr();
             ogre_tex->load(); // otherwise width and height are 512!?
             Vector2 tex_size(ogre_tex->getWidth(), ogre_tex->getHeight());
             Vector2 uv_offset = Vector2(0.5, 0.5) / obj->getSize();
@@ -893,7 +893,7 @@ void gfx_render_hud_one (GfxHudBase *base)
         ogre_rs->_setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
 
         if (tex != NULL) {
-            ogre_rs->_setTexture(0, true, tex->getOgreResourcePtr());
+            ogre_rs->_setTexture(0, true, tex->getOgreTexturePtr());
             Ogre::TextureUnitState::UVWAddressingMode addr_mode = {
                 Ogre::TextureUnitState::TAM_WRAP,
                 Ogre::TextureUnitState::TAM_WRAP,

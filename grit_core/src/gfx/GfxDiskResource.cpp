@@ -48,22 +48,24 @@ size_t gfx_gpu_ram_used (void)
 }
 
 
-GfxDiskResource::GfxDiskResource (const std::string &name, const std::string &ext)
-    : isMesh(ext == "mesh"), name(name)
+GfxDiskResource::GfxDiskResource (const std::string &name)
+    : name(name)
+{
+}
+
+GfxMeshDiskResource::GfxMeshDiskResource (const std::string &name)
+    : GfxDiskResource(name)
 {
     try {
         std::string ogre_name = name.substr(1);
-        if (isMesh) {
-            Ogre::HardwareBuffer::Usage u = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
-            rp = Ogre::MeshManager::getSingleton()
-                    .createOrRetrieve(ogre_name,"GRIT", false,0, 0, u,u,false,false).first;
-        } else {
-            rp = Ogre::TextureManager::getSingleton().createOrRetrieve(ogre_name,"GRIT").first;
-        }
+        Ogre::HardwareBuffer::Usage u = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
+        rp = Ogre::MeshManager::getSingleton()
+                .createOrRetrieve(ogre_name,"GRIT", false,0, 0, u,u,false,false).first;
     } catch (Ogre::Exception &e) { 
         GRIT_EXCEPT2(e.getFullDescription(), "Looking for a graphics resource");
     }       
 }
+
 
 // hack to get access to stuff
 class MyMeshHack : public Ogre::Mesh {
@@ -179,7 +181,8 @@ class MyMeshDeserializer : public Ogre::Serializer {
     Ogre::MeshSerializerListener *mListener;
 };
 
-void GfxDiskResource::loadImpl (void)
+
+void GfxMeshDiskResource::loadImpl (void)
 {
     APP_ASSERT(!isLoaded());
     try {
@@ -191,35 +194,32 @@ void GfxDiskResource::loadImpl (void)
 
             // for meshes, scan the bytes from disk to extract materials, then work out
             // what textures we are depending on...
-            if (rp->getCreator()->getResourceType() == "Mesh") {
-                Ogre::MeshPtr mp = rp;
-                Ogre::DataStreamPtr mesh_data = MyMeshHack::getData(mp);
-                std::vector<std::string> mat_names;
-                MyMeshDeserializer mmd(mesh_data, Ogre::MeshManager::getSingleton().getListener());
-                mmd.importMatNames(mp, mat_names);
+            Ogre::DataStreamPtr mesh_data = MyMeshHack::getData(rp);
+            std::vector<std::string> mat_names;
+            MyMeshDeserializer mmd(mesh_data, Ogre::MeshManager::getSingleton().getListener());
+            mmd.importMatNames(rp, mat_names);
 
-                GFX_MAT_SYNC;
-                if (gfx_disk_resource_verbose_loads) {
-                    CVERB << "materials = [";
-                    for (unsigned i=0 ; i<mat_names.size() ; ++i) {
-                        CLOG << (i==0?" ":", ") << mat_names[i];
-                    }
-                    CLOG << "]" << std::endl;
-                }
-
-                // sync with main thread to get texture names
+            GFX_MAT_SYNC;
+            if (gfx_disk_resource_verbose_loads) {
+                CVERB << "materials = [";
                 for (unsigned i=0 ; i<mat_names.size() ; ++i) {
-                    if (gfx_material_has_any(mat_names[i])) {
-                        gfx_material_add_dependencies(mat_names[i], this);
-                    } else {
-                        // Mesh references non-existing material, so silently ignore.
-                        // When it is later used, an error will be raised then.
-                        // This is actually better, as the error is raised at the point of use...
-                        // Rather than asynchronously, in advance of use.
-                    }
+                    CLOG << (i==0?" ":", ") << mat_names[i];
                 }
-                
+                CLOG << "]" << std::endl;
             }
+
+            // sync with main thread to get texture names
+            for (unsigned i=0 ; i<mat_names.size() ; ++i) {
+                if (gfx_material_has_any(mat_names[i])) {
+                    gfx_material_add_dependencies(mat_names[i], this);
+                } else {
+                    // Mesh references non-existing material, so silently ignore.
+                    // When it is later used, an error will be raised then.
+                    // This is actually better, as the error is raised at the point of use...
+                    // Rather than asynchronously, in advance of use.
+                }
+            }
+            
         } else {
             CVERB << "Internal warning: Loaded in OGRE, unloaded in GRIT: \"" << getName() << "\"" << std::endl;
         }
@@ -228,30 +228,80 @@ void GfxDiskResource::loadImpl (void)
     }
 }
 
-void GfxDiskResource::reloadImpl(void)
+void GfxMeshDiskResource::reloadImpl(void)
 {
     if (gfx_disk_resource_verbose_loads)
         CVERB << "OGRE: Reloading: " << rp->getName() << std::endl;
     try {
         rp->reload();
-        if (rp->getCreator() == Ogre::MeshManager::getSingletonPtr()) {
-            Ogre::MeshPtr ptr = rp;
-            if (ptr->hasSkeleton()) ptr->getSkeleton()->reload();
-            for (unsigned long i=0 ; i<gfx_all_bodies.size() ; ++i) {
-                GfxBody *b = gfx_all_bodies[i];
-                if (b->mesh == ptr) b->reinitialise();
-            }
-            for (unsigned long i=0 ; i<gfx_all_sky_bodies.size() ; ++i) {
-                GfxSkyBody *b = gfx_all_sky_bodies[i];
-                if (b->mesh == ptr) b->reinitialise();
-            }
+        if (rp->hasSkeleton()) rp->getSkeleton()->reload();
+        for (unsigned long i=0 ; i<gfx_all_bodies.size() ; ++i) {
+            GfxBody *b = gfx_all_bodies[i];
+            if (b->mesh == rp) b->reinitialise();
+        }
+        for (unsigned long i=0 ; i<gfx_all_sky_bodies.size() ; ++i) {
+            GfxSkyBody *b = gfx_all_sky_bodies[i];
+            if (b->mesh == rp) b->reinitialise();
         }
     } catch (Ogre::Exception &e) {
         CERR << e.getFullDescription() << std::endl;
     }       
 }  
 
-void GfxDiskResource::unloadImpl(void)
+void GfxMeshDiskResource::unloadImpl(void)
+{
+    if (gfx_disk_resource_verbose_loads)
+        CVERB << "OGRE: Unloading: " << rp->getName() << std::endl;
+    try {
+        rp->unload();
+    } catch (Ogre::Exception &e) {
+        CERR << e.getFullDescription() << std::endl;
+    }       
+}  
+
+
+
+GfxTextureDiskResource::GfxTextureDiskResource (const std::string &name)
+    : GfxDiskResource(name)
+{
+    try {
+        std::string ogre_name = name.substr(1);
+        rp = Ogre::TextureManager::getSingleton().createOrRetrieve(ogre_name,"GRIT").first;
+    } catch (Ogre::Exception &e) { 
+        GRIT_EXCEPT2(e.getFullDescription(), "Looking for a graphics resource");
+    }       
+}
+
+void GfxTextureDiskResource::loadImpl (void)
+{
+    APP_ASSERT(!isLoaded());
+    try {
+        if (!rp->isLoaded()) {
+            // do as much as we can, given that this is a background thread
+            if (gfx_disk_resource_verbose_loads)
+                CVERB << "Preparing an Ogre::Resource: " << rp->getName() << std::endl;
+            rp->prepare();
+
+        } else {
+            CVERB << "Internal warning: Loaded in OGRE, unloaded in GRIT: \"" << getName() << "\"" << std::endl;
+        }
+    } catch (Ogre::Exception &e) {
+        GRIT_EXCEPT(e.getDescription());
+    }
+}
+
+void GfxTextureDiskResource::reloadImpl(void)
+{
+    if (gfx_disk_resource_verbose_loads)
+        CVERB << "OGRE: Reloading: " << rp->getName() << std::endl;
+    try {
+        rp->reload();
+    } catch (Ogre::Exception &e) {
+        CERR << e.getFullDescription() << std::endl;
+    }       
+}  
+
+void GfxTextureDiskResource::unloadImpl(void)
 {
     if (gfx_disk_resource_verbose_loads)
         CVERB << "OGRE: Unloading: " << rp->getName() << std::endl;

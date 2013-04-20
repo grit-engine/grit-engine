@@ -38,7 +38,7 @@ bool disk_resource_has (const std::string &n)
     return true;
 }
 
-int disk_resource_num(void)
+unsigned long disk_resource_num (void)
 {
     return disk_resource_map.size();
 }
@@ -93,7 +93,7 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
     std::string suffix(rn, pos+1);
 
     if (suffix == "mesh") {
-        dr = new GfxDiskResource(rn,suffix);
+        dr = new GfxMeshDiskResource(rn);
     } else if (suffix == "tcol" || suffix == "gcol" || suffix == "bcol") {
         dr = new CollisionMesh(rn);
     } else if (suffix == "wav" || suffix == "ogg" || suffix == "mp3") {
@@ -104,7 +104,7 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
         unsigned num_texture_formats = sizeof(texture_formats)/sizeof(*texture_formats);
         for (unsigned i=0 ; i<num_texture_formats ; ++i) {
             if (suffix == texture_formats[i]) {
-                dr = new GfxDiskResource(rn,suffix);
+                dr = new GfxTextureDiskResource(rn);
                 break;
             }
         }

@@ -35,13 +35,13 @@ GfxRangedInstancesPtr GfxRangedInstances::make (const std::string &mesh_name, co
     
     if (!dr->isLoaded()) GRIT_EXCEPT("Resource not yet loaded: \""+mesh_name+"\"");
     
-    GfxDiskResource *gdr = dynamic_cast<GfxDiskResource*>(dr);
+    GfxMeshDiskResource *gdr = dynamic_cast<GfxMeshDiskResource*>(dr);
     if (gdr==NULL) GRIT_EXCEPT("Resource is not a mesh: \""+mesh_name+"\"");
 
     return GfxRangedInstancesPtr(new GfxRangedInstances(gdr, par_));
 }
 
-GfxRangedInstances::GfxRangedInstances (GfxDiskResource *gdr, const GfxBodyPtr &par_)
+GfxRangedInstances::GfxRangedInstances (GfxMeshDiskResource *gdr, const GfxBodyPtr &par_)
   : GfxInstances(gdr, par_),
     mItemRenderingDistance(40),
     mVisibility(1),

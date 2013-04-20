@@ -55,7 +55,7 @@ extern bool disk_resource_verbose_loads;
 extern bool disk_resource_verbose_incs;
 
 /** Number of disk resources in existence. */
-int disk_resource_num (void);
+unsigned long disk_resource_num (void);
 
 /** Number of disk resources that are loaded. */
 int disk_resource_num_loaded (void);

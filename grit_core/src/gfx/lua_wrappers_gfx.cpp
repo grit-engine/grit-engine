@@ -30,6 +30,7 @@
 #include "lua_wrappers_scnmgr.h"
 #include "lua_wrappers_mobj.h"
 #include "gfx_hud.h"
+#include "GfxFont.h"
 
 
 // GFXBODY ============================================================== {{{
@@ -1349,7 +1350,7 @@ TRY_START
             std::string v = check_path(L,3);
             DiskResource *d = disk_resource_get(v);
             if (d==NULL) my_lua_error(L, "Resource does not exist: \""+v+"\"");
-            GfxDiskResource *d2 = dynamic_cast<GfxDiskResource*>(d);
+            GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
             if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+v+"\"");
             self.setTexture(d2);
         }
@@ -1549,6 +1550,52 @@ TRY_START
 TRY_END
 }
 
+static int global_gfx_font_define (lua_State *L)
+{
+TRY_START
+    check_args(L,5);
+    std::string name = luaL_checkstring(L,1);
+    std::string file = luaL_checkstring(L,2);
+    lua_Number tex_width = check_t<unsigned>(L,3);
+    lua_Number tex_height = check_t<unsigned>(L,4);
+    luaL_checktype(L,5,LUA_TTABLE);
+
+    DiskResource *d = disk_resource_get(file);
+    if (d==NULL) my_lua_error(L, "Resource does not exist: \""+file+"\"");
+    GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
+    if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+file+"\"");
+
+    // get or create font of the right name
+    GfxFont *font = gfx_font_make(name, d2);
+
+    // iterate through codepoints
+    for (lua_pushnil(L) ; lua_next(L,5) ; lua_pop(L,1)) {
+        lua_Number codepoint = check_t<unsigned>(L,-2);
+        lua_rawgeti(L, -1, 1);
+        lua_Number x = check_t<unsigned>(L,-1);
+        lua_pop(L,1);
+        lua_rawgeti(L, -1, 2);
+        lua_Number y = check_t<unsigned>(L,-1);
+        lua_pop(L,1);
+        lua_rawgeti(L, -1, 3);
+        lua_Number w = check_t<unsigned>(L,-1);
+        lua_pop(L,1);
+        lua_rawgeti(L, -1, 4);
+        lua_Number h = check_t<unsigned>(L,-1);
+        lua_pop(L,1);
+
+        GfxFont::CharRect cr;
+        cr.u1 = x/tex_width;
+        cr.v1 = y/tex_height;
+        cr.u2 = cr.u1 + w/tex_width;
+        cr.v2 = cr.v1 + h/tex_height;
+        font->setCodePoint(codepoint, cr);
+    }
+
+    return 0;
+TRY_END
+}
+
 
 static int global_gfx_hud_object_add (lua_State *L)
 {
@@ -1628,7 +1675,7 @@ TRY_START
                 std::string v = check_path(L,-1);
                 DiskResource *d = disk_resource_get(v);
                 if (d==NULL) my_lua_error(L, "Resource does not exist: \""+v+"\"");
-                GfxDiskResource *d2 = dynamic_cast<GfxDiskResource*>(d);
+                GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
                 if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+v+"\"");
                 self->setTexture(d2);
                 have_texture = true;
@@ -1718,7 +1765,7 @@ TRY_START
             if (!success) my_lua_error(L, "Wrong type for texture field in hud class \""+hud_class->name+"\".");
             DiskResource *d = disk_resource_get(v);
             if (d==NULL) my_lua_error(L, "Resource does not exist: \""+std::string(v)+"\"");
-            GfxDiskResource *d2 = dynamic_cast<GfxDiskResource*>(d);
+            GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
             if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+std::string(v)+"\"");
             self->setTexture(d2);
         }
@@ -1743,13 +1790,11 @@ TRY_START
     self->triggerInit(L);
     if (!have_size && self->getTexture()!=NULL) {
         // set size from texture
-        GfxDiskResource *dr = self->getTexture();
-        if (!dr->isMesh) {
-            if (dr->isLoaded()) {
-                Ogre::TexturePtr tex = dr->getOgreResourcePtr();
-                tex->load(); // otherwise width and height are 512!?
-                self->setSize(L, Vector2(tex->getWidth(),tex->getHeight()));
-            }
+        GfxTextureDiskResource *dr = self->getTexture();
+        if (dr->isLoaded()) {
+            Ogre::TexturePtr tex = dr->getOgreTexturePtr();
+            tex->load(); // otherwise width and height are 512!?
+            self->setSize(L, Vector2(tex->getWidth(),tex->getHeight()));
         }
     }
     self->triggerParentResized(L);
@@ -3751,7 +3796,7 @@ TRY_START
             bool has_tex = tab->get("name", tex_name);
             APP_ASSERT(has_tex);
             tex_name = pwd_full_ex(L, tex_name, dir);
-            GfxDiskResource *tex = dynamic_cast<GfxDiskResource*>(disk_resource_get_or_make(tex_name));
+            GfxTextureDiskResource *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
             if (tex == NULL) my_lua_error(L, "Resource is not a texture \""+tex_name+"\"");
             uniform.texture = tex;
 
@@ -4243,6 +4288,8 @@ static const luaL_reg global[] = {
     {"gfx_ranged_instances_make",global_gfx_ranged_instances_make},
     {"gfx_sky_body_make",global_gfx_sky_body_make},
     {"gfx_light_make",global_gfx_light_make},
+
+    {"gfx_font_define",global_gfx_font_define},
 
     {"gfx_hud_object_add",global_gfx_hud_object_add},
     {"gfx_hud_class_add",global_gfx_hud_class_add},

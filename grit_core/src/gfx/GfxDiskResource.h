@@ -25,26 +25,24 @@ class GfxDiskResource;
 #define GFX_DISK_RESOURCE_H
 
 #include <OgreResource.h>
+#include <OgreTexture.h>
+#include <OgreMesh.h>
 
 #include "../CentralisedLog.h"
 #include "../BackgroundLoader.h"
 
-/** Representation for textures and meshes.  Textures have no dependencies.
- * Meshes depend on textures via materials, so the material database is used
- * while loading meshes to determine the textures used.  For background
- * loading, this has concurrency implications.  Also, if the material changes
- * to use a different texture, the list of dependencies may become stale.  This
- * is not currently handled correctly.
+/** Representation for Ogre resources.
  *
- * A loaded disk resource is only 'prepared' on Ogre parlance.  The actual Ogre
+ * A loaded disk resource is only 'prepared' in Ogre parlance.  The actual Ogre
  * load, i.e. the movement of data from system memory to GPU memory, is done on
  * the render of the first frame where the resource is actually used.
  */
 class GfxDiskResource : public DiskResource {
 
   public:
+
     /** Use disk_resource_get_or_make to create a new disk resource. */
-    GfxDiskResource (const std::string &name, const std::string &ext);
+    GfxDiskResource (const std::string &name);
 
     /** Returns true. */
     virtual bool isGPUResource (void) { return true; }
@@ -52,18 +50,49 @@ class GfxDiskResource : public DiskResource {
     /** Return Grit name for the resource, e.g. "/system/blah.dds". */
     virtual const std::string &getName (void) const { return name; }
 
-    /** Get the Ogre representation of the resource. */
-    const Ogre::ResourcePtr &getOgreResourcePtr (void) { return rp; }
+    /** Return Ogre name for the resource, e.g. "system/blah.dds". */
+    virtual std::string getOgreName (void) const = 0;
 
-    /** Is it a texture or a mesh? */
-    const bool isMesh;
+    /** Checks the dynamic type. */
+    virtual bool isMesh (void) = 0;
 
   private:
-    /** The ogre representaiton. */
-    Ogre::ResourcePtr rp;
 
     /** A cache of the Grit name, which is different to the Ogre name. */
     const std::string name;
+
+    /** Load via Ogre (i.e. prepare it in Ogre terminology). */
+    virtual void loadImpl (void) = 0;
+    /** Reload from disk via Ogre calls. */
+    virtual void reloadImpl (void) = 0;
+    /** Unload via Ogre. */
+    virtual void unloadImpl (void) = 0;
+
+    friend class GfxBaseMaterial;
+    friend class GfxMaterial;
+    friend class GfxSkyMaterial;
+};
+
+/** Representation for textures.  Textures have no dependencies.
+ */
+class GfxTextureDiskResource : public GfxDiskResource {
+
+  public:
+    /** Use disk_resource_get_or_make to create a new disk resource. */
+    GfxTextureDiskResource (const std::string &name);
+
+    /** Return Ogre name for the resource, e.g. "system/blah.dds". */
+    virtual std::string getOgreName (void) const { return rp->getName(); }
+
+    /** Is it a texture or a mesh? */
+    virtual bool isMesh (void) { return false; }
+
+    /** Return the internal Ogre object. */
+    const Ogre::TexturePtr &getOgreTexturePtr (void) { return rp; }
+
+  private:
+    /** The ogre representaiton. */
+    Ogre::TexturePtr rp;
 
     /** Load via Ogre (i.e. prepare it in Ogre terminology). */
     virtual void loadImpl (void);
@@ -72,9 +101,40 @@ class GfxDiskResource : public DiskResource {
     /** Unload via Ogre. */
     virtual void unloadImpl (void);
 
-    friend class GfxBaseMaterial;
-    friend class GfxMaterial;
-    friend class GfxSkyMaterial;
+};
+
+/** Representation for meshes.
+ * Meshes depend on textures via materials, so the material database is used
+ * while loading meshes to determine the textures used.  For background
+ * loading, this has concurrency implications.  Also, if the material changes
+ * to use a different texture, the list of dependencies may become stale.  This
+ * is not currently handled correctly.
+ */
+class GfxMeshDiskResource : public GfxDiskResource {
+
+  public:
+    /** Use disk_resource_get_or_make to create a new disk resource. */
+    GfxMeshDiskResource (const std::string &name);
+
+    /** Return Ogre name for the resource, e.g. "system/blah.dds". */
+    virtual std::string getOgreName (void) const { return rp->getName(); }
+
+    /** Is it a texture or a mesh? */
+    virtual bool isMesh (void) { return false; }
+
+    /** Return the internal Ogre object. */
+    const Ogre::MeshPtr &getOgreMeshPtr (void) { return rp; }
+
+  private:
+    /** The ogre representaiton. */
+    Ogre::MeshPtr rp;
+
+    /** Load via Ogre (i.e. prepare it in Ogre terminology). */
+    virtual void loadImpl (void);
+    /** Reload from disk via Ogre calls. */
+    virtual void reloadImpl (void);
+    /** Unload via Ogre. */
+    virtual void unloadImpl (void);
 
 };
 

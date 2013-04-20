@@ -47,13 +47,13 @@ static void validate_sky_mesh (const Ogre::MeshPtr &mesh)
 }
 
 
-GfxSkyBody::GfxSkyBody (GfxDiskResource *gdr, short z_order)
+GfxSkyBody::GfxSkyBody (GfxMeshDiskResource *gdr, short z_order)
   : dead(false),
     enabled(true),
     zOrder(z_order),
     orientation(1,0,0,0)
 {
-    const Ogre::ResourcePtr &rp = gdr->getOgreResourcePtr();
+    const Ogre::MeshPtr &rp = gdr->getOgreMeshPtr();
 
     mesh = rp;
 
@@ -92,7 +92,7 @@ GfxSkyBodyPtr GfxSkyBody::make (const std::string &mesh_name, short z_order)
 
     if (!dr->isLoaded()) GRIT_EXCEPT("Resource not yet loaded: \""+mesh_name+"\"");
 
-    GfxDiskResource *gdr = dynamic_cast<GfxDiskResource*>(dr);
+    GfxMeshDiskResource *gdr = dynamic_cast<GfxMeshDiskResource*>(dr);
     if (gdr==NULL) GRIT_EXCEPT("Resource is not a mesh: \""+mesh_name+"\"");
 
     return GfxSkyBodyPtr(new GfxSkyBody(gdr, z_order));
@@ -210,7 +210,7 @@ void GfxSkyBody::render (GfxPipeline *p)
             switch (s_uni->kind) {
                 case GFX_SHADER_UNIFORM_KIND_PARAM_TEXTURE2D: {
                     APP_ASSERT(m_uni != NULL); // todo: use this to pick a shader!
-                    ogre_rs->_setTexture(counter, true, m_uni->texture->getOgreResourcePtr());
+                    ogre_rs->_setTexture(counter, true, m_uni->texture->getOgreTexturePtr());
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);

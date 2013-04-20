@@ -54,7 +54,7 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
     bool dirty;
     bool enabled;
 
-    GfxInstances (GfxDiskResource *mesh, const GfxBodyPtr &par_);
+    GfxInstances (GfxMeshDiskResource *mesh, const GfxBodyPtr &par_);
     ~GfxInstances ();
 
     public:

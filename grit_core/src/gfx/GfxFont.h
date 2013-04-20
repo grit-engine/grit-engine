@@ -19,20 +19,58 @@
  * THE SOFTWARE.
  */
 
+#include <vector>
+
 class GfxFont;
+typedef std::vector<GfxFont*> GfxFonts;
 
 #ifndef GFXFONT_H
 #define GFXFONT_H
 
 #include <map>
 
+#include "GfxDiskResource.h"
+
 class GfxFont {
-    Ogre::TexturePtr texture;
+    public:
     typedef unsigned long codepoint_t;
     struct CharRect {
         float u1, v1, u2, v2;
     };
-    std::map<codepoint_t, CharRect> coords;
+    typedef std::map<codepoint_t, CharRect> CharRectMap;
+    private:
+    GfxTextureDiskResource *texture;
+    CharRectMap coords;
+    public:
+    GfxFont (GfxTextureDiskResource *tex)
+      : texture(tex)
+    { }
+    GfxTextureDiskResource *getTexture (void) {
+        return texture;
+    }
+    void setTexture (GfxTextureDiskResource *tex) {
+        APP_ASSERT(tex != NULL);
+        texture = tex;
+    }
+    bool hasCodePoint (codepoint_t cp) const {
+        CharRectMap::const_iterator it = coords.find(cp);
+        return it != coords.end();
+    }
+    void setCodePoint (codepoint_t cp, const CharRect &r) {
+        coords[cp] = r;
+    }
+    bool getCodePointOrFail (codepoint_t cp, CharRect &r) const {
+        CharRectMap::const_iterator it = coords.find(cp);
+        if (it == coords.end()) return false;
+        r = it->second;
+        return true;
+    }
+    void clearCodePoints (void) { coords.clear(); }
 };
+
+bool gfx_font_has (const std::string &name);
+GfxFont *gfx_font_get (const std::string &name);
+GfxFont *gfx_font_make (const std::string &name, GfxTextureDiskResource *dr);
+unsigned long gfx_font_num (void);
 
 #endif

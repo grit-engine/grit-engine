@@ -98,7 +98,7 @@ class GfxBody : public GfxNode, public fast_erase_index {
     std::vector<bool> manualBones;
     GfxStringMap initialMaterialMap;
 
-    GfxBody (GfxDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr &par_);
+    GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr &par_);
     GfxBody (const GfxBodyPtr &par_);
     ~GfxBody ();
 
@@ -186,7 +186,7 @@ class GfxBody : public GfxNode, public fast_erase_index {
     const std::string &getMeshName (void);
 
     friend class SharedPtr<GfxBody>;
-    friend class GfxDiskResource;
+    friend class GfxMeshDiskResource;
 };
 
 #endif
