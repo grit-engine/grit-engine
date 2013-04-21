@@ -201,7 +201,7 @@ void GfxTextBuffer::addFormattedString (const std::string &text)
     // TODO: \n
     Vector3 colour(1,1,1);
     float alpha = 1;
-    for (unsigned i=0 ; i<text.length() ; ) {
+    for (size_t i=0 ; i<text.length() ; ) {
         GfxFont::codepoint_t cp = decode_utf8 (text, i);
         bool r = addRawChar(cp, colour, alpha, colour, alpha);
         if (!r) {
