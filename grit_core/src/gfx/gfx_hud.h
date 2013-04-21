@@ -34,10 +34,6 @@ typedef std::map<std::string,GfxHudClass*> GfxHudClassMap;
 #ifndef GFX_HUD_h
 #define GFX_HUD_h
 
-#include <OgreHardwareBufferManager.h>
-#include <OgreHardwareVertexBuffer.h>
-#include <OgreHardwareIndexBuffer.h>
-
 extern "C" {
         #include <lua.h>
         #include <lauxlib.h>
@@ -52,6 +48,7 @@ extern "C" {
 
 #include "GfxPipeline.h"
 #include "GfxFont.h"
+#include "GfxTextBuffer.h"
 
 #define GFX_HUD_ZORDER_MAX 7
 
@@ -142,7 +139,7 @@ class GfxHudBase : public fast_erase_index {
 
     void destroy (void);
 
-    void assertAlive (void);
+    void assertAlive (void) const;
 
     bool destroyed (void) { return dead; }
 
@@ -150,24 +147,24 @@ class GfxHudBase : public fast_erase_index {
     bool isEnabled (void) { assertAlive(); return enabled; }
 
     void setInheritOrientation (bool v) { assertAlive(); inheritOrientation = v; }
-    bool getInheritOrientation (void) { assertAlive(); return inheritOrientation; }
+    bool getInheritOrientation (void) const { assertAlive(); return inheritOrientation; }
 
     void setOrientation (Radian v) { assertAlive(); orientation = v; }
-    Radian getOrientation (void) { assertAlive(); return orientation; }
-    Radian getDerivedOrientation (void);
+    Radian getOrientation (void) const { assertAlive(); return orientation; }
+    Radian getDerivedOrientation (void) const;
 
     void setPosition (const Vector2 &v) { assertAlive(); position = v; }
-    Vector2 getPosition (void) { assertAlive(); return position; }
-    Vector2 getDerivedPosition (void);
+    Vector2 getPosition (void) const { assertAlive(); return position; }
+    Vector2 getDerivedPosition (void) const;
 
     void setSize (const Vector2 &v) { assertAlive(); size = v; }
-    Vector2 getSize (void) { assertAlive(); return size; }
+    Vector2 getSize (void) const { assertAlive(); return size; }
 
     void setParent (GfxHudObject *v) { assertAlive(); registerRemove(); parent = v; registerAdd(); }
-    GfxHudObject *getParent (void) { assertAlive(); return parent; }
+    GfxHudObject *getParent (void) const { assertAlive(); return parent; }
 
     void setZOrder (unsigned char v) { assertAlive(); registerRemove(); zOrder = v; registerAdd(); }
-    unsigned char getZOrder (void) { assertAlive(); return zOrder; }
+    unsigned char getZOrder (void) const { assertAlive(); return zOrder; }
 
 };
 
@@ -208,31 +205,31 @@ class GfxHudObject : public GfxHudBase {
     void notifyChildRemove (GfxHudBase *child);
     void notifyChildAdd (GfxHudBase *child);
 
-    float getAlpha (void) { assertAlive(); return alpha; }
+    float getAlpha (void) const { assertAlive(); return alpha; }
     void setAlpha (float v) { assertAlive(); alpha = v; }
     
-    Vector3 getColour (void) { assertAlive(); return colour; }
+    Vector3 getColour (void) const { assertAlive(); return colour; }
     void setColour (const Vector3 &v) { assertAlive(); colour = v; }
     
-    Vector2 getUV1 (void) { assertAlive(); return uv1; }
+    Vector2 getUV1 (void) const { assertAlive(); return uv1; }
     void setUV1 (const Vector2 &v) { assertAlive(); uv1 = v; }
     
-    Vector2 getUV2 (void) { assertAlive(); return uv2; }
+    Vector2 getUV2 (void) const { assertAlive(); return uv2; }
     void setUV2 (const Vector2 &v) { assertAlive(); uv2 = v; }
 
-    GfxTextureDiskResource *getTexture (void) { assertAlive(); return texture; }
+    GfxTextureDiskResource *getTexture (void) const { assertAlive(); return texture; }
     void setTexture (GfxTextureDiskResource *v);
 
     void setSize (lua_State *L, const Vector2 &v);
     void setParent (lua_State *L, GfxHudObject *v);
 
-    bool getNeedsParentResizedCallbacks (void) { assertAlive(); return needsParentResizedCallbacks; }
+    bool getNeedsParentResizedCallbacks (void) const { assertAlive(); return needsParentResizedCallbacks; }
     void setNeedsParentResizedCallbacks (bool v) { assertAlive(); needsParentResizedCallbacks = v; }
 
-    bool getNeedsInputCallbacks (void) { assertAlive(); return needsInputCallbacks; }
+    bool getNeedsInputCallbacks (void) const { assertAlive(); return needsInputCallbacks; }
     void setNeedsInputCallbacks (bool v) { assertAlive(); needsInputCallbacks = v; }
 
-    bool getNeedsFrameCallbacks (void) { assertAlive(); return needsFrameCallbacks; }
+    bool getNeedsFrameCallbacks (void) const { assertAlive(); return needsFrameCallbacks; }
     void setNeedsFrameCallbacks (bool v) { assertAlive(); needsFrameCallbacks = v; }
 
     private:
@@ -248,16 +245,41 @@ class GfxHudText : public GfxHudBase {
 
     protected:
 
-    Ogre::HardwareVertexBufferSharedPtr vertexes;
-    Ogre::HardwareIndexBufferSharedPtr indexes;
-    Ogre::VertexData *quad_vdata;
-
     std::string text;
-    
+    GfxTextBuffer buf;
 
-    void setText (const std::string &v) { assertAlive(); text = v; }
-    void appendText (const std::string &v) { assertAlive(); text += v; }
-    const std::string &getText (void) { assertAlive(); return text; }
+    public:
+
+    GfxHudText (GfxFont *font)
+      : buf(font)
+    {
+    }
+
+    ~GfxHudText (void) { }
+
+    void clear (void)
+    {
+        assertAlive();
+        text.clear();
+        buf.clear();
+    }
+    void append (const std::string &v)
+    {
+        assertAlive();
+        text += v;
+        buf.addFormattedString(v);
+    }
+    void setText (const std::string &v)
+    {
+        assertAlive();
+        clear();
+        append(v);
+    }
+    const std::string &getText (void) const
+    {
+        assertAlive();
+        return text;
+    }
 };
 
 /** Called in the frame loop by the graphics code to render the HUD on top of the 3d graphics. */

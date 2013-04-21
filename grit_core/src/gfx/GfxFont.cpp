@@ -24,6 +24,12 @@
 typedef std::map<std::string, GfxFont *> FontMap;
 FontMap db;
 
+Vector2 GfxFont::getTextureDimensions (void) {
+    Ogre::TexturePtr ptr = texture->getOgreTexturePtr();
+    ptr->load(); // push to GPU, otherwise width and height are wrong
+    return Vector2(ptr->getWidth(), ptr->getHeight());
+}
+
 bool gfx_font_has (const std::string &name)
 {
     FontMap::iterator it = db.find(name);

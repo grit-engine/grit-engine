@@ -85,6 +85,7 @@ GRIT_OBJ=\
         gfx_option.o \
         GfxBody.o \
         GfxDiskResource.o \
+        GfxTextBuffer.o \
         gfx_hud.o \
         GfxInstances.o \
         GfxLight.o \

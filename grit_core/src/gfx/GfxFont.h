@@ -29,6 +29,10 @@ typedef std::vector<GfxFont*> GfxFonts;
 
 #include <map>
 
+#include "../BackgroundLoader.h"
+#include "../main.h"
+#include "../math_util.h"
+
 #include "GfxDiskResource.h"
 
 class GfxFont {
@@ -44,7 +48,15 @@ class GfxFont {
     public:
     GfxFont (GfxTextureDiskResource *tex)
       : texture(tex)
-    { }
+    {
+        texture->increment();
+        if (!texture->isLoaded()) texture->load();
+    }
+    ~GfxFont (void)
+    {
+        texture->decrement();
+        bgl->finishedWith(texture);
+    }
     GfxTextureDiskResource *getTexture (void) {
         return texture;
     }
@@ -65,6 +77,7 @@ class GfxFont {
         r = it->second;
         return true;
     }
+    Vector2 getTextureDimensions (void);
     void clearCodePoints (void) { coords.clear(); }
 };
 

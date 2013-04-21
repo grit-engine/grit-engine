@@ -125,13 +125,13 @@ void GfxHudBase::destroy (void)
     //CVERB << "GfxHud element destroyed: " << this << std::endl;
 }
 
-void GfxHudBase::assertAlive (void)
+void GfxHudBase::assertAlive (void) const
 {
     if (dead)
         GRIT_EXCEPT("Hud element destroyed.");
 }
 
-Radian GfxHudBase::getDerivedOrientation (void)
+Radian GfxHudBase::getDerivedOrientation (void) const
 {
     assertAlive();
     if (inheritOrientation && parent!=NULL) {
@@ -141,7 +141,7 @@ Radian GfxHudBase::getDerivedOrientation (void)
     }
 }
 
-Vector2 GfxHudBase::getDerivedPosition (void)
+Vector2 GfxHudBase::getDerivedPosition (void) const
 {
     assertAlive();
     if (parent!=NULL) {
