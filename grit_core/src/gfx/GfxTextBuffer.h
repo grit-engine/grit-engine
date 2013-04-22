@@ -61,11 +61,15 @@ class GfxTextBuffer {
     ~GfxTextBuffer (void) { }
 
     /** Reset the buffer. */
-    void clear (void)
+    void clear (bool clear_gpu)
     {
         rawVBuf.clear();
         rawIBuf.clear();
         currentOffset = Vector2(0,0);
+        dirty = true;
+        if (clear_gpu) {
+            copyToGPUIfNeeded(); // clear GPU buffers, (note this sets dirty = false again)
+        }
     }
 
 
@@ -79,6 +83,12 @@ class GfxTextBuffer {
      * \param text The text in UTF8.
      */
     void addFormattedString (const std::string &text);
+
+    /** Sets the font (note that text will be corrupted unless font has compatible UVs, so consider clear() as well. */
+    void setFont (GfxFont *v) { font = v; }
+
+    /** Returns the font. */
+    GfxFont *getFont (void) { return font; }
 
     protected:
 

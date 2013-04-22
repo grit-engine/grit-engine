@@ -1409,6 +1409,168 @@ MT_MACRO_NEWINDEX(gfxhudobj);
 
 
 
+// GFXHUDTEXT ============================================================== {{{
+
+void push_gfxhudtext (lua_State *L, GfxHudText *self)
+{
+    if (self==NULL)
+        lua_pushnil(L);
+    else {
+        self->incRefCount();
+        push(L,self,GFXHUDTEXT_TAG);
+    }
+}
+
+static int gfxhudtext_gc (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    self.decRefCount();
+    return 0;
+TRY_END
+}
+
+static int gfxhudtext_destroy (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    self.destroy();
+    return 0;
+TRY_END
+}
+
+static int gfxhudtext_append (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    std::string str = check_string(L,2);
+    self.append(str);
+    return 0;
+TRY_END
+}
+
+static int gfxhudtext_clear (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    self.clear();
+    return 0;
+TRY_END
+}
+
+
+
+TOSTRING_ADDR_MACRO (gfxhudtext,GfxHudText,GFXHUDTEXT_TAG)
+
+
+static int gfxhudtext_index (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"orientation")) {
+        lua_pushnumber(L, self.getOrientation().inDegrees());
+    } else if (!::strcmp(key,"position")) {
+        push_v2(L, self.getPosition());
+    } else if (!::strcmp(key,"zOrder")) {
+        lua_pushnumber(L, self.getZOrder());
+
+    } else if (!::strcmp(key,"colour")) {
+        push_v3(L, self.getColour());
+    } else if (!::strcmp(key,"alpha")) {
+        lua_pushnumber(L, self.getAlpha());
+    } else if (!::strcmp(key,"font")) {
+        GfxFont *font = self.getFont();
+        push_string(L, font->name);
+
+    } else if (!::strcmp(key,"text")) {
+        push_string(L, self.getText());
+    } else if (!::strcmp(key,"clear")) {
+        push_cfunction(L,gfxhudtext_clear);
+    } else if (!::strcmp(key,"append")) {
+        push_cfunction(L,gfxhudtext_append);
+
+    } else if (!::strcmp(key,"enabled")) {
+        lua_pushboolean(L, self.isEnabled());
+
+    } else if (!::strcmp(key,"parent")) {
+        push_gfxhudobj(L, self.getParent());
+
+    } else if (!::strcmp(key,"destroyed")) {
+        lua_pushboolean(L,self.destroyed());
+    } else if (!::strcmp(key,"destroy")) {
+        push_cfunction(L,gfxhudtext_destroy);
+    } else {
+        my_lua_error(L,"Not a readable GfxHudText member: "+std::string(key));
+    }
+    return 1;
+TRY_END
+}
+
+
+static int gfxhudtext_newindex (lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"orientation")) {
+        float v = check_float(L,3);
+        self.setOrientation(Degree(v));
+    } else if (!::strcmp(key,"position")) {
+        Vector2 v = check_v2(L,3);
+        self.setPosition(v);
+
+    } else if (!::strcmp(key,"colour")) {
+        Vector3 v = check_v3(L,3);
+        self.setColour(v);
+    } else if (!::strcmp(key,"alpha")) {
+        float v = check_float(L,3);
+        self.setAlpha(v);
+    } else if (!::strcmp(key,"font")) {
+        std::string v = check_path(L,3);
+        GfxFont *font = gfx_font_get(v);
+        if (font == NULL) my_lua_error(L, "Font does not exist \""+v+"\"");
+        self.setFont(font);
+
+    } else if (!::strcmp(key,"text")) {
+        std::string v = check_string(L,3);
+        self.setText(v);
+
+    } else if (!::strcmp(key,"parent")) {
+        if (lua_isnil(L,3)) {
+            self.setParent(NULL);
+        } else {
+            GET_UD_MACRO(GfxHudObject,v,3,GFXHUDOBJECT_TAG);
+            self.setParent(&v);
+        }
+    } else if (!::strcmp(key,"zOrder")) {
+        unsigned char v = check_int(L,3,0,7);
+        self.setZOrder(v);
+
+    } else if (!::strcmp(key,"enabled")) {
+        bool v = check_bool(L,3);
+        self.setEnabled(v);
+    } else {
+        my_lua_error(L,"Not a writeable GfxHudText member: "+std::string(key));
+    }
+    return 0;
+TRY_END
+}
+
+EQ_PTR_MACRO(GfxBodyPtr,gfxhudtext,GFXHUDTEXT_TAG)
+
+MT_MACRO_NEWINDEX(gfxhudtext);
+
+//}}}
+
+
+
 static int global_gfx_render (lua_State *L)
 {
 TRY_START
@@ -1554,16 +1716,16 @@ static int global_gfx_font_define (lua_State *L)
 {
 TRY_START
     check_args(L,5);
-    std::string name = luaL_checkstring(L,1);
-    std::string file = luaL_checkstring(L,2);
+    std::string name = check_path(L,1);
+    std::string tex_name = check_path(L,2);
     lua_Number tex_width = check_t<unsigned>(L,3);
     lua_Number tex_height = check_t<unsigned>(L,4);
     luaL_checktype(L,5,LUA_TTABLE);
 
-    DiskResource *d = disk_resource_get(file);
-    if (d==NULL) my_lua_error(L, "Resource does not exist: \""+file+"\"");
+    DiskResource *d = disk_resource_get(tex_name);
+    if (d==NULL) my_lua_error(L, "Resource does not exist: \""+tex_name+"\"");
     GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
-    if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+file+"\"");
+    if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+tex_name+"\"");
 
     // get or create font of the right name
     GfxFont *font = gfx_font_make(name, d2);
@@ -1593,6 +1755,21 @@ TRY_START
     }
 
     return 0;
+TRY_END
+}
+
+static int global_gfx_hud_text_add (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    std::string font_name = check_path(L,1);
+    GfxFont *font = gfx_font_get(font_name);
+    if (font == NULL) my_lua_error(L, "Font does not exist: \""+font_name+"\"");
+    
+    GfxHudText *self = new GfxHudText(font);
+    push_gfxhudtext(L,self);
+
+    return 1;
 TRY_END
 }
 
@@ -4292,6 +4469,7 @@ static const luaL_reg global[] = {
     {"gfx_font_define",global_gfx_font_define},
 
     {"gfx_hud_object_add",global_gfx_hud_object_add},
+    {"gfx_hud_text_add",global_gfx_hud_text_add},
     {"gfx_hud_class_add",global_gfx_hud_class_add},
     {"gfx_hud_class_get",global_gfx_hud_class_get},
     {"gfx_hud_class_has",global_gfx_hud_class_has},
@@ -4443,6 +4621,7 @@ void gfx_lua_init (lua_State *L)
     ADD_MT_MACRO(gfxrangedinstances,GFXRANGEDINSTANCES_TAG);
 
     ADD_MT_MACRO(gfxhudobj,GFXHUDOBJECT_TAG);
+    ADD_MT_MACRO(gfxhudtext,GFXHUDTEXT_TAG);
     ADD_MT_MACRO(gfxhudclass,GFXHUDCLASS_TAG);
 
     ADD_MT_MACRO(scnmgr,SCNMGR_TAG);

@@ -81,7 +81,7 @@ size_t gfx_hud_class_count (void)
 // }}}
 
 
-// {{{ OBJECTS
+// {{{ BASE
 static fast_erase_vector<GfxHudBase*> root_elements;
 
 void GfxHudBase::registerRemove (void)
@@ -106,7 +106,7 @@ void GfxHudBase::registerAdd (void)
 
 GfxHudBase::GfxHudBase (void)
   : dead(false), parent(NULL), zOrder(3),
-    position(0,0), size(32,32), orientation(0), inheritOrientation(true), enabled(true)
+    position(0,0), orientation(0), inheritOrientation(true), enabled(true)
 {
     //CVERB << "GfxHud element created: " << this << std::endl;
     registerAdd();
@@ -119,7 +119,7 @@ GfxHudBase::~GfxHudBase (void)
 
 void GfxHudBase::destroy (void)
 {
-    assertAlive();
+    if (dead) return;
     registerRemove();
     dead = true;
     //CVERB << "GfxHud element destroyed: " << this << std::endl;
@@ -151,11 +151,14 @@ Vector2 GfxHudBase::getDerivedPosition (void) const
     }
 }
 
+// }}}
 
+
+// {{{ OBJECTS
 
 GfxHudObject::GfxHudObject (GfxHudClass *hud_class)
   : GfxHudBase(), hudClass(hud_class),
-    texture(NULL), uv1(0,0), uv2(1,1), colour(1,1,1), alpha(1),
+    texture(NULL), uv1(0,0), uv2(1,1), size(32,32), colour(1,1,1), alpha(1),
     needsParentResizedCallbacks(false), needsInputCallbacks(false), needsFrameCallbacks(false),
     refCount(0)
 {
@@ -323,7 +326,8 @@ void GfxHudObject::triggerParentResized (lua_State *L)
 
 void GfxHudObject::setSize (lua_State *L, const Vector2 &v)
 {
-    GfxHudBase::setSize(v);
+    assertAlive();
+    size = v;
 
     // use local_children copy since callbacks can alter hierarchy
     std::vector<GfxHudBase*> local_children = children.rawVector();
@@ -688,6 +692,48 @@ void GfxHudObject::setTexture (GfxTextureDiskResource *v)
 }
 
 // }}}
+
+
+// {{{ TEXT
+
+void GfxHudText::incRefCount (void)
+{
+    refCount++;
+}
+
+void GfxHudText::decRefCount (void)
+{
+    refCount--;
+    if (refCount == 0) {
+        destroy();
+        delete this;
+    }
+}
+
+void GfxHudText::destroy (void)
+{
+    if (dead) return;
+    text.clear();
+    buf.clear(true);
+    GfxHudBase::destroy();
+}
+
+void GfxHudText::clear (void)
+{
+    assertAlive();
+    text.clear();
+    buf.clear(false);
+}
+void GfxHudText::append (const std::string &v)
+{
+    assertAlive();
+    text += v;
+    buf.addFormattedString(v);
+}
+
+// }}}
+
+
 
 
 // {{{ RENDERING

@@ -39,6 +39,7 @@
 #define GFXLIGHT_TAG "Grit/GfxLight"
 
 #define GFXHUDOBJECT_TAG "Grit/GfxHudObject"
+#define GFXHUDTEXT_TAG "Grit/GfxHudText"
 #define GFXHUDCLASS_TAG "Grit/GfxHudClass"
 
 void gfx_lua_init (lua_State *L);
@@ -51,5 +52,6 @@ void push_gfxlight (lua_State *L, const GfxLightPtr &self);
 
 void push_gfxhudclass (lua_State *L, GfxHudClass *self);
 void push_gfxhudobj (lua_State *L, GfxHudObject *self);
+void push_gfxhudtext (lua_State *L, GfxHudText *self);
 
 // vim: shiftwidth=8:tabstop=8:expandtab

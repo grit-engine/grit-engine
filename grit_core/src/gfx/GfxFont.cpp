@@ -47,7 +47,7 @@ GfxFont *gfx_font_make (const std::string &name, GfxTextureDiskResource *dr)
 {
     GfxFont *f = gfx_font_get(name);
     if (f == NULL) {
-        f = new GfxFont(dr);
+        f = new GfxFont(name, dr);
         db[name] = f;
     } else {
         f->setTexture(dr);

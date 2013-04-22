@@ -27,7 +27,7 @@ const unsigned VERT_FLOAT_SZ = 2+2+4;
 const unsigned VERT_BYTE_SZ = VERT_FLOAT_SZ*sizeof(float);
 
 GfxTextBuffer::GfxTextBuffer (GfxFont *font)
-  : font(font), currentOffset(0,0), dirty(false)
+  : font(font), currentSize(0), currentOffset(0,0), dirty(false)
 {   
     APP_ASSERT(font != NULL);
 
@@ -201,12 +201,12 @@ void GfxTextBuffer::addFormattedString (const std::string &text)
     // TODO: \n
     Vector3 colour(1,1,1);
     float alpha = 1;
-    for (size_t i=0 ; i<text.length() ; ) {
-        GfxFont::codepoint_t cp = decode_utf8 (text, i);
+    for (size_t i=0 ; i<text.length() ; ++i) {
+        GfxFont::codepoint_t cp = decode_utf8(text, i);
         bool r = addRawChar(cp, colour, alpha, colour, alpha);
         if (!r) {
             // try the error char
-            r = addRawChar(0xfffd, colour, alpha, colour, alpha);
+            r = addRawChar(UNICODE_ERROR_CODEPOINT, colour, alpha, colour, alpha);
             if (!r) {
                 // try a space...
                 r = addRawChar(' ', colour, alpha, colour, alpha);

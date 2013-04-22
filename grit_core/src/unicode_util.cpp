@@ -57,6 +57,7 @@ int encode_utf8 (unsigned long x, std::string &here)
         }
 }
 
+// FIXME: Needs to ensure there are no overruns!!!!!
 unsigned long decode_utf8 (const std::string &str, size_t &i)
 {
         char c0 = str[i];
@@ -65,31 +66,31 @@ unsigned long decode_utf8 (const std::string &str, size_t &i)
         } else if ((c0 & 0xE0) == 0xC0) { //110yyyxx 10xxxxxx
                 char c1 = str[++i];
                 if ((c1 & 0xC0) != 0x80) {
-                        return 0x20; // error code
+                        return UNICODE_ERROR_CODEPOINT;
                 }
                 return ((c0 & 0x1F) << 6ul) | (c1 & 0x3F);
         } else if ((c0 & 0xF0) == 0xE0) { //1110yyyy 10yyyyxx 10xxxxxx
                 char c1 = str[++i];
                 if ((c1 & 0xC0) != 0x80) {
-                        return 0x20; // error code
+                        return UNICODE_ERROR_CODEPOINT;
                 }
                 char c2 = str[++i];
                 if ((c2 & 0xC0) != 0x80) {
-                        return 0x20; // error code
+                        return UNICODE_ERROR_CODEPOINT;
                 }
                 return ((c0 & 0xF) << 12ul) | ((c1 & 0x3F) << 6) | (c2 & 0x3F);
         } else if ((c0 & 0xF8) == 0xF) { //11110zzz 10zzyyyy 10yyyyxx 10xxxxxx
                 char c1 = str[++i];
                 if ((c1 & 0xC0) != 0x80) {
-                        return 0x20; // error code
+                        return UNICODE_ERROR_CODEPOINT;
                 }
                 char c2 = str[++i];
                 if ((c2 & 0xC0) != 0x80) {
-                        return 0x20; // error code
+                        return UNICODE_ERROR_CODEPOINT;
                 }
                 char c3 = str[++i];
                 if ((c3 & 0xC0) != 0x80) {
-                        return 0x20; // error code
+                        return UNICODE_ERROR_CODEPOINT;
                 }
                 return ((c0 & 0x7) << 24ul) | ((c1 & 0x3F) << 12ul) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
         } else {
@@ -121,11 +122,12 @@ int encode_utf16 (unsigned long x, std::wstring &here)
 }
 
 
+// FIXME: Needs to ensure there are no overruns!!!!!
 unsigned long decode_utf16 (const std::wstring &str, size_t &i)
 {
         wchar_t first = str[i];
         if (first >= 0xdc00 && first < 0xe000) {
-                return 0x20; // error char -- space
+                return UNICODE_ERROR_CODEPOINT;
         }
         if (first >= 0xd800 && first < 0xdc00) {
                 // first part of surrogate pair
@@ -134,8 +136,8 @@ unsigned long decode_utf16 (const std::wstring &str, size_t &i)
                         // second part of surrogate pair
                         return (((first & 0x03FF) << 10ul) | (second & 0x03FF)) + 0x10000;
                 } else {
-                        // no pairing -- error, return space
-                        return 0x20;
+                        // no pairing -- error
+                        return UNICODE_ERROR_CODEPOINT;
                 }
         } else {
                 // not a surrogate pair

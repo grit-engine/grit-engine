@@ -122,7 +122,7 @@ class GfxHudBase : public fast_erase_index {
 
     unsigned char zOrder;
 
-    Vector2 position, size;
+    Vector2 position;
     Radian orientation;
     bool inheritOrientation;
     bool enabled;
@@ -157,9 +157,6 @@ class GfxHudBase : public fast_erase_index {
     Vector2 getPosition (void) const { assertAlive(); return position; }
     Vector2 getDerivedPosition (void) const;
 
-    void setSize (const Vector2 &v) { assertAlive(); size = v; }
-    Vector2 getSize (void) const { assertAlive(); return size; }
-
     void setParent (GfxHudObject *v) { assertAlive(); registerRemove(); parent = v; registerAdd(); }
     GfxHudObject *getParent (void) const { assertAlive(); return parent; }
 
@@ -180,6 +177,7 @@ class GfxHudObject : public GfxHudBase {
 
     GfxTextureDiskResource *texture;
     Vector2 uv1, uv2;
+    Vector2 size;
     Vector3 colour;
     float alpha;
 
@@ -221,6 +219,8 @@ class GfxHudObject : public GfxHudBase {
     void setTexture (GfxTextureDiskResource *v);
 
     void setSize (lua_State *L, const Vector2 &v);
+    Vector2 getSize (void) const { assertAlive(); return size; }
+
     void setParent (lua_State *L, GfxHudObject *v);
 
     bool getNeedsParentResizedCallbacks (void) const { assertAlive(); return needsParentResizedCallbacks; }
@@ -247,39 +247,38 @@ class GfxHudText : public GfxHudBase {
 
     std::string text;
     GfxTextBuffer buf;
+    Vector3 colour;
+    float alpha;
+
+    unsigned refCount;
 
     public:
 
     GfxHudText (GfxFont *font)
-      : buf(font)
+      : buf(font), colour(1,1,1), alpha(1), refCount(0)
     {
     }
 
     ~GfxHudText (void) { }
 
-    void clear (void)
-    {
-        assertAlive();
-        text.clear();
-        buf.clear();
-    }
-    void append (const std::string &v)
-    {
-        assertAlive();
-        text += v;
-        buf.addFormattedString(v);
-    }
-    void setText (const std::string &v)
-    {
-        assertAlive();
-        clear();
-        append(v);
-    }
-    const std::string &getText (void) const
-    {
-        assertAlive();
-        return text;
-    }
+    void incRefCount (void);
+    void decRefCount (void);
+    void destroy (void);
+
+    void clear (void);
+    void append (const std::string &v);
+
+    void setFont (GfxFont *v) { assertAlive() ; buf.setFont(v); }
+    GfxFont *getFont (void) { assertAlive() ; return buf.getFont(); }
+
+    const std::string &getText (void) const { assertAlive(); return text; }
+    void setText (const std::string &v) { assertAlive(); clear(); append(v); }
+
+    float getAlpha (void) const { assertAlive(); return alpha; }
+    void setAlpha (float v) { assertAlive(); alpha = v; }
+    
+    Vector3 getColour (void) const { assertAlive(); return colour; }
+    void setColour (const Vector3 &v) { assertAlive(); colour = v; }
 };
 
 /** Called in the frame loop by the graphics code to render the HUD on top of the 3d graphics. */

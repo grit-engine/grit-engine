@@ -148,6 +148,7 @@
     <ClCompile Include="src\gfx\GfxRangedInstances.cpp" />
     <ClCompile Include="src\gfx\GfxSkyBody.cpp" />
     <ClCompile Include="src\gfx\GfxSkyMaterial.cpp" />
+    <ClCompile Include="src\gfx\GfxTextBuffer.cpp" />
     <ClCompile Include="src\gfx\gfx_hud.cpp" />
     <ClCompile Include="src\gfx\gfx_option.cpp" />
     <ClCompile Include="src\gfx\HUD.cpp" />

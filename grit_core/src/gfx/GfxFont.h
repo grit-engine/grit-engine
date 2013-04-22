@@ -42,12 +42,13 @@ class GfxFont {
         float u1, v1, u2, v2;
     };
     typedef std::map<codepoint_t, CharRect> CharRectMap;
+    const std::string name;
     private:
     GfxTextureDiskResource *texture;
     CharRectMap coords;
     public:
-    GfxFont (GfxTextureDiskResource *tex)
-      : texture(tex)
+    GfxFont (const std::string &name, GfxTextureDiskResource *tex)
+      : name(name), texture(tex)
     {
         texture->increment();
         if (!texture->isLoaded()) texture->load();
@@ -62,6 +63,10 @@ class GfxFont {
     }
     void setTexture (GfxTextureDiskResource *tex) {
         APP_ASSERT(tex != NULL);
+        tex->increment();
+        texture->decrement();
+        bgl->finishedWith(texture);
+        if (!tex->isLoaded()) tex->load();
         texture = tex;
     }
     bool hasCodePoint (codepoint_t cp) const {
