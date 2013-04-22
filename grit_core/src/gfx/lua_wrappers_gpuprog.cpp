@@ -404,7 +404,7 @@ TRY_START
         } else if (key=="poseAnimationIncluded") {
                 lua_pushboolean(L,self->isPoseAnimationIncluded());
         } else if (key=="defines") {
-                Ogre::GLSLProgram *glsl = dynamic_cast<Ogre::GLSLProgram*>(&*self);
+                Ogre::GLSL::GLSLProgram *glsl = dynamic_cast<Ogre::GLSL::GLSLProgram*>(&*self);
                 if (glsl) {
                         lua_pushstring(L,glsl->getPreprocessorDefines().c_str());
                 } else {
@@ -484,7 +484,7 @@ TRY_START
                 self->setSyntaxCode(v);
         } else if (key=="defines") {
                 std::string v = luaL_checkstring(L, 3);
-                Ogre::GLSLProgram *glsl = dynamic_cast<Ogre::GLSLProgram*>(&*self);
+                Ogre::GLSL::GLSLProgram *glsl = dynamic_cast<Ogre::GLSL::GLSLProgram*>(&*self);
                 if (glsl) {
                         glsl->setPreprocessorDefines(v);
                 } else {

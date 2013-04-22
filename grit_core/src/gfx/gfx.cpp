@@ -21,6 +21,7 @@
 #include <sstream>
 
 #include <OgreAutoParamDataSource.h>
+#include <OgreOverlaySystem.h>
 
 #include "../path_util.h"
 #include "../sleep.h"
@@ -54,6 +55,7 @@ Ogre::OctreePlugin *octree;
 Ogre::CgPlugin *cg;
 
 Ogre::Root *ogre_root = NULL;
+Ogre::OverlaySystem *ogre_overlay_system = NULL;
 Ogre::RenderSystem *ogre_rs = NULL;
 Ogre::RenderWindow *ogre_win = NULL;
 Ogre::OctreeSceneManager *ogre_sm = NULL;
@@ -747,6 +749,11 @@ struct MeshSerializerListener : Ogre::MeshSerializerListener {
         std::string dir(filename, 0, filename.rfind('/')+1);
         *name = pwd_full_ex(*name, "/"+dir, *name).substr(1); // strip leading '/' from this one
     }
+    void processMeshCompleted (Ogre::Mesh *mesh)
+    {
+        (void) mesh;
+        // do nothing
+    }
 } mesh_serializer_listener;
 
 struct WindowEventListener : Ogre::WindowEventListener {
@@ -893,6 +900,8 @@ size_t gfx_init (GfxCallback &cb_)
         }
         ogre_root->setRenderSystem(ogre_rs);
 
+        ogre_overlay_system = new Ogre::OverlaySystem();
+
         ogre_root->initialise(true,"Grit Game Window");
 
         ogre_win = ogre_root->getAutoCreatedWindow();
@@ -932,6 +941,7 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_root_node = ogre_sm->getRootSceneNode();
         ogre_sm->setShadowCasterRenderBackFaces(false);
         ogre_sm->setShadowTextureSelfShadow(true);
+        ogre_sm->addRenderQueueListener(ogre_overlay_system);
         ogre_sun = ogre_sm->createLight("Sun");
         ogre_sun->setType(Ogre::Light::LT_DIRECTIONAL);
 
@@ -987,6 +997,7 @@ void gfx_shutdown (void)
         ftcv.setNull();
         gfx_hud_shutdown();
         if (ogre_sm && ogre_root) ogre_root->destroySceneManager(ogre_sm);
+        if (ogre_overlay_system && ogre_root) OGRE_DELETE ogre_overlay_system;
         if (ogre_root) OGRE_DELETE ogre_root; // internally deletes ogre_rs
         OGRE_DELETE octree;
         OGRE_DELETE cg;

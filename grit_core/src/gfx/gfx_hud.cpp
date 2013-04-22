@@ -746,14 +746,14 @@ static unsigned quad_vdecl_size;
 
 enum VertOrFrag { VERT, FRAG };
 
-static Ogre::HighLevelGpuProgramPtr make_shader (VertOrFrag kind, const std::string &code)
+static Ogre::HighLevelGpuProgramPtr make_shader (const std::string &name, VertOrFrag kind, const std::string &code)
 {
     Ogre::StringVector vp_profs, fp_profs;
     vp_profs.push_back("vs_3_0"); fp_profs.push_back("ps_3_0"); // d3d9
     vp_profs.push_back("gpu_vp"); fp_profs.push_back("gp4fp"); // gl
 
     Ogre::HighLevelGpuProgramPtr prog = Ogre::HighLevelGpuProgramManager::getSingleton()
-        .createProgram("hud_f", RESGRP, "cg", kind==FRAG ? Ogre::GPT_FRAGMENT_PROGRAM : Ogre::GPT_VERTEX_PROGRAM);
+        .createProgram(name, RESGRP, "cg", kind==FRAG ? Ogre::GPT_FRAGMENT_PROGRAM : Ogre::GPT_VERTEX_PROGRAM);
     APP_ASSERT(!prog.isNull());
     Ogre::CgProgram *tmp_prog = static_cast<Ogre::CgProgram*>(&*prog);
     prog->setSource(code);
@@ -786,7 +786,7 @@ void gfx_hud_init (void)
 
     // Initialise vertex program
 
-    vp_solid = make_shader(VERT, 
+    vp_solid = make_shader("vp_solid", VERT, 
         "void main (\n"
         "    in float2 in_POSITION:POSITION,\n"
         "    out float4 out_POSITION:POSITION\n"
@@ -795,7 +795,7 @@ void gfx_hud_init (void)
         "}\n"
     );
 
-    fp_solid = make_shader(FRAG, 
+    fp_solid = make_shader("fp_solid", FRAG, 
         "void main (\n"
         "    uniform float3 colour,\n"
         "    uniform float alpha,\n"
@@ -806,7 +806,7 @@ void gfx_hud_init (void)
         "}\n"
     );
     
-    vp_tex = make_shader(VERT, 
+    vp_tex = make_shader("vp_tex", VERT, 
         "void main (\n"
         "    in float2 in_POSITION:POSITION,\n"
         "    in float2 in_TEXCOORD0:TEXCOORD0,\n"
@@ -818,7 +818,7 @@ void gfx_hud_init (void)
         "}\n"
     );
 
-    fp_tex = make_shader(FRAG, 
+    fp_tex = make_shader("fp_tex", FRAG, 
         "void main (\n"
         "    in float2 in_TEXCOORD0:TEXCOORD0,\n"
         "    uniform sampler2D texture,\n"
