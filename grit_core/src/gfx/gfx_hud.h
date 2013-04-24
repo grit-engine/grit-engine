@@ -137,7 +137,7 @@ class GfxHudBase : public fast_erase_index {
 
     virtual ~GfxHudBase (void);
 
-    void destroy (void);
+    virtual void destroy (void);
 
     void assertAlive (void) const;
 
@@ -191,6 +191,9 @@ class GfxHudObject : public GfxHudBase {
 
     void incRefCount (void);
     void decRefCount (lua_State *L);
+    // do as much as we can without using L
+    void destroy (void);
+    // destroy with L (callbacks etc)
     void destroy (lua_State *L);
 
     void triggerInit (lua_State *L);
@@ -274,11 +277,16 @@ class GfxHudText : public GfxHudBase {
     const std::string &getText (void) const { assertAlive(); return text; }
     void setText (const std::string &v) { assertAlive(); clear(); append(v); }
 
+    Vector2 getSize (void) const { assertAlive(); return buf.getDimensions(); }
+
     float getAlpha (void) const { assertAlive(); return alpha; }
     void setAlpha (float v) { assertAlive(); alpha = v; }
     
     Vector3 getColour (void) const { assertAlive(); return colour; }
     void setColour (const Vector3 &v) { assertAlive(); colour = v; }
+
+    // internal function
+    friend void gfx_render_hud_one (GfxHudBase *base);
 };
 
 /** Called in the frame loop by the graphics code to render the HUD on top of the 3d graphics. */

@@ -752,12 +752,13 @@ lua_wrappers_core.o: ../src/gfx/GfxParticleSystem.h
 lua_wrappers_core.o: ../depend_stubs/utility ../src/gfx/GfxInstances.h
 lua_wrappers_core.o: ../src/DenseIndexMap.h
 lua_wrappers_core.o: ../src/gfx/GfxRangedInstances.h
-lua_wrappers_core.o: ../src/gfx/gfx_hud.h
+lua_wrappers_core.o: ../src/gfx/gfx_hud.h ../src/lua_util.h
+lua_wrappers_core.o: ../src/path_util.h ../src/gfx/GfxPipeline.h
+lua_wrappers_core.o: ../src/gfx/GfxFont.h ../src/main.h
+lua_wrappers_core.o: ../src/gfx/GfxTextBuffer.h
 lua_wrappers_core.o: ../depend_stubs/OgreHardwareBufferManager.h
 lua_wrappers_core.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 lua_wrappers_core.o: ../depend_stubs/OgreHardwareIndexBuffer.h
-lua_wrappers_core.o: ../src/lua_util.h ../src/path_util.h
-lua_wrappers_core.o: ../src/gfx/GfxPipeline.h
 lua_wrappers_core.o: ../src/audio/lua_wrappers_audio.h
 lua_wrappers_core.o: ../src/audio/audio.h ../depend_stubs/AL/al.h
 lua_wrappers_core.o: ../src/audio/AudioDiskResource.h
@@ -873,13 +874,36 @@ lua_wrappers_disk_resource.o: ../src/LuaPtr.h ../src/SplineTable.h
 lua_wrappers_disk_resource.o: ../src/BackgroundLoader.h
 lua_wrappers_disk_resource.o: ../src/CacheFriendlyRangeSpaceSIMD.h
 lua_wrappers_disk_resource.o: ../src/SSEAllocator.h
-lua_wrappers_disk_resource.o: ../src/gfx/gfx_hud.h
+lua_wrappers_disk_resource.o: ../src/gfx/gfx_hud.h ../src/LuaPtr.h
+lua_wrappers_disk_resource.o: ../src/lua_util.h ../src/path_util.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxPipeline.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxFont.h ../src/main.h
+lua_wrappers_disk_resource.o: ../src/Mouse.h ../src/Keyboard.h
+lua_wrappers_disk_resource.o: ../src/BulletDebugDrawer.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreFrameListener.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreManualObject.h
+lua_wrappers_disk_resource.o: ../depend_stubs/btBulletCollisionCommon.h
+lua_wrappers_disk_resource.o: ../src/gfx/lua_userdata_dependency_tracker.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreStaticGeometry.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreInstancedGeometry.h
+lua_wrappers_disk_resource.o: ../src/gfx/Clutter.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreVertexIndexData.h
+lua_wrappers_disk_resource.o: ../src/gfx/HUD.h ../depend_stubs/climits
+lua_wrappers_disk_resource.o: ../depend_stubs/OgrePanelOverlayElement.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreOverlay.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreOverlayManager.h
+lua_wrappers_disk_resource.o: ../src/gfx/TextListOverlayElement.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgrePrerequisites.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreOverlayElement.h
+lua_wrappers_disk_resource.o: ../depend_stubs/OgreFont.h
+lua_wrappers_disk_resource.o: ../src/physics/PhysicsWorld.h
+lua_wrappers_disk_resource.o: ../depend_stubs/btBulletDynamicsCommon.h
+lua_wrappers_disk_resource.o: ../src/physics/CollisionMesh.h
+lua_wrappers_disk_resource.o: ../src/GritObject.h
+lua_wrappers_disk_resource.o: ../src/gfx/GfxTextBuffer.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreHardwareBufferManager.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreHardwareIndexBuffer.h
-lua_wrappers_disk_resource.o: ../src/LuaPtr.h ../src/lua_util.h
-lua_wrappers_disk_resource.o: ../src/path_util.h
-lua_wrappers_disk_resource.o: ../src/gfx/GfxPipeline.h
 lua_wrappers_disk_resource.o: ../src/physics/lua_wrappers_physics.h
 lua_wrappers_disk_resource.o: ../src/physics/PhysicsWorld.h
 lua_wrappers_gritobj.o: ../src/GritObject.h ../depend_stubs/map
@@ -1295,19 +1319,84 @@ GfxDiskResource.o: ../src/math_util.h ../depend_stubs/cmath
 GfxDiskResource.o: ../depend_stubs/cfloat
 GfxDiskResource.o: ../src/gfx/GfxSkyMaterial.h
 GfxFont.o: ../src/gfx/GfxFont.h ../depend_stubs/vector
-GfxFont.o: ../depend_stubs/map ../src/gfx/GfxDiskResource.h
-GfxFont.o: ../depend_stubs/OgreResource.h
-GfxFont.o: ../depend_stubs/OgreTexture.h
-GfxFont.o: ../depend_stubs/OgreMesh.h ../src/CentralisedLog.h
-GfxFont.o: ../depend_stubs/iostream ../depend_stubs/sstream
-GfxFont.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-GfxFont.o: ../src/console_colour.h ../src/BackgroundLoader.h
+GfxFont.o: ../depend_stubs/map ../src/BackgroundLoader.h
 GfxFont.o: ../src/vect_util.h ../depend_stubs/algorithm
-GfxFont.o: ../src/CentralisedLog.h ../depend_stubs/list
+GfxFont.o: ../src/CentralisedLog.h ../depend_stubs/iostream
+GfxFont.o: ../depend_stubs/sstream
+GfxFont.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+GfxFont.o: ../src/console_colour.h ../depend_stubs/list
 GfxFont.o: ../depend_stubs/boost/thread/thread.hpp
 GfxFont.o: ../depend_stubs/boost/thread/condition.hpp
 GfxFont.o: ../src/DiskResource.h ../depend_stubs/set
-GfxFont.o: ../depend_stubs/string
+GfxFont.o: ../depend_stubs/string ../src/main.h
+GfxFont.o: ../depend_stubs/lua.h ../src/Mouse.h ../src/Keyboard.h
+GfxFont.o: ../src/BackgroundLoader.h ../src/BulletDebugDrawer.h
+GfxFont.o: ../depend_stubs/OgreFrameListener.h
+GfxFont.o: ../depend_stubs/OgreManualObject.h
+GfxFont.o: ../depend_stubs/btBulletCollisionCommon.h
+GfxFont.o: ../src/gfx/lua_userdata_dependency_tracker.h
+GfxFont.o: ../depend_stubs/OgreStaticGeometry.h
+GfxFont.o: ../depend_stubs/OgreInstancedGeometry.h
+GfxFont.o: ../src/gfx/Clutter.h ../depend_stubs/cfloat
+GfxFont.o: ../depend_stubs/OgreMovableObject.h
+GfxFont.o: ../depend_stubs/OgreVertexIndexData.h
+GfxFont.o: ../depend_stubs/OgreMaterial.h
+GfxFont.o: ../depend_stubs/OgreMesh.h ../src/math_util.h
+GfxFont.o: ../depend_stubs/cmath
+GfxFont.o: ../src/CacheFriendlyRangeSpaceSIMD.h
+GfxFont.o: ../src/SSEAllocator.h ../src/Streamer.h
+GfxFont.o: ../depend_stubs/lauxlib.h ../depend_stubs/lualib.h
+GfxFont.o: ../src/GritObject.h ../src/SharedPtr.h
+GfxFont.o: ../depend_stubs/cstdlib ../depend_stubs/functional
+GfxFont.o: ../src/Streamer.h ../src/ExternalTable.h
+GfxFont.o: ../src/math_util.h ../src/LuaPtr.h ../src/SplineTable.h
+GfxFont.o: ../src/gfx/HUD.h ../depend_stubs/climits
+GfxFont.o: ../depend_stubs/OgrePanelOverlayElement.h
+GfxFont.o: ../depend_stubs/OgreOverlayElementFactory.h
+GfxFont.o: ../depend_stubs/OgreOverlay.h
+GfxFont.o: ../depend_stubs/OgreOverlayManager.h
+GfxFont.o: ../src/gfx/TextListOverlayElement.h
+GfxFont.o: ../depend_stubs/OgrePrerequisites.h
+GfxFont.o: ../depend_stubs/OgreOverlayElement.h
+GfxFont.o: ../depend_stubs/OgreFont.h
+GfxFont.o: ../src/physics/PhysicsWorld.h ../src/CentralisedLog.h
+GfxFont.o: ../src/SharedPtr.h
+GfxFont.o: ../depend_stubs/btBulletDynamicsCommon.h
+GfxFont.o: ../src/physics/TColParser.h ../src/physics/TColLexer
+GfxFont.o: ../depend_stubs/istream
+GfxFont.o: ../depend_stubs/quex/code_base/compatibility/inttypes.h
+GfxFont.o: ../src/physics/TColLexer-token_ids
+GfxFont.o: ../depend_stubs/cstdio
+GfxFont.o: ../depend_stubs/quex/code_base/Token
+GfxFont.o: ../depend_stubs/quex/code_base/definitions
+GfxFont.o: ../depend_stubs/quex/code_base/buffer/Buffer
+GfxFont.o: ../depend_stubs/quex/code_base/buffer/plain/BufferFiller_Plain
+GfxFont.o: ../depend_stubs/quex/code_base/template/QuexMode
+GfxFont.o: ../depend_stubs/quex/code_base/template/Analyser
+GfxFont.o: ../depend_stubs/quex/code_base/template/Counter
+GfxFont.o: ../depend_stubs/quex/code_base/template/Accumulator
+GfxFont.o: ../depend_stubs/quex/code_base/TokenQueue
+GfxFont.o: ../depend_stubs/quex/code_base/template/IncludeStack
+GfxFont.o: ../depend_stubs/quex/code_base/temporary_macros_on
+GfxFont.o: ../depend_stubs/quex/code_base/temporary_macros_off
+GfxFont.o: ../depend_stubs/quex/code_base/template/constructor.i
+GfxFont.o: ../depend_stubs/quex/code_base/template/Counter.i
+GfxFont.o: ../depend_stubs/quex/code_base/template/Accumulator.i
+GfxFont.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+GfxFont.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
+GfxFont.o: ../depend_stubs/quex/code_base/template/mode_handling.i
+GfxFont.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
+GfxFont.o: ../depend_stubs/quex/code_base/template/misc.i
+GfxFont.o: ../depend_stubs/quex/code_base/template/buffer_access.i
+GfxFont.o: ../depend_stubs/quex/code_base/template/Analyser.i
+GfxFont.o: ../src/physics/CollisionMesh.h
+GfxFont.o: ../depend_stubs/OgreDataStream.h ../src/DiskResource.h
+GfxFont.o: ../src/sleep.h ../src/physics/BColParser.h
+GfxFont.o: ../depend_stubs/stdint.h ../src/physics/LooseEnd.h
+GfxFont.o: ../src/physics/PhysicalMaterial.h ../src/GritObject.h
+GfxFont.o: ../src/LuaPtr.h ../src/gfx/GfxDiskResource.h
+GfxFont.o: ../depend_stubs/OgreResource.h
+GfxFont.o: ../depend_stubs/OgreTexture.h
 GfxInstances.o: ../depend_stubs/algorithm ../src/main.h
 GfxInstances.o: ../depend_stubs/lua.h ../src/Mouse.h
 GfxInstances.o: ../depend_stubs/vector ../src/Keyboard.h
@@ -1693,6 +1782,95 @@ GfxSkyMaterial.o: ../depend_stubs/list
 GfxSkyMaterial.o: ../depend_stubs/boost/thread/thread.hpp
 GfxSkyMaterial.o: ../depend_stubs/boost/thread/condition.hpp
 GfxSkyMaterial.o: ../src/DiskResource.h ../depend_stubs/set
+GfxTextBuffer.o: ../src/gfx/GfxTextBuffer.h
+GfxTextBuffer.o: ../depend_stubs/OgreHardwareBufferManager.h
+GfxTextBuffer.o: ../depend_stubs/OgreHardwareVertexBuffer.h
+GfxTextBuffer.o: ../depend_stubs/OgreHardwareIndexBuffer.h
+GfxTextBuffer.o: ../src/math_util.h ../depend_stubs/cmath
+GfxTextBuffer.o: ../depend_stubs/cfloat ../src/CentralisedLog.h
+GfxTextBuffer.o: ../depend_stubs/iostream ../depend_stubs/sstream
+GfxTextBuffer.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+GfxTextBuffer.o: ../src/console_colour.h ../src/gfx/GfxFont.h
+GfxTextBuffer.o: ../depend_stubs/vector ../depend_stubs/map
+GfxTextBuffer.o: ../src/BackgroundLoader.h ../src/vect_util.h
+GfxTextBuffer.o: ../depend_stubs/algorithm ../depend_stubs/list
+GfxTextBuffer.o: ../depend_stubs/boost/thread/thread.hpp
+GfxTextBuffer.o: ../depend_stubs/boost/thread/condition.hpp
+GfxTextBuffer.o: ../src/DiskResource.h ../depend_stubs/set
+GfxTextBuffer.o: ../depend_stubs/string ../src/main.h
+GfxTextBuffer.o: ../depend_stubs/lua.h ../src/Mouse.h
+GfxTextBuffer.o: ../src/Keyboard.h ../src/BackgroundLoader.h
+GfxTextBuffer.o: ../src/BulletDebugDrawer.h
+GfxTextBuffer.o: ../depend_stubs/OgreFrameListener.h
+GfxTextBuffer.o: ../depend_stubs/OgreManualObject.h
+GfxTextBuffer.o: ../depend_stubs/btBulletCollisionCommon.h
+GfxTextBuffer.o: ../src/gfx/lua_userdata_dependency_tracker.h
+GfxTextBuffer.o: ../depend_stubs/OgreStaticGeometry.h
+GfxTextBuffer.o: ../depend_stubs/OgreInstancedGeometry.h
+GfxTextBuffer.o: ../src/gfx/Clutter.h
+GfxTextBuffer.o: ../depend_stubs/OgreMovableObject.h
+GfxTextBuffer.o: ../depend_stubs/OgreVertexIndexData.h
+GfxTextBuffer.o: ../depend_stubs/OgreMaterial.h
+GfxTextBuffer.o: ../depend_stubs/OgreMesh.h
+GfxTextBuffer.o: ../src/CacheFriendlyRangeSpaceSIMD.h
+GfxTextBuffer.o: ../src/SSEAllocator.h ../src/Streamer.h
+GfxTextBuffer.o: ../depend_stubs/lauxlib.h
+GfxTextBuffer.o: ../depend_stubs/lualib.h ../src/GritObject.h
+GfxTextBuffer.o: ../src/SharedPtr.h ../depend_stubs/cstdlib
+GfxTextBuffer.o: ../depend_stubs/functional ../src/Streamer.h
+GfxTextBuffer.o: ../src/ExternalTable.h ../src/math_util.h
+GfxTextBuffer.o: ../src/LuaPtr.h ../src/SplineTable.h
+GfxTextBuffer.o: ../src/gfx/HUD.h ../depend_stubs/climits
+GfxTextBuffer.o: ../depend_stubs/OgrePanelOverlayElement.h
+GfxTextBuffer.o: ../depend_stubs/OgreOverlayElementFactory.h
+GfxTextBuffer.o: ../depend_stubs/OgreOverlay.h
+GfxTextBuffer.o: ../depend_stubs/OgreOverlayManager.h
+GfxTextBuffer.o: ../src/gfx/TextListOverlayElement.h
+GfxTextBuffer.o: ../depend_stubs/OgrePrerequisites.h
+GfxTextBuffer.o: ../depend_stubs/OgreOverlayElement.h
+GfxTextBuffer.o: ../depend_stubs/OgreFont.h
+GfxTextBuffer.o: ../src/physics/PhysicsWorld.h
+GfxTextBuffer.o: ../src/CentralisedLog.h ../src/SharedPtr.h
+GfxTextBuffer.o: ../depend_stubs/btBulletDynamicsCommon.h
+GfxTextBuffer.o: ../src/physics/TColParser.h
+GfxTextBuffer.o: ../src/physics/TColLexer ../depend_stubs/istream
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/compatibility/inttypes.h
+GfxTextBuffer.o: ../src/physics/TColLexer-token_ids
+GfxTextBuffer.o: ../depend_stubs/cstdio
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/Token
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/definitions
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/buffer/Buffer
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/buffer/plain/BufferFiller_Plain
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/QuexMode
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/Analyser
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/Counter
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/Accumulator
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/TokenQueue
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/IncludeStack
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/temporary_macros_on
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/temporary_macros_off
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/constructor.i
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/Counter.i
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/Accumulator.i
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/mode_handling.i
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/misc.i
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/buffer_access.i
+GfxTextBuffer.o: ../depend_stubs/quex/code_base/template/Analyser.i
+GfxTextBuffer.o: ../src/physics/CollisionMesh.h
+GfxTextBuffer.o: ../depend_stubs/OgreDataStream.h
+GfxTextBuffer.o: ../src/DiskResource.h ../src/sleep.h
+GfxTextBuffer.o: ../src/physics/BColParser.h
+GfxTextBuffer.o: ../depend_stubs/stdint.h
+GfxTextBuffer.o: ../src/physics/LooseEnd.h
+GfxTextBuffer.o: ../src/physics/PhysicalMaterial.h
+GfxTextBuffer.o: ../src/GritObject.h ../src/LuaPtr.h
+GfxTextBuffer.o: ../src/gfx/GfxDiskResource.h
+GfxTextBuffer.o: ../depend_stubs/OgreResource.h
+GfxTextBuffer.o: ../depend_stubs/OgreTexture.h
+GfxTextBuffer.o: ../src/unicode_util.h
 HUD.o: ../depend_stubs/math.h ../depend_stubs/OgreFontManager.h
 HUD.o: ../src/gfx/HUD.h ../depend_stubs/vector
 HUD.o: ../depend_stubs/climits
@@ -1898,10 +2076,11 @@ gfx.o: ../src/gfx/GfxSkyBody.h ../depend_stubs/OgreEntity.h
 gfx.o: ../depend_stubs/OgreSceneNode.h
 gfx.o: ../src/gfx/GfxDiskResource.h ../depend_stubs/OgreResource.h
 gfx.o: ../depend_stubs/OgreTexture.h ../src/BackgroundLoader.h
-gfx.o: ../src/gfx/gfx_hud.h
+gfx.o: ../src/gfx/gfx_hud.h ../src/lua_util.h ../src/gfx/GfxFont.h
+gfx.o: ../src/gfx/GfxTextBuffer.h
 gfx.o: ../depend_stubs/OgreHardwareBufferManager.h
 gfx.o: ../depend_stubs/OgreHardwareVertexBuffer.h
-gfx.o: ../depend_stubs/OgreHardwareIndexBuffer.h ../src/lua_util.h
+gfx.o: ../depend_stubs/OgreHardwareIndexBuffer.h
 gfx_hud.o: ../depend_stubs/OgreHighLevelGpuProgramManager.h
 gfx_hud.o: ../depend_stubs/OgreCgProgram.h ../src/CentralisedLog.h
 gfx_hud.o: ../depend_stubs/iostream ../depend_stubs/sstream
@@ -1953,11 +2132,64 @@ gfx_hud.o: ../src/LuaPtr.h ../src/SplineTable.h
 gfx_hud.o: ../src/BackgroundLoader.h
 gfx_hud.o: ../src/CacheFriendlyRangeSpaceSIMD.h
 gfx_hud.o: ../src/SSEAllocator.h ../src/gfx/gfx_hud.h
+gfx_hud.o: ../src/LuaPtr.h ../src/lua_util.h
+gfx_hud.o: ../src/gfx/GfxPipeline.h ../src/gfx/GfxFont.h
+gfx_hud.o: ../src/main.h ../src/Mouse.h ../src/Keyboard.h
+gfx_hud.o: ../src/BulletDebugDrawer.h
+gfx_hud.o: ../depend_stubs/OgreFrameListener.h
+gfx_hud.o: ../depend_stubs/OgreManualObject.h
+gfx_hud.o: ../depend_stubs/btBulletCollisionCommon.h
+gfx_hud.o: ../src/gfx/lua_userdata_dependency_tracker.h
+gfx_hud.o: ../depend_stubs/OgreStaticGeometry.h
+gfx_hud.o: ../depend_stubs/OgreInstancedGeometry.h
+gfx_hud.o: ../src/gfx/Clutter.h
+gfx_hud.o: ../depend_stubs/OgreVertexIndexData.h ../src/gfx/HUD.h
+gfx_hud.o: ../depend_stubs/climits
+gfx_hud.o: ../depend_stubs/OgrePanelOverlayElement.h
+gfx_hud.o: ../depend_stubs/OgreOverlay.h
+gfx_hud.o: ../depend_stubs/OgreOverlayManager.h
+gfx_hud.o: ../src/gfx/TextListOverlayElement.h
+gfx_hud.o: ../depend_stubs/OgrePrerequisites.h
+gfx_hud.o: ../depend_stubs/OgreOverlayElement.h
+gfx_hud.o: ../depend_stubs/OgreFont.h
+gfx_hud.o: ../src/physics/PhysicsWorld.h
+gfx_hud.o: ../depend_stubs/btBulletDynamicsCommon.h
+gfx_hud.o: ../src/physics/TColParser.h ../src/physics/TColLexer
+gfx_hud.o: ../depend_stubs/istream
+gfx_hud.o: ../depend_stubs/quex/code_base/compatibility/inttypes.h
+gfx_hud.o: ../src/physics/TColLexer-token_ids
+gfx_hud.o: ../depend_stubs/cstdio
+gfx_hud.o: ../depend_stubs/quex/code_base/Token
+gfx_hud.o: ../depend_stubs/quex/code_base/definitions
+gfx_hud.o: ../depend_stubs/quex/code_base/buffer/Buffer
+gfx_hud.o: ../depend_stubs/quex/code_base/buffer/plain/BufferFiller_Plain
+gfx_hud.o: ../depend_stubs/quex/code_base/template/QuexMode
+gfx_hud.o: ../depend_stubs/quex/code_base/template/Analyser
+gfx_hud.o: ../depend_stubs/quex/code_base/template/Counter
+gfx_hud.o: ../depend_stubs/quex/code_base/template/Accumulator
+gfx_hud.o: ../depend_stubs/quex/code_base/TokenQueue
+gfx_hud.o: ../depend_stubs/quex/code_base/template/IncludeStack
+gfx_hud.o: ../depend_stubs/quex/code_base/temporary_macros_on
+gfx_hud.o: ../depend_stubs/quex/code_base/temporary_macros_off
+gfx_hud.o: ../depend_stubs/quex/code_base/template/constructor.i
+gfx_hud.o: ../depend_stubs/quex/code_base/template/Counter.i
+gfx_hud.o: ../depend_stubs/quex/code_base/template/Accumulator.i
+gfx_hud.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+gfx_hud.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
+gfx_hud.o: ../depend_stubs/quex/code_base/template/mode_handling.i
+gfx_hud.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
+gfx_hud.o: ../depend_stubs/quex/code_base/template/misc.i
+gfx_hud.o: ../depend_stubs/quex/code_base/template/buffer_access.i
+gfx_hud.o: ../depend_stubs/quex/code_base/template/Analyser.i
+gfx_hud.o: ../src/physics/CollisionMesh.h
+gfx_hud.o: ../depend_stubs/OgreDataStream.h ../src/DiskResource.h
+gfx_hud.o: ../src/sleep.h ../src/physics/BColParser.h
+gfx_hud.o: ../depend_stubs/stdint.h ../src/physics/LooseEnd.h
+gfx_hud.o: ../src/physics/PhysicalMaterial.h ../src/GritObject.h
+gfx_hud.o: ../src/gfx/GfxTextBuffer.h
 gfx_hud.o: ../depend_stubs/OgreHardwareBufferManager.h
 gfx_hud.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 gfx_hud.o: ../depend_stubs/OgreHardwareIndexBuffer.h
-gfx_hud.o: ../src/LuaPtr.h ../src/lua_util.h
-gfx_hud.o: ../src/gfx/GfxPipeline.h
 gfx_option.o: ../depend_stubs/string ../depend_stubs/map
 gfx_option.o: ../src/gfx/gfx_internal.h ../depend_stubs/sstream
 gfx_option.o: ../depend_stubs/Ogre.h
@@ -2096,11 +2328,12 @@ lua_wrappers_gfx.o: ../depend_stubs/utility
 lua_wrappers_gfx.o: ../src/gfx/GfxInstances.h
 lua_wrappers_gfx.o: ../src/DenseIndexMap.h
 lua_wrappers_gfx.o: ../src/gfx/GfxRangedInstances.h
-lua_wrappers_gfx.o: ../src/gfx/gfx_hud.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_hud.h ../src/lua_util.h
+lua_wrappers_gfx.o: ../src/gfx/GfxPipeline.h ../src/gfx/GfxFont.h
+lua_wrappers_gfx.o: ../src/gfx/GfxTextBuffer.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreHardwareBufferManager.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreHardwareIndexBuffer.h
-lua_wrappers_gfx.o: ../src/lua_util.h ../src/gfx/GfxPipeline.h
 lua_wrappers_gfx.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_gfx.o: ../src/lua_wrappers_common.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreException.h
@@ -2945,12 +3178,13 @@ lua_wrappers_physics.o: ../depend_stubs/OgreSceneNode.h
 lua_wrappers_physics.o: ../src/gfx/GfxSkyMaterial.h
 lua_wrappers_physics.o: ../src/gfx/GfxLight.h
 lua_wrappers_physics.o: ../src/gfx/GfxRangedInstances.h
-lua_wrappers_physics.o: ../src/gfx/gfx_hud.h
+lua_wrappers_physics.o: ../src/gfx/gfx_hud.h ../src/lua_util.h
+lua_wrappers_physics.o: ../src/gfx/GfxPipeline.h
+lua_wrappers_physics.o: ../src/gfx/GfxFont.h
+lua_wrappers_physics.o: ../src/gfx/GfxTextBuffer.h
 lua_wrappers_physics.o: ../depend_stubs/OgreHardwareBufferManager.h
 lua_wrappers_physics.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 lua_wrappers_physics.o: ../depend_stubs/OgreHardwareIndexBuffer.h
-lua_wrappers_physics.o: ../src/lua_util.h
-lua_wrappers_physics.o: ../src/gfx/GfxPipeline.h
 lua_wrappers_physics.o: ../src/physics/PhysicsWorld.h
 lua_wrappers_physics.o: ../src/physics/lua_wrappers_physics.h
 AudioDiskResource.o: ../src/audio/AudioDiskResource.h

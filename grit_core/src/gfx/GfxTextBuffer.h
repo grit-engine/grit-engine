@@ -43,12 +43,14 @@ class GfxTextBuffer {
     Ogre::IndexData iData;
     Ogre::HardwareVertexBufferSharedPtr vBuf;
     Ogre::HardwareIndexBufferSharedPtr iBuf;
+    Ogre::RenderOperation op;
     unsigned currentGPUCapacity; // due to lazy update, lags behind
 
     std::vector<float> rawVBuf;
     std::vector<uint16_t> rawIBuf;
     unsigned currentSize;
     unsigned currentCapacity;
+    Vector2 currentDimensions;
 
     Vector2 currentOffset;
 
@@ -58,14 +60,20 @@ class GfxTextBuffer {
 
     GfxTextBuffer (GfxFont *font);
 
-    ~GfxTextBuffer (void) { }
+    ~GfxTextBuffer (void)
+    {
+        clear(true);
+        vData.vertexDeclaration = NULL; // save OGRE from itself
+    }
 
     /** Reset the buffer. */
     void clear (bool clear_gpu)
     {
         rawVBuf.clear();
         rawIBuf.clear();
+        currentDimensions = Vector2(0,0);
         currentOffset = Vector2(0,0);
+        currentSize = 0;
         dirty = true;
         if (clear_gpu) {
             copyToGPUIfNeeded(); // clear GPU buffers, (note this sets dirty = false again)
@@ -77,7 +85,7 @@ class GfxTextBuffer {
     bool addRawChar (GfxFont::codepoint_t cp, Vector3 topColour, float topAlpha, Vector3 botColour, float botAlpha);
 
     /** Basic interface: end of line. */
-    void endLine (float line_height);
+    void endLine (void);
 
     /** High level interface: Add a string that can contain \n,\t and ansi terminal colours.
      * \param text The text in UTF8.
@@ -88,15 +96,21 @@ class GfxTextBuffer {
     void setFont (GfxFont *v) { font = v; }
 
     /** Returns the font. */
-    GfxFont *getFont (void) { return font; }
+    GfxFont *getFont (void) const { return font; }
+
+    /** Returns the size of the text rectangle in pixels. */
+    const Vector2 &getDimensions (void) const { return currentDimensions; }
+
+    /** Get an operation that can be used to render this text buffer. */
+    const Ogre::RenderOperation &getRenderOperation (void) const { return op; }
+
+    /** Copy the buffer to the GPU, enlarging GPU buffers if necessary. */
+    void copyToGPUIfNeeded ();
 
     protected:
 
     /** Change the amount of space used for data on the host. */
     void reserve (unsigned new_capacity);
-
-    /** Copy the buffer to the GPU, enlargeing GPU buffers if necessary. */
-    void copyToGPUIfNeeded ();
 
 };
 

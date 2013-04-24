@@ -27,7 +27,7 @@ const unsigned VERT_FLOAT_SZ = 2+2+4;
 const unsigned VERT_BYTE_SZ = VERT_FLOAT_SZ*sizeof(float);
 
 GfxTextBuffer::GfxTextBuffer (GfxFont *font)
-  : font(font), currentSize(0), currentOffset(0,0), dirty(false)
+  : font(font), currentSize(0), currentDimensions(0,0), currentOffset(0,0), dirty(false)
 {   
     APP_ASSERT(font != NULL);
 
@@ -44,11 +44,18 @@ GfxTextBuffer::GfxTextBuffer (GfxFont *font)
     iData.indexCount = 0;
     currentGPUCapacity = 0;
 
+
+    op.useIndexes = true;
+    op.vertexData = &vData;
+    op.indexData = &iData;
+    op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+
+
     vData.vertexDeclaration = &vDecl;
     unsigned vdecl_sz = 0;
-    vdecl_sz += vDecl.addElement(1, vdecl_sz, Ogre::VET_FLOAT2, Ogre::VES_POSITION, 1).getSize();
-    vdecl_sz += vDecl.addElement(1, vdecl_sz, Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES, 0).getSize(); // uv
-    vdecl_sz += vDecl.addElement(1, vdecl_sz, Ogre::VET_FLOAT4, Ogre::VES_TEXTURE_COORDINATES, 1).getSize(); // colour
+    vdecl_sz += vDecl.addElement(0, vdecl_sz, Ogre::VET_FLOAT2, Ogre::VES_POSITION, 0).getSize();
+    vdecl_sz += vDecl.addElement(0, vdecl_sz, Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES, 0).getSize(); // uv
+    vdecl_sz += vDecl.addElement(0, vdecl_sz, Ogre::VET_FLOAT4, Ogre::VES_TEXTURE_COORDINATES, 1).getSize(); // colour
     APP_ASSERT(vdecl_sz == VERT_BYTE_SZ);
 }
 
@@ -184,15 +191,19 @@ bool GfxTextBuffer::addRawChar (GfxFont::codepoint_t cp, Vector3 top_colour, flo
 
     currentSize++;
     currentOffset.x += width;
+
+    if (currentOffset.x > currentDimensions.x) currentDimensions.x = currentOffset.x;
+    if (-currentOffset.y + font->getHeight() > currentDimensions.y) currentDimensions.y = -currentOffset.y + font->getHeight();
+
     dirty = true;
 
     return true;
 }
 
-void GfxTextBuffer::endLine (float line_height)
+void GfxTextBuffer::endLine (void)
 {
     currentOffset.x = 0;
-    currentOffset.y -= line_height;
+    currentOffset.y -= font->getHeight();
 }
 
 void GfxTextBuffer::addFormattedString (const std::string &text)

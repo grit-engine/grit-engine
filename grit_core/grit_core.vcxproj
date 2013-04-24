@@ -53,7 +53,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(SolutionDir)\dependencies\bullet\src;$(SolutionDir)\dependencies\quex-0.34.1;$(SolutionDir)\dependencies\lua-5.1.4;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\OctreeSceneManager\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\ParticleFX\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\src\GLSL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\Direct3D9\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\CgProgramManager\include;$(SolutionDir)\dependencies\grit_ogre\Components\Overlay\include;$(SolutionDir)\dependencies\grit_ogre_dependencies\include;$(SolutionDir)\dependencies\icu\include;$(SolutionDir)\dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NO_PLUGINS;QUEX_OPTION_ASSERTS_WARNING_MESSAGE_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NO_PLUGINS;QUEX_OPTION_ASSERTS_WARNING_MESSAGE_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -84,7 +84,7 @@
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>$(SolutionDir)\dependencies\openal\include;$(SolutionDir)\dependencies\bullet\src;$(SolutionDir)\dependencies\quex-0.34.1;$(SolutionDir)\dependencies\lua-5.1.4;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\OctreeSceneManager\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\ParticleFX\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\src\GLSL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\Direct3D9\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\CgProgramManager\include;$(SolutionDir)\dependencies\grit_ogre\Components\Overlay\include;$(SolutionDir)\dependencies\grit_ogre_dependencies\include;$(SolutionDir)\dependencies\icu\include;$(SolutionDir)\dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NO_PLUGINS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NO_PLUGINS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>

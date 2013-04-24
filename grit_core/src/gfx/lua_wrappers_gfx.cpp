@@ -1479,6 +1479,8 @@ TRY_START
         push_v2(L, self.getPosition());
     } else if (!::strcmp(key,"zOrder")) {
         lua_pushnumber(L, self.getZOrder());
+    } else if (!::strcmp(key,"size")) {
+        push_v2(L, self.getSize());
 
     } else if (!::strcmp(key,"colour")) {
         push_v3(L, self.getColour());
@@ -1715,12 +1717,11 @@ TRY_END
 static int global_gfx_font_define (lua_State *L)
 {
 TRY_START
-    check_args(L,5);
+    check_args(L,4);
     std::string name = check_path(L,1);
     std::string tex_name = check_path(L,2);
-    lua_Number tex_width = check_t<unsigned>(L,3);
-    lua_Number tex_height = check_t<unsigned>(L,4);
-    luaL_checktype(L,5,LUA_TTABLE);
+    lua_Number line_height = luaL_checknumber(L, 3);
+    luaL_checktype(L,4,LUA_TTABLE);
 
     DiskResource *d = disk_resource_get(tex_name);
     if (d==NULL) my_lua_error(L, "Resource does not exist: \""+tex_name+"\"");
@@ -1728,10 +1729,11 @@ TRY_START
     if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+tex_name+"\"");
 
     // get or create font of the right name
-    GfxFont *font = gfx_font_make(name, d2);
+    GfxFont *font = gfx_font_make(name, d2, line_height);
+    Vector2 tex_dim = font->getTextureDimensions();
 
     // iterate through codepoints
-    for (lua_pushnil(L) ; lua_next(L,5) ; lua_pop(L,1)) {
+    for (lua_pushnil(L) ; lua_next(L,4) ; lua_pop(L,1)) {
         lua_Number codepoint = check_t<unsigned>(L,-2);
         lua_rawgeti(L, -1, 1);
         lua_Number x = check_t<unsigned>(L,-1);
@@ -1747,10 +1749,10 @@ TRY_START
         lua_pop(L,1);
 
         GfxFont::CharRect cr;
-        cr.u1 = x/tex_width;
-        cr.v1 = y/tex_height;
-        cr.u2 = cr.u1 + w/tex_width;
-        cr.v2 = cr.v1 + h/tex_height;
+        cr.u1 = x/tex_dim.x;
+        cr.v1 = y/tex_dim.y;
+        cr.u2 = cr.u1 + w/tex_dim.x;
+        cr.v2 = cr.v1 + h/tex_dim.y;
         font->setCodePoint(codepoint, cr);
     }
 

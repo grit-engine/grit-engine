@@ -185,6 +185,18 @@ void GfxHudObject::decRefCount (lua_State *L)
 }
 
 
+void GfxHudObject::destroy (void)
+{
+    if (!dead) {
+        if (texture) {
+            texture->decrement();
+            bgl->finishedWith(texture);
+            texture = NULL;
+        }
+        GfxHudBase::destroy();
+    }
+}
+
 void GfxHudObject::destroy (lua_State *L)
 {
     if (!dead) {
@@ -193,7 +205,7 @@ void GfxHudObject::destroy (lua_State *L)
         while (children.size() != 0) {
             children[0]->setParent(parent);
         }
-        GfxHudBase::destroy();
+        destroy();
     }
 }
 
@@ -686,8 +698,12 @@ void GfxHudObject::triggerDestroy (lua_State *L)
 void GfxHudObject::setTexture (GfxTextureDiskResource *v)
 {
     assertAlive();
-    // maybe check it's valid at this point
-    // although it can always become unloaaded before actual rendering time
+    if (texture != NULL) {
+        texture->decrement();
+        bgl->finishedWith(texture);
+    }
+    v->increment();
+    if (!v->isLoaded()) v->load();
     texture = v;
 }
 
@@ -737,6 +753,8 @@ void GfxHudText::append (const std::string &v)
 
 
 // {{{ RENDERING
+
+static Ogre::HighLevelGpuProgramPtr vp_text, fp_text;
 
 static Ogre::HighLevelGpuProgramPtr vp_tex, fp_tex;
 static Ogre::HighLevelGpuProgramPtr vp_solid, fp_solid;
@@ -809,25 +827,55 @@ void gfx_hud_init (void)
     vp_tex = make_shader("vp_tex", VERT, 
         "void main (\n"
         "    in float2 in_POSITION:POSITION,\n"
-        "    in float2 in_TEXCOORD0:TEXCOORD0,\n"
+        "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
         "    out float4 out_POSITION:POSITION,\n"
-        "    out float2 out_TEXCOORD0:TEXCOORD0\n"
+        "    out float4 out_TEXCOORD0:TEXCOORD0\n"
         ") {\n"
         "    out_POSITION = float4(in_POSITION,0,1);\n"
-        "    out_TEXCOORD0 = in_TEXCOORD0;\n"
+        "    out_TEXCOORD0.xy = in_TEXCOORD0.xy;\n"
         "}\n"
     );
 
     fp_tex = make_shader("fp_tex", FRAG, 
         "void main (\n"
-        "    in float2 in_TEXCOORD0:TEXCOORD0,\n"
+        "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
         "    uniform sampler2D texture,\n"
         "    uniform float3 colour,\n"
         "    uniform float alpha,\n"
         "    out float4 out_COLOR0:COLOR0\n"
         ") {\n"
-        "    float4 texel = tex2D(texture,in_TEXCOORD0);\n"
+        "    float4 texel = tex2D(texture,in_TEXCOORD0.xy);\n"
         "    out_COLOR0 = float4(colour,alpha) * texel;\n"
+        "}\n"
+    );
+    
+    vp_text = make_shader("vp_text", VERT, 
+        "void main (\n"
+        "    in float2 in_POSITION:POSITION,\n"
+        "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
+        "    in float4 in_TEXCOORD1:TEXCOORD1,\n"
+        "    uniform float4x4 matrix,\n"
+        "    out float4 out_POSITION:POSITION,\n"
+        "    out float4 out_TEXCOORD0:TEXCOORD0,\n"
+        "    out float4 out_TEXCOORD1:TEXCOORD1\n"
+        ") {\n"
+        "    out_POSITION = mul(matrix, float4(in_POSITION,0,1));\n"
+        "    out_TEXCOORD0.xy = in_TEXCOORD0.xy;\n"
+        "    out_TEXCOORD1 = in_TEXCOORD1;\n"
+        "}\n"
+    );
+
+    fp_text = make_shader("fp_text", FRAG, 
+        "void main (\n"
+        "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
+        "    in float4 in_TEXCOORD1:TEXCOORD1,\n"
+        "    uniform sampler2D texture,\n"
+        "    uniform float3 colour,\n"
+        "    uniform float alpha,\n"
+        "    out float4 out_COLOR0:COLOR0\n"
+        ") {\n"
+        "    float4 texel = tex2D(texture,in_TEXCOORD0.xy);\n"
+        "    out_COLOR0 = float4(colour,alpha) * in_TEXCOORD1 * texel;\n"
         "}\n"
     );
     
@@ -839,6 +887,8 @@ void gfx_hud_shutdown (void)
     fp_solid.setNull();
     vp_tex.setNull();
     fp_tex.setNull();
+    vp_text.setNull();
+    fp_text.setNull();
     quad_vbuf.setNull();
     delete quad_vdata;
 }
@@ -915,9 +965,6 @@ void gfx_render_hud_one (GfxHudBase *base)
 
         if (tex != NULL && d3d9) {
             // Texel offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
-            const Ogre::TexturePtr &ogre_tex = tex->getOgreTexturePtr();
-            ogre_tex->load(); // otherwise width and height are 512!?
-            Vector2 tex_size(ogre_tex->getWidth(), ogre_tex->getHeight());
             Vector2 uv_offset = Vector2(0.5, 0.5) / obj->getSize();
             uv_offset = uv_offset.rotateBy(- obj->getDerivedOrientation());
             uv1 += uv_offset;
@@ -929,7 +976,7 @@ void gfx_render_hud_one (GfxHudBase *base)
                         obj->getDerivedOrientation(), uv1, uv2);
 
         // premultiply the colour by the alpha -- for convenience
-        try_set_named_constant(fp, "colour", to_ogre(obj->getAlpha() * obj->getColour()));
+        try_set_named_constant(fp, "colour", to_ogre(obj->getColour()));
         try_set_named_constant(fp, "alpha", obj->getAlpha());
 
 
@@ -946,7 +993,7 @@ void gfx_render_hud_one (GfxHudBase *base)
                 Ogre::TextureUnitState::TAM_WRAP
             };
             ogre_rs->_setTextureAddressingMode(0, addr_mode);
-            ogre_rs->_setTextureUnitFiltering(0, Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_LINEAR);
+            ogre_rs->_setTextureUnitFiltering(0, Ogre::FO_ANISOTROPIC, Ogre::FO_ANISOTROPIC, Ogre::FO_LINEAR);
         }
 
 
@@ -960,13 +1007,11 @@ void gfx_render_hud_one (GfxHudBase *base)
         ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fragment_params, Ogre::GPV_ALL);
         ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vertex_params, Ogre::GPV_ALL);
 
-        // render the instances
+        // render the rectangle
         Ogre::RenderOperation op;
         op.useIndexes = false;
         op.vertexData = quad_vdata;
-        //op.indexData = &idata;
         op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
-        //op.numberOfInstances = 1;
         ogre_rs->_render(op);
 
         if (tex != NULL) {
@@ -984,6 +1029,61 @@ void gfx_render_hud_one (GfxHudBase *base)
 
     GfxHudText *text = dynamic_cast<GfxHudText*>(base);
     if (text!=NULL) {
+        GfxFont *font = text->getFont();
+        GfxTextureDiskResource *tex = font->getTexture();
+
+        const Ogre::GpuProgramParametersSharedPtr &vertex_params = vp_text->getDefaultParameters();
+        const Ogre::GpuProgramParametersSharedPtr &fragment_params = fp_text->getDefaultParameters();
+
+        // form matrix out of pos
+        const Vector2 &pos = text->getDerivedPosition();
+        const Degree &orientation = text->getDerivedOrientation();
+        //Ogre::Matrix4 matrix = Ogre::Matrix4::IDENTITY;
+        Ogre::Matrix4 matrix_spin(Ogre::Quaternion(to_ogre(orientation), Ogre::Vector3(0,0,-1)));
+        Ogre::Matrix4 matrix_scale = Ogre::Matrix4::IDENTITY;
+        matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y ,1));
+        Ogre::Matrix4 matrix_trans = Ogre::Matrix4::IDENTITY;
+        matrix_trans.setTrans(Ogre::Vector3(pos.x - win_size.x/2, pos.y - win_size.y/2, 0));
+        Ogre::Matrix4 matrix = matrix_scale * matrix_trans * matrix_spin;
+        try_set_named_constant(vp_text, "matrix", matrix);
+
+        try_set_named_constant(fp_text, "colour", to_ogre(text->getColour()));
+        try_set_named_constant(fp_text, "alpha", text->getAlpha());
+
+
+        ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
+        ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
+
+        ogre_rs->_setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+
+        ogre_rs->_setTexture(0, true, tex->getOgreTexturePtr());
+        Ogre::TextureUnitState::UVWAddressingMode addr_mode = {
+            Ogre::TextureUnitState::TAM_CLAMP,
+            Ogre::TextureUnitState::TAM_CLAMP,
+            Ogre::TextureUnitState::TAM_CLAMP
+        };
+        ogre_rs->_setTextureAddressingMode(0, addr_mode);
+        ogre_rs->_setTextureUnitFiltering(0, Ogre::FO_ANISOTROPIC, Ogre::FO_ANISOTROPIC, Ogre::FO_LINEAR);
+
+
+        APP_ASSERT(vp_text->_getBindingDelegate()!=NULL);
+        APP_ASSERT(fp_text->_getBindingDelegate()!=NULL);
+
+        // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
+        ogre_rs->bindGpuProgram(vp_text->_getBindingDelegate());
+        ogre_rs->bindGpuProgram(fp_text->_getBindingDelegate());
+
+        ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fragment_params, Ogre::GPV_ALL);
+        ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vertex_params, Ogre::GPV_ALL);
+
+        text->buf.copyToGPUIfNeeded();
+
+        if (text->buf.getRenderOperation().indexData->indexCount > 0) {
+            ogre_rs->_render(text->buf.getRenderOperation());
+        }
+
+        ogre_rs->_disableTextureUnit(0);
+
     }
 }
 

@@ -216,12 +216,16 @@ namespace HUD {
 
         typedef Ogre::SharedPtr<Text> TextPtr;
 
-        float text_width(const DStr& str, Ogre::FontPtr fp,
-                              float height);
+        /** Return the width of the text in pixels, given the font and size. */
+        float text_width(const DStr& str, Ogre::FontPtr fp, float height);
 
+        /** Return the substring of str that does not exceed a given width.
+         * The remainder of str is returned in 'str'.  If wordwrap is specified, will
+         * only break on spaces. */
         DStr pixel_substr(const DStr& str, Ogre::FontPtr fp, float height,
                           float width, DStr *rest, bool wordwrap);
 
+        /** Replace hard tabs with soft tabs in 'input', being mindful of ansi escape codes and \n. */
         void expand_tabs(const DStr& input, const unsigned int expand_tabs,
                          const bool ignore_codes, DStr& output);
 
@@ -250,5 +254,3 @@ namespace HUD {
 
 
 #endif
-
-// vim: shiftwidth=8:tabstop=8:expandtab

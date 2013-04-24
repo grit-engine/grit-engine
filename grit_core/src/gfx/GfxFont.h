@@ -45,10 +45,11 @@ class GfxFont {
     const std::string name;
     private:
     GfxTextureDiskResource *texture;
+    float height;
     CharRectMap coords;
     public:
-    GfxFont (const std::string &name, GfxTextureDiskResource *tex)
-      : name(name), texture(tex)
+    GfxFont (const std::string &name, GfxTextureDiskResource *tex, float height)
+      : name(name), texture(tex), height(height)
     {
         texture->increment();
         if (!texture->isLoaded()) texture->load();
@@ -58,6 +59,8 @@ class GfxFont {
         texture->decrement();
         bgl->finishedWith(texture);
     }
+    float getHeight (void) { return height; }
+    void setHeight (float v) { height = v; }
     GfxTextureDiskResource *getTexture (void) {
         return texture;
     }
@@ -88,7 +91,7 @@ class GfxFont {
 
 bool gfx_font_has (const std::string &name);
 GfxFont *gfx_font_get (const std::string &name);
-GfxFont *gfx_font_make (const std::string &name, GfxTextureDiskResource *dr);
+GfxFont *gfx_font_make (const std::string &name, GfxTextureDiskResource *dr, float height);
 unsigned long gfx_font_num (void);
 
 #endif

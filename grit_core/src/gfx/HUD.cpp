@@ -413,8 +413,7 @@ namespace HUD {
         {
                 output.reserve(input.size());
                 int col = 0;
-                for (DStr::const_iterator i=input.begin() ;
-                     i<input.end() ; i++) {
+                for (DStr::const_iterator i=input.begin() ; i<input.end() ; i++) {
                         if (ignore_codes) {
                                 DStr::const_iterator before;
                                 do {
