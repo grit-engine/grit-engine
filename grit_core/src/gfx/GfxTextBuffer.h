@@ -38,7 +38,6 @@ class GfxTextBuffer {
 
     GfxFont *font;
 
-    Ogre::VertexDeclaration vDecl;
     Ogre::VertexData vData;
     Ogre::IndexData iData;
     Ogre::HardwareVertexBufferSharedPtr vBuf;
@@ -49,7 +48,6 @@ class GfxTextBuffer {
     std::vector<float> rawVBuf;
     std::vector<uint16_t> rawIBuf;
     unsigned currentSize;
-    unsigned currentCapacity;
     Vector2 currentDimensions;
 
     Vector2 currentOffset;
@@ -106,11 +104,6 @@ class GfxTextBuffer {
 
     /** Copy the buffer to the GPU, enlarging GPU buffers if necessary. */
     void copyToGPUIfNeeded ();
-
-    protected:
-
-    /** Change the amount of space used for data on the host. */
-    void reserve (unsigned new_capacity);
 
 };
 

@@ -31,8 +31,6 @@ GfxTextBuffer::GfxTextBuffer (GfxFont *font)
 {   
     APP_ASSERT(font != NULL);
 
-    reserve(0);
-
     vBuf.setNull();
     iBuf.setNull();
     vData.vertexBufferBinding->setBinding(0, vBuf);
@@ -51,23 +49,11 @@ GfxTextBuffer::GfxTextBuffer (GfxFont *font)
     op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
 
 
-    vData.vertexDeclaration = &vDecl;
     unsigned vdecl_sz = 0;
-    vdecl_sz += vDecl.addElement(0, vdecl_sz, Ogre::VET_FLOAT2, Ogre::VES_POSITION, 0).getSize();
-    vdecl_sz += vDecl.addElement(0, vdecl_sz, Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES, 0).getSize(); // uv
-    vdecl_sz += vDecl.addElement(0, vdecl_sz, Ogre::VET_FLOAT4, Ogre::VES_TEXTURE_COORDINATES, 1).getSize(); // colour
+    vdecl_sz += vData.vertexDeclaration->addElement(0, vdecl_sz, Ogre::VET_FLOAT2, Ogre::VES_POSITION, 0).getSize();
+    vdecl_sz += vData.vertexDeclaration->addElement(0, vdecl_sz, Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES, 0).getSize(); // uv
+    vdecl_sz += vData.vertexDeclaration->addElement(0, vdecl_sz, Ogre::VET_FLOAT4, Ogre::VES_TEXTURE_COORDINATES, 1).getSize(); // colour
     APP_ASSERT(vdecl_sz == VERT_BYTE_SZ);
-}
-
-void GfxTextBuffer::reserve (unsigned new_capacity)
-{
-    unsigned vertex_capacity = new_capacity * 4; // 4 verts per quad
-    unsigned index_capacity = new_capacity * 6; // 2 triangles per quad
-
-    rawVBuf.reserve(vertex_capacity * VERT_BYTE_SZ / sizeof(float));
-    rawIBuf.reserve(index_capacity);
-
-    currentCapacity = new_capacity;
 }
 
 void GfxTextBuffer::copyToGPUIfNeeded (void)
@@ -75,10 +61,10 @@ void GfxTextBuffer::copyToGPUIfNeeded (void)
     if (!dirty) return;
     dirty = false;
 
-    unsigned vertex_capacity = currentCapacity * 4; // 4 verts per quad
-    unsigned index_capacity = currentCapacity * 6; // 2 triangles per quad
+    unsigned vertex_size = currentSize * 4; // 4 verts per quad
+    unsigned index_size = currentSize * 6; // 2 triangles per quad
 
-    if (currentGPUCapacity < currentCapacity) {
+    if (currentGPUCapacity < currentSize) {
         // resize needed
 
         vBuf.setNull();
@@ -86,34 +72,32 @@ void GfxTextBuffer::copyToGPUIfNeeded (void)
 
         vBuf = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
                         VERT_BYTE_SZ,
-                        vertex_capacity,
+                        vertex_size,
                         Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
 
         iBuf = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(
                         Ogre::HardwareIndexBuffer::IT_16BIT,
-                        index_capacity,
+                        index_size,
                         Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
 
         vData.vertexBufferBinding->setBinding(0, vBuf);
         iData.indexBuffer = iBuf;
 
-        currentGPUCapacity = currentCapacity;
+        currentGPUCapacity = currentSize;
     }
 
-    if (currentCapacity > 0) {
+    if (currentSize > 0) {
         // copy the whole thing every time (could optimise this if needed)
-        vBuf->writeData(0, vertex_capacity*VERT_BYTE_SZ, &rawVBuf[0], true);
-        iBuf->writeData(0, index_capacity*sizeof(unsigned short), &rawIBuf[0], true);
+        vBuf->writeData(0, vertex_size*VERT_BYTE_SZ, &rawVBuf[0], true);
+        iBuf->writeData(0, index_size*sizeof(unsigned short), &rawIBuf[0], true);
     }
     
-    vData.vertexCount = currentSize * 4; // do not include slack at the end of reserved space
-    iData.indexCount = currentSize * 6; // do not include slack at the end of reserved space
+    vData.vertexCount = vertex_size;
+    iData.indexCount = index_size;
 }
 
 bool GfxTextBuffer::addRawChar (GfxFont::codepoint_t cp, Vector3 top_colour, float top_alpha, Vector3 bot_colour, float bot_alpha)
 {
-    // resize if necessary
-    if (currentSize + 1 > currentCapacity) reserve(currentSize+100);
 
     GfxFont::CharRect uvs;
     bool r = font->getCodePointOrFail(cp, uvs);

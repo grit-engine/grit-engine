@@ -173,11 +173,11 @@ inline Ogre::HighLevelGpuProgramPtr load_and_validate_shader (const std::string 
 template<class T> void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
                                                const std::string &name, const T &v, bool silent_fail=false)
 {
+    p->setIgnoreMissingParams(silent_fail);
     try {
         p->setNamedConstant(name,v);
     } catch (const Ogre::Exception &e) {
         if (e.getNumber() == Ogre::Exception::ERR_INVALIDPARAMS) {
-            if (!silent_fail)
                 CLOG << "WARNING: " << e.getDescription() << std::endl;
         } else {
             throw e;
