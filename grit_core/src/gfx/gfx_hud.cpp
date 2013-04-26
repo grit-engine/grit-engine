@@ -906,22 +906,22 @@ static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radia
     float height = float(ogre_win->getHeight());
 
     Vertex top_left= {
-        (position + (Vector2(-1,1) * halfsize).rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2),
+        (position + (Vector2(-1,1) * halfsize).rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
         uv1
     };
 
     Vertex top_right = {
-        (position + halfsize.rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2),
+        (position + halfsize.rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
         Vector2(uv2.x,uv1.y)
     };
 
     Vertex bottom_left = {
-        (position - halfsize.rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2),
+        (position - halfsize.rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
         Vector2(uv1.x,uv2.y)
     };
 
     Vertex bottom_right = {
-        (position + (Vector2(1,-1) * halfsize).rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2),
+        (position + (Vector2(1,-1) * halfsize).rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
         uv2
     };
 
@@ -1038,7 +1038,7 @@ void gfx_render_hud_one (GfxHudBase *base)
         Vector2 pos = text->getDerivedPosition();
 
         Ogre::Matrix4 matrix_centre = Ogre::Matrix4::IDENTITY;
-        matrix_centre.setTrans(Ogre::Vector3(- floorf(text->getSize().x/2), floorf(text->getSize().y/2), 0));
+        matrix_centre.setTrans(Ogre::Vector3(-floorf(text->getSize().x/2), floorf(text->getSize().y/2), 0));
 
         const Degree &orientation = text->getDerivedOrientation();
         Ogre::Matrix4 matrix_spin(Ogre::Quaternion(to_ogre(orientation), Ogre::Vector3(0,0,-1)));
@@ -1049,7 +1049,9 @@ void gfx_render_hud_one (GfxHudBase *base)
         Ogre::Matrix4 matrix_d3d_offset = Ogre::Matrix4::IDENTITY;
         if (d3d9) {
             // offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
-            matrix_d3d_offset.setTrans(Ogre::Vector3(-0.5, 0.5, 0));
+            matrix_d3d_offset.setTrans(Ogre::Vector3(-0.5-win_size.x/2, 0.5-win_size.y/2, 0));
+        } else {
+            matrix_d3d_offset.setTrans(Ogre::Vector3(-win_size.x/2, -win_size.y/2, 0));
         }
 
         Ogre::Matrix4 matrix_scale = Ogre::Matrix4::IDENTITY;
@@ -1196,7 +1198,7 @@ void gfx_hud_signal_mouse_move (lua_State *L, int x, int y)
         if (base->destroyed()) continue;
 
         GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL) obj->triggerMouseMove(L, x - win_size.x/2, y - win_size.y/2);
+        if (obj != NULL) obj->triggerMouseMove(L, x, y);
 
     }
 }
@@ -1215,7 +1217,7 @@ void gfx_hud_signal_button (lua_State *L, const std::string &key, int x, int y)
 
         GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
         if (obj != NULL) {
-            obj->triggerMouseMove(L, x - win_size.x/2, y - win_size.y/2);
+            obj->triggerMouseMove(L, x, y);
             obj->triggerButton(L, key);
         }
 
