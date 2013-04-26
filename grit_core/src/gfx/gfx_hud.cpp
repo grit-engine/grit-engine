@@ -1049,7 +1049,7 @@ void gfx_render_hud_one (GfxHudBase *base)
         Ogre::Matrix4 matrix_d3d_offset = Ogre::Matrix4::IDENTITY;
         if (d3d9) {
             // offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
-            matrix_d3d_offset.setTrans(Ogre::Vector3(-0.5, -0.5, 0));
+            matrix_d3d_offset.setTrans(Ogre::Vector3(-0.5, 0.5, 0));
         }
 
         Ogre::Matrix4 matrix_scale = Ogre::Matrix4::IDENTITY;
