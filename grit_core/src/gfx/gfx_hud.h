@@ -198,7 +198,7 @@ class GfxHudObject : public GfxHudBase {
 
     void triggerInit (lua_State *L);
     void triggerParentResized (lua_State *L);
-    void triggerMouseMove (lua_State *L, int w, int h);
+    void triggerMouseMove (lua_State *L, float w, float h);
     void triggerButton (lua_State *L, const std::string &key);
     void triggerFrame (lua_State *L, float elapsed);
     void triggerDestroy (lua_State *L);

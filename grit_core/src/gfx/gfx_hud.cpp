@@ -371,7 +371,7 @@ void GfxHudObject::setParent (lua_State *L, GfxHudObject *v)
     }
 }
 
-void GfxHudObject::triggerMouseMove (lua_State *L, int w, int h)
+void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
 {
     assertAlive();
 
@@ -906,22 +906,22 @@ static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radia
     float height = float(ogre_win->getHeight());
 
     Vertex top_left= {
-        (position + (Vector2(-1,1) * halfsize).rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
+        (position + (Vector2(-1,1) * halfsize).rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2),
         uv1
     };
 
     Vertex top_right = {
-        (position + halfsize.rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
+        (position + halfsize.rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2),
         Vector2(uv2.x,uv1.y)
     };
 
     Vertex bottom_left = {
-        (position - halfsize.rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
+        (position - halfsize.rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2),
         Vector2(uv1.x,uv2.y)
     };
 
     Vertex bottom_right = {
-        (position + (Vector2(1,-1) * halfsize).rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
+        (position + (Vector2(1,-1) * halfsize).rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2),
         uv2
     };
 
@@ -1035,16 +1035,27 @@ void gfx_render_hud_one (GfxHudBase *base)
         const Ogre::GpuProgramParametersSharedPtr &vertex_params = vp_text->getDefaultParameters();
         const Ogre::GpuProgramParametersSharedPtr &fragment_params = fp_text->getDefaultParameters();
 
-        // form matrix out of pos
-        const Vector2 &pos = text->getDerivedPosition();
+        Vector2 pos = text->getDerivedPosition();
+
+        Ogre::Matrix4 matrix_centre = Ogre::Matrix4::IDENTITY;
+        matrix_centre.setTrans(Ogre::Vector3(- floorf(text->getSize().x/2), floorf(text->getSize().y/2), 0));
+
         const Degree &orientation = text->getDerivedOrientation();
-        //Ogre::Matrix4 matrix = Ogre::Matrix4::IDENTITY;
         Ogre::Matrix4 matrix_spin(Ogre::Quaternion(to_ogre(orientation), Ogre::Vector3(0,0,-1)));
+
+        Ogre::Matrix4 matrix_trans = Ogre::Matrix4::IDENTITY;
+        matrix_trans.setTrans(Ogre::Vector3(pos.x, pos.y, 0));
+
+        Ogre::Matrix4 matrix_d3d_offset = Ogre::Matrix4::IDENTITY;
+        if (d3d9) {
+            // offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
+            matrix_d3d_offset.setTrans(Ogre::Vector3(-0.5, -0.5, 0));
+        }
+
         Ogre::Matrix4 matrix_scale = Ogre::Matrix4::IDENTITY;
         matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y ,1));
-        Ogre::Matrix4 matrix_trans = Ogre::Matrix4::IDENTITY;
-        matrix_trans.setTrans(Ogre::Vector3(pos.x - win_size.x/2, pos.y - win_size.y/2, 0));
-        Ogre::Matrix4 matrix = matrix_scale * matrix_trans * matrix_spin;
+
+        Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin * matrix_centre;
         try_set_named_constant(vp_text, "matrix", matrix);
 
         try_set_named_constant(fp_text, "colour", to_ogre(text->getColour()));
@@ -1185,7 +1196,7 @@ void gfx_hud_signal_mouse_move (lua_State *L, int x, int y)
         if (base->destroyed()) continue;
 
         GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL) obj->triggerMouseMove(L, x, y);
+        if (obj != NULL) obj->triggerMouseMove(L, x - win_size.x/2, y - win_size.y/2);
 
     }
 }
@@ -1204,7 +1215,7 @@ void gfx_hud_signal_button (lua_State *L, const std::string &key, int x, int y)
 
         GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
         if (obj != NULL) {
-            obj->triggerMouseMove(L, x, y);
+            obj->triggerMouseMove(L, x - win_size.x/2, y - win_size.y/2);
             obj->triggerButton(L, key);
         }
 
