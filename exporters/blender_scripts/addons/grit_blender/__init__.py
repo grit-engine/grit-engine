@@ -58,6 +58,7 @@ import bpy
 import bpy.path
 import os.path
 import os
+import sys
 import inspect
 import subprocess
 import xml.etree.ElementTree
@@ -67,7 +68,8 @@ from bpy_extras.io_utils import unpack_list
 from bpy_extras.io_utils import unpack_face_list
 from mathutils import Quaternion, Vector, Matrix
 
-executable_suffix = ".exe" if os.pathsep == "\\" else ".linux.x86"
+platform = "x86_64" if sys.maxsize > 2**32 else "x86"
+executable_suffix = ".exe" if os.pathsep == "\\" else (".linux."+platform)
 
 def my_abspath(x):
     return os.path.abspath(bpy.path.abspath(x))
