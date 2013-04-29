@@ -1985,12 +1985,12 @@ TextListOverlayElement.o: ../src/physics/PhysicalMaterial.h
 TextListOverlayElement.o: ../src/GritObject.h ../src/LuaPtr.h
 gfx.o: ../depend_stubs/sstream
 gfx.o: ../depend_stubs/OgreAutoParamDataSource.h
-gfx.o: ../src/path_util.h ../depend_stubs/vector
-gfx.o: ../depend_stubs/string ../src/sleep.h ../src/main.h
-gfx.o: ../depend_stubs/lua.h ../src/Mouse.h ../src/Keyboard.h
-gfx.o: ../src/BackgroundLoader.h ../src/vect_util.h
-gfx.o: ../depend_stubs/algorithm ../src/CentralisedLog.h
-gfx.o: ../depend_stubs/iostream
+gfx.o: ../depend_stubs/OgreOverlaySystem.h ../src/path_util.h
+gfx.o: ../depend_stubs/vector ../depend_stubs/string
+gfx.o: ../src/sleep.h ../src/main.h ../depend_stubs/lua.h
+gfx.o: ../src/Mouse.h ../src/Keyboard.h ../src/BackgroundLoader.h
+gfx.o: ../src/vect_util.h ../depend_stubs/algorithm
+gfx.o: ../src/CentralisedLog.h ../depend_stubs/iostream
 gfx.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx.o: ../src/console_colour.h ../depend_stubs/list
 gfx.o: ../depend_stubs/boost/thread/thread.hpp

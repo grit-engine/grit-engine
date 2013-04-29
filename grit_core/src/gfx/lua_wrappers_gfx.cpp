@@ -1348,8 +1348,7 @@ TRY_START
             self.setTexture(NULL);
         } else {
             std::string v = check_path(L,3);
-            DiskResource *d = disk_resource_get(v);
-            if (d==NULL) my_lua_error(L, "Resource does not exist: \""+v+"\"");
+            DiskResource *d = disk_resource_get_or_make(v);
             GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
             if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+v+"\"");
             self.setTexture(d2);
@@ -1723,7 +1722,7 @@ TRY_START
     lua_Number line_height = luaL_checknumber(L, 3);
     luaL_checktype(L,4,LUA_TTABLE);
 
-    DiskResource *d = disk_resource_get(tex_name);
+    DiskResource *d = disk_resource_get_or_make(tex_name);
     if (d==NULL) my_lua_error(L, "Resource does not exist: \""+tex_name+"\"");
     GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
     if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+tex_name+"\"");
@@ -1786,7 +1785,11 @@ TRY_START
     int table_index = lua_gettop(L);
     if (!lua_istable(L,table_index)) my_lua_error(L,"Last parameter should be a table");
     
+    GfxHudObject *parent = NULL;
     GfxHudObject *self = new GfxHudObject(hud_class);
+
+    // push this now so that it will inc its internal ref counter and not be deleted if aliases are gc'd
+    push_gfxhudobj(L,self);
 
     bool have_orientation = false;
     bool have_position = false;
@@ -1833,6 +1836,13 @@ TRY_START
             } else {
                 my_lua_error(L, "Size must be a vector2.");
             }
+        } else if (!::strcmp(key,"parent")) {
+            if (lua_isnil(L,-1)) {
+                parent = NULL;
+            } else {
+                GET_UD_MACRO(GfxHudObject,v,-1,GFXHUDOBJECT_TAG);
+                parent = &v;
+            }
         } else if (!::strcmp(key,"colour")) {
             if (lua_isvector3(L,-1)) {
                 Vector3 v = check_v3(L,-1);
@@ -1852,8 +1862,7 @@ TRY_START
         } else if (!::strcmp(key,"texture")) {
             if (lua_isstring(L,-1)) {
                 std::string v = check_path(L,-1);
-                DiskResource *d = disk_resource_get(v);
-                if (d==NULL) my_lua_error(L, "Resource does not exist: \""+v+"\"");
+                DiskResource *d = disk_resource_get_or_make(v);
                 GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
                 if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+v+"\"");
                 self->setTexture(d2);
@@ -1942,7 +1951,7 @@ TRY_START
             bool success = tab.get("texture",v);
             v = pwd_full_ex(L, v, hud_class->dir);
             if (!success) my_lua_error(L, "Wrong type for texture field in hud class \""+hud_class->name+"\".");
-            DiskResource *d = disk_resource_get(v);
+            DiskResource *d = disk_resource_get_or_make(v);
             if (d==NULL) my_lua_error(L, "Resource does not exist: \""+std::string(v)+"\"");
             GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
             if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+std::string(v)+"\"");
@@ -1966,6 +1975,7 @@ TRY_START
             self->setEnabled(v);
         }
     }
+
     self->triggerInit(L);
     if (!have_size && self->getTexture()!=NULL) {
         // set size from texture
@@ -1976,7 +1986,8 @@ TRY_START
             self->setSize(L, Vector2(tex->getWidth(),tex->getHeight()));
         }
     }
-    self->triggerParentResized(L);
+    self->setParent(L, parent);
+
     push_gfxhudobj(L,self);
 
     return 1;

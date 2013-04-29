@@ -358,17 +358,7 @@ void GfxHudObject::setParent (lua_State *L, GfxHudObject *v)
 {
     GfxHudBase::setParent(v);
 
-    // use local_children copy since callbacks can alter hierarchy
-    std::vector<GfxHudBase*> local_children = children.rawVector();
-
-    for (unsigned j=0 ; j<local_children.size() ; ++j) {
-        GfxHudBase *base = local_children[j];
-
-        if (base->destroyed()) continue;
-
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL) obj->triggerParentResized(L);
-    }
+    triggerParentResized(L);
 }
 
 void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
