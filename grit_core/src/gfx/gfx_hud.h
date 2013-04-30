@@ -116,7 +116,9 @@ class GfxHudBase : public fast_erase_index {
 
     protected:
 
-    bool dead;
+    enum Aliveness { ALIVE, DYING, DEAD };
+
+    Aliveness aliveness;
 
     GfxHudObject *parent;
 
@@ -141,7 +143,7 @@ class GfxHudBase : public fast_erase_index {
 
     void assertAlive (void) const;
 
-    bool destroyed (void) { return dead; }
+    bool destroyed (void) { return aliveness == DEAD; }
 
     void setEnabled (bool v) { assertAlive(); registerRemove() ; enabled = v; registerAdd(); }
     bool isEnabled (void) { assertAlive(); return enabled; }

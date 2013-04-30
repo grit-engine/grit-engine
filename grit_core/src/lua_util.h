@@ -175,7 +175,7 @@ bool is_userdata (lua_State *L, int ud, const char *tname);
 
 void push_cfunction (lua_State *L, int (*func)(lua_State*));
 
-void func_map_shutdown (lua_State *L);
+void func_map_leak_all (void);
 
 void register_lua_globals (lua_State *L, const luaL_reg *globals);
 

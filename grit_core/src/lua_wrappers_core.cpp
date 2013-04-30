@@ -945,8 +945,8 @@ lua_State *init_lua(const char *filename)
 
 void shutdown_lua (lua_State *L)
 {
-        func_map_shutdown(L);
         lua_close(L);
+        func_map_leak_all();
 }
 
 //}}}

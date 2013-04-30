@@ -54,6 +54,16 @@ class LuaPtr {
         set(L);
     }
 
+    /** Lead the Lua object.  It will never be garbage collected.  The one case
+     * where this is a good idea is jsut before lua_close is called.  That allows
+     * faster shutdown times because we're not thrashing Lua when we clean up
+     * these guys.  Instead we just suppress the error message in the destructor.
+     */
+    void leak (void)
+    {
+        ptr = LUA_REFNIL;
+    }
+
     /** Make this pointer point to nil.
      */
     void setNil (lua_State *L)

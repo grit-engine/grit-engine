@@ -105,7 +105,7 @@ void GfxHudBase::registerAdd (void)
 }
 
 GfxHudBase::GfxHudBase (void)
-  : dead(false), parent(NULL), zOrder(3),
+  : aliveness(ALIVE), parent(NULL), zOrder(3),
     position(0,0), orientation(0), inheritOrientation(true), enabled(true)
 {
     //CVERB << "GfxHud element created: " << this << std::endl;
@@ -114,20 +114,20 @@ GfxHudBase::GfxHudBase (void)
 
 GfxHudBase::~GfxHudBase (void)
 {
-    if (!dead) destroy();
+    if (aliveness==ALIVE) destroy();
 }
 
 void GfxHudBase::destroy (void)
 {
-    if (dead) return;
+    if (aliveness==DEAD) return;
     registerRemove();
-    dead = true;
+    aliveness = DEAD;
     //CVERB << "GfxHud element destroyed: " << this << std::endl;
 }
 
 void GfxHudBase::assertAlive (void) const
 {
-    if (dead)
+    if (aliveness == DEAD)
         GRIT_EXCEPT("Hud element destroyed.");
 }
 
@@ -187,7 +187,7 @@ void GfxHudObject::decRefCount (lua_State *L)
 
 void GfxHudObject::destroy (void)
 {
-    if (!dead) {
+    if (aliveness != DEAD) {
         if (texture) {
             texture->decrement();
             bgl->finishedWith(texture);
@@ -199,7 +199,8 @@ void GfxHudObject::destroy (void)
 
 void GfxHudObject::destroy (lua_State *L)
 {
-    if (!dead) {
+    if (aliveness == ALIVE) {
+        aliveness = DYING;
         triggerDestroy(L);
         table.setNil(L);
         while (children.size() != 0) {
@@ -718,7 +719,7 @@ void GfxHudText::decRefCount (void)
 
 void GfxHudText::destroy (void)
 {
-    if (dead) return;
+    if (aliveness==ALIVE) return;
     text.clear();
     buf.clear(true);
     GfxHudBase::destroy();
@@ -779,7 +780,7 @@ void gfx_hud_init (void)
     win_size = Vector2(ogre_win->getWidth(), ogre_win->getHeight());
 
     // Prepare vertex buffer
-    quad_vdata = new Ogre::VertexData();
+    quad_vdata = OGRE_NEW Ogre::VertexData();
     quad_vdata->vertexStart = 0;
     quad_vdata->vertexCount = 6;
 
@@ -880,7 +881,7 @@ void gfx_hud_shutdown (void)
     vp_text.setNull();
     fp_text.setNull();
     quad_vbuf.setNull();
-    delete quad_vdata;
+    OGRE_DELETE quad_vdata;
 }
 
 static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radian orientation, const Vector2 &uv1, const Vector2 &uv2)
