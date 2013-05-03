@@ -138,7 +138,6 @@
     <ClCompile Include="src\gfx\Clutter.cpp" />
     <ClCompile Include="src\gfx\gfx.cpp" />
     <ClCompile Include="src\gfx\GfxBody.cpp" />
-    <ClCompile Include="src\gfx\GfxDiskResource.cpp" />
     <ClCompile Include="src\gfx\GfxFont.cpp" />
     <ClCompile Include="src\gfx\GfxInstances.cpp" />
     <ClCompile Include="src\gfx\GfxLight.cpp" />
@@ -149,6 +148,7 @@
     <ClCompile Include="src\gfx\GfxSkyBody.cpp" />
     <ClCompile Include="src\gfx\GfxSkyMaterial.cpp" />
     <ClCompile Include="src\gfx\GfxTextBuffer.cpp" />
+    <ClCompile Include="src\gfx\gfx_disk_resource.cpp" />
     <ClCompile Include="src\gfx\gfx_hud.cpp" />
     <ClCompile Include="src\gfx\gfx_option.cpp" />
     <ClCompile Include="src\gfx\HUD.cpp" />
