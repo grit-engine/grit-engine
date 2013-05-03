@@ -44,8 +44,6 @@
 #include "gfx.h"
 #include "gfx_option.h"
 
-#define ENV_CUBE_TEXTURE "system/EnvCube"
-
 #define RESGRP "GRIT"
 
 // render queues, ordering now actually determined by GfxPipeline
@@ -69,7 +67,7 @@ extern Ogre::RenderSystem *ogre_rs;
 extern Ogre::OctreeSceneManager *ogre_sm;
 extern Ogre::SceneNode *ogre_root_node;
 extern Ogre::Light *ogre_sun;
-extern Ogre::TexturePtr env_cube_tex;
+extern GfxEnvCubeDiskResource *scene_env_cube;
 extern Ogre::Matrix4 shadow_view_proj[3];
 
 static inline bool stereoscopic (void)
@@ -120,7 +118,7 @@ class GfxBaseMaterial {
 
     virtual ~GfxBaseMaterial (void) { }
 
-    virtual void addDependencies (GfxDiskResource *into) = 0;
+    virtual void addDependencies (DiskResource *into) = 0;
 
 };
 
@@ -128,7 +126,7 @@ typedef std::map<std::string,GfxBaseMaterial*> GfxMaterialDB;
 
 extern GfxMaterialDB material_db;
 
-void gfx_material_add_dependencies (const std::string &name, GfxDiskResource *into);
+void gfx_material_add_dependencies (const std::string &name, DiskResource *into);
 
 void handle_dirty_materials (void);
 

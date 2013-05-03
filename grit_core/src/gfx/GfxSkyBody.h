@@ -40,7 +40,7 @@ extern fast_erase_vector<GfxSkyBody*> gfx_all_sky_bodies;
 #include <OgreSceneNode.h>
 
 #include "../math_util.h"
-#include "GfxDiskResource.h"
+#include "gfx_disk_resource.h"
 #include "GfxSkyMaterial.h"
 
 class GfxSkyBody : public fast_erase_index {

@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-#include "gfx/GfxDiskResource.h"
+#include "gfx/gfx_disk_resource.h"
 #include "physics/CollisionMesh.h"
 
 #include "lua_wrappers_common.h"

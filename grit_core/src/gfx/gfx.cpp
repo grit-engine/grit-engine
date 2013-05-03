@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2012 *
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2013
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -95,8 +95,7 @@ Vector3 sky_cloud_colour;
 float sky_cloud_coverage;
 Vector3 hell_colour;
 
-std::string env_cube_name;
-Ogre::TexturePtr env_cube_tex;
+GfxEnvCubeDiskResource *scene_env_cube = NULL;
 float global_exposure = 1;
 float global_contrast = 0;
 float global_saturation = 1;
@@ -218,67 +217,26 @@ void gfx_particle_ambient (const Vector3 &v)
     particle_ambient = v;
 }
 
-std::string gfx_env_cube (void)
+GfxEnvCubeDiskResource *gfx_env_cube (void)
 {
-    return env_cube_name;
+    return scene_env_cube;
 }
 
-void gfx_env_cube (const std::string &v)
+void gfx_env_cube (GfxEnvCubeDiskResource *v)
 {
-    if (v == env_cube_name) return;
-    APP_ASSERT(v[0] == '/');
+    if (v == scene_env_cube) return;
 
-    Ogre::Image disk;
-    Ogre::Image img;
-    uint8_t *raw_tex = NULL;
-    if (v == "/") {
-        // Prepare texture (6(1x1) RGB8)
-        uint8_t raw_tex_stack[] = {
-            0xff, 0x7f, 0x7f,
-            0x00, 0x7f, 0x7f,
-            0x7f, 0xff, 0x7f,
-            0x7f, 0x00, 0x7f,
-            0x7f, 0x7f, 0xff,
-            0x7f, 0x7f, 0x00
-        };
-        // Load raw byte array into an Image
-        img.loadDynamicImage(raw_tex_stack, 1, 1, 1, Ogre::PF_B8G8R8, false, 6, 0);
-    } else {
-        // Reorganise into 
-        disk.load (v.substr(1), RESGRP);
-        if (disk.getWidth() != disk.getHeight()*6) {
-            GRIT_EXCEPT("Environment map has incorrect dimensions: "+v);
-        }
-        unsigned sz = disk.getHeight();
-        if (sz & (sz-1) ) {
-            GRIT_EXCEPT("Environment map dimensions not a power of 2: "+v);
-        }
-        raw_tex = new uint8_t[disk.getSize()];
-        img.loadDynamicImage(raw_tex, sz, sz, 1, disk.getFormat(), false, 6, 0);
-        // copy faces across
-        Ogre::PixelBox from = disk.getPixelBox();
-        for (unsigned face=0 ; face<6 ; ++face) {
-            Ogre::PixelBox to = img.getPixelBox(face,0);
-            for (unsigned y=0 ; y<sz ; ++y) {
-                for (unsigned x=0 ; x<sz ; ++x) {
-                    to.setColourAt(from.getColourAt(face*sz + x, y, 0), x, y, 0);
-                }
-            }
-        }
+    CVERB << "Setting scene_env_cube to " << v << std::endl;
+    if (scene_env_cube != NULL) {
+        scene_env_cube->decrement();
+        bgl->finishedWith(scene_env_cube);
     }
-
-    // Create texture based on img
-    if (env_cube_tex.isNull()) {
-        env_cube_tex = Ogre::TextureManager::getSingleton().loadImage(ENV_CUBE_TEXTURE, RESGRP, img, Ogre::TEX_TYPE_CUBE_MAP);
-    } else {
-        env_cube_tex->unload();
-        env_cube_tex->setTextureType(Ogre::TEX_TYPE_CUBE_MAP);
-        env_cube_tex->loadImage(img);
+    scene_env_cube = v;
+    if (v != NULL) {
+        v->increment();
+        if (!v->isLoaded()) v->load();
+        v->getOgreTexturePtr()->load();
     }
-
-    env_cube_name = v;
-
-    delete [] raw_tex;
 }
 
 float gfx_global_contrast (void)
@@ -950,7 +908,7 @@ size_t gfx_init (GfxCallback &cb_)
         gfx_particle_init();
         gfx_hud_init();
  
-        gfx_env_cube("");
+        gfx_env_cube(NULL);
 
         return winid;
     } catch (Ogre::Exception &e) {
@@ -980,7 +938,7 @@ bool gfx_material_has_any (const std::string &name)
     return material_db.find(name) != material_db.end();
 }
 
-void gfx_material_add_dependencies (const std::string &name, GfxDiskResource *into)
+void gfx_material_add_dependencies (const std::string &name, DiskResource *into)
 {
     if (!gfx_material_has_any(name)) GRIT_EXCEPT("Non-existent material: \""+name+"\"");
     material_db[name]->addDependencies(into);
@@ -993,7 +951,6 @@ void gfx_shutdown (void)
         shutting_down = true;
         delete eye_left;
         delete eye_right;
-        env_cube_tex.setNull();
         ftcv.setNull();
         gfx_hud_shutdown();
         if (ogre_sm && ogre_root) ogre_root->destroySceneManager(ogre_sm);

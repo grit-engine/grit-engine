@@ -929,8 +929,6 @@ void gfx_render_hud_one (GfxHudBase *base)
 
     GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
     if (obj!=NULL) {
-        //DiskResource *tex_ = disk_resource_get_or_make("/system/Crosshair.bmp");
-        //GfxDiskResource *tex = dynamic_cast<GfxDiskResource*>(tex_);
         GfxTextureDiskResource *tex = obj->getTexture();
         if (tex!=NULL && !tex->isLoaded()) {
             CERR << "Hud object using unloaded texture: \"" << (*tex) << "\"" << std::endl;

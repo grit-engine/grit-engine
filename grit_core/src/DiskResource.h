@@ -176,8 +176,6 @@ class DiskResource {
     /** Erase from memory, the only copy will be on disk. */
     void unload (void);
 
-    protected:
-
     /** Subclasses should register dependencies at load time. */
     void addDependency (const std::string &name)
     {
@@ -194,6 +192,8 @@ class DiskResource {
         if (!dep->isLoaded())
             dep->load();
     }
+
+    protected:
 
     /** Subclasses override to implement reloading. */
     virtual void reloadImpl (void) { unloadImpl(); loadImpl(); }

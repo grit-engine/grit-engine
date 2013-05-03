@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2012
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2013
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,6 @@
  */
 
 /* TODO:
- * clutter / rclutter
  * shaders
  * materials
  */
@@ -47,7 +46,7 @@ extern const GfxStringMap gfx_empty_string_map;
 
 #include "../math_util.h"
 
-#include "GfxDiskResource.h"
+#include "gfx_disk_resource.h"
 #include "GfxBody.h"
 
 #include "GfxParticleSystem.h"
@@ -71,8 +70,8 @@ void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector
 
 
 // lighting parameters
-std::string gfx_env_cube (void);
-void gfx_env_cube (const std::string &);
+GfxEnvCubeDiskResource *gfx_env_cube (void);
+void gfx_env_cube (GfxEnvCubeDiskResource *v);
 
 Vector3 gfx_particle_ambient (void);
 void gfx_particle_ambient (const Vector3 &v);

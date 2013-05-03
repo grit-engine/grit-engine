@@ -118,7 +118,7 @@ class GfxSkyMaterial : public GfxBaseMaterial {
 
     public:
 
-    void addDependencies (GfxDiskResource *into);
+    void addDependencies (DiskResource *into);
 
     const std::string name;
 

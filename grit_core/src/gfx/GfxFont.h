@@ -33,7 +33,7 @@ typedef std::vector<GfxFont*> GfxFonts;
 #include "../main.h"
 #include "../math_util.h"
 
-#include "GfxDiskResource.h"
+#include "gfx_disk_resource.h"
 
 class GfxFont {
     public:

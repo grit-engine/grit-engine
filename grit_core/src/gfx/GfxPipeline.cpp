@@ -335,7 +335,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             Ogre::HighLevelGpuProgramPtr das_vp = load_and_validate_shader("deferred_ambient_sun_v");
             Ogre::HighLevelGpuProgramPtr das_fp = load_and_validate_shader("deferred_ambient_sun_f");
 
-            Ogre::TexturePtr noise_tex = Ogre::TextureManager::getSingleton().load("system/HiFreqNoiseGauss.64.bmp", RESGRP);
+            Ogre::TexturePtr noise_tex = Ogre::TextureManager::getSingleton().load("system/HiFreqNoiseGauss.64.png", RESGRP);
 
 
             /////////
@@ -389,10 +389,14 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                 }
             }
 
-            ogre_rs->_setTexture(tex_index, true, env_cube_tex);
-            ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
-            ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
-            ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIP, Ogre::FO_LINEAR);
+            if (scene_env_cube != NULL) {
+                const Ogre::TexturePtr &scene_env_cube_tex = scene_env_cube->getOgreTexturePtr();
+                scene_env_cube_tex->load();
+                ogre_rs->_setTexture(tex_index, true, scene_env_cube_tex);
+                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
+                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
+                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIP, Ogre::FO_LINEAR);
+            }
             tex_index++;
 
             ogre_rs->_setCullingMode(Ogre::CULL_NONE);

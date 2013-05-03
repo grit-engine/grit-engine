@@ -20,7 +20,7 @@
  */
 
 
-#include "gfx/GfxDiskResource.h"
+#include "gfx/gfx_disk_resource.h"
 #include "audio/AudioDiskResource.h"
 #include "main.h"
 
@@ -80,6 +80,12 @@ DiskResource *disk_resource_get (const std::string &rn)
     return disk_resource_map[rn];
 }
 
+static bool ends_with (const std::string &str, const std::string &snippet)
+{
+    if (snippet.length() > str.length()) return false;
+    return str.substr(str.length() - snippet.length()) == snippet;
+}
+
 DiskResource *disk_resource_get_or_make (const std::string &rn)
 {
     DiskResource *dr = disk_resource_get(rn);
@@ -98,9 +104,16 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
         dr = new CollisionMesh(rn);
     } else if (suffix == "wav" || suffix == "ogg" || suffix == "mp3") {
         dr = new AudioDiskResource(rn);
+    } else if (suffix == "wav" || suffix == "ogg" || suffix == "mp3") {
+        dr = new AudioDiskResource(rn);
+    } else if (ends_with(rn, ".envcube.tiff")) {
+        dr = new GfxEnvCubeDiskResource(rn);
+    } else if (ends_with(rn, ".lut.png")) {
+        dr = new GfxColourGradeLUTDiskResource(rn);
+    } else if (ends_with(rn, ".lut.tiff")) {
+        dr = new GfxColourGradeLUTDiskResource(rn);
     } else {
-        const char *texture_formats[] = { "bmp", "jpg", "jpeg", "png", "tga", "targa",
-                                          "tif", "tiff", "gif", "hdr", "dds" };
+        const char *texture_formats[] = { "jpeg", "png", "tga", "tiff", "hdr", "dds" };
         unsigned num_texture_formats = sizeof(texture_formats)/sizeof(*texture_formats);
         for (unsigned i=0 ; i<num_texture_formats ; ++i) {
             if (suffix == texture_formats[i]) {

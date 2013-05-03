@@ -24,7 +24,7 @@
 #include "BackgroundLoader.h"
 #include "main.h"
 
-#include "gfx/GfxDiskResource.h"
+#include "gfx/gfx_disk_resource.h"
 
 #define SYNCHRONISED boost::recursive_mutex::scoped_lock _scoped_lock(lock)
 #define SYNCHRONISED2(bgl) boost::recursive_mutex::scoped_lock _scoped_lock(bgl->lock)

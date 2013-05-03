@@ -335,7 +335,7 @@ GfxSkyMaterial::GfxSkyMaterial (const std::string &name_)
 {
 }
 
-void GfxSkyMaterial::addDependencies (GfxDiskResource *into)
+void GfxSkyMaterial::addDependencies (DiskResource *into)
 {
     GFX_MAT_SYNC;
     // iterate through textures, add them as dependencies

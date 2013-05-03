@@ -212,7 +212,7 @@ class GfxMaterial : public GfxBaseMaterial {
         return paintMode == GFX_MATERIAL_PAINT_MAP;
     }
     
-    void addDependencies (GfxDiskResource *into);
+    void addDependencies (DiskResource *into);
 
     const std::string name;
 

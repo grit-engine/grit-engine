@@ -1274,7 +1274,7 @@ TRY_START
     } else if (!::strcmp(key,"alpha")) {
         lua_pushnumber(L, self.getAlpha());
     } else if (!::strcmp(key,"texture")) {
-        GfxDiskResource *d = self.getTexture();
+        GfxTextureDiskResource *d = self.getTexture();
         if (d==NULL) {
             lua_pushnil(L);
         } else {
@@ -2463,13 +2463,24 @@ static int global_gfx_env_cube (lua_State *L)
 TRY_START
     switch (lua_gettop(L)) {
         case 0: {
-            push_string(L, gfx_env_cube());
+            if (gfx_env_cube() != NULL) {
+                push_string(L, gfx_env_cube()->getName());
+            } else {
+                lua_pushnil(L);
+            }
             return 1;
         }
         case 1: {
-            std::string v = check_string(L,1);
-            v = pwd_full(L, v);
-            gfx_env_cube(v);
+            if (lua_isnil(L, 1)) {
+                gfx_env_cube(NULL);
+            } else {
+                std::string v = check_string(L,1);
+                v = pwd_full(L, v);
+                DiskResource *dr = disk_resource_get_or_make(v);
+                GfxEnvCubeDiskResource *ec = dynamic_cast<GfxEnvCubeDiskResource*>(dr);
+                if (ec == NULL) my_lua_error(L, "Not an env cube: \""+v+"\"");
+                gfx_env_cube(ec);
+            }
             return 0;
         }
         default:

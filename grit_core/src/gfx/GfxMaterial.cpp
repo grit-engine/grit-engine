@@ -64,7 +64,7 @@ GfxMaterial::GfxMaterial (const std::string &name_)
 {
 }
     
-void GfxMaterial::addDependencies (GfxDiskResource *into)
+void GfxMaterial::addDependencies (DiskResource *into)
 {
     if (hasEmissiveMap()) into->addDependency(getEmissiveMap());
     if (hasPaintMap()) into->addDependency(getPaintMap());

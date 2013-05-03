@@ -38,7 +38,7 @@
 #include "main.h"
 #include "lua_utf8.h"
 
-#include "gfx/GfxDiskResource.h"
+#include "gfx/gfx_disk_resource.h"
 
 
 #include "lua_wrappers_primitives.h"
