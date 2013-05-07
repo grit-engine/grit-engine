@@ -347,6 +347,11 @@ void GfxEnvCubeDiskResource::loadImpl (void)
         if (gfx_disk_resource_verbose_loads)
             CVERB << "Loading env cube: " << ogre_name << std::endl;
 
+        if (rp->isLoaded()) {
+            CERR << "WARNING: env cube "<<ogre_name<<" should not be loaded in Ogre" << std::endl;
+            rp->unload();
+        }
+
         Ogre::Image disk;
         disk.load (ogre_name, RESGRP);
         if (disk.getWidth() != disk.getHeight()*6) {
@@ -415,6 +420,11 @@ void GfxColourGradeLUTDiskResource::loadImpl (void)
 
         if (gfx_disk_resource_verbose_loads)
             CVERB << "Loading colour grade LUT: " << ogre_name << std::endl;
+
+        if (rp->isLoaded()) {
+            CERR << "WARNING: colour grade "<<ogre_name<<" should not be loaded in Ogre" << std::endl;
+            rp->unload();
+        }
 
         Ogre::Image disk;
         disk.load (ogre_name, RESGRP);
