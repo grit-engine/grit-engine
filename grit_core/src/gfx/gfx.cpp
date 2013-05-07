@@ -226,7 +226,7 @@ void gfx_env_cube (GfxEnvCubeDiskResource *v)
 {
     if (v == scene_env_cube) return;
 
-    CVERB << "Setting scene_env_cube to " << v << std::endl;
+    //CVERB << "Setting scene_env_cube to " << v << std::endl;
     if (scene_env_cube != NULL) {
         scene_env_cube->decrement();
         bgl->finishedWith(scene_env_cube);
@@ -235,7 +235,6 @@ void gfx_env_cube (GfxEnvCubeDiskResource *v)
     if (v != NULL) {
         v->increment();
         if (!v->isLoaded()) v->load();
-        v->getOgreTexturePtr()->load();
     }
 }
 
