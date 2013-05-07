@@ -196,7 +196,7 @@ class DiskResource {
     protected:
 
     /** Subclasses override to implement reloading. */
-    virtual void reloadImpl (void) { unloadImpl(); loadImpl(); }
+    virtual void reloadImpl (void) { unloadImpl(); loaded = false; loadImpl(); loaded = true; }
 
     /** Subclasses override to implement loading. */
     virtual void loadImpl (void) { }
