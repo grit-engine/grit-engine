@@ -265,6 +265,7 @@ TRY_START
     DiskResource *dr = disk_resource_get(name);
     if (dr==NULL) my_lua_error(L, "No such resource: \""+std::string(name)+"\"");
     dr->decrement();
+    bgl->finishedWith(dr);
     return 0;
 TRY_END
 }
