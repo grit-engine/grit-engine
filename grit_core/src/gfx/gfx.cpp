@@ -97,8 +97,8 @@ Vector3 hell_colour;
 
 GfxEnvCubeDiskResource *scene_env_cube = NULL;
 float global_exposure = 1;
-float global_contrast = 0;
 float global_saturation = 1;
+GfxColourGradeLUTDiskResource *scene_colour_grade_lut = NULL;
 
 // abuse ogre fog params to store several things
 static void set_ogre_fog (void)
@@ -226,7 +226,7 @@ void gfx_env_cube (GfxEnvCubeDiskResource *v)
 {
     if (v == scene_env_cube) return;
 
-    //CVERB << "Setting scene_env_cube to " << v << std::endl;
+    //CVERB << "Setting scene env cube to " << v << std::endl;
     if (scene_env_cube != NULL) {
         scene_env_cube->decrement();
         bgl->finishedWith(scene_env_cube);
@@ -238,17 +238,27 @@ void gfx_env_cube (GfxEnvCubeDiskResource *v)
     }
 }
 
-float gfx_global_contrast (void)
+GfxColourGradeLUTDiskResource *gfx_colour_grade (void)
 {
-    return global_contrast;
+    return scene_colour_grade_lut;
 }
 
-void gfx_global_contrast (float v)
+void gfx_colour_grade (GfxColourGradeLUTDiskResource *v)
 {
-    global_contrast = v;
-    set_ogre_fog();
+    if (v == scene_colour_grade_lut) return;
+
+    //CVERB << "Setting colour grade to " << v << std::endl;
+    if (scene_colour_grade_lut != NULL) {
+        scene_colour_grade_lut->decrement();
+        bgl->finishedWith(scene_colour_grade_lut);
+    }
+    scene_colour_grade_lut = v;
+    if (v != NULL) {
+        v->increment();
+        if (!v->isLoaded()) v->load();
+    }
 }
-    
+
 float gfx_global_saturation (void)
 {
     return global_saturation;
@@ -257,7 +267,6 @@ float gfx_global_saturation (void)
 void gfx_global_saturation (float v)
 {
     global_saturation = v;
-    set_ogre_fog();
 }
     
 float gfx_global_exposure (void)
@@ -268,7 +277,6 @@ float gfx_global_exposure (void)
 void gfx_global_exposure (float v)
 {
     global_exposure = v;
-    set_ogre_fog();
 }
     
 

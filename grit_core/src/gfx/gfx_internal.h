@@ -82,8 +82,8 @@ extern Vector3 fog_colour;
 extern float fog_density;
 extern float env_brightness;
 extern float global_exposure;
-extern float global_contrast;
 extern float global_saturation;
+extern GfxColourGradeLUTDiskResource *scene_colour_grade_lut;
 
 extern Vector3 sun_direction;
 extern Vector3 sun_colour;

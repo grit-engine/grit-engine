@@ -2490,6 +2490,38 @@ TRY_START
 TRY_END
 }
 
+static int global_gfx_colour_grade (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 0: {
+            if (gfx_env_cube() != NULL) {
+                push_string(L, gfx_colour_grade()->getName());
+            } else {
+                lua_pushnil(L);
+            }
+            return 1;
+        }
+        case 1: {
+            if (lua_isnil(L, 1)) {
+                gfx_colour_grade(NULL);
+            } else {
+                std::string v = check_string(L,1);
+                v = pwd_full(L, v);
+                DiskResource *dr = disk_resource_get_or_make(v);
+                GfxColourGradeLUTDiskResource *cg = dynamic_cast<GfxColourGradeLUTDiskResource*>(dr);
+                if (cg == NULL) my_lua_error(L, "Not a colour grade LUT texture: \""+v+"\"");
+                gfx_colour_grade(cg);
+            }
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
 static int global_gfx_global_saturation (lua_State *L)
 {
 TRY_START
@@ -2501,26 +2533,6 @@ TRY_START
         case 1: {
             float v = check_float(L,1);
             gfx_global_saturation(v);
-            return 0;
-        }
-        default:
-        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
-        return 0; // silence compiler
-    }
-TRY_END
-}
-
-static int global_gfx_global_contrast (lua_State *L)
-{
-TRY_START
-    switch (lua_gettop(L)) {
-        case 0: {
-            lua_pushnumber(L, gfx_global_contrast());
-            return 1;
-        }
-        case 1: {
-            float v = check_float(L,1);
-            gfx_global_contrast(v);
             return 0;
         }
         default:
@@ -4503,6 +4515,7 @@ static const luaL_reg global[] = {
     {"gfx_hud_signal_button",global_gfx_hud_signal_button},
 
     {"gfx_env_cube",global_gfx_env_cube},
+    {"gfx_colour_grade",global_gfx_colour_grade},
     {"gfx_particle_ambient",global_gfx_particle_ambient},
     {"gfx_sunlight_diffuse",global_gfx_sunlight_diffuse},
     {"gfx_sunlight_specular",global_gfx_sunlight_specular},
@@ -4529,7 +4542,6 @@ static const luaL_reg global[] = {
     {"gfx_sky_cloud_coverage",global_gfx_sky_cloud_coverage},
 
     {"gfx_global_saturation",global_gfx_global_saturation},
-    {"gfx_global_contrast",global_gfx_global_contrast},
     {"gfx_global_exposure",global_gfx_global_exposure},
 
     {"gfx_particle_define",global_gfx_particle_define},

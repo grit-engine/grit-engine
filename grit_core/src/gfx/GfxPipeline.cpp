@@ -853,10 +853,14 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
         if (bloom_iterations == 0) {
 
             Ogre::HighLevelGpuProgramPtr tonemap = load_and_validate_shader("tonemap");
-            try_set_named_constant(tonemap, "global_contrast", global_contrast);
             try_set_named_constant(tonemap, "global_exposure", to_ogre(global_exposure*opts.mask));
             try_set_named_constant(tonemap, "global_saturation", global_saturation*opts.saturationMask);
-            render_quad(targetViewport, RenderQuadParams<1>(tonemap, target_blend).tex(hdrFb[0]));
+            if (scene_colour_grade_lut == NULL) {
+                render_quad(targetViewport, RenderQuadParams<1>(tonemap, target_blend).tex(hdrFb[0]));
+            } else {
+                const Ogre::TexturePtr &lut = scene_colour_grade_lut->getOgreTexturePtr();
+                render_quad(targetViewport, RenderQuadParams<2>(tonemap, target_blend).tex(hdrFb[0]).tex(lut));
+            }
 
         } else {
 
@@ -870,7 +874,6 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
             Ogre::HighLevelGpuProgramPtr bloom_horz_blur = load_and_validate_shader("bloom_horz_blur");
 
             Ogre::HighLevelGpuProgramPtr bloom_vert_blur_combine_and_tonemap = load_and_validate_shader("bloom_vert_blur_combine_and_tonemap");
-            try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_contrast", global_contrast);
             try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_exposure", to_ogre(global_exposure*opts.mask));
             try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_saturation", global_saturation*opts.saturationMask);
 
@@ -898,7 +901,12 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
             Ogre::Vector4 viewport_size(     targetViewport->getActualWidth(),      targetViewport->getActualHeight(),
                                         1.0f/targetViewport->getActualWidth(), 1.0f/targetViewport->getActualHeight());
             try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "viewport_size", viewport_size);
-            render_quad(targetViewport, RenderQuadParams<2>(bloom_vert_blur_combine_and_tonemap, target_blend).tex(hdrFb[1]).tex(hdrFb[0]));
+            if (scene_colour_grade_lut == NULL) {
+                render_quad(targetViewport, RenderQuadParams<2>(bloom_vert_blur_combine_and_tonemap, target_blend).tex(hdrFb[1]).tex(hdrFb[0]));
+            } else {
+                const Ogre::TexturePtr &lut = scene_colour_grade_lut->getOgreTexturePtr();
+                render_quad(targetViewport, RenderQuadParams<3>(bloom_vert_blur_combine_and_tonemap, target_blend).tex(hdrFb[1]).tex(hdrFb[0]).tex(lut));
+            }
         }
     }
 

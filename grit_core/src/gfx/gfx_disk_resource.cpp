@@ -361,7 +361,7 @@ void GfxEnvCubeDiskResource::loadImpl (void)
         if (sz & (sz-1) ) {
             GRIT_EXCEPT("Environment map size not a power of 2: "+ogre_name);
         }
-        raw_tex = new uint8_t[disk.getSize()];
+        raw_tex = OGRE_NEW uint8_t[disk.getSize()];
 
         Ogre::Image img;
         img.loadDynamicImage(raw_tex, sz, sz, 1, disk.getFormat(), true, 6, 0);
@@ -405,7 +405,7 @@ GfxColourGradeLUTDiskResource::GfxColourGradeLUTDiskResource (const std::string 
     APP_ASSERT(name.length()>0 && name[0]=='/');
     try {
         std::string ogre_name = name.substr(1);
-        rp = Ogre::TextureManager::getSingleton().createManual(ogre_name, RESGRP, Ogre::TEX_TYPE_3D, 32, 32, 32, Ogre::MIP_DEFAULT, Ogre::PF_UNKNOWN);
+        rp = Ogre::TextureManager::getSingleton().createManual(ogre_name, RESGRP, Ogre::TEX_TYPE_3D, 32, 32, 32, 0, Ogre::PF_UNKNOWN);
     } catch (Ogre::Exception &e) { 
         GRIT_EXCEPT2(e.getFullDescription(), "Creating an env cube");
     }       
@@ -435,7 +435,7 @@ void GfxColourGradeLUTDiskResource::loadImpl (void)
         if (sz & (sz-1) ) {
             GRIT_EXCEPT("Colour grade LUT size not a power of 2: "+ogre_name);
         }
-        raw_tex = new uint8_t[disk.getSize()];
+        raw_tex = OGRE_NEW uint8_t[disk.getSize()];
 
         Ogre::Image img;
         img.loadDynamicImage(raw_tex, sz, sz, sz, disk.getFormat(), true, 1, 0);

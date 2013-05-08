@@ -144,11 +144,11 @@ void gfx_hell_colour (const Vector3 &v);
 
 
 // tone mapping
+GfxColourGradeLUTDiskResource *gfx_colour_grade (void);
+void gfx_colour_grade (GfxColourGradeLUTDiskResource *v);
+
 float gfx_global_saturation (void);
 void gfx_global_saturation (float);
-
-float gfx_global_contrast (void);
-void gfx_global_contrast (float);
 
 float gfx_global_exposure (void);
 void gfx_global_exposure (float);
