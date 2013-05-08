@@ -225,17 +225,25 @@ GfxEnvCubeDiskResource *gfx_env_cube (void)
 void gfx_env_cube (GfxEnvCubeDiskResource *v)
 {
     if (v == scene_env_cube) return;
-
     //CVERB << "Setting scene env cube to " << v << std::endl;
+
+    if (v != NULL) {
+        // have to try loading the new one first, in case it fails to load
+        v->increment();
+        try {
+            if (!v->isLoaded()) v->load();
+        } catch (GritException &e) {
+            v->decrement();
+            throw e;
+        }
+    }
+
     if (scene_env_cube != NULL) {
         scene_env_cube->decrement();
         bgl->finishedWith(scene_env_cube);
     }
+
     scene_env_cube = v;
-    if (v != NULL) {
-        v->increment();
-        if (!v->isLoaded()) v->load();
-    }
 }
 
 GfxColourGradeLUTDiskResource *gfx_colour_grade (void)
@@ -246,17 +254,25 @@ GfxColourGradeLUTDiskResource *gfx_colour_grade (void)
 void gfx_colour_grade (GfxColourGradeLUTDiskResource *v)
 {
     if (v == scene_colour_grade_lut) return;
-
     //CVERB << "Setting colour grade to " << v << std::endl;
+
+    if (v != NULL) {
+        // have to try loading the new one first, in case it fails to load
+        v->increment();
+        try {
+            if (!v->isLoaded()) v->load();
+        } catch (GritException &e) {
+            v->decrement();
+            throw e;
+        }
+    }
+
     if (scene_colour_grade_lut != NULL) {
         scene_colour_grade_lut->decrement();
         bgl->finishedWith(scene_colour_grade_lut);
     }
+
     scene_colour_grade_lut = v;
-    if (v != NULL) {
-        v->increment();
-        if (!v->isLoaded()) v->load();
-    }
 }
 
 float gfx_global_saturation (void)
