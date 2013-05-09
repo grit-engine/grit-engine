@@ -422,13 +422,16 @@ void GfxColourGradeLUTDiskResource::loadImpl (void)
             CVERB << "Loading colour grade LUT: " << ogre_name << std::endl;
 
         if (rp->isLoaded()) {
-            CERR << "WARNING: colour grade "<<ogre_name<<" should not be loaded in Ogre" << std::endl;
+            CERR << "Colour grade "<<ogre_name<<" should not be 'loaded' in Ogre" << std::endl;
             rp->unload();
         }
 
         Ogre::Image disk;
         disk.load (ogre_name, RESGRP);
         unsigned sz = disk.getHeight();
+        if (sz != 32) {
+            GRIT_EXCEPT("Colour grade LUT does not have dimensions 1024x32: "+ogre_name);
+        }
         if (disk.getWidth() != sz*sz) {
             GRIT_EXCEPT("Colour grade LUT has incorrect dimensions: "+ogre_name);
         }
