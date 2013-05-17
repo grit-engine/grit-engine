@@ -1239,6 +1239,21 @@ TRY_START
 TRY_END
 }
 
+static int gfxhudobj_set_rect (lua_State *L)
+{
+TRY_START
+    check_args(L,5);
+    GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
+    float left = check_float(L,2);
+    float bottom = check_float(L,3);
+    float right = check_float(L,4);
+    float top = check_float(L,5);
+    self.setPosition(Vector2((right+left)/2, (top+bottom)/2));
+    self.setSize(L, Vector2(right-left, top-bottom));
+    return 0;
+TRY_END
+}
+
 static int gfxhudobj_destroy (lua_State *L)
 {
 TRY_START
@@ -1266,6 +1281,8 @@ TRY_START
         push_v2(L, self.getPosition());
     } else if (!::strcmp(key,"size")) {
         push_v2(L, self.getSize());
+    } else if (!::strcmp(key,"setRect")) {
+        push_cfunction(L, gfxhudobj_set_rect);
     } else if (!::strcmp(key,"zOrder")) {
         lua_pushnumber(L, self.getZOrder());
 
