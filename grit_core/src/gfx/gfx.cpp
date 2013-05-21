@@ -599,7 +599,7 @@ void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector
                     6 * size, size, 1,
                     0,
                     Ogre::PF_FLOAT32_RGB,
-                    Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE | Ogre::TU_RENDERTARGET,
+                    Ogre::TU_RENDERTARGET,
                     NULL,
                     false);
     Ogre::RenderTarget *rt = cube->getBuffer()->getRenderTarget();

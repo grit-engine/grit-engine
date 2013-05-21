@@ -638,7 +638,7 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
                 width, height, 1,
                 0,
                 Ogre::PF_A8R8G8B8,
-                Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE | Ogre::TU_RENDERTARGET,
+                Ogre::TU_RENDERTARGET,
                 NULL,
                 use_hwgamma);
         gBuffer->bindSurface(i, gBufferElements[i]->getBuffer()->getRenderTarget());
@@ -652,7 +652,7 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
                     width, height, 1,
                     0,
                     Ogre::PF_FLOAT16_RGB,
-                    Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE | Ogre::TU_RENDERTARGET,
+                    Ogre::TU_RENDERTARGET,
                     NULL,
                     false);
     }
