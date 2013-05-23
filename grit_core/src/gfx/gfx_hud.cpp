@@ -790,7 +790,7 @@ void gfx_hud_init (void)
     quad_vdecl_size += quad_vdata->vertexDeclaration->addElement(0, quad_vdecl_size, Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES,0).getSize();
     quad_vbuf =
         Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
-            quad_vdecl_size, 6, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
+            quad_vdecl_size, 6, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
     quad_vdata->vertexBufferBinding->setBinding(0, quad_vbuf);
 
     // Initialise vertex program
@@ -918,7 +918,7 @@ static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radia
 
     Vertex vdata_raw[] = { bottom_left, bottom_right, top_left, top_left, bottom_right, top_right };
 
-    quad_vbuf->writeData(quad_vdata->vertexStart, quad_vdata->vertexCount*quad_vdecl_size, vdata_raw);
+    quad_vbuf->writeData(quad_vdata->vertexStart, quad_vdata->vertexCount*quad_vdecl_size, vdata_raw, true);
     
 }
 

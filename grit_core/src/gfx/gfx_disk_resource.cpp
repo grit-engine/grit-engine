@@ -361,7 +361,7 @@ void GfxEnvCubeDiskResource::loadImpl (void)
         if (sz & (sz-1) ) {
             GRIT_EXCEPT("Environment map size not a power of 2: "+ogre_name);
         }
-        raw_tex = OGRE_NEW uint8_t[disk.getSize()];
+        raw_tex = new uint8_t[disk.getSize()];
 
         Ogre::Image img;
         img.loadDynamicImage(raw_tex, sz, sz, 1, disk.getFormat(), true, 6, 0);
@@ -438,7 +438,7 @@ void GfxColourGradeLUTDiskResource::loadImpl (void)
         if (sz & (sz-1) ) {
             GRIT_EXCEPT("Colour grade LUT size not a power of 2: "+ogre_name);
         }
-        raw_tex = OGRE_NEW uint8_t[disk.getSize()];
+        raw_tex = new uint8_t[disk.getSize()];
 
         Ogre::Image img;
         img.loadDynamicImage(raw_tex, sz, sz, sz, disk.getFormat(), true, 1, 0);
