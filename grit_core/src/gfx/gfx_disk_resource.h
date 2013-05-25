@@ -31,6 +31,8 @@ class GfxColourGradeLUTDiskResource;
 #include <OgreTexture.h>
 #include <OgreMesh.h>
 
+#include "../math_util.h"
+
 #include "../CentralisedLog.h"
 #include "../BackgroundLoader.h"
 
@@ -160,9 +162,15 @@ class GfxColourGradeLUTDiskResource : public GfxGPUDiskResource {
     /** Return the internal Ogre object. */
     const Ogre::TexturePtr &getOgreTexturePtr (void) { return rp; }
 
+    /** Look up a single colour in the LUT.  The resource must be loaded (onto the GPU). */
+    Vector3 lookUp (const Vector3 &v) const;
+
   private:
     /** The ogre representation. */
     Ogre::TexturePtr rp;
+
+    /** The original image, kept on the CPU for lua or c++ lookups. */
+    Ogre::Image img;
 
     /** Load via Ogre (i.e. prepare it in Ogre terminology). */
     virtual void loadImpl (void);

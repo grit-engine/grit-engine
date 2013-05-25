@@ -138,7 +138,7 @@ class AudioSource : public DiskResource::ReloadWatcher
 
         void reinitialise (void);
 
-        void notifyReloaded (DiskResource *dr);
+        void notifyReloaded (const DiskResource *dr);
 
         void updatePositions (void);
 

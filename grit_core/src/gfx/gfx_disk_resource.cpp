@@ -440,7 +440,6 @@ void GfxColourGradeLUTDiskResource::loadImpl (void)
         }
         raw_tex = new uint8_t[disk.getSize()];
 
-        Ogre::Image img;
         img.loadDynamicImage(raw_tex, sz, sz, sz, disk.getFormat(), true, 1, 0);
         // copy faces across
         Ogre::PixelBox from = disk.getPixelBox();
@@ -453,13 +452,69 @@ void GfxColourGradeLUTDiskResource::loadImpl (void)
             }
         }
 
-
         rp->loadImage(img);
 
     } catch (Ogre::Exception &e) {
 
         GRIT_EXCEPT(e.getDescription());
     }
+}
+
+static inline Vector3 lerp1 (const Vector3 &v0, const Vector3 &v1, float a) { return (1-a)*v0 + a*v1; }
+
+static inline Vector3 lerp2 (const Vector3 &v00, const Vector3 &v01,
+                             const Vector3 &v10, const Vector3 &v11,
+                             float a, float b)
+{
+    return lerp1(
+        lerp1(v00, v01, b),
+        lerp1(v10, v11, b),
+        a);
+}
+
+static inline Vector3 lerp3 (const Vector3 &v000, const Vector3 &v001, const Vector3 &v010, const Vector3 &v011,
+                             const Vector3 &v100, const Vector3 &v101, const Vector3 &v110, const Vector3 &v111,
+                             float a, float b, float c)
+{
+    return lerp1(
+        lerp2(v000, v001, v000, v001, b, c),
+        lerp2(v110, v111, v110, v111, b, c),
+        a);
+}
+
+Vector3 GfxColourGradeLUTDiskResource::lookUp (const Vector3 &v) const
+{
+    if (!isLoaded()) GRIT_EXCEPT("Attempting to look up a colour in unloaded LUT \""+getName()+"\"");
+
+    float x = v.x > 0 ? v.x < 1 ? v.x : 1 : 0;
+    float y = v.y > 0 ? v.y < 1 ? v.y : 1 : 0;
+    float z = v.z > 0 ? v.z < 1 ? v.z : 1 : 0;
+
+    x *= 31; y*=31; z*=31;
+    
+    unsigned char x0 = (unsigned char)floorf(x), x1 = x0+1;
+    unsigned char y0 = (unsigned char)floorf(y), y1 = y0+1;
+    unsigned char z0 = (unsigned char)floorf(z), z1 = z0+1;
+
+    if (x1 > 31) x = x0 = x1 = 31;
+    if (y1 > 31) y = y0 = y1 = 31;
+    if (z1 > 31) z = z0 = z1 = 31;
+
+    Ogre::PixelBox pb = img.getPixelBox();
+    Vector3 v000 = from_ogre_cv(pb.getColourAt(x0, y0, z0));
+    Vector3 v001 = from_ogre_cv(pb.getColourAt(x0, y0, z1));
+    Vector3 v010 = from_ogre_cv(pb.getColourAt(x0, y1, z0));
+    Vector3 v011 = from_ogre_cv(pb.getColourAt(x0, y1, z1));
+    Vector3 v100 = from_ogre_cv(pb.getColourAt(x1, y0, z0));
+    Vector3 v101 = from_ogre_cv(pb.getColourAt(x1, y0, z1));
+    Vector3 v110 = from_ogre_cv(pb.getColourAt(x1, y1, z0));
+    Vector3 v111 = from_ogre_cv(pb.getColourAt(x1, y1, z1));
+
+    float xd         = x - x0;
+    float yd         = y - y0;
+    float zd         = z - z0;
+
+    return lerp3(v000, v001, v010, v011, v100, v101, v110, v111, xd, yd, zd);
 }
 
 void GfxColourGradeLUTDiskResource::unloadImpl(void)

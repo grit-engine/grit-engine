@@ -130,7 +130,7 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
     return dr;
 }
 
-void DiskResource::callReloadWatchers (void)
+void DiskResource::callReloadWatchers (void) const
 {
     typedef ReloadWatcherSet::iterator I;
     for (I i=reloadWatchers.begin(),i_=reloadWatchers.end() ; i!=i_ ; ++i) {

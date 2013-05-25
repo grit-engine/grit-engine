@@ -350,7 +350,7 @@ AudioSource::~AudioSource (void)
     resource->unregisterReloadWatcher(this);
 }
 
-void AudioSource::notifyReloaded (DiskResource *r)
+void AudioSource::notifyReloaded (const DiskResource *r)
 {
     (void) r;
     bool was_playing = playing();

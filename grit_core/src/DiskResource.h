@@ -109,7 +109,7 @@ class DiskResource {
     /** A callback to tell you if this resource is reloaded. */
     struct ReloadWatcher {
         virtual ~ReloadWatcher (void) { };
-        virtual void notifyReloaded (DiskResource *dr) = 0;
+        virtual void notifyReloaded (const DiskResource *dr) = 0;
     };
 
     /** Do not use this, call the disk_resource_get function instead. */
@@ -120,13 +120,13 @@ class DiskResource {
     virtual const std::string &getName (void) const = 0;
 
     /** Is the resource loaded and therefore ready for use? */
-    bool isLoaded (void) { return loaded; }
+    bool isLoaded (void) const { return loaded; }
 
     /** Number of users of this resource. */
-    int getUsers (void) { return users; }
+    int getUsers (void) const { return users; }
 
     /** Are there no users? */
-    bool noUsers() { return users == 0; }
+    bool noUsers() const { return users == 0; }
 
     /** Register a callback for discovering when a resource is reloaded. */
     void registerReloadWatcher (ReloadWatcher *u) { reloadWatchers.insert(u); }
@@ -136,7 +136,7 @@ class DiskResource {
 
     /** Call all the reload watchers.  This is called automatically so you
      * almost certainly don't need to call it yourself. */
-    void callReloadWatchers ();
+    void callReloadWatchers (void) const;
 
     /** Is this resource to be unloaded if there is GPU memory pressure?  There
      * are two kinds of memory, GPU memory (on the graphics card) and system
@@ -144,7 +144,7 @@ class DiskResource {
      * system memory.  Therefore if there is GPU memory pressure, unloading a
      * collsion mesh will not help.
     */
-    virtual bool isGPUResource (void)
+    virtual bool isGPUResource (void) const
     {
         return false;
     }

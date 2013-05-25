@@ -2687,6 +2687,14 @@ TRY_START
 TRY_END
 }
 
+static int global_gfx_colour_grade_look_up (lua_State *L)
+{
+    check_args(L,1);
+    Vector3 v = check_v3(L, 1);
+    push_v3(L, gfx_colour_grade_look_up(v));
+    return 1;
+}
+
 static int global_rgb_to_hsl (lua_State *L)
 {
     check_args(L,1);
@@ -4660,6 +4668,8 @@ static const luaL_reg global[] = {
     {"gfx_particle_step_size",global_gfx_particle_step_size},
 
     {"gfx_last_frame_stats",global_gfx_last_frame_stats},
+
+    {"gfx_colour_grade_look_up", global_gfx_colour_grade_look_up},
 
     {"RGBtoHSL", global_rgb_to_hsl},
     {"HSLtoRGB", global_hsl_to_rgb},
