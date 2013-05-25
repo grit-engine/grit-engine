@@ -2687,6 +2687,74 @@ TRY_START
 TRY_END
 }
 
+static int global_rgb_to_hsl (lua_State *L)
+{
+    check_args(L,1);
+    float r,g,b;
+    lua_checkvector3(L, 1, &r, &g, &b);
+    float h,s,l;
+    RGBtoHSL(r,g,b, h,s,l);
+    lua_pushvector3(L, h,s,l);
+    return 1;
+}
+
+static int global_hsl_to_rgb (lua_State *L)
+{
+    check_args(L,1);
+    float h,s,l;
+    lua_checkvector3(L, 1, &h, &s, &l);
+    float r,g,b;
+    HSLtoRGB(h,s,l, r,g,b);
+    lua_pushvector3(L, r,g,b);
+    return 1;
+}
+
+static int global_hsv_to_hsl (lua_State *L)
+{
+    check_args(L,1);
+    float hh,ss,ll;
+    lua_checkvector3(L, 1, &hh, &ss, &ll);
+    float h,s,l;
+    HSVtoHSL(hh,ss,ll, h,s,l);
+    lua_pushvector3(L, h,s,l);
+    return 1;
+}
+
+static int global_hsl_to_hsv (lua_State *L)
+{
+    check_args(L,1);
+    float h,s,l;
+    lua_checkvector3(L, 1, &h, &s, &l);
+    float hh,ss,ll;
+    HSLtoHSV(h,s,l, hh,ss,ll);
+    lua_pushvector3(L, hh,ss,ll);
+    return 1;
+}
+
+static int global_rgb_to_hsv (lua_State *L)
+{
+    check_args(L,1);
+    float r,g,b;
+    lua_checkvector3(L, 1, &r, &g, &b);
+    float h,s,v;
+    RGBtoHSV(r,g,b, h,s,v);
+    lua_pushvector3(L, h,s,v);
+    return 1;
+}
+
+static int global_hsv_to_rgb (lua_State *L)
+{
+    check_args(L,1);
+    float h,s,v;
+    lua_checkvector3(L, 1, &h, &s, &v);
+    float r,g,b;
+    HSVtoRGB(h,s,v, r,g,b);
+    lua_pushvector3(L, r,g,b);
+    return 1;
+}
+
+
+
 // {{{ Particles
 
 namespace {
@@ -4592,6 +4660,13 @@ static const luaL_reg global[] = {
     {"gfx_particle_step_size",global_gfx_particle_step_size},
 
     {"gfx_last_frame_stats",global_gfx_last_frame_stats},
+
+    {"RGBtoHSL", global_rgb_to_hsl},
+    {"HSLtoRGB", global_hsl_to_rgb},
+    {"HSBtoHSL", global_hsv_to_hsl},
+    {"HSLtoHSB", global_hsl_to_hsv},
+    {"RGBtoHSV", global_rgb_to_hsv},
+    {"HSVtoRGB", global_hsv_to_rgb},
 
     {NULL, NULL}
 };
