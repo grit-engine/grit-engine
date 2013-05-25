@@ -1824,10 +1824,10 @@ TRY_START
 
     // scan through table adding lua data to self
     for (lua_pushnil(L) ; lua_next(L,table_index)!=0 ; lua_pop(L,1)) {
-        if (lua_type(L,-2)!=LUA_TSTRING) {
-            my_lua_error(L,"user value key was not a string");
+        const char *key = "";
+        if (lua_type(L,-2)==LUA_TSTRING) {
+            key = luaL_checkstring(L,-2);
         }
-        const char *key = luaL_checkstring(L,-2);
         
         if (!::strcmp(key,"orientation")) {
             if (lua_isnumber(L,-1)) {
