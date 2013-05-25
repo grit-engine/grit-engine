@@ -1274,53 +1274,66 @@ static int gfxhudobj_index (lua_State *L)
 TRY_START
     check_args(L,2);
     GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
-    const char *key = luaL_checkstring(L,2);
-    if (!::strcmp(key,"orientation")) {
-        lua_pushnumber(L, self.getOrientation().inDegrees());
-    } else if (!::strcmp(key,"position")) {
-        push_v2(L, self.getPosition());
-    } else if (!::strcmp(key,"size")) {
-        push_v2(L, self.getSize());
-    } else if (!::strcmp(key,"setRect")) {
-        push_cfunction(L, gfxhudobj_set_rect);
-    } else if (!::strcmp(key,"zOrder")) {
-        lua_pushnumber(L, self.getZOrder());
+    if (lua_type(L,2) == LUA_TSTRING) {
+        const char *key = lua_tostring(L,2);
+        if (!::strcmp(key,"orientation")) {
+            lua_pushnumber(L, self.getOrientation().inDegrees());
+        } else if (!::strcmp(key,"position")) {
+            push_v2(L, self.getPosition());
+        } else if (!::strcmp(key,"size")) {
+            push_v2(L, self.getSize());
+        } else if (!::strcmp(key,"setRect")) {
+            push_cfunction(L, gfxhudobj_set_rect);
+        } else if (!::strcmp(key,"zOrder")) {
+            lua_pushnumber(L, self.getZOrder());
 
-    } else if (!::strcmp(key,"colour")) {
-        push_v3(L, self.getColour());
-    } else if (!::strcmp(key,"alpha")) {
-        lua_pushnumber(L, self.getAlpha());
-    } else if (!::strcmp(key,"texture")) {
-        GfxTextureDiskResource *d = self.getTexture();
-        if (d==NULL) {
-            lua_pushnil(L);
+        } else if (!::strcmp(key,"colour")) {
+            push_v3(L, self.getColour());
+        } else if (!::strcmp(key,"alpha")) {
+            lua_pushnumber(L, self.getAlpha());
+        } else if (!::strcmp(key,"texture")) {
+            GfxTextureDiskResource *d = self.getTexture();
+            if (d==NULL) {
+                lua_pushnil(L);
+            } else {
+                push_string(L, d->getName());
+            }
+
+        } else if (!::strcmp(key,"needsInputCallbacks")) {
+            lua_pushboolean(L, self.getNeedsInputCallbacks());
+        } else if (!::strcmp(key,"needsFrameCallbacks")) {
+            lua_pushboolean(L, self.getNeedsFrameCallbacks());
+        } else if (!::strcmp(key,"needsParentResizedCallbacks")) {
+            lua_pushboolean(L, self.getNeedsParentResizedCallbacks());
+
+        } else if (!::strcmp(key,"enabled")) {
+            lua_pushboolean(L, self.isEnabled());
+
+        } else if (!::strcmp(key,"parent")) {
+            push_gfxhudobj(L, self.getParent());
+        } else if (!::strcmp(key,"class")) {
+            push_gfxhudclass(L, self.hudClass);
+        } else if (!::strcmp(key,"className")) {
+            push_string(L, self.hudClass->name);
+        } else if (!::strcmp(key,"table")) {
+            self.table.push(L);
+
+        } else if (!::strcmp(key,"destroyed")) {
+            lua_pushboolean(L,self.destroyed());
+        } else if (!::strcmp(key,"destroy")) {
+            push_cfunction(L,gfxhudobj_destroy);
         } else {
-            push_string(L, d->getName());
+            if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
+            self.table.push(L);
+            lua_pushstring(L, key);
+            lua_rawget(L, -2);
+
+            if (!lua_isnil(L,-1)) return 1;
+            lua_pop(L,1);
+
+            // try class instead
+            self.hudClass->get(L,key);
         }
-
-    } else if (!::strcmp(key,"needsInputCallbacks")) {
-        lua_pushboolean(L, self.getNeedsInputCallbacks());
-    } else if (!::strcmp(key,"needsFrameCallbacks")) {
-        lua_pushboolean(L, self.getNeedsFrameCallbacks());
-    } else if (!::strcmp(key,"needsParentResizedCallbacks")) {
-        lua_pushboolean(L, self.getNeedsParentResizedCallbacks());
-
-    } else if (!::strcmp(key,"enabled")) {
-        lua_pushboolean(L, self.isEnabled());
-
-    } else if (!::strcmp(key,"parent")) {
-        push_gfxhudobj(L, self.getParent());
-    } else if (!::strcmp(key,"class")) {
-        push_gfxhudclass(L, self.hudClass);
-    } else if (!::strcmp(key,"className")) {
-        push_string(L, self.hudClass->name);
-    } else if (!::strcmp(key,"table")) {
-        self.table.push(L);
-
-    } else if (!::strcmp(key,"destroyed")) {
-        lua_pushboolean(L,self.destroyed());
-    } else if (!::strcmp(key,"destroy")) {
-        push_cfunction(L,gfxhudobj_destroy);
     } else {
         if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
         self.table.push(L);
@@ -1331,7 +1344,8 @@ TRY_START
         lua_pop(L,1);
 
         // try class instead
-        self.hudClass->get(L,key);
+        lua_pushvalue(L,2);
+        self.hudClass->get(L);
     }
     return 1;
 TRY_END
@@ -1343,68 +1357,77 @@ static int gfxhudobj_newindex (lua_State *L)
 TRY_START
     check_args(L,3);
     GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
-    const char *key = luaL_checkstring(L,2);
-    if (!::strcmp(key,"orientation")) {
-        float v = check_float(L,3);
-        self.setOrientation(Degree(v));
-    } else if (!::strcmp(key,"position")) {
-        Vector2 v = check_v2(L,3);
-        self.setPosition(v);
-    } else if (!::strcmp(key,"size")) {
-        Vector2 v = check_v2(L,3);
-        self.setSize(L, v);
+    if (lua_type(L,2) == LUA_TSTRING) {
+        const char *key = lua_tostring(L,2);
+        if (!::strcmp(key,"orientation")) {
+            float v = check_float(L,3);
+            self.setOrientation(Degree(v));
+        } else if (!::strcmp(key,"position")) {
+            Vector2 v = check_v2(L,3);
+            self.setPosition(v);
+        } else if (!::strcmp(key,"size")) {
+            Vector2 v = check_v2(L,3);
+            self.setSize(L, v);
 
-    } else if (!::strcmp(key,"colour")) {
-        Vector3 v = check_v3(L,3);
-        self.setColour(v);
-    } else if (!::strcmp(key,"alpha")) {
-        float v = check_float(L,3);
-        self.setAlpha(v);
-    } else if (!::strcmp(key,"texture")) {
-        if (lua_isnil(L,3)) {
-            self.setTexture(NULL);
+        } else if (!::strcmp(key,"colour")) {
+            Vector3 v = check_v3(L,3);
+            self.setColour(v);
+        } else if (!::strcmp(key,"alpha")) {
+            float v = check_float(L,3);
+            self.setAlpha(v);
+        } else if (!::strcmp(key,"texture")) {
+            if (lua_isnil(L,3)) {
+                self.setTexture(NULL);
+            } else {
+                std::string v = check_path(L,3);
+                DiskResource *d = disk_resource_get_or_make(v);
+                GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
+                if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+v+"\"");
+                self.setTexture(d2);
+            }
+
+        } else if (!::strcmp(key,"parent")) {
+            if (lua_isnil(L,3)) {
+                self.setParent(L, NULL);
+            } else {
+                GET_UD_MACRO(GfxHudObject,v,3,GFXHUDOBJECT_TAG);
+                self.setParent(L, &v);
+            }
+        } else if (!::strcmp(key,"zOrder")) {
+            unsigned char v = check_int(L,3,0,7);
+            self.setZOrder(v);
+
+        } else if (!::strcmp(key,"needsInputCallbacks")) {
+            bool v = check_bool(L,3);
+            self.setNeedsInputCallbacks(v);
+        } else if (!::strcmp(key,"needsFrameCallbacks")) {
+            bool v = check_bool(L,3);
+            self.setNeedsFrameCallbacks(v);
+        } else if (!::strcmp(key,"needsParentResizedCallbacks")) {
+            bool v = check_bool(L,3);
+            self.setNeedsParentResizedCallbacks(v);
+
+        } else if (!::strcmp(key,"enabled")) {
+            bool v = check_bool(L,3);
+            self.setEnabled(v);
+        } else if (!::strcmp(key,"table")) {
+            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+        } else if (!::strcmp(key,"class")) {
+            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+        } else if (!::strcmp(key,"className")) {
+            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+        } else if (!::strcmp(key,"destroy")) {
+            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+        } else if (!::strcmp(key,"destroyed")) {
+            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
         } else {
-            std::string v = check_path(L,3);
-            DiskResource *d = disk_resource_get_or_make(v);
-            GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
-            if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+v+"\"");
-            self.setTexture(d2);
+            if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
+
+            self.table.push(L);
+            lua_pushvalue(L, 2);
+            lua_pushvalue(L, 3);
+            lua_rawset(L, -3);
         }
-
-    } else if (!::strcmp(key,"parent")) {
-        if (lua_isnil(L,3)) {
-            self.setParent(L, NULL);
-        } else {
-            GET_UD_MACRO(GfxHudObject,v,3,GFXHUDOBJECT_TAG);
-            self.setParent(L, &v);
-        }
-    } else if (!::strcmp(key,"zOrder")) {
-        unsigned char v = check_int(L,3,0,7);
-        self.setZOrder(v);
-
-    } else if (!::strcmp(key,"needsInputCallbacks")) {
-        bool v = check_bool(L,3);
-        self.setNeedsInputCallbacks(v);
-    } else if (!::strcmp(key,"needsFrameCallbacks")) {
-        bool v = check_bool(L,3);
-        self.setNeedsFrameCallbacks(v);
-    } else if (!::strcmp(key,"needsParentResizedCallbacks")) {
-        bool v = check_bool(L,3);
-        self.setNeedsParentResizedCallbacks(v);
-
-    } else if (!::strcmp(key,"enabled")) {
-        bool v = check_bool(L,3);
-        self.setEnabled(v);
-    } else if (!::strcmp(key,"table")) {
-        my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
-    } else if (!::strcmp(key,"class")) {
-        my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
-    } else if (!::strcmp(key,"className")) {
-        my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
-    } else if (!::strcmp(key,"destroy")) {
-        my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
-    } else if (!::strcmp(key,"destroyed")) {
-        my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
     } else {
         if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
 
@@ -1994,6 +2017,7 @@ TRY_START
     }
 
     self->triggerInit(L);
+    // FIXME: this does not check whether the init callback overrode self.size...
     if (!have_size && self->getTexture()!=NULL) {
         // set size from texture
         GfxTextureDiskResource *dr = self->getTexture();

@@ -362,6 +362,31 @@ void GfxHudObject::setParent (lua_State *L, GfxHudObject *v)
     triggerParentResized(L);
 }
 
+bool GfxHudObject::shootRay (const Vector2 &screen_pos)
+{
+    if (!getNeedsInputCallbacks()) return false;
+    if (!isEnabled()) return false;
+
+    Vector2 local_pos = (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
+    bool inside = fabsf(local_pos.x) < getSize().x / 2
+               && fabsf(local_pos.y) < getSize().y / 2;
+
+    if (!inside) return false;
+    
+    // look at children, ensure not inside them
+    for (unsigned j=0 ; j<children.size() ; ++j) {
+        GfxHudBase *base = children[j];
+
+        if (base->destroyed()) continue;
+
+        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+        if (obj != NULL && obj->shootRay(screen_pos)) return false;
+    }
+    
+    // TODO: look at parent's z order > this one
+    return true;
+}
+
 void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
 {
     assertAlive();
@@ -403,13 +428,14 @@ void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
         Vector2 local_pos = (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
         push_v2(L, local_pos);
         push_v2(L, screen_pos);
-        //stack: err,callback,object,pos,local_pos
+        lua_pushboolean(L, this->shootRay(screen_pos));
+        //stack: err,callback,object,local_pos,screen_pos,inside
 
-        STACK_CHECK_N(5);
+        STACK_CHECK_N(6);
 
         // call (1 arg), pops function too
         pwd_push_dir(hudClass->dir);
-        int status = lua_pcall(L,3,0,error_handler);
+        int status = lua_pcall(L,4,0,error_handler);
         pwd_pop();
         if (status) {
             STACK_CHECK_N(2);
@@ -719,10 +745,11 @@ void GfxHudText::decRefCount (void)
 
 void GfxHudText::destroy (void)
 {
-    if (aliveness==ALIVE) return;
-    text.clear();
-    buf.clear(true);
-    GfxHudBase::destroy();
+    if (aliveness==ALIVE) {
+        text.clear();
+        buf.clear(true);
+        GfxHudBase::destroy();
+    }
 }
 
 void GfxHudText::clear (void)
@@ -926,6 +953,7 @@ static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radia
 void gfx_render_hud_one (GfxHudBase *base)
 {
     if (!base->isEnabled()) return;
+    if (base->destroyed()) return;
 
     GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
     if (obj!=NULL) {

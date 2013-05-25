@@ -67,6 +67,18 @@ class GfxHudClass {
         lua_pop(L,1); // the table we just iterated through
     }
 
+    void get (lua_State *L, lua_Number key)
+    {
+        const char *err = table.luaGet(L, key);
+        if (err) my_lua_error(L,err);
+    } 
+
+    void set (lua_State *L, lua_Number key)
+    {
+        const char *err = table.luaSet(L, key);
+        if (err) my_lua_error(L,err);
+    }
+    
     void get (lua_State *L, const std::string &key)
     {
         const char *err = table.luaGet(L, key);
@@ -79,6 +91,12 @@ class GfxHudClass {
         if (err) my_lua_error(L,err);
     }
     
+    void get (lua_State *L)
+    {   
+        const char *err = table.luaGet(L);
+        if (err) my_lua_error(L,err);
+    }
+
     void set (lua_State *L)
     {   
         const char *err = table.luaSet(L);
@@ -236,6 +254,8 @@ class GfxHudObject : public GfxHudBase {
 
     bool getNeedsFrameCallbacks (void) const { assertAlive(); return needsFrameCallbacks; }
     void setNeedsFrameCallbacks (bool v) { assertAlive(); needsFrameCallbacks = v; }
+
+    bool shootRay (const Vector2 &screen_pos);
 
     private:
 
