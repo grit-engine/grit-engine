@@ -858,12 +858,12 @@ size_t gfx_init (GfxCallback &cb_)
             ogre_rs = OGRE_NEW Ogre::D3D9RenderSystem(GetModuleHandle(NULL));
             ogre_rs->setConfigOption("Allow NVPerfHUD","Yes");
             ogre_rs->setConfigOption("Floating-point mode","Consistent");
-            ogre_rs->setConfigOption("Video Mode","800 x 600 @ 32-bit colour");
+            ogre_rs->setConfigOption("Video Mode","1024 x 768 @ 32-bit colour");
             #endif
         } else {
             ogre_rs = OGRE_NEW Ogre::GLRenderSystem();
             ogre_rs->setConfigOption("RTT Preferred Mode","FBO");
-            ogre_rs->setConfigOption("Video Mode","800 x 600");
+            ogre_rs->setConfigOption("Video Mode","1024 x 768");
         }
         ogre_rs->setConfigOption("sRGB Gamma Conversion",use_hwgamma?"Yes":"No");
         ogre_rs->setConfigOption("Full Screen","No");
