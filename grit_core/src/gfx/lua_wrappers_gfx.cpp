@@ -1900,7 +1900,7 @@ TRY_START
                 my_lua_error(L, "Alpha must be a number.");
             }
         } else if (!::strcmp(key,"texture")) {
-            if (lua_isstring(L,-1)) {
+            if (lua_type(L,-1) == LUA_TSTRING) {
                 std::string v = check_path(L,-1);
                 DiskResource *d = disk_resource_get_or_make(v);
                 GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
@@ -2914,7 +2914,7 @@ TRY_START
     if (!lua_istable(L,2)) my_lua_error(L,"Parameter 2 must be a table.");
 
     lua_getfield(L, 2, "map");
-    if (!lua_isstring(L,-1)) my_lua_error(L,"Particle map must be a string.");
+    if (lua_type(L,-1) != LUA_TSTRING) my_lua_error(L,"Particle map must be a string.");
     std::string texture = lua_tostring(L,-1);
     texture = pwd_full(L, texture); // TODO: should use particle dir, not current dir
     lua_pop(L,1);

@@ -58,7 +58,15 @@ static void my_lua_error (lua_State *L, const UnicodeString &str)
 //{ my_lua_error(L, to_utf8(str), level); }
 
 static UnicodeString checkustring (lua_State *L, int index)
-{ return UnicodeString::fromUTF8(StringPiece(luaL_checkstring(L,index))); }
+{
+        if (lua_type(L,index) != LUA_TSTRING) {
+                std::stringstream ss;
+                ss << "Expected a string at index " << index;
+                my_lua_error(L, ss.str());
+        }
+        const char *str = luaL_checkstring(L,index);
+        return UnicodeString::fromUTF8(StringPiece(str));
+}
 
 static void pushustring (lua_State *L, const UnicodeString &str)
 { lua_pushstring(L, to_utf8(str).c_str()); }
@@ -353,7 +361,7 @@ static int regex_matcher_index(lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(RegexMatcher,self,1,REGEX_MATCHER_TAG);
-        std::string key  = luaL_checkstring(L,2);
+        std::string key  = check_string(L,2);
         if (key=="input") {
                 pushustring(L,self.input());
         } else if (key=="pattern") {

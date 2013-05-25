@@ -115,7 +115,7 @@ void my_lua_error(lua_State *l, const char *msg)
 void my_lua_error(lua_State *l, const char *msg, unsigned long level)
 {
     luaL_where(l,level);
-    std::string str = luaL_checkstring(l,-1);
+    std::string str = check_string(l,-1);
     lua_pop(l,1);
     str += msg;
     lua_newtable(l);
@@ -190,12 +190,12 @@ bool check_bool (lua_State *l, int stack_index)
 
 std::string check_path (lua_State *L, int stack_index)
 {
-    return pwd_full(L, luaL_checkstring(L, stack_index));
+    return pwd_full(L, check_string(L, stack_index));
 }
 
 const char* check_string (lua_State *l, int stack_index)
 {
-    if (!lua_isstring(l,stack_index)) {
+    if (lua_type(l,stack_index) != LUA_TSTRING) {
         std::stringstream msg;
         msg << "Expected a string at parameter " << stack_index;
         my_lua_error(l, msg.str());
@@ -221,7 +221,7 @@ int my_lua_error_handler (lua_State *l, lua_State *coro, int levelhack)
     }
     level+=levelhack; // to remove the current function as well
 
-    std::string str = luaL_checkstring(l,-1);
+    std::string str = check_string(l,-1);
 
     std::vector<struct stack_frame> tb = traceback(coro,level);
 

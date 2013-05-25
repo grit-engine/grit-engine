@@ -52,7 +52,7 @@ void ExternalTable::clear (lua_State *L)
 const char *ExternalTable::luaGet (lua_State *L)
 {
         if (lua_type(L,-1)==LUA_TSTRING) {
-                std::string key = luaL_checkstring(L,-1);
+                std::string key = lua_tostring(L,-1);
                 return luaGet(L,key);
         } else if (lua_type(L,-1)==LUA_TNUMBER) {
                 lua_Number key = luaL_checknumber(L,-1);
@@ -122,7 +122,7 @@ const char *ExternalTable::luaGet (lua_State *L, lua_Number key)
 const char *ExternalTable::luaSet (lua_State *L)
 {
         if (lua_type(L,-2)==LUA_TSTRING) {
-                std::string key = luaL_checkstring(L,-2);
+                std::string key = lua_tostring(L,-2);
                 return luaSet(L,key);
         } else if (lua_type(L,-2)==LUA_TNUMBER) {
                 lua_Number key = luaL_checknumber(L,-2);
@@ -136,7 +136,7 @@ const char *ExternalTable::luaSet (lua_State *L, const std::string &key)
         if (lua_type(L,-1)==LUA_TNIL) {
                 unset(key);
         } else if (lua_type(L,-1)==LUA_TSTRING) {
-                std::string val = luaL_checkstring(L,-1);
+                std::string val = lua_tostring(L,-1);
                 set(key,val);
         } else if (lua_type(L,-1)==LUA_TNUMBER) {
                 lua_Number val = luaL_checknumber(L,-1);
@@ -178,7 +178,7 @@ const char *ExternalTable::luaSet (lua_State *L, lua_Number key)
         if (lua_type(L,-1)==LUA_TNIL) {
                 unset(key);
         } else if (lua_type(L,-1)==LUA_TSTRING) {
-                std::string val = luaL_checkstring(L,-1);
+                std::string val = lua_tostring(L,-1);
                 set(key,val);
         } else if (lua_type(L,-1)==LUA_TNUMBER) {
                 lua_Number val = luaL_checknumber(L,-1);

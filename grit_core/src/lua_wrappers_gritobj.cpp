@@ -59,7 +59,7 @@ static int gritcls_index (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(GritClass,self,1,GRITCLS_TAG);
-        std::string key = luaL_checkstring(L,2);
+        std::string key = check_string(L,2);
         if (key=="name") {
                 lua_pushstring(L,self.name.c_str());
         } else if (key=="parent") {
@@ -78,7 +78,7 @@ static int gritcls_newindex (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(GritClass,self,1,GRITCLS_TAG);
-        std::string key = luaL_checkstring(L,2);
+        std::string key = check_string(L,2);
 
         if (key=="name") {
                 my_lua_error(L,"Not a writeable GritClass member: "+key);
@@ -216,7 +216,7 @@ static int gritobj_index (lua_State *L)
 TRY_START
         check_args(L,2);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        std::string key = luaL_checkstring(L,2);
+        std::string key = check_string(L,2);
         if (key=="destroy") {
                 push_cfunction(L,gritobj_destroy);
         } else if (key=="activated") {
@@ -284,7 +284,7 @@ static int gritobj_newindex (lua_State *L)
 TRY_START
         check_args(L,3);
         GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        std::string key = luaL_checkstring(L,2);
+        std::string key = check_string(L,2);
 
         if (key=="destroy") {
                 my_lua_error(L,"Not a writeable GritObject member: "+key);
@@ -511,7 +511,7 @@ TRY_START
                         object_del(L,o);
                         my_lua_error(L,"user value key was not a string");
                 }
-                std::string key = luaL_checkstring(L,-2);
+                std::string key = check_string(L,-2);
                 // the name is held in the object anyway
                 if (key=="name") continue;
                 if (key=="near") continue;
@@ -544,7 +544,7 @@ static int global_object_get (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        std::string name = luaL_checkstring(L,1);
+        std::string name = check_string(L,1);
         GritObjectPtr o = object_get(name);
         if (o.isNull()) {
                 lua_pushnil(L);
@@ -559,7 +559,7 @@ static int global_object_has (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        std::string name = luaL_checkstring(L,1);
+        std::string name = check_string(L,1);
         lua_pushboolean(L,object_has(name));
         return 1;
 TRY_END
@@ -707,7 +707,7 @@ int global_core_option (lua_State *L)
 {
 TRY_START
     if (lua_gettop(L)==2) {
-        std::string opt = luaL_checkstring(L,1);
+        std::string opt = check_string(L,1);
         int t;
         CoreBoolOption o0;
         CoreIntOption o1;
@@ -723,7 +723,7 @@ TRY_START
         return 0;
     } else {
         check_args(L,1);
-        std::string opt = luaL_checkstring(L,1);
+        std::string opt = check_string(L,1);
         int t;
         CoreBoolOption o0;
         CoreIntOption o1;

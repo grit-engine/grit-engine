@@ -859,7 +859,7 @@ int global_physics_option (lua_State *L)
 {
 TRY_START
     if (lua_gettop(L)==2) {
-        std::string opt = luaL_checkstring(L,1);
+        std::string opt = check_string(L,1);
         int t;
         PhysicsBoolOption o0;
         PhysicsIntOption o1;
@@ -875,7 +875,7 @@ TRY_START
         return 0;
     } else {
         check_args(L,1);
-        std::string opt = luaL_checkstring(L,1);
+        std::string opt = check_string(L,1);
         int t;
         PhysicsBoolOption o0;
         PhysicsIntOption o1;
