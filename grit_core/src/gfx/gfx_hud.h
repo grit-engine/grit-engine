@@ -255,7 +255,13 @@ class GfxHudObject : public GfxHudBase {
     bool getNeedsFrameCallbacks (void) const { assertAlive(); return needsFrameCallbacks; }
     void setNeedsFrameCallbacks (bool v) { assertAlive(); needsFrameCallbacks = v; }
 
-    bool shootRay (const Vector2 &screen_pos);
+    enum RayResult {
+        MISSED,
+        HIT,
+        HIT_CHILD
+    };
+
+    RayResult shootRay (const Vector2 &screen_pos);
 
     private:
 

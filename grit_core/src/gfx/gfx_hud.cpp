@@ -362,29 +362,30 @@ void GfxHudObject::setParent (lua_State *L, GfxHudObject *v)
     triggerParentResized(L);
 }
 
-bool GfxHudObject::shootRay (const Vector2 &screen_pos)
+GfxHudObject::RayResult GfxHudObject::shootRay (const Vector2 &screen_pos)
 {
-    if (!getNeedsInputCallbacks()) return false;
-    if (!isEnabled()) return false;
+    if (!isEnabled()) return MISSED; // can't hit any children either
 
     Vector2 local_pos = (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
     bool inside = fabsf(local_pos.x) < getSize().x / 2
-               && fabsf(local_pos.y) < getSize().y / 2;
+                && fabsf(local_pos.y) < getSize().y / 2;
 
-    if (!inside) return false;
+    // children can still be hit, since they can be larger than parent, so do not return yet...
+    //if (!inside) return MISSED;
     
-    // look at children, ensure not inside them
+    // look at children, ensure not inside one of them
     for (unsigned j=0 ; j<children.size() ; ++j) {
         GfxHudBase *base = children[j];
 
         if (base->destroyed()) continue;
 
         GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL && obj->shootRay(screen_pos)) return false;
+        if (obj != NULL && obj->shootRay(screen_pos)!=MISSED) return HIT_CHILD;
     }
     
     // TODO: look at parent's z order > this one
-    return true;
+
+    return getNeedsInputCallbacks() && inside ? HIT : MISSED;
 }
 
 void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
@@ -428,7 +429,7 @@ void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
         Vector2 local_pos = (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
         push_v2(L, local_pos);
         push_v2(L, screen_pos);
-        lua_pushboolean(L, this->shootRay(screen_pos));
+        lua_pushboolean(L, this->shootRay(screen_pos)==GfxHudObject::HIT);
         //stack: err,callback,object,local_pos,screen_pos,inside
 
         STACK_CHECK_N(6);
