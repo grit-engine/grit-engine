@@ -315,6 +315,12 @@ static int lua_utf8_match (lua_State *L)
 
         long haystack_len = haystack.countChar32();
 
+        if (haystack_len == 0) {
+            // avoid a U_INDEX_OUTOFBOUNDS_ERROR when resetting the matcher below...
+            lua_pushnil(L);
+            return 1;
+        }
+
         if (init>haystack_len) init = haystack_len;
         if (init<0) init += haystack_len+1;
         if (init<1) init = 1;
