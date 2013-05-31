@@ -719,8 +719,10 @@ void GfxHudObject::setTexture (GfxTextureDiskResource *v)
         texture->decrement();
         bgl->finishedWith(texture);
     }
-    v->increment();
-    if (!v->isLoaded()) v->load();
+    if (v != NULL) {
+        v->increment();
+        if (!v->isLoaded()) v->load();
+    }
     texture = v;
 }
 
