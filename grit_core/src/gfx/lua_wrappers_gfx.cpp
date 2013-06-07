@@ -370,6 +370,29 @@ TRY_START
 TRY_END
 }
 
+static int gfxbody_get_animation_pos_normalised(lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    std::string anim = check_string(L,2);
+    lua_pushnumber(L, self->getAnimationPos(anim) / self->getAnimationLength(anim));
+    return 1;
+TRY_END
+}
+
+static int gfxbody_set_animation_pos_normalised(lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
+    std::string anim = check_string(L,2);
+    float const t = check_float(L,3);
+    self->setAnimationPos(anim, t * self->getAnimationLength(anim));
+    return 0;
+TRY_END
+}
+
 static int gfxbody_get_animation_mask(lua_State *L)
 {
 TRY_START
@@ -546,8 +569,12 @@ TRY_START
         push_cfunction(L,gfxbody_get_animation_length);
     } else if (!::strcmp(key,"getAnimationPos")) {
         push_cfunction(L,gfxbody_get_animation_pos);
+    } else if (!::strcmp(key,"getAnimationPosNormalised")) {
+        push_cfunction(L,gfxbody_get_animation_pos_normalised);
     } else if (!::strcmp(key,"setAnimationPos")) {
         push_cfunction(L,gfxbody_set_animation_pos);
+    } else if (!::strcmp(key,"setAnimationPosNormalised")) {
+        push_cfunction(L,gfxbody_set_animation_pos_normalised);
     } else if (!::strcmp(key,"getAnimationMask")) {
         push_cfunction(L,gfxbody_get_animation_mask);
     } else if (!::strcmp(key,"setAnimationMask")) {
