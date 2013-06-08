@@ -151,6 +151,8 @@
     <ClCompile Include="src\gfx\gfx_disk_resource.cpp" />
     <ClCompile Include="src\gfx\gfx_hud.cpp" />
     <ClCompile Include="src\gfx\gfx_option.cpp" />
+    <ClCompile Include="src\gfx\GritEntity.cpp" />
+    <ClCompile Include="src\gfx\GritSubEntity.cpp" />
     <ClCompile Include="src\gfx\HUD.cpp" />
     <ClCompile Include="src\gfx\lua_wrappers_gfx.cpp" />
     <ClCompile Include="src\gfx\lua_wrappers_gpuprog.cpp" />

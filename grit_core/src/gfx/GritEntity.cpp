@@ -215,7 +215,7 @@ GritSubEntity* GritEntity::getSubEntity(unsigned int index) const
 //-----------------------------------------------------------------------
 GritSubEntity* GritEntity::getSubEntity(const Ogre::String& name) const
 {
-    ushort index = mMesh->_getSubMeshIndex(name);
+    Ogre::ushort index = mMesh->_getSubMeshIndex(name);
     return getSubEntity(index);
 }
 //-----------------------------------------------------------------------
