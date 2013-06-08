@@ -22,6 +22,8 @@
 #include "gfx_internal.h"
 
 #include "GfxBody.h"
+#include "GritEntity.h"
+#include "GritSubEntity.h"
 
 const std::string GfxNode::className = "GfxNode";
 
@@ -294,8 +296,8 @@ void GfxBody::reinitialise (void)
     if (entEmissive) ogre_sm->destroyEntity(entEmissive);
     entEmissive = NULL;
 
-    if (ent!=NULL) ogre_sm->destroyEntity(ent);
-    ent = ogre_sm->createEntity(freshname(), mesh->getName());
+    if (ent!=NULL) delete ent;
+    ent = new GritEntity(freshname(), mesh);
     node->attachObject(ent);
     updateProperties();
     updateBones();
@@ -309,7 +311,7 @@ void GfxBody::updateVisibility (void)
     if (entEmissive) entEmissive->setVisible(enabled && fade > 0.001);
 
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
-        Ogre::SubEntity *se = ent->getSubEntity(i);
+        GritSubEntity *se = ent->getSubEntity(i);
         // fading in/out (either stipple or alpha factor)
         se->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
     }
@@ -380,7 +382,7 @@ void GfxBody::updateProperties (void)
 
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
 
-        Ogre::SubEntity *se = ent->getSubEntity(i);
+        GritSubEntity *se = ent->getSubEntity(i);
 
         GfxMaterial *gfx_material = materials[i];
 
@@ -450,7 +452,7 @@ void GfxBody::destroy (void)
         children[i]->notifyParentDead();
     }
     children.clear();
-    if (ent) ogre_sm->destroyEntity(ent);
+    if (ent) delete ent;
     ent = NULL;
     if (entEmissive) ogre_sm->destroyEntity(entEmissive);
     entEmissive = NULL;
@@ -790,13 +792,13 @@ std::vector<std::string> GfxBody::getAnimationNames (void)
     return r;
 }
 
-static Ogre::AnimationState *get_anim_state (Ogre::Entity *ent, const std::string &name)
+static Ogre::AnimationState *get_anim_state (GritEntity *ent, const std::string &name)
 {
     Ogre::Skeleton *skel = ent->getSkeleton();
     if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     Ogre::AnimationStateSet *anim_set = ent->getAllAnimationStates();
     if (anim_set == NULL) GRIT_EXCEPT("GfxBody has no animations");
-    Ogre::AnimationState *state = ent->getAnimationState(name);
+    Ogre::AnimationState *state = anim_set->getAnimationState(name);
     if (state == NULL) GRIT_EXCEPT("GfxBody has no animation called \""+name+"\"");
     return state;
 }

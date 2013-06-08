@@ -477,8 +477,8 @@ static inline Vector3 lerp3 (const Vector3 &v000, const Vector3 &v001, const Vec
                              float a, float b, float c)
 {
     return lerp1(
-        lerp2(v000, v001, v000, v001, b, c),
-        lerp2(v110, v111, v110, v111, b, c),
+        lerp2(v000, v001, v010, v011, b, c),
+        lerp2(v100, v101, v110, v111, b, c),
         a);
 }
 

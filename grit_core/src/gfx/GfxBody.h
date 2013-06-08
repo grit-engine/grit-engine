@@ -22,6 +22,7 @@
 #include "../SharedPtr.h"
 
 class GfxBody;
+class GritEntity;
 typedef SharedPtr<GfxBody> GfxBodyPtr;
 
 extern fast_erase_vector<GfxBody*> gfx_all_bodies;
@@ -29,9 +30,10 @@ extern fast_erase_vector<GfxBody*> gfx_all_bodies;
 #ifndef GfxBody_h
 #define GfxBody_h
 
+#include <OgreMesh.h>
+
 #include "gfx.h"
 #include "GfxMaterial.h"
-#include <OgreMesh.h>
 
 // this should rarely need to be used by users of this API
 class GfxNode {
@@ -86,7 +88,7 @@ class GfxBody : public GfxNode, public fast_erase_index {
     std::vector<GfxNode*> children; // caution!
     public: // HACK
     Ogre::MeshPtr mesh;
-    Ogre::Entity *ent;
+    GritEntity *ent;
     Ogre::Entity *entEmissive;
     protected:
     float fade;

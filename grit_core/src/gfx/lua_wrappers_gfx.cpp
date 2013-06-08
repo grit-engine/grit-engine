@@ -491,6 +491,7 @@ TRY_START
         push_cfunction(L,gfxbody_set_emissive_enabled);
     } else if (!::strcmp(key,"nodeHACK")) {
         push_node(L, self->node);
+/*
     } else if (!::strcmp(key,"entHACK")) {
         if (self->ent)
             push_entity(L, self->ent);
@@ -501,6 +502,7 @@ TRY_START
             push_entity(L, self->entEmissive);
         else
             lua_pushnil(L);
+*/
     } else if (!::strcmp(key,"reinitialise")) {
         push_cfunction(L, gfxbody_reinitialise);
 

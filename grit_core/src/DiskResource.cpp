@@ -98,6 +98,9 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
     }
     std::string suffix(rn, pos+1);
 
+    const char *texture_formats[] = { "jpg", "png", "tga", "tiff", "hdr", "dds" };
+    unsigned num_texture_formats = sizeof(texture_formats)/sizeof(*texture_formats);
+
     if (suffix == "mesh") {
         dr = new GfxMeshDiskResource(rn);
     } else if (suffix == "tcol" || suffix == "gcol" || suffix == "bcol") {
@@ -113,8 +116,6 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
     } else if (ends_with(rn, ".lut.tiff")) {
         dr = new GfxColourGradeLUTDiskResource(rn);
     } else {
-        const char *texture_formats[] = { "jpeg", "png", "tga", "tiff", "hdr", "dds" };
-        unsigned num_texture_formats = sizeof(texture_formats)/sizeof(*texture_formats);
         for (unsigned i=0 ; i<num_texture_formats ; ++i) {
             if (suffix == texture_formats[i]) {
                 dr = new GfxTextureDiskResource(rn);
@@ -123,8 +124,13 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
         }
     }
     if (dr == NULL) {
+        std::stringstream ss;
+        for (unsigned i=0 ; i<num_texture_formats ; ++i) {
+            if (i>0) ss << ", ";
+            ss << texture_formats[i];
+        }
         GRIT_EXCEPT("Ignoring resource \""+rn+"\" as "
-                    "its file extension was not recognised.");
+                    "its file extension was not recognised.  Recognised extensions: "+ss.str());
     }
     disk_resource_map[rn] = dr;
     return dr;
