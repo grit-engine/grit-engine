@@ -33,54 +33,8 @@ extern fast_erase_vector<GfxBody*> gfx_all_bodies;
 #include <OgreMesh.h>
 
 #include "gfx.h"
+#include "GfxNode.h"
 #include "GfxMaterial.h"
-
-// this should rarely need to be used by users of this API
-class GfxNode {
-    protected:
-    static const std::string className;
-    Vector3 pos; Quaternion quat; Vector3 scl;
-    GfxBodyPtr par;
-    public: // HACK
-    Ogre::SceneNode *node;
-    protected:
-    bool dead;
-
-    GfxNode (const GfxBodyPtr &par_);
-    virtual ~GfxNode ();
-
-    void notifyParentDead (void);
-    void ensureNotChildOf (GfxBody *leaf) const;
-
-    public:
-
-    const GfxBodyPtr &getParent (void) const;
-    virtual void setParent (const GfxBodyPtr &par_);
-
-    Vector3 transformPositionParent (const Vector3 &v);
-    Quaternion transformOrientationParent (const Quaternion &v);
-    Vector3 transformScaleParent (const Vector3 &v);
-    Vector3 transformPosition (const Vector3 &v);
-    Quaternion transformOrientation (const Quaternion &v);
-    Vector3 transformScale (const Vector3 &v);
-
-    const Vector3 &getLocalPosition (void);
-    void setLocalPosition (const Vector3 &p);
-    Vector3 getWorldPosition (void);
-
-    const Quaternion &getLocalOrientation (void);
-    void setLocalOrientation (const Quaternion &q);
-    Quaternion getWorldOrientation (void);
-
-    const Vector3 &getLocalScale (void);
-    void setLocalScale (const Vector3 &s);
-    Vector3 getWorldScale (void);
-
-    virtual void destroy (void);
-    virtual bool destroyed (void) const { return dead; }
-
-    friend class GfxBody; // otherwise it cannot access our protected stuff
-};
 
 class GfxBody : public GfxNode, public fast_erase_index {
     protected:

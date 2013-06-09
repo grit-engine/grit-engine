@@ -90,6 +90,7 @@ GRIT_OBJ=\
         GfxInstances.o \
         GfxLight.o \
         GfxMaterial.o \
+        GfxNode.o \
         GfxParticleSystem.o \
         GfxPipeline.o \
         GfxRangedInstances.o \
