@@ -36,8 +36,8 @@ static void ensure_coronas_init (void)
 
 const std::string GfxLight::className = "GfxLight";
 
-GfxLight::GfxLight (const GfxBodyPtr &par_)
-  : GfxNode(par_),
+GfxLight::GfxLight (const GfxNodePtr &par_)
+  : GfxLeaf(par_),
     enabled(true),
     fade(1),
     coronaLocalPos(0,0,0),
@@ -77,7 +77,7 @@ void GfxLight::destroy (void)
     light = NULL;
     all_lights.erase(this);
     corona->release();
-    GfxNode::destroy();
+    GfxLeaf::destroy();
 }
 
 void GfxLight::updateCorona (const Vector3 &cam_pos)

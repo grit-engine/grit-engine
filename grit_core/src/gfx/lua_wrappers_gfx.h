@@ -23,6 +23,7 @@
 
 #include "gfx.h"
 
+#include "GfxNode.h"
 #include "GfxBody.h"
 #include "GfxSkyBody.h"
 #include "GfxMaterial.h"
@@ -32,6 +33,7 @@
 #include "GfxRangedInstances.h"
 #include "gfx_hud.h"
 
+#define GFXNODE_TAG "Grit/GfxNode"
 #define GFXBODY_TAG "Grit/GfxBody"
 #define GFXSKYBODY_TAG "Grit/GfxSkyBody"
 #define GFXINSTANCES_TAG "Grit/GfxInstances"
@@ -44,6 +46,7 @@
 
 void gfx_lua_init (lua_State *L);
 
+void push_gfxnode (lua_State *L, const GfxNodePtr &self);
 void push_gfxbody (lua_State *L, const GfxBodyPtr &self);
 void push_gfxrangedinstances (lua_State *L, const GfxRangedInstancesPtr &self);
 void push_gfxinstances (lua_State *L, const GfxInstancesPtr &self);

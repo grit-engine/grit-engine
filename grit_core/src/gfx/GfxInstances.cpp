@@ -70,7 +70,7 @@ class GfxInstances::Section : public Ogre::Renderable {
 };
 
 
-GfxInstancesPtr GfxInstances::make (const std::string &mesh_name, const GfxBodyPtr &par_)
+GfxInstancesPtr GfxInstances::make (const std::string &mesh_name, const GfxNodePtr &par_)
 {       
     DiskResource *dr = disk_resource_get(mesh_name);
     if (dr==NULL) GRIT_EXCEPT("No such resource: \""+mesh_name+"\"");
@@ -83,8 +83,8 @@ GfxInstancesPtr GfxInstances::make (const std::string &mesh_name, const GfxBodyP
     return GfxInstancesPtr(new GfxInstances(gdr, par_));
 }
 
-GfxInstances::GfxInstances (GfxMeshDiskResource *gdr, const GfxBodyPtr &par_)
-  : GfxNode(par_),
+GfxInstances::GfxInstances (GfxMeshDiskResource *gdr, const GfxNodePtr &par_)
+  : GfxLeaf(par_),
     dirty(false),
     enabled(true),
     mBoundingBox(Ogre::AxisAlignedBox::BOX_INFINITE),
@@ -203,7 +203,7 @@ GfxInstances::~GfxInstances (void)
 void GfxInstances::destroy (void)
 {
     if (dead) THROW_DEAD(className);
-    GfxNode::destroy();
+    GfxLeaf::destroy();
 }
 
 unsigned GfxInstances::add (const Vector3 &pos, const Quaternion &q, float fade)

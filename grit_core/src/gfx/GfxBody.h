@@ -32,14 +32,12 @@ extern fast_erase_vector<GfxBody*> gfx_all_bodies;
 
 #include <OgreMesh.h>
 
-#include "gfx.h"
 #include "GfxNode.h"
 #include "GfxMaterial.h"
 
 class GfxBody : public GfxNode, public fast_erase_index {
     protected:
     static const std::string className;
-    std::vector<GfxNode*> children; // caution!
     public: // HACK
     Ogre::MeshPtr mesh;
     GritEntity *ent;
@@ -54,18 +52,14 @@ class GfxBody : public GfxNode, public fast_erase_index {
     std::vector<bool> manualBones;
     GfxStringMap initialMaterialMap;
 
-    GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr &par_);
-    GfxBody (const GfxBodyPtr &par_);
+    GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNodePtr &par_);
     ~GfxBody ();
 
 
     public:
     static GfxBodyPtr make (const std::string &mesh_name,
                             const GfxStringMap &sm=gfx_empty_string_map,
-                            const GfxBodyPtr &par_=GfxBodyPtr(NULL));
-
-    static GfxBodyPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
-    { return GfxBodyPtr(new GfxBody(par_)); }
+                            const GfxNodePtr &par_=GfxNodePtr(NULL));
 
     GfxMaterial *getMaterial (unsigned i);
     const std::string &getOriginalMaterialName (unsigned i);
@@ -74,10 +68,6 @@ class GfxBody : public GfxNode, public fast_erase_index {
     bool getEmissiveEnabled (unsigned i);
     void setEmissiveEnabled (unsigned i, bool v);
     unsigned getNumSubMeshes (void) { return materials.size(); }
-
-    void notifyLostChild (GfxNode *child);
-    void notifyGainedChild (GfxNode *child);
-    void setParent (const GfxBodyPtr &par_);
 
     protected:
     void updateEntEmissive (void);
@@ -137,7 +127,7 @@ class GfxBody : public GfxNode, public fast_erase_index {
 
     void destroy (void);
 
-    bool hasGraphics (void) const { return ent!=NULL; }
+    bool hasGraphics (void) const { return true; }
 
     const std::string &getMeshName (void);
 

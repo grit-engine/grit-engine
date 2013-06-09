@@ -32,9 +32,11 @@ typedef SharedPtr<GfxInstances> GfxInstancesPtr;
 
 #include "../DenseIndexMap.h"
 
-#include "GfxBody.h"
+#include "gfx_disk_resource.h"
+#include "GfxLeaf.h"
+#include "GfxNode.h"
 
-class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::MovableObject {
+class GfxInstances : public GfxLeaf, public fast_erase_index, public Ogre::MovableObject {
 
     protected:
 
@@ -54,11 +56,11 @@ class GfxInstances : public GfxNode, public fast_erase_index, public Ogre::Movab
     bool dirty;
     bool enabled;
 
-    GfxInstances (GfxMeshDiskResource *mesh, const GfxBodyPtr &par_);
-    ~GfxInstances ();
+    GfxInstances (GfxMeshDiskResource *mesh, const GfxNodePtr &par_);
+    ~GfxInstances (void);
 
     public:
-    static GfxInstancesPtr make (const std::string &mesh, const GfxBodyPtr &par_=GfxBodyPtr(NULL));
+    static GfxInstancesPtr make (const std::string &mesh, const GfxNodePtr &par_=GfxNodePtr(NULL));
 
     unsigned int add (const Vector3 &pos, const Quaternion &q, float fade);
     // in future, perhaps 3d scale, skew, or general 3x3 matrix?

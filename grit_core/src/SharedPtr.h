@@ -30,6 +30,7 @@
  * this one is not thread-safe (i.e. you cannot make reference or unreference
  * the target in concurrent threads or the counter updates will race). */
 template<class T> class SharedPtr {
+
     /** The target. */
     T *ptr;
 
@@ -62,9 +63,7 @@ public:
     }
 
     /** Return the number of references to the target. */
-    const unsigned int &useCount (void) const { return *cnt; }
-    /** Return the number of references to the target. */
-    unsigned int &useCount (void) { return *cnt; }
+    unsigned int &useCount (void) const { return *cnt; }
 
     /** Create with a NULL target. */
     SharedPtr (void) : ptr(NULL), cnt(NULL) { }
@@ -95,6 +94,18 @@ public:
         if (!isNull()) useCount()++;
         return *this;
     }
+
+    /** Return a SharedPtr to the same object that has a supertype (according to c++ static_cast rules). */
+    template<class U> SharedPtr<U> staticCast (void) const
+    {
+        SharedPtr<U> r;
+        r.cnt = cnt;
+        r.ptr = static_cast<U*>(ptr);
+        if (!isNull()) useCount()++;
+        return r;
+    }
+
+    template<class U> friend class SharedPtr;
 };
 
 /** Do the targets match? */

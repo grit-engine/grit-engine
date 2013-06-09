@@ -28,7 +28,7 @@
 
 const std::string GfxRangedInstances::className = "GfxRangedInstances";
 
-GfxRangedInstancesPtr GfxRangedInstances::make (const std::string &mesh_name, const GfxBodyPtr &par_)
+GfxRangedInstancesPtr GfxRangedInstances::make (const std::string &mesh_name, const GfxNodePtr &par_)
 {       
     DiskResource *dr = disk_resource_get(mesh_name);
     if (dr==NULL) GRIT_EXCEPT("No such resource: \""+mesh_name+"\"");
@@ -41,7 +41,7 @@ GfxRangedInstancesPtr GfxRangedInstances::make (const std::string &mesh_name, co
     return GfxRangedInstancesPtr(new GfxRangedInstances(gdr, par_));
 }
 
-GfxRangedInstances::GfxRangedInstances (GfxMeshDiskResource *gdr, const GfxBodyPtr &par_)
+GfxRangedInstances::GfxRangedInstances (GfxMeshDiskResource *gdr, const GfxNodePtr &par_)
   : GfxInstances(gdr, par_),
     mItemRenderingDistance(40),
     mVisibility(1),

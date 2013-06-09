@@ -32,6 +32,152 @@
 #include "gfx_hud.h"
 #include "GfxFont.h"
 
+GfxNodePtr check_gfx_node (lua_State *L, int idx)
+{
+    if (has_tag(L, idx, GFXNODE_TAG)) {
+        GET_UD_MACRO(GfxNodePtr,self,idx,GFXNODE_TAG);
+        return self;
+    } else if (has_tag(L, idx, GFXBODY_TAG)) {
+        GET_UD_MACRO(GfxBodyPtr,self,idx,GFXBODY_TAG);
+        return self.staticCast<GfxNode>();
+    } else {
+        std::stringstream ss;
+        ss << "Expected a GfxNode or GfxBody at position " << idx;
+        my_lua_error(L, ss.str());
+    }
+}
+
+void push_gfx_node_concrete (lua_State *L, const GfxNodePtr &np)
+{
+    if (np.isNull()) {
+        lua_pushnil(L);
+    } else if (np->hasGraphics()) {
+        push_gfxbody(L, np.staticCast<GfxBody>());
+    } else {
+        push_gfxnode(L, np);
+    }
+}
+
+// GFXNODE ============================================================== {{{
+
+void push_gfxnode (lua_State *L, const GfxNodePtr &self)
+{
+    if (self.isNull())
+        lua_pushnil(L);
+    else
+        push(L,new GfxNodePtr(self),GFXNODE_TAG);
+}
+
+GC_MACRO(GfxNodePtr,gfxnode,GFXNODE_TAG)
+
+static int gfxnode_make_child (lua_State *L)
+{
+TRY_START
+    if (lua_gettop(L)==1) {
+        GET_UD_MACRO(GfxNodePtr,self,1,GFXNODE_TAG);
+        push_gfxnode(L, GfxNode::make(self));
+    } else {
+        check_args(L,2);
+        GET_UD_MACRO(GfxNodePtr,self,1,GFXNODE_TAG);
+        std::string mesh_name = check_path(L,2);
+        push_gfxbody(L, GfxBody::make(mesh_name, gfx_empty_string_map, self));
+    }
+    return 1;
+TRY_END
+}
+
+static int gfxnode_destroy (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(GfxNodePtr,self,1,GFXNODE_TAG);
+    self->destroy();
+    return 0;
+TRY_END
+}
+
+
+
+TOSTRING_SMART_PTR_MACRO (gfxnode,GfxNodePtr,GFXNODE_TAG)
+
+
+static int gfxnode_index (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxNodePtr,self,1,GFXNODE_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"localPosition")) {
+        push_v3(L, self->getLocalPosition());
+    } else if (!::strcmp(key,"worldPosition")) {
+        push_v3(L, self->getWorldPosition());
+    } else if (!::strcmp(key,"localOrientation")) {
+        push_quat(L, self->getLocalOrientation());
+    } else if (!::strcmp(key,"worldOrientation")) {
+        push_quat(L, self->getWorldOrientation());
+    } else if (!::strcmp(key,"localScale")) {
+        push_v3(L, self->getLocalScale());
+    } else if (!::strcmp(key,"worldScale")) {
+        push_v3(L, self->getWorldScale());
+    } else if (!::strcmp(key,"parent")) {
+        push_gfx_node_concrete(L, self->getParent());
+    } else if (!::strcmp(key,"batchesWithChildren")) {
+        lua_pushnumber(L, self->getBatchesWithChildren());
+    } else if (!::strcmp(key,"trianglesWithChildren")) {
+        lua_pushnumber(L, self->getTrianglesWithChildren());
+    } else if (!::strcmp(key,"vertexesWithChildren")) {
+        lua_pushnumber(L, self->getVertexesWithChildren());
+    } else if (!::strcmp(key,"nodeHACK")) {
+        push_node(L, self->node);
+    } else if (!::strcmp(key,"makeChild")) {
+        push_cfunction(L,gfxnode_make_child);
+    } else if (!::strcmp(key,"destroyed")) {
+        lua_pushboolean(L,self->destroyed());
+    } else if (!::strcmp(key,"destroy")) {
+        push_cfunction(L,gfxnode_destroy);
+    } else {
+        my_lua_error(L,"Not a readable GfxNode member: "+std::string(key));
+    }
+    return 1;
+TRY_END
+}
+
+
+static int gfxnode_newindex (lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(GfxNodePtr,self,1,GFXNODE_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"localPosition")) {
+        Vector3 v = check_v3(L,3);
+        self->setLocalPosition(v);
+    } else if (!::strcmp(key,"localOrientation")) {
+        Quaternion v = check_quat(L,3);
+        self->setLocalOrientation(v);
+    } else if (!::strcmp(key,"localScale")) {
+        Vector3 v = check_v3(L,3);
+        self->setLocalScale(v);
+    } else if (!::strcmp(key,"parent")) {
+        if (lua_isnil(L,3)) {
+            self->setParent(GfxNodePtr(NULL));
+        } else {
+            GfxNodePtr par = check_gfx_node(L, 3);
+            self->setParent(par);
+        }
+    } else {
+       my_lua_error(L,"Not a writeable GfxNode member: "+std::string(key));
+    }
+    return 0;
+TRY_END
+}
+
+EQ_MACRO(GfxNodePtr,gfxnode,GFXNODE_TAG)
+
+MT_MACRO_NEWINDEX(gfxnode);
+
+//}}}
+
 
 // GFXBODY ============================================================== {{{
 
@@ -421,12 +567,12 @@ static int gfxbody_make_child (lua_State *L)
 TRY_START
     if (lua_gettop(L)==1) {
         GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-        push_gfxbody(L, GfxBody::make(self));
+        push_gfxnode(L, GfxNode::make(self.staticCast<GfxNode>()));
     } else {
         check_args(L,2);
         GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
         std::string mesh_name = check_path(L,2);
-        push_gfxbody(L, GfxBody::make(mesh_name, gfx_empty_string_map, self));
+        push_gfxbody(L, GfxBody::make(mesh_name, gfx_empty_string_map, self.staticCast<GfxNode>()));
     }
     return 1;
 TRY_END
@@ -466,7 +612,7 @@ TRY_START
     } else if (!::strcmp(key,"worldScale")) {
         push_v3(L, self->getWorldScale());
     } else if (!::strcmp(key,"parent")) {
-        push_gfxbody(L, self->getParent());
+        push_gfx_node_concrete(L, self->getParent());
     } else if (!::strcmp(key,"batches")) {
         lua_pushnumber(L, self->getBatches());
     } else if (!::strcmp(key,"batchesWithChildren")) {
@@ -618,9 +764,9 @@ TRY_START
         self->setFade(v);
     } else if (!::strcmp(key,"parent")) {
         if (lua_isnil(L,3)) {
-            self->setParent(GfxBodyPtr(NULL));
+            self->setParent(GfxNodePtr(NULL));
         } else {
-            GET_UD_MACRO(GfxBodyPtr,par,3,GFXBODY_TAG);
+            GfxNodePtr par = check_gfx_node(L, 3);
             self->setParent(par);
         }
     } else if (!::strcmp(key,"castShadows")) {
@@ -722,7 +868,7 @@ TRY_START
     } else if (!::strcmp(key,"destroy")) {
         push_cfunction(L,gfxrangedinstances_destroy);
     } else if (!::strcmp(key,"parent")) {
-        push_gfxbody(L, self->getParent());
+        push_gfx_node_concrete(L, self->getParent());
     } else if (!::strcmp(key,"add")) {
         push_cfunction(L,gfxrangedinstances_add);
     } else if (!::strcmp(key,"update")) {
@@ -764,9 +910,9 @@ TRY_START
         self->setCastShadows(v);
     } else if (!::strcmp(key,"parent")) {
         if (lua_isnil(L,3)) {
-            self->setParent(GfxBodyPtr(NULL));
+            self->setParent(GfxNodePtr(NULL));
         } else {
-            GET_UD_MACRO(GfxBodyPtr,par,3,GFXBODY_TAG);
+            GfxNodePtr par = check_gfx_node(L, 3);
             self->setParent(par);
         }
     } else if (!::strcmp(key,"enabled")) {
@@ -868,7 +1014,7 @@ TRY_START
     } else if (!::strcmp(key,"destroy")) {
         push_cfunction(L,gfxinstances_destroy);
     } else if (!::strcmp(key,"parent")) {
-        push_gfxbody(L, self->getParent());
+        push_gfx_node_concrete(L, self->getParent());
     } else if (!::strcmp(key,"add")) {
         push_cfunction(L,gfxinstances_add);
     } else if (!::strcmp(key,"update")) {
@@ -911,9 +1057,9 @@ TRY_START
         self->setCastShadows(v);
     } else if (!::strcmp(key,"parent")) {
         if (lua_isnil(L,3)) {
-            self->setParent(GfxBodyPtr(NULL));
+            self->setParent(GfxNodePtr(NULL));
         } else {
-            GET_UD_MACRO(GfxBodyPtr,par,3,GFXBODY_TAG);
+            GfxNodePtr par = check_gfx_node(L, 3);
             self->setParent(par);
         }
     } else if (!::strcmp(key,"enabled")) {
@@ -1088,7 +1234,7 @@ TRY_START
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self->isEnabled());
     } else if (!::strcmp(key,"parent")) {
-        push_gfxbody(L, self->getParent());
+        push_gfx_node_concrete(L, self->getParent());
     } else if (!::strcmp(key,"nodeHACK")) {
         push_node(L, self->node);
     } else if (!::strcmp(key,"lightHACK")) {
@@ -1159,9 +1305,9 @@ TRY_START
         self->setEnabled(v);
     } else if (!::strcmp(key,"parent")) {
         if (lua_isnil(L,3)) {
-            self->setParent(GfxBodyPtr(NULL));
+            self->setParent(GfxNodePtr(NULL));
         } else {
-            GET_UD_MACRO(GfxBodyPtr,par,3,GFXBODY_TAG);
+            GfxNodePtr par = check_gfx_node(L, 3);
             self->setParent(par);
         }
     } else {
@@ -1740,7 +1886,7 @@ static int global_gfx_body_make (lua_State *L)
 {
 TRY_START
     if (lua_gettop(L)==0) {
-        push_gfxbody(L, GfxBody::make());
+        push_gfxnode(L, GfxNode::make());
     } else if (lua_gettop(L)==1) {
         std::string meshname = check_path(L,1);
         push_gfxbody(L, GfxBody::make(meshname));
@@ -4805,6 +4951,7 @@ static const luaL_reg global_ogre_debug[] = {
 
 void gfx_lua_init (lua_State *L)
 {
+    ADD_MT_MACRO(gfxnode,GFXNODE_TAG);
     ADD_MT_MACRO(gfxbody,GFXBODY_TAG);
     ADD_MT_MACRO(gfxskybody,GFXSKYBODY_TAG);
     ADD_MT_MACRO(gfxlight,GFXLIGHT_TAG);

@@ -26,10 +26,10 @@ typedef SharedPtr<GfxLight> GfxLightPtr;
 #define GFX_LIGHT_H
 
 #include "gfx.h"
-#include "GfxBody.h"
+#include "GfxNode.h"
 #include "GfxParticleSystem.h"
 
-class GfxLight : public GfxNode, public fast_erase_index {
+class GfxLight : public GfxLeaf, public fast_erase_index {
     protected:
     static const std::string className;
     bool enabled;
@@ -48,13 +48,13 @@ class GfxLight : public GfxNode, public fast_erase_index {
     Ogre::Light *light;
     protected:
 
-    GfxLight (const GfxBodyPtr &par_);
+    GfxLight (const GfxNodePtr &par_);
     ~GfxLight ();
 
     void updateVisibility (void);
 
     public:
-    static GfxLightPtr make (const GfxBodyPtr &par_=GfxBodyPtr(NULL))
+    static GfxLightPtr make (const GfxNodePtr &par_=GfxNodePtr(NULL))
     { return GfxLightPtr(new GfxLight(par_)); }
     
     Vector3 getDiffuseColour (void);

@@ -129,7 +129,6 @@ protected:
     Ogre::Matrix4 *mBoneWorldMatrices;
     Ogre::Matrix4 *mBoneMatrices;
     unsigned short mNumBoneMatrices;
-    unsigned long mFrameAnimationLastUpdated;
     Ogre::SkeletonInstance* mSkeletonInstance;
 
 };

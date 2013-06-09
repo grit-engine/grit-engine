@@ -53,7 +53,7 @@ static void validate_mesh (const Ogre::MeshPtr &mesh, const GfxStringMap &gsm)
 
 GfxBodyPtr GfxBody::make (const std::string &mesh_name,
                           const GfxStringMap &sm,
-                          const GfxBodyPtr &par_)
+                          const GfxNodePtr &par_)
 {
     DiskResource *dr = disk_resource_get(mesh_name);
     if (dr==NULL) GRIT_EXCEPT("No such resource: \""+mesh_name+"\"");
@@ -66,7 +66,7 @@ GfxBodyPtr GfxBody::make (const std::string &mesh_name,
     return GfxBodyPtr(new GfxBody(gdr, sm, par_));
 }
 
-GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxBodyPtr &par_)
+GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNodePtr &par_)
   : GfxNode(par_), initialMaterialMap(sm)
 {
 
@@ -266,21 +266,6 @@ void GfxBody::updateProperties (void)
     updateVisibility();
 }
 
-GfxBody::GfxBody (const GfxBodyPtr &par_)
-  : GfxNode(par_)
-{
-    memset(colours, 0, sizeof(colours));
-
-    mesh.setNull();
-
-    ent = NULL;
-    entEmissive = NULL;
-    fade = 1;
-    enabled = true;
-
-    gfx_all_bodies.push_back(this);
-}
-
 GfxBody::~GfxBody (void)
 {
     if (!dead) destroy();
@@ -289,10 +274,6 @@ GfxBody::~GfxBody (void)
 void GfxBody::destroy (void)
 {
     if (dead) THROW_DEAD(className);
-    for (unsigned i=0 ; i<children.size() ; ++i) {
-        children[i]->notifyParentDead();
-    }
-    children.clear();
     if (ent) delete ent;
     ent = NULL;
     if (entEmissive) ogre_sm->destroyEntity(entEmissive);
@@ -334,34 +315,6 @@ void GfxBody::setEmissiveEnabled (unsigned i, bool v)
     updateEntEmissive();
 }
 
-void GfxBody::notifyLostChild (GfxNode *child)
-{
-    unsigned ci = 0;
-    bool found_child = false;
-    for (unsigned i=0 ; i<children.size() ; ++i) {
-        if (children[i]==child) {
-            ci = i;
-            found_child = true;
-            break;
-        }
-    }
-    APP_ASSERT(found_child);
-    children[ci] = children[children.size()-1];
-    children.pop_back();
-}
-
-void GfxBody::notifyGainedChild (GfxNode *child)
-{
-    children.push_back(child);
-}
-
-void GfxBody::setParent (const GfxBodyPtr &par_)
-{
-    if (dead) THROW_DEAD(className);
-    if (!par_.isNull()) par_->ensureNotChildOf(this); // check that we are not a parent of par_
-    GfxNode::setParent(par_);
-}
-
 unsigned GfxBody::getBatches (void) const
 {
     if (!hasGraphics()) return 0;
@@ -370,14 +323,7 @@ unsigned GfxBody::getBatches (void) const
 
 unsigned GfxBody::getBatchesWithChildren (void) const
 {
-    unsigned total = getBatches();
-    for (unsigned i=0 ; i<children.size() ; ++i) {
-        GfxBody *child = dynamic_cast<GfxBody*>(children[i]);
-        if (child) {
-            total += child->getBatchesWithChildren();
-        }
-    }
-    return total;
+    return getBatches() + GfxNode::getBatchesWithChildren();
 }
 
 unsigned GfxBody::getVertexes (void) const
@@ -392,14 +338,7 @@ unsigned GfxBody::getVertexes (void) const
 
 unsigned GfxBody::getVertexesWithChildren (void) const
 {
-    unsigned total = getVertexes();
-    for (unsigned i=0 ; i<children.size() ; ++i) {
-        GfxBody *child = dynamic_cast<GfxBody*>(children[i]);
-        if (child) {
-            total += child->getVertexesWithChildren();
-        }
-    }
-    return total;
+    return getVertexes() + GfxNode::getVertexesWithChildren();
 }
 
 unsigned GfxBody::getTriangles (void) const
@@ -414,14 +353,7 @@ unsigned GfxBody::getTriangles (void) const
 
 unsigned GfxBody::getTrianglesWithChildren (void) const
 {
-    unsigned total = getTriangles();
-    for (unsigned i=0 ; i<children.size() ; ++i) {
-        GfxBody *child = dynamic_cast<GfxBody*>(children[i]);
-        if (child) {
-            total += child->getTrianglesWithChildren();
-        }
-    }
-    return total;
+    return getTriangles() + GfxNode::getTrianglesWithChildren();
 }
 
 float GfxBody::getFade (void)
