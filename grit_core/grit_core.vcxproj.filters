@@ -204,10 +204,10 @@
     <ClCompile Include="src\gfx\gfx_disk_resource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\gfx\GritEntity.cpp">
+    <ClCompile Include="src\gfx\GfxNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\gfx\GritSubEntity.cpp">
+    <ClCompile Include="src\gfx\GfxLeaf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
