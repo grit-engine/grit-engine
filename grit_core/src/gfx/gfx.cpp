@@ -222,6 +222,18 @@ GfxEnvCubeDiskResource *gfx_env_cube (void)
     return scene_env_cube;
 }
 
+static void reset_env_cube (const Ogre::MaterialPtr &m, GfxEnvCubeDiskResource *old, GfxEnvCubeDiskResource *nu)
+{
+    if (m.isNull()) return;
+    Ogre::Pass *p = m->getTechnique(0)->getPass(0);
+    for (unsigned i=0 ; i<p->getNumTextureUnitStates() ; ++i) {
+        Ogre::TextureUnitState *tus = p->getTextureUnitState(i);
+        if (tus->getTextureName() == old->getOgreTexturePtr()->getName()) {
+            tus->setTextureName(nu->getOgreTexturePtr()->getName());
+        }
+    }
+}
+
 void gfx_env_cube (GfxEnvCubeDiskResource *v)
 {
     if (v == scene_env_cube) return;
@@ -243,7 +255,21 @@ void gfx_env_cube (GfxEnvCubeDiskResource *v)
         bgl->finishedWith(scene_env_cube);
     }
 
+    for (unsigned long i=0 ; i<gfx_all_bodies.size() ; ++i) {
+        GfxBody *b = gfx_all_bodies[i];
+        for (unsigned j=0 ; j<b->getNumSubMeshes() ; ++j) {
+            GfxMaterial *m = b->getMaterial(j);
+            if (m->getSceneBlend() != GFX_MATERIAL_OPAQUE) {
+                reset_env_cube(m->regularMat, scene_env_cube, v);
+                reset_env_cube(m->fadingMat, scene_env_cube, v);
+                reset_env_cube(m->worldMat, scene_env_cube, v);
+                
+            }
+        }
+    }
+
     scene_env_cube = v;
+
 }
 
 GfxColourGradeLUTDiskResource *gfx_colour_grade (void)
@@ -507,8 +533,6 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 
 
         update_coronas(cam_pos);
-
-        handle_dirty_materials();
 
         // This pumps ogre's texture animation and probably other things
         ftcv->setValue(elapsed);

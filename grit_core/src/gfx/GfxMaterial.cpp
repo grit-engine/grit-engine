@@ -26,28 +26,6 @@
 #include "GfxBody.h"
 
 
-static std::set<GfxMaterial*> dirty_mats;
-void handle_dirty_materials (void)
-{
-    if (dirty_mats.empty()) return;
-
-    for (unsigned long i=0 ; i<gfx_all_bodies.size() ; ++i) {
-        GfxBody *b = gfx_all_bodies[i];
-        bool needs_update = false;
-        for (unsigned j=0 ; j<b->getNumSubMeshes() ; ++j) {
-            GfxMaterial *m = b->getMaterial(j);
-            if (dirty_mats.find(m)!=dirty_mats.end()) {
-                needs_update = true;
-            }
-        }
-        if (needs_update) {
-            b->updateProperties();
-        }
-    }
-    
-    dirty_mats.clear();
-}
-
 boost::recursive_mutex gfx_material_lock;
 
 GfxMaterial::GfxMaterial (const std::string &name_)
@@ -83,14 +61,12 @@ void GfxMaterial::setSceneBlend (GfxMaterialSceneBlend v)
 {
     GFX_MAT_SYNC;
     sceneBlend = v;
-    dirty_mats.insert(this);
 }
 
 void GfxMaterial::setStipple (bool v)
 {   
     GFX_MAT_SYNC;
     stipple = v;
-    dirty_mats.insert(this);
 }       
         
 void GfxMaterial::setEmissiveColour (const Vector3 &v)
@@ -103,7 +79,6 @@ void GfxMaterial::setEmissiveColour (const Vector3 &v)
     } else {
             emissiveMat.setNull();
     }
-    dirty_mats.insert(this);
 }   
     
 GfxMaterial *gfx_material_add (const std::string &name)

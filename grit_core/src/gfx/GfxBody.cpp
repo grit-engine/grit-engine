@@ -107,11 +107,6 @@ const Ogre::MaterialPtr& GfxBody::Sub::getMaterial(void) const
 
 
 
-//-----------------------------------------------------------------------
-void GfxBody::_updateAnimation(void)
-{
-}
-
 
 // {{{ RENDERING
 
@@ -121,7 +116,7 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
 
     // Since we know we're going to be rendered, take this opportunity to
     // update the animation
-    if (skeleton) {
+    if (skeleton && freshFrame) {
 
         //update the current hardware animation state
         skeleton->setAnimationState(animationState);
@@ -145,6 +140,16 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
     for (unsigned i=0 ; i<subList.size() ; ++i) {
 
         Sub *sub = subList[i];
+
+        // car paint
+        if (freshFrame) {
+            sub->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
+            for (int k=0 ; k<4 ; ++k) {
+                const GfxPaintColour &c = colours[k];
+                sub->setCustomParameter(2*k+1, Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, c.met));
+                sub->setCustomParameter(2*k+2, Ogre::Vector4(c.spec.x, c.spec.y, c.spec.z, 0.0f));
+            }
+        }
 
         GfxMaterial *m = sub->material;
 
@@ -170,7 +175,7 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
             }
             queue->addRenderable(sub, queue_group, 0);
 
-            if (actual_render && !m->emissiveMat.isNull() && emissiveEnabled[i]) {
+            if (actual_render && !m->emissiveMat.isNull() && sub->emissiveEnabled) {
                 renderMaterial = m->emissiveMat;
                 switch (m->getSceneBlend()) {
                     case GFX_MATERIAL_OPAQUE:      queue_group = RQ_FORWARD_OPAQUE_EMISSIVE; break;
@@ -191,6 +196,7 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
 
     renderMaterial.setNull();
 
+    freshFrame = actual_render;
 }
 
 void GfxBody::visitRenderables(Ogre::Renderable::Visitor* visitor, bool)
@@ -231,25 +237,6 @@ static const std::string &apply_map (const GfxStringMap &sm, const std::string &
     return i==sm.end() ? s : i->second;
 }
 
-static void validate_mesh (const Ogre::MeshPtr &mesh, const GfxStringMap &gsm)
-{
-/*
-    for (GfxStringMap::const_iterator i=gsm.begin(),i_=gsm.end() ; i!=i_ ; ++i) {
-        CVERB << i->first << " " << i->second << std::endl;
-    }
-*/
-    for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
-        Ogre::SubMesh *sm = mesh->getSubMesh(i);
-        std::string matname = apply_map(gsm, sm->getMaterialName());
-        if (!gfx_material_has(matname)) {
-            CERR << "Mesh \"/"<<mesh->getName()<<"\" references non-existing material "
-                 << "\""<<matname<<"\""<<std::endl;
-            matname = "/system/FallbackMaterial";
-            sm->setMaterialName(matname);
-        }
-    }
-}
-
 GfxBodyPtr GfxBody::make (const std::string &mesh_name,
                           const GfxStringMap &sm,
                           const GfxNodePtr &par_)
@@ -281,27 +268,11 @@ GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNod
     castShadows = false;
     skeleton = NULL;
     wireframe = false;
+    freshFrame = true;
 
     reinitialise();
 
     gfx_all_bodies.push_back(this);
-}
-
-void GfxBody::updateMaterials (void)
-{
-    GFX_MAT_SYNC;
-    validate_mesh(mesh, initialMaterialMap);
-    materials = std::vector<GfxMaterial*>(mesh->getNumSubMeshes());
-    for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
-        Ogre::SubMesh *sm = mesh->getSubMesh(i);
-        std::string matname = apply_map(initialMaterialMap, sm->getMaterialName());
-        materials[i] = gfx_material_get(matname);
-    }
-    unsigned old_size = emissiveEnabled.size();
-    emissiveEnabled.resize(mesh->getNumSubMeshes());
-    for (unsigned i=old_size ; i<emissiveEnabled.size() ; ++i) {
-        emissiveEnabled[i] = true;
-    }
 }
 
 unsigned GfxBody::getSubMeshByOriginalMaterialName (const std::string &n)
@@ -345,16 +316,24 @@ void GfxBody::destroyGraphics (void)
 
 void GfxBody::reinitialise (void)
 {
-    updateMaterials();
-
     APP_ASSERT(mesh->isLoaded());
 
     destroyGraphics();
 
     for (unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i) {
-        Sub* sub_ent = new Sub(this, mesh->getSubMesh(i));
-        subList.push_back(sub_ent);
+        Ogre::SubMesh *sm = mesh->getSubMesh(i);
+        Sub* sub = new Sub(this, sm);
+        subList.push_back(sub);
+        GFX_MAT_SYNC;
+        std::string matname = apply_map(initialMaterialMap, sm->getMaterialName());
+        if (!gfx_material_has(matname)) {
+            CERR << "Mesh \"/"<<mesh->getName()<<"\" references non-existing material "
+                 << "\""<<matname<<"\""<<std::endl;
+            matname = "/system/FallbackMaterial";
+        }
+        sub->material = gfx_material_get(matname);
     }
+
 
     if (!mesh->getSkeleton().isNull()) {
         skeleton = OGRE_NEW Ogre::SkeletonInstance(mesh->getSkeleton());
@@ -371,47 +350,7 @@ void GfxBody::reinitialise (void)
         boneWorldMatrices = NULL;
     }
 
-    updateProperties();
     updateBones();
-}
-
-void GfxBody::updateVisibility (void)
-{
-    // avoid the draw entirely if faded out
-
-    for (unsigned i=0 ; i<subList.size() ; ++i) {
-        Sub *se = subList[i];
-        // fading in/out (either stipple or alpha factor)
-        se->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
-    }
-
-}
-
-// Currently needs to be updated when these material properties change:
-// getSceneBlend
-// getStipple
-// emissiveMat
-void GfxBody::updateProperties (void)
-{
-    GFX_MAT_SYNC;
-
-    for (unsigned i=0 ; i<subList.size() ; ++i) {
-
-        Sub *se = subList[i];
-
-        GfxMaterial *gfx_material = materials[i];
-
-        se->material = gfx_material;
-
-        // car paint
-        for (int k=0 ; k<4 ; ++k) {
-            const GfxPaintColour &c = colours[k];
-            se->setCustomParameter(2*k+1, Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, c.met));
-            se->setCustomParameter(2*k+2, Ogre::Vector4(c.spec.x, c.spec.y, c.spec.z, 0.0f));
-        }
-    }
-
-    updateVisibility();
 }
 
 GfxBody::~GfxBody (void)
@@ -429,39 +368,38 @@ void GfxBody::destroy (void)
 
 GfxMaterial *GfxBody::getMaterial (unsigned i)
 {
-    if (i >= materials.size()) GRIT_EXCEPT("Submesh id out of range. ");
-    return materials[i];
+    if (i >= subList.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    return subList[i]->material;
 }
 
 const std::string &GfxBody::getOriginalMaterialName (unsigned i)
 {
-    if (i >= materials.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    if (i >= subList.size()) GRIT_EXCEPT("Submesh id out of range. ");
     return mesh->getSubMesh(i)->getMaterialName();
 }
 
 void GfxBody::setMaterial (unsigned i, GfxMaterial *m)
 {
-    if (i >= materials.size()) GRIT_EXCEPT("Submesh id out of range. ");
-    if (materials[i] == m) return;
-    materials[i] = m;
-    updateProperties();
+    if (i >= subList.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    if (subList[i]->material == m) return;
+    subList[i]->material = m;
 }
 
 bool GfxBody::getEmissiveEnabled (unsigned i)
 {
-    if (i >= emissiveEnabled.size()) GRIT_EXCEPT("Submesh id out of range. ");
-    return emissiveEnabled[i];
+    if (i >= subList.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    return subList[i]->emissiveEnabled;
 }
 
 void GfxBody::setEmissiveEnabled (unsigned i, bool v)
 {
-    if (i >= emissiveEnabled.size()) GRIT_EXCEPT("Submesh id out of range. ");
-    emissiveEnabled[i] = v;
+    if (i >= subList.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    subList[i]->emissiveEnabled = v;
 }
 
 unsigned GfxBody::getBatches (void) const
 {
-    return materials.size();
+    return subList.size();
 }
 
 unsigned GfxBody::getBatchesWithChildren (void) const
@@ -471,9 +409,7 @@ unsigned GfxBody::getBatchesWithChildren (void) const
 
 unsigned GfxBody::getVertexes (void) const
 {
-    unsigned total = 0;
-    total += mesh->sharedVertexData->vertexCount;
-    return total;
+    return mesh->sharedVertexData->vertexCount;
 }
 
 unsigned GfxBody::getVertexesWithChildren (void) const
@@ -504,7 +440,6 @@ void GfxBody::setFade (float f)
 {
     if (dead) THROW_DEAD(className);
     fade = f;
-    updateVisibility();
 }
 
 bool GfxBody::getCastShadows (void)
@@ -536,7 +471,6 @@ void GfxBody::setPaintColour (int i, const GfxPaintColour &c)
 {
     if (dead) THROW_DEAD(className);
     colours[i] = c;
-    updateProperties();
 }
 
 unsigned GfxBody::getNumBones (void)
@@ -716,7 +650,6 @@ void GfxBody::setEnabled (bool v)
 {
     if (dead) THROW_DEAD(className);
     enabled = v;
-    updateVisibility();
 }
 
 const std::string &GfxBody::getMeshName (void)

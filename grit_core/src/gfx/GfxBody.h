@@ -36,7 +36,7 @@ extern fast_erase_vector<GfxBody*> gfx_all_bodies;
 
 class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObject {
 
-    public:
+    protected:
 
     class Sub : public Ogre::Renderable {
 
@@ -57,6 +57,7 @@ class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObj
         Ogre::SubMesh* getSubMesh(void) const { return subMesh; }
 
         GfxMaterial *material;
+        bool emissiveEnabled;
 
         const Ogre::MaterialPtr& getMaterial(void) const;
 
@@ -82,10 +83,6 @@ class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObj
 
     const std::string& getMovableType (void) const { return className; }
 
-    void _updateAnimation (void);
-
-    protected:
-
     typedef std::vector<Sub*> SubList;
     SubList subList;
 
@@ -95,6 +92,8 @@ class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObj
     Ogre::Matrix4 *boneMatrices;
     unsigned short numBoneMatrices;
     Ogre::SkeletonInstance* skeleton;
+    
+    bool freshFrame; // an optimisation -- do not recalculate stuff multiple times per frame
 
 
 
@@ -105,8 +104,6 @@ class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObj
     protected:
     float fade;
     Ogre::MaterialPtr renderMaterial;
-    GfxMaterials materials;
-    std::vector<bool> emissiveEnabled;
     GfxPaintColour colours[4];
     bool enabled;
     bool castShadows;
@@ -129,17 +126,14 @@ class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObj
     void setMaterial (unsigned i, GfxMaterial *m);
     bool getEmissiveEnabled (unsigned i);
     void setEmissiveEnabled (unsigned i, bool v);
-    unsigned getNumSubMeshes (void) { return materials.size(); }
+    unsigned getNumSubMeshes (void) { return subList.size(); }
 
     protected:
     void destroyGraphics (void);
-    void updateVisibility (void);
-    void updateMaterials (void);
     void updateBones (void);
     void checkBone (unsigned n);
     Ogre::AnimationState *getAnimState (const std::string &name);
     public:
-    void updateProperties (void);
     void reinitialise (void);
 
     unsigned getBatches (void) const;
