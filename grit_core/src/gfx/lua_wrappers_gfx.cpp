@@ -656,6 +656,8 @@ TRY_START
         lua_pushnumber(L, self->getFade());
     } else if (!::strcmp(key,"castShadows")) {
         lua_pushboolean(L, self->getCastShadows());
+    } else if (!::strcmp(key,"wireframe")) {
+        lua_pushboolean(L, self->getWireframe());
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self->isEnabled());
 
@@ -772,6 +774,9 @@ TRY_START
     } else if (!::strcmp(key,"castShadows")) {
         bool v = check_bool(L,3);
         self->setCastShadows(v);
+    } else if (!::strcmp(key,"wireframe")) {
+        bool v = check_bool(L,3);
+        self->setWireframe(v);
     } else if (!::strcmp(key,"enabled")) {
         bool v = check_bool(L,3);
         self->setEnabled(v);
@@ -4062,6 +4067,7 @@ TRY_START
         gfxmat->regularMat = Ogre::MaterialManager::getSingleton().getByName(name,"GRIT");
         gfxmat->fadingMat = gfxmat->regularMat;
         gfxmat->worldMat = Ogre::MaterialManager::getSingleton().getByName(name+"&","GRIT");
+        gfxmat->wireframeMat = Ogre::MaterialManager::getSingleton().getByName(name+"|","GRIT");
 
         Vector3 emissive_colour;
         t.get("emissiveColour",emissive_colour,Vector3(0,0,0));

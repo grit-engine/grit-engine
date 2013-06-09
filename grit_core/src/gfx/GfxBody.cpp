@@ -19,12 +19,211 @@
  * THE SOFTWARE.
  */
 
+#include "OgreSceneManager.h"
+#include "OgreSkeleton.h"
+#include "OgreAxisAlignedBox.h"
+#include "OgreVector4.h"
+#include "OgreSkeletonInstance.h"
+#include "OgreAnimation.h"
+#include "OgreOptimisedUtil.h"
+#include "OgreSubMesh.h"
+
+#include "../CentralisedLog.h"
+
 #include "gfx_internal.h"
 
 #include "GfxBody.h"
-#include "GritEntity.h"
 
 const std::string GfxBody::className = "GfxBody";
+
+
+// {{{ Sub
+
+unsigned short GfxBody::Sub::getNumWorldTransforms(void) const
+{
+    if (!parent->numBoneMatrices) {
+        // No skeletal animation, or software skinning
+        return 1;
+    }
+
+    // Hardware skinning, count all actually used matrices
+    const Ogre::Mesh::IndexMap& indexMap = subMesh->useSharedVertices ?
+        subMesh->parent->sharedBlendIndexToBoneIndexMap : subMesh->blendIndexToBoneIndexMap;
+    APP_ASSERT(indexMap.size() <= parent->numBoneMatrices);
+
+    return static_cast<unsigned short>(indexMap.size());
+}
+
+void GfxBody::Sub::getWorldTransforms(Ogre::Matrix4* xform) const
+{
+    if (!parent->numBoneMatrices) {
+        // No skeletal animation, or software skinning
+        *xform = parent->_getParentNodeFullTransform();
+        return;
+    }
+
+    // Hardware skinning, pass all actually used matrices
+    const Ogre::Mesh::IndexMap& indexMap = subMesh->useSharedVertices ?
+        subMesh->parent->sharedBlendIndexToBoneIndexMap : subMesh->blendIndexToBoneIndexMap;
+    APP_ASSERT(indexMap.size() <= parent->numBoneMatrices);
+
+    if (parent->boneWorldMatrices) {
+
+        // Bones, use cached matrices built when _updateRenderQueue was called
+        for (Ogre::Mesh::IndexMap::const_iterator i=indexMap.begin(),i_=indexMap.end() ; i!=i_; ++i) {
+            *(xform++) = parent->boneWorldMatrices[*i];
+        }
+
+    } else {
+
+        // All animations disabled, use parent GfxBody world transform only
+        std::fill_n(xform, indexMap.size(), parent->_getParentNodeFullTransform());
+    }
+}
+
+Ogre::Real GfxBody::Sub::getSquaredViewDepth (const Ogre::Camera* cam) const
+{
+    return parent->getParentSceneNode()->getSquaredViewDepth(cam);
+}
+
+const Ogre::LightList& GfxBody::Sub::getLights (void) const
+{
+    return parent->queryLights();
+}
+
+bool GfxBody::Sub::getCastsShadows (void) const
+{
+    return parent->getCastShadows();
+}
+
+const Ogre::MaterialPtr& GfxBody::Sub::getMaterial(void) const
+{
+    return parent->renderMaterial;
+}
+
+
+// }}}
+
+
+
+
+//-----------------------------------------------------------------------
+void GfxBody::_updateAnimation(void)
+{
+}
+
+
+// {{{ RENDERING
+
+void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
+{
+    if (!enabled || fade < 0.000001) return;
+
+    // Since we know we're going to be rendered, take this opportunity to
+    // update the animation
+    if (skeleton) {
+
+        //update the current hardware animation state
+        skeleton->setAnimationState(animationState);
+        skeleton->_getBoneMatrices(boneMatrices);
+
+        Ogre::OptimisedUtil::getImplementation()->concatenateAffineMatrices(
+            _getParentNodeFullTransform(),
+            boneMatrices,
+            boneWorldMatrices,
+            numBoneMatrices);
+
+    }
+
+    // i.e. not preparing shadow textures, etc
+    bool actual_render = ogre_sm->_getCurrentRenderStage() == Ogre::SceneManager::IRS_NONE;
+
+    bool do_wireframe = (wireframe || gfx_option(GFX_WIREFRAME)) && actual_render;
+    bool do_regular = !(do_wireframe && gfx_option(GFX_WIREFRAME_SOLID));
+
+    // Add each visible Sub to the queue
+    for (unsigned i=0 ; i<subList.size() ; ++i) {
+
+        Sub *sub = subList[i];
+
+        GfxMaterial *m = sub->material;
+
+        if (do_regular) {
+            /* TODO: include other criteria to pick a specific Ogre::Material:
+             * bones: 1 2 3 4
+             * vertex colours: false/true
+             * vertex alpha: false/true
+             * Fading: false/true
+             * World: false/true
+             */
+            if (fade < 1 && !m->getStipple()) {
+                renderMaterial = m->fadingMat;
+            } else {
+                renderMaterial = m->regularMat;
+            }
+
+            int queue_group = RQ_GBUFFER_OPAQUE;
+            switch (m->getSceneBlend()) {
+                case GFX_MATERIAL_OPAQUE:      queue_group = RQ_GBUFFER_OPAQUE; break;
+                case GFX_MATERIAL_ALPHA:       queue_group = RQ_FORWARD_ALPHA; break;
+                case GFX_MATERIAL_ALPHA_DEPTH: queue_group = RQ_FORWARD_ALPHA_DEPTH; break;
+            }
+            queue->addRenderable(sub, queue_group, 0);
+
+            if (actual_render && !m->emissiveMat.isNull() && emissiveEnabled[i]) {
+                renderMaterial = m->emissiveMat;
+                switch (m->getSceneBlend()) {
+                    case GFX_MATERIAL_OPAQUE:      queue_group = RQ_FORWARD_OPAQUE_EMISSIVE; break;
+                    case GFX_MATERIAL_ALPHA:       queue_group = RQ_FORWARD_ALPHA_EMISSIVE; break;
+                    case GFX_MATERIAL_ALPHA_DEPTH: queue_group = RQ_FORWARD_ALPHA_DEPTH_EMISSIVE; break;
+                }
+                queue->addRenderable(sub, queue_group, 0);
+            }
+        }
+
+        if (do_wireframe) {
+            renderMaterial = m->wireframeMat;
+            queue->addRenderable(sub, RQ_FORWARD_ALPHA, 0);
+        }
+
+
+    }
+
+    renderMaterial.setNull();
+
+}
+
+void GfxBody::visitRenderables(Ogre::Renderable::Visitor* visitor, bool)
+{
+    // Visit each Sub
+    for (SubList::iterator i = subList.begin(); i != subList.end(); ++i) {
+        GfxMaterial *m = (*i)->material;
+        renderMaterial = m->regularMat;
+        visitor->visit(*i, 0, false);
+        renderMaterial.setNull();
+    }
+}
+
+
+const Ogre::AxisAlignedBox& GfxBody::getBoundingBox(void) const
+{
+    return mesh->getBounds();
+}
+
+Ogre::Real GfxBody::getBoundingRadius(void) const
+{
+    return mesh->getBoundingSphereRadius();
+}
+
+ // }}}
+
+
+
+
+
+
+
+
 
 static const std::string &apply_map (const GfxStringMap &sm, const std::string &s)
 {
@@ -69,6 +268,7 @@ GfxBodyPtr GfxBody::make (const std::string &mesh_name,
 GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNodePtr &par_)
   : GfxNode(par_), initialMaterialMap(sm)
 {
+    node->attachObject(this);
 
     mesh = gdr->getOgreMeshPtr();
 
@@ -76,11 +276,11 @@ GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNod
 
     memset(colours, 0, sizeof(colours));
 
-    ent = NULL;
-    entEmissive = NULL;
     fade = 1;
     enabled = true;
     castShadows = false;
+    skeleton = NULL;
+    wireframe = false;
 
     reinitialise();
 
@@ -90,7 +290,6 @@ GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNod
 void GfxBody::updateMaterials (void)
 {
     GFX_MAT_SYNC;
-    if (mesh.isNull()) return;
     validate_mesh(mesh, initialMaterialMap);
     materials = std::vector<GfxMaterial*>(mesh->getNumSubMeshes());
     for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
@@ -119,94 +318,73 @@ unsigned GfxBody::getSubMeshByOriginalMaterialName (const std::string &n)
 
 void GfxBody::updateBones (void)
 {
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) {
+    if (skeleton == NULL) {
         manualBones.clear();
         return;
     }
-    manualBones.resize(skel->getNumBones());
-    for (unsigned i=0 ; i<skel->getNumBones() ; ++i) {
-        skel->getBone(i)->setManuallyControlled(manualBones[i]);
+    manualBones.resize(skeleton->getNumBones());
+    for (unsigned i=0 ; i<skeleton->getNumBones() ; ++i) {
+        skeleton->getBone(i)->setManuallyControlled(manualBones[i]);
     }
-    skel->_notifyManualBonesDirty(); // HACK: ogre should do this itself
+    skeleton->_notifyManualBonesDirty(); // HACK: ogre should do this itself
+}
+
+void GfxBody::destroyGraphics (void)
+{
+    for (SubList::iterator i=subList.begin(),i_=subList.end() ; i!=i_ ; ++i) {
+        delete *i;
+    }
+    subList.clear();
+    
+    if (skeleton) {
+        OGRE_FREE_SIMD(boneWorldMatrices, Ogre::MEMCATEGORY_ANIMATION);
+        OGRE_DELETE skeleton;
+        OGRE_FREE_SIMD(boneMatrices, Ogre::MEMCATEGORY_ANIMATION);
+    }
 }
 
 void GfxBody::reinitialise (void)
 {
     updateMaterials();
-    if (entEmissive) ogre_sm->destroyEntity(entEmissive);
-    entEmissive = NULL;
 
-    if (ent!=NULL) delete ent;
-    ent = new GritEntity(freshname(), mesh);
-    node->attachObject(ent);
+    APP_ASSERT(mesh->isLoaded());
+
+    destroyGraphics();
+
+    for (unsigned short i = 0; i < mesh->getNumSubMeshes(); ++i) {
+        Sub* sub_ent = new Sub(this, mesh->getSubMesh(i));
+        subList.push_back(sub_ent);
+    }
+
+    if (!mesh->getSkeleton().isNull()) {
+        skeleton = OGRE_NEW Ogre::SkeletonInstance(mesh->getSkeleton());
+        skeleton->load();
+        numBoneMatrices = skeleton->getNumBones();
+        boneMatrices      = static_cast<Ogre::Matrix4*>(OGRE_MALLOC_SIMD(sizeof(Ogre::Matrix4) * numBoneMatrices, Ogre::MEMCATEGORY_ANIMATION));
+        boneWorldMatrices = static_cast<Ogre::Matrix4*>(OGRE_MALLOC_SIMD(sizeof(Ogre::Matrix4) * numBoneMatrices, Ogre::MEMCATEGORY_ANIMATION));
+
+        mesh->_initAnimationState(&animationState);
+    } else {
+        skeleton = NULL;
+        numBoneMatrices = 0;
+        boneMatrices      = NULL;
+        boneWorldMatrices = NULL;
+    }
+
     updateProperties();
     updateBones();
 }
 
 void GfxBody::updateVisibility (void)
 {
-    if (ent==NULL) return;
     // avoid the draw entirely if faded out
-    ent->setVisible(enabled && fade > 0.001);
-    if (entEmissive) entEmissive->setVisible(enabled && fade > 0.001);
 
-    for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
-        GritEntity::Sub *se = ent->getSubEntity(i);
+    for (unsigned i=0 ; i<subList.size() ; ++i) {
+        Sub *se = subList[i];
         // fading in/out (either stipple or alpha factor)
         se->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
     }
 
-    if (entEmissive != NULL) {
-        for (unsigned i=0 ; i<entEmissive->getNumSubEntities() ; ++i) {
-            Ogre::SubEntity *se = entEmissive->getSubEntity(i);
-            // fading in/out (either stipple or alpha factor)
-            se->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
-        }
-    }
-
-}
-
-void GfxBody::updateEntEmissive (void)
-{
-    GFX_MAT_SYNC;
-    if (ent==NULL) return;
-    if (entEmissive != NULL) {
-        // destroy it if we've already got one
-        ogre_sm->destroyEntity(entEmissive);
-        entEmissive = NULL;
-    }
-    bool needs_emissive = false;
-    for (unsigned i=0 ; i<materials.size() ; ++i) {
-        GfxMaterial *gfx_material = materials[i];
-        if (!gfx_material->emissiveMat.isNull() && emissiveEnabled[i]) {
-            needs_emissive = true;
-        }
-    }
-    if (!needs_emissive) return;
-    entEmissive = ogre_sm->createEntity(freshname(), mesh->getName());
-    node->attachObject(entEmissive);
-    for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
-        GfxMaterial *gfx_material = materials[i];
-        Ogre::SubEntity *se = entEmissive->getSubEntity(i);
-        if (!gfx_material->emissiveMat.isNull() && emissiveEnabled[i]) {
-            se->setMaterial(gfx_material->emissiveMat);
-            switch (gfx_material->getSceneBlend()) {
-                case GFX_MATERIAL_OPAQUE:
-                se->setRenderQueueGroup(RQ_FORWARD_OPAQUE_EMISSIVE);
-                break;
-                case GFX_MATERIAL_ALPHA:
-                se->setRenderQueueGroup(RQ_FORWARD_ALPHA_EMISSIVE);
-                break;
-                case GFX_MATERIAL_ALPHA_DEPTH:
-                se->setRenderQueueGroup(RQ_FORWARD_ALPHA_DEPTH_EMISSIVE);
-                break;
-            }
-        } else {
-            se->setVisible(false);
-        }
-    }
-    updateVisibility();
 }
 
 // Currently needs to be updated when these material properties change:
@@ -217,41 +395,13 @@ void GfxBody::updateProperties (void)
 {
     GFX_MAT_SYNC;
 
-    if (ent==NULL) return;
+    for (unsigned i=0 ; i<subList.size() ; ++i) {
 
-    ent->setCastShadows(castShadows);
-
-    for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
-
-        GritEntity::Sub *se = ent->getSubEntity(i);
+        Sub *se = subList[i];
 
         GfxMaterial *gfx_material = materials[i];
 
-        switch (gfx_material->getSceneBlend()) {
-            case GFX_MATERIAL_OPAQUE:
-            se->setRenderQueueGroup(RQ_GBUFFER_OPAQUE);
-            break;
-            case GFX_MATERIAL_ALPHA:
-            se->setRenderQueueGroup(RQ_FORWARD_ALPHA);
-            break;
-            case GFX_MATERIAL_ALPHA_DEPTH:
-            se->setRenderQueueGroup(RQ_FORWARD_ALPHA_DEPTH);
-            break;
-        }
-
-        // materials
-        /* TODO: include other criteria to pick a specific Ogre::Material:
-         * bones: 1 2 3 4
-         * vertex colours: false/true
-         * vertex alpha: false/true
-         * Fading: false/true
-         * World: false/true
-         */
-        if (fade < 1 && !gfx_material->getStipple()) {
-            se->setMaterial(gfx_material->fadingMat);
-        } else {
-            se->setMaterial(gfx_material->regularMat);
-        }
+        se->material = gfx_material;
 
         // car paint
         for (int k=0 ; k<4 ; ++k) {
@@ -260,8 +410,6 @@ void GfxBody::updateProperties (void)
             se->setCustomParameter(2*k+2, Ogre::Vector4(c.spec.x, c.spec.y, c.spec.z, 0.0f));
         }
     }
-
-    updateEntEmissive();
 
     updateVisibility();
 }
@@ -274,10 +422,7 @@ GfxBody::~GfxBody (void)
 void GfxBody::destroy (void)
 {
     if (dead) THROW_DEAD(className);
-    if (ent) delete ent;
-    ent = NULL;
-    if (entEmissive) ogre_sm->destroyEntity(entEmissive);
-    entEmissive = NULL;
+    destroyGraphics();
     gfx_all_bodies.erase(this);
     GfxNode::destroy();
 }
@@ -312,12 +457,10 @@ void GfxBody::setEmissiveEnabled (unsigned i, bool v)
 {
     if (i >= emissiveEnabled.size()) GRIT_EXCEPT("Submesh id out of range. ");
     emissiveEnabled[i] = v;
-    updateEntEmissive();
 }
 
 unsigned GfxBody::getBatches (void) const
 {
-    if (!hasGraphics()) return 0;
     return materials.size();
 }
 
@@ -328,11 +471,8 @@ unsigned GfxBody::getBatchesWithChildren (void) const
 
 unsigned GfxBody::getVertexes (void) const
 {
-    if (!hasGraphics()) return 0;
     unsigned total = 0;
-    for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
-        total += ent->getMesh()->sharedVertexData->vertexCount;
-    }
+    total += mesh->sharedVertexData->vertexCount;
     return total;
 }
 
@@ -343,10 +483,9 @@ unsigned GfxBody::getVertexesWithChildren (void) const
 
 unsigned GfxBody::getTriangles (void) const
 {
-    if (!hasGraphics()) return 0;
     unsigned total = 0;
-    for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
-        total += ent->getSubEntity(i)->getSubMesh()->indexData->indexCount/3;
+    for (unsigned i=0 ; i<subList.size() ; ++i) {
+        total += subList[i]->getSubMesh()->indexData->indexCount/3;
     }
     return total;
 }
@@ -359,14 +498,11 @@ unsigned GfxBody::getTrianglesWithChildren (void) const
 float GfxBody::getFade (void)
 {
     if (dead) THROW_DEAD(className);
-    // It's convenient to just set fade for all nodes in the hierarchy
-    //if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     return fade;
 }
 void GfxBody::setFade (float f)
 {
     if (dead) THROW_DEAD(className);
-    //if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     fade = f;
     updateVisibility();
 }
@@ -378,9 +514,17 @@ bool GfxBody::getCastShadows (void)
 void GfxBody::setCastShadows (bool v)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     castShadows = v;
-    ent->setCastShadows(v);
+}
+
+bool GfxBody::getWireframe (void)
+{
+    return wireframe;
+}
+void GfxBody::setWireframe (bool v)
+{
+    if (dead) THROW_DEAD(className);
+    wireframe = v;
 }
 
 GfxPaintColour GfxBody::getPaintColour (int i)
@@ -398,22 +542,20 @@ void GfxBody::setPaintColour (int i, const GfxPaintColour &c)
 unsigned GfxBody::getNumBones (void)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     return manualBones.size();
 }
 
 unsigned GfxBody::getBoneId (const std::string name)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    if (!skel->hasBone(name)) GRIT_EXCEPT("GfxBody has no bone \""+name+"\"");
-    return skel->getBone(name)->getHandle();
+    if (skeleton == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (!skeleton->hasBone(name)) GRIT_EXCEPT("GfxBody has no bone \""+name+"\"");
+    return skeleton->getBone(name)->getHandle();
 }
 
 void GfxBody::checkBone (unsigned n)
 {
+    if (dead) THROW_DEAD(className);
     if (manualBones.size()==0) GRIT_EXCEPT("GfxBody has no skeleton");
     if (n >= manualBones.size()) {
         std::stringstream ss;
@@ -424,26 +566,18 @@ void GfxBody::checkBone (unsigned n)
 
 const std::string &GfxBody::getBoneName (unsigned n)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    return skel->getBone(n)->getName();
+    return skeleton->getBone(n)->getName();
 }
 
 bool GfxBody::getBoneManuallyControlled (unsigned n)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
     return manualBones[n];
 }
 
 void GfxBody::setBoneManuallyControlled (unsigned n, bool v)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
     manualBones[n] = v;
     updateBones();
@@ -452,7 +586,6 @@ void GfxBody::setBoneManuallyControlled (unsigned n, bool v)
 void GfxBody::setAllBonesManuallyControlled (bool v)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     for (unsigned i=0 ; i<manualBones.size() ; ++i) {
         manualBones[i] = v;
     }
@@ -461,90 +594,58 @@ void GfxBody::setAllBonesManuallyControlled (bool v)
 
 Vector3 GfxBody::getBoneInitialPosition (unsigned n)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::Bone *bone = skel->getBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
     return from_ogre(bone->getInitialPosition());
 }
 
 Vector3 GfxBody::getBoneWorldPosition (unsigned n)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::Bone *bone = skel->getBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
     return from_ogre(bone->_getDerivedPosition());
 }
 
 Vector3 GfxBody::getBoneLocalPosition (unsigned n)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::Bone *bone = skel->getBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
     return from_ogre(bone->getPosition());
 }
 
 Quaternion GfxBody::getBoneInitialOrientation (unsigned n)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::Bone *bone = skel->getBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
     return from_ogre(bone->getInitialOrientation());
 }
 
 Quaternion GfxBody::getBoneWorldOrientation (unsigned n)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::Bone *bone = skel->getBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
     return from_ogre(bone->_getDerivedOrientation());
 }
 
 Quaternion GfxBody::getBoneLocalOrientation (unsigned n)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::Bone *bone = skel->getBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
     return from_ogre(bone->getOrientation());
 }
 
 
 void GfxBody::setBoneLocalPosition (unsigned n, const Vector3 &v)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::Bone *bone = skel->getBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
     bone->setPosition(to_ogre(v));
 }
 
 void GfxBody::setBoneLocalOrientation (unsigned n, const Quaternion &v)
 {
-    if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
     checkBone(n);
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::Bone *bone = skel->getBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
     bone->setOrientation(to_ogre(v));
 }
 
@@ -553,24 +654,20 @@ std::vector<std::string> GfxBody::getAnimationNames (void)
     std::vector<std::string> r;
 
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
 
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    if (skeleton == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     
-    Ogre::AnimationStateIterator it = ent->getAllAnimationStates().getAnimationStateIterator();
+    Ogre::AnimationStateIterator it = animationState.getAnimationStateIterator();
 
     while (it.hasMoreElements()) r.push_back(it.getNext()->getAnimationName());
 
     return r;
 }
 
-static Ogre::AnimationState *get_anim_state (GritEntity *ent, const std::string &name)
+Ogre::AnimationState *GfxBody::getAnimState (const std::string &name)
 {
-    Ogre::Skeleton *skel = ent->getSkeleton();
-    if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::AnimationStateSet &anim_set = ent->getAllAnimationStates();
-    Ogre::AnimationState *state = anim_set.getAnimationState(name);
+    if (skeleton == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    Ogre::AnimationState *state = animationState.getAnimationState(name);
     if (state == NULL) GRIT_EXCEPT("GfxBody has no animation called \""+name+"\"");
     return state;
 }
@@ -578,29 +675,25 @@ static Ogre::AnimationState *get_anim_state (GritEntity *ent, const std::string 
 float GfxBody::getAnimationLength (const std::string &name)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
-    return get_anim_state(ent, name)->getLength();
+    return getAnimState(name)->getLength();
 }
 
 float GfxBody::getAnimationPos (const std::string &name)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
-    return get_anim_state(ent, name)->getTimePosition();
+    return getAnimState(name)->getTimePosition();
 }
 
 void GfxBody::setAnimationPos (const std::string &name, float v)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
-    get_anim_state(ent, name)->setTimePosition(v);
+    getAnimState(name)->setTimePosition(v);
 }
 
 float GfxBody::getAnimationMask (const std::string &name)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
-    Ogre::AnimationState *state = get_anim_state(ent, name);
+    Ogre::AnimationState *state = getAnimState(name);
     if (!state->getEnabled()) return 0.0f;
     return state->getWeight();
 }
@@ -608,8 +701,7 @@ float GfxBody::getAnimationMask (const std::string &name)
 void GfxBody::setAnimationMask (const std::string &name, float v)
 {
     if (dead) THROW_DEAD(className);
-    if (!ent) GRIT_EXCEPT("GfxBody has no graphical representation");
-    Ogre::AnimationState *state = get_anim_state(ent, name);
+    Ogre::AnimationState *state = getAnimState(name);
     state->setWeight(v);
     state->setEnabled(v > 0.0f);
 }
@@ -629,6 +721,5 @@ void GfxBody::setEnabled (bool v)
 
 const std::string &GfxBody::getMeshName (void)
 {
-    static std::string empty_string = "";
-    return mesh.isNull() ? empty_string : mesh->getName();
+    return mesh->getName();
 }

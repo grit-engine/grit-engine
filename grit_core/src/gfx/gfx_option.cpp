@@ -37,6 +37,7 @@ GfxBoolOption gfx_bool_options[] = {
 
     GFX_FOG,
     GFX_WIREFRAME,
+    GFX_WIREFRAME_SOLID,
     GFX_ANAGLYPH,
     GFX_CROSS_EYE,
     GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST,
@@ -130,6 +131,7 @@ std::string gfx_option_to_string (GfxBoolOption o)
 
         TO_STRING_MACRO(GFX_FOG);
         TO_STRING_MACRO(GFX_WIREFRAME);
+        TO_STRING_MACRO(GFX_WIREFRAME_SOLID);
         TO_STRING_MACRO(GFX_ANAGLYPH);
         TO_STRING_MACRO(GFX_CROSS_EYE);
         TO_STRING_MACRO(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST);
@@ -221,6 +223,7 @@ void gfx_option_from_string (const std::string &s,
 
     FROM_STRING_BOOL_MACRO(GFX_FOG)
     FROM_STRING_BOOL_MACRO(GFX_WIREFRAME)
+    FROM_STRING_BOOL_MACRO(GFX_WIREFRAME_SOLID)
     FROM_STRING_BOOL_MACRO(GFX_ANAGLYPH)
     FROM_STRING_BOOL_MACRO(GFX_CROSS_EYE)
     FROM_STRING_BOOL_MACRO(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST)
@@ -315,6 +318,8 @@ static void options_update (bool flush)
             reset_fullscreen = true;
             break;
             case GFX_FOG:
+            break;
+            case GFX_WIREFRAME_SOLID:
             break;
             case GFX_WIREFRAME:
             break;
@@ -549,6 +554,7 @@ void gfx_option_init (void)
 
     gfx_option(GFX_FOG, true);
     gfx_option(GFX_WIREFRAME, false);
+    gfx_option(GFX_WIREFRAME_SOLID, true);
     gfx_option(GFX_ANAGLYPH, false);
     gfx_option(GFX_CROSS_EYE, false);
     gfx_option(GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST, true);

@@ -35,20 +35,83 @@ extern fast_erase_vector<GfxBody*> gfx_all_bodies;
 #include "GfxNode.h"
 #include "GfxMaterial.h"
 
-class GfxBody : public GfxNode, public fast_erase_index {
+class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObject {
+
+    public:
+
+    class Sub : public Ogre::Renderable {
+
+        protected:
+
+        GfxBody *parent;
+
+
+        Ogre::SubMesh *subMesh;
+
+        public:
+
+        Sub (GfxBody *parent, Ogre::SubMesh *sub_mesh)
+            : Renderable(), parent(parent), subMesh(sub_mesh)
+        { }
+        ~Sub() { }
+
+        Ogre::SubMesh* getSubMesh(void) const { return subMesh; }
+
+        GfxMaterial *material;
+
+        const Ogre::MaterialPtr& getMaterial(void) const;
+
+
+        void getRenderOperation(Ogre::RenderOperation& op)
+        { subMesh->_getRenderOperation(op, 0); }
+
+        void getWorldTransforms(Ogre::Matrix4* xform) const;
+        unsigned short getNumWorldTransforms(void) const;
+        Ogre::Real getSquaredViewDepth(const Ogre::Camera* cam) const;
+        const Ogre::LightList& getLights(void) const;
+
+        bool getCastsShadows(void) const;
+
+    };
+
+
+    const Ogre::AxisAlignedBox& getBoundingBox (void) const;
+    float getBoundingRadius (void) const;
+
+    void _updateRenderQueue (Ogre::RenderQueue* queue);
+    void visitRenderables (Ogre::Renderable::Visitor* visitor, bool debugRenderables = false);
+
+    const std::string& getMovableType (void) const { return className; }
+
+    void _updateAnimation (void);
+
+    protected:
+
+    typedef std::vector<Sub*> SubList;
+    SubList subList;
+
+    Ogre::AnimationStateSet animationState;
+
+    Ogre::Matrix4 *boneWorldMatrices;
+    Ogre::Matrix4 *boneMatrices;
+    unsigned short numBoneMatrices;
+    Ogre::SkeletonInstance* skeleton;
+
+
+
     protected:
     static const std::string className;
     public: // HACK
     Ogre::MeshPtr mesh;
-    GritEntity *ent;
-    Ogre::Entity *entEmissive;
     protected:
     float fade;
+    Ogre::MaterialPtr renderMaterial;
     GfxMaterials materials;
     std::vector<bool> emissiveEnabled;
     GfxPaintColour colours[4];
     bool enabled;
     bool castShadows;
+    bool wireframe;
     std::vector<bool> manualBones;
     GfxStringMap initialMaterialMap;
 
@@ -70,11 +133,12 @@ class GfxBody : public GfxNode, public fast_erase_index {
     unsigned getNumSubMeshes (void) { return materials.size(); }
 
     protected:
-    void updateEntEmissive (void);
+    void destroyGraphics (void);
     void updateVisibility (void);
     void updateMaterials (void);
     void updateBones (void);
     void checkBone (unsigned n);
+    Ogre::AnimationState *getAnimState (const std::string &name);
     public:
     void updateProperties (void);
     void reinitialise (void);
@@ -93,6 +157,9 @@ class GfxBody : public GfxNode, public fast_erase_index {
 
     bool getCastShadows (void);
     void setCastShadows (bool v);
+
+    bool getWireframe (void);
+    void setWireframe (bool v);
 
     GfxPaintColour getPaintColour (int i);
     void setPaintColour (int i, const GfxPaintColour &c);

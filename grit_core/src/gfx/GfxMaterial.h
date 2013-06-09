@@ -132,6 +132,7 @@ class GfxMaterial : public GfxBaseMaterial {
     //Ogre::MaterialPtr shadowMat;      // ! can be simply a link to the default
     Ogre::MaterialPtr worldMat;       // & 
     //Ogre::MaterialPtr worldShadowMat; // % can be simply a link to the default
+    Ogre::MaterialPtr wireframeMat;     // |
 
 
     private: GfxMaterial (const std::string &name);
