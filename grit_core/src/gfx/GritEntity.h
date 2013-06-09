@@ -28,150 +28,110 @@ THE SOFTWARE.
 #ifndef GRIT_ENTITY_H
 #define GRIT_ENTITY_H
 
-#include "OgrePrerequisites.h"
-#include "OgreCommon.h"
-
-#include "OgreString.h"
 #include "OgreMovableObject.h"
-#include "OgreQuaternion.h"
-#include "OgreVector3.h"
-#include "OgreHardwareBufferManager.h"
 #include "OgreMesh.h"
 #include "OgreRenderable.h"
-#include "OgreResourceGroupManager.h"
-#include "OgreShadowCaster.h"
 #include "OgreMatrix4.h"
 
-class GritSubEntity;
+class GritEntity : public Ogre::MovableObject {
 
-class GritEntity: public Ogre::MovableObject
-{
-    friend class GritSubEntity;
+    public:
 
-public:
+    class Sub : public Ogre::Renderable {
+
+        protected:
+
+        GritEntity *mParentEntity;
+
+        Ogre::MaterialPtr mMaterial;
+
+        Ogre::SubMesh *mSubMesh;
+
+        bool mVisible;
+
+        Ogre::uint8 mRenderQueueID;
+        bool mRenderQueueIDSet;
+        Ogre::ushort mRenderQueuePriority;
+        bool mRenderQueuePrioritySet;
+
+        public:
+
+        Sub (GritEntity* parent, Ogre::SubMesh* sub_mesh);
+        virtual ~Sub();
+
+        GritEntity* getParent(void) const { return mParentEntity; }
+        Ogre::SubMesh* getSubMesh(void) const { return mSubMesh; }
+        
+        const Ogre::MaterialPtr& getMaterial(void) const { return mMaterial; }
+        void setMaterial (const Ogre::MaterialPtr& material) { mMaterial = material; }
+
+        virtual bool isVisible(void) const { return mVisible; }
+        virtual void setVisible(bool visible) { mVisible = visible; }
+
+
+        virtual void setRenderQueueGroup(Ogre::uint8 queueID);
+        
+        virtual void setRenderQueueGroupAndPriority(Ogre::uint8 queueID, Ogre::ushort priority);
+
+        virtual Ogre::uint8 getRenderQueueGroup(void) const;
+
+        virtual Ogre::ushort getRenderQueuePriority(void) const;
+            
+        virtual bool isRenderQueueGroupSet(void) const;
+            
+        virtual bool isRenderQueuePrioritySet(void) const;
+
+        
+        
+        void getRenderOperation(Ogre::RenderOperation& op);
+        
+        void getWorldTransforms(Ogre::Matrix4* xform) const;
+        unsigned short getNumWorldTransforms(void) const;
+        Ogre::Real getSquaredViewDepth(const Ogre::Camera* cam) const;
+        const Ogre::LightList& getLights(void) const;
+        bool getCastsShadows(void) const;
+                
+    };      
+
     
-    typedef std::set<GritEntity*> EntitySet;
     GritEntity( const std::string& name, const Ogre::MeshPtr& mesh);
+    ~GritEntity();
+
+    const Ogre::AxisAlignedBox& getBoundingBox (void) const;
+    float getBoundingRadius (void) const;
+
+    void _updateRenderQueue (Ogre::RenderQueue* queue);
+    void visitRenderables (Ogre::Renderable::Visitor* visitor, bool debugRenderables = false);
+
+    const std::string& getMovableType (void) const;
+
+
+    Ogre::AnimationStateSet &getAllAnimationStates (void) { return mAnimationState; }
+    const Ogre::Matrix4* _getBoneMatrices (void) const { return mBoneMatrices;}
+    unsigned short _getNumBoneMatrices (void) const { return mNumBoneMatrices; }
+    Ogre::SkeletonInstance* getSkeleton (void) const { return mSkeletonInstance; }
+    void _updateAnimation (void);
+
+    const Ogre::MeshPtr& getMesh (void) const { return mMesh; }
+
+    unsigned int getNumSubEntities (void) const { return mSubList.size(); }
+    Sub* getSubEntity (unsigned int index) const;
 
 protected:
 
-    GritEntity();
-
     Ogre::MeshPtr mMesh;
 
-    typedef std::vector<GritSubEntity*> SubEntityList;
-    SubEntityList mSubEntityList;
+    typedef std::vector<Sub*> SubList;
+    SubList mSubList;
 
-
-    Ogre::AnimationStateSet* mAnimationState;
-
-    bool mHardwareAnimationDirty;
-    bool mHardwareAnimation;
-
-    Ogre::TempBlendedBufferInfo mTempSkelAnimInfo;
-    Ogre::VertexData* mSkelAnimVertexData;
-
-    void extractTempBufferInfo(Ogre::VertexData* sourceData, Ogre::TempBlendedBufferInfo* info);
-    Ogre::VertexData* cloneVertexDataRemoveBlendInfo(const Ogre::VertexData* source);
-    void prepareTempBlendBuffers(void);
+    Ogre::AnimationStateSet mAnimationState;
 
     Ogre::Matrix4 *mBoneWorldMatrices;
     Ogre::Matrix4 *mBoneMatrices;
     unsigned short mNumBoneMatrices;
     unsigned long mFrameAnimationLastUpdated;
-
-    void updateAnimation(void);
-
-    unsigned long *mFrameBonesLastUpdated;
-
-    bool cacheBoneMatrices(void);
-
-    bool mCurrentHWAnimationState;
-
-    int mSoftwareAnimationNormalsRequests;
-    bool mSkipAnimStateUpdates;
-
-
     Ogre::SkeletonInstance* mSkeletonInstance;
 
-    bool mInitialised;
-
-    Ogre::Matrix4 mLastParentXform;
-
-    size_t mMeshStateCount;
-
-    void buildSubEntityList(Ogre::MeshPtr& mesh, SubEntityList* sublist);
-
-    void reevaluateVertexProcessing(void);
-
-    Ogre::ushort initHardwareAnimationElements(Ogre::VertexData* vdata, Ogre::ushort numberOfElements, bool animateNormals);
-    bool tempSkelAnimBuffersBound(bool requestNormals) const;
-
-
-    mutable Ogre::AxisAlignedBox mFullBoundingBox;
-
-public:
-    ~GritEntity();
-
-    const Ogre::MeshPtr& getMesh(void) const;
-
-    GritSubEntity* getSubEntity(unsigned int index) const;
-
-    GritSubEntity* getSubEntity( const std::string& name ) const;
-
-    unsigned int getNumSubEntities(void) const;
-
-    const Ogre::AxisAlignedBox& getBoundingBox(void) const;
-
-    Ogre::AxisAlignedBox getChildObjectsBoundingBox(void) const;
-
-    void _updateRenderQueue(Ogre::RenderQueue* queue);
-
-    const std::string& getMovableType(void) const;
-
-    Ogre::AnimationStateSet* getAllAnimationStates(void) const;
-
-    float getBoundingRadius(void) const;
-
-    const Ogre::Matrix4* _getBoneMatrices(void) const { return mBoneMatrices;}
-    unsigned short _getNumBoneMatrices(void) const { return mNumBoneMatrices; }
-    bool hasSkeleton(void) const { return mSkeletonInstance != 0; }
-    Ogre::SkeletonInstance* getSkeleton(void) const { return mSkeletonInstance; }
-    bool isHardwareAnimationEnabled(void);
-
-    void refreshAvailableAnimationState(void);
-    void _updateAnimation(void);
-    bool _isAnimated(void) const;
-    bool _isSkeletonAnimated(void) const;
-    Ogre::VertexData* _getSkelAnimVertexData(void) const;
-    Ogre::TempBlendedBufferInfo* _getSkelAnimTempBufferInfo(void);
-    Ogre::uint32 getTypeFlags(void) const;
-    Ogre::VertexData* getVertexDataForBinding(void);
-
-    enum VertexDataBindChoice
-    {
-        BIND_ORIGINAL,
-        BIND_SOFTWARE_SKELETAL
-    };
-    VertexDataBindChoice chooseVertexDataForBinding();
-
-    bool isInitialised(void) const { return mInitialised; }
-
-    void _initialise(bool forceReinitialise = false);
-    void _deinitialise(void);
-
-    void visitRenderables(Ogre::Renderable::Visitor* visitor, bool debugRenderables = false);
-
-    void setSkipAnimationStateUpdate(bool skip) {
-        mSkipAnimStateUpdates = skip;
-    }
-    
-    bool getSkipAnimationStateUpdate() const {
-        return mSkipAnimStateUpdates;
-    }
-
-
-    
 };
 
 #endif

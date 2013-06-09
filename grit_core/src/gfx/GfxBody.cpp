@@ -23,7 +23,6 @@
 
 #include "GfxBody.h"
 #include "GritEntity.h"
-#include "GritSubEntity.h"
 
 const std::string GfxNode::className = "GfxNode";
 
@@ -311,7 +310,7 @@ void GfxBody::updateVisibility (void)
     if (entEmissive) entEmissive->setVisible(enabled && fade > 0.001);
 
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
-        GritSubEntity *se = ent->getSubEntity(i);
+        GritEntity::Sub *se = ent->getSubEntity(i);
         // fading in/out (either stipple or alpha factor)
         se->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
     }
@@ -382,7 +381,7 @@ void GfxBody::updateProperties (void)
 
     for (unsigned i=0 ; i<ent->getNumSubEntities() ; ++i) {
 
-        GritSubEntity *se = ent->getSubEntity(i);
+        GritEntity::Sub *se = ent->getSubEntity(i);
 
         GfxMaterial *gfx_material = materials[i];
 
@@ -785,7 +784,7 @@ std::vector<std::string> GfxBody::getAnimationNames (void)
     Ogre::Skeleton *skel = ent->getSkeleton();
     if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
     
-    Ogre::AnimationStateIterator it = ent->getAllAnimationStates()->getAnimationStateIterator();
+    Ogre::AnimationStateIterator it = ent->getAllAnimationStates().getAnimationStateIterator();
 
     while (it.hasMoreElements()) r.push_back(it.getNext()->getAnimationName());
 
@@ -796,9 +795,8 @@ static Ogre::AnimationState *get_anim_state (GritEntity *ent, const std::string 
 {
     Ogre::Skeleton *skel = ent->getSkeleton();
     if (skel == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
-    Ogre::AnimationStateSet *anim_set = ent->getAllAnimationStates();
-    if (anim_set == NULL) GRIT_EXCEPT("GfxBody has no animations");
-    Ogre::AnimationState *state = anim_set->getAnimationState(name);
+    Ogre::AnimationStateSet &anim_set = ent->getAllAnimationStates();
+    Ogre::AnimationState *state = anim_set.getAnimationState(name);
     if (state == NULL) GRIT_EXCEPT("GfxBody has no animation called \""+name+"\"");
     return state;
 }
