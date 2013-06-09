@@ -22,7 +22,6 @@
 #include "../SharedPtr.h"
 
 class GfxBody;
-class GritEntity;
 typedef SharedPtr<GfxBody> GfxBodyPtr;
 
 extern fast_erase_vector<GfxBody*> gfx_all_bodies;
