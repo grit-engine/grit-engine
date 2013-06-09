@@ -112,6 +112,8 @@ const Ogre::MaterialPtr& GfxBody::Sub::getMaterial(void) const
 
 void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
 {
+    bool shadow_cast = ogre_sm->_getCurrentRenderStage() == Ogre::SceneManager::IRS_RENDER_TO_TEXTURE;
+
     if (!enabled || fade < 0.000001) return;
 
     // Since we know we're going to be rendered, take this opportunity to
@@ -128,75 +130,93 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
             boneWorldMatrices,
             numBoneMatrices);
 
+        freshFrame = false;
     }
 
-    // i.e. not preparing shadow textures, etc
-    bool actual_render = ogre_sm->_getCurrentRenderStage() == Ogre::SceneManager::IRS_NONE;
-
-    bool do_wireframe = (wireframe || gfx_option(GFX_WIREFRAME)) && actual_render;
+    bool do_wireframe = (wireframe || gfx_option(GFX_WIREFRAME));
     bool do_regular = !(do_wireframe && gfx_option(GFX_WIREFRAME_SOLID));
 
-    // Add each visible Sub to the queue
-    for (unsigned i=0 ; i<subList.size() ; ++i) {
+    if (shadow_cast) {
 
-        Sub *sub = subList[i];
+        // Add each visible Sub to the queue
+        for (unsigned i=0 ; i<subList.size() ; ++i) {
 
-        // car paint
-        if (freshFrame) {
+            Sub *sub = subList[i];
+
+            GfxMaterial *m = sub->material;
+
+            if (!m->getCastShadows()) continue;
+
+            renderMaterial = m->regularMat;
+
+            queue->addRenderable(sub, 0, 0);
+        }
+
+    } else {
+
+        freshFrame = true;
+
+        // Add each visible Sub to the queue
+        for (unsigned i=0 ; i<subList.size() ; ++i) {
+
+            Sub *sub = subList[i];
+
+            // car paint
             sub->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
             for (int k=0 ; k<4 ; ++k) {
                 const GfxPaintColour &c = colours[k];
                 sub->setCustomParameter(2*k+1, Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, c.met));
                 sub->setCustomParameter(2*k+2, Ogre::Vector4(c.spec.x, c.spec.y, c.spec.z, 0.0f));
             }
-        }
 
-        GfxMaterial *m = sub->material;
+            GfxMaterial *m = sub->material;
 
-        if (do_regular) {
-            /* TODO: include other criteria to pick a specific Ogre::Material:
-             * bones: 1 2 3 4
-             * vertex colours: false/true
-             * vertex alpha: false/true
-             * Fading: false/true
-             * World: false/true
-             */
-            if (fade < 1 && !m->getStipple()) {
-                renderMaterial = m->fadingMat;
-            } else {
-                renderMaterial = m->regularMat;
-            }
+            if (do_regular) {
 
-            int queue_group = RQ_GBUFFER_OPAQUE;
-            switch (m->getSceneBlend()) {
-                case GFX_MATERIAL_OPAQUE:      queue_group = RQ_GBUFFER_OPAQUE; break;
-                case GFX_MATERIAL_ALPHA:       queue_group = RQ_FORWARD_ALPHA; break;
-                case GFX_MATERIAL_ALPHA_DEPTH: queue_group = RQ_FORWARD_ALPHA_DEPTH; break;
-            }
-            queue->addRenderable(sub, queue_group, 0);
+                /* TODO: include other criteria to pick a specific Ogre::Material:
+                 * bones: 1 2 3 4
+                 * vertex colours: false/true
+                 * vertex alpha: false/true
+                 * Fading: false/true
+                 * World: false/true
+                 */
 
-            if (actual_render && !m->emissiveMat.isNull() && sub->emissiveEnabled) {
-                renderMaterial = m->emissiveMat;
+                if (fade < 1 && !m->getStipple()) {
+                    renderMaterial = m->fadingMat;
+                } else {
+                    renderMaterial = m->regularMat;
+                }
+
+                int queue_group = RQ_GBUFFER_OPAQUE;
                 switch (m->getSceneBlend()) {
-                    case GFX_MATERIAL_OPAQUE:      queue_group = RQ_FORWARD_OPAQUE_EMISSIVE; break;
-                    case GFX_MATERIAL_ALPHA:       queue_group = RQ_FORWARD_ALPHA_EMISSIVE; break;
-                    case GFX_MATERIAL_ALPHA_DEPTH: queue_group = RQ_FORWARD_ALPHA_DEPTH_EMISSIVE; break;
+                    case GFX_MATERIAL_OPAQUE:      queue_group = RQ_GBUFFER_OPAQUE; break;
+                    case GFX_MATERIAL_ALPHA:       queue_group = RQ_FORWARD_ALPHA; break;
+                    case GFX_MATERIAL_ALPHA_DEPTH: queue_group = RQ_FORWARD_ALPHA_DEPTH; break;
                 }
                 queue->addRenderable(sub, queue_group, 0);
+
+                if (!m->emissiveMat.isNull() && sub->emissiveEnabled) {
+                    renderMaterial = m->emissiveMat;
+                    switch (m->getSceneBlend()) {
+                        case GFX_MATERIAL_OPAQUE:      queue_group = RQ_FORWARD_OPAQUE_EMISSIVE; break;
+                        case GFX_MATERIAL_ALPHA:       queue_group = RQ_FORWARD_ALPHA_EMISSIVE; break;
+                        case GFX_MATERIAL_ALPHA_DEPTH: queue_group = RQ_FORWARD_ALPHA_DEPTH_EMISSIVE; break;
+                    }
+                    queue->addRenderable(sub, queue_group, 0);
+                }
             }
-        }
 
-        if (do_wireframe) {
-            renderMaterial = m->wireframeMat;
-            queue->addRenderable(sub, RQ_FORWARD_ALPHA, 0);
-        }
+            if (do_wireframe) {
+                renderMaterial = m->wireframeMat;
+                queue->addRenderable(sub, RQ_FORWARD_ALPHA, 0);
+            }
 
+        }
 
     }
 
     renderMaterial.setNull();
 
-    freshFrame = actual_render;
 }
 
 void GfxBody::visitRenderables(Ogre::Renderable::Visitor* visitor, bool)

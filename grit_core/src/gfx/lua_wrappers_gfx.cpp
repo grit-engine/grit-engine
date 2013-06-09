@@ -4059,8 +4059,14 @@ TRY_START
         bool depth_write;
         t.get("depthWrite", depth_write, true);
        
+        bool cast_shadows;
+        t.get("castShadows", cast_shadows, true);
+       
         bool stipple;
         t.get("stipple", stipple, true);
+
+        gfxmat->setCastShadows(cast_shadows);
+        gfxmat->setStipple(stipple);
        
         gfxmat->setSceneBlend(has_alpha ? depth_write ? GFX_MATERIAL_ALPHA_DEPTH : GFX_MATERIAL_ALPHA : GFX_MATERIAL_OPAQUE);
 

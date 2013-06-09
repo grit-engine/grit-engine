@@ -145,6 +145,10 @@ class GfxMaterial : public GfxBaseMaterial {
     public: GfxMaterialSceneBlend getSceneBlend (void) const { GFX_MAT_SYNC; return sceneBlend; }
     public: void setSceneBlend (GfxMaterialSceneBlend v);
 
+    private: bool castShadows;
+    public: bool getCastShadows (void) const { GFX_MAT_SYNC; return castShadows; }
+    public: void setCastShadows (bool v);
+
     private: bool stipple;
     public: bool getStipple (void) const { GFX_MAT_SYNC; return stipple; }
     public: void setStipple (bool v);

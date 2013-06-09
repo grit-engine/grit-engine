@@ -63,6 +63,12 @@ void GfxMaterial::setSceneBlend (GfxMaterialSceneBlend v)
     sceneBlend = v;
 }
 
+void GfxMaterial::setCastShadows (bool v)
+{   
+    GFX_MAT_SYNC;
+    castShadows = v;
+}       
+        
 void GfxMaterial::setStipple (bool v)
 {   
     GFX_MAT_SYNC;
