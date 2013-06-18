@@ -49,6 +49,7 @@
 #include "gfx/lua_wrappers_gfx.h"
 #include "audio/lua_wrappers_audio.h"
 #include "physics/lua_wrappers_physics.h"
+#include "net/lua_wrappers_net.h"
 
 
 // GLOBAL LIBRARY ========================================================== {{{
@@ -920,6 +921,7 @@ lua_State *init_lua(const char *filename)
         physics_lua_init(L);
         audio_lua_init(L);
         disk_resource_lua_init(L);
+		net_lua_init(L);
 
         status = aux_include(L,filename);
         if (status) {

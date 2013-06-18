@@ -72,6 +72,9 @@
       <TargetMachine>MachineX86</TargetMachine>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "$(SolutionDir)grit_core\media\Grit.dat"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">
     <BuildLog />
@@ -175,6 +178,11 @@
     <ClCompile Include="src\lua_wrappers_gritobj.cpp" />
     <ClCompile Include="src\lua_wrappers_primitives.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\net\lua_wrappers_net.cpp" />
+    <ClCompile Include="src\net\net.cpp" />
+    <ClCompile Include="src\net\NetAddress.cpp" />
+    <ClCompile Include="src\net\NetManager.cpp" />
+    <ClCompile Include="src\net\NetMessage.cpp" />
     <ClCompile Include="src\path_util.cpp" />
     <ClCompile Include="src\physics\BColParser.cpp" />
     <ClCompile Include="src\physics\CollisionMesh.cpp" />
@@ -191,6 +199,10 @@
     <ClCompile Include="src\win32\MouseDirectInput8.cpp" />
     <ClCompile Include="src\win32\win32_clipboard.cpp" />
     <ClCompile Include="src\win32\win32_sleep.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\net\lua_wrappers_net.h" />
+    <ClInclude Include="src\net\NetManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

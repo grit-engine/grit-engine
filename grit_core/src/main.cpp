@@ -50,7 +50,7 @@
 
 #include "audio/audio.h"
 
-
+#include "net/net.h"
 
 
 CentralisedLog clog;
@@ -138,6 +138,8 @@ int main(int argc, const char **argv)
                 #endif
 
                 physics_init();
+
+				net_init();
 
                 streamer_init();
 
