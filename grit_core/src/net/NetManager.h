@@ -1,8 +1,15 @@
-#include <queue>
-#include "../ExternalTable.h"
+class NetManager;
 
 #ifndef NetManager_h
 #define NetManager_h
+
+#include <cstdlib>
+
+#include <queue>
+
+#include "../ExternalTable.h"
+
+#include "net.h"
 
 class NetManager
 {

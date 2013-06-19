@@ -1,10 +1,11 @@
+#include <cstdlib>
+
 #include "../CentralisedLog.h"
 #include "../sleep.h"
+#include "../lua_util.h"
 
 #include "net.h"
 #include "NetManager.h"
-
-#include "../lua_util.h"
 #include "lua_wrappers_net.h"
 
 NetManager::NetPacket::NetPacket(NetAddress& from, std::string& data_)
@@ -19,6 +20,13 @@ NetManager::NetPacket::NetPacket(NetAddress& from, std::string& data_)
 #	define ADDRESS_ALREADY_USED WSAEADDRINUSE
 #	define WOULD_BLOCK WSAEWOULDBLOCK
 #	define CONNECTION_RESET WSAECONNRESET
+#else
+#   define sock_errno errno
+#   define closesocket close
+#   define ioctlsocket ioctl
+#	define WOULD_BLOCK EAGAIN
+#	define CONNECTION_RESET ECONNRESET
+#	define ADDRESS_ALREADY_USED EADDRINUSE
 #endif
 
 NetManager::NetManager()
@@ -130,7 +138,7 @@ void NetManager::process(lua_State* L)
 	char buffer[16384];
 	int bytes = 0;
 	sockaddr_storage remoteEP;
-	int remoteEPLength = sizeof(remoteEP);
+	socklen_t remoteEPLength = sizeof(remoteEP);
 
 	while (true)
 	{

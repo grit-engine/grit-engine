@@ -11,18 +11,29 @@ struct lua_State;
 #ifndef net_h
 #define net_h
 
+#include <string>
+
 class ExternalTable;
 
 #include <stdint.h>
 
 #if defined(WIN32)
 #include <WS2tcpip.h>
+#else
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <sys/param.h>
+#include <sys/types.h>
+#include <netdb.h>
+#define SOCKET int
+#define INVALID_SOCKET (-1)
+#include <sys/ioctl.h>
 #endif
 
 enum NetChannel
 {
 	NetChan_ClientToServer,
-	NetChan_ServerToClient,
+	NetChan_ServerToClient
 };
 
 enum NetAddressType

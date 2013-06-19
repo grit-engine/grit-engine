@@ -31,7 +31,8 @@ void net_send(NetChannel channel, NetAddress& address, const char* packet, uint3
 {
 	APP_ASSERT(netManager != nullptr);
 
-	netManager->sendPacket(channel, address, std::string(packet, packetLength));
+    std::string s = std::string(packet, packetLength);
+	netManager->sendPacket(channel, address, s);
 }
 
 bool net_get_loopback_packet(NetChannel channel, std::string& packet)

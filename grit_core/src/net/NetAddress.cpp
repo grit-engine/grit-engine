@@ -1,6 +1,8 @@
-#include "net.h"
+#include <cstdio>
+
 #include "../CentralisedLog.h"
-#include <stdio.h>
+
+#include "net.h"
 
 NetAddress::NetAddress()
 {
@@ -50,12 +52,12 @@ NetAddress NetAddress::resolve(const char* host, NetAddressType type)
 	// [^:] sounds like it'd fail for ipv6?
 	if (sscanf(host, "%256[^:]:%hu", hostName, &port) == 2)
 	{
-		if (stricmp(hostName, "localhost") == NULL)
+		if (!strcasecmp(hostName, "localhost"))
 		{
 			return NetAddress(NetAddress_Loopback);
 		}
 
-		addrinfo* addrInfo;
+		struct addrinfo* addrInfo;
 		if (getaddrinfo(hostName, NULL, NULL, &addrInfo) != 0)
 		{
 			return NetAddress(NetAddress_Invalid);
@@ -63,7 +65,7 @@ NetAddress NetAddress::resolve(const char* host, NetAddressType type)
 
 		int requestedFamily = (type == NetAddress_IPv6) ? AF_INET6 : AF_INET;
 
-		addrinfo* info = addrInfo;
+		struct addrinfo* info = addrInfo;
 		while (info)
 		{
 			if (info->ai_family == requestedFamily)
@@ -151,8 +153,7 @@ void NetAddress::getSockAddr(sockaddr_storage* storage, int* length)
 
 std::string NetAddress::toString()
 {
-	if (type == NetAddress_IPv4)
-	{
+	if (type == NetAddress_IPv4) {
 		sockaddr_storage storage;
 		int storageLen;
 
@@ -167,17 +168,13 @@ std::string NetAddress::toString()
 		ss << buffer << ":" << port;
 
 		return ss.str();
-	}
-	else if (type == NetAddress_IPv6)
-	{
+	} else if (type == NetAddress_IPv6) {
 		GRIT_EXCEPT("IPv6 toString not yet implemented");
-	}
-	else if (type == NetAddress_Loopback)
-	{
+	} else if (type == NetAddress_Loopback) {
 		return "localhost";
-	}
-	else if (type == NetAddress_Invalid)
-	{
+	} else if (type == NetAddress_Invalid) {
 		return "INVALID";
-	}
+	} else {
+        return "UNRECOGNISED TYPE";
+    }
 }

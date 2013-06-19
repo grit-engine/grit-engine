@@ -38,6 +38,8 @@ TRY_START
 
 	GET_UD_MACRO(NetAddressPtr,self,1,NETADDRESS_TAG);
 
+    (void) self;
+
 	my_lua_error(L,"NetAddress has no properties.");
 
 	return 0;
