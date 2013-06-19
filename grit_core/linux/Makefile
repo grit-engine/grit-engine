@@ -15,12 +15,13 @@ all: $(TARGETS)
 
 
 depend:
-	makedepend -Y -f Makefile ../src/*.cpp ../src/linux/*.cpp ../src/win32/*.cpp ../src/gfx/*.cpp ../src/physics/*.cpp ../src/audio/*.cpp -I ../depend_stubs
+	makedepend -Y -f Makefile ../src/*.cpp ../src/linux/*.cpp ../src/win32/*.cpp ../src/gfx/*.cpp ../src/physics/*.cpp ../src/audio/*.cpp ../src/net/*.cpp -I ../depend_stubs
 	sed -i 's_^[.][.]/src/linux/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/win32/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/gfx/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/physics/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/audio/\([^.]*[.]o:\)_\1_g' Makefile
+	sed -i 's_^[.][.]/src/net/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/\([^.]*[.]o:\)_\1_g' Makefile
 
 
@@ -58,6 +59,10 @@ endif
 	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
 %.o: ../src/physics/%.cpp
+	@$(COMPILING)
+	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
+
+%.o: ../src/net/%.cpp
 	@$(COMPILING)
 	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
@@ -133,6 +138,12 @@ GRIT_OBJ=\
         KeyboardX11.o \
         posix_sleep.o \
         x11_clipboard.o \
+        lua_wrappers_net.o \
+        NetAddress.o \
+        net.o \
+        NetManager.o \
+        NetMessage.o \
+
 
 
 %/Grit.$(GRIT_EXEC_SUFFIX): Grit.$(GRIT_EXEC_SUFFIX)
@@ -756,6 +767,7 @@ lua_wrappers_core.o: ../src/gfx/gfx_hud.h ../src/lua_util.h
 lua_wrappers_core.o: ../src/path_util.h ../src/gfx/GfxPipeline.h
 lua_wrappers_core.o: ../src/gfx/GfxFont.h ../src/main.h
 lua_wrappers_core.o: ../src/gfx/GfxTextBuffer.h
+lua_wrappers_core.o: ../depend_stubs/cstdint
 lua_wrappers_core.o: ../depend_stubs/OgreHardwareBufferManager.h
 lua_wrappers_core.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 lua_wrappers_core.o: ../depend_stubs/OgreHardwareIndexBuffer.h
@@ -765,6 +777,13 @@ lua_wrappers_core.o: ../src/audio/AudioDiskResource.h
 lua_wrappers_core.o: ../depend_stubs/OgreResourceGroupManager.h
 lua_wrappers_core.o: ../src/physics/lua_wrappers_physics.h
 lua_wrappers_core.o: ../src/physics/PhysicsWorld.h
+lua_wrappers_core.o: ../src/net/lua_wrappers_net.h ../src/net/net.h
+lua_wrappers_core.o: ../depend_stubs/sys/socket.h
+lua_wrappers_core.o: ../depend_stubs/arpa/inet.h
+lua_wrappers_core.o: ../depend_stubs/sys/param.h
+lua_wrappers_core.o: ../depend_stubs/sys/types.h
+lua_wrappers_core.o: ../depend_stubs/netdb.h
+lua_wrappers_core.o: ../depend_stubs/sys/ioctl.h
 lua_wrappers_disk_resource.o: ../src/gfx/gfx_disk_resource.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreResource.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreTexture.h
@@ -902,6 +921,7 @@ lua_wrappers_disk_resource.o: ../depend_stubs/btBulletDynamicsCommon.h
 lua_wrappers_disk_resource.o: ../src/physics/CollisionMesh.h
 lua_wrappers_disk_resource.o: ../src/GritObject.h
 lua_wrappers_disk_resource.o: ../src/gfx/GfxTextBuffer.h
+lua_wrappers_disk_resource.o: ../depend_stubs/cstdint
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreHardwareBufferManager.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreHardwareIndexBuffer.h
@@ -1107,7 +1127,10 @@ main.o: ../src/gfx/GfxParticleSystem.h ../depend_stubs/utility
 main.o: ../src/gfx/HUD.h ../depend_stubs/OgreRoot.h
 main.o: ../depend_stubs/OgreRenderWindow.h ../src/audio/audio.h
 main.o: ../depend_stubs/AL/al.h ../src/audio/AudioDiskResource.h
-main.o: ../depend_stubs/OgreResourceGroupManager.h
+main.o: ../depend_stubs/OgreResourceGroupManager.h ../src/net/net.h
+main.o: ../depend_stubs/sys/socket.h ../depend_stubs/arpa/inet.h
+main.o: ../depend_stubs/sys/param.h ../depend_stubs/sys/types.h
+main.o: ../depend_stubs/netdb.h ../depend_stubs/sys/ioctl.h
 path_util.o: ../src/CentralisedLog.h ../depend_stubs/iostream
 path_util.o: ../depend_stubs/sstream
 path_util.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
@@ -1241,7 +1264,12 @@ Clutter.o: ../depend_stubs/stdint.h ../src/physics/LooseEnd.h
 Clutter.o: ../src/physics/PhysicalMaterial.h ../src/GritObject.h
 Clutter.o: ../src/LuaPtr.h ../src/gfx/gfx.h ../src/vect_util.h
 GfxBody.o: ../depend_stubs/OgreSceneManager.h
+GfxBody.o: ../depend_stubs/OgreSkeleton.h
+GfxBody.o: ../depend_stubs/OgreAxisAlignedBox.h
 GfxBody.o: ../depend_stubs/OgreVector4.h
+GfxBody.o: ../depend_stubs/OgreSkeletonInstance.h
+GfxBody.o: ../depend_stubs/OgreAnimation.h
+GfxBody.o: ../depend_stubs/OgreOptimisedUtil.h
 GfxBody.o: ../depend_stubs/OgreSubMesh.h ../src/CentralisedLog.h
 GfxBody.o: ../src/gfx/gfx_internal.h ../depend_stubs/string
 GfxBody.o: ../depend_stubs/sstream ../depend_stubs/Ogre.h
@@ -1774,6 +1802,7 @@ GfxSkyMaterial.o: ../depend_stubs/OgreResource.h
 GfxSkyMaterial.o: ../depend_stubs/OgreTexture.h
 GfxSkyMaterial.o: ../src/BackgroundLoader.h ../src/vect_util.h
 GfxTextBuffer.o: ../src/gfx/GfxTextBuffer.h
+GfxTextBuffer.o: ../depend_stubs/cstdint
 GfxTextBuffer.o: ../depend_stubs/OgreHardwareBufferManager.h
 GfxTextBuffer.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 GfxTextBuffer.o: ../depend_stubs/OgreHardwareIndexBuffer.h
@@ -2066,7 +2095,7 @@ gfx.o: ../src/gfx/gfx_disk_resource.h
 gfx.o: ../depend_stubs/OgreResource.h
 gfx.o: ../depend_stubs/OgreTexture.h ../src/BackgroundLoader.h
 gfx.o: ../src/gfx/gfx_hud.h ../src/lua_util.h ../src/gfx/GfxFont.h
-gfx.o: ../src/gfx/GfxTextBuffer.h
+gfx.o: ../src/gfx/GfxTextBuffer.h ../depend_stubs/cstdint
 gfx.o: ../depend_stubs/OgreHardwareBufferManager.h
 gfx.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 gfx.o: ../depend_stubs/OgreHardwareIndexBuffer.h
@@ -2215,7 +2244,7 @@ gfx_hud.o: ../depend_stubs/OgreDataStream.h ../src/DiskResource.h
 gfx_hud.o: ../src/sleep.h ../src/physics/BColParser.h
 gfx_hud.o: ../depend_stubs/stdint.h ../src/physics/LooseEnd.h
 gfx_hud.o: ../src/physics/PhysicalMaterial.h ../src/GritObject.h
-gfx_hud.o: ../src/gfx/GfxTextBuffer.h
+gfx_hud.o: ../src/gfx/GfxTextBuffer.h ../depend_stubs/cstdint
 gfx_hud.o: ../depend_stubs/OgreHardwareBufferManager.h
 gfx_hud.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 gfx_hud.o: ../depend_stubs/OgreHardwareIndexBuffer.h
@@ -2360,6 +2389,7 @@ lua_wrappers_gfx.o: ../src/gfx/GfxRangedInstances.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_hud.h ../src/lua_util.h
 lua_wrappers_gfx.o: ../src/gfx/GfxPipeline.h ../src/gfx/GfxFont.h
 lua_wrappers_gfx.o: ../src/gfx/GfxTextBuffer.h
+lua_wrappers_gfx.o: ../depend_stubs/cstdint
 lua_wrappers_gfx.o: ../depend_stubs/OgreHardwareBufferManager.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreHardwareIndexBuffer.h
@@ -3209,6 +3239,7 @@ lua_wrappers_physics.o: ../src/gfx/gfx_hud.h ../src/lua_util.h
 lua_wrappers_physics.o: ../src/gfx/GfxPipeline.h
 lua_wrappers_physics.o: ../src/gfx/GfxFont.h
 lua_wrappers_physics.o: ../src/gfx/GfxTextBuffer.h
+lua_wrappers_physics.o: ../depend_stubs/cstdint
 lua_wrappers_physics.o: ../depend_stubs/OgreHardwareBufferManager.h
 lua_wrappers_physics.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 lua_wrappers_physics.o: ../depend_stubs/OgreHardwareIndexBuffer.h
@@ -3348,3 +3379,130 @@ lua_wrappers_audio.o: ../src/audio/AudioDiskResource.h
 lua_wrappers_audio.o: ../depend_stubs/OgreResourceGroupManager.h
 lua_wrappers_audio.o: ../src/audio/lua_wrappers_audio.h
 lua_wrappers_audio.o: ../src/lua_wrappers_common.h
+NetAddress.o: ../depend_stubs/cstdio ../src/CentralisedLog.h
+NetAddress.o: ../src/net/net.h ../src/SharedPtr.h
+NetAddress.o: ../depend_stubs/string ../depend_stubs/stdint.h
+NetAddress.o: ../depend_stubs/sys/socket.h
+NetAddress.o: ../depend_stubs/arpa/inet.h
+NetAddress.o: ../depend_stubs/sys/param.h
+NetAddress.o: ../depend_stubs/sys/types.h ../depend_stubs/netdb.h
+NetAddress.o: ../depend_stubs/sys/ioctl.h
+NetManager.o: ../depend_stubs/cstdlib ../src/CentralisedLog.h
+NetManager.o: ../src/sleep.h ../src/lua_util.h ../src/net/net.h
+NetManager.o: ../src/SharedPtr.h ../depend_stubs/string
+NetManager.o: ../depend_stubs/stdint.h
+NetManager.o: ../depend_stubs/sys/socket.h
+NetManager.o: ../depend_stubs/arpa/inet.h
+NetManager.o: ../depend_stubs/sys/param.h
+NetManager.o: ../depend_stubs/sys/types.h ../depend_stubs/netdb.h
+NetManager.o: ../depend_stubs/sys/ioctl.h ../src/net/NetManager.h
+NetManager.o: ../depend_stubs/queue ../src/ExternalTable.h
+NetManager.o: ../src/net/lua_wrappers_net.h
+NetManager.o: ../src/lua_wrappers_common.h
+NetMessage.o: ../src/net/net.h ../src/SharedPtr.h
+NetMessage.o: ../depend_stubs/string ../depend_stubs/stdint.h
+NetMessage.o: ../depend_stubs/sys/socket.h
+NetMessage.o: ../depend_stubs/arpa/inet.h
+NetMessage.o: ../depend_stubs/sys/param.h
+NetMessage.o: ../depend_stubs/sys/types.h ../depend_stubs/netdb.h
+NetMessage.o: ../depend_stubs/sys/ioctl.h ../src/CentralisedLog.h
+NetMessage.o: ../depend_stubs/stdio.h
+lua_wrappers_net.o: ../src/main.h ../depend_stubs/lua.h
+lua_wrappers_net.o: ../src/Mouse.h ../depend_stubs/vector
+lua_wrappers_net.o: ../src/Keyboard.h ../depend_stubs/string
+lua_wrappers_net.o: ../src/BackgroundLoader.h ../src/vect_util.h
+lua_wrappers_net.o: ../depend_stubs/algorithm
+lua_wrappers_net.o: ../src/CentralisedLog.h
+lua_wrappers_net.o: ../depend_stubs/iostream
+lua_wrappers_net.o: ../depend_stubs/sstream
+lua_wrappers_net.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+lua_wrappers_net.o: ../src/console_colour.h ../depend_stubs/list
+lua_wrappers_net.o: ../depend_stubs/boost/thread/thread.hpp
+lua_wrappers_net.o: ../depend_stubs/boost/thread/condition.hpp
+lua_wrappers_net.o: ../src/DiskResource.h ../depend_stubs/set
+lua_wrappers_net.o: ../src/BulletDebugDrawer.h
+lua_wrappers_net.o: ../depend_stubs/OgreFrameListener.h
+lua_wrappers_net.o: ../depend_stubs/OgreManualObject.h
+lua_wrappers_net.o: ../depend_stubs/btBulletCollisionCommon.h
+lua_wrappers_net.o: ../src/gfx/lua_userdata_dependency_tracker.h
+lua_wrappers_net.o: ../depend_stubs/OgreStaticGeometry.h
+lua_wrappers_net.o: ../depend_stubs/OgreInstancedGeometry.h
+lua_wrappers_net.o: ../src/gfx/Clutter.h ../depend_stubs/cfloat
+lua_wrappers_net.o: ../depend_stubs/OgreMovableObject.h
+lua_wrappers_net.o: ../depend_stubs/OgreVertexIndexData.h
+lua_wrappers_net.o: ../depend_stubs/OgreMaterial.h
+lua_wrappers_net.o: ../depend_stubs/OgreMesh.h ../src/math_util.h
+lua_wrappers_net.o: ../depend_stubs/cmath
+lua_wrappers_net.o: ../src/CacheFriendlyRangeSpaceSIMD.h
+lua_wrappers_net.o: ../depend_stubs/map ../src/SSEAllocator.h
+lua_wrappers_net.o: ../src/Streamer.h ../depend_stubs/lauxlib.h
+lua_wrappers_net.o: ../depend_stubs/lualib.h ../src/GritObject.h
+lua_wrappers_net.o: ../src/SharedPtr.h ../depend_stubs/cstdlib
+lua_wrappers_net.o: ../depend_stubs/functional ../src/Streamer.h
+lua_wrappers_net.o: ../src/ExternalTable.h ../src/math_util.h
+lua_wrappers_net.o: ../src/LuaPtr.h ../src/SplineTable.h
+lua_wrappers_net.o: ../src/gfx/HUD.h ../depend_stubs/climits
+lua_wrappers_net.o: ../depend_stubs/OgrePanelOverlayElement.h
+lua_wrappers_net.o: ../depend_stubs/OgreOverlayElementFactory.h
+lua_wrappers_net.o: ../depend_stubs/OgreOverlay.h
+lua_wrappers_net.o: ../depend_stubs/OgreOverlayManager.h
+lua_wrappers_net.o: ../src/gfx/TextListOverlayElement.h
+lua_wrappers_net.o: ../depend_stubs/OgrePrerequisites.h
+lua_wrappers_net.o: ../depend_stubs/OgreOverlayElement.h
+lua_wrappers_net.o: ../depend_stubs/OgreFont.h
+lua_wrappers_net.o: ../src/physics/PhysicsWorld.h
+lua_wrappers_net.o: ../src/CentralisedLog.h ../src/SharedPtr.h
+lua_wrappers_net.o: ../depend_stubs/btBulletDynamicsCommon.h
+lua_wrappers_net.o: ../src/physics/TColParser.h
+lua_wrappers_net.o: ../src/physics/TColLexer
+lua_wrappers_net.o: ../depend_stubs/istream
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/compatibility/inttypes.h
+lua_wrappers_net.o: ../src/physics/TColLexer-token_ids
+lua_wrappers_net.o: ../depend_stubs/cstdio
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/Token
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/definitions
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/buffer/Buffer
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/buffer/plain/BufferFiller_Plain
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/QuexMode
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Analyser
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Counter
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Accumulator
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/TokenQueue
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/IncludeStack
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/temporary_macros_on
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/temporary_macros_off
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/constructor.i
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Counter.i
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Accumulator.i
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/mode_handling.i
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/misc.i
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/buffer_access.i
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Analyser.i
+lua_wrappers_net.o: ../src/physics/CollisionMesh.h
+lua_wrappers_net.o: ../depend_stubs/OgreDataStream.h
+lua_wrappers_net.o: ../src/DiskResource.h ../src/sleep.h
+lua_wrappers_net.o: ../src/physics/BColParser.h
+lua_wrappers_net.o: ../depend_stubs/stdint.h
+lua_wrappers_net.o: ../src/physics/LooseEnd.h
+lua_wrappers_net.o: ../src/physics/PhysicalMaterial.h
+lua_wrappers_net.o: ../src/GritObject.h ../src/LuaPtr.h
+lua_wrappers_net.o: ../src/ExternalTable.h ../src/path_util.h
+lua_wrappers_net.o: ../src/net/net.h ../depend_stubs/sys/socket.h
+lua_wrappers_net.o: ../depend_stubs/arpa/inet.h
+lua_wrappers_net.o: ../depend_stubs/sys/param.h
+lua_wrappers_net.o: ../depend_stubs/sys/types.h
+lua_wrappers_net.o: ../depend_stubs/netdb.h
+lua_wrappers_net.o: ../depend_stubs/sys/ioctl.h
+lua_wrappers_net.o: ../src/net/lua_wrappers_net.h
+lua_wrappers_net.o: ../src/lua_wrappers_common.h
+net.o: ../src/CentralisedLog.h ../src/sleep.h ../src/net/net.h
+net.o: ../src/SharedPtr.h ../depend_stubs/string
+net.o: ../depend_stubs/stdint.h ../depend_stubs/sys/socket.h
+net.o: ../depend_stubs/arpa/inet.h ../depend_stubs/sys/param.h
+net.o: ../depend_stubs/sys/types.h ../depend_stubs/netdb.h
+net.o: ../depend_stubs/sys/ioctl.h ../src/net/NetManager.h
+net.o: ../depend_stubs/cstdlib ../depend_stubs/queue
+net.o: ../src/ExternalTable.h
