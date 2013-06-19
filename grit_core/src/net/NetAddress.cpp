@@ -52,7 +52,7 @@ NetAddress NetAddress::resolve(const char* host, NetAddressType type)
 	// [^:] sounds like it'd fail for ipv6?
 	if (sscanf(host, "%256[^:]:%hu", hostName, &port) == 2)
 	{
-		if (!strcasecmp(hostName, "localhost"))
+		if (!strcmp(hostName, "localhost"))
 		{
 			return NetAddress(NetAddress_Loopback);
 		}
