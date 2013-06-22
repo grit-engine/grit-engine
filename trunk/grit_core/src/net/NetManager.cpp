@@ -261,7 +261,7 @@ void NetManager::sendLoopbackPacket(NetChannel channel, std::string& packet)
 
 bool NetManager::getLoopbackPacket(NetChannel channel, std::string& packet)
 {
-	std::queue<std::string>* queue = nullptr;
+	std::queue<std::string>* queue = NULL;
 
 	if (channel == NetChan_ClientToServer)
 	{
@@ -272,7 +272,7 @@ bool NetManager::getLoopbackPacket(NetChannel channel, std::string& packet)
 		queue = &clientLoopQueue;
 	}
 
-	if (queue != nullptr)
+	if (queue != NULL)
 	{
 		if (!queue->empty())
 		{
