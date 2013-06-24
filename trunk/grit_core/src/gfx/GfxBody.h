@@ -50,7 +50,7 @@ class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObj
         public:
 
         Sub (GfxBody *parent, Ogre::SubMesh *sub_mesh)
-            : Renderable(), parent(parent), subMesh(sub_mesh)
+            : Renderable(), parent(parent), subMesh(sub_mesh), material(NULL), emissiveEnabled(true)
         { }
         ~Sub() { }
 
