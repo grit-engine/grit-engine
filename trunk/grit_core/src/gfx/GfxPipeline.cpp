@@ -651,7 +651,7 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
                     name+":hdrFb"+ss.str(), RESGRP, Ogre::TEX_TYPE_2D,
                     width, height, 1,
                     0,
-                    Ogre::PF_FLOAT16_RGB,
+                    Ogre::PF_FLOAT32_RGB,
                     Ogre::TU_RENDERTARGET,
                     NULL,
                     false);
