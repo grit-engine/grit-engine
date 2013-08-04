@@ -31,6 +31,7 @@ typedef std::vector<GfxSkyShader*> GfxSkyShaders;
 
 #include <OgreMaterial.h>
 
+#include "GfxMaterial.h"
 #include "gfx_internal.h"
 
 typedef std::vector<std::string> GfxSkyShaderVariation;

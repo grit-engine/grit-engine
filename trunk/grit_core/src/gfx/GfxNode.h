@@ -22,41 +22,113 @@
 #include "../SharedPtr.h"
 
 class GfxNode;
-typedef SharedPtr<GfxNode> GfxNodePtr;
+class GfxFertileNode;
+typedef SharedPtr<GfxFertileNode> GfxNodePtr;
 
-#ifndef GfxNode_h
-#define GfxNode_h
+#ifndef GfxLeaf_h
+#define GfxLeaf_h
 
-#include "GfxLeaf.h"
+#include <OgreSceneNode.h>
 
-/** A node can be a leaf, or a parent. */
-class GfxNode : public GfxLeaf {
+#include "../math_util.h"
+#include "../vect_util.h"
+
+#include "gfx_internal.h"
+
+// TERMINOLOGY:
+// A GfxNode is something that can be a leaf.  Everything in the tree is GfxNode.
+// A GfxFertileNode is something that can be a parent.  All GfxFertileNode are also GfxNode.
+// Objects should typically extend GfxFertileNode so they can have children attached.
+// Objects that do not exist in the Ogre scene graph are currenty not GfxFertileNode since they have no internal scene node.
+
+/* OH FUCK FUCK FUCK
+ * The parent can change its localTransform, thereby needing to make its children dirty.  Oh, the humanity.
+ */
+
+// this should rarely need to be used by users of this API
+class GfxNode : public fast_erase_index {
     protected:
     static const std::string className;
-    std::vector<GfxLeaf*> children; // caution!
+    Transform localTransform, worldTransform;
+    //bool dirtyWorldTransform;
+    GfxNodePtr par;
+    std::string parentBoneName;
+    int parentBoneId;
+    Ogre::SceneNode *node;
+    bool dead;
 
     GfxNode (const GfxNodePtr &par_);
-    ~GfxNode ();
+    virtual ~GfxNode ();
+
+    void notifyParentDead (void);
+    void ensureNotChildOf (GfxFertileNode *node) const;
+
+    void doUpdateWorldTransform (void);
+    void updateParentBoneId (void);
+
+    void ensureAlive (void) const { if (dead) THROW_DEAD(className); }
 
     public:
-    static GfxNodePtr make (const GfxNodePtr &par_=GfxNodePtr(NULL))
-    { return GfxNodePtr(new GfxNode(par_)); }
 
-    void notifyLostChild (GfxLeaf *child);
-    void notifyGainedChild (GfxLeaf *child);
+    void updateWorldTransform (void) {
+        /*if (dirtyWorldTransform)*/ doUpdateWorldTransform();
+    }
+
+    const GfxNodePtr &getParent (void) const { ensureAlive(); return par; }
     virtual void setParent (const GfxNodePtr &par_);
 
-    virtual unsigned getBatchesWithChildren (void) const;
+    const std::string &getParentBoneName (void) const
+    {
+        ensureAlive();
+        return parentBoneName;
+    }
+    virtual void setParentBoneName (const std::string &s)
+    {
+        ensureAlive();
+        parentBoneName = s;
+        updateParentBoneId();
+    }
 
-    virtual unsigned getTrianglesWithChildren (void) const;
-
-    virtual unsigned getVertexesWithChildren (void) const;
+    const Transform &getLocalTransform (void) const
+    {
+        ensureAlive();
+        return localTransform;
+    }
+    void setLocalTransform (const Transform &v)
+    {
+        ensureAlive();
+        localTransform = v;
+        //dirtyWorldTransform = true;
+    }
+    void setLocalPosition (const Vector3 &v)
+    {
+        ensureAlive();
+        localTransform.p = v;
+        //dirtyWorldTransform = true;
+    }
+    void setLocalOrientation (const Quaternion &v)
+    {
+        ensureAlive();
+        localTransform.r = v;
+        //dirtyWorldTransform = true;
+    }
+    void setLocalScale (const Vector3 &v)
+    {
+        ensureAlive();
+        localTransform.s = v;
+        //dirtyWorldTransform = true;
+    }
+    Transform getWorldTransform (void)
+    {
+        ensureAlive();
+        updateWorldTransform();
+        return worldTransform;
+    }
 
     virtual void destroy (void);
+    virtual bool destroyed (void) const { return dead; }
 
-    virtual bool hasGraphics (void) const { return false; }
-
-    friend class SharedPtr<GfxNode>;
+    friend class GfxFertileNode; // otherwise it cannot access our protected stuff
 };
 
 #endif

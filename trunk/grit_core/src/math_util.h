@@ -359,19 +359,21 @@ inline Quaternion::Quaternion (const Radian& a, const Vector3& axis)
 
 // {{{ Transform
 
+// this class may be buggy...
 struct Transform {
 
-    Quaternion r; // rotation
     Vector3 p; // position
+    Quaternion r; // rotation
+    Vector3 s; // scale
 
     Transform (void) { }
-    Transform (const Quaternion &r_, const Vector3 &p_) : r(r_), p(p_) { }
+    Transform (const Vector3 &p, const Quaternion &r, const Vector3 &s) : p(p), r(r), s(s) { }
 
     friend Vector3 operator * (const Transform &a, const Vector3 &b)
-    { return a.p + a.r*b; }
+    { return a.p + a.r*(a.s*b); }
 
     friend Transform operator * (const Transform &a, const Transform &b)
-    { return Transform(a.r*b.r, a.p + a.r*b.p); }
+    { return Transform(a.p + a.r*(a.s*b.p), a.r*b.r, a.s*b.s); }
 
 };
 

@@ -22,8 +22,6 @@
 #include "gfx_internal.h"
 #include "GfxLight.h"
 
-static fast_erase_vector<GfxLight*> all_lights;
-
 static bool have_init_coronas = false;
 
 static void ensure_coronas_init (void)
@@ -37,7 +35,7 @@ static void ensure_coronas_init (void)
 const std::string GfxLight::className = "GfxLight";
 
 GfxLight::GfxLight (const GfxNodePtr &par_)
-  : GfxLeaf(par_),
+  : GfxNode(par_),
     enabled(true),
     fade(1),
     coronaLocalPos(0,0,0),
@@ -56,7 +54,6 @@ GfxLight::GfxLight (const GfxNodePtr &par_)
     light->setSpotlightInnerAngle(Ogre::Degree(180));
     light->setSpotlightOuterAngle(Ogre::Degree(180));
     updateVisibility();
-    all_lights.push_back(this);
     ensure_coronas_init();
     corona = gfx_particle_emit("/system/Coronas");
     corona->setDefaultUV();
@@ -75,21 +72,20 @@ void GfxLight::destroy (void)
     if (dead) THROW_DEAD(className);
     if (light) ogre_sm->destroyLight(light);
     light = NULL;
-    all_lights.erase(this);
     corona->release();
-    GfxLeaf::destroy();
+    GfxNode::destroy();
 }
 
 void GfxLight::updateCorona (const Vector3 &cam_pos)
 {
     if (dead) THROW_DEAD(className);
-    coronaPos = transformPositionParent(coronaLocalPos);
+    coronaPos = getWorldTransform() * coronaLocalPos;
     corona->pos = coronaPos;
     Vector3 col = enabled ? fade * coronaColour : Vector3(0,0,0);
     corona->dimensions = Vector3(coronaSize, coronaSize, coronaSize);
 
-    Vector3 light_dir_ws = (cam_pos - getWorldPosition()).normalisedCopy();
-    Vector3 light_aim_ws_ = getWorldOrientation() * Vector3(0,1,0);
+    Vector3 light_dir_ws = (cam_pos - getWorldTransform().p).normalisedCopy();
+    Vector3 light_aim_ws_ = getWorldTransform().r * Vector3(0,1,0);
 
     float angle = light_aim_ws_.dot(light_dir_ws);
     float inner = gritcos(coronaInnerAngle);
@@ -253,13 +249,3 @@ void GfxLight::updateVisibility (void)
     light->setDiffuseColour(to_ogre_cv(fade * diffuse));
     light->setSpecularColour(to_ogre_cv(fade * specular));
 }
-    
-void update_coronas (const Vector3 &cam_pos)
-{
-    //const Ogre::LightList &ll = sm->_getLightsAffectingFrustum();
-    for (unsigned long i=0 ; i<all_lights.size() ; ++i) {
-        all_lights[i]->updateCorona(cam_pos);
-    }
-
-}
-

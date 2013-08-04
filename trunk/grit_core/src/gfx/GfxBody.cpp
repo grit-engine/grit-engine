@@ -110,15 +110,9 @@ const Ogre::MaterialPtr& GfxBody::Sub::getMaterial(void) const
 
 // {{{ RENDERING
 
-void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
+void GfxBody::updateBoneMatrixes (void)
 {
-    bool shadow_cast = ogre_sm->_getCurrentRenderStage() == Ogre::SceneManager::IRS_RENDER_TO_TEXTURE;
-
-    if (!enabled || fade < 0.000001) return;
-
-    // Since we know we're going to be rendered, take this opportunity to
-    // update the animation
-    if (skeleton && freshFrame) {
+    if (skeleton) {
 
         //update the current hardware animation state
         skeleton->setAnimationState(animationState);
@@ -129,9 +123,14 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
             boneMatrices,
             boneWorldMatrices,
             numBoneMatrices);
-
-        freshFrame = false;
     }
+}
+
+void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
+{
+    bool shadow_cast = ogre_sm->_getCurrentRenderStage() == Ogre::SceneManager::IRS_RENDER_TO_TEXTURE;
+
+    if (!enabled || fade < 0.000001) return;
 
     bool do_wireframe = (wireframe || gfx_option(GFX_WIREFRAME));
     bool do_regular = !(do_wireframe && gfx_option(GFX_WIREFRAME_SOLID));
@@ -273,7 +272,7 @@ GfxBodyPtr GfxBody::make (const std::string &mesh_name,
 }
 
 GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNodePtr &par_)
-  : GfxNode(par_), initialMaterialMap(sm)
+  : GfxFertileNode(par_), initialMaterialMap(sm)
 {
     node->attachObject(this);
 
@@ -292,7 +291,6 @@ GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNod
 
     reinitialise();
 
-    gfx_all_bodies.push_back(this);
 }
 
 unsigned GfxBody::getSubMeshByOriginalMaterialName (const std::string &n)
@@ -382,8 +380,7 @@ void GfxBody::destroy (void)
 {
     if (dead) THROW_DEAD(className);
     destroyGraphics();
-    gfx_all_bodies.erase(this);
-    GfxNode::destroy();
+    GfxFertileNode::destroy();
 }
 
 GfxMaterial *GfxBody::getMaterial (unsigned i)
@@ -424,7 +421,7 @@ unsigned GfxBody::getBatches (void) const
 
 unsigned GfxBody::getBatchesWithChildren (void) const
 {
-    return getBatches() + GfxNode::getBatchesWithChildren();
+    return getBatches() + GfxFertileNode::getBatchesWithChildren();
 }
 
 unsigned GfxBody::getVertexes (void) const
@@ -434,7 +431,7 @@ unsigned GfxBody::getVertexes (void) const
 
 unsigned GfxBody::getVertexesWithChildren (void) const
 {
-    return getVertexes() + GfxNode::getVertexesWithChildren();
+    return getVertexes() + GfxFertileNode::getVertexesWithChildren();
 }
 
 unsigned GfxBody::getTriangles (void) const
@@ -448,7 +445,7 @@ unsigned GfxBody::getTriangles (void) const
 
 unsigned GfxBody::getTrianglesWithChildren (void) const
 {
-    return getTriangles() + GfxNode::getTrianglesWithChildren();
+    return getTriangles() + GfxFertileNode::getTrianglesWithChildren();
 }
 
 float GfxBody::getFade (void)
@@ -493,13 +490,20 @@ void GfxBody::setPaintColour (int i, const GfxPaintColour &c)
     colours[i] = c;
 }
 
-unsigned GfxBody::getNumBones (void)
+unsigned GfxBody::getNumBones (void) const
 {
     if (dead) THROW_DEAD(className);
     return manualBones.size();
 }
 
-unsigned GfxBody::getBoneId (const std::string name)
+bool GfxBody::hasBoneName (const std::string name) const
+{
+    if (dead) THROW_DEAD(className);
+    if (skeleton == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
+    return skeleton->hasBone(name);
+}
+
+unsigned GfxBody::getBoneId (const std::string name) const
 {
     if (dead) THROW_DEAD(className);
     if (skeleton == NULL) GRIT_EXCEPT("GfxBody has no skeleton");
@@ -507,7 +511,7 @@ unsigned GfxBody::getBoneId (const std::string name)
     return skeleton->getBone(name)->getHandle();
 }
 
-void GfxBody::checkBone (unsigned n)
+void GfxBody::checkBone (unsigned n) const
 {
     if (dead) THROW_DEAD(className);
     if (manualBones.size()==0) GRIT_EXCEPT("GfxBody has no skeleton");
@@ -518,7 +522,7 @@ void GfxBody::checkBone (unsigned n)
     }
 }
 
-const std::string &GfxBody::getBoneName (unsigned n)
+const std::string &GfxBody::getBoneName (unsigned n) const
 {
     checkBone(n);
     return skeleton->getBone(n)->getName();
@@ -588,6 +592,40 @@ Quaternion GfxBody::getBoneLocalOrientation (unsigned n)
     return from_ogre(bone->getOrientation());
 }
 
+Vector3 GfxBody::getBoneInitialScale (unsigned n)
+{
+    checkBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
+    return from_ogre(bone->getInitialScale());
+}
+
+Vector3 GfxBody::getBoneWorldScale (unsigned n)
+{
+    checkBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
+    return from_ogre(bone->_getDerivedScale());
+}
+
+Vector3 GfxBody::getBoneLocalScale (unsigned n)
+{
+    checkBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
+    return from_ogre(bone->getScale());
+}
+
+
+Transform GfxBody::getBoneWorldTransform (unsigned n)
+{
+    checkBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
+    Transform t;
+    t.p = from_ogre(bone->_getDerivedPosition());
+    t.r = from_ogre(bone->_getDerivedOrientation());
+    t.s = from_ogre(bone->_getDerivedScale());
+    updateWorldTransform();
+    return worldTransform * t;
+}
+
 
 void GfxBody::setBoneLocalPosition (unsigned n, const Vector3 &v)
 {
@@ -601,6 +639,13 @@ void GfxBody::setBoneLocalOrientation (unsigned n, const Quaternion &v)
     checkBone(n);
     Ogre::Bone *bone = skeleton->getBone(n);
     bone->setOrientation(to_ogre(v));
+}
+
+void GfxBody::setBoneLocalScale (unsigned n, const Vector3 &v)
+{
+    checkBone(n);
+    Ogre::Bone *bone = skeleton->getBone(n);
+    bone->setScale(to_ogre(v));
 }
 
 std::vector<std::string> GfxBody::getAnimationNames (void)

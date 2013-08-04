@@ -230,9 +230,10 @@ void GfxMeshDiskResource::reloadImpl(void)
     try {
         rp->reload();
         if (rp->hasSkeleton()) rp->getSkeleton()->reload();
-        for (unsigned long i=0 ; i<gfx_all_bodies.size() ; ++i) {
-            GfxBody *b = gfx_all_bodies[i];
-            if (b->mesh == rp) b->reinitialise();
+        for (unsigned long i=0 ; i<gfx_all_nodes.size() ; ++i) {
+            GfxNode *leaf = gfx_all_nodes[i];
+            GfxBody *b = dynamic_cast<GfxBody*>(leaf);
+            if (b!=NULL && b->mesh == rp) b->reinitialise();
         }
         for (unsigned long i=0 ; i<gfx_all_sky_bodies.size() ; ++i) {
             GfxSkyBody *b = gfx_all_sky_bodies[i];

@@ -95,6 +95,7 @@ TRY_START
         Transform world_trans;
         world_trans.p = self->getPosition();
         world_trans.r = self->getOrientation();
+        world_trans.s = Vector3(1,1,1);
         float density       = check_float(L,3);
         float min_slope     = check_float(L,4);
         float max_slope     = check_float(L,5);
@@ -155,6 +156,7 @@ TRY_START
         Transform world_trans;
         world_trans.p = self->getPosition();
         world_trans.r = self->getOrientation();
+        world_trans.s = Vector3(1,1,1);
 
         self->colMesh->scatter(phys_mats.getMaterial(mat)->id,
                                world_trans, density, min_slope, max_slope, min_elevation,

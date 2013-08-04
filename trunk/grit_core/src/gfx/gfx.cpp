@@ -33,6 +33,7 @@
 #include "Clutter.h"
 #include "GfxMaterial.h"
 #include "GfxBody.h"
+#include "GfxLight.h"
 #include "GfxSkyMaterial.h"
 #include "GfxSkyBody.h"
 #include "gfx_hud.h"
@@ -109,7 +110,7 @@ static void set_ogre_fog (void)
 
 GfxShaderDB shader_db;
 GfxMaterialDB material_db;
-fast_erase_vector<GfxBody*> gfx_all_bodies;
+fast_erase_vector<GfxNode*> gfx_all_nodes;
 
 
 // {{{ utilities
@@ -255,15 +256,17 @@ void gfx_env_cube (GfxEnvCubeDiskResource *v)
         bgl->finishedWith(scene_env_cube);
     }
 
-    for (unsigned long i=0 ; i<gfx_all_bodies.size() ; ++i) {
-        GfxBody *b = gfx_all_bodies[i];
+    // Alpha materials are not part of the full screen deferred shading pass, so have
+    // the env cube texture bound as part of the material used to render that pass
+    for (unsigned long i=0 ; i<gfx_all_nodes.size() ; ++i) {
+        GfxBody *b = dynamic_cast<GfxBody*>(gfx_all_nodes[i]);
+        if (b==NULL) continue;
         for (unsigned j=0 ; j<b->getNumSubMeshes() ; ++j) {
             GfxMaterial *m = b->getMaterial(j);
             if (m->getSceneBlend() != GFX_MATERIAL_OPAQUE) {
                 reset_env_cube(m->regularMat, scene_env_cube, v);
                 reset_env_cube(m->fadingMat, scene_env_cube, v);
                 reset_env_cube(m->worldMat, scene_env_cube, v);
-                
             }
         }
     }
@@ -511,8 +514,6 @@ void gfx_sky_sun_alpha (unsigned i, float v)
 
 // {{{ RENDER
 
-void update_coronas (const Vector3 &cam_pos);
-
 float anim_time = 0;
 
 static float time_since_started_rendering = 0;
@@ -522,7 +523,21 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
     time_since_started_rendering += elapsed;
     anim_time = fmodf(anim_time+elapsed, ANIM_TIME_MAX);
 
-    debug_drawer->frameStarted();
+    // try and do all "each object" processing in this loop
+    for (unsigned long i=0 ; i<gfx_all_nodes.size() ; ++i) {
+        GfxNode *node = gfx_all_nodes[i];
+
+        GfxBody *b = dynamic_cast<GfxBody*>(node);
+        if (b != NULL) b->updateBoneMatrixes();
+
+        GfxLight *l = dynamic_cast<GfxLight*>(node);
+        if (l != NULL) l->updateCorona(cam_pos);
+    }
+    // must be done after updating bone matrixes
+    for (unsigned long i=0 ; i<gfx_all_nodes.size() ; ++i) {
+        GfxNode *node = gfx_all_nodes[i];
+        node->updateWorldTransform();
+    }
 
     try {
         Ogre::WindowEventUtilities::messagePump();
@@ -531,14 +546,13 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
             do_reset_framebuffer();
         }
 
-
-        update_coronas(cam_pos);
-
         // This pumps ogre's texture animation and probably other things
         ftcv->setValue(elapsed);
         ftcv->setElapsedTime(time_since_started_rendering);
         // used for indicating that ogre internal data prepared for last frame is now invalid
         ogre_root->setNextFrameNumber(ogre_root->getNextFrameNumber()+1);
+
+        debug_drawer->frameStarted();
 
         if (ogre_win->isActive()) {
             ogre_win->_beginUpdate();

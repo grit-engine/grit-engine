@@ -28,15 +28,15 @@ typedef SharedPtr<GfxInstances> GfxInstancesPtr;
 #ifndef GFX_INSTANCES_H
 #define GFX_INSTANCES_H
 
-#include "OgreMovableObject.h"
-
 #include "../DenseIndexMap.h"
 
-#include "gfx_disk_resource.h"
-#include "GfxLeaf.h"
-#include "GfxNode.h"
+#include "OgreMovableObject.h"
 
-class GfxInstances : public GfxLeaf, public fast_erase_index, public Ogre::MovableObject {
+#include "gfx_disk_resource.h"
+#include "GfxNode.h"
+#include "GfxFertileNode.h"
+
+class GfxInstances : public GfxNode, public Ogre::MovableObject {
 
     protected:
 

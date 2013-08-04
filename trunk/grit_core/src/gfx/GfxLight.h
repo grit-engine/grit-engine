@@ -26,10 +26,10 @@ typedef SharedPtr<GfxLight> GfxLightPtr;
 #define GFX_LIGHT_H
 
 #include "gfx.h"
-#include "GfxNode.h"
+#include "GfxFertileNode.h"
 #include "GfxParticleSystem.h"
 
-class GfxLight : public GfxLeaf, public fast_erase_index {
+class GfxLight : public GfxNode {
     protected:
     static const std::string className;
     bool enabled;

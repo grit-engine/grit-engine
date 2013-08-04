@@ -47,10 +47,12 @@ extern const GfxStringMap gfx_empty_string_map;
 #include "../math_util.h"
 
 #include "gfx_disk_resource.h"
-#include "GfxBody.h"
+#include "GfxNode.h"
 
 #include "GfxParticleSystem.h"
 #include "HUD.h"
+
+extern fast_erase_vector<GfxNode*> gfx_all_nodes;
 
 struct GfxCallback {
     virtual ~GfxCallback (void) { }

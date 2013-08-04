@@ -226,9 +226,9 @@ class CollisionMesh : public DiskResource {
                 if (rotate) {
                     Quaternion rnd(Radian(float(rand())/RAND_MAX * 2*M_PI),
                                    Vector3(0,0,1));
-                    r.push_back(Transform(base_q * rnd, p));
+                    r.push_back(Transform(p, base_q * rnd, Vector3(1,1,1)));
                 } else {
-                    r.push_back(Transform(base_q, p));
+                    r.push_back(Transform(p, base_q, Vector3(1,1,1)));
                 }
             }
         }

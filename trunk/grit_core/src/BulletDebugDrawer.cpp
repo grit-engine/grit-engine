@@ -30,6 +30,7 @@
 #include "CentralisedLog.h"
 
 #include "gfx/gfx.h"
+#include "gfx/gfx_internal.h"
 #include "physics/PhysicsWorld.h"
 
 static inline Vector3 from_bullet (const btVector3 &from)

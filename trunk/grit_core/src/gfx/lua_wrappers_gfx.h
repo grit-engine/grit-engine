@@ -23,7 +23,7 @@
 
 #include "gfx.h"
 
-#include "GfxNode.h"
+#include "GfxFertileNode.h"
 #include "GfxBody.h"
 #include "GfxSkyBody.h"
 #include "GfxMaterial.h"
@@ -33,7 +33,7 @@
 #include "GfxRangedInstances.h"
 #include "gfx_hud.h"
 
-#define GFXNODE_TAG "Grit/GfxNode"
+#define GFXNODE_TAG "Grit/GfxFertileNode"
 #define GFXBODY_TAG "Grit/GfxBody"
 #define GFXSKYBODY_TAG "Grit/GfxSkyBody"
 #define GFXINSTANCES_TAG "Grit/GfxInstances"

@@ -24,17 +24,15 @@
 class GfxBody;
 typedef SharedPtr<GfxBody> GfxBodyPtr;
 
-extern fast_erase_vector<GfxBody*> gfx_all_bodies;
-
 #ifndef GfxBody_h
 #define GfxBody_h
 
 #include <OgreMesh.h>
 
-#include "GfxNode.h"
+#include "GfxFertileNode.h"
 #include "GfxMaterial.h"
 
-class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObject {
+class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
 
     protected:
 
@@ -86,12 +84,12 @@ class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObj
     typedef std::vector<Sub*> SubList;
     SubList subList;
 
+    protected:
+    Ogre::SkeletonInstance* skeleton;
     Ogre::AnimationStateSet animationState;
-
     Ogre::Matrix4 *boneWorldMatrices;
     Ogre::Matrix4 *boneMatrices;
     unsigned short numBoneMatrices;
-    Ogre::SkeletonInstance* skeleton;
     
     bool freshFrame; // an optimisation -- do not recalculate stuff multiple times per frame
 
@@ -131,7 +129,7 @@ class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObj
     protected:
     void destroyGraphics (void);
     void updateBones (void);
-    void checkBone (unsigned n);
+    void checkBone (unsigned n) const;
     Ogre::AnimationState *getAnimState (const std::string &name);
     public:
     void reinitialise (void);
@@ -157,9 +155,11 @@ class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObj
     GfxPaintColour getPaintColour (int i);
     void setPaintColour (int i, const GfxPaintColour &c);
 
-    unsigned getNumBones (void);
-    unsigned getBoneId (const std::string name);
-    const std::string &getBoneName (unsigned n);
+    unsigned getNumBones (void) const;
+    bool hasBones (void) const { if (dead) THROW_DEAD(className); return skeleton != NULL; }
+    bool hasBoneName (const std::string name) const;
+    unsigned getBoneId (const std::string name) const;
+    const std::string &getBoneName (unsigned n) const;
 
     bool getBoneManuallyControlled (unsigned n);
     void setBoneManuallyControlled (unsigned n, bool v);
@@ -171,9 +171,17 @@ class GfxBody : public GfxNode, public fast_erase_index, public Ogre::MovableObj
     Quaternion getBoneInitialOrientation (unsigned n);
     Quaternion getBoneWorldOrientation (unsigned n);
     Quaternion getBoneLocalOrientation (unsigned n);
+    Vector3 getBoneInitialScale (unsigned n);
+    Vector3 getBoneWorldScale (unsigned n);
+    Vector3 getBoneLocalScale (unsigned n);
+
+    Transform getBoneWorldTransform (unsigned n);
 
     void setBoneLocalPosition (unsigned n, const Vector3 &v);
     void setBoneLocalOrientation (unsigned n, const Quaternion &v);
+    void setBoneLocalScale (unsigned n, const Vector3 &v);
+
+    void updateBoneMatrixes (void);
 
     std::vector<std::string> getAnimationNames (void);
     float getAnimationLength (const std::string &name);
