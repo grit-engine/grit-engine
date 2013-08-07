@@ -118,6 +118,8 @@ void GfxBody::updateBoneMatrixes (void)
         skeleton->setAnimationState(animationState);
         skeleton->_getBoneMatrices(boneMatrices);
 
+        updateWorldTransform();
+
         Ogre::OptimisedUtil::getImplementation()->concatenateAffineMatrices(
             _getParentNodeFullTransform(),
             boneMatrices,
@@ -618,10 +620,7 @@ Transform GfxBody::getBoneWorldTransform (unsigned n)
 {
     checkBone(n);
     Ogre::Bone *bone = skeleton->getBone(n);
-    Transform t;
-    t.p = from_ogre(bone->_getDerivedPosition());
-    t.r = from_ogre(bone->_getDerivedOrientation());
-    t.s = from_ogre(bone->_getDerivedScale());
+    Transform t(from_ogre(bone->_getDerivedPosition()), from_ogre(bone->_getDerivedOrientation()), from_ogre(bone->_getDerivedScale()));
     updateWorldTransform();
     return worldTransform * t;
 }

@@ -31,10 +31,12 @@ GfxNode::GfxNode (const GfxNodePtr &par_)
 {
     dead = false;
 
-    localTransform = Transform(Vector3(0,0,0), Quaternion(1,0,0,0), Vector3(1,1,1));
+    localPos = Vector3(0,0,0);
+    localOrientation = Quaternion(1,0,0,0);
+    localScale = Vector3(1,1,1);
 
     //dirtyWorldTransform = false;
-    worldTransform = localTransform;
+    worldTransform = Transform::identity();
 
     node = ogre_sm->createSceneNode();
     ogre_root_node->addChild(node);
@@ -106,7 +108,7 @@ void GfxNode::updateParentBoneId (void)
 void GfxNode::doUpdateWorldTransform (void)
 {
     if (par.isNull()) {
-        worldTransform = localTransform;
+        worldTransform = Transform(localPos, localOrientation, localScale);
     } else {
         GfxFertileNode *fertile_node = static_cast<GfxFertileNode*>(&*par);
         fertile_node->updateWorldTransform();
@@ -117,11 +119,20 @@ void GfxNode::doUpdateWorldTransform (void)
             GfxBody *pbody = static_cast<GfxBody*>(fertile_node);
             parentTransform = pbody->getBoneWorldTransform(parentBoneId);
         }
-        worldTransform = parentTransform * localTransform;
+        worldTransform = parentTransform * Transform(localPos, localOrientation, localScale);
     }
-    node->setPosition(to_ogre(worldTransform.p));
-    node->setOrientation(to_ogre(worldTransform.r));
-    node->setScale(to_ogre(worldTransform.s));
+    Ogre::Matrix4 trans;
+    for (int col=0 ; col<3 ; ++col) {
+        for (int row=0 ; row<3 ; ++row) {
+            trans[row][col] = worldTransform.mat[row][col];
+        }
+    }
+    trans[0][3] = worldTransform.pos.x;
+    trans[1][3] = worldTransform.pos.y;
+    trans[2][3] = worldTransform.pos.z;
+    trans[3][0] = trans[3][1] = trans[3][2] = 0;
+    trans[3][3] = 1;
+    node->overrideCachedTransform(trans);
     //dirtyWorldTransform = false;
 }
 

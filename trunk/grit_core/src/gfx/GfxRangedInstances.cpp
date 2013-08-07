@@ -119,7 +119,7 @@ void GfxRangedInstances::update (const Vector3 &new_pos)
     }
 }
 
-void GfxRangedInstances::push_back (const Transform &t)
+void GfxRangedInstances::push_back (const SimpleTransform &t)
 {
     // it is very important that the number of samples does not increase over time, or
     // the vector will resize and these pointers will become invalid
@@ -127,10 +127,10 @@ void GfxRangedInstances::push_back (const Transform &t)
     Item &item = items[items.size()-1];
     item.parent = this;
     item.activated = false;
-    item.quat = Quaternion(t.r.w, t.r.x, t.r.y, t.r.z);
+    item.quat = t.quat;
     item.lastFade = 0;
     mSpace.add(&item);
-    item.updateSphere(t.p, mItemRenderingDistance);
+    item.updateSphere(t.pos, mItemRenderingDistance);
 }
 
 float GfxRangedInstances::Item::calcFade (float range2)

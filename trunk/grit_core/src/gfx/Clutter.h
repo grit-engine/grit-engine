@@ -350,7 +350,7 @@ class RangedClutter : public Ogre::MovableObject, public StreamerCallback {
         void update (const Vector3 &new_pos);
 
         // be compatible with std::vector
-        void push_back (const Transform &t);
+        void push_back (const SimpleTransform &t);
         void reserve (size_t s) {
             items.reserve(s);
             mSpace.reserve(s);

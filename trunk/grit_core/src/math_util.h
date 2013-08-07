@@ -155,6 +155,21 @@ struct Quaternion {
     {
         o << "Quaternion(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z << ")";
         return o;
+    } 
+
+    void toMat (float (&mat)[3][3]) const
+    {
+        mat[0][0] = 1 - 2 * (y*y + z*z);
+        mat[0][1] =     2 * (x*y - z*w);
+        mat[0][2] =     2 * (x*z + y*w);
+
+        mat[1][0] =     2 * (x*y + z*w);
+        mat[1][1] = 1 - 2 * (x*x + z*z);
+        mat[1][2] =     2 * (y*z - x*w);
+
+        mat[2][0] =     2 * (x*z - y*w);
+        mat[2][1] =     2 * (y*z + x*w);
+        mat[2][2] = 1 - 2 * (x*x + y*y);
     }
 
 };
@@ -362,20 +377,109 @@ inline Quaternion::Quaternion (const Radian& a, const Vector3& axis)
 // this class may be buggy...
 struct Transform {
 
-    Vector3 p; // position
-    Quaternion r; // rotation
-    Vector3 s; // scale
+    Vector3 pos; // position
+    float mat[3][3]; // to be interpreted as mat[row][col]
 
     Transform (void) { }
-    Transform (const Vector3 &p, const Quaternion &r, const Vector3 &s) : p(p), r(r), s(s) { }
+    Transform (const Vector3 &p, const Quaternion &r, const Vector3 &s)
+    {
+        pos = p;
+        r.toMat(mat);
+        mat[0][0] *= s.x;
+        mat[1][1] *= s.y;
+        mat[2][2] *= s.z;
+    }
+
+    static Transform identity (void)
+    {
+        Transform t;
+        t.pos = Vector3(0,0,0);
+        for (int row=0 ; row<3 ; ++row) {
+            for (int col=0 ; col<3 ; ++col) {
+                t.mat[row][col] = 0;
+            }
+        }
+        return t;
+    }
 
     friend Vector3 operator * (const Transform &a, const Vector3 &b)
-    { return a.p + a.r*(a.s*b); }
+    {
+        Vector3 c = a.pos;
+        c.x = a.mat[0][0]*b.x + a.mat[0][1]*b.y + a.mat[0][2]*b.z;
+        c.y = a.mat[1][0]*b.x + a.mat[1][1]*b.y + a.mat[1][2]*b.z;
+        c.z = a.mat[2][0]*b.x + a.mat[2][1]*b.y + a.mat[2][2]*b.z;
+        return c;
+    }
 
     friend Transform operator * (const Transform &a, const Transform &b)
-    { return Transform(a.p + a.r*(a.s*b.p), a.r*b.r, a.s*b.s); }
+    {
+        Transform t;
+        for (int row=0 ; row<3 ; ++row) {
+            for (int col=0 ; col<3 ; ++col) {
+                t.mat[row][col] = 0;
+                for (int i=0 ; i<3 ; ++i) {
+                    t.mat[row][col] += a.mat[row][i] * b.mat[i][col];
+                }
+            }
+        }
+        t.pos = a.pos + a * b.pos;
+        return t;
+    }
+
+    Transform removeTranslation (void) const
+    {
+        Transform t = *this;
+        t.pos = Vector3(0,0,0);
+        return t;
+    }
 
 };
+
+
+// }}}
+
+
+// {{{ SimpleTransform (does not handle scale)
+
+struct SimpleTransform {
+
+    Vector3 pos; // position
+    Quaternion quat; // rotation
+
+    SimpleTransform (void) { }
+    SimpleTransform (const Vector3 &p, const Quaternion &r)
+    {
+        pos = p;
+        quat = r;
+    }
+
+    static SimpleTransform identity (void)
+    {
+        SimpleTransform t;
+        t.pos = Vector3(0,0,0);
+        t.quat = Quaternion(1,0,0,0);
+        return t;
+    }
+
+    friend Vector3 operator * (const SimpleTransform &a, const Vector3 &b)
+    {
+        return a.pos + a.quat * b;
+    }
+
+    friend SimpleTransform operator * (const SimpleTransform &a, const SimpleTransform &b)
+    {
+        return SimpleTransform(a.pos + a.quat*b.pos, a.quat*b.quat);
+    }
+
+    SimpleTransform removeTranslation (void) const
+    {
+        SimpleTransform t = *this;
+        t.pos = Vector3(0,0,0);
+        return t;
+    }
+
+};
+
 
 // }}}
 

@@ -49,7 +49,9 @@ typedef SharedPtr<GfxFertileNode> GfxNodePtr;
 class GfxNode : public fast_erase_index {
     protected:
     static const std::string className;
-    Transform localTransform, worldTransform;
+    Vector3 localPos, localScale;
+    Quaternion localOrientation;
+    Transform worldTransform;
     //bool dirtyWorldTransform;
     GfxNodePtr par;
     std::string parentBoneName;
@@ -89,33 +91,37 @@ class GfxNode : public fast_erase_index {
         updateParentBoneId();
     }
 
-    const Transform &getLocalTransform (void) const
+    const Vector3 &getLocalPosition (void) const
     {
         ensureAlive();
-        return localTransform;
+        return localPos;
     }
-    void setLocalTransform (const Transform &v)
+    const Quaternion &getLocalOrientation (void) const
     {
         ensureAlive();
-        localTransform = v;
-        //dirtyWorldTransform = true;
+        return localOrientation;
+    }
+    const Vector3 &getLocalScale (void) const
+    {
+        ensureAlive();
+        return localScale;
     }
     void setLocalPosition (const Vector3 &v)
     {
         ensureAlive();
-        localTransform.p = v;
+        localPos = v;
         //dirtyWorldTransform = true;
     }
     void setLocalOrientation (const Quaternion &v)
     {
         ensureAlive();
-        localTransform.r = v;
+        localOrientation = v;
         //dirtyWorldTransform = true;
     }
     void setLocalScale (const Vector3 &v)
     {
         ensureAlive();
-        localTransform.s = v;
+        localScale = v;
         //dirtyWorldTransform = true;
     }
     Transform getWorldTransform (void)

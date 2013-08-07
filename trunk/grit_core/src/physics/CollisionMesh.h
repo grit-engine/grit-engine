@@ -135,7 +135,7 @@ class CollisionMesh : public DiskResource {
     // member function void T::push_back(const WorldTransform &)
     // member function size_t T::size()
     template<class T>
-    void scatter (int mat, const Transform &world_trans, float density,
+    void scatter (int mat, const SimpleTransform &world_trans, float density,
                   float min_slope, float max_slope,
                   float min_elevation, float max_elevation,
                   bool no_z, bool rotate, bool align_slope,
@@ -173,8 +173,8 @@ class CollisionMesh : public DiskResource {
             const ProcObjFace &f = mat_faces[i];
 
             Vector3 A  = world_trans * f.A;
-            Vector3 AB = world_trans.r * f.AB;
-            Vector3 AC = world_trans.r * f.AC;
+            Vector3 AB = world_trans.removeTranslation() * f.AB;
+            Vector3 AC = world_trans.removeTranslation() * f.AC;
 
             Vector3 n = AB.cross(AC).normalisedCopy();
             if (n.z < min_slope_sin) continue;
@@ -226,9 +226,9 @@ class CollisionMesh : public DiskResource {
                 if (rotate) {
                     Quaternion rnd(Radian(float(rand())/RAND_MAX * 2*M_PI),
                                    Vector3(0,0,1));
-                    r.push_back(Transform(p, base_q * rnd, Vector3(1,1,1)));
+                    r.push_back(SimpleTransform(p, base_q * rnd));
                 } else {
-                    r.push_back(Transform(p, base_q, Vector3(1,1,1)));
+                    r.push_back(SimpleTransform(p, base_q));
                 }
             }
         }

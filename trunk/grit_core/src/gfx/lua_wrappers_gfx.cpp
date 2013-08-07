@@ -108,17 +108,11 @@ TRY_START
     GET_UD_MACRO(GfxNodePtr,self,1,GFXNODE_TAG);
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"localPosition")) {
-        push_v3(L, self->getLocalTransform().p);
-    } else if (!::strcmp(key,"worldPosition")) {
-        push_v3(L, self->getWorldTransform().p);
+        push_v3(L, self->getLocalPosition());
     } else if (!::strcmp(key,"localOrientation")) {
-        push_quat(L, self->getLocalTransform().r);
-    } else if (!::strcmp(key,"worldOrientation")) {
-        push_quat(L, self->getWorldTransform().r);
+        push_quat(L, self->getLocalOrientation());
     } else if (!::strcmp(key,"localScale")) {
-        push_v3(L, self->getLocalTransform().s);
-    } else if (!::strcmp(key,"worldScale")) {
-        push_v3(L, self->getWorldTransform().s);
+        push_v3(L, self->getLocalScale());
     } else if (!::strcmp(key,"parent")) {
         push_gfx_node_concrete(L, self->getParent());
     } else if (!::strcmp(key,"parentBone")) {
@@ -611,17 +605,11 @@ TRY_START
     GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"localPosition")) {
-        push_v3(L, self->getLocalTransform().p);
-    } else if (!::strcmp(key,"worldPosition")) {
-        push_v3(L, self->getWorldTransform().p);
+        push_v3(L, self->getLocalPosition());
     } else if (!::strcmp(key,"localOrientation")) {
-        push_quat(L, self->getLocalTransform().r);
-    } else if (!::strcmp(key,"worldOrientation")) {
-        push_quat(L, self->getWorldTransform().r);
+        push_quat(L, self->getLocalOrientation());
     } else if (!::strcmp(key,"localScale")) {
-        push_v3(L, self->getLocalTransform().s);
-    } else if (!::strcmp(key,"worldScale")) {
-        push_v3(L, self->getWorldTransform().s);
+        push_v3(L, self->getLocalScale());
     } else if (!::strcmp(key,"parent")) {
         push_gfx_node_concrete(L, self->getParent());
     } else if (!::strcmp(key,"parentBone")) {
@@ -1209,17 +1197,11 @@ TRY_START
     GET_UD_MACRO(GfxLightPtr,self,1,GFXLIGHT_TAG);
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"localPosition")) {
-        push_v3(L, self->getLocalTransform().p);
-    } else if (!::strcmp(key,"worldPosition")) {
-        push_v3(L, self->getWorldTransform().p);
+        push_v3(L, self->getLocalPosition());
     } else if (!::strcmp(key,"localOrientation")) {
-        push_quat(L, self->getLocalTransform().r);
-    } else if (!::strcmp(key,"worldOrientation")) {
-        push_quat(L, self->getWorldTransform().r);
+        push_quat(L, self->getLocalOrientation());
     } else if (!::strcmp(key,"localScale")) {
-        push_v3(L, self->getLocalTransform().s);
-    } else if (!::strcmp(key,"worldScale")) {
-        push_v3(L, self->getWorldTransform().s);
+        push_v3(L, self->getLocalScale());
     } else if (!::strcmp(key,"diffuseColour")) {
         push_v3(L, self->getDiffuseColour());
     } else if (!::strcmp(key,"specularColour")) {

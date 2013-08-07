@@ -625,7 +625,7 @@ void RangedClutter::update (const Vector3 &new_pos)
     }
 }
 
-void RangedClutter::push_back (const Transform &t)
+void RangedClutter::push_back (const SimpleTransform &t)
 {
     // it is very important that the number of samples does not increase over time, or
     // the vector will resize and these pointers will become invalid
@@ -634,10 +634,10 @@ void RangedClutter::push_back (const Transform &t)
     item.parent = this;
     item.activated = false;
     item.mesh = mNextMesh;
-    item.quat = Quaternion(t.r.w, t.r.x, t.r.y, t.r.z);
+    item.quat = t.quat;
     item.lastFade = 0;
     mSpace.add(&item);
-    item.updateSphere(t.p, mItemRenderingDistance);
+    item.updateSphere(t.pos, mItemRenderingDistance);
 }
 
 void RangedClutter::getUtilisation (size_t &used, size_t &rendered, size_t &total)

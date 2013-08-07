@@ -82,7 +82,7 @@ class GfxRangedInstances : public GfxInstances, public StreamerCallback {
     public:
     static GfxRangedInstancesPtr make (const std::string &mesh, const GfxNodePtr &par_=GfxNodePtr(NULL));
 
-    void push_back (const Transform &t);
+    void push_back (const SimpleTransform &t);
     void reserve (size_t s) {
         items.reserve(s);
         mSpace.reserve(s);

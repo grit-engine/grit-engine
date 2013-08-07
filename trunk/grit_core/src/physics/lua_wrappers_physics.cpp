@@ -92,10 +92,7 @@ TRY_START
         check_args(L,11);
         GET_UD_MACRO(RigidBodyPtr,self,1,RBODY_TAG);
         std::string mat = check_path(L,2);
-        Transform world_trans;
-        world_trans.p = self->getPosition();
-        world_trans.r = self->getOrientation();
-        world_trans.s = Vector3(1,1,1);
+        SimpleTransform world_trans(self->getPosition(), self->getOrientation());
         float density       = check_float(L,3);
         float min_slope     = check_float(L,4);
         float max_slope     = check_float(L,5);
@@ -106,7 +103,7 @@ TRY_START
         bool align_slope    = check_bool(L,10);
         unsigned seed       = check_t<unsigned>(L,11);
 
-        std::vector<Transform> r;
+        std::vector<SimpleTransform> r;
         self->colMesh->scatter(phys_mats.getMaterial(mat)->id,
                                world_trans, density, min_slope, max_slope, min_elevation,
                                max_elevation, no_z, rotate, align_slope, seed,
@@ -114,8 +111,8 @@ TRY_START
 
         lua_newtable(L);
         for (size_t j=0 ; j<r.size(); ++j) {
-                const Quaternion &q = r[j].r;
-                const Vector3 &p = r[j].p;
+                const Quaternion &q = r[j].quat;
+                const Vector3 &p = r[j].pos;
                 lua_pushnumber(L, p.x);
                 lua_rawseti(L,-2,7*j+0+LUA_ARRAY_BASE);
                 lua_pushnumber(L, p.y);
@@ -153,10 +150,7 @@ TRY_START
         bool align_slope    = check_bool(L,11);
         unsigned seed       = check_t<unsigned>(L,12);
 
-        Transform world_trans;
-        world_trans.p = self->getPosition();
-        world_trans.r = self->getOrientation();
-        world_trans.s = Vector3(1,1,1);
+        SimpleTransform world_trans(self->getPosition(), self->getOrientation());
 
         self->colMesh->scatter(phys_mats.getMaterial(mat)->id,
                                world_trans, density, min_slope, max_slope, min_elevation,

@@ -84,8 +84,8 @@ void GfxLight::updateCorona (const Vector3 &cam_pos)
     Vector3 col = enabled ? fade * coronaColour : Vector3(0,0,0);
     corona->dimensions = Vector3(coronaSize, coronaSize, coronaSize);
 
-    Vector3 light_dir_ws = (cam_pos - getWorldTransform().p).normalisedCopy();
-    Vector3 light_aim_ws_ = getWorldTransform().r * Vector3(0,1,0);
+    Vector3 light_dir_ws = (cam_pos - getWorldTransform().pos).normalisedCopy();
+    Vector3 light_aim_ws_ = getWorldTransform().removeTranslation() * Vector3(0,1,0);
 
     float angle = light_aim_ws_.dot(light_dir_ws);
     float inner = gritcos(coronaInnerAngle);
