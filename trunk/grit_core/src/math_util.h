@@ -385,9 +385,11 @@ struct Transform {
     {
         pos = p;
         r.toMat(mat);
-        mat[0][0] *= s.x;
-        mat[1][1] *= s.y;
-        mat[2][2] *= s.z;
+        for (int i=0 ; i<3 ; ++i) {
+            mat[i][0] *= s.x;
+            mat[i][1] *= s.y;
+            mat[i][2] *= s.z;
+        }
     }
 
     static Transform identity (void)
