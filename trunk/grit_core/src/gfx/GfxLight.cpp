@@ -48,7 +48,6 @@ GfxLight::GfxLight (const GfxNodePtr &par_)
     coronaOuterAngle(Degree(180))
 {
     light = ogre_sm->createLight();
-    node->attachObject(light);
     light->setDirection(Ogre::Vector3(0,1,0));
     light->setAttenuation(10, 0, 0, 0);
     light->setSpotlightInnerAngle(Ogre::Degree(180));
@@ -79,8 +78,9 @@ void GfxLight::destroy (void)
 void GfxLight::updateCorona (const Vector3 &cam_pos)
 {
     if (dead) THROW_DEAD(className);
-    coronaPos = getWorldTransform() * coronaLocalPos;
-    corona->pos = coronaPos;
+    light->setPosition(to_ogre(getWorldTransform().pos));
+    light->setDirection(to_ogre(getWorldTransform().removeTranslation()*Vector3(0,1,0)));
+    corona->pos = par.isNull() ? coronaLocalPos : par->getWorldTransform() * coronaLocalPos;
     Vector3 col = enabled ? fade * coronaColour : Vector3(0,0,0);
     corona->dimensions = Vector3(coronaSize, coronaSize, coronaSize);
 

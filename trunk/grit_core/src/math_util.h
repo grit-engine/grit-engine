@@ -398,7 +398,7 @@ struct Transform {
         t.pos = Vector3(0,0,0);
         for (int row=0 ; row<3 ; ++row) {
             for (int col=0 ; col<3 ; ++col) {
-                t.mat[row][col] = 0;
+                t.mat[row][col] = row==col? 1 : 0;
             }
         }
         return t;
@@ -407,9 +407,9 @@ struct Transform {
     friend Vector3 operator * (const Transform &a, const Vector3 &b)
     {
         Vector3 c = a.pos;
-        c.x = a.mat[0][0]*b.x + a.mat[0][1]*b.y + a.mat[0][2]*b.z;
-        c.y = a.mat[1][0]*b.x + a.mat[1][1]*b.y + a.mat[1][2]*b.z;
-        c.z = a.mat[2][0]*b.x + a.mat[2][1]*b.y + a.mat[2][2]*b.z;
+        c.x += a.mat[0][0]*b.x + a.mat[0][1]*b.y + a.mat[0][2]*b.z;
+        c.y += a.mat[1][0]*b.x + a.mat[1][1]*b.y + a.mat[1][2]*b.z;
+        c.z += a.mat[2][0]*b.x + a.mat[2][1]*b.y + a.mat[2][2]*b.z;
         return c;
     }
 
@@ -424,7 +424,7 @@ struct Transform {
                 }
             }
         }
-        t.pos = a.pos + a * b.pos;
+        t.pos = a * b.pos;
         return t;
     }
 
