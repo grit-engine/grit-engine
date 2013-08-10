@@ -523,6 +523,8 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
     time_since_started_rendering += elapsed;
     anim_time = fmodf(anim_time+elapsed, ANIM_TIME_MAX);
 
+    debug_drawer->frameStarted();
+
     // try and do all "each object" processing in this loop
     for (unsigned long i=0 ; i<gfx_all_nodes.size() ; ++i) {
         GfxNode *node = gfx_all_nodes[i];
@@ -551,8 +553,6 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
         ftcv->setElapsedTime(time_since_started_rendering);
         // used for indicating that ogre internal data prepared for last frame is now invalid
         ogre_root->setNextFrameNumber(ogre_root->getNextFrameNumber()+1);
-
-        debug_drawer->frameStarted();
 
         if (ogre_win->isActive()) {
             ogre_win->_beginUpdate();
@@ -713,6 +713,22 @@ void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector
 
 
 void gfx_screenshot (const std::string &filename) { ogre_win->writeContentsToFile(filename); }
+
+Vector2 gfx_window_size (void)
+{
+    return Vector2(ogre_win->getWidth(), ogre_win->getHeight());
+}
+
+Vector2 gfx_window_size_in_scene (void)
+{
+    float ncd = gfx_option(GFX_NEAR_CLIP);
+    float fov = gfx_option(GFX_FOV);
+    Vector2 win_size = gfx_window_size();
+    float ratio = win_size.x / win_size.y;
+    float height = ncd * 2 * tan(M_PI/180 * (fov/2));
+    float width = ratio * height;
+    return Vector2(width, height);
+}
 
 static GfxLastRenderStats stats_from_rt (Ogre::RenderTarget *rt)
 {

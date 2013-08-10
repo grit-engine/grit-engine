@@ -2859,6 +2859,20 @@ static int global_gfx_colour_grade_look_up (lua_State *L)
     return 1;
 }
 
+static int global_gfx_window_size (lua_State *L)
+{
+    check_args(L,0);
+    push_v2(L, gfx_window_size());
+    return 1;
+}
+
+static int global_gfx_window_size_in_scene (lua_State *L)
+{
+    check_args(L,0);
+    push_v2(L, gfx_window_size_in_scene());
+    return 1;
+}
+
 static int global_rgb_to_hsl (lua_State *L)
 {
     check_args(L,1);
@@ -4841,6 +4855,8 @@ static const luaL_reg global[] = {
     {"gfx_last_frame_stats",global_gfx_last_frame_stats},
 
     {"gfx_colour_grade_look_up", global_gfx_colour_grade_look_up},
+    {"gfx_window_size", global_gfx_window_size},
+    {"gfx_window_size_in_scene", global_gfx_window_size_in_scene},
 
     {"RGBtoHSL", global_rgb_to_hsl},
     {"HSLtoRGB", global_hsl_to_rgb},
