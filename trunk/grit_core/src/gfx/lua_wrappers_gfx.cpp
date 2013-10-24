@@ -1450,6 +1450,8 @@ TRY_START
             push_cfunction(L, gfxhudobj_set_rect);
         } else if (!::strcmp(key,"zOrder")) {
             lua_pushnumber(L, self.getZOrder());
+        } else if (!::strcmp(key,"inheritOrientation")) {
+            lua_pushboolean(L, self.getInheritOrientation());
 
         } else if (!::strcmp(key,"colour")) {
             push_v3(L, self.getColour());
@@ -1532,6 +1534,9 @@ TRY_START
         } else if (!::strcmp(key,"size")) {
             Vector2 v = check_v2(L,3);
             self.setSize(L, v);
+        } else if (!::strcmp(key,"inheritOrientation")) {
+            bool v = check_bool(L, 3);
+            self.setInheritOrientation(v);
 
         } else if (!::strcmp(key,"colour")) {
             Vector3 v = check_v3(L,3);
@@ -1684,6 +1689,8 @@ TRY_START
         lua_pushnumber(L, self.getZOrder());
     } else if (!::strcmp(key,"size")) {
         push_v2(L, self.getSize());
+    } else if (!::strcmp(key,"inheritOrientation")) {
+        lua_pushboolean(L, self.getInheritOrientation());
 
     } else if (!::strcmp(key,"colour")) {
         push_v3(L, self.getColour());
@@ -1730,6 +1737,9 @@ TRY_START
     } else if (!::strcmp(key,"position")) {
         Vector2 v = check_v2(L,3);
         self.setPosition(v);
+    } else if (!::strcmp(key,"inheritOrientation")) {
+        bool v = check_bool(L, 3);
+        self.setInheritOrientation(v);
 
     } else if (!::strcmp(key,"colour")) {
         Vector3 v = check_v3(L,3);
