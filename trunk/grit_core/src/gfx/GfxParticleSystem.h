@@ -30,7 +30,8 @@ class GfxPipeline;
 #include <utility>
 
 #include "../vect_util.h"
-#include "../math_util.h"
+#include <math_util.h>
+
 
 // Modify particle attributes whenever you want
 class GfxParticle : public fast_erase_index {

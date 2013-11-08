@@ -29,7 +29,8 @@ typedef SharedPtr<AudioSource> AudioSourcePtr;
 
 #include <AL/al.h>
 
-#include "../math_util.h"
+#include <math_util.h>
+
 #include "../BackgroundLoader.h"
 #include "../DiskResource.h"
 

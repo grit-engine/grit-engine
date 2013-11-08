@@ -19,10 +19,10 @@
  * THE SOFTWARE.
  */
 
+#include "grit_lua_util.h"
+
 #include "gfx/gfx_disk_resource.h"
 #include "physics/CollisionMesh.h"
-
-#include "lua_wrappers_common.h"
 
 #include "lua_wrappers_disk_resource.h"
 #include "gfx/lua_wrappers_gfx.h"

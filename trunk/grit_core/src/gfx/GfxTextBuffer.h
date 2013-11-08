@@ -30,7 +30,8 @@ class GfxTextBuffer;
 #include <OgreHardwareVertexBuffer.h>
 #include <OgreHardwareIndexBuffer.h>
 
-#include "../math_util.h"
+#include <math_util.h>
+
 #include "GfxFont.h"
 
 /** Encapsulate the code required to build GPU buffers for rendering text.*/

@@ -35,7 +35,7 @@
 #include "../main.h"
 #include "../CentralisedLog.h"
 #include "../option.h"
-#include "../lua_util.h"
+#include "../grit_lua_util.h"
 
 #include "PhysicsWorld.h"
 #include "lua_wrappers_physics.h"

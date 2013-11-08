@@ -43,8 +43,6 @@ void read_procobj (Csv &csv, ProcObjData &data)
 
 #ifdef _PROCOBJ_EXEC
 
-#include "console_colour.h"
-
 void assert_triggered (void) { }
 
 void app_verbose(char const* file, int line, const std::string& msg)

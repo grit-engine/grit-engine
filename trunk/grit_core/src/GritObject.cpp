@@ -26,7 +26,7 @@
 #include "GritClass.h"
 #include "path_util.h"
 
-#include "lua_util.h"
+#include "grit_lua_util.h"
 #include "lua_wrappers_gritobj.h"
 
 

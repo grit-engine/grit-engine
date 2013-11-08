@@ -20,7 +20,7 @@
 
 #include <OgreString.h>
 
-#include "../math_util.h"
+#include <math_util.h>
 #include "../sleep.h"
 
 #include "GfxPipeline.h"

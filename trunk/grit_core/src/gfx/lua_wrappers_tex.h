@@ -21,7 +21,7 @@
 
 #include <OgreTexture.h>
 
-#include "../lua_wrappers_common.h"
+#include "../grit_lua_util.h"
 
 #define TEX_TAG "Grit/Texture"
 MT_MACRO_DECLARE(tex);

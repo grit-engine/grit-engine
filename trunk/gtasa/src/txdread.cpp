@@ -395,8 +395,6 @@ Txd::Txd (std::istream &f, const std::string &dest_dir, bool output)
 
 #ifdef _TXDREAD_EXEC
 
-#include "console_colour.h"
-
 void app_verbose(char const* file, int line, const std::string& msg)
 {
         std::cout<<BOLD<<GREEN<<"VERBOSE "<<RESET

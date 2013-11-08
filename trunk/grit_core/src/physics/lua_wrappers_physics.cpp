@@ -114,19 +114,19 @@ TRY_START
                 const Quaternion &q = r[j].quat;
                 const Vector3 &p = r[j].pos;
                 lua_pushnumber(L, p.x);
-                lua_rawseti(L,-2,7*j+0+LUA_ARRAY_BASE);
+                lua_rawseti(L,-2,7*j+1);
                 lua_pushnumber(L, p.y);
-                lua_rawseti(L,-2,7*j+1+LUA_ARRAY_BASE);
+                lua_rawseti(L,-2,7*j+1+1);
                 lua_pushnumber(L, p.z);
-                lua_rawseti(L,-2,7*j+2+LUA_ARRAY_BASE);
+                lua_rawseti(L,-2,7*j+2+1);
                 lua_pushnumber(L, q.w);
-                lua_rawseti(L,-2,7*j+3+LUA_ARRAY_BASE);
+                lua_rawseti(L,-2,7*j+3+1);
                 lua_pushnumber(L, q.x);
-                lua_rawseti(L,-2,7*j+4+LUA_ARRAY_BASE);
+                lua_rawseti(L,-2,7*j+4+1);
                 lua_pushnumber(L, q.y);
-                lua_rawseti(L,-2,7*j+5+LUA_ARRAY_BASE);
+                lua_rawseti(L,-2,7*j+5+1);
                 lua_pushnumber(L, q.z);
-                lua_rawseti(L,-2,7*j+6+LUA_ARRAY_BASE);
+                lua_rawseti(L,-2,7*j+6+1);
         }
 
         return 1;
@@ -546,7 +546,7 @@ TRY_START
                 lua_createtable(L, mats.size(), 0);
                 for (size_t j=0 ; j<mats.size(); ++j) {
                         lua_pushstring(L, phys_mats.getMaterial(mats[j])->name.c_str());
-                        lua_rawseti(L, -2, j+LUA_ARRAY_BASE);
+                        lua_rawseti(L, -2, j+1);
                 }
         } else if (!::strcmp(key,"scatter")) {
                 push_cfunction(L,rbody_scatter);

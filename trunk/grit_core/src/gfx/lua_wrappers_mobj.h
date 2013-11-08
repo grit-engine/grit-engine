@@ -19,9 +19,9 @@
  * THE SOFTWARE.
  */
 
-#include "../lua_wrappers_common.h"
-
 #include <OgreLight.h>
+
+#include "../grit_lua_util.h"
 
 extern "C" {
 #include "lua.h"

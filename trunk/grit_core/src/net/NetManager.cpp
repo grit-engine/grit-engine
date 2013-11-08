@@ -2,7 +2,7 @@
 
 #include "../CentralisedLog.h"
 #include "../sleep.h"
-#include "../lua_util.h"
+#include "../grit_lua_util.h"
 
 #include "net.h"
 #include "NetManager.h"

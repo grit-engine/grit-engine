@@ -29,11 +29,13 @@
 #include <algorithm>
 #include <locale>
 
-#include "iplread.h"
 #include "ios_util.h"
+
+#include <console.h>
+
+#include "iplread.h"
 #include "csvread.h"
 
-#include "console_colour.h"
 
 static int tolowr (int c)
 {

@@ -22,9 +22,10 @@
 #include <iostream>
 #include <sstream>
 
+#include <unicode_util.h>
+
 #include "KeyboardX11.h"
 #include "../CentralisedLog.h"
-#include "../unicode_util.h"
 
 KeyboardX11::KeyboardX11 (size_t window)
       : focussed(true)

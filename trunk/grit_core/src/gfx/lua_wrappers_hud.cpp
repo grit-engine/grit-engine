@@ -21,8 +21,11 @@
 
 #include "HUD.h"
 
+#include "../grit_lua_util.h"
+
 #include "lua_wrappers_hud.h"
 #include "lua_wrappers_material.h"
+
 
 
 static HUD::TreePtr *check_hud_tree (lua_State *L, int index)

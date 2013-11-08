@@ -27,6 +27,7 @@
 #include <cerrno>
 
 #include "portable_io.h"
+#include <console.h>
 
 #ifndef ios_util_h
 #define ios_util_h

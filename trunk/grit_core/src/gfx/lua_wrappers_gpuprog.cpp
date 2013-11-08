@@ -452,7 +452,7 @@ TRY_START
                         lua_createtable(L, profs.size(), 0);
                         for (unsigned int i=0 ; i<profs.size() ; i++) {
                                 const char *key = profs[i].c_str();
-                                lua_pushnumber(L,i+LUA_ARRAY_BASE);
+                                lua_pushnumber(L,i+1);
                                 lua_pushstring(L,key);
                                 lua_settable(L,-3);
                         }

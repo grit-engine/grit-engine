@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-#include "../lua_wrappers_common.h"
+#include "../grit_lua_util.h"
 
 #include "audio.h"
 

@@ -246,8 +246,6 @@ void read_handling (Csv &csv, HandlingData &data)
 
 #ifdef _HANDLING_EXEC
 
-#include "console_colour.h"
-
 void app_verbose(char const* file, int line, const std::string& msg)
 {
         std::cout<<BOLD<<GREEN<<"VERBOSE "<<RESET

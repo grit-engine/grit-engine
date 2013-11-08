@@ -21,7 +21,6 @@
 
 #include <algorithm>
 
-
 #include "lua_wrappers_primitives.h"
 #include "math_util.h"
 
@@ -287,7 +286,7 @@ TRY_START
                 } else if (key=="table") {
                         lua_createtable(L, self.size(), 0);
                         for (unsigned int i=0 ; i<self.size() ; i++) {
-                                lua_pushnumber(L,i+LUA_ARRAY_BASE);
+                                lua_pushnumber(L,i+1);
                                 lua_pushstring(L,self[i].c_str());
                                 lua_settable(L,-3);
                         }

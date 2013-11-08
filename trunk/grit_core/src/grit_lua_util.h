@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2012
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2013
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,33 @@
  * THE SOFTWARE.
  */
 
+#include <string>
+
+extern "C" {
+        #include "lua.h"
+        #include <lauxlib.h>
+        #include <lualib.h>
+}
+
+#include <OgreException.h>
+
+#include <lua_util.h>
+#include <lua_wrappers_common.h>
+
 #include "CentralisedLog.h"
 
-void assert_triggered (void) { } 
+#define TRY_START try {
+#define TRY_END } catch (Ogre::Exception &e) { \
+        std::string msg = e.getFullDescription(); \
+        my_lua_error(L,msg); \
+        return 0; \
+} catch (GritException &e) { \
+        my_lua_error(L,e.longMessage()); \
+        return 0; \
+}
+
+std::string check_path (lua_State *l, int stack_index);
+
+void push_cfunction (lua_State *L, int (*func)(lua_State*));
+void func_map_leak_all (void);
 

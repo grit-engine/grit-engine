@@ -359,7 +359,7 @@ TRY_START
                 while (i.hasMoreElements()) {
                         Ogre::MovableObject *o = i.getNext();
                         if (push_mobj(L,o)) {
-                                lua_rawseti(L,-2,counter+LUA_ARRAY_BASE);
+                                lua_rawseti(L,-2,counter+1);
                                 counter++;
                         }
                 }
@@ -372,7 +372,7 @@ TRY_START
                         Ogre::Node *o = j.getNext();
                         if (dynamic_cast<Ogre::SceneNode*>(o)) {
                                 push_node(L, static_cast<Ogre::SceneNode*>(o));
-                                lua_rawseti(L,-2,counter+LUA_ARRAY_BASE);
+                                lua_rawseti(L,-2,counter+1);
                                 counter++;
                         }
                 }
@@ -1214,7 +1214,7 @@ TRY_START
                                 Ogre::Entity *ent = static_cast<Ogre::Entity*>
                                                                 (i.getNext());
                                 push_entity(L,ent);
-                                lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                                lua_rawseti(L,-2,c+1);
                                 c++;
                         }
                 }
@@ -1225,7 +1225,7 @@ TRY_START
                                 Ogre::Entity *ent = static_cast<Ogre::Entity*>
                                                                 (i.getNext());
                                 push_entity(L,ent);
-                                lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                                lua_rawseti(L,-2,c+1);
                                 c++;
                         }
                 }
@@ -1239,7 +1239,7 @@ TRY_START
                         Ogre::ManualObject *o =
                                 static_cast<Ogre::ManualObject*>(j.getNext());
                         push_manobj(L,o);
-                        lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                        lua_rawseti(L,-2,c+1);
                         c++;
                 }
 
@@ -1252,7 +1252,7 @@ TRY_START
                         Ogre::Camera *cam = static_cast<Ogre::Camera*>
                                                         (j.getNext());
                         push_cam(L,cam);
-                        lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                        lua_rawseti(L,-2,c+1);
                         c++;
                 }
 

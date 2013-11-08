@@ -29,9 +29,10 @@ typedef std::vector<GfxFont*> GfxFonts;
 
 #include <map>
 
+#include <math_util.h>
+
 #include "../BackgroundLoader.h"
 #include "../main.h"
-#include "../math_util.h"
 
 #include "gfx_disk_resource.h"
 

@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2012
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2013
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,4 +19,37 @@
  * THE SOFTWARE.
  */
 
-void utf8_lua_init (lua_State *L);
+#include <cstdlib>
+
+#include <map>
+
+#include "LuaPtr.h"
+#include "grit_lua_util.h"
+#include "path_util.h"
+
+typedef std::map<int (*)(lua_State*),LuaPtr> FuncMap;
+static FuncMap func_map;
+void push_cfunction (lua_State *L, int (*func)(lua_State*))
+{
+    if (func_map.find(func)==func_map.end()) {
+        lua_pushcfunction(L, func);
+        func_map[func].setNoPop(L);
+    } else {
+        func_map[func].push(L);
+    }
+}
+
+void func_map_leak_all (void)
+{
+    for (FuncMap::iterator i=func_map.begin(), i_=func_map.end() ; i!=i_ ; ++i) {
+        i->second.leak();
+    }
+}
+
+
+std::string check_path (lua_State *L, int stack_index)
+{
+    return pwd_full(L, check_string(L, stack_index));
+}
+
+

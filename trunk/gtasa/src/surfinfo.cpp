@@ -66,8 +66,6 @@ void read_surfinfo (Csv &csv, SurfInfoData &data)
 
 #ifdef _SURFINFO_EXEC
 
-#include "console_colour.h"
-
 void assert_triggered (void) { }
 
 void app_verbose(char const* file, int line, const std::string& msg)

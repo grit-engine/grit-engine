@@ -1755,8 +1755,6 @@ void export_mesh (const StringSet &texs,
 
 #ifdef _DFFREAD_EXEC
 
-#include "console_colour.h"
-
 void print_frame_tree (int d, struct dff *c, const std::string &p,
                        int more, unsigned long node)
 {

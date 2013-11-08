@@ -21,7 +21,7 @@
 
 #include <string>
 
-#include "../math_util.h"
+#include <math_util.h>
 
 #include "TColLexer"
 

@@ -37,7 +37,7 @@ extern "C" {
 }
 
 #include "ExternalTable.h"
-#include "lua_util.h"
+#include "grit_lua_util.h"
 #include "LuaPtr.h"
 #include "path_util.h"
 

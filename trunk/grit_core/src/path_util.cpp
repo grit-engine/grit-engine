@@ -21,7 +21,7 @@
 
 #include "CentralisedLog.h"
 #include "path_util.h"
-#include "lua_util.h"
+#include "grit_lua_util.h"
 
 // handle .. in paths
 static std::string path_collapse (const std::string &p, bool &err)

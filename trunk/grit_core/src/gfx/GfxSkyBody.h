@@ -38,7 +38,8 @@ extern fast_erase_vector<GfxSkyBody*> gfx_all_sky_bodies;
 #include <OgreMesh.h>
 #include <OgreSceneNode.h>
 
-#include "../math_util.h"
+#include <math_util.h>
+
 #include "gfx_disk_resource.h"
 #include "GfxSkyMaterial.h"
 

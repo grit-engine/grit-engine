@@ -29,6 +29,7 @@
         #include <sys/mman.h>
 #endif
 
+#include "grit_lua_util.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "BackgroundLoader.h"
@@ -72,7 +73,7 @@ TRY_START
         lua_createtable(L, presses.size(), 0);
         for (unsigned int i=0 ; i<presses.size() ; i++) {
                 const char *key = presses[i].c_str();
-                lua_pushnumber(L,i+LUA_ARRAY_BASE);
+                lua_pushnumber(L,i+1);
                 lua_pushstring(L,key);
                 lua_settable(L,-3);
         }
@@ -128,7 +129,7 @@ TRY_START
         lua_createtable(L, clicks.size(), 0);
         for (unsigned int i=0 ; i<clicks.size() ; i++) {
                 int button = clicks[i];
-                lua_pushnumber(L,i+LUA_ARRAY_BASE);
+                lua_pushnumber(L,i+1);
                 const char *button_ = "unknown";
                 switch (button) {
                         case Mouse::MOUSE_LEFT: button_="+left" ; break;
@@ -525,7 +526,7 @@ TRY_START
         check_args(L,0);
         lua_createtable(L, pwd.size(), 0);
         for (unsigned int i=0 ; i<pwd.size() ; i++) {
-                lua_pushnumber(L, i+LUA_ARRAY_BASE);
+                lua_pushnumber(L, i+1);
                 lua_pushstring(L, pwd[i].c_str());
                 lua_settable(L,-3);
         }

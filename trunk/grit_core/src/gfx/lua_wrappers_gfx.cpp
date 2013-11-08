@@ -19,6 +19,9 @@
  * THE SOFTWARE.
  */
 
+#include "../grit_lua_util.h"
+
+#include "../lua_wrappers_primitives.h"
 #include "../main.h"
 #include "../ExternalTable.h"
 #include "../LuaPtr.h"
@@ -26,7 +29,6 @@
 
 #include "lua_wrappers_gfx.h"
 #include "gfx_option.h"
-#include "../lua_wrappers_primitives.h"
 #include "lua_wrappers_scnmgr.h"
 #include "lua_wrappers_mobj.h"
 #include "gfx_hud.h"
@@ -2259,7 +2261,7 @@ TRY_START
     GfxHudClassMap::iterator i, i_;
     for (gfx_hud_class_all(i,i_) ; i!=i_ ; ++i) {
         push_gfxhudclass(L,i->second);
-        lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+        lua_rawseti(L,-2,c+1);
         c++;
     }
     return 1;
@@ -3504,7 +3506,7 @@ TRY_START
         int counter = 0;
         while (rmi.hasMoreElements()) {
                 const Ogre::TexturePtr &r = rmi.getNext();
-                lua_pushnumber(L,counter+LUA_ARRAY_BASE);
+                lua_pushnumber(L,counter+1);
                 push(L, new Ogre::TexturePtr(r), TEX_TAG);
                 lua_settable(L,-3);
                 counter++;
@@ -3631,7 +3633,7 @@ TRY_START
         int counter = 0;
         while (rmi.hasMoreElements()) {
                 const Ogre::SkeletonPtr &r = rmi.getNext();
-                lua_pushnumber(L,counter+LUA_ARRAY_BASE);
+                lua_pushnumber(L,counter+1);
                 push(L, new Ogre::SkeletonPtr(r), SKEL_TAG);
                 lua_settable(L,-3);
                 counter++;
@@ -3757,7 +3759,7 @@ TRY_START
         int counter = 0;
         while (rmi.hasMoreElements()) {
                 const Ogre::MeshPtr &r = rmi.getNext();
-                lua_pushnumber(L,counter+LUA_ARRAY_BASE);
+                lua_pushnumber(L,counter+1);
                 push(L, new Ogre::MeshPtr(r), MESH_TAG);
                 lua_settable(L,-3);
                 counter++;
@@ -3897,7 +3899,7 @@ TRY_START
         int counter = 0;
         while (rmi.hasMoreElements()) {
                 const Ogre::MaterialPtr &mat = rmi.getNext();
-                lua_pushnumber(L,counter+LUA_ARRAY_BASE);
+                lua_pushnumber(L,counter+1);
                 push(L, new Ogre::MaterialPtr(mat), MAT_TAG);
                 lua_settable(L,-3);
                 counter++;
@@ -4483,7 +4485,7 @@ TRY_START
     int counter = 0;
     while (rmi.hasMoreElements()) {
         const Ogre::HighLevelGpuProgramPtr &self = rmi.getNext();
-        lua_pushnumber(L,counter+LUA_ARRAY_BASE);
+        lua_pushnumber(L,counter+1);
         push(L, new Ogre::HighLevelGpuProgramPtr(self), GPUPROG_TAG);
         lua_settable(L,-3);
         counter++;

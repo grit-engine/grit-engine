@@ -33,8 +33,8 @@
 #include <algorithm>
 #include <locale>
 
-#include "ideread.h"
 #include "ios_util.h"
+#include "ideread.h"
 #include "csvread.h"
 
 static int tolowr (int c)
@@ -439,8 +439,6 @@ void read_ide (std::istream &f, struct ide *ide)
 #endif
 
 #ifdef _IDEREAD_EXEC
-
-#include "console_colour.h"
 
 void app_verbose(char const* file, int line, const std::string& msg)
 {

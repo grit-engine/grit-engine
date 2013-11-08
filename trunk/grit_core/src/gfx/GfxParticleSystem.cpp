@@ -23,8 +23,8 @@
 #include <algorithm>
 #include <map>
 
-#include "../vect_util.h"
-#include "../math_util.h"
+#include <vect_util.h>
+#include <math_util.h>
 
 #include "gfx.h"
 #include "gfx_internal.h"

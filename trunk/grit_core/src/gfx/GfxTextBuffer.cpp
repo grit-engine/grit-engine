@@ -19,9 +19,9 @@
  * THE SOFTWARE.
  */
 
-#include "GfxTextBuffer.h"
+#include <unicode_util.h>
 
-#include "../unicode_util.h"
+#include "GfxTextBuffer.h"
 
 const unsigned VERT_FLOAT_SZ = 2+2+4;
 const unsigned VERT_BYTE_SZ = VERT_FLOAT_SZ*sizeof(float);

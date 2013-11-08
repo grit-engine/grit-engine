@@ -31,7 +31,7 @@ class GfxColourGradeLUTDiskResource;
 #include <OgreTexture.h>
 #include <OgreMesh.h>
 
-#include "../math_util.h"
+#include <math_util.h>
 
 #include "../CentralisedLog.h"
 #include "../BackgroundLoader.h"

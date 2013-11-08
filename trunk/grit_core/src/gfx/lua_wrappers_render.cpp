@@ -345,7 +345,7 @@ TRY_START
                 lua_newtable(L);
                 for (unsigned int i=0 ; i<rt->getNumViewports() ; i++) {
                         push_viewport(L,rt->getViewport(i));
-                        lua_rawseti(L,-2,i+LUA_ARRAY_BASE);
+                        lua_rawseti(L,-2,i+1);
                 }
         } else if (key=="priority") {
                 lua_pushnumber(L,rt->getPriority());

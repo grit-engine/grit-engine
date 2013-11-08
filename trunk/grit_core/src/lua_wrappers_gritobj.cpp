@@ -438,7 +438,7 @@ TRY_START
         GritClassMap::iterator i, i_;
         for (class_all(i,i_) ; i!=i_ ; ++i) {
                 push_gritcls(L,i->second);
-                lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                lua_rawseti(L,-2,c+1);
                 c++;                 
         }       
         return 1;
@@ -577,7 +577,7 @@ TRY_START
         for (object_all(i,i_) ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = i->second;
                 push_gritobj(L,o);
-                lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                lua_rawseti(L,-2,c+1);
                 c++;                 
         }       
         return 1;
@@ -626,7 +626,7 @@ TRY_START
         for (streamer_object_activated(i,i_) ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = *i;
                 push_gritobj(L,o);
-                lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                lua_rawseti(L,-2,c+1);
                 c++;                 
         }       
         return 1;
@@ -656,7 +656,7 @@ TRY_START
                 if (oc==NULL) continue; // object destroyed
                 if (oc->name != cls) continue; // wrong class
                 push_gritobj(L,o);
-                lua_rawseti(L,-2,c+LUA_ARRAY_BASE);
+                lua_rawseti(L,-2,c+1);
                 c++;                 
         }       
         return 1;

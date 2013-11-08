@@ -24,8 +24,8 @@
  * materials
  */
 
-#include "../SharedPtr.h"
-#include "../vect_util.h"
+#include <SharedPtr.h>
+#include <vect_util.h>
 
 // Only things that are referenced from Lua AND can be destroyed (before shutdown) get a SharedPtr
 struct GfxCallback;
@@ -44,7 +44,7 @@ extern const GfxStringMap gfx_empty_string_map;
 
 #include <string>
 
-#include "../math_util.h"
+#include <math_util.h>
 
 #include "gfx_disk_resource.h"
 #include "GfxNode.h"

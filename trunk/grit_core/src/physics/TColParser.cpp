@@ -22,8 +22,10 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "../math_util.h"
-#include "../path_util.h"
+#include <math_util.h>
+#include <path_util.h>
+
+#include "../CentralisedLog.h"
 
 #include "TColLexer"
 #include "TColParser.h"

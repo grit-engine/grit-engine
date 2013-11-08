@@ -27,7 +27,12 @@
 
 #include <boost/thread/recursive_mutex.hpp>
 
-#include "console_colour.h"
+#define CERR CLog(__FILE__,__LINE__,true)
+#define CLOG CLog()
+#define CVERB CLog(__FILE__,__LINE__,false)
+#define CTRACE(x) CVERB << #x << " " << (x) << std::endl
+
+#include <console.h>
 
 /** Called when something so bad happens that the process has to exit uncleanly. */
 void app_fatal();
@@ -118,34 +123,6 @@ class CLog {
 
 };
 
-#define CERR CLog(__FILE__,__LINE__,true)
-#define CLOG CLog()
-#define CVERB CLog(__FILE__,__LINE__,false)
-#define CTRACE(x) CVERB << #x << " " << (x) << std::endl
-
-/** Place to hook a debugger to trap assert failures that would otherwise just
- * keep executing.
- */
-void assert_triggered (void);
-
-/** An assert macro that uses CERR and assert_triggered.
- */
-#define APP_ASSERT(cond) do { \
-        if (!(cond)) { \
-                CERR << "assertion failed: " << #cond << std::endl; \
-                assert_triggered(); \
-        } \
-} while (0)
-
-/** An assert macro that uses CERR and assert_triggered and also prints the value of perror.
- */
-#define APP_PERROR_ASSERT(cond) do { \
-        if (!(cond)) {\
-                CERR << "assertion failed: " << #cond << std::endl; \
-                perror("perror says"); \
-                assert_triggered(); \
-        } \
-} while (0)
 
 /** A general exception class used for all exceptions from Grit -- often caught
  * and converted to a Lua error.

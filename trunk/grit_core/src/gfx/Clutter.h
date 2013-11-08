@@ -33,7 +33,7 @@ class ClutterFactory;
 #include <OgreMesh.h>
 
 
-#include "../math_util.h"
+#include <math_util.h>
 
 #include "../CacheFriendlyRangeSpaceSIMD.h"
 

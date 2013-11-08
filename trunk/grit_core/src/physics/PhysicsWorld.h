@@ -110,11 +110,12 @@ extern "C" {
     #include <lualib.h>
 }
 
+#include <math_util.h>
+
 #include "TColParser.h"
 #include "CollisionMesh.h"
 
 #include "../GritObject.h"
-#include "../math_util.h"
 
 #include "../LuaPtr.h"
 

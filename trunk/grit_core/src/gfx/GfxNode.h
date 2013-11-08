@@ -30,7 +30,8 @@ typedef SharedPtr<GfxFertileNode> GfxNodePtr;
 
 #include <OgreSceneNode.h>
 
-#include "../math_util.h"
+#include <math_util.h>
+
 #include "../vect_util.h"
 
 #include "gfx_internal.h"

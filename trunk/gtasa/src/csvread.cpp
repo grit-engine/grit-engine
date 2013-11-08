@@ -107,8 +107,6 @@ void read_csv (std::istream &f, Csv &csv)
 
 #ifdef _CSVREAD_EXEC
 
-#include "console_colour.h"
-
 void app_verbose(char const* file, int line, const std::string& msg)
 {
         std::cout<<BOLD<<GREEN<<"VERBOSE "<<RESET

@@ -22,6 +22,14 @@
 #ifndef LuaPtr_h
 #define LuaPtr_h
 
+extern "C" {
+        #include "lua.h"
+        #include <lauxlib.h>
+        #include <lualib.h>
+}
+
+#include "CentralisedLog.h"
+
 /** A smart pointer that holds a pointer to an object on the lua heap.  The
  * smarts here are to do with ensuring lua GC works correctly, using the Lua
  * registry.
