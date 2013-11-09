@@ -40,12 +40,10 @@ extern "C" {
         #include <lualib.h>
 }
 
-#include <lua_util.h>
-#include <path_util.h>
-#include <vect_util.h>
-
+#include "../grit_lua_util.h"
+#include "../path_util.h"
+#include "../vect_util.h"
 #include "../LuaPtr.h"
-
 
 #include "GfxPipeline.h"
 #include "GfxFont.h"

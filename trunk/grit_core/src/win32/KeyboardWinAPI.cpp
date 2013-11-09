@@ -22,10 +22,10 @@
 #include <assert.h>
 #include <iostream>
 
+#include <unicode_util.h>
+
 #include "KeyboardWinAPI.h"
 #include "../CentralisedLog.h"
-
-#include "../unicode_util.h"
 
 typedef std::map<HWND, KeyboardWinAPI*> WindowMap;
 static WindowMap wmap;

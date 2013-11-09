@@ -24,7 +24,7 @@
 
 #include <windows.h>
 
-#include "../unicode_util.h"
+#include <unicode_util.h>
 
 void clipboard_set (const std::string &s_)
 {

@@ -52,7 +52,7 @@
     <BuildLog />
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\dependencies\bullet\src;$(SolutionDir)\dependencies\quex-0.34.1;$(SolutionDir)\dependencies\lua-5.1.4;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\OctreeSceneManager\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\ParticleFX\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\src\GLSL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\Direct3D9\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\CgProgramManager\include;$(SolutionDir)\dependencies\grit_ogre\Components\Overlay\include;$(SolutionDir)\dependencies\grit_ogre_dependencies\include;$(SolutionDir)\dependencies\icu\include;$(SolutionDir)\dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\dependencies\bullet\src;$(SolutionDir)\dependencies\quex-0.34.1;$(SolutionDir)\dependencies\lua-5.1.4;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\OctreeSceneManager\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\ParticleFX\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\src\GLSL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\Direct3D9\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\CgProgramManager\include;$(SolutionDir)\dependencies\grit_ogre\Components\Overlay\include;$(SolutionDir)\dependencies\grit_ogre_dependencies\include;$(SolutionDir)\dependencies\icu\include;$(SolutionDir)\dependencies;$(SolutionDir)\dependencies\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NO_PLUGINS;QUEX_OPTION_ASSERTS_WARNING_MESSAGE_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -86,7 +86,7 @@
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\dependencies\openal\include;$(SolutionDir)\dependencies\bullet\src;$(SolutionDir)\dependencies\quex-0.34.1;$(SolutionDir)\dependencies\lua-5.1.4;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\OctreeSceneManager\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\ParticleFX\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\src\GLSL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\Direct3D9\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\CgProgramManager\include;$(SolutionDir)\dependencies\grit_ogre\Components\Overlay\include;$(SolutionDir)\dependencies\grit_ogre_dependencies\include;$(SolutionDir)\dependencies\icu\include;$(SolutionDir)\dependencies;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\dependencies\openal\include;$(SolutionDir)\dependencies\bullet\src;$(SolutionDir)\dependencies\quex-0.34.1;$(SolutionDir)\dependencies\lua-5.1.4;$(SolutionDir)\dependencies\grit_ogre\OgreMain\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\OctreeSceneManager\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\ParticleFX\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\GL\src\GLSL\include;$(SolutionDir)\dependencies\grit_ogre\RenderSystems\Direct3D9\include;$(SolutionDir)\dependencies\grit_ogre\Plugins\CgProgramManager\include;$(SolutionDir)\dependencies\grit_ogre\Components\Overlay\include;$(SolutionDir)\dependencies\grit_ogre_dependencies\include;$(SolutionDir)\dependencies\icu\include;$(SolutionDir)\dependencies;$(SolutionDir)\dependencies\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NO_PLUGINS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -129,12 +129,15 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\dependencies\util\console.cpp" />
+    <ClCompile Include="..\dependencies\util\lua_utf8.cpp" />
+    <ClCompile Include="..\dependencies\util\lua_util.cpp" />
+    <ClCompile Include="..\dependencies\util\unicode_util.cpp" />
     <ClCompile Include="src\audio\audio.cpp" />
     <ClCompile Include="src\audio\AudioDiskResource.cpp" />
     <ClCompile Include="src\audio\lua_wrappers_audio.cpp" />
     <ClCompile Include="src\BackgroundLoader.cpp" />
     <ClCompile Include="src\BulletDebugDrawer.cpp" />
-    <ClCompile Include="src\CentralisedLog.cpp" />
     <ClCompile Include="src\DenseIndexMap.cpp" />
     <ClCompile Include="src\DiskResource.cpp" />
     <ClCompile Include="src\ExternalTable.cpp" />
@@ -170,9 +173,8 @@
     <ClCompile Include="src\gfx\TextListOverlayElement.cpp" />
     <ClCompile Include="src\GritClass.cpp" />
     <ClCompile Include="src\GritObject.cpp" />
+    <ClCompile Include="src\grit_lua_util.cpp" />
     <ClCompile Include="src\ldbglue.cpp" />
-    <ClCompile Include="src\lua_utf8.cpp" />
-    <ClCompile Include="src\lua_util.cpp" />
     <ClCompile Include="src\lua_wrappers_core.cpp" />
     <ClCompile Include="src\lua_wrappers_disk_resource.cpp" />
     <ClCompile Include="src\lua_wrappers_gritobj.cpp" />
@@ -193,7 +195,6 @@
     <ClCompile Include="src\physics\TColLexer.cpp" />
     <ClCompile Include="src\physics\TColParser.cpp" />
     <ClCompile Include="src\Streamer.cpp" />
-    <ClCompile Include="src\unicode_util.cpp" />
     <ClCompile Include="src\win32\KeyboardDirectInput8.cpp" />
     <ClCompile Include="src\win32\KeyboardWinAPI.cpp" />
     <ClCompile Include="src\win32\MouseDirectInput8.cpp" />

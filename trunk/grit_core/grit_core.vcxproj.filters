@@ -15,16 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\unicode_util.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\BackgroundLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\BulletDebugDrawer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CentralisedLog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\DiskResource.cpp">
@@ -40,12 +34,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ldbglue.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\lua_utf8.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\lua_util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\lua_wrappers_core.cpp">
@@ -223,6 +211,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\gfx\GfxFertileNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\grit_lua_util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\util\unicode_util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\util\console.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\util\lua_utf8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\util\lua_util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
