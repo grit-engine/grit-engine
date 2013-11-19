@@ -145,6 +145,9 @@ class GfxHudBase : public fast_erase_index {
     Radian orientation;
     bool inheritOrientation;
     bool enabled;
+    public:
+    bool snapPixels;
+    protected:
 
     GfxHudBase (void);
 

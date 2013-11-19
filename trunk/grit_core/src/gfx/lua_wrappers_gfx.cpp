@@ -1454,6 +1454,8 @@ TRY_START
             lua_pushnumber(L, self.getZOrder());
         } else if (!::strcmp(key,"inheritOrientation")) {
             lua_pushboolean(L, self.getInheritOrientation());
+        } else if (!::strcmp(key,"snapPixels")) {
+            lua_pushboolean(L, self.snapPixels);
 
         } else if (!::strcmp(key,"colour")) {
             push_v3(L, self.getColour());
@@ -1539,6 +1541,9 @@ TRY_START
         } else if (!::strcmp(key,"inheritOrientation")) {
             bool v = check_bool(L, 3);
             self.setInheritOrientation(v);
+        } else if (!::strcmp(key,"snapPixels")) {
+            bool v = check_bool(L, 3);
+            self.snapPixels = v;
 
         } else if (!::strcmp(key,"colour")) {
             Vector3 v = check_v3(L,3);
@@ -1693,6 +1698,8 @@ TRY_START
         push_v2(L, self.getSize());
     } else if (!::strcmp(key,"inheritOrientation")) {
         lua_pushboolean(L, self.getInheritOrientation());
+    } else if (!::strcmp(key,"snapPixels")) {
+        lua_pushboolean(L, self.snapPixels);
 
     } else if (!::strcmp(key,"colour")) {
         push_v3(L, self.getColour());
@@ -1742,6 +1749,9 @@ TRY_START
     } else if (!::strcmp(key,"inheritOrientation")) {
         bool v = check_bool(L, 3);
         self.setInheritOrientation(v);
+    } else if (!::strcmp(key,"snapPixels")) {
+        bool v = check_bool(L, 3);
+        self.snapPixels = v;
 
     } else if (!::strcmp(key,"colour")) {
         Vector3 v = check_v3(L,3);

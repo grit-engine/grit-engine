@@ -106,7 +106,7 @@ void GfxHudBase::registerAdd (void)
 
 GfxHudBase::GfxHudBase (void)
   : aliveness(ALIVE), parent(NULL), zOrder(3),
-    position(0,0), orientation(0), inheritOrientation(true), enabled(true)
+    position(0,0), orientation(0), inheritOrientation(true), enabled(true), snapPixels(true)
 {
     //CVERB << "GfxHud element created: " << this << std::endl;
     registerAdd();
@@ -914,7 +914,16 @@ void gfx_hud_shutdown (void)
     OGRE_DELETE quad_vdata;
 }
 
-static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radian orientation, const Vector2 &uv1, const Vector2 &uv2)
+static inline Vector2 maybe_snap (bool snap, Vector2 pos)
+{
+    if (snap) {
+        pos.x = ::floorf(pos.x);
+        pos.y = ::floorf(pos.y);
+    }
+    return pos;
+}
+
+static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radian orientation, bool snapPixels, const Vector2 &uv1, const Vector2 &uv2)
 {
     struct Vertex { // strict alignment required here
         Vector2 position;
@@ -923,26 +932,25 @@ static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radia
 
     const Vector2 halfsize = size/2;
 
-    float width = float(ogre_win->getWidth());
-    float height = float(ogre_win->getHeight());
+    Vector2 screen_sz = Vector2(ogre_win->getWidth(), ogre_win->getHeight());
 
-    Vertex top_left= {
-        (position + (Vector2(-1,1) * halfsize).rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
+    Vertex top_left = {
+        maybe_snap(snapPixels, position + (Vector2(-1,1) * halfsize).rotateBy(orientation)) / screen_sz * Vector2(2,2) - Vector2(1,1),
         uv1
     };
 
     Vertex top_right = {
-        (position + halfsize.rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
+        maybe_snap(snapPixels, position + halfsize.rotateBy(orientation)) / screen_sz * Vector2(2,2) - Vector2(1,1),
         Vector2(uv2.x,uv1.y)
     };
 
     Vertex bottom_left = {
-        (position - halfsize.rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
+        maybe_snap(snapPixels, position - halfsize.rotateBy(orientation)) / screen_sz * Vector2(2,2) - Vector2(1,1),
         Vector2(uv1.x,uv2.y)
     };
 
     Vertex bottom_right = {
-        (position + (Vector2(1,-1) * halfsize).rotateBy(orientation)) / Vector2(width,height) * Vector2(2,2) - Vector2(1,1),
+        maybe_snap(snapPixels, position + (Vector2(1,-1) * halfsize).rotateBy(orientation)) / screen_sz * Vector2(2,2) - Vector2(1,1),
         uv2
     };
 
@@ -993,7 +1001,7 @@ void gfx_render_hud_one (GfxHudBase *base)
 
         set_vertex_data(obj->getDerivedPosition(),
                         obj->getSize(),
-                        obj->getDerivedOrientation(), uv1, uv2);
+                        obj->getDerivedOrientation(), obj->snapPixels, uv1, uv2);
 
         // premultiply the colour by the alpha -- for convenience
         try_set_named_constant(fp, "colour", to_ogre(obj->getColour()));
@@ -1056,8 +1064,13 @@ void gfx_render_hud_one (GfxHudBase *base)
         const Ogre::GpuProgramParametersSharedPtr &fragment_params = fp_text->getDefaultParameters();
 
         Vector2 pos = text->getDerivedPosition();
+        if (text->snapPixels) {
+            pos.x = ::floorf(pos.x+0.5);
+            pos.y = ::floorf(pos.y+0.5);
+        }
 
         Ogre::Matrix4 matrix_centre = Ogre::Matrix4::IDENTITY;
+        // move origin to center (for rotation)
         matrix_centre.setTrans(Ogre::Vector3(-floorf(text->getSize().x/2), floorf(text->getSize().y/2), 0));
 
         const Degree &orientation = text->getDerivedOrientation();
