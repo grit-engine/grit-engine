@@ -1985,6 +1985,22 @@ TRY_START
 TRY_END
 }
 
+static int global_gfx_font_list (lua_State *L)
+{
+TRY_START
+    check_args(L, 0);
+    std::vector<GfxFont*> list = gfx_font_list();
+    lua_newtable(L);
+    int counter = 1;
+    for (unsigned i=0 ; i<list.size() ; ++i) {
+        lua_pushstring(L, list[i]->name.c_str());
+        lua_rawseti(L,-2,counter);
+        counter++;
+    }
+    return 1;
+TRY_END
+}
+
 static int global_gfx_hud_text_add (lua_State *L)
 {
 TRY_START
@@ -4827,6 +4843,7 @@ static const luaL_reg global[] = {
     {"gfx_light_make",global_gfx_light_make},
 
     {"gfx_font_define",global_gfx_font_define},
+    {"gfx_font_list",global_gfx_font_list},
 
     {"gfx_hud_object_add",global_gfx_hud_object_add},
     {"gfx_hud_text_add",global_gfx_hud_text_add},

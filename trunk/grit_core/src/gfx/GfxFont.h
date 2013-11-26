@@ -92,6 +92,7 @@ class GfxFont {
 
 bool gfx_font_has (const std::string &name);
 GfxFont *gfx_font_get (const std::string &name);
+std::vector<GfxFont*> gfx_font_list (void);
 GfxFont *gfx_font_make (const std::string &name, GfxTextureDiskResource *dr, float height);
 unsigned long gfx_font_num (void);
 

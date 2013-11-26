@@ -37,6 +37,15 @@ bool gfx_font_has (const std::string &name)
     return true;
 }
 
+std::vector<GfxFont*> gfx_font_list (void)
+{
+    std::vector<GfxFont*> r;
+    for (FontMap::const_iterator i=db.begin(),i_=db.end() ; i!=i_ ; ++i) {
+        r.push_back(i->second);
+    }
+    return r;
+}
+
 GfxFont *gfx_font_get (const std::string &name)
 {
     if (!gfx_font_has(name)) return NULL;
