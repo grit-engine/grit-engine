@@ -1188,6 +1188,11 @@ void gfx_hud_call_per_frame_callbacks (lua_State *L, float elapsed)
         std::vector<GfxHudBase*> local_root_elements = root_elements.rawVector();
 
         for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
+            GfxHudBase *base = local_root_elements[j];
+            GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+            if (obj != NULL) obj->incRefCount();
+        }
+        for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
 
             GfxHudBase *base = local_root_elements[j];
 
@@ -1196,11 +1201,21 @@ void gfx_hud_call_per_frame_callbacks (lua_State *L, float elapsed)
             GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
             if (obj != NULL) obj->triggerParentResized(L);
         }
+        for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
+            GfxHudBase *base = local_root_elements[j];
+            GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+            if (obj != NULL) obj->decRefCount(L);
+        }
     }
 
     // make local copy because callbacks can destroy elements
     std::vector<GfxHudBase*> local_root_elements = root_elements.rawVector();
 
+    for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
+        GfxHudBase *base = local_root_elements[j];
+        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+        obj->incRefCount();
+    }
     for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
 
         GfxHudBase *base = local_root_elements[j];
@@ -1210,6 +1225,11 @@ void gfx_hud_call_per_frame_callbacks (lua_State *L, float elapsed)
         GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
         if (obj != NULL) obj->triggerFrame(L, elapsed);
 
+    }
+    for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
+        GfxHudBase *base = local_root_elements[j];
+        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+        obj->decRefCount(L);
     }
 }
 

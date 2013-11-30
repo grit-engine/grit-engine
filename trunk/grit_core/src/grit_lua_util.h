@@ -29,10 +29,10 @@ extern "C" {
 
 #include <OgreException.h>
 
+#include "CentralisedLog.h"
 #include <lua_util.h>
 #include <lua_wrappers_common.h>
 
-#include "CentralisedLog.h"
 
 #define TRY_START try {
 #define TRY_END } catch (Ogre::Exception &e) { \
@@ -49,3 +49,6 @@ std::string check_path (lua_State *l, int stack_index);
 void push_cfunction (lua_State *L, int (*func)(lua_State*));
 void func_map_leak_all (void);
 
+int my_lua_error_handler (lua_State *l);
+
+int my_lua_error_handler (lua_State *l, lua_State *coro, int levelhack);

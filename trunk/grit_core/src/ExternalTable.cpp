@@ -20,7 +20,7 @@
  */
 
 #include "ExternalTable.h"
-#include "lua_util.h"
+#include "grit_lua_util.h"
 #include "lua_wrappers_primitives.h"
 
 void ExternalTable::destroy (lua_State *L)
