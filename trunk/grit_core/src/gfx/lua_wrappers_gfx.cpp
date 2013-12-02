@@ -1446,6 +1446,10 @@ TRY_START
             lua_pushnumber(L, self.getOrientation().inDegrees());
         } else if (!::strcmp(key,"position")) {
             push_v2(L, self.getPosition());
+        } else if (!::strcmp(key,"derivedPosition")) {
+            push_v2(L, self.getDerivedPosition());
+        } else if (!::strcmp(key,"derivedOrientation")) {
+            lua_pushnumber(L, self.getDerivedOrientation().inDegrees());
         } else if (!::strcmp(key,"size")) {
             push_v2(L, self.getSize());
         } else if (!::strcmp(key,"setRect")) {
@@ -1692,6 +1696,10 @@ TRY_START
         lua_pushnumber(L, self.getOrientation().inDegrees());
     } else if (!::strcmp(key,"position")) {
         push_v2(L, self.getPosition());
+    } else if (!::strcmp(key,"derivedPosition")) {
+        push_v2(L, self.getDerivedPosition());
+    } else if (!::strcmp(key,"derivedOrientation")) {
+        lua_pushnumber(L, self.getDerivedOrientation().inDegrees());
     } else if (!::strcmp(key,"zOrder")) {
         lua_pushnumber(L, self.getZOrder());
     } else if (!::strcmp(key,"size")) {
