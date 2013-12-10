@@ -57,9 +57,6 @@
     <ClCompile Include="src\Streamer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\win32\win32_sleep.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\win32\KeyboardDirectInput8.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -226,6 +223,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\dependencies\util\lua_util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\util\win32_sleep.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

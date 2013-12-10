@@ -23,8 +23,9 @@
 #include <OgreAutoParamDataSource.h>
 #include <OgreOverlaySystem.h>
 
+#include <sleep.h>
+
 #include "../path_util.h"
-#include "../sleep.h"
 #include "../main.h"
 
 #include "gfx_internal.h"

@@ -1,7 +1,8 @@
 #include <cstdlib>
 
+#include <sleep.h>
+
 #include "../CentralisedLog.h"
-#include "../sleep.h"
 #include "../grit_lua_util.h"
 
 #include "net.h"

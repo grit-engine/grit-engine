@@ -21,7 +21,7 @@
 #include <OgreString.h>
 
 #include <math_util.h>
-#include "../sleep.h"
+#include <sleep.h>
 
 #include "GfxPipeline.h"
 #include "GfxParticleSystem.h"

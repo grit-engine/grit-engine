@@ -29,11 +29,12 @@
         #include <sys/mman.h>
 #endif
 
+#include <sleep.h>
+
 #include "grit_lua_util.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "BackgroundLoader.h"
-#include "sleep.h"
 #include "clipboard.h"
 #include "CentralisedLog.h"
 #include "main.h"

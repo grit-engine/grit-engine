@@ -30,9 +30,10 @@ class btCompoundShape;
 
 #include <OgreDataStream.h>
 
+#include <sleep.h>
+
 #include "../CentralisedLog.h"
 #include "../DiskResource.h"
-#include "../sleep.h"
 #include "../SharedPtr.h"
 
 #include "TColParser.h"
