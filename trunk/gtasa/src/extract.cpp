@@ -1391,7 +1391,7 @@ int main(int argc, char **argv)
                  <<argv[1]<<"\""<<std::endl;
             return EXIT_FAILURE;
         }
-    } catch (GritException &e) {
+    } catch (const Exception &e) {
         CERR << e << std::endl;
 
         return EXIT_FAILURE;

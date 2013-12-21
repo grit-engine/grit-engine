@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
                 }
                 return EXIT_SUCCESS;
 
-        } catch (GritException &e) {
+        } catch (const Exception &e) {
                 CERR << e << std::endl;
 
                 return EXIT_FAILURE;

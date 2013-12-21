@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 
                 ifpread(f,ifp_name);
 
-        } catch (GritException &e) {
+        } catch (const Exception &e) {
                 
                 CERR << e << std::endl;
 

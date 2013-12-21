@@ -558,7 +558,7 @@ int main(int argc, char *argv[])
                                              <<ide.txdps[i].txd2<<std::endl;
                 }
 
-        } catch (GritException &e) {
+        } catch (const Exception &e) {
 
                 CERR << e << std::endl;
                 return EXIT_FAILURE;

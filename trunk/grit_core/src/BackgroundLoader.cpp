@@ -243,7 +243,7 @@ void BackgroundLoader::operator() (void)
                                         mAllowance--;
                                         //CVERB << "Loaded a resource: " << *rp << std::endl;
                                 }
-                        } catch (GritException &e) {
+                        } catch (Exception &e) {
                                 CERR << e << std::endl;
                                 caused_error = true;
                         }

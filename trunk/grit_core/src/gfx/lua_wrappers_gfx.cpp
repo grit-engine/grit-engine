@@ -19,6 +19,8 @@
  * THE SOFTWARE.
  */
 
+#include <colour_conversion.h>
+
 #include "../grit_lua_util.h"
 
 #include "../lua_wrappers_primitives.h"

@@ -224,7 +224,7 @@ int main (int argc, char **argv)
         if (in!=&std::cin) delete in;
         if (out!=&std::cout) delete out;
 
-    } catch (GritException& e) {
+    } catch (Exception& e) {
 
         CERR << e << std::endl;
 

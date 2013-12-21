@@ -246,7 +246,7 @@ void gfx_env_cube (GfxEnvCubeDiskResource *v)
         v->increment();
         try {
             if (!v->isLoaded()) v->load();
-        } catch (GritException &e) {
+        } catch (const Exception &e) {
             v->decrement();
             throw e;
         }
@@ -291,7 +291,7 @@ void gfx_colour_grade (GfxColourGradeLUTDiskResource *v)
         v->increment();
         try {
             if (!v->isLoaded()) v->load();
-        } catch (GritException &e) {
+        } catch (const Exception &e) {
             v->decrement();
             throw e;
         }
@@ -620,8 +620,8 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 
     } catch (Ogre::Exception &e) {
         CERR << e.getFullDescription() << std::endl;
-    } catch (GritException &e) {
-        CERR << e.msg << std::endl;
+    } catch (const Exception &e) {
+        CERR << e << std::endl;
     }
 
     debug_drawer->frameEnded();
@@ -990,7 +990,7 @@ size_t gfx_init (GfxCallback &cb_)
 
         return winid;
     } catch (Ogre::Exception &e) {
-        GRIT_EXCEPT2(e.getFullDescription(), "Initialising graphics subsystem");
+        GRIT_EXCEPT("Couldn't initialise graphics subsystem: "+e.getFullDescription());
     }
 }
 
@@ -1037,7 +1037,7 @@ void gfx_shutdown (void)
         OGRE_DELETE octree;
         OGRE_DELETE cg;
     } catch (Ogre::Exception &e) {
-        GRIT_EXCEPT2(e.getFullDescription(), "Shutting down graphics subsystem");
+        GRIT_EXCEPT("Couldn't shut down graphics subsystem: "+e.getFullDescription());
     }
 
 }
@@ -1048,174 +1048,6 @@ void gfx_shutdown (void)
 
 // {{{ COLOURSPACE CONVERSION UTILS
 
-void RGBtoHSL (float R, float G, float B, float &H, float &S, float &L)
-{
-
-    float max_intensity = std::max(std::max(R,G),B);
-    float min_intensity = std::min(std::min(R,G),B);
-
-    float delta = max_intensity - min_intensity;
-
-    L = 0.5f * (max_intensity + min_intensity); 
-
-    if (delta == 0) {
-        // all channels the same (colour is grey)
-        S = 0.0f;
-        H = 0.0f;
-        return;
-    }
-
-    if (L < 0.5f) {
-        S = (max_intensity - min_intensity)/(max_intensity + min_intensity);
-    } else {
-        S = (max_intensity - min_intensity)/(2 - max_intensity - min_intensity);
-    }
-    if (max_intensity == R) {
-        H = (G - B)/delta;
-    }
-    if (max_intensity == G) {
-        H = 2 + (B - R)/delta;
-    }
-    if (max_intensity == B) {
-        H = 4 + (R - G)/delta; 
-    }
-    H /= 6;
-    if (H < 0) H += 1;
-}
-    
-static float HSLtoRGB_aux (float temp1, float temp2, float temp3)
-{   
-    if (temp3 < 1)      return temp2  +  (temp1-temp2) * temp3; 
-    else if (temp3 < 3) return temp1;
-    else if (temp3 < 4) return temp2  +  (temp1-temp2) * (4 - temp3);
-    else                return temp2;
-}   
-
-void HSLtoRGB (float H, float S, float L, float &R, float &G, float &B)
-{   
-    if (S == 0) { 
-        // grey
-        R = L;
-        G = L;
-        B = L;
-        return;
-    }
-
-    float temp1 = L<0.5f ? L + L*S : L + S - L*S;
-    float temp2 = 2*L - temp1;
-
-    R = HSLtoRGB_aux(temp1, temp2, fmodf(6*H + 2, 6));
-    G = HSLtoRGB_aux(temp1, temp2, 6*H);
-    B = HSLtoRGB_aux(temp1, temp2, fmodf(6*H + 4, 6));
-}
-
-
-void HSVtoHSL (float h, float s, float v, float &hh, float &ss, float &ll)
-{
-    hh = h;
-    ll = (2 - s) * v;
-    ss = s * v;
-    ss /= (ll <= 1) ? ll : 2 - ll;
-    ll /= 2;
-}
-
-void HSLtoHSV (float hh, float ss, float ll, float &h, float &s, float &v)
-{
-    h = hh;
-    ss *= (ll <= 0.5) ? ll : 1 - ll;
-    v = ll + ss;
-    s = 2 * ss / (ll + ss);
-}
-
-void RGBtoHSV (float R, float G, float B, float &H, float &S, float &V)
-{
-    float max_intensity = std::max(std::max(R,G),B);
-    float min_intensity = std::min(std::min(R,G),B);
-
-    V = max_intensity;
-
-    float delta = max_intensity - min_intensity;
-
-    if (delta == 0) {
-        // grey
-        H = 0;
-        S = 0;
-        return;
-    }
-
-    S = (delta / max_intensity);
-
-    if (max_intensity == R) {
-        H = (G - B)/delta;
-    }
-    if (max_intensity == G) {
-        H = 2 + (B - R)/delta;
-    }
-    if (max_intensity == B) {
-        H = 4 + (R - G)/delta;
-    }
-    H /= 6;
-    if (H < 0) H += 1;
-}
-
-
-void HSVtoRGB (float H, float S, float V, float &R, float &G, float &B)
-{
-    if (S == 0.0) {
-        // grey
-        R = V;
-        G = V;
-        B = V;
-        return;
-    }
-
-    float hh = fmodf(H * 6, 6);
-    long i = (long)hh;
-    float ff = hh - i;
-    float p = V * (1.0 - S);
-    float q = V * (1.0 - (S * ff));
-    float t = V * (1.0 - (S * (1.0 - ff)));
-
-    switch (i) {
-
-        case 0:
-        R = V;
-        G = t;
-        B = p;
-        break;
-
-        case 1:
-        R = q;
-        G = V;
-        B = p;
-        break;
-
-        case 2:
-        R = p;
-        G = V;
-        B = t;
-        break;
-
-        case 3:
-        R = p;
-        G = q;
-        B = V;
-        break;
-
-        case 4:
-        R = t;
-        G = p;
-        B = V;
-        break;
-
-        case 5:
-        default:
-        R = V;
-        G = p;
-        B = q;
-        break;
-    }
-}
 
 Vector3 gfx_colour_grade_look_up (const Vector3 &v)
 {

@@ -401,8 +401,8 @@ class GfxParticleSystem {
             ogre_rs->_disableTextureUnit(0);
             ogre_rs->_disableTextureUnit(1);
 
-        } catch (GritException &e) {
-            CERR << "Rendering particles, got: " << e.msg << std::endl;
+        } catch (const Exception &e) {
+            CERR << "Rendering particles, got: " << e << std::endl;
         } catch (const Ogre::Exception &e) {
             CERR << "Rendering particles, got: " << e.getDescription() << std::endl;
         }

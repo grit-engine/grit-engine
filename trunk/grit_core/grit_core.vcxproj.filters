@@ -228,6 +228,9 @@
     <ClCompile Include="..\dependencies\util\win32_sleep.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\dependencies\util\colour_conversion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\net\NetManager.h">

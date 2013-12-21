@@ -1149,8 +1149,8 @@ void gfx_hud_render (Ogre::Viewport *vp)
             }
         }
 
-    } catch (const GritException &e) {
-        CERR << "Rendering HUD, got: " << e.msg << std::endl;
+    } catch (const Exception &e) {
+        CERR << "Rendering HUD, got: " << e << std::endl;
     } catch (const Ogre::Exception &e) {
         CERR << "Rendering HUD, got: " << e.getDescription() << std::endl;
     }

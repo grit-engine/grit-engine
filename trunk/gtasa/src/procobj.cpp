@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
                         std::cout << std::endl;
                 }
 
-        } catch (GritException &e) {
+        } catch (const Exception &e) {
 
                 CERR << e << std::endl;
  

@@ -140,7 +140,7 @@ void GritObject::activate (lua_State *L,
         // Since it's an explicit activation, we better make sure it will work.
         try {
             demand.immediateLoad();
-        } catch (GritException &e) {
+        } catch (Exception &e) {
             CERR << e << std::endl;
             CERR << "Object: \"" << name << "\" raised an error on activation, so destroying it." << std::endl;
             // will deactivate us

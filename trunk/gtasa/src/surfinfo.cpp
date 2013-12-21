@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
                         std::cout << name << std::endl;
                 }
 
-        } catch (GritException &e) {
+        } catch (const Exception &e) {
 
                 CERR << e << std::endl;
                 return EXIT_FAILURE;

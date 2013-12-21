@@ -205,9 +205,8 @@ int main(int argc, const char **argv)
 
                 delete bgl;
 
-        } catch( GritException& e ) {
-                std::cerr << "An exception has occured: "
-                          << e.longMessage() << std::endl;
+        } catch (Exception& e) {
+                std::cerr << "TOP LEVEL ERROR: " << e << std::endl;
         }
         return EXIT_SUCCESS;
 }

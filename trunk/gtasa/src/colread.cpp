@@ -172,7 +172,7 @@ int main(int argc, char **argv)
                 }
 
 
-        } catch (GritException &e) {
+        } catch (const Exception &e) {
 
                 CERR << e << std::endl;
 

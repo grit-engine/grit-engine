@@ -205,13 +205,6 @@ bool gfx_material_has_any (const std::string &name);
 
 void gfx_shutdown (void);
 
-void RGBtoHSL (float R, float G, float B, float &H, float &S, float &L);
-void HSLtoRGB (float H, float S, float L, float &R, float &G, float &B);
-void HSLtoHSV (float HH, float SS, float LL, float &H, float &S, float &L);
-void HSVtoHSL (float H, float S, float L, float &HH, float &SS, float &LL);
-void RGBtoHSV (float R, float G, float B, float &H, float &S, float &L);
-void HSVtoRGB (float H, float S, float L, float &R, float &G, float &B);
-
 Vector3 gfx_colour_grade_look_up (const Vector3 &v);
 
 Vector2 gfx_window_size (void);

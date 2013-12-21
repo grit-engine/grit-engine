@@ -33,6 +33,7 @@
 #define CTRACE(x) CVERB << #x << " " << (x) << std::endl
 
 #include <console.h>
+#include <exception.h>
 
 /** Called when something so bad happens that the process has to exit uncleanly. */
 void app_fatal();
@@ -124,52 +125,8 @@ class CLog {
 };
 
 
-/** A general exception class used for all exceptions from Grit -- often caught
- * and converted to a Lua error.
- */
-struct GritException {
-        GritException (const std::string &msg_, const char *func_, const char *file_, int line_)
-              : msg(msg_), func(func_), file(file_), line(line_) { }
-
-        GritException (const std::string &msg_, const std::string &doing,
-                       const char *func_, const char *file_, int line_)
-              : msg(msg_), func(func_), file(file_), line(line_)
-        {
-                msg += " while " + doing;
-        }
-        
-        std::string longMessage (void)
-        {
-                std::stringstream ss;
-                ss << msg << " (" << file << ":" << line << ": " << func << ")";
-                return ss.str();
-        }
-
-        std::string msg;
-        const char *func;
-        const char *file;
-        int line;
-};
-
-/** Allows printing an exception to a stream. */
-inline std::ostream &operator << (std::ostream &o, const GritException &e)
-{ o << e.msg; return o; }
-
-// Ways of getting the name of the current function, for debug output / exceptions.
-#if defined(_MSC_VER)
-//#define GRIT_FUNC_NAME __FUNCDNAME__ 
-#define GRIT_FUNC_NAME __FUNCSIG__ 
-//#define GRIT_FUNC_NAME __FUNCTION__ 
-#elif defined (__GNUC__)
-#define GRIT_FUNC_NAME __PRETTY_FUNCTION__
-#else
-#define GRIT_FUNC_NAME "<unknown func>"
-#endif
-
 /** Macro for throwing an exception easily. */
-#define GRIT_EXCEPT(msg) throw GritException(msg, GRIT_FUNC_NAME, __FILE__, __LINE__)
-/** Macro for throwing an exception easily. */
-#define GRIT_EXCEPT2(msg,doing) throw GritException(msg, doing, GRIT_FUNC_NAME, __FILE__, __LINE__)
+#define GRIT_EXCEPT(msg) EXCEPTEX << msg << ExceptionStream::EndL()
 
 #endif
 

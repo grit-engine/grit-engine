@@ -57,7 +57,7 @@ GfxMeshDiskResource::GfxMeshDiskResource (const std::string &name)
         rp = Ogre::MeshManager::getSingleton()
                 .createOrRetrieve(ogre_name,RESGRP, false,0, 0, u,u,false,false).first;
     } catch (Ogre::Exception &e) { 
-        GRIT_EXCEPT2(e.getFullDescription(), "Looking for a graphics resource");
+        GRIT_EXCEPT("Couldn't find graphics resource: "+e.getFullDescription());
     }       
 }
 
@@ -264,7 +264,7 @@ GfxTextureDiskResource::GfxTextureDiskResource (const std::string &name)
         std::string ogre_name = name.substr(1);
         rp = Ogre::TextureManager::getSingleton().createOrRetrieve(ogre_name,RESGRP).first;
     } catch (Ogre::Exception &e) { 
-        GRIT_EXCEPT2(e.getFullDescription(), "Looking for a graphics resource");
+        GRIT_EXCEPT("Couldn't find graphics resource: "+e.getFullDescription());
     }       
 }
 
@@ -319,7 +319,7 @@ GfxEnvCubeDiskResource::GfxEnvCubeDiskResource (const std::string &name)
         std::string ogre_name = name.substr(1);
         rp = Ogre::TextureManager::getSingleton().createManual(ogre_name, RESGRP, Ogre::TEX_TYPE_CUBE_MAP, 512, 512, Ogre::MIP_DEFAULT, Ogre::PF_UNKNOWN);
     } catch (Ogre::Exception &e) { 
-        GRIT_EXCEPT2(e.getFullDescription(), "Creating an env cube");
+        GRIT_EXCEPT("Couldn't create an env cube: "+e.getFullDescription());
     }       
 }
 
@@ -408,7 +408,7 @@ GfxColourGradeLUTDiskResource::GfxColourGradeLUTDiskResource (const std::string 
         std::string ogre_name = name.substr(1);
         rp = Ogre::TextureManager::getSingleton().createManual(ogre_name, RESGRP, Ogre::TEX_TYPE_3D, 32, 32, 32, 0, Ogre::PF_UNKNOWN);
     } catch (Ogre::Exception &e) { 
-        GRIT_EXCEPT2(e.getFullDescription(), "Creating an env cube");
+        GRIT_EXCEPT("Couldn't create a LUT texture: "+e.getFullDescription());
     }       
 }
 

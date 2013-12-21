@@ -39,8 +39,8 @@ extern "C" {
         std::string msg = e.getFullDescription(); \
         my_lua_error(L,msg); \
         return 0; \
-} catch (GritException &e) { \
-        my_lua_error(L,e.longMessage()); \
+} catch (Exception &e) { \
+        my_lua_error(L,e.msg); \
         return 0; \
 }
 

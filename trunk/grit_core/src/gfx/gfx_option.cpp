@@ -621,7 +621,7 @@ void gfx_option (GfxBoolOption o, bool v)
         new_options_bool[o] = v;
         if (new_options_bool[GFX_AUTOUPDATE]) options_update(false);
     } catch (Ogre::Exception &e) {
-        GRIT_EXCEPT2(e.getFullDescription(), "Setting graphics option");
+        GRIT_EXCEPT("Couldn't set graphics option: "+e.getFullDescription());
     }
 }
 bool gfx_option (GfxBoolOption o)
@@ -636,7 +636,7 @@ void gfx_option (GfxIntOption o, int v)
         new_options_int[o] = v;
         if (new_options_bool[GFX_AUTOUPDATE]) options_update(false);
     } catch (Ogre::Exception &e) {
-        GRIT_EXCEPT2(e.getFullDescription(), "Setting graphics option");
+        GRIT_EXCEPT("Couldn't set graphics option: "+e.getFullDescription());
     }
 }
 int gfx_option (GfxIntOption o)
@@ -651,7 +651,7 @@ void gfx_option (GfxFloatOption o, float v)
         new_options_float[o] = v;
         if (new_options_bool[GFX_AUTOUPDATE]) options_update(false);
     } catch (Ogre::Exception &e) {
-        GRIT_EXCEPT2(e.getFullDescription(), "Setting graphics option");
+        GRIT_EXCEPT("Couldn't set graphics option: "+e.getFullDescription());
     }
 }
 float gfx_option (GfxFloatOption o)

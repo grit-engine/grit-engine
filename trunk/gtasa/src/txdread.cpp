@@ -513,9 +513,8 @@ int main(int argc, char **argv)
             Txd txd(f, dest_dir, true);
         }
 
-    } catch (GritException &e) {
-        std::cerr << "ERROR: "
-                  << e.longMessage() << std::endl;
+    } catch (const Exception &e) {
+        std::cerr << "ERROR: " << e << std::endl;
 
         return EXIT_FAILURE;
     }
