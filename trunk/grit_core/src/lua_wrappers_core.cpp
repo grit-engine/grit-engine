@@ -418,7 +418,9 @@ TRY_START
         int args = lua_gettop(L);
         for (int i=1 ; i<=args ; ++i) {
                 if (i>1) ss << "\t";
-                lua_getfield(L, LUA_GLOBALSINDEX, "console_tostring");
+                lua_pushglobaltable(L);
+                lua_getfield(L, -1, "console_tostring");
+                lua_remove(L,-2); //global table
                 lua_pushvalue(L,i);
                 lua_call(L,1,1);
                 ss << lua_tostring(L,-1);
@@ -594,7 +596,7 @@ static int aux_include (lua_State *L, const std::string &filename)
         }
         LuaIncludeState lis;
         lis.ds = Ogre::ResourceGroupManager::getSingleton().openResource(fname,"GRIT");
-        return lua_load(L, aux_aux_include, &lis, ("@"+filename).c_str());
+        return lua_load(L, aux_aux_include, &lis, ("@"+filename).c_str(), "bt"); //last arg means it will accept either binary or text files
 }
 
 

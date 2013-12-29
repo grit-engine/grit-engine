@@ -239,7 +239,7 @@ class LuaCallback : public HUD::Calculator {
                 lua_pushnumber(L,ph);
                 lua_rawgeti(L,LUA_REGISTRYINDEX,ud_key);
                 lua_xmove(L,L2,4); // l has coro, l2 has 4 elements
-                int result = lua_resume(L2,3);
+                int result = lua_resume(L2, L, 3); //L resumes L2, isn't it?
                 while (true) {
                         if (result!=LUA_YIELD && result!=0) {
                                 lua_xmove(L2,L,1);
@@ -262,7 +262,7 @@ class LuaCallback : public HUD::Calculator {
                         lua_pushnumber(L,h);
                         lua_xmove(L,L2,4); // l has coro, l2 has the 4 vals
                         // don't need to pass the function this time
-                        result = lua_resume(L2,4);
+                        result = lua_resume(L2, L, 4);
                 }
                 lua_pop(L,1); // the coroutine (matches lua_newthread)
 
