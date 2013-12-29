@@ -291,3 +291,8 @@ void NetManager::setCBTable(ExternalTable& table)
 {
 	this->netCBTable = table;
 }
+
+ExternalTable& NetManager::getCBTable()
+{
+	return this->netCBTable;
+}

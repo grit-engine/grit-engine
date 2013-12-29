@@ -188,6 +188,8 @@ int main(int argc, const char **argv)
                 }
 
                 // lua returns - we quit
+                
+                net_shutdown(core_L); //net needs to close LuaPtrs properly
 
                 object_all_del(core_L); // will remove all demands from bgl
 

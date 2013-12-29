@@ -335,7 +335,7 @@ TRY_START
 	}
 	lua_pop(L,1);
 
-	net_set_callbacks(table);
+	net_set_callbacks(table, L);
 
 	return 0;
 

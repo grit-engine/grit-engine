@@ -48,6 +48,7 @@ public:
 	void sendPacket(NetChannel channel, NetAddress& address, std::string& data);
 
 	void setCBTable(ExternalTable& table);
+	ExternalTable& getCBTable();
 
 	bool getLoopbackPacket(NetChannel channel, std::string& packet);
 };

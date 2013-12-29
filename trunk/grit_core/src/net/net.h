@@ -130,6 +130,9 @@ public:
 // initializes the networking system
 void net_init();
 
+// shutdown the networking system, properly closing all LuaPtrs
+void net_shutdown(lua_State *L);
+
 // processes network packets and sends them off to wherever they need to go
 void net_process(lua_State* L);
 
@@ -140,7 +143,7 @@ void net_send_oob(NetChannel channel, NetAddress& address, const char* format, .
 void net_send(NetChannel channel, NetAddress& address, const char* packet, uint32_t packetLength);
 
 // sets the network callbacks
-void net_set_callbacks(ExternalTable& table);
+void net_set_callbacks(ExternalTable& table, lua_State* L);
 
 // gets a loopback packet
 bool net_get_loopback_packet(NetChannel channel, std::string& packet);

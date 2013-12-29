@@ -7,17 +7,15 @@
 
 static NetManager* netManager;
 
-void net_shutdown();
-
 void net_init()
 {
 	netManager = new NetManager();
-
-	atexit(net_shutdown);
 }
 
-void net_shutdown()
+void net_shutdown(lua_State *L)
 {
+	netManager->getCBTable().clear(L); //closing LuaPtrs
+	
 	delete netManager;
 }
 
@@ -43,9 +41,11 @@ bool net_get_loopback_packet(NetChannel channel, std::string& packet)
 	return netManager->getLoopbackPacket(channel, packet);
 }
 
-void net_set_callbacks(ExternalTable& table)
+void net_set_callbacks(ExternalTable& table, lua_State* L)
 {
 	APP_ASSERT(netManager != NULL);
 
 	netManager->setCBTable(table);
+	
+	table.clear(L); //ensure setNil() is called so we don't get LuaPtr shutdown error
 }

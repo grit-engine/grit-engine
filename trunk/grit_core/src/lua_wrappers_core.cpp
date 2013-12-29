@@ -925,7 +925,7 @@ lua_State *init_lua(const char *filename)
         physics_lua_init(L);
         audio_lua_init(L);
         disk_resource_lua_init(L);
-		net_lua_init(L);
+        net_lua_init(L);
 
         status = aux_include(L,filename);
         if (status) {
