@@ -62,6 +62,9 @@ enum AudioIntOption {
  */
 void audio_init (const char *devname);
 
+//close the audio device, to prevent audio stuttering
+void audio_close ();
+
 /** Call every frame.
  * \param position Worldspace location of player.
  * \param velocity Worldspace velocity of player.

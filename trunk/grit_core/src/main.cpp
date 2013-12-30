@@ -201,6 +201,7 @@ int main(int argc, const char **argv)
                 if (keyboard) delete keyboard;
                 if (core_L) shutdown_lua(core_L);
                 hud.setNull();
+                audio_close(); //close AL device
                 physics_shutdown();
                 if (debug_drawer) delete debug_drawer;
                 gfx_shutdown();

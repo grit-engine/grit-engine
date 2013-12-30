@@ -227,6 +227,11 @@ void audio_init (const char *devname)
     alcMakeContextCurrent(alContext);
 }
 
+void audio_close()
+{
+	alcCloseDevice(alDevice);
+}
+
 static std::vector<ALuint> one_shot_sounds;
 
 static ALuint audio_play_aux (ALuint buffer, float volume, float pitch, float ref_dist, float roll_off)
