@@ -257,13 +257,8 @@ class GfxHudObject : public GfxHudBase {
     bool getNeedsFrameCallbacks (void) const { assertAlive(); return needsFrameCallbacks; }
     void setNeedsFrameCallbacks (bool v) { assertAlive(); needsFrameCallbacks = v; }
 
-    enum RayResult {
-        MISSED,
-        HIT,
-        HIT_CHILD
-    };
-
-    RayResult shootRay (const Vector2 &screen_pos);
+    /** Return NULL for a miss, otherwise return the object hit, which can be a child.  Must have needsInputCallbacks otherwise ignored. */
+    GfxHudObject *shootRay (const Vector2 &screen_pos);
 
     private:
 
@@ -327,6 +322,9 @@ void gfx_hud_init (void);
 
 /** Called as the game engine exits to clean up internal state. */
 void gfx_hud_shutdown (void);
+
+/** Return the hud element at the given coordinates. */
+GfxHudObject *gfx_hud_ray (int x, int y);
 
 /** Notify the hud system of the mouse location (called on a mouse move event). */
 void gfx_hud_signal_mouse_move (lua_State *L, int x, int y);

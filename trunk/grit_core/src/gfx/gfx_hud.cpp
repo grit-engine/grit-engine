@@ -362,16 +362,16 @@ void GfxHudObject::setParent (lua_State *L, GfxHudObject *v)
     triggerParentResized(L);
 }
 
-GfxHudObject::RayResult GfxHudObject::shootRay (const Vector2 &screen_pos)
+GfxHudObject *GfxHudObject::shootRay (const Vector2 &screen_pos)
 {
-    if (!isEnabled()) return MISSED; // can't hit any children either
+    if (!isEnabled()) return NULL; // can't hit any children either
 
     Vector2 local_pos = (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
     bool inside = fabsf(local_pos.x) < getSize().x / 2
                 && fabsf(local_pos.y) < getSize().y / 2;
 
     // children can still be hit, since they can be larger than parent, so do not return yet...
-    //if (!inside) return MISSED;
+    //if (!inside) return NULL;
     
     // look at children, ensure not inside one of them
     for (unsigned j=0 ; j<children.size() ; ++j) {
@@ -380,12 +380,14 @@ GfxHudObject::RayResult GfxHudObject::shootRay (const Vector2 &screen_pos)
         if (base->destroyed()) continue;
 
         GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL && obj->shootRay(screen_pos)!=MISSED) return HIT_CHILD;
+        if (obj == NULL) continue;
+        GfxHudObject *hit = obj->shootRay(screen_pos);
+        if (hit != NULL) return hit;
     }
     
     // TODO: look at parent's z order > this one
 
-    return getNeedsInputCallbacks() && inside ? HIT : MISSED;
+    return getNeedsInputCallbacks() && inside ? this : NULL;
 }
 
 void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
@@ -429,7 +431,7 @@ void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
         Vector2 local_pos = (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
         push_v2(L, local_pos);
         push_v2(L, screen_pos);
-        lua_pushboolean(L, this->shootRay(screen_pos)==GfxHudObject::HIT);
+        lua_pushboolean(L, this->shootRay(screen_pos)==this);
         //stack: err,callback,object,local_pos,screen_pos,inside
 
         STACK_CHECK_N(6);
@@ -518,7 +520,7 @@ void GfxHudObject::triggerButton (lua_State *L, const std::string &name)
 
         STACK_CHECK_N(4);
 
-        // call (1 arg), pops function too
+        // call (2 args), pops function too
         pwd_push_dir(hudClass->dir);
         int status = lua_pcall(L,2,0,error_handler);
         pwd_pop();
@@ -1237,6 +1239,29 @@ void gfx_hud_call_per_frame_callbacks (lua_State *L, float elapsed)
 
 
 // {{{ INPUT
+
+GfxHudObject *gfx_hud_ray (int x, int y)
+{
+    // make local copy because callbacks can destroy elements
+    std::vector<GfxHudBase*> local_root_elements = root_elements.rawVector();
+    
+    Vector2 screen_pos(x,y);
+
+    for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
+
+        GfxHudBase *base = local_root_elements[j];
+
+        if (base->destroyed()) continue;
+
+        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+        if (obj == NULL) continue;
+        GfxHudObject *hit = obj->shootRay(screen_pos);
+        if (hit == NULL) continue;
+        return hit;
+    }
+
+    return NULL;
+}
 
 void gfx_hud_signal_mouse_move (lua_State *L, int x, int y)
 {

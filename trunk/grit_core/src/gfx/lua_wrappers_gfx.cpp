@@ -2304,6 +2304,19 @@ TRY_START
 TRY_END
 }
 
+static int global_gfx_hud_ray (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    // negative values occur when dragging out of the game window
+    // this sleazy hack makes them go away...
+    unsigned x = check_t<int>(L,1);
+    unsigned y = check_t<int>(L,2);
+    push_gfxhudobj(L, gfx_hud_ray(x, y));
+    return 1;
+TRY_END
+}
+
 static int global_gfx_hud_signal_mouse_move (lua_State *L)
 {
 TRY_START
@@ -4862,6 +4875,7 @@ static const luaL_reg global[] = {
     {"gfx_hud_class_has",global_gfx_hud_class_has},
     {"gfx_hud_class_all",global_gfx_hud_class_all},
     {"gfx_hud_class_count",global_gfx_hud_class_count},
+    {"gfx_hud_ray",global_gfx_hud_ray},
     {"gfx_hud_signal_mouse_move",global_gfx_hud_signal_mouse_move},
     {"gfx_hud_signal_button",global_gfx_hud_signal_button},
 
