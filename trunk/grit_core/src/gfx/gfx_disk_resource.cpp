@@ -362,7 +362,7 @@ void GfxEnvCubeDiskResource::loadImpl (void)
         if (sz & (sz-1) ) {
             GRIT_EXCEPT("Environment map size not a power of 2: "+ogre_name);
         }
-        raw_tex = new uint8_t[disk.getSize()];
+        raw_tex = OGRE_ALLOC_T(uint8_t, disk.getSize(), Ogre::MEMCATEGORY_GENERAL);
 
         Ogre::Image img;
         img.loadDynamicImage(raw_tex, sz, sz, 1, disk.getFormat(), true, 6, 0);

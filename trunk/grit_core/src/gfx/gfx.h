@@ -52,6 +52,13 @@ extern const GfxStringMap gfx_empty_string_map;
 #include "GfxParticleSystem.h"
 #include "HUD.h"
 
+extern "C" {
+    #include <lua.h>
+    #include <lauxlib.h>
+    #include <lualib.h>
+}
+
+
 extern fast_erase_vector<GfxNode*> gfx_all_nodes;
 
 struct GfxCallback {
@@ -202,6 +209,8 @@ GfxMaterialType gfx_material_type (const std::string &name);
 
 bool gfx_material_has_any (const std::string &name);
 
+
+void gfx_shutdown_lua (lua_State *L);
 
 void gfx_shutdown (void);
 

@@ -227,7 +227,7 @@ void audio_init (const char *devname)
     alcMakeContextCurrent(alContext);
 }
 
-void audio_close()
+void audio_shutdown()
 {
 	alcCloseDevice(alDevice);
 }

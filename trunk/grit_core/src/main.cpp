@@ -195,13 +195,15 @@ int main(int argc, const char **argv)
 
                 hud->removeAllChildren(); // will avoid any lua callbacks during destruction
 
+                gfx_shutdown_lua(core_L);
+
                 bgl->shutdown();
 
                 if (mouse) delete mouse;
                 if (keyboard) delete keyboard;
                 if (core_L) shutdown_lua(core_L);
                 hud.setNull();
-                audio_close(); //close AL device
+                audio_shutdown(); //close AL device
                 physics_shutdown();
                 if (debug_drawer) delete debug_drawer;
                 gfx_shutdown();

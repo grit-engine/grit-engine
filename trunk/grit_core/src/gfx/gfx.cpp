@@ -1022,6 +1022,11 @@ void gfx_material_add_dependencies (const std::string &name, DiskResource *into)
     material_db[name]->addDependencies(into);
 }
 
+void gfx_shutdown_lua (lua_State *L)
+{
+    gfx_hud_shutdown(L);
+}
+
 void gfx_shutdown (void)
 {
     try {
@@ -1030,7 +1035,6 @@ void gfx_shutdown (void)
         delete eye_left;
         delete eye_right;
         ftcv.setNull();
-        gfx_hud_shutdown();
         if (ogre_sm && ogre_root) ogre_root->destroySceneManager(ogre_sm);
         if (ogre_overlay_system && ogre_root) OGRE_DELETE ogre_overlay_system;
         if (ogre_root) OGRE_DELETE ogre_root; // internally deletes ogre_rs

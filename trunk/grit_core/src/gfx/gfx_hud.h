@@ -321,7 +321,7 @@ void gfx_hud_render (Ogre::Viewport *vp);
 void gfx_hud_init (void);
 
 /** Called as the game engine exits to clean up internal state. */
-void gfx_hud_shutdown (void);
+void gfx_hud_shutdown (lua_State *L);
 
 /** Return the hud element at the given coordinates. */
 GfxHudObject *gfx_hud_ray (int x, int y);

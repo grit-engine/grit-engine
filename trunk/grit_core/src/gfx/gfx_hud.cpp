@@ -84,9 +84,45 @@ size_t gfx_hud_class_count (void)
 // {{{ BASE
 static fast_erase_vector<GfxHudBase*> root_elements;
 
+/** Get a std::vector of root_elemenets that are GfxHudObjects, and also inc
+ * their ref counts.
+ *
+ * A common operation is to iterate over the hud objects and call a Lua
+ * callback on some/all of them.  Since Lua callbacks can trigger the Lua
+ * garbage collector, and thus call gc metamethods on hud objects, and thus dec
+ * the reference count of hud objects, we must be careful that 1) we are not
+ * iterating over root_elements directly since it will change, and 2) we are
+ * not iterating over a simple copy of root_elements since some of those
+ * pointers will be free'd in the middle of the iteration.  To avoid this, we
+ * increment the reference counters for all these objects before the iteration,
+ * as well as using a copied std::vector.
+ */
+static std::vector<GfxHudObject *> get_all_hud_objects (const fast_erase_vector<GfxHudBase*> &bases)
+{
+    std::vector<GfxHudObject*> r;
+    for (unsigned i=0 ; i<bases.size() ; ++i) {
+        GfxHudObject *o = dynamic_cast<GfxHudObject*>(bases[i]);
+        if (o == NULL) continue;
+        r.push_back(o);
+        o->incRefCount();
+    }
+    return r;
+}
+
+/** The companion to get_all_hud_objects.  This simply decs the reference count
+ * for all the objects.
+ */
+static void dec_all_hud_objects (lua_State *L, std::vector<GfxHudObject *> objs)
+{
+    for (unsigned i=0 ; i<objs.size() ; ++i) {
+        objs[i]->decRefCount(L);
+    }
+}
+
+
 void GfxHudBase::registerRemove (void)
 {
-    //CVERB << "GfxHud element resetting its existing existence: " << this << std::endl;
+    //CVERB << "GfxHud element unregistering its existence: " << this << std::endl;
     if (parent != NULL) {
         parent->notifyChildRemove(this);
     } else {
@@ -115,6 +151,7 @@ GfxHudBase::GfxHudBase (void)
 GfxHudBase::~GfxHudBase (void)
 {
     if (aliveness==ALIVE) destroy();
+    //CVERB << "GfxHud element deleted: " << this << std::endl;
 }
 
 void GfxHudBase::destroy (void)
@@ -167,11 +204,13 @@ GfxHudObject::GfxHudObject (GfxHudClass *hud_class)
 void GfxHudObject::incRefCount (void)
 {
     refCount++;
+    //CVERB << "Inc ref count to "<<refCount<<": " << this << std::endl;
 }
 
 void GfxHudObject::decRefCount (lua_State *L)
 {
     refCount--;
+    //CVERB << "Dec ref count to "<<refCount<<": " << this << std::endl;
     if (refCount == 0) {
         destroy(L);
         if (refCount == 0) {
@@ -180,6 +219,8 @@ void GfxHudObject::decRefCount (lua_State *L)
             // will throw exceptions when it is used in any way, but
             // will not actually be deleted until the ref count does reach zero
             delete this;
+        } else {
+            //CVERB << "Not deleting yet since destroy callback kept dangling link: " << this << std::endl;
         }
     }
 }
@@ -202,10 +243,10 @@ void GfxHudObject::destroy (lua_State *L)
     if (aliveness == ALIVE) {
         aliveness = DYING;
         triggerDestroy(L);
-        table.setNil(L);
         while (children.size() != 0) {
             children[0]->setParent(parent);
         }
+        table.setNil(L);
         destroy();
     }
 }
@@ -343,16 +384,12 @@ void GfxHudObject::setSize (lua_State *L, const Vector2 &v)
     size = v;
 
     // use local_children copy since callbacks can alter hierarchy
-    std::vector<GfxHudBase*> local_children = children.rawVector();
-
+    std::vector<GfxHudObject*> local_children = get_all_hud_objects(children);
     for (unsigned j=0 ; j<local_children.size() ; ++j) {
-        GfxHudBase *base = local_children[j];
-
-        if (base->destroyed()) continue;
-
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL) obj->triggerParentResized(L);
+        GfxHudObject *obj = local_children[j];
+        if (!obj->destroyed()) obj->triggerParentResized(L);
     }
+    dec_all_hud_objects(L, local_children);
 }
 
 void GfxHudObject::setParent (lua_State *L, GfxHudObject *v)
@@ -467,16 +504,12 @@ void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
     // note if we destroyed ourselves due to an error in the callback, children should be empty
 
     // use local_children copy since callbacks can alter hierarchy
-    std::vector<GfxHudBase*> local_children = children.rawVector();
-
+    std::vector<GfxHudObject*> local_children = get_all_hud_objects(children);
     for (unsigned j=0 ; j<local_children.size() ; ++j) {
-        GfxHudBase *base = local_children[j];
-
-        if (base->destroyed()) continue;
-
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL) obj->triggerMouseMove(L, w, h);
+        GfxHudObject *obj = local_children[j];
+        if (!obj->destroyed()) obj->triggerMouseMove(L, w, h);
     }
+    dec_all_hud_objects(L, local_children);
 }
 
 void GfxHudObject::triggerButton (lua_State *L, const std::string &name)
@@ -551,16 +584,12 @@ void GfxHudObject::triggerButton (lua_State *L, const std::string &name)
     // note if we destroyed ourselves due to an error in the callback, children should be empty
 
     // use local_children copy since callbacks can alter hierarchy
-    std::vector<GfxHudBase*> local_children = children.rawVector();
-
+    std::vector<GfxHudObject*> local_children = get_all_hud_objects(children);
     for (unsigned j=0 ; j<local_children.size() ; ++j) {
-        GfxHudBase *base = local_children[j];
-
-        if (base->destroyed()) continue;
-
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL) obj->triggerButton(L, name);
+        GfxHudObject *obj = local_children[j];
+        if (!obj->destroyed()) obj->triggerButton(L, name);
     }
+    dec_all_hud_objects(L, local_children);
 }
 
 void GfxHudObject::triggerFrame (lua_State *L, float elapsed)
@@ -635,16 +664,12 @@ void GfxHudObject::triggerFrame (lua_State *L, float elapsed)
     // note if we destroyed ourselves due to an error in the callback, children should be empty
 
     // use local_children copy since callbacks can alter hierarchy
-    std::vector<GfxHudBase*> local_children = children.rawVector();
-
+    std::vector<GfxHudObject*> local_children = get_all_hud_objects(children);
     for (unsigned j=0 ; j<local_children.size() ; ++j) {
-        GfxHudBase *base = local_children[j];
-
-        if (base->destroyed()) continue;
-
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL) obj->triggerFrame(L, elapsed);
+        GfxHudObject *obj = local_children[j];
+        if (!obj->destroyed()) obj->triggerFrame(L, elapsed);
     }
+    dec_all_hud_objects(L, local_children);
 }
 
 void GfxHudObject::notifyChildAdd (GfxHudBase *child)
@@ -904,7 +929,7 @@ void gfx_hud_init (void)
     
 }
 
-void gfx_hud_shutdown (void)
+void gfx_hud_shutdown (lua_State *L)
 {
     vp_solid.setNull();
     fp_solid.setNull();
@@ -914,6 +939,24 @@ void gfx_hud_shutdown (void)
     fp_text.setNull();
     quad_vbuf.setNull();
     OGRE_DELETE quad_vdata;
+
+
+    // Do this many times, because not all destroy callbacks actually destroy all their children!
+    // Children that get left behind will get destroyed on lua close in an arbitrary order and that
+    // can cause undefined behvaiour on the c++ side (access of deleted objects).  So we aggressively
+    // destroy all the root elements because orphaned children are re-attached at the root.
+    while (root_elements.size() > 0) {
+        //CVERB << "Destroying all hud elements on shutdown." << std::endl;
+        std::vector<GfxHudObject*> local_root_objects = get_all_hud_objects(root_elements);
+        for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
+            GfxHudObject *obj = local_root_objects[j];
+            if (obj->destroyed()) continue;
+            obj->destroy(L);
+        }
+
+        dec_all_hud_objects(L, local_root_objects);
+        //CVERB << "Done destroying all hud elements on shutdown." << std::endl;
+    }
 }
 
 static inline Vector2 maybe_snap (bool snap, Vector2 pos)
@@ -1180,59 +1223,24 @@ void gfx_hud_signal_window_resized (unsigned w, unsigned h)
 void gfx_hud_call_per_frame_callbacks (lua_State *L, float elapsed)
 {
 
+    std::vector<GfxHudObject*> local_root_objects = get_all_hud_objects(root_elements);
+
     if (window_size_dirty) {
-
         window_size_dirty = false;
-
-        // Do just the root bodies, they are the ones that have the screen as a parent
-
-        // make local copy because callbacks can destroy elements
-        std::vector<GfxHudBase*> local_root_elements = root_elements.rawVector();
-
-        for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
-            GfxHudBase *base = local_root_elements[j];
-            GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-            if (obj != NULL) obj->incRefCount();
-        }
-        for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
-
-            GfxHudBase *base = local_root_elements[j];
-
-            if (base->destroyed()) continue;
-
-            GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-            if (obj != NULL) obj->triggerParentResized(L);
-        }
-        for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
-            GfxHudBase *base = local_root_elements[j];
-            GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-            if (obj != NULL) obj->decRefCount(L);
+        for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
+            GfxHudObject *obj = local_root_objects[j];
+            if (obj->destroyed()) continue;
+            obj->triggerParentResized(L);
         }
     }
 
-    // make local copy because callbacks can destroy elements
-    std::vector<GfxHudBase*> local_root_elements = root_elements.rawVector();
-
-    for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
-        GfxHudBase *base = local_root_elements[j];
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        obj->incRefCount();
+    for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
+        GfxHudObject *obj = local_root_objects[j];
+        if (obj->destroyed()) continue;
+        obj->triggerFrame(L, elapsed);
     }
-    for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
 
-        GfxHudBase *base = local_root_elements[j];
-
-        if (base->destroyed()) continue;
-
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL) obj->triggerFrame(L, elapsed);
-
-    }
-    for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
-        GfxHudBase *base = local_root_elements[j];
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        obj->decRefCount(L);
-    }
+    dec_all_hud_objects(L, local_root_objects);
 }
 
 // }}}
@@ -1242,22 +1250,14 @@ void gfx_hud_call_per_frame_callbacks (lua_State *L, float elapsed)
 
 GfxHudObject *gfx_hud_ray (int x, int y)
 {
-    // make local copy because callbacks can destroy elements
-    std::vector<GfxHudBase*> local_root_elements = root_elements.rawVector();
-    
     Vector2 screen_pos(x,y);
 
-    for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
-
-        GfxHudBase *base = local_root_elements[j];
-
+    for (unsigned j=0 ; j<root_elements.size() ; ++j) {
+        GfxHudBase *base = root_elements[j];
         if (base->destroyed()) continue;
-
         GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj == NULL) continue;
         GfxHudObject *hit = obj->shootRay(screen_pos);
-        if (hit == NULL) continue;
-        return hit;
+        if (hit != NULL) return hit;
     }
 
     return NULL;
@@ -1266,40 +1266,30 @@ GfxHudObject *gfx_hud_ray (int x, int y)
 void gfx_hud_signal_mouse_move (lua_State *L, int x, int y)
 {
     // make local copy because callbacks can destroy elements
-    std::vector<GfxHudBase*> local_root_elements = root_elements.rawVector();
-    
+    std::vector<GfxHudObject*> local_root_objects = get_all_hud_objects(root_elements);
 
-    for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
-
-        GfxHudBase *base = local_root_elements[j];
-
-        if (base->destroyed()) continue;
-
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL) obj->triggerMouseMove(L, x, y);
-
+    for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
+        GfxHudObject *obj = local_root_objects[j];
+        if (obj->destroyed()) continue;
+        obj->triggerMouseMove(L, x, y);
     }
+
+    dec_all_hud_objects(L, local_root_objects);
 }
 
 void gfx_hud_signal_button (lua_State *L, const std::string &key, int x, int y)
 {
     // make local copy because callbacks can destroy elements
-    std::vector<GfxHudBase*> local_root_elements = root_elements.rawVector();
-    
+    std::vector<GfxHudObject*> local_root_objects = get_all_hud_objects(root_elements);
 
-    for (unsigned j=0 ; j<local_root_elements.size() ; ++j) {
-
-        GfxHudBase *base = local_root_elements[j];
-
-        if (base->destroyed()) continue;
-
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj != NULL) {
-            obj->triggerMouseMove(L, x, y);
-            obj->triggerButton(L, key);
-        }
-
+    for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
+        GfxHudObject *obj = local_root_objects[j];
+        if (obj->destroyed()) continue;
+        obj->triggerMouseMove(L, x, y);
+        obj->triggerButton(L, key);
     }
+
+    dec_all_hud_objects(L, local_root_objects);
 }
 
 // }}}

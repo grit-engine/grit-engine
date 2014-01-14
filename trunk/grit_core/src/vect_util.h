@@ -89,8 +89,8 @@ template<class T> class fast_erase_vector {
         maybe_deref<T>::_(vect[index])._index = index;
     }
 
-    /** Return the number of objects added. */
-    size_t size (void) { return vect.size(); }
+    /** Return the number of objects present. */
+    size_t size (void) const { return vect.size(); }
 
     /** Remove all objects from the vector. */
     void clear (void) { vect.clear(); }
@@ -101,8 +101,11 @@ template<class T> class fast_erase_vector {
     /** Return the number of objects this vector can hold before it must reallocate its internal memory. */
     size_t capacity (void) const { return vect.capacity(); }
 
-    /** Look up a particular index, this is not particularly useful because the indexes change during remove operations. */
+    /** Look up a particular index, this is only useful for iterations because the indexes change during remove operations. */
     T &operator[] (size_t i) { return vect[i]; }
+
+    /** Look up a particular index, this is only useful for iterations because the indexes change during remove operations. */
+    const T &operator[] (size_t i) const { return vect[i]; }
 
     const std::vector<T> &rawVector (void) { return vect; }
 
