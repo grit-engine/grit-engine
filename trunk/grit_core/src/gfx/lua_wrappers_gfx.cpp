@@ -2307,12 +2307,11 @@ TRY_END
 static int global_gfx_hud_ray (lua_State *L)
 {
 TRY_START
-    check_args(L,2);
+    check_args(L,1);
+    Vector2 pos = check_v2(L,1);
     // negative values occur when dragging out of the game window
-    // this sleazy hack makes them go away...
-    unsigned x = check_t<int>(L,1);
-    unsigned y = check_t<int>(L,2);
-    push_gfxhudobj(L, gfx_hud_ray(x, y));
+    // casting to unsigned makes them go away...
+    push_gfxhudobj(L, gfx_hud_ray((unsigned)pos.x, (unsigned)pos.y));
     return 1;
 TRY_END
 }
