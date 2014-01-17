@@ -156,6 +156,7 @@ std::string compile_grit_to_cg (const std::string &grit_code,
     scene_uniforms_code += "    uniform float su_fogDensity,\n";
     scene_uniforms_code += "    uniform float3 su_sunDirection,\n";
     scene_uniforms_code += "    uniform float3 su_sunColour,\n";
+    scene_uniforms_code += "    uniform float su_sunAlpha,\n";
     scene_uniforms_code += "    uniform float su_sunSize,\n";
     scene_uniforms_code += "    uniform float su_sunFalloffDistance,\n";
     scene_uniforms_code += "    uniform float su_skyGlareSunDistance,\n";

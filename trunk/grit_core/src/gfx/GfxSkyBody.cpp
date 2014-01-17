@@ -276,6 +276,7 @@ void GfxSkyBody::render (GfxPipeline *p)
         hack_set_constant(shader, "su_fogDensity", fog_density);
         hack_set_constant(shader, "su_sunDirection", sun_direction);
         hack_set_constant(shader, "su_sunColour", sun_colour);
+        hack_set_constant(shader, "su_sunAlpha", sun_alpha);
         hack_set_constant(shader, "su_sunSize", sun_size);
         hack_set_constant(shader, "su_sunFalloffDistance", sun_falloff_distance);
         hack_set_constant(shader, "su_skyGlareSunDistance", sky_glare_sun_distance);
