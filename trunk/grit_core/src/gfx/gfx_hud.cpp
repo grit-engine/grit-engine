@@ -182,10 +182,32 @@ Vector2 GfxHudBase::getDerivedPosition (void) const
 {
     assertAlive();
     if (parent!=NULL) {
-        return parent->getDerivedPosition() + position.rotateBy(parent->orientation);
+        return parent->getDerivedPosition() + position.rotateBy(parent->getDerivedOrientation());
     } else {
         return position;
     }
+}
+
+Vector2 GfxHudBase::getBounds (void) const
+{
+    assertAlive();
+    float s = gritsin(orientation);
+    float c = gritcos(orientation);
+    Vector2 size = getSize();
+    float w = (fabs(c)*size.x + fabs(s)*size.y);
+    float h = (fabs(s)*size.x + fabs(c)*size.y);
+    return Vector2(w,h);
+}
+
+Vector2 GfxHudBase::getDerivedBounds (void) const
+{
+    assertAlive();
+    float s = gritsin(getDerivedOrientation());
+    float c = gritcos(getDerivedOrientation());
+    Vector2 size = getSize();
+    float w = (fabs(c)*size.x + fabs(s)*size.y);
+    float h = (fabs(s)*size.x + fabs(c)*size.y);
+    return Vector2(w,h);
 }
 
 // }}}

@@ -1453,7 +1453,11 @@ TRY_START
         } else if (!::strcmp(key,"derivedOrientation")) {
             lua_pushnumber(L, self.getDerivedOrientation().inDegrees());
         } else if (!::strcmp(key,"size")) {
-            push_v2(L, self.getSize());
+            push_v2(L, self.GfxHudObject::getSize());
+        } else if (!::strcmp(key,"bounds")) {
+            push_v2(L, self.getBounds());
+        } else if (!::strcmp(key,"derivedBounds")) {
+            push_v2(L, self.getDerivedBounds());
         } else if (!::strcmp(key,"setRect")) {
             push_cfunction(L, gfxhudobj_set_rect);
         } else if (!::strcmp(key,"zOrder")) {
@@ -1629,7 +1633,6 @@ MT_MACRO_NEWINDEX(gfxhudobj);
 //}}}
 
 
-
 // GFXHUDTEXT ============================================================== {{{
 
 void push_gfxhudtext (lua_State *L, GfxHudText *self)
@@ -1705,7 +1708,11 @@ TRY_START
     } else if (!::strcmp(key,"zOrder")) {
         lua_pushnumber(L, self.getZOrder());
     } else if (!::strcmp(key,"size")) {
-        push_v2(L, self.getSize());
+        push_v2(L, self.GfxHudText::getSize());
+    } else if (!::strcmp(key,"bounds")) {
+        push_v2(L, self.getBounds());
+    } else if (!::strcmp(key,"derivedBounds")) {
+        push_v2(L, self.getDerivedBounds());
     } else if (!::strcmp(key,"inheritOrientation")) {
         lua_pushboolean(L, self.getInheritOrientation());
     } else if (!::strcmp(key,"snapPixels")) {

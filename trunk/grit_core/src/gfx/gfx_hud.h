@@ -179,6 +179,12 @@ class GfxHudBase : public fast_erase_index {
     Vector2 getPosition (void) const { assertAlive(); return position; }
     Vector2 getDerivedPosition (void) const;
 
+    virtual Vector2 getSize (void) const = 0;
+
+    Vector2 getBounds (void) const;
+
+    Vector2 getDerivedBounds (void) const;
+
     void setParent (GfxHudObject *v) { assertAlive(); registerRemove(); parent = v; registerAdd(); }
     GfxHudObject *getParent (void) const { assertAlive(); return parent; }
 
