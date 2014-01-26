@@ -962,13 +962,28 @@ void gfx_hud_shutdown (lua_State *L)
     quad_vbuf.setNull();
     OGRE_DELETE quad_vdata;
 
+    // Not all destroy callbacks actually destroy their children.  Orphaned
+    // children end up being adopted by grandparents, and ultimately the root.  If
+    // hud elements are left at the root until Lua state destruction, the gc
+    // callbacks are called in an arbitrary order. That can cause undefined
+    // behvaiour on the c++ side (access of deleted objects).  So we aggressively
+    // destroy all the root elements before the actual lua shutdown.  This causes
+    // the callbacks to run in the correct order, and avoid segfaults.
 
-    // Do this many times, because not all destroy callbacks actually destroy all their children!
-    // Children that get left behind will get destroyed on lua close in an arbitrary order and that
-    // can cause undefined behvaiour on the c++ side (access of deleted objects).  So we aggressively
-    // destroy all the root elements because orphaned children are re-attached at the root.
     while (root_elements.size() > 0) {
-        //CVERB << "Destroying all hud elements on shutdown." << std::endl;
+        // First clean up all the non Lua ones.  This is the easy part.
+
+        // Copy into an intermediate buffer, since calling destroy changes root_elements.
+        std::vector<GfxHudBase*> all_non_lua;
+        for (unsigned j=0 ; j<root_elements.size() ; ++j) {
+            GfxHudBase *base = root_elements[j];
+            if (dynamic_cast<GfxHudObject*>(base) == NULL) all_non_lua.push_back(base);
+        }
+        for (unsigned j=0 ; j<all_non_lua.size() ; ++j) {
+            all_non_lua[j]->destroy();
+        }
+
+        // Now kill the ones with lua callbacks.
         std::vector<GfxHudObject*> local_root_objects = get_all_hud_objects(root_elements);
         for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
             GfxHudObject *obj = local_root_objects[j];
@@ -977,7 +992,6 @@ void gfx_hud_shutdown (lua_State *L)
         }
 
         dec_all_hud_objects(L, local_root_objects);
-        //CVERB << "Done destroying all hud elements on shutdown." << std::endl;
     }
 }
 
