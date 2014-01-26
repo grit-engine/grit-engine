@@ -24,10 +24,8 @@
 #include <sstream>
 
 #ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #  include <windows.h>
-#define DIRECT3D_VERSION 0x0900
+#  define DIRECT3D_VERSION 0x0900
 //#  include <d3d9.h>
 #  include "win32/MouseDirectInput8.h"
 #  include "win32/KeyboardDirectInput8.h"
