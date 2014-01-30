@@ -27,7 +27,7 @@ const unsigned VERT_FLOAT_SZ = 2+2+4;
 const unsigned VERT_BYTE_SZ = VERT_FLOAT_SZ*sizeof(float);
 
 GfxTextBuffer::GfxTextBuffer (GfxFont *font)
-  : font(font), currentSize(0), currentDimensions(0,0), currentOffset(0,0), dirty(false)
+  : font(font), currentSize(0), currentDimensions(0,0), currentOffset(0,0), wrap(0,0), dirty(false)
 {   
     APP_ASSERT(font != NULL);
 
@@ -96,22 +96,39 @@ void GfxTextBuffer::copyToGPUIfNeeded (void)
     iData.indexCount = index_size;
 }
 
-bool GfxTextBuffer::addRawChar (GfxFont::codepoint_t cp, Vector3 top_colour, float top_alpha, Vector3 bot_colour, float bot_alpha)
+unsigned GfxTextBuffer::wordFit (const std::vector<Char> &word)
+{
+    if (wrap.x == 0) {
+        return word.size();
+    }
+    float curr_off = currentOffset.x;
+    for (unsigned i=0 ; i<word.size() ; ++i) {
+        GfxFont::codepoint_t cp = word[i].cp;
+        GfxFont::CharRect uvs;
+        bool r = font->getCodePointOrFail(cp, uvs);
+        if (!r) EXCEPTEX << cp << ENDL;
+        Vector2 tex_dim = font->getTextureDimensions();
+        float width = fabsf(uvs.u2 - uvs.u1) * tex_dim.x;
+        curr_off += width;
+
+        if (curr_off > wrap.x) return i;
+    }
+    return word.size();
+}
+
+void GfxTextBuffer::addRawChar (const Char &c)
 {
 
     GfxFont::CharRect uvs;
-    bool r = font->getCodePointOrFail(cp, uvs);
-    if (!r) {
-        // font didn't have this char
-        return false;
-    }
+    bool r = font->getCodePointOrFail(c.cp, uvs);
+    if (!r) EXCEPTEX << c.cp << ENDL;
     Vector2 tex_dim = font->getTextureDimensions();
     float width = fabsf(uvs.u2 - uvs.u1) * tex_dim.x;
     float height = fabsf(uvs.v2 - uvs.v1) * tex_dim.y;
 
     if (width == 0 || height == 0) {
-        // invalid char rect
-        return true;
+        // invalid char rect in font -- indicates char should not be rendered
+        return;
     }
 
     // use font, add to raw buf
@@ -129,37 +146,37 @@ bool GfxTextBuffer::addRawChar (GfxFont::codepoint_t cp, Vector3 top_colour, flo
         (*base++) = currentOffset.y;
         (*base++) = uvs.u1;
         (*base++) = uvs.v1;
-        (*base++) = top_colour.x;
-        (*base++) = top_colour.y;
-        (*base++) = top_colour.z;
-        (*base++) = top_alpha;
+        (*base++) = c.topColour.x;
+        (*base++) = c.topColour.y;
+        (*base++) = c.topColour.z;
+        (*base++) = c.topAlpha;
 
         (*base++) = currentOffset.x + width;
         (*base++) = currentOffset.y;
         (*base++) = uvs.u2;
         (*base++) = uvs.v1;
-        (*base++) = top_colour.x;
-        (*base++) = top_colour.y;
-        (*base++) = top_colour.z;
-        (*base++) = top_alpha;
+        (*base++) = c.topColour.x;
+        (*base++) = c.topColour.y;
+        (*base++) = c.topColour.z;
+        (*base++) = c.topAlpha;
 
         (*base++) = currentOffset.x;
         (*base++) = currentOffset.y - height;
         (*base++) = uvs.u1;
         (*base++) = uvs.v2;
-        (*base++) = bot_colour.x;
-        (*base++) = bot_colour.y;
-        (*base++) = bot_colour.z;
-        (*base++) = bot_alpha;
+        (*base++) = c.botColour.x;
+        (*base++) = c.botColour.y;
+        (*base++) = c.botColour.z;
+        (*base++) = c.botAlpha;
 
         (*base++) = currentOffset.x + width;
         (*base++) = currentOffset.y - height;
         (*base++) = uvs.u2;
         (*base++) = uvs.v2;
-        (*base++) = bot_colour.x;
-        (*base++) = bot_colour.y;
-        (*base++) = bot_colour.z;
-        (*base++) = bot_alpha;
+        (*base++) = c.botColour.x;
+        (*base++) = c.botColour.y;
+        (*base++) = c.botColour.z;
+        (*base++) = c.botAlpha;
     }
 
     {
@@ -180,8 +197,46 @@ bool GfxTextBuffer::addRawChar (GfxFont::codepoint_t cp, Vector3 top_colour, flo
     if (-currentOffset.y + font->getHeight() > currentDimensions.y) currentDimensions.y = -currentOffset.y + font->getHeight();
 
     dirty = true;
+}
 
-    return true;
+void GfxTextBuffer::addTab (void)
+{
+    //TODO: wrap
+    GfxFont::CharRect uvs;
+    bool r = font->getCodePointOrFail(' ', uvs);
+    if (!r) return;
+    Vector2 tex_dim = font->getTextureDimensions();
+    float width = fabsf(uvs.u2 - uvs.u1) * tex_dim.x;
+
+    int tab_width = width*9;
+    currentOffset.x = (currentOffset.x + (tab_width-1))/tab_width*tab_width;
+}
+
+void GfxTextBuffer::addRawWord (const std::vector<Char> &word)
+{
+    if (word.size() == 0) return;
+    if (wrap.y != 0 && -currentOffset.y + font->getHeight() > wrap.y) return;
+    unsigned letters = wordFit(word);
+    if (letters == word.size()) {
+        for (unsigned j=0 ; j<letters ; ++j) {
+            addRawChar(word[j]);
+        }
+    } else {
+        if (currentOffset.x == 0) {
+            // no point wrapping, just add what we can
+            for (unsigned j=0 ; j<letters ; ++j) {
+                addRawChar(word[j]);
+            }
+            std::vector<Char> rest;
+            for (unsigned j=letters ; j<word.size() ; ++j) {
+                rest.push_back(word[j]);
+            }
+            addRawWord(rest);
+        } else {
+            endLine();
+            addRawWord(word);
+        }
+    }
 }
 
 void GfxTextBuffer::endLine (void)
@@ -190,26 +245,106 @@ void GfxTextBuffer::endLine (void)
     currentOffset.y -= font->getHeight();
 }
 
-void GfxTextBuffer::addFormattedString (const std::string &text)
+void GfxTextBuffer::addFormattedString (const std::string &text,
+                                        const Vector3 top_colour, float top_alpha,
+                                        const Vector3 bot_colour, float bot_alpha)
 {
-    // TODO: colour codes
-    // TODO: \n
-    Vector3 colour(1,1,1);
-    float alpha = 1;
+    Char c;
+    c.topColour = top_colour;
+    c.topAlpha = top_alpha;
+    c.botColour = bot_colour;
+    c.botAlpha = bot_alpha;
+
+    Vector3 ansi_colour[] = {
+        Vector3(0,0,0), Vector3(.8,0,0), Vector3(0,.8,0), Vector3(.8,.8,0),
+        Vector3(0,0,.93), Vector3(.8,0,.8), Vector3(0,.8,.8), Vector3(.75,.75,.75),
+    };
+    Vector3 ansi_bold_colour[] = {
+        Vector3(0.5,0.5,0.5), Vector3(1,0,0), Vector3(0,1,0), Vector3(1,1,0),
+        Vector3(.36,.36,1), Vector3(1,0,1), Vector3(0,1,1), Vector3(1,1,1),
+    };
+
+    bool bold = false;
+    unsigned last_colour = 0;
+    std::vector<Char> word;
     for (size_t i=0 ; i<text.length() ; ++i) {
         GfxFont::codepoint_t cp = decode_utf8(text, i);
-        bool r = addRawChar(cp, colour, alpha, colour, alpha);
-        if (!r) {
-            // try the error char
-            r = addRawChar(UNICODE_ERROR_CODEPOINT, colour, alpha, colour, alpha);
-            if (!r) {
-                // try a space...
-                r = addRawChar(' ', colour, alpha, colour, alpha);
-                if (!r) {
-                    // just display nothing
-                }
+        if (cp == '\n') {
+            addRawWord(word);
+            word.clear();
+            endLine();
+            continue;
+        } else if (cp == ' ') {
+            addRawWord(word);
+            word.clear();
+            c.cp = cp;
+            // use (abuse) addRawWord because it handles wrapping...
+            std::vector<Char> chars;
+            chars.push_back(c);
+            addRawWord(chars);
+            continue;
+        } else if (cp == '\t') {
+            addRawWord(word);
+            word.clear();
+            addTab();
+            continue;
+        } else if (cp == UNICODE_ESCAPE_CODEPOINT) {
+            cp = decode_utf8(text, ++i);
+            if (cp == '[') {
+                // continue until 'm'
+                unsigned code = 0;
+                do {
+                    cp = decode_utf8(text, ++i);
+                    if (cp == 'm' || cp == ';') {
+                        // act on code
+                        if (code == 0) {
+                            bold = false;
+                            last_colour = 0;
+                            c.topColour = top_colour;
+                            c.botColour = bot_colour;
+                        } else if (code == 1) {
+                            bold = true;
+                            Vector3 col = bold ? ansi_bold_colour[last_colour] : ansi_colour[last_colour];
+                            c.topColour = col;
+                            c.botColour = col;
+                        } else if (code == 22) {
+                            bold = false;
+                            Vector3 col = bold ? ansi_bold_colour[last_colour] : ansi_colour[last_colour];
+                            c.topColour = col;
+                            c.botColour = col;
+                        } else if (code >= 30 && code <= 37) {
+                            last_colour = code - 30;
+                            Vector3 col = bold ? ansi_bold_colour[last_colour] : ansi_colour[last_colour];
+                            c.topColour = col;
+                            c.botColour = col;
+                        }
+                        code = 0;
+                    }
+                    if (cp == 'm') break;
+                    if (cp >= '0' && cp <= '9') {
+                        unsigned digit = cp - '0';
+                        code = 10*code + digit;
+                    }
+                } while (true);
+                if (cp == 'm') continue;
             }
         }
-    }
-}
 
+        // printable char
+
+        if (font->hasCodePoint(cp)) {
+            c.cp = cp;
+            word.push_back(c);
+        } else if (font->hasCodePoint(UNICODE_ERROR_CODEPOINT)) { // draw an error char
+            c.cp = UNICODE_ERROR_CODEPOINT;
+            word.push_back(c);
+        } else if (font->hasCodePoint(' ')) { // try a space...
+            c.cp = ' ';
+            word.push_back(c);
+        } else {
+            // just display nothing
+        }
+    }
+    addRawWord(word);
+    word.clear();
+}

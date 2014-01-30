@@ -798,7 +798,7 @@ void GfxHudText::decRefCount (void)
 void GfxHudText::destroy (void)
 {
     if (aliveness==ALIVE) {
-        text.clear();
+        blocks.clear();
         buf.clear(true);
         GfxHudBase::destroy();
     }
@@ -807,16 +807,35 @@ void GfxHudText::destroy (void)
 void GfxHudText::clear (void)
 {
     assertAlive();
-    text.clear();
+    blocks.clear();
     buf.clear(false);
 }
 void GfxHudText::append (const std::string &v)
 {
     assertAlive();
-    text += v;
-    buf.addFormattedString(v);
+    blocks.push_back(ColourBlock(v, letterTopColour, letterTopAlpha, letterBottomColour, letterBottomAlpha));
+    buf.addFormattedString(v, letterTopColour, letterTopAlpha, letterBottomColour, letterBottomAlpha);
 }
 
+void GfxHudText::reset (void)
+{
+    assertAlive();
+    buf.clear(false);
+    for (unsigned i=0 ; i<blocks.size() ; ++i) {
+        const ColourBlock &b = blocks[i];
+        buf.addFormattedString(b.text, b.topColour, b.topAlpha, b.bottomColour, b.bottomAlpha);
+    }
+}
+
+std::string GfxHudText::getText (void) const
+{
+    assertAlive();
+    std::string text;
+    for (unsigned i=0 ; i<blocks.size() ; ++i) {
+        text += blocks[i].text;
+    }
+    return text;
+}
 // }}}
 
 

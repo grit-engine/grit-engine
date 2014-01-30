@@ -53,6 +53,8 @@ class GfxTextBuffer {
 
     Vector2 currentOffset;
 
+    Vector2 wrap;
+
     bool dirty;
 
     public:
@@ -79,17 +81,34 @@ class GfxTextBuffer {
         }
     }
 
+    struct Char {
+        GfxFont::codepoint_t cp;
+        Vector3 topColour;
+        float topAlpha;
+        Vector3 botColour;
+        float botAlpha;
+    };
 
     /** Basic interface: add a character. */
-    bool addRawChar (GfxFont::codepoint_t cp, Vector3 topColour, float topAlpha, Vector3 botColour, float botAlpha);
+    void addRawChar (const Char &c);
 
-    /** Basic interface: end of line. */
+    /** How many chars of the given word will fit on the rest of the line? */
+    unsigned wordFit (const std::vector<Char> &word);
+
+    /** Basic interface: add a word.  Obeys wrap, wraps if necessary. */
+    void addRawWord (const std::vector<Char> &word);
+
+    /** Basic interface: increase indent to next tab level. */
+    void addTab (void);
+
+    /** Basic interface: end of line.  Returns true if new line exceeds wrap.y. */
     void endLine (void);
 
     /** High level interface: Add a string that can contain \n,\t and ansi terminal colours.
      * \param text The text in UTF8.
+     * \param top_colour and friends: Initial colours, overriden by use of ansi terminal colours.
      */
-    void addFormattedString (const std::string &text);
+    void addFormattedString (const std::string &text, Vector3 top_colour, float top_alpha, Vector3 bot_colour, float bot_alpha);
 
     /** Sets the font (note that text will be corrupted unless font has compatible UVs, so consider clear() as well. */
     void setFont (GfxFont *v) { font = v; }
@@ -99,6 +118,12 @@ class GfxTextBuffer {
 
     /** Returns the size of the text rectangle in pixels. */
     const Vector2 &getDimensions (void) const { return currentDimensions; }
+
+    /** Set the max size.  This is used to wrap text during addFormattedString. */
+    void setWrap (const Vector2 &v) { wrap = v; }
+
+    /** Returns the max size. \see setWrap */
+    const Vector2 &getWrap (void) const { return wrap; }
 
     /** Get an operation that can be used to render this text buffer. */
     const Ogre::RenderOperation &getRenderOperation (void) const { return op; }

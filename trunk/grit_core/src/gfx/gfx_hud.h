@@ -277,19 +277,38 @@ class GfxHudObject : public GfxHudBase {
 
 class GfxHudText : public GfxHudBase {
 
-    protected:
+    public:
+    struct ColourBlock {
+        std::string text;
+        Vector3 topColour;
+        float topAlpha;
+        Vector3 bottomColour;
+        float bottomAlpha;
+        ColourBlock (const std::string &text, const Vector3 &tc, float ta, const Vector3 &bc, float ba)
+          : text(text), topColour(tc), topAlpha(ta), bottomColour(bc), bottomAlpha(ba)
+        { }
+    };
+    typedef std::vector<ColourBlock> ColourBlocks;
 
-    std::string text;
+    protected:
+    ColourBlocks blocks;
     GfxTextBuffer buf;
     Vector3 colour;
     float alpha;
+    Vector3 letterTopColour;
+    float letterTopAlpha;
+    Vector3 letterBottomColour;
+    float letterBottomAlpha;
 
     unsigned refCount;
 
     public:
 
     GfxHudText (GfxFont *font)
-      : buf(font), colour(1,1,1), alpha(1), refCount(0)
+      : buf(font), colour(1,1,1), alpha(1),
+        letterTopColour(1,1,1), letterTopAlpha(1),
+        letterBottomColour(1,1,1), letterBottomAlpha(1),
+        refCount(0)
     {
     }
 
@@ -301,20 +320,43 @@ class GfxHudText : public GfxHudBase {
 
     void clear (void);
     void append (const std::string &v);
+    void reset (void);
 
-    void setFont (GfxFont *v) { assertAlive() ; buf.setFont(v); }
+    void setFont (GfxFont *v) { assertAlive() ; buf.setFont(v); reset(); }
     GfxFont *getFont (void) { assertAlive() ; return buf.getFont(); }
 
-    const std::string &getText (void) const { assertAlive(); return text; }
-    void setText (const std::string &v) { assertAlive(); clear(); append(v); }
+    std::string getText (void) const;
 
-    Vector2 getSize (void) const { assertAlive(); return buf.getDimensions(); }
+    void setTextWrap (const Vector2 &v) { assertAlive(); buf.setWrap(v); }
+    Vector2 getTextWrap (void) const { assertAlive(); return buf.getWrap(); }
+
+    Vector2 getSize (void) const
+    {
+        assertAlive();
+        /*
+        Vector2 r = buf.getWrap();
+        if (r.x == 0) r.x = buf.getDimensions().x;
+        if (r.y == 0) r.y = buf.getDimensions().y;
+        return r;
+        */
+        return buf.getDimensions();
+    }
 
     float getAlpha (void) const { assertAlive(); return alpha; }
     void setAlpha (float v) { assertAlive(); alpha = v; }
     
     Vector3 getColour (void) const { assertAlive(); return colour; }
     void setColour (const Vector3 &v) { assertAlive(); colour = v; }
+
+    Vector3 getLetterTopColour (void) const { assertAlive(); return letterTopColour; }
+    void setLetterTopColour (const Vector3 &v) { assertAlive(); letterTopColour = v; }
+    Vector3 getLetterBottomColour (void) const { assertAlive(); return letterBottomColour; }
+    void setLetterBottomColour (const Vector3 &v) { assertAlive(); letterBottomColour = v; }
+    float getLetterTopAlpha (void) const { assertAlive(); return letterTopAlpha; }
+    void setLetterTopAlpha (float v) { assertAlive(); letterTopAlpha = v; }
+    float getLetterBottomAlpha (void) const { assertAlive(); return letterBottomAlpha; }
+    void setLetterBottomAlpha (float v) { assertAlive(); letterBottomAlpha = v; }
+    
 
     // internal function
     friend void gfx_render_hud_one (GfxHudBase *base);

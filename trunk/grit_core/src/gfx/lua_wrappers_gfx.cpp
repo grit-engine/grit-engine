@@ -1709,6 +1709,8 @@ TRY_START
         lua_pushnumber(L, self.getZOrder());
     } else if (!::strcmp(key,"size")) {
         push_v2(L, self.GfxHudText::getSize());
+    } else if (!::strcmp(key,"textWrap")) {
+        push_v2(L, self.getTextWrap());
     } else if (!::strcmp(key,"bounds")) {
         push_v2(L, self.getBounds());
     } else if (!::strcmp(key,"derivedBounds")) {
@@ -1722,6 +1724,14 @@ TRY_START
         push_v3(L, self.getColour());
     } else if (!::strcmp(key,"alpha")) {
         lua_pushnumber(L, self.getAlpha());
+    } else if (!::strcmp(key,"letterTopColour")) {
+        push_v3(L, self.getLetterTopColour());
+    } else if (!::strcmp(key,"letterTopAlpha")) {
+        lua_pushnumber(L, self.getLetterTopAlpha());
+    } else if (!::strcmp(key,"letterBottomColour")) {
+        push_v3(L, self.getLetterBottomColour());
+    } else if (!::strcmp(key,"letterBottomAlpha")) {
+        lua_pushnumber(L, self.getLetterBottomAlpha());
     } else if (!::strcmp(key,"font")) {
         GfxFont *font = self.getFont();
         push_string(L, font->name);
@@ -1763,6 +1773,9 @@ TRY_START
     } else if (!::strcmp(key,"position")) {
         Vector2 v = check_v2(L,3);
         self.setPosition(v);
+    } else if (!::strcmp(key,"textWrap")) {
+        Vector2 v = check_v2(L,3);
+        self.setTextWrap(v);
     } else if (!::strcmp(key,"inheritOrientation")) {
         bool v = check_bool(L, 3);
         self.setInheritOrientation(v);
@@ -1776,6 +1789,18 @@ TRY_START
     } else if (!::strcmp(key,"alpha")) {
         float v = check_float(L,3);
         self.setAlpha(v);
+    } else if (!::strcmp(key,"letterTopColour")) {
+        Vector3 v = check_v3(L,3);
+        self.setLetterTopColour(v);
+    } else if (!::strcmp(key,"letterTopAlpha")) {
+        float v = check_float(L,3);
+        self.setLetterTopAlpha(v);
+    } else if (!::strcmp(key,"letterBottomColour")) {
+        Vector3 v = check_v3(L,3);
+        self.setLetterBottomColour(v);
+    } else if (!::strcmp(key,"letterBottomAlpha")) {
+        float v = check_float(L,3);
+        self.setLetterBottomAlpha(v);
     } else if (!::strcmp(key,"font")) {
         std::string v = check_path(L,3);
         GfxFont *font = gfx_font_get(v);
@@ -1784,7 +1809,12 @@ TRY_START
 
     } else if (!::strcmp(key,"text")) {
         std::string v = check_string(L,3);
-        self.setText(v);
+        self.clear();
+        self.setLetterTopColour(Vector3(1,1,1));
+        self.setLetterBottomColour(Vector3(1,1,1));
+        self.setLetterTopAlpha(1);
+        self.setLetterBottomAlpha(1);
+        self.append(v);
 
     } else if (!::strcmp(key,"parent")) {
         if (lua_isnil(L,3)) {
