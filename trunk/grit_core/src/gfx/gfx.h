@@ -50,7 +50,6 @@ extern const GfxStringMap gfx_empty_string_map;
 #include "GfxNode.h"
 
 #include "GfxParticleSystem.h"
-#include "HUD.h"
 
 extern "C" {
     #include <lua.h>
@@ -68,6 +67,8 @@ struct GfxCallback {
     virtual void messageLogged (const std::string &msg) = 0;
 };
 
+
+bool gfx_d3d9 (void);
 
 size_t gfx_init (GfxCallback &cb);
 
@@ -198,8 +199,6 @@ struct GfxRunningFrameStats {
 GfxLastFrameStats gfx_last_frame_stats (void);
 GfxRunningFrameStats gfx_running_frame_stats (void);
 
-HUD::RootPtr gfx_init_hud (void);
-
 enum GfxMaterialType {
     GFX_MATERIAL,
     GFX_SKY_MATERIAL
@@ -216,6 +215,7 @@ void gfx_shutdown (void);
 
 Vector3 gfx_colour_grade_look_up (const Vector3 &v);
 
+bool gfx_window_active (void);
 Vector2 gfx_window_size (void);
 Vector2 gfx_window_size_in_scene (void);
 

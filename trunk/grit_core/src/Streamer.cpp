@@ -23,6 +23,8 @@
 #include "main.h"
 #include "option.h"
 #include "GritClass.h"
+#include "GritClass.h"
+#include "CacheFriendlyRangeSpaceSIMD.h"
 
 float streamer_visibility;
 float streamer_prepare_distance_factor;

@@ -95,7 +95,6 @@
     <ClCompile Include="src\DenseIndexMap.cpp" />
     <ClCompile Include="src\DiskResource.cpp" />
     <ClCompile Include="src\ExternalTable.cpp" />
-    <ClCompile Include="src\gfx\Clutter.cpp" />
     <ClCompile Include="src\gfx\gfx.cpp" />
     <ClCompile Include="src\gfx\GfxBody.cpp" />
     <ClCompile Include="src\gfx\GfxFertileNode.cpp" />
@@ -113,18 +112,10 @@
     <ClCompile Include="src\gfx\gfx_disk_resource.cpp" />
     <ClCompile Include="src\gfx\gfx_hud.cpp" />
     <ClCompile Include="src\gfx\gfx_option.cpp" />
-    <ClCompile Include="src\gfx\HUD.cpp" />
     <ClCompile Include="src\gfx\lua_wrappers_gfx.cpp" />
     <ClCompile Include="src\gfx\lua_wrappers_gpuprog.cpp" />
-    <ClCompile Include="src\gfx\lua_wrappers_hud.cpp" />
     <ClCompile Include="src\gfx\lua_wrappers_material.cpp" />
-    <ClCompile Include="src\gfx\lua_wrappers_mesh.cpp" />
-    <ClCompile Include="src\gfx\lua_wrappers_mobj.cpp" />
-    <ClCompile Include="src\gfx\lua_wrappers_render.cpp" />
-    <ClCompile Include="src\gfx\lua_wrappers_scnmgr.cpp" />
-    <ClCompile Include="src\gfx\lua_wrappers_tex.cpp" />
     <ClCompile Include="src\gfx\ray.cpp" />
-    <ClCompile Include="src\gfx\TextListOverlayElement.cpp" />
     <ClCompile Include="src\GritClass.cpp" />
     <ClCompile Include="src\GritObject.cpp" />
     <ClCompile Include="src\grit_lua_util.cpp" />

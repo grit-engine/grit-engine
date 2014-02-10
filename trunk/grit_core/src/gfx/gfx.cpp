@@ -21,7 +21,6 @@
 #include <sstream>
 
 #include <OgreAutoParamDataSource.h>
-#include <OgreOverlaySystem.h>
 
 #include <sleep.h>
 
@@ -57,7 +56,6 @@ Ogre::OctreePlugin *octree;
 Ogre::CgPlugin *cg;
 
 Ogre::Root *ogre_root = NULL;
-Ogre::OverlaySystem *ogre_overlay_system = NULL;
 Ogre::RenderSystem *ogre_rs = NULL;
 Ogre::RenderWindow *ogre_win = NULL;
 Ogre::OctreeSceneManager *ogre_sm = NULL;
@@ -715,6 +713,11 @@ void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector
 
 void gfx_screenshot (const std::string &filename) { ogre_win->writeContentsToFile(filename); }
 
+bool gfx_window_active (void)
+{
+    return ogre_win->isActive();
+}
+
 Vector2 gfx_window_size (void)
 {
     return Vector2(ogre_win->getWidth(), ogre_win->getHeight());
@@ -889,6 +892,11 @@ struct SceneManagerListener : Ogre::SceneManager::Listener {
 
 // {{{ INIT / SHUTDOWN
 
+bool gfx_d3d9 (void)
+{
+    return d3d9;
+}
+
 size_t gfx_init (GfxCallback &cb_)
 {
     try {
@@ -936,8 +944,6 @@ size_t gfx_init (GfxCallback &cb_)
         }
         ogre_root->setRenderSystem(ogre_rs);
 
-        ogre_overlay_system = new Ogre::OverlaySystem();
-
         ogre_root->initialise(true,"Grit Game Window");
 
         ogre_win = ogre_root->getAutoCreatedWindow();
@@ -958,10 +964,6 @@ size_t gfx_init (GfxCallback &cb_)
 
         Ogre::TextureManager::getSingleton().setVerbose(false);
         Ogre::MeshManager::getSingleton().setVerbose(false);
-        Ogre::OverlayManager::getSingleton()
-                .addOverlayElementFactory(new HUD::TextListOverlayElementFactory());
-        ogre_root->addMovableObjectFactory(new MovableClutterFactory());
-        ogre_root->addMovableObjectFactory(new RangedClutterFactory());
 
         Ogre::MeshManager::getSingleton().setListener(&mesh_serializer_listener);
         Ogre::WindowEventUtilities::addWindowEventListener(ogre_win, &window_event_listener);
@@ -977,7 +979,6 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_root_node = ogre_sm->getRootSceneNode();
         ogre_sm->setShadowCasterRenderBackFaces(false);
         ogre_sm->setShadowTextureSelfShadow(true);
-        ogre_sm->addRenderQueueListener(ogre_overlay_system);
         ogre_sun = ogre_sm->createLight("Sun");
         ogre_sun->setType(Ogre::Light::LT_DIRECTIONAL);
 
@@ -992,11 +993,6 @@ size_t gfx_init (GfxCallback &cb_)
     } catch (Ogre::Exception &e) {
         GRIT_EXCEPT("Couldn't initialise graphics subsystem: "+e.getFullDescription());
     }
-}
-
-HUD::RootPtr gfx_init_hud (void)
-{
-    return HUD::RootPtr(new HUD::Root(ogre_win->getWidth(),ogre_win->getHeight()));
 }
 
 GfxMaterialType gfx_material_type (const std::string &name)
@@ -1036,7 +1032,6 @@ void gfx_shutdown (void)
         delete eye_right;
         ftcv.setNull();
         if (ogre_sm && ogre_root) ogre_root->destroySceneManager(ogre_sm);
-        if (ogre_overlay_system && ogre_root) OGRE_DELETE ogre_overlay_system;
         if (ogre_root) OGRE_DELETE ogre_root; // internally deletes ogre_rs
         OGRE_DELETE octree;
         OGRE_DELETE cg;

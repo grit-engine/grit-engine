@@ -56,10 +56,7 @@ bool clicked_close = false;
 Mouse *mouse = NULL;
 Keyboard *keyboard = NULL;
 lua_State *core_L = NULL;
-UserDataTables user_data_tables;
 BulletDebugDrawer *debug_drawer = NULL;
-std::stringstream gfx_msg_buffer;
-HUD::RootPtr hud;
 BackgroundLoader *bgl;
 
 struct TheGfxCallback : GfxCallback {
@@ -71,29 +68,19 @@ struct TheGfxCallback : GfxCallback {
 
         virtual void windowResized (int width, int height)
         {
-                hud->parentResized(width, height);
+                (void) width;
+                (void) height;
         }
         
         virtual void messageLogged (const std::string &line)
         {
-                std::cout << line << RESET << std::endl;
-                gfx_msg_buffer << line << RESET << std::endl;
+                clog.echo(line);
         }
 
     protected:
 
 
 } cb;
-
-/*
-std::string poll_gfx_msg_buffer (void)
-{
-        std::string r = gfx_msg_buffer.str();
-        gfx_msg_buffer.str("");
-        return r;
-}
-*/
-
 
 int already_fatal = 0;
 
@@ -120,8 +107,6 @@ int main(int argc, const char **argv)
                 bgl = new BackgroundLoader();
 
                 size_t winid = gfx_init(cb);
-
-                hud = gfx_init_hud();
 
                 debug_drawer = new BulletDebugDrawer(ogre_sm); // FIXME: hack
 
@@ -191,16 +176,20 @@ int main(int argc, const char **argv)
 
                 object_all_del(core_L); // will remove all demands from bgl
 
-                hud->removeAllChildren(); // will avoid any lua callbacks during destruction
+                CVERB << "Shutting down Lua Gfx..." << std::endl;
 
                 gfx_shutdown_lua(core_L);
 
+                CVERB << "Shutting down Background Loader..." << std::endl;
+
                 bgl->shutdown();
+
+                CVERB << "Shutting down Mouse & Keyboard..." << std::endl;
 
                 if (mouse) delete mouse;
                 if (keyboard) delete keyboard;
+                CVERB << "Shutting down Lua VM..." << std::endl;
                 if (core_L) shutdown_lua(core_L);
-                hud.setNull();
                 audio_shutdown(); //close AL device
                 physics_shutdown();
                 if (debug_drawer) delete debug_drawer;

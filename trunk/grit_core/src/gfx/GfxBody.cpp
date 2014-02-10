@@ -91,7 +91,7 @@ const Ogre::LightList& GfxBody::Sub::getLights (void) const
     return parent->queryLights();
 }
 
-bool GfxBody::Sub::getCastsShadows (void) const
+bool GfxBody::Sub::getCastShadows (void) const
 {
     return parent->getCastShadows();
 }
@@ -146,6 +146,7 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
 
             GfxMaterial *m = sub->material;
 
+            if (!sub->getCastShadows()) continue;
             if (!m->getCastShadows()) continue;
 
             renderMaterial = m->regularMat;
@@ -286,7 +287,7 @@ GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNod
 
     fade = 1;
     enabled = true;
-    castShadows = false;
+    castShadows = true;
     skeleton = NULL;
     wireframe = false;
     freshFrame = true;

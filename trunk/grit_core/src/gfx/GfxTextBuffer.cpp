@@ -26,8 +26,24 @@
 const unsigned VERT_FLOAT_SZ = 2+2+4;
 const unsigned VERT_BYTE_SZ = VERT_FLOAT_SZ*sizeof(float);
 
+/** If the font doesn't have the codepoint, try some alternatives. */
+static GfxFont::codepoint_t override_cp (GfxFont *font, GfxFont::codepoint_t cp) 
+{
+    if (font->hasCodePoint(cp)) return cp;
+    if (font->hasCodePoint(UNICODE_ERROR_CODEPOINT)) return UNICODE_ERROR_CODEPOINT;
+    if (font->hasCodePoint(' ')) return ' ';
+    if (font->hasCodePoint('E')) return 'E';
+    return cp;
+}
+
+static bool is_whitespace (GfxFont::codepoint_t cp)
+{
+    return cp==' ' || cp=='\n' || cp=='\t';
+}
+
 GfxTextBuffer::GfxTextBuffer (GfxFont *font)
-  : font(font), currentSize(0), currentDimensions(0,0), currentOffset(0,0), wrap(0,0), dirty(false)
+  : font(font), currentDrawnDimensions(0,0), currentLeft(0), currentTop(0),
+    lastTop(0), lastBottom(0), wrap(0), dirty(false)
 {   
     APP_ASSERT(font != NULL);
 
@@ -56,15 +72,170 @@ GfxTextBuffer::GfxTextBuffer (GfxFont *font)
     APP_ASSERT(vdecl_sz == VERT_BYTE_SZ);
 }
 
-void GfxTextBuffer::copyToGPUIfNeeded (void)
+// searching for the i such that cT[i-1].top < top && cT[i].top >= top, or 0 if cT[0] >= top
+unsigned long GfxTextBuffer::binaryChopTop (unsigned long begin, unsigned long end, unsigned long top)
 {
+    unsigned long middle = (end + begin + 1) / 2;
+    if (middle == 0) return middle;
+    if (middle == colouredText.size() - 1) return middle+1;
+    const ColouredChar &c = colouredText[middle];
+    const ColouredChar &b = colouredText[middle-1];
+    if (c.top < top) {
+        // too close to the beginning of the text, look right
+        APP_ASSERT(begin != middle); // this leads to infinite recursion
+        return binaryChopTop(middle, end, top);
+    } else if (b.top < top) {
+        // found it
+        return middle;
+    } else {
+        // too close to the end of the text, look left
+        return binaryChopTop(begin, middle-1, top);
+    }
+}
+
+// searching for the i such that cT[i].top <= top && cT[i+1].top > top, or sz-1 if cT[sz-1] < top
+unsigned long GfxTextBuffer::binaryChopBottom (unsigned long begin, unsigned long end, unsigned long bottom_top)
+{   
+    unsigned long middle = (end + begin) / 2;
+    if (middle == colouredText.size() - 1) return middle;
+    const ColouredChar &c = colouredText[middle];
+    const ColouredChar &d = colouredText[middle+1];
+    if (c.top > bottom_top) {
+        // too close to the end of the text, look left
+        APP_ASSERT(middle != end); // this leads to infinite recursion
+        return binaryChopBottom(begin, middle, bottom_top);
+    } else if (d.top > bottom_top) {
+        // found it
+        return middle;
+    } else {
+        // too close to the beginning of the text, look right
+        return binaryChopBottom(middle+1, end, bottom_top);
+    }
+}
+
+void GfxTextBuffer::updateGPU (bool no_scroll, long top, long bottom)
+{
+    if (lastTop != top || lastBottom != bottom) dirty = true;
     if (!dirty) return;
-    dirty = false;
 
-    unsigned vertex_size = currentSize * 4; // 4 verts per quad
-    unsigned index_size = currentSize * 6; // 2 triangles per quad
+    currentDrawnDimensions = Vector2(0,0);
+    rawVBuf.clear();
+    rawIBuf.clear();
 
-    if (currentGPUCapacity < currentSize) {
+    unsigned long start_index = 0;
+    unsigned long stop_index = colouredText.size();
+    float zero = 0;
+
+    if (!no_scroll && colouredText.size() > 0) {
+        long bottom_top = bottom - long(font->getHeight());
+        /* find start and stop */
+        if (bottom_top < 0) {
+            start_index = 0;
+            stop_index = 0;
+        } else {
+            start_index = binaryChopTop(0, colouredText.size() - 1, std::max(0l, top));
+            stop_index = 1+binaryChopBottom(0, colouredText.size() - 1, std::max(0l, bottom_top));
+            zero = top;
+        }
+    }
+
+    unsigned long current_size = 0;
+
+    for (unsigned long i=start_index ; i<stop_index ; ++i) {
+        const ColouredChar &c = colouredText[i];
+        if (is_whitespace(c.cp)) {
+            continue;
+        }
+
+        GfxFont::CharRect uvs;
+        GfxFont::codepoint_t cp = override_cp(font, c.cp);
+        bool r = font->getCodePointOrFail(cp, uvs);
+        if (!r) continue;
+        Vector2 tex_dim = font->getTextureDimensions();
+        float width = uvs.u2 - uvs.u1;
+        float height = uvs.v2 - uvs.v1;
+
+        if (width == 0 || height == 0) {
+            // invalid char rect in font -- indicates char should not be rendered
+            continue;
+        }
+
+        // use font, add to raw buf
+        /* 0---1
+           |  /|
+           | / |
+           |/  |
+           2---3   indexes: 0 2 1  1 2 3
+         */
+        {
+            // 4 because there are 4 vertexes per letter
+            rawVBuf.resize(rawVBuf.size() + VERT_FLOAT_SZ*4);
+            float *base = &rawVBuf[current_size * VERT_FLOAT_SZ*4];
+
+            (*base++) = c.left;
+            (*base++) = -(c.top - zero);
+            (*base++) = uvs.u1 / tex_dim.x;
+            (*base++) = uvs.v1 / tex_dim.y;
+            (*base++) = c.topColour.x;
+            (*base++) = c.topColour.y;
+            (*base++) = c.topColour.z;
+            (*base++) = c.topAlpha;
+
+            (*base++) = c.left + width;
+            (*base++) = -(c.top - zero);
+            (*base++) = uvs.u2 / tex_dim.x;
+            (*base++) = uvs.v1 / tex_dim.y;
+            (*base++) = c.topColour.x;
+            (*base++) = c.topColour.y;
+            (*base++) = c.topColour.z;
+            (*base++) = c.topAlpha;
+
+            (*base++) = c.left;
+            (*base++) = -(c.top - zero + height);
+            (*base++) = uvs.u1 / tex_dim.x;
+            (*base++) = uvs.v2 / tex_dim.y;
+            (*base++) = c.bottomColour.x;
+            (*base++) = c.bottomColour.y;
+            (*base++) = c.bottomColour.z;
+            (*base++) = c.bottomAlpha;
+
+            (*base++) = c.left + width;
+            (*base++) = -(c.top - zero + height);
+            (*base++) = uvs.u2 / tex_dim.x;
+            (*base++) = uvs.v2 / tex_dim.y;
+            (*base++) = c.bottomColour.x;
+            (*base++) = c.bottomColour.y;
+            (*base++) = c.bottomColour.z;
+            (*base++) = c.bottomAlpha;
+        }
+
+        {
+            // 6 because there are 2 triangles per letter
+            rawIBuf.resize(rawIBuf.size() + 6);
+            uint16_t *base = &rawIBuf[current_size * 6];
+            (*base++) = current_size*4 + 0;
+            (*base++) = current_size*4 + 2;
+            (*base++) = current_size*4 + 1;
+            (*base++) = current_size*4 + 1;
+            (*base++) = current_size*4 + 2;
+            (*base++) = current_size*4 + 3;
+        }
+
+        current_size++;
+
+        // calculate text bounds
+        currentDrawnDimensions.x = std::max(currentDrawnDimensions.x, float(c.left + width));
+        currentDrawnDimensions.y = std::max(currentDrawnDimensions.y, float(c.top + font->getHeight()));
+
+    }
+
+
+    // do the actual copy to GPU (resize if necessary)
+
+    unsigned vertex_size = current_size * 4; // 4 verts per quad
+    unsigned index_size = current_size * 6; // 2 triangles per quad
+
+    if (currentGPUCapacity < current_size) {
         // resize needed
 
         vBuf.setNull();
@@ -83,10 +254,10 @@ void GfxTextBuffer::copyToGPUIfNeeded (void)
         vData.vertexBufferBinding->setBinding(0, vBuf);
         iData.indexBuffer = iBuf;
 
-        currentGPUCapacity = currentSize;
+        currentGPUCapacity = current_size;
     }
 
-    if (currentSize > 0) {
+    if (current_size > 0) {
         // copy the whole thing every time (could optimise this if needed)
         vBuf->writeData(0, vertex_size*VERT_BYTE_SZ, &rawVBuf[0], true);
         iBuf->writeData(0, index_size*sizeof(unsigned short), &rawIBuf[0], true);
@@ -94,167 +265,95 @@ void GfxTextBuffer::copyToGPUIfNeeded (void)
     
     vData.vertexCount = vertex_size;
     iData.indexCount = index_size;
+
+    dirty = false;
+    lastTop = top;
+    lastBottom = bottom;
 }
 
-unsigned GfxTextBuffer::wordFit (const std::vector<Char> &word)
+void GfxTextBuffer::recalculatePositions (unsigned long start)
 {
-    if (wrap.x == 0) {
-        return word.size();
+    if (start == 0) {
+        currentLeft = 0;
+        currentTop = 0;
     }
-    float curr_off = currentOffset.x;
-    for (unsigned i=0 ; i<word.size() ; ++i) {
-        GfxFont::codepoint_t cp = word[i].cp;
-        GfxFont::CharRect uvs;
-        bool r = font->getCodePointOrFail(cp, uvs);
-        if (!r) EXCEPTEX << cp << ENDL;
-        Vector2 tex_dim = font->getTextureDimensions();
-        float width = fabsf(uvs.u2 - uvs.u1) * tex_dim.x;
-        curr_off += width;
+    unsigned word_first_letter = 0;
+    bool in_word = false;
+    bool word_first_on_line = true;
+    for (unsigned long i=start ; i<colouredText.size() ; ++i) {
+        if (!in_word) {
+            word_first_letter = i;
+            in_word = true;
+        }
+        ColouredChar &c = colouredText[i];
+        if (is_whitespace(c.cp)) {
+            in_word = false;
+            word_first_on_line = false;
+        }
 
-        if (curr_off > wrap.x) return i;
+        c.left = currentLeft;
+        c.top = currentTop;
+
+        switch (c.cp) {
+            case '\n':
+            word_first_on_line = true;
+            currentLeft = 0;
+            currentTop += font->getHeight();
+            break;
+
+            case '\t': {
+                GfxFont::CharRect uvs;
+                if (font->getCodePointOrFail(' ', uvs)) {
+                    // TODO: override tab width per textbuffer?
+                    unsigned long tab_width = 8 * (uvs.u2 - uvs.u1);
+                    // round up to next multiple of tab_width
+                    if (tab_width > 0)
+                        currentLeft = (currentLeft + tab_width)/tab_width * tab_width;
+                }
+            }
+            break;
+
+            default: {
+                GfxFont::CharRect uvs;
+                GfxFont::codepoint_t cp = override_cp(font, c.cp);
+                if (!font->getCodePointOrFail(cp, uvs)) continue;
+                float width = (uvs.u2 - uvs.u1);
+                currentLeft += width;
+                if (c.cp != ' ') {
+                }
+            }
+        }
+
+        if (wrap>0 && currentLeft>wrap) {
+            if (c.cp == '\t') {
+                // let the tab fill up the remainder of the line
+                // continue on the next line
+            } else if (c.cp == ' ') {
+                // let the space take us to the next line
+            } else if (c.left == 0) {
+                // break at next char, wasn't even enough space for 1 char
+            } else if (word_first_on_line) {
+                // break at char
+                i--;
+            } else {
+                // break at word
+                i = word_first_letter - 1;
+            }
+            in_word = false;
+            word_first_on_line = true;
+            currentLeft = 0;
+            currentTop += font->getHeight();
+            continue;
+        }
+
     }
-    return word.size();
-}
-
-void GfxTextBuffer::addRawChar (const Char &c)
-{
-
-    GfxFont::CharRect uvs;
-    bool r = font->getCodePointOrFail(c.cp, uvs);
-    if (!r) EXCEPTEX << c.cp << ENDL;
-    Vector2 tex_dim = font->getTextureDimensions();
-    float width = fabsf(uvs.u2 - uvs.u1) * tex_dim.x;
-    float height = fabsf(uvs.v2 - uvs.v1) * tex_dim.y;
-
-    if (width == 0 || height == 0) {
-        // invalid char rect in font -- indicates char should not be rendered
-        return;
-    }
-
-    // use font, add to raw buf
-    /* 0---1
-       |  /|
-       | / |
-       |/  |
-       2---3   indexes: 0 2 1  1 2 3
-     */
-    {
-        rawVBuf.resize(rawVBuf.size() + VERT_FLOAT_SZ*4);
-        float *base = &rawVBuf[currentSize * VERT_FLOAT_SZ*4];
-
-        (*base++) = currentOffset.x;
-        (*base++) = currentOffset.y;
-        (*base++) = uvs.u1;
-        (*base++) = uvs.v1;
-        (*base++) = c.topColour.x;
-        (*base++) = c.topColour.y;
-        (*base++) = c.topColour.z;
-        (*base++) = c.topAlpha;
-
-        (*base++) = currentOffset.x + width;
-        (*base++) = currentOffset.y;
-        (*base++) = uvs.u2;
-        (*base++) = uvs.v1;
-        (*base++) = c.topColour.x;
-        (*base++) = c.topColour.y;
-        (*base++) = c.topColour.z;
-        (*base++) = c.topAlpha;
-
-        (*base++) = currentOffset.x;
-        (*base++) = currentOffset.y - height;
-        (*base++) = uvs.u1;
-        (*base++) = uvs.v2;
-        (*base++) = c.botColour.x;
-        (*base++) = c.botColour.y;
-        (*base++) = c.botColour.z;
-        (*base++) = c.botAlpha;
-
-        (*base++) = currentOffset.x + width;
-        (*base++) = currentOffset.y - height;
-        (*base++) = uvs.u2;
-        (*base++) = uvs.v2;
-        (*base++) = c.botColour.x;
-        (*base++) = c.botColour.y;
-        (*base++) = c.botColour.z;
-        (*base++) = c.botAlpha;
-    }
-
-    {
-        rawIBuf.resize(rawIBuf.size() + 6);
-        uint16_t *base = &rawIBuf[currentSize * 6];
-        (*base++) = currentSize*4 + 0;
-        (*base++) = currentSize*4 + 2;
-        (*base++) = currentSize*4 + 1;
-        (*base++) = currentSize*4 + 1;
-        (*base++) = currentSize*4 + 2;
-        (*base++) = currentSize*4 + 3;
-    }
-
-    currentSize++;
-    currentOffset.x += width;
-
-    if (currentOffset.x > currentDimensions.x) currentDimensions.x = currentOffset.x;
-    if (-currentOffset.y + font->getHeight() > currentDimensions.y) currentDimensions.y = -currentOffset.y + font->getHeight();
-
     dirty = true;
 }
 
-void GfxTextBuffer::addTab (void)
-{
-    //TODO: wrap
-    GfxFont::CharRect uvs;
-    bool r = font->getCodePointOrFail(' ', uvs);
-    if (!r) return;
-    Vector2 tex_dim = font->getTextureDimensions();
-    float width = fabsf(uvs.u2 - uvs.u1) * tex_dim.x;
-
-    int tab_width = width*9;
-    currentOffset.x = (currentOffset.x + (tab_width-1))/tab_width*tab_width;
-}
-
-void GfxTextBuffer::addRawWord (const std::vector<Char> &word)
-{
-    if (word.size() == 0) return;
-    if (wrap.y != 0 && -currentOffset.y + font->getHeight() > wrap.y) return;
-    unsigned letters = wordFit(word);
-    if (letters == word.size()) {
-        for (unsigned j=0 ; j<letters ; ++j) {
-            addRawChar(word[j]);
-        }
-    } else {
-        if (currentOffset.x == 0) {
-            // no point wrapping, just add what we can
-            for (unsigned j=0 ; j<letters ; ++j) {
-                addRawChar(word[j]);
-            }
-            std::vector<Char> rest;
-            for (unsigned j=letters ; j<word.size() ; ++j) {
-                rest.push_back(word[j]);
-            }
-            addRawWord(rest);
-        } else {
-            endLine();
-            addRawWord(word);
-        }
-    }
-}
-
-void GfxTextBuffer::endLine (void)
-{
-    currentOffset.x = 0;
-    currentOffset.y -= font->getHeight();
-}
-
 void GfxTextBuffer::addFormattedString (const std::string &text,
-                                        const Vector3 top_colour, float top_alpha,
-                                        const Vector3 bot_colour, float bot_alpha)
+                                        const Vector3 &top_colour, float top_alpha,
+                                        const Vector3 &bot_colour, float bot_alpha)
 {
-    Char c;
-    c.topColour = top_colour;
-    c.topAlpha = top_alpha;
-    c.botColour = bot_colour;
-    c.botAlpha = bot_alpha;
-
     Vector3 ansi_colour[] = {
         Vector3(0,0,0), Vector3(.8,0,0), Vector3(0,.8,0), Vector3(.8,.8,0),
         Vector3(0,0,.93), Vector3(.8,0,.8), Vector3(0,.8,.8), Vector3(.75,.75,.75),
@@ -264,59 +363,46 @@ void GfxTextBuffer::addFormattedString (const std::string &text,
         Vector3(.36,.36,1), Vector3(1,0,1), Vector3(0,1,1), Vector3(1,1,1),
     };
 
+    ColouredChar c(0, top_colour, top_alpha, bot_colour, bot_alpha);
+
+    unsigned long original_size = colouredText.size();
+
     bool bold = false;
-    unsigned last_colour = 0;
-    std::vector<Char> word;
+    unsigned default_colour = 7; // FIXME: this assumes a 'white on black' console
+    unsigned last_colour = default_colour;
     for (size_t i=0 ; i<text.length() ; ++i) {
         GfxFont::codepoint_t cp = decode_utf8(text, i);
-        if (cp == '\n') {
-            addRawWord(word);
-            word.clear();
-            endLine();
-            continue;
-        } else if (cp == ' ') {
-            addRawWord(word);
-            word.clear();
-            c.cp = cp;
-            // use (abuse) addRawWord because it handles wrapping...
-            std::vector<Char> chars;
-            chars.push_back(c);
-            addRawWord(chars);
-            continue;
-        } else if (cp == '\t') {
-            addRawWord(word);
-            word.clear();
-            addTab();
-            continue;
-        } else if (cp == UNICODE_ESCAPE_CODEPOINT) {
-            cp = decode_utf8(text, ++i);
+        if (cp == UNICODE_ESCAPE_CODEPOINT) {
+            if (++i >= text.length()) break;
+            cp = decode_utf8(text, i);
             if (cp == '[') {
                 // continue until 'm'
                 unsigned code = 0;
                 do {
-                    cp = decode_utf8(text, ++i);
+                    if (++i >= text.length()) break;
+                    cp = decode_utf8(text, i);
                     if (cp == 'm' || cp == ';') {
                         // act on code
                         if (code == 0) {
                             bold = false;
-                            last_colour = 0;
+                            last_colour = default_colour;
                             c.topColour = top_colour;
-                            c.botColour = bot_colour;
+                            c.bottomColour = bot_colour;
                         } else if (code == 1) {
                             bold = true;
                             Vector3 col = bold ? ansi_bold_colour[last_colour] : ansi_colour[last_colour];
                             c.topColour = col;
-                            c.botColour = col;
+                            c.bottomColour = col;
                         } else if (code == 22) {
                             bold = false;
                             Vector3 col = bold ? ansi_bold_colour[last_colour] : ansi_colour[last_colour];
                             c.topColour = col;
-                            c.botColour = col;
+                            c.bottomColour = col;
                         } else if (code >= 30 && code <= 37) {
                             last_colour = code - 30;
                             Vector3 col = bold ? ansi_bold_colour[last_colour] : ansi_colour[last_colour];
                             c.topColour = col;
-                            c.botColour = col;
+                            c.bottomColour = col;
                         }
                         code = 0;
                     }
@@ -329,22 +415,11 @@ void GfxTextBuffer::addFormattedString (const std::string &text,
                 if (cp == 'm') continue;
             }
         }
-
-        // printable char
-
-        if (font->hasCodePoint(cp)) {
-            c.cp = cp;
-            word.push_back(c);
-        } else if (font->hasCodePoint(UNICODE_ERROR_CODEPOINT)) { // draw an error char
-            c.cp = UNICODE_ERROR_CODEPOINT;
-            word.push_back(c);
-        } else if (font->hasCodePoint(' ')) { // try a space...
-            c.cp = ' ';
-            word.push_back(c);
-        } else {
-            // just display nothing
-        }
+        
+        // This char is not part of an ansi terminal colour code.
+        c.cp = cp;
+        colouredText.push_back(c);
     }
-    addRawWord(word);
-    word.clear();
+
+    recalculatePositions(original_size);
 }

@@ -669,18 +669,6 @@ TRY_END
 }
 
 
-static int global_alive (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        void *ud = lua_touserdata(L,-1);
-        if (lua_type(L,1)!=LUA_TUSERDATA) 
-                luaL_typerror(L,1,"userdata");
-        lua_pushboolean(L,*(void**)ud!=NULL);
-        return 1;
-TRY_END
-}
-
 static lua_Number game_time = 0;
 typedef std::map<lua_Number, std::vector<LuaPtr*> > EventMap;
 static EventMap event_map;
@@ -802,7 +790,6 @@ static const luaL_reg global[] = {
         {"safe_include",global_safe_include},
         {"error",global_error},
         {"error_handler",global_error_handler},
-        {"alive",global_alive},
         {"echo",global_echo},
         {"console_poll",global_console_poll},
 

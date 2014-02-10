@@ -25,9 +25,7 @@
 #define THROW_DEAD(name) do { GRIT_EXCEPT(name+" has been destroyed."); } while (0)
 
 #include <Ogre.h>
-#include <OgreFontManager.h>
 #include <OgreMeshManager.h>
-#include <OgreOverlayElementFactory.h>
 #include <OgreOctreeSceneManager.h>
 #include <OgreVector3.h>
 #include <OgreQuaternion.h>

@@ -40,6 +40,11 @@ class ClutterFactory;
 #include "../Streamer.h"
 
 
+// NOTE: BEFORE USING THESE IMPLEMENTATIONS, ONE MUST:
+        //ogre_root->addMovableObjectFactory(new MovableClutterFactory());
+        //ogre_root->addMovableObjectFactory(new RangedClutterFactory());
+
+
 // Provides an interface whereby a fixed size vertex buffer is used to render a
 // number of instances in a batch.  The instances can be added / removed and
 // moved about arbitrarily.

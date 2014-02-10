@@ -40,16 +40,16 @@ class GfxFont {
     public:
     typedef unsigned long codepoint_t;
     struct CharRect {
-        float u1, v1, u2, v2;
+        unsigned long u1, v1, u2, v2;
     };
     typedef std::map<codepoint_t, CharRect> CharRectMap;
     const std::string name;
     private:
     GfxTextureDiskResource *texture;
-    float height;
+    unsigned long height;
     CharRectMap coords;
     public:
-    GfxFont (const std::string &name, GfxTextureDiskResource *tex, float height)
+    GfxFont (const std::string &name, GfxTextureDiskResource *tex, unsigned long height)
       : name(name), texture(tex), height(height)
     {
         texture->increment();
@@ -60,8 +60,8 @@ class GfxFont {
         texture->decrement();
         bgl->finishedWith(texture);
     }
-    float getHeight (void) { return height; }
-    void setHeight (float v) { height = v; }
+    unsigned long getHeight (void) { return height; }
+    void setHeight (unsigned long v) { height = v; }
     GfxTextureDiskResource *getTexture (void) {
         return texture;
     }
@@ -93,7 +93,7 @@ class GfxFont {
 bool gfx_font_has (const std::string &name);
 GfxFont *gfx_font_get (const std::string &name);
 std::vector<GfxFont*> gfx_font_list (void);
-GfxFont *gfx_font_make (const std::string &name, GfxTextureDiskResource *dr, float height);
+GfxFont *gfx_font_make (const std::string &name, GfxTextureDiskResource *dr, unsigned long height);
 unsigned long gfx_font_num (void);
 
 #endif

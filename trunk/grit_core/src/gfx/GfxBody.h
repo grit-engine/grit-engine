@@ -68,7 +68,7 @@ class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
         Ogre::Real getSquaredViewDepth(const Ogre::Camera* cam) const;
         const Ogre::LightList& getLights(void) const;
 
-        bool getCastsShadows(void) const;
+        bool getCastShadows(void) const;
 
     };
 

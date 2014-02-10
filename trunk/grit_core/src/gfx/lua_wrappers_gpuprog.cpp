@@ -31,8 +31,6 @@
 
 #include "lua_wrappers_gpuprog.h"
 
-// GPUPROG ================================================================= {{{
-
 void push_gpuprog (lua_State *L, const Ogre::HighLevelGpuProgramPtr &self)
 {
         if (self.isNull())
@@ -335,17 +333,7 @@ static int gpuprog_gc(lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO_OFFSET(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG,0);
-        if (self==NULL) return 0;
-        return 0;
-TRY_END
-}
-
-static int gpuprog_destroy (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
-        delete &self;
+        delete self;
         return 0;
 TRY_END
 }
@@ -362,9 +350,7 @@ TRY_START
         check_args(L,2);
         GET_UD_MACRO(Ogre::HighLevelGpuProgramPtr,self,1,GPUPROG_TAG);
         std::string key = luaL_checkstring(L,2);
-        if (key=="destroy") {
-                push_cfunction(L,gpuprog_destroy);
-        } else if (key=="load") {
+        if (key=="load") {
                 push_cfunction(L,gpuprog_load);
         } else if (key=="unload") {
                 push_cfunction(L,gpuprog_unload);
@@ -552,7 +538,5 @@ TRY_END
 EQ_PTR_MACRO(Ogre::GpuProgram,gpuprog,GPUPROG_TAG)
 
 MT_MACRO_NEWINDEX(gpuprog);
-
-// }}}
 
 // vim: shiftwidth=8:tabstop=8:expandtab

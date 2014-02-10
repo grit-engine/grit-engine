@@ -42,10 +42,6 @@ extern "C" {
 #include "CentralisedLog.h"
 #include "BulletDebugDrawer.h"
 
-#include "gfx/lua_userdata_dependency_tracker.h"
-
-#include "gfx/HUD.h"
-
 
 #include "physics/PhysicsWorld.h"
 
@@ -65,14 +61,11 @@ extern Keyboard *keyboard;
 extern lua_State *core_L;
 
 /** Used for garbage collecting Ogre objects properly in Lua. */
-extern UserDataTables user_data_tables;
+//extern UserDataTables user_data_tables;
 
 /** Used by the bullet backend for drawing debug information.  This is a
  * conduit between the physics and graphics subsystems. */
 extern BulletDebugDrawer *debug_drawer;
-
-/** The HUD system singleton. */
-extern HUD::RootPtr hud;
 
 /** The singleton that manages loading resources from disk in a background thread. */
 extern BackgroundLoader *bgl;

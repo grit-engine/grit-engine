@@ -351,6 +351,7 @@ static void options_update (bool flush)
             reset_fullscreen = true;
             break;
             case GFX_RAM:
+            Ogre::TextureManager::getSingleton().setMemoryBudget(v_new * 1024 * 1024);
             break;
             case GFX_SHADOW_RES:
             reset_shadowmaps = true;

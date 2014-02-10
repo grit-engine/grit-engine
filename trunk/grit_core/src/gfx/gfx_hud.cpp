@@ -188,7 +188,7 @@ Vector2 GfxHudBase::getDerivedPosition (void) const
     }
 }
 
-Vector2 GfxHudBase::getBounds (void) const
+Vector2 GfxHudBase::getBounds (void)
 {
     assertAlive();
     float s = gritsin(orientation);
@@ -199,7 +199,7 @@ Vector2 GfxHudBase::getBounds (void) const
     return Vector2(w,h);
 }
 
-Vector2 GfxHudBase::getDerivedBounds (void) const
+Vector2 GfxHudBase::getDerivedBounds (void)
 {
     assertAlive();
     float s = gritsin(getDerivedOrientation());
@@ -798,8 +798,7 @@ void GfxHudText::decRefCount (void)
 void GfxHudText::destroy (void)
 {
     if (aliveness==ALIVE) {
-        blocks.clear();
-        buf.clear(true);
+        buf.clear();
         GfxHudBase::destroy();
     }
 }
@@ -807,34 +806,20 @@ void GfxHudText::destroy (void)
 void GfxHudText::clear (void)
 {
     assertAlive();
-    blocks.clear();
-    buf.clear(false);
+    buf.clear();
 }
 void GfxHudText::append (const std::string &v)
 {
     assertAlive();
-    blocks.push_back(ColourBlock(v, letterTopColour, letterTopAlpha, letterBottomColour, letterBottomAlpha));
     buf.addFormattedString(v, letterTopColour, letterTopAlpha, letterBottomColour, letterBottomAlpha);
-}
-
-void GfxHudText::reset (void)
-{
-    assertAlive();
-    buf.clear(false);
-    for (unsigned i=0 ; i<blocks.size() ; ++i) {
-        const ColourBlock &b = blocks[i];
-        buf.addFormattedString(b.text, b.topColour, b.topAlpha, b.bottomColour, b.bottomAlpha);
-    }
 }
 
 std::string GfxHudText::getText (void) const
 {
     assertAlive();
-    std::string text;
-    for (unsigned i=0 ; i<blocks.size() ; ++i) {
-        text += blocks[i].text;
-    }
-    return text;
+    // TODO: support this, turn unicode cps into UTF8.
+    //return buf.getText();
+    return "";
 }
 // }}}
 
@@ -1060,6 +1045,80 @@ static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radia
     
 }
 
+void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour_mask, const Vector2 &offset)
+{
+    GfxFont *font = text->getFont();
+    GfxTextureDiskResource *tex = font->getTexture();
+
+    const Ogre::GpuProgramParametersSharedPtr &vertex_params = vp_text->getDefaultParameters();
+    const Ogre::GpuProgramParametersSharedPtr &fragment_params = fp_text->getDefaultParameters();
+
+    Vector2 pos = text->getDerivedPosition() + offset;
+    if (text->snapPixels) {
+        pos.x = ::floorf(pos.x+0.5);
+        pos.y = ::floorf(pos.y+0.5);
+    }
+
+    Ogre::Matrix4 matrix_centre = Ogre::Matrix4::IDENTITY;
+    // move origin to center (for rotation)
+    matrix_centre.setTrans(Ogre::Vector3(-floorf(text->getSize().x/2), floorf(text->getSize().y/2), 0));
+
+    const Degree &orientation = text->getDerivedOrientation();
+    Ogre::Matrix4 matrix_spin(Ogre::Quaternion(to_ogre(orientation), Ogre::Vector3(0,0,-1)));
+
+    Ogre::Matrix4 matrix_trans = Ogre::Matrix4::IDENTITY;
+    matrix_trans.setTrans(Ogre::Vector3(pos.x, pos.y, 0));
+
+    Ogre::Matrix4 matrix_d3d_offset = Ogre::Matrix4::IDENTITY;
+    if (d3d9) {
+        // offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
+        matrix_d3d_offset.setTrans(Ogre::Vector3(-0.5-win_size.x/2, 0.5-win_size.y/2, 0));
+    } else {
+        matrix_d3d_offset.setTrans(Ogre::Vector3(-win_size.x/2, -win_size.y/2, 0));
+    }
+
+    Ogre::Matrix4 matrix_scale = Ogre::Matrix4::IDENTITY;
+    matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y ,1));
+
+    Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin * matrix_centre;
+    try_set_named_constant(vp_text, "matrix", matrix);
+
+    try_set_named_constant(fp_text, "colour", to_ogre(text->getColour() * colour_mask));
+    try_set_named_constant(fp_text, "alpha", text->getAlpha());
+
+
+    ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
+    ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
+
+    ogre_rs->_setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+
+    ogre_rs->_setTexture(0, true, tex->getOgreTexturePtr());
+    Ogre::TextureUnitState::UVWAddressingMode addr_mode = {
+        Ogre::TextureUnitState::TAM_CLAMP,
+        Ogre::TextureUnitState::TAM_CLAMP,
+        Ogre::TextureUnitState::TAM_CLAMP
+    };
+    ogre_rs->_setTextureAddressingMode(0, addr_mode);
+    ogre_rs->_setTextureUnitFiltering(0, Ogre::FO_ANISOTROPIC, Ogre::FO_ANISOTROPIC, Ogre::FO_LINEAR);
+
+
+    APP_ASSERT(vp_text->_getBindingDelegate()!=NULL);
+    APP_ASSERT(fp_text->_getBindingDelegate()!=NULL);
+
+    // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
+    ogre_rs->bindGpuProgram(vp_text->_getBindingDelegate());
+    ogre_rs->bindGpuProgram(fp_text->_getBindingDelegate());
+
+    ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fragment_params, Ogre::GPV_ALL);
+    ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vertex_params, Ogre::GPV_ALL);
+
+    if (text->buf.getRenderOperation().indexData->indexCount > 0) {
+        ogre_rs->_render(text->buf.getRenderOperation());
+    }
+
+    ogre_rs->_disableTextureUnit(0);
+}
+
 
 void gfx_render_hud_one (GfxHudBase *base)
 {
@@ -1157,79 +1216,13 @@ void gfx_render_hud_one (GfxHudBase *base)
 
     GfxHudText *text = dynamic_cast<GfxHudText*>(base);
     if (text!=NULL) {
-        GfxFont *font = text->getFont();
-        GfxTextureDiskResource *tex = font->getTexture();
 
-        const Ogre::GpuProgramParametersSharedPtr &vertex_params = vp_text->getDefaultParameters();
-        const Ogre::GpuProgramParametersSharedPtr &fragment_params = fp_text->getDefaultParameters();
+        text->buf.updateGPU(text->wrap == Vector2(0,0), text->scroll, text->scroll+text->wrap.y);
 
-        Vector2 pos = text->getDerivedPosition();
-        if (text->snapPixels) {
-            pos.x = ::floorf(pos.x+0.5);
-            pos.y = ::floorf(pos.y+0.5);
+        if (text->getShadow() != Vector2(0,0)) {
+            gfx_render_hud_text(text, Vector3(0,0,0), text->getShadow());
         }
-
-        Ogre::Matrix4 matrix_centre = Ogre::Matrix4::IDENTITY;
-        // move origin to center (for rotation)
-        matrix_centre.setTrans(Ogre::Vector3(-floorf(text->getSize().x/2), floorf(text->getSize().y/2), 0));
-
-        const Degree &orientation = text->getDerivedOrientation();
-        Ogre::Matrix4 matrix_spin(Ogre::Quaternion(to_ogre(orientation), Ogre::Vector3(0,0,-1)));
-
-        Ogre::Matrix4 matrix_trans = Ogre::Matrix4::IDENTITY;
-        matrix_trans.setTrans(Ogre::Vector3(pos.x, pos.y, 0));
-
-        Ogre::Matrix4 matrix_d3d_offset = Ogre::Matrix4::IDENTITY;
-        if (d3d9) {
-            // offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
-            matrix_d3d_offset.setTrans(Ogre::Vector3(-0.5-win_size.x/2, 0.5-win_size.y/2, 0));
-        } else {
-            matrix_d3d_offset.setTrans(Ogre::Vector3(-win_size.x/2, -win_size.y/2, 0));
-        }
-
-        Ogre::Matrix4 matrix_scale = Ogre::Matrix4::IDENTITY;
-        matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y ,1));
-
-        Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin * matrix_centre;
-        try_set_named_constant(vp_text, "matrix", matrix);
-
-        try_set_named_constant(fp_text, "colour", to_ogre(text->getColour()));
-        try_set_named_constant(fp_text, "alpha", text->getAlpha());
-
-
-        ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
-        ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
-
-        ogre_rs->_setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
-
-        ogre_rs->_setTexture(0, true, tex->getOgreTexturePtr());
-        Ogre::TextureUnitState::UVWAddressingMode addr_mode = {
-            Ogre::TextureUnitState::TAM_CLAMP,
-            Ogre::TextureUnitState::TAM_CLAMP,
-            Ogre::TextureUnitState::TAM_CLAMP
-        };
-        ogre_rs->_setTextureAddressingMode(0, addr_mode);
-        ogre_rs->_setTextureUnitFiltering(0, Ogre::FO_ANISOTROPIC, Ogre::FO_ANISOTROPIC, Ogre::FO_LINEAR);
-
-
-        APP_ASSERT(vp_text->_getBindingDelegate()!=NULL);
-        APP_ASSERT(fp_text->_getBindingDelegate()!=NULL);
-
-        // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
-        ogre_rs->bindGpuProgram(vp_text->_getBindingDelegate());
-        ogre_rs->bindGpuProgram(fp_text->_getBindingDelegate());
-
-        ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fragment_params, Ogre::GPV_ALL);
-        ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vertex_params, Ogre::GPV_ALL);
-
-        text->buf.copyToGPUIfNeeded();
-
-        if (text->buf.getRenderOperation().indexData->indexCount > 0) {
-            ogre_rs->_render(text->buf.getRenderOperation());
-        }
-
-        ogre_rs->_disableTextureUnit(0);
-
+        gfx_render_hud_text(text, Vector3(1,1,1), Vector2(0,0));
     }
 }
 

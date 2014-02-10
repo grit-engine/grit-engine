@@ -52,7 +52,7 @@ GfxFont *gfx_font_get (const std::string &name)
     return db[name];
 }
 
-GfxFont *gfx_font_make (const std::string &name, GfxTextureDiskResource *dr, float height)
+GfxFont *gfx_font_make (const std::string &name, GfxTextureDiskResource *dr, unsigned long height)
 {
     GfxFont *f = gfx_font_get(name);
     if (f == NULL) {

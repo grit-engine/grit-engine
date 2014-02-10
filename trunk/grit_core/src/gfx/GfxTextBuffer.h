@@ -37,6 +37,24 @@ class GfxTextBuffer;
 /** Encapsulate the code required to build GPU buffers for rendering text.*/
 class GfxTextBuffer {
 
+    struct ColouredChar {
+        GfxFont::codepoint_t cp;
+        /* We have to record the top/bottom colour anyway since ansi colour codes are not
+        the only way to change the colour.  Therefore we may as well record all the
+        colour.  Also, if we have the colour per character, it is possible to know the
+        colour without looking back for the last colour code.
+         */
+        Vector3 topColour;
+        float topAlpha;
+        Vector3 bottomColour;
+        float bottomAlpha;
+        unsigned long left, top;
+        ColouredChar (GfxFont::codepoint_t cp, const Vector3 &tc, float ta, const Vector3 &bc, float ba)
+          : cp(cp), topColour(tc), topAlpha(ta), bottomColour(bc), bottomAlpha(ba)
+        { }
+    };
+    std::vector<ColouredChar> colouredText;
+
     GfxFont *font;
 
     Ogre::VertexData vData;
@@ -48,14 +66,22 @@ class GfxTextBuffer {
 
     std::vector<float> rawVBuf;
     std::vector<uint16_t> rawIBuf;
-    unsigned currentSize;
-    Vector2 currentDimensions;
 
-    Vector2 currentOffset;
+    Vector2 currentDrawnDimensions;
 
-    Vector2 wrap;
+    unsigned long currentLeft, currentTop;
+
+    long lastTop, lastBottom;
+    unsigned long wrap;
 
     bool dirty;
+
+    /** Fill in the ColouredChar::pos fields. */
+    void recalculatePositions (unsigned long offset = 0);
+
+    unsigned long binaryChopTop (unsigned long begin, unsigned long end, unsigned long top);
+
+    unsigned long binaryChopBottom (unsigned long begin, unsigned long end, unsigned long bottom_top);
 
     public:
 
@@ -63,73 +89,53 @@ class GfxTextBuffer {
 
     ~GfxTextBuffer (void)
     {
-        clear(true);
+        clear();
         vData.vertexDeclaration = NULL; // save OGRE from itself
     }
-
-    /** Reset the buffer. */
-    void clear (bool clear_gpu)
-    {
-        rawVBuf.clear();
-        rawIBuf.clear();
-        currentDimensions = Vector2(0,0);
-        currentOffset = Vector2(0,0);
-        currentSize = 0;
-        dirty = true;
-        if (clear_gpu) {
-            copyToGPUIfNeeded(); // clear GPU buffers, (note this sets dirty = false again)
-        }
-    }
-
-    struct Char {
-        GfxFont::codepoint_t cp;
-        Vector3 topColour;
-        float topAlpha;
-        Vector3 botColour;
-        float botAlpha;
-    };
-
-    /** Basic interface: add a character. */
-    void addRawChar (const Char &c);
-
-    /** How many chars of the given word will fit on the rest of the line? */
-    unsigned wordFit (const std::vector<Char> &word);
-
-    /** Basic interface: add a word.  Obeys wrap, wraps if necessary. */
-    void addRawWord (const std::vector<Char> &word);
-
-    /** Basic interface: increase indent to next tab level. */
-    void addTab (void);
-
-    /** Basic interface: end of line.  Returns true if new line exceeds wrap.y. */
-    void endLine (void);
 
     /** High level interface: Add a string that can contain \n,\t and ansi terminal colours.
      * \param text The text in UTF8.
      * \param top_colour and friends: Initial colours, overriden by use of ansi terminal colours.
      */
-    void addFormattedString (const std::string &text, Vector3 top_colour, float top_alpha, Vector3 bot_colour, float bot_alpha);
+    void addFormattedString (const std::string &text, const Vector3 &top_colour, float top_alpha, const Vector3 &bot_colour, float bot_alpha);
 
-    /** Sets the font (note that text will be corrupted unless font has compatible UVs, so consider clear() as well. */
-    void setFont (GfxFont *v) { font = v; }
+    /** Put the triangles in the vertex/index buffers and upload them.
+     * \param no_scroll Do not use top/bottom to clip the buffer vertically, render the whole buffer.
+     * \param top The top of the visible area, in pixels from the top of the buffer.  Can be negative to add extra space at top.
+     * \param bottom The bottom of the visible area, in pixels from the top of the buffer.  Can be negative.
+     */
+    void updateGPU (bool no_scroll, long top, long bottom);
+
+    public:
+
+    /** Reset the buffer. */
+    void clear (void)
+    {
+        colouredText.clear();
+        recalculatePositions();
+        dirty = true;
+    }
+
+    /** Sets the font. */
+    void setFont (GfxFont *v) { font = v; recalculatePositions(); }
 
     /** Returns the font. */
     GfxFont *getFont (void) const { return font; }
 
-    /** Returns the size of the text rectangle in pixels. */
-    const Vector2 &getDimensions (void) const { return currentDimensions; }
+    /** Returns the size of the text rectangle in pixels.  Drawn part only, updated by updateGPU. */
+    const Vector2 &getDrawnDimensions (void) const { return currentDrawnDimensions; }
+
+    /** Returns the size of the text rectangle in pixels.  Entire buffer. */
+    unsigned long getBufferHeight (void) const { return font->getHeight() + currentTop; }
 
     /** Set the max size.  This is used to wrap text during addFormattedString. */
-    void setWrap (const Vector2 &v) { wrap = v; }
+    void setWrap (float v) { wrap = v; recalculatePositions(); }
 
     /** Returns the max size. \see setWrap */
-    const Vector2 &getWrap (void) const { return wrap; }
+    float getWrap (void) const { return wrap; }
 
     /** Get an operation that can be used to render this text buffer. */
     const Ogre::RenderOperation &getRenderOperation (void) const { return op; }
-
-    /** Copy the buffer to the GPU, enlarging GPU buffers if necessary. */
-    void copyToGPUIfNeeded ();
 
 };
 
