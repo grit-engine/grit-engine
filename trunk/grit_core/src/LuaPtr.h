@@ -44,7 +44,7 @@ class LuaPtr {
         ptr = LUA_REFNIL;
     }
 
-    bool isNil() const { return ptr == LUA_REFNIL; }
+    bool isNil (void) const { return ptr == LUA_REFNIL; }
 
     /** Make this pointer point to whatever is at the top of the Lua stack,
      * and pops the stack.
@@ -62,10 +62,15 @@ class LuaPtr {
         set(L);
     }
 
-    /** Lead the Lua object.  It will never be garbage collected.  The one case
-     * where this is a good idea is jsut before lua_close is called.  That allows
-     * faster shutdown times because we're not thrashing Lua when we clean up
-     * these guys.  Instead we just suppress the error message in the destructor.
+    /** Leak the Lua object.  It will never be garbage collected.  The one case
+     * where this is a good idea is just after lua_close is called.  If something
+     * is so fundamental that it can't be removed from the registry before
+     * lua_close is called (e.g. because garbage collection metamethods may try to
+     * use it during the lua_close call), then one can simply let Lua clean up the
+     * metatable.  At this point, we need to not call luaL_ref on the closed state,
+     * in fact there is no cleanup to do, so we simply unlink it and walk away.
+     * The only real effect of this is disabling the error message in the LuaPtr
+     * destructor.
      */
     void leak (void)
     {
