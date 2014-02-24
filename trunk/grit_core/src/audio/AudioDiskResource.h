@@ -71,6 +71,9 @@ private:
     /** Utility function to load a PCM file with .wav header from the byte stream. */
 	void loadWAV (Ogre::DataStreamPtr &file);
 	
+    /** Utility function to load and decode Ogg Vorbis file. */
+	void loadOGG (Ogre::DataStreamPtr &file);
+	
     /** Cache of the name. */
 	const std::string name;
 

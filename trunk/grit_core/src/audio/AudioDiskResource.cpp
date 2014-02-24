@@ -22,6 +22,7 @@
 #include "AudioDiskResource.h"
 #include "audio.h"
 #include "../portable_io.h"
+#include "OggVorbisDecoder.h"
 
 void AudioDiskResource::loadImpl (void)
 {
@@ -43,6 +44,11 @@ void AudioDiskResource::loadImpl (void)
 	{
 		file->seek(0);
 		loadWAV(file);
+	}
+	else if (fourcc == 0x5367674F) // OggS
+	{
+		file->seek(0);
+		loadOGG(file);
 	}
 	else
 	{
@@ -112,7 +118,7 @@ void AudioDiskResource::loadWAV(Ogre::DataStreamPtr &file)
 
 	if (fmt.bitsPerSample != 8 && fmt.bitsPerSample != 16)
 	{
-		GRIT_EXCEPT(name + " isn't 8/16 bits per sample.");
+		GRIT_EXCEPT(name + " isn't 8 or 16 bits per sample.");
 	}
 
 	// seek to the data start
@@ -153,7 +159,7 @@ void AudioDiskResource::loadWAV(Ogre::DataStreamPtr &file)
 	if (fmt.channels == 1) {
         stereo = false;
         alGenBuffers(1, &alBufferLeft);
-        alBufferData(alBuffer, mono_format, data, dataHeader.size, fmt.samples);
+        alBufferData(alBufferLeft, mono_format, data, dataHeader.size, fmt.samples);
 	} else {
         stereo = true;
         alGenBuffers(1, &alBuffer);
@@ -173,6 +179,58 @@ void AudioDiskResource::loadWAV(Ogre::DataStreamPtr &file)
 	delete[] data;
 
 	// close the stream
+	file->close();
+}
+
+void AudioDiskResource::loadOGG(Ogre::DataStreamPtr &file)
+{	
+    alBufferLeft = 0;
+    alBufferRight = 0;
+    alBuffer = 0;
+
+	OggVorbisDecoder decoder(name, file);
+	
+	const int bytes_per_sample = 1;
+	
+	const int size = 4096;
+	uint8_t buffer[size];
+	
+	uint8_t *full_buffer = NULL;
+	unsigned int bytes_total = 0;
+	
+	while(true) {
+		int bytes_read = decoder.decode(buffer, size, bytes_per_sample);
+		if(bytes_read == 0) break;
+		full_buffer = reinterpret_cast<uint8_t*>(realloc(full_buffer, bytes_total+bytes_read));
+		memcpy(full_buffer+bytes_total, buffer, bytes_read);
+		bytes_total+=bytes_read;
+	}
+	
+	
+    ALenum mono_format = (bytes_per_sample == 1) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
+    ALenum stereo_format = (bytes_per_sample == 1) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
+	
+	if(decoder.stereo()) { //stereo
+		stereo = true;
+        alGenBuffers(1, &alBuffer);
+        alBufferData(alBuffer, stereo_format, full_buffer, bytes_total, decoder.rate());
+        uint8_t *data1 = new uint8_t[bytes_total / 2];
+    	size_t samples = bytes_total / 2 / bytes_per_sample;
+        for (size_t i=0 ; i < samples; ++i)
+        	memcpy(&data1[i*bytes_per_sample], &full_buffer[2*i*bytes_per_sample], bytes_per_sample);
+        alGenBuffers(1, &alBufferLeft);
+        alBufferData(alBufferLeft, mono_format, data1, bytes_total/2, decoder.rate());
+        for (size_t i=0 ; i < samples; ++i)
+        	memcpy(&data1[i*bytes_per_sample], &full_buffer[(2*i+1)*bytes_per_sample], bytes_per_sample);
+        alGenBuffers(1, &alBufferRight);
+        alBufferData(alBufferRight, mono_format, data1, bytes_total/2, decoder.rate());
+        delete[] data1;
+	} else { //mono
+		stereo = false;
+		alGenBuffers(1, &alBufferLeft);
+        alBufferData(alBufferLeft, mono_format, full_buffer, bytes_total, decoder.rate());
+	}
+	free(full_buffer);
 	file->close();
 }
 
