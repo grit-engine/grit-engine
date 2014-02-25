@@ -199,7 +199,7 @@ void AudioDiskResource::loadOGG(Ogre::DataStreamPtr &file)
 	unsigned int bytes_total = 0;
 	
 	while(true) {
-		int bytes_read = decoder.decode(buffer, size, bytes_per_sample);
+		int bytes_read = decoder.read(buffer, size, bytes_per_sample);
 		if(bytes_read == 0) break;
 		full_buffer = reinterpret_cast<uint8_t*>(realloc(full_buffer, bytes_total+bytes_read));
 		memcpy(full_buffer+bytes_total, buffer, bytes_read);

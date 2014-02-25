@@ -1,6 +1,25 @@
+/* Copyright (c) Alexey Shmakov and the Grit Game Engine project 2014
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 #include "OggVorbisDecoder.h"
-
-
 
 size_t read_callback(void *ptr, size_t size, size_t nmemb, void *datasource)
 {
@@ -42,11 +61,6 @@ long tell_callback(void *datasource)
 OggVorbisDecoder::OggVorbisDecoder(const std::string &_name, const Ogre::DataStreamPtr &_file)
 	: name(_name), file(_file), prepared(false)
 {
-/*
-	name = name;
-	file = file;
-	prepared = false;
-*/
 	callbacks.read_func = read_callback;
 	callbacks.seek_func = seek_callback;
 	callbacks.close_func = NULL; //do nothing, will clean up my data on my own
@@ -89,7 +103,94 @@ int OggVorbisDecoder::rate()
 	return info->rate;
 }
 
-long OggVorbisDecoder::decode(uint8_t *buffer, int length, int bytes_per_sample)
+uint32_t OggVorbisDecoder::total_decoded_size(int bytes_per_sample)
+{
+	if ((bytes_per_sample != 2) ||  (bytes_per_sample != 1))
+		GRIT_EXCEPT("bytes_per_sample can only be 1 or 2");
+	if(!prepared) prepare();
+	int r = ov_pcm_total(&vf, -1);
+	if(r < 0)
+		GRIT_EXCEPT("error getting total size for file \""+name+"\"");
+	return r * info->channels * bytes_per_sample;
+}
+
+uint32_t OggVorbisDecoder::raw_total()
+{
+	if(!prepared) prepare();
+	int r = ov_raw_total(&vf, -1);
+	if(r < 0)
+		GRIT_EXCEPT("error getting raw total size for file \""+name+"\"");
+	return r;
+}
+uint32_t OggVorbisDecoder::pcm_total()
+{
+	if(!prepared) prepare();
+	int r = ov_pcm_total(&vf, -1);
+	if(r < 0)
+		GRIT_EXCEPT("error getting pcm total size for file \""+name+"\"");
+	return r;
+
+}
+double OggVorbisDecoder::time_total()
+{
+	if(!prepared) prepare();
+	double r = ov_pcm_total(&vf, -1);
+	if(r < 0)
+		GRIT_EXCEPT("error getting time total size for file \""+name+"\"");
+	return r;
+}
+
+uint32_t OggVorbisDecoder::raw_seek(uint32_t pos)
+{
+	if(!prepared) prepare();
+	int r = ov_raw_seek(&vf, pos);
+	if(r != 0)
+		GRIT_EXCEPT("error raw seek for file \""+name+"\"");
+	return r;
+}
+uint32_t OggVorbisDecoder::pcm_seek(uint32_t pos)
+{
+	if(!prepared) prepare();
+	int r = ov_pcm_seek(&vf, pos);
+	if(r != 0)
+		GRIT_EXCEPT("error pcm seek for file \""+name+"\"");
+	return r;
+}
+uint32_t OggVorbisDecoder::time_seek(double pos)
+{
+	if(!prepared) prepare();
+	int r = ov_time_seek(&vf, pos);
+	if(r != 0)
+		GRIT_EXCEPT("error time seek for file \""+name+"\"");
+	return r;
+}
+
+uint32_t OggVorbisDecoder::raw_tell()
+{
+	if(!prepared) prepare();
+	int r = ov_raw_tell(&vf);
+	if(r < 0)
+		GRIT_EXCEPT("error raw tell for file \""+name+"\"");
+	return r;
+}
+uint32_t OggVorbisDecoder::pcm_tell()
+{
+	if(!prepared) prepare();
+	int r = ov_pcm_tell(&vf);
+	if(r < 0)
+		GRIT_EXCEPT("error pcm tell for file \""+name+"\"");
+	return r;
+}
+double OggVorbisDecoder::time_tell()
+{
+	if(!prepared) prepare();
+	double r = ov_time_tell(&vf);
+	if(r < 0)
+		GRIT_EXCEPT("error time tell for file \""+name+"\"");
+	return r;
+}
+
+long OggVorbisDecoder::read(uint8_t *buffer, int length, int bytes_per_sample)
 {
 	if(!prepared) prepare();
 
