@@ -21,184 +21,184 @@
 
 #include "OggVorbisDecoder.h"
 
-size_t read_callback(void *ptr, size_t size, size_t nmemb, void *datasource)
+static size_t read_callback (void *ptr, size_t size, size_t nmemb, void *datasource)
 {
-	Ogre::DataStreamPtr file = * static_cast<Ogre::DataStreamPtr*>(datasource);
-	return file->read(ptr, size*nmemb);
+    Ogre::DataStreamPtr &file = *static_cast<Ogre::DataStreamPtr*>(datasource);
+    return file->read(ptr, size*nmemb);
 }
 
-int seek_callback(void *datasource, ogg_int64_t offset, int type)
+static int seek_callback (void *datasource, ogg_int64_t offset, int type)
 {
-	Ogre::DataStreamPtr file = * static_cast<Ogre::DataStreamPtr*>(datasource);
-	
-	switch(type) {
-		case SEEK_CUR:
-			file->seek(file->tell()+offset);
-			break;
-		case SEEK_END:
-			file->seek(file->size());
-			break;
-		case SEEK_SET:
-			file->seek(offset);
-			break;
-	}
-	return 0;
+    Ogre::DataStreamPtr &file = *static_cast<Ogre::DataStreamPtr*>(datasource);
+    
+    switch (type) {
+        case SEEK_CUR:
+        file->seek(file->tell()+offset);
+        break;
+
+        case SEEK_END:
+        file->seek(file->size());
+        break;
+
+        case SEEK_SET:
+        file->seek(offset);
+        break;
+    }
+    return 0;
 }
-/*
-int close_callback(void *datasource)
+static long tell_callback (void *datasource)
 {
-	Ogre::DataStreamPtr file = static_cast<Ogre::DataStreamPtr>(datasource);
-	file->close();
-	return 0;
-}
-*/
-long tell_callback(void *datasource)
-{
-	Ogre::DataStreamPtr file = * static_cast<Ogre::DataStreamPtr*>(datasource);
-	return file->tell();
+    const Ogre::DataStreamPtr &file = *static_cast<const Ogre::DataStreamPtr*>(datasource);
+    return file->tell();
 }
 
-OggVorbisDecoder::OggVorbisDecoder(const std::string &_name, const Ogre::DataStreamPtr &_file)
-	: name(_name), file(_file), prepared(false)
+OggVorbisDecoder::OggVorbisDecoder(const std::string &name, const Ogre::DataStreamPtr &file)
+    : name(name), file(file), prepared(false)
 {
-	callbacks.read_func = read_callback;
-	callbacks.seek_func = seek_callback;
-	callbacks.close_func = NULL; //do nothing, will clean up my data on my own
-	callbacks.tell_func = tell_callback;
+    callbacks.read_func = read_callback;
+    callbacks.seek_func = seek_callback;
+    callbacks.close_func = NULL; // do nothing, the file is assumed to be closed by our caller
+    callbacks.tell_func = tell_callback;
 }
 
 OggVorbisDecoder::~OggVorbisDecoder()
 {
-	ov_clear(&vf);
+    // ov_clear should also clean up info
+    ov_clear(&vf);
 }
 
 void OggVorbisDecoder::prepare()
 {
-	if(ov_open_callbacks(const_cast<void*>((const void*)&file), &vf, NULL, 0, callbacks) < 0)
-		GRIT_EXCEPT("File \""+name+"\" is not in Ogg format.");
-		
-	info = ov_info(&vf, -1);
-	if(info->channels > 2)
-		GRIT_EXCEPT("Ogg Vorbis file \""+name+"\" has more than two channels.");
-		
-	prepared = true;
+    if (ov_open_callbacks(const_cast<void*>((const void*)&file), &vf, NULL, 0, callbacks) < 0)
+        GRIT_EXCEPT("File \""+name+"\" is not in Ogg format.");
+        
+    info = ov_info(&vf, -1);
+    if (info->channels > 2)
+        GRIT_EXCEPT("Ogg Vorbis file \""+name+"\" has more than two channels.");
+        
+    prepared = true;
 }
 
 bool OggVorbisDecoder::isOggVorbis()
 {
-	if(prepared) return true; //if we passed initialization successfully then we're definitely an ogg vorbis file
-	if(ov_test_callbacks(const_cast<void*>((const void*)&file), &vf, NULL, 0, callbacks) == 0) return true;
-	return false;
+    // if we passed initialization successfully then we're definitely an ogg vorbis file
+    if (prepared) return true; 
+    if (ov_test_callbacks(&file, &vf, NULL, 0, callbacks) == 0) return true;
+    return false;
 }
-	
+    
 bool OggVorbisDecoder::stereo()
 {
-	if(!prepared) prepare();
-	return (info->channels == 2);
+    if (!prepared) prepare();
+    return (info->channels == 2);
 }
 
 int OggVorbisDecoder::rate()
 {
-	if(!prepared) prepare();
-	return info->rate;
+    if (!prepared) prepare();
+    return info->rate;
 }
 
 uint32_t OggVorbisDecoder::total_decoded_size()
 {
-	if(!prepared) prepare();
-	int r = ov_pcm_total(&vf, -1);
-	if(r < 0)
-		GRIT_EXCEPT("error getting total decoded size for file \""+name+"\"");
-	return r * info->channels * 2;
+    if (!prepared) prepare();
+    int r = ov_pcm_total(&vf, -1);
+    if (r < 0)
+        GRIT_EXCEPT("error getting total decoded size for file \""+name+"\"");
+    return r * info->channels * 2;
 }
 
 uint32_t OggVorbisDecoder::raw_total()
 {
-	if(!prepared) prepare();
-	int r = ov_raw_total(&vf, -1);
-	if(r < 0)
-		GRIT_EXCEPT("error getting raw total size for file \""+name+"\"");
-	return r;
+    if (!prepared) prepare();
+    int r = ov_raw_total(&vf, -1);
+    if (r < 0)
+        GRIT_EXCEPT("error getting raw total size for file \""+name+"\"");
+    return r;
 }
 uint32_t OggVorbisDecoder::pcm_total()
 {
-	if(!prepared) prepare();
-	int r = ov_pcm_total(&vf, -1);
-	if(r < 0)
-		GRIT_EXCEPT("error getting pcm total size for file \""+name+"\"");
-	return r;
+    if (!prepared) prepare();
+    int r = ov_pcm_total(&vf, -1);
+    if (r < 0)
+        GRIT_EXCEPT("error getting pcm total size for file \""+name+"\"");
+    return r;
 
 }
 double OggVorbisDecoder::time_total()
 {
-	if(!prepared) prepare();
-	double r = ov_pcm_total(&vf, -1);
-	if(r < 0)
-		GRIT_EXCEPT("error getting time total size for file \""+name+"\"");
-	return r;
+    if (!prepared) prepare();
+    double r = ov_pcm_total(&vf, -1);
+    if (r < 0)
+        GRIT_EXCEPT("error getting time total size for file \""+name+"\"");
+    return r;
 }
 
 uint32_t OggVorbisDecoder::raw_seek(uint32_t pos)
 {
-	if(!prepared) prepare();
-	int r = ov_raw_seek(&vf, pos);
-	if(r != 0)
-		GRIT_EXCEPT("error raw seek for file \""+name+"\"");
-	return r;
+    if (!prepared) prepare();
+    int r = ov_raw_seek(&vf, pos);
+    if (r != 0)
+        GRIT_EXCEPT("error raw seek for file \""+name+"\"");
+    return r;
 }
 uint32_t OggVorbisDecoder::pcm_seek(uint32_t pos)
 {
-	if(!prepared) prepare();
-	int r = ov_pcm_seek(&vf, pos);
-	if(r != 0)
-		GRIT_EXCEPT("error pcm seek for file \""+name+"\"");
-	return r;
+    if (!prepared) prepare();
+    int r = ov_pcm_seek(&vf, pos);
+    if (r != 0)
+        GRIT_EXCEPT("error pcm seek for file \""+name+"\"");
+    return r;
 }
 uint32_t OggVorbisDecoder::time_seek(double pos)
 {
-	if(!prepared) prepare();
-	int r = ov_time_seek(&vf, pos);
-	if(r != 0)
-		GRIT_EXCEPT("error time seek for file \""+name+"\"");
-	return r;
+    if (!prepared) prepare();
+    int r = ov_time_seek(&vf, pos);
+    if (r != 0)
+        GRIT_EXCEPT("error time seek for file \""+name+"\"");
+    return r;
 }
 
 uint32_t OggVorbisDecoder::raw_tell()
 {
-	if(!prepared) prepare();
-	int r = ov_raw_tell(&vf);
-	if(r < 0)
-		GRIT_EXCEPT("error raw tell for file \""+name+"\"");
-	return r;
+    if (!prepared) prepare();
+    int r = ov_raw_tell(&vf);
+    if (r < 0)
+        GRIT_EXCEPT("error raw tell for file \""+name+"\"");
+    return r;
 }
 uint32_t OggVorbisDecoder::pcm_tell()
 {
-	if(!prepared) prepare();
-	int r = ov_pcm_tell(&vf);
-	if(r < 0)
-		GRIT_EXCEPT("error pcm tell for file \""+name+"\"");
-	return r;
+    if (!prepared) prepare();
+    int r = ov_pcm_tell(&vf);
+    if (r < 0)
+        GRIT_EXCEPT("error pcm tell for file \""+name+"\"");
+    return r;
 }
 double OggVorbisDecoder::time_tell()
 {
-	if(!prepared) prepare();
-	double r = ov_time_tell(&vf);
-	if(r < 0)
-		GRIT_EXCEPT("error time tell for file \""+name+"\"");
-	return r;
+    if (!prepared) prepare();
+    double r = ov_time_tell(&vf);
+    if(r < 0)
+        GRIT_EXCEPT("error time tell for file \""+name+"\"");
+    return r;
 }
 
 long OggVorbisDecoder::read(char *buffer, int length)
 {
-	if(!prepared) prepare();
+    if (!prepared) prepare();
 
-	int current_section;
+    int current_section;
 
-	long bytes_read = ov_read(&vf, reinterpret_cast<char*>(buffer), length, 0/*0 = little endian, 1 = big endian*/, 2/*1 = 8 bit samples, 2 = 16 bit samples*/, 1/*0 = unsigned samples, 1 = signed samples*/, &current_section);
-	
-	if(bytes_read < 0){	
-			GRIT_EXCEPT("Error during decoding Ogg Vorbis file \""+name+"\"");
-	}
-	
-	return bytes_read;
+    long bytes_read = ov_read(&vf, buffer, length,
+                              0/*0 = little endian, 1 = big endian*/,
+                              2/*1 = 8 bit samples, 2 = 16 bit samples*/,
+                              1/*0 = unsigned samples, 1 = signed samples*/,
+                              &current_section);
+    
+    if (bytes_read < 0){    
+            GRIT_EXCEPT("Error during decoding Ogg Vorbis file \""+name+"\"");
+    }
+    
+    return bytes_read;
 }

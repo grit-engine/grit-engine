@@ -30,41 +30,42 @@
 
 class OggVorbisDecoder {
 public:
-	OggVorbisDecoder (const std::string& name, const Ogre::DataStreamPtr &file);
-	~OggVorbisDecoder();
-	void prepare(); //read initial headers
-	
-	bool isOggVorbis();
-	bool stereo();
-	int rate();
-	
-	uint32_t total_decoded_size(); //returns a size of buffer needed to hold the whole decoded pcm for all channels
-	
-	uint32_t raw_total();
-	uint32_t pcm_total();
-	double time_total(); //total size is in seconds
-	
-	uint32_t raw_seek(uint32_t pos); //when speed is priority use of this function is recommended
-	uint32_t pcm_seek(uint32_t pos);
-	uint32_t time_seek(double pos); //pos is in seconds
-	
-	uint32_t raw_tell();
-	uint32_t pcm_tell();
-	double time_tell();
-	
-	long read(char *buffer, int length); //note this actually reads 2 byte samples
-	//TODO: expose ov_read_float()
+    OggVorbisDecoder (const std::string& name, const Ogre::DataStreamPtr &file);
+    ~OggVorbisDecoder (void);
+
+    void prepare (void); //read initial headers
+    
+    bool isOggVorbis (void);
+    bool stereo (void);
+    int rate (void);
+    
+    uint32_t total_decoded_size (void); //returns a size of buffer needed to hold the whole decoded pcm for all channels
+    
+    uint32_t raw_total (void);
+    uint32_t pcm_total (void);
+    double time_total (void); //total size is in seconds
+    
+    uint32_t raw_seek (uint32_t pos); //when speed is priority use of this function is recommended
+    uint32_t pcm_seek (uint32_t pos);
+    uint32_t time_seek (double pos); //pos is in seconds
+    
+    uint32_t raw_tell (void);
+    uint32_t pcm_tell (void);
+    double time_tell (void);
+    
+    long read (char *buffer, int length); //note this actually reads 2 byte samples
+    //TODO: expose ov_read_float()
 private:
-	const std::string &name; //used in thrown exceptions
-	const Ogre::DataStreamPtr &file;
-	
-	bool prepared; //is initial headers were read?
-	
-	vorbis_info* info;
-	
-	OggVorbis_File vf; //needed for vorbis file decoding
-	
-	ov_callbacks callbacks;
+    const std::string name; //used in thrown exceptions
+    Ogre::DataStreamPtr file;
+    
+    bool prepared; //is initial headers were read?
+    
+    vorbis_info *info;
+    
+    OggVorbis_File vf; //needed for vorbis file decoding
+    
+    ov_callbacks callbacks;
 };
 
 #endif //OGG_VORBIS_DECODER_H
