@@ -38,7 +38,7 @@ public:
 	bool stereo();
 	int rate();
 	
-	uint32_t total_decoded_size(int bytes_per_sample); //returns a size of buffer needed to hold the whole decoded pcm for all channels
+	uint32_t total_decoded_size(); //returns a size of buffer needed to hold the whole decoded pcm for all channels
 	
 	uint32_t raw_total();
 	uint32_t pcm_total();
@@ -52,7 +52,7 @@ public:
 	uint32_t pcm_tell();
 	double time_tell();
 	
-	long read(uint8_t *buffer, int length, int bytes_per_sample);
+	long read(char *buffer, int length); //note this actually reads 2 byte samples
 	//TODO: expose ov_read_float()
 private:
 	const std::string &name; //used in thrown exceptions

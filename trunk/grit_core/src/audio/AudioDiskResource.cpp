@@ -190,47 +190,43 @@ void AudioDiskResource::loadOGG(Ogre::DataStreamPtr &file)
 
 	OggVorbisDecoder decoder(name, file);
 	
-	const int bytes_per_sample = 1;
-	
 	const int size = 4096;
-	uint8_t buffer[size];
+	char buffer[size];
 	
-	uint8_t *full_buffer = NULL;
-	unsigned int bytes_total = 0;
+	std::vector<char> data;
 	
 	while(true) {
-		int bytes_read = decoder.read(buffer, size, bytes_per_sample);
+		int bytes_read = decoder.read(buffer, size);
 		if(bytes_read == 0) break;
-		full_buffer = reinterpret_cast<uint8_t*>(realloc(full_buffer, bytes_total+bytes_read));
-		memcpy(full_buffer+bytes_total, buffer, bytes_read);
-		bytes_total+=bytes_read;
+		data.insert(data.end(), buffer, buffer+bytes_read);
 	}
 	
-	
-    ALenum mono_format = (bytes_per_sample == 1) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
-    ALenum stereo_format = (bytes_per_sample == 1) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
+	//these doesn't mean to be changed, the OggVorbisDecoder is now decoding 2 bytes samples only, and this are left here just for readability
+	const int bytes_per_sample = 2;
+    const ALenum mono_format = AL_FORMAT_MONO16;
+    const ALenum stereo_format = AL_FORMAT_STEREO16;
 	
 	if(decoder.stereo()) { //stereo
 		stereo = true;
         alGenBuffers(1, &alBuffer);
-        alBufferData(alBuffer, stereo_format, full_buffer, bytes_total, decoder.rate());
-        uint8_t *data1 = new uint8_t[bytes_total / 2];
-    	size_t samples = bytes_total / 2 / bytes_per_sample;
+        alBufferData(alBuffer, stereo_format, &data[0], data.size(), decoder.rate());
+        char *data1 = new char[data.size() / 2];
+    	size_t samples = data.size() / 2 / bytes_per_sample;
         for (size_t i=0 ; i < samples; ++i)
-        	memcpy(&data1[i*bytes_per_sample], &full_buffer[2*i*bytes_per_sample], bytes_per_sample);
+        	memcpy(&data1[i*bytes_per_sample], &data[2*i*bytes_per_sample], bytes_per_sample);
         alGenBuffers(1, &alBufferLeft);
-        alBufferData(alBufferLeft, mono_format, data1, bytes_total/2, decoder.rate());
+        alBufferData(alBufferLeft, mono_format, data1, data.size()/2, decoder.rate());
         for (size_t i=0 ; i < samples; ++i)
-        	memcpy(&data1[i*bytes_per_sample], &full_buffer[(2*i+1)*bytes_per_sample], bytes_per_sample);
+        	memcpy(&data1[i*bytes_per_sample], &data[(2*i+1)*bytes_per_sample], bytes_per_sample);
         alGenBuffers(1, &alBufferRight);
-        alBufferData(alBufferRight, mono_format, data1, bytes_total/2, decoder.rate());
+        alBufferData(alBufferRight, mono_format, data1, data.size()/2, decoder.rate());
         delete[] data1;
 	} else { //mono
 		stereo = false;
 		alGenBuffers(1, &alBufferLeft);
-        alBufferData(alBufferLeft, mono_format, full_buffer, bytes_total, decoder.rate());
+        alBufferData(alBufferLeft, mono_format, &data[0], data.size(), decoder.rate());
 	}
-	free(full_buffer);
+	
 	file->close();
 }
 

@@ -103,15 +103,13 @@ int OggVorbisDecoder::rate()
 	return info->rate;
 }
 
-uint32_t OggVorbisDecoder::total_decoded_size(int bytes_per_sample)
+uint32_t OggVorbisDecoder::total_decoded_size()
 {
-	if ((bytes_per_sample != 2) ||  (bytes_per_sample != 1))
-		GRIT_EXCEPT("bytes_per_sample can only be 1 or 2");
 	if(!prepared) prepare();
 	int r = ov_pcm_total(&vf, -1);
 	if(r < 0)
-		GRIT_EXCEPT("error getting total size for file \""+name+"\"");
-	return r * info->channels * bytes_per_sample;
+		GRIT_EXCEPT("error getting total decoded size for file \""+name+"\"");
+	return r * info->channels * 2;
 }
 
 uint32_t OggVorbisDecoder::raw_total()
@@ -190,16 +188,16 @@ double OggVorbisDecoder::time_tell()
 	return r;
 }
 
-long OggVorbisDecoder::read(uint8_t *buffer, int length, int bytes_per_sample)
+long OggVorbisDecoder::read(char *buffer, int length)
 {
 	if(!prepared) prepare();
 
 	int current_section;
 
-	long bytes_read = ov_read(&vf, reinterpret_cast<char*>(buffer), length, 0/*0 = little endian, 1 = big endian*/, bytes_per_sample/*1 = 8 bit samples, 2 = 16 bit samples*/, 0/*0 = unsigned samples, 1 = signed samples*/, &current_section);
+	long bytes_read = ov_read(&vf, reinterpret_cast<char*>(buffer), length, 0/*0 = little endian, 1 = big endian*/, 2/*1 = 8 bit samples, 2 = 16 bit samples*/, 1/*0 = unsigned samples, 1 = signed samples*/, &current_section);
 	
 	if(bytes_read < 0){	
-			GRIT_EXCEPT("Error during decoding Ogg file \""+name+"\"");
+			GRIT_EXCEPT("Error during decoding Ogg Vorbis file \""+name+"\"");
 	}
 	
 	return bytes_read;
