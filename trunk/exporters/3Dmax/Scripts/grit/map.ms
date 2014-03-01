@@ -135,7 +135,8 @@ Rollout GritRolloutClass "Classes" -- {{{
 				-- we multiply max orientation by quat(90,vector3(-1,0,0)) (90 degrees around x axis negative)
 				--i dont know it just works :D
 				MAX_ORIENTATION = (in coordsys parent lightsz.rotation)
-				R = MAX_ORIENTATION * (quat 0.7071068 -0.7071068 0 0)
+				R = MAX_ORIENTATION * (quat -0.7071068 0 0 0.7071068)
+				
 				--RX = (R.x)
 				--RY = (in coordsys parent lightsz.rotation.y )
 				--RZ = (in coordsys parent lightsz.rotation.z )
@@ -158,7 +159,7 @@ Rollout GritRolloutClass "Classes" -- {{{
 				loangle = lightsz.falloff
 				liangle = lightsz.hotspot
 				
-				format "\n{ pos=vector3(%, %, %), diff=vector3(%,%,%), spec=vector3(%,%,%), range=%, iangle=%, oangle=%, aim=quat(%,%,%,%) }," X Y Z lcolorred lcolorgreen lcolorblue lspecred lspecgreen lspecblue lrange liangle loangle R.x R.y R.z R.w to:listener
+				format "\n{ pos=vector3(%, %, %), diff=vector3(%,%,%), spec=vector3(%,%,%), range=%, iangle=%, oangle=%, aim=quat(%,%,%,%) }," X Y Z lcolorred lcolorgreen lcolorblue lspecred lspecgreen lspecblue lrange liangle loangle R.w R.x R.y R.z to:listener
 				)
 			)
 			PBCEXP.value = 100
