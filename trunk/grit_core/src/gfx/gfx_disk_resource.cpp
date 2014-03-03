@@ -35,16 +35,19 @@
 
 bool gfx_disk_resource_verbose_loads = false;
 
-size_t gfx_gpu_ram_available (void)
+double gfx_gpu_ram_available (void)
 {
-    return gfx_option(GFX_RAM) * 1024 * 1024;
+    return gfx_option(GFX_RAM);
 }
 
-size_t gfx_gpu_ram_used (void)
+double gfx_gpu_ram_used (void)
 {
+    // TODO: don't use Ogre for this, track it from Grit.
+    // It will be useful to provide this number as well, to make sure it does
+    // not significantly deviate from Grit's number.
     Ogre::TextureManager &tm = Ogre::TextureManager::getSingleton();
     Ogre::MeshManager &mm = Ogre::MeshManager::getSingleton();
-    return tm.getMemoryUsage() + mm.getMemoryUsage();
+    return (tm.getMemoryUsage() + mm.getMemoryUsage()) / 1024.0 / 1024.0;
 }
 
 

@@ -90,6 +90,7 @@
     <ClCompile Include="src\audio\audio.cpp" />
     <ClCompile Include="src\audio\AudioDiskResource.cpp" />
     <ClCompile Include="src\audio\lua_wrappers_audio.cpp" />
+    <ClCompile Include="src\audio\OggVorbisDecoder.cpp" />
     <ClCompile Include="src\BackgroundLoader.cpp" />
     <ClCompile Include="src\BulletDebugDrawer.cpp" />
     <ClCompile Include="src\DenseIndexMap.cpp" />

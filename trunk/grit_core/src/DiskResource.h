@@ -77,6 +77,14 @@ DiskResource *disk_resource_get (const std::string &rn);
 /** Test if a disk resource of the given name exists. */
 bool disk_resource_has (const std::string &rn);
 
+/** How many MB of host RAM are available for use by disk resources. 
+ * This is actually controlled by core_option(CORE_RAM)
+ */
+double host_ram_available (void);
+
+/** How many MB of host RAM have been used by disk resources. */
+double host_ram_used (void);
+
 /** Represents some data on disk that must be loaded before use.
  *
  * Subclasses of DiskResource define different kinds of data, such as audio,

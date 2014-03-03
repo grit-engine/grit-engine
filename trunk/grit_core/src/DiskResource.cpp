@@ -181,5 +181,15 @@ void DiskResource::unload (void)
     loaded = false;
 }
 
+double host_ram_available (void)
+{
+    return core_option(CORE_RAM);
+}
+
+double host_ram_used (void)
+{
+    // TODO: Implement this by requiring each DiskReosurce to specify its in-memory size.
+    return 0;
+}
 
 

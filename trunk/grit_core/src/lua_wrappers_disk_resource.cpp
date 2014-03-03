@@ -270,10 +270,30 @@ TRY_START
 TRY_END
 }
 
+static int global_host_ram_available (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    lua_pushnumber(L, host_ram_available());
+    return 1;
+TRY_END
+}
+
+static int global_host_ram_used (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    lua_pushnumber(L, host_ram_used());
+    return 1;
+TRY_END
+}
+
+
 
 
 
 static const luaL_reg global[] = {
+
     // global flags
     {"disk_resource_get_gfx_verbose_loads",global_disk_resource_get_gfx_verbose_loads},
     {"disk_resource_set_gfx_verbose_loads",global_disk_resource_set_gfx_verbose_loads},
@@ -300,6 +320,8 @@ static const luaL_reg global[] = {
     {"disk_resource_acquire",global_disk_resource_acquire},
     {"disk_resource_release",global_disk_resource_release},
 
+    {"host_ram_available",global_host_ram_available},
+    {"host_ram_used",global_host_ram_used},
 
     {NULL, NULL}
 };

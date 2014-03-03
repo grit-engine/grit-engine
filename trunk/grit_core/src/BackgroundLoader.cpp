@@ -304,11 +304,11 @@ void BackgroundLoader::finishedWith (DiskResource *de)
 void BackgroundLoader::checkRAMGPU ()
 {
 
-        size_t budget = gfx_gpu_ram_available();
+        double budget = gfx_gpu_ram_available();
 
         while (true) {
 
-                size_t usage = gfx_gpu_ram_used();
+                double usage = gfx_gpu_ram_used();
 
                 if (usage < budget || mDeathRowGPU.size() == 0) break;
 
@@ -319,24 +319,14 @@ void BackgroundLoader::checkRAMGPU ()
 
 }
 
-static size_t host_ram_available (void)
-{
-        return 1024*1024*1024;
-}
-
-static size_t host_ram_used (void)
-{
-        return 0;
-}
-
 void BackgroundLoader::checkRAMHost ()
 {
 
-        size_t budget = host_ram_available();
+        double budget = host_ram_available();
 
         while (true) {
 
-                size_t usage = host_ram_used();
+                double usage = host_ram_used();
 
                 if (usage < budget || mDeathRowHost.size() == 0) break;
 

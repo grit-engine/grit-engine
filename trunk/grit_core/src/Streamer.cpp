@@ -43,7 +43,8 @@ static CoreFloatOption option_keys_float[] = {
 };
 
 static CoreIntOption option_keys_int[] = {
-    CORE_STEP_SIZE
+    CORE_STEP_SIZE,
+    CORE_RAM
 };
 
 
@@ -77,6 +78,7 @@ std::string core_option_to_string (CoreIntOption o)
 {   
     switch (o) {
         case CORE_STEP_SIZE: return "STEP_SIZE";
+        case CORE_RAM: return "RAM";
     }   
     return "UNKNOWN_INT_OPTION";
 }
@@ -100,6 +102,7 @@ void core_option_from_string (const std::string &s,
     if (s=="AUTOUPDATE") { t = 0; o0 = CORE_AUTOUPDATE; }
 
     else if (s=="STEP_SIZE") { t = 1 ; o1 = CORE_STEP_SIZE; }
+    else if (s=="RAM") { t = 1 ; o1 = CORE_RAM; }
 
     else if (s=="VISIBILITY") { t = 2 ; o2 = CORE_VISIBILITY; }
     else if (s=="PREPARE_DISTANCE_FACTOR") { t = 2 ; o2 = CORE_PREPARE_DISTANCE_FACTOR; }
@@ -130,6 +133,7 @@ static void options_update (bool flush)
         if (v_old == v_new) continue;
         switch (o) {
             case CORE_STEP_SIZE:
+            case CORE_RAM:
             break;
         }
     }
@@ -169,6 +173,7 @@ static void init_options (void)
     }
 
     valid_option(CORE_STEP_SIZE, new ValidOptionRange<int>(0,20000));
+    valid_option(CORE_RAM, new ValidOptionRange<int>(0,1024*1024)); // 1TB
 
     valid_option(CORE_VISIBILITY, new ValidOptionRange<float>(0, 10));
     valid_option(CORE_PREPARE_DISTANCE_FACTOR, new ValidOptionRange<float>(1, 3));
@@ -179,6 +184,7 @@ static void init_options (void)
     core_option(CORE_AUTOUPDATE, false);
 
     core_option(CORE_STEP_SIZE, 20000);
+    core_option(CORE_RAM, 1024); // 1GB
 
     core_option(CORE_VISIBILITY, 1.0f);
     core_option(CORE_PREPARE_DISTANCE_FACTOR, 1.3f);

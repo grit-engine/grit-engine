@@ -66,7 +66,9 @@ enum CoreFloatOption {
 
 enum CoreIntOption {
     /** The number of objects per frame considered for streaming in. */
-    CORE_STEP_SIZE
+    CORE_STEP_SIZE,
+    /** The number of megabytes of host RAM to use for cached disk resources. */
+    CORE_RAM
 };
 
 /** Returns the enum value of the option described by s.  Only one of o0, o1,

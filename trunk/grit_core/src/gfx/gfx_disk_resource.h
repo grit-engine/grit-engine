@@ -187,10 +187,10 @@ class GfxColourGradeLUTDiskResource : public GfxGPUDiskResource {
 // * * old set of children are decremented
 
 /** How much RAM is available on the GPU.  This is actually a number provided by the user, via gfx_option(GFX_RAM). */
-size_t gfx_gpu_ram_available (void);
+double gfx_gpu_ram_available (void);
 
 /** How much RAM is used on the GPU. */
-size_t gfx_gpu_ram_used (void);
+double gfx_gpu_ram_used (void);
 
 /** Should additional log messages specifically about graphics resource loading/unloaded be emitted? */
 extern bool gfx_disk_resource_verbose_loads;
