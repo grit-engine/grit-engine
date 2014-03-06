@@ -207,6 +207,9 @@
     <ClCompile Include="src\audio\OggVorbisDecoder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\input_filter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\net\NetManager.h">
@@ -214,6 +217,9 @@
     </ClInclude>
     <ClInclude Include="src\net\lua_wrappers_net.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\input_filter.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

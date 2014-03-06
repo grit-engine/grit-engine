@@ -120,6 +120,7 @@
     <ClCompile Include="src\GritClass.cpp" />
     <ClCompile Include="src\GritObject.cpp" />
     <ClCompile Include="src\grit_lua_util.cpp" />
+    <ClCompile Include="src\input_filter.cpp" />
     <ClCompile Include="src\ldbglue.cpp" />
     <ClCompile Include="src\lua_wrappers_core.cpp" />
     <ClCompile Include="src\lua_wrappers_disk_resource.cpp" />
@@ -147,6 +148,7 @@
     <ClCompile Include="src\win32\win32_clipboard.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\input_filter.h" />
     <ClInclude Include="src\net\lua_wrappers_net.h" />
     <ClInclude Include="src\net\NetManager.h" />
   </ItemGroup>
