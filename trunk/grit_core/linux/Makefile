@@ -86,31 +86,33 @@ GRIT_OBJ=\
         CollisionMesh.o \
         colour_conversion.o \
         console.o \
-        DiskResource.o \
         DenseIndexMap.o \
+        DiskResource.o \
         ExternalTable.o \
-        GfxFont.o \
-        gfx.o \
-        gfx_option.o \
         GfxBody.o \
         gfx_disk_resource.o \
-        GfxTextBuffer.o \
+        GfxFertileNode.o \
+        GfxFont.o \
         gfx_hud.o \
         GfxInstances.o \
-        GfxNode.o \
         GfxLight.o \
         GfxMaterial.o \
-        GfxFertileNode.o \
+        GfxNode.o \
+        gfx.o \
+        gfx_option.o \
         GfxParticleSystem.o \
         GfxPipeline.o \
         GfxRangedInstances.o \
         GfxSkyBody.o \
         GfxSkyMaterial.o \
-        grit_lua_util.o \
+        GfxTextBuffer.o \
         GritClass.o \
+        grit_lua_util.o \
         GritObject.o \
-        Streamer.o \
+        input_filter.o \
+        KeyboardX11.o \
         ldbglue.o \
+        lua_utf8.o \
         lua_util.o \
         lua_wrappers_audio.o \
         lua_wrappers_core.o \
@@ -119,28 +121,27 @@ GRIT_OBJ=\
         lua_wrappers_gpuprog.o \
         lua_wrappers_gritobj.o \
         lua_wrappers_material.o \
+        lua_wrappers_net.o \
         lua_wrappers_physics.o \
         lua_wrappers_primitives.o \
-        lua_utf8.o \
         main.o \
-        OggVorbisDecoder.o \
-        path_util.o \
-        PhysicsWorld.o \
-        PhysicalMaterial.o \
-        ray.o \
-        TColLexer.o \
-        TColLexer-core-engine.o \
-        TColParser.o \
-        unicode_util.o \
         MouseX11.o \
-        KeyboardX11.o \
-        posix_sleep.o \
-        x11_clipboard.o \
-        lua_wrappers_net.o \
         NetAddress.o \
-        net.o \
         NetManager.o \
         NetMessage.o \
+        net.o \
+        OggVorbisDecoder.o \
+        path_util.o \
+        PhysicalMaterial.o \
+        PhysicsWorld.o \
+        posix_sleep.o \
+        ray.o \
+        Streamer.o \
+        TColLexer-core-engine.o \
+        TColLexer.o \
+        TColParser.o \
+        unicode_util.o \
+        x11_clipboard.o \
 
 
 
