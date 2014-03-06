@@ -2418,7 +2418,8 @@ TRY_START
     check_args(L,2);
     unsigned x = check_t<int>(L,1);
     unsigned y = check_t<int>(L,2);
-    gfx_hud_signal_mouse_move(L, x,y);
+    Vector2 abs = Vector2(x,y);
+    gfx_hud_signal_mouse_move(L, abs);
     return 0;
 TRY_END
 }
@@ -2426,11 +2427,9 @@ TRY_END
 static int global_gfx_hud_signal_button (lua_State *L)
 {
 TRY_START
-    check_args(L,3);
+    check_args(L,1);
     const char *str = luaL_checkstring(L, 1);
-    unsigned x = check_t<int>(L,2);
-    unsigned y = check_t<int>(L,3);
-    gfx_hud_signal_button(L, str, x, y);
+    gfx_hud_signal_button(L, str);
     return 0;
 TRY_END
 }

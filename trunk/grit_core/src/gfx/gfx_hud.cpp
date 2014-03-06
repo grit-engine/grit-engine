@@ -449,7 +449,7 @@ GfxHudObject *GfxHudObject::shootRay (const Vector2 &screen_pos)
     return getNeedsInputCallbacks() && inside ? this : NULL;
 }
 
-void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
+void GfxHudObject::triggerMouseMove (lua_State *L, const Vector2 &screen_pos)
 {
     assertAlive();
 
@@ -486,7 +486,6 @@ void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
         STACK_CHECK_N(2);
 
         push_gfxhudobj(L, this);
-        Vector2 screen_pos(w, h);
         Vector2 local_pos = (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
         push_v2(L, local_pos);
         push_v2(L, screen_pos);
@@ -529,7 +528,7 @@ void GfxHudObject::triggerMouseMove (lua_State *L, float w, float h)
     std::vector<GfxHudObject*> local_children = get_all_hud_objects(children);
     for (unsigned j=0 ; j<local_children.size() ; ++j) {
         GfxHudObject *obj = local_children[j];
-        if (!obj->destroyed()) obj->triggerMouseMove(L, w, h);
+        if (!obj->destroyed()) obj->triggerMouseMove(L, screen_pos);
     }
     dec_all_hud_objects(L, local_children);
 }
@@ -1311,7 +1310,8 @@ GfxHudObject *gfx_hud_ray (int x, int y)
     return NULL;
 }
 
-void gfx_hud_signal_mouse_move (lua_State *L, int x, int y)
+static Vector2 last_mouse_abs;
+void gfx_hud_signal_mouse_move (lua_State *L, const Vector2 &abs)
 {
     // make local copy because callbacks can destroy elements
     std::vector<GfxHudObject*> local_root_objects = get_all_hud_objects(root_elements);
@@ -1319,13 +1319,14 @@ void gfx_hud_signal_mouse_move (lua_State *L, int x, int y)
     for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
         GfxHudObject *obj = local_root_objects[j];
         if (obj->destroyed()) continue;
-        obj->triggerMouseMove(L, x, y);
+        obj->triggerMouseMove(L, abs);
     }
 
     dec_all_hud_objects(L, local_root_objects);
+    last_mouse_abs = abs;
 }
 
-void gfx_hud_signal_button (lua_State *L, const std::string &key, int x, int y)
+void gfx_hud_signal_button (lua_State *L, const std::string &key)
 {
     // make local copy because callbacks can destroy elements
     std::vector<GfxHudObject*> local_root_objects = get_all_hud_objects(root_elements);
@@ -1333,11 +1334,16 @@ void gfx_hud_signal_button (lua_State *L, const std::string &key, int x, int y)
     for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
         GfxHudObject *obj = local_root_objects[j];
         if (obj->destroyed()) continue;
-        obj->triggerMouseMove(L, x, y);
+        obj->triggerMouseMove(L, last_mouse_abs);
         obj->triggerButton(L, key);
     }
 
     dec_all_hud_objects(L, local_root_objects);
 }
 
+void gfx_hud_signal_flush (lua_State *L)
+{
+    (void) L;
+    // TODO: issue 'fake' key up for any keys that are still down.
+}
 // }}}

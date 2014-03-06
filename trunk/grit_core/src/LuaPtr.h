@@ -56,9 +56,9 @@ class LuaPtr {
     }
 
     /** Just like set(L), but does not pop the stack. */
-    void setNoPop (lua_State *L)
+    void setNoPop (lua_State *L, int index=-1)
     {
-        lua_pushvalue(L, -1);
+        lua_pushvalue(L, index);
         set(L);
     }
 

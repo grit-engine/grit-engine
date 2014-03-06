@@ -230,7 +230,7 @@ class GfxHudObject : public GfxHudBase {
 
     void triggerInit (lua_State *L);
     void triggerParentResized (lua_State *L);
-    void triggerMouseMove (lua_State *L, float w, float h);
+    void triggerMouseMove (lua_State *L, const Vector2 &abs);
     void triggerButton (lua_State *L, const std::string &key);
     void triggerFrame (lua_State *L, float elapsed);
     void triggerDestroy (lua_State *L);
@@ -398,13 +398,16 @@ void gfx_hud_shutdown (lua_State *L);
 GfxHudObject *gfx_hud_ray (int x, int y);
 
 /** Notify the hud system of the mouse location (called on a mouse move event). */
-void gfx_hud_signal_mouse_move (lua_State *L, int x, int y);
+void gfx_hud_signal_mouse_move (lua_State *L, const Vector2 &abs);
 
 /** Notify the hud system of a mouse button event. */
-void gfx_hud_signal_button (lua_State *L, const std::string &key, int x, int y);
+void gfx_hud_signal_button (lua_State *L, const std::string &key);
 
 /** Notify the hud objects of a window resize. */
 void gfx_hud_signal_window_resized (unsigned w, unsigned h);
+
+/** Notify the hud objects that they will not be getting key presses for a while. */
+void gfx_hud_signal_flush (lua_State *L);
 
 /** To be called just before gfx_render, to notify hud objects of any parent
  * resize events that may be pending.  The point is that this function has a lua state param, whereas the gfx_render call does not.
