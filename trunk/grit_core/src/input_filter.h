@@ -23,6 +23,7 @@
 #define INPUT_FILTER_H
 
 #include <map>
+#include <set>
 #include <string>
 
 extern "C" {
@@ -30,6 +31,8 @@ extern "C" {
         #include <lauxlib.h>
         #include <lualib.h>
 }
+
+#include "LuaPtr.h"
 
 // You can set a callback set for specific button events.  This
 // emulates UI:bind().  If a callback is provided for a button event,
@@ -86,6 +89,8 @@ extern "C" {
 
 class InputFilter {
 
+    public:
+
     struct Callback {
         LuaPtr down;
         LuaPtr up;
@@ -94,6 +99,9 @@ class InputFilter {
 
     typedef std::map<std::string, std::string> ButtonStatus;
     typedef std::map<std::string, Callback> CallbackMap;
+    typedef std::set<std::string> BindingSet;
+
+    private:
 
     /** Keys that we sent a down signal for, but not an up yet.  These must be
      * "flushed" in certain circumstances, such as when as when we are disabled, or
@@ -124,7 +132,7 @@ class InputFilter {
         EXCEPT << "InputFilter \""<<description<<"\" destroyed." << ENDL;
     }
 
-public:
+    public:
 
     const std::string description;
 
@@ -141,12 +149,13 @@ public:
      * thing can be nil or a function and is the 'up' callback.  Third thing can be
      * nil, true, or a function and is the 'repeat' callback (true means to use the
      * 'down' callback for this as well).  The button name is given without +-:
-     * prefix.
+     * prefix.  It can have a C-A-S- prefix, e.g. C-A-T for ctrl+alt, or S-V for
+     * shift+V.
      */
     void bind (lua_State *L, const std::string &button);
 
     /** The given key no-longer triggers callbacks and falls to the next filter.  The
-     * button is given without +-: prefix.
+     * button is given in the same form as in bind.
      */
     void unbind (lua_State *L, const std::string &button);
 
@@ -158,24 +167,26 @@ public:
     bool getEnabled (void) { return enabled; }
 
     /** Will trigger events at lower levels or this level. */
-    void setEnabled (bool v);
+    void setEnabled (lua_State *L, bool v);
 
     bool getModal (void) { return modal; }
 
     /** Will effectively disable all lower levels. */
-    void setModal (bool v);
+    void setModal (lua_State *L, bool v);
 
     bool getMouseCapture (void) { return mouseCapture; }
 
     /** Will hide the mouse cursor and we will get mouse move events instead of
      * the HUD.
      */
-    void setMouseCapture (bool v);
+    void setMouseCapture (lua_State *L, bool v);
 
     /** Test for whether a given button is down at this time from the
      * perspective of this filter.  The button is given without +-:= prefix.
      */
-    bool isButtonDown (const std::string &b);
+    bool isButtonPressed (const std::string &b);
+
+    double getPriority (void) { return priority; }
 
     /** For internal use. */
     bool acceptButton (lua_State *L, const std::string &b);
@@ -183,6 +194,7 @@ public:
     void triggerFunc (lua_State *L, const LuaPtr &func);
     void triggerMouseMove (lua_State *L, const Vector2 &abs);
     void flushAll (lua_State *L);
+    void flushSet (lua_State *L, const BindingSet &s);
     bool isBound (const std::string &b);
 
 };

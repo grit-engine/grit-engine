@@ -32,6 +32,7 @@
 #include <sleep.h>
 
 #include "grit_lua_util.h"
+#include "input_filter.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "BackgroundLoader.h"
@@ -52,6 +53,135 @@
 #include "audio/lua_wrappers_audio.h"
 #include "physics/lua_wrappers_physics.h"
 #include "net/lua_wrappers_net.h"
+
+#define IFILTER_TAG "Grit/InputFilter"
+
+
+// INPUT_FILTER  ========================================================== {{{
+
+static int ifilter_make (lua_State *L)
+{
+TRY_START
+    check_args(L, 2);
+    double priority = luaL_checknumber(L, 1);
+    std::string desc = check_string(L, 2);
+    InputFilter *self = new InputFilter(priority, desc);
+    push(L,self,IFILTER_TAG);
+    return 1;
+TRY_END
+}
+
+TOSTRING_ADDR_MACRO(ifilter,InputFilter,IFILTER_TAG)
+
+GC_MACRO(InputFilter,ifilter,IFILTER_TAG)
+
+static int ifilter_pressed (lua_State *L)
+{
+TRY_START
+    check_args(L, 2);
+    GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
+    std::string button = check_string(L, 2);
+    lua_pushboolean(L, self.isButtonPressed(button));
+    return 1;
+TRY_END
+}
+
+static int ifilter_bind (lua_State *L)
+{
+TRY_START
+    check_args(L, 5);
+    GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
+    std::string button = check_string(L, 2);
+    self.bind(L, button);
+    return 1;
+TRY_END
+}
+
+static int ifilter_unbind (lua_State *L)
+{
+TRY_START
+    check_args(L, 2);
+    GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
+    std::string button = check_string(L, 2);
+    self.unbind(L, button);
+    return 1;
+TRY_END
+}
+
+static int ifilter_destroy (lua_State *L)
+{
+TRY_START
+    check_args(L, 1);
+    GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
+    self.destroy(L);
+    return 0;
+TRY_END
+}
+
+static int ifilter_index (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(InputFilter,self,1,IFILTER_TAG);
+    std::string key  = luaL_checkstring(L,2);
+    if (key=="priority") {
+        lua_pushnumber(L,self.getPriority());
+    } else if (key=="description") {
+        push_string(L,self.description);
+    } else if (key=="enabled") {
+        lua_pushboolean(L,self.getEnabled());
+    } else if (key=="modal") {
+        lua_pushboolean(L,self.getModal());
+    } else if (key=="mouseCapture") {
+        lua_pushboolean(L,self.getMouseCapture());
+    } else if (key=="bind") {
+        push_cfunction(L, ifilter_bind);
+    } else if (key=="unbind") {
+        push_cfunction(L, ifilter_unbind);
+    } else if (key=="pressed") {
+        push_cfunction(L, ifilter_pressed);
+    } else if (key=="destroy") {
+        push_cfunction(L, ifilter_destroy);
+    } else {
+        my_lua_error(L,"Not a readable InputFilter member: "+key);
+    }
+    return 1;
+TRY_END
+}
+
+static int ifilter_newindex (lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(InputFilter,self,1,IFILTER_TAG);
+    std::string key  = luaL_checkstring(L,2);
+    if (key=="enabled") {
+        bool v = check_bool(L, 3);
+        self.setEnabled(L, v);
+    } else if (key=="modal") {
+        bool v = check_bool(L, 3);
+        self.setModal(L, v);
+    } else if (key=="mouseCapture") {
+        bool v = check_bool(L, 3);
+        self.setMouseCapture(L, v);
+    } else if (key=="mouseMoveCallback") {
+        if (lua_type(L, 3) != LUA_TFUNCTION) {
+            EXCEPT << "mouseMoveCallback expects a function." << ENDL;
+        }
+        self.setMouseMoveCallback(L);
+    } else {
+        EXCEPT << "Not a writeable InputFilter member: " << key << ENDL;
+    }
+    return 0;
+TRY_END
+}
+
+EQ_PTR_MACRO(InputFilter,ifilter,IFILTER_TAG)
+
+MT_MACRO_NEWINDEX(ifilter);
+
+
+//}}}
 
 
 // GLOBAL LIBRARY ========================================================== {{{
@@ -833,6 +963,7 @@ static const luaL_reg global[] = {
         {"profiler_start" ,global_profiler_start},
         {"profiler_stop" ,global_profiler_stop},
 
+        {"InputFilter",ifilter_make},
         {"PlotV3",plot_v3_make},
         {"Plot",plot_make},
         {"StringDB",stringdb_make},
@@ -898,6 +1029,7 @@ lua_State *init_lua(const char *filename)
 */
 
 
+        ADD_MT_MACRO(ifilter,IFILTER_TAG);
         ADD_MT_MACRO(plot,PLOT_TAG);
         ADD_MT_MACRO(plot_v3,PLOT_V3_TAG);
         ADD_MT_MACRO(stringdb,STRINGDB_TAG);
@@ -943,7 +1075,6 @@ void shutdown_lua (lua_State *L)
 }
 
 //}}}
-
 
 
 // vim: shiftwidth=8:tabstop=8:expandtab

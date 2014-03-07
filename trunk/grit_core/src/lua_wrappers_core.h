@@ -20,10 +20,10 @@
  */
 
 extern "C" {
-#include "lua.h"
+    #include "lua.h"
 }
 
-lua_State *init_lua(const char *filename);
+lua_State *init_lua (const char *filename);
 
 void shutdown_lua (lua_State *L);
 

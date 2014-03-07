@@ -24,6 +24,7 @@
 #include "input_filter.h"
 #include "gfx/gfx_hud.h"
 
+typedef InputFilter::BindingSet BindingSet;
 typedef std::map<double, InputFilter *> IFMap;
 static IFMap ifmap;
 
@@ -40,24 +41,36 @@ std::string input_filter_get_description (double priority)
     return i->second->description;
 }
 
-struct Combo {
-    bool ctrl, alt, shift;
-    std::string prefix;
-    Combo (void) { }
-    Combo (bool ctrl, bool alt, bool shift, const std::string &prefix)
-      : ctrl(ctrl), alt(alt), shift(shift), prefix(prefix) { }
-};
+namespace {
+    struct Combo {
+        bool ctrl, alt, shift;
+        std::string prefix;
+        Combo (void) { }
+        Combo (bool ctrl, bool alt, bool shift, const std::string &prefix)
+          : ctrl(ctrl), alt(alt), shift(shift), prefix(prefix) { }
+    };
 
-Combo combos[8] = {
-    Combo(true, true, true, "C-A-S-"),
-    Combo(true, true, false, "C-A-"),
-    Combo(true, false, true, "C-S-"),
-    Combo(false, true, true, "A-S-"),
-    Combo(true, false, false, "C-"),
-    Combo(false, true, false, "A-"),
-    Combo(false, false, true, "S-"),
-    Combo(false, false, false, ""),
-};
+    Combo combos[8] = {
+        Combo(true, true, true, "C-A-S-"),
+        Combo(true, true, false, "C-A-"),
+        Combo(true, false, true, "C-S-"),
+        Combo(false, true, true, "A-S-"),
+        Combo(true, false, false, "C-"),
+        Combo(false, true, false, "A-"),
+        Combo(false, false, true, "S-"),
+        Combo(false, false, false, ""),
+    };
+    const Combo &empty_combo = combos[7];
+}
+
+static const Combo &prefix_to_combo (const std::string &prefix)
+{
+    for (unsigned i=0 ; i<8 ; ++i) {
+        const Combo &c = combos[i];
+        if (c.prefix == prefix) return c;
+    }
+    EXCEPT << "Unrecognised key combo: " << prefix << ENDL;
+}
 
 bool InputFilter::isBound (const std::string &ev)
 {
@@ -66,9 +79,9 @@ bool InputFilter::isBound (const std::string &ev)
 
 bool InputFilter::acceptButton (lua_State *L, const std::string &ev)
 {
-    bool ctrl = isButtonDown("Ctrl");
-    bool alt = isButtonDown("Alt");
-    bool shift = isButtonDown("Shift");
+    bool ctrl = isButtonPressed("Ctrl");
+    bool alt = isButtonPressed("Alt");
+    bool shift = isButtonPressed("Shift");
     return acceptButton(L, ev, ctrl, alt, shift);
 }
 
@@ -93,7 +106,7 @@ bool InputFilter::acceptButton (lua_State *L, const std::string &ev, bool ctrl, 
         if (found.size() == 0) return false;
 
         // should not already be down
-        APP_ASSERT(!isButtonDown(button));
+        APP_ASSERT(!isButtonPressed(button));
 
         const Combo &c = found[0];
         
@@ -111,8 +124,8 @@ bool InputFilter::acceptButton (lua_State *L, const std::string &ev, bool ctrl, 
 
         ButtonStatus::iterator earlier = down.find(button);
 
-        // silently ignore events if the button isn't down
-        if (earlier == down.end()) return true;
+        // Maybe some lower filter has it bound with fewer modifiers.
+        if (earlier == down.end()) return false;
 
         const std::string &prefix = earlier->second;
 
@@ -166,7 +179,7 @@ void InputFilter::triggerFunc (lua_State *L, const LuaPtr &func)
         STACK_CHECK;
         CERR << "InputFilter \"" << description << "\" "
              << "raised an error on button callback, disabling." << std::endl;
-        setEnabled(false);
+        setEnabled(L, false);
         //stack is empty
     } else {
         //stack: err
@@ -201,7 +214,7 @@ void InputFilter::triggerMouseMove (lua_State *L, const Vector2 &rel)
         STACK_CHECK;
         CERR << "InputFilter \"" << description << "\" "
              << "has no mouseMoveCallback function, releasing mouse." << std::endl;
-        setMouseCapture(false);
+        setMouseCapture(L, false);
         return;
     }
 
@@ -225,7 +238,7 @@ void InputFilter::triggerMouseMove (lua_State *L, const Vector2 &rel)
         STACK_CHECK;
         CERR << "InputFilter \"" << description << "\" "
              << "raised an error on mouseMoveCallback, releasing mouse." << std::endl;
-        setMouseCapture(false);
+        setMouseCapture(L, false);
         //stack is empty
     } else {
         //stack: err
@@ -245,6 +258,60 @@ void InputFilter::flushAll (lua_State *L)
     ButtonStatus d = down;
     for (ButtonStatus::iterator i=d.begin(),i_=d.end() ; i!=i_ ; ++i) {
         acceptButton(L, "-"+i->first);
+    }
+    APP_ASSERT(down.size() == 0);
+}
+
+/** Is maskee masked by masker? */
+static bool masked_by (const Combo &maskee, const Combo &masker)
+{
+    // masker needs to have fewer modifiers
+    if (masker.ctrl && !maskee.ctrl) return false;
+    if (masker.alt && !maskee.alt) return false;
+    if (masker.shift && !maskee.shift) return false;
+    return true;
+}
+
+static std::pair<Combo,std::string> split_bind (const std::string &bind)
+{
+    // This code assumes keys do not contain - and are non-empty.
+    size_t last = bind.rfind('-');
+    if (last == std::string::npos) return std::pair<Combo,std::string>(empty_combo, bind);
+    APP_ASSERT(last+1 < bind.length());
+    std::string prefix = bind.substr(0, last+1);
+    std::string button = bind.substr(last+1);
+    return std::pair<Combo,std::string>(prefix_to_combo(prefix), button);
+}
+
+static bool masked_by (const std::string &maskee_, const std::string &masker_)
+{
+    auto maskee = split_bind(maskee_);
+    auto masker = split_bind(masker_);
+
+    // Different keys, cannot mask.
+    if (maskee.second != masker.second) return false;
+
+    // Otherwise examine key combinations.
+    return masked_by(maskee.first, masker.first);
+}
+
+/** Is the given bind maskee masked by something in the set masker? */
+static bool masked_by (const std::string &maskee, const BindingSet &masker)
+{
+    for (BindingSet::iterator i=masker.begin(),i_=masker.end() ; i!=i_ ; ++i) {
+        if (masked_by(maskee, *i)) return true;
+    }
+    return false;
+}
+
+void InputFilter::flushSet (lua_State *L, const BindingSet &s)
+{
+    ensureAlive();
+    // 'down' modified by acceptButton (and also potentially by callbacks).
+    ButtonStatus d = down;
+    for (ButtonStatus::iterator i=d.begin(),i_=d.end() ; i!=i_ ; ++i) {
+        if (masked_by(i->second, s))
+            acceptButton(L, "-"+i->first);
     }
     APP_ASSERT(down.size() == 0);
 }
@@ -368,7 +435,7 @@ void InputFilter::bind (lua_State *L, const std::string &button)
     if (!lua_isnil(L, -1)) {
         if (lua_isboolean(L, -1)) {
             if (lua_toboolean(L, -1)) {
-                if (!lua_isnil(L, -3)) {
+                if (lua_isnil(L, -3)) {
                     c.repeat.setNoPop(L, -3);
                 }
             }
@@ -391,6 +458,8 @@ void InputFilter::unbind (lua_State *L, const std::string &button)
     c.up.setNil(L);
     c.repeat.setNil(L);
     buttonCallbacks.erase(button);
+    // just in case the button was down at the time of the unbind call
+    down.erase(button);
 }
 
 void InputFilter::setMouseMoveCallback (lua_State *L)
@@ -400,52 +469,57 @@ void InputFilter::setMouseMoveCallback (lua_State *L)
     mouseMoveCallback.setNoPop(L);
 }
 
-void InputFilter::setEnabled (bool v)
+void InputFilter::setEnabled (lua_State *L, bool v)
 {
     ensureAlive();
+    if (enabled == v) return;
+    enabled = v;
+    if (enabled) {
+        // If enabling, release all masked buttons below.
+        BindingSet masked;
+        for (auto i=buttonCallbacks.begin(),i_=buttonCallbacks.end() ; i!=i_ ; ++i) {
+            masked.insert(i->first);
+        }
+        IFMap::iterator i = ifmap.find(this->priority);
+        i++;
+        for ( ; i!=ifmap.end(); ++i) {
+            i->second->flushSet(L, masked);
+        }
+    } else {
+        // If disabling, release all local buttons.
+        flushAll(L);
+    }
 
     enabled = v;
-    // TODO: If disabling, release all local buttons.
-    // If enabling, release all masked buttons below.
 }
 
-void InputFilter::setModal (bool v)
+void InputFilter::setModal (lua_State *L, bool v)
 {
     ensureAlive();
-
+    if (modal == v) return;
     modal = v;
-    // TODO: If enabling, release all buttons below.
+    if (modal) {
+        IFMap::iterator i = ifmap.find(this->priority);
+        i++;
+        for ( ; i!=ifmap.end(); ++i) {
+            i->second->flushAll(L);
+        }
+    }
 }
 
-void InputFilter::setMouseCapture (bool v)
+void InputFilter::setMouseCapture (lua_State *L, bool v)
 {
     ensureAlive();
-
+    if (mouseCapture == v) return;
     mouseCapture = v;
-    // TODO: If enabling, release all buttons in HUD.
+
+    if (mouseCapture) {
+        gfx_hud_signal_flush(L);
+    }
 }
 
-bool InputFilter::isButtonDown (const std::string &b)
+bool InputFilter::isButtonPressed (const std::string &b)
 {
     ensureAlive();
     return down.find(b) != down.end();
 }
-
-/*
-void binding_stack_set_state (lua_State *L, BindingLevel level, BindingState s)
-{
-    BindingStack::iterator i = binding_stack.find(level);
-    if (i == binding_stack.end()) EXCEPT << "No binding stack at level: " << level << ENDL;
-    BindingStack &stack = i->second;
-    if (stack.modal == v) return;
-    if (stack.
-    if (stack.modal) {
-        ButtonSet all_not_captured = stack.down - stack.captured;
-        flush(L, stack, level, captured);
-    } else {
-        // send keydowns for keys down in binding tables below i 
-    }
-    stack.modal = v;
-}
-*/
-
