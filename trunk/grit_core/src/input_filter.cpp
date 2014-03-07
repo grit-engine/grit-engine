@@ -28,6 +28,10 @@ typedef InputFilter::BindingSet BindingSet;
 typedef std::map<double, InputFilter *> IFMap;
 static IFMap ifmap;
 
+static bool ctrl_pressed = false;
+static bool shift_pressed = false;
+static bool alt_pressed = false;
+
 bool input_filter_has (double priority)
 {
     IFMap::iterator i = ifmap.find(priority);
@@ -79,14 +83,6 @@ bool InputFilter::isBound (const std::string &ev)
 
 bool InputFilter::acceptButton (lua_State *L, const std::string &ev)
 {
-    bool ctrl = isButtonPressed("Ctrl");
-    bool alt = isButtonPressed("Alt");
-    bool shift = isButtonPressed("Shift");
-    return acceptButton(L, ev, ctrl, alt, shift);
-}
-
-bool InputFilter::acceptButton (lua_State *L, const std::string &ev, bool ctrl, bool alt, bool shift)
-{
     ensureAlive();
     char kind = ev[0];
     std::string button = &ev[1];
@@ -97,9 +93,9 @@ bool InputFilter::acceptButton (lua_State *L, const std::string &ev, bool ctrl, 
         for (unsigned i=0 ; i<8 ; ++i) {
             const Combo &c = combos[i];
             // ignore prefixes that do not apply given current modifier status
-            if (c.ctrl && !ctrl) continue;
-            if (c.alt && !alt) continue;
-            if (c.shift && !shift) continue;
+            if (c.ctrl && !ctrl_pressed) continue;
+            if (c.alt && !alt_pressed) continue;
+            if (c.shift && !shift_pressed) continue;
             if (isBound(c.prefix+button)) found.push_back(c);
         }
         // if no bindings match, fall through
@@ -143,7 +139,7 @@ bool InputFilter::acceptButton (lua_State *L, const std::string &ev, bool ctrl, 
 
     }
 
-    return false;
+    return true;
 }
 
 void InputFilter::triggerFunc (lua_State *L, const LuaPtr &func)
@@ -318,13 +314,21 @@ void InputFilter::flushSet (lua_State *L, const BindingSet &s)
 
 void input_filter_trickle_button (lua_State *L, const std::string &b)
 {
+    if (b == "+Shift") shift_pressed = true;
+    if (b == "-Shift") shift_pressed = false;
+    if (b == "+Ctrl") ctrl_pressed = true;
+    if (b == "-Ctrl") ctrl_pressed = false;
+    if (b == "+Alt") alt_pressed = true;
+    if (b == "-Alt") alt_pressed = false;
+
     // copy because callbacks can alter the map while we're iterating over it
     IFMap m = ifmap;
     bool captured = false;
     for (IFMap::const_iterator i=m.begin(),i_=m.end() ; i!=i_ ; ++i) {
         InputFilter *f = i->second;
-        if (f->acceptButton(L, b)) return;
+        if (!f->getEnabled()) continue;
         if (f->getMouseCapture()) captured = true;
+        if (f->acceptButton(L, b)) break;
         if (f->getModal()) break;
     }
     if (!captured) gfx_hud_signal_button(L, b);
@@ -336,6 +340,7 @@ void input_filter_trickle_mouse_move (lua_State *L, const Vector2 &rel, const Ve
     IFMap m = ifmap;
     for (IFMap::const_iterator i=m.begin(),i_=m.end() ; i!=i_ ; ++i) {
         InputFilter *f = i->second;
+        if (!f->getEnabled()) continue;
         if (f->getMouseCapture()) {
             f->triggerMouseMove(L, rel);
             return;
@@ -347,6 +352,9 @@ void input_filter_trickle_mouse_move (lua_State *L, const Vector2 &rel, const Ve
 
 void input_filter_flush (lua_State *L)
 {
+    ctrl_pressed = false;
+    shift_pressed = false;
+    alt_pressed = false;
     IFMap m = ifmap;
     for (IFMap::const_iterator i=m.begin(),i_=m.end() ; i!=i_ ; ++i) {
         InputFilter *f = i->second;

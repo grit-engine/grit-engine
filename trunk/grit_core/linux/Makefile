@@ -601,6 +601,92 @@ grit_lua_util.o: ../../dependencies/util/math_util.h
 grit_lua_util.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 grit_lua_util.o: ../../dependencies/util/lua_wrappers_common.h
 grit_lua_util.o: ../src/path_util.h
+input_filter.o: ../../dependencies/util/lua_util.h
+input_filter.o: ../depend_stubs/string ../depend_stubs/sstream
+input_filter.o: ../depend_stubs/limits ../depend_stubs/vector
+input_filter.o: ../depend_stubs/lua.h ../depend_stubs/lauxlib.h
+input_filter.o: ../depend_stubs/lualib.h
+input_filter.o: ../../dependencies/util/exception.h
+input_filter.o: ../depend_stubs/cstdlib ../depend_stubs/iostream
+input_filter.o: ../../dependencies/util/intrinsics.h
+input_filter.o: ../../dependencies/util/math_util.h
+input_filter.o: ../depend_stubs/cmath ../depend_stubs/cfloat
+input_filter.o: ../src/LuaPtr.h ../src/CentralisedLog.h
+input_filter.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+input_filter.o: ../../dependencies/util/console.h
+input_filter.o: ../src/input_filter.h ../depend_stubs/map
+input_filter.o: ../src/gfx/gfx_hud.h ../src/SharedPtr.h
+input_filter.o: ../depend_stubs/functional ../src/grit_lua_util.h
+input_filter.o: ../depend_stubs/OgreException.h
+input_filter.o: ../../dependencies/util/lua_wrappers_common.h
+input_filter.o: ../src/path_util.h ../src/vect_util.h
+input_filter.o: ../depend_stubs/algorithm ../src/LuaPtr.h
+input_filter.o: ../src/gfx/GfxPipeline.h ../src/gfx/gfx_internal.h
+input_filter.o: ../depend_stubs/Ogre.h
+input_filter.o: ../depend_stubs/OgreMeshManager.h
+input_filter.o: ../depend_stubs/OgreOctreeSceneManager.h
+input_filter.o: ../depend_stubs/OgreVector3.h
+input_filter.o: ../depend_stubs/OgreQuaternion.h
+input_filter.o: ../depend_stubs/OgreCustomCompositionPass.h
+input_filter.o: ../depend_stubs/OgreCompositor.h
+input_filter.o: ../depend_stubs/OgreOctreePlugin.h
+input_filter.o: ../depend_stubs/OgreCgPlugin.h
+input_filter.o: ../depend_stubs/OgreRenderSystem.h
+input_filter.o: ../depend_stubs/OgreGLRenderSystem.h ../src/gfx/gfx.h
+input_filter.o: ../src/gfx/gfx_option.h ../src/gfx/GfxFont.h
+input_filter.o: ../src/BackgroundLoader.h ../src/vect_util.h
+input_filter.o: ../src/main.h ../src/Mouse.h ../src/Keyboard.h
+input_filter.o: ../src/BackgroundLoader.h ../depend_stubs/list
+input_filter.o: ../depend_stubs/boost/thread/thread.hpp
+input_filter.o: ../depend_stubs/boost/thread/condition.hpp
+input_filter.o: ../src/DiskResource.h ../depend_stubs/set
+input_filter.o: ../src/BulletDebugDrawer.h
+input_filter.o: ../depend_stubs/OgreFrameListener.h
+input_filter.o: ../depend_stubs/OgreManualObject.h
+input_filter.o: ../depend_stubs/btBulletCollisionCommon.h
+input_filter.o: ../src/physics/PhysicsWorld.h ../src/CentralisedLog.h
+input_filter.o: ../depend_stubs/btBulletDynamicsCommon.h
+input_filter.o: ../src/physics/TColParser.h ../src/physics/TColLexer
+input_filter.o: ../depend_stubs/istream
+input_filter.o: ../depend_stubs/quex/code_base/compatibility/inttypes.h
+input_filter.o: ../src/physics/TColLexer-token_ids
+input_filter.o: ../depend_stubs/cstdio
+input_filter.o: ../depend_stubs/quex/code_base/Token
+input_filter.o: ../depend_stubs/quex/code_base/definitions
+input_filter.o: ../depend_stubs/quex/code_base/buffer/Buffer
+input_filter.o: ../depend_stubs/quex/code_base/buffer/plain/BufferFiller_Plain
+input_filter.o: ../depend_stubs/quex/code_base/template/QuexMode
+input_filter.o: ../depend_stubs/quex/code_base/template/Analyser
+input_filter.o: ../depend_stubs/quex/code_base/template/Counter
+input_filter.o: ../depend_stubs/quex/code_base/template/Accumulator
+input_filter.o: ../depend_stubs/quex/code_base/temporary_macros_on
+input_filter.o: ../depend_stubs/quex/code_base/temporary_macros_off
+input_filter.o: ../depend_stubs/quex/code_base/template/constructor.i
+input_filter.o: ../depend_stubs/quex/code_base/template/Counter.i
+input_filter.o: ../depend_stubs/quex/code_base/template/Accumulator.i
+input_filter.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
+input_filter.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+input_filter.o: ../depend_stubs/quex/code_base/template/mode_handling.i
+input_filter.o: ../depend_stubs/quex/code_base/template/misc.i
+input_filter.o: ../depend_stubs/quex/code_base/template/buffer_access.i
+input_filter.o: ../depend_stubs/quex/code_base/template/Analyser.i
+input_filter.o: ../src/physics/CollisionMesh.h
+input_filter.o: ../depend_stubs/OgreDataStream.h
+input_filter.o: ../../dependencies/util/sleep.h ../src/DiskResource.h
+input_filter.o: ../src/physics/BColParser.h ../depend_stubs/stdint.h
+input_filter.o: ../src/physics/LooseEnd.h
+input_filter.o: ../src/physics/PhysicalMaterial.h ../src/GritObject.h
+input_filter.o: ../src/SharedPtr.h ../src/Streamer.h
+input_filter.o: ../src/GritObject.h ../src/ExternalTable.h
+input_filter.o: ../../dependencies/util/SplineTable.h
+input_filter.o: ../src/gfx/gfx_disk_resource.h
+input_filter.o: ../depend_stubs/OgreResource.h
+input_filter.o: ../depend_stubs/OgreTexture.h
+input_filter.o: ../depend_stubs/OgreMesh.h ../src/gfx/GfxTextBuffer.h
+input_filter.o: ../depend_stubs/cstdint
+input_filter.o: ../depend_stubs/OgreHardwareBufferManager.h
+input_filter.o: ../depend_stubs/OgreHardwareVertexBuffer.h
+input_filter.o: ../depend_stubs/OgreHardwareIndexBuffer.h
 ldbglue.o: ../depend_stubs/lua.h
 lua_wrappers_core.o: ../depend_stubs/limits.h
 lua_wrappers_core.o: ../depend_stubs/sys/mman.h
@@ -2644,8 +2730,12 @@ AudioDiskResource.o: ../depend_stubs/cstring
 AudioDiskResource.o: ../depend_stubs/fstream
 AudioDiskResource.o: ../depend_stubs/stdint.h
 AudioDiskResource.o: ../src/audio/OggVorbisDecoder.h
+AudioDiskResource.o: ../depend_stubs/vorbis/codec.h
+AudioDiskResource.o: ../depend_stubs/vorbis/vorbisfile.h
 OggVorbisDecoder.o: ../src/audio/OggVorbisDecoder.h
 OggVorbisDecoder.o: ../depend_stubs/string
+OggVorbisDecoder.o: ../depend_stubs/vorbis/codec.h
+OggVorbisDecoder.o: ../depend_stubs/vorbis/vorbisfile.h
 OggVorbisDecoder.o: ../depend_stubs/OgreResourceGroupManager.h
 OggVorbisDecoder.o: ../src/CentralisedLog.h
 audio.o: ../depend_stubs/AL/al.h ../depend_stubs/AL/alc.h

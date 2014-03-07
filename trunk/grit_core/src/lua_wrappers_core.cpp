@@ -71,9 +71,28 @@ TRY_START
 TRY_END
 }
 
-TOSTRING_ADDR_MACRO(ifilter,InputFilter,IFILTER_TAG)
+static int ifilter_tostring (lua_State *L)
+{
+TRY_START
+    check_args(L, 1);
+    GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
+    std::stringstream ss;
+    ss << IFILTER_TAG << " " << static_cast<void*>(&self) << " (" << self.getPriority() << ") \"" << self.description << "\"";
+    lua_pushstring(L, ss.str().c_str());
+    return 1;
+TRY_END
+}
 
-GC_MACRO(InputFilter,ifilter,IFILTER_TAG)
+static int ifilter_gc (lua_State *L)
+{
+TRY_START
+    check_args(L, 1);
+    GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
+    self.destroy(L);
+    delete &self;
+    return 0;
+TRY_END
+}
 
 static int ifilter_pressed (lua_State *L)
 {
@@ -89,11 +108,13 @@ TRY_END
 static int ifilter_bind (lua_State *L)
 {
 TRY_START
+    if (lua_gettop(L) < 3) EXCEPT << "InputFilter.bind takes at least 3 arguments." << ENDL;
+    while (lua_gettop(L) < 5) lua_pushnil(L);
     check_args(L, 5);
     GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
     std::string button = check_string(L, 2);
     self.bind(L, button);
-    return 1;
+    return 0;
 TRY_END
 }
 
@@ -104,7 +125,7 @@ TRY_START
     GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
     std::string button = check_string(L, 2);
     self.unbind(L, button);
-    return 1;
+    return 0;
 TRY_END
 }
 
@@ -335,6 +356,28 @@ TRY_START
         return 0;
 TRY_END
 }
+
+static int global_input_filter_trickle_mouse_move (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    Vector2 rel = check_v2(L, 1);
+    Vector2 abs = check_v2(L, 2);
+    input_filter_trickle_mouse_move(L, rel, abs);
+    return 0;
+TRY_END
+}
+
+static int global_input_filter_trickle_button (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    const char *str = luaL_checkstring(L, 1);
+    input_filter_trickle_button(L, str);
+    return 0;
+TRY_END
+}
+
 
 
 
@@ -962,6 +1005,9 @@ static const luaL_reg global[] = {
 
         {"profiler_start" ,global_profiler_start},
         {"profiler_stop" ,global_profiler_stop},
+
+        {"input_filter_trickle_button",global_input_filter_trickle_button},
+        {"input_filter_trickle_mouse_move",global_input_filter_trickle_mouse_move},
 
         {"InputFilter",ifilter_make},
         {"PlotV3",plot_v3_make},

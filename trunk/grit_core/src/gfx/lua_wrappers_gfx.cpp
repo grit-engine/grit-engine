@@ -2412,28 +2412,6 @@ TRY_START
 TRY_END
 }
 
-static int global_gfx_hud_signal_mouse_move (lua_State *L)
-{
-TRY_START
-    check_args(L,2);
-    unsigned x = check_t<int>(L,1);
-    unsigned y = check_t<int>(L,2);
-    Vector2 abs = Vector2(x,y);
-    gfx_hud_signal_mouse_move(L, abs);
-    return 0;
-TRY_END
-}
-
-static int global_gfx_hud_signal_button (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    const char *str = luaL_checkstring(L, 1);
-    gfx_hud_signal_button(L, str);
-    return 0;
-TRY_END
-}
-
 
 
 
@@ -4337,8 +4315,6 @@ static const luaL_reg global[] = {
     {"gfx_hud_class_all",global_gfx_hud_class_all},
     {"gfx_hud_class_count",global_gfx_hud_class_count},
     {"gfx_hud_ray",global_gfx_hud_ray},
-    {"gfx_hud_signal_mouse_move",global_gfx_hud_signal_mouse_move},
-    {"gfx_hud_signal_button",global_gfx_hud_signal_button},
 
     {"gfx_env_cube",global_gfx_env_cube},
     {"gfx_colour_grade",global_gfx_colour_grade},

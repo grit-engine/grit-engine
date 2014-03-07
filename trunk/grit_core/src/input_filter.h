@@ -190,7 +190,6 @@ class InputFilter {
 
     /** For internal use. */
     bool acceptButton (lua_State *L, const std::string &b);
-    bool acceptButton (lua_State *L, const std::string &b, bool ctrl, bool alt, bool shift);
     void triggerFunc (lua_State *L, const LuaPtr &func);
     void triggerMouseMove (lua_State *L, const Vector2 &abs);
     void flushAll (lua_State *L);
