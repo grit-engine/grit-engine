@@ -26,14 +26,14 @@
 
 #include "../lua_wrappers_primitives.h"
 #include "../main.h"
-#include "../ExternalTable.h"
-#include "../LuaPtr.h"
+#include "../external_table.h"
+#include "../lua_ptr.h"
 #include "../path_util.h"
 
 #include "lua_wrappers_gfx.h"
 #include "gfx_option.h"
 #include "gfx_hud.h"
-#include "GfxFont.h"
+#include "gfx_font.h"
 
 GfxNodePtr check_gfx_node (lua_State *L, int idx)
 {

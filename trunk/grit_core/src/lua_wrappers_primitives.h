@@ -21,7 +21,7 @@
 
 #include "grit_lua_util.h"
 
-#include "SplineTable.h"
+#include "spline_table.h"
 
 #define STRINGDB_TAG "Grit/StringDB"
 MT_MACRO_DECLARE(stringdb);

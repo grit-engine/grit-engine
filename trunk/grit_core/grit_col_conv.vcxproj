@@ -70,13 +70,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="src\physics\BColParser.c++" />
+    <None Include="src\physics\bcol_parser.c++" />
     <None Include="src\physics\grit_col_conv.c++" />
-    <None Include="src\physics\TColParser.c++" />
+    <None Include="src\physics\tcol_parser.c++" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\physics\TColLexer-core-engine.cpp" />
-    <ClCompile Include="src\physics\TColLexer.cpp" />
+    <ClCompile Include="src\physics\tcol_lexer-core-engine.cpp" />
+    <ClCompile Include="src\physics\tcol_lexer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

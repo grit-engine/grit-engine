@@ -1,9 +1,9 @@
 #include <sleep.h>
 
-#include "../CentralisedLog.h"
+#include "../centralised_log.h"
 #include "net.h"
 
-#include "NetManager.h"
+#include "net_manager.h"
 
 static NetManager* netManager;
 

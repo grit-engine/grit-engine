@@ -21,7 +21,7 @@
 
 #include <limits>
 
-#include "../gfx/GfxRangedInstances.h"
+#include "../gfx/gfx_ranged_instances.h"
 #include "../lua_wrappers_gritobj.h"
 #include "../main.h"
 #include "../path_util.h"
@@ -30,8 +30,8 @@
 #include "../gfx/gfx.h"
 #include "../gfx/lua_wrappers_gfx.h"
 
-#include "PhysicsWorld.h"
-#include "CollisionMesh.h"
+#include "physics_world.h"
+#include "collision_mesh.h"
 #include "lua_wrappers_physics.h"
 
 

@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-#include "CentralisedLog.h"
+#include "centralised_log.h"
 #include "path_util.h"
 #include "grit_lua_util.h"
 

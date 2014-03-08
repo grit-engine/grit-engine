@@ -36,14 +36,14 @@ extern "C" {
         #include "lua.h"
 }
 
-#include "Mouse.h"
-#include "Keyboard.h"
-#include "BackgroundLoader.h"
-#include "CentralisedLog.h"
-#include "BulletDebugDrawer.h"
+#include "mouse.h"
+#include "keyboard.h"
+#include "background_loader.h"
+#include "centralised_log.h"
+#include "bullet_debug_drawer.h"
 
 
-#include "physics/PhysicsWorld.h"
+#include "physics/physics_world.h"
 
 /** A singleton log object through which all internal debug log output is passed. */
 extern CentralisedLog clog;

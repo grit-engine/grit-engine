@@ -20,7 +20,7 @@
  */
 
 #include "lua_util.h"
-#include "LuaPtr.h"
+#include "lua_ptr.h"
 #include "input_filter.h"
 #include "gfx/gfx_hud.h"
 

@@ -20,8 +20,8 @@
  */
 
 #include "../main.h"
-#include "../ExternalTable.h"
-#include "../LuaPtr.h"
+#include "../external_table.h"
+#include "../lua_ptr.h"
 #include "../path_util.h"
 
 #include "audio.h"

@@ -23,14 +23,14 @@
 
 #include "gfx.h"
 
-#include "GfxFertileNode.h"
-#include "GfxBody.h"
-#include "GfxSkyBody.h"
-#include "GfxMaterial.h"
-#include "GfxSkyMaterial.h"
-#include "GfxLight.h"
-#include "GfxInstances.h"
-#include "GfxRangedInstances.h"
+#include "gfx_fertile_node.h"
+#include "gfx_body.h"
+#include "gfx_sky_body.h"
+#include "gfx_material.h"
+#include "gfx_sky_material.h"
+#include "gfx_light.h"
+#include "gfx_instances.h"
+#include "gfx_ranged_instances.h"
 #include "gfx_hud.h"
 
 #define GFXNODE_TAG "Grit/GfxFertileNode"

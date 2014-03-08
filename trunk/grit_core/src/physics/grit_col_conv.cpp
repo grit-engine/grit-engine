@@ -32,8 +32,8 @@
 #include <fcntl.h>
 
 #include "../portable_io.h"
-#include "TColParser.h"
-#include "BColParser.h"
+#include "tcol_parser.h"
+#include "bcol_parser.h"
 
 #define VERSION "1.0"
 
@@ -155,8 +155,8 @@ int main (int argc, char **argv)
 
             TColFile tcol;
 
-            quex::TColLexer* qlex =
-                    new quex::TColLexer(in);
+            quex::tcol_lexer* qlex =
+                    new quex::tcol_lexer(in);
             parse_tcol_1_0(input_filename,qlex,tcol);
             delete qlex;
 

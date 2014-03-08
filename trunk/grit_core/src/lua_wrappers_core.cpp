@@ -33,11 +33,11 @@
 
 #include "grit_lua_util.h"
 #include "input_filter.h"
-#include "Keyboard.h"
-#include "Mouse.h"
-#include "BackgroundLoader.h"
+#include "keyboard.h"
+#include "mouse.h"
+#include "background_loader.h"
 #include "clipboard.h"
-#include "CentralisedLog.h"
+#include "centralised_log.h"
 #include "main.h"
 #include "lua_utf8.h"
 

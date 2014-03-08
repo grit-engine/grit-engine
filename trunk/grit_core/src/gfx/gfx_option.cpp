@@ -23,10 +23,10 @@
 #include <map>
 
 #include "gfx_internal.h"
-#include "GfxPipeline.h"
+#include "gfx_pipeline.h"
 #include "gfx_option.h"
 #include "../option.h"
-#include "../CentralisedLog.h"
+#include "../centralised_log.h"
     
 GfxBoolOption gfx_bool_options[] = {
     GFX_AUTOUPDATE,

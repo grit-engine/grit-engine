@@ -1,4 +1,4 @@
-#include "../SharedPtr.h"
+#include "../shared_ptr.h"
 
 class NetAddress;
 typedef SharedPtr<NetAddress> NetAddressPtr;

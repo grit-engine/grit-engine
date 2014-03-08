@@ -40,7 +40,7 @@
         #include <stdint.h>
 #endif
 
-#include "CentralisedLog.h"
+#include "centralised_log.h"
 
 /** \file
  *

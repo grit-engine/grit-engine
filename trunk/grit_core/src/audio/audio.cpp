@@ -22,12 +22,12 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 
-#include "../CentralisedLog.h"
+#include "../centralised_log.h"
 #include "../vect_util.h"
 #include "../option.h"
 
 #include "audio.h"
-#include "AudioDiskResource.h"
+#include "audio_disk_resource.h"
 
 ALCdevice* alDevice;
 ALCcontext* alContext;

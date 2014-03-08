@@ -23,7 +23,7 @@
 
 #include <map>
 
-#include "LuaPtr.h"
+#include "lua_ptr.h"
 #include "grit_lua_util.h"
 #include "path_util.h"
 

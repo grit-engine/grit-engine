@@ -24,7 +24,7 @@ extern "C" {
 #include "lua.h"
 }
 
-#include "DiskResource.h"
+#include "disk_resource.h"
 
 bool disk_resource_index (lua_State *L, DiskResource &self, const char *key);
 

@@ -26,8 +26,8 @@
 #include <fstream>
 
 #include "ios_util.h"
-#include "physics/TColParser.h"
-#include "ColParser.h"
+#include "physics/tcol_parser.h"
+#include "col_parser.h"
 
 #define VERSION "1.0"
 
@@ -138,8 +138,8 @@ int main(int argc, char **argv)
 
                         TColFile tcol;
 
-                        quex::TColLexer* qlex =
-                                new quex::TColLexer(in);
+                        quex::tcol_lexer* qlex =
+                                new quex::tcol_lexer(in);
                         parse_tcol_1_0(input_filename,qlex,tcol);
                         delete qlex;
 

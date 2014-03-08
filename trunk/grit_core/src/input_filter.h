@@ -32,7 +32,7 @@ extern "C" {
         #include <lualib.h>
 }
 
-#include "LuaPtr.h"
+#include "lua_ptr.h"
 
 // You can set a callback set for specific button events.  This
 // emulates UI:bind().  If a callback is provided for a button event,

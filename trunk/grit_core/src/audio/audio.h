@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-#include "../SharedPtr.h"
+#include "../shared_ptr.h"
 
 class AudioSource;
 typedef SharedPtr<AudioSource> AudioSourcePtr;
@@ -31,10 +31,10 @@ typedef SharedPtr<AudioSource> AudioSourcePtr;
 
 #include <math_util.h>
 
-#include "../BackgroundLoader.h"
-#include "../DiskResource.h"
+#include "../background_loader.h"
+#include "../disk_resource.h"
 
-#include "AudioDiskResource.h"
+#include "audio_disk_resource.h"
 
 enum AudioBoolOption {
     /** Whether or not setting the next option will cause fresh option values to be

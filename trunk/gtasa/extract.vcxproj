@@ -89,9 +89,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\grit_core\src\physics\BColParser.cpp" />
-    <ClCompile Include="..\grit_core\src\physics\TColParser.cpp" />
-    <ClCompile Include="src\ColParser.cpp" />
+    <ClCompile Include="..\grit_core\src\physics\bcol_parser.cpp" />
+    <ClCompile Include="..\grit_core\src\physics\tcol_parser.cpp" />
+    <ClCompile Include="src\col_parser.cpp" />
     <ClCompile Include="src\csvread.cpp" />
     <ClCompile Include="src\dffread.cpp" />
     <ClCompile Include="src\dirutil.cpp" />

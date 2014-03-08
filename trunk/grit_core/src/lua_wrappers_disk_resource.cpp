@@ -22,7 +22,7 @@
 #include "grit_lua_util.h"
 
 #include "gfx/gfx_disk_resource.h"
-#include "physics/CollisionMesh.h"
+#include "physics/collision_mesh.h"
 
 #include "lua_wrappers_disk_resource.h"
 #include "gfx/lua_wrappers_gfx.h"

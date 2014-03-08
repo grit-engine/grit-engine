@@ -28,14 +28,14 @@
 #include "../main.h"
 
 #include "gfx_internal.h"
-#include "GfxPipeline.h"
+#include "gfx_pipeline.h"
 #include "gfx_option.h"
-#include "Clutter.h"
-#include "GfxMaterial.h"
-#include "GfxBody.h"
-#include "GfxLight.h"
-#include "GfxSkyMaterial.h"
-#include "GfxSkyBody.h"
+#include "clutter.h"
+#include "gfx_material.h"
+#include "gfx_body.h"
+#include "gfx_light.h"
+#include "gfx_sky_material.h"
+#include "gfx_sky_body.h"
 #include "gfx_hud.h"
 
 #ifdef WIN32

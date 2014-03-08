@@ -21,7 +21,7 @@
 
 #include "grit_lua_util.h"
 
-#include "Streamer.h"
+#include "streamer.h"
 
 #define GRITCLS_TAG "Grit/Class"
 MT_MACRO_DECLARE(gritcls);

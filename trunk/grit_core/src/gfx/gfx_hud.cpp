@@ -22,7 +22,7 @@
 #include <OgreHighLevelGpuProgramManager.h>
 #include <OgreCgProgram.h>
 
-#include "../CentralisedLog.h"
+#include "../centralised_log.h"
 #include "../path_util.h"
 
 #include "lua_wrappers_gfx.h"

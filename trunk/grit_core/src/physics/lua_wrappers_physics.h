@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-#include "PhysicsWorld.h"
+#include "physics_world.h"
 
 void push_rbody (lua_State *L, const RigidBodyPtr &self);
 

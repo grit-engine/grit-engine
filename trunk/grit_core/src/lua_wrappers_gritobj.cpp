@@ -19,8 +19,8 @@
  * THE SOFTWARE.
  */
 
-#include "GritObject.h"
-#include "GritClass.h"
+#include "grit_object.h"
+#include "grit_class.h"
 #include "main.h"
 
 #include "lua_wrappers_gritobj.h"

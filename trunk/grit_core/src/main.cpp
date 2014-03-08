@@ -27,16 +27,16 @@
 #  include <windows.h>
 #  define DIRECT3D_VERSION 0x0900
 //#  include <d3d9.h>
-#  include "win32/MouseDirectInput8.h"
-#  include "win32/KeyboardDirectInput8.h"
-#  include "win32/KeyboardWinAPI.h"
+#  include "win32/mouse_direct_input8.h"
+#  include "win32/keyboard_direct_input8.h"
+#  include "win32/keyboard_win_api.h"
 #else
-#  include "linux/KeyboardX11.h"
-#  include "linux/MouseX11.h"
+#  include "linux/keyboard_x11.h"
+#  include "linux/mouse_x11.h"
 #endif
 
 #include "main.h"
-#include "CentralisedLog.h"
+#include "centralised_log.h"
 
 
 #include "grit_lua_util.h"
@@ -44,7 +44,7 @@
 
 #include "gfx/gfx.h"
 
-#include "physics/PhysicsWorld.h"
+#include "physics/physics_world.h"
 
 #include "audio/audio.h"
 

@@ -28,9 +28,9 @@
 
 #include "gfx_disk_resource.h"
 #include "gfx_internal.h"
-#include "GfxMaterial.h"
-#include "GfxBody.h"
-#include "GfxSkyBody.h"
+#include "gfx_material.h"
+#include "gfx_body.h"
+#include "gfx_sky_body.h"
 
 
 bool gfx_disk_resource_verbose_loads = false;

@@ -22,7 +22,7 @@
 #include <string>
 #include <map>
 
-#include "../SharedPtr.h"
+#include "../shared_ptr.h"
 
 class GfxHudBase;
 class GfxHudObject;
@@ -43,11 +43,11 @@ extern "C" {
 #include "../grit_lua_util.h"
 #include "../path_util.h"
 #include "../vect_util.h"
-#include "../LuaPtr.h"
+#include "../lua_ptr.h"
 
-#include "GfxPipeline.h"
-#include "GfxFont.h"
-#include "GfxTextBuffer.h"
+#include "gfx_pipeline.h"
+#include "gfx_font.h"
+#include "gfx_text_buffer.h"
 
 #define GFX_HUD_ZORDER_MAX 7
 
