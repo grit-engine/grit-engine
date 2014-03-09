@@ -35,15 +35,11 @@ public:
 
         typedef std::vector<Press> Presses;
 
-        Keyboard() : fullFlushRequested(false), verbose(false) { }
+        Keyboard() : verbose(false) { }
 
         virtual ~Keyboard() = 0;
 
         virtual Presses getPresses() = 0;
-
-        virtual void flush() { fullFlushRequested = true; }
-
-        virtual void flush(Press p) { keysToFlush.push_back(p); }
 
         virtual bool hasFocus() = 0;
 
@@ -52,11 +48,7 @@ public:
 
 protected:
 
-        bool fullFlushRequested;
-
         bool verbose;
-
-        Presses keysToFlush;
 
 };
 

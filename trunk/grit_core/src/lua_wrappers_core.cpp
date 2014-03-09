@@ -88,7 +88,7 @@ static int ifilter_gc (lua_State *L)
 TRY_START
     check_args(L, 1);
     GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
-    self.destroy(L);
+    if (self.isAlive()) self.destroy(L);
     delete &self;
     return 0;
 TRY_END
@@ -234,20 +234,6 @@ TRY_START
 TRY_END
 }
 
-static int global_keyb_flush (lua_State *L)
-{
-TRY_START
-        if (lua_gettop(L)==1) {
-                std::string key = luaL_checkstring(L,1);
-                keyboard->flush(key);
-        } else {
-                check_args(L,0);
-                keyboard->flush();
-        }
-        return 0;
-TRY_END
-}
-
 static int global_get_keyb_verbose (lua_State *L)
 {
 TRY_START
@@ -308,55 +294,6 @@ TRY_START
 TRY_END
 }
 
-static int global_set_mouse_pos (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        int x = check_t<int>(L,1);
-        int y = check_t<int>(L,2);
-        mouse->setPos(x,y);
-        return 0;
-TRY_END
-}
-
-static int global_get_mouse_hide (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_pushboolean(L,mouse->getHide());
-        return 1;
-TRY_END
-}
-
-static int global_get_mouse_grab (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_pushboolean(L,mouse->getGrab());
-        return 1;
-TRY_END
-}
-
-static int global_set_mouse_hide (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        bool b = check_bool(L,1);
-        mouse->setHide(b);
-        return 0;
-TRY_END
-}
-
-static int global_set_mouse_grab (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        bool b = check_bool(L,1);
-        mouse->setGrab(b);
-        return 0;
-TRY_END
-}
-
 static int global_input_filter_trickle_mouse_move (lua_State *L)
 {
 TRY_START
@@ -374,6 +311,25 @@ TRY_START
     check_args(L,1);
     const char *str = luaL_checkstring(L, 1);
     input_filter_trickle_button(L, str);
+    return 0;
+TRY_END
+}
+
+static int global_input_filter_pressed (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    const char *str = luaL_checkstring(L, 1);
+    lua_pushboolean(L, input_filter_pressed(str));
+    return 1;
+TRY_END
+}
+
+static int global_input_filter_flush (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    input_filter_flush(L);
     return 0;
 TRY_END
 }
@@ -970,15 +926,9 @@ static const luaL_reg global[] = {
         {"have_focus",global_have_focus},
 
         {"get_keyb_presses",global_get_keyb_presses},
-        {"keyb_flush",global_keyb_flush},
         {"set_keyb_verbose",global_set_keyb_verbose},
         {"get_keyb_verbose",global_get_keyb_verbose},
         {"get_mouse_events",global_get_mouse_events},
-        {"set_mouse_pos",global_set_mouse_pos},
-        {"get_mouse_hide",global_get_mouse_hide},
-        {"set_mouse_hide",global_set_mouse_hide},
-        {"get_mouse_grab",global_get_mouse_grab},
-        {"set_mouse_grab",global_set_mouse_grab},
 
         {"micros" ,global_micros},
         {"seconds" ,global_seconds},
@@ -1008,6 +958,8 @@ static const luaL_reg global[] = {
 
         {"input_filter_trickle_button",global_input_filter_trickle_button},
         {"input_filter_trickle_mouse_move",global_input_filter_trickle_mouse_move},
+        {"input_filter_pressed",global_input_filter_pressed},
+        {"input_filter_flush",global_input_filter_flush},
 
         {"InputFilter",ifilter_make},
         {"PlotV3",plot_v3_make},

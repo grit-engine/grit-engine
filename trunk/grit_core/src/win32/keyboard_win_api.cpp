@@ -265,8 +265,6 @@ LRESULT KeyboardWinAPI::wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lP
         if (have_key) {
                 for (int i=0 ; i<repeat_count ; ++i)
                     presses.push_back(key);
-
-                //return 0;
         }
 
         return CallWindowProc(old_wndproc, msgwin, msg, wParam, lParam);
@@ -275,41 +273,8 @@ LRESULT KeyboardWinAPI::wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lP
 
 Keyboard::Presses KeyboardWinAPI::getPresses (void)
 {
-        Keyboard::Presses ret;
-
-        for (Presses::iterator i=presses.begin(),i_=presses.end() ; i!=i_ ; ++i) {
-                Press p = *i;
-                if (p.substr(0,1)=="+") {
-                    down.insert(p.substr(1));
-                } else if (p.substr(0,1)=="-") {
-                    down.erase(p.substr(1));
-                }
-                ret.push_back(p);
-        }
+        Keyboard::Presses ret = presses;
         presses.clear();
-        
-        for (Presses::iterator i=keysToFlush.begin(),
-                               i_=keysToFlush.end() ; i!=i_ ; ++i) {
-                if (down.find(*i)!=down.end()) {
-                        ret.push_back("-"+*i);
-                        down.erase(*i);
-                        if (verbose) {
-                            CLOG << "winapi: key flushed: " << *i << std::endl;
-                        }
-                }
-        }
-        keysToFlush.clear();
-
-        if (fullFlushRequested) {
-                for (DownSet::iterator i=down.begin(),i_=down.end() ; i!=i_ ; ++i) {
-                        ret.push_back("-"+*i);
-                }
-                down.clear();
-                fullFlushRequested = false;
-                if (verbose) {
-                    CLOG << "winapi: keyboard flushed" << std::endl;
-                }
-        }
         return ret;
 }
 

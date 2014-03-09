@@ -47,14 +47,8 @@ protected:
 
         Display *display;
         Window win;
-/*
-        XIM im;
-        XIC ic;
-*/
 
         std::map<KeySym,const char*> myKeyMap;
-
-        std::set<Press> currentlyPressed;
 
         bool focussed;
 };

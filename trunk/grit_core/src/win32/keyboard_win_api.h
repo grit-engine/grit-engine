@@ -52,9 +52,6 @@ class KeyboardWinAPI : public Keyboard {
 
         Keyboard::Presses presses;
 
-        typedef std::set<Press> DownSet;
-        DownSet down;
-
 };
 
 // vim: shiftwidth=8:tabstop=8:expandtab

@@ -161,24 +161,6 @@ void KeyboardX11::add_key (Keyboard::Presses &keys, XEvent ev, int kind)
      
         str += keystr;
 
-        bool contains = currentlyPressed.find(keystr)!=currentlyPressed.end();
-
-        switch (kind) {
-                case -1: // release
-                if (!contains) return;
-                currentlyPressed.erase(keystr);
-                break;
-                case 0: // repeat
-                if (!contains) {
-                        add_key(keys, ev, 1);
-                        return;
-                } 
-                break;
-                case 1: // press
-                if (contains) return;
-                currentlyPressed.insert(keystr);
-                break;
-        }
         if (verbose) {
                 CLOG << "X key: " << str << std::endl;
         }
@@ -275,33 +257,6 @@ Keyboard::Presses KeyboardX11::getPresses (void)
                 add_key(r, last_event, -1);
         }
 
-        for (Presses::iterator i=keysToFlush.begin(),
-                               i_=keysToFlush.end() ; i!=i_ ; ++i) {
-                if (currentlyPressed.find(*i)!=currentlyPressed.end()) {
-                        r.push_back("-"+*i);
-                        currentlyPressed.erase(*i);
-                        if (verbose) {
-                                CLOG << "X keyboard: flushed: " << *i << std::endl;
-                        }
-                }
-        }
-        keysToFlush.clear();
-        if (fullFlushRequested) {
-                // Any key we currently recognise as being held
-                // down is "released" (note a repeating key
-                // will still repeat upon refocus)
-
-                typedef std::set<Press>::iterator I;
-                for (I i=currentlyPressed.begin(),i_=currentlyPressed.end() ;
-                     i!=i_ ; ++i) {
-                        r.push_back("-"+*i);
-                }
-                currentlyPressed.clear();
-                fullFlushRequested = false;
-                if (verbose) {
-                        CLOG << "X keyboard: all flushed" << std::endl;
-                }
-        }
         return r;
 }
 

@@ -95,6 +95,7 @@ class InputFilter {
         LuaPtr down;
         LuaPtr up;
         LuaPtr repeat;
+        std::string path;
     };
 
     typedef std::map<std::string, std::string> ButtonStatus;
@@ -122,6 +123,7 @@ class InputFilter {
     CallbackMap buttonCallbacks;
 
     LuaPtr mouseMoveCallback;
+    std::string mouseMoveCallbackPath;
 
     double priority;
 
@@ -141,6 +143,9 @@ class InputFilter {
 
     ~InputFilter (void);
 
+    /** Has anyone called destroy yet? */
+    bool isAlive (void) { return !destroyed; };
+    
     /** Unlink all the Lua callbacks. */
     void destroy (lua_State *L);
     
@@ -190,7 +195,7 @@ class InputFilter {
 
     /** For internal use. */
     bool acceptButton (lua_State *L, const std::string &b);
-    void triggerFunc (lua_State *L, const LuaPtr &func);
+    void triggerFunc (lua_State *L, const std::string &button, const LuaPtr &func, const std::string &path);
     void triggerMouseMove (lua_State *L, const Vector2 &abs);
     void flushAll (lua_State *L);
     void flushSet (lua_State *L, const BindingSet &s);
@@ -212,6 +217,9 @@ void input_filter_trickle_button (lua_State *L, const std::string &ev);
 
 /** Issue mouse move events to the appropriate level of the stack or the HUD. */
 void input_filter_trickle_mouse_move (lua_State *L, const Vector2 &rel, const Vector2 &abs);
+
+/** Is the given button down (globally). */
+bool input_filter_pressed (const std::string &button);
 
 /** Issue button up events to anyone who believes a key is down.  This is used
  * when losing focus from the game window and similar situations when we can
