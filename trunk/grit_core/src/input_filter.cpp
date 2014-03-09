@@ -87,13 +87,13 @@ namespace {
     };
 
     Combo combos[8] = {
-        Combo(true, true, true, "C-A-S-"),
-        Combo(true, true, false, "C-A-"),
-        Combo(true, false, true, "C-S-"),
-        Combo(false, true, true, "A-S-"),
-        Combo(true, false, false, "C-"),
-        Combo(false, true, false, "A-"),
-        Combo(false, false, true, "S-"),
+        Combo(true, true, true, "C+A+S+"),
+        Combo(true, true, false, "C+A+"),
+        Combo(true, false, true, "C+S+"),
+        Combo(false, true, true, "A+S+"),
+        Combo(true, false, false, "C+"),
+        Combo(false, true, false, "A+"),
+        Combo(false, false, true, "S+"),
         Combo(false, false, false, ""),
     };
     const Combo &empty_combo = combos[7];
