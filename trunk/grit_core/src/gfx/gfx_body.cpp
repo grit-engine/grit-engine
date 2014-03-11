@@ -137,6 +137,13 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
     bool do_wireframe = (wireframe || gfx_option(GFX_WIREFRAME));
     bool do_regular = !(do_wireframe && gfx_option(GFX_WIREFRAME_SOLID));
 
+    // fade is used by both shadow_cast and regular pass
+    // we could potentially move this out of the frame loop if it affects performance
+    for (unsigned i=0 ; i<subList.size() ; ++i) {
+        Sub *sub = subList[i];
+        sub->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
+    }
+
     if (shadow_cast) {
 
         // Add each visible Sub to the queue
@@ -164,7 +171,6 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
             Sub *sub = subList[i];
 
             // car paint
-            sub->setCustomParameter(0, Ogre::Vector4(fade,0,0,0));
             for (int k=0 ; k<4 ; ++k) {
                 const GfxPaintColour &c = colours[k];
                 sub->setCustomParameter(2*k+1, Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, c.met));
