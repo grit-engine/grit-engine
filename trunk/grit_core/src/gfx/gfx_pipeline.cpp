@@ -675,7 +675,6 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_EMISSIVE));
     rqisDeferred->add(new ParticlesPasses(this, true)); // alpha
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_BULLET_DEBUG_DRAWER));
-    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(Ogre::RENDER_QUEUE_OVERLAY));
 }
 
 GfxPipeline::~GfxPipeline (void) {
@@ -805,7 +804,6 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
 
     // populate gbuffer
     vp = gBuffer->addViewport(cam);
-    vp->setOverlaysEnabled(false);
     vp->setShadowsEnabled(true);
     // white here makes sure that the depth (remember that it is 3 bytes) is maximal
     vp->setBackgroundColour(Ogre::ColourValue::White);
@@ -820,10 +818,9 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
 
     if (!opts.bloomAndToneMap) {
 
-        // render gbuffer and alpha, sky, etc into hdr viewport
+        // render gbuffer and alpha, sky, etc into ldr window
         vp = targetViewport;
         vp->setCamera(cam);
-        vp->setOverlaysEnabled(opts.hud);
         vp->setShadowsEnabled(false);
         vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
         vp->update();
@@ -836,7 +833,6 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
 
         // render gbuffer and alpha, sky, etc into hdr viewport
         vp = hdrFb[0]->getBuffer()->getRenderTarget()->addViewport(cam);
-        vp->setOverlaysEnabled(opts.hud); // want to do it in the last pass but this seems... difficult
         vp->setShadowsEnabled(false);
         vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
         vp->update();

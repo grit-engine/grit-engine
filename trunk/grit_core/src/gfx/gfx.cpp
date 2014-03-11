@@ -667,7 +667,6 @@ void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector
         opts.particles = false;
         opts.pointLights = false;
         opts.sky = true;
-        opts.hud = false;
         opts.sun = false;
 
         pipe.render(opts);
