@@ -62,12 +62,16 @@ BulletDebugDrawer::BulletDebugDrawer (Ogre::SceneManager *sm)
     mTriangles->setDynamic(true);
     mTriangles->setCastShadows(false);
     sm->getRootSceneNode()->attachObject(mTriangles);
+
+    // We don't call update on the scenemanager anymore, so have to provide this ourselves.
+    sm->getRootSceneNode()->overrideCachedTransform(Ogre::Matrix4::IDENTITY);
     
     mat = Ogre::MaterialManager::getSingleton().create("/system/BulletDebugDrawer", RESGRP);
     mat->getTechnique(0)->getPass(0)->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
     mat->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
     mat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
     mat->getTechnique(0)->getPass(0)->createTextureUnitState();
+    mat->getTechnique(0)->getPass(0)->setFog(true, Ogre::FOG_NONE);
     mat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setColourOperationEx(Ogre::LBX_MODULATE, Ogre::LBS_DIFFUSE, Ogre::LBS_DIFFUSE);
 
     mLines->begin(mat->getName(), Ogre::RenderOperation::OT_LINE_LIST);
