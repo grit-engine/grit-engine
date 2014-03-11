@@ -774,7 +774,7 @@ static void render_quad (Ogre::Viewport *viewport, const RenderQuadParams<n> &op
         op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
         render_with_progs(vp,opts.fp,op);
 
-        for (unsigned i=0 ; i<n ; ++i) ogre_rs->_disableTextureUnit(0);
+        for (unsigned i=0 ; i<n ; ++i) ogre_rs->_disableTextureUnit(i);
 
         ogre_rs->_endFrame();
 
