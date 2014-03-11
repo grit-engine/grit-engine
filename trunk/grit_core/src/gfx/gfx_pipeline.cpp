@@ -403,6 +403,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
             ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
             ogre_rs->setStencilCheckEnabled(false);
+            ogre_rs->_setDepthBias(0, 0);
 
             // render the instances
             Ogre::RenderOperation op;
@@ -531,21 +532,20 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                     ogre_rs->_setTexture(tex_index++, true, pipe->getGBufferTexture(i));
                 }
 
+                ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
+                ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+                ogre_rs->setStencilCheckEnabled(false);
+                ogre_rs->_setDepthBias(0, 0);
+
                 if (mdl.indexesUsed() > 0) {
                     ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
                     ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
-                    ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
-                    ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
-                    ogre_rs->setStencilCheckEnabled(false);
                     render_with_progs(dl_vp, dl_fp, mdl.getRenderOperation());
                 }
 
                 if (mdlInside.indexesUsed() > 0) {
                     ogre_rs->_setCullingMode(Ogre::CULL_ANTICLOCKWISE);
                     ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_GREATER_EQUAL);
-                    ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
-                    ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
-                    ogre_rs->setStencilCheckEnabled(false);
                     render_with_progs(dl_vp, dl_fp, mdlInside.getRenderOperation());
                 }
 
@@ -764,6 +764,8 @@ static void render_quad (Ogre::Viewport *viewport, const RenderQuadParams<n> &op
         ogre_rs->_setSceneBlending(Ogre::SBF_ONE, opts.targetBlend);
         ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
         ogre_rs->setStencilCheckEnabled(false);
+        ogre_rs->_setDepthBias(0, 0);
+
 
         // render the quad
         Ogre::RenderOperation op;

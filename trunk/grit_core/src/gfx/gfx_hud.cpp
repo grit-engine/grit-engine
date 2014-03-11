@@ -1099,6 +1099,9 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour_mask, const Ve
     };
     ogre_rs->_setTextureAddressingMode(0, addr_mode);
     ogre_rs->_setTextureUnitFiltering(0, Ogre::FO_ANISOTROPIC, Ogre::FO_ANISOTROPIC, Ogre::FO_LINEAR);
+    ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+    ogre_rs->setStencilCheckEnabled(false);
+    ogre_rs->_setDepthBias(0, 0);
 
 
     APP_ASSERT(vp_text->_getBindingDelegate()!=NULL);
@@ -1182,6 +1185,9 @@ void gfx_render_hud_one (GfxHudBase *base)
             ogre_rs->_setTextureUnitFiltering(0, Ogre::FO_ANISOTROPIC, Ogre::FO_ANISOTROPIC, Ogre::FO_LINEAR);
         }
 
+        ogre_rs->_setDepthBias(0, 0);
+        ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+        ogre_rs->setStencilCheckEnabled(false);
 
         APP_ASSERT(vp->_getBindingDelegate()!=NULL);
         APP_ASSERT(fp->_getBindingDelegate()!=NULL);
