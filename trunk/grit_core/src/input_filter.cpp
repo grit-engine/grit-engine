@@ -38,6 +38,7 @@ bool input_filter_pressed (const std::string &button)
 static Vector2 last_mouse_pos(0,0);
 static Vector2 prior_grab_mouse_pos(0,0);
 static bool is_captured = false;
+static bool cursor_hidden = false;
 
 // Based on the state of the input filters, grab or ungrab the mouse.
 static void update_grabbed (void)
@@ -50,17 +51,17 @@ static void update_grabbed (void)
         if (f->getModal()) break;
     }
     if (!keyboard->hasFocus()) should_be_captured = false;
+    bool should_hide = should_be_captured || cursor_hidden;
+    mouse->setHide(should_hide);
     if (is_captured == should_be_captured) return;
     is_captured = should_be_captured;
     if (should_be_captured) {
         prior_grab_mouse_pos = last_mouse_pos;
         mouse->setGrab(true);
-        mouse->setHide(true);
     } else {
         mouse->setPos(prior_grab_mouse_pos.x, prior_grab_mouse_pos.y);
         last_mouse_pos = prior_grab_mouse_pos;
         mouse->setGrab(false);
-        mouse->setHide(false);
     }
 }
 
@@ -401,6 +402,17 @@ void input_filter_flush (lua_State *L)
     }
     gfx_hud_signal_flush(L);
     update_grabbed();
+}
+
+void input_filter_set_cursor_hidden (bool v)
+{
+    cursor_hidden = v;
+    update_grabbed();
+}
+
+bool input_filter_get_cursor_hidden (void)
+{
+    return cursor_hidden;
 }
 
 void input_filter_shutdown (lua_State *L)

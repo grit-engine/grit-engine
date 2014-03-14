@@ -1485,6 +1485,9 @@ TRY_START
         } else if (!::strcmp(key,"needsParentResizedCallbacks")) {
             lua_pushboolean(L, self.getNeedsParentResizedCallbacks());
 
+        } else if (!::strcmp(key,"cornered")) {
+            lua_pushboolean(L, self.isCornered());
+
         } else if (!::strcmp(key,"enabled")) {
             lua_pushboolean(L, self.isEnabled());
 
@@ -1591,6 +1594,10 @@ TRY_START
         } else if (!::strcmp(key,"needsParentResizedCallbacks")) {
             bool v = check_bool(L,3);
             self.setNeedsParentResizedCallbacks(v);
+
+        } else if (!::strcmp(key,"cornered")) {
+            bool v = check_bool(L,3);
+            self.setCornered(v);
 
         } else if (!::strcmp(key,"enabled")) {
             bool v = check_bool(L,3);
@@ -2146,6 +2153,7 @@ TRY_START
     bool have_alpha = false;
     bool have_texture = false;
     bool have_zorder = false;
+    bool have_cornered = false;
     bool have_enabled = false;
 
     lua_newtable(L);
@@ -2166,7 +2174,7 @@ TRY_START
                 self->setOrientation(Degree(v));
                 have_orientation = true;
             } else {
-                my_lua_error(L, "Orientation must be a number.");
+                my_lua_error(L, "orientation must be a number.");
             }
         } else if (!::strcmp(key,"position")) {
             if (lua_isvector2(L,-1)) {
@@ -2174,7 +2182,7 @@ TRY_START
                 self->setPosition(v);
                 have_position = true;
             } else {
-                my_lua_error(L, "Position must be a vector2.");
+                my_lua_error(L, "position must be a vector2.");
             }
         } else if (!::strcmp(key,"size")) {
             if (lua_isvector2(L,-1)) {
@@ -2182,7 +2190,7 @@ TRY_START
                 self->setSize(L, v);
                 have_size = true;
             } else {
-                my_lua_error(L, "Size must be a vector2.");
+                my_lua_error(L, "size must be a vector2.");
             }
         } else if (!::strcmp(key,"parent")) {
             if (lua_isnil(L,-1)) {
@@ -2197,7 +2205,7 @@ TRY_START
                 self->setColour(v);
                 have_colour = true;
             } else {
-                my_lua_error(L, "Colour must be a vector3.");
+                my_lua_error(L, "colour must be a vector3.");
             }
         } else if (!::strcmp(key,"alpha")) {
             if (lua_isnumber(L,-1)) {
@@ -2205,7 +2213,7 @@ TRY_START
                 self->setAlpha(v);
                 have_alpha = true;
             } else {
-                my_lua_error(L, "Alpha must be a number.");
+                my_lua_error(L, "alpha must be a number.");
             }
         } else if (!::strcmp(key,"texture")) {
             if (lua_type(L,-1) == LUA_TSTRING) {
@@ -2216,7 +2224,7 @@ TRY_START
                 self->setTexture(d2);
                 have_texture = true;
             } else {
-                my_lua_error(L, "Texture must be a string.");
+                my_lua_error(L, "texture must be a string.");
             }
         } else if (!::strcmp(key,"zOrder")) {
             if (lua_isnumber(L,-1)) {
@@ -2229,13 +2237,21 @@ TRY_START
             } else {
                 my_lua_error(L, "zOrder must be a number.");
             }
+        } else if (!::strcmp(key,"cornered")) {
+            if (lua_isboolean(L,-1)) {
+                bool v = check_bool(L,-1);
+                self->setCornered(v);
+                have_cornered = true;
+            } else {
+                my_lua_error(L, "cornered must be a boolean.");
+            }
         } else if (!::strcmp(key,"enabled")) {
             if (lua_isboolean(L,-1)) {
                 bool v = check_bool(L,-1);
                 self->setEnabled(v);
                 have_enabled = true;
             } else {
-                my_lua_error(L, "Enabled must be a boolean.");
+                my_lua_error(L, "enabled must be a boolean.");
             }
         } else if (!::strcmp(key,"class")) {
             my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
@@ -2313,6 +2329,14 @@ TRY_START
             if (!success) my_lua_error(L, "Wrong type for zOrder field in hud class \""+hud_class->name+"\".");
             if ((unsigned char)(v) != v) my_lua_error(L, "zOrder must be an integer in range 0 to 255 in class \""+hud_class->name+"\".");
             self->setZOrder((unsigned char)v);
+        }
+    }
+    if (!have_cornered) {
+        if (tab.has("cornered")) {
+            bool v;
+            bool success = tab.get("cornered",v);
+            if (!success) my_lua_error(L, "Wrong type for cornered field in hud class \""+hud_class->name+"\".");
+            self->setCornered(v);
         }
     }
     if (!have_enabled) {

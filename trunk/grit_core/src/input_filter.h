@@ -226,6 +226,15 @@ bool input_filter_pressed (const std::string &button);
  * expect to fundamentally lose input events for a period of time. */
 void input_filter_flush (lua_State *L);
 
+/** Suppress system mouse cursor.  The system mouse cursor is usually more
+ * responsive than anything you can render in game.  However, if the style is
+ * disagreeable it can be hidden, and you can draw your own instead.
+*/
+void input_filter_set_cursor_hidden (bool v);
+
+/** Is the system mouse cursor suppressed? */
+bool input_filter_get_cursor_hidden (void);
+
 /** Shutdown Lua state. */
 void input_filter_shutdown (lua_State *L);
 

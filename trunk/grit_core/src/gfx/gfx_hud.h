@@ -209,6 +209,7 @@ class GfxHudObject : public GfxHudBase {
 
     GfxTextureDiskResource *texture;
     Vector2 uv1, uv2;
+    bool cornered;
     Vector2 size;
     Vector3 colour;
     float alpha;
@@ -249,6 +250,9 @@ class GfxHudObject : public GfxHudBase {
     
     Vector2 getUV2 (void) const { assertAlive(); return uv2; }
     void setUV2 (const Vector2 &v) { assertAlive(); uv2 = v; }
+
+    bool isCornered (void) const { assertAlive(); return cornered; }
+    void setCornered (bool v) { assertAlive(); cornered = v; }
 
     GfxTextureDiskResource *getTexture (void) const { assertAlive(); return texture; }
     void setTexture (GfxTextureDiskResource *v);

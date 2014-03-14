@@ -334,6 +334,25 @@ TRY_START
 TRY_END
 }
 
+static int global_input_filter_get_cursor_hidden (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    lua_pushboolean(L, input_filter_get_cursor_hidden());
+    return 1;
+TRY_END
+}
+
+static int global_input_filter_set_cursor_hidden (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    bool v = check_bool(L, 1);
+    input_filter_set_cursor_hidden(v);
+    return 0;
+TRY_END
+}
+
 
 
 
@@ -960,6 +979,8 @@ static const luaL_reg global[] = {
         {"input_filter_trickle_mouse_move",global_input_filter_trickle_mouse_move},
         {"input_filter_pressed",global_input_filter_pressed},
         {"input_filter_flush",global_input_filter_flush},
+        {"input_filter_get_cursor_hidden",global_input_filter_get_cursor_hidden},
+        {"input_filter_set_cursor_hidden",global_input_filter_set_cursor_hidden},
 
         {"InputFilter",ifilter_make},
         {"PlotV3",plot_v3_make},

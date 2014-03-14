@@ -217,7 +217,7 @@ Vector2 GfxHudBase::getDerivedBounds (void)
 
 GfxHudObject::GfxHudObject (GfxHudClass *hud_class)
   : GfxHudBase(), hudClass(hud_class),
-    texture(NULL), uv1(0,0), uv2(1,1), size(32,32), colour(1,1,1), alpha(1),
+    texture(NULL), uv1(0,0), uv2(1,1), cornered(false), size(32,32), colour(1,1,1), alpha(1),
     needsParentResizedCallbacks(false), needsInputCallbacks(false), needsFrameCallbacks(false),
     refCount(0)
 {
@@ -831,9 +831,18 @@ static Ogre::HighLevelGpuProgramPtr vp_text, fp_text;
 
 static Ogre::HighLevelGpuProgramPtr vp_tex, fp_tex;
 static Ogre::HighLevelGpuProgramPtr vp_solid, fp_solid;
-static Ogre::VertexData *quad_vdata; // Must be allocated later because constructor requires ogre to be initialised
+
+// vdata/idata be allocated later because constructor requires ogre to be initialised
+static Ogre::VertexData *quad_vdata;
 static Ogre::HardwareVertexBufferSharedPtr quad_vbuf;
 static unsigned quad_vdecl_size;
+
+// vdata/idata be allocated later because constructor requires ogre to be initialised
+static Ogre::VertexData *cornered_quad_vdata;
+static Ogre::IndexData *cornered_quad_idata;
+static Ogre::HardwareVertexBufferSharedPtr cornered_quad_vbuf;
+static Ogre::HardwareIndexBufferSharedPtr cornered_quad_ibuf;
+static unsigned cornered_quad_vdecl_size;
 
 enum VertOrFrag { VERT, FRAG };
 
@@ -861,12 +870,10 @@ void gfx_hud_init (void)
 {
     win_size = Vector2(ogre_win->getWidth(), ogre_win->getHeight());
 
-    // Prepare vertex buffer
+    // Prepare vertex buffers
     quad_vdata = OGRE_NEW Ogre::VertexData();
     quad_vdata->vertexStart = 0;
     quad_vdata->vertexCount = 6;
-
-    // Non-instanced data
     quad_vdecl_size = 0;
     quad_vdecl_size += quad_vdata->vertexDeclaration->addElement(0, quad_vdecl_size, Ogre::VET_FLOAT2, Ogre::VES_POSITION).getSize();
     quad_vdecl_size += quad_vdata->vertexDeclaration->addElement(0, quad_vdecl_size, Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES,0).getSize();
@@ -875,14 +882,53 @@ void gfx_hud_init (void)
             quad_vdecl_size, 6, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
     quad_vdata->vertexBufferBinding->setBinding(0, quad_vbuf);
 
+    cornered_quad_vdata = OGRE_NEW Ogre::VertexData();
+    cornered_quad_vdata->vertexStart = 0;
+    cornered_quad_vdata->vertexCount = 16;
+    cornered_quad_vdecl_size = 0;
+    cornered_quad_vdecl_size += cornered_quad_vdata->vertexDeclaration->addElement(0, cornered_quad_vdecl_size, Ogre::VET_FLOAT2, Ogre::VES_POSITION).getSize();
+    cornered_quad_vdecl_size += cornered_quad_vdata->vertexDeclaration->addElement(0, cornered_quad_vdecl_size, Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES,0).getSize();
+    cornered_quad_vbuf =
+        Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
+            cornered_quad_vdecl_size, 16, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
+    cornered_quad_vdata->vertexBufferBinding->setBinding(0, cornered_quad_vbuf);
+
+    unsigned cornered_quad_indexes = 6*9;
+    cornered_quad_ibuf =
+        Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(
+            Ogre::HardwareIndexBuffer::IT_16BIT,
+            cornered_quad_indexes,
+            Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
+
+    cornered_quad_idata = OGRE_NEW Ogre::IndexData();
+    cornered_quad_idata->indexStart = 0;
+    cornered_quad_idata->indexCount = cornered_quad_indexes;
+    cornered_quad_idata->indexBuffer = cornered_quad_ibuf;
+
+    /* c d e f
+     * 8 9 a b
+     * 4 5 6 7    d c
+     * 0 1 2 3    a b
+     */
+    #define QUAD(a,b,c,d) a, b, d,  c, d, b
+    uint16_t cornered_quad_idata_raw[] = {
+        QUAD( 0, 1, 5, 4), QUAD( 1, 2, 6, 5), QUAD( 2, 3, 7, 6),
+        QUAD( 4, 5, 9, 8), QUAD( 5, 6,10, 9), QUAD( 6, 7,11,10),
+        QUAD( 8, 9,13,12), QUAD( 9,10,14,13), QUAD(10,11,15,14),
+    };
+    #undef QUAD
+
+    cornered_quad_ibuf->writeData(0, cornered_quad_indexes*sizeof(uint16_t), &cornered_quad_idata_raw[0], true);
+
     // Initialise vertex program
 
     vp_solid = make_shader("vp_solid", VERT, 
         "void main (\n"
         "    in float2 in_POSITION:POSITION,\n"
+        "    uniform float4x4 matrix,\n"
         "    out float4 out_POSITION:POSITION\n"
         ") {\n"
-        "    out_POSITION = float4(in_POSITION,0,1);\n"
+        "    out_POSITION = mul(matrix, float4(in_POSITION,0,1));\n"
         "}\n"
     );
 
@@ -901,10 +947,11 @@ void gfx_hud_init (void)
         "void main (\n"
         "    in float2 in_POSITION:POSITION,\n"
         "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
+        "    uniform float4x4 matrix,\n"
         "    out float4 out_POSITION:POSITION,\n"
         "    out float4 out_TEXCOORD0:TEXCOORD0\n"
         ") {\n"
-        "    out_POSITION = float4(in_POSITION,0,1);\n"
+        "    out_POSITION = mul(matrix, float4(in_POSITION,0,1));\n"
         "    out_TEXCOORD0.xy = in_TEXCOORD0.xy;\n"
         "}\n"
     );
@@ -964,6 +1011,8 @@ void gfx_hud_shutdown (lua_State *L)
     fp_text.setNull();
     quad_vbuf.setNull();
     OGRE_DELETE quad_vdata;
+    cornered_quad_vbuf.setNull();
+    OGRE_DELETE cornered_quad_vdata;
 
     // Not all destroy callbacks actually destroy their children.  Orphaned
     // children end up being adopted by grandparents, and ultimately the root.  If
@@ -1007,41 +1056,80 @@ static inline Vector2 maybe_snap (bool snap, Vector2 pos)
     return pos;
 }
 
-static void set_vertex_data (const Vector2 &position, const Vector2 &size, Radian orientation, bool snapPixels, const Vector2 &uv1, const Vector2 &uv2)
+static void set_vertex_data (const Vector2 &size,
+                             const Vector2 &uv1, const Vector2 &uv2)
 {
-    struct Vertex { // strict alignment required here
-        Vector2 position;
-        Vector2 uv;
+    // strict alignment required here
+    struct Vertex { Vector2 position; Vector2 uv; };
+
+    float left   = -size.x / 2;
+    float right  =  size.x / 2;
+    float bottom = -size.y / 2;
+    float top    =  size.y / 2;
+
+    Vertex bottom_left = { Vector2(left, bottom), Vector2(uv1.x,uv2.y) };
+    Vertex bottom_right = { Vector2(right, bottom), uv2 };
+    Vertex top_left = { Vector2(left, top), uv1 };
+    Vertex top_right = { Vector2(right, top), Vector2(uv2.x,uv1.y) };
+
+    Vertex vdata_raw[] = {
+        bottom_left, bottom_right, top_left,
+        top_left, bottom_right, top_right
     };
 
-    const Vector2 halfsize = size/2;
+    quad_vbuf->writeData(quad_vdata->vertexStart, quad_vdata->vertexCount*quad_vdecl_size,
+                         vdata_raw, true);
+}
 
-    Vector2 screen_sz = Vector2(ogre_win->getWidth(), ogre_win->getHeight());
+static void set_cornered_vertex_data (GfxTextureDiskResource *tex,
+                                      const Vector2 &size,
+                                      const Vector2 &uv1, const Vector2 &uv2)
+{
+    // strict alignment required here
+    struct Vertex { Vector2 position; Vector2 uv; };
 
-    Vertex top_left = {
-        maybe_snap(snapPixels, position + (Vector2(-1,1) * halfsize).rotateBy(orientation)) / screen_sz * Vector2(2,2) - Vector2(1,1),
-        uv1
-    };
-
-    Vertex top_right = {
-        maybe_snap(snapPixels, position + halfsize.rotateBy(orientation)) / screen_sz * Vector2(2,2) - Vector2(1,1),
-        Vector2(uv2.x,uv1.y)
-    };
-
-    Vertex bottom_left = {
-        maybe_snap(snapPixels, position - halfsize.rotateBy(orientation)) / screen_sz * Vector2(2,2) - Vector2(1,1),
-        Vector2(uv1.x,uv2.y)
-    };
-
-    Vertex bottom_right = {
-        maybe_snap(snapPixels, position + (Vector2(1,-1) * halfsize).rotateBy(orientation)) / screen_sz * Vector2(2,2) - Vector2(1,1),
-        uv2
-    };
-
-    Vertex vdata_raw[] = { bottom_left, bottom_right, top_left, top_left, bottom_right, top_right };
-
-    quad_vbuf->writeData(quad_vdata->vertexStart, quad_vdata->vertexCount*quad_vdecl_size, vdata_raw, true);
+    const Ogre::TexturePtr &texptr = tex->getOgreTexturePtr();
+    const Vector2 whole_tex_size(texptr->getWidth(), texptr->getHeight());
     
+    const Vector2 tex_size = whole_tex_size * Vector2(::fabsf(uv2.x-uv1.x), ::fabsf(uv2.y-uv1.y));
+    const Vector2 uvm = (uv2+uv1)/2;
+
+    const Vector2 diag0 = -size/2;
+    const Vector2 diag3 = size/2;
+    const Vector2 diag1 = diag0 + tex_size/2;
+    const Vector2 diag2 = diag3 - tex_size/2;
+
+    /* c d e f
+     * 8 9 a b
+     * 4 5 6 7
+     * 0 1 2 3
+     */
+
+    Vertex vdata_raw[] = {
+        { Vector2(diag0.x, diag0.y), Vector2(uv1.x, uv2.y) },
+        { Vector2(diag1.x, diag0.y), Vector2(uvm.x, uv2.y) },
+        { Vector2(diag2.x, diag0.y), Vector2(uvm.x, uv2.y) },
+        { Vector2(diag3.x, diag0.y), Vector2(uv2.x, uv2.y) },
+
+        { Vector2(diag0.x, diag1.y), Vector2(uv1.x, uvm.y) },
+        { Vector2(diag1.x, diag1.y), Vector2(uvm.x, uvm.y) },
+        { Vector2(diag2.x, diag1.y), Vector2(uvm.x, uvm.y) },
+        { Vector2(diag3.x, diag1.y), Vector2(uv2.x, uvm.y) },
+
+        { Vector2(diag0.x, diag2.y), Vector2(uv1.x, uvm.y) },
+        { Vector2(diag1.x, diag2.y), Vector2(uvm.x, uvm.y) },
+        { Vector2(diag2.x, diag2.y), Vector2(uvm.x, uvm.y) },
+        { Vector2(diag3.x, diag2.y), Vector2(uv2.x, uvm.y) },
+
+        { Vector2(diag0.x, diag3.y), Vector2(uv1.x, uv1.y) },
+        { Vector2(diag1.x, diag3.y), Vector2(uvm.x, uv1.y) },
+        { Vector2(diag2.x, diag3.y), Vector2(uvm.x, uv1.y) },
+        { Vector2(diag3.x, diag3.y), Vector2(uv2.x, uv1.y) },
+    };
+
+    cornered_quad_vbuf->writeData(cornered_quad_vdata->vertexStart,
+                                  cornered_quad_vdata->vertexCount*cornered_quad_vdecl_size,
+                                  vdata_raw, true);
 }
 
 void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour_mask, const Vector2 &offset)
@@ -1052,11 +1140,12 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour_mask, const Ve
     const Ogre::GpuProgramParametersSharedPtr &vertex_params = vp_text->getDefaultParameters();
     const Ogre::GpuProgramParametersSharedPtr &fragment_params = fp_text->getDefaultParameters();
 
-    Vector2 pos = text->getDerivedPosition() + offset;
+    Vector2 pos = text->getDerivedPosition();
     if (text->snapPixels) {
         pos.x = ::floorf(pos.x+0.5);
         pos.y = ::floorf(pos.y+0.5);
     }
+    pos += offset;
 
     Ogre::Matrix4 matrix_centre = Ogre::Matrix4::IDENTITY;
     // move origin to center (for rotation)
@@ -1136,33 +1225,52 @@ void gfx_render_hud_one (GfxHudBase *base)
             tex = NULL;
         }
 
+        bool is_cornered = obj->isCornered() && tex != NULL;
+
         const Ogre::HighLevelGpuProgramPtr &vp = tex == NULL ? vp_solid : vp_tex;
         const Ogre::HighLevelGpuProgramPtr &fp = tex == NULL ? fp_solid : fp_tex;
         const Ogre::GpuProgramParametersSharedPtr &vertex_params = vp->getDefaultParameters();
         const Ogre::GpuProgramParametersSharedPtr &fragment_params = fp->getDefaultParameters();
 
-        //const Vector2 position(400,400);
-        //const Vector2 size(4,4);
-        //Degree orientation(0);
-        //const Vector2 uv1(0.0, 0.0); // top left
-        //const Vector2 uv2(1.0, 1.0); // bottom right
-        //const Vector3 colour(1,1,1);
-        //const float alpha = 1;
-
         Vector2 uv1 = obj->getUV1();
         Vector2 uv2 = obj->getUV2();
 
-        if (tex != NULL && d3d9) {
-            // Texel offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
-            Vector2 uv_offset = Vector2(0.5, 0.5) / obj->getSize();
-            uv_offset = uv_offset.rotateBy(- obj->getDerivedOrientation());
-            uv1 += uv_offset;
-            uv2 += uv_offset;
+        Vector2 pos = obj->getDerivedPosition();
+        if (obj->snapPixels) {
+            pos.x = ::floorf(pos.x+0.5f);
+            pos.y = ::floorf(pos.y+0.5f);
+            if (int(obj->getSize().x) % 2 == 1)
+                pos.x -= 0.5f;
+            if (int(obj->getSize().y) % 2 == 1)
+                pos.y -= 0.5f;
         }
 
-        set_vertex_data(obj->getDerivedPosition(),
-                        obj->getSize(),
-                        obj->getDerivedOrientation(), obj->snapPixels, uv1, uv2);
+        if (is_cornered) {
+            set_cornered_vertex_data(tex, obj->getSize(), uv1, uv2);
+        } else {
+            set_vertex_data(obj->getSize(), uv1, uv2);
+        }
+
+        const Degree &orientation = obj->getDerivedOrientation();
+        Ogre::Matrix4 matrix_spin(Ogre::Quaternion(to_ogre(orientation), Ogre::Vector3(0,0,-1)));
+
+        Ogre::Matrix4 matrix_trans = Ogre::Matrix4::IDENTITY;
+        matrix_trans.setTrans(Ogre::Vector3(pos.x, pos.y, 0));
+
+        Ogre::Matrix4 matrix_d3d_offset = Ogre::Matrix4::IDENTITY;
+        if (d3d9) {
+            // offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
+            matrix_d3d_offset.setTrans(Ogre::Vector3(-0.5-win_size.x/2, 0.5-win_size.y/2, 0));
+        } else {
+            matrix_d3d_offset.setTrans(Ogre::Vector3(-win_size.x/2, -win_size.y/2, 0));
+        }
+
+        Ogre::Matrix4 matrix_scale = Ogre::Matrix4::IDENTITY;
+        matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y ,1));
+
+        Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin;
+        try_set_named_constant(vp, "matrix", matrix);
+
 
         // premultiply the colour by the alpha -- for convenience
         try_set_named_constant(fp, "colour", to_ogre(obj->getColour()));
@@ -1201,8 +1309,14 @@ void gfx_render_hud_one (GfxHudBase *base)
 
         // render the rectangle
         Ogre::RenderOperation op;
-        op.useIndexes = false;
-        op.vertexData = quad_vdata;
+        if (is_cornered) {
+            op.useIndexes = true;
+            op.vertexData = cornered_quad_vdata;
+            op.indexData = cornered_quad_idata;
+        } else {
+            op.useIndexes = false;
+            op.vertexData = quad_vdata;
+        }
         op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
         ogre_rs->_render(op);
 

@@ -260,7 +260,7 @@ void GfxTextBuffer::updateGPU (bool no_scroll, long top, long bottom)
     if (current_size > 0) {
         // copy the whole thing every time (could optimise this if needed)
         vBuf->writeData(0, vertex_size*VERT_BYTE_SZ, &rawVBuf[0], true);
-        iBuf->writeData(0, index_size*sizeof(unsigned short), &rawIBuf[0], true);
+        iBuf->writeData(0, index_size*sizeof(uint16_t), &rawIBuf[0], true);
     }
     
     vData.vertexCount = vertex_size;
