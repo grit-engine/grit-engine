@@ -247,18 +247,6 @@ background_loader.o: ../src/streamer.h ../src/grit_object.h
 background_loader.o: ../src/external_table.h ../src/lua_ptr.h
 background_loader.o: ../../dependencies/util/spline_table.h
 background_loader.o: ../src/lua_ptr.h
-binding_stack.o: ../../dependencies/util/lua_util.h
-binding_stack.o: ../depend_stubs/string ../depend_stubs/sstream
-binding_stack.o: ../depend_stubs/limits ../depend_stubs/vector
-binding_stack.o: ../depend_stubs/lua.h ../depend_stubs/lauxlib.h
-binding_stack.o: ../depend_stubs/lualib.h
-binding_stack.o: ../../dependencies/util/exception.h
-binding_stack.o: ../depend_stubs/cstdlib ../depend_stubs/iostream
-binding_stack.o: ../../dependencies/util/intrinsics.h
-binding_stack.o: ../../dependencies/util/math_util.h
-binding_stack.o: ../depend_stubs/cmath ../depend_stubs/cfloat
-binding_stack.o: ../src/binding_stack.h ../depend_stubs/set
-binding_stack.o: ../depend_stubs/map
 bullet_debug_drawer.o: ../depend_stubs/OgreSceneManager.h
 bullet_debug_drawer.o: ../depend_stubs/OgreMaterialManager.h
 bullet_debug_drawer.o: ../depend_stubs/OgreRoot.h

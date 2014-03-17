@@ -299,6 +299,8 @@ class GfxHudText : public GfxHudBase {
     Vector2 wrap;
     long scroll;
     Vector2 shadow;
+    Vector3 shadowColour;
+    float shadowAlpha;
 
     unsigned refCount;
 
@@ -308,7 +310,9 @@ class GfxHudText : public GfxHudBase {
       : buf(font), colour(1,1,1), alpha(1),
         letterTopColour(1,1,1), letterTopAlpha(1),
         letterBottomColour(1,1,1), letterBottomAlpha(1),
-        wrap(0,0), scroll(0), shadow(0,0), refCount(0)
+        wrap(0,0), scroll(0),
+        shadow(0,0), shadowColour(0,0,0), shadowAlpha(1),
+        refCount(0)
     {
     }
 
@@ -374,6 +378,12 @@ class GfxHudText : public GfxHudBase {
     Vector2 getShadow (void) const { assertAlive(); return shadow; }
     void setShadow (const Vector2 &v) { assertAlive(); shadow = v; }
 
+    Vector3 getShadowColour (void) const { assertAlive(); return shadowColour; }
+    void setShadowColour (const Vector3 &v) { assertAlive(); shadowColour = v; }
+
+    float getShadowAlpha (void) const { assertAlive(); return shadowAlpha; }
+    void setShadowAlpha (float v) { assertAlive(); shadowAlpha = v; }
+
     Vector3 getLetterTopColour (void) const { assertAlive(); return letterTopColour; }
     void setLetterTopColour (const Vector3 &v) { assertAlive(); letterTopColour = v; }
     Vector3 getLetterBottomColour (void) const { assertAlive(); return letterBottomColour; }
@@ -386,7 +396,7 @@ class GfxHudText : public GfxHudBase {
 
     // internal function
     friend void gfx_render_hud_one (GfxHudBase *base);
-    friend void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour_mask, const Vector2 &offset);
+    friend void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, const Vector2 &offset);
 };
 
 /** Called in the frame loop by the graphics code to render the HUD on top of the 3d graphics. */

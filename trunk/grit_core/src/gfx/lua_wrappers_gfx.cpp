@@ -1729,6 +1729,10 @@ TRY_START
         } else {
             push_v2(L, self.getShadow());
         }
+    } else if (!::strcmp(key,"shadowColour")) {
+        push_v3(L, self.getShadowColour());
+    } else if (!::strcmp(key,"shadowAlpha")) {
+        lua_pushnumber(L, self.getShadowAlpha());
     } else if (!::strcmp(key,"bufferHeight")) {
         lua_pushnumber(L, self.getBufferHeight());
     } else if (!::strcmp(key,"bounds")) {
@@ -1810,6 +1814,12 @@ TRY_START
             Vector2 v = check_v2(L,3);
             self.setShadow(v);
         }
+    } else if (!::strcmp(key,"shadowColour")) {
+        Vector3 v = check_v3(L,3);
+        self.setShadowColour(v);
+    } else if (!::strcmp(key,"shadowAlpha")) {
+        float v = check_float(L,3);
+        self.setShadowAlpha(v);
     } else if (!::strcmp(key,"inheritOrientation")) {
         bool v = check_bool(L, 3);
         self.setInheritOrientation(v);

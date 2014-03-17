@@ -1132,7 +1132,7 @@ static void set_cornered_vertex_data (GfxTextureDiskResource *tex,
                                   vdata_raw, true);
 }
 
-void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour_mask, const Vector2 &offset)
+void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, const Vector2 &offset)
 {
     GfxFont *font = text->getFont();
     GfxTextureDiskResource *tex = font->getTexture();
@@ -1171,8 +1171,8 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour_mask, const Ve
     Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin * matrix_centre;
     try_set_named_constant(vp_text, "matrix", matrix);
 
-    try_set_named_constant(fp_text, "colour", to_ogre(text->getColour() * colour_mask));
-    try_set_named_constant(fp_text, "alpha", text->getAlpha());
+    try_set_named_constant(fp_text, "colour", to_ogre(colour));
+    try_set_named_constant(fp_text, "alpha", alpha);
 
 
     ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
@@ -1339,9 +1339,9 @@ void gfx_render_hud_one (GfxHudBase *base)
         text->buf.updateGPU(text->wrap == Vector2(0,0), text->scroll, text->scroll+text->wrap.y);
 
         if (text->getShadow() != Vector2(0,0)) {
-            gfx_render_hud_text(text, Vector3(0,0,0), text->getShadow());
+            gfx_render_hud_text(text, text->getShadowColour(), text->getShadowAlpha(), text->getShadow());
         }
-        gfx_render_hud_text(text, Vector3(1,1,1), Vector2(0,0));
+        gfx_render_hud_text(text, text->getColour(), text->getAlpha(), Vector2(0,0));
     }
 }
 
