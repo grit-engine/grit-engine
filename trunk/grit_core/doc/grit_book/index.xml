@@ -2,22 +2,53 @@
 
 <xi:include href="intro.xml"/>
 
-<chapter title="Graphics Bodies" />
+<xi:include href="streaming.xml"/>
 
-<chapter title="Materials" />
+<chapter title="Graphics" filename="graphics.html">
 
-<chapter title="Physics Bodies" />
+        <section title="Overview" />
 
-<chapter title="Collision Files" />
+        <section title="Graphics Bodies" />
 
-<chapter title="Audio Bodies" />
+        <section title="Sky Bodies" />
 
-<chapter title="The Streaming Object Model" />
+        <section title="Materials" />
 
-<chapter title="Mathematics" />
+        <section title="Lights" />
 
-<chapter title="The HUD" />
+        <section title="Particles" />
 
-<chapter title="InputFilter" />
+        <section title="The HUD" />
+
+        <section title="Shadow Artefacts" />
+
+        <section title="Fonts" />
+
+</chapter>
+
+
+<chapter title="Physics" filename="physics.html">
+
+        <section title="Physics Bodies" />
+
+        <section title="Collision Files" />
+
+</chapter>
+
+
+<chapter title="Audio" filename="audio.html">
+        <section title="Audio Bodies" />
+</chapter>
+
+
+<chapter title="InputFilter" filename="inputfilter.html"/>
+
+<chapter title="Miscellaneous" filename="misc.html">
+
+        <section title="Lua Utilities" />
+
+        <section title="Mathematics" />
+
+</chapter>
 
 </book>

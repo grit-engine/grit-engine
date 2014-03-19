@@ -1,38 +1,81 @@
-<chapter title="Introduction">
+<chapter title="Introduction" filename="intro.html">
 
-The Grit Game Engine allows you to create interactive 3D environments such
-as computer games.  Its fundamental architecture is based around the Lua
-scripting language.  Games are created by creating custom behaviours for
-objects in the scene, the scene itself, and on-screen HUD objects.  This is
-done at a very high level, with an easy-to-use programming model.  The in-game
-Lua console allows experimentation, debugging, and development while the game
-is running.
+The Grit Game Engine allows you to create rich 3D interactive worlds using Lua
+scripting.  All gameplay logic, graphical elements, physical behaviour, AI,
+sound, and everything else is ultimately controlled via general-purpose Lua
+APIs.  This manual serves as a reference for the APIs and frameworks for those
+APIs, complete with discussion and examples.
 
-The engine is very general-purpose.  This is achieved by having independent
-object-oriented APIs for the various subsystems (graphics, physics, audio,
-input, etc).  These are tied together by the object framework, which is also
-exposed via Lua.
+<section title="Licensing" >
 
-As a trivial example, a ball of energy that floats up and down could be
-implemented with an object.  The game designer writes a class with an
-initialisation callback that creates a graphics body in the graphics world, and
-stores a pointer to it in a field of the new object.  The class also has a
-destruction callback that can be used to clean up the graphics body when the
-object is removed from the scene.  Finally, there is a per-step callback to
-move the ball around, presumably using a sin function or similar.  If a light
-source is desired, then a light body would be created in the graphics world as
-well, and e.g. its intensity can be modified in the step callback.  Similarly,
-other graphics bodies, particles, and physical behaviour can be added if
-desired.  Audio bodies can be added in the audio world.  All of these "bodies",
-which manifest in independent subsystems, are created and controlled by the
-object in question.
+Grit is open source and is released under a liberal license.  It can be used
+for both commercial and non-commercial projects.  The copyright and license for
+the code and assets within the project package breaks down as follows:
 
-<image src="energy-ball-diagram.png" title="Energy Ball"
-       caption="Objects glue together the various subsystems." />
+<section title="Core Works">
 
-The lower level performance critical parts of the engine, such as the
-rendering pipeline and the collision detection, are written in C++.  However
-the Lua bindings are designed to be as expressive and safe as was possible
-without compromising on performance.
+Grit core works consist of:
+
+<ul>
+<li>The C++ code for the engine itself.</li>
+<li>Python and Maxscript code used in exporters.</li>
+<li>All Luaimg code.</li>
+<li>All assets and Lua code in system/.</li>
+<li>All Lua code in common/ and vehicles/.</li>
+</ul>
+
+These works are sufficient to build a game containing custom assets.  It covers
+all non-trivial code released as part of Grit.  The works are relased under the
+MIT license:
+
+<pre>
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</pre>
+
+</section>
+
+<section title="Example Content">
+
+There is also some example content provided with the engine, and the copyright
+situation for these is more complex.  It is not expected that third parties
+will be re-using and reselling these assets, as they exist only to demonstrate
+the engine.  Furthermore, unlike source code, it is hard to find good quality
+assets under permissive licenses.
+
+Some assets have copyright owned by project contributors, and are released
+under liberal licenses such as MIT or CC-BY, just like the source code. But
+other assets have less liberal licenses such as CC-SA, CC-NC or GPL.
+Furthermore, many assets are taken from stock image sites and thus copyright is
+still owned by those sites.  In these latter cases, care must be taken to use
+the assets in accordance with the appropriate licenses, as dictated by their
+copyright owners.
+
+Each directory has a copyright.txt file that lists the copyright owner, license
+of each asset in that directory.  Each element of an atlas will be described in
+copyright.txt unless all elements of the atlas are subject to the same license.
+Modifications to assets may also be mentioned in copyright.txt. Any important
+restrictions on the license is also given.
+
+</section>
+
+</section>
+
+
 
 </chapter>
