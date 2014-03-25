@@ -4,28 +4,11 @@
 
 <xi:include href="streaming.xml"/>
 
-<chapter title="Graphics" filename="graphics.html">
-
-        <section title="Overview" />
-
-        <section title="Graphics Bodies" />
-
-        <section title="Sky Bodies" />
-
-        <section title="Materials" />
-
-        <section title="Lights" />
-
-        <section title="Particles" />
-
-        <section title="The HUD" />
-
-        <section title="Shadow Artefacts" />
-
-        <section title="Fonts" />
+<chapter title="Resources" filename="resources.html">
 
 </chapter>
 
+<xi:include href="graphics.xml"/>
 
 <chapter title="Physics" filename="physics.html">
 
@@ -40,8 +23,7 @@
         <section title="Audio Bodies" />
 </chapter>
 
-
-<chapter title="InputFilter" filename="inputfilter.html"/>
+<xi:include href="inputfilter.xml"/>
 
 <chapter title="Miscellaneous" filename="misc.html">
 
