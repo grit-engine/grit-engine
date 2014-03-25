@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import lxml.etree as ET
-import translatexml
 
 def UnparseHtmlInlines(ns, inner=False):
     s = ""
