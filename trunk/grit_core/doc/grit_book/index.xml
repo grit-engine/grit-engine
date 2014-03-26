@@ -4,32 +4,34 @@
 
 <xi:include href="streaming.xml"/>
 
-<chapter title="Resources" filename="resources.html">
+<chapter title="Resources" id="resources">
 
 </chapter>
 
 <xi:include href="graphics.xml"/>
 
-<chapter title="Physics" filename="physics.html">
+<chapter title="Physics" id="physics">
 
-        <section title="Physics Bodies" />
+        <section title="Physics Bodies" id="physics_bodies"/>
 
-        <section title="Collision Files" />
+        <section title="Collision Files" id="collision_files"/>
 
 </chapter>
 
 
-<chapter title="Audio" filename="audio.html">
-        <section title="Audio Bodies" />
+<chapter title="Audio" id="audio">
+
+        <section title="Audio Bodies" id="audio_bodies" />
+
 </chapter>
 
 <xi:include href="inputfilter.xml"/>
 
-<chapter title="Miscellaneous" filename="misc.html">
+<chapter title="Miscellaneous" id="misc">
 
-        <section title="Lua Utilities" />
+        <section title="Lua Utilities" id="lua_utils" />
 
-        <section title="Mathematics" />
+        <section title="Mathematics" id="maths" />
 
 </chapter>
 

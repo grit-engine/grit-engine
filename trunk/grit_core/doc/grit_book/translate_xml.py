@@ -10,6 +10,9 @@ class Node:
     return self.attr[key]
   def __repr__(self):
     return 'Node("%s", attr=%s)' % (self.kind, repr(self.attr))
+  def __iter__(self):
+    for a in self.data:
+        yield a
 
 inline_tags = { 'def', 'web', 'issue' }
 
@@ -17,7 +20,7 @@ def TranslateParagraphs(content, dosplit=True):
     r = []
     r2 = None
     for i, c in enumerate(content):
-        if isinstance(c, str):
+        if isinstance(c, str) or isinstance(c, unicode):
             for i, s in enumerate(c.split('\n\n') if dosplit else [c]):
                 if i==0:
                     if not r2:
@@ -79,7 +82,7 @@ def TranslateBlockContents(block):
         else:
             if el.tag == "section":
                 data = TranslateBlockContents(el)
-                translated_content = Node('Section', index='2', title=el.get('title'), data=data)
+                translated_content = Node('Section', index='2', id=el.get('id'), title=el.get('title'), data=data)
             elif el.tag == "image":
                 src = el.get('src')
                 translated_content = Node('Image', src=src, caption=el.get('caption'),

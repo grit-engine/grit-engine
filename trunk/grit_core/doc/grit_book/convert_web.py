@@ -25,8 +25,11 @@ def GeneratePage(title, content, pages):
 <div class="logo" > </div>
 
 <div class="navbar">'''
+    s += '\n<div class="navitem"><a class="navitem" href="index.html">Contents</a></div>'
+    chapter_index = 0
     for filename, ast in pages:
-        s += '\n<div class="navitem"><a class="navitem" href="' + filename + '">' + ast.title + '</a></div>'
+        chapter_index += 1
+        s += '\n<div class="navitem"><a class="navitem" href="%s">%d. %s</a></div>' % (filename, chapter_index, ast.title)
     s += '''
 </div>
 
@@ -60,22 +63,42 @@ for chapter in book:
         continue
     assert chapter.tag == 'chapter'
     title = chapter.get('title')
-    filename = chapter.get('filename')
-    ast = Node('Section', title=title, data=TranslateBlockContents(chapter))
+    id = chapter.get('id')
+    filename = id + '.html'
+    ast = Node('Section', id=id, title=title, data=TranslateBlockContents(chapter))
     pages.append((filename, ast))
 
 print 'Unparsing to HTML...'
+chapter_index = 0
 for filename, ast in pages:
     # Convert the chapter tag into a section, for easy translation.
     f = open(filename, 'w')
-    f.write(GeneratePage(ast.title, UnparseHtmlBlocks([ast]), pages))
+    f.write(GeneratePage(ast.title, UnparseHtmlBlocks([ast], [], chapter_index), pages))
+    chapter_index += 1
     f.close()
 
+def Sections(ast, filename, path):
+    index = ''
+    section_index = 0
+    for n in ast:
+        if n.kind == 'Section':
+            section_index += 1
+            new_path = path + [section_index]
+            path_string = '.'.join([str(e) for e in new_path])
+            indent = '&nbsp;' * (len(path) * 8)
+            url = '%s#%s' % (filename, n.id)
+            index += '<p>%s%s <a href="%s">%s</a></p>\n\n' % (indent, path_string, url, n.title)
+            index += Sections(n, filename, new_path)
+    return index
+
 print 'Creating contents page...'
-index = '<h1>Contents</h1>\n\n<ol>'
+index = '<h1>Contents</h1>\n\n'
+chapter_index = 0
 for filename, ast in pages:
-    index += ('<li><p><a href="' + filename + '">' + ast.title + '</a></p></li>\n\n')
-index += '</ol>\n'
+    chapter_index += 1
+    index += '<p>%d <a href="%s">%s</a></p>\n\n' % (chapter_index, filename, ast.title)
+    index += Sections(ast, filename, [chapter_index])
+index += '\n'
 contents = open('index.html', 'w')
 contents.write(GeneratePage('Contents', index, pages))
 contents.close()

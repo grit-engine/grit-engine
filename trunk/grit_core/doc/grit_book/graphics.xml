@@ -1,12 +1,16 @@
-<chapter title="Graphics" filename="graphics.html">
+<chapter title="Graphics" id="graphics">
 
-<section title="Overview" />
+<section title="Overview" id="gfx_overview">
 
-<section title="Graphics Bodies" />
+</section>
 
-<section title="Realtime Shadow Techniques Used By Grit">
+<section title="Graphics Bodies" id="gfx_body">
 
-    <section title="Depth Shadow Mapping">
+</section>
+
+<section title="Realtime Shadow Techniques Used By Grit" id="gfx_shadow">
+
+    <section title="Depth Shadow Mapping" id="gfx_shadow_dsm">
 
         Grit has full dynamic shadows that are calculated in real time on the
 GPU. The basic technique is called <web
@@ -24,7 +28,7 @@ it is in shadow).
 
     </section>
 
-    <section title="Perspective Transform" >
+    <section title="Perspective Transform" id="gfx_shadow_lispsm">
 
         There is a perspective transform applied in order to concentrate as
 many of the shadow map's texels as possible in the area nearest the player.
@@ -43,7 +47,7 @@ quite severe. This causes an unavoidable 'crawling' effect in the shadows.
 
     </section>
 
-    <section title="Covering Larger Distances" >
+    <section title="Covering Larger Distances" id="gfx_shadow_pssm">
 
         There are in fact 3 shadow maps used. One for the area closest to the
 player, one to cover the area further away, and the 3rd one for the furthest
@@ -58,30 +62,30 @@ shadow map to the next, as a sudden decrease in shadow quality.
 
     </section>
 
-    <section title="Soft Shadows">
+    <section title="Soft Shadows" id="gfx_shadow_pcf">
 
         If each screen pixel was merely tested for being in shadow or not, the
 shadows would be very hard-edged because of the sudden transition from 'in
 shadow' to 'not in shadow'. To avoid this, we soften the shadows using a
-technique called PCF (Percentage Closer Filtering)
-http://http.developer.nvidia.com/GPUGems/gpugems_ch11.html. This boils down to
-testing the shadow map several times per screen pixel, and taking the average.
-The appearance is that several faint shadows have been overlaid in slightly
-different positions, to produce a blurred effect. It can get very slow but
-there is hardware support that we are currently not using that can help, see
-<issue id="125"/>.
+technique called PCF (<web
+url="http://http.developer.nvidia.com/GPUGems/gpugems_ch11.html">Percentage
+Closer Filtering</web>) . This boils down to testing the shadow map several times
+per screen pixel, and taking the average.  The appearance is that several faint
+shadows have been overlaid in slightly different positions, to produce a
+blurred effect. It can get very slow but there is hardware support that we are
+currently not using that can help, see <issue id="125"/>.
 
     </section>
 
 </section>
 
-<section title="Shadow Artefacts">
+<section title="Shadow Artefacts" id="gfx_shadow_artefacts">
 
     There are certain things that can go wrong with dynamic shadow
 implementations like the ones used in Grit. There are some things to avoid when
 modelling objects, in order to avoid problems.
 
-    <section title="Holes in shadows">
+    <section title="Holes in shadows" id="gfx_shadow_holes">
 
         Since the shadows are calculated by rendering the scene from the sun
 (or moon) you have to make sure that your geometry, when viewed from this
@@ -96,7 +100,7 @@ of "wall", then you do.
 
     </section>
 
-    <section title="Shadow Texture Stretch">
+    <section title="Shadow Texture Stretch" id="gfx_shadow_stretch">
 
         <image src="shadow_stretch.png" caption="Shadow texture stretch occurs
 where polys are not facing the light." title="Using SHADOWYNESS" />
@@ -134,19 +138,113 @@ incorporating the diffuse lighting component as well as the shadow map:
 
     </section>
 
+    <section title="Normal Bending" id="gfx_shadow_bending">
+
+        If your mesh has sharp edges between polys (an angle of more than 20
+degrees for example) and is smooth shaded, then for some pixels, the normals
+interpolated across that mesh will be considerably different to the 'true'
+normal of that face (i.e. the normal you would calculate using the positions of
+the 3 vertexes).  For example, if you model a cube and use smooth shading then
+the normal of each face will be orthogonal, but the normals will be smoothly
+interpolated around the cube causing a huge amount of normal bending at the
+edges and corners.
+
+        <image src="shadow_artefacts.png" caption="Shadow artefacts caused by
+normal bending." title="Normal Bending" />
+
+        Normal bending is usually OK, but causes a problem with shadows. This
+is because shadow stretch occurs in places where the true normal of the polygon
+is close to perpendicular to the light source.  However light attenuation uses
+the interpolated normal, which can be pointing closer to the light than the
+true normal.  This kind of artefact often occurs on sharp terrain like cliffs.
+It causes areas to be subject to lighting that would not ordinarily be lit, and
+therefore causes shadow artefacts to appear that would ordinarily be hidden in
+the darkness. If the face is in-line with the light, e.g. cliffs at noon, and
+there is significant normal bending, then the polygon may be almost fully lit,
+even though the polygon is nearly at 90 degrees to the sun.
+
+        The best fix for this is to model in a way that does not have such
+extreme smoothing of the normals. However to avoid explosion of polycount,
+there is also an alternative - the shadowObliqueCutOff material property.
+<!-- — -->
+
+        <image src="shadow_artefacts_fixed.png" caption="Here,
+shadowObliqueCutoff is set to 20 degrees." title="Normal Bending" />
+
+    </section>
+
+    <section title="Shadow Acne" id="gfx_shadow_acne">
+
+        Imprecision in the shadow map, which records the distance of each
+occluder from the light, causes the shadow to fluctuate, causing unpleasant
+high frequency transitions from 'in shadow' to 'not in shadow' on every
+surface. The engine will avoid shadow acne by adding a certain amount of bias
+to the shadow. Thus the shadow is pushed away from the light by enough in order
+to avoid the noise being an issue.
+
+        <image src="shadow_acne_example.png" caption="" title="Shadow Acne" />
+
+        The following diagram illustrates the problem, in the case of a wall
+standing on flat ground, viewed as a cross-section.
+
+        <image src="shadow_acne_diagram.png" caption="" title="Shadow Acne Diagram" />
+
+        You don't need to worry about this as a modeller, as the engine handles
+it internally. However, you should be aware that there is a bias applied to the
+shadow by the engine in order to avoid it.
+
+    </section>
+
+    <section title="Additional Bias" id="gfx_shadow_bias">
+
+        You can add additional bias yourself, in the material, in order to get
+rid of other artefacts. For example here there are unwanted shadows on the
+tank. There is simply not enough fidelity in the dynamic shadows to do this
+well enough. We would rather there were no shadows at all.
+
+        <image src="shadow_unwanted.png" caption="" title="Unwanted Shadow Fidelity" />
+
+        One way to avoid this is to avoid these kind of nooks and crannies in
+the geometry of the object. However since these contribute greatly to the
+appearance of objects, we would prefer some other solution. We can add another
+0.1m to the bias in order to push the shadow far enough away from the object to
+hide shadows on the high detail parts of the mesh.
+
+        <image src="shadow_unwanted_fixed.png" caption="" title="Manual Bias" />
+
+    </section>
+
+    <section title="Shadow Disconnection" id="gfx_shadow_discon">
+
+        Too much bias can cause a problem in itself though. If the bias is
+increased enough, the shadow will move so far from the object that there will
+be a 'gap' where the object meets the ground. This gives the unwelcome
+appearance that the object is 'floating' above the ground. This is also
+illustrated in the above diagram.
+
+        <image src="shadow_disconnection.png" caption="" title="Shadow Disconnection" />
+
+        The bias automatically used by the engine is carefully chosen to be as
+small as it can be. However as a modeller you must also make sure your
+additional bias is not too large as well.
+
+    </section>
+
 </section>
 
-<section title="Sky Bodies" />
+<section title="Sky Bodies" id="gfx_sky_body" />
 
-<section title="Materials" />
+<section title="Materials" id="gfx_material" />
 
-<section title="Lights" />
+<section title="Lights" id="gfx_light" />
 
-<section title="Particles" />
+<section title="Particles" id="gfx_particle" />
 
-<section title="The HUD" />
+<section title="The HUD" id="gfx_hud">
 
-<section title="Fonts" />
+</section>
+
+<section title="Fonts" id="gfx_font" />
 
 </chapter>
 

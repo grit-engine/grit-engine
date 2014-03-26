@@ -1,4 +1,4 @@
-<chapter title="Introduction" filename="intro.html">
+<chapter title="Introduction" id="intro">
 
 The Grit Game Engine allows you to create rich 3D interactive worlds using Lua
 scripting.  All gameplay logic, graphical elements, physical behaviour, AI,
@@ -6,13 +6,13 @@ sound, and everything else is ultimately controlled via general-purpose Lua
 APIs.  This manual serves as a reference for the APIs and frameworks for those
 APIs, complete with discussion and examples.
 
-<section title="Licensing" >
+<section title="Licensing" id="intro_licensing">
 
 Grit is open source and is released under a liberal license.  It can be used
 for both commercial and non-commercial projects.  The copyright and license for
 the code and assets within the project package breaks down as follows:
 
-<section title="Core Works">
+<section title="Core Works" id="intro_core">
 
 Grit core works consist of:
 
@@ -50,7 +50,7 @@ THE SOFTWARE.
 
 </section>
 
-<section title="Example Content">
+<section title="Example Content" id="intro_example">
 
 There is also some example content provided with the engine, and the copyright
 situation for these is more complex.  It is not expected that third parties

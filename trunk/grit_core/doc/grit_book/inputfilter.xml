@@ -1,4 +1,4 @@
-<chapter title="Input" filename="inputfilter.html">
+<chapter title="Input" id="inputfilter">
 
 <!-- Be sure to use the terminology "button press" in order to include both
    - mouse buttons and keypresses.

@@ -5,7 +5,7 @@ import lxml.etree as ET
 def UnparseHtmlInlines(ns, inner=False):
     s = ""
     for n in ns:
-        if isinstance(n, str):
+        if isinstance(n, str) or isinstance(n, unicode):
             s += n
         elif n.kind == 'Definition':
             s += '<span class="def">'
@@ -22,9 +22,8 @@ def UnparseHtmlInlines(ns, inner=False):
             print "ERROR: unknown node kind: " + n.kind
     return s
 
-def UnparseHtmlBlocks(ns, d=1):
+def UnparseHtmlBlocks(ns, path, section_counter = 0):
     s = ""
-    section_counter = 0
     for n in ns:
         if n.kind == 'Image':
             s += '''<div class="image">
@@ -35,11 +34,14 @@ def UnparseHtmlBlocks(ns, d=1):
         elif n.kind == 'UnorderedList':
             s += '<ul>\n\n'
             for item in n.data:
-                s += '<li>\n\n' + UnparseHtmlBlocks(item) + '</li>\n\n'
+                s += '<li>\n\n' + UnparseHtmlBlocks(item, path) + '</li>\n\n'
             s += '</ul>\n'
         elif n.kind == 'Section':
-            s += '<h%d>%s</h%d>\n\n' % (d, n.title, d)
-            s += UnparseHtmlBlocks(n.data, d+1)
+            section_counter += 1
+            path_string = '.'.join([str(e) for e in path + [section_counter]])
+            h = len(path) + 1
+            s += '<h%d id="%s">%s&nbsp;&nbsp;%s</h%d>\n\n' % (h, n.id, path_string, n.title, h)
+            s += UnparseHtmlBlocks(n.data, path+[section_counter])
         elif n.kind == 'Preformatted':
             s += '<pre>%s</pre>\n' % n.data
         elif n.kind == 'Lua':
