@@ -1,38 +1,19 @@
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
 
-<xi:include href="intro.xml"/>
+    <xi:include href="intro.xml"/>
 
-<xi:include href="streaming.xml"/>
+    <xi:include href="streaming.xml"/>
 
-<chapter title="Resources" id="resources">
+    <xi:include href="resources.xml"/>
 
-</chapter>
+    <xi:include href="graphics.xml"/>
 
-<xi:include href="graphics.xml"/>
+    <xi:include href="physics.xml"/>
 
-<chapter title="Physics" id="physics">
+    <xi:include href="audio.xml"/>
 
-        <section title="Physics Bodies" id="physics_bodies"/>
+    <xi:include href="inputfilter.xml"/>
 
-        <section title="Collision Files" id="collision_files"/>
-
-</chapter>
-
-
-<chapter title="Audio" id="audio">
-
-        <section title="Audio Bodies" id="audio_bodies" />
-
-</chapter>
-
-<xi:include href="inputfilter.xml"/>
-
-<chapter title="Miscellaneous" id="misc">
-
-        <section title="Lua Utilities" id="lua_utils" />
-
-        <section title="Mathematics" id="maths" />
-
-</chapter>
+    <xi:include href="misc.xml"/>
 
 </book>

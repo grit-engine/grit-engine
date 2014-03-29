@@ -5,7 +5,7 @@ import lxml.etree as ET
 def UnparseHtmlInlines(ns, inner=False):
     s = ""
     for n in ns:
-        if isinstance(n, str) or isinstance(n, unicode):
+        if isinstance(n, basestring):
             s += n
         elif n.kind == 'Definition':
             s += '<span class="def">'
@@ -40,7 +40,7 @@ def UnparseHtmlBlocks(ns, path, section_counter = 0):
             section_counter += 1
             path_string = '.'.join([str(e) for e in path + [section_counter]])
             h = len(path) + 1
-            s += '<h%d id="%s">%s&nbsp;&nbsp;%s</h%d>\n\n' % (h, n.id, path_string, n.title, h)
+            s += '<h%d id="%s">%s.&nbsp;&nbsp;%s</h%d>\n\n' % (h, n.id, path_string, n.title, h)
             s += UnparseHtmlBlocks(n.data, path+[section_counter])
         elif n.kind == 'Preformatted':
             s += '<pre>%s</pre>\n' % n.data

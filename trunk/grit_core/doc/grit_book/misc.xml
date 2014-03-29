@@ -1,0 +1,154 @@
+<chapter title="Miscellaneous" id="misc">
+
+    <section title="Lua Utilities" id="lua_utils">
+
+    </section>
+
+    <section title="Mathematics" id="maths">
+
+        <section title="Quaternion Basics" id="maths_quaternion">
+
+            Quaternions are used to represent rotations in 3d space. They may seem scary, especially if you read <web
+            url="http://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation">wikipedia articles</web> on the subject.
+            The maths behind them is advanced, but you don't need to understand that in order to use them in Grit.
+
+            Quaternions are just a clockwise rotation of a given number of degrees about a given axis (think like
+            screwing in a screw). Part of the reason they seem scary is that they are often given in 'raw' form like so:
+
+            <lua>
+                quat(1,0,0,0)
+            </lua>
+
+            These 4 floating point numbers are the in-memory representation of the rotation.  They are labeled
+            <def>w</def>, <def>x</def>, <def>y</def>, <def>z</def>, in that order.  The fact that only 4 numbers are
+            needed is the reason quaternions are popular.  The most reasonable alternative, rotation matrixes, require 9
+            numbers.  This particular quaternion is very important, as it is the <def>identity quaternion</def>.  It
+            represents a rotation of 0 degrees.  When writing Lua code you can use the <def>Q_ID</def> global variable
+            to make this more explicit.
+
+            It is possible to understand raw quaternions if you are reasonably good at mathematics, but it is much
+            clearer to give quaternions in their angle/axis form. Here is the same quaternion in angle/axis form (you
+            can choose any axis, since it is 0 degrees of rotation).  These quaternion values all test equal:
+
+            <lua>
+                quat(0, vec(0,0,1)) == Q_ID
+                quat(0, vec(1,0,0)) == Q_ID
+            </lua>
+
+            A rotation of 0 degrees about any axis is not very useful. The following is a more interesting quaternion:
+
+            <lua>
+                quat(90, vec(1,0,0))
+            </lua>
+
+            This means a clockwise rotation of 90 degrees about the 'X' axis.  To visualise this, imagine screwing a
+            screw in the direction of the X axis. If you turn the screw 90 degrees, what used to point in the direction
+            of the Y axis now points towards the Z axis. Likewise, what used to point in -Z now points towards Y.
+
+            To specify an anti-clockwise rotation about the X axis, one can invert either the angle or the axis.
+            Inverting both results in an identical quaternion.  The following are all equal:
+
+            <lua>
+                quat(-90, vec(1,0,0))
+                quat(90, vec(-1,0,0))
+                quat(0.7071068, -0.7071068, 0, 0)
+            </lua>
+
+            Generally, if you see a quaternion with 0.7 in the first value, it is a rotation by 90 degrees, whereas 0
+            indicates 180 degrees.  In both cases, the last 3 numbers taken as a vector3 give the axis of rotation.
+            Here are some example of 180 degree rotations:
+
+            <lua>
+                quat(0, 1, 0, 0) -- 180 degrees about X
+                quat(0, 0, 1, 0) -- 180 degrees about Y
+                quat(0, 0, 0, 1) -- 180 degrees about Z
+            </lua>
+
+            Note that there are many different ways of rotating by 180 degrees.  E.g. a barrel roll, turning on the
+            spot, and doing a backflip. You can in fact rotate by 180 degrees about any axis and the result is different
+            in each case.  On the other hand if you rotate by 0 degrees than it does not matter which axis you rotate
+            around, because you are not rotating at all.
+
+            You can also get the quaternion that would transform one vector into another: The following quaternions all
+            specify a rotation of 90 degrees about the 'X' axis.  In the first case Y is turned to Z, and in the second
+            case -Z is turned to X.
+
+            <lua>
+                quat(vec(0,1,0), vec(0,0,1))
+                quat(vec(0,0,-1), vec(0,1,0))
+            </lua>
+
+            It is possible to see the raw form of a quaternion by typing these other forms into the console.  Also, one
+            can easily extract the axis and angle from a quaternion using <def>q.axis</def> and <def>q.angle</def>.
+
+        </section>
+            
+        <section title="Representing Orientations" id="maths_orientation">
+
+            The difference between a rotation and an orientation is that a rotation is a change in orientation. It is
+            like the difference between an absolute value and an offset. In order to use an offset as an absolute value,
+            we must assume a base value from which to offset to the value we want. In the case of simple numbers and
+            positions, it is clear that the base value should be 0, or vec(0,0,0) respectively. However with rotations,
+            one uses the identity quaternion, or quat(1,0,0,0) as a base.
+
+            For models, no rotation at all just means that XYZ in model space point in the same directions as XYZ in
+            world space.  However for lights, an unrotated light will shine in the +Y direction. Thus if you want it to
+            shine in the -Z direction then it needs to be rotated by the following quaternion:
+
+            <lua>
+                quat(vec(0,1,0), vec(0,0,-1))
+            </lua>
+
+            Having lights shine in +Y by default is an arbitrary decision.  Other applications instead prefer +Z, -Z,
+            etc., so one must be careful when converting lighting setups from other software into Grit.
+
+        </section>
+
+        <section title="Transforming Vectors With Quaternions" id="maths_transform">
+
+            If you have a point (or a direction, in the form of a direction vector) in model space, and you want to
+            transform it into world space, you use the orientation of the object to rotate that vector.  For example if
+            you want to know if a car is upside down, you can trotate the up vector for the car in model space,
+            vec(0,0,1), by the car's orientation, and test if it is still pointing up.
+
+            <lua>
+                (car_orientation * vec(0,0,1)).z > 0
+            </lua>
+
+            This operation can be chained.  If you have a turret on a tank, and the turret usually faces +Y in model
+            space, but you want to know where it points in world space given the turret angle (clockwise from the top)
+            and tank orientation, you could use:
+
+            <lua>
+                turret_point_model_space = quat(turret_angle, vec(0,0,-1)) * vec(0,1,0)
+                turret_point_world_space = tank_orientation * turret_point_model_space
+            </lua>
+
+            You can also combine the two quaternions into a single one that describes the complete rotation:
+
+            <lua>
+                turret_orientation_world_space = tank_orientation * quat(turret_angle, vec(0,0,-1))
+                turret_vector_world_space = turret_orientation_world_space * vec(0,1,0)
+            </lua>
+
+            You can also invert a quaternion, which simply is the opposite rotation, i.e. the opposite angle around the
+            same axis:
+
+            <lua>
+                inv(quat(35, vec(0,1,0))) == quat(-35, vec(0,1,0))
+            </lua>
+
+            This allows you to find out e.g. where the turret should point at in model space, in order for it point in a
+            particular direction in world space.  From there you can e.g.  use math.atan2 to figure out the angle for
+            the turret.
+
+            <lua> 
+                turret_point_model_space = inv(turret_orientation_world_space) * vector_to_enemy
+            </lua>
+
+        </section>
+
+    </section>
+
+</chapter>
+

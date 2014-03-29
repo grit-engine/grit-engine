@@ -106,3 +106,7 @@ pre {
         border-width: 1px;
         display: inline-block;
 }
+
+p {
+        text-align: justify;
+}

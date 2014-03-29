@@ -1,6 +1,38 @@
 #!/usr/bin/python
 
+import os.path
 import lxml.etree as ET
+import textwrap
+
+class TranslateError:
+    def __init__(self, el, problem):
+        self.filename = el.base
+        self.line = el.sourceline
+        self.problem = problem
+    def __str__(self):
+        return '%s:%d: %s' % (self.filename, self.line, self.problem)
+
+def Error(el, msg):
+    raise TranslateError(el, msg)
+
+
+def AssertNoBody(el):
+    if el.text.strip('\n\t '):
+        Error(el, 'Cannot have text after element %s.' % el.tag)
+
+
+def AssertNoTail(el):
+    if el.tail.strip('\n\t '):
+        Error(el, 'Cannot have text after element %s.' % el.tag)
+     
+
+def AssertTag(el, tag):
+    if el.tag != tag:
+        Error(el, 'Expected %s, not %s.' % (tag, el.tag))
+     
+def AssertFile(el, fname):
+    if not os.path.isfile(fname):
+        Error(el, "File does not exist: " + fname)
 
 class Node:
   def __init__(self, kind, **kwargs):
@@ -20,7 +52,7 @@ def TranslateParagraphs(content, dosplit=True):
     r = []
     r2 = None
     for i, c in enumerate(content):
-        if isinstance(c, str) or isinstance(c, unicode):
+        if isinstance(c, basestring):
             for i, s in enumerate(c.split('\n\n') if dosplit else [c]):
                 if i==0:
                     if not r2:
@@ -41,7 +73,8 @@ def TranslateParagraphs(content, dosplit=True):
             elif c.tag == "web":
                 r2.append(Node('Web', url=c.get('url'), data=flattened))
             elif c.tag == "issue":
-                assert not flattened
+                if flattened:
+                    Error(c, "Issue tag should be empty.") 
                 r2.append(Node('Issue', id=int(c.get('id'))))
             else:
                 print 'ERROR: Unknown tag: ' + str(c.tag)
@@ -83,22 +116,26 @@ def TranslateBlockContents(block):
             if el.tag == "section":
                 data = TranslateBlockContents(el)
                 translated_content = Node('Section', index='2', id=el.get('id'), title=el.get('title'), data=data)
+                AssertNoTail(el)
             elif el.tag == "image":
                 src = el.get('src')
+                thumb_src = 'thumb_' + src
+                AssertFile(el, src)
+                AssertFile(el, thumb_src)
                 translated_content = Node('Image', src=src, caption=el.get('caption'),
-                                          thumb_src='thumb_' + src, title=el.get('title'))
+                                          thumb_src=thumb_src, title=el.get('title'))
             elif el.tag == "ul":
-                assert not el.text.strip('\n\t ')
+                AssertNoBody(el)
                 translated_items = []
                 for item in el:
-                    assert item.tag == 'li'
+                    AssertTag(item, 'li')
                     translated_items.append(TranslateBlockContents(item))
-                    assert not item.tail.strip('\n\t ')
+                    AssertNoTail(item)
                 translated_content = Node('UnorderedList', data=translated_items)
             elif el.tag == "lua":
-                translated_content = Node('Lua', data=el.text.strip('\n'))
+                translated_content = Node('Lua', data=textwrap.dedent(el.text))
             elif el.tag == "pre":
-                translated_content = Node('Preformatted', data=el.text.strip('\n'))
+                translated_content = Node('Preformatted', data=textwrap.dedent(el.text))
             else:
                 print 'ERROR: Unknown tag: ' + str(el.tag)
                 continue

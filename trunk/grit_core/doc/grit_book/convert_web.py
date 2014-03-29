@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import codecs
+
 import lxml.etree as ET
 from translate_xml import *
 from unparse_http import *
@@ -50,29 +52,43 @@ def GeneratePage(title, content, pages):
     return s
 
 
-print 'Parsing XML...'
-parser = ET.XMLParser(load_dtd=True, resolve_entities=True)
-tree = ET.parse('index.xml', parser=parser)
-tree.xinclude()
+# libxml2 does not properly implement the XML standard, so do my own implementation here...
+def MyXInclude(tree):
+    for n in tree:
+        if n.tag == '{http://www.w3.org/2001/XInclude}include':
+            href = n.get('href')
+            print 'Parsing ' + href
+            include_tree = ET.parse(href)
+            include_tree.getroot().set('{http://www.w3.org/XML/1998/namespace}base', href)
+            tree.replace(n, include_tree.getroot())
+        else:
+            MyXInclude(n)
+            
+
+print 'Parsing index.xml'
+tree = ET.parse('index.xml')
+MyXInclude(tree.getroot())
 book = tree.getroot()
+
 
 print 'Translating XML dom...'
 pages = []
+AssertTag(book, 'book')
 for chapter in book:
     if chapter.tag == ET.Comment:
         continue
-    assert chapter.tag == 'chapter'
+    AssertTag(chapter, 'chapter')
     title = chapter.get('title')
     id = chapter.get('id')
     filename = id + '.html'
     ast = Node('Section', id=id, title=title, data=TranslateBlockContents(chapter))
     pages.append((filename, ast))
 
-print 'Unparsing to HTML...'
 chapter_index = 0
 for filename, ast in pages:
     # Convert the chapter tag into a section, for easy translation.
-    f = open(filename, 'w')
+    print 'Unparsing ' + filename
+    f = codecs.open(filename, 'w', 'utf-8')
     f.write(GeneratePage(ast.title, UnparseHtmlBlocks([ast], [], chapter_index), pages))
     chapter_index += 1
     f.close()
@@ -91,7 +107,7 @@ def Sections(ast, filename, path):
             index += Sections(n, filename, new_path)
     return index
 
-print 'Creating contents page...'
+print 'Writing index.html'
 index = '<h1>Contents</h1>\n\n'
 chapter_index = 0
 for filename, ast in pages:
@@ -99,7 +115,7 @@ for filename, ast in pages:
     index += '<p>%d <a href="%s">%s</a></p>\n\n' % (chapter_index, filename, ast.title)
     index += Sections(ast, filename, [chapter_index])
 index += '\n'
-contents = open('index.html', 'w')
+contents = codecs.open('index.html', 'w', 'utf-8')
 contents.write(GeneratePage('Contents', index, pages))
 contents.close()
 print 'Done.'

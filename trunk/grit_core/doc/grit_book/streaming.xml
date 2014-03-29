@@ -1,48 +1,44 @@
 <chapter title="Object Model" id="streaming">
 
-The Grit Game Engine allows you to create interactive 3D environments such
-as computer games.  Its fundamental architecture is based around the Lua
-scripting language.  Games are created by creating custom behaviours for
-objects in the scene, the scene itself, and on-screen HUD objects.  This is
-done at a very high level, with an easy-to-use programming model.  The in-game
-Lua console allows experimentation, debugging, and development while the game
-is running.
+    The Grit Game Engine allows you to create interactive 3D environments such
+    as computer games.  Its fundamental architecture is based around the Lua
+    scripting language.  Games are created by creating custom behaviours for
+    objects in the scene, the scene itself, and on-screen HUD objects.  This is
+    done at a very high level, with an easy-to-use programming model.  The
+    in-game Lua console allows experimentation, debugging, and development
+    while the game is running.
 
-Grit is very general-purpose.  This is achieved by having independent Lua APIs
-for the various subsystems (graphics, physics, audio, input, etc).  Some
-instances of these APIs, called <def>bodies</def>, occupy a particular location
-in the 3D space of the game world.  Others are simply interfaces into the
-screen or the global game environment and are referred to as simply
-<def>entities</def>.  Both bodies and entities are tied together by the
-streaming object model, which is also exposed via a Lua framework.  An
-<def>object</def> represents a higher level of abstraction with an encompassing
-behaviour, such as a car.  Objects are instances of <def>classes</def> which
+    Grit is very general-purpose.  This is achieved by having independent Lua
+    APIs for the various subsystems (graphics, physics, audio, input, etc).
+    Some instances of these APIs, called <def>bodies</def>, occupy a particular
+    location in the 3D space of the game world.  Others are simply interfaces
+    into the screen or the global game environment and are referred to as
+    simply <def>entities</def>.  Both bodies and entities are tied together by
+    the streaming object model, which is also exposed via a Lua framework.  An
+    <def>object</def> represents a higher level of abstraction with an
+    encompassing behaviour, such as a car.  Objects are instances of
+    <def>classes</def> which
 
-<!--
-<image src="energy_ball_diagram.png" title="Energy Ball"
-       caption="Objects glue together the various subsystems." />
--->
+    <image src="example_image.png" title="Energy Ball" caption="Objects glue
+    together the various subsystems." />
 
-<image src="example_image.png" title="Energy Ball"
-       caption="Objects glue together the various subsystems." />
+    As a trivial example, a ball of energy that floats up and down could be
+    implemented with an object.  The game designer writes a class with an
+    initialisation callback that creates a graphics body in the graphics world,
+    and stores a pointer to it in a field of the new object.  The class also
+    has a destruction callback that can be used to clean up the graphics body
+    when the object is removed from the scene.  Finally, there is a per-step
+    callback to move the ball around, presumably using a sin function or
+    similar.  If a light source is desired, then a light body would be created
+    in the graphics world as well, and e.g. its intensity can be modified in
+    the step callback.  Similarly, other graphics bodies, particles, and
+    physical behaviour can be added if desired.  Audio bodies can be added in
+    the audio world.  All of these "bodies", which manifest in independent
+    subsystems, are created and controlled by the object in question.
 
-As a trivial example, a ball of energy that floats up and down could be
-implemented with an object.  The game designer writes a class with an
-initialisation callback that creates a graphics body in the graphics world, and
-stores a pointer to it in a field of the new object.  The class also has a
-destruction callback that can be used to clean up the graphics body when the
-object is removed from the scene.  Finally, there is a per-step callback to
-move the ball around, presumably using a sin function or similar.  If a light
-source is desired, then a light body would be created in the graphics world as
-well, and e.g. its intensity can be modified in the step callback.  Similarly,
-other graphics bodies, particles, and physical behaviour can be added if
-desired.  Audio bodies can be added in the audio world.  All of these "bodies",
-which manifest in independent subsystems, are created and controlled by the
-object in question.
-
-The low level performance critical parts of the engine, such as the
-rendering pipeline and the collision detection, are written in C++.  However
-the Lua bindings are designed to be as expressive and safe as was possible
-without compromising on performance.
+    The low level performance critical parts of the engine, such as the
+    rendering pipeline and the collision detection, are written in C++.
+    However the Lua bindings are designed to be as expressive and safe as was
+    possible without compromising on performance.
 
 </chapter>
