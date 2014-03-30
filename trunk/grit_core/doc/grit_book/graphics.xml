@@ -2,15 +2,16 @@
 
 <section title="Graphics" id="graphics" splitbelow="true">
 
-    <section title="Overview" id="gfx_overview">
-
-    </section>
+    The graphics subsystem is the largest, and its API gives control over
+    everything you see on the screen.  This includes objects, particles, and
+    lights in the graphics world.  It also includes the heads up display (HUD)
+    and fonts.
 
     <section title="Graphics Bodies" id="gfx_body">
 
-    </section>
+        <section title="Materials" id="gfx_material">
 
-    <section title="Materials" id="gfx_material">
+        </section>
 
     </section>
 

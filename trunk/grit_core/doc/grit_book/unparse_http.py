@@ -115,11 +115,11 @@ def UnparseHtmlBlocks(book, parent, path, section_counter, split_below, never_sp
             print "ERROR: unknown node kind: " + n.kind
         s += '\n'
     if split_below and not never_split:
-        s += BuildHtmlIndex(parent, path)
+        s += BuildHtmlIndex(parent, path, len(path))
     return s
 
 
-def BuildHtmlIndex(parent, path, filename=None):
+def BuildHtmlIndex(parent, path, dedent, filename=None):
     index = ''
     section_index = 0
     for n in parent:
@@ -127,13 +127,13 @@ def BuildHtmlIndex(parent, path, filename=None):
             section_index += 1
             new_path = path + [section_index]
             path_string = '.'.join([str(e) for e in new_path])
-            indent = '&nbsp;' * (len(path) * 8)
+            indent = '&nbsp;' * ((len(path)-dedent) * 8)
             new_filename = n.id + '.html' if parent.split else filename
             if parent.split:
                 index += '<p class="index">%s%s. <a class="index" href="%s">%s</a></p>\n\n' % (indent, path_string, new_filename, n.title)
             else:
                 url = '%s#%s' % (new_filename, n.id)
                 index += '<p class="index">%s%s. %s (<a class="index" href="%s">&sect;</a>)</p>\n\n' % (indent, path_string, n.title, url)
-            index += BuildHtmlIndex(n, new_path, new_filename)
+            index += BuildHtmlIndex(n, new_path, dedent, new_filename)
     return index
 

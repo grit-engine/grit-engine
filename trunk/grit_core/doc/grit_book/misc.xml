@@ -18,9 +18,97 @@
         To learn Lua quickly, read chapter 2 of <web
         url="http://www.lua.org/manual/5.2/">its manual</web>.
 
-        <section title="Modifications" id="lua_mods">
+        Lua is used in Grit with some minor modifications that make Lua
+        code written for Grit incompatible with a regular Lua interpreter
+        and regular Lua programs potentially incompatible with Grit.
 
-            
+        It should be possible to make regular Lua code work in Grit with
+        minor (probably zero) modifications and the same performance. It is
+        very unlikely that Grit Lua code will work outside of the
+        customized Grit Lua VM without running much more slowly.
+
+        <section title="Unicode" id="lua_unicode">
+
+            All Lua files are now UTF-8. The string class in Lua has been
+            rewritten to properly understand unicode. E.g. #"£" is 1, not
+            2. The most visible difference is that the syntax for regular
+            expressions has changed. The new syntax is that of <web
+            url="http://userguide.icu-project.org/strings/regexp">ICU's
+            regular expression engine</web>. For documentation, see
+            sections "Regular Expression Metacharacters", "Regular
+            Expression Operators" and "Replacement Text".
+
+        </section>
+
+        <section title="Vectors &amp; Quaternions" id="lua_unicode">
+
+            Grit Lua scripts are often used to transform and manipulate objects
+            in screen space and 3D space, as well as to manipulate colours.
+            This is easiest with primitive vector (2d, 3d, 4d) and quaternion
+            values.  For performance reasons, we cannot use userdata or tables
+            for our vector and quaternion values.  This puts too much pressure
+            on the garbage collector.  Thus, the VM has been modified so that
+            vector2,3,4, and quat are primitive types just like 'number',
+            'boolean' and 'nil'. They are copied by value and are not garbage
+            collected.  The following code shows some of the ways they can be
+            used:
+
+            <lua>
+                Q_ID = quat(1, 0, 0, 0)      -- constructing quaternions and 3d vectors
+                V_ID = vec(0, 0, 0)
+                V_NORTH = vec(0, 1, 0)
+                V_EAST  = vec(1, 0, 0)
+
+                local v = vec(1, 2, 3)
+                print(v)
+                print(v + v)
+                print(2 * v)
+                print(v * 2)
+                print(v / 2)
+                print(v * v)                   -- pointwise multiplication
+                print(dot(v, v))               -- dot product
+                print(norm(v))                 -- normalise
+                print(cross(V_NORTH, V_EAST))  -- cross product
+                print(-v)                      -- opposite direction, same length
+
+                print(Q_ID)
+
+                print(Q_ID * v2)               -- transform a vector
+
+                local q2 = quat(180, vector3(0, 0, 1))  -- angle/axis form
+                print(q2)
+                print(q2 * v2)  -- transform a vector by a quaternion
+
+                local q3 = Q_ID * q2 -- concatenate quaternion transformations
+                print(q3)
+                print(q3 * v2)
+                print(inv(q3) * q3 * v2)  -- invert a quaternion
+
+                print(v2 == v2)  -- equality is pointwise on the elements
+                print(q2 == q2)
+                print(q2 ~= q3)
+
+                print(#v2) -- length (pythagoras)
+                print(#q2) -- length (should be 1 for quaternions used to represent rotations)
+
+                print(unpack(v2)) -- explode into x, y, z
+                print(unpack(q2)) -- explode into w, x, y, z
+
+                print(quat(90, vector3(0,0,1)) * (V_NORTH + V_EAST)) -- angle/axis constructor form
+                print(quat(V_NORTH, V_EAST))                         -- quat between two direction vectors
+                print(quat(V_NORTH, V_EAST) * V_NORTH)
+
+                print(V_NORTH.yx) -- arbitrary swizzling is supported
+            </lua>
+
+        </section>
+
+        <section title="Not A Number (NaN)" id="lua_nan">
+
+            If you divide by zero in regular lua, you get a NaN value that goes
+            on to pollute other code, making debugging difficult. In Grit we
+            instead trap the divide by zero with an error instead of returning
+            NaN.
 
         </section>
 
