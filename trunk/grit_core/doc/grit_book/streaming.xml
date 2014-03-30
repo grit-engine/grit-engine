@@ -1,4 +1,6 @@
-<chapter title="Object Model" id="streaming">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<section title="Object Model" id="streaming">
 
     The Grit Game Engine allows you to create interactive 3D environments such
     as computer games.  Its fundamental architecture is based around the Lua
@@ -41,4 +43,4 @@
     However the Lua bindings are designed to be as expressive and safe as was
     possible without compromising on performance.
 
-</chapter>
+</section>

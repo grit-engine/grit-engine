@@ -1,4 +1,4 @@
-<chapter title="Input" id="inputfilter">
+<section title="Input" id="inputfilter">
 
     <!-- Be sure to use the terminology "button press" in order to include both
        - mouse buttons and keypresses.
@@ -71,4 +71,4 @@
         my_filter:destroy()
     </lua>
 
-</chapter>
+</section>

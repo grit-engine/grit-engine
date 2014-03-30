@@ -1,4 +1,6 @@
-<chapter title="Physics" id="physics">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<section title="Physics" id="physics">
 
     The physics subsystem exists independently of the graphics subsystem.
     There can be physics bodies that have no graphical representation (i.e.
@@ -25,4 +27,4 @@
 
     </section>
 
-</chapter>
+</section>

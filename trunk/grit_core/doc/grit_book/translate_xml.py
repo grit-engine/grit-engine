@@ -12,17 +12,18 @@ class TranslateError:
     def __str__(self):
         return '%s:%d: %s' % (self.filename, self.line, self.problem)
 
+
 def Error(el, msg):
     raise TranslateError(el, msg)
 
 
 def AssertNoBody(el):
-    if el.text.strip('\n\t '):
+    if el.text and el.text.strip('\n\t '):
         Error(el, 'Cannot have text after element %s.' % el.tag)
 
 
 def AssertNoTail(el):
-    if el.tail.strip('\n\t '):
+    if el.tail and el.tail.strip('\n\t '):
         Error(el, 'Cannot have text after element %s.' % el.tag)
      
 
@@ -30,9 +31,11 @@ def AssertTag(el, tag):
     if el.tag != tag:
         Error(el, 'Expected %s, not %s.' % (tag, el.tag))
      
+
 def AssertFile(el, fname):
     if not os.path.isfile(fname):
         Error(el, "File does not exist: " + fname)
+
 
 class Node:
   def __init__(self, kind, **kwargs):
@@ -40,13 +43,25 @@ class Node:
     self.attr = kwargs
   def __getattr__(self, key):
     return self.attr[key]
+  def __str__(self):
+    return repr(self)
   def __repr__(self):
     return 'Node("%s", attr=%s)' % (self.kind, repr(self.attr))
   def __iter__(self):
     for a in self.data:
         yield a
+  def __nonzero__(self):
+    return True
+
 
 inline_tags = { 'def', 'web', 'issue' }
+
+def NonEmptyParagraph(p):
+    if len(p) > 1:
+        return True
+    if p[0].strip('\n\t '):
+        return True
+    return False
 
 def TranslateParagraphs(content, dosplit=True):
     r = []
@@ -78,7 +93,7 @@ def TranslateParagraphs(content, dosplit=True):
                 r2.append(Node('Issue', id=int(c.get('id'))))
             else:
                 print 'ERROR: Unknown tag: ' + str(c.tag)
-    return r
+    return filter(NonEmptyParagraph, r)
 
 
 def TranslateBlockContents(block):
@@ -115,7 +130,9 @@ def TranslateBlockContents(block):
         else:
             if el.tag == "section":
                 data = TranslateBlockContents(el)
-                translated_content = Node('Section', index='2', id=el.get('id'), title=el.get('title'), data=data)
+                sb = el.get('splitbelow')
+                translated_content = Node('Section', split=sb=="true", id=el.get('id'),
+                                          title=el.get('title'), data=data)
                 AssertNoTail(el)
             elif el.tag == "image":
                 src = el.get('src')

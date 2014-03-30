@@ -1,3 +1,8 @@
-<chapter title="Resources" id="resources">
+<?xml version="1.0" encoding="UTF-8"?>
 
-</chapter>
+<section title="Resources" id="resources">
+
+    This section will be written after I resolve some problems with the paths
+    system in Lua, as the API will probably change.
+
+</section>

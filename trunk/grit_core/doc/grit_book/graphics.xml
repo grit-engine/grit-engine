@@ -1,4 +1,6 @@
-<chapter title="Graphics" id="graphics">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<section title="Graphics" id="graphics" splitbelow="true">
 
     <section title="Overview" id="gfx_overview">
 
@@ -340,5 +342,5 @@
 
     </section>
 
-</chapter>
+</section>
 

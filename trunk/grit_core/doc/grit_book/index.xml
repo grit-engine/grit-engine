@@ -1,19 +1,19 @@
-<book xmlns:xi="http://www.w3.org/2001/XInclude">
+<?xml version="1.0" encoding="UTF-8"?>
 
-    <xi:include href="intro.xml"/>
+<book>
+    <include src="intro.xml"/>
 
-    <xi:include href="streaming.xml"/>
+    <include src="streaming.xml"/>
 
-    <xi:include href="resources.xml"/>
+    <include src="resources.xml"/>
 
-    <xi:include href="graphics.xml"/>
+    <include src="graphics.xml"/>
 
-    <xi:include href="physics.xml"/>
+    <include src="physics.xml"/>
 
-    <xi:include href="audio.xml"/>
+    <include src="audio.xml"/>
 
-    <xi:include href="inputfilter.xml"/>
+    <include src="inputfilter.xml"/>
 
-    <xi:include href="misc.xml"/>
-
+    <include src="misc.xml"/>
 </book>

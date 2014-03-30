@@ -9,7 +9,7 @@ for k,fname in ipairs{...} do
     else
         img = img:cropCentre(vec(img.width, img.width/ratio), vec(0,0,1))
     end
-    img = img:scale(vec(300,200), "BOX")
+    img = img:scale(vec(225,150), "BOX")
     img:save("thumb_"..fname)
 end
 

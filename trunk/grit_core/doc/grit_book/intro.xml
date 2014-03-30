@@ -1,4 +1,8 @@
-<chapter title="Introduction" id="intro">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<section title="Introduction" id="intro">
+
+    <image src="frontpage.jpg" title="Grit Screenshot" caption="The 'playground' map." />
 
     The Grit Game Engine allows you to create rich 3D interactive worlds using Lua scripting.  All gameplay logic,
     graphical elements, physical behaviour, AI, sound, and everything else is ultimately controlled via general-purpose
@@ -77,4 +81,4 @@
 
     </section>
 
-</chapter>
+</section>

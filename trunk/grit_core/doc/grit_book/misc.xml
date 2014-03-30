@@ -1,6 +1,28 @@
-<chapter title="Miscellaneous" id="misc">
+<?xml version="1.0" encoding="UTF-8"?>
 
-    <section title="Lua Utilities" id="lua_utils">
+<section title="Miscellaneous" id="misc" splitbelow="true">
+
+    <section title="Lua" id="lua">
+
+        Lua is a general purpose scripting language. It is well-known for
+        having a small and fast implementation but a wide set of features
+        including co-operative threading (co-routines), closures, self-style
+        object orientation, and so on. Lua is more expressive and faster than
+        all of the mainstream scripting languages and is used in many computer
+        games.
+
+        It is used extensively for scripting objects and for defining maps and
+        so on. A little knowledge of Lua can go a very long way whether you are
+        a programmer, artist, or even user of Grit.
+
+        To learn Lua quickly, read chapter 2 of <web
+        url="http://www.lua.org/manual/5.2/">its manual</web>.
+
+        <section title="Modifications" id="lua_mods">
+
+            
+
+        </section>
 
     </section>
 
@@ -150,5 +172,5 @@
 
     </section>
 
-</chapter>
+</section>
 
