@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import codecs
+import re
 
 import lxml.etree as ET
 from translate_xml import *
@@ -20,16 +21,22 @@ def MyXInclude(tree):
         else:
             MyXInclude(n)
 
+id_regex = re.compile("^[_a-z0-9]+$")
 id_map = {}
 # Ensure no two ids are the same
 def CheckIds(node):
+    nid = node.get('id')
     if node.tag == 'section':
-        nid = node.get('id')
         if not nid:
             Error(node, 'Section must have id attribute.')
+        if not id_regex.match(string):
+            Error(node, 'Section id uses invalid characters.')
         if id_map[nid]:
             Error(node, 'Section id already exists: ' + nid)
         id_map[nid] = n
+    else:
+        if nid:
+            Error(node, 'Only section tags can have id attribute.')
     for child in node:
         CheckIds(child)
             
