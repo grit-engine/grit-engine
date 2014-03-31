@@ -287,11 +287,11 @@
         of these layers can be enabled/disabled and oriented seprately.
 
         Each sky body uses a mesh that is exported from a modeller in the usual
-        way.  It is typically a cube or sphere, or in the case of sun / moon etc, a
-        small billboard.  The normals all point inwards, towards vec(0,0,0).  Its
-        materials refer to sky materials instead of regular materials.  Sky
-        materials are defined in a special way, and are not interchangeable with
-        regular materials.
+        way.  It is typically a cube or sphere, or in the case of sun / moon
+        etc, a small billboard.  The polygons all point inwards, towards
+        vec(0,0,0).  Its materials refer to sky materials instead of regular
+        materials.  Sky materials are defined in a special way, and are not
+        interchangeable with regular materials.
 
         <lua>
             sky_material "starfield" {
@@ -299,29 +299,21 @@
             }
         </lua>
 
-        The sky body is created as shown:
+        The sky body is created as shown below.  The 255 is the z order, this
+        places it behind everything else.  Use lower numbers to add more layers
+        on top.  If two sky bodies have the same z order, the result is
+        undefined.  So don't do that.
 
         <lua>
             sky_ent = gfx_sky_body_make("MySkyMesh.mesh", 255)
+            sky_ent.enabled = true/false -- disable drawing of this layer
+            sky_ent.zOrder = 100 -- change z order
+            sky_ent.orientation = quat(1,0,0,0)
         </lua>
 
-        
 
     <!--
 
-    local sky_mesh = "/spaceships/skybox/skybox.mesh"
-    sky_mesh is the full path to your skybox mesh.
-
-
-    Then this line will destroy the current skybox entity currently in place:
-    sky_ent = safe_destroy(sky_ent)
-
-
-    The following lines then setup your new skybox:
-    env.clockTicking = false
-
-
-    gfx_sky_body_make(name,zOrder) load the object into GPU RAM, and start rendering it at the defined zOrder, which is how far in your ZBuffer the cube gets rendered. If you have multiples layers of sky objects you will want to render those according to their right order in the buffer using that parameter.
     By setting env.clockTicking to false you will set your skybox to a null rotation (need facts here) and stop it from rotating along time. Where the rotation is used for a starfield seen from earth, it makes no sense in space itself.
     -->
 

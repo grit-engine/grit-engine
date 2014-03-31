@@ -1,6 +1,9 @@
 #!/usr/bin/python
 
 import codecs
+import textwrap
+from xml.sax.saxutils import escape
+
 
 import lxml.etree as ET
 
@@ -19,35 +22,33 @@ def GeneratePage(title, content, book):
 
 <div class="page">
 
+
 <div class="header">
-
-<div class="logo" > </div>
-
-<div class="navbar">'''
+    <div class="logo"> </div>
+    <div class="navbar">'''
     if book:
-        s += '\n<div class="navitem"><a class="navitem" href="index.html">Contents</a></div>'
+        s += '\n    <div class="navitem"><a class="navitem" href="index.html">Contents</a></div>'
         for chapter_index, chapter in enumerate(book):
             filename = chapter.id + '.html'
-            s += '\n<div class="navitem"><a class="navitem" href="%s">%d. %s</a></div>' % (filename, chapter_index + 1, chapter.title)
+            s += '\n        <div class="navitem"><a class="navitem" href="%s">%d. %s</a></div>' % (filename, chapter_index + 1, chapter.title)
     else:
-        s += '\n<div class="navitem"><a class="navitem" href="complete.html">Complete Manual</a></div>'
+        s += '\n    <div class="navitem"><a class="navitem" href="complete.html">Complete Manual</a></div>'
     s += '''
+    </div>
 </div>
 
-
-</div>
 
 <div class="content">
 
-''' + content + '''
+''' + content + '''</div> <!-- content -->
 
-</div>
 
-</div>
+</div> <!-- page -->
 
 </body>
 
-</html>'''
+</html>
+'''
     return s
 
 
@@ -55,7 +56,7 @@ def UnparseHtmlInlines(parent, inner=False):
     s = ""
     for n in parent:
         if isinstance(n, basestring):
-            s += n
+            s += escape(n)
         elif n.kind == 'Definition':
             s += '<span class="def">'
             s += UnparseHtmlInlines(n.data, True)
@@ -77,23 +78,25 @@ def UnparseHtmlBlocks(book, parent, path, section_counter, split_below, never_sp
     for n in parent:
         if n.kind == 'Image':
             s += '''<div class="image">
-<div class="image-title">''' + n.title + '''</div>
-<a class="image-link" href="''' + n.src + '''"><img class="thumbnail" src="''' + n.thumb_src + '''" /></a>
-<div class="image-caption">''' + n.caption + '''</div>
-</div>\n'''
+    <div class="image-title">''' + escape(n.title) + '''</div>
+    <a class="image-link" href="''' + escape(n.src) + '''">
+        <img class="thumbnail" src="''' + escape(n.thumb_src) + '''" />
+    </a>
+    <div class="image-caption">''' + escape(n.caption) + '''</div>
+</div>\n\n'''
         elif n.kind == 'UnorderedList':
             s += '<ul>\n\n'
             for item in n.data:
                 s += '<li>\n\n'
                 s += UnparseHtmlBlocks(book, item, path, section_counter, split_below, never_split)
                 s += '</li>\n\n'
-            s += '</ul>\n'
+            s += '</ul>\n\n'
         elif n.kind == 'Section':
             section_counter += 1
             new_path = path + [section_counter] 
             path_string = '.'.join([str(e) for e in new_path])
             h = len(new_path)
-            inner_html = '<h%d id="%s">%s.&nbsp;&nbsp;%s</h%d>\n\n' % (h, n.id, path_string, n.title, h)
+            inner_html = '<h%d id="%s">%s. %s</h%d>\n\n' % (h, n.id, path_string, escape(n.title), h)
             inner_html += UnparseHtmlBlocks(book, n, new_path, 0, n.split, never_split)
             if split_below and not never_split:
                 filename = n.id + '.html'
@@ -104,36 +107,40 @@ def UnparseHtmlBlocks(book, parent, path, section_counter, split_below, never_sp
             else:
                 s += inner_html
         elif n.kind == 'Preformatted':
-            s += '<pre>%s</pre>\n' % n.data
+            s += '<pre>%s</pre>\n\n' % n.data
         elif n.kind == 'Lua':
-            s += '<pre>%s</pre>\n' % n.data
+            s += '<pre class="lua">%s</pre>\n\n' % n.data
         elif n.kind == 'Paragraph':
-            s += '<p>'
-            s += UnparseHtmlInlines(n.data)
-            s += '</p>\n'
+            s += '<p>\n'
+            s += '\n'.join(textwrap.wrap(UnparseHtmlInlines(n.data)))
+            s += '\n</p>\n\n'
         else:
             print "ERROR: unknown node kind: " + n.kind
-        s += '\n'
     if split_below and not never_split:
-        s += BuildHtmlIndex(parent, path, len(path))
+        s += BuildHtmlIndex(parent, path)
     return s
 
 
-def BuildHtmlIndex(parent, path, dedent, filename=None):
-    index = ''
+def BuildHtmlIndex(parent, path, indent=0, filename=None):
+    indentstr = ' ' * (indent*4)
+    index = indentstr + '<ul>\n'
     section_index = 0
     for n in parent:
         if n.kind == 'Section':
             section_index += 1
             new_path = path + [section_index]
             path_string = '.'.join([str(e) for e in new_path])
-            indent = '&nbsp;' * ((len(path)-dedent) * 8)
             new_filename = n.id + '.html' if parent.split else filename
+            title = escape(n.title)
+            index += ' ' * ((indent+1)*4)
             if parent.split:
-                index += '<p class="index">%s%s. <a class="index" href="%s">%s</a></p>\n\n' % (indent, path_string, new_filename, n.title)
+                index += '<li class="index">%s. <a class="index" href="%s">%s</a></li>\n' % (path_string, new_filename, title)
             else:
                 url = '%s#%s' % (new_filename, n.id)
-                index += '<p class="index">%s%s. %s (<a class="index" href="%s">&sect;</a>)</p>\n\n' % (indent, path_string, n.title, url)
-            index += BuildHtmlIndex(n, new_path, dedent, new_filename)
+                index += '<li class="index">%s. %s (<a class="index" href="%s">&sect;</a>)</li>\n' % (path_string, title, url)
+            index += BuildHtmlIndex(n, new_path, indent+1, new_filename)
+    index += indentstr + '</ul>\n'
+    if section_index == 0:
+        return ''
     return index
 

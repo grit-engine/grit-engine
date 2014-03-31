@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
 import os.path
-import lxml.etree as ET
+import re
 import textwrap
+
+import lxml.etree as ET
 
 class TranslateError:
     def __init__(self, el, problem):
@@ -42,7 +44,7 @@ class Node:
     self.kind = kind
     self.attr = kwargs
   def __getattr__(self, key):
-    return self.attr[key]
+    return self.attr.get(key)
   def __str__(self):
     return repr(self)
   def __repr__(self):
@@ -50,11 +52,33 @@ class Node:
   def __iter__(self):
     for a in self.data:
         yield a
+  def __len__(self):
+    return len(self.data)
   def __nonzero__(self):
     return True
 
 
 inline_tags = { 'def', 'web', 'issue' }
+
+def MinimiseWhiteSpace(n):
+    return re.sub('[ \t\n]+', ' ', n)
+
+def StripParagraphWhiteSpace(p, inside=False):
+    # Strip leading and whitespcae from the first element, and trailing from
+    # the last.  Minimise whitespace in all other cases.
+    r = []
+    for i, n in enumerate(p):
+        if isinstance(n, basestring):
+            n = MinimiseWhiteSpace(n)
+            if i==0 and not inside:
+                n = n.lstrip(' \t\n')
+            if i==len(p)-1 and not inside:
+                n = n.rstrip(' \t\n')
+        elif n.data:
+            n.data = StripParagraphWhiteSpace(n.data, True)
+        r.append(n)
+    return r
+        
 
 def NonEmptyParagraph(p):
     if len(p) > 1:
@@ -62,6 +86,7 @@ def NonEmptyParagraph(p):
     if p[0].strip('\n\t '):
         return True
     return False
+
 
 def TranslateParagraphs(content, dosplit=True):
     r = []
@@ -93,7 +118,9 @@ def TranslateParagraphs(content, dosplit=True):
                 r2.append(Node('Issue', id=int(c.get('id'))))
             else:
                 print 'ERROR: Unknown tag: ' + str(c.tag)
-    return filter(NonEmptyParagraph, r)
+    r = map(StripParagraphWhiteSpace, r)
+    r = filter(NonEmptyParagraph, r)
+    return r
 
 
 def TranslateBlockContents(block):
@@ -137,10 +164,11 @@ def TranslateBlockContents(block):
             elif el.tag == "image":
                 src = el.get('src')
                 thumb_src = 'thumb_' + src
+                caption = MinimiseWhiteSpace(el.get('caption'))
+                title = MinimiseWhiteSpace(el.get('title'))
                 AssertFile(el, src)
                 AssertFile(el, thumb_src)
-                translated_content = Node('Image', src=src, caption=el.get('caption'),
-                                          thumb_src=thumb_src, title=el.get('title'))
+                translated_content = Node('Image', src=src, caption=caption, thumb_src=thumb_src, title=title)
             elif el.tag == "ul":
                 AssertNoBody(el)
                 translated_items = []

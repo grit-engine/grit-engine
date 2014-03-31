@@ -111,10 +111,12 @@ pre {
 
 p {
         text-align: justify;
+        line-height: 1.5em;
 }
 
-p.index {
-        font-weight: bold
+li.index {
+        font-weight: bold;
+        list-style: none;
 }
 
 a {
