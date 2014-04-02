@@ -3,9 +3,9 @@
 import codecs
 import textwrap
 from xml.sax.saxutils import escape
-
-
 import lxml.etree as ET
+
+from translate_xml import *
 
 def GeneratePage(title, content, book):
     s = '''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -61,13 +61,17 @@ def UnparseHtmlInlines(parent, inner=False):
             s += '<span class="def">'
             s += UnparseHtmlInlines(n.data, True)
             s += '</span>'
+        elif n.kind == 'Issue':
+            url = 'http://code.google.com/p/grit/issues/detail?id=%d' % n.id
+            s += '<a class="issue" href="%s">issue %d</a>' % (url, n.id)
+        elif n.kind == 'Todo':
+            s += '<span class="todo">'
+            s += UnparseHtmlInlines(n.data, True)
+            s += '</span>'
         elif n.kind == 'Web':
             s += '<a class="web" href="' + n.url + '">'
             s += UnparseHtmlInlines(n.data, True)
             s += '</a>'
-        elif n.kind == 'Issue':
-            url = 'http://code.google.com/p/grit/issues/detail?id=%d' % n.id
-            s += '<a class="issue" href="%s">issue %d</a>' % (url, n.id)
         else:
             print "ERROR: unknown node kind: " + n.kind
     return s

@@ -270,28 +270,39 @@
 
     <section title="Sky Bodies" id="gfx_sky_body">
 
-        The sky is rendered specially.  It is composed of a number of layers,
-        composed via alpha blending in HDR buffers.  Conceptually, each layer is a
-        <def>Sky Body</def> that surrounds the camera but is infinitely far away.
-        Thus the body does not have a controllable position, although it can be
-        rotated.
+        The sky is rendered in a special way.  The scene is rendered first,
+        including lighting (but not post-processing effects like bloom), and
+        then any areas that remain undrawn are filled with the sky.  The sky
+        has only emissive lighting, as it is too far away to be affected by
+        lights in the scene.  It also does not move, it is always centered at
+        the camera.
+        
+        The sky is composed of a number of layers, composed via alpha blending
+        in HDR buffers.  Conceptually, each layer is a <def>Sky Body</def>
+        whose polygons either completely or partially surround the camera
+        (which is at 0,0,0).  Thus, the body does not have a position like the
+        regular gfx body, although it can be rotated.
 
-        The scene is rendered first, including lighting (but not post-processing
-        effects like bloom), and then any areas that remain undrawn are filled with
-        the sky.  The sky has only emissive lighting, as it is too far away to be
-        affected by lights in the scene.
-
-        Different layers allow the controlling of different effects, e.g. you can
-        have a base stars layer, then a moon layer, followed by a sky layer (with
-        some sort of atmospheric colour model), finally followed by clouds.  Each
-        of these layers can be enabled/disabled and oriented seprately.
+        Different layers allow the controlling of different effects, e.g. you
+        can have a base stars layer, then a moon layer (which you rotate to
+        control the position of the moon), followed by a sky layer (with some
+        sort of atmospheric colour model), finally followed by clouds.  Each of
+        these layers can be enabled/disabled and oriented seprately.
 
         Each sky body uses a mesh that is exported from a modeller in the usual
         way.  It is typically a cube or sphere, or in the case of sun / moon
-        etc, a small billboard.  The polygons all point inwards, towards
-        vec(0,0,0).  Its materials refer to sky materials instead of regular
-        materials.  Sky materials are defined in a special way, and are not
-        interchangeable with regular materials.
+        etc, a small billboard.  One can also imagine strips or other shapes
+        being used in certain cases, like meteorite belts or jet trails.  The
+        polygons all point inwards, towards vec(0,0,0).  The distance of the
+        polygons from 0,0,0 can be arbitrary, since the depth buffer is not
+        used to control the layering of sky bodies, rather they are layered
+        explicitly.  Typically we use about 1 metre because that is easy to
+        manipulate in modelling software.
+        
+        Sky body materials refer to sky materials instead of regular materials.
+        Sky materials are defined in a special way, and are not interchangeable
+        with regular materials, although they can share textures.  Here is an
+        example:
 
         <lua>
             sky_material "starfield" {
@@ -299,10 +310,14 @@
             }
         </lua>
 
-        The sky body is created as shown below.  The 255 is the z order, this
-        places it behind everything else.  Use lower numbers to add more layers
-        on top.  If two sky bodies have the same z order, the result is
-        undefined.  So don't do that.
+        There is currently implemented a prototype for custom sky shaders, that
+        interact with the sky materials.  This is going to be changed in future
+        to make it easier to use, so we shall not document it here.  Take a
+        look at /system/sky.lua if you are curious to see the current state.
+        If you need advanced skies now, contact us via IRC or the forums for
+        assistance.
+
+        The sky body itself is created as shown below:
 
         <lua>
             sky_ent = gfx_sky_body_make("MySkyMesh.mesh", 255)
@@ -311,6 +326,11 @@
             sky_ent.orientation = quat(1,0,0,0)
         </lua>
 
+        The 255 is the z order, an integer between 0 and 255 inclusive.  The
+        value of 255 places it behind everything else.  Use lower numbers to
+        add more layers on top.  If two sky bodies have the same z order, the
+        ordering is undefined.  So don't do that unless you know the polys will
+        not overlap.
 
     <!--
 
@@ -321,14 +341,156 @@
 
     <section title="Lights" id="gfx_light">
 
+        Lights provide illumination of the scene (beyond that of the sun/moon)
+        and also provide a corona sprite.  They exist at a given place in the
+        scene and (if set up to be spotlights) can be rotated to light in a
+        given direction.  They are implemented using deferred shading, which
+        means their performance cost is proportional to the number of screen
+        pixels lit by them.  This allows lots of small lights to be rendered
+        efficiently.
+
+        The lights are nodes in the scene graph, so can be attached to other
+        nodes and have the same fields.  Like graphics bodies, they can be
+        individually enabled/disabled and faded.
+
+        <image src="light_diagram.png" caption="Illustration of various light
+        fields." title="Light Diagram" />
+
+        <lua>
+            l = gfx_light_make()
+            l.localPosition = vec(1, 2, 3)
+            l.orientation = quat(1, 0, 0, 0)
+            l.diffuseColour = vec(2,2,2) -- note use of HDR
+            l.specularColour = vec(2,2,2)
+            l.range = 10 -- light extends for 10m
+            l.innerAngle = 50  -- see diagram
+            l.outerAngle = 60
+        </lua>
+
+        The outerAngle must be >= the innerAngle, as shown in the diagram.  If
+        the innerAngle is 180, then the light is not directional, so the
+        orientation does not matter.  Otherwise it shines in the +Y direction
+        unless oriented differently.
+
+        <section title="Coronas">
+
+            If desired, Grit can draw a corona to simulate the blinding effect
+            of the light itself.  The corona's size (diameter) must be
+            specified, as it defaults to 0 which means no corona.  The corona
+            also has its own colour, which you must set otherwise it defaults
+            to white. 
+
+            <lua>
+                l.coronaSize = 0.3 -- sphere diameter in metres
+                l.coronaLocalPosition = vec(0, 0, 0)
+                l.coronaColour = vec(1,1,1) -- white
+            </lua>
+
+        </section>
+
     </section>
 
     <section title="Particles" id="gfx_particle">
 
     </section>
 
-    <section title="The HUD" id="gfx_hud">
+    <section title="The Heads Up Display (HUD)" id="gfx_hud">
 
+        The <def>heads up display</def> (HUD) is a 2D framework for providing a
+        graphical user interface to the player.  Like everything else, it can
+        be extensively customised via Lua.  The most basic API allows
+        positioning and rotating text / textured rectangles in a
+        scenegraph-like hierarchy on the screen.  On top of this, various
+        widgets have been implemented in Lua, and you are free to make your own
+        as well.  The HUD subsystem is designed to handle things like
+        health/ammo displays, minimaps, menu screens, and general purpose
+        mouse-driven graphical user interfaces.
+
+        To begin, we define a <def>HUD class</def>, which has fields and
+        methods much like a game class.  The HUD class can be instantiated into
+        as many <def>HUD objects</def> as we want.  Without any Lua scripting,
+        a HUD object is simply a rectangle drawn on the screen:
+        
+        <lua>
+            hud_class "Icon" {
+                texture = "Icon.png";
+                colour = vec(0, 1, 1); -- cyan
+            }
+            obj = gfx_hud_obj_make("Icon", { alpha = 0.5, zOrder = 2 })
+            obj.position = vec(100,100)
+            obj.size = vec(50,50)
+            obj.orientation = 44
+            ...
+            obj:destroy()
+        </lua>
+
+        The HUD object has a number of attributes that define how it is
+        rendered.  Some examples of these are above, and they are
+        comprehensively documented <todo>here</todo>.  They can be assigned at
+        any time, or provided in the class as defaults, or given in the second
+        parameter table of gfx_hud_obj_make.  This latter case is simply a
+        convenient shorthand for assigning them immediately after construction.
+
+        In this case, the drawn, cyan-masked texture will be centered at
+        vec(100,100) from the bottom left of the screen and will be 50 pixels
+        tall and wide.  The orientation attribute rotates the HUD object 44
+        degrees clockwise about its centre.
+
+        The object is automatically garbage collected when it is no-longer
+        pointed at, but can be destroyed earlier using the destroy method.
+        
+        Let us now define something more interesting.  This class has a frame
+        callback and a child object -- a text body.
+
+        <lua>
+            hud_class "SpinningIcon" {
+                texture = "Icon.png";
+                myField = true; -- user variables are allowed
+                init = function (self)
+                    self.needsFrameCallbacks = true
+                    self.myField = false
+                    -- create a child
+                    self.child = gfx_hud_text_add("/common/fonts/Verdana12")
+                    self.child.parent = self
+                    self.child.text = "Grit!"
+                end;
+                destroy = function (self)
+                    -- nothing to do
+                end;
+                frameCallback = function(self, elapsed)
+                    self.orientation = (self.orientation + 10*elapsed) % 360
+                end;
+            }
+        </lua>
+
+        This simple example will draw a cyan-tinted rectangle in the bottomn
+        left of the screen, that will rotate clockwise about its centre at 10
+        degrees per second.  All of the fields that define the HUD object's
+        appearance can be given in the class, in the table given in the second
+        parameter of gfx_hud_obj_make (which overrides the class values), or at
+        any time after construction using regular field assignment.
+
+        The object that we just created has a child object.  This relationship
+        was established by setting its parent field.  HUD text is truly a
+        primitive entity - it cannot have user-defined fields, have callbacks,
+        or be a parent.  A tree is thus formed, with HUD objects at the nodes,
+        and either HUD objects or HUD text at the leaves.  We will discuss text
+        in greater deal, shortly.
+        
+        As the icon rotates, the text rotates with it.  Orientation and
+        position are applied to children, although inheritOrientation can be
+        set to false to suppress the inheriting of orientation.  This can be
+        useful e.g. to avoid icons rotating within a spinning minimap / radar
+        display.
+        
+        In this case, a frame callback is used to adjust the orientation.  The
+        callback is only called if needsFrameCallbacks is set to true.
+
+
+
+        
+
+        
     </section>
 
     <section title="Fonts" id="gfx_font">

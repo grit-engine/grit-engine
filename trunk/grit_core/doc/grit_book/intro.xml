@@ -2,17 +2,21 @@
 
 <section title="Introduction" id="intro">
 
-    <image src="frontpage.jpg" title="Grit Screenshot" caption="The 'playground' map." />
+    <image src="frontpage.jpg" title="Grit Screenshot" caption="The
+    'playground' map." />
 
-    The Grit Game Engine allows you to create rich 3D interactive worlds using Lua scripting.  All gameplay logic,
-    graphical elements, physical behaviour, AI, sound, and everything else is ultimately controlled via general-purpose
-    Lua APIs.  This manual serves as a reference for the APIs and frameworks for those APIs, complete with discussion
-    and examples.
+    The Grit Game Engine allows you to create rich 3D interactive worlds using
+    Lua scripting.  All gameplay logic, graphical elements, physical behaviour,
+    AI, sound, and everything else is ultimately controlled via general-purpose
+    Lua APIs.  This manual serves as a reference for the APIs and frameworks
+    for those APIs, complete with discussion and examples.  But first, the
+    boring stuff:
 
     <section title="Licensing" id="intro_licensing">
 
-        Grit is open source and is released under a liberal license.  It can be used for both commercial and
-        non-commercial projects.  The copyright and license for the code and assets within the project package breaks
+        Grit is open source and is released under a liberal license.  It can be
+        used for both commercial and non-commercial projects.  The copyright
+        and license for the code and assets within the project package breaks
         down as follows:
 
         <section title="Core Works" id="intro_core">
@@ -27,27 +31,31 @@
                 <li> All Lua code in common/ and vehicles/. </li>
             </ul>
 
-            These works are sufficient to build a game containing custom assets.  It covers all non-trivial code
-            released as part of Grit.  The works are relased under the MIT license:
+            These works are sufficient to build a game containing custom
+            assets.  It covers all non-trivial code released as part of Grit.
+            The works are relased under the MIT license:
 
             <pre>
-                Permission is hereby granted, free of charge, to any person obtaining a copy
-                of this software and associated documentation files (the "Software"), to deal
-                in the Software without restriction, including without limitation the rights
-                to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-                copies of the Software, and to permit persons to whom the Software is
-                furnished to do so, subject to the following conditions:
+                Permission is hereby granted, free of charge, to any person
+                obtaining a copy of this software and associated documentation
+                files (the "Software"), to deal in the Software without
+                restriction, including without limitation the rights to use,
+                copy, modify, merge, publish, distribute, sublicense, and/or
+                sell copies of the Software, and to permit persons to whom the
+                Software is furnished to do so, subject to the following
+                conditions:
 
-                The above copyright notice and this permission notice shall be included in
-                all copies or substantial portions of the Software.
+                The above copyright notice and this permission notice shall be
+                included in all copies or substantial portions of the Software.
 
-                THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-                IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-                FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-                AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-                LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-                OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-                THE SOFTWARE.
+                THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+                EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+                OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+                NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+                HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+                FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+                OTHER DEALINGS IN THE SOFTWARE.
             </pre>
 
         </section>

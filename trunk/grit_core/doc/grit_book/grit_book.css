@@ -98,6 +98,11 @@ span.def {
         font-weight: bold;
 }
 
+span.todo {
+        font-weight: bold;
+        color: #f00;
+}
+
 pre {
         background-color: #fff;
         margin: 0 16px 0 16px;

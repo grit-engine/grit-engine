@@ -1,46 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<section title="Object Model" id="streaming">
+<section title="Fundamentals" id="streaming">
 
     The Grit Game Engine allows you to create interactive 3D environments such
     as computer games.  Its fundamental architecture is based around the Lua
-    scripting language.  Games are created by creating custom behaviours for
-    objects in the scene, the scene itself, and on-screen HUD objects.  This is
-    done at a very high level, with an easy-to-use programming model.  The
-    in-game Lua console allows experimentation, debugging, and development
-    while the game is running.
+    scripting language.  Games are created by writing scripts that control all
+    aspects of the engine, i.e. graphics, physics, game logic, audio, etc.
+    This is done at a very high level, with an easy-to-use programming model.
+    The in-game Lua console allows experimentation, debugging, and development
+    of these scripts while the game is running.
 
     Grit is very general-purpose.  This is achieved by having independent Lua
     APIs for the various subsystems (graphics, physics, audio, input, etc).
-    Some instances of these APIs, called <def>bodies</def>, occupy a particular
-    location in the 3D space of the game world.  Others are simply interfaces
-    into the screen or the global game environment and are referred to as
-    simply <def>entities</def>.  Both bodies and entities are tied together by
-    the streaming object model, which is also exposed via a Lua framework.  An
-    <def>object</def> represents a higher level of abstraction with an
-    encompassing behaviour, such as a car.  Objects are instances of
-    <def>classes</def> which
-
-    <image src="example_image.png" title="Energy Ball" caption="Objects glue
-    together the various subsystems." />
-
-    As a trivial example, a ball of energy that floats up and down could be
-    implemented with an object.  The game designer writes a class with an
-    initialisation callback that creates a graphics body in the graphics world,
-    and stores a pointer to it in a field of the new object.  The class also
-    has a destruction callback that can be used to clean up the graphics body
-    when the object is removed from the scene.  Finally, there is a per-step
-    callback to move the ball around, presumably using a sin function or
-    similar.  If a light source is desired, then a light body would be created
-    in the graphics world as well, and e.g. its intensity can be modified in
-    the step callback.  Similarly, other graphics bodies, particles, and
-    physical behaviour can be added if desired.  Audio bodies can be added in
-    the audio world.  All of these "bodies", which manifest in independent
-    subsystems, are created and controlled by the object in question.
-
     The low level performance critical parts of the engine, such as the
     rendering pipeline and the collision detection, are written in C++.
-    However the Lua bindings are designed to be as expressive and safe as was
-    possible without compromising on performance.
+    However, the Lua APIs are designed to be as expressive and safe as was
+    possible without compromising on performance.  Most of the APIs are
+    object-oriented in style.
+
+    Some of these APIs allow one to create <def>bodies</def>, which represent
+    some tangible thing, that can be seen, heard, or otherwise experienced in
+    some way by the player.  Lua code can modify fields of these objects in the
+    usual way, controlling the way that they manfiest, e.g.  changing their
+    colour (for graphical bodies) or their volume (for audio bodies).  There
+    are many such bodies and they each have many modifiable fields, according
+    to their function.  This manual will document them in <todo>later
+    chapters</todo>.  There are also other APIs that are less tangible like
+    user input and resource management.  Finally there is a category of Lua
+    code that is very declarative and is approachable even for those with no
+    programming experience.  This is used for defining resources, like
+    graphical materials.
+
+    Such APIs are a toolbox for achieving what you want, but there is another
+    category of Lua code that allows one to create objects with their own
+    behaviour.  This is done by defining <def>classes</def>, and instantiating
+    them as <def>objects</def>.  Such objects have user-defined methods and
+    fields like an object-oriented language.  This is used to implement
+    <def>game objects</def>, which act as glue to bind together graphics,
+    physics, audio, etc bodies.  For example one can write a car game object
+    class that handles all the simulation aspects of a car.  The same technique
+    is also used for particles, and for HUD, as will be explained in
+    <todo>later sections</todo>.  All of these things have customisable
+    behaviour.
+
+    <section title="Game Object Framework">
+
+        <image src="example_image.png" title="Energy Ball" caption="Objects glue
+        together the various subsystems." />
+
+        As a trivial example, a ball of energy that floats up and down could be
+        implemented with an object.  The game designer writes a class with an
+        initialisation callback that creates a graphics body in the graphics world,
+        and stores a pointer to it in a field of the new object.  The class also
+        has a destruction callback that can be used to clean up the graphics body
+        when the object is removed from the scene.  Finally, there is a per-step
+        callback to move the ball around, presumably using a sin function or
+        similar.  If a light source is desired, then a light body would be created
+        in the graphics world as well, and e.g. its intensity can be modified in
+        the step callback.  Similarly, other graphics bodies, particles, and
+        physical behaviour can be added if desired.  Audio bodies can be added in
+        the audio world.  All of these "bodies", which manifest in independent
+        subsystems, are created and controlled by the object in question.
+
+    </section>
 
 </section>

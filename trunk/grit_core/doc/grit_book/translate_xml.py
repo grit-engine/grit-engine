@@ -58,7 +58,7 @@ class Node:
     return True
 
 
-inline_tags = { 'def', 'web', 'issue' }
+inline_tags = { 'def', 'web', 'issue', 'todo' }
 
 def MinimiseWhiteSpace(n):
     return re.sub('[ \t\n]+', ' ', n)
@@ -88,6 +88,7 @@ def NonEmptyParagraph(p):
     return False
 
 
+# FIXME: paragraphs divided by empty lines containing whitespace are not split
 def TranslateParagraphs(content, dosplit=True):
     r = []
     r2 = None
@@ -116,8 +117,10 @@ def TranslateParagraphs(content, dosplit=True):
                 if flattened:
                     Error(c, "Issue tag should be empty.") 
                 r2.append(Node('Issue', id=int(c.get('id'))))
+            elif c.tag == "todo":
+                r2.append(Node('Todo', data=flattened))
             else:
-                print 'ERROR: Unknown tag: ' + str(c.tag)
+                Error(c, 'Unknown tag: ' + str(c.tag))
     r = map(StripParagraphWhiteSpace, r)
     r = filter(NonEmptyParagraph, r)
     return r
@@ -182,8 +185,7 @@ def TranslateBlockContents(block):
             elif el.tag == "pre":
                 translated_content = Node('Preformatted', data=textwrap.dedent(el.text))
             else:
-                print 'ERROR: Unknown tag: ' + str(el.tag)
-                continue
+                Error(el, 'Unknown tag: ' + str(el.tag))
             output_content.append(translated_content)
 
     return output_content
