@@ -69,13 +69,13 @@ from bpy_extras.io_utils import unpack_face_list
 from mathutils import Quaternion, Vector, Matrix
 
 platform = "x86_64" if sys.maxsize > 2**32 else "x86"
-executable_suffix = ".exe" if os.pathsep == "\\" else (".linux."+platform)
+executable_suffix = ".exe" if os.sep == "\\" else (".linux."+platform)
 
 def my_abspath(x):
     return os.path.abspath(bpy.path.abspath(x))
 
 def path_to_os(x):
-    return x.replace("/",os.pathsep).replace("\\",os.pathsep)
+    return x.replace("/",os.sep).replace("\\",os.sep)
 
 def path_to_grit(x):
     return x.replace("\\","/")
