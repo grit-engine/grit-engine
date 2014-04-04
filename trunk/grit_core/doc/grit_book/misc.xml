@@ -40,7 +40,7 @@
 
         </section>
 
-        <section title="Vectors &amp; Quaternions" id="lua_unicode">
+        <section title="Vectors &amp; Quaternions" id="lua_vectors">
 
             Grit Lua scripts are often used to transform and manipulate objects
             in screen space and 3D space, as well as to manipulate colours.

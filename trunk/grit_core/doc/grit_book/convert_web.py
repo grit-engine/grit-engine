@@ -29,11 +29,13 @@ def CheckIds(node):
     if node.tag == 'section':
         if not nid:
             Error(node, 'Section must have id attribute.')
-        if not id_regex.match(string):
+        if not id_regex.match(nid):
             Error(node, 'Section id uses invalid characters.')
-        if id_map[nid]:
+        if id_map.get(nid):
             Error(node, 'Section id already exists: ' + nid)
-        id_map[nid] = n
+        id_map[nid] = node
+    elif node.tag == 'issue':
+        pass
     else:
         if nid:
             Error(node, 'Only section tags can have id attribute.')
@@ -46,6 +48,7 @@ tree = ET.parse('index.xml')
 MyXInclude(tree.getroot())
 book = tree.getroot()
 
+CheckIds(book)
 AssertTag(book, 'book')
 
 print 'Translating XML dom...'

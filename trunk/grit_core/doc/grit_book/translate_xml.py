@@ -94,8 +94,9 @@ def TranslateParagraphs(content, dosplit=True):
     r2 = None
     for i, c in enumerate(content):
         if isinstance(c, basestring):
-            for i, s in enumerate(c.split('\n\n') if dosplit else [c]):
+            for i, s in enumerate(re.split('\n[ \t]*\n',c) if dosplit else [c]):
                 if i==0:
+                    # could be after an inline block, therefore not the beginning of a paragraph
                     if not r2:
                         r2 = []
                         r.append(r2)
@@ -167,7 +168,7 @@ def TranslateBlockContents(block):
             elif el.tag == "image":
                 src = el.get('src')
                 thumb_src = 'thumb_' + src
-                caption = MinimiseWhiteSpace(el.get('caption'))
+                caption = MinimiseWhiteSpace(el.text or '')
                 title = MinimiseWhiteSpace(el.get('title'))
                 AssertFile(el, src)
                 AssertFile(el, thumb_src)

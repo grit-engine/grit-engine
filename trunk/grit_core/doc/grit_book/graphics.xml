@@ -19,76 +19,77 @@
 
         <section title="Depth Shadow Mapping" id="gfx_shadow_dsm">
 
-            Grit has fully dynamic shadows that are calculated in real time on the
-            GPU. The basic technique is called <web
+            Grit has fully dynamic shadows that are calculated in real time on
+            the GPU. The basic technique is called <web
             url="http://en.wikipedia.org/wiki/Shadow_mapping">depth shadow
-            mapping</web>.  It involves rendering the scene from the light (the sun
-            or the moon) into a texture, called a <def>depth shadow map</def>. The
-            shadow map is updated every frame, because objects move and so does the
-            light.  The colour of the scene is not computed, as we are only
-            interested in the distance to all the surfaces that the light can 'see'
-            (these are the occluders).
+            mapping</web>.  It involves rendering the scene from the light (the
+            sun or the moon) into a texture, called a <def>depth shadow
+            map</def>. The shadow map is updated every frame, because objects
+            move and so does the light.  The colour of the scene is not
+            computed, as we are only interested in the distance to all the
+            surfaces that the light can 'see' (these are the occluders).
 
-            When the scene is rendered from the player's point of view, this shadow
-            map is used as a reference to help decide if a given pixel is the
-            closest one to the light (in which case it is not in shadow) or whether
-            there is something else that is closer (in which case it is rendered
-            darker because it is in shadow).
+            When the scene is rendered from the player's point of view, this
+            shadow map is used as a reference to help decide if a given pixel
+            is the closest one to the light (in which case it is not in shadow)
+            or whether there is something else that is closer (in which case it
+            is rendered darker because it is in shadow).
 
         </section>
 
         <section title="Perspective Transform" id="gfx_shadow_lispsm">
 
-            The depth shadow map has a limited resolution, so in order to increase
-            the apparent fidelity (and avoid blocky artefacts) there is a
-            perspective transform applied in order to concentrate as many as
-            possible of the shadow map's texels close to the player.  There are
-            many techniques but the one used in Grit is called LiSPSM (<web
+            The depth shadow map has a limited resolution, so in order to
+            increase the apparent fidelity (and avoid blocky artefacts) there
+            is a perspective transform applied in order to concentrate as many
+            as possible of the shadow map's texels close to the player.  There
+            are many techniques but the one used in Grit is called LiSPSM (<web
             url="http://www.cg.tuwien.ac.at/research/vr/lispsm/">LIght Space
-            Perspective Shadow Mapping</web>).  The worst case is when the sun is
-            directly behind you, in which case no perspective transform can be
-            applied, and the shadow is very low detail and noisy. However, if you
-            look 90 degrees to the sun, the shadows will be a lot crisper due to
-            the use of LiSPSM.  Note that increasing the resolution of the shadow
-            map texture will also make the shadows crisper, but will cost memory
-            and performance.
+            Perspective Shadow Mapping</web>).  The worst case is when the sun
+            is directly behind you, in which case no perspective transform can
+            be applied, and the shadow is very low detail and noisy.  However,
+            if you look 90 degrees to the sun, the shadows will be a lot
+            crisper due to the use of LiSPSM.  Note that increasing the
+            resolution of the shadow map texture will also make the shadows
+            crisper, but will cost memory and performance.
 
-            The perspective transform changes every frame depending on the light
-            direction and the chase cam's direction. Sometimes the changes can be
-            quite severe. This causes an unavoidable 'crawling' effect in the
-            shadows.
+            The perspective transform changes every frame depending on the
+            light direction and the chase cam's direction. Sometimes the
+            changes can be quite severe. This causes an unavoidable 'crawling'
+            effect in the shadows.
 
         </section>
 
         <section title="Covering Larger Distances" id="gfx_shadow_pssm">
 
-            There are in fact 3 shadow maps used. One for the area closest to the
-            player, one to cover the area further away, and the 3rd one for the
-            furthest reach of the shadow (200 metres). They are all the same size
-            textures, but the one nearest to the camera covers a much smaller area
-            and thus the shadows are better defined. Another way of looking at this
-            is that it allows shadows to appear much further from the player,
-            without compromising the quality of shadows near the player. The exact
-            technique used in Grit is called PSSM (<web
+            There are in fact 3 shadow maps used. One for the area closest to
+            the player, one to cover the area further away, and the 3rd one for
+            the furthest reach of the shadow (200 metres). They are all the
+            same size textures, but the one nearest to the camera covers a much
+            smaller area and thus the shadows are better defined. Another way
+            of looking at this is that it allows shadows to appear much further
+            from the player, without compromising the quality of shadows near
+            the player. The exact technique used in Grit is called PSSM (<web
             url="http://http.developer.nvidia.com/GPUGems3/gpugems3_ch10.html">Parallel
-            Split Shadow Mapping</web>). Sometimes you can see the transition from
-            one shadow map to the next, as a sudden decrease in shadow quality.
+            Split Shadow Mapping</web>). Sometimes you can see the transition
+            from one shadow map to the next, as a sudden decrease in shadow
+            quality.
 
         </section>
 
         <section title="Soft Shadows" id="gfx_shadow_pcf">
 
-            If each screen pixel was merely tested for being in shadow or not, the
-            shadows would be very hard-edged because of the sudden transition from
-            'in shadow' to 'not in shadow'. To avoid this, we soften the shadows
-            using a technique called PCF (<web
+            If each screen pixel was merely tested for being in shadow or not,
+            the shadows would be very hard-edged because of the sudden
+            transition from 'in shadow' to 'not in shadow'. To avoid this, we
+            soften the shadows using a technique called PCF (<web
             url="http://http.developer.nvidia.com/GPUGems/gpugems_ch11.html">Percentage
             Closer Filtering</web>) . This boils down to testing the shadow map
-            several times per screen pixel, and taking the average.  The appearance
-            is that several faint shadows have been overlaid in slightly different
-            positions, to produce a blurred effect. It can get very slow but there
-            is hardware support that we are currently not using that can help, see
-            <issue id="125"/>.
+            several times per screen pixel, and taking the average.  The
+            appearance is that several faint shadows have been overlaid in
+            slightly different positions, to produce a blurred effect. It can
+            get very slow but there is hardware support that we are currently
+            not using that can help, see <issue id="125"/>.
 
         </section>
 
@@ -97,61 +98,65 @@
     <section title="Shadow Artefacts" id="gfx_shadow_artefacts">
 
         There are certain things that can go wrong with dynamic shadow
-        implementations like the ones used in Grit. There are some things to avoid
-        when modelling objects, in order to avoid problems.
+        implementations like the ones used in Grit. There are some things to
+        avoid when modelling objects, in order to avoid problems.
 
         <section title="Holes in shadows" id="gfx_shadow_holes">
 
-            Since the shadows are calculated by rendering the scene from the sun
-            (or moon) you have to make sure that your geometry, when viewed from
-            this direction, appears to be opaque. This means cliffs must have
-            polygons around the back facing the sun, in order to the sun shining
-            through them to the front.  A more expensive alternative is to turn on
-            the rendering of backfaces in the material.
+            Since the shadows are calculated by rendering the scene from the
+            sun (or moon) you have to make sure that your geometry, when viewed
+            from this direction, appears to be opaque. This means cliffs must
+            have polygons around the back facing the sun, in order to the sun
+            shining through them to the front.  A more expensive alternative is
+            to turn on the rendering of backfaces in the material.
 
-            If your map is an island that drops below sealevel in all directions,
-            you don't have to worry about this.  But if your map is surrounded by
-            some sort of "wall", then you do.
+            If your map is an island that drops below sealevel in all
+            directions, you don't have to worry about this.  But if your map is
+            surrounded by some sort of "wall", then you do.
 
         </section>
 
         <section title="Shadow Texture Stretch" id="gfx_shadow_stretch">
 
-            <image src="shadow_stretch.png" caption="Shadow texture stretch occurs
-            where polys are not facing the light." title="Using SHADOWYNESS" />
+            <image src="shadow_stretch.png" title="Using SHADOWYNESS">
+                Shadow texture stretch occurs where polygons do not face the
+                light.
+            </image>
 
-            Since the shadow texture is projected onto the scene from the light,
-            surfaces that are perpendicular to the light (e.g. flat ground at
-            sunset) will experience very bad texture stretch. This causes aliasing
-            artefacts. Because of the LiSPSM perspective transformation, the
-            artefacts have a very nasty sawtooth appearance, instead of the square
-            pixelation that usually occurs with aliasing artefacts.
+            Since the shadow texture is projected onto the scene from the
+            light, surfaces that are perpendicular to the light (e.g. flat
+            ground at sunset) will experience very bad texture stretch. This
+            causes aliasing artefacts. Because of the LiSPSM perspective
+            transformation, the artefacts have a very nasty sawtooth
+            appearance, instead of the square pixelation that usually occurs
+            with aliasing artefacts.
 
-            To visualise the aliasing, we can use the following, which renders just
-            the projection of the shadow map onto the scene, with equal intensitity
-            for all triangles:
+            To visualise the aliasing, we can use the following, which renders
+            just the projection of the shadow map onto the scene, with equal
+            intensitity for all triangles:
 
             <lua>
                 debug_cfg.falseColour = "SHADOWYNESS"
             </lua>
 
             A small fern on the edge of a cliff is projecting a shadow downhill
-            away from the edge of the cliff.  The shadow is very elongated because
-            of the low sun.  One can see the sawtooth artefacts in the stretched
-            part of the shadow.  When animated, the moving sun causes these
-            sawtooth artefacts to crawl in a very distracting way.
+            away from the edge of the cliff.  The shadow is very elongated
+            because of the low sun.  One can see the sawtooth artefacts in the
+            stretched part of the shadow.  When animated, the moving sun causes
+            these sawtooth artefacts to crawl in a very distracting way.
 
-            <image src="shadow_stretched_hidden.png" caption="Shadow texture
-            stretch is usually hidden by the lighting equation." title="Using
-            SHADOW_MASK" />
+            <image src="shadow_stretched_hidden.png" title="Using SHADOW_MASK">
+            Shadow texture stretch is usually hidden by the lighting equation.
+            </image>
 
-            Luckily these areas should receive very much light due to the diffuse
-            lighting equation. E.g. if the light is incident at 15 degrees then the
-            amount of lighting would only be 25% (i.e. sin(15)) of the amount of
-            light that it would receive at 90 degrees. This means the shadow is
-            much less distinct in these areas. The following falseColour value
-            shows the actual shadow, i.e.  incorporating the diffuse lighting
-            component as well as the shadow map:
+            Luckily these areas should receive very much light due to the
+            diffuse lighting equation. E.g. if the light is incident at 15
+            degrees then the amount of lighting would only be 25% (i.e.
+            sin(15)) of the amount of light that it would receive at 90
+            degrees. This means the shadow is much less distinct in these
+            areas. The following falseColour value shows the actual shadow,
+            i.e.  incorporating the diffuse lighting component as well as the
+            shadow map:
 
             <lua>
                 debug_cfg.falseColour = "SHADOW_MASK"
@@ -164,105 +169,111 @@
 
         <section title="Normal Bending" id="gfx_shadow_bending">
 
-            If your mesh has sharp edges between polys (an angle of more than 20
-            degrees for example) and is smooth shaded, then for some pixels, the
-            normals interpolated across that mesh will be considerably different to
-            the 'true' normal of that face (i.e. the normal you would calculate
-            using the positions of the 3 vertexes).  For example, if you model a
-            cube and use smooth shading then the normals of each face will be
-            orthogonal, but the normals will be smoothly interpolated around the
-            cube causing a huge amount of normal bending at the edges and corners.
+            If your mesh has sharp edges between polys (an angle of more than
+            20 degrees for example) and is smooth shaded, then for some pixels,
+            the normals interpolated across that mesh will be considerably
+            different to the 'true' normal of that face (i.e. the normal you
+            would calculate using the positions of the 3 vertexes).  For
+            example, if you model a cube and use smooth shading then the
+            normals of each face will be orthogonal, but the normals will be
+            smoothly interpolated around the cube causing a huge amount of
+            normal bending at the edges and corners.
 
-            <image src="shadow_artefacts.png" caption="Shadow artefacts caused by
-            normal bending." title="Normal Bending" />
+            <image src="shadow_artefacts.png" title="Normal Bending">
+            Shadow artefacts caused by normal bending.
+            </image>
 
-            Normal bending is usually OK, but causes a problem with shadows. This
-            is because shadow stretch occurs in places where the true normal of the
-            polygon is close to perpendicular to the light source, however light
-            attenuation uses the interpolated normal, which can be pointing closer
-            to the light than the true normal.  This kind of artefact often occurs
-            on sharp terrain like cliffs.  It causes areas to be illuminated when
-            they would not otherwise be, and therefore causes shadow artefacts to
-            appear that would ordinarily be hidden in the darkness. If the face is
-            in-line with the light, e.g. cliffs at noon, and there is significant
-            normal bending, then the polygon may be almost fully lit, even though
-            the polygon is nearly at 90 degrees to the sun.
+            Normal bending is usually OK, but causes a problem with shadows.
+            This is because shadow stretch occurs in places where the true
+            normal of the polygon is close to perpendicular to the light
+            source, however light attenuation uses the interpolated normal,
+            which can be pointing closer to the light than the true normal.
+            This kind of artefact often occurs on sharp terrain like cliffs.
+            It causes areas to be illuminated when they would not otherwise be,
+            and therefore causes shadow artefacts to appear that would
+            ordinarily be hidden in the darkness. If the face is in-line with
+            the light, e.g. cliffs at noon, and there is significant normal
+            bending, then the polygon may be almost fully lit, even though the
+            polygon is nearly at 90 degrees to the sun.
 
-            There used to be a material property <def>shadowObliqueCutoff</def> for
-            controlling this effect, but it is no-longer implemented since the
-            switch to deferred shading.  The technique was to attenuate shadows
-            more aggressively on surfaces rendered with the material in question.
-            However doing this on a per-material basis causes areas of the mesh
-            that do not have normal bending to be subject to the same attenuation
-            of shadows.  The preferred solution is to calculate the amount the
-            amount required at each vertex and store that in the vertex as an
-            attribute.  This can be fully automated in the asset generation
-            pipeline.  However it is not yet implemented.  Please ignore the
-            artifacts for now.
+            There used to be a material property <def>shadowObliqueCutoff</def>
+            for controlling this effect, but it is no-longer implemented since
+            the switch to deferred shading.  The technique was to attenuate
+            shadows more aggressively on surfaces rendered with the material in
+            question.  However doing this on a per-material basis causes areas
+            of the mesh that do not have normal bending to be subject to the
+            same attenuation of shadows.  The preferred solution is to
+            calculate the amount the amount required at each vertex and store
+            that in the vertex as an attribute.  This can be fully automated in
+            the asset generation pipeline.  However it is not yet implemented.
+            Please ignore the artifacts for now.
 
         </section>
 
         <section title="Shadow Acne" id="gfx_shadow_acne">
 
-            <image src="shadow_acne_diagram.png" caption="An illustration of shadow
-            acne." title="Shadow Acne Diagram" />
+            <image src="shadow_acne_diagram.png" title="Shadow Acne Diagram">
+            An illustration of shadow acne.
+            </image>
 
             Imprecision in the shadow map, which records the distance of each
             occluder from the light, causes the shadow to fluctuate, causing
             unpleasant high frequency transitions from 'in shadow' to 'not in
-            shadow' on every surface that faces the light. The engine will avoid
-            shadow acne by adding a certain amount of bias to the depth of hte
-            caster during the shadow casting phase.  Thus, the shadow is pushed
-            away from the light by enough in order to avoid the noise being an
-            issue.  The following image illustrates the problem and how the depth
-            bias solves it, the screen shot is of a natural gas tank, but the
-            diagram below is for a wall on flat ground.
+            shadow' on every surface that faces the light. The engine will
+            avoid shadow acne by adding a certain amount of bias to the depth
+            of hte caster during the shadow casting phase.  Thus, the shadow is
+            pushed away from the light by enough in order to avoid the noise
+            being an issue.  The following image illustrates the problem and
+            how the depth bias solves it, the screen shot is of a natural gas
+            tank, but the diagram below is for a wall on flat ground.
 
             The engine tries to use the minimal amonut of bias to avoid shadow
-            acne, by using the normal of the casting surface and a small constant
-            offset on everything.  Thus, you don't need to worry about this as a
-            modeller, unless your surfaces are so thin that even this small amount
-            of bias is too much.
+            acne, by using the normal of the casting surface and a small
+            constant offset on everything.  Thus, you don't need to worry about
+            this as a modeller, unless your surfaces are so thin that even this
+            small amount of bias is too much.
 
         </section>
 
         <section title="Additional Bias" id="gfx_shadow_bias">
 
-            <image src="shadow_unwanted.png" caption="Unwanted self-shadowing."
-            title="Unwanted Shadow Fidelity" />
+            <image src="shadow_unwanted.png" title="Unwanted Shadow Fidelity">
+            Unwanted self-shadowing.
+            </image>
 
-            You can add additional bias yourself, in the material, in order to get
-            rid of other artefacts. For example here there are unwanted shadows on
-            the tank. There is simply not enough fidelity in the dynamic shadows to
-            properly render shdaows for such detailed geometry.  We would rather
-            there were no shadows at all.
+            You can add additional bias yourself, in the material, in order to
+            get rid of other artefacts. For example here there are unwanted
+            shadows on the tank. There is simply not enough fidelity in the
+            dynamic shadows to properly render shdaows for such detailed
+            geometry.  We would rather there were no shadows at all.
 
-            One way to avoid this is to avoid these kind of nooks and crannies in
-            the geometry of the object. However since these contribute greatly to
-            the appearance of objects, this may be unacceptable.  Another solution
-            is to add another 0.1m to the depth bias during shadow casting (on top
-            of the small amount calculated by the engine), in order to push the
-            shadow far enough away from the object to hide shadows on the high
-            detail parts of the mesh.
+            One way to avoid this is to avoid these kind of nooks and crannies
+            in the geometry of the object. However since these contribute
+            greatly to the appearance of objects, this may be unacceptable.
+            Another solution is to add another 0.1m to the depth bias during
+            shadow casting (on top of the small amount calculated by the
+            engine), in order to push the shadow far enough away from the
+            object to hide shadows on the high detail parts of the mesh.
 
         </section>
 
         <section title="Shadow Disconnection" id="gfx_shadow_discon">
 
-            <image src="shadow_disconnection.png" caption="Too high a bias causes
-            the shadow to disconnect from the base of the object." title="Shadow
-            Disconnection" />
+            <image src="shadow_disconnection.png" title="Shadow Disconnection">
+                Too much bias causes the shadow to disconnect from the base of
+                the object.
+            </image>
 
             Too much bias can cause a problem in itself though. If the bias is
             increased enough, the shadow will move so far from the object that
-            there will be a 'gap' where the object meets the ground. This gives the
-            unwelcome appearance that the object is 'floating' above the ground, as
-            seen with this table.  If you want a lot of bias, you may have to
-            thicken the geometry of your model.
+            there will be a 'gap' where the object meets the ground. This gives
+            the unwelcome appearance that the object is 'floating' above the
+            ground, as seen with this table.  If you want a lot of bias, you
+            may have to thicken the geometry of your model.
 
-            The bias automatically used by the engine is carefully chosen to be as
-            small as it can be. However as a modeller you must also make sure your
-            additional bias is not too large as well.
+            The bias automatically used by the engine is carefully chosen to be
+            as small as it can be. However as a modeller you must also make
+            sure your additional bias is not too large as well.
 
         </section>
 
@@ -332,11 +343,6 @@
         ordering is undefined.  So don't do that unless you know the polys will
         not overlap.
 
-    <!--
-
-    By setting env.clockTicking to false you will set your skybox to a null rotation (need facts here) and stop it from rotating along time. Where the rotation is used for a starfield seen from earth, it makes no sense in space itself.
-    -->
-
     </section>
 
     <section title="Lights" id="gfx_light">
@@ -353,8 +359,9 @@
         nodes and have the same fields.  Like graphics bodies, they can be
         individually enabled/disabled and faded.
 
-        <image src="light_diagram.png" caption="Illustration of various light
-        fields." title="Light Diagram" />
+        <image src="light_diagram.png" title="Light Diagram">
+        Illustration of various light fields.
+        </image>
 
         <lua>
             l = gfx_light_make()
@@ -372,7 +379,7 @@
         orientation does not matter.  Otherwise it shines in the +Y direction
         unless oriented differently.
 
-        <section title="Coronas">
+        <section title="Coronas" id="coronas">
 
             If desired, Grit can draw a corona to simulate the blinding effect
             of the light itself.  The corona's size (diameter) must be
