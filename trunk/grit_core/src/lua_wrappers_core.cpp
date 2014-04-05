@@ -31,6 +31,9 @@
 
 #include <sleep.h>
 
+#include <lua_stack.h>
+#include <lua_utf8.h>
+
 #include "grit_lua_util.h"
 #include "input_filter.h"
 #include "keyboard.h"
@@ -39,7 +42,6 @@
 #include "clipboard.h"
 #include "centralised_log.h"
 #include "main.h"
-#include "lua_utf8.h"
 
 #include "gfx/gfx_disk_resource.h"
 
@@ -816,6 +818,14 @@ TRY_START
 TRY_END
 }
 
+static int global_current_dir (lua_State *L)
+{
+    check_args(L, 0);
+    std::string dir = lua_current_dir(L);
+    push_string(L, dir);
+    return 1;
+}
+
 
 static lua_Number game_time = 0;
 typedef std::map<lua_Number, std::vector<LuaPtr*> > EventMap;
@@ -936,6 +946,7 @@ static const luaL_reg global[] = {
         {"path_stack_pop",global_path_stack_pop},
         {"include",global_include},
         {"safe_include",global_safe_include},
+        {"current_dir",global_current_dir},
         {"error",global_error},
         {"error_handler",global_error_handler},
         {"echo",global_echo},

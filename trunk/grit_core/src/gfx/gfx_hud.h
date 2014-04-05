@@ -211,6 +211,7 @@ class GfxHudObject : public GfxHudBase {
     Vector2 uv1, uv2;
     bool cornered;
     Vector2 size;
+    bool sizeSet;
     Vector3 colour;
     float alpha;
 
@@ -259,6 +260,7 @@ class GfxHudObject : public GfxHudBase {
 
     void setSize (lua_State *L, const Vector2 &v);
     Vector2 getSize (void) { assertAlive(); return size; }
+    bool getSizeSet (void) { assertAlive(); return sizeSet; }
 
     void setParent (lua_State *L, GfxHudObject *v);
 

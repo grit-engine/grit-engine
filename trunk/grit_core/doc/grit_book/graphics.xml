@@ -413,38 +413,77 @@
         health/ammo displays, minimaps, menu screens, and general purpose
         mouse-driven graphical user interfaces.
 
-        To begin, we define a <def>HUD class</def>, which has fields and
-        methods much like a game class.  The HUD class can be instantiated into
-        as many <def>HUD objects</def> as we want.  Without any Lua scripting,
-        a HUD object is simply a rectangle drawn on the screen:
+        <section title="Basics" id="gfx_hud_basics">
+
+            let us first instantiate an existing class.  The <def>Rect</def>
+            HUD class is the simplest class it is possible to write, as it has
+            no user-defined behaviours.  Its one-line definition is in the
+            common/hud directory, but you can also define your own.
+            Instantiate it as follows:
+
+            <lua>
+                obj = gfx_hud_obj_make("Rect")
+                obj.position = vec(100,100)
+                obj.texture = "Icon.png"
+                obj.size = vec(50,50)
+                obj.orientation = 44
+                -- Can also initialise members with a table param:
+                obj = gfx_hud_obj_make("Rect", {position = vec(50,50), ...})
+            </lua>
+
+            The HUD object has a number of attributes that define how it is
+            rendered.  Some examples of these are above, and they are
+            comprehensively documented <todo>here</todo>.  If not given, they
+            fall back to defaults first in the HUD class and then system
+            defaults.
+
+            To begin, we define a <def>HUD class</def>, which has fields and
+            methods much like a game class.  The HUD class can be instantiated into
+            as many <def>HUD objects</def> as we want.  Without any Lua scripting,
+            a HUD object is simply a rectangle drawn on the screen:
+            
+            <lua>
+                hud_class "Icon" {
+                    texture = "Icon.png";
+                    colour = vec(0, 1, 1); -- cyan
+                }
+                obj = gfx_hud_obj_make("Icon", { alpha = 0.5, zOrder = 2 })
+                obj.position = vec(100,100)
+                obj.size = vec(50,50)
+                obj.orientation = 44
+                ...
+                obj:destroy()
+            </lua>
+
+            The HUD object has a number of attributes that define how it is
+            rendered.  Some examples of these are above, and they are
+            comprehensively documented <todo>here</todo>.  They can be assigned at
+            any time, or provided in the class as defaults, or given in the second
+            parameter table of gfx_hud_obj_make.  This latter case is simply a
+            convenient shorthand for assigning them individually, immediately after
+            construction.
+
+            In this case, the 50% alpha-blended, cyan-masked texture will be
+            centered at vec(100,100) from the bottom left of the screen and will be
+            50 pixels tall and wide.  The orientation attribute rotates the HUD
+            object 44 degrees clockwise about its centre.  The zOrder field is an
+            integer between 0 and 7 inclusive.  This controls the draw order, with
+            7 being on top at 0 being at the bottom.
+
+            The object is automatically garbage collected when it is no-longer
+            reachable, but can be destroyed earlier using the destroy method.
+
+        </section>
+
+        <section title="Text">
+
+            The text widget allows 
+
+        </section>
         
-        <lua>
-            hud_class "Icon" {
-                texture = "Icon.png";
-                colour = vec(0, 1, 1); -- cyan
-            }
-            obj = gfx_hud_obj_make("Icon", { alpha = 0.5, zOrder = 2 })
-            obj.position = vec(100,100)
-            obj.size = vec(50,50)
-            obj.orientation = 44
-            ...
-            obj:destroy()
-        </lua>
+        <section title="The Hierarchy">
 
-        The HUD object has a number of attributes that define how it is
-        rendered.  Some examples of these are above, and they are
-        comprehensively documented <todo>here</todo>.  They can be assigned at
-        any time, or provided in the class as defaults, or given in the second
-        parameter table of gfx_hud_obj_make.  This latter case is simply a
-        convenient shorthand for assigning them immediately after construction.
-
-        In this case, the drawn, cyan-masked texture will be centered at
-        vec(100,100) from the bottom left of the screen and will be 50 pixels
-        tall and wide.  The orientation attribute rotates the HUD object 44
-        degrees clockwise about its centre.
-
-        The object is automatically garbage collected when it is no-longer
-        pointed at, but can be destroyed earlier using the destroy method.
+        </section>
         
         Let us now define something more interesting.  This class has a frame
         callback and a child object -- a text body.

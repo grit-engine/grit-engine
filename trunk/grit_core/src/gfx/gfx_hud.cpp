@@ -217,7 +217,7 @@ Vector2 GfxHudBase::getDerivedBounds (void)
 
 GfxHudObject::GfxHudObject (GfxHudClass *hud_class)
   : GfxHudBase(), hudClass(hud_class),
-    texture(NULL), uv1(0,0), uv2(1,1), cornered(false), size(32,32), colour(1,1,1), alpha(1),
+    texture(NULL), uv1(0,0), uv2(1,1), cornered(false), size(32,32), sizeSet(false), colour(1,1,1), alpha(1),
     needsParentResizedCallbacks(false), needsInputCallbacks(false), needsFrameCallbacks(false),
     refCount(0)
 {
@@ -403,6 +403,7 @@ void GfxHudObject::triggerParentResized (lua_State *L)
 void GfxHudObject::setSize (lua_State *L, const Vector2 &v)
 {
     assertAlive();
+    sizeSet = true;
     size = v;
 
     // use local_children copy since callbacks can alter hierarchy

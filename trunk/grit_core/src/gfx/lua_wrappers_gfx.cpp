@@ -2359,8 +2359,7 @@ TRY_START
     }
 
     self->triggerInit(L);
-    // FIXME: this does not check whether the init callback overrode self.size...
-    if (!have_size && self->getTexture()!=NULL) {
+    if (!have_size && !self->getSizeSet() && self->getTexture()!=NULL) {
         // set size from texture
         GfxTextureDiskResource *dr = self->getTexture();
         if (dr->isLoaded()) {

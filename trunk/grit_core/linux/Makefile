@@ -112,6 +112,7 @@ GRIT_OBJ=\
         input_filter.o \
         keyboard_x11.o \
         ldbglue.o \
+        lua_stack.o \
         lua_utf8.o \
         lua_util.o \
         lua_wrappers_audio.o \
