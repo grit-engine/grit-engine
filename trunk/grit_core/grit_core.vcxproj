@@ -83,6 +83,8 @@
   <ItemGroup>
     <ClCompile Include="..\dependencies\util\colour_conversion.cpp" />
     <ClCompile Include="..\dependencies\util\console.cpp" />
+    <ClCompile Include="..\dependencies\util\io_util.cpp" />
+    <ClCompile Include="..\dependencies\util\lua_stack.cpp" />
     <ClCompile Include="..\dependencies\util\lua_utf8.cpp" />
     <ClCompile Include="..\dependencies\util\lua_util.cpp" />
     <ClCompile Include="..\dependencies\util\unicode_util.cpp" />

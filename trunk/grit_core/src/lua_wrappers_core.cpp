@@ -33,6 +33,7 @@
 
 #include <lua_stack.h>
 #include <lua_utf8.h>
+#include <io_util.h>
 
 #include "grit_lua_util.h"
 #include "input_filter.h"
@@ -561,23 +562,27 @@ TRY_END
 }
 
 
-static int global_echo (lua_State *L)
+static int global_print (lua_State *L)
 {
 TRY_START
-        std::stringstream ss;
-        int args = lua_gettop(L);
-        for (int i=1 ; i<=args ; ++i) {
-                if (i>1) ss << "\t";
-                lua_pushglobaltable(L);
-                lua_getfield(L, -1, "console_tostring");
-                lua_remove(L,-2); //global table
-                lua_pushvalue(L,i);
-                lua_call(L,1,1);
-                ss << lua_tostring(L,-1);
-                lua_pop(L,1);
+    std::stringstream ss;
+    int args = lua_gettop(L);
+    for (int i=1 ; i<=args ; ++i) {
+        if (i > 1) ss << "\t";
+        if (lua_isstring(L, i)) {
+            ss << lua_tostring(L, i);
+        } else {
+            lua_pushglobaltable(L);
+            lua_getfield(L, -1, "dump");
+            lua_remove(L, -2); //global table
+            lua_pushvalue(L,i);
+            lua_call(L, 1, 1);
+            ss << lua_tostring(L, -1);
+            lua_pop(L, 1);
         }
-        clog.echo(ss.str());
-        return 0;
+    }
+    clog.print(ss.str());
+    return 0;
 TRY_END
 }
 
@@ -826,6 +831,17 @@ static int global_current_dir (lua_State *L)
     return 1;
 }
 
+static int global_r (lua_State *L)
+{
+TRY_START
+        check_args(L, 1);
+        std::string rel = luaL_checkstring(L, 1);
+        std::string collapsed = collapse_path(lua_current_dir(L) + rel);
+        lua_pushstring(L, collapsed.c_str());
+        return 1;
+TRY_END
+}
+
 
 static lua_Number game_time = 0;
 typedef std::map<lua_Number, std::vector<LuaPtr*> > EventMap;
@@ -937,6 +953,7 @@ TRY_END
 
 static const luaL_reg global[] = {
 
+        {"r",global_r},
         {"fqn",global_fqn},
         {"fqn_ex",global_fqn_ex},
         {"path_stack",global_path_stack},
@@ -949,7 +966,7 @@ static const luaL_reg global[] = {
         {"current_dir",global_current_dir},
         {"error",global_error},
         {"error_handler",global_error_handler},
-        {"echo",global_echo},
+        {"print",global_print},
         {"console_poll",global_console_poll},
 
         {"clicked_close",global_clicked_close},
@@ -1064,9 +1081,10 @@ lua_State *init_lua(const char *filename)
         ADD_MT_MACRO(plot_v3,PLOT_V3_TAG);
         ADD_MT_MACRO(stringdb,STRINGDB_TAG);
 
-        register_lua_globals(L, global);
+        lua_getglobal(L, "print");
+        lua_setglobal(L, "print_stdout");
 
-        lua_pushthread(L); lua_setglobal(L,"MAIN_STATE");
+        register_lua_globals(L, global);
 
         utf8_lua_init(L);
         gritobj_lua_init(L);

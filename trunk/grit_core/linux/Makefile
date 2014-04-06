@@ -110,6 +110,7 @@ GRIT_OBJ=\
         grit_lua_util.o \
         grit_object.o \
         input_filter.o \
+        io_util.o \
         keyboard_x11.o \
         ldbglue.o \
         lua_stack.o \

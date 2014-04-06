@@ -50,7 +50,7 @@ class CentralisedLog {
 
         //boost::recursive_mutex lock;
 
-        void echo (const std::string &line)
+        void print (const std::string &line)
         {
                 std::cout << line << RESET << std::endl;
                 buffer << line << RESET << std::endl;
@@ -108,7 +108,7 @@ class CLog {
         CLog &operator<< (manip *o)
         {
                 if (o == (manip*)std::endl) {
-                        clog.echo(clog.tmp.str());
+                        clog.print(clog.tmp.str());
                         clog.tmp.str("");
                 } else {
                         clog.tmp << o;

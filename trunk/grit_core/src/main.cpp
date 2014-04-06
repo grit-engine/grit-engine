@@ -74,7 +74,7 @@ struct TheGfxCallback : GfxCallback {
         
         virtual void messageLogged (const std::string &line)
         {
-                clog.echo(line);
+                clog.print(line);
         }
 
     protected:
