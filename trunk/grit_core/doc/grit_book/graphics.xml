@@ -475,15 +475,13 @@
 
         </section>
 
-        <section title="Text">
+        <section title="Text" id="gfx_hud_text">
 
             The text widget allows 
 
         </section>
         
-        <section title="The Hierarchy">
-
-        </section>
+        <section title="The Hierarchy" id="gfx_hud_tree">
         
         Let us now define something more interesting.  This class has a frame
         callback and a child object -- a text body.
@@ -534,6 +532,7 @@
 
 
 
+        </section>
         
 
         
