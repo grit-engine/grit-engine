@@ -130,6 +130,8 @@ TRY_START
         lua_pushnumber(L, self->getTrianglesWithChildren());
     } else if (!::strcmp(key,"vertexesWithChildren")) {
         lua_pushnumber(L, self->getVertexesWithChildren());
+    } else if (!::strcmp(key,"fade")) {
+        lua_pushnumber(L, 1);
     } else if (!::strcmp(key,"makeChild")) {
         push_cfunction(L,gfxnode_make_child);
     } else if (!::strcmp(key,"destroyed")) {
@@ -173,6 +175,9 @@ TRY_START
             std::string s = check_string(L, 3);
             self->setParentBoneName(s);
         }
+    } else if (!::strcmp(key,"fade")) {
+        float v = check_float(L,3);
+        (void) v;
     } else {
        my_lua_error(L,"Not a writeable GfxFertileNode member: "+std::string(key));
     }
@@ -1846,7 +1851,7 @@ TRY_START
         float v = check_float(L,3);
         self.setLetterBottomAlpha(v);
     } else if (!::strcmp(key,"font")) {
-        std::string v = check_path(L,3);
+        std::string v = check_string(L,3);
         GfxFont *font = gfx_font_get(v);
         if (font == NULL) my_lua_error(L, "Font does not exist \""+v+"\"");
         self.setFont(font);
@@ -2323,7 +2328,6 @@ TRY_START
         if (tab.has("texture")) {
             std::string v;
             bool success = tab.get("texture",v);
-            v = pwd_full_ex(L, v, hud_class->dir);
             if (!success) my_lua_error(L, "Wrong type for texture field in hud class \""+hud_class->name+"\".");
             DiskResource *d = disk_resource_get_or_make(v);
             if (d==NULL) my_lua_error(L, "Resource does not exist: \""+std::string(v)+"\"");
@@ -2845,8 +2849,7 @@ TRY_START
             if (lua_isnil(L, 1)) {
                 gfx_env_cube(NULL);
             } else {
-                std::string v = check_string(L,1);
-                v = pwd_full(L, v);
+                std::string v = check_path(L,1);
                 DiskResource *dr = disk_resource_get_or_make(v);
                 GfxEnvCubeDiskResource *ec = dynamic_cast<GfxEnvCubeDiskResource*>(dr);
                 if (ec == NULL) my_lua_error(L, "Not an env cube: \""+v+"\"");
@@ -2878,7 +2881,6 @@ TRY_START
                 gfx_colour_grade(NULL);
             } else {
                 std::string v = check_string(L,1);
-                v = pwd_full(L, v);
                 DiskResource *dr = disk_resource_get_or_make(v);
                 GfxColourGradeLUTDiskResource *cg = dynamic_cast<GfxColourGradeLUTDiskResource*>(dr);
                 if (cg == NULL) my_lua_error(L, "Not a colour grade LUT texture: \""+v+"\"");
@@ -3357,7 +3359,6 @@ TRY_START
     lua_getfield(L, 2, "map");
     if (lua_type(L,-1) != LUA_TSTRING) my_lua_error(L,"Particle map must be a string.");
     std::string texture = lua_tostring(L,-1);
-    texture = pwd_full(L, texture); // TODO: should use particle dir, not current dir
     lua_pop(L,1);
     lua_pushnil(L);
     lua_setfield(L, 2, "map");
@@ -3975,15 +3976,12 @@ TRY_START
     ExternalTable t;
     t.takeTableFromLuaStack(L,2);
 
-    std::string dir = grit_dirname(name);
-
     GFX_MAT_SYNC;
     GfxSkyMaterial *gfxskymat = gfx_sky_material_add_or_get(name);
 
 
     std::string shader_name;
     t.get("shader", shader_name, std::string("/system/SkyDefault"));
-    shader_name = pwd_full_ex(L, shader_name, dir);
     GfxSkyShader *shader = gfx_sky_shader_get(shader_name);
 
     std::string scene_blend;
@@ -4050,7 +4048,6 @@ TRY_START
 
             bool has_tex = tab->get("name", tex_name);
             APP_ASSERT(has_tex);
-            tex_name = pwd_full_ex(L, tex_name, dir);
             GfxTextureDiskResource *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
             if (tex == NULL) my_lua_error(L, "Resource is not a texture \""+tex_name+"\"");
             uniform.texture = tex;
@@ -4408,34 +4405,34 @@ static const luaL_reg global[] = {
 
 static const luaL_reg global_ogre_debug[] = {
 
-    {"load_material" ,global_load_material},
+    {"load_material", global_load_material},
     {"get_all_materials",global_get_all_materials},
     {"get_material",global_get_material},
-    {"get_material_usage" ,global_get_material_usage},
-    {"unload_all_materials" ,global_unload_all_materials},
-    {"unload_unused_materials" ,global_unload_unused_materials},
+    {"get_material_usage", global_get_material_usage},
+    {"unload_all_materials", global_unload_all_materials},
+    {"unload_unused_materials", global_unload_unused_materials},
     {"remove_material",global_remove_material},
 
-    {"make_gpuprog" ,global_make_gpuprog},
-    {"get_all_gpuprogs" ,global_get_all_gpuprogs},
-    {"get_gpuprog" ,global_get_gpuprog},
-    {"get_gpuprog_usage" ,global_get_gpuprog_usage},
-    {"unload_all_gpuprogs" ,global_unload_all_gpuprogs},
-    {"unload_unused_gpuprogs" ,global_unload_unused_gpuprogs},
-    {"remove_gpuprog" ,global_remove_gpuprog},
+    {"make_gpuprog", global_make_gpuprog},
+    {"get_all_gpuprogs", global_get_all_gpuprogs},
+    {"get_gpuprog", global_get_gpuprog},
+    {"get_gpuprog_usage", global_get_gpuprog_usage},
+    {"unload_all_gpuprogs", global_unload_all_gpuprogs},
+    {"unload_unused_gpuprogs", global_unload_unused_gpuprogs},
+    {"remove_gpuprog", global_remove_gpuprog},
 
-    {"register_material" ,global_register_material},
-    {"register_sky_material" ,global_register_sky_material},
-    {"register_sky_shader" ,global_register_sky_shader},
-    {"dump_registered_material" ,global_dump_registered_material},
-    {"registered_material_get" ,global_registered_material_get},
-    {"reprocess_all_registered_materials" ,global_reprocess_all_registered_materials},
+    {"register_material", global_register_material},
+    {"register_sky_material", global_register_sky_material},
+    {"register_sky_shader", global_register_sky_shader},
+    {"dump_registered_material", global_dump_registered_material},
+    {"registered_material_get", global_registered_material_get},
+    {"reprocess_all_registered_materials", global_reprocess_all_registered_materials},
 
-    {"Material" ,global_make_material},
+    {"Material", global_make_material},
 
-    {"add_resource_location",global_add_resource_location},
-    {"initialise_all_resource_groups",global_init_all_resource_groups},
-    {"resource_exists",global_resource_exists},
+    {"add_resource_location", global_add_resource_location},
+    {"initialise_all_resource_groups", global_init_all_resource_groups},
+    {"resource_exists", global_resource_exists},
 
     {NULL, NULL}
 };

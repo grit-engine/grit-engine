@@ -95,7 +95,6 @@ class InputFilter {
         LuaPtr down;
         LuaPtr up;
         LuaPtr repeat;
-        std::string path;
     };
 
     typedef std::map<std::string, std::string> ButtonStatus;
@@ -123,7 +122,6 @@ class InputFilter {
     CallbackMap buttonCallbacks;
 
     LuaPtr mouseMoveCallback;
-    std::string mouseMoveCallbackPath;
 
     double priority;
 
@@ -195,7 +193,7 @@ class InputFilter {
 
     /** For internal use. */
     bool acceptButton (lua_State *L, const std::string &b);
-    void triggerFunc (lua_State *L, const std::string &button, const LuaPtr &func, const std::string &path);
+    void triggerFunc (lua_State *L, const std::string &button, const LuaPtr &func);
     void triggerMouseMove (lua_State *L, const Vector2 &abs);
     void flushAll (lua_State *L);
     void flushSet (lua_State *L, const BindingSet &s);

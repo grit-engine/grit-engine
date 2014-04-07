@@ -54,33 +54,12 @@ static std::string path_collapse (const std::string &p, bool &err)
     return r;
 }
 
-std::vector<std::string> pwd;
-
-void pwd_push_dir (const std::string &dir)
-{
-    //CVERB << "PUSH: " << dir << std::endl;
-    APP_ASSERT(dir[dir.size()-1] == '/');
-    pwd.push_back(dir);
-}
-
 std::string grit_dirname (const std::string &absolute)
 {
     APP_ASSERT(absolute[0] == '/');
     std::string dir(absolute, 0, absolute.rfind('/')+1);
     return dir;
 }
-
-void pwd_push_file (const std::string &filename)
-{
-    // push everytihng up to and including the last /
-    APP_ASSERT(filename[0] == '/');
-    std::string dir(filename, 0, filename.rfind('/')+1);
-    pwd_push_dir(dir);
-}
-
-std::string pwd_pop (void) { std::string r = pwd[pwd.size()-1]; pwd.pop_back(); return r; }
-
-std::string pwd_get (void) { return pwd.size()==0 ? "/" : pwd[pwd.size()-1]; }
 
 std::string pwd_full_ex (lua_State *L, std::string rel, const std::string &path)
 {
@@ -108,16 +87,6 @@ std::string pwd_full_ex (std::string rel, const std::string &path, const std::st
         r = def;
     }
     return r;
-}
-
-std::string pwd_full (lua_State *L, const std::string &rel)
-{
-    return pwd_full_ex(L, rel, pwd_get());
-}
-
-std::string pwd_full (const std::string &rel, const std::string &def)
-{
-    return pwd_full_ex(rel, pwd_get(), def);
 }
 
 // vim: ts=4:sw=4:et

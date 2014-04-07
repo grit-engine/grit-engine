@@ -49,7 +49,10 @@ class GfxBaseDiskResource : public DiskResource {
     /** Use disk_resource_get_or_make to create a new disk resource. */
     GfxBaseDiskResource (const std::string &name)
       : name(name)
-    { } 
+    {
+        if (name[0] != '/')
+            EXCEPT << "Path must be absolute: " << name << ENDL;
+    } 
 
     /** Return Grit name for the resource, e.g. "/system/blah.dds". */
     virtual const std::string &getName (void) const { return name; }

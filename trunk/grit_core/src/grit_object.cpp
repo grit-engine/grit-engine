@@ -24,7 +24,6 @@
 #include "main.h"
 #include "grit_object.h"
 #include "grit_class.h"
-#include "path_util.h"
 
 #include "grit_lua_util.h"
 #include "lua_wrappers_gritobj.h"
@@ -107,9 +106,7 @@ void GritObject::notifyFade (lua_State *L,
     push_gritobj(L,self); // persistent grit obj
     lua_pushnumber(L,fade); // fade
     //stack: err,class,callback,persistent, fade
-    pwd_push_dir(gritClass->dir);
     int status = lua_pcall(L,2,0,error_handler);
-    pwd_pop();
     if (status) {
         //stack: err,class,msg
         // pop the error message since the error handler will
@@ -197,9 +194,7 @@ void GritObject::activate (lua_State *L,
     STACK_CHECK_N(5);
 
     // call (2 args), pops function too
-    pwd_push_dir(gritClass->dir);
     int status = lua_pcall(L,2,0,error_handler);
-    pwd_pop();
     if (status) {
         STACK_CHECK_N(3);
         //stack: err,class,error
@@ -314,9 +309,7 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
 
     push_gritobj(L,self); // persistent grit obj
     //stack: err,class,callback
-    pwd_push_dir(gritClass->dir);
     int status = lua_pcall(L,1,1,error_handler);
-    pwd_pop();
     if (status) {
         //stack: err,class,msg
         // pop the error message since the error handler will
@@ -367,6 +360,10 @@ void GritObject::init (lua_State *L, const GritObjectPtr &self)
         lua_pop(L,3);
         //stack is empty
         STACK_CHECK;
+        CERR << "initializing object: \""<<name<<"\": "
+             << "class \""<<gritClass->name<<"\" "
+             << "does not have init function" << std::endl;
+        object_del(L,self);
         return;
     }
 
@@ -376,14 +373,15 @@ void GritObject::init (lua_State *L, const GritObjectPtr &self)
     lua_checkstack(L,2);
     push_gritobj(L,self); // persistent grit obj
     //stack: err,class,callback,persistent
-    pwd_push_dir(gritClass->dir);
     int status = lua_pcall(L,1,0,error_handler);
-    pwd_pop();
     if (status) {
         //stack: err,class,msg
         // pop the error message since the error handler will
         // have already printed it out
         lua_pop(L,1);
+        CERR << "Object: \"" << name << "\" raised an error on initialization, so destroying it." << std::endl;
+        // will deactivate us
+        object_del(L,self);
         //stack: err,class
     }
     //stack: err,class
@@ -428,9 +426,7 @@ bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, float e
     push_gritobj(L,self); // persistent grit obj
     lua_pushnumber(L, elapsed); // time since last frame
     //stack: err,class,callback,instance,elapsed
-    pwd_push_dir(gritClass->dir);
     int status = lua_pcall(L,2,0,error_handler);
-    pwd_pop();
     if (status) {
         //stack: err,class,msg
         // pop the error message since the error handler will
@@ -481,9 +477,7 @@ bool GritObject::stepCallback (lua_State *L, const GritObjectPtr &self, float el
     push_gritobj(L,self); // persistent grit obj
     lua_pushnumber(L, elapsed); // time since last frame
     //stack: err,class,callback,instance,elapsed
-    pwd_push_dir(gritClass->dir);
     int status = lua_pcall(L,2,0,error_handler);
-    pwd_pop();
     if (status) {
         //stack: err,class,msg
         // pop the error message since the error handler will

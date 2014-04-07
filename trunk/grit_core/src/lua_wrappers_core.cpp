@@ -656,78 +656,6 @@ TRY_END
 }
 
 
-static int global_fqn (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        std::string fqn = pwd_full(L, luaL_checkstring(L,1));
-        lua_pushstring(L, fqn.c_str());
-        return 1;
-TRY_END
-}
-
-static int global_fqn_ex (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        std::string rel = luaL_checkstring(L,1);
-        std::string filename = luaL_checkstring(L,2);
-        std::string dir(filename, 0, filename.rfind('/')+1);
-        lua_pushstring(L, pwd_full_ex(L, rel, dir).c_str());
-        return 1;
-TRY_END
-}
-
-static int global_path_stack (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_createtable(L, pwd.size(), 0);
-        for (unsigned int i=0 ; i<pwd.size() ; i++) {
-                lua_pushnumber(L, i+1);
-                lua_pushstring(L, pwd[i].c_str());
-                lua_settable(L,-3);
-        }
-        return 1;
-TRY_END
-}
-
-static int global_path_stack_push_file (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        pwd_push_file(luaL_checkstring(L,1));
-        return 0;
-TRY_END
-}
-
-static int global_path_stack_push_dir (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        pwd_push_dir(luaL_checkstring(L,1));
-        return 0;
-TRY_END
-}
-
-static int global_path_stack_pop (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_pushstring(L, pwd_pop().c_str());
-        return 1;
-TRY_END
-}
-
-static int global_path_stack_top (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        lua_pushstring(L, pwd_get().c_str());
-        return 1;
-TRY_END
-}
-
 struct LuaIncludeState {
         Ogre::DataStreamPtr ds;
         char buf[16384];
@@ -758,28 +686,27 @@ static int aux_include (lua_State *L, const std::string &filename)
 static int global_include (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        std::string filename = pwd_full(L, luaL_checkstring(L,1));
+        check_args(L, 1);
+        std::string rel = luaL_checkstring(L, 1);
+        std::string filename = absolute_path(lua_current_dir(L), rel);
 
         lua_pushcfunction(L, my_lua_error_handler);
         int error_handler = lua_gettop(L);
 
         int status = aux_include(L,filename);
         if (status) {
-                const char *str = lua_tostring(L,-1);
+                const char *str = lua_tostring(L, -1);
                 // call error function manually, lua will not do this for us in lua_load
                 my_lua_error(L,str);
         } else {
-                pwd_push_file(filename);
                 status = lua_pcall(L,0,0,error_handler);
-                pwd_pop();
                 if (status) {
                         //my_lua_error(L, "Failed to include file.");
                         lua_pop(L,1); //message
                 }
         }
 
-        lua_pop(L,1); // error handler
+        lua_pop(L, 1); // error handler
         return 0;
 TRY_END
 }
@@ -787,8 +714,9 @@ TRY_END
 static int global_safe_include (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        std::string filename = pwd_full(L, luaL_checkstring(L,1));
+        check_args(L, 1);
+        std::string rel = luaL_checkstring(L, 1);
+        std::string filename = absolute_path(lua_current_dir(L), rel);
 
         lua_pushcfunction(L, my_lua_error_handler);
         // stack: [error_handler]
@@ -808,25 +736,28 @@ TRY_START
                 // stack: [error_handler]
         } else {
                 // stack: [error_handler, function]
-                pwd_push_file(filename);
                 // stack: [error_handler, function]
                 status = lua_pcall(L,0,0,error_handler);
-                pwd_pop();
                 if (status) {
                         // stack: [error_handler, error string]
                         lua_pop(L,1); //message
                 }
         }
 
-        lua_pop(L,1); // error handler
+        lua_pop(L, 1); // error handler
         return 0;
 TRY_END
 }
 
 static int global_current_dir (lua_State *L)
 {
-    check_args(L, 0);
-    std::string dir = lua_current_dir(L);
+    int level = 1;
+    if (lua_gettop(L) == 1) {
+        level = check_t<int>(L, 1);
+    } else {
+        check_args(L, 0);
+    }
+    std::string dir = lua_current_dir(L, level);
     push_string(L, dir);
     return 1;
 }
@@ -834,9 +765,14 @@ static int global_current_dir (lua_State *L)
 static int global_r (lua_State *L)
 {
 TRY_START
-        check_args(L, 1);
+        int level = 1;
+        if (lua_gettop(L) == 2) {
+            level = check_t<int>(L, 2);
+        } else {
+            check_args(L, 1);
+        }
         std::string rel = luaL_checkstring(L, 1);
-        std::string collapsed = collapse_path(lua_current_dir(L) + rel);
+        std::string collapsed = absolute_path(lua_current_dir(L, level), rel);
         lua_pushstring(L, collapsed.c_str());
         return 1;
 TRY_END
@@ -954,13 +890,6 @@ TRY_END
 static const luaL_reg global[] = {
 
         {"r",global_r},
-        {"fqn",global_fqn},
-        {"fqn_ex",global_fqn_ex},
-        {"path_stack",global_path_stack},
-        {"path_stack_top",global_path_stack_top},
-        {"path_stack_push_file",global_path_stack_push_file},
-        {"path_stack_push_dir",global_path_stack_push_dir},
-        {"path_stack_pop",global_path_stack_pop},
         {"include",global_include},
         {"safe_include",global_safe_include},
         {"current_dir",global_current_dir},
@@ -1101,10 +1030,8 @@ lua_State *init_lua(const char *filename)
                 lua_pop(L,1); // message
                 app_fatal();
         } else {
-                pwd_push_file(filename);
                 // error handler should print stacktrace and stuff
                 status = lua_pcall(L,0,0,error_handler);
-                pwd_pop();
                 if (status) {
                         lua_pop(L,1); //message
                         app_fatal();

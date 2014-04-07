@@ -173,7 +173,7 @@ static int global_audio_source_make (lua_State *L)
 {
 TRY_START
 	check_args(L, 1);
-	push_audiosource(L, AudioSource::make(check_string(L, 1),false));
+	push_audiosource(L, AudioSource::make(check_path(L, 1),false));
 	return 1;
 TRY_END
 }
@@ -182,7 +182,7 @@ static int global_audio_source_make_ambient (lua_State *L)
 {
 TRY_START
 	check_args(L, 1);
-	push_audiosource(L, AudioSource::make(check_string(L, 1),true));
+	push_audiosource(L, AudioSource::make(check_path(L, 1),true));
 	return 1;
 TRY_END
 }
@@ -191,7 +191,7 @@ static int global_audio_play_ambient (lua_State *L)
 {
 TRY_START
 	check_args(L, 6);
-    std::string res = check_string(L,1);
+    std::string res = check_path(L,1);
     Vector3 pos = check_v3(L,2);
     float volume = check_float(L,3);
     float ref_dist = check_float(L,4);
@@ -206,7 +206,7 @@ static int global_audio_play (lua_State *L)
 {
 TRY_START
 	check_args(L, 6);
-    std::string res = check_string(L,1);
+    std::string res = check_path(L,1);
     Vector3 pos = check_v3(L,2);
     float volume = check_float(L,3);
     float ref_dist = check_float(L,4);

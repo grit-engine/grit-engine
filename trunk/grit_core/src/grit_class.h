@@ -59,7 +59,7 @@ class GritClass {
 
         /** Create a class using class_add, this function is internal. */
         GritClass (lua_State *L, const std::string &name_)
-              : name(name_), dir(grit_dirname(name_)), refCount(1)
+              : name(name_), refCount(1)
         {
                 int index = lua_gettop(L);
                 for (lua_pushnil(L) ; lua_next(L,index)!=0 ; lua_pop(L,1)) {
@@ -138,9 +138,6 @@ class GritClass {
 
         /** The name of the class, as a Grit path. */
         const std::string name;
-
-        /** The directory part of the class name. */
-        const std::string dir;
 
     protected:
 

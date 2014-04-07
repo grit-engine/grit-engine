@@ -23,6 +23,9 @@
 
 #include <map>
 
+#include <io_util.h>
+#include <lua_stack.h>
+
 #include "lua_ptr.h"
 #include "grit_lua_util.h"
 #include "path_util.h"
@@ -49,7 +52,8 @@ void func_map_leak_all (void)
 
 std::string check_path (lua_State *L, int stack_index)
 {
-    return pwd_full(L, check_string(L, stack_index));
+    std::string rel = check_string(L, stack_index);
+    return absolute_path(lua_current_dir(L), rel);
 }
 
 

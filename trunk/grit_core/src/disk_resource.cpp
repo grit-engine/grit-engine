@@ -33,6 +33,7 @@ DiskResourceMap disk_resource_map;
 
 bool disk_resource_has (const std::string &n)
 {
+    if (n[0] != '/') EXCEPT << "Path must be absolute: \"" << n << "\"" << ENDL;
     DiskResourceMap::iterator it = disk_resource_map.find(n);
     if (it == disk_resource_map.end()) return false;
     return true;

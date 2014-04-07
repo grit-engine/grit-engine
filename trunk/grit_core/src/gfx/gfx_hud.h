@@ -56,7 +56,7 @@ class GfxHudClass {
     public:
 
     GfxHudClass (lua_State *L, const std::string &name_)
-          : name(name_), dir(grit_dirname(name_))
+          : name(name_)
     {
         int index = lua_gettop(L);
         for (lua_pushnil(L) ; lua_next(L,index)!=0 ; lua_pop(L,1)) {
@@ -108,7 +108,6 @@ class GfxHudClass {
     }
 
     const std::string name;
-    const std::string dir;
 
     const ExternalTable &getTable (void) const { return table; }
     ExternalTable &getTable (void) { return table; }

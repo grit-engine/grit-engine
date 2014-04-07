@@ -452,17 +452,20 @@ grit_class.o: ../../dependencies/util/intrinsics.h
 grit_class.o: ../../dependencies/util/lua_wrappers_common.h
 grit_class.o: ../src/path_util.h
 grit_lua_util.o: ../depend_stubs/cstdlib ../depend_stubs/map
-grit_lua_util.o: ../src/lua_ptr.h ../depend_stubs/lua.h
-grit_lua_util.o: ../depend_stubs/lauxlib.h ../depend_stubs/lualib.h
+grit_lua_util.o: ../../dependencies/util/io_util.h
+grit_lua_util.o: ../depend_stubs/cstdio ../depend_stubs/cstring
+grit_lua_util.o: ../depend_stubs/string ../depend_stubs/iostream
+grit_lua_util.o: ../depend_stubs/fstream
+grit_lua_util.o: ../../dependencies/util/exception.h
+grit_lua_util.o: ../depend_stubs/sstream
+grit_lua_util.o: ../../dependencies/util/intrinsics.h
+grit_lua_util.o: ../../dependencies/util/lua_stack.h
+grit_lua_util.o: ../depend_stubs/lua.h ../depend_stubs/lauxlib.h
+grit_lua_util.o: ../depend_stubs/lualib.h ../src/lua_ptr.h
 grit_lua_util.o: ../src/centralised_log.h ../src/grit_lua_util.h
-grit_lua_util.o: ../depend_stubs/string
 grit_lua_util.o: ../depend_stubs/OgreException.h
 grit_lua_util.o: ../../dependencies/util/lua_util.h
-grit_lua_util.o: ../depend_stubs/sstream ../depend_stubs/limits
-grit_lua_util.o: ../depend_stubs/vector
-grit_lua_util.o: ../../dependencies/util/exception.h
-grit_lua_util.o: ../depend_stubs/iostream
-grit_lua_util.o: ../../dependencies/util/intrinsics.h
+grit_lua_util.o: ../depend_stubs/limits ../depend_stubs/vector
 grit_lua_util.o: ../../dependencies/util/math_util.h
 grit_lua_util.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 grit_lua_util.o: ../../dependencies/util/lua_wrappers_common.h
@@ -623,17 +626,23 @@ ldbglue.o: ../depend_stubs/lua.h
 lua_wrappers_core.o: ../depend_stubs/limits.h
 lua_wrappers_core.o: ../depend_stubs/sys/mman.h
 lua_wrappers_core.o: ../../dependencies/util/sleep.h
-lua_wrappers_core.o: ../src/grit_lua_util.h ../depend_stubs/string
-lua_wrappers_core.o: ../depend_stubs/lua.h ../depend_stubs/lauxlib.h
+lua_wrappers_core.o: ../../dependencies/util/lua_stack.h
+lua_wrappers_core.o: ../depend_stubs/string ../depend_stubs/lua.h
+lua_wrappers_core.o: ../depend_stubs/lauxlib.h
 lua_wrappers_core.o: ../depend_stubs/lualib.h
+lua_wrappers_core.o: ../../dependencies/util/lua_utf8.h
+lua_wrappers_core.o: ../../dependencies/util/io_util.h
+lua_wrappers_core.o: ../depend_stubs/cstdlib ../depend_stubs/cstdio
+lua_wrappers_core.o: ../depend_stubs/cstring ../depend_stubs/iostream
+lua_wrappers_core.o: ../depend_stubs/fstream
+lua_wrappers_core.o: ../../dependencies/util/exception.h
+lua_wrappers_core.o: ../depend_stubs/sstream
+lua_wrappers_core.o: ../../dependencies/util/intrinsics.h
+lua_wrappers_core.o: ../src/grit_lua_util.h
 lua_wrappers_core.o: ../depend_stubs/OgreException.h
 lua_wrappers_core.o: ../src/centralised_log.h
 lua_wrappers_core.o: ../../dependencies/util/lua_util.h
-lua_wrappers_core.o: ../depend_stubs/sstream ../depend_stubs/limits
-lua_wrappers_core.o: ../depend_stubs/vector
-lua_wrappers_core.o: ../../dependencies/util/exception.h
-lua_wrappers_core.o: ../depend_stubs/cstdlib ../depend_stubs/iostream
-lua_wrappers_core.o: ../../dependencies/util/intrinsics.h
+lua_wrappers_core.o: ../depend_stubs/limits ../depend_stubs/vector
 lua_wrappers_core.o: ../../dependencies/util/math_util.h
 lua_wrappers_core.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 lua_wrappers_core.o: ../../dependencies/util/lua_wrappers_common.h
@@ -656,7 +665,6 @@ lua_wrappers_core.o: ../src/physics/tcol_parser.h
 lua_wrappers_core.o: ../src/physics/tcol_lexer ../depend_stubs/istream
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/compatibility/inttypes.h
 lua_wrappers_core.o: ../src/physics/tcol_lexer-token_ids
-lua_wrappers_core.o: ../depend_stubs/cstdio
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/Token
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/definitions
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/buffer/Buffer
@@ -689,9 +697,7 @@ lua_wrappers_core.o: ../src/grit_object.h ../src/shared_ptr.h
 lua_wrappers_core.o: ../src/streamer.h ../src/grit_object.h
 lua_wrappers_core.o: ../src/external_table.h
 lua_wrappers_core.o: ../../dependencies/util/spline_table.h
-lua_wrappers_core.o: ../src/lua_ptr.h
-lua_wrappers_core.o: ../../dependencies/util/lua_utf8.h
-lua_wrappers_core.o: ../src/gfx/gfx_disk_resource.h
+lua_wrappers_core.o: ../src/lua_ptr.h ../src/gfx/gfx_disk_resource.h
 lua_wrappers_core.o: ../depend_stubs/OgreResource.h
 lua_wrappers_core.o: ../depend_stubs/OgreTexture.h
 lua_wrappers_core.o: ../depend_stubs/OgreMesh.h

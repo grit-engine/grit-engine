@@ -307,9 +307,7 @@ void GfxHudObject::triggerInit (lua_State *L)
     STACK_CHECK_N(3);
 
     // call (1 arg), pops function too
-    pwd_push_dir(hudClass->dir);
     int status = lua_pcall(L,1,0,error_handler);
-    pwd_pop();
     if (status) {
         STACK_CHECK_N(2);
         //stack: err,error
@@ -372,9 +370,7 @@ void GfxHudObject::triggerParentResized (lua_State *L)
     STACK_CHECK_N(4);
 
     // call (1 arg), pops function too
-    pwd_push_dir(hudClass->dir);
     int status = lua_pcall(L,2,0,error_handler);
-    pwd_pop();
     if (status) {
         STACK_CHECK_N(2);
         //stack: err,error
@@ -496,9 +492,7 @@ void GfxHudObject::triggerMouseMove (lua_State *L, const Vector2 &screen_pos)
         STACK_CHECK_N(6);
 
         // call (1 arg), pops function too
-        pwd_push_dir(hudClass->dir);
         int status = lua_pcall(L,4,0,error_handler);
-        pwd_pop();
         if (status) {
             STACK_CHECK_N(2);
             //stack: err,error
@@ -576,9 +570,7 @@ void GfxHudObject::triggerButton (lua_State *L, const std::string &name)
         STACK_CHECK_N(4);
 
         // call (2 args), pops function too
-        pwd_push_dir(hudClass->dir);
         int status = lua_pcall(L,2,0,error_handler);
-        pwd_pop();
         if (status) {
             STACK_CHECK_N(2);
             //stack: err,error
@@ -656,9 +648,7 @@ void GfxHudObject::triggerFrame (lua_State *L, float elapsed)
         STACK_CHECK_N(4);
 
         // call (1 arg), pops function too
-        pwd_push_dir(hudClass->dir);
         int status = lua_pcall(L,2,0,error_handler);
-        pwd_pop();
         if (status) {
             STACK_CHECK_N(2);
             //stack: err,error
@@ -738,9 +728,7 @@ void GfxHudObject::triggerDestroy (lua_State *L)
     STACK_CHECK_N(3);
 
     // call (1 arg), pops function too
-    pwd_push_dir(hudClass->dir);
     int status = lua_pcall(L,1,0,error_handler);
-    pwd_pop();
     if (status) {
         STACK_CHECK_N(2);
         //stack: err,error

@@ -112,6 +112,61 @@
 
         </section>
 
+        <section title="Tail Call Optimisations" id="lua_tco">
+
+            If the last statement of a Lua function is a call to another
+            function, the standard Lua compiler will perform an optimization
+            that results in a small performance improvement and allows
+            unbounded recursion in those cases (essentially allowing more programs to be
+            written).  Here is an example of such a program:
+            
+            <lua>
+                function sum_1_to_n(x, sum)
+                    if x == 0 then return sum end
+                    sum = sum or 0
+                    return sum_1_to_n(x-1, sum+x)
+                end
+            </lua>
+
+            Unfortuantely this optimisation removes lines from the stack trace
+            and this can be highly confusing when debugging programs.  We
+            consider the performance improvement to be a poor tradeoff for the
+            productivity loss caused its effect on stack traces.  So this
+            optimization is disabled in Grit Lua.
+
+            This means programs like the above must be rewritten as follows:
+
+            <lua>
+                function sum_1_to_n(x)
+                    local counter
+                    for i=1, x do
+                        counter = counter + i
+                    end
+                    return counter
+                end
+            </lua>
+
+            For an example of where lost debugging information causes a
+            problem, see the following code, where the stack trace does not
+            mention the critical filename or line number where the function was
+            wrongly called:
+
+            <lua>
+                function do_something_tricky(x, y)
+                    if x ~= y % 3 then
+                        error("You fool, you called do_something_tricky wrongly.", 1)
+                    end
+                end
+
+                function i_am_buried_somewhere_in_a_million_lines_of_code ()
+                    x = 42
+                    y = 666
+                    return do_something_tricky(x, y) -- problem is here
+                end
+            </lua>
+
+        </section>
+
     </section>
 
     <section title="Mathematics" id="maths">

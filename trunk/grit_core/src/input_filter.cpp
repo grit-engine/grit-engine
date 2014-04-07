@@ -148,7 +148,7 @@ bool InputFilter::acceptButton (lua_State *L, const std::string &ev)
         const LuaPtr &func = cb.down;
 
         if (!func.isNil()) {
-            triggerFunc(L, bind, func, cb.path);
+            triggerFunc(L, bind, func);
         }
 
     } else if (kind == '-' || kind == '=') {
@@ -171,7 +171,7 @@ bool InputFilter::acceptButton (lua_State *L, const std::string &ev)
 
         const LuaPtr &func = kind == '-' ? cb.up : cb.repeat;
         if (!func.isNil()) {
-            triggerFunc(L, bind, func, cb.path);
+            triggerFunc(L, bind, func);
         }
 
     }
@@ -179,7 +179,7 @@ bool InputFilter::acceptButton (lua_State *L, const std::string &ev)
     return true;
 }
 
-void InputFilter::triggerFunc (lua_State *L, const std::string &bind, const LuaPtr &func, const std::string &path)
+void InputFilter::triggerFunc (lua_State *L, const std::string &bind, const LuaPtr &func)
 {
     ensureAlive();
 
@@ -202,9 +202,7 @@ void InputFilter::triggerFunc (lua_State *L, const std::string &bind, const LuaP
     STACK_CHECK_N(2);
 
     // call (1 arg), pops function too
-    pwd_push_dir(path);
     int status = lua_pcall(L,0,0,error_handler);
-    pwd_pop();
     if (status) {
         STACK_CHECK_N(2);
         //stack: err,error
@@ -262,9 +260,7 @@ void InputFilter::triggerMouseMove (lua_State *L, const Vector2 &rel)
     STACK_CHECK_N(3);
 
     // call (1 arg), pops function too
-    pwd_push_dir(mouseMoveCallbackPath);
     int status = lua_pcall(L,1,0,error_handler);
-    pwd_pop();
     if (status) {
         STACK_CHECK_N(2);
         //stack: err,error
@@ -476,7 +472,6 @@ void InputFilter::bind (lua_State *L, const std::string &button)
     c.down.setNil(L);
     c.up.setNil(L);
     c.repeat.setNil(L);
-    c.path = pwd_get();
     APP_ASSERT(lua_gettop(L) >= 3);
     // DOWN
     if (!lua_isnil(L, -3)) {
@@ -526,9 +521,7 @@ void InputFilter::unbind (lua_State *L, const std::string &button)
 void InputFilter::setMouseMoveCallback (lua_State *L)
 {
     ensureAlive();
-
     mouseMoveCallback.setNoPop(L);
-    mouseMoveCallbackPath = pwd_get();
 }
 
 void InputFilter::setEnabled (lua_State *L, bool v)
