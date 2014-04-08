@@ -1131,14 +1131,22 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
 
     Vector2 pos = text->getDerivedPosition();
     if (text->snapPixels) {
-        pos.x = ::floorf(pos.x+0.5);
-        pos.y = ::floorf(pos.y+0.5);
+        if (int(text->getDerivedBounds().x + 0.5) % 2 == 1)
+            pos.x += 0.5f;
+        if (int(text->getDerivedBounds().y + 0.5) % 2 == 1)
+            pos.y += 0.5f;
+        pos.x = ::floorf(pos.x);
+        pos.y = ::floorf(pos.y);
+        if (int(text->getDerivedBounds().x + 0.5) % 2 == 1)
+            pos.x -= 0.5f;
+        if (int(text->getDerivedBounds().y + 0.5) % 2 == 1)
+            pos.y -= 0.5f;
     }
     pos += offset;
 
     Ogre::Matrix4 matrix_centre = Ogre::Matrix4::IDENTITY;
     // move origin to center (for rotation)
-    matrix_centre.setTrans(Ogre::Vector3(-floorf(text->getSize().x/2), floorf(text->getSize().y/2), 0));
+    matrix_centre.setTrans(Ogre::Vector3(-text->getSize().x/2, text->getSize().y/2, 0));
 
     const Degree &orientation = text->getDerivedOrientation();
     Ogre::Matrix4 matrix_spin(Ogre::Quaternion(to_ogre(orientation), Ogre::Vector3(0,0,-1)));
@@ -1226,11 +1234,15 @@ void gfx_render_hud_one (GfxHudBase *base)
 
         Vector2 pos = obj->getDerivedPosition();
         if (obj->snapPixels) {
-            pos.x = ::floorf(pos.x+0.5f);
-            pos.y = ::floorf(pos.y+0.5f);
-            if (int(obj->getSize().x) % 2 == 1)
+            if (int(obj->getDerivedBounds().x + 0.5) % 2 == 1)
+                pos.x += 0.5f;
+            if (int(obj->getDerivedBounds().y + 0.5) % 2 == 1)
+                pos.y += 0.5f;
+            pos.x = ::floorf(pos.x);
+            pos.y = ::floorf(pos.y);
+            if (int(obj->getDerivedBounds().x + 0.5) % 2 == 1)
                 pos.x -= 0.5f;
-            if (int(obj->getSize().y) % 2 == 1)
+            if (int(obj->getDerivedBounds().y + 0.5) % 2 == 1)
                 pos.y -= 0.5f;
         }
 
