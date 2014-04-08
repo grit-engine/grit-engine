@@ -26,7 +26,7 @@
 
         This section details the Lua modifications.  You can skim it if you are
         not already very familiar with Lua, and if you're not intending to port
-        Lua code from external sources to run in Gri_t.
+        Lua code from external sources to run in Grit.
 
         <section title="Unicode" id="lua_unicode">
 
