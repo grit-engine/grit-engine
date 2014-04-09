@@ -17,6 +17,7 @@ def MyXInclude(tree):
             print 'Parsing ' + src
             include_tree = ET.parse(src)
             include_tree.getroot().set('{http://www.w3.org/XML/1998/namespace}base', src)
+            MyXInclude(include_tree.getroot())
             tree.replace(n, include_tree.getroot())
         else:
             MyXInclude(n)
