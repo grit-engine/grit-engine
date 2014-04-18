@@ -21,118 +21,325 @@
         Instantiate it as follows:
 
         <lua>
-            obj = gfx_hud_obj_make("Rect")
-            obj.position = vec(100,100)
-            obj.texture = "Icon.png"
-            obj.size = vec(50,50)
-            obj.orientation = 44
-            -- Can also initialise members with a table param:
-            obj = gfx_hud_obj_make("Rect", {position = vec(50,50), ...})
-        </lua>
-
-        The HUD object has a number of attributes that define how it is
-        rendered.  Some examples of these are above, and they are
-        comprehensively documented <todo>here</todo>.  If not given, they
-        fall back to defaults first in the HUD class and then system
-        defaults.
-
-        To begin, we define a <def>HUD class</def>, which has fields and
-        methods much like a game class.  The HUD class can be instantiated into
-        as many <def>HUD objects</def> as we want.  Without any Lua scripting,
-        a HUD object is simply a rectangle drawn on the screen:
-        
-        <lua>
-            hud_class "Icon" {
-                texture = "Icon.png";
-                colour = vec(0, 1, 1); -- cyan
-            }
-            obj = gfx_hud_obj_make("Icon", { alpha = 0.5, zOrder = 2 })
-            obj.position = vec(100,100)
-            obj.size = vec(50,50)
-            obj.orientation = 44
+            obj = gfx_hud_obj_make(`/common/hud/Rect`)
+            obj.position = vec(100, 100) -- centre of object, from screen bottom left
+            obj.texture = `Icon.png`
+            obj.size = vec(50, 50)
+            obj.colour = vec(0, 1, 1) -- cyan (masks texture)
+            obj.zOrder = 2 -- 
+            obj.alpha = 0.5
+            obj.orientation = 44 -- degrees (clockwise)
             ...
             obj:destroy()
+            -- Can also initialise members with a table param:
+            obj = gfx_hud_obj_make(`Rect`, {size = vec(50, 50), ...})
         </lua>
 
-        The HUD object has a number of attributes that define how it is
+        The HUD object has a number of fields that define how it is
         rendered.  Some examples of these are above, and they are
-        comprehensively documented <todo>here</todo>.  They can be assigned at
-        any time, or provided in the class as defaults, or given in the second
-        parameter table of gfx_hud_obj_make.  This latter case is simply a
-        convenient shorthand for assigning them individually, immediately after
-        construction.
+        comprehensively documented <todo>here</todo>.  If not given, they fall
+        back to defaults first in the HUD class and then the system defaults.
 
-        In this case, the 50% alpha-blended, cyan-masked texture will be
-        centered at vec(100,100) from the bottom left of the screen and will be
-        50 pixels tall and wide.  The orientation attribute rotates the HUD
-        object 44 degrees clockwise about its centre.  The zOrder field is an
-        integer between 0 and 7 inclusive.  This controls the draw order, with
-        7 being on top at 0 being at the bottom.
+        The size defaults to the size of the texture, if one is given.  The
+        zOrder field is an integer between 0 and 7, which defaults to 3.
+        Higher values are drawn on top of lower values.  The HUD object is
+        garbage collected when it is abandoned, and can be destroyed earlier
+        with :destroy().
 
-        The object is automatically garbage collected when it is no-longer
-        reachable, but can be destroyed earlier using the destroy method.
+        Rect can be useful for simple things but usually we will define our own
+        <def>HUD class</def>, which has fields and methods much like a game
+        class.  The HUD class can be instantiated into as many <def>HUD
+        objects</def> as we want.  The following HUD class implements a
+        spinning icon;
+
+        <lua>
+            hud_class `SpinningIcon` {
+                texture = `Icon.png`;
+                speed = 20;
+                init = function (self)
+                    self.needsFrameCallbacks = true
+                    self.angle = 0
+                end;
+                destroy = function (self)
+                    -- nothing to do
+                end;
+                frameCallback = function(self, elapsed)
+                    self.angle = (self.angle + elapsed*self.speed) % 360
+                    self.orientation = self.angle
+                end;
+            }
+        </lua>
+
+        The 3 defined methods are all callbacks, and there are other possible
+        callbacks as well.  You can also define your own methods with your own
+        names, to help structure your code or to provide a public API to the
+        object.  The init callback sets the angle field of the object and
+        requests frame callbacks.  If you enable a callback, you had better
+        have a method of the right name to receive it.  If a callback raises an
+        error, the system will usually disable the callback by setting the
+        needsX field to false again.
+
+        Note how giving the speed in the class allows it, optionally, to be
+        overidden on a per-object basis.  The following code shows how we can
+        override the speed when we instanitate the object:
+
+        <lua>
+            obj = gfx_hud_obj_make(`SpinningIcon`, { position = vec(50, 100) })
+            faster_obj = gfx_hud_obj_make(`SpinningIcon`, { speed = 30, position = vec(100, 100) })
+        </lua>
 
     </section>
 
     <section title="Text" id="gfx_hud_text">
 
-        The text widget allows 
+        HUD text objects allow the rendering of text according to a particular
+        <todo>font</todo>.  It supports top/bottom colour, ANSI terminal colour
+        codes, hard tabs, new lines, wrapping according to a pixel width, and
+        scrolling.
+
+        The text objects behave like HUD objects, but they are not extensible.
+        They do not have customisable fields and methods, and they cannot
+        receive callbacks.  They do, however, have all the basic fields of
+        HUD objects.
+
+        <lua>
+            t = gfx_hud_text_add(`/common/fonts/misc.fixed`)
+            t.text = "Hello World!"
+            t.position = vec(30,30)
+            t.orientation = 90
+            t.zOrder = 7
+            ...
+            t:destroy()
+        </lua>
+
+        The size field of text is immutable.  Upon setting the text, it gives
+        you the number of pixels occupied by this particular text in this font.
+        The code takes account of tabs, new lines, and ansi terminal colour
+        codes.  
+
+        <section title="Text Colour" id="gfx_hud_text_colour">
+
+            Colour and alpha are supported via two mechanisms.  Firstly, and most
+            simply, one can set the colour/alpha fields, which act as a general
+            mask on the colour/alpha present in the texture.  This is the same as
+            regular HUD objects.
+            
+            To apply colour and alpha to individual letters and words, and to use
+            top/bottom colouring (gradients) there is a different mechanism.
+            Instead of setting the text field, one uses several calls to append(),
+            between which the letter colour/alpha can be changed.  The clear() call
+            will reset the state.  Setting the text field is equivalent to calling
+            clear(), setting the colours to white and the alphas to 1, and then
+            calling append().
+
+            <lua>
+                t:clear()
+                t.letterTopColour = vec(1, 1, 0) -- yellow
+                t.letterBottomColour = vec(1, 0, 0) -- red
+                t.letterTopAlpha = 0.7
+                t:append("Some firey text")
+                t.letterTopAlpha = 1
+                t.letterTopColour = vec(.5, .5, 1)
+                t.letterBottomColour = vec(.5, .5, 1)
+                t.append(" and some white text.")
+            </lua>
+
+        </section>
+
+        <section title="Text Drop Shadows" id="gfx_hud_text_shad">
+
+            To allow clearer reading of the text on arbitrary backgrounds, it is
+            possible to enable a drop shadow.  This works by rendering the text
+            first coloured black, at an offset, and then rendering the actual text
+            in a second draw on top of it.  In the second case below, the texel
+            lookup are offset by 0.5 texels, which causes bilinear filtering.  This
+            has the same effect as blurring the text with a 2x2 box filter.  Note
+            thatA there must be an additional pixel of space around each letter in
+            the font texture for this to work.
+
+            <lua>
+                t.shadow = vec(1, -1) -- bottom right by 1 pixel
+                t.shadow = vec(1.5, -1.5) -- pixel blurring
+            </lua>
+
+        </section>
+
+        <section title="Wrapping Paragraphs" id="gfx_hud_text_wrap">
+
+            By default, the text object will only break the text at any
+            new-line characters (\n) given in the input text.  This means the
+            width of the text object will be the length of its longest line.
+            To automatically wrap the text at a given width in pixels, set the
+            textWrap field, which defaults to nil.
+
+            <lua>
+                t.textWrap = vec(500, 400)
+            </lua>
+
+            This defines a rectangle.  Firstly, text is broken to avoid it
+            rendering wider than the given number of pixels (500 in this case).
+            Secondly, no more lines are drawn than would fit into the given
+            height (400 pixels in this case).  The size field will always
+            return the textWrap dimensions when it is non-nil, regardless of
+            how much text is in the text object.  Lines are broken at word
+            boundaries unless a word is too long for the line.
+
+            It is also possible to scroll the text, i.e. to clip lines at the
+            top of the text, as well as, or instead of, the bottom of the text.
+            This is done by setting the scroll field, which defaults to 0.
+
+            <lua> t.scroll = 200 </lua>
+            
+            This starts rendering at 200 pixels below the top of the given
+            text, i.e. represents a scrolling down of 200 pixels.
+
+        </section>
 
     </section>
     
     <section title="The Hierarchy" id="gfx_hud_tree">
     
-    Let us now define something more interesting.  This class has a frame
-    callback and a child object -- a text body.
+        Like the 3D scene, the HUD objects exist in a hierarchy, i.e. one can
+        be the child of another.  This is achieved by setting the parent field:
 
-    <lua>
-        hud_class "SpinningIcon" {
-            texture = "Icon.png";
-            myField = true; -- user variables are allowed
-            init = function (self)
-                self.needsFrameCallbacks = true
-                self.myField = false
-                -- create a child
-                self.child = gfx_hud_text_add("/common/fonts/Verdana12")
-                self.child.parent = self
-                self.child.text = "Grit!"
-            end;
-            destroy = function (self)
-                -- nothing to do
-            end;
-            frameCallback = function(self, elapsed)
-                self.orientation = (self.orientation + 10*elapsed) % 360
-            end;
-        }
-    </lua>
+        <lua>
+            p = gfx_hud_obj_make(`/common/hud/Rect`, {colour=vec(1,0,0), position=vec(100,100), size=vec(40,40)})
+            c = gfx_hud_obj_make(`/common/hud/Rect`, {alpha=0.5, position=vec(10,10), size=vec(7,7)})
+            c.parent = p
+        </lua>
 
-    This simple example will draw a cyan-tinted rectangle in the bottomn
-    left of the screen, that will rotate clockwise about its centre at 10
-    degrees per second.  All of the fields that define the HUD object's
-    appearance can be given in the class, in the table given in the second
-    parameter of gfx_hud_obj_make (which overrides the class values), or at
-    any time after construction using regular field assignment.
+        The object p has a child object c.  This relationship was established
+        by setting its parent field, which can be changed at any time or
+        provided in the constructor's 2nd argument.  HUD objects can be
+        children or parents, but HUD texts can only be children.  A tree is
+        thus formed, with HUD objects at the nodes, and either HUD objects or
+        HUD text at the leaves.
 
-    The object that we just created has a child object.  This relationship
-    was established by setting its parent field.  HUD text is truly a
-    primitive entity - it cannot have user-defined fields, have callbacks,
-    or be a parent.  A tree is thus formed, with HUD objects at the nodes,
-    and either HUD objects or HUD text at the leaves.  We will discuss text
-    in greater deal, shortly.
-    
-    As the icon rotates, the text rotates with it.  Orientation and
-    position are applied to children, although inheritOrientation can be
-    set to false to suppress the inheriting of orientation.  This can be
-    useful e.g. to avoid icons rotating within a spinning minimap / radar
-    display.
-    
-    In this case, a frame callback is used to adjust the orientation.  The
-    callback is only called if needsFrameCallbacks is set to true.
+        The position of the child is relatve to its parent.  It thus displays
+        on top of the parent, in its upper right corner.  The child is always
+        drawn on top of the parent, so setting zOrder is only necessary to
+        disambiguate the draw order of siblings.  Disabling a parent causes all
+        children to effectively be disabled as well.
 
+        Typically, this hierarchy is used to implement more high-level GUI
+        elements in terms of low-level ones.  For example, a GUI dialog might
+        consist of buttons and text entry widgets.  Disabling the dialog would
+        hide everything, and the dialog can be moved / rotated as a single
+        atomic unit.
+        
+        As the parent's position (or orientation) is updated, the child's
+        derived position and orientation are recalculated.  It is also possible
+        to set inheritOrientation to false, which is useful to avoid icons
+        rotating within a spinning minimap, or to keep text looking crisp and
+        clear.
 
+        Note that the child will be garbage collected if there is no link to
+        it, so it is standard to store a link from the parent to the child in
+        order to keep it alive.  The link from child to parent is a
+        <def>weak</def> link, in that it does not in itself prevent the parent
+        from being garbage collected.  Typically, however, one does not link to
+        children without also linking to the parent.
+
+        When a HUD object is destroyed, its children are automatically
+        destroyed with it.  If you don't want this behaviour, you can unlink
+        the children in the destroy callback by setting their parent to nil.
+
+    </section>
+
+    <section title="Corner Mapped Textures" id="gfx_hud_corner">
+
+        By default, when a texture is set on a HUD object, it is filtered
+        (stretched or shrunk) to fit the rectangular size of the object.  This
+        can be useful when the size of the object can vary at run time, or if a
+        single texture is to be used for a variety of differently sized HUD
+        objects.  However, the filtering artefacts can look ugly for a lot of
+        textures, especially when the texture is magnified a lot.
+        
+        For certain kinds of textures, there is a technique that avoids the
+        artefacts while allowing arbitrary scaling of the HUD object.  This
+        involves mapping the four quarters of the texture 1:1 into the corners
+        of the HUD object and stretching a single row and column of texels
+        across the middle of the HUD object.
+
+        This works well in a variety of situations where the centre of the HUD
+        object is a solid colour, but detail is desired around the edge and at
+        the corners.  For example, simple rounded corner rectangles, borders,
+        bevels, etc.  Some example textures are provided in
+        /common/hud/CornerTextures.
+
+        <lua>
+            o = gfx_hud_obj_make(`/common/hud/Rect`, texture=`MyTexture.png`})
+            o.size = vec(100,100) -- larger than the texture
+            o.cornered = true -- enable corner mapping
+        </lua>
+
+    </section>
+
+    <section title="Handling Keyboard/Mouse Input" id="gfx_hud_input">
+
+        So much to write here...
 
     </section>
     
+    <section title="Existing HUD Classes" id="gfx_hud_existing">
 
-    
+        In /common/hud there are a few existing classes you can use to build
+        GUIs quickly.  We have already seen an example of this with
+        /common/hud/Rect, but there are more sophisticated classes as well.  In
+        all cases, the code for these classes is available to be read.  This is
+        useful to find out how to instantiate them, and also to see examples of
+        HUD code in use.
+
+        <section title="Button" id="gfx_hud_existing_button">
+
+            The class /common/hud/Button can be used to create a clickable
+            button with text on it.  The button changes colour on mouse hover
+            and click, and can also be greyed out.  It can be instantiated as
+            follows.  Note the pressedCallback, which the code in this class
+            executes when it receives a button press.
+
+            <lua>
+                b = gfx_hud_obj_make(`/common/hud/Button`, {
+                    caption = "Click Me!";
+                    pressedCallback = function (self)
+                        print("You clicked me!")
+                    end;
+                }
+                -- By defualt, size is chosen based on the caption size.
+                b.parent = my_dialog
+                b.position = vec(40, 0) -- position within the parent
+                b:setGreyed(true) -- turn the button off, default false
+                b.enabled = false -- hide the button, default true
+            </lua>
+
+            It is also possible to customize some of the attibutes of the
+            button.  The following rather garish button demonstrates this.
+
+            <lua>
+                b = gfx_hud_obj_make(`/common/hud/Button`, {
+                    size = vec(100,40);
+                    font = `/common/fonts/Impact13`
+                    caption = "Click Me!";
+                    baseColour = vec(0, 0, 0) -- black
+                    hoverColour = vec(1, 0, 0) -- red
+                    clickColour = vec(1, 1, 0) -- yellow
+                    borderColour = vec(1, 1, 1) -- white
+                    captionColour = vec(1, 1, 1)
+                    captionColourGreyed = vec(0.5, 0.5, 0.5) -- grey
+                }
+            </lua>
+
+
+        </section>
+
+
+        <section title="Layout" id="gfx_hud_existing_layout">
+
+            vgroup/hgroup
+
+        </section>
+
+
+    </section>
+
 </section>
