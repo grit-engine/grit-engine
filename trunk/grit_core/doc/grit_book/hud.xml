@@ -21,9 +21,9 @@
         Instantiate it as follows:
 
         <lua>
-            obj = gfx_hud_obj_make(`/common/hud/Rect`)
+            obj = gfx_hud_object_add(`/common/hud/Rect`)
             obj.position = vec(100, 100) -- centre of object, from screen bottom left
-            obj.texture = `Icon.png`
+            obj.texture = `/common/hud/textures/Icon064.png`
             obj.size = vec(50, 50)
             obj.colour = vec(0, 1, 1) -- cyan (masks texture)
             obj.zOrder = 2 -- 
@@ -32,7 +32,7 @@
             ...
             obj:destroy()
             -- Can also initialise members with a table param:
-            obj = gfx_hud_obj_make(`Rect`, {size = vec(50, 50), ...})
+            obj = gfx_hud_object_add(`Rect`, {size = vec(50, 50), ...})
         </lua>
 
         The HUD object has a number of fields that define how it is
@@ -84,8 +84,8 @@
         override the speed when we instanitate the object:
 
         <lua>
-            obj = gfx_hud_obj_make(`SpinningIcon`, { position = vec(50, 100) })
-            faster_obj = gfx_hud_obj_make(`SpinningIcon`, { speed = 30, position = vec(100, 100) })
+            obj = gfx_hud_object_add(`SpinningIcon`, { position = vec(50, 100) })
+            faster_obj = gfx_hud_object_add(`SpinningIcon`, { speed = 30, position = vec(100, 100) })
         </lua>
 
     </section>
@@ -203,8 +203,8 @@
         be the child of another.  This is achieved by setting the parent field:
 
         <lua>
-            p = gfx_hud_obj_make(`/common/hud/Rect`, {colour=vec(1,0,0), position=vec(100,100), size=vec(40,40)})
-            c = gfx_hud_obj_make(`/common/hud/Rect`, {alpha=0.5, position=vec(10,10), size=vec(7,7)})
+            p = gfx_hud_object_add(`/common/hud/Rect`, {colour=vec(1,0,0), position=vec(100,100), size=vec(40,40)})
+            c = gfx_hud_object_add(`/common/hud/Rect`, {alpha=0.5, position=vec(10,10), size=vec(7,7)})
             c.parent = p
         </lua>
 
@@ -268,7 +268,7 @@
         /common/hud/CornerTextures.
 
         <lua>
-            o = gfx_hud_obj_make(`/common/hud/Rect`, texture=`MyTexture.png`})
+            o = gfx_hud_object_add(`/common/hud/Rect`, texture=`MyTexture.png`})
             o.size = vec(100,100) -- larger than the texture
             o.cornered = true -- enable corner mapping
         </lua>
@@ -299,7 +299,7 @@
             executes when it receives a button press.
 
             <lua>
-                b = gfx_hud_obj_make(`/common/hud/Button`, {
+                b = gfx_hud_object_add(`/common/hud/Button`, {
                     caption = "Click Me!";
                     pressedCallback = function (self)
                         print("You clicked me!")
@@ -316,7 +316,7 @@
             button.  The following rather garish button demonstrates this.
 
             <lua>
-                b = gfx_hud_obj_make(`/common/hud/Button`, {
+                b = gfx_hud_object_add(`/common/hud/Button`, {
                     size = vec(100,40);
                     font = `/common/fonts/Impact13`
                     caption = "Click Me!";
