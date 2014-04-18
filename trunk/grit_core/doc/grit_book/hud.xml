@@ -20,6 +20,10 @@
         common/hud directory, but you can also define your own.
         Instantiate it as follows:
 
+        <image src="hud_example1.png" title="Example1">
+            Use of /common/hud/Rect as shown in the Lua snippet.
+        </image>
+
         <lua>
             obj = gfx_hud_object_add(`/common/hud/Rect`)
             obj.position = vec(100, 100) -- centre of object, from screen bottom left
@@ -54,7 +58,7 @@
 
         <lua>
             hud_class `SpinningIcon` {
-                texture = `Icon.png`;
+                texture = `/common/hud/textures/Icon064.png`;
                 speed = 20;
                 init = function (self)
                     self.needsFrameCallbacks = true
@@ -70,6 +74,10 @@
             }
         </lua>
 
+        <image src="hud_example2.png" title="Spinning Icon">
+            The icon on the right (faster_obj) spins faster than the one on the left (obj).
+        </image>
+
         The 3 defined methods are all callbacks, and there are other possible
         callbacks as well.  You can also define your own methods with your own
         names, to help structure your code or to provide a public API to the
@@ -84,8 +92,8 @@
         override the speed when we instanitate the object:
 
         <lua>
-            obj = gfx_hud_object_add(`SpinningIcon`, { position = vec(50, 100) })
-            faster_obj = gfx_hud_object_add(`SpinningIcon`, { speed = 30, position = vec(100, 100) })
+            obj = gfx_hud_object_add(`SpinningIcon`, { position=vec(200, 100) })
+            faster_obj = gfx_hud_object_add(`SpinningIcon`, {p osition=vec(300, 100), speed=30 })
         </lua>
 
     </section>
@@ -97,6 +105,10 @@
         codes, hard tabs, new lines, wrapping according to a pixel width, and
         scrolling.
 
+        <image src="hud_example3.png" title="Basic Text Rendering">
+            A HUD text object using the simple misc.fixed font.
+        </image>
+
         The text objects behave like HUD objects, but they are not extensible.
         They do not have customisable fields and methods, and they cannot
         receive callbacks.  They do, however, have all the basic fields of
@@ -105,7 +117,7 @@
         <lua>
             t = gfx_hud_text_add(`/common/fonts/misc.fixed`)
             t.text = "Hello World!"
-            t.position = vec(30,30)
+            t.position = vec(300, 300)
             t.orientation = 90
             t.zOrder = 7
             ...
@@ -124,6 +136,10 @@
             mask on the colour/alpha present in the texture.  This is the same as
             regular HUD objects.
             
+            <image src="hud_example4.png" title="Per-Letter Colouring">
+                Text with per-letter colouring.
+            </image>
+
             To apply colour and alpha to individual letters and words, and to use
             top/bottom colouring (gradients) there is a different mechanism.
             Instead of setting the text field, one uses several calls to append(),
@@ -137,16 +153,20 @@
                 t.letterTopColour = vec(1, 1, 0) -- yellow
                 t.letterBottomColour = vec(1, 0, 0) -- red
                 t.letterTopAlpha = 0.7
-                t:append("Some firey text")
+                t:append("Some firey text\n")
                 t.letterTopAlpha = 1
                 t.letterTopColour = vec(.5, .5, 1)
                 t.letterBottomColour = vec(.5, .5, 1)
-                t.append(" and some white text.")
+                t:append("and some pale blue text.")
             </lua>
 
         </section>
 
         <section title="Text Drop Shadows" id="gfx_hud_text_shad">
+
+            <image src="hud_example5.png" title="Drop Shadows">
+                An example of drop shadows.
+            </image>
 
             To allow clearer reading of the text on arbitrary backgrounds, it is
             possible to enable a drop shadow.  This works by rendering the text
