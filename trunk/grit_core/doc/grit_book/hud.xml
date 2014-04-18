@@ -20,7 +20,7 @@
         common/hud directory, but you can also define your own.
         Instantiate it as follows:
 
-        <image src="hud_example1.png" title="Example1">
+        <image src="hud_example1.png" title="Basic HUD object example">
             Use of /common/hud/Rect as shown in the Lua snippet.
         </image>
 
@@ -165,7 +165,7 @@
         <section title="Text Drop Shadows" id="gfx_hud_text_shad">
 
             <image src="hud_example5.png" title="Drop Shadows">
-                An example of drop shadows.
+                A drop shadow of 1 pixel towards the bottom right of the screen.
             </image>
 
             To allow clearer reading of the text on arbitrary backgrounds, it is
@@ -223,7 +223,7 @@
         be the child of another.  This is achieved by setting the parent field:
 
         <image src="hud_example6.png" title="The Hierarchy">
-            An example showing how the child is drawn relative to the parent.
+            The child is drawn relative to the parent.
         </image>
 
         <lua>
@@ -288,6 +288,11 @@
         objects.  However, the filtering artefacts can look ugly for a lot of
         textures, especially when the texture is magnified a lot.
         
+        <image src="hud_example7.png" title="Corner Mapped Texture">
+            The texture itself is shown to the right.  To the left is shown the
+            HUD object mapping this texture with corner mapping.
+        </image>
+
         For certain kinds of textures, there is a technique that avoids the
         artefacts while allowing arbitrary scaling of the HUD object.  This
         involves mapping the four quarters of the texture 1:1 into the corners
@@ -298,7 +303,8 @@
         object is a solid colour, but detail is desired around the edge and at
         the corners.  For example, simple rounded corner rectangles, borders,
         bevels, etc.  Some example textures are provided in
-        /common/hud/CornerTextures.
+        /common/hud/CornerTextures.  See the <todo>button</todo> class below
+        for a concrete example.
 
         <lua>
             o = gfx_hud_object_add(`/common/hud/Rect`, texture=`MyTexture.png`})
