@@ -307,7 +307,7 @@
         for a concrete example.
 
         <lua>
-            o = gfx_hud_object_add(`/common/hud/Rect`, texture=`MyTexture.png`})
+            o = gfx_hud_object_add(`/common/hud/Rect`, {texture=`MyTexture.png`})
             o.size = vec(100,100) -- larger than the texture
             o.cornered = true -- enable corner mapping
         </lua>
@@ -337,13 +337,17 @@
             follows.  Note the pressedCallback, which the code in this class
             executes when it receives a button press.
 
+            <image src="hud_example8.png" title="Button">
+                The button created by the Lua snippet left.
+            </image>
+
             <lua>
                 b = gfx_hud_object_add(`/common/hud/Button`, {
                     caption = "Click Me!";
                     pressedCallback = function (self)
                         print("You clicked me!")
                     end;
-                }
+                })
                 -- By defualt, size is chosen based on the caption size.
                 b.parent = my_dialog
                 b.position = vec(40, 0) -- position within the parent
@@ -354,18 +358,22 @@
             It is also possible to customize some of the attibutes of the
             button.  The following rather garish button demonstrates this.
 
+            <image src="hud_example9.png" title="Garish Button">
+                The colours become more interesting upon mouse interaction.
+            </image>
+
             <lua>
                 b = gfx_hud_object_add(`/common/hud/Button`, {
                     size = vec(100,40);
-                    font = `/common/fonts/Impact13`
+                    font = `/common/fonts/Impact24`;
                     caption = "Click Me!";
-                    baseColour = vec(0, 0, 0) -- black
-                    hoverColour = vec(1, 0, 0) -- red
-                    clickColour = vec(1, 1, 0) -- yellow
-                    borderColour = vec(1, 1, 1) -- white
-                    captionColour = vec(1, 1, 1)
-                    captionColourGreyed = vec(0.5, 0.5, 0.5) -- grey
-                }
+                    baseColour = vec(0, 0, 0); -- black
+                    hoverColour = vec(1, 0, 0); -- red
+                    clickColour = vec(1, 1, 0); -- yellow
+                    borderColour = vec(1, 1, 1); -- white
+                    captionColour = vec(1, 1, 1);
+                    captionColourGreyed = vec(0.5, 0.5, 0.5); -- grey
+                })
             </lua>
 
 
