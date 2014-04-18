@@ -222,10 +222,23 @@
         Like the 3D scene, the HUD objects exist in a hierarchy, i.e. one can
         be the child of another.  This is achieved by setting the parent field:
 
+        <image src="hud_example6.png" title="The Hierarchy">
+            An example showing how the child is drawn relative to the parent.
+        </image>
+
         <lua>
-            p = gfx_hud_object_add(`/common/hud/Rect`, {colour=vec(1,0,0), position=vec(100,100), size=vec(40,40)})
-            c = gfx_hud_object_add(`/common/hud/Rect`, {alpha=0.5, position=vec(10,10), size=vec(7,7)})
+            p = gfx_hud_object_add(`/common/hud/Rect`, {
+                colour = vec(1,0,0),
+                position = vec(400,150),
+                size = vec(40,40)
+            })
+            c = gfx_hud_object_add(`/common/hud/Rect`, {
+                alpha = 0.5,
+                position = vec(10,10),
+                size = vec(15,15)
+            })
             c.parent = p
+            p.orientation = 45
         </lua>
 
         The object p has a child object c.  This relationship was established
