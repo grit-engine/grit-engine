@@ -36,7 +36,7 @@
             ...
             obj:destroy()
             -- Can also initialise members with a table param:
-            obj = gfx_hud_object_add(`Rect`, {size = vec(50, 50), ...})
+            obj = gfx_hud_object_add(`Rect`, {size=vec(50,50), ...})
         </lua>
 
         The HUD object has a number of fields that define how it is
@@ -89,11 +89,46 @@
 
         Note how giving the speed in the class allows it, optionally, to be
         overidden on a per-object basis.  The following code shows how we can
-        override the speed when we instanitate the object:
+        override the speed when we instantiate the object:
 
         <lua>
-            obj = gfx_hud_object_add(`SpinningIcon`, { position=vec(200, 100) })
-            faster_obj = gfx_hud_object_add(`SpinningIcon`, {p osition=vec(300, 100), speed=30 })
+            obj = gfx_hud_object_add(`SpinningIcon`, {position=vec(200,100)})
+            faster_obj = gfx_hud_object_add(`SpinningIcon`, {position=vec(300,100), speed=30})
+        </lua>
+
+    </section>
+
+    <section title="Corner Mapped Textures" id="gfx_hud_corner">
+
+        By default, when a texture is set on a HUD object, it is filtered
+        (stretched or shrunk) to fit the rectangular size of the object.  This
+        can be useful when the size of the object can vary at run time, or if a
+        single texture is to be used for a variety of differently sized HUD
+        objects.  However, the filtering artefacts can look ugly for a lot of
+        textures, especially when the texture is magnified a lot.
+        
+        <image src="hud_example7.png" title="Corner Mapped Texture">
+            The texture itself is shown to the right.  To the left is shown the
+            HUD object mapping this texture with corner mapping.
+        </image>
+
+        For certain kinds of textures, there is a technique that avoids the
+        artefacts while allowing arbitrary scaling of the HUD object.  This
+        involves mapping the four quarters of the texture 1:1 into the corners
+        of the HUD object and stretching a single row and column of texels
+        across the middle of the HUD object.
+
+        This works well in a variety of situations where the centre of the HUD
+        object is a solid colour, but detail is desired around the edge and at
+        the corners.  For example, simple rounded corner rectangles, borders,
+        bevels, etc.  Some example textures are provided in
+        /common/hud/CornerTextures.  See the <todo>button</todo> class below
+        for a concrete example.
+
+        <lua>
+            o = gfx_hud_object_add(`/common/hud/Rect`, {texture=`MyTexture.png`})
+            o.size = vec(100, 100) -- larger than the texture
+            o.cornered = true -- enable corner mapping
         </lua>
 
     </section>
@@ -228,14 +263,14 @@
 
         <lua>
             p = gfx_hud_object_add(`/common/hud/Rect`, {
-                colour = vec(1,0,0),
-                position = vec(400,150),
-                size = vec(40,40)
+                colour = vec(1,0,0);
+                position = vec(400,150);
+                size = vec(40,40);
             })
             c = gfx_hud_object_add(`/common/hud/Rect`, {
-                alpha = 0.5,
-                position = vec(10,10),
-                size = vec(15,15)
+                alpha = 0.5;
+                position = vec(10,10);
+                size = vec(15,15);
             })
             c.parent = p
             p.orientation = 45
@@ -279,44 +314,13 @@
 
     </section>
 
-    <section title="Corner Mapped Textures" id="gfx_hud_corner">
-
-        By default, when a texture is set on a HUD object, it is filtered
-        (stretched or shrunk) to fit the rectangular size of the object.  This
-        can be useful when the size of the object can vary at run time, or if a
-        single texture is to be used for a variety of differently sized HUD
-        objects.  However, the filtering artefacts can look ugly for a lot of
-        textures, especially when the texture is magnified a lot.
-        
-        <image src="hud_example7.png" title="Corner Mapped Texture">
-            The texture itself is shown to the right.  To the left is shown the
-            HUD object mapping this texture with corner mapping.
-        </image>
-
-        For certain kinds of textures, there is a technique that avoids the
-        artefacts while allowing arbitrary scaling of the HUD object.  This
-        involves mapping the four quarters of the texture 1:1 into the corners
-        of the HUD object and stretching a single row and column of texels
-        across the middle of the HUD object.
-
-        This works well in a variety of situations where the centre of the HUD
-        object is a solid colour, but detail is desired around the edge and at
-        the corners.  For example, simple rounded corner rectangles, borders,
-        bevels, etc.  Some example textures are provided in
-        /common/hud/CornerTextures.  See the <todo>button</todo> class below
-        for a concrete example.
-
-        <lua>
-            o = gfx_hud_object_add(`/common/hud/Rect`, {texture=`MyTexture.png`})
-            o.size = vec(100,100) -- larger than the texture
-            o.cornered = true -- enable corner mapping
-        </lua>
-
-    </section>
-
     <section title="Handling Keyboard/Mouse Input" id="gfx_hud_input">
 
-        So much to write here...
+        Handling keyboard/mouse input allows us to create interactive HUD
+        objects, for example buttons, text entry, scroll bars, etc.  There are
+        two callbacks that provide this fundamental capability -- one for mouse
+        pointer movements, and one for button events (both mouse and keyboard
+        buttons).
 
     </section>
     
