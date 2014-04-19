@@ -9,7 +9,7 @@
     scenegraph-like hierarchy on the screen.  On top of this, various
     widgets have been implemented in Lua, and you are free to make your own
     as well.  The HUD subsystem is designed to handle things like
-    health/ammo displays, minimaps, menu screens, and general purpose
+    health/ammo displays, mini-maps, menu screens, and general purpose
     mouse-driven graphical user interfaces.
 
     <section title="Basics" id="gfx_hud_basics">
@@ -161,7 +161,7 @@
 
         The size field of text is immutable.  Upon setting the text, it gives
         you the number of pixels occupied by this particular text in this font.
-        The code takes account of tabs, new lines, and ansi terminal colour
+        The code takes account of tabs, new lines, and ANSI terminal colour
         codes.  
 
         <section title="Text Colour" id="gfx_hud_text_colour">
@@ -209,7 +209,7 @@
             in a second draw on top of it.  In the second case below, the texel
             lookup are offset by 0.5 texels, which causes bilinear filtering.  This
             has the same effect as blurring the text with a 2x2 box filter.  Note
-            thatA there must be an additional pixel of space around each letter in
+            that there must be an additional pixel of space around each letter in
             the font texture for this to work.
 
             <lua>
@@ -283,7 +283,7 @@
         thus formed, with HUD objects at the nodes, and either HUD objects or
         HUD text at the leaves.
 
-        The position of the child is relatve to its parent.  It thus displays
+        The position of the child is relative to its parent.  It thus displays
         on top of the parent, in its upper right corner.  The child is always
         drawn on top of the parent, so setting zOrder is only necessary to
         disambiguate the draw order of siblings.  Disabling a parent causes all
@@ -298,7 +298,7 @@
         As the parent's position (or orientation) is updated, the child's
         derived position and orientation are recalculated.  It is also possible
         to set inheritOrientation to false, which is useful to avoid icons
-        rotating within a spinning minimap, or to keep text looking crisp and
+        rotating within a spinning mini-map, or to keep text looking crisp and
         clear.
 
         Note that the child will be garbage collected if there is no link to
@@ -320,7 +320,59 @@
         objects, for example buttons, text entry, scroll bars, etc.  There are
         two callbacks that provide this fundamental capability -- one for mouse
         pointer movements, and one for button events (both mouse and keyboard
-        buttons).
+        buttons).  They are both enabled by setting needsInputCallbacks:
+
+        <lua>
+            hud_class `InputDemo` {
+                init = function (self)
+                    self.needsInputCallbacks = true
+                    self.inside = false
+                end;
+                destroy = function (self)
+                    -- nothing to do
+                end;
+                mouseMoveCallback = function(self, local, screen, inside)
+                    print(local, screen, inside)
+                    self.inside = inside
+                end;
+                buttonCallback = function(self, event)
+                    if inside then
+                        print(event)
+                    end
+                end;
+            }
+        </lua>
+
+        The mouseMoveCallback gets the cursor position local to the object
+        (with derived orientation and position transfromations reversed), the
+        screen cursor position, and a boolean indicating whether the mouse
+        cursor is over the HUD object or not.  This takes into account other
+        HUD objects that may be occluding this HUD object.  If inside is true,
+        then the local position should be within the rectangle defined by the
+        HUD object's size.
+
+        The buttonCallback receives all keyboard and mouse button events
+        whenever needsInputCallbacks is true.  So typically, you should
+        implement some code to implement mouse or click focus in order to
+        disregard button presses when they should not be processed.  Grit does
+        not prescribe a focus strategy, but it is trivial to implement one, as
+        shown in the above code.
+
+        The received events are strings.  Each string consists of a prefix
+        character, one of +, -, =, or :, that denotes the action.  For example
+        +a means a was pressed, -a means a was released, and =a is a repeat
+        event, issued by the operating system because the key is being held
+        down.  For such keys, the suffix of the key is the name of the button,
+        which is always lower case.  Buttons like the arrow keys have names
+        that begin with an upper case letter, e.g. "Left" or "Ctrl".  The mouse
+        buttons have names beginning with a lower case letter, such as "left",
+        "middle", and "right".
+
+        Key events beginning with the ":" character are text events.  These
+        incorporate the shift key for capitalisation, internationalisation
+        accent keys, and other keyboard modifiers that affect the way text is
+        typed.  So use these events for text input, do not try and capitalise
+        letters yourself by watching for the shift key.
 
     </section>
     
@@ -339,7 +391,7 @@
             button with text on it.  The button changes colour on mouse hover
             and click, and can also be greyed out.  It can be instantiated as
             follows.  Note the pressedCallback, which the code in this class
-            executes when it receives a button press.
+            executes when it receives a button press.  
 
             <image src="hud_example8.png" title="Button">
                 The button created by the Lua snippet left.
@@ -352,14 +404,14 @@
                         print("You clicked me!")
                     end;
                 })
-                -- By defualt, size is chosen based on the caption size.
+                -- By default, size is chosen based on the caption size.
                 b.parent = my_dialog
                 b.position = vec(40, 0) -- position within the parent
                 b:setGreyed(true) -- turn the button off, default false
                 b.enabled = false -- hide the button, default true
             </lua>
 
-            It is also possible to customize some of the attibutes of the
+            It is also possible to customize some of the attributes of the
             button.  The following rather garish button demonstrates this.
 
             <image src="hud_example9.png" title="Garish Button">
