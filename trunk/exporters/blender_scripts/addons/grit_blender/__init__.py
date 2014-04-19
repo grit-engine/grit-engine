@@ -47,7 +47,7 @@ bl_info = {
     "description": "Exporter for Grit Game Engine",
     "author": "Dave Cunningham",
     "version": (1, 1),
-    "blender": (2, 6, 3),
+    "blender": (2, 7, 0),
     "api": 31236,
     "location": "File > Import-Export > Grit",
     "warning": "",
@@ -984,10 +984,11 @@ def export_objects (scene, objs):
 
 
 
-class ScenePanel(bpy.types.Panel): #{{{
+class ScenePanel(bpy.types.Panel): #{{{    
+    bl_category = "Grit"
     bl_label = "Grit Export Settings"
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
+    bl_region_type = 'TOOLS'
 
     #@classmethod
     #def poll(cls, context):
@@ -1193,6 +1194,7 @@ class ImportXML(bpy.types.Operator):
 
 
 class ToolsPanel(bpy.types.Panel):
+    bl_category = "Grit"
     bl_label = "Grit Tools"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
