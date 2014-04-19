@@ -102,21 +102,21 @@ fn exportmatToListener mat = (
 		diffMap = ""
 	)else(
 		diffMap = splitMatFile diffMap as String
-		diffMap = "diffuseMap=\"" + diffMap + "\""
+		diffMap = "diffuseMap=`" + diffMap + "`"
 	)
 	if normMap == undefined then (
 		normMap = ""
 	)else(
 		normMap = splitMatFile normMap as String
-		normMap = ", normalMap=\"" + normMap + "\""
+		normMap = ", normalMap=`" + normMap + "`"
 	)
 	if specMap == undefined then (
 		specMap = ""
 	)else(
 		specMap = splitMatFile specMap as String
-		specMap = ", specularMap=\"" + specMap + "\""
+		specMap = ", specularMap=`" + specMap + "`"
 	)
-	format "material \"%\" { %%% }\n" materialName diffMap normMap specMap to:listener
+	format "material `%` { %%% }\n" materialName diffMap normMap specMap to:listener
 )
 
     on ExpMats pressed do

@@ -905,14 +905,14 @@ def export_objects (scene, objs):
 
         for obj in grit_objects:
             if  obj.grit_object_class_name == "":
-                errors.append("Object without class: \""+obj.name+"\"")
+                errors.append("Object without class: `"+obj.name+"`")
             else:
                 pos = obj.location
                 rot = obj.rotation_euler.to_quaternion()
                 rot_str = rot == Quaternion((1,0,0,0)) and "" or "rot=quat("+str(rot.w)+", "+str(rot.x)+", "+str(rot.y)+", "+str(rot.z)+"), "
                 #TODO: handle classes in other directories
                 class_name = obj.grit_object_class_name
-                f.write("object \""+class_name+"\" ("+str(pos.x)+", "+str(pos.y)+", "+str(pos.z)+") { "+rot_str+"name=\""+scene.grit_map_prefix+obj.name+"\" }\n")
+                f.write("object `"+class_name+"` ("+str(pos.x)+", "+str(pos.y)+", "+str(pos.z)+") { "+rot_str+"name=\""+scene.grit_map_prefix+obj.name+"\" }\n")
 
         f.close()
 
@@ -965,7 +965,7 @@ def export_objects (scene, objs):
             else:
                 interior = "\n    " + ";\n    ".join(map(lambda x: x[0] + " = " + to_lua(x[1]), attributes)) + ";\n"
 
-            f.write("class \""+class_name+"\" ("+parent_class_name+") {"+interior+"}\n\n")
+            f.write("class `"+class_name+"` ("+parent_class_name+") {"+interior+"}\n\n")
 
         f.close()
 

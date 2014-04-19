@@ -38,7 +38,7 @@ Rollout GritRolloutClass "Classes" -- {{{
 	PBCEXP.value = 0
 	format "\nExporting class...\n" to:listener
 	PBCEXP.value = 25
-	format "class \"%%\" (%) {" mpath.text mnpath.text ctype.selected to:listener
+	format "class `%%` (%) {" mpath.text mnpath.text ctype.selected to:listener
 	format "renderingDistance=%" sdrawd.value to:listener
 	PBCEXP.value = 75
 	format "}\n" to:listener
@@ -59,7 +59,7 @@ Rollout GritRolloutClass "Classes" -- {{{
 			mdrawd = getUserProp objs "obdrawd"
 			mctype = getUserProp objs "obctype"
 		
-			format "class \"%%\" (%) {" mdir mname mctype to:listener
+			format "class `%%` (%) {" mdir mname mctype to:listener
 			format "renderingDistance=%" mdrawd to:listener
 			format "}\n" to:listener
 		)
@@ -84,7 +84,7 @@ Rollout GritRolloutClass "Classes" -- {{{
 					mdrawd = getUserProp objs "obdrawd"
 					mctype = getUserProp objs "obctype"
 						
-					format "class \"%%\" (%) {" mdir mname mctype to:objfl
+					format "class `%%` (%) {" mdir mname mctype to:objfl
 					format "renderingDistance=%" mdrawd to:objfl
 					format "}\n" to:objfl
 				)
@@ -241,7 +241,7 @@ Rollout GritRolloutPlace "Placement" -- {{{
 			mdir = tdir.text
 			mname = objs.name 
 			
-			format "object \"%%\" (%, %, %) {" mdir mname X Y Z to:listener
+			format "object `%%` (%, %, %) {" mdir mname X Y Z to:listener
 			if onamexp.triState == 1 then
 			(
 				format "name=\"%\"" objs.name to:listener
@@ -280,7 +280,7 @@ Rollout GritRolloutPlace "Placement" -- {{{
 				mdir = getUserProp objs "obmpath"
 				mname = getUserProp objs "obmnpath" 
 				
-				format "object \"%%\" (%, %, %) {" mdir mname X Y Z to:objfl
+				format "object `%%` (%, %, %) {" mdir mname X Y Z to:objfl
 				if onamexp.triState == 1 then
 				(
 					format "name=\"%\"" objs.name to:listener
@@ -319,7 +319,7 @@ Rollout GritRolloutPlace "Placement" -- {{{
 			mdir = getUserProp objs "obmpath"
 			mname = getUserProp objs "obmnpath" 
 			
-			format "object \"%%\" (%, %, %) {" mdir mname X Y Z to:listener
+			format "object `%%` (%, %, %) {" mdir mname X Y Z to:listener
 			if onamexp.triState == 1 then
 			(
 				format "name=\"%\"" objs.name to:listener
