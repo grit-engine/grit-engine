@@ -66,9 +66,9 @@ static int ifilter_make (lua_State *L)
 {
 TRY_START
     check_args(L, 2);
-    double priority = luaL_checknumber(L, 1);
+    double order = luaL_checknumber(L, 1);
     std::string desc = check_string(L, 2);
-    InputFilter *self = new InputFilter(priority, desc);
+    InputFilter *self = new InputFilter(order, desc);
     push(L,self,IFILTER_TAG);
     return 1;
 TRY_END
@@ -80,7 +80,7 @@ TRY_START
     check_args(L, 1);
     GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
     std::stringstream ss;
-    ss << IFILTER_TAG << " " << static_cast<void*>(&self) << " (" << self.getPriority() << ") \"" << self.description << "\"";
+    ss << IFILTER_TAG << " " << static_cast<void*>(&self) << " (" << self.getOrder() << ") \"" << self.description << "\"";
     lua_pushstring(L, ss.str().c_str());
     return 1;
 TRY_END
@@ -148,8 +148,8 @@ TRY_START
     check_args(L,2);
     GET_UD_MACRO(InputFilter,self,1,IFILTER_TAG);
     std::string key  = luaL_checkstring(L,2);
-    if (key=="priority") {
-        lua_pushnumber(L,self.getPriority());
+    if (key=="order") {
+        lua_pushnumber(L,self.getOrder());
     } else if (key=="description") {
         push_string(L,self.description);
     } else if (key=="enabled") {

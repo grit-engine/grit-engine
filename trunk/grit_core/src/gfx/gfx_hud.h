@@ -159,6 +159,7 @@ class GfxHudBase : public fast_erase_index {
     virtual ~GfxHudBase (void);
 
     virtual void destroy (void);
+    virtual void destroy (lua_State *) { destroy(); }
 
     void assertAlive (void) const;
 
@@ -322,6 +323,7 @@ class GfxHudText : public GfxHudBase {
     void incRefCount (void);
     void decRefCount (void);
     void destroy (void);
+    void destroy (lua_State *) { destroy(); }
 
     void clear (void);
     void append (const std::string &v);

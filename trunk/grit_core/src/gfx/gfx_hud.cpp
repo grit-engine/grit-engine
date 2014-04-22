@@ -266,7 +266,8 @@ void GfxHudObject::destroy (lua_State *L)
         aliveness = DYING;
         triggerDestroy(L);
         while (children.size() != 0) {
-            children[0]->setParent(parent);
+            GfxHudBase *child = children[0];
+            child->destroy(L);
         }
         table.setNil(L);
         destroy();

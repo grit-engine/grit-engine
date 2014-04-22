@@ -65,16 +65,16 @@ static void update_grabbed (void)
     }
 }
 
-bool input_filter_has (double priority)
+bool input_filter_has (double order)
 {
-    IFMap::iterator i = ifmap.find(priority);
+    IFMap::iterator i = ifmap.find(order);
     return i != ifmap.end();
 }
 
-std::string input_filter_get_description (double priority)
+std::string input_filter_get_description (double order)
 {
-    IFMap::iterator i = ifmap.find(priority);
-    if (i == ifmap.end()) EXCEPT << "No InputFilter at priority " << priority << ENDL;
+    IFMap::iterator i = ifmap.find(order);
+    if (i == ifmap.end()) EXCEPT << "No InputFilter at order " << order << ENDL;
     return i->second->description;
 }
 
@@ -422,15 +422,15 @@ void input_filter_shutdown (lua_State *L)
 }
 
 
-InputFilter::InputFilter (double priority, const std::string &desc)
-  : modal(false), enabled(true), mouseCapture(false), priority(priority), destroyed(false), description(desc)
+InputFilter::InputFilter (double order, const std::string &desc)
+  : modal(false), enabled(true), mouseCapture(false), order(order), destroyed(false), description(desc)
 {
-    IFMap::iterator i = ifmap.find(priority);
+    IFMap::iterator i = ifmap.find(order);
     if (i != ifmap.end()) {
-        EXCEPT << "Cannot create InputFilter \"" << desc << "\" at priority already occupied by "
+        EXCEPT << "Cannot create InputFilter \"" << desc << "\" at order already occupied by "
                << "\""<<i->second->description<<"\"" << std::endl;
     }
-    ifmap[priority] = this;
+    ifmap[order] = this;
 }
     
 InputFilter::~InputFilter (void)
@@ -445,7 +445,7 @@ InputFilter::~InputFilter (void)
             i->second.repeat.leak();
         }
         buttonCallbacks.clear();
-        ifmap.erase(this->priority);
+        ifmap.erase(this->order);
     }
 }
 
@@ -461,7 +461,7 @@ void InputFilter::destroy (lua_State *L)
         i->second.repeat.setNil(L);
     }
     buttonCallbacks.clear();
-    ifmap.erase(this->priority);
+    ifmap.erase(this->order);
 }
 
 void InputFilter::bind (lua_State *L, const std::string &button)
@@ -535,7 +535,7 @@ void InputFilter::setEnabled (lua_State *L, bool v)
         for (auto i=buttonCallbacks.begin(),i_=buttonCallbacks.end() ; i!=i_ ; ++i) {
             masked.insert(i->first);
         }
-        IFMap::iterator i = ifmap.find(this->priority);
+        IFMap::iterator i = ifmap.find(this->order);
         i++;
         for ( ; i!=ifmap.end(); ++i) {
             i->second->flushSet(L, masked);
@@ -555,7 +555,7 @@ void InputFilter::setModal (lua_State *L, bool v)
     if (modal == v) return;
     modal = v;
     if (modal) {
-        IFMap::iterator i = ifmap.find(this->priority);
+        IFMap::iterator i = ifmap.find(this->order);
         i++;
         for ( ; i!=ifmap.end(); ++i) {
             i->second->flushAll(L);

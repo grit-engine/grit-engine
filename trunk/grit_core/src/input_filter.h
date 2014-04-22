@@ -34,34 +34,6 @@ extern "C" {
 
 #include "lua_ptr.h"
 
-// You can set a callback set for specific button events.  This
-// emulates UI:bind().  If a callback is provided for a button event,
-// it will not propagate to lower priority InputFilters.
-
-// You can disable and enable InputFilters, doing so prevents the
-// button events being masked so lower priorities will receive them.
-
-// You can also query what buttons are down (for a given level).  If
-// you are disabled, this is always the empty set.
-
-// You can set modal, which means that all lower priorities are effectively
-// disabled.
-
-// You can set mouse capture, which hides the cursor.  The highest priority
-// input filter with mouse capture receives mouse move events via a callback.
-
-
-// The HUD will get mouse move events and remaining button events if no-one has
-// captured the mouse.  The hud system keeps track of button down status
-// itself.
-
-
-// Lowever priority filters (including the HUD) will get button up events to
-// cleanly empty their button down sets, when they are no-longer able to
-// receive those events naturally (e.g. disable of themselves, enable of higher
-// priority stuff, modal, mouse lock changes, etc).
-
-
 // Menu (binds escape)
 //   * goes into modal to display menu (disable player_ctrl and tab stuff)
 //   * never captures mouse
@@ -105,7 +77,7 @@ class InputFilter {
 
     /** Keys that we sent a down signal for, but not an up yet.  These must be
      * "flushed" in certain circumstances, such as when as when we are disabled, or
-     * if a higher priority input watcher goes modal.  Each down button is mapped
+     * if an earlier input filter goes modal.  Each down button is mapped
      * to the prefix of modifiers that were down at the time of it being pressed.
      * These allow the button up events to be matched to button down events
      * properly, even if the modifier was released between the down and up events.
@@ -123,7 +95,7 @@ class InputFilter {
 
     LuaPtr mouseMoveCallback;
 
-    double priority;
+    double order;
 
     bool destroyed;
 
@@ -136,8 +108,8 @@ class InputFilter {
 
     const std::string description;
 
-    /** Give the initial priority, and a string description (useful for debugging). */
-    InputFilter (double priority, const std::string &desc);
+    /** Give the initial order, and a string description (useful for debugging). */
+    InputFilter (double order, const std::string &desc);
 
     ~InputFilter (void);
 
@@ -163,7 +135,7 @@ class InputFilter {
     void unbind (lua_State *L, const std::string &button);
 
     /** Receive mouse move events.  This callback is called if this InputFilter
-     * has locked the mouse and no higher priority ones have done so.
+     * has locked the mouse and no earlier ones have done so.
      */
     void setMouseMoveCallback (lua_State *L);
 
@@ -189,7 +161,7 @@ class InputFilter {
      */
     bool isButtonPressed (const std::string &b);
 
-    double getPriority (void) { return priority; }
+    double getOrder (void) { return order; }
 
     /** For internal use. */
     bool acceptButton (lua_State *L, const std::string &b);
@@ -201,14 +173,14 @@ class InputFilter {
 
 };
 
-/** Does there exist an InputFilter at this priority? */
-bool input_filter_has (double priority);
+/** Does there exist an InputFilter at this order? */
+bool input_filter_has (double order);
 
-/** Get the description at this priority, or throw exception. */
-std::string input_filter_get_description (double priority);
+/** Get the description at this order, or throw exception. */
+std::string input_filter_get_description (double order);
 
 /** Destroy a given input filter.  This can be useful if you've lost the pointer to it. */
-std::string input_filter_destroy (double priority);
+std::string input_filter_destroy (double order);
 
 /** Issue button events to the appropriate level of the stack or the HUD. */
 void input_filter_trickle_button (lua_State *L, const std::string &ev);
