@@ -62,7 +62,7 @@
         far easier than rebuilding the whole engine and debugging it in a C++
         debugger.  This manual concentrates on the Lua APIs, there are some
         <web url="http://gritengine.com/internal_api_doc/">doxygen docs</web>
-        for the _c++ code.
+        for the C++ code.
 
     </section>
 

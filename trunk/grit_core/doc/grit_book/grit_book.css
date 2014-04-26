@@ -163,6 +163,9 @@ a:link.index_nocol {
 a:visited.index_nocol {
         color: inherit;
 }
-a.web {
+a:link.web {
         color: #00E;
+}
+a:visited.web {
+        color: #60A;
 }
