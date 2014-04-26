@@ -61,7 +61,8 @@
         bceause developing high level code in Lua, using the in-game console is
         far easier than rebuilding the whole engine and debugging it in a C++
         debugger.  This manual concentrates on the Lua APIs, there are some
-        <todo>doxygen docs</todo> for the C++ code.
+        <web url="http://gritengine.com/internal_api_doc/">doxygen docs</web>
+        for the _c++ code.
 
     </section>
 

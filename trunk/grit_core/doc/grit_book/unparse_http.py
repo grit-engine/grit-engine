@@ -129,7 +129,8 @@ def UnparseHtmlBlocks(book, parent, split_below, never_split):
             new_path = GetPath(n)
             path_string = '.'.join(new_path)
             h = len(new_path)
-            inner_html = '<h%d id="%s">%s. %s</h%d>\n\n' % (h, n.id, path_string, escape(n.title), h)
+            title = '<a class=index_nocol href="%s">%s. %s</a>' % (GetLinkToNode(n), path_string, escape(n.title))
+            inner_html = '<h%d id="%s">%s</h%d>\n\n' % (h, n.id, title, h)
             inner_html += UnparseHtmlBlocks(book, n, n.split, never_split)
             if split_below and not never_split:
                 filename = n.id + '.html'
@@ -154,7 +155,7 @@ def UnparseHtmlBlocks(book, parent, split_below, never_split):
     return s
 
 
-def BuildHtmlIndex(parent, indent=0, filename=None):
+def BuildHtmlIndex(parent, indent=0):
     indentstr = ' ' * (indent*4)
     index = indentstr + '<ul>\n'
     section_index = 0
@@ -162,15 +163,12 @@ def BuildHtmlIndex(parent, indent=0, filename=None):
         if n.kind == 'Section':
             section_index += 1
             path_string = GetPathString(n)
-            new_filename = n.id + '.html' if parent.split else filename
             title = escape(n.title)
             index += ' ' * ((indent+1)*4)
-            if parent.split:
-                index += '<li class="index">%s. <a class="index" href="%s">%s</a></li>\n' % (path_string, new_filename, title)
-            else:
-                url = '%s#%s' % (new_filename, n.id)
-                index += '<li class="index">%s. %s (<a class="index" href="%s">&sect;</a>)</li>\n' % (path_string, title, url)
-            index += BuildHtmlIndex(n, indent+1, new_filename)
+            url = GetLinkToNode(n)
+            cls = 'index' if parent.split else 'index_nocol'
+            index += '<li class="index">%s. <a class="%s" href="%s">%s</a></li>\n' % (path_string, cls, url, title)
+            index += BuildHtmlIndex(n, indent+1)
     index += indentstr + '</ul>\n'
     if section_index == 0:
         return ''
