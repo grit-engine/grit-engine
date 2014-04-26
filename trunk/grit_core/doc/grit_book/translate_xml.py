@@ -65,6 +65,13 @@ class Node:
     return len(self.data)
   def __nonzero__(self):
     return True
+  def __eq__(self, other):
+    if other.kind != self.kind: return False
+    if other.parent != self.parent: return False
+    if other.attr != self.attr: return False
+    return True
+  def __ne__(self, other):
+    return not (self == other)
 
 
 inline_tags = { 'def', 'web', 'issue', 'todo', 'sref' }

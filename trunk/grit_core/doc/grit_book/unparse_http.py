@@ -51,6 +51,33 @@ def GeneratePage(title, content, book):
 '''
     return s
 
+def GetParentIndex(node):
+    i = 0
+    for c in node.parent:
+        if c.kind == 'Section':
+            i += 1
+        if c == node:
+            return i
+    return None
+        
+
+def GetPath(node):
+    if not node.parent:
+        return []
+    here = []
+    if node.kind == 'Section':
+        here = [str(GetParentIndex(node))]
+    return GetPath(node.parent) + here
+
+def GetPathString(node):
+    return '.'.join(GetPath(node))
+
+def GetLinkToNode(target):
+    the_file = GetOutputFile(target)
+    if the_file.id == target.id:
+        return '%s.html' % the_file.id
+    else:
+        return '%s.html#%s' % (the_file.id, target.id)
 
 def UnparseHtmlInlines(parent, inner=False):
     s = ""
@@ -73,20 +100,14 @@ def UnparseHtmlInlines(parent, inner=False):
             s += UnparseHtmlInlines(n.data, True)
             s += '</a>'
         elif n.kind == 'SRef':
-            the_file = GetOutputFile(n.target)
-            if the_file.id == n.target.id:
-                link = '%s.html' % the_file.id
-            else:
-                link = '%s.html#%s' % (the_file.id, n.target.id)
-            s += '<a class="index" href="%s">' % link
-            s += UnparseHtmlInlines(n.data, True)
-            s += '</a>'
+            content = UnparseHtmlInlines(n.data, True)
+            s += '%s (<a class="index" href="%s">&sect;%s</a>)' % (content, GetLinkToNode(n.target), GetPathString(n.target))
         else:
-            print "ERROR: unknown node kind: " + n.kind
+            print 'ERROR: unknown node kind: ' + n.kind
     return s
 
 
-def UnparseHtmlBlocks(book, parent, path, section_counter, split_below, never_split):
+def UnparseHtmlBlocks(book, parent, split_below, never_split):
     s = ""
     for n in parent:
         if n.kind == 'Image':
@@ -101,16 +122,15 @@ def UnparseHtmlBlocks(book, parent, path, section_counter, split_below, never_sp
             s += '<ul>\n\n'
             for item in n.data:
                 s += '<li>\n\n'
-                s += UnparseHtmlBlocks(book, item, path, section_counter, split_below, never_split)
+                s += UnparseHtmlBlocks(book, item, split_below, never_split)
                 s += '</li>\n\n'
             s += '</ul>\n\n'
         elif n.kind == 'Section':
-            section_counter += 1
-            new_path = path + [section_counter] 
-            path_string = '.'.join([str(e) for e in new_path])
+            new_path = GetPath(n)
+            path_string = '.'.join(new_path)
             h = len(new_path)
             inner_html = '<h%d id="%s">%s. %s</h%d>\n\n' % (h, n.id, path_string, escape(n.title), h)
-            inner_html += UnparseHtmlBlocks(book, n, new_path, 0, n.split, never_split)
+            inner_html += UnparseHtmlBlocks(book, n, n.split, never_split)
             if split_below and not never_split:
                 filename = n.id + '.html'
                 print 'Writing ' + filename
@@ -130,19 +150,18 @@ def UnparseHtmlBlocks(book, parent, path, section_counter, split_below, never_sp
         else:
             print "ERROR: unknown node kind: " + n.kind
     if split_below and not never_split:
-        s += BuildHtmlIndex(parent, path)
+        s += BuildHtmlIndex(parent)
     return s
 
 
-def BuildHtmlIndex(parent, path, indent=0, filename=None):
+def BuildHtmlIndex(parent, indent=0, filename=None):
     indentstr = ' ' * (indent*4)
     index = indentstr + '<ul>\n'
     section_index = 0
     for n in parent:
         if n.kind == 'Section':
             section_index += 1
-            new_path = path + [section_index]
-            path_string = '.'.join([str(e) for e in new_path])
+            path_string = GetPathString(n)
             new_filename = n.id + '.html' if parent.split else filename
             title = escape(n.title)
             index += ' ' * ((indent+1)*4)
@@ -151,7 +170,7 @@ def BuildHtmlIndex(parent, path, indent=0, filename=None):
             else:
                 url = '%s#%s' % (new_filename, n.id)
                 index += '<li class="index">%s. %s (<a class="index" href="%s">&sect;</a>)</li>\n' % (path_string, title, url)
-            index += BuildHtmlIndex(n, new_path, indent+1, new_filename)
+            index += BuildHtmlIndex(n, indent+1, new_filename)
     index += indentstr + '</ul>\n'
     if section_index == 0:
         return ''

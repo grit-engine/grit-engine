@@ -60,13 +60,13 @@ book_ast.data = TranslateBlockContents(book, book_ast)
 
 print 'Writing index.html'
 index = '<h1> Contents </h1>\n'
-index += UnparseHtmlBlocks(book_ast, book_ast, [], 0, True, False)
+index += UnparseHtmlBlocks(book_ast, book_ast, True, False)
 contents = codecs.open('index.html', 'w', 'utf-8')
 contents.write(GeneratePage('Contents', index, book_ast))
 contents.close()
 
 print 'Writing complete.html'
-index = UnparseHtmlBlocks(book_ast, book_ast, [], 0, True, True)
+index = UnparseHtmlBlocks(book_ast, book_ast, True, True)
 contents = codecs.open('complete.html', 'w', 'utf-8')
 contents.write(GeneratePage('Contents', index, None))
 contents.close()
