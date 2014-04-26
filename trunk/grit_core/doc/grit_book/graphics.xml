@@ -287,12 +287,13 @@
         has only emissive lighting, as it is too far away to be affected by
         lights in the scene.  It also does not move, it is always centered at
         the camera.
-        
+
         The sky is composed of a number of layers, composed via alpha blending
         in HDR buffers.  Conceptually, each layer is a <def>Sky Body</def>
         whose polygons either completely or partially surround the camera
         (which is at 0,0,0).  Thus, the body does not have a position like the
-        regular gfx body, although it can be rotated.
+        regular <sref id="gfx_body">graphics body</sref>, although it can
+        be rotated.
 
         Different layers allow the controlling of different effects, e.g. you
         can have a base stars layer, then a moon layer (which you rotate to
@@ -310,10 +311,10 @@
         explicitly.  Typically we use about 1 metre because that is easy to
         manipulate in modelling software.
         
-        Sky body materials refer to sky materials instead of regular materials.
-        Sky materials are defined in a special way, and are not interchangeable
-        with regular materials, although they can share textures.  Here is an
-        example:
+        Sky body materials refer to sky materials instead of <sref
+        id="gfx_material">regular materials</sref>.  Sky materials are defined
+        in a special way, and are not interchangeable with regular materials,
+        although they can share textures.  Here is an example:
 
         <lua>
             sky_material "starfield" {

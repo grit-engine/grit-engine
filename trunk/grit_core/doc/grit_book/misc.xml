@@ -28,6 +28,49 @@
         not already very familiar with Lua, and if you're not intending to port
         Lua code from external sources to run in Grit.
 
+        <section title="Relative Path Literals" id="lua_paths">
+
+            It is convenient for Lua files to refer to resources via relative
+            paths.  This makes it possible to define packages of scripts and
+            resources, that can be downloaded and unpacked anywhere in the
+            directory hierarchy without having to edit the Lua files to correct
+            absolute paths.
+
+            However, when using strings to represent relative paths, the
+            strings can be passed by value through function calls and variable
+            assignments and end up being used in a different Lua file, where
+            the relative path no-longer resolved correctly.
+
+            In order for the relative paths to be resolved in the file where
+            they are defined, Lua has been extended to add another kind of
+            string literal:
+
+            <lua>
+                print(`foo`)
+                print(`/dir/foo`)
+                print(`../foo`)
+                print(`.`)
+            </lua>
+
+            This string is assumed to be a path.  If the path begins with a '/'
+            then it behaves the same as ordinary strings.  However other paths
+            are assumed to be relative, and will be resolved using the
+            directory of the currently-executing Lua file (or / if such a dir
+            cannot be found).
+
+            The path will also be canonicalised, i.e., use of . and .. will be
+            removed.  An error is raised if too many .. descend below the root
+            of the game directory.
+
+            <lua>
+                assert(`foo/../bar` == `bar`)
+                assert(`foo/../bar/.` == `bar`)
+                assert(`./foo/../bar` == `bar`)
+                assert(`/.` == `/`)
+            </lua>
+
+        </section>
+
         <section title="Unicode" id="lua_unicode">
 
             All Lua files are now UTF-8. The string class in Lua has been
@@ -151,12 +194,12 @@
             from the stack trace if an error is generated.  This can be highly
             confusing when debugging programs, as you can't find the line
             number where the bad call occurred.
-            
+
             It is not only in the case of these "tail recursive" functions
             where the loss of stack frame occurs, but in any function with a
             tail call.  In almost all such cases the optimization does not
             provide any benefit at all.
-            
+
             We consider the small overall benefit of this feature to be a poor
             tradeoff for the productivity loss caused its effect on the
             readability of stack traces.  Consequently, <def>it is
@@ -278,7 +321,7 @@
             can easily extract the axis and angle from a quaternion using <def>q.axis</def> and <def>q.angle</def>.
 
         </section>
-            
+
         <section title="Representing Orientations" id="maths_orientation">
 
             The difference between a rotation and an orientation is that a rotation is a change in orientation. It is
@@ -338,7 +381,7 @@
             particular direction in world space.  From there you can e.g.  use math.atan2 to figure out the angle for
             the turret.
 
-            <lua> 
+            <lua>
                 turret_point_model_space = inv(turret_orientation_world_space) * vector_to_enemy
             </lua>
 

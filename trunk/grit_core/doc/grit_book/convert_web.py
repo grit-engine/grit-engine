@@ -8,7 +8,6 @@ from translate_xml import *
 from unparse_http import *
 
 
-
 # libxml2 does not properly implement the XML standard, so do my own implementation here...
 def MyXInclude(tree):
     for n in tree:
@@ -22,27 +21,30 @@ def MyXInclude(tree):
         else:
             MyXInclude(n)
 
-id_regex = re.compile("^[_a-z0-9]+$")
-id_map = {}
+
+_ID_REGEX = re.compile("^[_a-z0-9]+$")
+
+_ID_MAP = {}
+
 # Ensure no two ids are the same
 def CheckIds(node):
     nid = node.get('id')
     if node.tag == 'section':
         if not nid:
             Error(node, 'Section must have id attribute.')
-        if not id_regex.match(nid):
+        if not _ID_REGEX.match(nid):
             Error(node, 'Section id uses invalid characters.')
-        if id_map.get(nid):
+        if _ID_MAP.get(nid):
             Error(node, 'Section id already exists: ' + nid)
-        id_map[nid] = node
-    elif node.tag == 'issue':
+        _ID_MAP[nid] = node
+    elif node.tag in ['issue', 'sref']:
         pass
     else:
         if nid:
             Error(node, 'Only section tags can have id attribute.')
     for child in node:
         CheckIds(child)
-            
+
 
 print 'Parsing index.xml'
 tree = ET.parse('index.xml')
@@ -53,7 +55,8 @@ CheckIds(book)
 AssertTag(book, 'book')
 
 print 'Translating XML dom...'
-book_ast = Node('Book', split=True, data=TranslateBlockContents(book))
+book_ast = Node('Book', None, split=True, data=False)
+book_ast.data = TranslateBlockContents(book, book_ast)
 
 print 'Writing index.html'
 index = '<h1> Contents </h1>\n'

@@ -72,6 +72,15 @@ def UnparseHtmlInlines(parent, inner=False):
             s += '<a class="web" href="' + n.url + '">'
             s += UnparseHtmlInlines(n.data, True)
             s += '</a>'
+        elif n.kind == 'SRef':
+            the_file = GetOutputFile(n.target)
+            if the_file.id == n.target.id:
+                link = '%s.html' % the_file.id
+            else:
+                link = '%s.html#%s' % (the_file.id, n.target.id)
+            s += '<a class="index" href="%s">' % link
+            s += UnparseHtmlInlines(n.data, True)
+            s += '</a>'
         else:
             print "ERROR: unknown node kind: " + n.kind
     return s
