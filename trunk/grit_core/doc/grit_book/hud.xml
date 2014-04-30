@@ -122,8 +122,8 @@
         object is a solid colour, but detail is desired around the edge and at
         the corners.  For example, simple rounded corner rectangles, borders,
         bevels, etc.  Some example textures are provided in
-        /common/hud/CornerTextures.  See the <todo>button</todo> class below
-        for a concrete example.
+        /common/hud/CornerTextures.  See the <sref
+        id="gfx_hud_button">button</sref> class below for a concrete example.
 
         <lua>
             o = gfx_hud_object_add(`/common/hud/Rect`, {texture=`MyTexture.png`})
@@ -136,9 +136,9 @@
     <section title="Text" id="gfx_hud_text">
 
         HUD text bodies allow the rendering of text according to a particular
-        <todo>font</todo>.  It supports top/bottom colour, ANSI terminal colour
-        codes, hard tabs, new lines, wrapping according to a pixel width, and
-        scrolling.
+        <sref id="gfx_font">font</sref>.  It supports top/bottom colour, ANSI
+        terminal colour codes, hard tabs, new lines, wrapping according to a
+        pixel width, and scrolling.
 
         <image src="hud_example3.png" title="Basic Text Rendering">
             A HUD text body using the simple misc.fixed font.
@@ -386,7 +386,7 @@
         to instantiate them, and also to see examples of HUD code, for those
         writing their own HUD classes.  Some key classes are documented here:
 
-        <section title="Button" id="gfx_hud_existing_button">
+        <section title="Button" id="gfx_hud_button">
 
             The class /common/hud/Button can be used to create a clickable
             button with text on it.  The button changes colour on mouse hover
@@ -435,7 +435,7 @@
 
         </section>
 
-        <section title="Label" id="gfx_hud_existing_label">
+        <section title="Label" id="gfx_hud_label">
 
             The /common/hud/Label class encapsulates a HUD text body.  It
             provides a simple way of aligning the text, and has the ability to
@@ -456,26 +456,29 @@
 
         </section>
 
-        <section title="Border" id="gfx_hud_existing_border">
+        <section title="Border" id="gfx_hud_border">
 
             The /common/hud/Border class wraps a child object and draws a
             border around it using <sref id="gfx_hud_corner">corner
             mapping</sref>.  When instantiating the class, the child object is
             given and automatically has its parent set to the border object.
 
+            <image src="hud_example10.png" title="Border">
+                Putting a border around another HUD object.
+            </image>
+
             <lua>
-                gfx_hud_object_add(`/common/hud/Border`, {
+                o = gfx_hud_object_add(`/common/hud/Border`, {
+                    position = vec(200, 200);
                     padding = 8;  -- Extra space on the inside.
                     colour = 0.25 * vec(1, 1, 1);  -- Dark grey
                     texture = "/common/hud/CornerTextures/Border04.png";
                     -- The child object:
-                    gfx_hud_object_add(`/common/hud/Button`, {
+                    child = gfx_hud_object_add(`/common/hud/Button`, {
                         caption = "Some button.";
                     })
-                }),
+                })
             </lua>
-
-            <todo>Needs picture.</todo>
 
         </section>
 
@@ -498,7 +501,7 @@
             The /common/hud/Stretcher class will control the position and size
             of its child.  It does this by changing its own position (the child
             is at vec(0, 0) relative), and size, and also changing the child's
-            size to fill its own boundaries.  If the child has a
+            size to fill its own boundaries.  If the child has an
             updateChildrenSize callback, it also calls that.
 
             The class is instantiated by overriding the calcRect function,
@@ -506,20 +509,24 @@
             should relate to its parent's size.  The callback is re-executed
             every time the parent size changes.  The result of calcRect is
             passed to setRect, i.e. it is the values left, bottom, right, top.
-            In this case, it specifies a 10 pixel padding.
+            In this case, it specifies a 50 pixel padding, and the Stretcher
+            has no parent, so it uses the screen dimensions as input.
+
+            <image src="hud_example11.png" title="Stretcher">
+                Using the /common/hud/Stretcher class to resize a button to
+                fill the screen.
+            </image>
 
             <lua>
-                gfx_hud_object_add(`/common/hud/Stretcher`, {
+                o = gfx_hud_object_add(`/common/hud/Stretcher`, {
                     calcRect = function(self, psize)
-                        return 10, 10, psize.x-10, psize.y-10
+                        return 50, 50, psize.x-50, psize.y-50
                     end;
-                    gfx_hud_object_add(`/common/hud/Button`, {
+                    child = gfx_hud_object_add(`/common/hud/Button`, {
                         caption = "Some button.";
-                    })
-                }),
+                    })  
+                })  
             </lua>
-
-            <todo>Needs picture.</todo>
 
         </section>
 

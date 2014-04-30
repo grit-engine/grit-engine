@@ -115,7 +115,19 @@ def NonEmptyParagraph(para):
             return True
     return False
 
+
 SECTION_MAP = {}
+
+def ResolveReferences(ast):
+    if not isinstance(ast, Node):
+        return
+    if ast.kind == "SRef":
+        target = SECTION_MAP.get(ast.target)
+        # ChedkRef ensures that the references are all valid.
+        ast.target = target
+    for ch in ast:
+        ResolveReferences(ch)
+
 
 def TranslateParagraphs(content, context_ast, dosplit=True):
     """Translate text and XML elements into paragraphs by examining whitespace.
@@ -160,12 +172,9 @@ def TranslateParagraphs(content, context_ast, dosplit=True):
             elif c.tag == "todo":
                 r2.append(Node('Todo', context_ast, data=flattened))
             elif c.tag == "sref":
-                id = c.get('id')
-                if not id:
-                    Error(n, 'Tag: %s should have an id attribute.' % c.tag)
-                target = SECTION_MAP.get(id)
+                target = c.get('id')
                 if not target:
-                    Error(n, 'Referenced target does not exist: "%s"' % n.id)
+                    Error(c, 'Tag: %s should have an id attribute.' % c.tag)
                 r2.append(Node('SRef', context_ast, target=target, data=flattened))
             else:
                 Error(c, 'Unknown tag: ' + str(c.tag))

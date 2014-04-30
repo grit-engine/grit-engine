@@ -3,13 +3,15 @@
 local ratio = 3/2
 
 for k,fname in ipairs{...} do
-    local img = open(fname)
-    if img.width/img.height > ratio then
-        img = img:cropCentre(vec(ratio*img.height, img.height), vec(0,0,1))
-    else
-        img = img:cropCentre(vec(img.width, img.width/ratio), vec(0,0,1))
+    if fname:sub(1,6) ~= "thumb_" then
+        local img = open(fname)
+        if img.width/img.height > ratio then
+            img = img:cropCentre(vec(ratio*img.height, img.height), vec(0,0,1))
+        else
+            img = img:cropCentre(vec(img.width, img.width/ratio), vec(0,0,1))
+        end
+        img = img:scale(vec(225,150), "BOX")
+        img:save("thumb_"..fname)
     end
-    img = img:scale(vec(225,150), "BOX")
-    img:save("thumb_"..fname)
 end
 

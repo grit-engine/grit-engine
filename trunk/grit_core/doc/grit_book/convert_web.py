@@ -24,26 +24,38 @@ def MyXInclude(tree):
 
 _ID_REGEX = re.compile("^[_a-z0-9]+$")
 
-_ID_MAP = {}
+ID_MAP = {}
 
 # Ensure no two ids are the same
-def CheckIds(node):
+def CheckDupIds(node):
     nid = node.get('id')
     if node.tag == 'section':
         if not nid:
             Error(node, 'Section must have id attribute.')
         if not _ID_REGEX.match(nid):
             Error(node, 'Section id uses invalid characters.')
-        if _ID_MAP.get(nid):
-            Error(node, 'Section id already exists: ' + nid)
-        _ID_MAP[nid] = node
+        existing = ID_MAP.get(nid)
+        if existing:
+            Error(node, 'Section id already exists: %s.  The other exists at %s:%d' % (nid, existing.base, existing.sourceline))
+        ID_MAP[nid] = node
     elif node.tag in ['issue', 'sref']:
         pass
     else:
         if nid:
             Error(node, 'Only section tags can have id attribute.')
     for child in node:
-        CheckIds(child)
+        CheckDupIds(child)
+
+# Ensure ids are not dangling
+def CheckRefIds(node):
+    if node.tag == 'sref':
+        nid = node.get('id')
+        if not nid:
+            Error(node, 'sref must have id attribute.')
+        if ID_MAP.get(nid) is None:
+            Error(node, 'Referenced section id does not exist: ' + nid)
+    for child in node:
+        CheckRefIds(child)
 
 
 print 'Parsing index.xml'
@@ -51,12 +63,14 @@ tree = ET.parse('index.xml')
 MyXInclude(tree.getroot())
 book = tree.getroot()
 
-CheckIds(book)
+CheckDupIds(book)
+CheckRefIds(book)
 AssertTag(book, 'book')
 
 print 'Translating XML dom...'
 book_ast = Node('Book', None, split=True, data=False)
 book_ast.data = TranslateBlockContents(book, book_ast)
+ResolveReferences(book_ast)
 
 print 'Writing index.html'
 index = '<h1> Contents </h1>\n'
