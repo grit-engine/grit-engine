@@ -26,13 +26,13 @@
 
         <lua>
             obj = gfx_hud_object_add(`/common/hud/Rect`)
-            obj.position = vec(100, 100) -- centre of object, from screen bottom left
+            obj.position = vec(100, 100)  -- centre of object, from screen bottom left
             obj.texture = `/common/hud/textures/Icon064.png`
             obj.size = vec(50, 50)
-            obj.colour = vec(0, 1, 1) -- cyan (masks texture)
-            obj.zOrder = 2 -- 
+            obj.colour = vec(0, 1, 1)  -- cyan (masks texture)
+            obj.zOrder = 2
             obj.alpha = 0.5
-            obj.orientation = 44 -- degrees (clockwise)
+            obj.orientation = 44  -- degrees (clockwise)
             ...
             obj:destroy()
             -- Can also initialise members with a table param:
@@ -135,16 +135,16 @@
 
     <section title="Text" id="gfx_hud_text">
 
-        HUD text objects allow the rendering of text according to a particular
+        HUD text bodies allow the rendering of text according to a particular
         <todo>font</todo>.  It supports top/bottom colour, ANSI terminal colour
         codes, hard tabs, new lines, wrapping according to a pixel width, and
         scrolling.
 
         <image src="hud_example3.png" title="Basic Text Rendering">
-            A HUD text object using the simple misc.fixed font.
+            A HUD text body using the simple misc.fixed font.
         </image>
 
-        The text objects behave like HUD objects, but they are not extensible.
+        The text bodies behave like HUD objects, but they are not extensible.
         They do not have customisable fields and methods, and they cannot
         receive callbacks.  They do, however, have all the basic fields of
         HUD objects.
@@ -221,9 +221,9 @@
 
         <section title="Wrapping Paragraphs" id="gfx_hud_text_wrap">
 
-            By default, the text object will only break the text at any
+            By default, the text body will only break the text at any
             new-line characters (\n) given in the input text.  This means the
-            width of the text object will be the length of its longest line.
+            width of the text body will be the length of its longest line.
             To automatically wrap the text at a given width in pixels, set the
             textWrap field, which defaults to nil.
 
@@ -236,7 +236,7 @@
             Secondly, no more lines are drawn than would fit into the given
             height (400 pixels in this case).  The size field will always
             return the textWrap dimensions when it is non-nil, regardless of
-            how much text is in the text object.  Lines are broken at word
+            how much text is in the text body.  Lines are broken at word
             boundaries unless a word is too long for the line.
 
             It is also possible to scroll the text, i.e. to clip lines at the
@@ -379,11 +379,12 @@
     <section title="Existing HUD Classes" id="gfx_hud_existing">
 
         In /common/hud there are a few existing classes you can use to build
-        GUIs quickly.  We have already seen an example of this with
-        /common/hud/Rect, but there are more sophisticated classes as well.  In
-        all cases, the code for these classes is available to be read.  This is
-        useful to find out how to instantiate them, and also to see examples of
-        HUD code in use.
+        GUIs quickly.  /common/hud/Rect is an example, and we have already seen
+        several example applications in <sref id="gfx_hud">this chapter</sref>.
+        The other classes are more sophisticated.  In all cases, the code for
+        these classes is available to be read.  This is useful to find out how
+        to instantiate them, and also to see examples of HUD code, for those
+        writing their own HUD classes.  Some key classes are documented here:
 
         <section title="Button" id="gfx_hud_existing_button">
 
@@ -423,25 +424,113 @@
                     size = vec(100,40);
                     font = `/common/fonts/Impact24`;
                     caption = "Click Me!";
-                    baseColour = vec(0, 0, 0); -- black
-                    hoverColour = vec(1, 0, 0); -- red
-                    clickColour = vec(1, 1, 0); -- yellow
-                    borderColour = vec(1, 1, 1); -- white
+                    baseColour = vec(0, 0, 0);  -- Black
+                    hoverColour = vec(1, 0, 0);  -- Red
+                    clickColour = vec(1, 1, 0);  -- Yellow
+                    borderColour = vec(1, 1, 1);  -- White
                     captionColour = vec(1, 1, 1);
-                    captionColourGreyed = vec(0.5, 0.5, 0.5); -- grey
+                    captionColourGreyed = vec(0.5, 0.5, 0.5);  -- Grey
                 })
             </lua>
 
+        </section>
+
+        <section title="Label" id="gfx_hud_existing_label">
+
+            The /common/hud/Label class encapsulates a HUD text body.  It
+            provides a simple way of aligning the text, and has the ability to
+            set the text to grey, which is useful when greying out a whole
+            dialog, including text labels.
+
+            <lua>
+                label = gfx_hud_object_add(`/common/hud/Label`, {
+                    size = vec(100, 40);
+                    alignment = "LEFT";  -- Also, "CENTRE", or "RIGHT".
+                    value = "Enter number of things here: ";
+                    position = vec(30, 30);
+                    greyed = true;
+                })
+                label:setValue("Changed value: ")
+                label:setGreyed(false)
+            </lua>
+
+        </section>
+
+        <section title="Border" id="gfx_hud_existing_border">
+
+            The /common/hud/Border class wraps a child object and draws a
+            border around it using <sref id="gfx_hud_corner">corner
+            mapping</sref>.  When instantiating the class, the child object is
+            given and automatically has its parent set to the border object.
+
+            <lua>
+                gfx_hud_object_add(`/common/hud/Border`, {
+                    padding = 8;  -- Extra space on the inside.
+                    colour = 0.25 * vec(1, 1, 1);  -- Dark grey
+                    texture = "/common/hud/CornerTextures/Border04.png";
+                    -- The child object:
+                    gfx_hud_object_add(`/common/hud/Button`, {
+                        caption = "Some button.";
+                    })
+                }),
+            </lua>
+
+            <todo>Needs picture.</todo>
+
+        </section>
+
+    </section>
+
+    <section title="Layout" id="gfx_hud_existing_layout">
+
+        By making use of the HUD hierarchy, one can position HUD objects
+        using relative co-ordinates.  When creating a dialog, this means
+        hardcoding the positions of all the elements of that dialog, which
+        can be tedious and hard to maintain.  There are a few HUD objects
+        that control the the layout of their children, making this easier.
+
+        <section title="StackX and StackY" id="gfx_hud_stacks">
+
+        </section>
+
+        <section title="Stretcher" id="gfx_hud_stretcher">
+
+            The /common/hud/Stretcher class will control the position and size
+            of its child.  It does this by changing its own position (the child
+            is at vec(0, 0) relative), and size, and also changing the child's
+            size to fill its own boundaries.  If the child has a
+            updateChildrenSize callback, it also calls that.
+
+            The class is instantiated by overriding the calcRect function,
+            which allows the user to specify how the size of the stretcher
+            should relate to its parent's size.  The callback is re-executed
+            every time the parent size changes.  The result of calcRect is
+            passed to setRect, i.e. it is the values left, bottom, right, top.
+            In this case, it specifies a 10 pixel padding.
+
+            <lua>
+                gfx_hud_object_add(`/common/hud/Stretcher`, {
+                    calcRect = function(self, psize)
+                        return 10, 10, psize.x-10, psize.y-10
+                    end;
+                    gfx_hud_object_add(`/common/hud/Button`, {
+                        caption = "Some button.";
+                    })
+                }),
+            </lua>
+
+            <todo>Needs picture.</todo>
+
+        </section>
+
+        <section title="Positioner" id="gfx_hud_positioner">
 
         </section>
 
 
-        <section title="Layout" id="gfx_hud_existing_layout">
+    </section>
 
-            vgroup/hgroup
-
-        </section>
-
+    <section title="Bringing it all together" id="gfx_hud_summary">
 
     </section>
 
