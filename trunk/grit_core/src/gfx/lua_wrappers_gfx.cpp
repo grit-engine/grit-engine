@@ -1420,6 +1420,10 @@ TRY_START
     float bottom = check_float(L,3);
     float right = check_float(L,4);
     float top = check_float(L,5);
+    left = floorf(left + 0.5);
+    bottom = floorf(bottom + 0.5);
+    right = floorf(right + 0.5);
+    top = floorf(top + 0.5);
     self.setPosition(Vector2((right+left)/2, (top+bottom)/2));
     self.setSize(L, Vector2(right-left, top-bottom));
     return 0;
@@ -1458,6 +1462,8 @@ TRY_START
             lua_pushnumber(L, self.getDerivedOrientation().inDegrees());
         } else if (!::strcmp(key,"size")) {
             push_v2(L, self.GfxHudObject::getSize());
+        } else if (!::strcmp(key,"sizeSet")) {
+            lua_pushboolean(L, self.getSizeSet());
         } else if (!::strcmp(key,"bounds")) {
             push_v2(L, self.getBounds());
         } else if (!::strcmp(key,"derivedBounds")) {
