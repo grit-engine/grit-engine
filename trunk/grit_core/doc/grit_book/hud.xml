@@ -480,6 +480,8 @@
                 })
             </lua>
 
+            <todo> Editbox, scale, controls </todo>
+
         </section>
 
     </section>
@@ -494,15 +496,58 @@
 
         <section title="StackX and StackY" id="gfx_hud_stacks">
 
+            The /common/hud/StackX and StackY HUD classes will control the
+            positions of their child objects and arrange them into horizontal
+            or vertical alignment.  StackY will place the children vertically,
+            in order, starting from the top.  StackX does the same but
+            horizontally, starting from the left.
+            
+            Ultimately, the size of the stack object will be the bound of all
+            the objects inside it, allowing you to nest stacks, add borders,
+            etc.  The stack cannot be directly resized, it also does not react
+            to children whose size change at some time after the stack was
+            created.
+
+            <lua>
+
+                o = gfx_hud_object_add(`/common/hud/StackY`, {
+                    position = vec(200, 200);
+                    padding = 8;  -- Default space between elements (defaults to 0)
+
+                    -- The child objects:
+                    { align="LEFT" };  -- "RIGHT" and "CENTRE" (default) also available.
+                    gfx_hud_object_add(`/common/hud/Button`, {
+                        caption = "Shoot Missile.";
+                    });
+                    gfx_hud_object_add(`/common/hud/Button`, {
+                        caption = "Shoot Laser.";
+                    });
+                    vec(0, 10);  -- It's also possible to add extra space (or subtract it).
+                    gfx_hud_object_add(`/common/hud/Button`, {
+                        caption = "Place Mine.";
+                    });
+                })
+
+            </lua>
+
+            Each element in the list is either the next child object, a vector2
+            value giving some padding (which behaves like an invisible Rect of
+            the same size), or a string that specifies a new alignment.  The
+            alignment applies to all subsequent objects, unless it is changed
+            again.
+
+            <todo>picture needed</todo>
+
         </section>
 
         <section title="Stretcher" id="gfx_hud_stretcher">
 
-            The /common/hud/Stretcher class will control the position and size
-            of its child.  It does this by changing its own position (the child
-            is at vec(0, 0) relative), and size, and also changing the child's
-            size to fill its own boundaries.  If the child has an
-            updateChildrenSize callback, it also calls that.
+            The /common/hud/Stretcher class will position its child object to
+            fill the given space.  It does this by changing its own position
+            (the child is at vec(0, 0) relative), and size, and also changing
+            the child's size to fill its own boundaries.  If the child has an
+            updateChildrenSize callback, it calls that after changing the child
+            size.
 
             The class is instantiated by overriding the calcRect function,
             which allows the user to specify how the size of the stretcher
@@ -532,8 +577,23 @@
 
         <section title="Positioner" id="gfx_hud_positioner">
 
-        </section>
+            The /common/hud/Positioner controls its own position according to
+            the size of its parent.  It is typically used to place other
+            objects relative to the four corners of the screen, and update
+            these positions as the resolution or window size changes.  There
+            are 5 existing positioner objects you can attach a HUD object to
+            (by setting them as parent):  hud_center, hud_bottom_left,
+            hud_bottom_right, hud_top_left, and hud_top_right.
 
+            <lua>
+                o = gfx_hud_object_add(`/common/hud/Rect`, {
+                    size = vec(100, 100);
+                    parent = hud_top_left;
+                    position = vec(50, -50);
+                })
+            </lua>
+
+        </section>
 
     </section>
 
