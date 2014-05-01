@@ -88,7 +88,7 @@
         needsX field to false again.
 
         Note how giving the speed in the class allows it, optionally, to be
-        overidden on a per-object basis.  The following code shows how we can
+        overridden on a per-object basis.  The following code shows how we can
         override the speed when we instantiate the object:
 
         <lua>
@@ -344,7 +344,7 @@
         </lua>
 
         The mouseMoveCallback gets the cursor position local to the object
-        (with derived orientation and position transfromations reversed), the
+        (with derived orientation and position transformations reversed), the
         screen cursor position, and a boolean indicating whether the mouse
         cursor is over the HUD object or not.  This takes into account other
         HUD objects that may be occluding this HUD object.  If inside is true,
@@ -492,7 +492,7 @@
         using relative co-ordinates.  When creating a dialog, this means
         hardcoding the positions of all the elements of that dialog, which
         can be tedious and hard to maintain.  There are a few HUD objects
-        that control the the layout of their children, making this easier.
+        that control the layout of their children, making this easier.
 
         <section title="StackX and StackY" id="gfx_hud_stacks">
 
@@ -507,6 +507,11 @@
             etc.  The stack cannot be directly resized, it also does not react
             to children whose size change at some time after the stack was
             created.
+
+            <image src="hud_example12.png" title="Border">
+                Three buttons laid out using StackY.  Note the extra gap of 10
+                pixels.
+            </image>
 
             <lua>
 
@@ -536,7 +541,10 @@
             alignment applies to all subsequent objects, unless it is changed
             again.
 
-            <todo>picture needed</todo>
+            The StackX is the same, except obviously they are placed one after
+            each other from left to right.  Also, the alignment options are
+            "TOP", "CENTRE", and "BOTTOM", and any additional spacing is given
+            as vec(0, n) instead of vec(0, n).
 
         </section>
 
