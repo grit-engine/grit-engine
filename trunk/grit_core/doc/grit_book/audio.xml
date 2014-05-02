@@ -2,6 +2,43 @@
 
 <section title="Audio" id="audio">
 
-    <section title="Audio Bodies" id="audio_bodies" />
+    Grit's audio support supports loading audio files from disk and playing
+    them.  PCM (wav files) and OGG vorbis files are supported.  Sound files can
+    be mono or stereo.  Sounds can either be <def>instantaneous</def> or
+    <def>continuous</def>, and, unrelatedly, they can either be
+    <def>ambient</def> or <def>positional</def>.  Those 2 categories yield 4
+    possibilities.
+
+    Instantaneous sounds are usually short, they are used for bangs and throw
+    away noises.  They always play to completion and they cannot be paused, or
+    have their volume or pitch changed while the sound is playing.
+
+    Ambient sounds play in the same manner everywhere.  They are typically used
+    for environemntal noise.  They are usually stereo, and the channels are
+    mapped directly to the computer's speakers.
+
+    Positional sounds have a position in the 3D world, and their volume (and
+    possibly other effects) is controlled automatically based on distance to
+    the camera and other factors.  Instantaneous positional sounds play to
+    completion at a fixed point, typically used for impact sounds and similar
+    events.  Typically these are mono soundeffects.  If not, then two mono
+    sound emitters are created a fixed distance apart, according to a rotation
+    parameter.
+
+    <lua>
+        audio_play_ambient()
+        audio_play()
+    </lua>
+    
+    <section title="Audio Bodies" id="audio_bodies">
+    
+        Continuous sounds are implemented with <def>audio
+        bodies</def> which have fields and methods via which the playback can
+        be controlled after the sound has started playing.  
+
+        Audio bodies playing positional sounds can have their position updated
+        at run-time.
+
+    </section>
 
 </section>

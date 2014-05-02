@@ -8,6 +8,9 @@
             The 'playground' map.
         </image>
 
+        <todo>This book is incomplete, but is posted online in the hope that it
+        its existing content be useful.</todo>
+
         The Grit Game Engine allows you to create interactive 3D environments
         such as computer games.  Its fundamental architecture is based around
         the Lua scripting language.  Games are created by writing scripts that
