@@ -21,8 +21,8 @@
 
 #include "../shared_ptr.h"
 
-class AudioSource;
-typedef SharedPtr<AudioSource> AudioSourcePtr;
+class AudioBody;
+typedef SharedPtr<AudioBody> AudioBodyPtr;
 
 #ifndef audio_h
 #define audio_h
@@ -73,11 +73,19 @@ void audio_shutdown ();
  */
 void audio_update (const Vector3& position, const Vector3& velocity, const Quaternion& rotation);
 
+/** Make an instantaneous ambient sound.  Useful for distant car horns, and
+ * other short duration environmental sounds.  The sound cannot be controlled
+ * after playback has begun.
+ * \param filename The name of an audio disk resource, must be loaded.
+ * \param volume Amplitude multiplier.
+ * \param pitch Frequency multiplier (use 1 for verbatim playback).
+ */
+void audio_play_ambient (const std::string& filename, float volume, float pitch);
+
 /** Make an instantaneous sound.  Useful for bangs, knocks, and other short
  * duration sounds.  The sound cannot be controlled after playback has begun.
  * \param filename The name of an audio disk resource, must be loaded.
- * \param ambient Whether or not the sound should be attenuated with distance.
- * \param position If not ambient, worldspace location to emit from.
+ * \param position The worldspace location to emit from.  Stereo sounds have channels fused.
  * \param volume Amplitude multiplier.
  * \param ref_dist Reference distance - the radius of a sphere inside which the
  *        volume is maximum.
@@ -85,8 +93,7 @@ void audio_update (const Vector3& position, const Vector3& velocity, const Quate
  *        the ref_dist sphere.
  * \param pitch Frequency multiplier (use 1 for verbatim playback).
  */
-
-void audio_play (const std::string& filename, bool ambient, const Vector3& position,
+void audio_play (const std::string& filename, const Vector3& position,
                  float volume, float ref_dist, float roll_off, float pitch);
 
 /** Convert the enum value to a human-readable string. */
@@ -119,7 +126,7 @@ float audio_option (AudioFloatOption o);
 
 /** A sound emitter whose parameters can be modified while the sound is
  * playing.  Stereo sounds are implemented using two emitters. */
-class AudioSource : public DiskResource::ReloadWatcher
+class AudioBody : public DiskResource::ReloadWatcher
 {
     private:
         AudioDiskResource *resource;
@@ -138,8 +145,8 @@ class AudioSource : public DiskResource::ReloadWatcher
         ALuint alSourceLeft;
         ALuint alSourceRight;
 
-        AudioSource (const std::string &filename, bool ambient);
-        virtual ~AudioSource (void);
+        AudioBody (const std::string &filename, bool ambient);
+        virtual ~AudioBody (void);
 
         void reinitialise (void);
 
@@ -153,8 +160,8 @@ class AudioSource : public DiskResource::ReloadWatcher
          * \param filename The disk resource that will be played.  Must be loaded.
          * \param ambient Whether or not the sound attenuates with player distance.
          */
-        static AudioSourcePtr make (const std::string &filename, bool ambient)
-        { return AudioSourcePtr(new AudioSource(filename, ambient)); }
+        static AudioBodyPtr make (const std::string &filename, bool ambient)
+        { return AudioBodyPtr(new AudioBody(filename, ambient)); }
 
         /** Return the worldspace location where sound is emitted. */
         Vector3 getPosition (void) { return position; }
@@ -219,7 +226,7 @@ class AudioSource : public DiskResource::ReloadWatcher
         /** Destroy TODO: why? */
         void destroy (void);
 
-        friend class SharedPtr<AudioSource>;
+        friend class SharedPtr<AudioBody>;
 };
 
 

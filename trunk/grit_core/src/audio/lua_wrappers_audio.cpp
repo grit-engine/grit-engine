@@ -27,65 +27,65 @@
 #include "audio.h"
 #include "lua_wrappers_audio.h"
 
-#define AUDIOSOURCE_TAG "Grit/AudioSource"
+#define AUDIOSOURCE_TAG "Grit/AudioBody"
 
-void push_audiosource (lua_State *L, const AudioSourcePtr &self)
+void push_audiobody (lua_State *L, const AudioBodyPtr &self)
 {
     if (self.isNull())
         lua_pushnil(L);
     else
-        push(L,new AudioSourcePtr(self),AUDIOSOURCE_TAG);
+        push(L,new AudioBodyPtr(self),AUDIOSOURCE_TAG);
 }
 
-GC_MACRO(AudioSourcePtr,audiosource,AUDIOSOURCE_TAG)
+GC_MACRO(AudioBodyPtr,audiobody,AUDIOSOURCE_TAG)
 
-static int audiosource_play (lua_State *L)
+static int audiobody_play (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(AudioSourcePtr,self,1,AUDIOSOURCE_TAG);
+    GET_UD_MACRO(AudioBodyPtr,self,1,AUDIOSOURCE_TAG);
     self->play();
     return 0;
 TRY_END
 }
 
-static int audiosource_pause (lua_State *L)
+static int audiobody_pause (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(AudioSourcePtr,self,1,AUDIOSOURCE_TAG);
+    GET_UD_MACRO(AudioBodyPtr,self,1,AUDIOSOURCE_TAG);
     self->pause();
     return 0;
 TRY_END
 }
 
-static int audiosource_stop (lua_State *L)
+static int audiobody_stop (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(AudioSourcePtr,self,1,AUDIOSOURCE_TAG);
+    GET_UD_MACRO(AudioBodyPtr,self,1,AUDIOSOURCE_TAG);
     self->stop();
     return 0;
 TRY_END
 }
 
-static int audiosource_destroy (lua_State *L)
+static int audiobody_destroy (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(AudioSourcePtr,self,1,AUDIOSOURCE_TAG);
+    GET_UD_MACRO(AudioBodyPtr,self,1,AUDIOSOURCE_TAG);
     self->destroy();
     return 0;
 TRY_END
 }
 
-TOSTRING_SMART_PTR_MACRO (audiosource,AudioSourcePtr,AUDIOSOURCE_TAG)
+TOSTRING_SMART_PTR_MACRO (audiobody,AudioBodyPtr,AUDIOSOURCE_TAG)
 
-static int audiosource_index (lua_State *L)
+static int audiobody_index (lua_State *L)
 {
 TRY_START
     check_args(L,2);
-    GET_UD_MACRO(AudioSourcePtr,self,1,AUDIOSOURCE_TAG);
+    GET_UD_MACRO(AudioBodyPtr,self,1,AUDIOSOURCE_TAG);
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"position")) {
         push_v3(L, self->getPosition());
@@ -109,120 +109,117 @@ TRY_START
         lua_pushnumber(L, self->getRollOff());
     } else if (!::strcmp(key,"playing")) {
         lua_pushboolean(L, self->playing());
-	} else if (!::strcmp(key,"play")) {
-		push_cfunction(L,audiosource_play);
-	} else if (!::strcmp(key,"pause")) {
-		push_cfunction(L,audiosource_pause);
-	} else if (!::strcmp(key,"stop")) {
-		push_cfunction(L,audiosource_stop);
+    } else if (!::strcmp(key,"play")) {
+        push_cfunction(L,audiobody_play);
+    } else if (!::strcmp(key,"pause")) {
+        push_cfunction(L,audiobody_pause);
+    } else if (!::strcmp(key,"stop")) {
+        push_cfunction(L,audiobody_stop);
     } else if (!::strcmp(key,"destroy")) {
-        push_cfunction(L,audiosource_destroy);
+        push_cfunction(L,audiobody_destroy);
     } else {
-        my_lua_error(L,"Not a readable AudioSource member: "+std::string(key));
+        my_lua_error(L,"Not a readable AudioBody member: "+std::string(key));
     }
     return 1;
 TRY_END
 }
 
 
-static int audiosource_newindex (lua_State *L)
+static int audiobody_newindex (lua_State *L)
 {
 TRY_START
     check_args(L,3);
-    GET_UD_MACRO(AudioSourcePtr,self,1,AUDIOSOURCE_TAG);
+    GET_UD_MACRO(AudioBodyPtr,self,1,AUDIOSOURCE_TAG);
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"position")) {
         Vector3 v = check_v3(L,3);
         self->setPosition(v);
     } else if (!::strcmp(key,"orientation")) {
         Quaternion v = check_quat(L,3);
-		self->setOrientation(v);
+        self->setOrientation(v);
     } else if (!::strcmp(key,"separation")) {
         float v = check_float(L,3);
-		self->setSeparation(v);
+        self->setSeparation(v);
     } else if (!::strcmp(key,"velocity")) {
         Vector3 v = check_v3(L,3);
-		self->setVelocity(v);
-	} else if (!::strcmp(key,"pitch")) {
-		float f = check_float(L, 3);
-		self->setPitch(f);
-	} else if (!::strcmp(key,"volume")) {
-		float f = check_float(L, 3);
-		self->setVolume(f);
-	} else if (!::strcmp(key,"referenceDistance")) {
-		float f = check_float(L, 3);
-		self->setReferenceDistance(f);
-	} else if (!::strcmp(key,"rollOff")) {
-		float f = check_float(L, 3);
-		self->setRollOff(f);
+        self->setVelocity(v);
+    } else if (!::strcmp(key,"pitch")) {
+        float f = check_float(L, 3);
+        self->setPitch(f);
+    } else if (!::strcmp(key,"volume")) {
+        float f = check_float(L, 3);
+        self->setVolume(f);
+    } else if (!::strcmp(key,"referenceDistance")) {
+        float f = check_float(L, 3);
+        self->setReferenceDistance(f);
+    } else if (!::strcmp(key,"rollOff")) {
+        float f = check_float(L, 3);
+        self->setRollOff(f);
     } else if (!::strcmp(key,"looping")) {
         bool b = check_bool(L,3);
-		self->setLooping(b);
+        self->setLooping(b);
     } else {
-        my_lua_error(L,"Not a writable AudioSource member: "+std::string(key));
+        my_lua_error(L,"Not a writable AudioBody member: "+std::string(key));
     }
     return 0;
 TRY_END
 }
 
-EQ_MACRO(AudioSourcePtr,audiosource,AUDIOSOURCE_TAG)
+EQ_MACRO(AudioBodyPtr,audiobody,AUDIOSOURCE_TAG)
 
-MT_MACRO_NEWINDEX(audiosource);
+MT_MACRO_NEWINDEX(audiobody);
 
-static int global_audio_source_make (lua_State *L)
+static int global_audio_body_make (lua_State *L)
 {
 TRY_START
-	check_args(L, 1);
-	push_audiosource(L, AudioSource::make(check_path(L, 1),false));
-	return 1;
+    check_args(L, 1);
+    push_audiobody(L, AudioBody::make(check_path(L, 1),false));
+    return 1;
 TRY_END
 }
 
-static int global_audio_source_make_ambient (lua_State *L)
+static int global_audio_body_make_ambient (lua_State *L)
 {
 TRY_START
-	check_args(L, 1);
-	push_audiosource(L, AudioSource::make(check_path(L, 1),true));
-	return 1;
+    check_args(L, 1);
+    push_audiobody(L, AudioBody::make(check_path(L, 1),true));
+    return 1;
 TRY_END
 }
 
 static int global_audio_play_ambient (lua_State *L)
 {
 TRY_START
-	check_args(L, 6);
+    check_args(L, 3);
     std::string res = check_path(L,1);
-    Vector3 pos = check_v3(L,2);
-    float volume = check_float(L,3);
-    float ref_dist = check_float(L,4);
-    float roll_off = check_float(L,5);
-    float pitch = check_float(L,6);
-	audio_play(res, true, pos, volume, ref_dist, roll_off, pitch);
-	return 0;
+    float volume = check_float(L,2);
+    float pitch = check_float(L,3);
+    audio_play_ambient(res, volume, pitch);
+    return 0;
 TRY_END
 }
 
 static int global_audio_play (lua_State *L)
 {
 TRY_START
-	check_args(L, 6);
+    check_args(L, 6);
     std::string res = check_path(L,1);
-    Vector3 pos = check_v3(L,2);
-    float volume = check_float(L,3);
-    float ref_dist = check_float(L,4);
-    float roll_off = check_float(L,5);
-    float pitch = check_float(L,6);
-	audio_play(res, false, pos, volume, ref_dist, roll_off, pitch);
-	return 0;
+    float volume = check_float(L,2);
+    float pitch = check_float(L,3);
+    Vector3 pos = check_v3(L,4);
+    float ref_dist = check_float(L,5);
+    float roll_off = check_float(L,6);
+    audio_play(res, pos, volume, ref_dist, roll_off, pitch);
+    return 0;
 TRY_END
 }
 
 static int global_audio_update (lua_State *L)
 {
 TRY_START
-	check_args(L, 3);
-	audio_update(check_v3(L, 1), check_v3(L, 2), check_quat(L, 3));
-	return 0;
+    check_args(L, 3);
+    audio_update(check_v3(L, 1), check_v3(L, 2), check_quat(L, 3));
+    return 0;
 TRY_END
 }
 
@@ -265,17 +262,17 @@ TRY_END
 }
 
 static const luaL_reg global[] = {
-	{"audio_source_make",global_audio_source_make},
-	{"audio_source_make_ambient",global_audio_source_make_ambient},
-	{"audio_play",global_audio_play},
-	{"audio_play_ambient",global_audio_play_ambient},
-	{"audio_update",global_audio_update},
-	{"audio_option",global_audio_option},
-	{NULL,NULL}
+    {"audio_body_make",global_audio_body_make},
+    {"audio_body_make_ambient",global_audio_body_make_ambient},
+    {"audio_play",global_audio_play},
+    {"audio_play_ambient",global_audio_play_ambient},
+    {"audio_update",global_audio_update},
+    {"audio_option",global_audio_option},
+    {NULL,NULL}
 };
 
 void audio_lua_init (lua_State *L)
 {
-	ADD_MT_MACRO(audiosource,AUDIOSOURCE_TAG);
+    ADD_MT_MACRO(audiobody,AUDIOSOURCE_TAG);
     register_lua_globals(L, global);
 }

@@ -7,7 +7,7 @@
     In Grit, user input, in the form of mouse movements and keyboard/mouse button
     presses, is delivered to the scripting environment via a chain of
     <def>InputFilter</def> objects.  Each InputFilter has a set of button bindings
-    associated with it, e.g. "C+A-s" meaning ctrl+alt+S.  These buttons include
+    associated with it, e.g. "C+A-s" meaning Ctrl+Alt+S.  These buttons include
     both keyboard and mouse buttons.  Lua code registers callbacks to handle these
     button presses.  The first function is called when the button is pressed down.
     The second is called when it is released, and the third is for key repeat
@@ -16,7 +16,7 @@
 
     <lua>
         my_filter = InputFilter(135, "My Bindings")
-        my_filter:bind("C+A-s", function() echo("Hello World!") end, nil, true)
+        my_filter:bind("C+A-s", function() print("Hello World!") end, nil, true)
     </lua>
 
     The intent is that different modules of behaviour within Grit have their
@@ -62,7 +62,7 @@
     cursor. 
 
     <lua>
-        my_filter.mouseMoveCallback = function (rel) echo("Mouse: "..tostring(rel)) end
+        my_filter.mouseMoveCallback = function (rel) print("Mouse: "..tostring(rel)) end
         my_filter.mouseCapture = true
     </lua>
 

@@ -234,7 +234,7 @@ void audio_shutdown()
 
 static std::vector<ALuint> one_shot_sounds;
 
-static ALuint audio_play_aux (ALuint buffer, float volume, float pitch, float ref_dist, float roll_off)
+static ALuint audio_play_aux (ALuint buffer, float volume, float pitch, float ref_dist=0, float roll_off=0)
 {
     one_shot_sounds.push_back(ALuint());
     ALuint &src = one_shot_sounds[one_shot_sounds.size()-1];
@@ -248,7 +248,7 @@ static ALuint audio_play_aux (ALuint buffer, float volume, float pitch, float re
     return src;
 }
 
-void audio_play (const std::string& filename, bool ambient, const Vector3& position, float volume, float ref_dist, float roll_off, float pitch)
+void audio_play_ambient (const std::string& filename, float volume, float pitch)
 {
     DiskResource *dr = disk_resource_get(filename);
     if (dr == NULL) GRIT_EXCEPT("Resource not found: \""+filename+"\"");
@@ -258,22 +258,33 @@ void audio_play (const std::string& filename, bool ambient, const Vector3& posit
         GRIT_EXCEPT("Cannot play an unloaded audio resource: " + resource->getName());
     }
     
-    if (ambient) {
-        ALuint src = audio_play_aux(resource->getALBufferAll(), volume, pitch, ref_dist, roll_off);
-        alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
-        alSourcePlay(src);
-    } else {
-        Vector3 v;
-        // put them in the same place for now -- openal doesn't really support this and there's not point in an uphill struggle
-        ALuint src_l = audio_play_aux(resource->getALBufferLeft(), volume, pitch, ref_dist, roll_off);
-        v = position;
-        alSource3f(src_l, AL_POSITION, v.x, v.y, v.z);
-        alSourcePlay(src_l);
-        ALuint src_r = audio_play_aux(resource->getALBufferRight(), volume, pitch, ref_dist, roll_off);
-        v = position;
-        alSource3f(src_r, AL_POSITION, v.x, v.y, v.z);
-        alSourcePlay(src_r);
+    ALuint src = audio_play_aux(resource->getALBufferAll(), volume, pitch);
+    alSource3f(src, AL_POSITION, 0, 0, 0);
+    alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
+    alSourcePlay(src);
+    
+}
+
+void audio_play (const std::string& filename, const Vector3& position, float volume, float ref_dist, float roll_off, float pitch)
+{
+    DiskResource *dr = disk_resource_get(filename);
+    if (dr == NULL) GRIT_EXCEPT("Resource not found: \""+filename+"\"");
+    AudioDiskResource *resource = dynamic_cast<AudioDiskResource*>(dr);
+    if (resource == NULL) GRIT_EXCEPT("Not an audio resource: \""+filename+"\"");
+    if (!resource->isLoaded()) {
+        GRIT_EXCEPT("Cannot play an unloaded audio resource: " + resource->getName());
     }
+    
+    Vector3 v;
+    // put them in the same place for now -- openal doesn't really support this and there's not point in an uphill struggle
+    ALuint src_l = audio_play_aux(resource->getALBufferLeft(), volume, pitch, ref_dist, roll_off);
+    v = position;
+    alSource3f(src_l, AL_POSITION, v.x, v.y, v.z);
+    alSourcePlay(src_l);
+    ALuint src_r = audio_play_aux(resource->getALBufferRight(), volume, pitch, ref_dist, roll_off);
+    v = position;
+    alSource3f(src_r, AL_POSITION, v.x, v.y, v.z);
+    alSourcePlay(src_r);
     
 }
 
@@ -317,7 +328,7 @@ void audio_update (const Vector3& position, const Vector3& velocity, const Quate
     }
 }
 
-AudioSource::AudioSource (const std::string &filename, bool ambient)
+AudioBody::AudioBody (const std::string &filename, bool ambient)
       : resource(NULL),
         position(Vector3(0,0,0)),
         orientation(Quaternion(1,0,0,0)),
@@ -349,13 +360,13 @@ AudioSource::AudioSource (const std::string &filename, bool ambient)
 
 }
 
-AudioSource::~AudioSource (void)
+AudioBody::~AudioBody (void)
 {
     if (resource == NULL) return;
     resource->unregisterReloadWatcher(this);
 }
 
-void AudioSource::notifyReloaded (const DiskResource *r)
+void AudioBody::notifyReloaded (const DiskResource *r)
 {
     (void) r;
     bool was_playing = playing();
@@ -364,13 +375,13 @@ void AudioSource::notifyReloaded (const DiskResource *r)
     if (was_playing) play();
 }
 
-void AudioSource::reinitialise (void)
+void AudioBody::reinitialise (void)
 {
     alSourcei(alSourceLeft, AL_BUFFER, AL_NONE);
     alSourcei(alSourceRight, AL_BUFFER, AL_NONE);
 
     if (!resource->isLoaded()) {
-        CERR << "Cannot create an AudioSource for an unloaded audio resource: " + resource->getName() << std::endl;
+        CERR << "Cannot create an AudioBody for an unloaded audio resource: " + resource->getName() << std::endl;
         return;
     }
 
@@ -388,7 +399,7 @@ void AudioSource::reinitialise (void)
 
 //FIXME: setters/getters for separation and orientation -- call updatePositions
 
-void AudioSource::updatePositions (void)
+void AudioBody::updatePositions (void)
 {
     if (ambient) return;
     // put them on top of each other if not stereo
@@ -400,76 +411,79 @@ void AudioSource::updatePositions (void)
     alSource3f(alSourceRight, AL_POSITION, v_r.x, v_r.y, v_r.z);
 }
 
-void AudioSource::destroy (void)
+void AudioBody::destroy (void)
 {
     alDeleteSources(1, &alSourceLeft);
     alDeleteSources(1, &alSourceRight);
 }
 
-void AudioSource::setPosition (const Vector3& v)
+void AudioBody::setPosition (const Vector3& v)
 {
     if (ambient) return;
     position = v;
     updatePositions();
 }
 
-void AudioSource::setOrientation (const Quaternion& v)
+void AudioBody::setOrientation (const Quaternion& v)
 {
     if (ambient) return;
     orientation = v;
     updatePositions();
 }
 
-void AudioSource::setSeparation (float v)
+void AudioBody::setSeparation (float v)
 {
     if (ambient) return;
     separation = v;
     updatePositions();
 }
 
-void AudioSource::setVelocity (const Vector3& v)
+void AudioBody::setVelocity (const Vector3& v)
 {
+    if (ambient) return;
     velocity = v;
     alSource3f(alSourceLeft, AL_VELOCITY, v.x, v.y, v.z);
     alSource3f(alSourceRight, AL_VELOCITY, v.x, v.y, v.z);
 }
 
-void AudioSource::setLooping (bool v)
+void AudioBody::setLooping (bool v)
 {
     looping = v;
     alSourcei(alSourceLeft, AL_LOOPING, v);
     alSourcei(alSourceRight, AL_LOOPING, v);
 }
 
-void AudioSource::setVolume (float v)
+void AudioBody::setVolume (float v)
 {
     volume = v;
     alSourcef(alSourceLeft, AL_GAIN, v);
     alSourcef(alSourceRight, AL_GAIN, v);
 }
 
-void AudioSource::setPitch (float v)
+void AudioBody::setPitch (float v)
 {
     pitch = v;
     alSourcef(alSourceLeft, AL_PITCH, v);
     alSourcef(alSourceRight, AL_PITCH, v);
 }
 
-void AudioSource::setReferenceDistance (float v)
+void AudioBody::setReferenceDistance (float v)
 {
+    if (ambient) return;
     referenceDistance = v;
     alSourcef(alSourceLeft, AL_REFERENCE_DISTANCE, v);
     alSourcef(alSourceRight, AL_REFERENCE_DISTANCE, v);
 }
 
-void AudioSource::setRollOff (float v)
+void AudioBody::setRollOff (float v)
 {
+    if (ambient) return;
     rollOff = v;
     alSourcef(alSourceLeft, AL_ROLLOFF_FACTOR, v);
     alSourcef(alSourceRight, AL_ROLLOFF_FACTOR, v);
 }
 
-bool AudioSource::playing (void)
+bool AudioBody::playing (void)
 {
     ALint value;
     // just query left source, right one may not have a buffer
@@ -477,20 +491,20 @@ bool AudioSource::playing (void)
     return (value == AL_PLAYING);
 }
 
-void AudioSource::play (void)
+void AudioBody::play (void)
 {
     alSourcePlay(alSourceLeft);
     alSourcePlay(alSourceRight);
 }
 
-void AudioSource::pause (void)
+void AudioBody::pause (void)
 {
     // presumably does nothing if the track is not playing
     alSourcePause(alSourceLeft);
     alSourcePause(alSourceRight);
 }
 
-void AudioSource::stop (void)
+void AudioBody::stop (void)
 {
     alSourceStop(alSourceLeft);
     alSourceStop(alSourceRight);
