@@ -26,7 +26,7 @@
 #include "gfx_body.h"
 
 
-boost::recursive_mutex gfx_material_lock;
+std::recursive_mutex gfx_material_lock;
 
 GfxMaterial::GfxMaterial (const std::string &name_)
   : fadingMat(NULL),

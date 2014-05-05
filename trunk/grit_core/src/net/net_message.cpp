@@ -1,6 +1,10 @@
-#include "net.h"
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+
 #include "../centralised_log.h"
-#include <stdio.h>
+
+#include "net.h"
 
 NetMessage::NetMessage()
 {

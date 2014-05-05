@@ -25,8 +25,6 @@
 #include <iostream>
 #include <sstream>
 
-#include <boost/thread/recursive_mutex.hpp>
-
 #define CERR CLog(__FILE__,__LINE__,true)
 #define CLOG CLog()
 #define CVERB CLog(__FILE__,__LINE__,false)
@@ -46,9 +44,7 @@ class CentralisedLog {
     public:
 
         // Chickening out of making this thread safe -- because the only sane way to do it is to introduce
-        // yield points at the std::endl, but then if someone forgets a std::endl it will deadlock
-
-        //boost::recursive_mutex lock;
+        // yield points at the std::endl, but then if someone forgets a std::endl it will deadlock.
 
         void print (const std::string &line)
         {

@@ -27,8 +27,8 @@
 #include "background_loader.h"
 #include "main.h"
 
-#define SYNCHRONISED boost::recursive_mutex::scoped_lock _scoped_lock(lock)
-#define SYNCHRONISED2(bgl) boost::recursive_mutex::scoped_lock _scoped_lock(bgl->lock)
+#define SYNCHRONISED std::lock_guard<std::recursive_mutex> _scoped_lock(lock)
+#define SYNCHRONISED2(bgl) std::lock_guard<std::recursive_mutex> _scoped_lock(bgl->lock)
 
 bool Demand::requestLoad (float dist)
 {
@@ -127,7 +127,7 @@ BackgroundLoader::BackgroundLoader (void)
 {
         SYNCHRONISED;
 
-        mThread = new boost::thread(boost::ref(*this));
+        mThread = new std::thread((void (*)(BackgroundLoader*))thread_main, const_cast<BackgroundLoader*>(this));
 }
 
 BackgroundLoader::~BackgroundLoader (void)
@@ -195,7 +195,12 @@ void BackgroundLoader::handleBastards (void)
 }
 
 
-void BackgroundLoader::operator() (void)
+void BackgroundLoader::thread_main (BackgroundLoader *self)
+{
+        self->thread_main();
+}
+
+void BackgroundLoader::thread_main (void)
 {
         //APP_VERBOSE("BackgroundLoader: thread started");
         DiskResources pending;
@@ -228,7 +233,7 @@ void BackgroundLoader::operator() (void)
                         }
                         pending.clear();
                         if (mAllowance <= 0 || !nearestDemand(mCurrent)) {
-                                cVar.wait(_scoped_lock);
+                                cVar.wait(lock);
                                 continue;        
                         }
                         pending = mCurrent->resources;

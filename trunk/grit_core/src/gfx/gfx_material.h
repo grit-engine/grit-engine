@@ -25,6 +25,8 @@ struct GfxPaintColour;
 #ifndef GFX_MATERIAL_H
 #define GFX_MATERIAL_H
 
+#include <mutex>
+
 #include <OgreMaterial.h>
 
 #include "gfx.h"
@@ -50,8 +52,8 @@ enum GfxMaterialSpecularMode {
  * to access the material database, which is also being accessed from the primary render
  * thread.
  */
-extern boost::recursive_mutex gfx_material_lock;
-#define GFX_MAT_SYNC boost::recursive_mutex::scoped_lock _scoped_lock(gfx_material_lock)
+extern std::recursive_mutex gfx_material_lock;
+#define GFX_MAT_SYNC std::lock_guard<std::recursive_mutex> _scoped_lock(gfx_material_lock)
 
 
 // textures and texture settings

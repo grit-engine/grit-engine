@@ -29,13 +29,11 @@ typedef fast_erase_vector<Demand*> Demands;
 #ifndef BACKGROUNDLOADER_H
 #define BACKGROUNDLOADER_H
 
-#include <list>
 #include <algorithm>
-
-#include <boost/thread/thread.hpp>
-#include <boost/thread/condition.hpp>
-#include <boost/thread/recursive_mutex.hpp>
-
+#include <condition_variable>
+#include <list>
+#include <mutex>
+#include <thread>
 
 #include "centralised_log.h"
 #include "disk_resource.h"
@@ -249,10 +247,12 @@ class BackgroundLoader {
 
 
         // background thread entry point
-        void operator() (void);
+        static void thread_main (BackgroundLoader *self);
 
-        boost::recursive_mutex lock;
-        boost::condition cVar;
+        void thread_main (void);
+
+        std::recursive_mutex lock;
+        std::condition_variable_any cVar;
 
     protected:
 
@@ -263,7 +263,7 @@ class BackgroundLoader {
 
         Demands mDemands;
 
-        boost::thread *mThread;
+        std::thread *mThread;
 
         Demand * volatile mCurrent;
         volatile bool mQuit;

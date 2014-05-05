@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstring>
 
 #include "../centralised_log.h"
 
