@@ -21,6 +21,8 @@
 
 #include <cstdlib>
 #include <string>
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
 
 void clipboard_set (const std::string &s)
 {
@@ -30,7 +32,69 @@ void clipboard_set (const std::string &s)
 
 std::string clipboard_get (void)
 {
-        return "clipboard not yet supported";
+        Display *display = XOpenDisplay(NULL);
+        if(!display)
+                return "";
+        
+        //first try CLIPBOARD since it behaves pretty much like windows's one
+        Atom selectionSource = XInternAtom(display, "CLIPBOARD", False);
+        Window selectionOwner = XGetSelectionOwner(display, selectionSource);
+        
+        if(selectionOwner == None)
+        {
+                //use XA_PRIMARY as a fallback clipboard
+                selectionSource=XA_PRIMARY;
+                selectionOwner = XGetSelectionOwner(display, selectionSource);
+        
+                if(selectionOwner == None)
+                {
+                        return "";
+                }
+        }
+        
+        Atom property = XInternAtom(display, "SelectionPropertyTemp", False);
+        //ask owner to convert the string into Latin-1 format
+        //TODO: FIXME: unicode support
+        //see this for reference http://svn.gna.org/svn/warzone/trunk/lib/betawidget/src/platform/sdl/clipboardX11.c
+        XConvertSelection(display, selectionSource, XA_STRING, property, selectionOwner, CurrentTime);
+        XFlush(display);
+        
+        Atom type;
+        int format=0, result=0;
+        unsigned long len=0, bytes_left=0, dummy=0;
+        uint8_t *data=NULL;
+        
+        result = XGetWindowProperty(display, selectionOwner, property,
+                0, 0,   //offset, len
+                0,      //delete 0==FALSE
+                AnyPropertyType, //flag
+                &type,          //return type
+                &format,        //return format
+                &len, &bytes_left,
+                &data);
+         if(result != Success)
+         {
+                return "";
+         }
+         if(result == Success && bytes_left > 0)
+         {
+                result = XGetWindowProperty (display, selectionOwner,
+                        property, 0, bytes_left, 0,
+                        AnyPropertyType, &type, &format,
+                        &len, &dummy, &data);
+                 
+                 if(result != Success)
+                 {
+                        return "";
+                 }
+                 
+                 if(type == XA_STRING)
+                 {
+                        return std::string(data, data+bytes_left);
+                 }
+         }
+        
+        return "";
 }
 
 // vim: shiftwidth=8:tabstop=8:expandtab
