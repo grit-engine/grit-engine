@@ -53,10 +53,12 @@ std::string clipboard_get (void)
         }
         
         Atom property = XInternAtom(display, "SelectionPropertyTemp", False);
-        //ask owner to convert the string into Latin-1 format
-        //TODO: FIXME: unicode support
+       
+        //get atom for unicode string property
+        Atom XA_UTF8_STRING = XInternAtom(display, "UTF8_STRING", False);
+        //ask owner to convert the string into unicode
         //see this for reference http://svn.gna.org/svn/warzone/trunk/lib/betawidget/src/platform/sdl/clipboardX11.c
-        XConvertSelection(display, selectionSource, XA_STRING, property, selectionOwner, CurrentTime);
+        XConvertSelection(display, selectionSource, XA_UTF8_STRING, property, selectionOwner, CurrentTime);
         XFlush(display);
         
         Atom type;
@@ -88,7 +90,7 @@ std::string clipboard_get (void)
                         return "";
                  }
                  
-                 if(type == XA_STRING)
+                 if(type == XA_UTF8_STRING)
                  {
                         return std::string(data, data+bytes_left);
                  }
