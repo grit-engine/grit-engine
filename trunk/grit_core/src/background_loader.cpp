@@ -27,8 +27,8 @@
 #include "background_loader.h"
 #include "main.h"
 
-#define SYNCHRONISED std::lock_guard<std::recursive_mutex> _scoped_lock(lock)
-#define SYNCHRONISED2(bgl) std::lock_guard<std::recursive_mutex> _scoped_lock(bgl->lock)
+#define SYNCHRONISED std::unique_lock<std::recursive_mutex> _scoped_lock(lock)
+#define SYNCHRONISED2(bgl) std::unique_lock<std::recursive_mutex> _scoped_lock(bgl->lock)
 
 bool Demand::requestLoad (float dist)
 {
@@ -233,7 +233,7 @@ void BackgroundLoader::thread_main (void)
                         }
                         pending.clear();
                         if (mAllowance <= 0 || !nearestDemand(mCurrent)) {
-                                cVar.wait(lock);
+                                cVar.wait(_scoped_lock);
                                 continue;        
                         }
                         pending = mCurrent->resources;
