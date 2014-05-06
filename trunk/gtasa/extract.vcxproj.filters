@@ -48,9 +48,6 @@
     <ClCompile Include="src\txdread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ColParser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\csvread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -87,10 +84,13 @@
     <ClCompile Include="src\tex_dups.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\grit_core\src\physics\TColParser.cpp">
+    <ClCompile Include="..\grit_core\src\physics\bcol_parser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\grit_core\src\physics\BColParser.cpp">
+    <ClCompile Include="..\grit_core\src\physics\tcol_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\col_parser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

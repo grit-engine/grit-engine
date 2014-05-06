@@ -15,21 +15,17 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\physics\BColParser.c++">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="src\physics\grit_col_conv.c++">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="src\physics\TColParser.c++">
-      <Filter>Source Files</Filter>
-    </None>
+    <None Include="src\physics\bcol_parser.c++" />
+    <None Include="src\physics\tcol_parser.c++" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\physics\TColLexer-core-engine.cpp">
+    <ClCompile Include="src\physics\tcol_lexer-core-engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\physics\TColLexer.cpp">
+    <ClCompile Include="src\physics\tcol_lexer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

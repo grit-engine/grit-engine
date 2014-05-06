@@ -19,6 +19,7 @@
  * THE SOFTWARE.
  */
 
+#include <algorithm>
 #include <sstream>
 
 #include "dense_index_map.h"
