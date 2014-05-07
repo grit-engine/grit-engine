@@ -41,6 +41,11 @@ void clipboard_set (const std::string &s_)
     CloseClipboard();
 }
 
+void clipboard_selection_set (const std::string &s)
+{
+    clipboard_set(s);
+}
+
 std::string clipboard_get (void)
 {
     if (!IsClipboardFormatAvailable(CF_UNICODETEXT)) return ""; 
@@ -59,7 +64,7 @@ std::string clipboard_selection_get (void)
     return clipboard_get();
 }
 
-void clipboard_init (size_t win)
+void clipboard_init (void)
 {
     (void) win;
 }

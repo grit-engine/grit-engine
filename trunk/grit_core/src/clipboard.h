@@ -22,13 +22,16 @@
 #include <string>
 
 /** Platform portability wrapper:  To be called at program startup. */
-void clipboard_init (size_t win);
+void clipboard_init (void);
 
 /** Platform portability wrapper:  To be called at program shutdown. */
 void clipboard_shutdown (void);
 
 /** Platform portability wrapper:  Set the given text to the clipboard. */
 void clipboard_set (const std::string &s);
+
+/** Platform portability wrapper:  Set the given text to the selection buffer. */
+void clipboard_selection_set (const std::string &s);
 
 /** Platform portability wrapper:  Retrieve text from the clipboard. */
 std::string clipboard_get (void);

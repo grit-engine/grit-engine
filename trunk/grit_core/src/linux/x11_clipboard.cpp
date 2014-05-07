@@ -28,7 +28,7 @@
 #include "../centralised_log.h"
 
 static Display *display = NULL;
-Window win = None;
+Window window = None;
 
 static std::string get_xlib_error (Display *display, int code)
 {
@@ -37,13 +37,15 @@ static std::string get_xlib_error (Display *display, int code)
     return std::string(buf);
 }
 
-void clipboard_init (size_t the_win)
+void clipboard_init (void)
 {
-    win = the_win;
     display = XOpenDisplay(NULL);
     if (!display) {
         EXCEPT << "Could not open X display for getting clipboard." << ENDL;
     }
+    Window root = XDefaultRootWindow (display);
+    int black = BlackPixel (display, DefaultScreen (display));
+    window = XCreateSimpleWindow (display, root, 0, 0, 1, 1, 0, black, black);
 }
 
 void clipboard_shutdown (void)
@@ -56,70 +58,73 @@ void clipboard_set (const std::string &s)
     (void) s;
 }
 
+void clipboard_selection_set (const std::string &s)
+{
+    (void) s;
+}
+
 static std::string clipboard_get (Atom source)
 {
     unsigned char *data = NULL;
     std::string s;
     try {
 
-        Window owner = XGetSelectionOwner(display, source);
+        Atom property = XInternAtom(display, "SelectionPropertyTemp", False);
+        Atom utf8_string = XInternAtom(display, "UTF8_STRING", False);
 
-        if (owner != None) {
+        // Ask owner to convert the string into unicode.
+        XConvertSelection(display, source, utf8_string, property, window, CurrentTime);
 
-            // FIXME: property has to come from the right thing...
+        XSync (display, False);
 
-            Atom property = XInternAtom(display, "SelectionPropertyTemp", False);
-            Atom utf8_string = XInternAtom(display, "UTF8_STRING", False);
-
-            // Ask owner to convert the string into unicode.
-            XConvertSelection(display, source, utf8_string, property, owner, CurrentTime);
-
-            /*
-            // Ensure that property has been populated.
-            bool got_it = false;
-            while (!got_it) {
-                XEvent event;
-                XNextEvent(display, &event);
-                if (event.type == SelectionNotify) {
-                    std::cout << "Got it." << std::endl;
-                    got_it = true;
-                } else {
-                    std::cout << event.type << std::endl;
+        // Ensure that property has been populated.
+        bool got_it = false;
+        while (!got_it) {
+            XEvent event;
+            XNextEvent(display, &event);
+            if (event.type == SelectionNotify) {
+                if (event.xselection.selection != source) continue;
+                if (event.xselection.property == None) {
+                    EXCEPT << "SelectionNotify event had property == None." << ENDL;
                 }
+
+
+                got_it = true;
+            } else {
+                std::cout << event.type << std::endl;
             }
-            */
+        }
 
-            Atom type;  // Unused.
-            int format=0;
-            unsigned long len=0, bytes_left=0;
+        Atom type;  // Unused.
+        int format=0;
+        unsigned long len=0, bytes_left=0;
 
-            // First call gets the length.
-            int result = XGetWindowProperty(display, owner, property,
-                0, 0,
+        // First call gets the length.
+        int result = XGetWindowProperty(display, window, property,
+            0, 0,
+            False,
+            AnyPropertyType,
+            &type,
+            &format,
+            &len, &bytes_left,
+            &data);
+        if (result != Success) {
+            EXCEPT << "Could not XGetWindowProperty: " << get_xlib_error(display, result) << ENDL;
+        }
+
+
+        if (bytes_left != 0) {
+            unsigned long dummy = 0;
+            result = XGetWindowProperty(display, window, property,
+                0, bytes_left,
                 False,
-                AnyPropertyType,
-                &type,
-                &format,
-                &len, &bytes_left,
-                &data);
+                AnyPropertyType, &type, &format,
+                &len, &dummy, &data);
+
             if (result != Success) {
                 EXCEPT << "Could not XGetWindowProperty: " << get_xlib_error(display, result) << ENDL;
             }
-
-
-            if (bytes_left != 0) {
-                unsigned long dummy = 0;
-                result = XGetWindowProperty(display, owner, property,
-                    0, bytes_left,
-                    False,
-                    AnyPropertyType, &type, &format,
-                    &len, &dummy, &data);
-
-                if (result != Success) {
-                    EXCEPT << "Could not XGetWindowProperty: " << get_xlib_error(display, result) << ENDL;
-                }
-                s = std::string(data, data+len);
-            }
+            s = std::string(data, data+len);
 
         }
 
@@ -153,15 +158,7 @@ std::string clipboard_selection_get (void)
 
 int main(void)
 {
-    Display *display = XOpenDisplay(NULL);
-    if (!display) {
-        EXCEPT << "Could not open X display for getting clipboard." << ENDL;
-    }
-    Window root = XDefaultRootWindow (display);
-    int black = BlackPixel (display, DefaultScreen (display));
-    Window window = XCreateSimpleWindow (display, root, 0, 0, 1, 1, 0, black, black);
-
-    clipboard_init(window);
+    clipboard_init();
 
     std::cout << "Clipboard: \n" << clipboard_get() << "\n" << std::endl;;
     std::cout << "Selection: \n" << clipboard_selection_get() << "\n" << std::endl;;

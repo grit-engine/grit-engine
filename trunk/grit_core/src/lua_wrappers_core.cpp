@@ -495,6 +495,25 @@ TRY_START
 TRY_END
 }
 
+static int global_get_clipboard_selection (lua_State *L)
+{
+TRY_START
+        check_args(L,0);
+        lua_pushstring(L,clipboard_selection_get().c_str());
+        return 1;
+TRY_END
+}
+
+static int global_set_clipboard_selection (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        std::string s = luaL_checkstring(L,1);
+        clipboard_selection_set(s);
+        return 0;
+TRY_END
+}
+
 
 static int global_sleep_micros (lua_State *L)
 {
@@ -913,6 +932,8 @@ static const luaL_reg global[] = {
         {"sleep",global_sleep_micros},
         {"get_clipboard",global_get_clipboard},
         {"set_clipboard",global_set_clipboard},
+        {"get_clipboard_selection",global_get_clipboard_selection},
+        {"set_clipboard_selection",global_set_clipboard_selection},
 
         {"get_alloc_stats" ,global_get_alloc_stats},
         {"set_alloc_stats" ,global_set_alloc_stats},
