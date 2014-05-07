@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<section title="Compilation Instructions" id="compilation">
+
+    Grit can be substantially modified through Lua scripting, and this
+    potential should be exhausted before modifying C++ code. Prebuilt
+    executables for Linux and Windows are available in svn, and these will have
+    all the latest bug fixes.
+
+    Compiling Grit yourself is not recommended except for those intending to
+    modify the source code. There are several large dependencies, one of which
+    has to be locally patched before it can be used.  Due to the amount of
+    code, building also takes a long time.  Even if you know what you're doing,
+    expect to spend at least an hour building Grit for the first time.
+
+    <section title="Windows" id="compilation_windows">
+
+        <section title="Tools" id="compilation_windows_tools">
+
+            Only Visual Studio Express 2013 is supported.  It is free (as in
+            beer).  Download it from the Microsoft site.
+
+            You will need svn (<web
+            url="http://tortoisesvn.net/downloads">Windows GUI</web>) to check
+            out the Grit repository, and mercurial (<web
+            url="http://tortoisehg.bitbucket.org/download/index.html">Windows
+            GUI</web>) to check out the Grit Ogre fork.
+
+            You will need the DirectX9 SDK (Google it), install that on your
+            system (in Program Files). The install adds an environment variable
+            DXSDK_DIR pointing to the install directory. This is used by the
+            Visual Studio build.  If Visual studio is running, you will have to
+            restart it to make it 'see' the new environment variable.
+
+        </section>
+
+        <section title="Build" id="compilation_windows_build">
+
+            Check out the <web
+            url="https://svn.code.sf.net/p/gritengine/code/trunk">Grit svn
+            repository</web>.  There are few dependencies to add to this tree
+            before we can build Grit.
+
+            We recommend you download a <web
+            url="http://download.icu-project.org/files/icu4c/4.2.1/icu4c-4_2_1-Win32-msvc9.zip">prebuilt
+            ICU</web> as compiling it yourself can be complicated. Unpack it so
+            that you have a gritengine/dependencies/icu/ directory. In that
+            directory is 'include' 'bin' and 'lib'.
+
+            Clone the <web
+            url="http://bitbucket.org/sparkprime/grit_ogre/#Grit">Grit Ogre
+            mercurial repository</web>, your clone should live in
+            gritengine/dependencies/grit_ogre.  This is updated infrequently so
+            if you have a build problem in future, try pulling and updating the
+            Grit Ogre repository.
+
+            Check out the <web
+            url="http://bullet.googlecode.com/svn/trunk">Bullet svn
+            repository</web>, but use a specific revision number (found in
+            dependencies/bullet_revision.txt).  Your checkout should be in
+            gritengine/dependencies/bullet.  Patch it with
+            dependencies/bullet.patch.  Open grit_core.sln and build the whole
+            solution with the <def>Normal</def> configuration.  This will build
+            all the dependencies as well.
+
+        </section>
+
+        <section title="Debug" id="compilation_windows_debug">
+
+            It easiest to debug Grit when it is built with the <def>Debug</def>
+            configuration.  Execute the grit_core project from inside Visual
+            Studio.  You may need to set the working directory to the
+            gritengine/grit_core/media directory (from the grit_core project
+            properties).
+
+        </section>
+
+    </section>
+
+    <section title="Linux" id="compilation_linux">
+
+        <section title="Tools" id="compilation_linux_tools">
+
+            We will assume you are using Ubuntu, as this is most common these
+            days.  First, install at least these (please update this page or
+            contact us if you needed more):
+            
+            <pre>
+                apt-get install subversion wget patch mercurial g++ make cmake \
+                gdb valgrind libfreeimage-dev libzzip-dev libfreetype6-dev libglu1-mesa-dev \
+                libxt-dev libxaw7-dev libglew1.5-dev libxrandr-dev \
+                libgoogle-perftools-dev libopenal-dev libreadline-dev freeglut3-dev \
+                nvidia-cg-toolkit libvorbis-dev xutils-dev
+            </pre>
+
+        </section>
+
+        <section title="Build" id="compilation_linux_build">
+
+            Now, check out the Grit repository:
+
+            <pre>
+                svn co https://svn.code.sf.net/p/gritengine/code/trunk gritengine
+                cd gritengine
+            </pre>
+
+            The build system uses handwritten make scripts, one for each
+            subproject in the repository. They all include <def>common.mk</def>
+            from the root, which defines general build variables.  See that
+            file for more information.  If you need to override some of these
+            variables, you can define a <def>user.mk</def> in the root.  This
+            means you will not need to modify (and risk accidentally
+            committing) common.mk.
+
+            There is a script gritengine/dependencies/get_deps.sh, which you
+            can run to fetch &amp; patch the dependencies.  You still have to
+            build each one manually.  Increase the -j field below if you have
+            more cores.
+
+            ICU (unicode library):
+
+            <pre>
+                cd dependencies/icu/source
+                ./configure --enable-static
+                make -j3
+                cd ../..
+            </pre>
+
+            Grit OGRE fork (3D rendering library):
+
+            <pre>
+                cd dependencies/grit_ogre
+                make -j3
+                cd ../..
+            </pre>
+
+            Bullet (rigid dynamics and collision detection library):
+
+            <pre>
+                cd dependencies/bullet
+                cmake .
+                make CMAKE_BUILD_TYPE=RelWithDebInfo LinearMath BulletDynamics BulletCollision GIMPACTUtils ConvexDecomposition -j3
+                cd ../..
+            </pre>
+
+            Grit Lua fork:
+
+            <pre>
+                cd dependencies/lua-5.2.3
+                make liblua.a -j3
+                cd ../..
+            </pre>
+
+            Grit itself:
+
+            <pre>
+                cd grit_core/linux
+                make -j3
+                cd ../..
+            </pre>
+
+            If you want to build the GTASA conversion tools:
+
+            <pre>
+                cd gtasa/linux
+                make -j3
+                cd ../..
+            </pre>
+
+        </section>
+
+        <section title="Debug" id="compilation_linux_debug">
+
+            Use gdb with the binary in the grit_core/linux directory.  The one
+            in grit_core/media lacks debug symbols. Valgrind is also a useful
+            tool for debugging Grit.
+
+        </section>
+
+    </section>
+
+</section>
