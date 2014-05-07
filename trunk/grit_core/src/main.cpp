@@ -35,6 +35,8 @@
 #  include "linux/mouse_x11.h"
 #endif
 
+#include "clipboard.h"
+
 #include "main.h"
 #include "centralised_log.h"
 
@@ -119,6 +121,7 @@ int main(int argc, const char **argv)
                 mouse = new MouseX11(winid);
                 keyboard = new KeyboardX11(winid);
                 #endif
+                clipboard_init(winid);
 
                 physics_init();
 

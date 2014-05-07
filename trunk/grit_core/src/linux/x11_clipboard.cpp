@@ -24,12 +24,11 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
+#include "../clipboard.h"
 #include "../centralised_log.h"
 
-void clipboard_set (const std::string &s)
-{
-    (void) s;
-}
+static Display *display = NULL;
+Window win = None;
 
 static std::string get_xlib_error (Display *display, int code)
 {
@@ -38,24 +37,36 @@ static std::string get_xlib_error (Display *display, int code)
     return std::string(buf);
 }
 
-std::string clipboard_get (void)
+void clipboard_init (size_t the_win)
 {
-    Display *display = NULL;
+    win = the_win;
+    display = XOpenDisplay(NULL);
+    if (!display) {
+        EXCEPT << "Could not open X display for getting clipboard." << ENDL;
+    }
+}
+
+void clipboard_shutdown (void)
+{
+    if (display) XCloseDisplay(display);
+}
+
+void clipboard_set (const std::string &s)
+{
+    (void) s;
+}
+
+static std::string clipboard_get (Atom source)
+{
     unsigned char *data = NULL;
     std::string s;
     try {
 
-        display = XOpenDisplay(NULL);
-
-        if (!display) {
-            EXCEPT << "Could not open X display for getting clipboard." << ENDL;
-        }
-
-        // First try CLIPBOARD since it behaves pretty much like Windows's one.
-        Atom source = XInternAtom(display, "CLIPBOARD", False);
         Window owner = XGetSelectionOwner(display, source);
 
         if (owner != None) {
+
+            // FIXME: property has to come from the right thing...
 
             Atom property = XInternAtom(display, "SelectionPropertyTemp", False);
             Atom utf8_string = XInternAtom(display, "UTF8_STRING", False);
@@ -63,32 +74,27 @@ std::string clipboard_get (void)
             // Ask owner to convert the string into unicode.
             XConvertSelection(display, source, utf8_string, property, owner, CurrentTime);
 
+            /*
             // Ensure that property has been populated.
-            XSync(display, False);
+            bool got_it = false;
+            while (!got_it) {
+                XEvent event;
+                XNextEvent(display, &event);
+                if (event.type == SelectionNotify) {
+                    std::cout << "Got it." << std::endl;
+                    got_it = true;
+                } else {
+                    std::cout << event.type << std::endl;
+                }
+            }
+            */
 
             Atom type;  // Unused.
             int format=0;
             unsigned long len=0, bytes_left=0;
 
-            // Returns all zeros the first call.  No idea why.
+            // First call gets the length.
             int result = XGetWindowProperty(display, owner, property,
-                0, 0,   //offset, len
-                False,      //delete
-                AnyPropertyType,
-                &type,
-                &format,
-                &len, &bytes_left,
-                &data);
-            if (result != Success) {
-                EXCEPT << "Could not XGetWindowProperty: " << get_xlib_error(display, result) << ENDL;
-            }
-            if (data) {
-                XFree(data);
-                data = NULL;
-            }
-
-            // Second call gets the length.
-            result = XGetWindowProperty(display, owner, property,
                 0, 0,
                 False,
                 AnyPropertyType,
@@ -99,6 +105,7 @@ std::string clipboard_get (void)
             if (result != Success) {
                 EXCEPT << "Could not XGetWindowProperty: " << get_xlib_error(display, result) << ENDL;
             }
+
 
             if (bytes_left != 0) {
                 unsigned long dummy = 0;
@@ -113,16 +120,55 @@ std::string clipboard_get (void)
                 }
                 s = std::string(data, data+len);
             }
+
         }
 
     } catch (Exception &e) {
         if (data) XFree(data);
-        if (display) XCloseDisplay(display);
         throw e;
     }
 
     if (data) XFree(data);
-    if (display) XCloseDisplay(display);
-
     return s;
 }
+
+
+std::string clipboard_get (void)
+{
+    // First try CLIPBOARD since it behaves pretty much like Windows's one.
+    Atom source = XInternAtom(display, "CLIPBOARD", False);
+    return clipboard_get(source);
+}
+
+std::string clipboard_selection_get (void)
+{
+    // The X selection is where 
+    Atom source = XInternAtom(display, "PRIMARY", False);
+    return clipboard_get(source);
+}
+
+#ifdef GRIT_CLIPBOARD_TEST
+#include <cstdlib>
+#include <iostream>
+
+int main(void)
+{
+    Display *display = XOpenDisplay(NULL);
+    if (!display) {
+        EXCEPT << "Could not open X display for getting clipboard." << ENDL;
+    }
+    Window root = XDefaultRootWindow (display);
+    int black = BlackPixel (display, DefaultScreen (display));
+    Window window = XCreateSimpleWindow (display, root, 0, 0, 1, 1, 0, black, black);
+
+    clipboard_init(window);
+
+    std::cout << "Clipboard: \n" << clipboard_get() << "\n" << std::endl;;
+    std::cout << "Selection: \n" << clipboard_selection_get() << "\n" << std::endl;;
+
+    clipboard_shutdown();
+        
+    return EXIT_SUCCESS;
+}
+
+#endif
