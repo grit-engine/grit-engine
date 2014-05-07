@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2012
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2014
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -6,10 +6,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,79 +24,105 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
+#include "../centralised_log.h"
+
 void clipboard_set (const std::string &s)
 {
-        (void) s;
+    (void) s;
 }
 
+static std::string get_xlib_error (Display *display, int code)
+{
+    char buf[1000];
+    XGetErrorText(display, code, buf, sizeof(buf));
+    return std::string(buf);
+}
 
 std::string clipboard_get (void)
 {
-        Display *display = XOpenDisplay(NULL);
-        if(!display)
-                return "";
-        
-        //first try CLIPBOARD since it behaves pretty much like windows's one
-        Atom selectionSource = XInternAtom(display, "CLIPBOARD", False);
-        Window selectionOwner = XGetSelectionOwner(display, selectionSource);
-        
-        if(selectionOwner == None)
-        {
-                //use XA_PRIMARY as a fallback clipboard
-                selectionSource=XA_PRIMARY;
-                selectionOwner = XGetSelectionOwner(display, selectionSource);
-        
-                if(selectionOwner == None)
-                {
-                        return "";
-                }
+    Display *display = NULL;
+    unsigned char *data = NULL;
+    std::string s;
+    try {
+
+        display = XOpenDisplay(NULL);
+
+        if (!display) {
+            EXCEPT << "Could not open X display for getting clipboard." << ENDL;
         }
-        
-        Atom property = XInternAtom(display, "SelectionPropertyTemp", False);
-       
-        //get atom for unicode string property
-        Atom XA_UTF8_STRING = XInternAtom(display, "UTF8_STRING", False);
-        //ask owner to convert the string into unicode
-        //see this for reference http://svn.gna.org/svn/warzone/trunk/lib/betawidget/src/platform/sdl/clipboardX11.c
-        XConvertSelection(display, selectionSource, XA_UTF8_STRING, property, selectionOwner, CurrentTime);
-        XFlush(display);
-        
-        Atom type;
-        int format=0, result=0;
-        unsigned long len=0, bytes_left=0, dummy=0;
-        uint8_t *data=NULL;
-        
-        result = XGetWindowProperty(display, selectionOwner, property,
+
+        // First try CLIPBOARD since it behaves pretty much like Windows's one.
+        Atom source = XInternAtom(display, "CLIPBOARD", False);
+        Window owner = XGetSelectionOwner(display, source);
+
+        if (owner != None) {
+
+            Atom property = XInternAtom(display, "SelectionPropertyTemp", False);
+            Atom utf8_string = XInternAtom(display, "UTF8_STRING", False);
+
+            // Ask owner to convert the string into unicode.
+            XConvertSelection(display, source, utf8_string, property, owner, CurrentTime);
+
+            // Ensure that property has been populated.
+            XSync(display, False);
+
+            Atom type;  // Unused.
+            int format=0;
+            unsigned long len=0, bytes_left=0;
+
+            // Returns all zeros the first call.  No idea why.
+            int result = XGetWindowProperty(display, owner, property,
                 0, 0,   //offset, len
-                0,      //delete 0==FALSE
-                AnyPropertyType, //flag
-                &type,          //return type
-                &format,        //return format
+                False,      //delete
+                AnyPropertyType,
+                &type,
+                &format,
                 &len, &bytes_left,
                 &data);
-         if(result != Success)
-         {
-                return "";
-         }
-         if(result == Success && bytes_left > 0)
-         {
-                result = XGetWindowProperty (display, selectionOwner,
-                        property, 0, bytes_left, 0,
-                        AnyPropertyType, &type, &format,
-                        &len, &dummy, &data);
-                 
-                 if(result != Success)
-                 {
-                        return "";
-                 }
-                 
-                 if(type == XA_UTF8_STRING)
-                 {
-                        return std::string(data, data+bytes_left);
-                 }
-         }
-        
-        return "";
-}
+            if (result != Success) {
+                EXCEPT << "Could not XGetWindowProperty: " << get_xlib_error(display, result) << ENDL;
+            }
+            if (data) {
+                XFree(data);
+                data = NULL;
+            }
 
-// vim: shiftwidth=8:tabstop=8:expandtab
+            // Second call gets the length.
+            result = XGetWindowProperty(display, owner, property,
+                0, 0,
+                False,
+                AnyPropertyType,
+                &type,
+                &format,
+                &len, &bytes_left,
+                &data);
+            if (result != Success) {
+                EXCEPT << "Could not XGetWindowProperty: " << get_xlib_error(display, result) << ENDL;
+            }
+
+            if (bytes_left != 0) {
+                unsigned long dummy = 0;
+                result = XGetWindowProperty(display, owner, property,
+                    0, bytes_left,
+                    False,
+                    AnyPropertyType, &type, &format,
+                    &len, &dummy, &data);
+
+                if (result != Success) {
+                    EXCEPT << "Could not XGetWindowProperty: " << get_xlib_error(display, result) << ENDL;
+                }
+                s = std::string(data, data+len);
+            }
+        }
+
+    } catch (Exception &e) {
+        if (data) XFree(data);
+        if (display) XCloseDisplay(display);
+        throw e;
+    }
+
+    if (data) XFree(data);
+    if (display) XCloseDisplay(display);
+
+    return s;
+}
