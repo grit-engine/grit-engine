@@ -146,7 +146,6 @@
                 <li> Lua, BSD license, statically linked </li>
                 <li> Squish, BSD license, statically linked </li>
                 <li> OpenAL, OS-dependent, dynamically linked </li>
-                <li> Boost, BSD license, statically linked </li>
             </ul>
 
         </section>
