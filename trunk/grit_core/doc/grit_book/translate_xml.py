@@ -224,10 +224,11 @@ def TranslateBlockContents(block, block_ast):
         else:
             if el.tag == "section":
                 id = AssertExists(el, 'id')
+                title = AssertExists(el, 'title')
                 sb = el.get('splitbelow')
                 # Add Section node without data field first.
                 translated_content = Node('Section', block_ast, split=sb=="true", id=id,
-                                          title=el.get('title'), data=False)
+                                          title=title, data=False)
                 SECTION_MAP[id] = translated_content
                 translated_content.data = TranslateBlockContents(el, translated_content)
                 AssertNoTail(el)
