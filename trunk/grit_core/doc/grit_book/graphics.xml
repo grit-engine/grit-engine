@@ -406,6 +406,17 @@
 
     <section title="Fonts" id="gfx_font">
 
+        The font subsystem allows the definition of fonts that can then be used
+        to render text in the <sref id="gfx_hud">HUD</sref> and, in future, in
+        the game world (e.g. signs etc).
+
+        The font is a single texture containing all the letters for a
+        particular size.  It commonly has an alpha channel to allow the text to
+        be rendered on a background.  The texture is typically white, so the
+        text colour can be controlled with a mask at render time.  However you
+        can use colours if you wish.  This can be useful in some cases, for big
+        title text and so on.
+
     </section>
 
 </section>
