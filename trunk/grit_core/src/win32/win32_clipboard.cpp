@@ -30,7 +30,6 @@
 
 void clipboard_init (void)
 {
-    (void) win;
 }
 
 void clipboard_shutdown (void)
