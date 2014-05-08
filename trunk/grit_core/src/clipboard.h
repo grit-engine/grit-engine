@@ -27,6 +27,9 @@ void clipboard_init (void);
 /** Platform portability wrapper:  To be called at program shutdown. */
 void clipboard_shutdown (void);
 
+/** Platform portability wrapper:  To be called every frame. */
+void clipboard_pump (void);
+
 /** Platform portability wrapper:  Set the given text to the clipboard. */
 void clipboard_set (const std::string &s);
 

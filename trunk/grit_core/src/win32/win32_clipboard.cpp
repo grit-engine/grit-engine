@@ -28,6 +28,19 @@
 
 #include "../clipboard.h"
 
+void clipboard_init (void)
+{
+    (void) win;
+}
+
+void clipboard_shutdown (void)
+{
+}
+
+void clipboard_pump (void)
+{
+}
+
 void clipboard_set (const std::string &s_)
 {
     std::wstring s = utf8_to_utf16(s_);;
@@ -62,15 +75,6 @@ std::string clipboard_get (void)
 std::string clipboard_selection_get (void)
 {
     return clipboard_get();
-}
-
-void clipboard_init (void)
-{
-    (void) win;
-}
-
-void clipboard_shutdown (void)
-{
 }
 
 // vim: shiftwidth=8:tabstop=8:expandtab

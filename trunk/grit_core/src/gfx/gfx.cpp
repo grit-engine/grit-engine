@@ -26,6 +26,7 @@
 
 #include "../path_util.h"
 #include "../main.h"
+#include "../clipboard.h"
 
 #include "gfx_internal.h"
 #include "gfx_pipeline.h"
@@ -521,6 +522,8 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 {
     time_since_started_rendering += elapsed;
     anim_time = fmodf(anim_time+elapsed, ANIM_TIME_MAX);
+
+    clipboard_pump();
 
     debug_drawer->frameStarted();
 
