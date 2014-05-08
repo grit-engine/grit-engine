@@ -58,40 +58,41 @@ void clipboard_init (void)
     src_clipboard = XInternAtom(display, "CLIPBOARD", False);
 }
 
+static bool handle_event (const XEvent &event)
+{
+    if (event.type != SelectionRequest)
+        return false;
+
+    const XSelectionRequestEvent &req = event.xselectionrequest;
+    std::string *to_serve;
+    if (req.selection == src_selection) {
+        to_serve = &data_selection;
+    } else if (req.selection == src_clipboard) {
+        to_serve = &data_clipboard;
+    } else {
+        return true;
+    }
+    XSelectionEvent res;
+    res.type = SelectionNotify;
+    res.display = req.display;
+    res.requestor = req.requestor;
+    res.selection = req.selection;
+    res.time = req.time;
+    res.target = req.target;
+    res.property = req.property;
+    XChangeProperty(display, req.requestor, req.property,
+                    req.target, 8, PropModeReplace,
+                    reinterpret_cast<const unsigned char*>(to_serve->c_str()), to_serve->length());
+    XSendEvent(display, res.requestor, False, (unsigned long)NULL, (XEvent *)&res);
+    return true;
+}
+
 void clipboard_pump (void)
 {
     XEvent event;
     int r = XCheckTypedEvent(display, SelectionRequest, &event);
     if (!r) return;
-    
-    switch (event.type) {
-        case SelectionRequest: {
-            XSelectionRequestEvent &req = event.xselectionrequest;
-            std::string *to_serve;
-            if (req.selection == src_selection) {
-                to_serve = &data_selection;
-            } else if (req.selection == src_clipboard) {
-                to_serve = &data_clipboard;
-            } else {
-                return;
-            }
-            XSelectionEvent res;
-            res.type = SelectionNotify;
-            res.display = req.display;
-            res.requestor = req.requestor;
-            res.selection = req.selection;
-            res.time = req.time;
-            res.target = req.target;
-            res.property = req.property;
-            XChangeProperty(display, req.requestor, req.property,
-                            req.target, 8, PropModeReplace,
-                            reinterpret_cast<const unsigned char*>(to_serve->c_str()), to_serve->length());
-            XSendEvent(display, res.requestor, False, (unsigned long)NULL, (XEvent *)&res);
-        } break;
-
-        default:
-        break;
-    }
+    handle_event(event);
 }
 
 void clipboard_shutdown (void)
@@ -125,9 +126,11 @@ static std::string clipboard_get (Atom source)
         while (!got_it) {
             // Blocks if queue is empty.
             XNextEvent(display, &event);
-            if (event.type == SelectionNotify) {
-                if (event.xselection.selection == source)
-                    got_it = true;
+            if (!handle_event(event)) {
+                if (event.type == SelectionNotify) {
+                    if (event.xselection.selection == source)
+                        got_it = true;
+                }
             }
         }
 
