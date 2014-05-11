@@ -162,7 +162,7 @@ class MyMeshDeserializer : public Ogre::Serializer {
                 } break;
                 // error case if streamID is unknown
                 default:
-                    CERR << "Corrupted mesh, not loading textures: \""<<pMesh->getName()<<"\"" << std::endl;
+                    CERR << "Corrupted mesh, not loading textures: \""<<pMesh->getName()<<"\", streamId was " << streamID << std::endl;
                     mat_names.clear();
                     broken = true;
                     break;
