@@ -3,14 +3,14 @@
 <section title="The Heads Up Display (HUD)" id="gfx_hud">
 
     The <def>heads up display</def> (HUD) is a 2D framework for providing a
-    graphical user interface to the player.  Like everything else, it can
-    be extensively customised via Lua.  The most basic API allows
-    positioning and rotating text / textured rectangles in a
-    scenegraph-like hierarchy on the screen.  On top of this, various
-    widgets have been implemented in Lua, and you are free to make your own
-    as well.  The HUD subsystem is designed to handle things like
-    health/ammo displays, mini-maps, menu screens, and general purpose
-    mouse-driven graphical user interfaces.
+    graphical user interface to the player.  Like everything else, it can be
+    extensively customised via Lua.  The most basic API allows positioning and
+    rotating text / textured rectangles in a scenegraph-like hierarchy on the
+    screen.  On top of this, various widgets have been implemented in Lua, via
+    <def>HUD Class</def> definitions.  This, you are also free to make your
+    own.  The HUD subsystem is designed to handle things like health/ammo
+    displays, mini-maps, menu screens, and general purpose mouse-driven
+    graphical user interfaces.
 
     <section title="Basics" id="gfx_hud_basics">
 

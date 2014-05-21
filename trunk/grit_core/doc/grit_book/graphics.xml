@@ -400,6 +400,55 @@
 
     <section title="Particles" id="gfx_particle">
 
+        Particles are a special kind of graphical effect.  Conceptually they
+        are cubes in the game world, i.e., they have a 3D position and size,
+        but their orientation is constrained to face the direction of the
+        camera (and optionally to be rotated around the vector to the camera).
+        Although they are conceptually 3D, they are rendered with textured 2D
+        quads that face the camera.  The shader uses the screen depth to soften
+        their intersection with other geometry in the scene.
+
+        Particles are typically used to render certain types of volumetric
+        gas-like effects like smoke, clouds, kicked up dirt, flames, and
+        explosions.  Each particle is a fixed, roughly spherical shape, but
+        with a cloud of particles, the overall shape can be roughly
+        approximated.
+
+        Although the term "particles" implies that there should be a large
+        number of small particles, typically this is not the case.  Particles
+        are reasonably heavy to render and you don't want to have too many
+        behind each other in the case of alpha particles because that causes a
+        lot of overdraw.
+        
+        Use just enough particles to represent your 3D shape.  The key to
+        particles is to use a great looking (preferably animated) texture, and
+        then write enough behaviour into that particle class, that a cloud of
+        particles together resemble what you want.
+
+        There are a number of particles defined in /common, which you can spawn
+        in your own code.  Typically a particle is created at a given location,
+        possibly with customised values for some other parameters , and then
+        from that point on it is in charge of its own destiny, including
+        destroying itself.  Particle behaviour can be arbitrarily complex,
+        performing physics tests or interacting with objects in the scene.
+        They can even spawn more particles.
+
+        <todo>The particles API needs some cleanup before it is worth documenting.</todo>
+
+        <lua>
+        </lua>
+
+        To create your own particles, define a <def>Particle Class</def> in Lua
+        scripting, which provides the references textures, default fields, and provides a
+        stepCallback to implement the behaviour of the particle.
+        
+        Particle texture coordinates are used to implement animation.  When
+        defining a particle, a list of coordinates are given, one for each
+        frame.
+
+        Particles have a number of other attributes that define their
+        appearance: colour, alpha, position, angle, and size.
+
     </section>
 
     <include src="hud.xml"/>
@@ -408,14 +457,50 @@
 
         The font subsystem allows the definition of fonts that can then be used
         to render text in the <sref id="gfx_hud">HUD</sref> and, in future, in
-        the game world (e.g. signs etc).
+        the game world (e.g., for signs, etc).  Each font has a name in the
+        directory hierarchy, so they should be referred to using the `` quotes.
+        There are many examples in /common/fonts.
 
-        The font is a single texture containing all the letters for a
-        particular size.  It commonly has an alpha channel to allow the text to
-        be rendered on a background.  The texture is typically white, so the
-        text colour can be controlled with a mask at render time.  However you
-        can use colours if you wish.  This can be useful in some cases, for big
-        title text and so on.
+        The font texture contains all the letters for a particular size.  It
+        commonly has an alpha channel to allow the text to be rendered on a
+        background, and is typically white, so the text colour can be
+        controlled with a mask at render time.  However you can use colours if
+        you wish.  This can be useful in some cases, for big title text and so
+        on.
+
+        A font binds from each unicode code point to a rectangle within the
+        texture.  Not every code point need be bound.  If a code point is not
+        bound in a font, then the font subsystem tries to find another
+        character that is.  First it tries the unicode replacement character
+        "�", then space " " then finally the letter "E", before giving up and
+        skipping the character.
+
+        To define a font, use the <def>gfx_font_define</def> function.  This
+        takes the name of the font being defined, the name of the texture to
+        use, the line spacing (font height), and then a table giving the
+        texture co-ordinates for each codepoint.  Each code point defines a
+        rectangle of texels, by giving the x, y of the bottom left corner of
+        the rectangle, and also the width and height.  The texture co-ordinates
+        are relative to the bottom left of the texture.  The following font
+        defines codepoints for the letters A and B, and maps the same
+        rectangles to a and b as well.  This can be a useful way of making text
+        appear in all capitals.
+
+        <lua>
+            gfx_font_define(`MyFont`, `MyFont.png`, 12, {
+                [0x0041] = {0, 0, 10, 12},  -- A
+                [0x0042] = {0, 10, 10, 12},  -- B
+                [0x0061] = {0, 0, 10, 12},  -- a
+                [0x0062] = {0, 10, 10, 12},  -- b
+            })
+        </lua>
+
+        In the above case, both letters are the same size, but this need not be
+        the case.  One can define variable width fonts, which are often more
+        attractive than monospaced fonts.  If the letters are different
+        heights, they are aligned along the top of the rectangles as the text
+        is rendered.  This means you can clip unused texels at the bottom of
+        character, saving texture space.
 
     </section>
 

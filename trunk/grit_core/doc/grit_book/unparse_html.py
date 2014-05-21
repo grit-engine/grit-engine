@@ -92,9 +92,7 @@ def UnparseHtmlInlines(parent, inner=False):
             url = 'http://code.google.com/p/grit/issues/detail?id=%d' % n.id
             s += '<a class="issue" href="%s">issue %d</a>' % (url, n.id)
         elif n.kind == 'Todo':
-            s += '<span class="todo">'
-            s += UnparseHtmlInlines(n.data, True)
-            s += '</span>'
+            s += '(<span class="todo">TODO: %s</span>)' % UnparseHtmlInlines(n.data, True)
         elif n.kind == 'Web':
             s += '<a class="web" href="' + n.url + '">'
             s += UnparseHtmlInlines(n.data, True)
