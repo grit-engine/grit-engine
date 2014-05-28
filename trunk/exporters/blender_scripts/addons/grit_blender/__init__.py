@@ -612,7 +612,7 @@ class InstantiateExternalClass(bpy.types.Operator):
 def to_lua (v):
     if v == True: return "true"
     if v == False: return "false"
-    if type(v) == type("a string"): return repr(v)
+    if type(v) == type("a string"): return v
     return str(v)
 
 # {{{ export_objects
@@ -944,7 +944,7 @@ def export_objects (scene, objs):
             mesh_name =  meshes[0].name
             if meshes[0].grit_promotion == 'MESH_EXT':
                 mesh_name = meshes[0].grit_gcol_ext_name
-            if class_name + ".mesh" != mesh_name: attributes.append(("gfxMesh", mesh_name))
+            if class_name + ".mesh" != mesh_name: attributes.append(("gfxMesh", "`%s`" % mesh_name))
             parent_class_name = ""
             if len(cols) == 0:
                 parent_class_name = "BaseClass"
@@ -957,7 +957,7 @@ def export_objects (scene, objs):
                 col_name = cols[0].name
                 if cols[0].grit_promotion == 'GCOL_EXT':
                     col_name = cols[0].grit_gcol_ext_name
-                if class_name + ".gcol" != col_name: attributes.append(("colMesh", col_name))
+                if class_name + ".gcol" != col_name: attributes.append(("colMesh", "`%s`" % col_name))
 
             interior = ""
             if len(attributes) == 0:
