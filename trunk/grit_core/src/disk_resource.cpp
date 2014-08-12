@@ -108,8 +108,6 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
         dr = new CollisionMesh(rn);
     } else if (suffix == "wav" || suffix == "ogg" || suffix == "mp3") {
         dr = new AudioDiskResource(rn);
-    } else if (suffix == "wav" || suffix == "ogg" || suffix == "mp3") {
-        dr = new AudioDiskResource(rn);
     } else if (ends_with(rn, ".envcube.tiff")) {
         dr = new GfxEnvCubeDiskResource(rn);
     } else if (ends_with(rn, ".lut.png")) {
