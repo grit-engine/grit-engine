@@ -9,6 +9,7 @@ ROOT=../..
 include $(ROOT)/common.mk
 
 TARGETS=$(ROOT)/grit_core/media/Grit.$(GRIT_EXEC_SUFFIX) \
+        $(ROOT)/grit_core/media/Tools/gsl.$(GRIT_EXEC_SUFFIX) \
         $(ROOT)/exporters/blender_scripts/addons/grit_blender/grit_col_conv.$(GRIT_EXEC_SUFFIX) \
 
 all: $(TARGETS)
@@ -160,7 +161,7 @@ COL_CONV_OBJ = grit_col_conv.o \
                bcol_parser.o \
                tcol_parser.o \
                tcol_lexer.o \
-               tcol_lexer-core-engine.o  \
+               tcol_lexer-core-engine.o \
 
 %/grit_col_conv.$(GRIT_EXEC_SUFFIX): grit_col_conv.$(GRIT_EXEC_SUFFIX)
 	strip -s $< -o $@
@@ -168,6 +169,17 @@ COL_CONV_OBJ = grit_col_conv.o \
 grit_col_conv.$(GRIT_EXEC_SUFFIX): $(COL_CONV_OBJ)
 	@$(LINKING)
 	@$(CXX) $(COL_CONV_OBJ) -o $@ $(LDFLAGS) $(LDLIBS)
+
+
+GSL_OBJ = gfx_gasoline.o \
+          gfx_gasoline_standalone.o \
+
+%/gsl.$(GRIT_EXEC_SUFFIX): gsl.$(GRIT_EXEC_SUFFIX)
+	strip -s $< -o $@
+
+gsl.$(GRIT_EXEC_SUFFIX): $(GSL_OBJ)
+	@$(LINKING)
+	@$(CXX) $(GSL_OBJ) -o $@ $(LDFLAGS) $(LDLIBS)
 
 
 
@@ -188,20 +200,20 @@ background_loader.o: ../../dependencies/util/math_util.h
 background_loader.o: ../depend_stubs/string ../depend_stubs/iostream
 background_loader.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 background_loader.o: ../src/centralised_log.h ../depend_stubs/sstream
-background_loader.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 background_loader.o: ../../dependencies/util/console.h
 background_loader.o: ../../dependencies/util/exception.h
 background_loader.o: ../depend_stubs/cstdlib
 background_loader.o: ../../dependencies/util/intrinsics.h
 background_loader.o: ../src/background_loader.h ../depend_stubs/vector
 background_loader.o: ../src/vect_util.h ../depend_stubs/algorithm
-background_loader.o: ../src/centralised_log.h ../depend_stubs/list
-background_loader.o: ../depend_stubs/boost/thread/thread.hpp
-background_loader.o: ../depend_stubs/boost/thread/condition.hpp
-background_loader.o: ../src/disk_resource.h ../depend_stubs/set
-background_loader.o: ../src/background_loader.h ../src/main.h
-background_loader.o: ../depend_stubs/lua.h ../src/mouse.h
-background_loader.o: ../src/keyboard.h ../src/bullet_debug_drawer.h
+background_loader.o: ../src/centralised_log.h
+background_loader.o: ../depend_stubs/condition_variable
+background_loader.o: ../depend_stubs/list ../depend_stubs/mutex
+background_loader.o: ../depend_stubs/thread ../src/disk_resource.h
+background_loader.o: ../depend_stubs/set ../src/background_loader.h
+background_loader.o: ../src/main.h ../depend_stubs/lua.h
+background_loader.o: ../src/mouse.h ../src/keyboard.h
+background_loader.o: ../src/bullet_debug_drawer.h
 background_loader.o: ../depend_stubs/OgreFrameListener.h
 background_loader.o: ../depend_stubs/OgreManualObject.h
 background_loader.o: ../depend_stubs/btBulletCollisionCommon.h
@@ -224,16 +236,15 @@ background_loader.o: ../depend_stubs/quex/code_base/template/QuexMode
 background_loader.o: ../depend_stubs/quex/code_base/template/Analyser
 background_loader.o: ../depend_stubs/quex/code_base/template/Counter
 background_loader.o: ../depend_stubs/quex/code_base/template/Accumulator
-background_loader.o: ../depend_stubs/quex/code_base/template/IncludeStack
+background_loader.o: ../depend_stubs/quex/code_base/TokenQueue
 background_loader.o: ../depend_stubs/quex/code_base/temporary_macros_on
 background_loader.o: ../depend_stubs/quex/code_base/temporary_macros_off
 background_loader.o: ../depend_stubs/quex/code_base/template/constructor.i
 background_loader.o: ../depend_stubs/quex/code_base/template/Counter.i
 background_loader.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-background_loader.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-background_loader.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+background_loader.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+background_loader.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 background_loader.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-background_loader.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 background_loader.o: ../depend_stubs/quex/code_base/template/misc.i
 background_loader.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 background_loader.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -271,16 +282,14 @@ bullet_debug_drawer.o: ../depend_stubs/OgreTexture.h
 bullet_debug_drawer.o: ../depend_stubs/OgreMesh.h
 bullet_debug_drawer.o: ../src/centralised_log.h
 bullet_debug_drawer.o: ../depend_stubs/sstream
-bullet_debug_drawer.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 bullet_debug_drawer.o: ../../dependencies/util/console.h
 bullet_debug_drawer.o: ../../dependencies/util/exception.h
 bullet_debug_drawer.o: ../../dependencies/util/intrinsics.h
 bullet_debug_drawer.o: ../src/background_loader.h ../src/vect_util.h
-bullet_debug_drawer.o: ../depend_stubs/list
-bullet_debug_drawer.o: ../depend_stubs/boost/thread/thread.hpp
-bullet_debug_drawer.o: ../depend_stubs/boost/thread/condition.hpp
-bullet_debug_drawer.o: ../src/disk_resource.h ../depend_stubs/set
-bullet_debug_drawer.o: ../src/gfx/gfx_node.h
+bullet_debug_drawer.o: ../depend_stubs/condition_variable
+bullet_debug_drawer.o: ../depend_stubs/list ../depend_stubs/mutex
+bullet_debug_drawer.o: ../depend_stubs/thread ../src/disk_resource.h
+bullet_debug_drawer.o: ../depend_stubs/set ../src/gfx/gfx_node.h
 bullet_debug_drawer.o: ../depend_stubs/OgreSceneNode.h
 bullet_debug_drawer.o: ../src/gfx/gfx_internal.h
 bullet_debug_drawer.o: ../depend_stubs/Ogre.h
@@ -318,16 +327,15 @@ bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/QuexMode
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/Analyser
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/Counter
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/Accumulator
-bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/IncludeStack
+bullet_debug_drawer.o: ../depend_stubs/quex/code_base/TokenQueue
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/temporary_macros_on
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/temporary_macros_off
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/constructor.i
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/Counter.i
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/misc.i
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 bullet_debug_drawer.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -344,8 +352,9 @@ bullet_debug_drawer.o: ../src/streamer.h ../src/grit_object.h
 bullet_debug_drawer.o: ../src/external_table.h ../src/lua_ptr.h
 bullet_debug_drawer.o: ../../dependencies/util/spline_table.h
 bullet_debug_drawer.o: ../src/background_loader.h ../src/lua_ptr.h
-dense_index_map.o: ../depend_stubs/sstream ../src/dense_index_map.h
-dense_index_map.o: ../depend_stubs/vector ../src/centralised_log.h
+dense_index_map.o: ../depend_stubs/algorithm ../depend_stubs/sstream
+dense_index_map.o: ../src/dense_index_map.h ../depend_stubs/vector
+dense_index_map.o: ../src/centralised_log.h
 disk_resource.o: ../src/gfx/gfx_disk_resource.h
 disk_resource.o: ../depend_stubs/OgreResource.h
 disk_resource.o: ../depend_stubs/OgreTexture.h
@@ -354,17 +363,17 @@ disk_resource.o: ../../dependencies/util/math_util.h
 disk_resource.o: ../depend_stubs/string ../depend_stubs/iostream
 disk_resource.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 disk_resource.o: ../src/centralised_log.h ../depend_stubs/sstream
-disk_resource.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 disk_resource.o: ../../dependencies/util/console.h
 disk_resource.o: ../../dependencies/util/exception.h
 disk_resource.o: ../depend_stubs/cstdlib
 disk_resource.o: ../../dependencies/util/intrinsics.h
 disk_resource.o: ../src/background_loader.h ../depend_stubs/vector
 disk_resource.o: ../src/vect_util.h ../depend_stubs/algorithm
-disk_resource.o: ../src/centralised_log.h ../depend_stubs/list
-disk_resource.o: ../depend_stubs/boost/thread/thread.hpp
-disk_resource.o: ../depend_stubs/boost/thread/condition.hpp
-disk_resource.o: ../src/disk_resource.h ../depend_stubs/set
+disk_resource.o: ../src/centralised_log.h
+disk_resource.o: ../depend_stubs/condition_variable
+disk_resource.o: ../depend_stubs/list ../depend_stubs/mutex
+disk_resource.o: ../depend_stubs/thread ../src/disk_resource.h
+disk_resource.o: ../depend_stubs/set
 disk_resource.o: ../src/audio/audio_disk_resource.h
 disk_resource.o: ../depend_stubs/AL/al.h
 disk_resource.o: ../depend_stubs/OgreResourceGroupManager.h
@@ -391,16 +400,15 @@ disk_resource.o: ../depend_stubs/quex/code_base/template/QuexMode
 disk_resource.o: ../depend_stubs/quex/code_base/template/Analyser
 disk_resource.o: ../depend_stubs/quex/code_base/template/Counter
 disk_resource.o: ../depend_stubs/quex/code_base/template/Accumulator
-disk_resource.o: ../depend_stubs/quex/code_base/template/IncludeStack
+disk_resource.o: ../depend_stubs/quex/code_base/TokenQueue
 disk_resource.o: ../depend_stubs/quex/code_base/temporary_macros_on
 disk_resource.o: ../depend_stubs/quex/code_base/temporary_macros_off
 disk_resource.o: ../depend_stubs/quex/code_base/template/constructor.i
 disk_resource.o: ../depend_stubs/quex/code_base/template/Counter.i
 disk_resource.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-disk_resource.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-disk_resource.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+disk_resource.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+disk_resource.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 disk_resource.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-disk_resource.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 disk_resource.o: ../depend_stubs/quex/code_base/template/misc.i
 disk_resource.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 disk_resource.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -482,7 +490,6 @@ grit_object.o: ../depend_stubs/btBulletCollisionCommon.h
 grit_object.o: ../src/physics/physics_world.h ../depend_stubs/map
 grit_object.o: ../src/centralised_log.h ../depend_stubs/iostream
 grit_object.o: ../depend_stubs/sstream
-grit_object.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 grit_object.o: ../../dependencies/util/console.h
 grit_object.o: ../../dependencies/util/exception.h
 grit_object.o: ../depend_stubs/cstdlib
@@ -504,16 +511,15 @@ grit_object.o: ../depend_stubs/quex/code_base/template/QuexMode
 grit_object.o: ../depend_stubs/quex/code_base/template/Analyser
 grit_object.o: ../depend_stubs/quex/code_base/template/Counter
 grit_object.o: ../depend_stubs/quex/code_base/template/Accumulator
-grit_object.o: ../depend_stubs/quex/code_base/template/IncludeStack
+grit_object.o: ../depend_stubs/quex/code_base/TokenQueue
 grit_object.o: ../depend_stubs/quex/code_base/temporary_macros_on
 grit_object.o: ../depend_stubs/quex/code_base/temporary_macros_off
 grit_object.o: ../depend_stubs/quex/code_base/template/constructor.i
 grit_object.o: ../depend_stubs/quex/code_base/template/Counter.i
 grit_object.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-grit_object.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-grit_object.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+grit_object.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+grit_object.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 grit_object.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-grit_object.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 grit_object.o: ../depend_stubs/quex/code_base/template/misc.i
 grit_object.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 grit_object.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -564,12 +570,11 @@ input_filter.o: ../depend_stubs/OgreRenderSystem.h
 input_filter.o: ../depend_stubs/OgreGLRenderSystem.h ../src/gfx/gfx.h
 input_filter.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_font.h
 input_filter.o: ../src/background_loader.h ../src/vect_util.h
-input_filter.o: ../depend_stubs/list
-input_filter.o: ../depend_stubs/boost/thread/thread.hpp
-input_filter.o: ../depend_stubs/boost/thread/condition.hpp
-input_filter.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-input_filter.o: ../src/disk_resource.h ../src/main.h ../src/mouse.h
-input_filter.o: ../src/keyboard.h ../src/background_loader.h
+input_filter.o: ../depend_stubs/condition_variable
+input_filter.o: ../depend_stubs/list ../depend_stubs/mutex
+input_filter.o: ../depend_stubs/thread ../src/disk_resource.h
+input_filter.o: ../src/main.h ../src/mouse.h ../src/keyboard.h
+input_filter.o: ../src/background_loader.h
 input_filter.o: ../src/bullet_debug_drawer.h
 input_filter.o: ../depend_stubs/OgreFrameListener.h
 input_filter.o: ../depend_stubs/OgreManualObject.h
@@ -591,16 +596,15 @@ input_filter.o: ../depend_stubs/quex/code_base/template/QuexMode
 input_filter.o: ../depend_stubs/quex/code_base/template/Analyser
 input_filter.o: ../depend_stubs/quex/code_base/template/Counter
 input_filter.o: ../depend_stubs/quex/code_base/template/Accumulator
-input_filter.o: ../depend_stubs/quex/code_base/template/IncludeStack
+input_filter.o: ../depend_stubs/quex/code_base/TokenQueue
 input_filter.o: ../depend_stubs/quex/code_base/temporary_macros_on
 input_filter.o: ../depend_stubs/quex/code_base/temporary_macros_off
 input_filter.o: ../depend_stubs/quex/code_base/template/constructor.i
 input_filter.o: ../depend_stubs/quex/code_base/template/Counter.i
 input_filter.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-input_filter.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-input_filter.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+input_filter.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+input_filter.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 input_filter.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-input_filter.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 input_filter.o: ../depend_stubs/quex/code_base/template/misc.i
 input_filter.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 input_filter.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -657,7 +661,6 @@ lua_wrappers_core.o: ../depend_stubs/OgreManualObject.h
 lua_wrappers_core.o: ../depend_stubs/btBulletCollisionCommon.h
 lua_wrappers_core.o: ../src/physics/physics_world.h
 lua_wrappers_core.o: ../src/centralised_log.h
-lua_wrappers_core.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 lua_wrappers_core.o: ../../dependencies/util/console.h
 lua_wrappers_core.o: ../src/shared_ptr.h ../depend_stubs/functional
 lua_wrappers_core.o: ../depend_stubs/btBulletDynamicsCommon.h
@@ -673,16 +676,15 @@ lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/QuexMode
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/Analyser
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/Counter
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/Accumulator
-lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/IncludeStack
+lua_wrappers_core.o: ../depend_stubs/quex/code_base/TokenQueue
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/temporary_macros_on
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/temporary_macros_off
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/constructor.i
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/Counter.i
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/misc.i
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 lua_wrappers_core.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -701,10 +703,10 @@ lua_wrappers_core.o: ../src/lua_ptr.h ../src/gfx/gfx_disk_resource.h
 lua_wrappers_core.o: ../depend_stubs/OgreResource.h
 lua_wrappers_core.o: ../depend_stubs/OgreTexture.h
 lua_wrappers_core.o: ../depend_stubs/OgreMesh.h
-lua_wrappers_core.o: ../src/background_loader.h ../depend_stubs/list
-lua_wrappers_core.o: ../depend_stubs/boost/thread/thread.hpp
-lua_wrappers_core.o: ../depend_stubs/boost/thread/condition.hpp
-lua_wrappers_core.o: ../src/disk_resource.h
+lua_wrappers_core.o: ../src/background_loader.h
+lua_wrappers_core.o: ../depend_stubs/condition_variable
+lua_wrappers_core.o: ../depend_stubs/list ../depend_stubs/mutex
+lua_wrappers_core.o: ../depend_stubs/thread ../src/disk_resource.h
 lua_wrappers_core.o: ../src/lua_wrappers_primitives.h
 lua_wrappers_core.o: ../src/path_util.h ../src/lua_wrappers_gritobj.h
 lua_wrappers_core.o: ../src/lua_wrappers_disk_resource.h
@@ -784,14 +786,14 @@ lua_wrappers_disk_resource.o: ../depend_stubs/OgreResource.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreTexture.h
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreMesh.h
 lua_wrappers_disk_resource.o: ../src/centralised_log.h
-lua_wrappers_disk_resource.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 lua_wrappers_disk_resource.o: ../../dependencies/util/console.h
 lua_wrappers_disk_resource.o: ../src/background_loader.h
 lua_wrappers_disk_resource.o: ../src/vect_util.h
 lua_wrappers_disk_resource.o: ../depend_stubs/algorithm
+lua_wrappers_disk_resource.o: ../depend_stubs/condition_variable
 lua_wrappers_disk_resource.o: ../depend_stubs/list
-lua_wrappers_disk_resource.o: ../depend_stubs/boost/thread/thread.hpp
-lua_wrappers_disk_resource.o: ../depend_stubs/boost/thread/condition.hpp
+lua_wrappers_disk_resource.o: ../depend_stubs/mutex
+lua_wrappers_disk_resource.o: ../depend_stubs/thread
 lua_wrappers_disk_resource.o: ../src/disk_resource.h
 lua_wrappers_disk_resource.o: ../depend_stubs/set
 lua_wrappers_disk_resource.o: ../src/physics/collision_mesh.h
@@ -815,16 +817,15 @@ lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/QuexMode
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/Analyser
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/Counter
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/Accumulator
-lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/IncludeStack
+lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/TokenQueue
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/temporary_macros_on
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/temporary_macros_off
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/constructor.i
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/Counter.i
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/misc.i
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 lua_wrappers_disk_resource.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -921,7 +922,6 @@ lua_wrappers_gritobj.o: ../depend_stubs/OgreManualObject.h
 lua_wrappers_gritobj.o: ../depend_stubs/btBulletCollisionCommon.h
 lua_wrappers_gritobj.o: ../src/physics/physics_world.h
 lua_wrappers_gritobj.o: ../src/centralised_log.h
-lua_wrappers_gritobj.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 lua_wrappers_gritobj.o: ../../dependencies/util/console.h
 lua_wrappers_gritobj.o: ../src/shared_ptr.h ../depend_stubs/functional
 lua_wrappers_gritobj.o: ../depend_stubs/btBulletDynamicsCommon.h
@@ -939,16 +939,15 @@ lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/QuexMode
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/Analyser
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/Counter
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/Accumulator
-lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/IncludeStack
+lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/TokenQueue
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/temporary_macros_on
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/temporary_macros_off
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/constructor.i
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/Counter.i
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/misc.i
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 lua_wrappers_gritobj.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -993,17 +992,15 @@ main.o: ../depend_stubs/map ../depend_stubs/X11/Xlib.h
 main.o: ../depend_stubs/X11/Xutil.h ../depend_stubs/X11/keysym.h
 main.o: ../src/keyboard.h ../depend_stubs/string
 main.o: ../depend_stubs/vector ../src/linux/mouse_x11.h ../src/mouse.h
-main.o: ../src/main.h ../depend_stubs/lua.h ../src/mouse.h
-main.o: ../src/keyboard.h ../src/background_loader.h
+main.o: ../src/clipboard.h ../src/main.h ../depend_stubs/lua.h
+main.o: ../src/mouse.h ../src/keyboard.h ../src/background_loader.h
 main.o: ../src/vect_util.h ../depend_stubs/algorithm
 main.o: ../src/centralised_log.h ../src/bullet_debug_drawer.h
 main.o: ../depend_stubs/OgreFrameListener.h
 main.o: ../depend_stubs/OgreManualObject.h
 main.o: ../depend_stubs/btBulletCollisionCommon.h
 main.o: ../src/physics/physics_world.h ../src/centralised_log.h
-main.o: ../depend_stubs/iostream
-main.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-main.o: ../../dependencies/util/console.h
+main.o: ../depend_stubs/iostream ../../dependencies/util/console.h
 main.o: ../../dependencies/util/exception.h ../depend_stubs/cstdlib
 main.o: ../../dependencies/util/intrinsics.h ../src/shared_ptr.h
 main.o: ../depend_stubs/functional
@@ -1022,16 +1019,15 @@ main.o: ../depend_stubs/quex/code_base/template/QuexMode
 main.o: ../depend_stubs/quex/code_base/template/Analyser
 main.o: ../depend_stubs/quex/code_base/template/Counter
 main.o: ../depend_stubs/quex/code_base/template/Accumulator
-main.o: ../depend_stubs/quex/code_base/template/IncludeStack
+main.o: ../depend_stubs/quex/code_base/TokenQueue
 main.o: ../depend_stubs/quex/code_base/temporary_macros_on
 main.o: ../depend_stubs/quex/code_base/temporary_macros_off
 main.o: ../depend_stubs/quex/code_base/template/constructor.i
 main.o: ../depend_stubs/quex/code_base/template/Counter.i
 main.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-main.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-main.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+main.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+main.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 main.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-main.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 main.o: ../depend_stubs/quex/code_base/template/misc.i
 main.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 main.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -1049,12 +1045,12 @@ main.o: ../../dependencies/util/lua_wrappers_common.h
 main.o: ../src/lua_wrappers_core.h ../src/gfx/gfx.h ../src/vect_util.h
 main.o: ../src/gfx/gfx_disk_resource.h ../depend_stubs/OgreResource.h
 main.o: ../depend_stubs/OgreTexture.h ../depend_stubs/OgreMesh.h
-main.o: ../src/background_loader.h ../depend_stubs/list
-main.o: ../depend_stubs/boost/thread/thread.hpp
-main.o: ../depend_stubs/boost/thread/condition.hpp
-main.o: ../src/disk_resource.h ../src/gfx/gfx_node.h
-main.o: ../depend_stubs/OgreSceneNode.h ../src/gfx/gfx_internal.h
-main.o: ../depend_stubs/Ogre.h ../depend_stubs/OgreMeshManager.h
+main.o: ../src/background_loader.h ../depend_stubs/condition_variable
+main.o: ../depend_stubs/list ../depend_stubs/mutex
+main.o: ../depend_stubs/thread ../src/disk_resource.h
+main.o: ../src/gfx/gfx_node.h ../depend_stubs/OgreSceneNode.h
+main.o: ../src/gfx/gfx_internal.h ../depend_stubs/Ogre.h
+main.o: ../depend_stubs/OgreMeshManager.h
 main.o: ../depend_stubs/OgreOctreeSceneManager.h
 main.o: ../depend_stubs/OgreVector3.h ../depend_stubs/OgreQuaternion.h
 main.o: ../depend_stubs/OgreCustomCompositionPass.h
@@ -1099,9 +1095,7 @@ streamer.o: ../depend_stubs/OgreFrameListener.h
 streamer.o: ../depend_stubs/OgreManualObject.h
 streamer.o: ../depend_stubs/btBulletCollisionCommon.h
 streamer.o: ../src/physics/physics_world.h ../src/centralised_log.h
-streamer.o: ../depend_stubs/sstream
-streamer.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-streamer.o: ../../dependencies/util/console.h
+streamer.o: ../depend_stubs/sstream ../../dependencies/util/console.h
 streamer.o: ../../dependencies/util/exception.h
 streamer.o: ../depend_stubs/cstdlib
 streamer.o: ../../dependencies/util/intrinsics.h ../src/shared_ptr.h
@@ -1119,16 +1113,15 @@ streamer.o: ../depend_stubs/quex/code_base/template/QuexMode
 streamer.o: ../depend_stubs/quex/code_base/template/Analyser
 streamer.o: ../depend_stubs/quex/code_base/template/Counter
 streamer.o: ../depend_stubs/quex/code_base/template/Accumulator
-streamer.o: ../depend_stubs/quex/code_base/template/IncludeStack
+streamer.o: ../depend_stubs/quex/code_base/TokenQueue
 streamer.o: ../depend_stubs/quex/code_base/temporary_macros_on
 streamer.o: ../depend_stubs/quex/code_base/temporary_macros_off
 streamer.o: ../depend_stubs/quex/code_base/template/constructor.i
 streamer.o: ../depend_stubs/quex/code_base/template/Counter.i
 streamer.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-streamer.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-streamer.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+streamer.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+streamer.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 streamer.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-streamer.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 streamer.o: ../depend_stubs/quex/code_base/template/misc.i
 streamer.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 streamer.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -1156,7 +1149,6 @@ keyboard_x11.o: ../depend_stubs/map ../depend_stubs/X11/Xlib.h
 keyboard_x11.o: ../depend_stubs/X11/Xutil.h
 keyboard_x11.o: ../depend_stubs/X11/keysym.h ../src/keyboard.h
 keyboard_x11.o: ../depend_stubs/vector ../src/centralised_log.h
-keyboard_x11.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 keyboard_x11.o: ../../dependencies/util/console.h
 keyboard_x11.o: ../../dependencies/util/exception.h
 keyboard_x11.o: ../../dependencies/util/intrinsics.h
@@ -1164,12 +1156,19 @@ mouse_x11.o: ../depend_stubs/sstream ../src/linux/mouse_x11.h
 mouse_x11.o: ../depend_stubs/X11/Xlib.h ../src/mouse.h
 mouse_x11.o: ../depend_stubs/vector ../src/centralised_log.h
 mouse_x11.o: ../depend_stubs/iostream
-mouse_x11.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 mouse_x11.o: ../../dependencies/util/console.h
 mouse_x11.o: ../../dependencies/util/exception.h
 mouse_x11.o: ../depend_stubs/cstdlib ../depend_stubs/string
 mouse_x11.o: ../../dependencies/util/intrinsics.h
 x11_clipboard.o: ../depend_stubs/cstdlib ../depend_stubs/string
+x11_clipboard.o: ../depend_stubs/X11/Xlib.h
+x11_clipboard.o: ../depend_stubs/X11/Xatom.h ../src/clipboard.h
+x11_clipboard.o: ../src/centralised_log.h
+x11_clipboard.o: ../depend_stubs/iostream
+x11_clipboard.o: ../depend_stubs/sstream
+x11_clipboard.o: ../../dependencies/util/console.h
+x11_clipboard.o: ../../dependencies/util/exception.h
+x11_clipboard.o: ../../dependencies/util/intrinsics.h
 keyboard_direct_input8.o: ../depend_stubs/assert.h
 keyboard_direct_input8.o: ../depend_stubs/iostream
 keyboard_direct_input8.o: ../src/win32/keyboard_direct_input8.h
@@ -1181,7 +1180,6 @@ keyboard_direct_input8.o: ../depend_stubs/string
 keyboard_direct_input8.o: ../depend_stubs/vector
 keyboard_direct_input8.o: ../src/centralised_log.h
 keyboard_direct_input8.o: ../depend_stubs/sstream
-keyboard_direct_input8.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 keyboard_direct_input8.o: ../../dependencies/util/console.h
 keyboard_direct_input8.o: ../../dependencies/util/exception.h
 keyboard_direct_input8.o: ../depend_stubs/cstdlib
@@ -1197,7 +1195,6 @@ keyboard_win_api.o: ../depend_stubs/windows.h ../src/keyboard.h
 keyboard_win_api.o: ../depend_stubs/vector
 keyboard_win_api.o: ../src/centralised_log.h
 keyboard_win_api.o: ../depend_stubs/sstream
-keyboard_win_api.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 keyboard_win_api.o: ../../dependencies/util/console.h
 keyboard_win_api.o: ../../dependencies/util/exception.h
 keyboard_win_api.o: ../../dependencies/util/intrinsics.h
@@ -1208,7 +1205,6 @@ mouse_direct_input8.o: ../depend_stubs/dinput.h ../src/mouse.h
 mouse_direct_input8.o: ../depend_stubs/vector
 mouse_direct_input8.o: ../src/centralised_log.h
 mouse_direct_input8.o: ../depend_stubs/sstream
-mouse_direct_input8.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 mouse_direct_input8.o: ../../dependencies/util/console.h
 mouse_direct_input8.o: ../../dependencies/util/exception.h
 mouse_direct_input8.o: ../depend_stubs/cstdlib
@@ -1218,6 +1214,7 @@ win32_clipboard.o: ../depend_stubs/cstdlib
 win32_clipboard.o: ../depend_stubs/string
 win32_clipboard.o: ../depend_stubs/windows.h
 win32_clipboard.o: ../../dependencies/util/unicode_util.h
+win32_clipboard.o: ../src/clipboard.h
 clutter.o: ../depend_stubs/OgreHardwareBufferManager.h
 clutter.o: ../depend_stubs/OgreMaterialManager.h
 clutter.o: ../depend_stubs/OgreSubMesh.h
@@ -1233,7 +1230,6 @@ clutter.o: ../depend_stubs/btBulletCollisionCommon.h
 clutter.o: ../src/physics/physics_world.h ../depend_stubs/map
 clutter.o: ../src/centralised_log.h ../depend_stubs/iostream
 clutter.o: ../depend_stubs/sstream
-clutter.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 clutter.o: ../../dependencies/util/console.h
 clutter.o: ../../dependencies/util/exception.h
 clutter.o: ../depend_stubs/cstdlib
@@ -1256,16 +1252,15 @@ clutter.o: ../depend_stubs/quex/code_base/template/QuexMode
 clutter.o: ../depend_stubs/quex/code_base/template/Analyser
 clutter.o: ../depend_stubs/quex/code_base/template/Counter
 clutter.o: ../depend_stubs/quex/code_base/template/Accumulator
-clutter.o: ../depend_stubs/quex/code_base/template/IncludeStack
+clutter.o: ../depend_stubs/quex/code_base/TokenQueue
 clutter.o: ../depend_stubs/quex/code_base/temporary_macros_on
 clutter.o: ../depend_stubs/quex/code_base/temporary_macros_off
 clutter.o: ../depend_stubs/quex/code_base/template/constructor.i
 clutter.o: ../depend_stubs/quex/code_base/template/Counter.i
 clutter.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-clutter.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-clutter.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+clutter.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+clutter.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 clutter.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-clutter.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 clutter.o: ../depend_stubs/quex/code_base/template/misc.i
 clutter.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 clutter.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -1279,98 +1274,6 @@ clutter.o: ../src/shared_ptr.h ../src/streamer.h
 clutter.o: ../src/grit_object.h ../src/external_table.h
 clutter.o: ../src/lua_ptr.h ../../dependencies/util/spline_table.h
 clutter.o: ../src/lua_ptr.h ../src/gfx/gfx.h ../src/vect_util.h
-gfx.o: ../depend_stubs/sstream
-gfx.o: ../depend_stubs/OgreAutoParamDataSource.h
-gfx.o: ../../dependencies/util/sleep.h ../src/path_util.h
-gfx.o: ../depend_stubs/vector ../depend_stubs/string ../src/main.h
-gfx.o: ../depend_stubs/lua.h ../src/mouse.h ../src/keyboard.h
-gfx.o: ../src/background_loader.h ../src/vect_util.h
-gfx.o: ../depend_stubs/algorithm ../src/centralised_log.h
-gfx.o: ../src/bullet_debug_drawer.h
-gfx.o: ../depend_stubs/OgreFrameListener.h
-gfx.o: ../depend_stubs/OgreManualObject.h
-gfx.o: ../depend_stubs/btBulletCollisionCommon.h
-gfx.o: ../src/physics/physics_world.h ../depend_stubs/map
-gfx.o: ../src/centralised_log.h ../depend_stubs/iostream
-gfx.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-gfx.o: ../../dependencies/util/console.h
-gfx.o: ../../dependencies/util/exception.h ../depend_stubs/cstdlib
-gfx.o: ../../dependencies/util/intrinsics.h ../src/shared_ptr.h
-gfx.o: ../depend_stubs/functional
-gfx.o: ../depend_stubs/btBulletDynamicsCommon.h
-gfx.o: ../depend_stubs/lauxlib.h ../depend_stubs/lualib.h
-gfx.o: ../../dependencies/util/math_util.h ../depend_stubs/cmath
-gfx.o: ../depend_stubs/cfloat ../src/physics/tcol_parser.h
-gfx.o: ../src/physics/tcol_lexer ../depend_stubs/istream
-gfx.o: ../depend_stubs/quex/code_base/compatibility/inttypes.h
-gfx.o: ../src/physics/tcol_lexer-token_ids ../depend_stubs/cstdio
-gfx.o: ../depend_stubs/quex/code_base/Token
-gfx.o: ../depend_stubs/quex/code_base/definitions
-gfx.o: ../depend_stubs/quex/code_base/buffer/Buffer
-gfx.o: ../depend_stubs/quex/code_base/buffer/plain/BufferFiller_Plain
-gfx.o: ../depend_stubs/quex/code_base/template/QuexMode
-gfx.o: ../depend_stubs/quex/code_base/template/Analyser
-gfx.o: ../depend_stubs/quex/code_base/template/Counter
-gfx.o: ../depend_stubs/quex/code_base/template/Accumulator
-gfx.o: ../depend_stubs/quex/code_base/template/IncludeStack
-gfx.o: ../depend_stubs/quex/code_base/temporary_macros_on
-gfx.o: ../depend_stubs/quex/code_base/temporary_macros_off
-gfx.o: ../depend_stubs/quex/code_base/template/constructor.i
-gfx.o: ../depend_stubs/quex/code_base/template/Counter.i
-gfx.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-gfx.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-gfx.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
-gfx.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-gfx.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
-gfx.o: ../depend_stubs/quex/code_base/template/misc.i
-gfx.o: ../depend_stubs/quex/code_base/template/buffer_access.i
-gfx.o: ../depend_stubs/quex/code_base/template/Analyser.i
-gfx.o: ../src/physics/collision_mesh.h
-gfx.o: ../depend_stubs/OgreDataStream.h ../src/disk_resource.h
-gfx.o: ../depend_stubs/set ../src/physics/bcol_parser.h
-gfx.o: ../depend_stubs/stdint.h ../src/physics/loose_end.h
-gfx.o: ../src/physics/physical_material.h ../src/grit_object.h
-gfx.o: ../src/shared_ptr.h ../src/streamer.h ../src/grit_object.h
-gfx.o: ../src/external_table.h ../src/lua_ptr.h
-gfx.o: ../../dependencies/util/spline_table.h ../src/lua_ptr.h
-gfx.o: ../src/gfx/gfx_internal.h ../depend_stubs/Ogre.h
-gfx.o: ../depend_stubs/OgreMeshManager.h
-gfx.o: ../depend_stubs/OgreOctreeSceneManager.h
-gfx.o: ../depend_stubs/OgreVector3.h
-gfx.o: ../depend_stubs/OgreQuaternion.h
-gfx.o: ../depend_stubs/OgreCustomCompositionPass.h
-gfx.o: ../depend_stubs/OgreCompositor.h
-gfx.o: ../depend_stubs/OgreOctreePlugin.h
-gfx.o: ../depend_stubs/OgreCgPlugin.h
-gfx.o: ../depend_stubs/OgreRenderSystem.h
-gfx.o: ../depend_stubs/OgreGLRenderSystem.h ../src/gfx/gfx.h
-gfx.o: ../src/vect_util.h ../src/gfx/gfx_option.h
-gfx.o: ../src/gfx/gfx_pipeline.h ../src/gfx/clutter.h
-gfx.o: ../depend_stubs/OgreMovableObject.h
-gfx.o: ../depend_stubs/OgreVertexIndexData.h
-gfx.o: ../depend_stubs/OgreMaterial.h ../depend_stubs/OgreMesh.h
-gfx.o: ../src/cache_friendly_range_space_simd.h
-gfx.o: ../src/sse_allocator.h ../src/streamer.h
-gfx.o: ../src/gfx/gfx_material.h ../src/gfx/gfx_body.h
-gfx.o: ../src/gfx/gfx_fertile_node.h ../src/gfx/gfx_node.h
-gfx.o: ../depend_stubs/OgreSceneNode.h ../src/gfx/gfx_light.h
-gfx.o: ../src/gfx/gfx_particle_system.h ../depend_stubs/utility
-gfx.o: ../src/gfx/gfx_sky_material.h ../src/gfx/gfx_sky_body.h
-gfx.o: ../src/gfx/gfx_disk_resource.h
-gfx.o: ../depend_stubs/OgreResource.h
-gfx.o: ../depend_stubs/OgreTexture.h ../src/background_loader.h
-gfx.o: ../depend_stubs/list
-gfx.o: ../depend_stubs/boost/thread/thread.hpp
-gfx.o: ../depend_stubs/boost/thread/condition.hpp
-gfx.o: ../src/disk_resource.h ../src/gfx/gfx_hud.h
-gfx.o: ../src/grit_lua_util.h ../depend_stubs/OgreException.h
-gfx.o: ../../dependencies/util/lua_util.h ../depend_stubs/limits
-gfx.o: ../../dependencies/util/lua_wrappers_common.h
-gfx.o: ../src/gfx/gfx_font.h ../src/gfx/gfx_text_buffer.h
-gfx.o: ../depend_stubs/cstdint
-gfx.o: ../depend_stubs/OgreHardwareBufferManager.h
-gfx.o: ../depend_stubs/OgreHardwareVertexBuffer.h
-gfx.o: ../depend_stubs/OgreHardwareIndexBuffer.h
 gfx_body.o: ../depend_stubs/OgreSceneManager.h
 gfx_body.o: ../depend_stubs/OgreSkeleton.h
 gfx_body.o: ../depend_stubs/OgreAxisAlignedBox.h
@@ -1380,7 +1283,6 @@ gfx_body.o: ../depend_stubs/OgreAnimation.h
 gfx_body.o: ../depend_stubs/OgreOptimisedUtil.h
 gfx_body.o: ../depend_stubs/OgreSubMesh.h ../src/centralised_log.h
 gfx_body.o: ../depend_stubs/iostream ../depend_stubs/sstream
-gfx_body.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx_body.o: ../../dependencies/util/console.h
 gfx_body.o: ../../dependencies/util/exception.h
 gfx_body.o: ../depend_stubs/cstdlib ../depend_stubs/string
@@ -1405,8 +1307,97 @@ gfx_body.o: ../src/gfx/gfx_fertile_node.h ../src/gfx/gfx_node.h
 gfx_body.o: ../depend_stubs/OgreSceneNode.h
 gfx_body.o: ../../dependencies/util/math_util.h
 gfx_body.o: ../depend_stubs/cmath ../depend_stubs/cfloat
-gfx_body.o: ../src/gfx/gfx_material.h
+gfx_body.o: ../src/gfx/gfx_material.h ../depend_stubs/mutex
 gfx_body.o: ../depend_stubs/OgreMaterial.h
+gfx.o: ../depend_stubs/sstream
+gfx.o: ../depend_stubs/OgreAutoParamDataSource.h
+gfx.o: ../../dependencies/util/sleep.h ../src/path_util.h
+gfx.o: ../depend_stubs/vector ../depend_stubs/string ../src/main.h
+gfx.o: ../depend_stubs/lua.h ../src/mouse.h ../src/keyboard.h
+gfx.o: ../src/background_loader.h ../src/vect_util.h
+gfx.o: ../depend_stubs/algorithm ../src/centralised_log.h
+gfx.o: ../src/bullet_debug_drawer.h
+gfx.o: ../depend_stubs/OgreFrameListener.h
+gfx.o: ../depend_stubs/OgreManualObject.h
+gfx.o: ../depend_stubs/btBulletCollisionCommon.h
+gfx.o: ../src/physics/physics_world.h ../depend_stubs/map
+gfx.o: ../src/centralised_log.h ../depend_stubs/iostream
+gfx.o: ../../dependencies/util/console.h
+gfx.o: ../../dependencies/util/exception.h ../depend_stubs/cstdlib
+gfx.o: ../../dependencies/util/intrinsics.h ../src/shared_ptr.h
+gfx.o: ../depend_stubs/functional
+gfx.o: ../depend_stubs/btBulletDynamicsCommon.h
+gfx.o: ../depend_stubs/lauxlib.h ../depend_stubs/lualib.h
+gfx.o: ../../dependencies/util/math_util.h ../depend_stubs/cmath
+gfx.o: ../depend_stubs/cfloat ../src/physics/tcol_parser.h
+gfx.o: ../src/physics/tcol_lexer ../depend_stubs/istream
+gfx.o: ../depend_stubs/quex/code_base/compatibility/inttypes.h
+gfx.o: ../src/physics/tcol_lexer-token_ids ../depend_stubs/cstdio
+gfx.o: ../depend_stubs/quex/code_base/Token
+gfx.o: ../depend_stubs/quex/code_base/definitions
+gfx.o: ../depend_stubs/quex/code_base/buffer/Buffer
+gfx.o: ../depend_stubs/quex/code_base/buffer/plain/BufferFiller_Plain
+gfx.o: ../depend_stubs/quex/code_base/template/QuexMode
+gfx.o: ../depend_stubs/quex/code_base/template/Analyser
+gfx.o: ../depend_stubs/quex/code_base/template/Counter
+gfx.o: ../depend_stubs/quex/code_base/template/Accumulator
+gfx.o: ../depend_stubs/quex/code_base/TokenQueue
+gfx.o: ../depend_stubs/quex/code_base/temporary_macros_on
+gfx.o: ../depend_stubs/quex/code_base/temporary_macros_off
+gfx.o: ../depend_stubs/quex/code_base/template/constructor.i
+gfx.o: ../depend_stubs/quex/code_base/template/Counter.i
+gfx.o: ../depend_stubs/quex/code_base/template/Accumulator.i
+gfx.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+gfx.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
+gfx.o: ../depend_stubs/quex/code_base/template/mode_handling.i
+gfx.o: ../depend_stubs/quex/code_base/template/misc.i
+gfx.o: ../depend_stubs/quex/code_base/template/buffer_access.i
+gfx.o: ../depend_stubs/quex/code_base/template/Analyser.i
+gfx.o: ../src/physics/collision_mesh.h
+gfx.o: ../depend_stubs/OgreDataStream.h ../src/disk_resource.h
+gfx.o: ../depend_stubs/set ../src/physics/bcol_parser.h
+gfx.o: ../depend_stubs/stdint.h ../src/physics/loose_end.h
+gfx.o: ../src/physics/physical_material.h ../src/grit_object.h
+gfx.o: ../src/shared_ptr.h ../src/streamer.h ../src/grit_object.h
+gfx.o: ../src/external_table.h ../src/lua_ptr.h
+gfx.o: ../../dependencies/util/spline_table.h ../src/lua_ptr.h
+gfx.o: ../src/clipboard.h ../src/gfx/gfx_internal.h
+gfx.o: ../depend_stubs/Ogre.h ../depend_stubs/OgreMeshManager.h
+gfx.o: ../depend_stubs/OgreOctreeSceneManager.h
+gfx.o: ../depend_stubs/OgreVector3.h
+gfx.o: ../depend_stubs/OgreQuaternion.h
+gfx.o: ../depend_stubs/OgreCustomCompositionPass.h
+gfx.o: ../depend_stubs/OgreCompositor.h
+gfx.o: ../depend_stubs/OgreOctreePlugin.h
+gfx.o: ../depend_stubs/OgreCgPlugin.h
+gfx.o: ../depend_stubs/OgreRenderSystem.h
+gfx.o: ../depend_stubs/OgreGLRenderSystem.h ../src/gfx/gfx.h
+gfx.o: ../src/vect_util.h ../src/gfx/gfx_option.h
+gfx.o: ../src/gfx/gfx_pipeline.h ../src/gfx/clutter.h
+gfx.o: ../depend_stubs/OgreMovableObject.h
+gfx.o: ../depend_stubs/OgreVertexIndexData.h
+gfx.o: ../depend_stubs/OgreMaterial.h ../depend_stubs/OgreMesh.h
+gfx.o: ../src/cache_friendly_range_space_simd.h
+gfx.o: ../src/sse_allocator.h ../src/streamer.h
+gfx.o: ../src/gfx/gfx_material.h ../depend_stubs/mutex
+gfx.o: ../src/gfx/gfx_body.h ../src/gfx/gfx_fertile_node.h
+gfx.o: ../src/gfx/gfx_node.h ../depend_stubs/OgreSceneNode.h
+gfx.o: ../src/gfx/gfx_light.h ../src/gfx/gfx_particle_system.h
+gfx.o: ../depend_stubs/utility ../src/gfx/gfx_sky_material.h
+gfx.o: ../src/gfx/gfx_sky_body.h ../src/gfx/gfx_disk_resource.h
+gfx.o: ../depend_stubs/OgreResource.h
+gfx.o: ../depend_stubs/OgreTexture.h ../src/background_loader.h
+gfx.o: ../depend_stubs/condition_variable ../depend_stubs/list
+gfx.o: ../depend_stubs/thread ../src/disk_resource.h
+gfx.o: ../src/gfx/gfx_hud.h ../src/grit_lua_util.h
+gfx.o: ../depend_stubs/OgreException.h
+gfx.o: ../../dependencies/util/lua_util.h ../depend_stubs/limits
+gfx.o: ../../dependencies/util/lua_wrappers_common.h
+gfx.o: ../src/gfx/gfx_font.h ../src/gfx/gfx_text_buffer.h
+gfx.o: ../depend_stubs/cstdint
+gfx.o: ../depend_stubs/OgreHardwareBufferManager.h
+gfx.o: ../depend_stubs/OgreHardwareVertexBuffer.h
+gfx.o: ../depend_stubs/OgreHardwareIndexBuffer.h
 gfx_disk_resource.o: ../depend_stubs/OgreMesh.h
 gfx_disk_resource.o: ../depend_stubs/OgreMeshManager.h
 gfx_disk_resource.o: ../depend_stubs/OgreTexture.h
@@ -1421,7 +1412,6 @@ gfx_disk_resource.o: ../depend_stubs/iostream
 gfx_disk_resource.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 gfx_disk_resource.o: ../src/centralised_log.h
 gfx_disk_resource.o: ../depend_stubs/sstream
-gfx_disk_resource.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx_disk_resource.o: ../../dependencies/util/console.h
 gfx_disk_resource.o: ../../dependencies/util/exception.h
 gfx_disk_resource.o: ../depend_stubs/cstdlib
@@ -1429,11 +1419,11 @@ gfx_disk_resource.o: ../../dependencies/util/intrinsics.h
 gfx_disk_resource.o: ../src/background_loader.h
 gfx_disk_resource.o: ../depend_stubs/vector ../src/vect_util.h
 gfx_disk_resource.o: ../depend_stubs/algorithm
-gfx_disk_resource.o: ../src/centralised_log.h ../depend_stubs/list
-gfx_disk_resource.o: ../depend_stubs/boost/thread/thread.hpp
-gfx_disk_resource.o: ../depend_stubs/boost/thread/condition.hpp
-gfx_disk_resource.o: ../src/disk_resource.h ../depend_stubs/set
-gfx_disk_resource.o: ../src/gfx/gfx_internal.h
+gfx_disk_resource.o: ../src/centralised_log.h
+gfx_disk_resource.o: ../depend_stubs/condition_variable
+gfx_disk_resource.o: ../depend_stubs/list ../depend_stubs/mutex
+gfx_disk_resource.o: ../depend_stubs/thread ../src/disk_resource.h
+gfx_disk_resource.o: ../depend_stubs/set ../src/gfx/gfx_internal.h
 gfx_disk_resource.o: ../depend_stubs/Ogre.h
 gfx_disk_resource.o: ../depend_stubs/OgreOctreeSceneManager.h
 gfx_disk_resource.o: ../depend_stubs/OgreVector3.h
@@ -1488,13 +1478,12 @@ gfx_font.o: ../depend_stubs/string ../depend_stubs/iostream
 gfx_font.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 gfx_font.o: ../src/background_loader.h ../src/vect_util.h
 gfx_font.o: ../depend_stubs/algorithm ../src/centralised_log.h
-gfx_font.o: ../depend_stubs/list
-gfx_font.o: ../depend_stubs/boost/thread/thread.hpp
-gfx_font.o: ../depend_stubs/boost/thread/condition.hpp
-gfx_font.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-gfx_font.o: ../src/disk_resource.h ../depend_stubs/set
-gfx_font.o: ../src/main.h ../depend_stubs/lua.h ../src/mouse.h
-gfx_font.o: ../src/keyboard.h ../src/background_loader.h
+gfx_font.o: ../depend_stubs/condition_variable
+gfx_font.o: ../depend_stubs/list ../depend_stubs/mutex
+gfx_font.o: ../depend_stubs/thread ../src/disk_resource.h
+gfx_font.o: ../depend_stubs/set ../src/main.h
+gfx_font.o: ../depend_stubs/lua.h ../src/mouse.h ../src/keyboard.h
+gfx_font.o: ../src/background_loader.h
 gfx_font.o: ../src/bullet_debug_drawer.h
 gfx_font.o: ../depend_stubs/OgreFrameListener.h
 gfx_font.o: ../depend_stubs/OgreManualObject.h
@@ -1521,16 +1510,15 @@ gfx_font.o: ../depend_stubs/quex/code_base/template/QuexMode
 gfx_font.o: ../depend_stubs/quex/code_base/template/Analyser
 gfx_font.o: ../depend_stubs/quex/code_base/template/Counter
 gfx_font.o: ../depend_stubs/quex/code_base/template/Accumulator
-gfx_font.o: ../depend_stubs/quex/code_base/template/IncludeStack
+gfx_font.o: ../depend_stubs/quex/code_base/TokenQueue
 gfx_font.o: ../depend_stubs/quex/code_base/temporary_macros_on
 gfx_font.o: ../depend_stubs/quex/code_base/temporary_macros_off
 gfx_font.o: ../depend_stubs/quex/code_base/template/constructor.i
 gfx_font.o: ../depend_stubs/quex/code_base/template/Counter.i
 gfx_font.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-gfx_font.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-gfx_font.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+gfx_font.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+gfx_font.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 gfx_font.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-gfx_font.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 gfx_font.o: ../depend_stubs/quex/code_base/template/misc.i
 gfx_font.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 gfx_font.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -1548,11 +1536,26 @@ gfx_font.o: ../src/lua_ptr.h ../src/gfx/gfx_disk_resource.h
 gfx_font.o: ../depend_stubs/OgreResource.h
 gfx_font.o: ../depend_stubs/OgreTexture.h
 gfx_font.o: ../depend_stubs/OgreMesh.h
+gfx_gasoline.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/list
+gfx_gasoline.o: ../depend_stubs/string ../depend_stubs/ostream
+gfx_gasoline.o: ../../dependencies/util/exception.h
+gfx_gasoline.o: ../depend_stubs/cstdlib ../depend_stubs/sstream
+gfx_gasoline.o: ../depend_stubs/iostream
+gfx_gasoline.o: ../../dependencies/util/intrinsics.h
+gfx_gasoline_standalone.o: ../depend_stubs/fstream
+gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline.h
+gfx_gasoline_standalone.o: ../depend_stubs/list
+gfx_gasoline_standalone.o: ../depend_stubs/string
+gfx_gasoline_standalone.o: ../depend_stubs/ostream
+gfx_gasoline_standalone.o: ../../dependencies/util/exception.h
+gfx_gasoline_standalone.o: ../depend_stubs/cstdlib
+gfx_gasoline_standalone.o: ../depend_stubs/sstream
+gfx_gasoline_standalone.o: ../depend_stubs/iostream
+gfx_gasoline_standalone.o: ../../dependencies/util/intrinsics.h
 gfx_hud.o: ../depend_stubs/OgreHighLevelGpuProgramManager.h
 gfx_hud.o: ../depend_stubs/OgreCgProgram.h
 gfx_hud.o: ../src/centralised_log.h ../depend_stubs/iostream
 gfx_hud.o: ../depend_stubs/sstream
-gfx_hud.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx_hud.o: ../../dependencies/util/console.h
 gfx_hud.o: ../../dependencies/util/exception.h
 gfx_hud.o: ../depend_stubs/cstdlib ../depend_stubs/string
@@ -1585,18 +1588,16 @@ gfx_hud.o: ../depend_stubs/OgreRenderSystem.h
 gfx_hud.o: ../depend_stubs/OgreGLRenderSystem.h
 gfx_hud.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_body.h
 gfx_hud.o: ../depend_stubs/OgreMesh.h ../src/gfx/gfx_material.h
-gfx_hud.o: ../depend_stubs/OgreMaterial.h
+gfx_hud.o: ../depend_stubs/mutex ../depend_stubs/OgreMaterial.h
 gfx_hud.o: ../src/gfx/gfx_sky_body.h
 gfx_hud.o: ../src/gfx/gfx_disk_resource.h
 gfx_hud.o: ../depend_stubs/OgreResource.h
 gfx_hud.o: ../depend_stubs/OgreTexture.h
 gfx_hud.o: ../src/background_loader.h ../src/vect_util.h
-gfx_hud.o: ../depend_stubs/list
-gfx_hud.o: ../depend_stubs/boost/thread/thread.hpp
-gfx_hud.o: ../depend_stubs/boost/thread/condition.hpp
-gfx_hud.o: ../src/disk_resource.h ../depend_stubs/set
-gfx_hud.o: ../src/gfx/gfx_sky_material.h ../src/gfx/gfx_light.h
-gfx_hud.o: ../src/gfx/gfx_particle_system.h
+gfx_hud.o: ../depend_stubs/condition_variable ../depend_stubs/list
+gfx_hud.o: ../depend_stubs/thread ../src/disk_resource.h
+gfx_hud.o: ../depend_stubs/set ../src/gfx/gfx_sky_material.h
+gfx_hud.o: ../src/gfx/gfx_light.h ../src/gfx/gfx_particle_system.h
 gfx_hud.o: ../depend_stubs/utility ../src/gfx/gfx_instances.h
 gfx_hud.o: ../depend_stubs/OgreMovableObject.h
 gfx_hud.o: ../src/dense_index_map.h
@@ -1625,16 +1626,15 @@ gfx_hud.o: ../depend_stubs/quex/code_base/template/QuexMode
 gfx_hud.o: ../depend_stubs/quex/code_base/template/Analyser
 gfx_hud.o: ../depend_stubs/quex/code_base/template/Counter
 gfx_hud.o: ../depend_stubs/quex/code_base/template/Accumulator
-gfx_hud.o: ../depend_stubs/quex/code_base/template/IncludeStack
+gfx_hud.o: ../depend_stubs/quex/code_base/TokenQueue
 gfx_hud.o: ../depend_stubs/quex/code_base/temporary_macros_on
 gfx_hud.o: ../depend_stubs/quex/code_base/temporary_macros_off
 gfx_hud.o: ../depend_stubs/quex/code_base/template/constructor.i
 gfx_hud.o: ../depend_stubs/quex/code_base/template/Counter.i
 gfx_hud.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-gfx_hud.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-gfx_hud.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+gfx_hud.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+gfx_hud.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 gfx_hud.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-gfx_hud.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 gfx_hud.o: ../depend_stubs/quex/code_base/template/misc.i
 gfx_hud.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 gfx_hud.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -1663,7 +1663,6 @@ gfx_instances.o: ../depend_stubs/btBulletCollisionCommon.h
 gfx_instances.o: ../src/physics/physics_world.h
 gfx_instances.o: ../depend_stubs/map ../src/centralised_log.h
 gfx_instances.o: ../depend_stubs/iostream ../depend_stubs/sstream
-gfx_instances.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx_instances.o: ../../dependencies/util/console.h
 gfx_instances.o: ../../dependencies/util/exception.h
 gfx_instances.o: ../depend_stubs/cstdlib
@@ -1687,16 +1686,15 @@ gfx_instances.o: ../depend_stubs/quex/code_base/template/QuexMode
 gfx_instances.o: ../depend_stubs/quex/code_base/template/Analyser
 gfx_instances.o: ../depend_stubs/quex/code_base/template/Counter
 gfx_instances.o: ../depend_stubs/quex/code_base/template/Accumulator
-gfx_instances.o: ../depend_stubs/quex/code_base/template/IncludeStack
+gfx_instances.o: ../depend_stubs/quex/code_base/TokenQueue
 gfx_instances.o: ../depend_stubs/quex/code_base/temporary_macros_on
 gfx_instances.o: ../depend_stubs/quex/code_base/temporary_macros_off
 gfx_instances.o: ../depend_stubs/quex/code_base/template/constructor.i
 gfx_instances.o: ../depend_stubs/quex/code_base/template/Counter.i
 gfx_instances.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-gfx_instances.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-gfx_instances.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+gfx_instances.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+gfx_instances.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 gfx_instances.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-gfx_instances.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 gfx_instances.o: ../depend_stubs/quex/code_base/template/misc.i
 gfx_instances.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 gfx_instances.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -1726,6 +1724,7 @@ gfx_instances.o: ../depend_stubs/OgreRenderSystem.h
 gfx_instances.o: ../depend_stubs/OgreGLRenderSystem.h
 gfx_instances.o: ../src/gfx/gfx.h ../src/vect_util.h
 gfx_instances.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_material.h
+gfx_instances.o: ../depend_stubs/mutex
 gfx_instances.o: ../depend_stubs/OgreMaterial.h
 gfx_instances.o: ../src/gfx/gfx_instances.h
 gfx_instances.o: ../depend_stubs/OgreMovableObject.h
@@ -1734,9 +1733,9 @@ gfx_instances.o: ../src/gfx/gfx_disk_resource.h
 gfx_instances.o: ../depend_stubs/OgreResource.h
 gfx_instances.o: ../depend_stubs/OgreTexture.h
 gfx_instances.o: ../depend_stubs/OgreMesh.h
-gfx_instances.o: ../src/background_loader.h ../depend_stubs/list
-gfx_instances.o: ../depend_stubs/boost/thread/thread.hpp
-gfx_instances.o: ../depend_stubs/boost/thread/condition.hpp
+gfx_instances.o: ../src/background_loader.h
+gfx_instances.o: ../depend_stubs/condition_variable
+gfx_instances.o: ../depend_stubs/list ../depend_stubs/thread
 gfx_instances.o: ../src/disk_resource.h ../src/gfx/gfx_node.h
 gfx_instances.o: ../depend_stubs/OgreSceneNode.h
 gfx_instances.o: ../src/gfx/gfx_fertile_node.h
@@ -1781,6 +1780,7 @@ gfx_material.o: ../depend_stubs/vector ../depend_stubs/algorithm
 gfx_material.o: ../src/centralised_log.h ../src/shared_ptr.h
 gfx_material.o: ../depend_stubs/cstdlib ../depend_stubs/functional
 gfx_material.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_material.h
+gfx_material.o: ../depend_stubs/mutex
 gfx_material.o: ../depend_stubs/OgreMaterial.h
 gfx_material.o: ../src/gfx/gfx_body.h ../depend_stubs/OgreMesh.h
 gfx_material.o: ../src/gfx/gfx_fertile_node.h
@@ -1810,7 +1810,7 @@ gfx_node.o: ../../dependencies/util/math_util.h
 gfx_node.o: ../depend_stubs/iostream ../depend_stubs/cmath
 gfx_node.o: ../depend_stubs/cfloat ../src/gfx/gfx_fertile_node.h
 gfx_node.o: ../src/gfx/gfx_body.h ../depend_stubs/OgreMesh.h
-gfx_node.o: ../src/gfx/gfx_material.h
+gfx_node.o: ../src/gfx/gfx_material.h ../depend_stubs/mutex
 gfx_node.o: ../depend_stubs/OgreMaterial.h
 gfx_option.o: ../depend_stubs/string ../depend_stubs/map
 gfx_option.o: ../src/gfx/gfx_internal.h ../depend_stubs/sstream
@@ -1832,7 +1832,6 @@ gfx_option.o: ../depend_stubs/cstdlib ../depend_stubs/functional
 gfx_option.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_pipeline.h
 gfx_option.o: ../src/option.h ../depend_stubs/ostream
 gfx_option.o: ../src/centralised_log.h ../depend_stubs/iostream
-gfx_option.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx_option.o: ../../dependencies/util/console.h
 gfx_option.o: ../../dependencies/util/exception.h
 gfx_option.o: ../../dependencies/util/intrinsics.h
@@ -1894,16 +1893,14 @@ gfx_pipeline.o: ../src/gfx/gfx_disk_resource.h
 gfx_pipeline.o: ../depend_stubs/OgreResource.h
 gfx_pipeline.o: ../depend_stubs/OgreTexture.h
 gfx_pipeline.o: ../src/centralised_log.h
-gfx_pipeline.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx_pipeline.o: ../../dependencies/util/console.h
 gfx_pipeline.o: ../../dependencies/util/exception.h
 gfx_pipeline.o: ../../dependencies/util/intrinsics.h
 gfx_pipeline.o: ../src/background_loader.h ../src/vect_util.h
-gfx_pipeline.o: ../depend_stubs/list
-gfx_pipeline.o: ../depend_stubs/boost/thread/thread.hpp
-gfx_pipeline.o: ../depend_stubs/boost/thread/condition.hpp
-gfx_pipeline.o: ../src/disk_resource.h ../depend_stubs/set
-gfx_pipeline.o: ../src/gfx/gfx_sky_material.h
+gfx_pipeline.o: ../depend_stubs/condition_variable
+gfx_pipeline.o: ../depend_stubs/list ../depend_stubs/mutex
+gfx_pipeline.o: ../depend_stubs/thread ../src/disk_resource.h
+gfx_pipeline.o: ../depend_stubs/set ../src/gfx/gfx_sky_material.h
 gfx_pipeline.o: ../depend_stubs/OgreMaterial.h
 gfx_pipeline.o: ../src/gfx/gfx_material.h
 gfx_ranged_instances.o: ../depend_stubs/algorithm ../src/main.h
@@ -1922,7 +1919,6 @@ gfx_ranged_instances.o: ../depend_stubs/map
 gfx_ranged_instances.o: ../src/centralised_log.h
 gfx_ranged_instances.o: ../depend_stubs/iostream
 gfx_ranged_instances.o: ../depend_stubs/sstream
-gfx_ranged_instances.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx_ranged_instances.o: ../../dependencies/util/console.h
 gfx_ranged_instances.o: ../../dependencies/util/exception.h
 gfx_ranged_instances.o: ../depend_stubs/cstdlib
@@ -1949,16 +1945,15 @@ gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/QuexMode
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/Analyser
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/Counter
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/Accumulator
-gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/IncludeStack
+gfx_ranged_instances.o: ../depend_stubs/quex/code_base/TokenQueue
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/temporary_macros_on
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/temporary_macros_off
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/constructor.i
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/Counter.i
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/misc.i
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 gfx_ranged_instances.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2000,9 +1995,9 @@ gfx_ranged_instances.o: ../depend_stubs/OgreResource.h
 gfx_ranged_instances.o: ../depend_stubs/OgreTexture.h
 gfx_ranged_instances.o: ../depend_stubs/OgreMesh.h
 gfx_ranged_instances.o: ../src/background_loader.h
-gfx_ranged_instances.o: ../depend_stubs/list
-gfx_ranged_instances.o: ../depend_stubs/boost/thread/thread.hpp
-gfx_ranged_instances.o: ../depend_stubs/boost/thread/condition.hpp
+gfx_ranged_instances.o: ../depend_stubs/condition_variable
+gfx_ranged_instances.o: ../depend_stubs/list ../depend_stubs/mutex
+gfx_ranged_instances.o: ../depend_stubs/thread
 gfx_ranged_instances.o: ../src/disk_resource.h
 gfx_ranged_instances.o: ../src/gfx/gfx_node.h
 gfx_ranged_instances.o: ../depend_stubs/OgreSceneNode.h
@@ -2033,16 +2028,14 @@ gfx_sky_body.o: ../src/gfx/gfx_disk_resource.h
 gfx_sky_body.o: ../depend_stubs/OgreResource.h
 gfx_sky_body.o: ../depend_stubs/OgreTexture.h
 gfx_sky_body.o: ../src/centralised_log.h
-gfx_sky_body.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx_sky_body.o: ../../dependencies/util/console.h
 gfx_sky_body.o: ../../dependencies/util/exception.h
 gfx_sky_body.o: ../../dependencies/util/intrinsics.h
 gfx_sky_body.o: ../src/background_loader.h ../src/vect_util.h
-gfx_sky_body.o: ../depend_stubs/list
-gfx_sky_body.o: ../depend_stubs/boost/thread/thread.hpp
-gfx_sky_body.o: ../depend_stubs/boost/thread/condition.hpp
-gfx_sky_body.o: ../src/disk_resource.h ../depend_stubs/set
-gfx_sky_body.o: ../src/gfx/gfx_sky_material.h
+gfx_sky_body.o: ../depend_stubs/condition_variable
+gfx_sky_body.o: ../depend_stubs/list ../depend_stubs/mutex
+gfx_sky_body.o: ../depend_stubs/thread ../src/disk_resource.h
+gfx_sky_body.o: ../depend_stubs/set ../src/gfx/gfx_sky_material.h
 gfx_sky_body.o: ../depend_stubs/OgreMaterial.h
 gfx_sky_body.o: ../src/gfx/gfx_material.h
 gfx_sky_body.o: ../src/gfx/gfx_pipeline.h
@@ -2051,7 +2044,6 @@ gfx_sky_material.o: ../depend_stubs/OgreCgProgram.h
 gfx_sky_material.o: ../src/centralised_log.h
 gfx_sky_material.o: ../depend_stubs/iostream
 gfx_sky_material.o: ../depend_stubs/sstream
-gfx_sky_material.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 gfx_sky_material.o: ../../dependencies/util/console.h
 gfx_sky_material.o: ../../dependencies/util/exception.h
 gfx_sky_material.o: ../depend_stubs/cstdlib
@@ -2077,6 +2069,7 @@ gfx_sky_material.o: ../src/gfx/gfx_option.h
 gfx_sky_material.o: ../src/gfx/gfx_sky_material.h
 gfx_sky_material.o: ../depend_stubs/OgreMaterial.h
 gfx_sky_material.o: ../src/gfx/gfx_material.h
+gfx_sky_material.o: ../depend_stubs/mutex
 gfx_sky_material.o: ../src/gfx/gfx_sky_body.h
 gfx_sky_material.o: ../depend_stubs/OgreMesh.h
 gfx_sky_material.o: ../depend_stubs/OgreSceneNode.h
@@ -2086,9 +2079,8 @@ gfx_sky_material.o: ../src/gfx/gfx_disk_resource.h
 gfx_sky_material.o: ../depend_stubs/OgreResource.h
 gfx_sky_material.o: ../depend_stubs/OgreTexture.h
 gfx_sky_material.o: ../src/background_loader.h ../src/vect_util.h
-gfx_sky_material.o: ../depend_stubs/list
-gfx_sky_material.o: ../depend_stubs/boost/thread/thread.hpp
-gfx_sky_material.o: ../depend_stubs/boost/thread/condition.hpp
+gfx_sky_material.o: ../depend_stubs/condition_variable
+gfx_sky_material.o: ../depend_stubs/list ../depend_stubs/thread
 gfx_sky_material.o: ../src/disk_resource.h ../depend_stubs/set
 gfx_text_buffer.o: ../../dependencies/util/unicode_util.h
 gfx_text_buffer.o: ../depend_stubs/cstdlib ../depend_stubs/string
@@ -2103,14 +2095,13 @@ gfx_text_buffer.o: ../depend_stubs/cfloat ../src/gfx/gfx_font.h
 gfx_text_buffer.o: ../depend_stubs/vector ../depend_stubs/map
 gfx_text_buffer.o: ../src/background_loader.h ../src/vect_util.h
 gfx_text_buffer.o: ../depend_stubs/algorithm
-gfx_text_buffer.o: ../src/centralised_log.h ../depend_stubs/list
-gfx_text_buffer.o: ../depend_stubs/boost/thread/thread.hpp
-gfx_text_buffer.o: ../depend_stubs/boost/thread/condition.hpp
-gfx_text_buffer.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-gfx_text_buffer.o: ../src/disk_resource.h ../depend_stubs/set
-gfx_text_buffer.o: ../src/main.h ../depend_stubs/lua.h
-gfx_text_buffer.o: ../src/mouse.h ../src/keyboard.h
-gfx_text_buffer.o: ../src/background_loader.h
+gfx_text_buffer.o: ../src/centralised_log.h
+gfx_text_buffer.o: ../depend_stubs/condition_variable
+gfx_text_buffer.o: ../depend_stubs/list ../depend_stubs/mutex
+gfx_text_buffer.o: ../depend_stubs/thread ../src/disk_resource.h
+gfx_text_buffer.o: ../depend_stubs/set ../src/main.h
+gfx_text_buffer.o: ../depend_stubs/lua.h ../src/mouse.h
+gfx_text_buffer.o: ../src/keyboard.h ../src/background_loader.h
 gfx_text_buffer.o: ../src/bullet_debug_drawer.h
 gfx_text_buffer.o: ../depend_stubs/OgreFrameListener.h
 gfx_text_buffer.o: ../depend_stubs/OgreManualObject.h
@@ -2139,16 +2130,15 @@ gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/QuexMode
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/Analyser
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/Counter
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/Accumulator
-gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/IncludeStack
+gfx_text_buffer.o: ../depend_stubs/quex/code_base/TokenQueue
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/temporary_macros_on
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/temporary_macros_off
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/constructor.i
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/Counter.i
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/misc.i
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 gfx_text_buffer.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2198,7 +2188,6 @@ lua_wrappers_gfx.o: ../depend_stubs/OgreManualObject.h
 lua_wrappers_gfx.o: ../depend_stubs/btBulletCollisionCommon.h
 lua_wrappers_gfx.o: ../src/physics/physics_world.h
 lua_wrappers_gfx.o: ../src/centralised_log.h
-lua_wrappers_gfx.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 lua_wrappers_gfx.o: ../../dependencies/util/console.h
 lua_wrappers_gfx.o: ../src/shared_ptr.h ../depend_stubs/functional
 lua_wrappers_gfx.o: ../depend_stubs/btBulletDynamicsCommon.h
@@ -2216,16 +2205,15 @@ lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/QuexMode
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/Analyser
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/Counter
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/Accumulator
-lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/IncludeStack
+lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/TokenQueue
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/temporary_macros_on
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/temporary_macros_off
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/constructor.i
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/Counter.i
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/misc.i
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 lua_wrappers_gfx.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2262,15 +2250,15 @@ lua_wrappers_gfx.o: ../depend_stubs/OgreGLRenderSystem.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_body.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreMesh.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_material.h
+lua_wrappers_gfx.o: ../depend_stubs/mutex
 lua_wrappers_gfx.o: ../depend_stubs/OgreMaterial.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_sky_body.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_disk_resource.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreResource.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreTexture.h
 lua_wrappers_gfx.o: ../src/background_loader.h
-lua_wrappers_gfx.o: ../depend_stubs/list
-lua_wrappers_gfx.o: ../depend_stubs/boost/thread/thread.hpp
-lua_wrappers_gfx.o: ../depend_stubs/boost/thread/condition.hpp
+lua_wrappers_gfx.o: ../depend_stubs/condition_variable
+lua_wrappers_gfx.o: ../depend_stubs/list ../depend_stubs/thread
 lua_wrappers_gfx.o: ../src/disk_resource.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_sky_material.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_light.h
@@ -2377,16 +2365,15 @@ bcol_parser.o: ../depend_stubs/quex/code_base/template/QuexMode
 bcol_parser.o: ../depend_stubs/quex/code_base/template/Analyser
 bcol_parser.o: ../depend_stubs/quex/code_base/template/Counter
 bcol_parser.o: ../depend_stubs/quex/code_base/template/Accumulator
-bcol_parser.o: ../depend_stubs/quex/code_base/template/IncludeStack
+bcol_parser.o: ../depend_stubs/quex/code_base/TokenQueue
 bcol_parser.o: ../depend_stubs/quex/code_base/temporary_macros_on
 bcol_parser.o: ../depend_stubs/quex/code_base/temporary_macros_off
 bcol_parser.o: ../depend_stubs/quex/code_base/template/constructor.i
 bcol_parser.o: ../depend_stubs/quex/code_base/template/Counter.i
 bcol_parser.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-bcol_parser.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-bcol_parser.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+bcol_parser.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+bcol_parser.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 bcol_parser.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-bcol_parser.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 bcol_parser.o: ../depend_stubs/quex/code_base/template/misc.i
 bcol_parser.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 bcol_parser.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2402,7 +2389,6 @@ collision_mesh.o: ../depend_stubs/BulletCollision/Gimpact/btGImpactShape.h
 collision_mesh.o: ../depend_stubs/BulletCollision/CollisionDispatch/btInternalEdgeUtility.h
 collision_mesh.o: ../src/centralised_log.h
 collision_mesh.o: ../depend_stubs/sstream
-collision_mesh.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 collision_mesh.o: ../../dependencies/util/console.h
 collision_mesh.o: ../../dependencies/util/exception.h
 collision_mesh.o: ../depend_stubs/string
@@ -2430,16 +2416,15 @@ collision_mesh.o: ../depend_stubs/quex/code_base/template/QuexMode
 collision_mesh.o: ../depend_stubs/quex/code_base/template/Analyser
 collision_mesh.o: ../depend_stubs/quex/code_base/template/Counter
 collision_mesh.o: ../depend_stubs/quex/code_base/template/Accumulator
-collision_mesh.o: ../depend_stubs/quex/code_base/template/IncludeStack
+collision_mesh.o: ../depend_stubs/quex/code_base/TokenQueue
 collision_mesh.o: ../depend_stubs/quex/code_base/temporary_macros_on
 collision_mesh.o: ../depend_stubs/quex/code_base/temporary_macros_off
 collision_mesh.o: ../depend_stubs/quex/code_base/template/constructor.i
 collision_mesh.o: ../depend_stubs/quex/code_base/template/Counter.i
 collision_mesh.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-collision_mesh.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-collision_mesh.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+collision_mesh.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+collision_mesh.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 collision_mesh.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-collision_mesh.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 collision_mesh.o: ../depend_stubs/quex/code_base/template/misc.i
 collision_mesh.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 collision_mesh.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2452,6 +2437,7 @@ grit_col_conv.o: ../depend_stubs/cerrno
 grit_col_conv.o: ../depend_stubs/cstring
 grit_col_conv.o: ../depend_stubs/iostream
 grit_col_conv.o: ../depend_stubs/fstream
+grit_col_conv.o: ../depend_stubs/unistd.h
 grit_col_conv.o: ../depend_stubs/sys/types.h
 grit_col_conv.o: ../depend_stubs/sys/stat.h
 grit_col_conv.o: ../depend_stubs/sys/mman.h
@@ -2477,16 +2463,15 @@ grit_col_conv.o: ../depend_stubs/quex/code_base/template/QuexMode
 grit_col_conv.o: ../depend_stubs/quex/code_base/template/Analyser
 grit_col_conv.o: ../depend_stubs/quex/code_base/template/Counter
 grit_col_conv.o: ../depend_stubs/quex/code_base/template/Accumulator
-grit_col_conv.o: ../depend_stubs/quex/code_base/template/IncludeStack
+grit_col_conv.o: ../depend_stubs/quex/code_base/TokenQueue
 grit_col_conv.o: ../depend_stubs/quex/code_base/temporary_macros_on
 grit_col_conv.o: ../depend_stubs/quex/code_base/temporary_macros_off
 grit_col_conv.o: ../depend_stubs/quex/code_base/template/constructor.i
 grit_col_conv.o: ../depend_stubs/quex/code_base/template/Counter.i
 grit_col_conv.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-grit_col_conv.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-grit_col_conv.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+grit_col_conv.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+grit_col_conv.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 grit_col_conv.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-grit_col_conv.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 grit_col_conv.o: ../depend_stubs/quex/code_base/template/misc.i
 grit_col_conv.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 grit_col_conv.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2517,15 +2502,15 @@ lua_wrappers_physics.o: ../depend_stubs/string
 lua_wrappers_physics.o: ../depend_stubs/cfloat
 lua_wrappers_physics.o: ../src/centralised_log.h
 lua_wrappers_physics.o: ../depend_stubs/sstream
-lua_wrappers_physics.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 lua_wrappers_physics.o: ../../dependencies/util/console.h
 lua_wrappers_physics.o: ../../dependencies/util/exception.h
 lua_wrappers_physics.o: ../../dependencies/util/intrinsics.h
 lua_wrappers_physics.o: ../src/background_loader.h
 lua_wrappers_physics.o: ../src/vect_util.h
+lua_wrappers_physics.o: ../depend_stubs/condition_variable
 lua_wrappers_physics.o: ../depend_stubs/list
-lua_wrappers_physics.o: ../depend_stubs/boost/thread/thread.hpp
-lua_wrappers_physics.o: ../depend_stubs/boost/thread/condition.hpp
+lua_wrappers_physics.o: ../depend_stubs/mutex
+lua_wrappers_physics.o: ../depend_stubs/thread
 lua_wrappers_physics.o: ../src/disk_resource.h
 lua_wrappers_physics.o: ../depend_stubs/set
 lua_wrappers_physics.o: ../src/gfx/gfx_node.h
@@ -2578,16 +2563,15 @@ lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/QuexMode
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/Analyser
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/Counter
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/Accumulator
-lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/IncludeStack
+lua_wrappers_physics.o: ../depend_stubs/quex/code_base/TokenQueue
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/temporary_macros_on
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/temporary_macros_off
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/constructor.i
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/Counter.i
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/misc.i
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 lua_wrappers_physics.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2630,12 +2614,12 @@ lua_wrappers_physics.o: ../depend_stubs/OgreHardwareIndexBuffer.h
 lua_wrappers_physics.o: ../src/physics/physics_world.h
 lua_wrappers_physics.o: ../src/physics/lua_wrappers_physics.h
 physical_material.o: ../src/physics/physical_material.h
-physical_material.o: ../depend_stubs/vector
+physical_material.o: ../depend_stubs/map
 physical_material.o: ../depend_stubs/string
+physical_material.o: ../depend_stubs/vector
 physical_material.o: ../src/centralised_log.h
 physical_material.o: ../depend_stubs/iostream
 physical_material.o: ../depend_stubs/sstream
-physical_material.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 physical_material.o: ../../dependencies/util/console.h
 physical_material.o: ../../dependencies/util/exception.h
 physical_material.o: ../depend_stubs/cstdlib
@@ -2666,7 +2650,6 @@ physics_world.o: ../depend_stubs/btBulletCollisionCommon.h
 physics_world.o: ../src/physics/physics_world.h
 physics_world.o: ../src/centralised_log.h
 physics_world.o: ../depend_stubs/sstream
-physics_world.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 physics_world.o: ../../dependencies/util/console.h
 physics_world.o: ../../dependencies/util/exception.h
 physics_world.o: ../../dependencies/util/intrinsics.h
@@ -2687,16 +2670,15 @@ physics_world.o: ../depend_stubs/quex/code_base/template/QuexMode
 physics_world.o: ../depend_stubs/quex/code_base/template/Analyser
 physics_world.o: ../depend_stubs/quex/code_base/template/Counter
 physics_world.o: ../depend_stubs/quex/code_base/template/Accumulator
-physics_world.o: ../depend_stubs/quex/code_base/template/IncludeStack
+physics_world.o: ../depend_stubs/quex/code_base/TokenQueue
 physics_world.o: ../depend_stubs/quex/code_base/temporary_macros_on
 physics_world.o: ../depend_stubs/quex/code_base/temporary_macros_off
 physics_world.o: ../depend_stubs/quex/code_base/template/constructor.i
 physics_world.o: ../depend_stubs/quex/code_base/template/Counter.i
 physics_world.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-physics_world.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-physics_world.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+physics_world.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+physics_world.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 physics_world.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-physics_world.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 physics_world.o: ../depend_stubs/quex/code_base/template/misc.i
 physics_world.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 physics_world.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2732,17 +2714,16 @@ tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/QuexMode
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/Analyser
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/Counter
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/Accumulator
-tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/IncludeStack
+tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/TokenQueue
 tcol_lexer-core-engine.o: ../depend_stubs/cstdlib
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/temporary_macros_on
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/temporary_macros_off
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/constructor.i
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/Counter.i
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/misc.i
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 tcol_lexer-core-engine.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2759,17 +2740,16 @@ tcol_lexer.o: ../depend_stubs/quex/code_base/template/QuexMode
 tcol_lexer.o: ../depend_stubs/quex/code_base/template/Analyser
 tcol_lexer.o: ../depend_stubs/quex/code_base/template/Counter
 tcol_lexer.o: ../depend_stubs/quex/code_base/template/Accumulator
-tcol_lexer.o: ../depend_stubs/quex/code_base/template/IncludeStack
+tcol_lexer.o: ../depend_stubs/quex/code_base/TokenQueue
 tcol_lexer.o: ../depend_stubs/cstdlib
 tcol_lexer.o: ../depend_stubs/quex/code_base/temporary_macros_on
 tcol_lexer.o: ../depend_stubs/quex/code_base/temporary_macros_off
 tcol_lexer.o: ../depend_stubs/quex/code_base/template/constructor.i
 tcol_lexer.o: ../depend_stubs/quex/code_base/template/Counter.i
 tcol_lexer.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-tcol_lexer.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-tcol_lexer.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+tcol_lexer.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+tcol_lexer.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 tcol_lexer.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-tcol_lexer.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 tcol_lexer.o: ../depend_stubs/quex/code_base/template/misc.i
 tcol_lexer.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 tcol_lexer.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2780,7 +2760,6 @@ tcol_parser.o: ../depend_stubs/string ../depend_stubs/cmath
 tcol_parser.o: ../depend_stubs/cfloat ../src/path_util.h
 tcol_parser.o: ../depend_stubs/vector ../src/centralised_log.h
 tcol_parser.o: ../depend_stubs/sstream
-tcol_parser.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 tcol_parser.o: ../../dependencies/util/console.h
 tcol_parser.o: ../../dependencies/util/exception.h
 tcol_parser.o: ../../dependencies/util/intrinsics.h
@@ -2797,16 +2776,15 @@ tcol_parser.o: ../depend_stubs/quex/code_base/template/QuexMode
 tcol_parser.o: ../depend_stubs/quex/code_base/template/Analyser
 tcol_parser.o: ../depend_stubs/quex/code_base/template/Counter
 tcol_parser.o: ../depend_stubs/quex/code_base/template/Accumulator
-tcol_parser.o: ../depend_stubs/quex/code_base/template/IncludeStack
+tcol_parser.o: ../depend_stubs/quex/code_base/TokenQueue
 tcol_parser.o: ../depend_stubs/quex/code_base/temporary_macros_on
 tcol_parser.o: ../depend_stubs/quex/code_base/temporary_macros_off
 tcol_parser.o: ../depend_stubs/quex/code_base/template/constructor.i
 tcol_parser.o: ../depend_stubs/quex/code_base/template/Counter.i
 tcol_parser.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-tcol_parser.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-tcol_parser.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+tcol_parser.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+tcol_parser.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 tcol_parser.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-tcol_parser.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 tcol_parser.o: ../depend_stubs/quex/code_base/template/misc.i
 tcol_parser.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 tcol_parser.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2815,7 +2793,6 @@ tcol_parser.o: ../src/physics/col_defaults.h
 audio.o: ../depend_stubs/AL/al.h ../depend_stubs/AL/alc.h
 audio.o: ../src/centralised_log.h ../depend_stubs/iostream
 audio.o: ../depend_stubs/sstream
-audio.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 audio.o: ../../dependencies/util/console.h
 audio.o: ../../dependencies/util/exception.h
 audio.o: ../depend_stubs/cstdlib ../depend_stubs/string
@@ -2827,9 +2804,8 @@ audio.o: ../src/shared_ptr.h ../depend_stubs/functional
 audio.o: ../../dependencies/util/math_util.h
 audio.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 audio.o: ../src/background_loader.h ../src/vect_util.h
-audio.o: ../depend_stubs/list
-audio.o: ../depend_stubs/boost/thread/thread.hpp
-audio.o: ../depend_stubs/boost/thread/condition.hpp
+audio.o: ../depend_stubs/condition_variable ../depend_stubs/list
+audio.o: ../depend_stubs/mutex ../depend_stubs/thread
 audio.o: ../src/disk_resource.h ../depend_stubs/set
 audio.o: ../src/disk_resource.h
 audio.o: ../src/audio/audio_disk_resource.h
@@ -2840,7 +2816,6 @@ audio_disk_resource.o: ../depend_stubs/OgreResourceGroupManager.h
 audio_disk_resource.o: ../src/centralised_log.h
 audio_disk_resource.o: ../depend_stubs/iostream
 audio_disk_resource.o: ../depend_stubs/sstream
-audio_disk_resource.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 audio_disk_resource.o: ../../dependencies/util/console.h
 audio_disk_resource.o: ../../dependencies/util/exception.h
 audio_disk_resource.o: ../depend_stubs/cstdlib
@@ -2850,9 +2825,10 @@ audio_disk_resource.o: ../src/background_loader.h
 audio_disk_resource.o: ../depend_stubs/vector ../src/vect_util.h
 audio_disk_resource.o: ../depend_stubs/algorithm
 audio_disk_resource.o: ../src/centralised_log.h
+audio_disk_resource.o: ../depend_stubs/condition_variable
 audio_disk_resource.o: ../depend_stubs/list
-audio_disk_resource.o: ../depend_stubs/boost/thread/thread.hpp
-audio_disk_resource.o: ../depend_stubs/boost/thread/condition.hpp
+audio_disk_resource.o: ../depend_stubs/mutex
+audio_disk_resource.o: ../depend_stubs/thread
 audio_disk_resource.o: ../src/disk_resource.h
 audio_disk_resource.o: ../depend_stubs/set ../src/audio/audio.h
 audio_disk_resource.o: ../src/shared_ptr.h
@@ -2886,7 +2862,6 @@ lua_wrappers_audio.o: ../depend_stubs/map
 lua_wrappers_audio.o: ../src/centralised_log.h
 lua_wrappers_audio.o: ../depend_stubs/iostream
 lua_wrappers_audio.o: ../depend_stubs/sstream
-lua_wrappers_audio.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 lua_wrappers_audio.o: ../../dependencies/util/console.h
 lua_wrappers_audio.o: ../../dependencies/util/exception.h
 lua_wrappers_audio.o: ../depend_stubs/cstdlib
@@ -2913,16 +2888,15 @@ lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/QuexMode
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/Analyser
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/Counter
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/Accumulator
-lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/IncludeStack
+lua_wrappers_audio.o: ../depend_stubs/quex/code_base/TokenQueue
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/temporary_macros_on
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/temporary_macros_off
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/constructor.i
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/Counter.i
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/misc.i
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 lua_wrappers_audio.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -2942,9 +2916,9 @@ lua_wrappers_audio.o: ../src/lua_ptr.h ../src/external_table.h
 lua_wrappers_audio.o: ../src/path_util.h ../src/audio/audio.h
 lua_wrappers_audio.o: ../depend_stubs/AL/al.h
 lua_wrappers_audio.o: ../src/background_loader.h
-lua_wrappers_audio.o: ../depend_stubs/list
-lua_wrappers_audio.o: ../depend_stubs/boost/thread/thread.hpp
-lua_wrappers_audio.o: ../depend_stubs/boost/thread/condition.hpp
+lua_wrappers_audio.o: ../depend_stubs/condition_variable
+lua_wrappers_audio.o: ../depend_stubs/list ../depend_stubs/mutex
+lua_wrappers_audio.o: ../depend_stubs/thread
 lua_wrappers_audio.o: ../src/disk_resource.h
 lua_wrappers_audio.o: ../src/audio/audio_disk_resource.h
 lua_wrappers_audio.o: ../depend_stubs/OgreResourceGroupManager.h
@@ -2962,7 +2936,6 @@ ogg_vorbis_decoder.o: ../depend_stubs/OgreResourceGroupManager.h
 ogg_vorbis_decoder.o: ../src/centralised_log.h
 ogg_vorbis_decoder.o: ../depend_stubs/iostream
 ogg_vorbis_decoder.o: ../depend_stubs/sstream
-ogg_vorbis_decoder.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 ogg_vorbis_decoder.o: ../../dependencies/util/console.h
 ogg_vorbis_decoder.o: ../../dependencies/util/exception.h
 ogg_vorbis_decoder.o: ../depend_stubs/cstdlib
@@ -2981,7 +2954,6 @@ lua_wrappers_net.o: ../src/physics/physics_world.h
 lua_wrappers_net.o: ../depend_stubs/map ../src/centralised_log.h
 lua_wrappers_net.o: ../depend_stubs/iostream
 lua_wrappers_net.o: ../depend_stubs/sstream
-lua_wrappers_net.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 lua_wrappers_net.o: ../../dependencies/util/console.h
 lua_wrappers_net.o: ../../dependencies/util/exception.h
 lua_wrappers_net.o: ../depend_stubs/cstdlib
@@ -3006,16 +2978,15 @@ lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/QuexMode
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Analyser
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Counter
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Accumulator
-lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/IncludeStack
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/TokenQueue
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/temporary_macros_on
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/temporary_macros_off
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/constructor.i
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Counter.i
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Accumulator.i
-lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/token_receiving_via_singleton.i
-lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/token_sending_via_singleton.i
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/mode_handling.i
-lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/misc.i
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/buffer_access.i
 lua_wrappers_net.o: ../depend_stubs/quex/code_base/template/Analyser.i
@@ -3045,22 +3016,9 @@ lua_wrappers_net.o: ../depend_stubs/OgreException.h
 lua_wrappers_net.o: ../../dependencies/util/lua_util.h
 lua_wrappers_net.o: ../depend_stubs/limits
 lua_wrappers_net.o: ../../dependencies/util/lua_wrappers_common.h
-net.o: ../../dependencies/util/sleep.h ../src/centralised_log.h
-net.o: ../depend_stubs/iostream ../depend_stubs/sstream
-net.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-net.o: ../../dependencies/util/console.h
-net.o: ../../dependencies/util/exception.h ../depend_stubs/cstdlib
-net.o: ../depend_stubs/string ../../dependencies/util/intrinsics.h
-net.o: ../src/net/net.h ../src/shared_ptr.h
-net.o: ../depend_stubs/functional ../depend_stubs/stdint.h
-net.o: ../depend_stubs/sys/socket.h ../depend_stubs/arpa/inet.h
-net.o: ../depend_stubs/sys/param.h ../depend_stubs/sys/types.h
-net.o: ../depend_stubs/netdb.h ../depend_stubs/sys/ioctl.h
-net.o: ../src/net/net_manager.h ../depend_stubs/queue
-net.o: ../src/external_table.h
-net_address.o: ../depend_stubs/cstdio ../src/centralised_log.h
-net_address.o: ../depend_stubs/iostream ../depend_stubs/sstream
-net_address.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
+net_address.o: ../depend_stubs/cstdio ../depend_stubs/cstring
+net_address.o: ../src/centralised_log.h ../depend_stubs/iostream
+net_address.o: ../depend_stubs/sstream
 net_address.o: ../../dependencies/util/console.h
 net_address.o: ../../dependencies/util/exception.h
 net_address.o: ../depend_stubs/cstdlib ../depend_stubs/string
@@ -3072,11 +3030,22 @@ net_address.o: ../depend_stubs/arpa/inet.h
 net_address.o: ../depend_stubs/sys/param.h
 net_address.o: ../depend_stubs/sys/types.h ../depend_stubs/netdb.h
 net_address.o: ../depend_stubs/sys/ioctl.h
+net.o: ../../dependencies/util/sleep.h ../src/centralised_log.h
+net.o: ../depend_stubs/iostream ../depend_stubs/sstream
+net.o: ../../dependencies/util/console.h
+net.o: ../../dependencies/util/exception.h ../depend_stubs/cstdlib
+net.o: ../depend_stubs/string ../../dependencies/util/intrinsics.h
+net.o: ../src/net/net.h ../src/shared_ptr.h
+net.o: ../depend_stubs/functional ../depend_stubs/stdint.h
+net.o: ../depend_stubs/sys/socket.h ../depend_stubs/arpa/inet.h
+net.o: ../depend_stubs/sys/param.h ../depend_stubs/sys/types.h
+net.o: ../depend_stubs/netdb.h ../depend_stubs/sys/ioctl.h
+net.o: ../src/net/net_manager.h ../depend_stubs/queue
+net.o: ../src/external_table.h
 net_manager.o: ../depend_stubs/cstdlib
 net_manager.o: ../../dependencies/util/sleep.h
 net_manager.o: ../src/centralised_log.h ../depend_stubs/iostream
 net_manager.o: ../depend_stubs/sstream
-net_manager.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
 net_manager.o: ../../dependencies/util/console.h
 net_manager.o: ../../dependencies/util/exception.h
 net_manager.o: ../depend_stubs/string
@@ -3100,18 +3069,17 @@ net_manager.o: ../depend_stubs/sys/ioctl.h
 net_manager.o: ../src/net/net_manager.h ../depend_stubs/queue
 net_manager.o: ../src/external_table.h
 net_manager.o: ../src/net/lua_wrappers_net.h
+net_message.o: ../depend_stubs/cstdlib ../depend_stubs/cstdio
+net_message.o: ../depend_stubs/cstring ../src/centralised_log.h
+net_message.o: ../depend_stubs/iostream ../depend_stubs/sstream
+net_message.o: ../../dependencies/util/console.h
+net_message.o: ../../dependencies/util/exception.h
+net_message.o: ../depend_stubs/string
+net_message.o: ../../dependencies/util/intrinsics.h
 net_message.o: ../src/net/net.h ../src/shared_ptr.h
-net_message.o: ../depend_stubs/cstdlib ../depend_stubs/functional
-net_message.o: ../depend_stubs/string ../depend_stubs/stdint.h
+net_message.o: ../depend_stubs/functional ../depend_stubs/stdint.h
 net_message.o: ../depend_stubs/sys/socket.h
 net_message.o: ../depend_stubs/arpa/inet.h
 net_message.o: ../depend_stubs/sys/param.h
 net_message.o: ../depend_stubs/sys/types.h ../depend_stubs/netdb.h
 net_message.o: ../depend_stubs/sys/ioctl.h
-net_message.o: ../src/centralised_log.h ../depend_stubs/iostream
-net_message.o: ../depend_stubs/sstream
-net_message.o: ../depend_stubs/boost/thread/recursive_mutex.hpp
-net_message.o: ../../dependencies/util/console.h
-net_message.o: ../../dependencies/util/exception.h
-net_message.o: ../../dependencies/util/intrinsics.h
-net_message.o: ../depend_stubs/stdio.h
