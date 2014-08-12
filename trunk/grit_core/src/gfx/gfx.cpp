@@ -545,7 +545,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 
     try {
         Ogre::WindowEventUtilities::messagePump();
-		if (reset_frame_buffer_on_next_render) {
+        if (reset_frame_buffer_on_next_render) {
             reset_frame_buffer_on_next_render = false;
             do_reset_framebuffer();
         }
@@ -736,6 +736,29 @@ Vector2 gfx_window_size_in_scene (void)
     return Vector2(width, height);
 }
 
+Vector3 gfx_world_to_screen (const Vector3 &cam_pos, const Quaternion &cam_dir, const Vector3 &p)
+{
+
+    Ogre::Matrix4 view = Ogre::Math::makeViewMatrix(to_ogre(cam_pos),
+                                                    to_ogre(cam_dir*Quaternion(Degree(90),Vector3(1,0,0))),
+                                                    nullptr);
+
+    Ogre::Frustum frustum;
+    // Ogre cameras point towards Z whereas in Grit the convention is that 'unrotated' means pointing towards y (north)
+    frustum.setFOVy(Ogre::Degree(gfx_option(GFX_FOV)));
+    frustum.setNearClipDistance(gfx_option(GFX_NEAR_CLIP));
+    frustum.setFarClipDistance(gfx_option(GFX_FAR_CLIP));
+    Ogre::Matrix4 proj = frustum.getProjectionMatrix();;
+
+    Ogre::Vector4 sp_h = proj * (view * Ogre::Vector4(p.x, p.y, p.z, 1));
+    if (sp_h.w == 0) return Vector3(0, 0, 0);
+    Vector3 sp = Vector3(sp_h.x, sp_h.y, sp_h.z) / sp_h.w;
+    if (sp_h.w < 0) sp *= Vector3(1, 1, -1);
+    float w = ogre_win->getWidth();
+    float h = ogre_win->getHeight();
+    return Vector3((sp.x+1)/2*w, (sp.y+1)/2*h, sp.z);
+}
+
 static GfxLastRenderStats stats_from_rt (Ogre::RenderTarget *rt)
 {
     GfxLastRenderStats r;
@@ -746,7 +769,7 @@ static GfxLastRenderStats stats_from_rt (Ogre::RenderTarget *rt)
 
 GfxLastFrameStats gfx_last_frame_stats (void)
 {
-    GfxLastFrameStats r; 
+    GfxLastFrameStats r;
 
     r.left_deferred = eye_left->getDeferredStats();
     r.left_gbuffer = eye_left->getGBufferStats();
