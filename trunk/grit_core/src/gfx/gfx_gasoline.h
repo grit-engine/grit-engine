@@ -39,6 +39,10 @@ static inline std::ostream &operator<<(std::ostream &o, const GfxGslLocation &lo
 }
 
 struct Type {
+    bool writeable;
+    bool readable;
+    Type() : writeable(false), readable(true) { }
+    virtual ~Type() { }
 };
 
 // Abstract Syntax Tree
@@ -49,31 +53,15 @@ struct Ast {
     virtual ~Ast(void) { }
 };
 
-// Idents do not have/need location info, therefore are not Asts.
-struct Ident {
-    std::string name;
-    Ident (const std::string &name)
-      : name(name)
-    { }
-};
-
-static inline std::ostream &operator<<(std::ostream &o, const Ident *id)
-{   
-    o << id->name;
-    return o;
-}
-
-
 class Allocator {
     std::vector<Ast*> poolAst;
     std::vector<Type*> poolType;
-    std::vector<Ident*> poolIdent;
     public:
     Allocator (void) { }
     ~Allocator (void)
     {
-        for (auto id : poolIdent) delete id;
         for (auto a : poolAst) delete a;
+        for (auto t : poolType) delete t;
     }
     template<class T, class... Args> Ast *makeAst (Args... args)
     {
@@ -81,21 +69,17 @@ class Allocator {
         poolAst.push_back(r);
         return r;
     }
-    template<class T, class... Args> Ast *makeType (Args... args)
+    template<class T, class... Args> T *makeType (Args... args)
     {
         auto *r = new T(args...);
         poolType.push_back(r);
         return r;
     }
-    Ident *makeIdent (const std::string &name)
-    {
-        auto *r  = new Ident(name);
-        poolIdent.push_back(r);
-        return r;
-    }
 };
 
 Ast *gfx_gasoline_parse (Allocator &alloc, const std::string &shader);
+
+void gfx_gasoline_type (Allocator &alloc, Ast *ast);
 
 std::string gfx_gasoline_unparse (const Ast *ast);
 

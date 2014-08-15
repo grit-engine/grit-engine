@@ -27,6 +27,7 @@
 #include <sstream>
 
 #include "gfx_gasoline.h"
+#include "centralised_log.h"
 #include <exception.h>
 
 // Don't use soft keywords.  They will make it harder to read code.  Use proper keyword tokens.  It
@@ -380,9 +381,9 @@ struct Block : public Ast {
 
 struct Decl : public Ast {
     bool immutable;
-    const Ident *id;
+    const std::string id;
     Ast *init;
-    Decl (const GfxGslLocation &loc, bool immutable, const Ident *id, Ast *init)
+    Decl (const GfxGslLocation &loc, bool immutable, const std::string id, Ast *init)
       : Ast(loc), immutable(immutable), id(id), init(init)
     { }
 };
@@ -405,17 +406,17 @@ struct Assign : public Ast {
 };
 
 struct Call : public Ast {
-    Ident *func;
+    const std::string func;
     Asts args;
-    Call (const GfxGslLocation &loc, Ident *func, Asts args)
+    Call (const GfxGslLocation &loc, const std::string &func, Asts args)
       : Ast(loc), func(func), args(args)
     { }
 };
 
 struct Field : public Ast {
     Ast *target;
-    Ident *id;
-    Field (const GfxGslLocation &loc, Ast *target, Ident *id)
+    const std::string id;
+    Field (const GfxGslLocation &loc, Ast *target, const std::string &id)
       : Ast(loc), target(target), id(id)
     { }
 };
@@ -431,8 +432,8 @@ typedef Literal<int32_t> LiteralInt;
 typedef Literal<float> LiteralFloat;
 
 struct Var : public Ast {
-    Ident *id;
-    Var (const GfxGslLocation &loc, Ident *id)
+    const std::string id;
+    Var (const GfxGslLocation &loc, const std::string &id)
       : Ast(loc), id(id)
     { }
 };
@@ -643,8 +644,7 @@ class Parser {
                 case FRAG: return alloc.makeAst<Frag>(pop().loc);
                 case IDENTIFIER: {
                     auto tok = pop();
-                    auto *id = alloc.makeIdent(tok.val);
-                    return alloc.makeAst<Var>(tok.loc, id);
+                    return alloc.makeAst<Var>(tok.loc, tok.val);
                 }
                 case LITERAL_NUMBER: {
                     auto tok = pop();
@@ -654,9 +654,9 @@ class Parser {
                         if (c < '0' || c > '9') is_float = true;
                     }
                     if (is_float)
-                        return alloc.makeAst<LiteralFloat>(tok.loc, strtod(tok.val.c_str(), NULL));
+                        return alloc.makeAst<LiteralFloat>(tok.loc, strtod(tok.val.c_str(), nullptr));
                     else
-                        return alloc.makeAst<LiteralInt>(tok.loc, strtol(tok.val.c_str(), NULL, 10));
+                        return alloc.makeAst<LiteralInt>(tok.loc, strtol(tok.val.c_str(), nullptr, 10));
                 }
                 case SYMBOL:
                 if (tok.val == "(") {
@@ -712,7 +712,7 @@ class Parser {
                     }
                 } else if (sym == ".") {
                     auto dot = pop();
-                    auto *id = alloc.makeIdent(popKind(IDENTIFIER).val);
+                    const auto &id = popKind(IDENTIFIER).val;
                     a = alloc.makeAst<Field>(dot.loc, a, id);
                 } else {
                     break;  // Process this token at higher precedence.
@@ -736,13 +736,13 @@ class Parser {
     {
         auto loc = peek().loc;
         if (maybePopKind(VAL)) {
-            auto *id = alloc.makeIdent(popKind(IDENTIFIER).val);
+            const auto &id = popKind(IDENTIFIER).val;
             popKind(SYMBOL, "=");
             auto *init = parseExpr(precedence_max);
             popKind(SYMBOL, ";");
             return alloc.makeAst<Decl>(loc, true, id, init);
         } else if (maybePopKind(VAR)) {
-            auto *id = alloc.makeIdent(popKind(IDENTIFIER).val);
+            const auto &id = popKind(IDENTIFIER).val;
             popKind(SYMBOL, "=");
             auto *init = parseExpr(precedence_max);
             popKind(SYMBOL, ";");
@@ -776,7 +776,6 @@ class Parser {
             popKind(SYMBOL, ";");
             return alloc.makeAst<Assign>(loc, lhs, rhs);
         }
-        return alloc.makeAst<Literal<int>>(NO_LOC, 4);
     }
 
     Ast *parseShader (void)
@@ -896,24 +895,440 @@ std::string gfx_gasoline_unparse (const Ast *ast)
 
 // Type system:
 //
-// float, float2, flota3, float4, bool
+// float, float2, float3, float4, bool
 // (T*) -> T
 //
 typedef std::vector<Type*> Types;
 
-struct Float : public Type {
+struct FloatType : public Type {
     unsigned dim;
-    Float (unsigned dim) : dim(dim) { }
+    FloatType (unsigned dim) : dim(dim) { }
 };
 
-struct Bool : public Type {
-    Bool (void) { }
+struct FloatMatrixType : public Type {
+    unsigned w;
+    unsigned h;
+    FloatMatrixType (unsigned w, unsigned h) : w(w), h(h) { }
 };
 
-struct Function : public Type {
-    Type *ret;
+struct IntType : public Type {
+    unsigned dim;
+    IntType (unsigned dim) : dim(dim) { }
+};
+
+struct BoolType : public Type {
+    BoolType (void) { }
+};
+
+struct VoidType : public Type {
+    VoidType (void) { }
+};
+
+struct GlobalType : public Type {
+    GlobalType (void) { }
+};
+
+struct MatType : public Type {
+    MatType (void) { }
+};
+
+struct VertType : public Type {
+    VertType (void) { }
+};
+
+struct FragType : public Type {
+    FragType (void) { }
+};
+
+struct FunctionType : public Type {
     Types params;
-    Function (Type *ret, const Types &params) : ret(ret), params(params) { }
+    Type *ret;
+    FunctionType (const Types &params, Type *ret) : params(params), ret(ret) { }
 };
 
+static inline std::ostream &operator<<(std::ostream &o, Type *t_)
+{   
+    if (auto *t = dynamic_cast<FloatType*>(t_)) {
+        o << "float";
+        if (t->dim > 1) o << t->dim;
+
+    } else if (auto *t = dynamic_cast<FloatMatrixType*>(t_)) {
+        o << "float" << t->w << "x" << t->h;
+
+    } else if (auto *t = dynamic_cast<IntType*>(t_)) {
+        o << "int";
+        if (t->dim > 1) o << t->dim;
+
+    } else if (dynamic_cast<BoolType*>(t_)) {
+        o << "bool";
+
+    } else if (dynamic_cast<VoidType*>(t_)) {
+        o << "void";
+
+    } else if (dynamic_cast<GlobalType*>(t_)) {
+        o << "Global";
+
+    } else if (dynamic_cast<MatType*>(t_)) {
+        o << "Mat";
+
+    } else if (dynamic_cast<VertType*>(t_)) {
+        o << "Vert";
+
+    } else if (dynamic_cast<FragType*>(t_)) {
+        o << "Frag";
+
+    } else if (auto *t = dynamic_cast<FunctionType*>(t_)) {
+        if (t->params.size() > 0) {
+            o << "( )";
+        } else {
+            const char *prefix = "(";
+            for (unsigned i=0 ; i<t->params.size() ; ++i) {
+                o << prefix << t->params[i];
+                prefix = ", ";
+            }
+            o << ")";
+        }
+
+        o << " -> ";
+        o << t->ret;
+    }
+
+    return o;
+}
+
+class TypeSystem {
+    Allocator &alloc;
+
+    std::map<std::string, Type*> symbols;
+
+    std::map<std::string, std::vector<FunctionType*>> funcTypes;
+
+    void initFuncTypes (void)
+    {
+        Type *fs[] = {
+            nullptr,  // Easier to read code below if array starts from 1
+            alloc.makeType<FloatType>(1),
+            alloc.makeType<FloatType>(2),
+            alloc.makeType<FloatType>(3),
+            alloc.makeType<FloatType>(4)
+        };
+        //Type *b = alloc.makeType<BoolType>();
+        // ts holds the set of all functions: float_n -> float_n
+        std::vector<FunctionType*> ts;
+        for (unsigned i=1 ; i<=4 ; ++i)
+            ts.push_back(alloc.makeType<FunctionType>(Types{fs[i]}, fs[i]));
+        funcTypes["atan"] = ts;
+        funcTypes["ddx"] = ts;
+        funcTypes["ddy"] = ts;
+        funcTypes["pow"] = ts;
+
+        funcTypes["dot"] = { alloc.makeType<FunctionType>(Types{fs[3], fs[3]}, fs[1]) };
+        funcTypes["normalize"] = { alloc.makeType<FunctionType>(Types{fs[3]}, fs[3]) };
+
+        // ts holds the set of all functions: (float_n, float_n, float_n) -> float_n
+        ts.clear();
+        for (unsigned i=1 ; i<=4 ; ++i)
+            ts.push_back(alloc.makeType<FunctionType>(Types{fs[i], fs[i], fs[i]}, fs[i]));
+        funcTypes["clamp"] = ts;
+
+        funcTypes["float"] = { alloc.makeType<FunctionType>(Types{fs[1]}, fs[1]) };
+        funcTypes["float2"] = {
+            alloc.makeType<FunctionType>(Types{fs[2]}, fs[2]),
+            alloc.makeType<FunctionType>(Types{fs[1], fs[1]}, fs[2])
+        };
+        funcTypes["float3"] = {
+            alloc.makeType<FunctionType>(Types{fs[3]}, fs[3]),
+            alloc.makeType<FunctionType>(Types{fs[2], fs[1]}, fs[3]),
+            alloc.makeType<FunctionType>(Types{fs[1], fs[2]}, fs[3])
+        };
+        funcTypes["float4"] = {
+            alloc.makeType<FunctionType>(Types{fs[4]}, fs[4]),
+
+            alloc.makeType<FunctionType>(Types{fs[3], fs[1]}, fs[4]),
+            alloc.makeType<FunctionType>(Types{fs[1], fs[3]}, fs[4]),
+            alloc.makeType<FunctionType>(Types{fs[2], fs[2]}, fs[4]),
+
+            alloc.makeType<FunctionType>(Types{fs[1], fs[1], fs[2]}, fs[4]),
+            alloc.makeType<FunctionType>(Types{fs[1], fs[2], fs[1]}, fs[4]),
+            alloc.makeType<FunctionType>(Types{fs[2], fs[1], fs[1]}, fs[4]),
+
+            alloc.makeType<FunctionType>(Types{fs[1], fs[1], fs[1], fs[1]}, fs[4])
+        };
+
+        // ts holds the set of all functions: (float_n, float_n, float1) -> float_n
+        ts.clear();
+        for (unsigned i=1 ; i<=4 ; ++i)
+            ts.push_back(alloc.makeType<FunctionType>(Types{fs[i], fs[i], fs[1]}, fs[i]));
+        funcTypes["lerp"] = ts;
+
+            
+        // ts holds the set of all functions: (float_n, float_n) -> float_n
+        ts.clear();
+        for (unsigned i=1 ; i<=4 ; ++i)
+            ts.push_back(alloc.makeType<FunctionType>(Types{fs[i], fs[i]}, fs[i]));
+        funcTypes["max"] = ts;
+        funcTypes["min"] = ts;
+
+        // ts holds the set of all functions: (float_n, float_1) -> float_n
+        ts.clear();
+        for (unsigned i=1 ; i<=4 ; ++i)
+            ts.push_back(alloc.makeType<FunctionType>(Types{fs[i], fs[1]}, fs[i]));
+        funcTypes["mod"] = ts;
+
+        ts.clear();
+        for (unsigned w=1 ; w<=4 ; ++w) {
+            for (unsigned h=1 ; h<=4 ; ++h) {
+                Type *m = alloc.makeType<FloatMatrixType>(w, h);
+                ts.push_back(alloc.makeType<FunctionType>(Types{m, fs[h]}, fs[h]));
+            }
+        }
+        funcTypes["mul"] = ts;
+    }
+
+    FunctionType *lookupFunction(const GfxGslLocation &loc, const std::string &name,
+                                 const std::vector<Ast*> &asts)
+    {
+        auto it = funcTypes.find(name);
+        if (it == funcTypes.end()) {
+            error(loc) << "Unrecognised function: " << name << ENDL;
+        }
+        const std::vector<FunctionType*> &overrides = it->second;
+        for (auto *o : overrides) {
+            if (o->params.size() != asts.size()) continue;
+            for (unsigned i=0 ; i<asts.size() ; ++i) {
+                if (!equal(o->params[i], asts[i]->type)) goto nextfunc;
+            }
+            return o;
+            nextfunc:;
+        }
+
+        // TODO: search again using implicit conversions
+
+        std::stringstream ss;
+        if (asts.size() == 0) {
+            ss << "()";
+        } else {
+            const char *prefix = "(";
+            for (unsigned i=0 ; i<asts.size() ; ++i) {
+                ss << prefix << asts[i]->type;
+                prefix = ", ";
+            }
+            ss << ")";
+        }
+        error(loc) << "No override found for " << name << ss.str() << ENDL;
+    }
+
+    bool isVoid (Type *x)
+    {
+        return dynamic_cast<Type*>(x) != nullptr;
+    }
+
+    bool isFirstClass (Type *x)
+    {
+        if (dynamic_cast<FloatType*>(x)) {
+            return true;
+        } else if (dynamic_cast<IntType*>(x)) {
+            return true;
+        } else if (dynamic_cast<BoolType*>(x)) {
+            return true;
+        }
+        return false;
+    }
+
+    bool equal (Type *a_, Type *b_)
+    {
+        if (auto *a = dynamic_cast<FloatType*>(a_)) {
+            auto *b = dynamic_cast<FloatType*>(b_);
+            if (b == nullptr) return false;
+            if (b->dim != a->dim) return false;
+
+        } else if (auto *a = dynamic_cast<IntType*>(a_)) {
+            auto *b = dynamic_cast<IntType*>(b_);
+            if (b == nullptr) return false;
+            if (b->dim != a->dim) return false;
+
+        } else if (dynamic_cast<BoolType*>(a_)) {
+            auto *b = dynamic_cast<BoolType*>(b_);
+            if (b == nullptr) return false;
+
+        } else if (dynamic_cast<VoidType*>(a_)) {
+            auto *b = dynamic_cast<VoidType*>(b_);
+            if (b == nullptr) return false;
+
+        } else if (dynamic_cast<GlobalType*>(a_)) {
+            auto *b = dynamic_cast<GlobalType*>(b_);
+            if (b == nullptr) return false;
+
+        } else if (dynamic_cast<MatType*>(a_)) {
+            auto *b = dynamic_cast<MatType*>(b_);
+            if (b == nullptr) return false;
+
+        } else if (dynamic_cast<VertType*>(a_)) {
+            auto *b = dynamic_cast<VertType*>(b_);
+            if (b == nullptr) return false;
+
+        } else if (dynamic_cast<FragType*>(a_)) {
+            auto *b = dynamic_cast<FragType*>(b_);
+            if (b == nullptr) return false;
+
+        } else if (auto *a = dynamic_cast<FunctionType*>(a_)) {
+            auto *b = dynamic_cast<FunctionType*>(b_);
+            if (b == nullptr) return false;
+            if (!equal(a->ret, b->ret)) return false;
+            if (a->params.size() != b->params.size()) return false;
+            for (unsigned i=0 ; i<a->params.size() ; ++i) {
+                if (!equal(a->params[i], b->params[i])) return false;
+            }
+        }
+        return true;
+    }
+
+    // Wrap from to do conversion
+    bool conversionExists (Ast *&from, Type *to)
+    {
+        // TODO(dcunnin): Support conversions.
+        if (equal(from->type, to)) return true;
+        return false;
+    }
+
+    void unify (const GfxGslLocation &loc, Ast *&a, Ast *&b)
+    {
+        ASSERT(a != nullptr);
+        ASSERT(b != nullptr);
+        ASSERT(a->type != nullptr);
+        ASSERT(b->type != nullptr);
+        if ((conversionExists(a, b->type))) {
+            return;
+        }
+        if ((conversionExists(b, a->type))) {
+            return;
+        }
+        error(loc) << "Could not unify types " << a->type << " and " << b->type << ENDL;
+    }
+
+    public:
+
+    TypeSystem (Allocator &alloc)
+      : alloc(alloc)
+    {
+        initFuncTypes();
+    }
+
+    void inferAndSet (Ast *ast_)
+    {
+        ASSERT(ast_ != nullptr);
+        const GfxGslLocation &loc = ast_->loc;
+
+        if (auto *ast = dynamic_cast<Block*>(ast_)) {
+            for (auto stmt : ast->stmts) {
+                inferAndSet(stmt);
+            }
+            ast->type = alloc.makeType<VoidType>();
+
+        } else if (auto *ast = dynamic_cast<Shader*>(ast_)) {
+            for (auto stmt : ast->stmts) {
+                inferAndSet(stmt);
+            }
+            ast->type = alloc.makeType<VoidType>();
+
+        } else if (auto *ast = dynamic_cast<Decl*>(ast_)) {
+            inferAndSet(ast->init);
+            if (!isFirstClass(ast->init->type)) {
+                error(loc) << "Type is not first class: " << ast->init->type << ENDL;
+            }
+            if (!ast->immutable) ast->init->type->writeable = true;
+            symbols[ast->id] = ast->init->type;
+            ast->type = alloc.makeType<VoidType>();
+
+        } else if (auto *ast = dynamic_cast<If*>(ast_)) {
+            inferAndSet(ast->cond);
+            inferAndSet(ast->yes);
+            if (ast->no) {
+                inferAndSet(ast->no);
+                unify(loc, ast->yes, ast->no);
+            }
+            ast->type = alloc.makeType<VoidType>();
+
+        } else if (auto *ast = dynamic_cast<Assign*>(ast_)) {
+            inferAndSet(ast->target);
+            if (!ast->target->type->writeable) {
+                error(loc) << "Cannot assign to this object." << ENDL;
+            }
+            inferAndSet(ast->expr);
+            
+            ast->type = alloc.makeType<VoidType>();
+
+        } else if (auto *ast = dynamic_cast<Discard*>(ast_)) {
+            ast->type = alloc.makeType<VoidType>();
+
+        } else if (auto *ast = dynamic_cast<Return*>(ast_)) {
+            ast->type = alloc.makeType<VoidType>();
+
+        } else if (auto *ast = dynamic_cast<Call*>(ast_)) {
+            // TODO(dcunnin): Implement this.
+            for (unsigned i=0 ; i<ast->args.size() ; ++i)
+                inferAndSet(ast->args[i]);
+            FunctionType *t = lookupFunction(loc, ast->func, ast->args);
+            ast->type = t->ret;
+
+        } else if (auto *ast = dynamic_cast<Field*>(ast_)) {
+            // TODO(dcunnin): Implement this.
+            //ast->target
+            //ast->id
+            std::cout << "field: " << ast->id << std::endl;;
+            ast->type = alloc.makeType<FloatType>(1);
+            ast->type->writeable = true;
+
+        } else if (auto *ast = dynamic_cast<LiteralInt*>(ast_)) {
+            ast->type = alloc.makeType<IntType>(1);
+
+        } else if (auto *ast = dynamic_cast<LiteralFloat*>(ast_)) {
+            ast->type = alloc.makeType<FloatType>(1);
+
+        } else if (auto *ast = dynamic_cast<Var*>(ast_)) {
+            auto it = symbols.find(ast->id);
+            if (it == symbols.end()) {
+                error(loc) << "Unknown variable: " << ast->id << ENDL;
+            }
+            ast->type = symbols[ast->id];
+
+        } else if (auto *ast = dynamic_cast<Binary*>(ast_)) {
+            // TODO(dcunnin): Implement this.
+            // Varies depending on the op, e.g. + vs <=
+            //ast->op
+            //ast->a
+            //ast->b
+            ast->type = alloc.makeType<FloatType>(1);
+
+        } else if (auto *ast = dynamic_cast<Unary*>(ast_)) {
+            // TODO(dcunnin): Implement this.
+            // Varies depending on the op, e.g. ! vs -
+            //ast->op
+            //ast->expr
+            ast->type = alloc.makeType<FloatType>(1);
+
+        } else if (auto *ast = dynamic_cast<Global*>(ast_)) {
+            ast->type = alloc.makeType<GlobalType>();
+
+        } else if (auto *ast = dynamic_cast<Mat*>(ast_)) {
+            ast->type = alloc.makeType<MatType>();
+
+        } else if (auto *ast = dynamic_cast<Vert*>(ast_)) {
+            ast->type = alloc.makeType<VertType>();
+
+        } else if (auto *ast = dynamic_cast<Frag*>(ast_)) {
+            ast->type = alloc.makeType<FragType>();
+
+        } else {
+            EXCEPTEX << "INTERNAL ERROR: Unknown Ast." << ENDL;
+
+        }
+    }
+};
+
+void gfx_gasoline_type (Allocator &alloc, Ast *ast)
+{
+    TypeSystem ts(alloc);
+    ts.inferAndSet(ast);
+}
 // vim: shiftwidth=4:tabstop=4:expandtab

@@ -40,10 +40,11 @@ int main(int argc, char **argv)
     input.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
     try {
         Allocator alloc;
-        auto ast = gfx_gasoline_parse(alloc, input);
+        auto *ast = gfx_gasoline_parse(alloc, input);
+        gfx_gasoline_type(alloc, ast);
         std::cout << gfx_gasoline_unparse(ast);
     } catch (const Exception &e) {
-        std::cerr << e << std::endl;
+        std::cerr << argv[1] << ": " << e << std::endl;
     }
 }
 
