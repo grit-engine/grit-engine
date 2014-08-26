@@ -430,6 +430,7 @@ template<class T> struct Literal : public Ast {
 
 typedef Literal<int32_t> LiteralInt;
 typedef Literal<float> LiteralFloat;
+typedef Literal<bool> LiteralBoolean;
 
 struct Var : public Ast {
     const std::string id;
@@ -508,41 +509,6 @@ struct Binary : public Ast {
     Ast *b;
     Binary (const GfxGslLocation &loc, Ast *a, Op op, Ast *b)
       : Ast(loc), a(a), op(op), b(b)
-    { }
-};
-
-enum UnaryOp {
-    UOP_NEG,
-    UOP_NOT
-};
-
-std::string to_string (UnaryOp op)
-{
-    switch (op) {
-        case UOP_NEG: return "-";
-        case UOP_NOT: return "!";
-        default: EXCEPTEX << "INTERNAL ERROR: Unknown unary operator: " << op << ENDL;
-    }
-}
-
-const std::map<std::string, UnaryOp> unary_map = {
-    {"-", UOP_NEG},
-    {"!", UOP_NOT}
-};
-
-bool is_uop(const std::string &symbol, UnaryOp &uop)
-{
-    auto it = unary_map.find(symbol);
-    if (it == unary_map.end()) return false;
-    uop = it->second;
-    return true;
-}
-
-struct Unary : public Ast {
-    UnaryOp op;
-    Ast *expr;
-    Unary (const GfxGslLocation &loc, UnaryOp op, Ast *expr)
-      : Ast(loc), op(op), expr(expr)
     { }
 };
 
@@ -671,11 +637,16 @@ class Parser {
             }
         } else if (precedence == precedence_uop) {
             if (tok.kind == SYMBOL) {
-                UnaryOp op;
-                if (is_uop(tok.val, op)) {
+                if (tok.val == "!") {
                     pop();
                     auto *expr = parseExpr(precedence_uop);
-                    return alloc.makeAst<Unary>(tok.loc, op, expr);
+                    auto *_false = alloc.makeAst<LiteralBoolean>(tok.loc, false);
+                    return alloc.makeAst<Binary>(tok.loc, expr, OP_EQ, _false);
+                } else if (tok.val == "-") {
+                    pop();
+                    auto *expr = parseExpr(precedence_uop);
+                    auto *zero = alloc.makeAst<LiteralInt>(tok.loc, 0);
+                    return alloc.makeAst<Binary>(tok.loc, zero, OP_SUB, expr);
                 }
             }
         }
@@ -857,6 +828,8 @@ static void unparse (std::stringstream &ss, const Ast *ast_, int indent)
         ss << ast->val;
     } else if (auto ast = dynamic_cast<const LiteralFloat*>(ast_)) {
         ss << ast->val;
+    } else if (auto ast = dynamic_cast<const LiteralBoolean*>(ast_)) {
+        ss << (ast->val ? "true" : "false");
     } else if (auto ast = dynamic_cast<const Var*>(ast_)) {
         ss << ast->id;
     } else if (auto ast = dynamic_cast<const Binary*>(ast_)) {
@@ -864,11 +837,6 @@ static void unparse (std::stringstream &ss, const Ast *ast_, int indent)
         unparse(ss, ast->a, indent);
         ss << " " << to_string(ast->op) << " ";
         unparse(ss, ast->b, indent);
-        ss << ")";
-    } else if (auto ast = dynamic_cast<const Unary*>(ast_)) {
-        ss << "(";
-        ss << " " << to_string(ast->op) << " ";
-        unparse(ss, ast->expr, indent);
         ss << ")";
 
     } else if (dynamic_cast<const Global*>(ast_)) {
@@ -899,10 +867,15 @@ std::string gfx_gasoline_unparse (const Ast *ast)
 // (T*) -> T
 //
 typedef std::vector<Type*> Types;
+typedef std::map<std::string, Type*> TypeMap;
 
-struct FloatType : public Type {
+struct CoordType : public Type {
     unsigned dim;
-    FloatType (unsigned dim) : dim(dim) { }
+    CoordType (unsigned dim) : dim(dim) { }
+};
+
+struct FloatType : public CoordType {
+    FloatType (unsigned dim) : CoordType(dim) { }
 };
 
 struct FloatMatrixType : public Type {
@@ -911,9 +884,13 @@ struct FloatMatrixType : public Type {
     FloatMatrixType (unsigned w, unsigned h) : w(w), h(h) { }
 };
 
-struct IntType : public Type {
+struct FloatTextureType : public Type {
     unsigned dim;
-    IntType (unsigned dim) : dim(dim) { }
+    FloatTextureType (unsigned dim) : dim(dim) { }
+};
+
+struct IntType : public CoordType {
+    IntType (unsigned dim) : CoordType(dim) { }
 };
 
 struct BoolType : public Type {
@@ -949,21 +926,25 @@ struct FunctionType : public Type {
 static inline std::ostream &operator<<(std::ostream &o, Type *t_)
 {   
     if (auto *t = dynamic_cast<FloatType*>(t_)) {
-        o << "float";
+        o << "Float";
         if (t->dim > 1) o << t->dim;
 
     } else if (auto *t = dynamic_cast<FloatMatrixType*>(t_)) {
-        o << "float" << t->w << "x" << t->h;
+        o << "Float" << t->w << "x" << t->h;
+
+    } else if (auto *t = dynamic_cast<FloatTextureType*>(t_)) {
+        o << "FloatTexture";
+        if (t->dim > 1) o << t->dim;
 
     } else if (auto *t = dynamic_cast<IntType*>(t_)) {
-        o << "int";
+        o << "Int";
         if (t->dim > 1) o << t->dim;
 
     } else if (dynamic_cast<BoolType*>(t_)) {
-        o << "bool";
+        o << "Bool";
 
     } else if (dynamic_cast<VoidType*>(t_)) {
-        o << "void";
+        o << "Void";
 
     } else if (dynamic_cast<GlobalType*>(t_)) {
         o << "Global";
@@ -978,7 +959,7 @@ static inline std::ostream &operator<<(std::ostream &o, Type *t_)
         o << "Frag";
 
     } else if (auto *t = dynamic_cast<FunctionType*>(t_)) {
-        if (t->params.size() > 0) {
+        if (t->params.size() == 0) {
             o << "( )";
         } else {
             const char *prefix = "(";
@@ -999,94 +980,188 @@ static inline std::ostream &operator<<(std::ostream &o, Type *t_)
 class TypeSystem {
     Allocator &alloc;
 
-    std::map<std::string, Type*> symbols;
+    TypeMap symbols;
 
     std::map<std::string, std::vector<FunctionType*>> funcTypes;
+    struct FieldType {
+        Type *t;
+        bool vr; // readable / writeable in fragment/vertex shader
+        bool vw;
+        bool fr;
+        bool fw;
+        FieldType (Type *t, bool vr, bool vw, bool fr, bool fw)
+          : t(t), vr(vr), vw(vw), fr(fr), fw(fw)
+        { }
+        FieldType (void)
+        { }
+    };
+    std::map<std::string, FieldType> fragFields;
+    TypeMap vertFields;
+    TypeMap globalFields;
+    TypeMap matFields;
+    TypeMap vars;
+
+    GfxGslKind kind;
+
+    Type *cloneType (Type *t_)
+    {
+        if (auto *t = dynamic_cast<FloatType*>(t_)) {
+            return alloc.makeType<FloatType>(*t);
+        } else if (auto *t = dynamic_cast<FloatMatrixType*>(t_)) {
+            return alloc.makeType<FloatMatrixType>(*t);
+        } else if (auto *t = dynamic_cast<FloatTextureType*>(t_)) {
+            return alloc.makeType<FloatTextureType>(*t);
+        } else if (auto *t = dynamic_cast<IntType*>(t_)) {
+            return alloc.makeType<IntType>(*t);
+        } else if (dynamic_cast<BoolType*>(t_)) {
+            return alloc.makeType<BoolType>();
+        } else if (dynamic_cast<VoidType*>(t_)) {
+            return alloc.makeType<VoidType>();
+        } else if (dynamic_cast<GlobalType*>(t_)) {
+            return alloc.makeType<GlobalType>();
+        } else if (dynamic_cast<MatType*>(t_)) {
+            return alloc.makeType<MatType>();
+        } else if (dynamic_cast<VertType*>(t_)) {
+            return alloc.makeType<VertType>();
+        } else if (dynamic_cast<FragType*>(t_)) {
+            return alloc.makeType<FragType>();
+        } else if (auto *t = dynamic_cast<FunctionType*>(t_)) {
+            return alloc.makeType<FunctionType>(*t);
+        } else {
+            EXCEPTEX << "Internal error." << ENDL;
+        }
+    }
+
+    void initObjectTypes (void)
+    {
+        fragFields["colour"] = FieldType(alloc.makeType<FloatType>(4), false, false, true, true);
+        fragFields["position"] = FieldType(alloc.makeType<FloatType>(4), true, true, true, false);
+
+        vertFields["position"] = alloc.makeType<FloatType>(4);
+        vertFields["coord0"] = alloc.makeType<FloatType>(4);
+
+        globalFields["world"] = alloc.makeType<FloatMatrixType>(4,4);
+        globalFields["worldViewProj"] = alloc.makeType<FloatMatrixType>(4,4);
+        globalFields["viewProj"] = alloc.makeType<FloatMatrixType>(4,4);
+        globalFields["viewportSize"] = alloc.makeType<FloatType>(2);
+        globalFields["fovY"] = alloc.makeType<FloatType>(1);
+        globalFields["time"] = alloc.makeType<FloatType>(1);
+        globalFields["hellColour"] = alloc.makeType<FloatType>(3);
+        globalFields["skyCloudColour"] = alloc.makeType<FloatType>(3);
+        globalFields["skyCloudColour"] = alloc.makeType<FloatType>(3);
+        globalFields["sunDirection"] = alloc.makeType<FloatType>(3);
+    }
 
     void initFuncTypes (void)
     {
-        Type *fs[] = {
-            nullptr,  // Easier to read code below if array starts from 1
-            alloc.makeType<FloatType>(1),
-            alloc.makeType<FloatType>(2),
-            alloc.makeType<FloatType>(3),
-            alloc.makeType<FloatType>(4)
-        };
+        auto is = [&] (int i) -> IntType* { return alloc.makeType<IntType>(i); };
+        auto fs = [&] (int i) -> FloatType* { return alloc.makeType<FloatType>(i); };
+        auto tex = [&] (int i) -> FloatTextureType* { return alloc.makeType<FloatTextureType>(i); };
         //Type *b = alloc.makeType<BoolType>();
         // ts holds the set of all functions: float_n -> float_n
         std::vector<FunctionType*> ts;
         for (unsigned i=1 ; i<=4 ; ++i)
-            ts.push_back(alloc.makeType<FunctionType>(Types{fs[i]}, fs[i]));
+            ts.push_back(alloc.makeType<FunctionType>(Types{fs(i)}, fs(i)));
         funcTypes["atan"] = ts;
         funcTypes["ddx"] = ts;
         funcTypes["ddy"] = ts;
         funcTypes["pow"] = ts;
+        funcTypes["sqrt"] = ts;
 
-        funcTypes["dot"] = { alloc.makeType<FunctionType>(Types{fs[3], fs[3]}, fs[1]) };
-        funcTypes["normalize"] = { alloc.makeType<FunctionType>(Types{fs[3]}, fs[3]) };
+        funcTypes["atan2"] = { alloc.makeType<FunctionType>(Types{fs(1), fs(1)}, fs(1)) };
+
+        funcTypes["dot"] = { alloc.makeType<FunctionType>(Types{fs(3), fs(3)}, fs(1)) };
+        funcTypes["dot"] = { alloc.makeType<FunctionType>(Types{fs(2), fs(2)}, fs(1)) };
+        funcTypes["normalize"] = { alloc.makeType<FunctionType>(Types{fs(3)}, fs(3)) };
 
         // ts holds the set of all functions: (float_n, float_n, float_n) -> float_n
         ts.clear();
         for (unsigned i=1 ; i<=4 ; ++i)
-            ts.push_back(alloc.makeType<FunctionType>(Types{fs[i], fs[i], fs[i]}, fs[i]));
+            ts.push_back(alloc.makeType<FunctionType>(Types{fs(i), fs(i), fs(i)}, fs(i)));
         funcTypes["clamp"] = ts;
 
-        funcTypes["float"] = { alloc.makeType<FunctionType>(Types{fs[1]}, fs[1]) };
-        funcTypes["float2"] = {
-            alloc.makeType<FunctionType>(Types{fs[2]}, fs[2]),
-            alloc.makeType<FunctionType>(Types{fs[1], fs[1]}, fs[2])
+        funcTypes["Float"] = {
+            alloc.makeType<FunctionType>(Types{is(1)}, fs(1)),
+            alloc.makeType<FunctionType>(Types{fs(1)}, fs(1)),
         };
-        funcTypes["float3"] = {
-            alloc.makeType<FunctionType>(Types{fs[3]}, fs[3]),
-            alloc.makeType<FunctionType>(Types{fs[2], fs[1]}, fs[3]),
-            alloc.makeType<FunctionType>(Types{fs[1], fs[2]}, fs[3])
+        funcTypes["Float2"] = {
+            alloc.makeType<FunctionType>(Types{is(1)}, fs(2)),
+            alloc.makeType<FunctionType>(Types{fs(1)}, fs(2)),
+            alloc.makeType<FunctionType>(Types{is(2)}, fs(2)),
+            alloc.makeType<FunctionType>(Types{fs(2)}, fs(2)),
+
+            alloc.makeType<FunctionType>(Types{fs(1), fs(1)}, fs(2))
         };
-        funcTypes["float4"] = {
-            alloc.makeType<FunctionType>(Types{fs[4]}, fs[4]),
+        funcTypes["Float3"] = {
+            alloc.makeType<FunctionType>(Types{is(1)}, fs(3)),
+            alloc.makeType<FunctionType>(Types{fs(1)}, fs(3)),
+            alloc.makeType<FunctionType>(Types{is(3)}, fs(3)),
+            alloc.makeType<FunctionType>(Types{fs(3)}, fs(3)),
 
-            alloc.makeType<FunctionType>(Types{fs[3], fs[1]}, fs[4]),
-            alloc.makeType<FunctionType>(Types{fs[1], fs[3]}, fs[4]),
-            alloc.makeType<FunctionType>(Types{fs[2], fs[2]}, fs[4]),
+            alloc.makeType<FunctionType>(Types{fs(2), fs(1)}, fs(3)),
+            alloc.makeType<FunctionType>(Types{fs(1), fs(2)}, fs(3))
+        };
+        funcTypes["Float4"] = {
+            alloc.makeType<FunctionType>(Types{is(1)}, fs(4)),
+            alloc.makeType<FunctionType>(Types{fs(1)}, fs(4)),
+            alloc.makeType<FunctionType>(Types{is(4)}, fs(4)),
+            alloc.makeType<FunctionType>(Types{fs(4)}, fs(4)),
 
-            alloc.makeType<FunctionType>(Types{fs[1], fs[1], fs[2]}, fs[4]),
-            alloc.makeType<FunctionType>(Types{fs[1], fs[2], fs[1]}, fs[4]),
-            alloc.makeType<FunctionType>(Types{fs[2], fs[1], fs[1]}, fs[4]),
+            alloc.makeType<FunctionType>(Types{fs(3), fs(1)}, fs(4)),
+            alloc.makeType<FunctionType>(Types{fs(1), fs(3)}, fs(4)),
+            alloc.makeType<FunctionType>(Types{fs(2), fs(2)}, fs(4)),
 
-            alloc.makeType<FunctionType>(Types{fs[1], fs[1], fs[1], fs[1]}, fs[4])
+            alloc.makeType<FunctionType>(Types{fs(1), fs(1), fs(2)}, fs(4)),
+            alloc.makeType<FunctionType>(Types{fs(1), fs(2), fs(1)}, fs(4)),
+            alloc.makeType<FunctionType>(Types{fs(2), fs(1), fs(1)}, fs(4)),
+
+            alloc.makeType<FunctionType>(Types{fs(1), fs(1), fs(1), fs(1)}, fs(4))
         };
 
         // ts holds the set of all functions: (float_n, float_n, float1) -> float_n
         ts.clear();
         for (unsigned i=1 ; i<=4 ; ++i)
-            ts.push_back(alloc.makeType<FunctionType>(Types{fs[i], fs[i], fs[1]}, fs[i]));
+            ts.push_back(alloc.makeType<FunctionType>(Types{fs(i), fs(i), fs(1)}, fs(i)));
         funcTypes["lerp"] = ts;
 
             
         // ts holds the set of all functions: (float_n, float_n) -> float_n
         ts.clear();
         for (unsigned i=1 ; i<=4 ; ++i)
-            ts.push_back(alloc.makeType<FunctionType>(Types{fs[i], fs[i]}, fs[i]));
+            ts.push_back(alloc.makeType<FunctionType>(Types{fs(i), fs(i)}, fs(i)));
         funcTypes["max"] = ts;
         funcTypes["min"] = ts;
 
         // ts holds the set of all functions: (float_n, float_1) -> float_n
         ts.clear();
         for (unsigned i=1 ; i<=4 ; ++i)
-            ts.push_back(alloc.makeType<FunctionType>(Types{fs[i], fs[1]}, fs[i]));
+            ts.push_back(alloc.makeType<FunctionType>(Types{fs(i), fs(1)}, fs(i)));
         funcTypes["mod"] = ts;
 
         ts.clear();
         for (unsigned w=1 ; w<=4 ; ++w) {
             for (unsigned h=1 ; h<=4 ; ++h) {
                 Type *m = alloc.makeType<FloatMatrixType>(w, h);
-                ts.push_back(alloc.makeType<FunctionType>(Types{m, fs[h]}, fs[h]));
+                ts.push_back(alloc.makeType<FunctionType>(Types{m, fs(h)}, fs(h)));
             }
         }
         funcTypes["mul"] = ts;
+
+        funcTypes["sample2D"] = {
+            alloc.makeType<FunctionType>(Types{tex(2), fs(2)}, fs(4)),
+        };
+        funcTypes["sample3D"] = {
+            alloc.makeType<FunctionType>(Types{tex(3), fs(3)}, fs(4)),
+        };
+
+        funcTypes["pma_decode"] = {
+            alloc.makeType<FunctionType>(Types{fs(4)}, fs(4)),
+        };
+
     }
 
     FunctionType *lookupFunction(const GfxGslLocation &loc, const std::string &name,
-                                 const std::vector<Ast*> &asts)
+                                 Asts &asts)
     {
         auto it = funcTypes.find(name);
         if (it == funcTypes.end()) {
@@ -1102,7 +1177,27 @@ class TypeSystem {
             nextfunc:;
         }
 
-        // TODO: search again using implicit conversions
+        FunctionType *found = nullptr;
+        for (auto *o : overrides) {
+            std::cout << o << std::endl;
+            if (o->params.size() != asts.size()) continue;
+            for (unsigned i=0 ; i<asts.size() ; ++i) {
+                if (!conversionExists(asts[i]->type, o->params[i])) goto nextfunc2;
+            }
+            if (found != nullptr) {
+                error(loc) << "Cannot unambiguously bind function: " << name << ENDL;
+            }
+            found = o;
+            break;
+            nextfunc2:;
+        }
+
+        if (found != nullptr) {
+            for (unsigned i=0 ; i<asts.size() ; ++i) {
+                doConversion(asts[i], found->params[i]);
+            }
+            return found;
+        }
 
         std::stringstream ss;
         if (asts.size() == 0) {
@@ -1183,12 +1278,72 @@ class TypeSystem {
         return true;
     }
 
-    // Wrap from to do conversion
-    bool conversionExists (Ast *&from, Type *to)
+    
+    // Can the type be automatically converted
+    bool conversionExists (Type *from_, Type *to_)
     {
-        // TODO(dcunnin): Support conversions.
-        if (equal(from->type, to)) return true;
+        if (equal(from_, to_)) return true;
+        
+        if (dynamic_cast<IntType*>(to_)) {
+            if (auto *ft = dynamic_cast<IntType*>(from_)) {
+                if (ft->dim == 1) {
+                    // Int -> Int[n]
+                    return true;
+                }
+            }
+        } else if (dynamic_cast<FloatType*>(to_)) {
+            if (auto *ft = dynamic_cast<FloatType*>(from_)) {
+                if (ft->dim == 1) {
+                    // Float -> Float[n]
+                    return true;
+                }
+            } else if (auto *ft = dynamic_cast<IntType*>(from_)) {
+                // Int -> Float[n]
+                if (ft->dim == 1) {
+                    return true;
+                }
+            }
+        }
         return false;
+    }
+
+    // Wrap from, if necessary, to convert type.
+    void doConversion (Ast *&from, Type *to_)
+    {
+        if (equal(from->type, to_)) {
+            // Nothing to do.
+            return;
+        }
+
+        if (auto *tt = dynamic_cast<IntType*>(to_)) {
+            const char *names[] = { "Int1", "Int2", "Int3", "Int4" };
+            if (auto *ft = dynamic_cast<IntType*>(from->type)) {
+                if (ft->dim == 1) {
+                    // Int -> Int[n]
+                    from = alloc.makeAst<Call>(from->loc, names[tt->dim-1], Asts{from});
+                    from->type = cloneType(tt);
+                    return;
+                }
+            }
+        } else if (auto *tt = dynamic_cast<FloatType*>(to_)) {
+            const char *names[] = { "Float1", "Float2", "Float3", "Float4" };
+            if (auto *ft = dynamic_cast<FloatType*>(from->type)) {
+                if (ft->dim == 1) {
+                    // Float -> Float[n]
+                    from = alloc.makeAst<Call>(from->loc, names[tt->dim-1], Asts{from});
+                    from->type = cloneType(tt);
+                    return;
+                }
+            } else if (auto *ft = dynamic_cast<IntType*>(from->type)) {
+                // Int1 -> Float[n]
+                if (ft->dim == 1) {
+                    from = alloc.makeAst<Call>(from->loc, names[tt->dim-1], Asts{from});
+                    from->type = cloneType(tt);
+                    return;
+                }
+            }
+        }
+        EXCEPTEX << "No conversion possible." << ENDL;
     }
 
     void unify (const GfxGslLocation &loc, Ast *&a, Ast *&b)
@@ -1197,10 +1352,12 @@ class TypeSystem {
         ASSERT(b != nullptr);
         ASSERT(a->type != nullptr);
         ASSERT(b->type != nullptr);
-        if ((conversionExists(a, b->type))) {
+        if (conversionExists(a->type, b->type)) {
+            doConversion(a, b->type);
             return;
         }
-        if ((conversionExists(b, a->type))) {
+        if (conversionExists(b->type, a->type)) {
+            doConversion(b, a->type);
             return;
         }
         error(loc) << "Could not unify types " << a->type << " and " << b->type << ENDL;
@@ -1208,10 +1365,11 @@ class TypeSystem {
 
     public:
 
-    TypeSystem (Allocator &alloc)
-      : alloc(alloc)
+    TypeSystem (Allocator &alloc, GfxGslKind kind, const TypeMap &matFields, const TypeMap &vars)
+      : alloc(alloc), matFields(matFields), vars(vars), kind(kind)
     {
         initFuncTypes();
+        initObjectTypes();
     }
 
     void inferAndSet (Ast *ast_)
@@ -1265,19 +1423,78 @@ class TypeSystem {
             ast->type = alloc.makeType<VoidType>();
 
         } else if (auto *ast = dynamic_cast<Call*>(ast_)) {
-            // TODO(dcunnin): Implement this.
             for (unsigned i=0 ; i<ast->args.size() ; ++i)
                 inferAndSet(ast->args[i]);
             FunctionType *t = lookupFunction(loc, ast->func, ast->args);
             ast->type = t->ret;
 
         } else if (auto *ast = dynamic_cast<Field*>(ast_)) {
+            inferAndSet(ast->target);
             // TODO(dcunnin): Implement this.
-            //ast->target
-            //ast->id
-            std::cout << "field: " << ast->id << std::endl;;
-            ast->type = alloc.makeType<FloatType>(1);
-            ast->type->writeable = true;
+            if (dynamic_cast<FragType*>(ast->target->type)) {
+                if (fragFields.find(ast->id) == fragFields.end()) {
+                    error(loc) << "Frag field does not exist:  " << ast->id << ENDL;
+                }
+                const FieldType &f = fragFields[ast->id];
+                ast->type = cloneType(f.t);
+                if (kind == GFX_GSL_FRAG) {
+                    if (!f.fr) {
+                        error(loc) << "frag." << ast->id << " not accessible in fragment shader." << ENDL;
+                    }
+                    ast->type->writeable = f.fw;
+                } else {
+                    if (!f.vr) {
+                        error(loc) << "frag." << ast->id << " not accessible in vertex shader." << ENDL;
+                    }
+                    ast->type->writeable = f.vw;
+                }
+            } else if (dynamic_cast<VertType*>(ast->target->type)) {
+                if (vertFields.find(ast->id) == vertFields.end()) {
+                    error(loc) << "vert." << ast->id << " does not exist." << ENDL;
+                }
+                Type *t = vertFields[ast->id];
+                ast->type = cloneType(t);
+                ast->type->writeable = false;
+            } else if (dynamic_cast<GlobalType*>(ast->target->type)) {
+                if (globalFields.find(ast->id) == globalFields.end()) {
+                    error(loc) << "global." << ast->id << " does not exist." << ENDL;
+                }
+                Type *t = globalFields[ast->id];
+                ast->type = cloneType(t);
+                ast->type->writeable = false;
+            } else if (dynamic_cast<MatType*>(ast->target->type)) {
+                if (matFields.find(ast->id) == matFields.end()) {
+                    error(loc) << "mat." << ast->id << " does not exist." << ENDL;
+                }
+                Type *t = matFields[ast->id];
+                ast->type = cloneType(t);
+                ast->type->writeable = false;
+            } else if (auto *ft = dynamic_cast<FloatType*>(ast->target->type)) {
+                unsigned dim = ft->dim;
+                const std::string &id = ast->id;
+                if (id.length() > 4) {
+                    error(loc) << "Invalid field of " << ft << ": " << ast->id << ENDL;
+                }
+                for (unsigned i=0 ; i<id.length() ; ++i) {
+                    unsigned offset;
+                    switch (id[i]) {
+                        case 'r': case 'x': offset = 0; break;
+                        case 'g': case 'y': offset = 1; break;
+                        case 'b': case 'z': offset = 2; break;
+                        case 'a': case 'w': offset = 3; break;
+                        default:
+                        error(loc) << "Invalid field of " << ft << ": " << ast->id << ENDL;
+                    }
+                    if (offset >= dim) {
+                        error(loc) << "Invalid field of " << ft << ": " << ast->id << ENDL;
+                    }
+                }
+                ast->type = alloc.makeType<FloatType>(id.length());
+                ast->type->writeable = ft->writeable;
+                
+            } else {
+                error(loc) << "Cannot access " << ft << " of type: " << ast->target->type << ENDL;
+            }
 
         } else if (auto *ast = dynamic_cast<LiteralInt*>(ast_)) {
             ast->type = alloc.makeType<IntType>(1);
@@ -1293,18 +1510,40 @@ class TypeSystem {
             ast->type = symbols[ast->id];
 
         } else if (auto *ast = dynamic_cast<Binary*>(ast_)) {
+            inferAndSet(ast->a);
+            inferAndSet(ast->b);
+            unify(loc, ast->a, ast->b);
             // TODO(dcunnin): Implement this.
-            // Varies depending on the op, e.g. + vs <=
-            //ast->op
-            //ast->a
-            //ast->b
-            ast->type = alloc.makeType<FloatType>(1);
+            std::cout << "op: " << ast->op << std::endl;;
+            switch (ast->op) {
+                case OP_ADD: {
+                } break;
+                case OP_SUB: {
+                } break;
+                case OP_MUL: {
+                } break;
+                case OP_DIV: {
+                } break;
+                case OP_MOD: {
+                } break;
 
-        } else if (auto *ast = dynamic_cast<Unary*>(ast_)) {
-            // TODO(dcunnin): Implement this.
-            // Varies depending on the op, e.g. ! vs -
-            //ast->op
-            //ast->expr
+                case OP_EQ: {
+                } break;
+                case OP_NE: {
+                } break;
+                case OP_LT: {
+                } break;
+                case OP_LTE: {
+                } break;
+                case OP_GT: {
+                } break;
+                case OP_GTE: {
+                } break;
+                case OP_AND: {
+                } break;
+                case OP_OR: {
+                } break;
+            }
             ast->type = alloc.makeType<FloatType>(1);
 
         } else if (auto *ast = dynamic_cast<Global*>(ast_)) {
@@ -1326,9 +1565,9 @@ class TypeSystem {
     }
 };
 
-void gfx_gasoline_type (Allocator &alloc, Ast *ast)
+void gfx_gasoline_type (Allocator &alloc, Ast *ast, GfxGslKind kind)
 {
-    TypeSystem ts(alloc);
+    TypeSystem ts(alloc, kind, {}, {});
     ts.inferAndSet(ast);
 }
 // vim: shiftwidth=4:tabstop=4:expandtab

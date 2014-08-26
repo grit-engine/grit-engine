@@ -38,11 +38,16 @@ static inline std::ostream &operator<<(std::ostream &o, const GfxGslLocation &lo
     return o;
 }
 
+enum GfxGslKind {
+    GFX_GSL_VERT,
+    GFX_GSL_FRAG
+};
+
 struct Type {
     bool writeable;
     bool readable;
     Type() : writeable(false), readable(true) { }
-    virtual ~Type() { }
+    virtual ~Type (void) { }
 };
 
 // Abstract Syntax Tree
@@ -79,7 +84,7 @@ class Allocator {
 
 Ast *gfx_gasoline_parse (Allocator &alloc, const std::string &shader);
 
-void gfx_gasoline_type (Allocator &alloc, Ast *ast);
+void gfx_gasoline_type (Allocator &alloc, Ast *ast, GfxGslKind kind);
 
 std::string gfx_gasoline_unparse (const Ast *ast);
 
