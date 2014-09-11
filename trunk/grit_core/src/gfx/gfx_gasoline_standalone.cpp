@@ -21,41 +21,61 @@
 #include <fstream>
 
 #include "gfx_gasoline.h"
+
 #include <exception.h>
 
 int main(int argc, char **argv)
 {
     if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <kind> <filename>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <vert.gsl> <frag.gsl>" << std::endl;
         return EXIT_FAILURE;
     }
-    GfxGslKind kind;
-    std::string kind_str(argv[1]);
-    if (kind_str == "frag") {
-        kind = GFX_GSL_FRAG;
-    } else if (kind_str == "vert") {
-        kind = GFX_GSL_VERT;
-    } else {
-        std::cerr << "Unknown shader type (should be frag or vert): " << argv[2] << std::endl;
-        return EXIT_FAILURE;
-    }
+
+    std::string vert_code, frag_code;
     std::ifstream f;
+
+    f.open(argv[1]);
+    if (!f.good()) {
+        std::cerr << "Opening file: ";
+        perror(argv[1]);
+        return EXIT_FAILURE;
+    }
+    vert_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+    f.close();
+
     f.open(argv[2]);
     if (!f.good()) {
         std::cerr << "Opening file: ";
         perror(argv[2]);
         return EXIT_FAILURE;
     }
-    std::string input;
-    input.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+    frag_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+    f.close();
+
+    GfxGslShaderParams params;
+    params["starfieldMap"] = GFX_GSL_FLOAT_TEXTURE2;
+    params["starfieldMask"] = GFX_GSL_FLOAT3;
+    params["perlin"] = GFX_GSL_FLOAT_TEXTURE2;
+    params["perlinN"] = GFX_GSL_FLOAT_TEXTURE2;
+    params["emissiveMap"] = GFX_GSL_FLOAT_TEXTURE2;
+    params["emissiveMask"] = GFX_GSL_FLOAT3;
+    params["alphaMask"] = GFX_GSL_FLOAT1;
+    params["alphaRejectThreshold"] = GFX_GSL_FLOAT1;
+
     try {
-        Allocator alloc;
-        auto *ast = gfx_gasoline_parse(alloc, input);
-        gfx_gasoline_type(alloc, ast, kind);
-        std::cout << gfx_gasoline_unparse(ast);
+        GfxGslCompilerGsl comp(vert_code, frag_code, params);
+        comp.compile();
+        std::cout << "// Vertex shader" << std::endl;
+        std::cout << comp.getVertOutput();
+        std::cout << "// Fragment shader" << std::endl;
+        std::cout << comp.getFragOutput();
+        return EXIT_SUCCESS;
     } catch (const Exception &e) {
-        std::cerr << argv[2] << ": " << e << std::endl;
+        std::cerr << e << std::endl;
+        return EXIT_FAILURE;
     }
+
+
 }
 
 // vim: shiftwidth=4:tabstop=4:expandtab
