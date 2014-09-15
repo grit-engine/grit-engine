@@ -114,9 +114,46 @@ static void unparse (std::stringstream &ss, const GfxGslAst *ast_, int indent)
     }
 }
 
-std::string gfx_gasoline_unparse_gsl (const GfxGslAst *ast)
+template<class T>
+static std::ostream &operator<< (std::ostream &o, const std::vector<T> &s)
+{
+    if (s.empty()) {
+        o << "[ ]";
+    } else {
+        const char *prefix = "[";
+        for (const auto &str : s) {
+            o << prefix << str;
+            prefix = ", ";
+        }
+        o << "]";
+    }
+    return o;
+}
+
+template<class T>
+static std::ostream &operator<< (std::ostream &o, const std::set<T> &s)
+{
+    if (s.empty()) {
+        o << "{ }";
+    } else {
+        const char *prefix = "{";
+        for (const auto &str : s) {
+            o << prefix << str;
+            prefix = ", ";
+        }
+        o << "}";
+    }
+    return o;
+}
+
+std::string gfx_gasoline_unparse_gsl (const GfxGslTypeSystem *ts, const GfxGslAst *ast)
 {
     std::stringstream ss;
+    ss << "// Vert fields read: " << ts->getVertFieldsRead() << "\n";
+    ss << "// Frag fields read: " << ts->getFragFieldsRead() << "\n";
+    ss << "// Material fields read: " << ts->getMatFieldsRead() << "\n";
+    ss << "// Global fields read: " << ts->getGlobalFieldsRead() << "\n";
+    ss << "// Trans-values: " << ts->getTrans() << "\n";
     unparse(ss, ast, 0);
     return ss.str();
 }

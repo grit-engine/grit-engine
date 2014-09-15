@@ -19,7 +19,6 @@
  */
 
 #include <cstdlib>
-#include <cfloat>
 
 #include <list>
 #include <map>
@@ -29,8 +28,8 @@
 #include "centralised_log.h"
 #include <exception.h>
 
-// Don't use soft keywords.  They will make it harder to read code.  Use proper keyword tokens.  It
-// makes it easier to disallow keywords being identifiers.
+// Workaround for g++ not supporting moveable streams.
+#define error(loc) (EXCEPT << "Parse error: " << loc << ": ")
 
 enum TokenKind {
     IDENTIFIER,  // Has val.
@@ -94,9 +93,6 @@ static inline std::ostream &operator<<(std::ostream &o, const Token &v)
     o << v.val;
     return o;
 }
-
-// Workaround for g++ not supporting moveable streams.
-#define error(loc) (EXCEPT << "Shader error: " << loc << ": ")
 
 // Symbol tokens are arbitrary-length uninterrupted sequences of these characters
 bool is_symbol (char c)

@@ -26,12 +26,11 @@
 
 int main(int argc, char **argv)
 {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <vert.gsl> <frag.gsl>" << std::endl;
+    if (argc != 6) {
+        std::cerr << "Usage: " << argv[0] << " <vert.gsl> <frag.gsl> <targetlang> <vert.out> <frag.out>" << std::endl;
         return EXIT_FAILURE;
     }
 
-    std::string vert_code, frag_code;
     std::ifstream f;
 
     f.open(argv[1]);
@@ -40,6 +39,7 @@ int main(int argc, char **argv)
         perror(argv[1]);
         return EXIT_FAILURE;
     }
+    std::string vert_code;
     vert_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
     f.close();
 
@@ -49,8 +49,11 @@ int main(int argc, char **argv)
         perror(argv[2]);
         return EXIT_FAILURE;
     }
+    std::string frag_code;
     frag_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
     f.close();
+
+    std::string language = argv[3];
 
     GfxGslShaderParams params;
     params["starfieldMap"] = GFX_GSL_FLOAT_TEXTURE2;
@@ -62,16 +65,42 @@ int main(int argc, char **argv)
     params["alphaMask"] = GFX_GSL_FLOAT1;
     params["alphaRejectThreshold"] = GFX_GSL_FLOAT1;
 
+    GfxGslCompiler *comp = nullptr;
     try {
-        GfxGslCompilerGsl comp(vert_code, frag_code, params);
-        comp.compile();
-        std::cout << "// Vertex shader" << std::endl;
-        std::cout << comp.getVertOutput();
-        std::cout << "// Fragment shader" << std::endl;
-        std::cout << comp.getFragOutput();
+        if (language == "gsl") {
+            comp = new GfxGslCompilerGsl(vert_code, frag_code, params);
+        } else if (language == "cg") {
+            comp = new GfxGslCompilerCg(vert_code, frag_code, params);
+        } else {
+            std::cerr << "Unrecognised target language: " << comp << std::endl;
+            return EXIT_FAILURE;
+        }
+        comp->compile();
+        std::ofstream of;
+        of.open(argv[4]);
+        if (!of.good()) {
+            std::cerr << "Opening file: ";
+            perror(argv[4]);
+            return EXIT_FAILURE;
+        }
+        of << "// Vertex shader" << std::endl;
+        of << comp->getVertOutput();
+        of.close();
+        
+        of.open(argv[5]);
+        if (!of.good()) {
+            std::cerr << "Opening file: ";
+            perror(argv[5]);
+            return EXIT_FAILURE;
+        }
+        of << "// Fragment shader" << std::endl;
+        of << comp->getFragOutput();
+        of.close();
+        delete comp;
         return EXIT_SUCCESS;
     } catch (const Exception &e) {
         std::cerr << e << std::endl;
+        delete comp;
         return EXIT_FAILURE;
     }
 

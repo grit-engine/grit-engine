@@ -21,6 +21,7 @@
 #include <cstdlib>
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -35,7 +36,7 @@ enum GfxGslKind {
 };
 
 typedef std::vector<GfxGslType*> GfxGslTypes;
-typedef std::map<std::string, GfxGslType*> GfxGslTypeMap;
+typedef std::map<std::string, const GfxGslType*> GfxGslTypeMap;
 
 std::ostream &operator<<(std::ostream &o, const GfxGslType *t_);
 
@@ -114,10 +115,28 @@ class GfxGslTypeSystem {
     GfxGslTypeMap globalFields;
     GfxGslTypeMap matFields;
     GfxGslTypeMap vars;
+    const GfxGslTypeMap outerVars;
+
+    std::set<std::string> fragFieldsRead;
+    std::set<std::string> vertFieldsRead;
+    std::set<std::string> globalFieldsRead;
+    std::set<std::string> matFieldsRead;
+
+
+    public:
+    struct Trans {
+        bool isVert;
+        std::vector<std::string> path;
+    };
+
+    private:
+    std::vector<Trans> trans;
+
+    std::set<std::string> fragFieldsWritten;
 
     GfxGslKind kind;
 
-    GfxGslType *cloneType (GfxGslType *t_);
+    GfxGslType *cloneType (const GfxGslType *t_);
 
     void initObjectTypes (void);
 
@@ -144,19 +163,112 @@ class GfxGslTypeSystem {
 
     void unify (const GfxGslLocation &loc, GfxGslAst *&a, GfxGslAst *&b);
 
+    struct Ctx {
+        /* read indicates that the object that the expression resolves to (if any) may be read
+         * write indicates that the object that the expression resolves to (if any) may be written
+         * path is the field path we will read from this object
+         */
+        bool read;
+        bool write;
+        std::vector<std::string> path;
+        Ctx (void) : read(false), write(false) { }
+        Ctx setRead (bool v) const
+        {
+            Ctx c = *this;
+            c.read = v;
+            return c;
+        }
+        Ctx setWrite (bool v) const
+        {
+            Ctx c = *this;
+            c.write = v;
+            return c;
+        }
+        Ctx appendPath (const std::string &v) const
+        {
+            Ctx c = *this;
+            c.path.insert(c.path.begin(), v);
+            return c;
+        }
+    };
+
+    void addTrans (const GfxGslLocation &loc, const std::vector<std::string> &path,
+                   const GfxGslType *type, bool vert);
+
+    void inferAndSet (GfxGslAst *ast_, const Ctx &c);
+
     public:
 
     GfxGslTypeSystem (GfxGslAllocator &alloc, GfxGslKind kind, const GfxGslTypeMap &matFields,
                       const GfxGslTypeMap &vars)
-      : alloc(alloc), matFields(matFields), vars(vars), kind(kind)
+      : alloc(alloc), matFields(matFields), vars(vars), outerVars(vars), kind(kind)
     {
         initFuncTypes();
         initObjectTypes();
     }
 
-    void inferAndSet (GfxGslAst *ast_);
 
-    const GfxGslTypeMap &getVars (void) { return vars; }
+    void inferAndSet (GfxGslAst *ast_)
+    {
+        inferAndSet(ast_, Ctx());
+    }
+
+    const GfxGslTypeMap &getVars (void) const { return vars; }
+
+    const std::set<std::string> &getVertFieldsRead (void) const { return vertFieldsRead; }
+    const std::set<std::string> &getFragFieldsRead (void) const { return fragFieldsRead; }
+    const std::set<std::string> &getMatFieldsRead (void) const { return matFieldsRead; }
+    const std::set<std::string> &getGlobalFieldsRead (void) const { return globalFieldsRead; }
+    const std::set<std::string> &getFragFieldsWritten (void) const { return fragFieldsWritten; }
+
+    const GfxGslType *getVertType (const std::string &f) const
+    {
+        auto it = vertFields.find(f);
+        if (it == vertFields.end()) return nullptr;
+        return it->second;
+    }
+
+    const GfxGslType *getFragType (const std::string &f) const
+    {
+        auto it = fragFields.find(f);
+        if (it == fragFields.end()) return nullptr;
+        return it->second.t;
+    }
+
+    const GfxGslType *getMatType (const std::string &f) const
+    {
+        auto it = matFields.find(f);
+        if (it == matFields.end()) return nullptr;
+        return it->second;
+    }
+
+    const GfxGslType *getGlobalType (const std::string &f) const
+    {
+        auto it = globalFields.find(f);
+        if (it == globalFields.end()) return nullptr;
+        return it->second;
+    }
+
+    const GfxGslType *getVarType (const std::string &v) const
+    {
+        auto it = vars.find(v);
+        if (it == vars.end()) return nullptr;
+        return it->second;
+    }
+
+    const std::vector<Trans> &getTrans (void) const { return trans; }
 };
+
+static inline std::ostream &operator<< (std::ostream &o, const GfxGslTypeSystem::Trans &t)
+{
+    const char *prefix = "";
+    if (t.isVert)
+        o << "vert.";
+    for (unsigned i=0 ; i<t.path.size() ; ++i) {  
+        o << prefix << t.path[i];
+        prefix = ".";
+    }
+    return o;
+}
 
 #endif

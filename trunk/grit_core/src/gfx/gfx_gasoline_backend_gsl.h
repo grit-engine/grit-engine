@@ -28,7 +28,7 @@
 #ifndef GFX_GASOLINE_BACKEND_GSL
 #define GFX_GASOLINE_BACKEND_GSL
 
-std::string gfx_gasoline_unparse_gsl (const GfxGslAst *ast);
+std::string gfx_gasoline_unparse_gsl (const GfxGslTypeSystem *ts, const GfxGslAst *ast);
 
 
 #endif

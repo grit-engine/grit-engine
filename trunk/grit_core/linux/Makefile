@@ -175,8 +175,8 @@ GSL_OBJ = gfx_gasoline.o \
           gfx_gasoline_parser.o \
           gfx_gasoline_type_system.o \
           gfx_gasoline_backend_gsl.o \
+          gfx_gasoline_backend_cg.o \
           gfx_gasoline_standalone.o \
-          #gfx_gasoline_backend_cg.o \
 
 %/gsl.$(GRIT_EXEC_SUFFIX): gsl.$(GRIT_EXEC_SUFFIX)
 	strip -s $< -o $@
@@ -1551,6 +1551,7 @@ gfx_gasoline_backend_cg.o: ../depend_stubs/sstream
 gfx_gasoline_backend_cg.o: ../depend_stubs/iostream
 gfx_gasoline_backend_cg.o: ../../dependencies/util/intrinsics.h
 gfx_gasoline_backend_cg.o: ../src/gfx/gfx_gasoline_type_system.h
+gfx_gasoline_backend_cg.o: ../depend_stubs/set
 gfx_gasoline_backend_gsl.o: ../depend_stubs/cstdlib
 gfx_gasoline_backend_gsl.o: ../../dependencies/util/exception.h
 gfx_gasoline_backend_gsl.o: ../depend_stubs/string
@@ -1564,9 +1565,21 @@ gfx_gasoline_backend_gsl.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_backend_gsl.o: ../depend_stubs/map
 gfx_gasoline_backend_gsl.o: ../depend_stubs/vector
 gfx_gasoline_backend_gsl.o: ../src/gfx/gfx_gasoline_type_system.h
+gfx_gasoline_backend_gsl.o: ../depend_stubs/set
+gfx_gasoline.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdlib
+gfx_gasoline.o: ../src/gfx/gfx_gasoline_parser.h
+gfx_gasoline.o: ../depend_stubs/map ../depend_stubs/string
+gfx_gasoline.o: ../depend_stubs/vector
+gfx_gasoline.o: ../../dependencies/util/exception.h
+gfx_gasoline.o: ../depend_stubs/sstream ../depend_stubs/iostream
+gfx_gasoline.o: ../../dependencies/util/intrinsics.h
+gfx_gasoline.o: ../src/gfx/gfx_gasoline_type_system.h
+gfx_gasoline.o: ../depend_stubs/set
+gfx_gasoline.o: ../src/gfx/gfx_gasoline_backend_gsl.h
+gfx_gasoline.o: ../src/gfx/gfx_gasoline_backend_cg.h
 gfx_gasoline_parser.o: ../depend_stubs/cstdlib
-gfx_gasoline_parser.o: ../depend_stubs/cfloat ../depend_stubs/list
-gfx_gasoline_parser.o: ../depend_stubs/map ../depend_stubs/sstream
+gfx_gasoline_parser.o: ../depend_stubs/list ../depend_stubs/map
+gfx_gasoline_parser.o: ../depend_stubs/sstream
 gfx_gasoline_parser.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_parser.o: ../depend_stubs/string
 gfx_gasoline_parser.o: ../depend_stubs/vector
@@ -1586,10 +1599,11 @@ gfx_gasoline_standalone.o: ../depend_stubs/sstream
 gfx_gasoline_standalone.o: ../depend_stubs/iostream
 gfx_gasoline_standalone.o: ../../dependencies/util/intrinsics.h
 gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_type_system.h
+gfx_gasoline_standalone.o: ../depend_stubs/set
 gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_backend_gsl.h
 gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_backend_cg.h
-gfx_gasoline_type_system.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_type_system.o: ../depend_stubs/cstdlib
+gfx_gasoline_type_system.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_type_system.o: ../depend_stubs/map
 gfx_gasoline_type_system.o: ../depend_stubs/string
 gfx_gasoline_type_system.o: ../depend_stubs/vector
@@ -1598,6 +1612,7 @@ gfx_gasoline_type_system.o: ../depend_stubs/sstream
 gfx_gasoline_type_system.o: ../depend_stubs/iostream
 gfx_gasoline_type_system.o: ../../dependencies/util/intrinsics.h
 gfx_gasoline_type_system.o: ../src/gfx/gfx_gasoline_type_system.h
+gfx_gasoline_type_system.o: ../depend_stubs/set
 gfx_hud.o: ../depend_stubs/OgreHighLevelGpuProgramManager.h
 gfx_hud.o: ../depend_stubs/OgreCgProgram.h
 gfx_hud.o: ../src/centralised_log.h ../depend_stubs/iostream
