@@ -168,8 +168,10 @@ void GfxGslTypeSystem::initFuncTypes (void)
     funcTypes["asin"] = ts;
     funcTypes["cos"] = ts;
     funcTypes["acos"] = ts;
-    funcTypes["ddx"] = ts;
-    funcTypes["ddy"] = ts;
+    if (kind == GFX_GSL_FRAG) {
+        funcTypes["ddx"] = ts;
+        funcTypes["ddy"] = ts;
+    }
     funcTypes["sqrt"] = ts;
 
     funcTypes["pow"] = {
@@ -518,6 +520,7 @@ void GfxGslTypeSystem::addTrans (const GfxGslLocation &loc, const std::vector<st
         for (unsigned i=0 ; i<last.length() ; ++i) {
             unsigned offset;
             get_offset(last[i], offset);
+            ASSERT(offset < ft->dim);
             parts.insert(offset);
         }
     } else {
@@ -525,12 +528,17 @@ void GfxGslTypeSystem::addTrans (const GfxGslLocation &loc, const std::vector<st
     }
     static const char *fields = "xyzw";
     for (unsigned p : parts) {
-        
-        trans.emplace_back();
-        Trans &t = trans.back();
+        Trans t;
         t.isVert = vert;
         t.path.push_back(path[0]);
-        t.path.emplace_back(1, fields[p]);
+        if (ft->dim > 1) {
+            t.path.emplace_back(1, fields[p]);
+        }
+        for (const auto &tran : trans) {
+            if (tran == t) goto no_add;
+        }
+        trans.push_back(t);
+        no_add:;
     }
 }
 

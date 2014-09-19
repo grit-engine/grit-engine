@@ -71,6 +71,8 @@ int main(int argc, char **argv)
             comp = new GfxGslCompilerGsl(vert_code, frag_code, params);
         } else if (language == "cg") {
             comp = new GfxGslCompilerCg(vert_code, frag_code, params);
+        } else if (language == "glsl") {
+            comp = new GfxGslCompilerGlsl(vert_code, frag_code, params);
         } else {
             std::cerr << "Unrecognised target language: " << comp << std::endl;
             return EXIT_FAILURE;
@@ -83,7 +85,6 @@ int main(int argc, char **argv)
             perror(argv[4]);
             return EXIT_FAILURE;
         }
-        of << "// Vertex shader" << std::endl;
         of << comp->getVertOutput();
         of.close();
         
@@ -93,7 +94,6 @@ int main(int argc, char **argv)
             perror(argv[5]);
             return EXIT_FAILURE;
         }
-        of << "// Fragment shader" << std::endl;
         of << comp->getFragOutput();
         of.close();
         delete comp;

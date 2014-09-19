@@ -24,6 +24,7 @@
 #include "gfx_gasoline_type_system.h"
 #include "gfx_gasoline_backend_gsl.h"
 #include "gfx_gasoline_backend_cg.h"
+#include "gfx_gasoline_backend_glsl.h"
 
 #ifndef GFX_GASOLINE
 #define GFX_GASOLINE
@@ -79,6 +80,21 @@ class GfxGslCompiler {
         
 };
 
+class GfxGslCompilerGsl : public GfxGslCompiler {
+    public:
+    GfxGslCompilerGsl (const std::string &vert_prog, const std::string &frag_prog,
+                       const GfxGslShaderParams &params)
+      : GfxGslCompiler(vert_prog, frag_prog, params)
+    { }
+
+    void compile (void)
+    {
+        frontend();
+        vertOutput = gfx_gasoline_unparse_gsl(vertTypeSystem, vertAst);
+        fragOutput = gfx_gasoline_unparse_gsl(fragTypeSystem, fragAst);
+    }
+};
+
 class GfxGslCompilerCg : public GfxGslCompiler {
     public:
     GfxGslCompilerCg (const std::string &vert_prog, const std::string &frag_prog,
@@ -94,18 +110,18 @@ class GfxGslCompilerCg : public GfxGslCompiler {
     }
 };
 
-class GfxGslCompilerGsl : public GfxGslCompiler {
+class GfxGslCompilerGlsl : public GfxGslCompiler {
     public:
-    GfxGslCompilerGsl (const std::string &vert_prog, const std::string &frag_prog,
-                       const GfxGslShaderParams &params)
+    GfxGslCompilerGlsl (const std::string &vert_prog, const std::string &frag_prog,
+                      const GfxGslShaderParams &params)
       : GfxGslCompiler(vert_prog, frag_prog, params)
     { }
 
     void compile (void)
     {
         frontend();
-        vertOutput = gfx_gasoline_unparse_gsl(vertTypeSystem, vertAst);
-        fragOutput = gfx_gasoline_unparse_gsl(fragTypeSystem, fragAst);
+        gfx_gasoline_unparse_glsl(vertTypeSystem, vertAst, vertOutput,
+                                  fragTypeSystem, fragAst, fragOutput);
     }
 };
 

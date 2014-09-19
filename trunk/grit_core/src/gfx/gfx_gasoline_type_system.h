@@ -127,6 +127,12 @@ class GfxGslTypeSystem {
     struct Trans {
         bool isVert;
         std::vector<std::string> path;
+        bool operator== (const Trans &other) const
+        {
+            if (isVert != other.isVert) return false;
+            if (path != other.path) return false;
+            return true;
+        }
     };
 
     private:

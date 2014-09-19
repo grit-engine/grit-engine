@@ -24,6 +24,7 @@ depend:
 	sed -i 's_^[.][.]/src/audio/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/net/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/\([^.]*[.]o:\)_\1_g' Makefile
+	rm Makefile.bak
 
 
 .PHONY: depend
@@ -176,6 +177,7 @@ GSL_OBJ = gfx_gasoline.o \
           gfx_gasoline_type_system.o \
           gfx_gasoline_backend_gsl.o \
           gfx_gasoline_backend_cg.o \
+          gfx_gasoline_backend_glsl.o \
           gfx_gasoline_standalone.o \
 
 %/gsl.$(GRIT_EXEC_SUFFIX): gsl.$(GRIT_EXEC_SUFFIX)
@@ -1552,6 +1554,18 @@ gfx_gasoline_backend_cg.o: ../depend_stubs/iostream
 gfx_gasoline_backend_cg.o: ../../dependencies/util/intrinsics.h
 gfx_gasoline_backend_cg.o: ../src/gfx/gfx_gasoline_type_system.h
 gfx_gasoline_backend_cg.o: ../depend_stubs/set
+gfx_gasoline_backend_glsl.o: ../src/gfx/gfx_gasoline_backend_cg.h
+gfx_gasoline_backend_glsl.o: ../depend_stubs/cstdlib
+gfx_gasoline_backend_glsl.o: ../depend_stubs/string
+gfx_gasoline_backend_glsl.o: ../src/gfx/gfx_gasoline_parser.h
+gfx_gasoline_backend_glsl.o: ../depend_stubs/map
+gfx_gasoline_backend_glsl.o: ../depend_stubs/vector
+gfx_gasoline_backend_glsl.o: ../../dependencies/util/exception.h
+gfx_gasoline_backend_glsl.o: ../depend_stubs/sstream
+gfx_gasoline_backend_glsl.o: ../depend_stubs/iostream
+gfx_gasoline_backend_glsl.o: ../../dependencies/util/intrinsics.h
+gfx_gasoline_backend_glsl.o: ../src/gfx/gfx_gasoline_type_system.h
+gfx_gasoline_backend_glsl.o: ../depend_stubs/set
 gfx_gasoline_backend_gsl.o: ../depend_stubs/cstdlib
 gfx_gasoline_backend_gsl.o: ../../dependencies/util/exception.h
 gfx_gasoline_backend_gsl.o: ../depend_stubs/string
@@ -1577,6 +1591,7 @@ gfx_gasoline.o: ../src/gfx/gfx_gasoline_type_system.h
 gfx_gasoline.o: ../depend_stubs/set
 gfx_gasoline.o: ../src/gfx/gfx_gasoline_backend_gsl.h
 gfx_gasoline.o: ../src/gfx/gfx_gasoline_backend_cg.h
+gfx_gasoline.o: ../src/gfx/gfx_gasoline_backend_glsl.h
 gfx_gasoline_parser.o: ../depend_stubs/cstdlib
 gfx_gasoline_parser.o: ../depend_stubs/list ../depend_stubs/map
 gfx_gasoline_parser.o: ../depend_stubs/sstream
@@ -1602,6 +1617,7 @@ gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_type_system.h
 gfx_gasoline_standalone.o: ../depend_stubs/set
 gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_backend_gsl.h
 gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_backend_cg.h
+gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_backend_glsl.h
 gfx_gasoline_type_system.o: ../depend_stubs/cstdlib
 gfx_gasoline_type_system.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_type_system.o: ../depend_stubs/map
