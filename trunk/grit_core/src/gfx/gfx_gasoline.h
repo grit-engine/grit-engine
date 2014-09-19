@@ -20,11 +20,9 @@
 
 #include <cstdlib>
 
-#include "gfx_gasoline_parser.h"
-#include "gfx_gasoline_type_system.h"
-#include "gfx_gasoline_backend_gsl.h"
-#include "gfx_gasoline_backend_cg.h"
-#include "gfx_gasoline_backend_glsl.h"
+#include <map>
+#include <ostream>
+#include <string>
 
 #ifndef GFX_GASOLINE
 #define GFX_GASOLINE
@@ -40,89 +38,27 @@ enum GfxGslShaderParamType {
     GFX_GSL_FLOAT_TEXTURE4
 };
 
+struct GfxGslColour {
+    float r, g, b, a;
+    GfxGslColour (void) { }
+    GfxGslColour (float r, float g, float b, float a)
+      : r(r), g(g), b(b), a(a)
+    { }
+};
+
+static inline std::ostream &operator<< (std::ostream &o, const GfxGslColour &c)
+{
+    o << "Float4(" << c.r << ", " << c.g << ", " << c.b << ", " << c.a << ")";
+    return o;
+}
+
 typedef std::map<std::string, GfxGslShaderParamType> GfxGslShaderParams;
+typedef std::map<std::string, GfxGslColour> GfxGslUnboundTextures;
 
-class GfxGslCompiler {
-
-    protected:
-
-    const std::string vertProg;
-    const std::string fragProg;
-    const GfxGslShaderParams params;
-    GfxGslAst *vertAst;
-    GfxGslAst *fragAst;
-    GfxGslAllocator alloc;
-    GfxGslTypeSystem *vertTypeSystem;
-    GfxGslTypeSystem *fragTypeSystem;
-    std::string vertOutput;
-    std::string fragOutput;
-
-    public:
-
-    GfxGslCompiler (const std::string &vert_prog, const std::string &frag_prog,
-                    const GfxGslShaderParams &params)
-      : vertProg(vert_prog), fragProg(frag_prog), params(params),
-        vertAst(nullptr), fragAst(nullptr), vertTypeSystem(nullptr), fragTypeSystem(nullptr)
-    { }
-
-    virtual ~GfxGslCompiler (void)
-    {
-        delete vertTypeSystem;
-        delete fragTypeSystem;
-    }
-
-    void frontend (void);
-
-    virtual void compile (void) = 0;
-
-    std::string getVertOutput (void) const { return vertOutput; }
-    std::string getFragOutput (void) const { return fragOutput; }
-        
-};
-
-class GfxGslCompilerGsl : public GfxGslCompiler {
-    public:
-    GfxGslCompilerGsl (const std::string &vert_prog, const std::string &frag_prog,
-                       const GfxGslShaderParams &params)
-      : GfxGslCompiler(vert_prog, frag_prog, params)
-    { }
-
-    void compile (void)
-    {
-        frontend();
-        vertOutput = gfx_gasoline_unparse_gsl(vertTypeSystem, vertAst);
-        fragOutput = gfx_gasoline_unparse_gsl(fragTypeSystem, fragAst);
-    }
-};
-
-class GfxGslCompilerCg : public GfxGslCompiler {
-    public:
-    GfxGslCompilerCg (const std::string &vert_prog, const std::string &frag_prog,
-                      const GfxGslShaderParams &params)
-      : GfxGslCompiler(vert_prog, frag_prog, params)
-    { }
-
-    void compile (void)
-    {
-        frontend();
-        gfx_gasoline_unparse_cg(vertTypeSystem, vertAst, vertOutput,
-                                fragTypeSystem, fragAst, fragOutput);
-    }
-};
-
-class GfxGslCompilerGlsl : public GfxGslCompiler {
-    public:
-    GfxGslCompilerGlsl (const std::string &vert_prog, const std::string &frag_prog,
-                      const GfxGslShaderParams &params)
-      : GfxGslCompiler(vert_prog, frag_prog, params)
-    { }
-
-    void compile (void)
-    {
-        frontend();
-        gfx_gasoline_unparse_glsl(vertTypeSystem, vertAst, vertOutput,
-                                  fragTypeSystem, fragAst, fragOutput);
-    }
-};
+std::pair<std::string, std::string> gfx_gasoline_compile (const std::string &lang,
+                                                          const std::string &vert_prog,
+                                                          const std::string &frag_prog,
+                                                          const GfxGslShaderParams &params,
+                                                          const GfxGslUnboundTextures &texs);
 
 #endif

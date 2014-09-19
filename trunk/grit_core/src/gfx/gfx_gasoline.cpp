@@ -18,11 +18,21 @@
  * THE SOFTWARE.
  */
 
-
 #include "gfx_gasoline.h"
+#include "gfx_gasoline_parser.h"
+#include "gfx_gasoline_type_system.h"
+#include "gfx_gasoline_backend_gsl.h"
+#include "gfx_gasoline_backend_cg.h"
+#include "gfx_gasoline_backend_glsl.h"
 
-void GfxGslCompiler::frontend (void)
+std::pair<std::string, std::string> gfx_gasoline_compile (const std::string &lang,
+                                                          const std::string &vert_prog,
+                                                          const std::string &frag_prog,
+                                                          const GfxGslShaderParams &params,
+                                                          const GfxGslUnboundTextures &ubt)
 {
+    GfxGslAllocator alloc;
+
     GfxGslTypeMap mat_fields;
     for (auto pair : params) {
         switch (pair.second) {
@@ -53,22 +63,41 @@ void GfxGslCompiler::frontend (void)
         }
     }
 
-    GfxGslTypeMap vars;
+    GfxGslAst *vert_ast;
+    GfxGslTypeSystem vert_ts(alloc, GFX_GSL_VERT, mat_fields, GfxGslTypeMap());
 
     try {
-        vertAst = gfx_gasoline_parse(alloc, vertProg);
-        vertTypeSystem = new GfxGslTypeSystem(alloc, GFX_GSL_VERT, mat_fields, vars);
-        vertTypeSystem->inferAndSet(vertAst);
+        vert_ast = gfx_gasoline_parse(alloc, vert_prog);
+        vert_ts.inferAndSet(vert_ast);
     } catch (const Exception &e) {
         EXCEPT << "Vertex shader " << e << ENDL;
     }
 
+
+    GfxGslAst *frag_ast;
+    GfxGslTypeSystem frag_ts(alloc, GFX_GSL_FRAG, mat_fields, vert_ts.getVars());
+
     try {
-        fragAst = gfx_gasoline_parse(alloc, fragProg);
-        vars = vertTypeSystem->getVars();
-        fragTypeSystem = new GfxGslTypeSystem(alloc, GFX_GSL_FRAG, mat_fields, vars);
-        fragTypeSystem->inferAndSet(fragAst);
+        frag_ast = gfx_gasoline_parse(alloc, frag_prog);
+        frag_ts.inferAndSet(frag_ast);
     } catch (const Exception &e) {
         EXCEPT << "Fragment shader " << e << ENDL;
     }
+
+    std::string vert_out;
+    std::string frag_out;
+    if (lang == "gsl") {
+        vert_out = gfx_gasoline_unparse_gsl(&vert_ts, vert_ast);
+        frag_out = gfx_gasoline_unparse_gsl(&frag_ts, frag_ast);
+    } else if (lang == "cg") {
+        gfx_gasoline_unparse_cg(&vert_ts, vert_ast, vert_out,
+                                &frag_ts, frag_ast, frag_out, ubt);
+    } else if (lang == "glsl") {
+        gfx_gasoline_unparse_glsl(&vert_ts, vert_ast, vert_out,
+                                  &frag_ts, frag_ast, frag_out, ubt);
+    } else {
+        EXCEPT << "Unrecognised shader target language: " << lang << ENDL;
+    }
+
+    return {vert_out, frag_out};
 }

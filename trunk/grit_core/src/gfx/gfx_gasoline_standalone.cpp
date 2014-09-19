@@ -65,19 +65,12 @@ int main(int argc, char **argv)
     params["alphaMask"] = GFX_GSL_FLOAT1;
     params["alphaRejectThreshold"] = GFX_GSL_FLOAT1;
 
-    GfxGslCompiler *comp = nullptr;
     try {
-        if (language == "gsl") {
-            comp = new GfxGslCompilerGsl(vert_code, frag_code, params);
-        } else if (language == "cg") {
-            comp = new GfxGslCompilerCg(vert_code, frag_code, params);
-        } else if (language == "glsl") {
-            comp = new GfxGslCompilerGlsl(vert_code, frag_code, params);
-        } else {
-            std::cerr << "Unrecognised target language: " << comp << std::endl;
-            return EXIT_FAILURE;
-        }
-        comp->compile();
+        std::pair<std::string, std::string> shaders;
+        GfxGslUnboundTextures ubt;
+        ubt["perlinN"] = GfxGslColour(0.5, 0.5, 0.5, 0);
+        shaders = gfx_gasoline_compile(language, vert_code, frag_code, params, ubt);
+
         std::ofstream of;
         of.open(argv[4]);
         if (!of.good()) {
@@ -85,7 +78,7 @@ int main(int argc, char **argv)
             perror(argv[4]);
             return EXIT_FAILURE;
         }
-        of << comp->getVertOutput();
+        of << shaders.first;
         of.close();
         
         of.open(argv[5]);
@@ -94,13 +87,11 @@ int main(int argc, char **argv)
             perror(argv[5]);
             return EXIT_FAILURE;
         }
-        of << comp->getFragOutput();
+        of << shaders.second;
         of.close();
-        delete comp;
         return EXIT_SUCCESS;
     } catch (const Exception &e) {
         std::cerr << e << std::endl;
-        delete comp;
         return EXIT_FAILURE;
     }
 

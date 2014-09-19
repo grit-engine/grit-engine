@@ -22,15 +22,17 @@
 
 #include <string>
 
-#include "gfx_gasoline_parser.h"
-#include "gfx_gasoline_type_system.h"
-
 #ifndef GFX_GASOLINE_BACKEND_CG
 #define GFX_GASOLINE_BACKEND_CG
 
+#include "gfx_gasoline.h"
+#include "gfx_gasoline_parser.h"
+#include "gfx_gasoline_type_system.h"
+
 void gfx_gasoline_unparse_cg (const GfxGslTypeSystem *vert_ts, const GfxGslAst *vert_ast,
                               std::string &vert_output, const GfxGslTypeSystem *frag_ts,
-                              const GfxGslAst *frag_ast, std::string &frag_output);
+                              const GfxGslAst *frag_ast, std::string &frag_output,
+                              const GfxGslUnboundTextures &ubt);
 
 
 #endif

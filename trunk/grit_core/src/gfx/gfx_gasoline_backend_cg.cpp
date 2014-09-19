@@ -20,14 +20,15 @@
 
 #include "gfx_gasoline_backend_cg.h"
 
-class CgBackend {
+class Backend {
     std::stringstream ss;
     const GfxGslTypeSystem *ts;
     GfxGslKind kind;
+    const GfxGslUnboundTextures &ubt;
 
     public:
-    CgBackend (const GfxGslTypeSystem *ts, GfxGslKind kind)
-      : ts(ts), kind(kind)
+    Backend (const GfxGslTypeSystem *ts, GfxGslKind kind, const GfxGslUnboundTextures &ubt)
+      : ts(ts), kind(kind), ubt(ubt)
     { }
 
     void unparse (const GfxGslAst *ast_, int indent)
@@ -231,16 +232,19 @@ static void cg_preamble (const GfxGslTypeSystem *ts, std::ostream &ss)
     ss << "Float4 gamma_encode (Float4 v) { return pow(v, 1/2.2); }\n";
     ss << "Float4 sample2D (FloatTexture2 tex, Float2 uv) { return tex2D(tex, uv); }\n";
     ss << "Float4 sample2D (FloatTexture2 tex, Float2 uv, Float2 ddx, Float2 ddy) { return tex2D(tex, uv, ddx, ddy); }\n";
+    ss << "Float4 sample2D (Float4 c, Float2 uv) { return c; }\n";
+    ss << "Float4 sample2D (Float4 c, Float2 uv, Float2 ddx, Float2 ddy) { return c; }\n";
     ss << "\n";
 }
 
 void gfx_gasoline_unparse_cg (const GfxGslTypeSystem *vert_ts, const GfxGslAst *vert_ast,
                               std::string &vert_output, const GfxGslTypeSystem *frag_ts,
-                              const GfxGslAst *frag_ast, std::string &frag_output)
+                              const GfxGslAst *frag_ast, std::string &frag_output,
+                              const GfxGslUnboundTextures &ubt)
 {
-    CgBackend vert_backend(vert_ts, GFX_GSL_VERT);
+    Backend vert_backend(vert_ts, GFX_GSL_VERT, ubt);
     vert_backend.unparse(vert_ast, 1);
-    CgBackend frag_backend(frag_ts, GFX_GSL_FRAG);
+    Backend frag_backend(frag_ts, GFX_GSL_FRAG, ubt);
     frag_backend.unparse(frag_ast, 1);
 
     std::stringstream vert_ss;
@@ -263,8 +267,12 @@ void gfx_gasoline_unparse_cg (const GfxGslTypeSystem *vert_ts, const GfxGslAst *
 
     for (const auto &f : vert_ts->getGlobalFieldsRead())
         vert_ss << "    uniform " << vert_ts->getGlobalType(f) << " global_" << f << ",\n";
-    for (const auto &f : vert_ts->getMatFieldsRead())
-        vert_ss << "    uniform " << vert_ts->getMatType(f) << " mat_" << f << ",\n";
+    for (const auto &f : vert_ts->getMatFieldsRead()) {
+        auto it = ubt.find(f);
+        if (it == ubt.end()) {
+            vert_ss << "    uniform " << vert_ts->getMatType(f) << " mat_" << f << ",\n";
+        }
+    }
 
     for (const auto &f : vert_ts->getFragFieldsWritten()) {
         vert_ss << "    out " << vert_ts->getFragType(f) << " frag_" << f << " : "
@@ -280,6 +288,12 @@ void gfx_gasoline_unparse_cg (const GfxGslTypeSystem *vert_ts, const GfxGslAst *
 
     vert_ss << "    uniform float vert_unused\n";
     vert_ss << ") {\n";
+    for (const auto &f : vert_ts->getMatFieldsRead()) {
+        auto it = ubt.find(f);
+        if (it != ubt.end()) {
+            vert_ss << "    const Float4 mat_" << f << " = " << it->second << ",\n";
+        }
+    }
     for (const auto &f : vert_ts->getFragFieldsWritten()) {
         vert_ss << "    frag_" << f << " = 0.0;\n";
     }
@@ -319,8 +333,12 @@ void gfx_gasoline_unparse_cg (const GfxGslTypeSystem *vert_ts, const GfxGslAst *
     }
     for (const auto &f : frag_ts->getGlobalFieldsRead())
         frag_ss << "    uniform " << frag_ts->getGlobalType(f) << " global_" << f << ",\n";
-    for (const auto &f : frag_ts->getMatFieldsRead())
-        frag_ss << "    uniform " << frag_ts->getMatType(f) << " mat_" << f << ",\n";
+    for (const auto &f : frag_ts->getMatFieldsRead()) {
+        auto it = ubt.find(f);
+        if (it == ubt.end()) {
+            frag_ss << "    uniform " << vert_ts->getMatType(f) << " mat_" << f << ",\n";
+        }
+    }
 
     for (const auto &f : frag_ts->getFragFieldsWritten()) {
         frag_ss << "    out " << frag_ts->getFragType(f) << " frag_" << f
@@ -329,6 +347,14 @@ void gfx_gasoline_unparse_cg (const GfxGslTypeSystem *vert_ts, const GfxGslAst *
 
     frag_ss << "    uniform float frag_unused\n";
     frag_ss << ") {\n";
+
+    for (const auto &f : frag_ts->getMatFieldsRead()) {
+        auto it = ubt.find(f);
+        if (it != ubt.end()) {
+            frag_ss << "    const Float4 mat_" << f << " = " << it->second << ";\n";
+        }
+    }
+
     for (const auto &f : frag_ts->getFragFieldsWritten()) {
         frag_ss << "    frag_" << f << " = 0.0;\n";
     }

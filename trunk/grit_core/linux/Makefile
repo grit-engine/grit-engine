@@ -1545,8 +1545,10 @@ gfx_font.o: ../depend_stubs/OgreMesh.h
 gfx_gasoline_backend_cg.o: ../src/gfx/gfx_gasoline_backend_cg.h
 gfx_gasoline_backend_cg.o: ../depend_stubs/cstdlib
 gfx_gasoline_backend_cg.o: ../depend_stubs/string
-gfx_gasoline_backend_cg.o: ../src/gfx/gfx_gasoline_parser.h
+gfx_gasoline_backend_cg.o: ../src/gfx/gfx_gasoline.h
 gfx_gasoline_backend_cg.o: ../depend_stubs/map
+gfx_gasoline_backend_cg.o: ../depend_stubs/ostream
+gfx_gasoline_backend_cg.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_backend_cg.o: ../depend_stubs/vector
 gfx_gasoline_backend_cg.o: ../../dependencies/util/exception.h
 gfx_gasoline_backend_cg.o: ../depend_stubs/sstream
@@ -1557,8 +1559,10 @@ gfx_gasoline_backend_cg.o: ../depend_stubs/set
 gfx_gasoline_backend_glsl.o: ../src/gfx/gfx_gasoline_backend_cg.h
 gfx_gasoline_backend_glsl.o: ../depend_stubs/cstdlib
 gfx_gasoline_backend_glsl.o: ../depend_stubs/string
-gfx_gasoline_backend_glsl.o: ../src/gfx/gfx_gasoline_parser.h
+gfx_gasoline_backend_glsl.o: ../src/gfx/gfx_gasoline.h
 gfx_gasoline_backend_glsl.o: ../depend_stubs/map
+gfx_gasoline_backend_glsl.o: ../depend_stubs/ostream
+gfx_gasoline_backend_glsl.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_backend_glsl.o: ../depend_stubs/vector
 gfx_gasoline_backend_glsl.o: ../../dependencies/util/exception.h
 gfx_gasoline_backend_glsl.o: ../depend_stubs/sstream
@@ -1566,6 +1570,7 @@ gfx_gasoline_backend_glsl.o: ../depend_stubs/iostream
 gfx_gasoline_backend_glsl.o: ../../dependencies/util/intrinsics.h
 gfx_gasoline_backend_glsl.o: ../src/gfx/gfx_gasoline_type_system.h
 gfx_gasoline_backend_glsl.o: ../depend_stubs/set
+gfx_gasoline_backend_glsl.o: ../src/centralised_log.h
 gfx_gasoline_backend_gsl.o: ../depend_stubs/cstdlib
 gfx_gasoline_backend_gsl.o: ../../dependencies/util/exception.h
 gfx_gasoline_backend_gsl.o: ../depend_stubs/string
@@ -1581,8 +1586,9 @@ gfx_gasoline_backend_gsl.o: ../depend_stubs/vector
 gfx_gasoline_backend_gsl.o: ../src/gfx/gfx_gasoline_type_system.h
 gfx_gasoline_backend_gsl.o: ../depend_stubs/set
 gfx_gasoline.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdlib
+gfx_gasoline.o: ../depend_stubs/map ../depend_stubs/ostream
+gfx_gasoline.o: ../depend_stubs/string
 gfx_gasoline.o: ../src/gfx/gfx_gasoline_parser.h
-gfx_gasoline.o: ../depend_stubs/map ../depend_stubs/string
 gfx_gasoline.o: ../depend_stubs/vector
 gfx_gasoline.o: ../../dependencies/util/exception.h
 gfx_gasoline.o: ../depend_stubs/sstream ../depend_stubs/iostream
@@ -1605,19 +1611,13 @@ gfx_gasoline_parser.o: ../src/centralised_log.h
 gfx_gasoline_standalone.o: ../depend_stubs/fstream
 gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline.h
 gfx_gasoline_standalone.o: ../depend_stubs/cstdlib
-gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_standalone.o: ../depend_stubs/map
+gfx_gasoline_standalone.o: ../depend_stubs/ostream
 gfx_gasoline_standalone.o: ../depend_stubs/string
-gfx_gasoline_standalone.o: ../depend_stubs/vector
 gfx_gasoline_standalone.o: ../../dependencies/util/exception.h
 gfx_gasoline_standalone.o: ../depend_stubs/sstream
 gfx_gasoline_standalone.o: ../depend_stubs/iostream
 gfx_gasoline_standalone.o: ../../dependencies/util/intrinsics.h
-gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_type_system.h
-gfx_gasoline_standalone.o: ../depend_stubs/set
-gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_backend_gsl.h
-gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_backend_cg.h
-gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline_backend_glsl.h
 gfx_gasoline_type_system.o: ../depend_stubs/cstdlib
 gfx_gasoline_type_system.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_type_system.o: ../depend_stubs/map
