@@ -3982,7 +3982,7 @@ static void skymat_push_string_from_scene_blend (lua_State *L, GfxSkyMaterialSce
 }
 */
 
-static int global_register_sky_material (lua_State *L)
+static int global_gfx_register_sky_material (lua_State *L)
 {
 TRY_START
 
@@ -4042,10 +4042,10 @@ TRY_START
                 }
                 switch (uniform.values.size()) {
                     case 0: my_lua_error(L, "Uniform \""+key+"\" must have a default value");
-                    case 1: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT1; break;
-                    //case 2: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT2; break;
-                    case 3: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT3; break;
-                    case 4: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT4; break;
+                    case 1: uniform.kind = GFX_GSL_FLOAT1; break;
+                    case 2: uniform.kind = GFX_GSL_FLOAT2; break;
+                    case 3: uniform.kind = GFX_GSL_FLOAT3; break;
+                    case 4: uniform.kind = GFX_GSL_FLOAT4; break;
                     default: my_lua_error(L, "Uniform \""+key+"\" unsupported number of default values");
                 }
             } else {
@@ -4054,19 +4054,12 @@ TRY_START
 
         } else if (uniform_kind == "TEXTURE2D") {
 
-            uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_TEXTURE2D;
-/*
-    addrMode = "CLAMP";
-    minFilter = "LINEAR";
-    magFilter = "LINEAR";
-    mipFilter = "ANISOTROPIC";
-    anisotropy = 16;
-*/
+            uniform.kind = GFX_GSL_FLOAT_TEXTURE2;
             std::string tex_name;
 
             bool has_tex = tab->get("name", tex_name);
             APP_ASSERT(has_tex);
-            GfxTextureDiskResource *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
+            auto *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
             if (tex == NULL) my_lua_error(L, "Resource is not a texture \""+tex_name+"\"");
             uniform.texture = tex;
 
@@ -4085,17 +4078,12 @@ TRY_START
 TRY_END
 }
 
-static std::string default_fragment_code = "out_COLOR.rgb = float3(1,0,0); out_COLOR.a = 1;\n";
-static std::string default_vertex_code = "out_POSITION = mul(su_worldViewProj, float4(in_POSITION.xyz,1));\n"
-                                         "// hack our way to maximum depth\n"
-                                         "// for both d3d9 and gl, 1 is the clipspace depth of the backplane\n"
-                                         "out_POSITION.z = out_POSITION.w;\n"
-                                         "// use slightly less than full distance, to avoid black lightning artifacts\n"
-                                         "out_POSITION.z *= 1 - 1.0f/256/256;\n"
-                                         "out_TEXCOORD0.xy = in_TEXCOORD0.xy;\n";
+static std::string default_fragment_code = "frag.colour = Float4(1, 0, 0, 1);\n";
+static std::string default_vertex_code =
+"frag.position = mul(global.worldViewProj, Float4(vert.position.xyz, 1));\n"
+"frag.position.z = frag.position.w * (1 - 1.0/65536);\n";
 
-
-static int global_register_sky_shader (lua_State *L)
+static int global_gfx_register_sky_shader (lua_State *L)
 {
 TRY_START
 
@@ -4151,10 +4139,10 @@ TRY_START
                 }
                 switch (uniform.defaults.size()) {
                     case 0: my_lua_error(L, "Uniform \""+key+"\" must have a default value");
-                    case 1: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT1; break;
-                    //case 2: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT2; break;
-                    case 3: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT3; break;
-                    case 4: uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT4; break;
+                    case 1: uniform.kind = GFX_GSL_FLOAT1; break;
+                    case 2: uniform.kind = GFX_GSL_FLOAT2; break;
+                    case 3: uniform.kind = GFX_GSL_FLOAT3; break;
+                    case 4: uniform.kind = GFX_GSL_FLOAT4; break;
                     default: my_lua_error(L, "Uniform \""+key+"\" unsupported number of default values");
                 }
             } else {
@@ -4168,7 +4156,7 @@ TRY_START
             tab->get("defaultColour", default_colour, Vector3(1,1,1));
             tab->get("defaultAlpha", default_alpha, 1.0);
 
-            uniform.kind = GFX_SHADER_UNIFORM_KIND_PARAM_TEXTURE2D;
+            uniform.kind = GFX_GSL_FLOAT_TEXTURE2;
             uniform.defaultColour = default_colour;
             uniform.defaultAlpha = default_alpha;
 
@@ -4350,6 +4338,9 @@ static const luaL_reg global[] = {
     {"gfx_sky_body_make",global_gfx_sky_body_make},
     {"gfx_light_make",global_gfx_light_make},
 
+    {"gfx_register_sky_material", global_gfx_register_sky_material},
+    {"gfx_register_sky_shader", global_gfx_register_sky_shader},
+
     {"gfx_font_define",global_gfx_font_define},
     {"gfx_font_line_height",global_gfx_font_line_height},
     {"gfx_font_list",global_gfx_font_list},
@@ -4441,8 +4432,6 @@ static const luaL_reg global_ogre_debug[] = {
     {"remove_gpuprog", global_remove_gpuprog},
 
     {"register_material", global_register_material},
-    {"register_sky_material", global_register_sky_material},
-    {"register_sky_shader", global_register_sky_shader},
     {"dump_registered_material", global_dump_registered_material},
     {"registered_material_get", global_registered_material_get},
     {"reprocess_all_registered_materials", global_reprocess_all_registered_materials},

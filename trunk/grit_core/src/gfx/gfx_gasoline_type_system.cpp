@@ -172,6 +172,7 @@ void GfxGslTypeSystem::initFuncTypes (void)
         funcTypes["ddx"] = ts;
         funcTypes["ddy"] = ts;
     }
+    funcTypes["abs"] = ts;
     funcTypes["sqrt"] = ts;
 
     funcTypes["pow"] = {
@@ -188,6 +189,12 @@ void GfxGslTypeSystem::initFuncTypes (void)
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2), fs(2)}, fs(1)),
     };
     funcTypes["normalize"] = { alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)) };
+
+    // ts holds the set of all functions: (float_n) -> float_1
+    ts.clear();
+    for (unsigned i=1 ; i<=4 ; ++i)
+        ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(i)}, fs(1)));
+    funcTypes["length"] = ts;
 
     // ts holds the set of all functions: (float_n, float_n, float_n) -> float_n
     ts.clear();

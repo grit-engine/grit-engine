@@ -20,7 +20,7 @@
 
 #include "gfx_gasoline_backend_cg.h"
 
-#include <centralised_log.h>
+#include "../centralised_log.h"
 
 static std::map<std::string, std::string> vert_global = {
     {"position", "gl_Vertex"},
@@ -288,10 +288,10 @@ static void preamble (const GfxGslTypeSystem *ts, GfxGslKind k, std::ostream &ss
     ss << "Float2 gamma_encode (Float2 v) { return pow(v, vec2(1/2.2, 1/2.2)); }\n";
     ss << "Float3 gamma_encode (Float3 v) { return pow(v, vec3(1/2.2, 1/2.2, 1/2.2)); }\n";
     ss << "Float4 gamma_encode (Float4 v) { return pow(v, vec4(1/2.2, 1/2.2, 1/2.2, 1/2.2)); }\n";
-    ss << "Float lerp (Float a, Float b, Float v) { return v*a + (1-v)*b; }\n";
-    ss << "Float2 lerp (Float2 a, Float2 b, Float v) { return v*a + (1-v)*b; }\n";
-    ss << "Float3 lerp (Float3 a, Float3 b, Float v) { return v*a + (1-v)*b; }\n";
-    ss << "Float4 lerp (Float4 a, Float4 b, Float v) { return v*a + (1-v)*b; }\n";
+    ss << "Float lerp (Float a, Float b, Float v) { return v*b + (1-v)*a; }\n";
+    ss << "Float2 lerp (Float2 a, Float2 b, Float v) { return v*b + (1-v)*a; }\n";
+    ss << "Float3 lerp (Float3 a, Float3 b, Float v) { return v*b + (1-v)*a; }\n";
+    ss << "Float4 lerp (Float4 a, Float4 b, Float v) { return v*b + (1-v)*a; }\n";
     ss << "\n";
 }
 

@@ -331,8 +331,14 @@ void gfx_gasoline_unparse_cg (const GfxGslTypeSystem *vert_ts, const GfxGslAst *
         if (sz > 1) type << sz;
         frag_ss << "    in " << type.str() << " trans" << i/4 << " : TEXCOORD" << i/4 << ",\n";
     }
-    for (const auto &f : frag_ts->getGlobalFieldsRead())
-        frag_ss << "    uniform " << frag_ts->getGlobalType(f) << " global_" << f << ",\n";
+    unsigned counter = 0;
+    for (const auto &f : frag_ts->getGlobalFieldsRead()) {
+        frag_ss << "    uniform " << frag_ts->getGlobalType(f) << " global_" << f;
+        if (dynamic_cast<const GfxGslFloatTextureType*>(frag_ts->getGlobalType(f))) {
+            frag_ss << " : TEXUNIT" << counter++;
+        }
+        frag_ss << ",\n";
+    }
     for (const auto &f : frag_ts->getMatFieldsRead()) {
         auto it = ubt.find(f);
         if (it == ubt.end()) {

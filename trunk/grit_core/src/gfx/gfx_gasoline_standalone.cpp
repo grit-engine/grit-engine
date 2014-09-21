@@ -53,9 +53,21 @@ int main(int argc, char **argv)
     frag_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
     f.close();
 
+    GfxGslBackend backend;
     std::string language = argv[3];
+    if (language == "gsl") {
+        backend = GFX_GSL_BACKEND_GSL;
+    } else if (language == "cg") {
+        backend = GFX_GSL_BACKEND_CG;
+    } else if (language == "glsl") {
+        backend = GFX_GSL_BACKEND_GLSL;
+    } else {
+        std::cerr << "Unrecognised shader target language: " << language << std::endl;
+        return EXIT_FAILURE;
+    }
 
-    GfxGslShaderParams params;
+
+    GfxGslParams params;
     params["starfieldMap"] = GFX_GSL_FLOAT_TEXTURE2;
     params["starfieldMask"] = GFX_GSL_FLOAT3;
     params["perlin"] = GFX_GSL_FLOAT_TEXTURE2;
@@ -69,7 +81,7 @@ int main(int argc, char **argv)
         std::pair<std::string, std::string> shaders;
         GfxGslUnboundTextures ubt;
         ubt["perlinN"] = GfxGslColour(0.5, 0.5, 0.5, 0);
-        shaders = gfx_gasoline_compile(language, vert_code, frag_code, params, ubt);
+        shaders = gfx_gasoline_compile(backend, vert_code, frag_code, params, ubt);
 
         std::ofstream of;
         of.open(argv[4]);

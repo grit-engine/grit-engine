@@ -102,6 +102,12 @@
     <ClCompile Include="src\gfx\gfx_body.cpp" />
     <ClCompile Include="src\gfx\gfx_fertile_node.cpp" />
     <ClCompile Include="src\gfx\gfx_font.cpp" />
+    <ClCompile Include="src\gfx\gfx_gasoline.cpp" />
+    <ClCompile Include="src\gfx\gfx_gasoline_backend_cg.cpp" />
+    <ClCompile Include="src\gfx\gfx_gasoline_backend_glsl.cpp" />
+    <ClCompile Include="src\gfx\gfx_gasoline_backend_gsl.cpp" />
+    <ClCompile Include="src\gfx\gfx_gasoline_parser.cpp" />
+    <ClCompile Include="src\gfx\gfx_gasoline_type_system.cpp" />
     <ClCompile Include="src\gfx\gfx_instances.cpp" />
     <ClCompile Include="src\gfx\gfx_light.cpp" />
     <ClCompile Include="src\gfx\gfx_material.cpp" />

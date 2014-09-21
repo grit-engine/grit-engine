@@ -19,15 +19,18 @@
  */
 
 #include <cstdlib>
+#include <cstdint>
 
 #include <map>
 #include <ostream>
 #include <string>
 
-#ifndef GFX_GASOLINE
-#define GFX_GASOLINE
+#include "../centralised_log.h"
 
-enum GfxGslShaderParamType {
+#ifndef GFX_GASOLINE_H
+#define GFX_GASOLINE_H
+
+enum GfxGslParamType {
     GFX_GSL_FLOAT1,
     GFX_GSL_FLOAT2,
     GFX_GSL_FLOAT3,
@@ -36,6 +39,29 @@ enum GfxGslShaderParamType {
     GFX_GSL_FLOAT_TEXTURE2,
     GFX_GSL_FLOAT_TEXTURE3,
     GFX_GSL_FLOAT_TEXTURE4
+};
+
+static inline bool gfx_gasoline_param_is_texture (GfxGslParamType t)
+{
+    switch (t) {
+        case GFX_GSL_FLOAT_TEXTURE1:
+        case GFX_GSL_FLOAT_TEXTURE2:
+        case GFX_GSL_FLOAT_TEXTURE3:
+        case GFX_GSL_FLOAT_TEXTURE4:
+        return true;
+        case GFX_GSL_FLOAT1:
+        case GFX_GSL_FLOAT2:
+        case GFX_GSL_FLOAT3:
+        case GFX_GSL_FLOAT4:
+        return false;
+    }
+    EXCEPTEX << "Internal error" << ENDL;
+}
+
+enum GfxGslBackend {
+    GFX_GSL_BACKEND_GSL,
+    GFX_GSL_BACKEND_CG,
+    GFX_GSL_BACKEND_GLSL
 };
 
 struct GfxGslColour {
@@ -52,13 +78,13 @@ static inline std::ostream &operator<< (std::ostream &o, const GfxGslColour &c)
     return o;
 }
 
-typedef std::map<std::string, GfxGslShaderParamType> GfxGslShaderParams;
+typedef std::map<std::string, GfxGslParamType> GfxGslParams;
 typedef std::map<std::string, GfxGslColour> GfxGslUnboundTextures;
 
-std::pair<std::string, std::string> gfx_gasoline_compile (const std::string &lang,
+std::pair<std::string, std::string> gfx_gasoline_compile (GfxGslBackend backend,
                                                           const std::string &vert_prog,
                                                           const std::string &frag_prog,
-                                                          const GfxGslShaderParams &params,
-                                                          const GfxGslUnboundTextures &texs);
+                                                          const GfxGslParams &params,
+                                                          const GfxGslUnboundTextures &ubt);
 
 #endif

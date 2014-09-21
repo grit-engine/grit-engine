@@ -21,6 +21,7 @@
 
 #include <OgreHighLevelGpuProgramManager.h>
 #include <OgreCgProgram.h>
+#include <OgreGLSLProgram.h>
 
 #include "../centralised_log.h"
 #include "../path_util.h"
@@ -836,20 +837,54 @@ static unsigned cornered_quad_vdecl_size;
 
 enum VertOrFrag { VERT, FRAG };
 
-static Ogre::HighLevelGpuProgramPtr make_shader (const std::string &name, VertOrFrag kind, const std::string &code)
+static Ogre::HighLevelGpuProgramPtr make_cg_shader (const std::string &name, VertOrFrag kind, const std::string &code)
 {
+    CVERB << "Compiling HUD CG shader: " << name << std::endl;
     Ogre::StringVector vp_profs, fp_profs;
     vp_profs.push_back("vs_3_0"); fp_profs.push_back("ps_3_0"); // d3d9
     vp_profs.push_back("gpu_vp"); fp_profs.push_back("gp4fp"); // gl
 
+    auto kind2 = kind==FRAG ? Ogre::GPT_FRAGMENT_PROGRAM : Ogre::GPT_VERTEX_PROGRAM;
     Ogre::HighLevelGpuProgramPtr prog = Ogre::HighLevelGpuProgramManager::getSingleton()
-        .createProgram(name, RESGRP, "cg", kind==FRAG ? Ogre::GPT_FRAGMENT_PROGRAM : Ogre::GPT_VERTEX_PROGRAM);
+        .createProgram(name, RESGRP, "cg", kind2);
     APP_ASSERT(!prog.isNull());
     Ogre::CgProgram *tmp_prog = static_cast<Ogre::CgProgram*>(&*prog);
     prog->setSource(code);
     tmp_prog->setEntryPoint("main");
     tmp_prog->setProfiles(kind==FRAG ? fp_profs : vp_profs);
     tmp_prog->setCompileArguments("-I. -O3");
+    prog->unload();
+    prog->load();
+    load_and_validate_shader(prog);
+    return prog;
+}
+
+static Ogre::HighLevelGpuProgramPtr make_glsl_shader (const std::string &name, VertOrFrag kind, const std::string &code)
+{
+    CVERB << "Compiling HUD GLSL shader: " << name << std::endl;
+
+    auto kind2 = kind==FRAG ? Ogre::GPT_FRAGMENT_PROGRAM : Ogre::GPT_VERTEX_PROGRAM;
+    Ogre::HighLevelGpuProgramPtr prog = Ogre::HighLevelGpuProgramManager::getSingleton()
+        .createProgram(name, RESGRP, "glsl", kind2);
+    APP_ASSERT(!prog.isNull());
+    std::string uniforms;
+    if (kind == VERT) {
+        uniforms += "uniform mat4 matrix;\n";
+        uniforms += "in vec4 vertex;\n";
+        uniforms += "in vec4 uv0;\n";
+        uniforms += "in vec4 uv1;\n";
+        uniforms += "out vec4 trans0;\n";
+        uniforms += "out vec4 trans1;\n";
+    } else {
+        uniforms += "uniform sampler2D tex;\n";
+        uniforms += "uniform vec3 colour;\n";
+        uniforms += "uniform float alpha;\n";
+        uniforms += "in vec4 trans0;\n";
+        uniforms += "in vec4 trans1;\n";
+        uniforms += "out vec4 frag_colour;\n";
+    }
+    std::string code2 = "#version 130\n" + uniforms + code;
+    prog->setSource(code2);
     prog->unload();
     prog->load();
     load_and_validate_shader(prog);
@@ -912,82 +947,125 @@ void gfx_hud_init (void)
 
     // Initialise vertex program
 
-    vp_solid = make_shader("vp_solid", VERT, 
-        "void main (\n"
-        "    in float2 in_POSITION:POSITION,\n"
-        "    uniform float4x4 matrix,\n"
-        "    out float4 out_POSITION:POSITION\n"
-        ") {\n"
-        "    out_POSITION = mul(matrix, float4(in_POSITION,0,1));\n"
-        "}\n"
-    );
+    if (gfx_d3d9()) {
+        vp_solid = make_cg_shader("vp_solid", VERT, 
+            "void main (\n"
+            "    in float2 in_POSITION:POSITION,\n"
+            "    uniform float4x4 matrix,\n"
+            "    out float4 out_POSITION:POSITION\n"
+            ") {\n"
+            "    out_POSITION = mul(matrix, float4(in_POSITION,0,1));\n"
+            "}\n"
+        );
 
-    fp_solid = make_shader("fp_solid", FRAG, 
-        "void main (\n"
-        "    uniform float3 colour,\n"
-        "    uniform float alpha,\n"
-        "    out float4 out_COLOR0:COLOR0\n"
-        ") {\n"
-        "    float4 texel = float4(1,1,1,1);\n"
-        "    out_COLOR0 = float4(colour,alpha) * texel;\n"
-        "}\n"
-    );
-    
-    vp_tex = make_shader("vp_tex", VERT, 
-        "void main (\n"
-        "    in float2 in_POSITION:POSITION,\n"
-        "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
-        "    uniform float4x4 matrix,\n"
-        "    out float4 out_POSITION:POSITION,\n"
-        "    out float4 out_TEXCOORD0:TEXCOORD0\n"
-        ") {\n"
-        "    out_POSITION = mul(matrix, float4(in_POSITION,0,1));\n"
-        "    out_TEXCOORD0.xy = in_TEXCOORD0.xy;\n"
-        "}\n"
-    );
+        fp_solid = make_cg_shader("fp_solid", FRAG, 
+            "void main (\n"
+            "    uniform float3 colour,\n"
+            "    uniform float alpha,\n"
+            "    out float4 out_COLOR0:COLOR0\n"
+            ") {\n"
+            "    float4 texel = float4(1,1,1,1);\n"
+            "    out_COLOR0 = float4(colour,alpha) * texel;\n"
+            "}\n"
+        );
+        
+        vp_tex = make_cg_shader("vp_tex", VERT, 
+            "void main (\n"
+            "    in float2 in_POSITION:POSITION,\n"
+            "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
+            "    uniform float4x4 matrix,\n"
+            "    out float4 out_POSITION:POSITION,\n"
+            "    out float4 out_TEXCOORD0:TEXCOORD0\n"
+            ") {\n"
+            "    out_POSITION = mul(matrix, float4(in_POSITION,0,1));\n"
+            "    out_TEXCOORD0.xy = in_TEXCOORD0.xy;\n"
+            "}\n"
+        );
 
-    fp_tex = make_shader("fp_tex", FRAG, 
-        "void main (\n"
-        "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
-        "    uniform sampler2D texture,\n"
-        "    uniform float3 colour,\n"
-        "    uniform float alpha,\n"
-        "    out float4 out_COLOR0:COLOR0\n"
-        ") {\n"
-        "    float4 texel = tex2D(texture,in_TEXCOORD0.xy);\n"
-        "    out_COLOR0 = float4(colour,alpha) * texel;\n"
-        "}\n"
-    );
-    
-    vp_text = make_shader("vp_text", VERT, 
-        "void main (\n"
-        "    in float2 in_POSITION:POSITION,\n"
-        "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
-        "    in float4 in_TEXCOORD1:TEXCOORD1,\n"
-        "    uniform float4x4 matrix,\n"
-        "    out float4 out_POSITION:POSITION,\n"
-        "    out float4 out_TEXCOORD0:TEXCOORD0,\n"
-        "    out float4 out_TEXCOORD1:TEXCOORD1\n"
-        ") {\n"
-        "    out_POSITION = mul(matrix, float4(in_POSITION,0,1));\n"
-        "    out_TEXCOORD0.xy = in_TEXCOORD0.xy;\n"
-        "    out_TEXCOORD1 = in_TEXCOORD1;\n"
-        "}\n"
-    );
+        fp_tex = make_cg_shader("fp_tex", FRAG, 
+            "void main (\n"
+            "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
+            "    uniform sampler2D texture : TEXUNIT0,\n"
+            "    uniform float3 colour,\n"
+            "    uniform float alpha,\n"
+            "    out float4 out_COLOR0:COLOR0\n"
+            ") {\n"
+            "    float4 texel = tex2D(texture,in_TEXCOORD0.xy);\n"
+            "    out_COLOR0 = float4(colour,alpha) * texel;\n"
+            "}\n"
+        );
+        
+        vp_text = make_cg_shader("vp_text", VERT, 
+            "void main (\n"
+            "    in float2 in_POSITION:POSITION,\n"
+            "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
+            "    in float4 in_TEXCOORD1:TEXCOORD1,\n"
+            "    uniform float4x4 matrix,\n"
+            "    out float4 out_POSITION:POSITION,\n"
+            "    out float4 out_TEXCOORD0:TEXCOORD0,\n"
+            "    out float4 out_TEXCOORD1:TEXCOORD1\n"
+            ") {\n"
+            "    out_POSITION = mul(matrix, float4(in_POSITION,0,1));\n"
+            "    out_TEXCOORD0.xy = in_TEXCOORD0.xy;\n"
+            "    out_TEXCOORD1 = in_TEXCOORD1;\n"
+            "}\n"
+        );
 
-    fp_text = make_shader("fp_text", FRAG, 
-        "void main (\n"
-        "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
-        "    in float4 in_TEXCOORD1:TEXCOORD1,\n"
-        "    uniform sampler2D texture,\n"
-        "    uniform float3 colour,\n"
-        "    uniform float alpha,\n"
-        "    out float4 out_COLOR0:COLOR0\n"
-        ") {\n"
-        "    float4 texel = tex2D(texture,in_TEXCOORD0.xy);\n"
-        "    out_COLOR0 = float4(colour,alpha) * in_TEXCOORD1 * texel;\n"
-        "}\n"
-    );
+        fp_text = make_cg_shader("fp_text", FRAG, 
+            "void main (\n"
+            "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
+            "    in float4 in_TEXCOORD1:TEXCOORD1,\n"
+            "    uniform sampler2D texture : TEXUNIT0,\n"
+            "    uniform float3 colour,\n"
+            "    uniform float alpha,\n"
+            "    out float4 out_COLOR0:COLOR0\n"
+            ") {\n"
+            "    float4 texel = tex2D(texture,in_TEXCOORD0.xy);\n"
+            "    colour = float4(colour,alpha) * in_TEXCOORD1 * texel;\n"
+            "}\n"
+        );
+    } else {
+        vp_solid = make_glsl_shader("vp_solid", VERT, 
+            "void main (void) {\n"
+            "    gl_Position = matrix * vec4(vertex.xy, 0, 1);\n"
+            "}\n"
+        );
+
+        fp_solid = make_glsl_shader("fp_solid", FRAG, 
+            "void main (void) {\n"
+            "    frag_colour = vec4(colour, alpha);\n"
+            "}\n"
+        );
+        
+        vp_tex = make_glsl_shader("vp_tex", VERT, 
+            "void main (void) {\n"
+            "    gl_Position = matrix * vec4(vertex.xy, 0, 1);\n"
+            "    trans0.xy = uv0.xy;\n"
+            "}\n"
+        );
+
+        fp_tex = make_glsl_shader("fp_tex", FRAG, 
+            "void main (void) {\n"
+            "    vec4 texel = texture(tex, trans0.xy);\n"
+            "    frag_colour = vec4(colour, alpha) * texel;\n"
+            "}\n"
+        );
+        
+        vp_text = make_glsl_shader("vp_text", VERT, 
+            "void main (void) {\n"
+            "    gl_Position = matrix * vec4(vertex.xy, 0, 1);\n"
+            "    trans0.xy = uv0.xy;\n"
+            "    trans1 = uv1;\n"
+            "}\n"
+        );
+
+        fp_text = make_glsl_shader("fp_text", FRAG, 
+            "void main (void) {\n"
+            "    vec4 texel = texture(tex, trans0.xy);\n"
+            "    frag_colour = vec4(colour, alpha) * trans1 * texel;\n"
+            "}\n"
+        );
+    }
     
 }
 
@@ -1127,9 +1205,6 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
     GfxFont *font = text->getFont();
     GfxTextureDiskResource *tex = font->getTexture();
 
-    const Ogre::GpuProgramParametersSharedPtr &vertex_params = vp_text->getDefaultParameters();
-    const Ogre::GpuProgramParametersSharedPtr &fragment_params = fp_text->getDefaultParameters();
-
     Vector2 pos = text->getDerivedPosition();
     if (text->snapPixels) {
         if (int(text->getDerivedBounds().x + 0.5) % 2 == 1)
@@ -1167,11 +1242,10 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
     matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y ,1));
 
     Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin * matrix_centre;
-    try_set_named_constant(vp_text, "matrix", matrix);
 
+    try_set_named_constant(vp_text, "matrix", matrix);
     try_set_named_constant(fp_text, "colour", to_ogre(colour));
     try_set_named_constant(fp_text, "alpha", alpha);
-
 
     ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
     ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
@@ -1190,13 +1264,15 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
     ogre_rs->setStencilCheckEnabled(false);
     ogre_rs->_setDepthBias(0, 0);
 
-
     APP_ASSERT(vp_text->_getBindingDelegate()!=NULL);
     APP_ASSERT(fp_text->_getBindingDelegate()!=NULL);
 
     // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
     ogre_rs->bindGpuProgram(vp_text->_getBindingDelegate());
     ogre_rs->bindGpuProgram(fp_text->_getBindingDelegate());
+
+    const Ogre::GpuProgramParametersSharedPtr &vertex_params = vp_text->getDefaultParameters();
+    const Ogre::GpuProgramParametersSharedPtr &fragment_params = fp_text->getDefaultParameters();
 
     ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fragment_params, Ogre::GPV_ALL);
     ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vertex_params, Ogre::GPV_ALL);
@@ -1227,8 +1303,6 @@ void gfx_render_hud_one (GfxHudBase *base)
 
         const Ogre::HighLevelGpuProgramPtr &vp = tex == NULL ? vp_solid : vp_tex;
         const Ogre::HighLevelGpuProgramPtr &fp = tex == NULL ? fp_solid : fp_tex;
-        const Ogre::GpuProgramParametersSharedPtr &vertex_params = vp->getDefaultParameters();
-        const Ogre::GpuProgramParametersSharedPtr &fragment_params = fp->getDefaultParameters();
 
         Vector2 uv1 = obj->getUV1();
         Vector2 uv2 = obj->getUV2();
@@ -1271,13 +1345,11 @@ void gfx_render_hud_one (GfxHudBase *base)
         matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y ,1));
 
         Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin;
+
         try_set_named_constant(vp, "matrix", matrix);
-
-
-        // premultiply the colour by the alpha -- for convenience
         try_set_named_constant(fp, "colour", to_ogre(obj->getColour()));
         try_set_named_constant(fp, "alpha", obj->getAlpha());
-
+        try_set_named_constant(fp, "tex", 0);
 
         ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
         ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
@@ -1306,8 +1378,11 @@ void gfx_render_hud_one (GfxHudBase *base)
         ogre_rs->bindGpuProgram(vp->_getBindingDelegate());
         ogre_rs->bindGpuProgram(fp->_getBindingDelegate());
 
-        ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fragment_params, Ogre::GPV_ALL);
+        const Ogre::GpuProgramParametersSharedPtr &vertex_params = vp->getDefaultParameters();
+        const Ogre::GpuProgramParametersSharedPtr &fragment_params = fp->getDefaultParameters();
+
         ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vertex_params, Ogre::GPV_ALL);
+        ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fragment_params, Ogre::GPV_ALL);
 
         // render the rectangle
         Ogre::RenderOperation op;

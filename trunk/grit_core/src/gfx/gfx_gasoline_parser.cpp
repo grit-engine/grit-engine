@@ -24,9 +24,11 @@
 #include <map>
 #include <sstream>
 
-#include "gfx_gasoline_parser.h"
-#include "centralised_log.h"
 #include <exception.h>
+
+#include "../centralised_log.h"
+
+#include "gfx_gasoline_parser.h"
 
 // Workaround for g++ not supporting moveable streams.
 #define error(loc) (EXCEPT << "Parse error: " << loc << ": ")

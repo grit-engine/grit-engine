@@ -19,6 +19,7 @@
  */
 
 #include <cstdlib>
+#include <cstdint>
 
 #include <map>
 #include <string>

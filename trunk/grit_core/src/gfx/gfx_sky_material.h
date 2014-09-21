@@ -33,19 +33,12 @@ typedef std::vector<GfxSkyShader*> GfxSkyShaders;
 
 #include "gfx_material.h"
 #include "gfx_internal.h"
+#include "gfx_gasoline.h"
 
 typedef std::vector<std::string> GfxSkyShaderVariation;
 
-enum GfxSkyShaderUniformKind {
-    GFX_SHADER_UNIFORM_KIND_PARAM_TEXTURE2D,
-    GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT1,
-    //GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT2,
-    GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT3,
-    GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT4
-};
-
 struct GfxSkyShaderUniform {
-    GfxSkyShaderUniformKind kind;
+    GfxGslParamType kind;
     std::vector<float> defaults;
 
     // texture-specific stuff
@@ -88,7 +81,7 @@ bool gfx_sky_shader_has (const std::string &name);
 
 
 struct GfxSkyMaterialUniform {
-    GfxSkyShaderUniformKind kind;
+    GfxGslParamType kind;
     std::vector<float> values;
     
     GfxTextureDiskResource *texture;
@@ -106,8 +99,10 @@ class GfxSkyMaterial : public GfxBaseMaterial {
     GfxSkyMaterial (const std::string &name);
 
     private: GfxSkyMaterialUniformMap uniforms;
-    public: const GfxSkyMaterialUniformMap &getUniforms (void) { return uniforms; } // take MAT_SYNC when iterating through this stuff
-    public: void setUniforms (const GfxSkyMaterialUniformMap &v) { GFX_MAT_SYNC; uniforms = v; /*TODO: check this stuff*/ }
+    // take MAT_SYNC when iterating through this stuff
+    public: const GfxSkyMaterialUniformMap &getUniforms (void) { return uniforms; }
+    /*TODO: check this stuff*/
+    public: void setUniforms (const GfxSkyMaterialUniformMap &v) { GFX_MAT_SYNC; uniforms = v; }
     
     private: GfxSkyShader *shader;
     public: GfxSkyShader *getShader (void) const { return shader; }

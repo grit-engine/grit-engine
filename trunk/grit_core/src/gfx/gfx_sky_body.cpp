@@ -198,18 +198,22 @@ void GfxSkyBody::render (GfxPipeline *p)
         const GfxSkyMaterialUniformMap &m_unis = mat->getUniforms();
 
         unsigned counter = 0;
-        for (GfxSkyShaderUniformMap::const_iterator i=s_unis.begin(), i_=s_unis.end() ; i!=i_ ; ++i) {
-            const std::string &name = i->first;
-            const GfxSkyShaderUniform *s_uni = &i->second;
+        for (const auto &pair : s_unis) {
+            const std::string &name = pair.first;
+            const GfxSkyShaderUniform *s_uni = &pair.second;
             const GfxSkyMaterialUniform *m_uni = NULL;
-            GfxSkyMaterialUniformMap::const_iterator m_uni_it = m_unis.find(name);
-            if (m_uni_it != m_unis.end()) m_uni = &m_uni_it->second; // material might leave a given uniform undefined in which case revert to shader default
+            auto m_uni_it = m_unis.find(name);
+            // material might leave a given uniform undefined in which case revert to shader default
+            if (m_uni_it != m_unis.end()) m_uni = &m_uni_it->second;
 
             APP_ASSERT(m_uni==NULL || m_uni->kind == s_uni->kind);
             
             switch (s_uni->kind) {
-                case GFX_SHADER_UNIFORM_KIND_PARAM_TEXTURE2D: {
-                    APP_ASSERT(m_uni != NULL); // todo: use this to pick a shader!
+                case GFX_GSL_FLOAT_TEXTURE1: {
+                    EXCEPTEX << "Not yet implemented." << ENDL;
+                } break;
+                case GFX_GSL_FLOAT_TEXTURE2: {
+                    APP_ASSERT(m_uni != NULL); // TODO: use this to pick a shader!
                     ogre_rs->_setTexture(counter, true, m_uni->texture->getOgreTexturePtr());
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
@@ -219,89 +223,99 @@ void GfxSkyBody::render (GfxPipeline *p)
                     am.v = Ogre::TextureUnitState::TAM_WRAP;
                     am.w = Ogre::TextureUnitState::TAM_WRAP;
                     ogre_rs->_setTextureAddressingMode(counter, am);
+                    hack_set_constant(shader, "mat_"+name, int(counter));
                     counter++;
                 }
                 break;
-                case GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT1: {
+                case GFX_GSL_FLOAT_TEXTURE3: {
+                    EXCEPTEX << "Not yet implemented." << ENDL;
+                } break;
+                case GFX_GSL_FLOAT_TEXTURE4: {
+                    EXCEPTEX << "Not yet implemented." << ENDL;
+                } break;
+
+                case GFX_GSL_FLOAT1: {
                     float v1 = m_uni == NULL ? s_uni->defaults[0] : m_uni->values[0];
                     float v = v1;
-                    hack_set_constant(shader, "mu_"+name, v);
+                    hack_set_constant(shader, "mat_"+name, v);
                 }
                 break;
-/*
-                case GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT2: {
+                case GFX_GSL_FLOAT2: {
+                    EXCEPTEX << "Not yet implemented." << ENDL;
+                    // Ogre call does not exist for Ogre::Vector2
+                    /*
                     float v1 = m_uni == NULL ? s_uni->defaults[0] : m_uni->values[0];
                     float v2 = m_uni == NULL ? s_uni->defaults[1] : m_uni->values[1];
                     Ogre::Vector2 v(v1,v2);
-                    try_set_named_constant(shader->getFP(), "mu_"+name, v, true);
-                    try_set_named_constant(shader->getVP(), "mu_"+name, v, true);
+                    try_set_named_constant(shader->getFP(), "mat_"+name, v, true);
+                    try_set_named_constant(shader->getVP(), "mat_"+name, v, true);
+                    */
                 }
                 break;
-*/
-                case GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT3: {
+                case GFX_GSL_FLOAT3: {
                     float v1 = m_uni == NULL ? s_uni->defaults[0] : m_uni->values[0];
                     float v2 = m_uni == NULL ? s_uni->defaults[1] : m_uni->values[1];
                     float v3 = m_uni == NULL ? s_uni->defaults[2] : m_uni->values[2];
                     Ogre::Vector3 v(v1,v2,v3);
-                    hack_set_constant(shader, "mu_"+name, v);
+                    hack_set_constant(shader, "mat_"+name, v);
                 }
                 break;
-                case GFX_SHADER_UNIFORM_KIND_PARAM_FLOAT4: {
+                case GFX_GSL_FLOAT4: {
                     float v1 = m_uni == NULL ? s_uni->defaults[0] : m_uni->values[0];
                     float v2 = m_uni == NULL ? s_uni->defaults[1] : m_uni->values[1];
                     float v3 = m_uni == NULL ? s_uni->defaults[2] : m_uni->values[2];
                     float v4 = m_uni == NULL ? s_uni->defaults[3] : m_uni->values[3];
                     Ogre::Vector4 v(v1,v2,v3,v4);
-                    hack_set_constant(shader, "mu_"+name, v);
+                    hack_set_constant(shader, "mat_"+name, v);
                 }
                 break;
             }
         }
 
-        hack_set_constant(shader, "su_world", world);
-        hack_set_constant(shader, "su_view", view);
-        hack_set_constant(shader, "su_proj", proj);
-        hack_set_constant(shader, "su_worldView", world_view);
-        hack_set_constant(shader, "su_viewProj", view_proj);
-        hack_set_constant(shader, "su_worldViewProj", world_view_proj);
-        hack_set_constant(shader, "su_viewportSize", viewport_size);
-        hack_set_constant(shader, "su_fovY", fov_y);
-        hack_set_constant(shader, "su_time", anim_time); // FIXME:
+        hack_set_constant(shader, "global_world", world);
+        hack_set_constant(shader, "global_view", view);
+        hack_set_constant(shader, "global_proj", proj);
+        hack_set_constant(shader, "global_worldView", world_view);
+        hack_set_constant(shader, "global_viewProj", view_proj);
+        hack_set_constant(shader, "global_worldViewProj", world_view_proj);
+        hack_set_constant(shader, "global_viewportSize", viewport_size);
+        hack_set_constant(shader, "global_fovY", fov_y);
+        hack_set_constant(shader, "global_time", anim_time); // FIXME:
 
-        hack_set_constant(shader, "su_particleAmbient", particle_ambient);
-        hack_set_constant(shader, "su_sunlightDiffuse", gfx_sunlight_diffuse());
-        hack_set_constant(shader, "su_sunlightSpecular", gfx_sunlight_specular());
-        hack_set_constant(shader, "su_sunlightDirection", gfx_sunlight_direction());
-        hack_set_constant(shader, "su_fogColour", fog_colour);
-        hack_set_constant(shader, "su_fogDensity", fog_density);
-        hack_set_constant(shader, "su_sunDirection", sun_direction);
-        hack_set_constant(shader, "su_sunColour", sun_colour);
-        hack_set_constant(shader, "su_sunAlpha", sun_alpha);
-        hack_set_constant(shader, "su_sunSize", sun_size);
-        hack_set_constant(shader, "su_sunFalloffDistance", sun_falloff_distance);
-        hack_set_constant(shader, "su_skyGlareSunDistance", sky_glare_sun_distance);
-        hack_set_constant(shader, "su_skyGlareHorizonElevation", sky_glare_horizon_elevation);
-        hack_set_constant(shader, "su_skyCloudColour", sky_cloud_colour);
-        hack_set_constant(shader, "su_skyCloudCoverage", sky_cloud_coverage);
-        hack_set_constant(shader, "su_hellColour", hell_colour);
+        hack_set_constant(shader, "global_particleAmbient", particle_ambient);
+        hack_set_constant(shader, "global_sunlightDiffuse", gfx_sunlight_diffuse());
+        hack_set_constant(shader, "global_sunlightSpecular", gfx_sunlight_specular());
+        hack_set_constant(shader, "global_sunlightDirection", gfx_sunlight_direction());
+        hack_set_constant(shader, "global_fogColour", fog_colour);
+        hack_set_constant(shader, "global_fogDensity", fog_density);
+        hack_set_constant(shader, "global_sunDirection", sun_direction);
+        hack_set_constant(shader, "global_sunColour", sun_colour);
+        hack_set_constant(shader, "global_sunAlpha", sun_alpha);
+        hack_set_constant(shader, "global_sunSize", sun_size);
+        hack_set_constant(shader, "global_sunFalloffDistance", sun_falloff_distance);
+        hack_set_constant(shader, "global_skyGlareSunDistance", sky_glare_sun_distance);
+        hack_set_constant(shader, "global_skyGlareHorizonElevation", sky_glare_horizon_elevation);
+        hack_set_constant(shader, "global_skyCloudColour", sky_cloud_colour);
+        hack_set_constant(shader, "global_skyCloudCoverage", sky_cloud_coverage);
+        hack_set_constant(shader, "global_hellColour", hell_colour);
 
-        hack_set_constant(shader, "su_skyDivider1", sky_divider[0]);
-        hack_set_constant(shader, "su_skyDivider2", sky_divider[1]);
-        hack_set_constant(shader, "su_skyDivider3", sky_divider[2]);
-        hack_set_constant(shader, "su_skyDivider4", sky_divider[3]);
+        hack_set_constant(shader, "global_skyDivider1", sky_divider[0]);
+        hack_set_constant(shader, "global_skyDivider2", sky_divider[1]);
+        hack_set_constant(shader, "global_skyDivider3", sky_divider[2]);
+        hack_set_constant(shader, "global_skyDivider4", sky_divider[3]);
 
-        hack_set_constant(shader, "su_skyColour0", sky_colour[0]);
-        hack_set_constant(shader, "su_skyColour1", sky_colour[1]);
-        hack_set_constant(shader, "su_skyColour2", sky_colour[2]);
-        hack_set_constant(shader, "su_skyColour3", sky_colour[3]);
-        hack_set_constant(shader, "su_skyColour4", sky_colour[4]);
-        hack_set_constant(shader, "su_skyColour5", sky_colour[5]);
+        hack_set_constant(shader, "global_skyColour0", sky_colour[0]);
+        hack_set_constant(shader, "global_skyColour1", sky_colour[1]);
+        hack_set_constant(shader, "global_skyColour2", sky_colour[2]);
+        hack_set_constant(shader, "global_skyColour3", sky_colour[3]);
+        hack_set_constant(shader, "global_skyColour4", sky_colour[4]);
+        hack_set_constant(shader, "global_skyColour5", sky_colour[5]);
 
-        hack_set_constant(shader, "su_skySunColour0", sky_sun_colour[0]);
-        hack_set_constant(shader, "su_skySunColour1", sky_sun_colour[1]);
-        hack_set_constant(shader, "su_skySunColour2", sky_sun_colour[2]);
-        hack_set_constant(shader, "su_skySunColour3", sky_sun_colour[3]);
-        hack_set_constant(shader, "su_skySunColour4", sky_sun_colour[4]);
+        hack_set_constant(shader, "global_skySunColour0", sky_sun_colour[0]);
+        hack_set_constant(shader, "global_skySunColour1", sky_sun_colour[1]);
+        hack_set_constant(shader, "global_skySunColour2", sky_sun_colour[2]);
+        hack_set_constant(shader, "global_skySunColour3", sky_sun_colour[3]);
+        hack_set_constant(shader, "global_skySunColour4", sky_sun_colour[4]);
 
 
 
