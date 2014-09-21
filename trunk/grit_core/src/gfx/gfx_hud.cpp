@@ -1021,7 +1021,7 @@ void gfx_hud_init (void)
             "    out float4 out_COLOR0:COLOR0\n"
             ") {\n"
             "    float4 texel = tex2D(texture,in_TEXCOORD0.xy);\n"
-            "    colour = float4(colour,alpha) * in_TEXCOORD1 * texel;\n"
+            "    out_COLOR0 = float4(colour,alpha) * in_TEXCOORD1 * texel;\n"
             "}\n"
         );
     } else {
@@ -1340,16 +1340,20 @@ void gfx_render_hud_one (GfxHudBase *base)
         } else {
             matrix_d3d_offset.setTrans(Ogre::Vector3(-win_size.x/2, -win_size.y/2, 0));
         }
-
+		
         Ogre::Matrix4 matrix_scale = Ogre::Matrix4::IDENTITY;
         matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y ,1));
 
         Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin;
 
-        try_set_named_constant(vp, "matrix", matrix);
-        try_set_named_constant(fp, "colour", to_ogre(obj->getColour()));
-        try_set_named_constant(fp, "alpha", obj->getAlpha());
-        try_set_named_constant(fp, "tex", 0);
+		try_set_named_constant(vp, "matrix", matrix, true);
+		try_set_named_constant(vp, "colour", to_ogre(obj->getColour()), true);
+		try_set_named_constant(vp, "alpha", obj->getAlpha(), true);
+		try_set_named_constant(vp, "tex", 0, true);
+		try_set_named_constant(fp, "matrix", matrix, true);
+		try_set_named_constant(fp, "colour", to_ogre(obj->getColour()), true);
+		try_set_named_constant(fp, "alpha", obj->getAlpha(), true);
+		try_set_named_constant(fp, "tex", 0, true);
 
         ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
         ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
