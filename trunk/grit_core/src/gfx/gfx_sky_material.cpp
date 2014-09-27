@@ -23,6 +23,10 @@
 #include <map>
 
 #include <OgreCgProgram.h>
+#include <OgreGLGpuProgram.h>
+#include <OgreGLSLGpuProgram.h>
+#include <OgreGLSLProgram.h>
+#include <OgreGLSLLinkProgramManager.h>
 
 #include "../centralised_log.h"
 
@@ -169,20 +173,28 @@ void GfxSkyShader::reset (const std::string &new_vertex_code,
             vp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
                 name+"_v", RESGRP, "glsl", Ogre::GPT_VERTEX_PROGRAM);
         APP_ASSERT(!vp.isNull());
-        vp->setSource(shaders.first);
         vp->unload();
+        vp->setSource(shaders.first);
         vp->load();
 
         if (fp.isNull())
             fp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
                 name+"_f", RESGRP, "glsl", Ogre::GPT_FRAGMENT_PROGRAM);
         APP_ASSERT(!fp.isNull());
-        fp->setSource(shaders.second);
         fp->unload();
+        fp->setSource(shaders.second);
         fp->load();
 
         load_and_validate_shader(vp);
         load_and_validate_shader(fp);
+
+        auto *vp_low = static_cast<Ogre::GLSL::GLSLGpuProgram*>(vp->_getBindingDelegate());
+        auto *fp_low = static_cast<Ogre::GLSL::GLSLGpuProgram*>(fp->_getBindingDelegate());
+
+        // Force the actual compilation of it...
+        Ogre::GLSL::GLSLLinkProgramManager::getSingleton().setActiveVertexShader(vp_low);
+        Ogre::GLSL::GLSLLinkProgramManager::getSingleton().setActiveFragmentShader(fp_low);
+        Ogre::GLSL::GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
     }
 }
 
