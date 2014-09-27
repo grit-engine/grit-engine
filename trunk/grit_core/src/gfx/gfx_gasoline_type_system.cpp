@@ -20,6 +20,8 @@
 
 #include <cstdlib>
 
+#include "../centralised_log.h"
+
 #include "gfx_gasoline_parser.h"
 #include "gfx_gasoline_type_system.h"
 
@@ -326,10 +328,20 @@ GfxGslFunctionType *GfxGslTypeSystem::lookupFunction(const GfxGslLocation &loc,
             if (!conversionExists(asts[i]->type, o->params[i])) goto nextfunc2;
         }
         if (found != nullptr) {
-            error(loc) << "Cannot unambiguously bind function: " << name << ENDL;
+            std::stringstream ss;
+            if (asts.size() == 0) {
+                ss << "()";
+            } else {
+                const char *prefix = "(";
+                for (unsigned i=0 ; i<asts.size() ; ++i) {
+                    ss << prefix << asts[i]->type;
+                    prefix = ", ";
+                }
+                ss << ")";
+            }
+            error(loc) << "Cannot unambiguously bind function: " << name << ss.str() << ENDL;
         }
         found = o;
-        break;
         nextfunc2:;
     }
 
@@ -567,10 +579,10 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
         ast->type = alloc.makeType<GfxGslVoidType>();
         if (kind == GFX_GSL_FRAG) {
             if (fragFieldsWritten.find("colour") == fragFieldsWritten.end())
-                error(loc) << "Fragment shader must write to frag.colour." <<  ENDL;
+                error(loc) << "Must write to frag.colour." <<  ENDL;
         } else {
             if (fragFieldsWritten.find("position") == fragFieldsWritten.end()) 
-                error(loc) << "Vertex shader must write to frag.position." <<  ENDL;
+                error(loc) << "Must write to frag.position." <<  ENDL;
         }
 
     } else if (auto *ast = dynamic_cast<GfxGslDecl*>(ast_)) {
