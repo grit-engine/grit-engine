@@ -994,6 +994,8 @@ size_t gfx_init (GfxCallback &cb_)
         Ogre::WindowEventUtilities::addWindowEventListener(ogre_win, &window_event_listener);
         Ogre::ResourceGroupManager::getSingleton().addResourceLocation(".","FileSystem",RESGRP,false);
         Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+
+        Ogre::GpuProgramManager::getSingleton().setSaveMicrocodesToCache(false);
         
         ftcv = Ogre::ControllerManager::getSingleton().getFrameTimeSource().dynamicCast<Ogre::FrameTimeControllerValue>();
         if (ftcv.isNull()) {
