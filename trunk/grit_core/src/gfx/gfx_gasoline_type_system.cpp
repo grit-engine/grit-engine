@@ -570,7 +570,7 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
                 error(loc) << "Fragment shader must write to frag.colour." <<  ENDL;
         } else {
             if (fragFieldsWritten.find("position") == fragFieldsWritten.end()) 
-                error(loc) << "Fragment shader must write to frag.position." <<  ENDL;
+                error(loc) << "Vertex shader must write to frag.position." <<  ENDL;
         }
 
     } else if (auto *ast = dynamic_cast<GfxGslDecl*>(ast_)) {
