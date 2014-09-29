@@ -23,20 +23,20 @@
 #include "../centralised_log.h"
 
 static std::map<std::string, std::string> vert_global = {
-    {"position", "gl_Vertex"},
-    {"coord0", "gl_MultiTexCoord0"},
-    {"coord1", "gl_MultiTexCoord1"},
-    {"coord2", "gl_MultiTexCoord2"},
-    {"coord3", "gl_MultiTexCoord3"},
-    {"coord4", "gl_MultiTexCoord4"},
-    {"coord5", "gl_MultiTexCoord5"},
-    {"coord6", "gl_MultiTexCoord6"},
-    {"coord7", "gl_MultiTexCoord7"},
+    {"position", "vertex"},
+    {"coord0", "uv0"},
+    {"coord1", "uv1"},
+    {"coord2", "uv2"},
+    {"coord3", "uv3"},
+    {"coord4", "uv4"},
+    {"coord5", "uv5"},
+    {"coord6", "uv6"},
+    {"coord7", "uv7"},
 };
 
 static std::map<std::string, std::string> frag_global = {
     {"position", "gl_Position"},
-    {"colour", "gl_FragColor"},
+    {"colour", "out_colour"},
     {"screen", "gl_FragCoord"},
     {"depth", "gl_FragDepth"},
 };
@@ -315,6 +315,9 @@ void gfx_gasoline_unparse_glsl (const GfxGslTypeSystem *vert_ts, const GfxGslAst
         vert_in.insert(tran.path[0]);
     }
 
+    for (const auto &f : vert_in) {
+        vert_ss << "in " << vert_ts->getVertType(f) << " " << vert_global[f] << ";\n";
+    }
     for (const auto &f : vert_ts->getGlobalFieldsRead())
         vert_ss << "uniform " << vert_ts->getGlobalType(f) << " global_" << f << ";\n";
     for (const auto &f : vert_ts->getMatFieldsRead()) {
@@ -324,6 +327,13 @@ void gfx_gasoline_unparse_glsl (const GfxGslTypeSystem *vert_ts, const GfxGslAst
         } else {
             vert_ss << "uniform " << vert_ts->getMatType(f) << " mat_" << f << ";\n";
         }
+    }
+    for (unsigned i=0 ; i<trans.size() ; i+=4) {
+        unsigned sz = trans.size()-i > 4 ? 4 : trans.size()-i;
+        std::stringstream type;
+        type << "Float";
+        if (sz > 1) type << sz;
+        vert_ss << "out " << type.str() << " trans" << i/4 << ";\n";
     }
 
     vert_ss << "void main (void)\n";
@@ -344,8 +354,9 @@ void gfx_gasoline_unparse_glsl (const GfxGslTypeSystem *vert_ts, const GfxGslAst
                 expr << "user_" << tran.path[0];
             for (unsigned k=1 ; k<tran.path.size() ; ++k)
                 expr << "." << tran.path[k];
-            vert_ss << "    gl_TexCoord[" << i/4 << "]." << fields[j] << " = "
-                    << expr.str() << ";\n";
+            vert_ss << "    trans" << i/4;
+            if (sz > 1) vert_ss << "." << fields[j];
+            vert_ss << " = " << expr.str() << ";\n";
 
         }
     }
@@ -354,6 +365,13 @@ void gfx_gasoline_unparse_glsl (const GfxGslTypeSystem *vert_ts, const GfxGslAst
     std::stringstream frag_ss;
     preamble(frag_ts, GFX_GSL_FRAG, frag_ss, ubt);
 
+    for (unsigned i=0 ; i<trans.size() ; i+=4) {
+        unsigned sz = trans.size()-i > 4 ? 4 : trans.size()-i;
+        std::stringstream type;
+        type << "Float";
+        if (sz > 1) type << sz;
+        frag_ss << "in " << type.str() << " trans" << i/4 << ";\n";
+    }
     for (const auto &f : frag_ts->getGlobalFieldsRead())
         frag_ss << "uniform " << frag_ts->getGlobalType(f) << " global_" << f << ";\n";
     for (const auto &f : frag_ts->getMatFieldsRead()) {
@@ -364,6 +382,7 @@ void gfx_gasoline_unparse_glsl (const GfxGslTypeSystem *vert_ts, const GfxGslAst
             frag_ss << "uniform " << frag_ts->getMatType(f) << " mat_" << f << ";\n";
         }
     }
+    frag_ss << "out Float4 out_colour;\n";
 
     frag_ss << "void main (void)\n";
     frag_ss << "{\n";
@@ -398,7 +417,10 @@ void gfx_gasoline_unparse_glsl (const GfxGslTypeSystem *vert_ts, const GfxGslAst
                 expr << prefix << tran.path[k];
                 prefix = ".";
             }
-            frag_ss << "    " << expr.str() << " = " << "gl_TexCoord[" << i/4 << "]." << fields[j] << ";\n";
+            frag_ss << "    " << expr.str() << " = ";
+            frag_ss << "trans" << i/4;
+            if (sz > 1) frag_ss << "." << fields[j];
+            frag_ss << ";\n";
         }
     }
     frag_ss << frag_backend.getOutput();

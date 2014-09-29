@@ -211,6 +211,7 @@ TRY_START
 	GET_UD_MACRO_OFFSET(NetMessagePtr,self,1,NETMESSAGE_TAG,0);
 
 	int bits = (lua_gettop(L) == 4) ? check_int(L, 4, 1, 32) : 32;
+    (void) bits;
 	(*self)->writeDeltaFloat(luaL_checkinteger(L, 2), luaL_checkinteger(L, 3));
 	
 	return 0;

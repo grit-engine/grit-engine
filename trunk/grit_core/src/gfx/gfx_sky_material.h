@@ -34,26 +34,12 @@ typedef std::vector<GfxSkyShader*> GfxSkyShaders;
 #include "gfx_material.h"
 #include "gfx_internal.h"
 #include "gfx_gasoline.h"
-
-typedef std::vector<std::string> GfxSkyShaderVariation;
-
-struct GfxSkyShaderUniform {
-    GfxGslParamType kind;
-    std::vector<float> defaults;
-
-    // texture-specific stuff
-    Vector3 defaultColour;
-    float defaultAlpha;
-};
-
-typedef std::map<std::string, GfxSkyShaderUniform> GfxSkyShaderUniformMap;
+#include "gfx_shader.h"
 
 class GfxSkyShader {
     std::string vertexCode;
     std::string fragmentCode;
-    Ogre::HighLevelGpuProgramPtr vp, fp;
-    std::vector<GfxSkyShaderVariation> variations;
-    GfxSkyShaderUniformMap uniforms;
+    GfxShader *shader;
 
     public:
     const std::string name;
@@ -61,12 +47,9 @@ class GfxSkyShader {
 
     void reset (const std::string &new_vertex_source,
                 const std::string &new_fragment_source,
-                const std::vector<GfxSkyShaderVariation> &new_variations,
-                const GfxSkyShaderUniformMap &new_uniforms);
-    const Ogre::HighLevelGpuProgramPtr &getFP() { return fp; }
-    const Ogre::HighLevelGpuProgramPtr &getVP() { return vp; }
+                const GfxShaderParamMap &new_uniforms);
 
-    const GfxSkyShaderUniformMap &getUniforms (void) { return uniforms; }
+    GfxShader *getShader() { return shader; }
 
 };
             
@@ -80,39 +63,48 @@ bool gfx_sky_shader_has (const std::string &name);
 
 
 
-struct GfxSkyMaterialUniform {
-    GfxGslParamType kind;
-    std::vector<float> values;
-    
+struct GfxSkyMaterialTexture {
     GfxTextureDiskResource *texture;
     bool clamp;
     int anisotropy;
 };
 
-typedef std::map<std::string, GfxSkyMaterialUniform> GfxSkyMaterialUniformMap;
+typedef std::map<std::string, GfxSkyMaterialTexture> GfxSkyMaterialTextureMap;
 
 
-enum GfxSkyMaterialSceneBlend { GFX_SKY_MATERIAL_OPAQUE, GFX_SKY_MATERIAL_ALPHA, GFX_SKY_MATERIAL_ADD };
+enum GfxSkyMaterialSceneBlend {
+    GFX_SKY_MATERIAL_OPAQUE,
+    GFX_SKY_MATERIAL_ALPHA,
+    GFX_SKY_MATERIAL_ADD
+};
 
 class GfxSkyMaterial : public GfxBaseMaterial {
 
+    GfxSkyShader *shader;
+    GfxShaderBindingsPtr bindings;
+    GfxSkyMaterialTextureMap textures;
+    GfxSkyMaterialSceneBlend sceneBlend;
+
     GfxSkyMaterial (const std::string &name);
 
-    private: GfxSkyMaterialUniformMap uniforms;
-    // take MAT_SYNC when iterating through this stuff
-    public: const GfxSkyMaterialUniformMap &getUniforms (void) { return uniforms; }
-    /*TODO: check this stuff*/
-    public: void setUniforms (const GfxSkyMaterialUniformMap &v) { GFX_MAT_SYNC; uniforms = v; }
-    
-    private: GfxSkyShader *shader;
-    public: GfxSkyShader *getShader (void) const { return shader; }
-    public: void setShader (GfxSkyShader *v) { GFX_MAT_SYNC; shader = v; uniforms.clear(); }
-
-    private: GfxSkyMaterialSceneBlend sceneBlend;
-    public: GfxSkyMaterialSceneBlend getSceneBlend (void) const { return sceneBlend; }
-    public: void setSceneBlend (GfxSkyMaterialSceneBlend v) { sceneBlend = v; }
-
     public:
+    // take MAT_SYNC when iterating through this stuff
+    const GfxSkyMaterialTextureMap &getTextures (void) { return textures; }
+    void setTextures (const GfxSkyMaterialTextureMap &v) { GFX_MAT_SYNC; textures = v; }
+
+    const GfxShaderBindingsPtr &getBindings (void) { return bindings; }
+    void setBindings (const GfxShaderBindingsPtr &v) { bindings = v; }
+    
+    GfxSkyShader *getShader (void) const { return shader; }
+    void setShader (GfxSkyShader *v) {
+        GFX_MAT_SYNC;
+        shader = v;
+        bindings = shader->getShader()->makeBindings();
+        textures.clear();
+    }
+
+    GfxSkyMaterialSceneBlend getSceneBlend (void) const { return sceneBlend; }
+    void setSceneBlend (GfxSkyMaterialSceneBlend v) { sceneBlend = v; }
 
     void addDependencies (DiskResource *into);
 
@@ -131,5 +123,7 @@ GfxSkyMaterial *gfx_sky_material_get (const std::string &name);
 bool gfx_sky_material_has (const std::string &name);
 
 void gfx_sky_material_shutdown (void);
+
+void gfx_sky_material_init (void);
 
 #endif

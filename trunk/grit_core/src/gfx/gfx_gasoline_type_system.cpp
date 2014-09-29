@@ -116,7 +116,7 @@ void GfxGslTypeSystem::initObjectTypes (void)
 {
     fragFields["colour"] = FieldType(alloc.makeType<GfxGslFloatType>(4), false, false, true, true);
     fragFields["position"] = FieldType(alloc.makeType<GfxGslFloatType>(4), true, true, false,false);
-    fragFields["screen"] = FieldType(alloc.makeType<GfxGslFloatType>(4), false, false, true, false);
+    fragFields["screen"] = FieldType(alloc.makeType<GfxGslFloatType>(2), false, false, true, false);
 
     vertFields["position"] = alloc.makeType<GfxGslFloatType>(4);
     vertFields["coord0"] = alloc.makeType<GfxGslFloatType>(4);

@@ -36,6 +36,18 @@ std::pair<std::string, std::string> gfx_gasoline_compile (GfxGslBackend backend,
     GfxGslTypeMap mat_fields;
     for (auto pair : params) {
         switch (pair.second) {
+            case GFX_GSL_INT1: {
+                mat_fields[pair.first] = alloc.makeType<GfxGslIntType>(1);
+            } break;
+            case GFX_GSL_INT2: {
+                mat_fields[pair.first] = alloc.makeType<GfxGslIntType>(2);
+            } break;
+            case GFX_GSL_INT3: {
+                mat_fields[pair.first] = alloc.makeType<GfxGslIntType>(3);
+            } break;
+            case GFX_GSL_INT4: {
+                mat_fields[pair.first] = alloc.makeType<GfxGslIntType>(4);
+            } break;
             case GFX_GSL_FLOAT1: {
                 mat_fields[pair.first] = alloc.makeType<GfxGslFloatType>(1);
             } break;

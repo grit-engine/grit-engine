@@ -81,7 +81,10 @@ Vector3 fog_colour;
 float fog_density;
 
 Vector3 sun_direction;
+Vector3 sunlight_direction;
 Vector3 sun_colour;
+Vector3 sunlight_diffuse;
+Vector3 sunlight_specular;
 float sun_alpha;
 float sun_size;
 float sun_falloff_distance;
@@ -180,31 +183,34 @@ void do_reset_framebuffer (void)
 
 Vector3 gfx_sunlight_diffuse (void)
 {
-    return from_ogre_cv(ogre_sun->getDiffuseColour());;
+    return sunlight_diffuse;
 }
 
 void gfx_sunlight_diffuse (const Vector3 &v)
 {
+    sunlight_diffuse = v;
     ogre_sun->setDiffuseColour(to_ogre_cv(v));
 }
 
 Vector3 gfx_sunlight_specular (void)
 {
-    return from_ogre_cv(ogre_sun->getSpecularColour());;
+    return sunlight_specular;
 }
 
 void gfx_sunlight_specular (const Vector3 &v)
 {
+    sunlight_specular = v;
     ogre_sun->setSpecularColour(to_ogre_cv(v));
 }
 
 Vector3 gfx_sunlight_direction (void)
 {
-    return from_ogre(ogre_sun->getDirection());
+    return sunlight_direction;
 }
 
 void gfx_sunlight_direction (const Vector3 &v)
 {
+    sunlight_direction = v;
     ogre_sun->setDirection(to_ogre(v));
 }
 
@@ -1009,6 +1015,8 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_sun = ogre_sm->createLight("Sun");
         ogre_sun->setType(Ogre::Light::LT_DIRECTIONAL);
 
+        gfx_shader_init();
+        gfx_sky_material_init();
         gfx_pipeline_init();
         gfx_option_init();
         gfx_particle_init();
@@ -1057,6 +1065,7 @@ void gfx_shutdown (void)
         shutting_down = true;
         delete eye_left;
         delete eye_right;
+        gfx_shader_shutdown();
         ftcv.setNull();
         if (ogre_sm && ogre_root) ogre_root->destroySceneManager(ogre_sm);
         if (ogre_root) OGRE_DELETE ogre_root; // internally deletes ogre_rs

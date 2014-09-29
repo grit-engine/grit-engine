@@ -293,7 +293,6 @@ static void options_update (bool flush)
     bool reset_shadows = flush;
     bool reset_pcss = flush;
     bool reset_framebuffer = flush;
-    bool reset_anaglyph_params = flush;
 
     for (unsigned i=0 ; i<sizeof(gfx_bool_options)/sizeof(*gfx_bool_options) ; ++i) {
         GfxBoolOption o = gfx_bool_options[i];
@@ -398,7 +397,6 @@ static void options_update (bool flush)
             case GFX_ANAGLYPH_RIGHT_GREEN_MASK:
             case GFX_ANAGLYPH_RIGHT_BLUE_MASK:
             case GFX_ANAGLYPH_DESATURATION:
-            reset_anaglyph_params = true;
             break;
             case GFX_BLOOM_THRESHOLD:
             break;
@@ -469,27 +467,6 @@ static void options_update (bool flush)
 
     if (reset_framebuffer) {
         do_reset_framebuffer();
-    }
-
-    if (reset_anaglyph_params) {
-/*
-        Ogre::MaterialPtr rtt_mat = Ogre::MaterialManager::getSingleton()
-            .getByName(ANAGLYPH_COMPOSITOR_MATERIAL);
-        rtt_mat->load();
-        Ogre::Pass *p = rtt_mat->getTechnique(0)->getPass(0);
-
-        Ogre::Vector3 left_mask(gfx_option(GFX_ANAGLYPH_LEFT_RED_MASK),
-                                gfx_option(GFX_ANAGLYPH_LEFT_GREEN_MASK),
-                                gfx_option(GFX_ANAGLYPH_LEFT_BLUE_MASK));
-        Ogre::Vector3 right_mask(gfx_option(GFX_ANAGLYPH_RIGHT_RED_MASK),
-                                 gfx_option(GFX_ANAGLYPH_RIGHT_GREEN_MASK),
-                                 gfx_option(GFX_ANAGLYPH_RIGHT_BLUE_MASK));
-        p->getFragmentProgramParameters()
-            ->setNamedConstant("desaturation",gfx_option(GFX_ANAGLYPH_DESATURATION));
-        p->getFragmentProgramParameters()->setNamedConstant("left_mask",left_mask);
-        p->getFragmentProgramParameters()->setNamedConstant("right_mask",right_mask);
-*/
-
     }
 
 }

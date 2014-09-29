@@ -234,6 +234,9 @@
     <ClCompile Include="src\gfx\gfx_gasoline_type_system.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\gfx\gfx_shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\net\lua_wrappers_net.h">

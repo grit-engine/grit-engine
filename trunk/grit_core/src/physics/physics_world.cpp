@@ -918,8 +918,8 @@ void physics_update (lua_State *L)
         unsigned num_contacts = manifold->getNumContacts();
         for (unsigned j=0 ; j<num_contacts ; ++j) {
             btManifoldPoint &p = manifold->getContactPoint(j);
-            int mat0 = p.m_partId0;
-            int mat1 = p.m_partId1;
+            unsigned mat0 = p.m_partId0;
+            unsigned mat1 = p.m_partId1;
             Info infoA = {
                 rb_a->getPtr(), rb_b->getPtr(), 
                 (float)p.getLifeTime(), p.getAppliedImpulse(), -p.getDistance(),

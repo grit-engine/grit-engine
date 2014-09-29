@@ -4005,8 +4005,8 @@ TRY_START
     std::string scene_blend;
     t.get("sceneBlend", scene_blend, std::string("OPAQUE"));
 
-    GfxSkyMaterialUniformMap uniforms;
-    std::vector<GfxSkyShaderVariation> variations;
+    GfxSkyMaterialTextureMap textures;
+    GfxShaderBindingsPtr bindings = shader->getShader()->makeBindings();
 
     typedef ExternalTable::KeyIterator KI;
     for (KI i=t.begin(), i_=t.end() ; i!=i_ ; ++i) {
@@ -4015,7 +4015,6 @@ TRY_START
         if (key == "sceneBlend") continue;
 
         // must be a texture or param
-        GfxSkyMaterialUniform uniform;
 
         SharedPtr<ExternalTable> tab;
         if (!t.get(key, tab)) {
@@ -4028,57 +4027,60 @@ TRY_START
         }
 
         if (uniform_kind == "PARAM") {
+
             std::string value_kind; // type of the actual data (e.g. FLOAT)
             if (!tab->get("valueKind", value_kind)) {
                 my_lua_error(L, "Uniform \""+key+"\" expected string 'valueKind' field.");
             }
 
             if (value_kind=="FLOAT") {
+                GfxShaderParam bind;
+                std::vector<float> vs;
                 for (unsigned i=1 ; true ; ++i) {
                     lua_Number def;
                     if (tab->get(i, def)) {
-                        uniform.values.push_back(def);
+                        vs.push_back(def);
                     } else break;
                 }
-                switch (uniform.values.size()) {
-                    case 0: my_lua_error(L, "Uniform \""+key+"\" must have a default value");
-                    case 1: uniform.kind = GFX_GSL_FLOAT1; break;
-                    case 2: uniform.kind = GFX_GSL_FLOAT2; break;
-                    case 3: uniform.kind = GFX_GSL_FLOAT3; break;
-                    case 4: uniform.kind = GFX_GSL_FLOAT4; break;
-                    default: my_lua_error(L, "Uniform \""+key+"\" unsupported number of default values");
+                switch (vs.size()) {
+                    case 0: my_lua_error(L, "Uniform \"" + key + "\" must have a default value");
+                    case 1: bind = GfxShaderParam(vs[0]); break;
+                    case 2: bind = GfxShaderParam(Vector2(vs[0], vs[1])); break;
+                    case 3: bind = GfxShaderParam(Vector3(vs[0], vs[1], vs[2])); break;
+                    case 4: bind = GfxShaderParam(Vector4(vs[0], vs[1], vs[2], vs[3])); break;
+                    default: my_lua_error(L, "Uniform \"" + key + "\" unsupported number of default values");
                 }
+                bindings->setBinding(key, bind);
             } else {
                 my_lua_error(L, "Uniform \""+key+"\" unrecognised 'valueKind' field: \""+value_kind+"\"");
             }
 
         } else if (uniform_kind == "TEXTURE2D") {
 
-            uniform.kind = GFX_GSL_FLOAT_TEXTURE2;
             std::string tex_name;
-
             bool has_tex = tab->get("name", tex_name);
             APP_ASSERT(has_tex);
             auto *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
             if (tex == NULL) my_lua_error(L, "Resource is not a texture \""+tex_name+"\"");
-            uniform.texture = tex;
+            bool clamp = false;
+            int anisotropy = 16;
+            textures[key] = { tex, clamp, anisotropy };
+            CVERB << key << " " << tex_name << std::endl;
 
         } else {
             my_lua_error(L, "Did not understand 'uniformKind' value \""+uniform_kind+"\"");
         }
-
-        uniforms[key] = uniform;
     }
 
     gfxskymat->setShader(shader);
     gfxskymat->setSceneBlend(skymat_scene_blend_from_string(L, scene_blend));
-    gfxskymat->setUniforms(uniforms);
+    gfxskymat->setTextures(textures);
+    gfxskymat->setBindings(bindings);
 
     return 0;
 TRY_END
 }
 
-static std::string default_fragment_code = "frag.colour = Float4(1, 0, 0, 1);\n";
 static std::string default_vertex_code =
 "frag.position = mul(global.worldViewProj, Float4(vert.position.xyz, 1));\n"
 "frag.position.z = frag.position.w * (1 - 1.0/65536);\n";
@@ -4090,7 +4092,7 @@ TRY_START
     check_args(L,2);
     std::string name = check_path(L,1);
     if (!lua_istable(L,2))
-            my_lua_error(L,"Second parameter should be a table");
+        my_lua_error(L,"Second parameter should be a table");
 
     ExternalTable t;
     t.takeTableFromLuaStack(L,2);
@@ -4098,11 +4100,11 @@ TRY_START
     std::string fragment_code;
     std::string vertex_code;
 
-    t.get("fragmentCode", fragment_code, default_fragment_code);
     t.get("vertexCode", vertex_code, default_vertex_code);
+    if (!t.get("fragmentCode", fragment_code))
+        my_lua_error(L, "Shader \"" + name + "\" did not specify fragmentCode.");
 
-    GfxSkyShaderUniformMap uniforms;
-    std::vector<GfxSkyShaderVariation> variations;
+    GfxShaderParamMap uniforms;
 
     typedef ExternalTable::KeyIterator KI;
     for (KI i=t.begin(), i_=t.end() ; i!=i_ ; ++i) {
@@ -4112,7 +4114,7 @@ TRY_START
         if (key == "vertexCode") continue;
 
         // must be a texture or param
-        GfxSkyShaderUniform uniform;
+        GfxShaderParam uniform;
 
         SharedPtr<ExternalTable> tab;
         if (!t.get(key, tab)) {
@@ -4131,37 +4133,36 @@ TRY_START
             }
 
             if (value_kind=="FLOAT") {
+                std::vector<float> vs;
                 for (unsigned i=1 ; true ; ++i) {
                     lua_Number def;
                     if (tab->get(i, def)) {
-                        uniform.defaults.push_back(def);
+                        vs.push_back(def);
                     } else break;
                 }
-                switch (uniform.defaults.size()) {
-                    case 0: my_lua_error(L, "Uniform \""+key+"\" must have a default value");
-                    case 1: uniform.kind = GFX_GSL_FLOAT1; break;
-                    case 2: uniform.kind = GFX_GSL_FLOAT2; break;
-                    case 3: uniform.kind = GFX_GSL_FLOAT3; break;
-                    case 4: uniform.kind = GFX_GSL_FLOAT4; break;
-                    default: my_lua_error(L, "Uniform \""+key+"\" unsupported number of default values");
+                switch (vs.size()) {
+                    case 0: my_lua_error(L, "Uniform \"" + key + "\" must have a default value");
+                    case 1: uniform = GfxShaderParam(vs[0]); break;
+                    case 2: uniform = GfxShaderParam(Vector2(vs[0], vs[1])); break;
+                    case 3: uniform = GfxShaderParam(Vector3(vs[0], vs[1], vs[2])); break;
+                    case 4: uniform = GfxShaderParam(Vector4(vs[0], vs[1], vs[2], vs[3])); break;
+                    default: my_lua_error(L, "Uniform \"" + key + "\" unsupported number of default values");
                 }
             } else {
                 my_lua_error(L, "Uniform \""+key+"\" unrecognised 'valueKind' field: \""+value_kind+"\"");
             }
 
         } else if (uniform_kind == "TEXTURE2D") {
-            Vector3 default_colour;
-            lua_Number default_alpha;
+            Vector3 c;
+            tab->get("defaultColour", c, Vector3(1,1,1));
 
-            tab->get("defaultColour", default_colour, Vector3(1,1,1));
-            tab->get("defaultAlpha", default_alpha, 1.0);
+            lua_Number a;
+            tab->get("defaultAlpha", a, 1.0);
 
-            uniform.kind = GFX_GSL_FLOAT_TEXTURE2;
-            uniform.defaultColour = default_colour;
-            uniform.defaultAlpha = default_alpha;
+            uniform = GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(c.x, c.y, c.z, a));
 
         } else {
-            my_lua_error(L, "Did not understand 'uniformKind' value \""+uniform_kind+"\"");
+            my_lua_error(L, "Did not understand 'uniformKind' value \"" + uniform_kind + "\"");
         }
 
         uniforms[key] = uniform;
@@ -4170,7 +4171,7 @@ TRY_START
 
     GfxSkyShader *shader = gfx_sky_shader_add_or_get(name);
 
-    shader->reset(vertex_code, fragment_code, variations, uniforms);
+    shader->reset(vertex_code, fragment_code, uniforms);
 
     return 0;
 TRY_END

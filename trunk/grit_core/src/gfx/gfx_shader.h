@@ -1,0 +1,131 @@
+/* Copyright (c) David Cunningham and the Grit Game Engine project 2012
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+#include <cstdlib>
+#include <cstdint>
+
+#include <array>
+#include <map>
+#include <string>
+
+#include <OgreHighLevelGpuProgram.h>
+
+#include <math_util.h>
+
+#include "../shared_ptr.h"
+
+#include "gfx_gasoline.h"
+#include "gfx_pipeline.h"
+
+class GfxShader;
+class GfxShaderBindings;
+typedef SharedPtr<GfxShaderBindings> GfxShaderBindingsPtr;
+
+
+#ifndef GFX_SHADER_H
+#define GFX_SHADER_H
+
+struct GfxShaderParam {
+    GfxGslParamType t; 
+    // Use std::array instead of c-style array to work around a bug in Microsoft Visual Studio 2013
+    std::array<float, 4> fs;
+    std::array<int32_t, 4> is;
+    GfxShaderParam (void) { }
+    // This form for textures
+    GfxShaderParam (GfxGslParamType t, const Vector4 &v) : t(t), fs({v.x, v.y, v.z, v.w}), is({0}) { }
+    GfxShaderParam (int v) : t(GFX_GSL_FLOAT1), fs({0}), is({v}) { }
+    GfxShaderParam (float v) : t(GFX_GSL_FLOAT1), fs({v}), is({0}) { }
+    GfxShaderParam (const Vector2 &v) : t(GFX_GSL_FLOAT2), fs({v.x, v.y}), is({0}) { }
+    GfxShaderParam (const Vector3 &v) : t(GFX_GSL_FLOAT3), fs({v.x, v.y, v.z}), is({0}) { }
+    GfxShaderParam (const Vector4 &v) : t(GFX_GSL_FLOAT4), fs({v.x, v.y, v.z, v.w}), is({0}) { }
+};
+
+typedef std::map<std::string, GfxShaderParam> GfxShaderParamMap;
+
+class GfxShader {
+    const std::string name;
+    const Ogre::HighLevelGpuProgramPtr vp, fp;
+    GfxShaderParamMap params;
+    public:
+    GfxShader (const std::string &name,
+               const Ogre::HighLevelGpuProgramPtr &vp,
+               const Ogre::HighLevelGpuProgramPtr &fp,
+               const GfxShaderParamMap &params)
+      : name(name), vp(vp), fp(fp), params(params)
+    {
+    }
+
+    void validate (void);
+
+    GfxShaderBindingsPtr makeBindings (void);
+    const GfxShaderParamMap &getParams (void) const { return params; }
+    void setParams (const GfxShaderParamMap &v) { params = v; }
+
+    void bindShader (void);
+    void bindGlobals (const Ogre::Matrix4 &world,
+                      const Ogre::Matrix4 &view,
+                      const Ogre::Matrix4 &proj,
+                      const Vector2 &viewport_dim);
+    void bind (const GfxShaderBindingsPtr &bindings);
+    void bindShaderParams (void);
+
+
+    const Ogre::HighLevelGpuProgramPtr &getOgreVertexProgram (void) { return vp; }
+    const Ogre::HighLevelGpuProgramPtr &getOgreFragmentProgram (void) { return fp; }
+    void explicitBinding (const std::string &name, const Ogre::Matrix4 &v);
+    void explicitBinding (const std::string &name, int v);
+    void explicitBinding (const std::string &name, float v);
+    void explicitBinding (const std::string &name, const Vector2 &v);
+    void explicitBinding (const std::string &name, const Vector3 &v);
+    void explicitBinding (const std::string &name, const Vector4 &v);
+    void explicitTextures (const std::vector<std::string> &texs);
+    
+};
+
+class GfxShaderBindings {
+    GfxShader *shader;
+    public:
+    private:
+    typedef std::map<std::string, GfxShaderParam> Map;
+    Map bindings;
+    public:
+    GfxShaderBindings (GfxShader *shader)
+      : shader(shader)
+    { }
+    template<class T> void setBinding (const std::string &name, const T &v)
+    {
+        bindings[name] = GfxShaderParam(v);
+    }
+    GfxShaderParam getBinding (const std::string &name);
+    friend class GfxShader;
+};
+
+GfxShader *gfx_shader_make_from_existing (const std::string &name,
+                                          const Ogre::HighLevelGpuProgramPtr &vp,
+                                          const Ogre::HighLevelGpuProgramPtr &fp,
+                                          const GfxShaderParamMap &params);
+
+GfxShader *gfx_shader_get (const std::string &name);
+
+void gfx_shader_init (void);
+void gfx_shader_shutdown (void);
+
+#endif

@@ -229,12 +229,16 @@ extern Ogre::OctreeSceneManager *ogre_sm; // FIXME: hack
 extern Ogre::RenderWindow *ogre_win; // FIXME: hack
 
 
+static inline Ogre::Vector2 to_ogre (const Vector2 &v)
+{ return Ogre::Vector2(v.x, v.y); }
 static inline Ogre::Vector3 to_ogre (const Vector3 &v)
-{ return Ogre::Vector3(v.x,v.y,v.z); }
+{ return Ogre::Vector3(v.x, v.y, v.z); }
+static inline Ogre::Vector4 to_ogre (const Vector4 &v)
+{ return Ogre::Vector4(v.x, v.y, v.z, v.w); }
 static inline Ogre::Quaternion to_ogre (const Quaternion &v)
-{ return Ogre::Quaternion(v.w,v.x,v.y,v.z); }
+{ return Ogre::Quaternion(v.w, v.x, v.y, v.z); }
 static inline Ogre::ColourValue to_ogre_cv (const Vector3 &v)
-{ return Ogre::ColourValue(v.x,v.y,v.z); }
+{ return Ogre::ColourValue(v.x, v.y, v.z); }
 static inline Ogre::Degree to_ogre (const Degree &v)
 { return Ogre::Degree(v.inDegrees()); }
 static inline Ogre::Radian to_ogre (const Radian &v)

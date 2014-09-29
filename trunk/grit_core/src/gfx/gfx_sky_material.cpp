@@ -23,10 +23,6 @@
 #include <map>
 
 #include <OgreCgProgram.h>
-#include <OgreGLGpuProgram.h>
-#include <OgreGLSLGpuProgram.h>
-#include <OgreGLSLProgram.h>
-#include <OgreGLSLLinkProgramManager.h>
 
 #include "../centralised_log.h"
 
@@ -71,8 +67,7 @@ bool gfx_sky_shader_has (const std::string &name)
 GfxSkyShader::GfxSkyShader (const std::string &name)
   : name(name)
 {
-    vp.setNull();
-    fp.setNull();
+    shader = nullptr;
 }
 
 std::set<std::string> identifiers (const std::string &code, const std::string &prefix)
@@ -110,13 +105,12 @@ std::set<std::string> identifiers (const std::string &code, const std::string &p
 
 void GfxSkyShader::reset (const std::string &new_vertex_code,
                           const std::string &new_fragment_code,
-                          const std::vector<GfxSkyShaderVariation> &new_variations,
-                          const GfxSkyShaderUniformMap &new_uniforms)
+                          const GfxShaderParamMap &new_uniforms)
 {
     GfxGslBackend backend = gfx_d3d9() ? GFX_GSL_BACKEND_CG : GFX_GSL_BACKEND_GLSL;
     GfxGslParams params;
     for (const auto &u : new_uniforms) {
-        params[u.first] = u.second.kind;
+        params[u.first] = u.second.t;
     }
     // TODO: actually generate more than one shader
     GfxGslUnboundTextures ubt;
@@ -127,75 +121,57 @@ void GfxSkyShader::reset (const std::string &new_vertex_code,
 
     vertexCode = new_vertex_code;
     fragmentCode = new_fragment_code;
-    variations = new_variations;
-    uniforms = new_uniforms;
 
-    // Set up Ogre objects
-    if (backend == GFX_GSL_BACKEND_CG) {
+    Ogre::HighLevelGpuProgramPtr vp, fp;
 
-        Ogre::StringVector vp_profs, fp_profs;
-        if (gfx_d3d9()) {
-            vp_profs.push_back("vs_3_0");
-            fp_profs.push_back("ps_3_0");
-        } else {
-            vp_profs.push_back("gpu_vp");
-            fp_profs.push_back("gp4fp");
-        }
-        if (vp.isNull())
+    if (shader == nullptr) {
+        if (backend == GFX_GSL_BACKEND_CG) {
             vp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
                 name+"_v", RESGRP, "cg", Ogre::GPT_VERTEX_PROGRAM);
-        APP_ASSERT(!vp.isNull());
-        Ogre::CgProgram *tmp_vp = static_cast<Ogre::CgProgram*>(&*vp);
-        vp->setSource(shaders.first);
-        tmp_vp->setEntryPoint("main");
-        tmp_vp->setProfiles(vp_profs);
-        tmp_vp->setCompileArguments("-I. -O3");
-        vp->unload();
-        vp->load();
-
-        if (fp.isNull())
             fp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
                 name+"_f", RESGRP, "cg", Ogre::GPT_FRAGMENT_PROGRAM);
-        APP_ASSERT(!fp.isNull());
-        Ogre::CgProgram *tmp_fp = static_cast<Ogre::CgProgram*>(&*fp);
-        fp->setSource(shaders.second);
-        tmp_fp->setEntryPoint("main");
-        tmp_fp->setProfiles(fp_profs);
-        tmp_fp->setCompileArguments("-I. -O3");
-        fp->unload();
-        fp->load();
+            Ogre::StringVector vp_profs, fp_profs;
+            if (gfx_d3d9()) {
+                vp_profs.push_back("vs_3_0");
+                fp_profs.push_back("ps_3_0");
+            } else {
+                vp_profs.push_back("gpu_vp");
+                fp_profs.push_back("gp4fp");
+            }
+            Ogre::CgProgram *tmp_vp = static_cast<Ogre::CgProgram*>(&*vp);
+            tmp_vp->setEntryPoint("main");
+            tmp_vp->setProfiles(vp_profs);
+            tmp_vp->setCompileArguments("-I. -O3");
 
-        load_and_validate_shader(vp);
-        load_and_validate_shader(fp);
-
-    } else {
-        if (vp.isNull())
+            Ogre::CgProgram *tmp_fp = static_cast<Ogre::CgProgram*>(&*fp);
+            tmp_fp->setEntryPoint("main");
+            tmp_fp->setProfiles(fp_profs);
+            tmp_fp->setCompileArguments("-I. -O3");
+        } else {
             vp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
                 name+"_v", RESGRP, "glsl", Ogre::GPT_VERTEX_PROGRAM);
-        APP_ASSERT(!vp.isNull());
-        vp->unload();
-        vp->setSource(shaders.first);
-        vp->load();
-
-        if (fp.isNull())
             fp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
                 name+"_f", RESGRP, "glsl", Ogre::GPT_FRAGMENT_PROGRAM);
-        APP_ASSERT(!fp.isNull());
-        fp->unload();
-        fp->setSource(shaders.second);
-        fp->load();
-
-        load_and_validate_shader(vp);
-        load_and_validate_shader(fp);
-
-        auto *vp_low = static_cast<Ogre::GLSL::GLSLGpuProgram*>(vp->_getBindingDelegate());
-        auto *fp_low = static_cast<Ogre::GLSL::GLSLGpuProgram*>(fp->_getBindingDelegate());
-
-        // Force the actual compilation of it...
-        Ogre::GLSL::GLSLLinkProgramManager::getSingleton().setActiveVertexShader(vp_low);
-        Ogre::GLSL::GLSLLinkProgramManager::getSingleton().setActiveFragmentShader(fp_low);
-        Ogre::GLSL::GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
+        }
+        shader = gfx_shader_make_from_existing(name, vp, fp, new_uniforms);
+    } else {
+        vp = shader->getOgreVertexProgram();
+        fp = shader->getOgreFragmentProgram();
+        shader->setParams(new_uniforms);
     }
+
+    APP_ASSERT(!vp.isNull());
+    APP_ASSERT(!fp.isNull());
+
+    vp->unload();
+    vp->setSource(shaders.first);
+    vp->load();
+
+    fp->unload();
+    fp->setSource(shaders.second);
+    fp->load();
+
+    shader->validate();
 }
 
 
@@ -238,6 +214,7 @@ bool gfx_sky_material_has (const std::string &name)
 
 GfxSkyMaterial::GfxSkyMaterial (const std::string &name_)
   : shader(gfx_sky_shader_get("/system/SkyDefault")),
+    bindings(shader->getShader()->makeBindings()),
     sceneBlend(GFX_SKY_MATERIAL_OPAQUE),
     name(name_)
 {
@@ -246,9 +223,28 @@ GfxSkyMaterial::GfxSkyMaterial (const std::string &name_)
 void GfxSkyMaterial::addDependencies (DiskResource *into)
 {
     GFX_MAT_SYNC;
-    // iterate through textures, add them as dependencies
-    for (const auto &i : uniforms) {
-        if (gfx_gasoline_param_is_texture(i.second.kind))
-            into->addDependency(i.second.texture);
+    for (const auto &i : textures) {
+        into->addDependency(i.second.texture);
     }
+}
+
+void gfx_sky_material_init (void)
+{
+    GfxSkyShader *s = gfx_sky_shader_add("/system/SkyDefault");
+    std::string vs = "frag.position = mul(global.worldViewProj, Float4(vert.position.xyz, 1));\n"
+                     "frag.position.z = frag.position.w * (1 - 1.0/65536);\n";
+    std::string fs = "val c = pma_decode(sample2D(mat.emissiveMap, vert.coord0.xy))\n"
+                     "             * Float4(1, 1, 1, mat.alphaMask);\n"
+                     "if (c.a <= mat.alphaRejectThreshold) discard;\n"
+                     "frag.colour = Float4(gamma_decode(c.rgb) * mat.emissiveMask, c.a);\n";
+
+    s->reset(vs, fs, {
+        { "alphaMask", GfxShaderParam(1.0f) },
+        { "alphaRejectThreshold", GfxShaderParam(-1.0f) },
+        { "emissiveMap", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1)) },
+        { "emissiveMask", GfxShaderParam(Vector3(1, 1, 1)) },
+    });
+
+    GfxSkyMaterial *m = gfx_sky_material_add("/system/SkyDefault");
+    m->setShader(s);
 }

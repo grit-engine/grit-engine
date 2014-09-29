@@ -138,92 +138,84 @@ GfxSkyMaterial *GfxSkyBody::getMaterial (unsigned i)
     return materials[i];
 }
 
-template<class T> static void hack_set_constant(GfxSkyShader *shader, const std::string &name, const T&v)
-{
-    try_set_named_constant(shader->getVP(), name, v, true);
-    try_set_named_constant(shader->getFP(), name, v, true);
-}
-static void hack_set_constant(GfxSkyShader *shader, const std::string &name, const Vector3 &v)
-{
-    Ogre::Vector3 v2 = to_ogre(v);
-    hack_set_constant(shader,name,v2);
-}
-
 void GfxSkyBody::render (GfxPipeline *p)
 {
     if (!enabled) return;
 
-    Ogre::Viewport *viewport = p->getCamera()->getViewport();
-
-    float render_target_flipping = viewport->getTarget()->requiresTextureFlipping() ? -1.0f : 1.0f;
-
     Ogre::Matrix3 rot;
     to_ogre(orientation).ToRotationMatrix(rot);
+
     Ogre::Matrix4 world(rot);
+
     Ogre::Matrix4 view = p->getCamera()->getViewMatrix();
-    view.setTrans(Ogre::Vector3(0,0,0)); // do not want translation part of view matrix (i.e. just camera direction)
+    // do not want translation part of view matrix (i.e. just camera direction)
+    view.setTrans(Ogre::Vector3(0,0,0)); 
+
+    Ogre::Viewport *viewport = p->getCamera()->getViewport();
+    float render_target_flipping = viewport->getTarget()->requiresTextureFlipping() ? -1.0f : 1.0f;
     Ogre::Matrix4 proj = p->getCamera()->getProjectionMatrixWithRSDepth();
     // Invert transformed y if necessary
     proj[1][0] *= render_target_flipping;
     proj[1][1] *= render_target_flipping;
     proj[1][2] *= render_target_flipping;
     proj[1][3] *= render_target_flipping;
-    Ogre::Matrix4 world_view = view * world;
-    Ogre::Matrix4 view_proj = proj * view;
-    Ogre::Matrix4 world_view_proj = proj * view * world;
 
-    Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
-                                1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());
-
-    float fov_y = p->getCameraOpts().fovY;
+    Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
 
 
-    GFX_MAT_SYNC; // this is to protect the material to texture mappings which might be concurrently read by the background loading thread
+    // this is to protect the material to texture mappings which might be
+    // concurrently read by the background loading thread
     // TODO: use a RW lock to avoid stalls
+    GFX_MAT_SYNC;
 
     // iterate through the materials
     for (unsigned i=0 ; i<materials.size() ; ++i) {
         GfxSkyMaterial *mat = materials[i];
 
         Ogre::SubMesh *sm = mesh->getSubMesh(i);
-        // render this submesh using mat
 
-        GfxSkyShader *shader = mat->getShader();
+        // render sm using mat
 
-        // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
-        ogre_rs->bindGpuProgram(shader->getFP()->_getBindingDelegate());
-        ogre_rs->bindGpuProgram(shader->getVP()->_getBindingDelegate());
+        GfxShader *shader = mat->getShader()->getShader();
 
-        const GfxSkyShaderUniformMap &s_unis = shader->getUniforms();
-        const GfxSkyMaterialUniformMap &m_unis = mat->getUniforms();
+        shader->bindShader();
+        shader->bind(mat->getBindings());
+        shader->bindGlobals(world, view, proj, viewport_dim);
+        shader->bindShaderParams();
+
+        const GfxShaderParamMap &params = shader->getParams();
+        const GfxSkyMaterialTextureMap &mat_texs = mat->getTextures();
 
         unsigned counter = 0;
-        for (const auto &pair : s_unis) {
+        for (const auto &pair : params) {
             const std::string &name = pair.first;
-            const GfxSkyShaderUniform *s_uni = &pair.second;
-            const GfxSkyMaterialUniform *m_uni = NULL;
-            auto m_uni_it = m_unis.find(name);
-            // material might leave a given uniform undefined in which case revert to shader default
-            if (m_uni_it != m_unis.end()) m_uni = &m_uni_it->second;
+            const GfxShaderParam &param = pair.second;
+            if (!gfx_gasoline_param_is_texture(param.t)) continue;
 
-            APP_ASSERT(m_uni==NULL || m_uni->kind == s_uni->kind);
-            
-            switch (s_uni->kind) {
+            const GfxSkyMaterialTexture *sky_tex = NULL;
+            auto it = mat_texs.find(name);
+            // material might leave a given uniform undefined in which case revert to shader default
+            if (it != mat_texs.end()) sky_tex = &it->second;
+
+            switch (param.t) {
                 case GFX_GSL_FLOAT_TEXTURE1: {
                     EXCEPTEX << "Not yet implemented." << ENDL;
                 } break;
                 case GFX_GSL_FLOAT_TEXTURE2: {
-                    APP_ASSERT(m_uni != NULL); // TODO: use this to pick a shader!
-                    ogre_rs->_setTexture(counter, true, m_uni->texture->getOgreTexturePtr());
+                    // TODO: use this to pick a shader!
+                    APP_ASSERT(sky_tex != NULL);
+                    ogre_rs->_setTexture(counter, true, sky_tex->texture->getOgreTexturePtr());
+                    //ogre_rs->_setTextureLayerAnisotropy(counter, sky_tex->anisotropy);
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
+                    auto mode = sky_tex->clamp ? Ogre::TextureUnitState::TAM_CLAMP
+                                               : Ogre::TextureUnitState::TAM_WRAP;
                     Ogre::TextureUnitState::UVWAddressingMode am;
-                    am.u = Ogre::TextureUnitState::TAM_WRAP;
-                    am.v = Ogre::TextureUnitState::TAM_WRAP;
-                    am.w = Ogre::TextureUnitState::TAM_WRAP;
+                    am.u = mode;
+                    am.v = mode;
+                    am.w = mode;
                     ogre_rs->_setTextureAddressingMode(counter, am);
-                    hack_set_constant(shader, "mat_"+name, int(counter));
                     counter++;
                 }
                 break;
@@ -234,93 +226,17 @@ void GfxSkyBody::render (GfxPipeline *p)
                     EXCEPTEX << "Not yet implemented." << ENDL;
                 } break;
 
-                case GFX_GSL_FLOAT1: {
-                    float v1 = m_uni == NULL ? s_uni->defaults[0] : m_uni->values[0];
-                    float v = v1;
-                    hack_set_constant(shader, "mat_"+name, v);
-                }
-                break;
-                case GFX_GSL_FLOAT2: {
-                    EXCEPTEX << "Not yet implemented." << ENDL;
-                    // Ogre call does not exist for Ogre::Vector2
-                    /*
-                    float v1 = m_uni == NULL ? s_uni->defaults[0] : m_uni->values[0];
-                    float v2 = m_uni == NULL ? s_uni->defaults[1] : m_uni->values[1];
-                    Ogre::Vector2 v(v1,v2);
-                    try_set_named_constant(shader->getFP(), "mat_"+name, v, true);
-                    try_set_named_constant(shader->getVP(), "mat_"+name, v, true);
-                    */
-                }
-                break;
-                case GFX_GSL_FLOAT3: {
-                    float v1 = m_uni == NULL ? s_uni->defaults[0] : m_uni->values[0];
-                    float v2 = m_uni == NULL ? s_uni->defaults[1] : m_uni->values[1];
-                    float v3 = m_uni == NULL ? s_uni->defaults[2] : m_uni->values[2];
-                    Ogre::Vector3 v(v1,v2,v3);
-                    hack_set_constant(shader, "mat_"+name, v);
-                }
-                break;
-                case GFX_GSL_FLOAT4: {
-                    float v1 = m_uni == NULL ? s_uni->defaults[0] : m_uni->values[0];
-                    float v2 = m_uni == NULL ? s_uni->defaults[1] : m_uni->values[1];
-                    float v3 = m_uni == NULL ? s_uni->defaults[2] : m_uni->values[2];
-                    float v4 = m_uni == NULL ? s_uni->defaults[3] : m_uni->values[3];
-                    Ogre::Vector4 v(v1,v2,v3,v4);
-                    hack_set_constant(shader, "mat_"+name, v);
-                }
+                case GFX_GSL_FLOAT1:
+                case GFX_GSL_FLOAT2:
+                case GFX_GSL_FLOAT3:
+                case GFX_GSL_FLOAT4:
+                case GFX_GSL_INT1:
+                case GFX_GSL_INT2:
+                case GFX_GSL_INT3:
+                case GFX_GSL_INT4:
                 break;
             }
         }
-
-        hack_set_constant(shader, "global_world", world);
-        hack_set_constant(shader, "global_view", view);
-        hack_set_constant(shader, "global_proj", proj);
-        hack_set_constant(shader, "global_worldView", world_view);
-        hack_set_constant(shader, "global_viewProj", view_proj);
-        hack_set_constant(shader, "global_worldViewProj", world_view_proj);
-        hack_set_constant(shader, "global_viewportSize", viewport_size);
-        hack_set_constant(shader, "global_fovY", fov_y);
-        hack_set_constant(shader, "global_time", anim_time); // FIXME:
-
-        hack_set_constant(shader, "global_particleAmbient", particle_ambient);
-        hack_set_constant(shader, "global_sunlightDiffuse", gfx_sunlight_diffuse());
-        hack_set_constant(shader, "global_sunlightSpecular", gfx_sunlight_specular());
-        hack_set_constant(shader, "global_sunlightDirection", gfx_sunlight_direction());
-        hack_set_constant(shader, "global_fogColour", fog_colour);
-        hack_set_constant(shader, "global_fogDensity", fog_density);
-        hack_set_constant(shader, "global_sunDirection", sun_direction);
-        hack_set_constant(shader, "global_sunColour", sun_colour);
-        hack_set_constant(shader, "global_sunAlpha", sun_alpha);
-        hack_set_constant(shader, "global_sunSize", sun_size);
-        hack_set_constant(shader, "global_sunFalloffDistance", sun_falloff_distance);
-        hack_set_constant(shader, "global_skyGlareSunDistance", sky_glare_sun_distance);
-        hack_set_constant(shader, "global_skyGlareHorizonElevation", sky_glare_horizon_elevation);
-        hack_set_constant(shader, "global_skyCloudColour", sky_cloud_colour);
-        hack_set_constant(shader, "global_skyCloudCoverage", sky_cloud_coverage);
-        hack_set_constant(shader, "global_hellColour", hell_colour);
-
-        hack_set_constant(shader, "global_skyDivider1", sky_divider[0]);
-        hack_set_constant(shader, "global_skyDivider2", sky_divider[1]);
-        hack_set_constant(shader, "global_skyDivider3", sky_divider[2]);
-        hack_set_constant(shader, "global_skyDivider4", sky_divider[3]);
-
-        hack_set_constant(shader, "global_skyColour0", sky_colour[0]);
-        hack_set_constant(shader, "global_skyColour1", sky_colour[1]);
-        hack_set_constant(shader, "global_skyColour2", sky_colour[2]);
-        hack_set_constant(shader, "global_skyColour3", sky_colour[3]);
-        hack_set_constant(shader, "global_skyColour4", sky_colour[4]);
-        hack_set_constant(shader, "global_skyColour5", sky_colour[5]);
-
-        hack_set_constant(shader, "global_skySunColour0", sky_sun_colour[0]);
-        hack_set_constant(shader, "global_skySunColour1", sky_sun_colour[1]);
-        hack_set_constant(shader, "global_skySunColour2", sky_sun_colour[2]);
-        hack_set_constant(shader, "global_skySunColour3", sky_sun_colour[3]);
-        hack_set_constant(shader, "global_skySunColour4", sky_sun_colour[4]);
-
-
-
-        ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, shader->getFP()->getDefaultParameters(), Ogre::GPV_ALL);
-        ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, shader->getVP()->getDefaultParameters(), Ogre::GPV_ALL);
 
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);
         // read but don't write depth buffer

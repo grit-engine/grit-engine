@@ -192,7 +192,7 @@ void NetMessage::readBits(int bits, void* out)
 		}
 		else
 		{
-			outputStuff[curOut] = (uint8_t)((0xFF >> (8 - minBit)) & (buffer[curByte] << (8 - remain)) | (thisByte >> remain));
+			outputStuff[curOut] = (uint8_t)(((0xFF >> (8 - minBit)) & (buffer[curByte] << (8 - remain))) | (thisByte >> remain));
 		}
 
 		curOut++;
@@ -242,7 +242,7 @@ void NetMessage::writeBits(int bits, const void* data)
 
 		thisData = ((nextByte << (8 - thisBit)) | (thisData >> thisBit));
 
-		uint8_t outByte = (~mask & (thisData << bitPos) | tempByte);
+		uint8_t outByte = ((~mask & (thisData << bitPos)) | tempByte);
 		buffer[bytePos] = outByte;
 
 		curBit += thisWrite;

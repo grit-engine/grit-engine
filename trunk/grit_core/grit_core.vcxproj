@@ -115,6 +115,7 @@
     <ClCompile Include="src\gfx\gfx_particle_system.cpp" />
     <ClCompile Include="src\gfx\gfx_pipeline.cpp" />
     <ClCompile Include="src\gfx\gfx_ranged_instances.cpp" />
+    <ClCompile Include="src\gfx\gfx_shader.cpp" />
     <ClCompile Include="src\gfx\gfx_sky_body.cpp" />
     <ClCompile Include="src\gfx\gfx_sky_material.cpp" />
     <ClCompile Include="src\gfx\gfx_text_buffer.cpp" />

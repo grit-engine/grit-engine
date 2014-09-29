@@ -17,6 +17,7 @@ NetAddress::NetAddress(NetAddressType type)
 
 NetAddress::NetAddress(sockaddr* addr, int length)
 {
+    (void) length;
 	switch (addr->sa_family)
 	{
 		case AF_INET:

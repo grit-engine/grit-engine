@@ -702,6 +702,24 @@ static int aux_include (lua_State *L, const std::string &filename)
 }
 
 
+static int global_import_str (lua_State *L)
+{
+TRY_START
+        check_args(L, 1);
+        std::string filename = luaL_checkstring(L, 1);
+        std::string fname(filename, 1); // strip leading /
+
+        if (!Ogre::ResourceGroupManager::getSingleton().resourceExists("GRIT", fname))
+                my_lua_error(L, "File not found: \"" + filename + "\"");
+
+        Ogre::DataStreamPtr ds
+                = Ogre::ResourceGroupManager::getSingleton().openResource(fname, "GRIT");
+        push_string(L, ds->getAsString());
+
+        return 1;
+TRY_END
+}
+
 static int global_include (lua_State *L)
 {
 TRY_START
@@ -909,6 +927,7 @@ TRY_END
 static const luaL_reg global[] = {
 
         {"r",global_r},
+        {"import_str",global_import_str},
         {"include",global_include},
         {"safe_include",global_safe_include},
         {"current_dir",global_current_dir},

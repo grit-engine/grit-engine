@@ -35,6 +35,10 @@
 #include <OgreCgPlugin.h>
 #include <OgreRenderSystem.h>
 #include <OgreGLRenderSystem.h>
+#include <OgreGLGpuProgram.h>
+#include <OgreGLSLGpuProgram.h>
+#include <OgreGLSLProgram.h>
+#include <OgreGLSLLinkProgramManager.h>
 #ifdef WIN32
 #  include <OgreD3D9RenderSystem.h>
 #endif
@@ -84,7 +88,10 @@ extern float global_saturation;
 extern GfxColourGradeLUTDiskResource *scene_colour_grade_lut;
 
 extern Vector3 sun_direction;
+extern Vector3 sunlight_direction;
 extern Vector3 sun_colour;
+extern Vector3 sunlight_diffuse;
+extern Vector3 sunlight_specular;
 extern float sun_alpha;
 extern float sun_size;
 extern float sun_falloff_distance;
@@ -136,56 +143,51 @@ typedef std::map<std::string,GfxSkyShader*> GfxShaderDB;
 extern GfxShaderDB shader_db;
 
 
-inline void load_and_validate_shader (const Ogre::HighLevelGpuProgramPtr &prog)
-{
-    prog->load();
-
-    if (!prog->isLoaded()) {
-        std::stringstream ss;
-        ss << "Program not loaded: \"" << prog->getName() << "\"";
-        GRIT_EXCEPT(ss.str());
-    }
-
-    if (prog->_getBindingDelegate() == NULL) {
-        std::stringstream ss;
-        ss << "Program cannot be bound: \"" << prog->getName() << "\"";
-        GRIT_EXCEPT(ss.str());
-    }
-}
-
-inline Ogre::HighLevelGpuProgramPtr load_and_validate_shader (const std::string &name)
-{
-    Ogre::HighLevelGpuProgramPtr prog = Ogre::HighLevelGpuProgramManager::getSingleton().getByName(name, RESGRP);
-    std::stringstream ss;
-    if (prog.isNull()) {
-        ss << "Program not found: \"" << name << "\"";
-        GRIT_EXCEPT(ss.str());
-    }
-
-    load_and_validate_shader(prog);
-    return prog;
-}
-
-template<class T> void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
-                                               const std::string &name, const T &v, bool silent_fail=false)
+template<class T> void try_set_named_constant_ (const Ogre::GpuProgramParametersSharedPtr &p,
+                                                const std::string &name, const T &v, bool silent_fail)
 {
     p->setIgnoreMissingParams(silent_fail);
     try {
         p->setNamedConstant(name,v);
     } catch (const Ogre::Exception &e) {
         if (e.getNumber() == Ogre::Exception::ERR_INVALIDPARAMS) {
-                CLOG << "WARNING: " << e.getDescription() << std::endl;
+            CLOG << "WARNING: " << e.getDescription() << std::endl;
         } else {
             throw e;
         }
     }
 }   
     
+/*
+static inline void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
+                             const std::string &name, const Ogre::ColourValue &v, bool silent_fail=false)
+{ try_set_named_constant_(p, name, v, silent_fail); }
+*/
+
+static inline void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
+                             const std::string &name, const Ogre::Matrix4 &v, bool silent_fail=false)
+{ try_set_named_constant_(p, name, v, silent_fail); }
+
+static inline void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
+                             const std::string &name, float v, bool silent_fail=false)
+{ try_set_named_constant_(p, name, v, silent_fail); }
+
+/*
+void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
+                             const std::string &name, const Ogre::Vector2 &v, bool silent_fail=false)
+{ try_set_named_constant_(p, name, v, silent_fail); }
+*/
+
+static inline void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
+                             const std::string &name, const Ogre::Vector3 &v, bool silent_fail=false)
+{ try_set_named_constant_(p, name, v, silent_fail); }
+
+static inline void try_set_named_constant (const Ogre::GpuProgramParametersSharedPtr &p,
+                             const std::string &name, const Ogre::Vector4 &v, bool silent_fail=false)
+{ try_set_named_constant_(p, name, v, silent_fail); }
+
 template<class T> void try_set_named_constant (const Ogre::HighLevelGpuProgramPtr &p,
                                                const std::string &name, const T &v, bool silent_fail=false)
-{
-    try_set_named_constant(p->getDefaultParameters(), name, v, silent_fail);
-}   
+{ try_set_named_constant(p->getDefaultParameters(), name, v, silent_fail); }
     
 #endif
-
