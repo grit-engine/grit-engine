@@ -20,115 +20,126 @@
 
 #include "gfx_gasoline_backend_cg.h"
 
-class Backend {
-    std::stringstream ss;
-    const GfxGslTypeSystem *ts;
-    GfxGslKind kind;
-    const GfxGslUnboundTextures &ubt;
+namespace {
+    class Backend {
+        std::stringstream ss;
+        const GfxGslTypeSystem *ts;
+        GfxGslKind kind;
+        const GfxGslUnboundTextures &ubt;
 
-    public:
-    Backend (const GfxGslTypeSystem *ts, GfxGslKind kind, const GfxGslUnboundTextures &ubt)
-      : ts(ts), kind(kind), ubt(ubt)
-    { }
+        public:
+        Backend (const GfxGslTypeSystem *ts, GfxGslKind kind, const GfxGslUnboundTextures &ubt)
+          : ts(ts), kind(kind), ubt(ubt)
+        { }
 
-    void unparse (const GfxGslAst *ast_, int indent)
-    {
-        std::string space(4 * indent, ' ');
-        if (auto ast = dynamic_cast<const GfxGslBlock*>(ast_)) {
-            ss << space << "{\n";
-            for (auto stmt : ast->stmts) {
-                unparse(stmt, indent+1);
-            }
-            ss << space << "}\n";
-        } else if (auto ast = dynamic_cast<const GfxGslShader*>(ast_)) {
-            for (auto stmt : ast->stmts) {
-                unparse(stmt, indent);
-            }
-        } else if (auto ast = dynamic_cast<const GfxGslDecl*>(ast_)) {
-            ss << space << ast->init->type;
-            ss << " user_" << ast->id << " = ";
-            unparse(ast->init, indent);
-            ss << ";\n";
-        } else if (auto ast = dynamic_cast<const GfxGslIf*>(ast_)) {
-            ss << space << "if (";
-            unparse(ast->cond, indent);
-            ss << ") {\n";
-            unparse(ast->yes, indent+1);
-            if (ast->no) {
-                ss << space << "} else {\n";
-                unparse(ast->no, indent+1);
-            }
-            ss << space << "}\n";
-        } else if (auto ast = dynamic_cast<const GfxGslAssign*>(ast_)) {
-            ss << space;
-            unparse(ast->target, indent);
-            ss << " = ";
-            unparse(ast->expr, indent);
-            ss << ";\n";
-        } else if (dynamic_cast<const GfxGslDiscard*>(ast_)) {
-            ss << space << "discard;\n";
-        } else if (dynamic_cast<const GfxGslReturn*>(ast_)) {
-            ss << space << "return;\n";
-
-        } else if (auto ast = dynamic_cast<const GfxGslCall*>(ast_)) {
-            ss << ast->func;
-            if (ast->args.size() == 0) {
-                ss << "()";
-            } else {
-                const char *sep = "(";
-                for (auto arg : ast->args) {
-                    ss << sep;
-                    unparse(arg, indent);
-                    sep = ", ";
+        void unparse (const GfxGslAst *ast_, int indent)
+        {
+            std::string space(4 * indent, ' ');
+            if (auto ast = dynamic_cast<const GfxGslBlock*>(ast_)) {
+                ss << space << "{\n";
+                for (auto stmt : ast->stmts) {
+                    unparse(stmt, indent+1);
                 }
-                ss << ")";
-            }
-        } else if (auto ast = dynamic_cast<const GfxGslField*>(ast_)) {
-            if (dynamic_cast<GfxGslGlobalType*>(ast->target->type)) {
-                ss << "global_" << ast->id;
-            } else if (dynamic_cast<GfxGslMatType*>(ast->target->type)) {
-                ss << "mat_" << ast->id;
-            } else if (dynamic_cast<GfxGslVertType*>(ast->target->type)) {
-                ss << "vert_" << ast->id;
-            } else if (dynamic_cast<GfxGslFragType*>(ast->target->type)) {
-                ss << "frag_" << ast->id;
-            } else {
-                ss << "(";
+                ss << space << "}\n";
+            } else if (auto ast = dynamic_cast<const GfxGslShader*>(ast_)) {
+                for (auto stmt : ast->stmts) {
+                    unparse(stmt, indent);
+                }
+            } else if (auto ast = dynamic_cast<const GfxGslDecl*>(ast_)) {
+                ss << space << ast->init->type;
+                ss << " user_" << ast->id << " = ";
+                unparse(ast->init, indent);
+                ss << ";\n";
+            } else if (auto ast = dynamic_cast<const GfxGslIf*>(ast_)) {
+                ss << space << "if (";
+                unparse(ast->cond, indent);
+                ss << ") {\n";
+                unparse(ast->yes, indent+1);
+                if (ast->no) {
+                    ss << space << "} else {\n";
+                    unparse(ast->no, indent+1);
+                }
+                ss << space << "}\n";
+            } else if (auto ast = dynamic_cast<const GfxGslAssign*>(ast_)) {
+                ss << space;
                 unparse(ast->target, indent);
-                ss << ").";
-                ss << ast->id;
+                ss << " = ";
+                unparse(ast->expr, indent);
+                ss << ";\n";
+            } else if (dynamic_cast<const GfxGslDiscard*>(ast_)) {
+                ss << space << "discard;\n";
+            } else if (dynamic_cast<const GfxGslReturn*>(ast_)) {
+                ss << space << "return;\n";
+
+            } else if (auto ast = dynamic_cast<const GfxGslCall*>(ast_)) {
+                ss << ast->func;
+                if (ast->args.size() == 0) {
+                    ss << "()";
+                } else {
+                    const char *sep = "(";
+                    for (auto arg : ast->args) {
+                        ss << sep;
+                        unparse(arg, indent);
+                        sep = ", ";
+                    }
+                    ss << ")";
+                }
+            } else if (auto ast = dynamic_cast<const GfxGslField*>(ast_)) {
+                if (dynamic_cast<GfxGslGlobalType*>(ast->target->type)) {
+                    ss << "global_" << ast->id;
+                } else if (dynamic_cast<GfxGslMatType*>(ast->target->type)) {
+                    ss << "mat_" << ast->id;
+                } else if (dynamic_cast<GfxGslVertType*>(ast->target->type)) {
+                    ss << "vert_" << ast->id;
+                } else if (dynamic_cast<GfxGslFragType*>(ast->target->type)) {
+                    ss << "frag_" << ast->id;
+                } else {
+                    ss << "(";
+                    unparse(ast->target, indent);
+                    ss << ").";
+                    ss << ast->id;
+                }
+            } else if (auto ast = dynamic_cast<const GfxGslLiteralInt*>(ast_)) {
+                ss << ast->val;
+            } else if (auto ast = dynamic_cast<const GfxGslLiteralFloat*>(ast_)) {
+                ss << ast->val;
+            } else if (auto ast = dynamic_cast<const GfxGslLiteralBoolean*>(ast_)) {
+                ss << (ast->val ? "true" : "false");
+            } else if (auto ast = dynamic_cast<const GfxGslVar*>(ast_)) {
+                ss << "user_" << ast->id;
+            } else if (auto ast = dynamic_cast<const GfxGslBinary*>(ast_)) {
+                if (ast->op == GFX_GSL_OP_MOD) {
+                    ss << "mod(";
+                    unparse(ast->a, indent);
+                    ss << ", ";
+                    unparse(ast->b, indent);
+                    ss << ")";
+                } else {
+                    ss << "(";
+                    unparse(ast->a, indent);
+                    ss << " " << to_string(ast->op) << " ";
+                    unparse(ast->b, indent);
+                    ss << ")";
+                }
+
+            } else if (dynamic_cast<const GfxGslGlobal*>(ast_)) {
+                ss << "global";
+            } else if (dynamic_cast<const GfxGslMat*>(ast_)) {
+                ss << "mat";
+            } else if (dynamic_cast<const GfxGslVert*>(ast_)) {
+                ss << "vert";
+            } else if (dynamic_cast<const GfxGslFrag*>(ast_)) {
+                ss << "frag";
+
+            } else {
+                EXCEPTEX << "INTERNAL ERROR: Unknown GfxGslAst." << ENDL;
             }
-        } else if (auto ast = dynamic_cast<const GfxGslLiteralInt*>(ast_)) {
-            ss << ast->val;
-        } else if (auto ast = dynamic_cast<const GfxGslLiteralFloat*>(ast_)) {
-            ss << ast->val;
-        } else if (auto ast = dynamic_cast<const GfxGslLiteralBoolean*>(ast_)) {
-            ss << (ast->val ? "true" : "false");
-        } else if (auto ast = dynamic_cast<const GfxGslVar*>(ast_)) {
-            ss << "user_" << ast->id;
-        } else if (auto ast = dynamic_cast<const GfxGslBinary*>(ast_)) {
-            ss << "(";
-            unparse(ast->a, indent);
-            ss << " " << to_string(ast->op) << " ";
-            unparse(ast->b, indent);
-            ss << ")";
-
-        } else if (dynamic_cast<const GfxGslGlobal*>(ast_)) {
-            ss << "global";
-        } else if (dynamic_cast<const GfxGslMat*>(ast_)) {
-            ss << "mat";
-        } else if (dynamic_cast<const GfxGslVert*>(ast_)) {
-            ss << "vert";
-        } else if (dynamic_cast<const GfxGslFrag*>(ast_)) {
-            ss << "frag";
-
-        } else {
-            EXCEPTEX << "INTERNAL ERROR: Unknown GfxGslAst." << ENDL;
         }
-    }
 
-    std::string getOutput (void) { return ss.str(); }
-};
+        std::string getOutput (void) { return ss.str(); }
+    };
+
+}
 
 static inline bool in_set(const std::set<std::string> &set, const std::string &s)
 { return set.find(s) != set.end(); }

@@ -144,12 +144,19 @@ namespace {
             } else if (auto ast = dynamic_cast<const GfxGslVar*>(ast_)) {
                 ss << "user_" << ast->id;
             } else if (auto ast = dynamic_cast<const GfxGslBinary*>(ast_)) {
-                ss << "(";
-                unparse(ast->a, indent);
-                ss << " " << to_string(ast->op) << " ";
-                unparse(ast->b, indent);
-                ss << ")";
-
+                if (ast->op == GFX_GSL_OP_MOD) {
+                    ss << "mod(";
+                    unparse(ast->a, indent);
+                    ss << ", ";
+                    unparse(ast->b, indent);
+                    ss << ")";
+                } else {
+                    ss << "(";
+                    unparse(ast->a, indent);
+                    ss << " " << to_string(ast->op) << " ";
+                    unparse(ast->b, indent);
+                    ss << ")";
+                }
             } else if (dynamic_cast<const GfxGslGlobal*>(ast_)) {
                 ss << "global";
             } else if (dynamic_cast<const GfxGslMat*>(ast_)) {

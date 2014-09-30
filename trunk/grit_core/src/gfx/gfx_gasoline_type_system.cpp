@@ -491,7 +491,7 @@ void GfxGslTypeSystem::doConversion (GfxGslAst *&from, GfxGslType *to_)
             }
         }
     }
-    EXCEPTEX << "No conversion possible." << ENDL;
+    error(from->loc) << "Could not convert type " << from->type << " to " << to_ << ENDL;
 }
 
 void GfxGslTypeSystem::unify (const GfxGslLocation &loc, GfxGslAst *&a, GfxGslAst *&b)
@@ -610,6 +610,7 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
         if (!ast->target->type->writeable)
             error(loc) << "Cannot assign to this object." <<  ENDL;
         inferAndSet(ast->expr, c.setRead(true));
+        doConversion(ast->expr, ast->target->type);
         ast->type = alloc.makeType<GfxGslVoidType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslDiscard*>(ast_)) {
