@@ -37,7 +37,7 @@ static std::map<std::string, std::string> vert_global = {
 static std::map<std::string, std::string> frag_global = {
     {"position", "gl_Position"},
     {"colour", "out_colour"},
-    {"screen", "gl_FragCoord"},
+    {"screen", "internal_frag_coord"},
     {"depth", "gl_FragDepth"},
 };
 
@@ -267,6 +267,7 @@ static void preamble (const GfxGslTypeSystem *ts, GfxGslKind k, std::ostream &ss
     ss << "#define FloatTexture sampler1D\n";
     ss << "#define FloatTexture2 sampler2D\n";
     ss << "#define FloatTexture3 sampler3D\n";
+
     ss << "Float atan2 (Float y, Float x) { return atan(y, x); }\n";
     if (k == GFX_GSL_FRAG) {
         ss << "Float ddx (Float v) { return dFdx(v); }\n";
@@ -299,6 +300,9 @@ static void preamble (const GfxGslTypeSystem *ts, GfxGslKind k, std::ostream &ss
     ss << "Float2 lerp (Float2 a, Float2 b, Float v) { return v*b + (1-v)*a; }\n";
     ss << "Float3 lerp (Float3 a, Float3 b, Float v) { return v*b + (1-v)*a; }\n";
     ss << "Float4 lerp (Float4 a, Float4 b, Float v) { return v*b + (1-v)*a; }\n";
+
+    ss << "uniform Float internal_rt_flip;\n";
+
     ss << "\n";
 }
 
@@ -379,8 +383,13 @@ void gfx_gasoline_unparse_glsl (const GfxGslTypeSystem *vert_ts, const GfxGslAst
         if (sz > 1) type << sz;
         frag_ss << "in " << type.str() << " trans" << i/4 << ";\n";
     }
-    for (const auto &f : frag_ts->getGlobalFieldsRead())
+    bool got_vps = false;
+    for (const auto &f : frag_ts->getGlobalFieldsRead()) {
         frag_ss << "uniform " << frag_ts->getGlobalType(f) << " global_" << f << ";\n";
+        if (f == "viewportSize") got_vps = true;
+    }
+    if (!got_vps)
+        frag_ss << "uniform Float4 global_viewportSize;\n";
     for (const auto &f : frag_ts->getMatFieldsRead()) {
         auto it = ubt.find(f);
         if (it != ubt.end()) {
@@ -393,6 +402,9 @@ void gfx_gasoline_unparse_glsl (const GfxGslTypeSystem *vert_ts, const GfxGslAst
 
     frag_ss << "void main (void)\n";
     frag_ss << "{\n";
+    frag_ss << "    Float2 internal_frag_coord = gl_FragCoord.xy;\n";
+    frag_ss << "    if (internal_rt_flip < 0)\n";
+    frag_ss << "        internal_frag_coord.y = global_viewportSize.y - internal_frag_coord.y;\n";
     for (const auto &f : frag_ts->getFragFieldsWritten()) {
         frag_ss << "    " << frag_global[f] << " = vec4(0.0, 0.0, 0.0, 0.0);\n";
     }

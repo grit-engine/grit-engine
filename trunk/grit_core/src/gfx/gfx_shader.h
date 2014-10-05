@@ -83,7 +83,8 @@ class GfxShader {
     void bindGlobals (const Ogre::Matrix4 &world,
                       const Ogre::Matrix4 &view,
                       const Ogre::Matrix4 &proj,
-                      const Vector2 &viewport_dim);
+                      const Vector2 &viewport_dim,
+                      bool render_target_flipping);
     void bind (const GfxShaderBindingsPtr &bindings);
     void bindShaderParams (void);
 

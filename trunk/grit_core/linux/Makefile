@@ -760,6 +760,7 @@ lua_wrappers_core.o: ../src/gfx/gfx_disk_resource.h
 lua_wrappers_core.o: ../src/gfx/gfx_sky_material.h
 lua_wrappers_core.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdint
 lua_wrappers_core.o: ../depend_stubs/ostream ../src/gfx/gfx_shader.h
+lua_wrappers_core.o: ../depend_stubs/array
 lua_wrappers_core.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 lua_wrappers_core.o: ../src/gfx/gfx_pipeline.h ../src/gfx/gfx_light.h
 lua_wrappers_core.o: ../src/gfx/gfx_particle_system.h
@@ -895,6 +896,7 @@ lua_wrappers_disk_resource.o: ../src/gfx/gfx_gasoline.h
 lua_wrappers_disk_resource.o: ../depend_stubs/cstdint
 lua_wrappers_disk_resource.o: ../depend_stubs/ostream
 lua_wrappers_disk_resource.o: ../src/gfx/gfx_shader.h
+lua_wrappers_disk_resource.o: ../depend_stubs/array
 lua_wrappers_disk_resource.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 lua_wrappers_disk_resource.o: ../src/gfx/gfx_pipeline.h
 lua_wrappers_disk_resource.o: ../src/gfx/gfx_light.h
@@ -1400,6 +1402,7 @@ gfx.o: ../src/gfx/gfx_light.h ../src/gfx/gfx_particle_system.h
 gfx.o: ../depend_stubs/utility ../src/gfx/gfx_sky_material.h
 gfx.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdint
 gfx.o: ../depend_stubs/ostream ../src/gfx/gfx_shader.h
+gfx.o: ../depend_stubs/array
 gfx.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx.o: ../src/gfx/gfx_sky_body.h ../src/gfx/gfx_disk_resource.h
 gfx.o: ../depend_stubs/OgreResource.h
@@ -1508,7 +1511,7 @@ gfx_disk_resource.o: ../src/gfx/gfx_sky_material.h
 gfx_disk_resource.o: ../src/gfx/gfx_gasoline.h
 gfx_disk_resource.o: ../depend_stubs/cstdint ../depend_stubs/map
 gfx_disk_resource.o: ../depend_stubs/ostream
-gfx_disk_resource.o: ../src/gfx/gfx_shader.h
+gfx_disk_resource.o: ../src/gfx/gfx_shader.h ../depend_stubs/array
 gfx_disk_resource.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_disk_resource.o: ../src/gfx/gfx_pipeline.h
 gfx_fertile_node.o: ../src/gfx/gfx_fertile_node.h
@@ -1760,7 +1763,7 @@ gfx_hud.o: ../depend_stubs/thread ../src/disk_resource.h
 gfx_hud.o: ../depend_stubs/set ../src/gfx/gfx_sky_material.h
 gfx_hud.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdint
 gfx_hud.o: ../depend_stubs/map ../depend_stubs/ostream
-gfx_hud.o: ../src/gfx/gfx_shader.h
+gfx_hud.o: ../src/gfx/gfx_shader.h ../depend_stubs/array
 gfx_hud.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_hud.o: ../src/gfx/gfx_pipeline.h ../src/gfx/gfx_light.h
 gfx_hud.o: ../src/gfx/gfx_particle_system.h
@@ -2058,6 +2061,7 @@ gfx_particle_system.o: ../depend_stubs/utility
 gfx_particle_system.o: ../src/gfx/gfx_pipeline.h
 gfx_particle_system.o: ../src/gfx/gfx_shader.h
 gfx_particle_system.o: ../depend_stubs/cstdint
+gfx_particle_system.o: ../depend_stubs/array
 gfx_particle_system.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_particle_system.o: ../src/gfx/gfx_gasoline.h
 gfx_particle_system.o: ../depend_stubs/ostream
@@ -2111,7 +2115,7 @@ gfx_pipeline.o: ../depend_stubs/OgreMaterial.h
 gfx_pipeline.o: ../src/gfx/gfx_material.h
 gfx_pipeline.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdint
 gfx_pipeline.o: ../depend_stubs/map ../depend_stubs/ostream
-gfx_pipeline.o: ../src/gfx/gfx_shader.h
+gfx_pipeline.o: ../src/gfx/gfx_shader.h ../depend_stubs/array
 gfx_pipeline.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_ranged_instances.o: ../depend_stubs/algorithm ../src/main.h
 gfx_ranged_instances.o: ../depend_stubs/lua.h ../src/mouse.h
@@ -2228,7 +2232,7 @@ gfx_shader.o: ../../dependencies/util/exception.h
 gfx_shader.o: ../depend_stubs/cstdlib ../depend_stubs/string
 gfx_shader.o: ../../dependencies/util/intrinsics.h
 gfx_shader.o: ../src/gfx/gfx_shader.h ../depend_stubs/cstdint
-gfx_shader.o: ../depend_stubs/map
+gfx_shader.o: ../depend_stubs/array ../depend_stubs/map
 gfx_shader.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_shader.o: ../../dependencies/util/math_util.h
 gfx_shader.o: ../depend_stubs/cmath ../depend_stubs/cfloat
@@ -2291,7 +2295,7 @@ gfx_sky_body.o: ../depend_stubs/OgreMaterial.h
 gfx_sky_body.o: ../src/gfx/gfx_material.h
 gfx_sky_body.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdint
 gfx_sky_body.o: ../depend_stubs/map ../depend_stubs/ostream
-gfx_sky_body.o: ../src/gfx/gfx_shader.h
+gfx_sky_body.o: ../src/gfx/gfx_shader.h ../depend_stubs/array
 gfx_sky_body.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_sky_body.o: ../src/gfx/gfx_pipeline.h
 gfx_sky_material.o: ../depend_stubs/string ../depend_stubs/map
@@ -2332,7 +2336,7 @@ gfx_sky_material.o: ../depend_stubs/mutex
 gfx_sky_material.o: ../src/gfx/gfx_gasoline.h
 gfx_sky_material.o: ../depend_stubs/cstdint
 gfx_sky_material.o: ../depend_stubs/ostream
-gfx_sky_material.o: ../src/gfx/gfx_shader.h
+gfx_sky_material.o: ../src/gfx/gfx_shader.h ../depend_stubs/array
 gfx_sky_material.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_sky_material.o: ../../dependencies/util/math_util.h
 gfx_sky_material.o: ../depend_stubs/cmath ../depend_stubs/cfloat
@@ -2535,7 +2539,7 @@ lua_wrappers_gfx.o: ../src/gfx/gfx_sky_material.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_gasoline.h
 lua_wrappers_gfx.o: ../depend_stubs/cstdint
 lua_wrappers_gfx.o: ../depend_stubs/ostream
-lua_wrappers_gfx.o: ../src/gfx/gfx_shader.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_shader.h ../depend_stubs/array
 lua_wrappers_gfx.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_pipeline.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_light.h
@@ -2888,6 +2892,7 @@ lua_wrappers_physics.o: ../src/gfx/gfx_gasoline.h
 lua_wrappers_physics.o: ../depend_stubs/cstdint
 lua_wrappers_physics.o: ../depend_stubs/ostream
 lua_wrappers_physics.o: ../src/gfx/gfx_shader.h
+lua_wrappers_physics.o: ../depend_stubs/array
 lua_wrappers_physics.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 lua_wrappers_physics.o: ../src/gfx/gfx_pipeline.h
 lua_wrappers_physics.o: ../src/gfx/gfx_light.h

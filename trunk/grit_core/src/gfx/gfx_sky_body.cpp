@@ -152,13 +152,14 @@ void GfxSkyBody::render (GfxPipeline *p)
     view.setTrans(Ogre::Vector3(0,0,0)); 
 
     Ogre::Viewport *viewport = p->getCamera()->getViewport();
-    float render_target_flipping = viewport->getTarget()->requiresTextureFlipping() ? -1.0f : 1.0f;
+    bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
+    float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
     Ogre::Matrix4 proj = p->getCamera()->getProjectionMatrixWithRSDepth();
     // Invert transformed y if necessary
-    proj[1][0] *= render_target_flipping;
-    proj[1][1] *= render_target_flipping;
-    proj[1][2] *= render_target_flipping;
-    proj[1][3] *= render_target_flipping;
+    proj[1][0] *= render_target_flipping_factor;
+    proj[1][1] *= render_target_flipping_factor;
+    proj[1][2] *= render_target_flipping_factor;
+    proj[1][3] *= render_target_flipping_factor;
 
     Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
 
@@ -180,7 +181,7 @@ void GfxSkyBody::render (GfxPipeline *p)
 
         shader->bindShader();
         shader->bind(mat->getBindings());
-        shader->bindGlobals(world, view, proj, viewport_dim);
+        shader->bindGlobals(world, view, proj, viewport_dim, render_target_flipping);
         shader->bindShaderParams();
 
         const GfxShaderParamMap &params = shader->getParams();

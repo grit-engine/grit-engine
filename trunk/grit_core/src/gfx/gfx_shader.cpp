@@ -106,13 +106,15 @@ template<class T> static void hack_set_constant(GfxShader *shader, const std::st
 void GfxShader::bindGlobals (const Ogre::Matrix4 &world,
                              const Ogre::Matrix4 &view,
                              const Ogre::Matrix4 &proj,
-                             const Vector2 &viewport_dim)
+                             const Vector2 &viewport_dim,
+                             bool render_target_flipping)
 {
     Ogre::Matrix4 world_view = view * world;
     Ogre::Matrix4 view_proj = proj * view; 
     Ogre::Matrix4 world_view_proj = proj * view * world;
     Vector4 viewport_size(viewport_dim.x, viewport_dim.y,
                           1.0f/viewport_dim.x, 1.0f/viewport_dim.y);
+    float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
 
     hack_set_constant(this, "global_world", world);
     hack_set_constant(this, "global_view", view);
@@ -159,6 +161,7 @@ void GfxShader::bindGlobals (const Ogre::Matrix4 &world,
     hack_set_constant(this, "global_skySunColour3", sky_sun_colour[3]);
     hack_set_constant(this, "global_skySunColour4", sky_sun_colour[4]);
 
+    hack_set_constant(this, "internal_rt_flip", render_target_flipping_factor);
 }
 
 void GfxShader::bindShader (void)

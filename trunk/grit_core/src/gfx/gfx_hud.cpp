@@ -1252,17 +1252,19 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
     }
     pos += offset;
 
-    Ogre::Matrix4 matrix_centre = Ogre::Matrix4::IDENTITY;
+    const Ogre::Matrix4 &I = Ogre::Matrix4::IDENTITY;
+
+    Ogre::Matrix4 matrix_centre = I;
     // move origin to center (for rotation)
     matrix_centre.setTrans(Ogre::Vector3(-text->getSize().x/2, text->getSize().y/2, 0));
 
     const Degree &orientation = text->getDerivedOrientation();
     Ogre::Matrix4 matrix_spin(Ogre::Quaternion(to_ogre(orientation), Ogre::Vector3(0,0,-1)));
 
-    Ogre::Matrix4 matrix_trans = Ogre::Matrix4::IDENTITY;
+    Ogre::Matrix4 matrix_trans = I;
     matrix_trans.setTrans(Ogre::Vector3(pos.x, pos.y, 0));
 
-    Ogre::Matrix4 matrix_d3d_offset = Ogre::Matrix4::IDENTITY;
+    Ogre::Matrix4 matrix_d3d_offset = I;
     if (d3d9) {
         // offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
         matrix_d3d_offset.setTrans(Ogre::Vector3(-0.5-win_size.x/2, 0.5-win_size.y/2, 0));
@@ -1270,13 +1272,15 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
         matrix_d3d_offset.setTrans(Ogre::Vector3(-win_size.x/2, -win_size.y/2, 0));
     }
 
-    Ogre::Matrix4 matrix_scale = Ogre::Matrix4::IDENTITY;
+    Ogre::Matrix4 matrix_scale = I;
     matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y ,1));
 
+    // TODO: render target flipping (see comment in text rendering, above)
+    bool render_target_flipping = false;
     Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin * matrix_centre;
 
     shader_text->bindShader();
-    shader_text->bindGlobals(matrix, Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY, win_size);
+    shader_text->bindGlobals(matrix, I, I, win_size, render_target_flipping);
     shader_text_binds->setBinding("colour", colour);
     shader_text_binds->setBinding("alpha", alpha);
     shader_text->bind(shader_text_binds);
@@ -1352,10 +1356,12 @@ void gfx_render_hud_one (GfxHudBase *base)
         const Degree &orientation = obj->getDerivedOrientation();
         Ogre::Matrix4 matrix_spin(Ogre::Quaternion(to_ogre(orientation), Ogre::Vector3(0,0,-1)));
 
-        Ogre::Matrix4 matrix_trans = Ogre::Matrix4::IDENTITY;
+        const Ogre::Matrix4 &I = Ogre::Matrix4::IDENTITY;
+
+        Ogre::Matrix4 matrix_trans = I;
         matrix_trans.setTrans(Ogre::Vector3(pos.x, pos.y, 0));
 
-        Ogre::Matrix4 matrix_d3d_offset = Ogre::Matrix4::IDENTITY;
+        Ogre::Matrix4 matrix_d3d_offset = I;
         if (d3d9) {
             // offsets for D3D rasterisation quirks, see http://msdn.microsoft.com/en-us/library/windows/desktop/bb219690(v=vs.85).aspx
             matrix_d3d_offset.setTrans(Ogre::Vector3(-0.5-win_size.x/2, 0.5-win_size.y/2, 0));
@@ -1363,13 +1369,16 @@ void gfx_render_hud_one (GfxHudBase *base)
             matrix_d3d_offset.setTrans(Ogre::Vector3(-win_size.x/2, -win_size.y/2, 0));
         }
 		
-        Ogre::Matrix4 matrix_scale = Ogre::Matrix4::IDENTITY;
+        Ogre::Matrix4 matrix_scale = I;
         matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y ,1));
 
+        // TODO: Is there no render target flipping?
+        // I guess we never rendered HUD to a texture on GL?
+        bool render_target_flipping = false;
         Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin;
 
         shader->bindShader();
-        shader->bindGlobals(matrix, Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY, win_size);
+        shader->bindGlobals(matrix, I, I, win_size, render_target_flipping);
         binds->setBinding("colour", obj->getColour());
         binds->setBinding("alpha", obj->getAlpha());
         shader->bind(binds);
