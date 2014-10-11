@@ -90,7 +90,7 @@
                 gdb valgrind libfreeimage-dev libzzip-dev libfreetype6-dev libglu1-mesa-dev \
                 libxt-dev libxaw7-dev libglew1.5-dev libxrandr-dev \
                 libgoogle-perftools-dev libopenal-dev libreadline-dev freeglut3-dev \
-                nvidia-cg-toolkit libvorbis-dev xutils-dev
+                nvidia-cg-toolkit libvorbis-dev xutils-dev libicu-dev
             </pre>
 
         </section>
@@ -116,15 +116,6 @@
             can run to fetch &amp; patch the dependencies.  You still have to
             build each one manually.  Increase the -j field below if you have
             more cores.
-
-            ICU (unicode library):
-
-            <pre>
-                cd dependencies/icu/source
-                ./configure --enable-static
-                make -j3
-                cd ../..
-            </pre>
 
             Grit OGRE fork (3D rendering library):
 
