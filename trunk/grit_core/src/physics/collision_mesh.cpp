@@ -177,7 +177,7 @@ void CollisionMesh::loadImpl (void)
 
     Ogre::DataStreamPtr file;
     try {
-        file = Ogre::ResourceGroupManager::getSingleton().openResource(name.substr(1),"GRIT");
+        file = Ogre::ResourceGroupManager::getSingleton().openResource(name.substr(1), "GRIT");
     } catch (Ogre::Exception &e) {
         GRIT_EXCEPT(e.getDescription());
     }
@@ -510,6 +510,9 @@ void CollisionMesh::loadImpl (void)
     if (is_static) {
         setInertia(Vector3(0,0,0));
     } else {
+        if (faceMaterials.size() > 0) {
+            CERR << "While loading \"" + name + "\": Dynamic trimesh is deprecated." << std::endl;
+        }
         if (compute_inertia) {
             btVector3 i;
             masterShape->calculateLocalInertia(mass,i);
