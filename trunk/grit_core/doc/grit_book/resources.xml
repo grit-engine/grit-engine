@@ -5,4 +5,86 @@
     This section will be written after I resolve some problems with the paths
     system in Lua, as the API will probably change.
 
+    Resources are things like <code>/foo/bar/MyThing</code>, that are named using a path from the
+    base game directory.  They may or may not actually exist as files on disk.  Typically resources
+    either represent assets defined in Lua files, such as classes, objects, etc (covered in the
+    various other chapters of this book), or the represent assets on disk, such as sound files,
+    textures, meshes, etc.  These disk resources have some special features, which are documented
+    here.
+
+    <section title="Disk Resources" id="disk_resources">
+
+        <todo>Currently it is necessary to pre-declare resources with disk_resource_add(name), or
+        Grit will raise an error.  This will be fixed to declare them lazily.</todo>
+
+        Disk resources can either be loaded or unloaded, which means whether or not they are
+        occupying RAM (this can be CPU RAM or GPU RAM).  When a body is created that depends on a
+        resource, e.g. a GfxBody depending on mesh and texture assets, those resources will be
+        automatically loaded if needed.  However, loading the resource immediately before creating
+        the body will introduce a noticeable delay, which is not what you want in a game.  So there
+        are a number of API calls that can be used to control the loading and unloading of
+        resources.  In the following calls, <code>name</code> is an absolute path.  To give a
+        relative path, use backticks <sref id="lua_paths"/> to give a relative path.
+
+        <lua>
+            disk_resource_has(name)  // Check if loading a resource would cause an error.
+            disk_resource_load(name)
+            disk_resource_unload(name)
+            disk_resource_loaded(name)
+            disk_resource_reload(name)  // Useful if you change a texture / mesh
+        </lua>
+
+        Using the above calls, it is possible to load resources ahead of time.  This is 
+        useful in a game that is too small to need streaming, as you can load everything at the
+        beginning.  However there is a catch.  Grit manages the available memory and GPU memory.
+        If, upon load, there is not enough CPU or GPU RAM, Grit will unload the least recently used
+        resource to make space.  To tell Grit whether or not a resource is in use, the following
+        calls are used:
+
+        <lua>
+            disk_resource_acquire(name)
+            disk_resource_release(name)
+            disk_resource_users(name)
+        </lua>
+
+        It is best to <def>acquire</def> the <def>resource</def>, then <def>load</def> it.  Until
+        everyone has <def>released</def> it, it will not be unloaded automatically.  The number of
+        times a resource has been acquired is shown by the <code>users</code> call.  When you are
+        done with a resource, you can either leave it loaded or unload it, but either way you must
+        <def>release</def> it.  If you know the resource won't be used again you can unload it, but
+        otherwise it's best to leave it loaded in case you need to use it again.  Resources left
+        loaded but not released will be cleaned up if needed.
+        
+        Note that it is <emph>not</emph> true that if a resource has users then it must be loaded.
+        You can acquire a resource before loading it.  You can also unload it before releasing it.
+        So the state of being loaded and the state of being used are independent.
+
+        The following calls allow you to query the state of the system itself:
+
+        <lua>
+            disk_resource_num()  // Count all disk resources.
+            disk_resource_num_loaded()  // Count all loaded disk resources.
+            disk_resource_all()  // List all disk resources.
+            disk_resource_all_loaded()  // List all loaded disk resources.
+            host_ram_available()  // CPU RAM cap (configured by user).
+            host_ram_used()
+            gfx_gpu_ram_available()  // GPU RAM cap (configured by user.
+            gfx_gpu_ram_used()
+        </lua>
+
+        Finally, there are some verbose modes you can turn on to see when various things are
+        happening:
+
+        <lua>
+            disk_resource_get_gfx_verbose_loads()
+            disk_resource_set_gfx_verbose_loads(b)
+            disk_resource_get_verbose_loads()
+            disk_resource_set_verbose_loads(b)
+            disk_resource_get_verbose_incs()
+            disk_resource_set_verbose_incs(b)
+        </lua>
+
+    </section>
+    
+
 </section>

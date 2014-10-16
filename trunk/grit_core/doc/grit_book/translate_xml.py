@@ -74,7 +74,7 @@ class Node:
     return not (self == other)
 
 
-inline_tags = { 'def', 'web', 'issue', 'todo', 'sref' }
+inline_tags = { 'def', 'web', 'issue', 'todo', 'sref', 'code', 'emph' }
 
 def MinimiseWhiteSpace(n):
     """Convert any whitespace to a single space."""
@@ -171,6 +171,10 @@ def TranslateParagraphs(content, context_ast, dosplit=True):
                 r2.append(Node('Issue', context_ast, id=int(c.get('id'))))
             elif c.tag == "todo":
                 r2.append(Node('Todo', context_ast, data=flattened))
+            elif c.tag == "emph":
+                r2.append(Node('Emph', context_ast, data=flattened))
+            elif c.tag == "code":
+                r2.append(Node('Code', context_ast, data=flattened))
             elif c.tag == "sref":
                 target = c.get('id')
                 if not target:

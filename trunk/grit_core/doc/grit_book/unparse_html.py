@@ -105,9 +105,9 @@ def GeneratePage(title, content, book):
 
 <div class="header">'''
     if book:
-        s += '\n    <div id="complete"><a href="complete.html">Complete Manual</a></div>'
+        s += '\n    <div id="complete"><a href="complete.html">Print Version</a></div>'
     else:
-        s += '\n    <div id="complete"><a href="index.html">Web Manual</a></div>'
+        s += '\n    <div id="complete"><a href="index.html">Web Version</a></div>'
     s += '\n    <div class="logo"> </div>'
     if book:
         s += '\n<ol id="menubar">'
@@ -160,6 +160,10 @@ def UnparseHtmlInlines(parent, inner=False):
         elif n.kind == 'Issue':
             url = 'http://code.google.com/p/grit/issues/detail?id=%d' % n.id
             s += '<a class="issue" href="%s">issue %d</a>' % (url, n.id)
+        elif n.kind == 'Emph':
+            s += '<span class="emph">%s</span>' % UnparseHtmlInlines(n.data, True)
+        elif n.kind == 'Code':
+            s += '<code>%s</code>' % UnparseHtmlInlines(n.data, True)
         elif n.kind == 'Todo':
             s += '(<span class="todo">TODO: %s</span>)' % UnparseHtmlInlines(n.data, True)
         elif n.kind == 'Web':

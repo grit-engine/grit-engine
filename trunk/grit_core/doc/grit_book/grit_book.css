@@ -4,7 +4,8 @@ html {
 
 /** The whole page, including left and right margins. */
 body {
-        font-family: sans-serif;
+        font-family: Arial, sans-serif;
+        font-size: 12pt;
         width: 974px;
         margin: 0 auto;
         background-image: url('bg.jpg');
@@ -69,7 +70,6 @@ ol#menubar li a {
         margin: 0;
         background-color: #000;
         text-decoration: none;
-        font-family: Arial, sans-serif;
 }
 
 ol#menubar li a:hover {
@@ -88,7 +88,6 @@ ol#menubar li div a {
         display: block;
         white-space: nowrap;
         text-decoration: none;
-        font-family: Arial, sans-serif;
         font-size: 11pt;
 }
 
@@ -171,6 +170,15 @@ img.thumbnail {
 span.def {
         font-style: italic;
         font-weight: bold;
+}
+
+span.emph {
+        font-style: italic;
+}
+
+code {
+        font-family: Courier, monospace;
+        font-size: 13pt;
 }
 
 span.todo {
