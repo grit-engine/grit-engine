@@ -46,16 +46,18 @@ typedef SharedPtr<GfxShaderBindings> GfxShaderBindingsPtr;
 struct GfxShaderParam {
     GfxGslParamType t; 
     // Use std::array instead of c-style array to work around a bug in Microsoft Visual Studio 2013
-    std::array<float, 4> fs;
-    std::array<int32_t, 4> is;
+    typedef std::array<float, 4> F4;
+    F4 fs;
+    typedef std::array<int32_t, 4> I4;
+    I4 is;
     GfxShaderParam (void) { }
     // This form for textures
-    GfxShaderParam (GfxGslParamType t, const Vector4 &v) : t(t), fs({v.x, v.y, v.z, v.w}), is({0}) { }
-    GfxShaderParam (int v) : t(GFX_GSL_FLOAT1), fs({0}), is({v}) { }
-    GfxShaderParam (float v) : t(GFX_GSL_FLOAT1), fs({v}), is({0}) { }
-    GfxShaderParam (const Vector2 &v) : t(GFX_GSL_FLOAT2), fs({v.x, v.y}), is({0}) { }
-    GfxShaderParam (const Vector3 &v) : t(GFX_GSL_FLOAT3), fs({v.x, v.y, v.z}), is({0}) { }
-    GfxShaderParam (const Vector4 &v) : t(GFX_GSL_FLOAT4), fs({v.x, v.y, v.z, v.w}), is({0}) { }
+    GfxShaderParam (GfxGslParamType t, const Vector4 &v) : t(t), fs(F4{{v.x, v.y, v.z, v.w}}), is(I4{{0}}) { }
+    GfxShaderParam (int v) : t(GFX_GSL_FLOAT1), fs(F4{{0}}), is(I4{{v}}) { }
+    GfxShaderParam (float v) : t(GFX_GSL_FLOAT1), fs(F4{{v}}), is(I4{{0}}) { }
+    GfxShaderParam (const Vector2 &v) : t(GFX_GSL_FLOAT2), fs(F4{{v.x, v.y}}), is(I4{{0}}) { }
+    GfxShaderParam (const Vector3 &v) : t(GFX_GSL_FLOAT3), fs(F4{{v.x, v.y, v.z}}), is(I4{{0}}) { }
+    GfxShaderParam (const Vector4 &v) : t(GFX_GSL_FLOAT4), fs(F4{{v.x, v.y, v.z, v.w}}), is(I4{{0}}) { }
 };
 
 typedef std::map<std::string, GfxShaderParam> GfxShaderParamMap;
