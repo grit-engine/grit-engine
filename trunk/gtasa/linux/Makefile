@@ -9,7 +9,7 @@ TARGETS=extract colread imgread ideread iplread ifpread dffread csvread handling
 
 all: $(TARGETS)
 
-CXXFLAGS += $(GRIT_BASE_CXXFLAGS) $(OGRE_CXXFLAGS) $(QUEX_CXXFLAGS) -I $(ROOT)/dependencies/util
+CXXFLAGS += $(GRIT_BASE_CXXFLAGS) $(OGRE_CXXFLAGS) $(QUEX_CXXFLAGS) -I $(ROOT)/dependencies/util -I $(ROOT)/grit_core/src
 LDFLAGS  += $(GRIT_BASE_LDFLAGS) $(OGRE_LDFLAGS) $(QUEX_LDFLAGS)
 LDLIBS   += $(GRIT_BASE_LDLIBS) $(OGRE_LDLIBS) $(QUEX_LDLIBS)
 

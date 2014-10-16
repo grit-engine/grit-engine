@@ -20,6 +20,7 @@
  */
 
 #include <cstdlib>
+#include <cstddef>
 #include <climits>
 #include <locale>
 //#include <cstdarg>
