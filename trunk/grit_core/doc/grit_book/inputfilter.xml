@@ -76,7 +76,7 @@
     For debugging purposes, it may be useful to get see the complete set of currently existing input
     filters.  The following function returns a map from order number to the description string.  The
     only way to get a reference to the actual input filter is to find which variable it is stored
-    in, on the Lua side.
+    in, on the Lua side, e.g. my_filter in the above examples.
 
     <lua>
         input_filter_map()
