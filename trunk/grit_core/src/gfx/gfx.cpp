@@ -99,10 +99,10 @@ Vector3 sky_cloud_colour;
 float sky_cloud_coverage;
 Vector3 hell_colour;
 
-GfxEnvCubeDiskResource *scene_env_cube = NULL;
+DiskResourcePtr<GfxEnvCubeDiskResource> scene_env_cube;
 float global_exposure = 1;
 float global_saturation = 1;
-GfxColourGradeLUTDiskResource *scene_colour_grade_lut = NULL;
+DiskResourcePtr<GfxColourGradeLUTDiskResource> scene_colour_grade_lut;
 
 // abuse ogre fog params to store several things
 static void set_ogre_fog (void)
@@ -241,26 +241,10 @@ static void reset_env_cube (const Ogre::MaterialPtr &m, GfxEnvCubeDiskResource *
     }
 }
 
-void gfx_env_cube (GfxEnvCubeDiskResource *v)
+void gfx_env_cube (const DiskResourcePtr<GfxEnvCubeDiskResource> &v)
 {
-    if (v == scene_env_cube) return;
+    if (scene_env_cube == v) return;
     //CVERB << "Setting scene env cube to " << v << std::endl;
-
-    if (v != NULL) {
-        // have to try loading the new one first, in case it fails to load
-        v->increment();
-        try {
-            if (!v->isLoaded()) v->load();
-        } catch (const Exception &e) {
-            v->decrement();
-            throw e;
-        }
-    }
-
-    if (scene_env_cube != NULL) {
-        scene_env_cube->decrement();
-        bgl->finishedWith(scene_env_cube);
-    }
 
     // Alpha materials are not part of the full screen deferred shading pass, so have
     // the env cube texture bound as part of the material used to render that pass
@@ -286,26 +270,10 @@ GfxColourGradeLUTDiskResource *gfx_colour_grade (void)
     return scene_colour_grade_lut;
 }
 
-void gfx_colour_grade (GfxColourGradeLUTDiskResource *v)
+void gfx_colour_grade (const DiskResourcePtr<GfxColourGradeLUTDiskResource> &v)
 {
     if (v == scene_colour_grade_lut) return;
     //CVERB << "Setting colour grade to " << v << std::endl;
-
-    if (v != NULL) {
-        // have to try loading the new one first, in case it fails to load
-        v->increment();
-        try {
-            if (!v->isLoaded()) v->load();
-        } catch (const Exception &e) {
-            v->decrement();
-            throw e;
-        }
-    }
-
-    if (scene_colour_grade_lut != NULL) {
-        scene_colour_grade_lut->decrement();
-        bgl->finishedWith(scene_colour_grade_lut);
-    }
 
     scene_colour_grade_lut = v;
 }
@@ -607,8 +575,10 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 
                 }
 
+                bool additive = gfx_option(GFX_ANAGLYPH);
+
                 eye_left->render(opts_left);
-                eye_right->render(opts_right, gfx_option(GFX_ANAGLYPH));
+                eye_right->render(opts_right, additive);
 
             } else {
                 eye_left->render(opts_left);
@@ -636,7 +606,8 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 
 // }}}
 
-void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector3 &cam_pos, float saturation, const Vector3 &ambient)
+void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector3 &cam_pos,
+                        float saturation, const Vector3 &ambient)
 {
     if ((size & (size-1)) != 0) GRIT_EXCEPT("Can only bake env cubes with power of 2 size");
 
@@ -1022,7 +993,7 @@ size_t gfx_init (GfxCallback &cb_)
         gfx_particle_init();
         gfx_hud_init();
  
-        gfx_env_cube(NULL);
+        gfx_env_cube(DiskResourcePtr<GfxEnvCubeDiskResource>());
 
         return winid;
     } catch (Ogre::Exception &e) {
@@ -1086,7 +1057,7 @@ void gfx_shutdown (void)
 
 Vector3 gfx_colour_grade_look_up (const Vector3 &v)
 {
-    if (scene_colour_grade_lut == NULL) return v;
+    if (scene_colour_grade_lut == nullptr) return v;
     return scene_colour_grade_lut->lookUp(v);
 }
 

@@ -400,6 +400,15 @@ void input_filter_flush (lua_State *L)
     update_grabbed();
 }
 
+std::vector<std::pair<double,std::string>> input_filter_list (void)
+{
+    std::vector<std::pair<double,std::string>> r;
+    for (IFMap::const_iterator i=ifmap.begin(),i_=ifmap.end() ; i!=i_ ; ++i) {
+        r.emplace_back(i->second->order, i->second->description);
+    }
+    return r;
+}
+
 void input_filter_set_cursor_hidden (bool v)
 {
     cursor_hidden = v;
@@ -423,7 +432,9 @@ void input_filter_shutdown (lua_State *L)
 
 
 InputFilter::InputFilter (double order, const std::string &desc)
-  : modal(false), enabled(true), mouseCapture(false), order(order), destroyed(false), description(desc)
+
+  : modal(false), enabled(true), mouseCapture(false), destroyed(false), order(order),
+    description(desc)
 {
     IFMap::iterator i = ifmap.find(order);
     if (i != ifmap.end()) {

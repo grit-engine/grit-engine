@@ -26,6 +26,8 @@
 #ifndef OPTION_H
 #define OPTION_H
 
+#include <exception.h>
+
 /** Abstract base class for an option (i.e. a configurable parameter of one of
  * the Grit subsystems such as gfx_option) that defines the valid range of
  * values. */
@@ -38,17 +40,17 @@ template<class T> struct ValidOption {
 
     /** Writes to the stream a string of the form "must be <property of values
      * that are valid in this range>" . */
-    virtual void err (std::ostream &o) = 0;
+    virtual void err (ExceptionStream &o) = 0;
 
     /** Throws an error with an appropriate message including the name of the
      * option if the given value is not valid. */
     virtual void maybeThrow (const std::string name, T v)
     {
         if (!isValid(v)) {
-            std::stringstream ss;
-            ss << name << " option: new value " << v << ": ";
-            err(ss);
-            GRIT_EXCEPT(ss.str());
+            ExceptionStream ex;
+            ex << name << " option: new value " << v << ": ";
+            err(ex);
+            ex << ENDL;
         }
     }
 };
@@ -58,7 +60,7 @@ template<class T> struct ValidOptionRange : ValidOption<T> {
     T min, max;
     ValidOptionRange (T min_, T max_) : min(min_), max(max_) { }
     virtual bool isValid (T v) { return v>=min && v<=max; }
-    virtual void err (std::ostream &o) { o << "must be between "<<min<<" and "<<max; }
+    virtual void err (ExceptionStream &o) { o << "must be between "<<min<<" and "<<max; }
 };
 
 /** An implementation of ValidOption that allows a defined list of values.  A must be of type T[n] for some literal n. */
@@ -76,7 +78,7 @@ template<class T, class A> struct ValidOptionList : ValidOption<T> {
             if (v==list[i]) return true;
         return false;
     }   
-    virtual void err (std::ostream &o)
+    virtual void err (ExceptionStream &o)
     {
         o << "must be one of [";
         for (unsigned i=0 ; i<sizeof(A)/sizeof(T) ; ++i)

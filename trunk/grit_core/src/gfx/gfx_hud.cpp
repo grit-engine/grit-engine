@@ -219,7 +219,7 @@ Vector2 GfxHudBase::getDerivedBounds (void)
 
 GfxHudObject::GfxHudObject (GfxHudClass *hud_class)
   : GfxHudBase(), hudClass(hud_class),
-    texture(NULL), uv1(0,0), uv2(1,1), cornered(false), size(32,32), sizeSet(false), colour(1,1,1), alpha(1),
+    uv1(0,0), uv2(1,1), cornered(false), size(32,32), sizeSet(false), colour(1,1,1), alpha(1),
     needsParentResizedCallbacks(false), needsInputCallbacks(false), needsFrameCallbacks(false),
     refCount(0)
 {
@@ -253,11 +253,7 @@ void GfxHudObject::decRefCount (lua_State *L)
 void GfxHudObject::destroy (void)
 {
     if (aliveness != DEAD) {
-        if (texture) {
-            texture->decrement();
-            bgl->finishedWith(texture);
-            texture = NULL;
-        }
+        texture = nullptr;
         GfxHudBase::destroy();
     }
 }
@@ -753,15 +749,10 @@ void GfxHudObject::triggerDestroy (lua_State *L)
     STACK_CHECK;
 }
 
-void GfxHudObject::setTexture (GfxTextureDiskResource *v)
+void GfxHudObject::setTexture (const DiskResourcePtr<GfxTextureDiskResource> &v)
 {
     assertAlive();
-    if (texture != NULL) {
-        texture->decrement();
-        bgl->finishedWith(texture);
-    }
-    if (v != NULL) {
-        v->increment();
+    if (v != nullptr) {
         if (!v->isLoaded()) v->load();
     }
     texture = v;
@@ -1321,8 +1312,8 @@ void gfx_render_hud_one (GfxHudBase *base)
         GfxTextureDiskResource *tex = obj->getTexture();
         if (tex!=NULL && !tex->isLoaded()) {
             CERR << "Hud object using unloaded texture: \"" << (*tex) << "\"" << std::endl;
-            obj->setTexture(NULL);
-            tex = NULL;
+            obj->setTexture(DiskResourcePtr<GfxTextureDiskResource>());
+            tex = nullptr;
         }
 
         bool is_cornered = obj->isCornered() && tex != NULL;

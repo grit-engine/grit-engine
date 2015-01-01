@@ -75,7 +75,7 @@ class GfxGPUDiskResource : public GfxBaseDiskResource {
       : GfxBaseDiskResource(name)
     { } 
     /** Returns true. */
-    virtual bool isGPUResource (void) { return true; }
+    virtual bool isGPUResource (void) const { return true; }
 
 };
 

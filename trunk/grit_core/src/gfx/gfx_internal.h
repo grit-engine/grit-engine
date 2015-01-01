@@ -22,8 +22,6 @@
 #include <string>
 #include <sstream>
 
-#define THROW_DEAD(name) do { GRIT_EXCEPT(name+" has been destroyed."); } while (0)
-
 #include <Ogre.h>
 #include <OgreMeshManager.h>
 #include <OgreOctreeSceneManager.h>
@@ -69,7 +67,7 @@ extern Ogre::RenderSystem *ogre_rs;
 extern Ogre::OctreeSceneManager *ogre_sm;
 extern Ogre::SceneNode *ogre_root_node;
 extern Ogre::Light *ogre_sun;
-extern GfxEnvCubeDiskResource *scene_env_cube;
+extern DiskResourcePtr<GfxEnvCubeDiskResource> scene_env_cube;
 extern Ogre::Matrix4 shadow_view_proj[3];
 
 static inline bool stereoscopic (void)
@@ -85,7 +83,7 @@ extern float fog_density;
 extern float env_brightness;
 extern float global_exposure;
 extern float global_saturation;
-extern GfxColourGradeLUTDiskResource *scene_colour_grade_lut;
+extern DiskResourcePtr<GfxColourGradeLUTDiskResource> scene_colour_grade_lut;
 
 extern Vector3 sun_direction;
 extern Vector3 sunlight_direction;

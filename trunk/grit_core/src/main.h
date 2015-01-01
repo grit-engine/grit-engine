@@ -43,8 +43,6 @@ extern "C" {
 #include "bullet_debug_drawer.h"
 
 
-#include "physics/physics_world.h"
-
 /** A singleton log object through which all internal debug log output is passed. */
 extern CentralisedLog clog;
 

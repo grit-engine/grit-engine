@@ -45,31 +45,25 @@ class GfxFont {
     typedef std::map<codepoint_t, CharRect> CharRectMap;
     const std::string name;
     private:
-    GfxTextureDiskResource *texture;
+    DiskResourcePtr<GfxTextureDiskResource> texture;
     unsigned long height;
     CharRectMap coords;
     public:
     GfxFont (const std::string &name, GfxTextureDiskResource *tex, unsigned long height)
       : name(name), texture(tex), height(height)
     {
-        texture->increment();
         if (!texture->isLoaded()) texture->load();
     }
     ~GfxFont (void)
     {
-        texture->decrement();
-        bgl->finishedWith(texture);
     }
     unsigned long getHeight (void) { return height; }
     void setHeight (unsigned long v) { height = v; }
     GfxTextureDiskResource *getTexture (void) {
-        return texture;
+        return &*texture;
     }
-    void setTexture (GfxTextureDiskResource *tex) {
-        APP_ASSERT(tex != NULL);
-        tex->increment();
-        texture->decrement();
-        bgl->finishedWith(texture);
+    void setTexture (const DiskResourcePtr<GfxTextureDiskResource> &tex) {
+        APP_ASSERT(tex != nullptr);
         if (!tex->isLoaded()) tex->load();
         texture = tex;
     }

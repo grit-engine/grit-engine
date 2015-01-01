@@ -703,47 +703,8 @@ TRY_END
 
 
 
-int global_core_option (lua_State *L)
-{
-TRY_START
-    if (lua_gettop(L)==2) {
-        std::string opt = check_string(L,1);
-        int t;
-        CoreBoolOption o0;
-        CoreIntOption o1;
-        CoreFloatOption o2;
-        core_option_from_string(opt, t, o0, o1, o2);
-        switch (t) {
-            case -1: my_lua_error(L,"Unrecognised core option: \""+opt+"\"");
-            case 0: core_option(o0, check_bool(L,2)); break;
-            case 1: core_option(o1, check_t<int>(L,2)); break;
-            case 2: core_option(o2, check_float(L,2)); break;
-            default: my_lua_error(L,"Unrecognised type from core_option_from_string");
-        }
-        return 0;
-    } else {
-        check_args(L,1);
-        std::string opt = check_string(L,1);
-        int t;
-        CoreBoolOption o0;
-        CoreIntOption o1;
-        CoreFloatOption o2;
-        core_option_from_string(opt, t, o0, o1, o2);
-        switch (t) {
-            case -1: my_lua_error(L,"Unrecognised core option: \""+opt+"\"");
-            case 0: lua_pushboolean(L,core_option(o0)); break;
-            case 1: lua_pushnumber(L,core_option(o1)); break;
-            case 2: lua_pushnumber(L,core_option(o2)); break;
-            default: my_lua_error(L,"Unrecognised type from core_option_from_string");
-        }
-        return 1;
-    }
-TRY_END
-}
-
 static const luaL_reg global[] = {
     {"streamer_centre",global_streamer_centre},
-    {"core_option",global_core_option},
     {"class_add",global_class_add},
     {"class_del",global_class_del},
     {"class_all_del",global_class_all_del},

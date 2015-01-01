@@ -55,8 +55,9 @@ class GfxInstances : public GfxNode, public Ogre::MovableObject {
     std::vector<float> instBufRaw;
     bool dirty;
     bool enabled;
+    const DiskResourcePtr<GfxMeshDiskResource> gdr;
 
-    GfxInstances (GfxMeshDiskResource *mesh, const GfxNodePtr &par_);
+    GfxInstances (const DiskResourcePtr<GfxMeshDiskResource> &gdr, const GfxNodePtr &par_);
     ~GfxInstances (void);
 
     public:

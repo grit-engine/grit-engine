@@ -91,8 +91,6 @@ class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
     Ogre::Matrix4 *boneMatrices;
     unsigned short numBoneMatrices;
     
-    bool freshFrame; // an optimisation -- do not recalculate stuff multiple times per frame
-
 
 
     protected:
@@ -106,10 +104,13 @@ class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
     bool enabled;
     bool castShadows;
     bool wireframe;
+    bool firstPerson;
     std::vector<bool> manualBones;
     GfxStringMap initialMaterialMap;
+    const DiskResourcePtr<GfxMeshDiskResource> gdr;
 
-    GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNodePtr &par_);
+    GfxBody (const DiskResourcePtr<GfxMeshDiskResource> &gdr,
+             const GfxStringMap &sm, const GfxNodePtr &par_);
     ~GfxBody ();
 
 
@@ -151,6 +152,9 @@ class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
 
     bool getWireframe (void);
     void setWireframe (bool v);
+
+    bool getFirstPerson (void);
+    void setFirstPerson (bool v);
 
     GfxPaintColour getPaintColour (int i);
     void setPaintColour (int i, const GfxPaintColour &c);
@@ -203,4 +207,6 @@ class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
     friend class GfxMeshDiskResource;
 };
 
+// called every frame
+void gfx_body_render_first_person (GfxPipeline *p);
 #endif

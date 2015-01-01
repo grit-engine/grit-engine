@@ -48,9 +48,6 @@ public:
     /** Specialised unloading functionality for audio files. */
 	virtual void unloadImpl (void);
 
-    /** Returns false. */
-	virtual bool isGPUResource (void);
-
     /** The name of the resource, i.e. the filename on disk as an absolute Grit path. */
 	virtual const std::string &getName (void) const { return name; }
 

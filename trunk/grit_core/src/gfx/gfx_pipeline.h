@@ -61,6 +61,7 @@ struct CameraOpts {
         pos(0,0,0), dir(0,0,0,1) { }
 };
 
+/** The pipeline handles complete rendering of the scene for one 'eye' of a stereographic view. */
 class GfxPipeline {
     Ogre::Camera *cam;
     GfxLastRenderStats gBufferStats;

@@ -40,10 +40,11 @@ extern "C" {
         #include <lualib.h>
 }
 
+#include "../external_table.h"
 #include "../grit_lua_util.h"
+#include "../lua_ptr.h"
 #include "../path_util.h"
 #include "../vect_util.h"
-#include "../lua_ptr.h"
 
 #include "gfx_pipeline.h"
 #include "gfx_font.h"
@@ -207,7 +208,7 @@ class GfxHudObject : public GfxHudBase {
     protected:
     fast_erase_vector<GfxHudBase*> children;
 
-    GfxTextureDiskResource *texture;
+    DiskResourcePtr<GfxTextureDiskResource> texture;
     Vector2 uv1, uv2;
     bool cornered;
     Vector2 size;
@@ -255,8 +256,8 @@ class GfxHudObject : public GfxHudBase {
     bool isCornered (void) const { assertAlive(); return cornered; }
     void setCornered (bool v) { assertAlive(); cornered = v; }
 
-    GfxTextureDiskResource *getTexture (void) const { assertAlive(); return texture; }
-    void setTexture (GfxTextureDiskResource *v);
+    GfxTextureDiskResource *getTexture (void) const { assertAlive(); return &*texture; }
+    void setTexture (const DiskResourcePtr<GfxTextureDiskResource> &v);
 
     void setSize (lua_State *L, const Vector2 &v);
     Vector2 getSize (void) { assertAlive(); return size; }

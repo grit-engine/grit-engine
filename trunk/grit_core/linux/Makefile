@@ -96,6 +96,7 @@ GRIT_OBJ=\
         collision_mesh.o \
         colour_conversion.o \
         console.o \
+		core_option.o \
         dense_index_map.o \
         disk_resource.o \
         external_table.o \

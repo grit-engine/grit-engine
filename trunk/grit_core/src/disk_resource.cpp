@@ -20,10 +20,15 @@
  */
 
 
-#include "gfx/gfx_disk_resource.h"
-#include "audio/audio_disk_resource.h"
+#include "core_option.h"
 #include "main.h"
 
+#include "gfx/gfx_disk_resource.h"
+
+#include "audio/audio_disk_resource.h"
+#include "physics/collision_mesh.h"
+
+bool disk_resource_foreground_warnings = true;
 bool disk_resource_verbose_loads = false;
 bool disk_resource_verbose_incs = false;
 
@@ -75,12 +80,6 @@ DiskResources disk_resource_all_loaded (void)
     return r;
 }
  
-DiskResource *disk_resource_get (const std::string &rn)
-{
-    if (!disk_resource_has(rn)) return NULL;
-    return disk_resource_map[rn];
-}
-
 static bool ends_with (const std::string &str, const std::string &snippet)
 {
     if (snippet.length() > str.length()) return false;
@@ -89,19 +88,19 @@ static bool ends_with (const std::string &str, const std::string &snippet)
 
 DiskResource *disk_resource_get_or_make (const std::string &rn)
 {
-    DiskResource *dr = disk_resource_get(rn);
-    if (dr != NULL) return dr;
+    if (disk_resource_has(rn))
+        return disk_resource_map[rn];
 
     size_t pos = rn.rfind('.');
     if (pos == rn.npos) {
-        GRIT_EXCEPT("Ignoring resource \""+rn+"\" as "
-                    "it does not have a file extension.");
+        EXCEPT << "Disk resource \"" << rn << "\" does not have a file extension." << ENDL;
     }
     std::string suffix(rn, pos+1);
 
     const char *texture_formats[] = { "jpg", "png", "tga", "tiff", "hdr", "dds" };
     unsigned num_texture_formats = sizeof(texture_formats)/sizeof(*texture_formats);
 
+    DiskResource *dr = nullptr;
     if (suffix == "mesh") {
         dr = new GfxMeshDiskResource(rn);
     } else if (suffix == "tcol" || suffix == "gcol" || suffix == "bcol") {
@@ -164,6 +163,25 @@ void DiskResource::load (void)
     callReloadWatchers();
 }
 
+void DiskResource::loadForeground (void)
+{
+    if (disk_resource_foreground_warnings)
+        CLOG << "WARNING: Resource loaded in rendering thread: " << getName() << std::endl;
+    load();
+}
+
+void DiskResource::decrement (void)
+{
+    APP_ASSERT(users > 0);
+    users--;
+    if (disk_resource_verbose_incs)
+        CVERB << "-- " << getName() << "(now " << users << ")" << std::endl;
+    // Maybe reclaim now / later
+    if (users == 0) {
+        bgl->finishedWith(this);
+    }
+}
+
 void DiskResource::unload (void)
 {
     APP_ASSERT(loaded);
@@ -173,7 +191,6 @@ void DiskResource::unload (void)
         CVERB << "FREE " << getName() << std::endl;
     for (unsigned i=0 ; i<dependencies.size() ; ++i) {
         dependencies[i]->decrement();
-        bgl->finishedWith(dependencies[i]);
     }
     dependencies.clear();
     unloadImpl();

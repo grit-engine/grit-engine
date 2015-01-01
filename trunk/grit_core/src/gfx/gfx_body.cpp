@@ -130,9 +130,10 @@ void GfxBody::updateBoneMatrixes (void)
 
 void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
 {
-    bool shadow_cast = ogre_sm->_getCurrentRenderStage() == Ogre::SceneManager::IRS_RENDER_TO_TEXTURE;
+    bool shadow_cast =
+        ogre_sm->_getCurrentRenderStage() == Ogre::SceneManager::IRS_RENDER_TO_TEXTURE;
 
-    if (!enabled || fade < 0.000001) return;
+    if (!enabled || fade < 0.000001 || firstPerson) return;
 
     bool do_wireframe = (wireframe || gfx_option(GFX_WIREFRAME));
     bool do_regular = !(do_wireframe && gfx_option(GFX_WIREFRAME_SOLID));
@@ -162,8 +163,6 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
         }
 
     } else {
-
-        freshFrame = true;
 
         // Add each visible Sub to the queue
         for (unsigned i=0 ; i<subList.size() ; ++i) {
@@ -269,19 +268,15 @@ GfxBodyPtr GfxBody::make (const std::string &mesh_name,
                           const GfxStringMap &sm,
                           const GfxNodePtr &par_)
 {
-    DiskResource *dr = disk_resource_get(mesh_name);
-    if (dr==NULL) GRIT_EXCEPT("No such resource: \""+mesh_name+"\"");
-
-    if (!dr->isLoaded()) GRIT_EXCEPT("Resource not yet loaded: \""+mesh_name+"\"");
-
-    GfxMeshDiskResource *gdr = dynamic_cast<GfxMeshDiskResource*>(dr);
-    if (gdr==NULL) GRIT_EXCEPT("Resource is not a mesh: \""+mesh_name+"\"");
+    auto gdr = disk_resource_use<GfxMeshDiskResource>(mesh_name);
+    if (gdr == nullptr) GRIT_EXCEPT("Resource is not a mesh: \"" + mesh_name + "\"");
 
     return GfxBodyPtr(new GfxBody(gdr, sm, par_));
 }
 
-GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNodePtr &par_)
-  : GfxFertileNode(par_), initialMaterialMap(sm)
+GfxBody::GfxBody (const DiskResourcePtr<GfxMeshDiskResource> &gdr, const GfxStringMap &sm,
+                  const GfxNodePtr &par_)
+  : GfxFertileNode(par_), initialMaterialMap(sm), gdr(gdr)
 {
     node->attachObject(this);
 
@@ -296,10 +291,9 @@ GfxBody::GfxBody (GfxMeshDiskResource *gdr, const GfxStringMap &sm, const GfxNod
     castShadows = true;
     skeleton = NULL;
     wireframe = false;
-    freshFrame = true;
+    firstPerson = false;
 
     reinitialise();
-
 }
 
 unsigned GfxBody::getSubMeshByOriginalMaterialName (const std::string &n)
@@ -486,6 +480,16 @@ void GfxBody::setWireframe (bool v)
 {
     if (dead) THROW_DEAD(className);
     wireframe = v;
+}
+
+bool GfxBody::getFirstPerson (void)
+{
+    return firstPerson;
+}
+void GfxBody::setFirstPerson (bool v)
+{
+    if (dead) THROW_DEAD(className);
+    firstPerson = v;
 }
 
 GfxPaintColour GfxBody::getPaintColour (int i)
@@ -726,4 +730,10 @@ void GfxBody::setEnabled (bool v)
 const std::string &GfxBody::getMeshName (void)
 {
     return mesh->getName();
+}
+
+
+void gfx_body_render_first_person (GfxPipeline *p)
+{
+    (void) p;
 }

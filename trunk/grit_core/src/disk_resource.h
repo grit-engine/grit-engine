@@ -23,6 +23,7 @@
 #include <set>
 
 class DiskResource;
+template <class T> class DiskResourcePtr;
 typedef std::vector<DiskResource*> DiskResources;
 
 #ifndef DiskResource_h
@@ -31,6 +32,7 @@ typedef std::vector<DiskResource*> DiskResources;
 #include <string>
 
 #include "centralised_log.h"
+
 
 /** \file
  *
@@ -47,6 +49,9 @@ typedef std::vector<DiskResource*> DiskResources;
  * development of games, where e.g. textures can be tweaked on disk and
  * reloaded in the game for instant preview.
  */
+
+/** Whether or not to print warnings when a resource is loaded in foreground thread. */
+extern bool disk_resource_foreground_warnings;
 
 /** Whether or not disk resource (un)loads trigger a log message. */
 extern bool disk_resource_verbose_loads;
@@ -70,9 +75,6 @@ DiskResources disk_resource_all_loaded (void);
  * The disk resource will begin life unloaded.
  */
 DiskResource *disk_resource_get_or_make (const std::string &rn);
-
-/** Retrieve the existing disk resource or NULL if it does not exist. */
-DiskResource *disk_resource_get (const std::string &rn);
 
 /** Test if a disk resource of the given name exists. */
 bool disk_resource_has (const std::string &rn);
@@ -150,7 +152,7 @@ class DiskResource {
      * are two kinds of memory, GPU memory (on the graphics card) and system
      * memory.  Textures and meshes take up both kinds, everything else only takes
      * system memory.  Therefore if there is GPU memory pressure, unloading a
-     * collsion mesh will not help.
+     * collision mesh will not help.
     */
     virtual bool isGPUResource (void) const
     {
@@ -160,20 +162,13 @@ class DiskResource {
     /** Register yourself as a user.  This stops the resource being unloaded while you're using it. */
     void increment (void)
     {
-        if (disk_resource_verbose_incs)
-            CVERB << "++ " << getName() << std::endl;
         users++;
+        if (disk_resource_verbose_incs)
+            CVERB << "++ " << getName() << " (now at " << users << ")" << std::endl;
     }
 
     /** Inform that you are no-longer using this resource. */
-    bool decrement (void)
-    {
-        if (disk_resource_verbose_incs)
-            CVERB << "-- " << getName() << std::endl;
-        users--;
-        // do not unload at this time, will be added to LRU queue by caller
-        return users == 0;
-    }
+    void decrement (void);
 
     /** Update internal state from disk.  The resource is never actually unloaded at any point. */
     void reload (void);
@@ -181,10 +176,13 @@ class DiskResource {
     /** Load from disk. */
     void load (void);
 
+    /** Load from disk. */
+    void loadForeground (void);
+
     /** Erase from memory, the only copy will be on disk. */
     void unload (void);
 
-    /** Subclasses should register dependencies at load time. */
+    /** Subclasses should register dependencies at load time.  This also loads the dependencies. */
     void addDependency (const std::string &name)
     {
         APP_ASSERT(name!="");
@@ -192,7 +190,7 @@ class DiskResource {
         addDependency(dep);
     }
 
-    /** Subclasses should register dependencies at load time. */
+    /** Subclasses should register dependencies at load time.  This also loads the dependencies. */
     void addDependency (DiskResource *dep)
     {
         dependencies.push_back(dep);
@@ -248,5 +246,68 @@ inline std::ostream &operator << (std::ostream &o, const DiskResources &dr)
     }
     return o << (dr.size()==0?"]":" ]");
 }
+
+
+// Use this smart pointer to avoid mismatched increment/decrement calls.
+template<class T> class DiskResourcePtr {
+    T *dr;
+    public:
+    explicit DiskResourcePtr (T *dr = nullptr)
+      : dr(dr)
+    {
+        if (dr != nullptr)
+            dr->increment();
+    }
+    DiskResourcePtr (const DiskResourcePtr<T> &other)
+      : dr(&*other)
+    {
+        if (dr != nullptr)
+            dr->increment();
+    }
+    ~DiskResourcePtr (void)
+    {
+        if (dr != nullptr)
+            dr->decrement();
+    }
+    T &operator* (void) const { return *dr; }
+    T *operator-> (void) const { return dr; }
+
+    DiskResourcePtr<T> &operator= (const DiskResourcePtr<T> &other)
+    {
+        return *this = &*other;
+    }
+
+    DiskResourcePtr<T> &operator= (T *other)
+    {
+        if (other == dr) return *this;  // Optimisation
+        if (other != nullptr)
+            other->increment();
+        if (dr != nullptr)
+            dr->decrement();
+        dr = other;
+        return *this;
+    }
+
+    operator T *(void) const { return dr; }
+};
+
+template<class T>
+bool operator== (const DiskResourcePtr<T> &a, const DiskResourcePtr<T> &b) { return &*a == &*b; }
+template<class T>
+bool operator!= (const DiskResourcePtr<T> &a, const DiskResourcePtr<T> &b) { return !(a == b); }
+
+/** Create (if necessary load) the disk resource, and increment. */
+template <class T> DiskResourcePtr<T> disk_resource_use (const std::string &name)
+{
+    DiskResource *dr = disk_resource_get_or_make(name);
+    if (dynamic_cast<T*>(dr) == nullptr)
+        return DiskResourcePtr<T>();
+
+    DiskResourcePtr<T> drp(static_cast<T*>(dr));
+    if (!drp->isLoaded())
+        drp->loadForeground();
+    return drp;
+}
+
 
 #endif

@@ -236,8 +236,3 @@ void AudioDiskResource::unloadImpl (void)
     if (alBufferLeft != 0) alDeleteBuffers(1, &alBufferLeft);
     if (alBufferRight != 0) alDeleteBuffers(1, &alBufferRight);
 }
-
-bool AudioDiskResource::isGPUResource (void)
-{
-    return false;
-}

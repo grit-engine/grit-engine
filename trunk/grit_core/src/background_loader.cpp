@@ -115,9 +115,6 @@ void Demand::finishedWith (void)
                 }
                 incremented = false;
         }
-        for (unsigned i=0 ; i<resources.size() ; ++i) {
-                bgl->finishedWith(resources[i]);
-        }
 }
 
 
@@ -337,7 +334,8 @@ void BackgroundLoader::checkRAMHost ()
 
                 DiskResource *r = mDeathRowHost.pop();
 
-                if (r->noUsers() && r->isLoaded()) r->unload();
+                if (r->noUsers() && r->isLoaded())
+                        r->unload();
         }
 
 }

@@ -129,7 +129,7 @@ float audio_option (AudioFloatOption o);
 class AudioBody : public DiskResource::ReloadWatcher
 {
     private:
-        AudioDiskResource *resource;
+        DiskResourcePtr<AudioDiskResource> resource;
 
         Vector3 position;
         Quaternion orientation; // for stereo
@@ -141,6 +141,7 @@ class AudioBody : public DiskResource::ReloadWatcher
         bool ambient;
         float referenceDistance;
         float rollOff;
+        bool destroyed;
 
         ALuint alSourceLeft;
         ALuint alSourceRight;
@@ -153,6 +154,8 @@ class AudioBody : public DiskResource::ReloadWatcher
         void notifyReloaded (const DiskResource *dr);
 
         void updatePositions (void);
+
+        static const std::string className;
 
     public:
 
@@ -223,7 +226,7 @@ class AudioBody : public DiskResource::ReloadWatcher
         /** Stop playback (restart with \see play). */
         void stop (void);
 
-        /** Destroy TODO: why? */
+        /** Destroy before destructor is called */
         void destroy (void);
 
         friend class SharedPtr<AudioBody>;

@@ -56,7 +56,9 @@ class GfxSkyBody : public fast_erase_index {
     Ogre::MeshPtr mesh;
     GfxSkyMaterials materials;
 
-    GfxSkyBody (GfxMeshDiskResource *gdr, short z_order);
+    const DiskResourcePtr<GfxMeshDiskResource> gdr;
+
+    GfxSkyBody (const DiskResourcePtr<GfxMeshDiskResource> &gdr, short z_order);
 
   public:
 

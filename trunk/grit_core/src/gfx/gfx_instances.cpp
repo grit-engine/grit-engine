@@ -73,21 +73,16 @@ class GfxInstances::Section : public Ogre::Renderable {
 
 GfxInstancesPtr GfxInstances::make (const std::string &mesh_name, const GfxNodePtr &par_)
 {       
-    DiskResource *dr = disk_resource_get(mesh_name);
-    if (dr==NULL) GRIT_EXCEPT("No such resource: \""+mesh_name+"\"");
-    
-    if (!dr->isLoaded()) GRIT_EXCEPT("Resource not yet loaded: \""+mesh_name+"\"");
-    
-    GfxMeshDiskResource *gdr = dynamic_cast<GfxMeshDiskResource*>(dr);
-    if (gdr==NULL) GRIT_EXCEPT("Resource is not a mesh: \""+mesh_name+"\"");
-
+    auto gdr = disk_resource_use<GfxMeshDiskResource>(mesh_name);
+    if (gdr == nullptr) GRIT_EXCEPT("Resource is not a mesh: \"" + mesh_name + "\"");
     return GfxInstancesPtr(new GfxInstances(gdr, par_));
 }
 
-GfxInstances::GfxInstances (GfxMeshDiskResource *gdr, const GfxNodePtr &par_)
+GfxInstances::GfxInstances (const DiskResourcePtr<GfxMeshDiskResource> &gdr, const GfxNodePtr &par_)
   : GfxNode(par_),
     dirty(false),
     enabled(true),
+    gdr(gdr),
     mBoundingBox(Ogre::AxisAlignedBox::BOX_INFINITE),
     mBoundingRadius(std::numeric_limits<float>::max())
 {   

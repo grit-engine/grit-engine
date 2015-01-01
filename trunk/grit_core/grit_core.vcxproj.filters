@@ -237,6 +237,9 @@
     <ClCompile Include="src\gfx\gfx_shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\core_option.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\net\lua_wrappers_net.h">

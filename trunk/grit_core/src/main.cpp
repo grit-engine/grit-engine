@@ -37,19 +37,15 @@
 
 #include "clipboard.h"
 
-#include "main.h"
 #include "centralised_log.h"
-
-
+#include "core_option.h"
 #include "grit_lua_util.h"
 #include "lua_wrappers_core.h"
+#include "main.h"
 
 #include "gfx/gfx.h"
-
 #include "physics/physics_world.h"
-
 #include "audio/audio.h"
-
 #include "net/net.h"
 
 
@@ -127,6 +123,7 @@ int main (int argc, const char **argv)
 
         net_init();
 
+        core_option_init();
         streamer_init();
 
         // audio_init(getenv("GRIT_AUDIO_DEV"));

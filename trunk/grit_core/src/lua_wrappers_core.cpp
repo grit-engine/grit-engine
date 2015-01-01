@@ -35,6 +35,7 @@
 #include <lua_utf8.h>
 #include <io_util.h>
 
+#include "core_option.h"
 #include "grit_lua_util.h"
 #include "input_filter.h"
 #include "keyboard.h"
@@ -80,7 +81,7 @@ TRY_START
     check_args(L, 1);
     GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
     std::stringstream ss;
-    ss << IFILTER_TAG << " " << static_cast<void*>(&self) << " (" << self.getOrder() << ") \"" << self.description << "\"";
+    ss << IFILTER_TAG << " " << static_cast<void*>(&self) << " (" << self.order << ") \"" << self.description << "\"";
     lua_pushstring(L, ss.str().c_str());
     return 1;
 TRY_END
@@ -149,7 +150,7 @@ TRY_START
     GET_UD_MACRO(InputFilter,self,1,IFILTER_TAG);
     std::string key  = luaL_checkstring(L,2);
     if (key=="order") {
-        lua_pushnumber(L,self.getOrder());
+        lua_pushnumber(L,self.order);
     } else if (key=="description") {
         push_string(L,self.description);
     } else if (key=="enabled") {
@@ -334,6 +335,22 @@ TRY_START
     check_args(L,0);
     input_filter_flush(L);
     return 0;
+TRY_END
+}
+
+static int global_input_filter_map (lua_State *L)
+{
+TRY_START
+    check_args(L,0);
+    std::vector<std::pair<double,std::string>> filters = input_filter_list();
+    lua_createtable(L, filters.size(), 0);
+    int top_table = lua_gettop(L);
+    for (unsigned int i=0 ; i<filters.size() ; i++) {
+        lua_pushnumber(L, filters[i].first);
+        push_string(L, filters[i].second);
+        lua_settable(L, top_table);
+    }
+    return 1;
 TRY_END
 }
 
@@ -815,6 +832,44 @@ TRY_START
 TRY_END
 }
 
+int global_core_option (lua_State *L)
+{
+TRY_START
+    if (lua_gettop(L)==2) {
+        std::string opt = check_string(L,1);
+        int t;
+        CoreBoolOption o0;
+        CoreIntOption o1;
+        CoreFloatOption o2;
+        core_option_from_string(opt, t, o0, o1, o2);
+        switch (t) {
+            case -1: my_lua_error(L,"Unrecognised core option: \""+opt+"\"");
+            case 0: core_option(o0, check_bool(L,2)); break;
+            case 1: core_option(o1, check_t<int>(L,2)); break;
+            case 2: core_option(o2, check_float(L,2)); break;
+            default: my_lua_error(L,"Unrecognised type from core_option_from_string");
+        }
+        return 0;
+    } else {
+        check_args(L,1);
+        std::string opt = check_string(L,1);
+        int t;
+        CoreBoolOption o0;
+        CoreIntOption o1;
+        CoreFloatOption o2;
+        core_option_from_string(opt, t, o0, o1, o2);
+        switch (t) {
+            case -1: my_lua_error(L,"Unrecognised core option: \""+opt+"\"");
+            case 0: lua_pushboolean(L,core_option(o0)); break;
+            case 1: lua_pushnumber(L,core_option(o1)); break;
+            case 2: lua_pushnumber(L,core_option(o2)); break;
+            default: my_lua_error(L,"Unrecognised type from core_option_from_string");
+        }
+        return 1;
+    }
+TRY_END
+}
+
 
 static lua_Number game_time = 0;
 typedef std::map<lua_Number, std::vector<LuaPtr*> > EventMap;
@@ -822,103 +877,103 @@ static EventMap event_map;
 
 static void add_event (lua_State *L, lua_Number countdown)
 {
-        LuaPtr *lp = new LuaPtr();
-        lp->setNoPop(L);
-        event_map[countdown + game_time].push_back(lp);
+    LuaPtr *lp = new LuaPtr();
+    lp->setNoPop(L);
+    event_map[countdown + game_time].push_back(lp);
 }
 
 static int global_future_event (lua_State *L)
 {
 TRY_START
-        check_args(L,2);
-        lua_Number countdown = luaL_checknumber(L,1);
-        if (!lua_isfunction(L,2)) my_lua_error(L, "Argument 2 must be a function.");
-        add_event(L, countdown);
-        return 0;
+    check_args(L,2);
+    lua_Number countdown = luaL_checknumber(L,1);
+    if (!lua_isfunction(L,2)) my_lua_error(L, "Argument 2 must be a function.");
+    add_event(L, countdown);
+    return 0;
 TRY_END
 }
 
 static int global_clear_events (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        for (EventMap::iterator i=event_map.begin(),i_=event_map.end() ; i!=i_ ; ++i) {
-                for (unsigned j=0 ; j<i->second.size() ; ++j) {
-                        i->second[j]->setNil(L);
-                        delete i->second[j];
-                }
+    check_args(L,0);
+    for (EventMap::iterator i=event_map.begin(),i_=event_map.end() ; i!=i_ ; ++i) {
+        for (unsigned j=0 ; j<i->second.size() ; ++j) {
+            i->second[j]->setNil(L);
+            delete i->second[j];
         }
-        event_map.clear();
-        return 0;
+    }
+    event_map.clear();
+    return 0;
 TRY_END
 }
 
 static int global_dump_events (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        lua_newtable(L);
-        int counter = 1;
-        for (EventMap::iterator i=event_map.begin(),i_=event_map.end() ; i!=i_ ; ++i) {
-                for (unsigned j=0 ; j<i->second.size() ; ++j) {
-                        i->second[j]->push(L);
-                        lua_rawseti(L, -2, counter++);
-                        lua_pushnumber(L, i->first);
-                        lua_rawseti(L, -2, counter++);
-                }
+    check_args(L,0);
+    lua_newtable(L);
+    int counter = 1;
+    for (EventMap::iterator i=event_map.begin(),i_=event_map.end() ; i!=i_ ; ++i) {
+        for (unsigned j=0 ; j<i->second.size() ; ++j) {
+            i->second[j]->push(L);
+            lua_rawseti(L, -2, counter++);
+            lua_pushnumber(L, i->first);
+            lua_rawseti(L, -2, counter++);
         }
-        return 1;
+    }
+    return 1;
 TRY_END
 }
 
 static int global_do_events (lua_State *L)
 {
 TRY_START
-        check_args(L,1);
-        lua_Number elapsed = luaL_checknumber(L,1);
-        
-        lua_pushcfunction(L, my_lua_error_handler);
-        int error_handler = lua_gettop(L);
+    check_args(L,1);
+    lua_Number elapsed = luaL_checknumber(L,1);
+    
+    lua_pushcfunction(L, my_lua_error_handler);
+    int error_handler = lua_gettop(L);
 
-        game_time += elapsed;
-        do {
-                // stack: eh
-                EventMap::iterator i = event_map.begin();
-                if (i==event_map.end()) break;
-                lua_Number time = i->first;
-                std::vector<LuaPtr*> &events = i->second;
-                if (time > game_time) break;
-                for (unsigned j=0 ; j<events.size() ; ++j) {
-                        // stack: eh
-                        LuaPtr *func = events[j];
+    game_time += elapsed;
+    do {
+        // stack: eh
+        EventMap::iterator i = event_map.begin();
+        if (i==event_map.end()) break;
+        lua_Number time = i->first;
+        std::vector<LuaPtr*> &events = i->second;
+        if (time > game_time) break;
+        for (unsigned j=0 ; j<events.size() ; ++j) {
+            // stack: eh
+            LuaPtr *func = events[j];
+            func->push(L);
+            // stack: eh, func
+            int status = lua_pcall(L, 0, 1, error_handler);
+            if (status) {
+                lua_pop(L,1); // error msg
+            } else {
+                // stack: eh, r
+                if (!lua_isnil(L,-1)) {
+                    if (!lua_isnumber(L,-1)) {
+                        CERR << "Return type of event must be number or nil." << std::endl;
+                    } else {
+                        lua_Number r = lua_tonumber(L,-1);
                         func->push(L);
-                        // stack: eh, func
-                        int status = lua_pcall(L, 0, 1, error_handler);
-                        if (status) {
-                                lua_pop(L,1); // error msg
-                        } else {
-                                // stack: eh, r
-                                if (!lua_isnil(L,-1)) {
-                                        if (!lua_isnumber(L,-1)) {
-                                                CERR << "Return type of event must be number or nil." << std::endl;
-                                        } else {
-                                                lua_Number r = lua_tonumber(L,-1);
-                                                func->push(L);
-                                                add_event(L, r);
-                                                lua_pop(L,1);
-                                        }
-                                        // stack: eh, r;
-                                }
-                                lua_pop(L, 1);
-                                // stack: eh
-                        }
-                        func->setNil(L);
-                        delete func;
-                        // stack: eh
+                        add_event(L, r);
+                        lua_pop(L,1);
+                    }
+                    // stack: eh, r;
                 }
-                event_map.erase(i);
-        } while (true);
-        return 0;
+                lua_pop(L, 1);
+                // stack: eh
+            }
+            func->setNil(L);
+            delete func;
+            // stack: eh
+        }
+        event_map.erase(i);
+    } while (true);
+    return 0;
 TRY_END
 }
 
@@ -926,70 +981,72 @@ TRY_END
 
 static const luaL_reg global[] = {
 
-        {"r",global_r},
-        {"import_str",global_import_str},
-        {"include",global_include},
-        {"safe_include",global_safe_include},
-        {"current_dir",global_current_dir},
-        {"error",global_error},
-        {"error_handler",global_error_handler},
-        {"print",global_print},
-        {"console_poll",global_console_poll},
+    {"r", global_r},
+    {"core_option", global_core_option},
+    {"import_str", global_import_str},
+    {"include", global_include},
+    {"safe_include", global_safe_include},
+    {"current_dir", global_current_dir},
+    {"error", global_error},
+    {"error_handler", global_error_handler},
+    {"print", global_print},
+    {"console_poll", global_console_poll},
 
-        {"clicked_close",global_clicked_close},
-        {"have_focus",global_have_focus},
+    {"clicked_close", global_clicked_close},
+    {"have_focus", global_have_focus},
 
-        {"get_keyb_presses",global_get_keyb_presses},
-        {"set_keyb_verbose",global_set_keyb_verbose},
-        {"get_keyb_verbose",global_get_keyb_verbose},
-        {"get_mouse_events",global_get_mouse_events},
+    {"get_keyb_presses", global_get_keyb_presses},
+    {"set_keyb_verbose", global_set_keyb_verbose},
+    {"get_keyb_verbose", global_get_keyb_verbose},
+    {"get_mouse_events", global_get_mouse_events},
 
-        {"micros" ,global_micros},
-        {"seconds" ,global_seconds},
-        {"sleep_seconds",global_sleep_seconds},
-        {"sleep_micros",global_sleep_micros},
-        {"sleep",global_sleep_micros},
-        {"get_clipboard",global_get_clipboard},
-        {"set_clipboard",global_set_clipboard},
-        {"get_clipboard_selection",global_get_clipboard_selection},
-        {"set_clipboard_selection",global_set_clipboard_selection},
+    {"micros", global_micros},
+    {"seconds", global_seconds},
+    {"sleep_seconds", global_sleep_seconds},
+    {"sleep_micros", global_sleep_micros},
+    {"sleep", global_sleep_micros},
+    {"get_clipboard", global_get_clipboard},
+    {"set_clipboard", global_set_clipboard},
+    {"get_clipboard_selection", global_get_clipboard_selection},
+    {"set_clipboard_selection", global_set_clipboard_selection},
 
-        {"get_alloc_stats" ,global_get_alloc_stats},
-        {"set_alloc_stats" ,global_set_alloc_stats},
-        {"reset_alloc_stats" ,global_reset_alloc_stats},
+    {"get_alloc_stats", global_get_alloc_stats},
+    {"set_alloc_stats", global_set_alloc_stats},
+    {"reset_alloc_stats", global_reset_alloc_stats},
 
-        {"get_in_queue_size" ,global_get_in_queue_size},
-        {"get_out_queue_size_gpu" ,global_get_out_queue_size_gpu},
-        {"get_out_queue_size_host" ,global_get_out_queue_size_host},
-        {"give_queue_allowance" ,global_give_queue_allowance},
-        {"handle_bastards" ,global_handle_bastards},
-        {"check_ram_gpu" ,global_check_ram_gpu},
-        {"check_ram_host" ,global_check_ram_host},
+    {"get_in_queue_size", global_get_in_queue_size},
+    {"get_out_queue_size_gpu", global_get_out_queue_size_gpu},
+    {"get_out_queue_size_host", global_get_out_queue_size_host},
+    {"give_queue_allowance", global_give_queue_allowance},
+    {"handle_bastards", global_handle_bastards},
+    {"check_ram_gpu", global_check_ram_gpu},
+    {"check_ram_host", global_check_ram_host},
 
-        {"mlockall" ,global_mlockall},
-        {"munlockall" ,global_munlockall},
+    {"mlockall", global_mlockall},
+    {"munlockall", global_munlockall},
 
-        {"profiler_start" ,global_profiler_start},
-        {"profiler_stop" ,global_profiler_stop},
+    {"profiler_start", global_profiler_start},
+    {"profiler_stop", global_profiler_stop},
 
-        {"input_filter_trickle_button",global_input_filter_trickle_button},
-        {"input_filter_trickle_mouse_move",global_input_filter_trickle_mouse_move},
-        {"input_filter_pressed",global_input_filter_pressed},
-        {"input_filter_flush",global_input_filter_flush},
-        {"input_filter_get_cursor_hidden",global_input_filter_get_cursor_hidden},
-        {"input_filter_set_cursor_hidden",global_input_filter_set_cursor_hidden},
+    {"input_filter_trickle_button", global_input_filter_trickle_button},
+    {"input_filter_trickle_mouse_move", global_input_filter_trickle_mouse_move},
+    {"input_filter_pressed", global_input_filter_pressed},
+    {"input_filter_flush", global_input_filter_flush},
+    {"input_filter_map", global_input_filter_map},
+    {"input_filter_get_cursor_hidden", global_input_filter_get_cursor_hidden},
+    {"input_filter_set_cursor_hidden", global_input_filter_set_cursor_hidden},
 
-        {"InputFilter",ifilter_make},
-        {"PlotV3",plot_v3_make},
-        {"Plot",plot_make},
-        {"StringDB",stringdb_make},
+    {"InputFilter", ifilter_make},
+    {"PlotV3", plot_v3_make},
+    {"Plot", plot_make},
+    {"StringDB", stringdb_make},
 
-        {"future_event",global_future_event},
-        {"clear_events",global_clear_events},
-        {"dump_events",global_dump_events},
-        {"do_events",global_do_events},
+    {"future_event", global_future_event},
+    {"clear_events", global_clear_events},
+    {"dump_events", global_dump_events},
+    {"do_events", global_do_events},
 
-        {NULL, NULL}
+    {NULL, NULL}
 };
 
 //}}}
@@ -1000,96 +1057,93 @@ static const luaL_reg global[] = {
 static int lua_panic(lua_State *L)
 {
 TRY_START
-        lua_checkstack(L,2);
-        if (lua_type(L,-1)==LUA_TTABLE) {
-                lua_rawgeti(L,-1,2);
-        }
+    lua_checkstack(L,2);
+    if (lua_type(L,-1)==LUA_TTABLE) {
+        lua_rawgeti(L,-1,2);
+    }
 
-        std::string err = luaL_checkstring(L,-1);
-        CERR<<"PANIC! "<<err<<std::endl;
-        app_fatal();
-        return 0;
+    std::string err = luaL_checkstring(L,-1);
+    CERR<<"PANIC! "<<err<<std::endl;
+    app_fatal();
+    return 0;
 TRY_END
 }
 
 lua_State *init_lua(const char *filename)
 {
-        lua_State *L = lua_newstate(lua_alloc, NULL);
-        lua_atpanic(L,lua_panic);
+    lua_State *L = lua_newstate(lua_alloc, NULL);
+    lua_atpanic(L,lua_panic);
 
-        luaL_openlibs(L);
+    luaL_openlibs(L);
 
-        push_cfunction(L, my_lua_error_handler);
-        int error_handler = lua_gettop(L);
-        int status;
+    push_cfunction(L, my_lua_error_handler);
+    int error_handler = lua_gettop(L);
+    int status;
 
 /*
-        lua_getglobal(L,"package");
-        lua_pushstring(L,"./system/?.lua");
-        lua_setfield(L,-2,"path");
-        lua_pushstring(L,"");
-        lua_setfield(L,-2,"cpath");
-        lua_pop(L,1);
+    lua_getglobal(L,"package");
+    lua_pushstring(L,"./system/?.lua");
+    lua_setfield(L,-2,"path");
+    lua_pushstring(L,"");
+    lua_setfield(L,-2,"cpath");
+    lua_pop(L,1);
 
-        lua_getglobal(L, "require");
-        lua_pushstring(L, "ldb");
-        // error handler should print stacktrace and stuff
-        status = lua_pcall(L,1,1,error_handler);
-        if (status) {
-                lua_pop(L,1); //message
-                CLOG<<"The most common cause of this is running the executable "
-                      "from the wrong directory."<<std::endl;
-                app_fatal();
-        }
-        lua_setfield(L, LUA_REGISTRYINDEX, "ldb");
+    lua_getglobal(L, "require");
+    lua_pushstring(L, "ldb");
+    // error handler should print stacktrace and stuff
+    status = lua_pcall(L,1,1,error_handler);
+    if (status) {
+        lua_pop(L,1); //message
+        CLOG<<"The most common cause of this is running the executable "
+              "from the wrong directory."<<std::endl;
+        app_fatal();
+    }
+    lua_setfield(L, LUA_REGISTRYINDEX, "ldb");
 */
 
 
-        ADD_MT_MACRO(ifilter,IFILTER_TAG);
-        ADD_MT_MACRO(plot,PLOT_TAG);
-        ADD_MT_MACRO(plot_v3,PLOT_V3_TAG);
-        ADD_MT_MACRO(stringdb,STRINGDB_TAG);
+    ADD_MT_MACRO(ifilter,IFILTER_TAG);
+    ADD_MT_MACRO(plot,PLOT_TAG);
+    ADD_MT_MACRO(plot_v3,PLOT_V3_TAG);
+    ADD_MT_MACRO(stringdb,STRINGDB_TAG);
 
-        lua_getglobal(L, "print");
-        lua_setglobal(L, "print_stdout");
+    lua_getglobal(L, "print");
+    lua_setglobal(L, "print_stdout");
 
-        register_lua_globals(L, global);
+    register_lua_globals(L, global);
 
-        utf8_lua_init(L);
-        gritobj_lua_init(L);
-        gfx_lua_init(L);
-        physics_lua_init(L);
-        audio_lua_init(L);
-        disk_resource_lua_init(L);
-        net_lua_init(L);
+    utf8_lua_init(L);
+    gritobj_lua_init(L);
+    gfx_lua_init(L);
+    physics_lua_init(L);
+    audio_lua_init(L);
+    disk_resource_lua_init(L);
+    net_lua_init(L);
 
-        status = aux_include(L,filename);
+    status = aux_include(L,filename);
+    if (status) {
+        const char *str = lua_tostring(L,-1);
+        CERR << "loading lua file: " << str << std::endl;
+        lua_pop(L,1); // message
+        app_fatal();
+    } else {
+        // error handler should print stacktrace and stuff
+        status = lua_pcall(L,0,0,error_handler);
         if (status) {
-                const char *str = lua_tostring(L,-1);
-                CERR << "loading lua file: " << str << std::endl;
-                lua_pop(L,1); // message
-                app_fatal();
-        } else {
-                // error handler should print stacktrace and stuff
-                status = lua_pcall(L,0,0,error_handler);
-                if (status) {
-                        lua_pop(L,1); //message
-                        app_fatal();
-                }
+            lua_pop(L,1); //message
+            app_fatal();
         }
-        lua_pop(L,1); //error handler
+    }
+    lua_pop(L,1); //error handler
 
-        return L;
+    return L;
 
 }
 
 void shutdown_lua (lua_State *L)
 {
-        lua_close(L);
-        func_map_leak_all();
+    lua_close(L);
+    func_map_leak_all();
 }
 
 //}}}
-
-
-// vim: shiftwidth=8:tabstop=8:expandtab

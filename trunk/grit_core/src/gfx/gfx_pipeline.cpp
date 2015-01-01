@@ -475,7 +475,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                 }
             }
 
-            if (scene_env_cube != NULL && scene_env_cube->isLoaded()) {
+            if (scene_env_cube != nullptr && scene_env_cube->isLoaded()) {
                 const Ogre::TexturePtr &scene_env_cube_tex = scene_env_cube->getOgreTexturePtr();
                 ogre_rs->_setTexture(tex_index, true, scene_env_cube_tex);
                 ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);

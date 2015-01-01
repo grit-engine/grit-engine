@@ -95,6 +95,7 @@
     <ClCompile Include="src\audio\ogg_vorbis_decoder.cpp" />
     <ClCompile Include="src\background_loader.cpp" />
     <ClCompile Include="src\bullet_debug_drawer.cpp" />
+    <ClCompile Include="src\core_option.cpp" />
     <ClCompile Include="src\dense_index_map.cpp" />
     <ClCompile Include="src\disk_resource.cpp" />
     <ClCompile Include="src\external_table.cpp" />

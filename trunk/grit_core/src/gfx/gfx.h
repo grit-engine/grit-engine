@@ -81,7 +81,7 @@ void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector
 
 // lighting parameters
 GfxEnvCubeDiskResource *gfx_env_cube (void);
-void gfx_env_cube (GfxEnvCubeDiskResource *v);
+void gfx_env_cube (const DiskResourcePtr<GfxEnvCubeDiskResource> &v);
 
 Vector3 gfx_particle_ambient (void);
 void gfx_particle_ambient (const Vector3 &v);
@@ -155,7 +155,7 @@ void gfx_hell_colour (const Vector3 &v);
 
 // tone mapping
 GfxColourGradeLUTDiskResource *gfx_colour_grade (void);
-void gfx_colour_grade (GfxColourGradeLUTDiskResource *v);
+void gfx_colour_grade (const DiskResourcePtr<GfxColourGradeLUTDiskResource> &v);
 
 float gfx_global_saturation (void);
 void gfx_global_saturation (float);

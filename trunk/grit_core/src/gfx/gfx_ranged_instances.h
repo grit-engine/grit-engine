@@ -39,7 +39,7 @@ class GfxRangedInstances : public GfxInstances, public StreamerCallback {
 
     static const std::string className;
 
-    GfxRangedInstances (GfxMeshDiskResource *mesh, const GfxNodePtr &par_);
+    GfxRangedInstances (const DiskResourcePtr<GfxMeshDiskResource> &mesh, const GfxNodePtr &par_);
     ~GfxRangedInstances ();
 
     struct Item {

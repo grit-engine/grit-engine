@@ -657,6 +657,8 @@ TRY_START
         lua_pushboolean(L, self->getCastShadows());
     } else if (!::strcmp(key,"wireframe")) {
         lua_pushboolean(L, self->getWireframe());
+    } else if (!::strcmp(key,"firstPerson")) {
+        lua_pushboolean(L, self->getFirstPerson());
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self->isEnabled());
 
@@ -786,8 +788,11 @@ TRY_START
     } else if (!::strcmp(key,"enabled")) {
         bool v = check_bool(L,3);
         self->setEnabled(v);
+    } else if (!::strcmp(key,"firstPerson")) {
+        bool v = check_bool(L,3);
+        self->setFirstPerson(v);
     } else {
-           my_lua_error(L,"Not a writeable GfxBody member: "+std::string(key));
+       my_lua_error(L,"Not a writeable GfxBody member: "+std::string(key));
     }
     return 0;
 TRY_END
@@ -1576,13 +1581,12 @@ TRY_START
             self.setAlpha(v);
         } else if (!::strcmp(key,"texture")) {
             if (lua_isnil(L,3)) {
-                self.setTexture(NULL);
+                self.setTexture(DiskResourcePtr<GfxTextureDiskResource>());
             } else {
                 std::string v = check_path(L,3);
-                DiskResource *d = disk_resource_get_or_make(v);
-                GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
-                if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+v+"\"");
-                self.setTexture(d2);
+                auto d = disk_resource_use<GfxTextureDiskResource>(v);
+                if (d == nullptr) my_lua_error(L, "Resource not a texture: \"" + v + "\"");
+                self.setTexture(d);
             }
 
         } else if (!::strcmp(key,"parent")) {
@@ -2239,10 +2243,9 @@ TRY_START
         } else if (!::strcmp(key,"texture")) {
             if (lua_type(L,-1) == LUA_TSTRING) {
                 std::string v = check_path(L,-1);
-                DiskResource *d = disk_resource_get_or_make(v);
-                GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
-                if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+v+"\"");
-                self->setTexture(d2);
+                auto d = disk_resource_use<GfxTextureDiskResource>(v);
+                if (d == nullptr) my_lua_error(L, "Resource not a texture: \"" + v + "\"");
+                self->setTexture(d);
                 have_texture = true;
             } else {
                 my_lua_error(L, "texture must be a string.");
@@ -2335,11 +2338,9 @@ TRY_START
             std::string v;
             bool success = tab.get("texture",v);
             if (!success) my_lua_error(L, "Wrong type for texture field in hud class \""+hud_class->name+"\".");
-            DiskResource *d = disk_resource_get_or_make(v);
-            if (d==NULL) my_lua_error(L, "Resource does not exist: \""+std::string(v)+"\"");
-            GfxTextureDiskResource *d2 = dynamic_cast<GfxTextureDiskResource*>(d);
-            if (d2==NULL) my_lua_error(L, "Resource not a texture: \""+std::string(v)+"\"");
-            self->setTexture(d2);
+            auto d = disk_resource_use<GfxTextureDiskResource>(v);
+            if (d == nullptr) my_lua_error(L, "Resource not a texture: \""+std::string(v)+"\"");
+            self->setTexture(d);
         }
     }
     if (!have_zorder) {
@@ -2853,13 +2854,12 @@ TRY_START
         }
         case 1: {
             if (lua_isnil(L, 1)) {
-                gfx_env_cube(NULL);
+                gfx_env_cube(DiskResourcePtr<GfxEnvCubeDiskResource>());
             } else {
                 std::string v = check_path(L,1);
-                DiskResource *dr = disk_resource_get_or_make(v);
-                GfxEnvCubeDiskResource *ec = dynamic_cast<GfxEnvCubeDiskResource*>(dr);
-                if (ec == NULL) my_lua_error(L, "Not an env cube: \""+v+"\"");
-                gfx_env_cube(ec);
+                auto dr = disk_resource_use<GfxEnvCubeDiskResource>(v);
+                if (dr == nullptr) my_lua_error(L, "Not an env cube: \"" + v + "\"");
+                gfx_env_cube(dr);
             }
             return 0;
         }
@@ -2875,7 +2875,7 @@ static int global_gfx_colour_grade (lua_State *L)
 TRY_START
     switch (lua_gettop(L)) {
         case 0: {
-            if (gfx_env_cube() != NULL) {
+            if (gfx_colour_grade() != NULL) {
                 push_string(L, gfx_colour_grade()->getName());
             } else {
                 lua_pushnil(L);
@@ -2884,13 +2884,12 @@ TRY_START
         }
         case 1: {
             if (lua_isnil(L, 1)) {
-                gfx_colour_grade(NULL);
+                gfx_colour_grade(DiskResourcePtr<GfxColourGradeLUTDiskResource>());
             } else {
                 std::string v = check_string(L,1);
-                DiskResource *dr = disk_resource_get_or_make(v);
-                GfxColourGradeLUTDiskResource *cg = dynamic_cast<GfxColourGradeLUTDiskResource*>(dr);
-                if (cg == NULL) my_lua_error(L, "Not a colour grade LUT texture: \""+v+"\"");
-                gfx_colour_grade(cg);
+                auto dr = disk_resource_use<GfxColourGradeLUTDiskResource>(v);
+                if (dr == nullptr) my_lua_error(L, "Not a colour grade LUT texture: \"" + v + "\"");
+                gfx_colour_grade(dr);
             }
             return 0;
         }

@@ -59,7 +59,7 @@ GfxFont *gfx_font_make (const std::string &name, GfxTextureDiskResource *dr, uns
         f = new GfxFont(name, dr, height);
         db[name] = f;
     } else {
-        f->setTexture(dr);
+        f->setTexture(DiskResourcePtr<GfxTextureDiskResource>(dr));
         f->clearCodePoints();
     }
     return f;
