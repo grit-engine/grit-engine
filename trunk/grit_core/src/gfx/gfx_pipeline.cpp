@@ -453,7 +453,9 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
             Ogre::Vector3 the_fog_params(fog_density, 1, 0);
             try_set_named_constant(das_fp, "the_fog_params", the_fog_params);
-            try_set_named_constant(das_fp, "the_fog_colour", to_ogre(fog_colour));
+            if (gfx_option(GFX_FOG)) {
+                try_set_named_constant(das_fp, "the_fog_colour", to_ogre(fog_colour));
+            }
 
             if (gfx_option(GFX_SHADOW_RECEIVE)) {
                 try_set_named_constant(das_fp, "shadow_view_proj1", shadow_view_proj[0]);
