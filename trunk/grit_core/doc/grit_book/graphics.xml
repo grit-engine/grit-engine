@@ -317,8 +317,8 @@
         although they can share textures.  Here is an example:
 
         <lua>
-            sky_material "starfield" {
-                emissiveMap = "starfield.dds";
+            sky_material `starfield` {
+                emissiveMap = `starfield.dds`;
             }
         </lua>
 
@@ -332,7 +332,7 @@
         The sky body itself is created as shown below:
 
         <lua>
-            sky_ent = gfx_sky_body_make("MySkyMesh.mesh", 255)
+            sky_ent = gfx_sky_body_make(`MySkyMesh.mesh`, 255)
             sky_ent.enabled = true/false -- disable drawing of this layer
             sky_ent.zOrder = 100 -- change z order
             sky_ent.orientation = quat(1,0,0,0)
