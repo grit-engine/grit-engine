@@ -48,6 +48,7 @@ struct CameraOpts {
     bool particles;
     bool sky;
     bool sun;
+    bool firstPerson;
     bool reflect;
     Vector3 reflectPlaneNormal;
     float reflectPlaneDist;
@@ -57,7 +58,7 @@ struct CameraOpts {
       : fovY(55), nearClip(0.3f), farClip(800),
         frustumOffset(0), saturationMask(1), mask(1,1,1),
         bloomAndToneMap(true), pointLights(true), particles(true), sky(true), sun(true),
-        reflect(false), reflectPlaneNormal(0,0,1), reflectPlaneDist(0),
+        firstPerson(true), reflect(false), reflectPlaneNormal(0,0,1), reflectPlaneDist(0),
         pos(0,0,0), dir(0,0,0,1) { }
 };
 

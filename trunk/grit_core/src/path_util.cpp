@@ -61,7 +61,7 @@ std::string grit_dirname (const std::string &absolute)
     return dir;
 }
 
-std::string pwd_full_ex (lua_State *L, std::string rel, const std::string &path)
+std::string pwd_full_ex (std::string rel, const std::string &path)
 {
     if (rel[0] != '/') {
         rel = path + rel;
@@ -70,7 +70,7 @@ std::string pwd_full_ex (lua_State *L, std::string rel, const std::string &path)
     bool err = false;
     std::string r = path_collapse(rel, err);
     if (err)
-        my_lua_error(L, "Path tries to escape game dir: \""+rel+"\"");
+        EXCEPT << "Path tries to escape game dir: \"" << rel << "\"" << ENDL;
     return r;
 }
 

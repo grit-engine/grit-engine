@@ -26,6 +26,7 @@
 #include "gfx_pipeline.h"
 #include "gfx_particle_system.h"
 #include "gfx_sky_body.h"
+#include "gfx_body.h"
 
 static inline Ogre::HighLevelGpuProgramPtr get_shader(const char *name)
 {
@@ -708,6 +709,36 @@ class SkyPasses : public Ogre::RenderQueueInvocation {
 
 
 
+// {{{ First Person
+
+class FirstPersonPasses : public Ogre::RenderQueueInvocation {
+    GfxPipeline *pipe;
+    bool alphaBlend;
+
+    public:
+    FirstPersonPasses (GfxPipeline *pipe, bool alpha_blend)
+      : Ogre::RenderQueueInvocation(0), pipe(pipe), alphaBlend(alpha_blend)
+    {
+        setSuppressShadows(true);
+    }
+
+    void invoke (Ogre::RenderQueueGroup *, Ogre::SceneManager *)
+    {
+        try {
+            if (pipe->getCameraOpts().firstPerson) gfx_body_render_first_person(pipe, alphaBlend);
+        } catch (Ogre::Exception &e) {
+            CERR << "While rendering first person: " << e.getDescription() << std::endl;
+        } catch (const Exception &e) {
+            CERR << "While rendering first person: " << e << std::endl;
+        }
+    }
+    
+};
+
+// }}}
+
+
+
 GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewport)
   : targetViewport(target_viewport)
 {
@@ -750,17 +781,22 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
     rqisGbuffer = ogre_root->createRenderQueueInvocationSequence(name+":gbuffer");
     rqisGbuffer->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_GBUFFER_OPAQUE));
 
+    // Opaque passes
     rqisDeferred = ogre_root->createRenderQueueInvocationSequence(name+":deferred");
     rqisDeferred->add(new DeferredLightingPasses(this));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_OPAQUE));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_OPAQUE_EMISSIVE));
-    rqisDeferred->add(new ParticlesPasses(this, false)); // opaque
+    rqisDeferred->add(new ParticlesPasses(this, false));
     rqisDeferred->add(new SkyPasses(this));
+    rqisDeferred->add(new FirstPersonPasses(this, false));
+    // Alpha passes
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH_EMISSIVE));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_EMISSIVE));
-    rqisDeferred->add(new ParticlesPasses(this, true)); // alpha
+    rqisDeferred->add(new ParticlesPasses(this, true));
+    rqisDeferred->add(new FirstPersonPasses(this, true));
+    // Debug basses
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_BULLET_DEBUG_DRAWER));
 }
 
@@ -920,7 +956,7 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
 
     } else {
 
-        // render gbuffer and alpha, sky, etc into hdr viewport
+        // render from gbuffer, the alpha passes, sky, etc into hdr viewport
         vp = hdrFb[0]->getBuffer()->getRenderTarget()->addViewport(cam);
         vp->setShadowsEnabled(false);
         vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());

@@ -36,6 +36,8 @@
 
 const std::string GfxBody::className = "GfxBody";
 
+static std::set<GfxBody*> first_person_bodies;
+
 
 // {{{ Sub
 
@@ -383,6 +385,7 @@ void GfxBody::destroy (void)
 {
     if (dead) THROW_DEAD(className);
     destroyGraphics();
+    setFirstPerson(false);  // Remove it from the set.
     GfxFertileNode::destroy();
 }
 
@@ -489,7 +492,13 @@ bool GfxBody::getFirstPerson (void)
 void GfxBody::setFirstPerson (bool v)
 {
     if (dead) THROW_DEAD(className);
+    if (firstPerson == v) return;
     firstPerson = v;
+    if (firstPerson) {
+        first_person_bodies.insert(this);
+    } else {
+        first_person_bodies.erase(this);
+    }
 }
 
 GfxPaintColour GfxBody::getPaintColour (int i)
@@ -733,7 +742,18 @@ const std::string &GfxBody::getMeshName (void)
 }
 
 
-void gfx_body_render_first_person (GfxPipeline *p)
+void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
 {
     (void) p;
+    (void) alpha_blend;
+    // Gbuffer stores depth from 0 to 1 (cam to far clip plane), so we could render first person
+    // bodies into the gbuffer even though they have different clip planes.  However I think this
+    // would have shadow artifacts.  So instead, I'll treat it as a point when lighting it, i.e.
+    // sample shadow buffer at a point and intersect the camera with the point lights to determine
+    // the ones that should be used to light us.
+
+    // Render, to HDR buffer
+    // if (camera is not in shadow) sky light
+    // env box (the one local to player)
+    // emissive
 }

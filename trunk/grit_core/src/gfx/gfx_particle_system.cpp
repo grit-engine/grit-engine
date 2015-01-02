@@ -260,7 +260,7 @@ class GfxParticleSystem {
                        bool alpha_blend, float alphaRej, bool emissive)
          : name(name), alphaBlend(alpha_blend), alphaRej(alphaRej), emissive(emissive)
     {
-
+        APP_ASSERT(texname[0] == '/');
         texname = texname.substr(1);
         tex = Ogre::TextureManager::getSingleton().load(texname, RESGRP);
         texHeight = tex->getHeight();
@@ -487,6 +487,8 @@ static PSysMap psystems;
 void gfx_particle_define (const std::string &pname, const std::string &tex_name,
                           bool alpha_blend, float alpha_rej, bool emissive)
 {
+    if (pname[0] != '/') EXCEPT << "Not an absolute path: \"" << pname << "\"" << ENDL;
+    if (tex_name[0] != '/') EXCEPT << "Not an absolute path: \"" << tex_name << "\"" << ENDL;
     GfxParticleSystem *&psys = psystems[pname];
     if (psys != NULL) delete psys;
     psys = new GfxParticleSystem(pname, tex_name, alpha_blend, alpha_rej, emissive);

@@ -208,5 +208,5 @@ class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
 };
 
 // called every frame
-void gfx_body_render_first_person (GfxPipeline *p);
+void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend);
 #endif

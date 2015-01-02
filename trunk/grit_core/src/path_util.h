@@ -21,10 +21,6 @@
 
 #include <vector>
 #include <string>
-struct lua_State;
-
-/** A stack of directories.  The top of the stack is the current working directory */
-extern std::vector<std::string> pwd;
 
 /** Translates a relative path to an absolute path.
 @remarks
@@ -33,7 +29,7 @@ If given an absolute path, simply returns it.
 @param rel The relative path or a fully qualified path
 @param path The current working directory
 */
-std::string pwd_full_ex (lua_State *L, std::string rel, const std::string &path);
+std::string pwd_full_ex (std::string rel, const std::string &path);
 
 /** Version of pwd_full_ex that does not need a lua state.  Errors are reported via CERR and the
 provided string is substituted.

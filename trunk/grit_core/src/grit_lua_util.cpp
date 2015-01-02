@@ -52,8 +52,14 @@ void func_map_leak_all (void)
 
 std::string check_path (lua_State *L, int stack_index)
 {
-    std::string rel = check_string(L, stack_index);
-    return absolute_path(lua_current_dir(L), rel);
+    std::string abs = check_string(L, stack_index);
+    if (abs.length() == 0) {
+        EXCEPT << "Path was a zero length string." << ENDL;
+    }
+    if (abs[0] != '/') {
+        EXCEPT << "Absolute path expected: \"" << abs << "\"" << ENDL;
+    }
+    return abs;
 }
 
 

@@ -2080,7 +2080,7 @@ int main(int argc, char **argv)
         }
 
     } catch (const Exception &e) {
-        CERR << e << std::endl;
+        std::cerr << e << std::endl;
 
         return EXIT_FAILURE;
     }

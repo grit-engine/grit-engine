@@ -599,8 +599,6 @@ void extract (const Config &cfg, std::ostream &out)
         
             APP_ASSERT(dff.geometries.size()==1 || dff.geometries.size()==2);
 
-            typedef std::vector<std::string> Strs;
-
             float rad = 0;
             for (unsigned long j=0 ; j<dff.frames.size() ; ++j) {
                 frame &fr = dff.frames[j];

@@ -741,8 +741,7 @@ static int global_include (lua_State *L)
 {
 TRY_START
         check_args(L, 1);
-        std::string rel = luaL_checkstring(L, 1);
-        std::string filename = absolute_path(lua_current_dir(L), rel);
+        std::string filename = check_path(L, 1);
 
         lua_pushcfunction(L, my_lua_error_handler);
         int error_handler = lua_gettop(L);
@@ -769,8 +768,7 @@ static int global_safe_include (lua_State *L)
 {
 TRY_START
         check_args(L, 1);
-        std::string rel = luaL_checkstring(L, 1);
-        std::string filename = absolute_path(lua_current_dir(L), rel);
+        std::string filename = check_path(L, 1);
 
         lua_pushcfunction(L, my_lua_error_handler);
         // stack: [error_handler]
@@ -814,22 +812,6 @@ static int global_current_dir (lua_State *L)
     std::string dir = lua_current_dir(L, level);
     push_string(L, dir);
     return 1;
-}
-
-static int global_r (lua_State *L)
-{
-TRY_START
-        int level = 1;
-        if (lua_gettop(L) == 2) {
-            level = check_t<int>(L, 2);
-        } else {
-            check_args(L, 1);
-        }
-        std::string rel = luaL_checkstring(L, 1);
-        std::string collapsed = absolute_path(lua_current_dir(L, level), rel);
-        lua_pushstring(L, collapsed.c_str());
-        return 1;
-TRY_END
 }
 
 int global_core_option (lua_State *L)
@@ -981,7 +963,6 @@ TRY_END
 
 static const luaL_reg global[] = {
 
-    {"r", global_r},
     {"core_option", global_core_option},
     {"import_str", global_import_str},
     {"include", global_include},
