@@ -3732,53 +3732,32 @@ TRY_END
 
 // new material interface
 
-static void process_tex_blend (GfxMaterial *gfxmat, ExternalTable &src, GfxMaterialTextureBlendUnit &dst)
+static void add_texture (GfxMaterialTextureMap &textures, const std::string &key,
+                         const std::string &tex_name, bool clamp=false, int anisotropy=16)
 {
+    auto *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
+    if (tex == NULL) EXCEPT << "Resource is not a texture \"" << tex_name << "\"" << ENDL;
+    textures[key] = { tex, clamp, anisotropy };
+    CVERB << key << " bound to texture " << tex_name << std::endl;
+}
+
+static void process_tex_blend (GfxMaterialTextureMap &textures, int counter, ExternalTable &src)
+{
+        std::stringstream counter_;
+        counter_ << counter;
+        std::string i = counter_.str();
 
         std::string diffuse_map;
-        src.get("diffuseMap", diffuse_map, std::string(""));
-        dst.setDiffuseMap(diffuse_map);
+        if (src.get("diffuseMap", diffuse_map))
+            add_texture(textures, "diffuseMap" + counter, diffuse_map);
 
         std::string normal_map;
-        src.get("normalMap", normal_map, std::string(""));
-        dst.setNormalMap(normal_map);
+        if (src.get("normalMap", normal_map))
+            add_texture(textures, "diffuseMap" + counter, normal_map);
 
-        std::string specular_map;
-        src.get("glossMap", specular_map, std::string(""));
-        dst.setSpecularMap(specular_map);
-        if (specular_map.length() > 0)
-                gfxmat->setSpecularMode(GFX_MATERIAL_SPEC_MAP);
-
-        lua_Number specular_diffuse_brightness = 0;
-        lua_Number specular_diffuse_contrast = 0;
-        SharedPtr<ExternalTable> specular_diffuse;
-        if (src.get("specularFromDiffuse",specular_diffuse)) {
-                specular_diffuse->get(lua_Number(1), specular_diffuse_brightness);
-                specular_diffuse->get(lua_Number(2), specular_diffuse_contrast);
-                gfxmat->setSpecularMode(GFX_MATERIAL_SPEC_ADJUSTED_DIFFUSE_COLOUR);
-        }
-        dst.setSpecularDiffuseBrightness(specular_diffuse_brightness);
-        dst.setSpecularDiffuseContrast(specular_diffuse_contrast);
-
-        lua_Number texture_animation_x = 0;
-        lua_Number texture_animation_y = 0;
-        SharedPtr<ExternalTable> texture_animation;
-        if (src.get("textureAnimation",texture_animation)) {
-                texture_animation->get(lua_Number(1), texture_animation_x);
-                texture_animation->get(lua_Number(2), texture_animation_y);
-        }
-        dst.setTextureAnimationX(texture_animation_x);
-        dst.setTextureAnimationY(texture_animation_y);
-        
-        lua_Number texture_scale_x = 0;
-        lua_Number texture_scale_y = 0;
-        SharedPtr<ExternalTable> texture_scale;
-        if (src.get("textureScale",texture_scale)) {
-                texture_scale->get(lua_Number(1), texture_scale_x);
-                texture_scale->get(lua_Number(2), texture_scale_y);
-        }
-        dst.setTextureScaleX(texture_scale_x);
-        dst.setTextureScaleY(texture_scale_y);
+        std::string gloss_map;
+        if (src.get("glossMap", gloss_map))
+            add_texture(textures, "glossMap" + counter, gloss_map);
 }
 
 typedef std::map<std::string, ExternalTable> MatMap;
@@ -3791,7 +3770,7 @@ TRY_START
         check_args(L,2);
         std::string name = check_path(L,1);
         if (!lua_istable(L,2))
-                my_lua_error(L,"Second parameter should be a table");
+            my_lua_error(L,"Second parameter should be a table");
 
         //CVERB << name << std::endl;
 
@@ -3802,28 +3781,24 @@ TRY_START
         GFX_MAT_SYNC;
         GfxMaterial *gfxmat = gfx_material_add_or_get(name);
 
-        bool has_alpha;
+        GfxMaterialTextureMap textures;
+
         lua_Number alpha;
         if (t.has("alpha")) {
-                t.get("alpha", has_alpha, true);
-                t.get("alpha", alpha, 1.0);
+            t.get("alpha", alpha, 1.0);
         } else {
-                has_alpha = false;
-                alpha = 1.0;
+            alpha = 1.0;
         }
+        bool has_alpha = alpha < 1;
 
         bool depth_write;
         t.get("depthWrite", depth_write, true);
-       
+
         bool cast_shadows;
         t.get("castShadows", cast_shadows, true);
        
-        bool stipple;
-        t.get("stipple", stipple, true);
-
         gfxmat->setCastShadows(cast_shadows);
-        gfxmat->setStipple(stipple);
-       
+      
         gfxmat->setSceneBlend(has_alpha ? depth_write ? GFX_MATERIAL_ALPHA_DEPTH : GFX_MATERIAL_ALPHA : GFX_MATERIAL_OPAQUE);
 
         gfxmat->regularMat = Ogre::MaterialManager::getSingleton().getByName(name,"GRIT");
@@ -3832,68 +3807,36 @@ TRY_START
         gfxmat->wireframeMat = Ogre::MaterialManager::getSingleton().getByName(name+"|","GRIT");
 
         Vector3 emissive_colour;
-        t.get("emissiveColour",emissive_colour,Vector3(0,0,0));
-        gfxmat->setEmissiveColour(emissive_colour);
+        t.get("emissiveColour", emissive_colour, Vector3(0,0,0));
+        if (emissive_colour != Vector3(0,0,0)) {
+            gfxmat->emissiveMat = Ogre::MaterialManager::getSingleton().getByName(name+"^", "GRIT");
+        }
+
+        
 
         std::string emissive_map;
-        t.get("emissiveMap", emissive_map, std::string(""));
-        gfxmat->setEmissiveMap(emissive_map);
+        if (t.get("emissiveMap", emissive_map))
+            add_texture(textures, "emissiveMap", emissive_map);
 
         std::string paint_map;
-        lua_Number paint_colour = 0; // silence compiler
-        if (t.get("paintColour", paint_colour)) {
-                if (paint_colour == 1) {
-                        gfxmat->setPaintMode(GFX_MATERIAL_PAINT_1);
-                } else if (paint_colour == 2) {
-                        gfxmat->setPaintMode(GFX_MATERIAL_PAINT_2);
-                } else if (paint_colour == 3) {
-                        gfxmat->setPaintMode(GFX_MATERIAL_PAINT_3);
-                } else if (paint_colour == 4) {
-                        gfxmat->setPaintMode(GFX_MATERIAL_PAINT_4);
-                } else {
-                        CERR << "Unexpected paint_colour: " << paint_colour << std::endl;
-                        gfxmat->setPaintMode(GFX_MATERIAL_PAINT_NONE);
-                }
-                gfxmat->setPaintMap("");
-        } else if (t.get("paintMap", paint_map)) {
-                gfxmat->setPaintMap(paint_map);
-                gfxmat->setPaintMode(GFX_MATERIAL_PAINT_MAP);
-        } else {
-                gfxmat->setPaintMode(GFX_MATERIAL_PAINT_NONE);
-        }
-        bool paint_by_diffuse_alpha;
-        t.get("paintByDiffuseAlpha", paint_by_diffuse_alpha, false);
-        gfxmat->setPaintByDiffuseAlpha(paint_by_diffuse_alpha);
+        if (t.get("paintMap", paint_map))
+            add_texture(textures, "paintMap", paint_map);
 
-        gfxmat->setSpecularMode(GFX_MATERIAL_SPEC_NONE);
 
         SharedPtr<ExternalTable> blend;
         if(t.get("blend", blend)) {
-                for (lua_Number i=1 ; i<=4 ; ++i) {
-                        unsigned i_ = unsigned(i)-1;
-                        SharedPtr<ExternalTable> texBlends;
-                        if (!blend->get(i, texBlends)) {
-                                gfxmat->setNumTextureBlends(i_);
-                                break;
-                        }
-                        process_tex_blend(gfxmat, *texBlends, gfxmat->texBlends[i_]);
-                }
+            for (lua_Number i=1 ; i<=4 ; ++i) {
+                unsigned i_ = unsigned(i)-1;
+                SharedPtr<ExternalTable> texBlends;
+                if (!blend->get(i, texBlends))
+                    break;
+                process_tex_blend(textures, i_, *texBlends);
+            }
         } else {
-                process_tex_blend(gfxmat, t, gfxmat->texBlends[0]);
-                gfxmat->setNumTextureBlends(0);
+            process_tex_blend(textures, 0, t);
         }
 
-        bool gloss_from_specular_alpha;
-        t.get("glossFromSpecularAlpha", gloss_from_specular_alpha, false);
-        if (gloss_from_specular_alpha) {
-                gfxmat->setSpecularMode(GFX_MATERIAL_SPEC_MAP_WITH_GLOSS);
-        }
-
-        bool specular_from_diffuse_alpha;
-        t.get("specularFromDiffuseAlpha", specular_from_diffuse_alpha, false);
-        if (specular_from_diffuse_alpha) {
-                gfxmat->setSpecularMode(GFX_MATERIAL_SPEC_DIFFUSE_ALPHA);
-        }
+        gfxmat->setTextures(textures);
 
         return 0;
 TRY_END
@@ -3999,13 +3942,13 @@ TRY_START
 
     std::string shader_name;
     t.get("shader", shader_name, std::string("/system/SkyDefault"));
-    GfxSkyShader *shader = gfx_sky_shader_get(shader_name);
+    GfxShader *shader = gfx_shader_get(shader_name);
 
     std::string scene_blend;
     t.get("sceneBlend", scene_blend, std::string("OPAQUE"));
 
-    GfxSkyMaterialTextureMap textures;
-    GfxShaderBindingsPtr bindings = shader->getShader()->makeBindings();
+    GfxMaterialTextureMap textures;
+    GfxShaderBindingsPtr bindings = shader->makeBindings();
 
     typedef ExternalTable::KeyIterator KI;
     for (KI i=t.begin(), i_=t.end() ; i!=i_ ; ++i) {
@@ -4059,12 +4002,7 @@ TRY_START
             std::string tex_name;
             bool has_tex = tab->get("name", tex_name);
             APP_ASSERT(has_tex);
-            auto *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
-            if (tex == NULL) my_lua_error(L, "Resource is not a texture \""+tex_name+"\"");
-            bool clamp = false;
-            int anisotropy = 16;
-            textures[key] = { tex, clamp, anisotropy };
-            CVERB << key << " " << tex_name << std::endl;
+            add_texture(textures, key, tex_name);
 
         } else {
             my_lua_error(L, "Did not understand 'uniformKind' value \""+uniform_kind+"\"");
@@ -4168,9 +4106,7 @@ TRY_START
     }
 
 
-    GfxSkyShader *shader = gfx_sky_shader_add_or_get(name);
-
-    shader->reset(vertex_code, fragment_code, uniforms);
+    gfx_shader_make_or_reset_sky(name, vertex_code, fragment_code, uniforms);
 
     return 0;
 TRY_END

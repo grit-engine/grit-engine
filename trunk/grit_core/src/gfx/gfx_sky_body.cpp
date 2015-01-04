@@ -172,7 +172,8 @@ void GfxSkyBody::render (GfxPipeline *p)
 
         // render sm using mat
 
-        GfxShader *shader = mat->getShader()->getShader();
+        GfxShader *shader = mat->getShader();
+        APP_ASSERT(shader != nullptr);
 
         shader->bindShader();
         shader->bind(mat->getBindings());
@@ -180,7 +181,7 @@ void GfxSkyBody::render (GfxPipeline *p)
         shader->bindShaderParams();
 
         const GfxShaderParamMap &params = shader->getParams();
-        const GfxSkyMaterialTextureMap &mat_texs = mat->getTextures();
+        const GfxMaterialTextureMap &mat_texs = mat->getTextures();
 
         unsigned counter = 0;
         for (const auto &pair : params) {
@@ -188,7 +189,7 @@ void GfxSkyBody::render (GfxPipeline *p)
             const GfxShaderParam &param = pair.second;
             if (!gfx_gasoline_param_is_texture(param.t)) continue;
 
-            const GfxSkyMaterialTexture *sky_tex = NULL;
+            const GfxMaterialTexture *sky_tex = NULL;
             auto it = mat_texs.find(name);
             // material might leave a given uniform undefined in which case revert to shader default
             if (it != mat_texs.end()) sky_tex = &it->second;

@@ -43,6 +43,7 @@ typedef SharedPtr<GfxShaderBindings> GfxShaderBindingsPtr;
 #ifndef GFX_SHADER_H
 #define GFX_SHADER_H
 
+/** Tagged union of the various values that can go into a shader param. */
 struct GfxShaderParam {
     GfxGslParamType t; 
     // Use std::array instead of c-style array to work around a bug in Microsoft Visual Studio 2013
@@ -104,14 +105,10 @@ class GfxShader {
 };
 
 class GfxShaderBindings {
-    GfxShader *shader;
-    public:
-    private:
     typedef std::map<std::string, GfxShaderParam> Map;
     Map bindings;
     public:
-    GfxShaderBindings (GfxShader *shader)
-      : shader(shader)
+    GfxShaderBindings (void)
     { }
     template<class T> void setBinding (const std::string &name, const T &v)
     {
@@ -121,12 +118,25 @@ class GfxShaderBindings {
     friend class GfxShader;
 };
 
+/** Temporary hack to allow transition to a purely gasoline setup. */
 GfxShader *gfx_shader_make_from_existing (const std::string &name,
                                           const Ogre::HighLevelGpuProgramPtr &vp,
                                           const Ogre::HighLevelGpuProgramPtr &fp,
                                           const GfxShaderParamMap &params);
 
+GfxShader *gfx_shader_make_or_reset (const std::string &name,
+                                     const std::string &new_vertex_code,
+                                     const std::string &new_forward_code,
+                                     const std::string &new_emissive_code,
+                                     const GfxShaderParamMap &params);
+
+GfxShader *gfx_shader_make_or_reset_sky (const std::string &name,
+                                         const std::string &new_vertex_code,
+                                         const std::string &new_fragment_code,
+                                         const GfxShaderParamMap &params);
+
 GfxShader *gfx_shader_get (const std::string &name);
+bool gfx_shader_has (const std::string &name);
 
 void gfx_shader_init (void);
 void gfx_shader_shutdown (void);

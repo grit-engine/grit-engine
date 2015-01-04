@@ -987,6 +987,7 @@ size_t gfx_init (GfxCallback &cb_)
         ogre_sun->setType(Ogre::Light::LT_DIRECTIONAL);
 
         gfx_shader_init();
+        gfx_material_init();
         gfx_sky_material_init();
         gfx_pipeline_init();
         gfx_option_init();

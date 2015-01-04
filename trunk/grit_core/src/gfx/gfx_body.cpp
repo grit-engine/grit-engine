@@ -190,7 +190,7 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
                  * World: false/true
                  */
 
-                if (fade < 1 && !m->getStipple()) {
+                if (fade < 1 && m->getSceneBlend() != GFX_MATERIAL_OPAQUE) {
                     renderMaterial = m->fadingMat;
                 } else {
                     renderMaterial = m->regularMat;
@@ -742,10 +742,17 @@ const std::string &GfxBody::getMeshName (void)
 }
 
 
-void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
+void GfxBody::renderFirstPerson (GfxPipeline *p, bool alpha_blend)
 {
     (void) p;
     (void) alpha_blend;
+    // We are inside the update() call of a particular viewport.  The camera bound to this viewport
+    // has particular front / back clip distances.  We want to use different ones.
+}
+
+
+void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
+{
     // Gbuffer stores depth from 0 to 1 (cam to far clip plane), so we could render first person
     // bodies into the gbuffer even though they have different clip planes.  However I think this
     // would have shadow artifacts.  So instead, I'll treat it as a point when lighting it, i.e.
@@ -756,4 +763,8 @@ void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
     // if (camera is not in shadow) sky light
     // env box (the one local to player)
     // emissive
+
+    for (const auto &body : first_person_bodies) {
+        body->renderFirstPerson(p, alpha_blend);
+    }
 }

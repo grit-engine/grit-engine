@@ -114,29 +114,14 @@ void clean_compositors (void);
 void do_reset_framebuffer (void);
 void do_reset_compositors (void);
 
-// API consumers should not see this
-class GfxBaseMaterial {
-
-    public:
-
-    virtual ~GfxBaseMaterial (void) { }
-
-    virtual void addDependencies (DiskResource *into) = 0;
-
-};
-
-typedef std::map<std::string,GfxBaseMaterial*> GfxMaterialDB;
-
-extern GfxMaterialDB material_db;
-
 void gfx_material_add_dependencies (const std::string &name, DiskResource *into);
 
 void handle_dirty_materials (void);
 
 
-class GfxSkyShader;
+class GfxShader;
 
-typedef std::map<std::string,GfxSkyShader*> GfxShaderDB;
+typedef std::map<std::string,GfxShader*> GfxShaderDB;
 
 extern GfxShaderDB shader_db;
 

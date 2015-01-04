@@ -32,6 +32,12 @@ typedef SharedPtr<GfxBody> GfxBodyPtr;
 #include "gfx_fertile_node.h"
 #include "gfx_material.h"
 
+struct GfxPaintColour {
+    Vector3 diff;
+    Vector3 spec; // spec, unused, gloss
+    float met; // metallic paint (0 -> 1)
+};
+
 class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
 
     protected:
@@ -134,6 +140,8 @@ class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
     Ogre::AnimationState *getAnimState (const std::string &name);
     public:
     void reinitialise (void);
+
+    void renderFirstPerson (GfxPipeline *p, bool alpha_blend);
 
     unsigned getBatches (void) const;
     unsigned getBatchesWithChildren (void) const;

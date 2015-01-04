@@ -22,9 +22,7 @@
 #include <vector>
 
 class GfxSkyMaterial;
-class GfxSkyShader;
 typedef std::vector<GfxSkyMaterial*> GfxSkyMaterials;
-typedef std::vector<GfxSkyShader*> GfxSkyShaders;
 
 #ifndef GFX_SKY_MATERIAL_H
 #define GFX_SKY_MATERIAL_H
@@ -36,42 +34,6 @@ typedef std::vector<GfxSkyShader*> GfxSkyShaders;
 #include "gfx_gasoline.h"
 #include "gfx_shader.h"
 
-class GfxSkyShader {
-    std::string vertexCode;
-    std::string fragmentCode;
-    GfxShader *shader;
-
-    public:
-    const std::string name;
-    GfxSkyShader (const std::string &name);
-
-    void reset (const std::string &new_vertex_source,
-                const std::string &new_fragment_source,
-                const GfxShaderParamMap &new_uniforms);
-
-    GfxShader *getShader() { return shader; }
-
-};
-            
-GfxSkyShader *gfx_sky_shader_add (const std::string &name);
-
-GfxSkyShader *gfx_sky_shader_add_or_get (const std::string &name);
-
-GfxSkyShader *gfx_sky_shader_get (const std::string &name);
-    
-bool gfx_sky_shader_has (const std::string &name);
-
-
-
-struct GfxSkyMaterialTexture {
-    GfxTextureDiskResource *texture;
-    bool clamp;
-    int anisotropy;
-};
-
-typedef std::map<std::string, GfxSkyMaterialTexture> GfxSkyMaterialTextureMap;
-
-
 enum GfxSkyMaterialSceneBlend {
     GFX_SKY_MATERIAL_OPAQUE,
     GFX_SKY_MATERIAL_ALPHA,
@@ -80,29 +42,16 @@ enum GfxSkyMaterialSceneBlend {
 
 class GfxSkyMaterial : public GfxBaseMaterial {
 
-    GfxSkyShader *shader;
-    GfxShaderBindingsPtr bindings;
-    GfxSkyMaterialTextureMap textures;
     GfxSkyMaterialSceneBlend sceneBlend;
 
     GfxSkyMaterial (const std::string &name);
 
     public:
     // take MAT_SYNC when iterating through this stuff
-    const GfxSkyMaterialTextureMap &getTextures (void) { return textures; }
-    void setTextures (const GfxSkyMaterialTextureMap &v) { GFX_MAT_SYNC; textures = v; }
 
     const GfxShaderBindingsPtr &getBindings (void) { return bindings; }
     void setBindings (const GfxShaderBindingsPtr &v) { bindings = v; }
     
-    GfxSkyShader *getShader (void) const { return shader; }
-    void setShader (GfxSkyShader *v) {
-        GFX_MAT_SYNC;
-        shader = v;
-        bindings = shader->getShader()->makeBindings();
-        textures.clear();
-    }
-
     GfxSkyMaterialSceneBlend getSceneBlend (void) const { return sceneBlend; }
     void setSceneBlend (GfxSkyMaterialSceneBlend v) { sceneBlend = v; }
 

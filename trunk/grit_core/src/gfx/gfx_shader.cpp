@@ -2,13 +2,14 @@
 #include <OgreGLSLGpuProgram.h>
 #include <OgreGLSLProgram.h>
 #include <OgreGLSLLinkProgramManager.h>
+#include <OgreCgProgram.h>
+
 
 #include "../centralised_log.h"
 
 #include "gfx_shader.h"
 #include "gfx.h"
-
-std::map<std::string, GfxShader*> all_shaders;
+#include "gfx_internal.h"
 
 void GfxShader::validate (void)
 {
@@ -47,7 +48,7 @@ void GfxShader::validate (void)
 
 GfxShaderBindingsPtr GfxShader::makeBindings (void)
 {
-    GfxShaderBindingsPtr r(new GfxShaderBindings(this));
+    GfxShaderBindingsPtr r(new GfxShaderBindings());
     return r;
 }
 
@@ -278,21 +279,111 @@ GfxShader *gfx_shader_make_from_existing (const std::string &name,
                                           const Ogre::HighLevelGpuProgramPtr &fp,
                                           const GfxShaderParamMap &params)
 {
-    if (all_shaders.find(name) != all_shaders.end())
-        EXCEPT << "GfxShader already exists: " << name << ENDL;
-
+    if (gfx_shader_has(name))
+        EXCEPT << "Shader already exists: " << name << ENDL;
     auto *s = new GfxShader(name, vp, fp, params);
-    all_shaders[name] = s;
+    shader_db[name] = s;
     return s;
+}
+
+GfxShader *gfx_shader_make_or_reset_sky (const std::string &name,
+                                         const std::string &new_vertex_code,
+                                         const std::string &new_fragment_code,
+                                         const GfxShaderParamMap &new_uniforms)
+{
+    // TODO: Split shader for
+    // * unbound textures
+    // * bones count
+    // * fade status
+    // * instancing
+    // * enums (manual splits)
+
+    // TODO: figure out how to inject code into the shader.  Function in scope?
+
+    GfxGslBackend backend = gfx_d3d9() ? GFX_GSL_BACKEND_CG : GFX_GSL_BACKEND_GLSL;
+    GfxGslParams params;
+    // This will not be a straight copy when we're splitting the sahder
+    for (const auto &u : new_uniforms) {
+        params[u.first] = u.second.t;
+    }
+    GfxGslUnboundTextures ubt;  // TODO: permute over this
+
+    std::pair<std::string, std::string> shaders =
+        gfx_gasoline_compile(backend, new_vertex_code, new_fragment_code, params, ubt);
+    
+    // No errors should be possible beyond this point.
+    GfxShader *shader = nullptr;
+    Ogre::HighLevelGpuProgramPtr vp, fp;
+
+    if (gfx_shader_has(name)) {
+        shader = gfx_shader_get(name);
+        vp = shader->getOgreVertexProgram();
+        fp = shader->getOgreFragmentProgram();
+        shader->setParams(new_uniforms);
+    } else {
+        if (backend == GFX_GSL_BACKEND_CG) {
+            vp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
+                name+"_v", RESGRP, "cg", Ogre::GPT_VERTEX_PROGRAM);
+            fp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
+                name+"_f", RESGRP, "cg", Ogre::GPT_FRAGMENT_PROGRAM);
+            Ogre::StringVector vp_profs, fp_profs;
+            if (gfx_d3d9()) {
+                vp_profs.push_back("vs_3_0");
+                fp_profs.push_back("ps_3_0");
+            } else {
+                vp_profs.push_back("gpu_vp");
+                fp_profs.push_back("gp4fp");
+            }
+            Ogre::CgProgram *tmp_vp = static_cast<Ogre::CgProgram*>(&*vp);
+            tmp_vp->setEntryPoint("main");
+            tmp_vp->setProfiles(vp_profs);
+            tmp_vp->setCompileArguments("-I. -O3");
+
+            Ogre::CgProgram *tmp_fp = static_cast<Ogre::CgProgram*>(&*fp);
+            tmp_fp->setEntryPoint("main");
+            tmp_fp->setProfiles(fp_profs);
+            tmp_fp->setCompileArguments("-I. -O3");
+        } else {
+            vp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
+                name+"_v", RESGRP, "glsl", Ogre::GPT_VERTEX_PROGRAM);
+            fp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
+                name+"_f", RESGRP, "glsl", Ogre::GPT_FRAGMENT_PROGRAM);
+        }
+        shader = new GfxShader(name, vp, fp, new_uniforms);
+    }
+
+    APP_ASSERT(!vp.isNull());
+    APP_ASSERT(!fp.isNull());
+
+    vp->unload();
+    vp->setSource(shaders.first);
+    vp->load();
+
+    fp->unload();
+    fp->setSource(shaders.second);
+    fp->load();
+
+    shader->validate();
+
+    shader_db[name] = shader;
+    return shader;
 }
 
 GfxShader *gfx_shader_get (const std::string &name)
 {
-    auto it = all_shaders.find(name);
-    if (it == all_shaders.end())
-        EXCEPT << "GfxShader not found: " << name << ENDL;
-    return it->second;
+    if (!gfx_shader_has(name)) GRIT_EXCEPT("Shader does not exist: \"" + name + "\"");
+    return shader_db[name];
 }
+
+bool gfx_shader_has (const std::string &name)
+{
+    GfxShaderDB::iterator it = shader_db.find(name);
+    if (it == shader_db.end()) return false;
+    return true;
+}
+
+
+
 
 void gfx_shader_init (void)
 {
@@ -300,9 +391,6 @@ void gfx_shader_init (void)
 
 void gfx_shader_shutdown (void)
 {
-    for (auto pair : all_shaders)
-        delete pair.second;
-    all_shaders.clear();
 }
 
 
