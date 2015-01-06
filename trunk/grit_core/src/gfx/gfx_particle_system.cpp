@@ -363,8 +363,8 @@ class GfxParticleSystem {
                 particle_shaders[suff_index] = shader;
             }
 
-            Ogre::HighLevelGpuProgramPtr vp = shader->getOgreVertexProgram();
-            Ogre::HighLevelGpuProgramPtr fp = shader->getOgreFragmentProgram();
+            Ogre::HighLevelGpuProgramPtr vp = shader->getHackOgreVertexProgram();
+            Ogre::HighLevelGpuProgramPtr fp = shader->getHackOgreFragmentProgram();
 
             try_set_named_constant(vp, "view_proj", proj_view);
             float render_target_flipping = render_target->requiresTextureFlipping() ? -1.0f : 1.0f;
@@ -497,7 +497,7 @@ void gfx_particle_define (const std::string &pname, const std::string &tex_name,
 GfxParticle *gfx_particle_emit (const std::string &pname)
 {
     GfxParticleSystem *&psys = psystems[pname];
-    if (psys == NULL) GRIT_EXCEPT("No such particle: \""+pname+"\"");
+    if (psys == NULL) EXCEPT << "No such particle: \"" << pname << "\"" << ENDL;
     return psys->emit();
 }
 

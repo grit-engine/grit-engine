@@ -31,14 +31,17 @@
 #define GFX_GASOLINE_TYPE_SYSTEM
 
 enum GfxGslKind {
-    GFX_GSL_VERT,
-    GFX_GSL_FRAG
+    GFX_GSL_VERTEX,
+    GFX_GSL_DANGS,
+    GFX_GSL_COLOUR
 };
 
 typedef std::vector<GfxGslType*> GfxGslTypes;
 typedef std::map<std::string, const GfxGslType*> GfxGslTypeMap;
 
 std::ostream &operator<<(std::ostream &o, const GfxGslType *t_);
+
+// Primitives
 
 struct GfxGslCoordType : public GfxGslType {
     unsigned dim;
@@ -68,9 +71,12 @@ struct GfxGslBoolType : public GfxGslType {
     GfxGslBoolType (void) { }
 };
 
+
 struct GfxGslVoidType : public GfxGslType {
     GfxGslVoidType (void) { }
 };
+
+// Engine access types
 
 struct GfxGslGlobalType : public GfxGslType {
     GfxGslGlobalType (void) { }
@@ -88,11 +94,13 @@ struct GfxGslFragType : public GfxGslType {
     GfxGslFragType (void) { }
 };
 
+
 struct GfxGslFunctionType : public GfxGslType {
     GfxGslTypes params;
     GfxGslType *ret;
     GfxGslFunctionType (const GfxGslTypes &params, GfxGslType *ret) : params(params), ret(ret) { }
 };
+
 
 class GfxGslTypeSystem {
     GfxGslAllocator &alloc;
@@ -100,12 +108,10 @@ class GfxGslTypeSystem {
     std::map<std::string, std::vector<GfxGslFunctionType*>> funcTypes;
     struct FieldType {
         GfxGslType *t;
-        bool vr; // readable / writeable in fragment/vertex shader
-        bool vw;
-        bool fr;
-        bool fw;
-        FieldType (GfxGslType *t, bool vr, bool vw, bool fr, bool fw)
-          : t(t), vr(vr), vw(vw), fr(fr), fw(fw)
+        bool writeable;
+        bool mustWrite;
+        FieldType (GfxGslType *t, bool writeable = false, bool must_write = false)
+          : t(t), writeable(writeable), mustWrite(must_write)
         { }
         FieldType (void)
         { }
@@ -144,7 +150,7 @@ class GfxGslTypeSystem {
 
     GfxGslType *cloneType (const GfxGslType *t_);
 
-    void initObjectTypes (void);
+    void initObjectTypes (GfxGslKind k);
 
     void initFuncTypes (void);
 
@@ -210,7 +216,7 @@ class GfxGslTypeSystem {
       : alloc(alloc), matFields(matFields), vars(vars), outerVars(vars), kind(kind)
     {
         initFuncTypes();
-        initObjectTypes();
+        initObjectTypes(kind);
     }
 
 

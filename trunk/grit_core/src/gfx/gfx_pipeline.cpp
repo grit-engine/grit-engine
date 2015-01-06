@@ -35,8 +35,8 @@ static inline Ogre::HighLevelGpuProgramPtr get_shader(const char *name)
 
 static void render_with_progs (GfxShader *shader, const Ogre::RenderOperation &op)
 {
-    auto vp = shader->getOgreVertexProgram();
-    auto fp = shader->getOgreFragmentProgram();
+    auto vp = shader->getHackOgreVertexProgram();
+    auto fp = shader->getHackOgreFragmentProgram();
 
     // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
     ogre_rs->bindGpuProgram(vp->_getBindingDelegate());
@@ -419,8 +419,8 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
         try {
             get_deferred_ambient_sun()->validate();
-            auto das_vp = deferred_ambient_sun->getOgreVertexProgram();
-            auto das_fp = deferred_ambient_sun->getOgreFragmentProgram();
+            auto das_vp = deferred_ambient_sun->getHackOgreVertexProgram();
+            auto das_fp = deferred_ambient_sun->getHackOgreFragmentProgram();
 
             Ogre::TexturePtr noise_tex = Ogre::TextureManager::getSingleton().load("system/HiFreqNoiseGauss.64.png", RESGRP);
 
@@ -597,8 +597,8 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             if (light_counter > 0) {
 
                 get_deferred_lights()->validate();
-                auto dl_vp = deferred_lights->getOgreVertexProgram();
-                auto dl_fp = deferred_lights->getOgreFragmentProgram();
+                auto dl_vp = deferred_lights->getHackOgreVertexProgram();
+                auto dl_fp = deferred_lights->getHackOgreFragmentProgram();
 
                 try_set_named_constant(dl_vp, "view_proj", view_proj);
                 try_set_named_constant(dl_vp, "render_target_flipping", render_target_flipping);
@@ -848,7 +848,7 @@ static void render_quad (Ogre::RenderTarget *rt, const Ogre::Vector4 &win, bool 
     if (vpsz) {
         Ogre::Vector4 viewport_size(     vp->getActualWidth(),      vp->getActualHeight(),
                                     1.0f/vp->getActualWidth(), 1.0f/vp->getActualHeight());
-        try_set_named_constant(opts.shader->getOgreFragmentProgram(), "viewport_size", viewport_size);
+        try_set_named_constant(opts.shader->getHackOgreFragmentProgram(), "viewport_size", viewport_size);
     }
     render_quad(vp, opts);
     rt->removeViewport(vp->getZOrder());
@@ -857,7 +857,7 @@ static void render_quad (Ogre::RenderTarget *rt, const Ogre::Vector4 &win, bool 
 template<unsigned n>
 static void render_quad (Ogre::Viewport *viewport, const RenderQuadParams<n> &opts)
 {
-        Ogre::HighLevelGpuProgramPtr vp = opts.shader->getOgreVertexProgram();
+        Ogre::HighLevelGpuProgramPtr vp = opts.shader->getHackOgreVertexProgram();
         float render_target_flipping = viewport->getTarget()->requiresTextureFlipping() ? -1.0f : 1.0f;
         try_set_named_constant(vp, "render_target_flipping", render_target_flipping);
         if (d3d9) {
@@ -976,7 +976,7 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
         if (bloom_iterations == 0) {
 
             get_compositor_tonemap()->validate();
-            auto fp = compositor_tonemap->getOgreFragmentProgram();
+            auto fp = compositor_tonemap->getHackOgreFragmentProgram();
             try_set_named_constant(fp, "global_exposure", to_ogre(global_exposure*opts.mask));
             try_set_named_constant(fp, "global_saturation", global_saturation*opts.saturationMask);
             if (scene_colour_grade_lut == NULL) {
@@ -991,17 +991,17 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
             float bloom_threshold = gfx_option(GFX_BLOOM_THRESHOLD);
 
             get_compositor_bloom_filter_then_horz_blur()->validate();
-            auto bloom_filter_then_horz_blur = compositor_bloom_filter_then_horz_blur->getOgreFragmentProgram();
+            auto bloom_filter_then_horz_blur = compositor_bloom_filter_then_horz_blur->getHackOgreFragmentProgram();
             try_set_named_constant(bloom_filter_then_horz_blur, "bloom_threshold", bloom_threshold/global_exposure);
 
             get_compositor_bloom_vert_blur()->validate();
-            auto bloom_vert_blur = compositor_bloom_vert_blur->getOgreFragmentProgram();
+            auto bloom_vert_blur = compositor_bloom_vert_blur->getHackOgreFragmentProgram();
 
             get_compositor_bloom_horz_blur()->validate();
-            auto bloom_horz_blur = compositor_bloom_horz_blur->getOgreFragmentProgram();
+            auto bloom_horz_blur = compositor_bloom_horz_blur->getHackOgreFragmentProgram();
 
             get_compositor_bloom_vert_blur_combine_and_tonemap()->validate();
-            auto bloom_vert_blur_combine_and_tonemap = compositor_bloom_vert_blur_combine_and_tonemap->getOgreFragmentProgram();
+            auto bloom_vert_blur_combine_and_tonemap = compositor_bloom_vert_blur_combine_and_tonemap->getHackOgreFragmentProgram();
             try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_exposure", to_ogre(global_exposure*opts.mask));
             try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_saturation", global_saturation*opts.saturationMask);
 

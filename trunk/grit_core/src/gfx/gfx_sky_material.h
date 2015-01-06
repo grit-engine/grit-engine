@@ -49,9 +49,6 @@ class GfxSkyMaterial : public GfxBaseMaterial {
     public:
     // take MAT_SYNC when iterating through this stuff
 
-    const GfxShaderBindingsPtr &getBindings (void) { return bindings; }
-    void setBindings (const GfxShaderBindingsPtr &v) { bindings = v; }
-    
     GfxSkyMaterialSceneBlend getSceneBlend (void) const { return sceneBlend; }
     void setSceneBlend (GfxSkyMaterialSceneBlend v) { sceneBlend = v; }
 

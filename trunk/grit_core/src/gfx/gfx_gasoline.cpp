@@ -25,58 +25,45 @@
 #include "gfx_gasoline_backend_cg.h"
 #include "gfx_gasoline_backend_glsl.h"
 
-std::pair<std::string, std::string> gfx_gasoline_compile (GfxGslBackend backend,
-                                                          const std::string &vert_prog,
-                                                          const std::string &frag_prog,
-                                                          const GfxGslParams &params,
-                                                          const GfxGslUnboundTextures &ubt)
+static GfxGslType *to_type (GfxGslAllocator &alloc, GfxGslParamType t)
+{
+    switch (t) {
+        case GFX_GSL_INT1: return alloc.makeType<GfxGslIntType>(1);
+        case GFX_GSL_INT2: return alloc.makeType<GfxGslIntType>(2);
+        case GFX_GSL_INT3: return alloc.makeType<GfxGslIntType>(3);
+        case GFX_GSL_INT4: return alloc.makeType<GfxGslIntType>(4);
+        case GFX_GSL_FLOAT1: return alloc.makeType<GfxGslFloatType>(1);
+        case GFX_GSL_FLOAT2: return alloc.makeType<GfxGslFloatType>(2);
+        case GFX_GSL_FLOAT3: return alloc.makeType<GfxGslFloatType>(3);
+        case GFX_GSL_FLOAT4: return alloc.makeType<GfxGslFloatType>(4);
+        case GFX_GSL_FLOAT_TEXTURE1: return alloc.makeType<GfxGslFloatTextureType>(1);
+        case GFX_GSL_FLOAT_TEXTURE2: return alloc.makeType<GfxGslFloatTextureType>(2);
+        case GFX_GSL_FLOAT_TEXTURE3: return alloc.makeType<GfxGslFloatTextureType>(3);
+        case GFX_GSL_FLOAT_TEXTURE4: return alloc.makeType<GfxGslFloatTextureType>(4);
+    }
+    EXCEPTEX << ENDL;
+}
+
+static GfxGslTypeMap make_mat_fields (GfxGslAllocator &alloc, const GfxGslParams &params)
+{
+    GfxGslTypeMap r;
+    for (auto pair : params)
+        r[pair.first] = to_type(alloc, pair.second);
+    return r;
+}
+
+GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
+                                               const std::string &vert_prog,
+                                               const std::string &colour_prog,
+                                               const GfxGslParams &params,
+                                               const GfxGslUnboundTextures &ubt)
 {
     GfxGslAllocator alloc;
 
-    GfxGslTypeMap mat_fields;
-    for (auto pair : params) {
-        switch (pair.second) {
-            case GFX_GSL_INT1: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslIntType>(1);
-            } break;
-            case GFX_GSL_INT2: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslIntType>(2);
-            } break;
-            case GFX_GSL_INT3: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslIntType>(3);
-            } break;
-            case GFX_GSL_INT4: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslIntType>(4);
-            } break;
-            case GFX_GSL_FLOAT1: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslFloatType>(1);
-            } break;
-            case GFX_GSL_FLOAT2: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslFloatType>(2);
-            } break;
-            case GFX_GSL_FLOAT3: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslFloatType>(3);
-            } break;
-            case GFX_GSL_FLOAT4: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslFloatType>(4);
-            } break;
-            case GFX_GSL_FLOAT_TEXTURE1: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslFloatTextureType>(1);
-            } break;
-            case GFX_GSL_FLOAT_TEXTURE2: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslFloatTextureType>(2);
-            } break;
-            case GFX_GSL_FLOAT_TEXTURE3: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslFloatTextureType>(3);
-            } break;
-            case GFX_GSL_FLOAT_TEXTURE4: {
-                mat_fields[pair.first] = alloc.makeType<GfxGslFloatTextureType>(4);
-            } break;
-        }
-    }
+    GfxGslTypeMap mat_fields = make_mat_fields(alloc, params);
 
     GfxGslAst *vert_ast;
-    GfxGslTypeSystem vert_ts(alloc, GFX_GSL_VERT, mat_fields, GfxGslTypeMap());
+    GfxGslTypeSystem vert_ts(alloc, GFX_GSL_VERTEX, mat_fields, GfxGslTypeMap());
 
     try {
         vert_ast = gfx_gasoline_parse(alloc, vert_prog);
@@ -87,10 +74,10 @@ std::pair<std::string, std::string> gfx_gasoline_compile (GfxGslBackend backend,
 
 
     GfxGslAst *frag_ast;
-    GfxGslTypeSystem frag_ts(alloc, GFX_GSL_FRAG, mat_fields, vert_ts.getVars());
+    GfxGslTypeSystem frag_ts(alloc, GFX_GSL_COLOUR, mat_fields, vert_ts.getVars());
 
     try {
-        frag_ast = gfx_gasoline_parse(alloc, frag_prog);
+        frag_ast = gfx_gasoline_parse(alloc, colour_prog);
         frag_ts.inferAndSet(frag_ast);
     } catch (const Exception &e) {
         EXCEPT << "Fragment shader: " << e << ENDL;
@@ -117,3 +104,58 @@ std::pair<std::string, std::string> gfx_gasoline_compile (GfxGslBackend backend,
 
     return {vert_out, frag_out};
 }
+
+GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
+                                                     const std::string &vert_prog,
+                                                     const std::string &dangs_prog,
+                                                     const std::string &additional_prog,
+                                                     const GfxGslParams &params,
+                                                     const GfxGslUnboundTextures &ubt)
+{
+    GfxGslAllocator alloc;
+
+    GfxGslTypeMap mat_fields = make_mat_fields(alloc, params);
+
+    GfxGslAst *vert_ast;
+    GfxGslTypeSystem vert_ts(alloc, GFX_GSL_VERTEX, mat_fields, GfxGslTypeMap());
+
+    try {
+        vert_ast = gfx_gasoline_parse(alloc, vert_prog);
+        vert_ts.inferAndSet(vert_ast);
+    } catch (const Exception &e) {
+        EXCEPT << "Vertex shader: " << e << ENDL;
+    }
+
+
+    GfxGslAst *additional_ast;
+    GfxGslTypeSystem additional_ts(alloc, GFX_GSL_COLOUR, mat_fields, vert_ts.getVars());
+
+    try {
+        additional_ast = gfx_gasoline_parse(alloc, additional_prog);
+        additional_ts.inferAndSet(additional_ast);
+    } catch (const Exception &e) {
+        EXCEPT << "Fragment shader: " << e << ENDL;
+    }
+
+    std::string vert_out;
+    std::string frag_out;
+    switch (backend) {
+        case GFX_GSL_BACKEND_GSL:
+        vert_out = gfx_gasoline_unparse_gsl(&vert_ts, vert_ast);
+        frag_out = gfx_gasoline_unparse_gsl(&additional_ts, additional_ast);
+        break;
+
+        case GFX_GSL_BACKEND_CG:
+        gfx_gasoline_unparse_cg(&vert_ts, vert_ast, vert_out,
+                                &additional_ts, additional_ast, frag_out, ubt);
+        break;
+
+        case GFX_GSL_BACKEND_GLSL:
+        gfx_gasoline_unparse_glsl(&vert_ts, vert_ast, vert_out,
+                                  &additional_ts, additional_ast, frag_out, ubt);
+        break;
+    }
+
+    return {vert_out, frag_out};
+}
+

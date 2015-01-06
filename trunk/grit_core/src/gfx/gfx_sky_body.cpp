@@ -133,7 +133,7 @@ GfxSkyMaterial *GfxSkyBody::getMaterial (unsigned i)
     return materials[i];
 }
 
-void GfxSkyBody::render (GfxPipeline *p)
+void GfxSkyBody::render (GfxPipeline *p, const GfxShaderGlobals &g)
 {
     if (!enabled) return;
 
@@ -142,21 +142,6 @@ void GfxSkyBody::render (GfxPipeline *p)
 
     Ogre::Matrix4 world(rot);
 
-    Ogre::Matrix4 view = p->getCamera()->getViewMatrix();
-    // do not want translation part of view matrix (i.e. just camera direction)
-    view.setTrans(Ogre::Vector3(0,0,0)); 
-
-    Ogre::Viewport *viewport = p->getCamera()->getViewport();
-    bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
-    float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
-    Ogre::Matrix4 proj = p->getCamera()->getProjectionMatrixWithRSDepth();
-    // Invert transformed y if necessary
-    proj[1][0] *= render_target_flipping_factor;
-    proj[1][1] *= render_target_flipping_factor;
-    proj[1][2] *= render_target_flipping_factor;
-    proj[1][3] *= render_target_flipping_factor;
-
-    Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
 
 
     // this is to protect the material to texture mappings which might be
@@ -166,74 +151,14 @@ void GfxSkyBody::render (GfxPipeline *p)
 
     // iterate through the materials
     for (unsigned i=0 ; i<materials.size() ; ++i) {
-        GfxSkyMaterial *mat = materials[i];
 
+        GfxSkyMaterial *mat = materials[i];
         Ogre::SubMesh *sm = mesh->getSubMesh(i);
 
         // render sm using mat
-
-        GfxShader *shader = mat->getShader();
-        APP_ASSERT(shader != nullptr);
-
-        shader->bindShader();
-        shader->bind(mat->getBindings());
-        shader->bindGlobals(world, view, proj, viewport_dim, render_target_flipping);
-        shader->bindShaderParams();
-
-        const GfxShaderParamMap &params = shader->getParams();
+ 
         const GfxMaterialTextureMap &mat_texs = mat->getTextures();
-
-        unsigned counter = 0;
-        for (const auto &pair : params) {
-            const std::string &name = pair.first;
-            const GfxShaderParam &param = pair.second;
-            if (!gfx_gasoline_param_is_texture(param.t)) continue;
-
-            const GfxMaterialTexture *sky_tex = NULL;
-            auto it = mat_texs.find(name);
-            // material might leave a given uniform undefined in which case revert to shader default
-            if (it != mat_texs.end()) sky_tex = &it->second;
-
-            switch (param.t) {
-                case GFX_GSL_FLOAT_TEXTURE1: {
-                    EXCEPTEX << "Not yet implemented." << ENDL;
-                } break;
-                case GFX_GSL_FLOAT_TEXTURE2: {
-                    // TODO: use this to pick a shader!
-                    APP_ASSERT(sky_tex != NULL);
-                    ogre_rs->_setTexture(counter, true, sky_tex->texture->getOgreTexturePtr());
-                    //ogre_rs->_setTextureLayerAnisotropy(counter, sky_tex->anisotropy);
-                    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
-                    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
-                    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
-                    auto mode = sky_tex->clamp ? Ogre::TextureUnitState::TAM_CLAMP
-                                               : Ogre::TextureUnitState::TAM_WRAP;
-                    Ogre::TextureUnitState::UVWAddressingMode am;
-                    am.u = mode;
-                    am.v = mode;
-                    am.w = mode;
-                    ogre_rs->_setTextureAddressingMode(counter, am);
-                    counter++;
-                }
-                break;
-                case GFX_GSL_FLOAT_TEXTURE3: {
-                    EXCEPTEX << "Not yet implemented." << ENDL;
-                } break;
-                case GFX_GSL_FLOAT_TEXTURE4: {
-                    EXCEPTEX << "Not yet implemented." << ENDL;
-                } break;
-
-                case GFX_GSL_FLOAT1:
-                case GFX_GSL_FLOAT2:
-                case GFX_GSL_FLOAT3:
-                case GFX_GSL_FLOAT4:
-                case GFX_GSL_INT1:
-                case GFX_GSL_INT2:
-                case GFX_GSL_INT3:
-                case GFX_GSL_INT4:
-                break;
-            }
-        }
+        mat->getShader()->bindShader(GfxShader::SKY, g, world, mat_texs, mat->getBindings());
 
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);
         // read but don't write depth buffer
@@ -257,7 +182,7 @@ void GfxSkyBody::render (GfxPipeline *p)
         sm->_getRenderOperation(op);
         ogre_rs->_render(op);
 
-        for (unsigned i=0 ; i<counter ; ++i) {
+        for (unsigned i=0 ; i<mat_texs.size() ; ++i) {
             ogre_rs->_disableTextureUnit(i);
         }
 
@@ -274,6 +199,21 @@ static bool sky_body_compare (GfxSkyBody *a, GfxSkyBody *b)
 // called every frame
 void gfx_sky_render (GfxPipeline *p)
 {
+    Ogre::Matrix4 view = p->getCamera()->getViewMatrix();
+    // do not want translation part of view matrix (i.e. just camera direction)
+    view.setTrans(Ogre::Vector3(0,0,0)); 
+    Ogre::Viewport *viewport = p->getCamera()->getViewport();
+    bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
+    float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
+    Ogre::Matrix4 proj = p->getCamera()->getProjectionMatrixWithRSDepth();
+    // Invert transformed y if necessary
+    proj[1][0] *= render_target_flipping_factor;
+    proj[1][1] *= render_target_flipping_factor;
+    proj[1][2] *= render_target_flipping_factor;
+    proj[1][3] *= render_target_flipping_factor;
+    Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
+    GfxShaderGlobals g = { view, proj, viewport_dim, render_target_flipping };
+
     // sort by z order into separate container
     std::vector<GfxSkyBody*> sorted;
     for (unsigned i=0 ; i<gfx_all_sky_bodies.size() ; ++i) {
@@ -282,7 +222,7 @@ void gfx_sky_render (GfxPipeline *p)
     std::sort(sorted.begin(), sorted.end(), sky_body_compare);
 
     for (unsigned i=0 ; i<sorted.size() ; ++i) {
-        sorted[i]->render(p);
+        sorted[i]->render(p, g);
     }
 }
 

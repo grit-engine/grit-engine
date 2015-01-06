@@ -20,6 +20,8 @@
  */
 
 class GfxMaterial;
+struct GfxMaterialTexture;
+typedef std::map<std::string, GfxMaterialTexture> GfxMaterialTextureMap;
 
 #ifndef GFX_MATERIAL_H
 #define GFX_MATERIAL_H
@@ -50,15 +52,13 @@ struct GfxMaterialTexture {
     int anisotropy;
 };
 
-typedef std::map<std::string, GfxMaterialTexture> GfxMaterialTextureMap;
-    
         
 class GfxBaseMaterial {
 
     protected:
 
     GfxShader *shader;
-    GfxShaderBindingsPtr bindings;
+    GfxShaderBindings bindings;
     GfxMaterialTextureMap textures;
     
     public:
@@ -73,8 +73,8 @@ class GfxBaseMaterial {
 
     void addDependencies (DiskResource *into) const;
 
-    const GfxShaderBindingsPtr &getBindings (void) const { return bindings; }
-    void setBindings (const GfxShaderBindingsPtr &v) { bindings = v; }
+    const GfxShaderBindings &getBindings (void) const { return bindings; }
+    void setBindings (const GfxShaderBindings &v) { bindings = v; }
     
     GfxShader *getShader (void) const { return shader; }
     void setShader (GfxShader *v);
@@ -90,15 +90,6 @@ typedef std::vector<GfxMaterial*> GfxMaterials;
 
 enum GfxMaterialSceneBlend { GFX_MATERIAL_OPAQUE, GFX_MATERIAL_ALPHA, GFX_MATERIAL_ALPHA_DEPTH };
 
-enum GfxMaterialSpecularMode {
-    GFX_MATERIAL_SPEC_NONE,
-    GFX_MATERIAL_SPEC_ADJUSTED_DIFFUSE_COLOUR,
-    GFX_MATERIAL_SPEC_DIFFUSE_ALPHA,
-    GFX_MATERIAL_SPEC_MAP,
-    GFX_MATERIAL_SPEC_MAP_WITH_GLOSS
-};  
-
-
 class GfxMaterial : public GfxBaseMaterial {
     public: // hack
     Ogre::MaterialPtr regularMat;     // no suffix
@@ -109,18 +100,21 @@ class GfxMaterial : public GfxBaseMaterial {
     //Ogre::MaterialPtr worldShadowMat; // % can be simply a link to the default
     Ogre::MaterialPtr wireframeMat;     // |
 
-
-    private: GfxMaterial (const std::string &name);
-
-    private: GfxMaterialSceneBlend sceneBlend;
-    public: GfxMaterialSceneBlend getSceneBlend (void) const { GFX_MAT_SYNC; return sceneBlend; }
-    public: void setSceneBlend (GfxMaterialSceneBlend v);
-
-    private: bool castShadows;
-    public: bool getCastShadows (void) const { GFX_MAT_SYNC; return castShadows; }
-    public: void setCastShadows (bool v);
+    private:
+    GfxMaterial (const std::string &name);
+    GfxMaterialSceneBlend sceneBlend;
+    bool castShadows;
+    // backfaces  // vface semantic should be available in shader
+    // shadowAlphaReject  // Whether to use discard from dangs shader
+    // shadowBias  // as shadow shader not available
+    // various addressing modes
 
     public:
+    GfxMaterialSceneBlend getSceneBlend (void) const { GFX_MAT_SYNC; return sceneBlend; }
+    void setSceneBlend (GfxMaterialSceneBlend v);
+
+    bool getCastShadows (void) const { GFX_MAT_SYNC; return castShadows; }
+    void setCastShadows (bool v);
 
     friend GfxMaterial *gfx_material_add(const std::string &);
     friend class GfxBody;

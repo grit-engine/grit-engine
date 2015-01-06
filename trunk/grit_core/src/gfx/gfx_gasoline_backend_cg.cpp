@@ -253,9 +253,9 @@ void gfx_gasoline_unparse_cg (const GfxGslTypeSystem *vert_ts, const GfxGslAst *
                               const GfxGslAst *frag_ast, std::string &frag_output,
                               const GfxGslUnboundTextures &ubt)
 {
-    Backend vert_backend(vert_ts, GFX_GSL_VERT, ubt);
+    Backend vert_backend(vert_ts, GFX_GSL_VERTEX, ubt);
     vert_backend.unparse(vert_ast, 1);
-    Backend frag_backend(frag_ts, GFX_GSL_FRAG, ubt);
+    Backend frag_backend(frag_ts, GFX_GSL_COLOUR, ubt);
     frag_backend.unparse(frag_ast, 1);
 
     std::stringstream vert_ss;

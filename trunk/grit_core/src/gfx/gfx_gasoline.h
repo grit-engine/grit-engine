@@ -97,10 +97,38 @@ static inline std::ostream &operator<< (std::ostream &o, const GfxGslColour &c)
 typedef std::map<std::string, GfxGslParamType> GfxGslParams;
 typedef std::map<std::string, GfxGslColour> GfxGslUnboundTextures;
 
-std::pair<std::string, std::string> gfx_gasoline_compile (GfxGslBackend backend,
-                                                          const std::string &vert_prog,
-                                                          const std::string &frag_prog,
-                                                          const GfxGslParams &params,
-                                                          const GfxGslUnboundTextures &ubt);
+/** Return the shader code that defines things needsd by the generated code. */
+std::string gfx_gasoline_preamble (GfxGslBackend backend);
+
+struct GfxGasolineResult {
+    std::string vertexShader;
+    std::string fragmentShader;
+};
+
+GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
+                                               const std::string &vert_prog,
+                                               const std::string &colour_prog,
+                                               const GfxGslParams &params,
+                                               const GfxGslUnboundTextures &ubt);
+
+GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
+                                                     const std::string &vert_prog,
+                                                     const std::string &dangs_prog,
+                                                     const std::string &additional_prog,
+                                                     const GfxGslParams &params,
+                                                     const GfxGslUnboundTextures &ubt);
+
+// To come!
+GfxGasolineResult gfx_gasoline_compile_forward (GfxGslBackend backend,
+                                                const std::string &vert_prog,
+                                                const std::string &fwd_prog,
+                                                const GfxGslParams &params,
+                                                const GfxGslUnboundTextures &ubt);
+
+GfxGasolineResult gfx_gasoline_compile_shadow_cast (GfxGslBackend backend,
+                                                    const std::string &vert_prog,
+                                                    const std::string &fwd_prog,
+                                                    const GfxGslParams &params,
+                                                    const GfxGslUnboundTextures &ubt);
 
 #endif

@@ -3738,7 +3738,7 @@ static void add_texture (GfxMaterialTextureMap &textures, const std::string &key
     auto *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
     if (tex == NULL) EXCEPT << "Resource is not a texture \"" << tex_name << "\"" << ENDL;
     textures[key] = { tex, clamp, anisotropy };
-    CVERB << key << " bound to texture " << tex_name << std::endl;
+    //CVERB << key << " bound to texture " << tex_name << std::endl;
 }
 
 static void process_tex_blend (GfxMaterialTextureMap &textures, int counter, ExternalTable &src)
@@ -3948,7 +3948,7 @@ TRY_START
     t.get("sceneBlend", scene_blend, std::string("OPAQUE"));
 
     GfxMaterialTextureMap textures;
-    GfxShaderBindingsPtr bindings = shader->makeBindings();
+    GfxShaderBindings bindings;
 
     typedef ExternalTable::KeyIterator KI;
     for (KI i=t.begin(), i_=t.end() ; i!=i_ ; ++i) {
@@ -3992,7 +3992,7 @@ TRY_START
                     case 4: bind = GfxShaderParam(Vector4(vs[0], vs[1], vs[2], vs[3])); break;
                     default: my_lua_error(L, "Uniform \"" + key + "\" unsupported number of default values");
                 }
-                bindings->setBinding(key, bind);
+                bindings[key] = bind;
             } else {
                 my_lua_error(L, "Uniform \""+key+"\" unrecognised 'valueKind' field: \""+value_kind+"\"");
             }
@@ -4105,8 +4105,8 @@ TRY_START
         uniforms[key] = uniform;
     }
 
-
-    gfx_shader_make_or_reset_sky(name, vertex_code, fragment_code, uniforms);
+    gfx_shader_check(GfxShader::SKY, vertex_code, "", fragment_code, uniforms);
+    gfx_shader_make_or_reset(name, vertex_code, "", fragment_code, uniforms);
 
     return 0;
 TRY_END

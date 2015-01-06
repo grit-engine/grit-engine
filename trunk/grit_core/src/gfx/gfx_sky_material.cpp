@@ -79,18 +79,17 @@ void gfx_sky_material_init (void)
 {
     std::string vs = "frag.position = mul(global.worldViewProj, Float4(vert.position.xyz, 1));\n"
                      "frag.position.z = frag.position.w * (1 - 1.0/65536);\n";
-    std::string fs = "val c = pma_decode(sample2D(mat.emissiveMap, vert.coord0.xy))\n"
+    std::string fs = "var c = pma_decode(sample2D(mat.emissiveMap, vert.coord0.xy))\n"
                      "             * Float4(1, 1, 1, mat.alphaMask);\n"
                      "if (c.a <= mat.alphaRejectThreshold) discard;\n"
                      "frag.colour = Float4(gamma_decode(c.rgb) * mat.emissiveMask, c.a);\n";
 
-    GfxShader *s = gfx_shader_make_or_reset_sky("/system/SkyDefault", vs, fs, {
+    gfx_shader_make_or_reset("/system/SkyDefault", vs, "", fs, {
         { "alphaMask", GfxShaderParam(1.0f) },
         { "alphaRejectThreshold", GfxShaderParam(-1.0f) },
         { "emissiveMap", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1)) },
         { "emissiveMask", GfxShaderParam(Vector3(1, 1, 1)) },
     });
 
-    GfxSkyMaterial *m = gfx_sky_material_add("/system/SkyDefault");
-    m->setShader(s);
+    gfx_sky_material_add("/system/SkyDefault");
 }

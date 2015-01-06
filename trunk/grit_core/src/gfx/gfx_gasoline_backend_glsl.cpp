@@ -110,7 +110,7 @@ namespace {
                 } else if (dynamic_cast<GfxGslMatType*>(ast->target->type)) {
                     ss << "mat_" << ast->id;
                 } else if (dynamic_cast<GfxGslVertType*>(ast->target->type)) {
-                    if (kind == GFX_GSL_VERT) {
+                    if (kind == GFX_GSL_VERTEX) {
                         ss << vert_global[ast->id];
                     } else {
                         ss << "vert_" << ast->id;
@@ -230,7 +230,7 @@ static void preamble (const GfxGslTypeSystem *ts, GfxGslKind k, std::ostream &ss
                       const GfxGslUnboundTextures &ubt)
 {
     ss << "#version 130\n";
-    ss << "// " << (k == GFX_GSL_VERT ? "Vertex" : "Fragment") << " shader.\n";
+    ss << "// " << (k == GFX_GSL_VERTEX ? "Vertex" : "Fragment") << " shader.\n";
     ss << "// This GLSL shader compiled from Gasoline, the Grit shading language.\n";
     ss << "\n";
 
@@ -269,7 +269,7 @@ static void preamble (const GfxGslTypeSystem *ts, GfxGslKind k, std::ostream &ss
     ss << "#define FloatTexture3 sampler3D\n";
 
     ss << "Float atan2 (Float y, Float x) { return atan(y, x); }\n";
-    if (k == GFX_GSL_FRAG) {
+    if (k == GFX_GSL_COLOUR) {
         ss << "Float ddx (Float v) { return dFdx(v); }\n";
         ss << "Float ddy (Float v) { return dFdy(v); }\n";
         ss << "Float2 ddx (Float2 v) { return dFdx(v); }\n";
@@ -311,13 +311,13 @@ void gfx_gasoline_unparse_glsl (const GfxGslTypeSystem *vert_ts, const GfxGslAst
                                 const GfxGslAst *frag_ast, std::string &frag_output,
                                 const GfxGslUnboundTextures &ubt)
 {
-    Backend vert_backend(vert_ts, GFX_GSL_VERT);
+    Backend vert_backend(vert_ts, GFX_GSL_VERTEX);
     vert_backend.unparse(vert_ast, 1);
-    Backend frag_backend(frag_ts, GFX_GSL_FRAG);
+    Backend frag_backend(frag_ts, GFX_GSL_COLOUR);
     frag_backend.unparse(frag_ast, 1);
 
     std::stringstream vert_ss;
-    preamble(vert_ts, GFX_GSL_VERT, vert_ss, ubt);
+    preamble(vert_ts, GFX_GSL_VERTEX, vert_ss, ubt);
 
     const auto &trans = frag_ts->getTrans();
     auto vert_in = vert_ts->getVertFieldsRead();
@@ -374,7 +374,7 @@ void gfx_gasoline_unparse_glsl (const GfxGslTypeSystem *vert_ts, const GfxGslAst
     vert_ss << "}\n";
 
     std::stringstream frag_ss;
-    preamble(frag_ts, GFX_GSL_FRAG, frag_ss, ubt);
+    preamble(frag_ts, GFX_GSL_COLOUR, frag_ss, ubt);
 
     for (unsigned i=0 ; i<trans.size() ; i+=4) {
         unsigned sz = trans.size()-i > 4 ? 4 : trans.size()-i;

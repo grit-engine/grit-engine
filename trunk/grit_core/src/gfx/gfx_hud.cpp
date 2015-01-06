@@ -811,8 +811,8 @@ std::string GfxHudText::getText (void) const
 // {{{ RENDERING
 
 
-GfxShader *shader_text, *shader_tex, *shader_solid;
-GfxShaderBindingsPtr shader_text_binds, shader_tex_binds, shader_solid_binds;
+GfxShader *shader_text, *shader_tex;
+GfxShaderBindings shader_text_binds, shader_tex_binds;
 
 // vdata/idata be allocated later because constructor requires ogre to be initialised
 static Ogre::VertexData *quad_vdata;
@@ -825,62 +825,6 @@ static Ogre::IndexData *cornered_quad_idata;
 static Ogre::HardwareVertexBufferSharedPtr cornered_quad_vbuf;
 static Ogre::HardwareIndexBufferSharedPtr cornered_quad_ibuf;
 static unsigned cornered_quad_vdecl_size;
-
-enum VertOrFrag { VERT, FRAG };
-
-static Ogre::HighLevelGpuProgramPtr make_cg_shader (const std::string &name, VertOrFrag kind, const std::string &code)
-{
-    CVERB << "Compiling HUD CG shader: " << name << std::endl;
-    Ogre::StringVector vp_profs, fp_profs;
-    vp_profs.push_back("vs_3_0"); fp_profs.push_back("ps_3_0"); // d3d9
-    vp_profs.push_back("gpu_vp"); fp_profs.push_back("gp4fp"); // gl
-
-    auto kind2 = kind==FRAG ? Ogre::GPT_FRAGMENT_PROGRAM : Ogre::GPT_VERTEX_PROGRAM;
-    Ogre::HighLevelGpuProgramPtr prog = Ogre::HighLevelGpuProgramManager::getSingleton()
-        .createProgram(name, RESGRP, "cg", kind2);
-    APP_ASSERT(!prog.isNull());
-    Ogre::CgProgram *tmp_prog = static_cast<Ogre::CgProgram*>(&*prog);
-    prog->setSource(code);
-    tmp_prog->setEntryPoint("main");
-    tmp_prog->setProfiles(kind==FRAG ? fp_profs : vp_profs);
-    tmp_prog->setCompileArguments("-I. -O3");
-    prog->unload();
-    prog->load();
-    return prog;
-}
-
-static Ogre::HighLevelGpuProgramPtr make_glsl_shader (const std::string &name, VertOrFrag kind, const std::string &code)
-{
-    CVERB << "Compiling HUD GLSL shader: " << name << std::endl;
-
-    auto kind2 = kind==FRAG ? Ogre::GPT_FRAGMENT_PROGRAM : Ogre::GPT_VERTEX_PROGRAM;
-    Ogre::HighLevelGpuProgramPtr prog = Ogre::HighLevelGpuProgramManager::getSingleton()
-        .createProgram(name, RESGRP, "glsl", kind2);
-    APP_ASSERT(!prog.isNull());
-    std::string uniforms;
-    if (kind == VERT) {
-        uniforms += "uniform mat4 global_worldViewProj;\n";
-        uniforms += "in vec4 vertex;\n";
-        uniforms += "in vec4 uv0;\n";
-        uniforms += "in vec4 uv1;\n";
-        uniforms += "out vec4 trans0;\n";
-        uniforms += "out vec4 trans1;\n";
-    } else {
-        uniforms += "uniform sampler2D mat_tex;\n";
-        uniforms += "uniform vec3 mat_colour;\n";
-        uniforms += "uniform float mat_alpha;\n";
-        uniforms += "in vec4 trans0;\n";
-        uniforms += "in vec4 trans1;\n";
-        uniforms += "out vec4 frag_colour;\n";
-    }
-    std::string code2 = "#version 130\n" + uniforms + code;
-    prog->setSource(code2);
-    prog->unload();
-    prog->load();
-
-
-    return prog;
-}
 
 void gfx_hud_init (void)
 {
@@ -936,12 +880,6 @@ void gfx_hud_init (void)
 
     cornered_quad_ibuf->writeData(0, cornered_quad_indexes*sizeof(uint16_t), &cornered_quad_idata_raw[0], true);
 
-    // Initialise vertex program
-    GfxShaderParamMap shader_solid_params = {
-        {"colour", GfxShaderParam(Vector3(1, 1, 1))},
-        {"alpha", GfxShaderParam(1.0f)},
-    };
-
     GfxShaderParamMap shader_tex_params = {
         {"colour", GfxShaderParam(Vector3(1, 1, 1))},
         {"alpha", GfxShaderParam(1.0f)},
@@ -954,148 +892,25 @@ void gfx_hud_init (void)
         {"tex", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1))}
     };
 
-    if (gfx_d3d9()) {
-        shader_solid = gfx_shader_make_from_existing(
-            "/system/HudSolid",
-            make_cg_shader("vp_solid", VERT, 
-                "void main (\n"
-                "    in float2 in_POSITION:POSITION,\n"
-                "    uniform float4x4 global_worldViewProj,\n"
-                "    out float4 out_POSITION:POSITION\n"
-                ") {\n"
-                "    out_POSITION = mul(global_worldViewProj, float4(in_POSITION,0,1));\n"
-                "}\n"
-            ),
-            make_cg_shader("fp_solid", FRAG, 
-                "void main (\n"
-                "    uniform float3 mat_colour,\n"
-                "    uniform float mat_alpha,\n"
-                "    out float4 out_COLOR0:COLOR0\n"
-                ") {\n"
-                "    float4 texel = float4(1,1,1,1);\n"
-                "    out_COLOR0 = float4(mat_colour, mat_alpha) * texel;\n"
-                "}\n"
-            ),
-            shader_solid_params);
-        
-        shader_tex = gfx_shader_make_from_existing(
-            "/system/HudTex",
-            make_cg_shader("vp_tex", VERT, 
-                "void main (\n"
-                "    in float2 in_POSITION:POSITION,\n"
-                "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
-                "    uniform float4x4 global_worldViewProj,\n"
-                "    out float4 out_POSITION:POSITION,\n"
-                "    out float4 out_TEXCOORD0:TEXCOORD0\n"
-                ") {\n"
-                "    out_POSITION = mul(global_worldViewProj, float4(in_POSITION,0,1));\n"
-                "    out_TEXCOORD0.xy = in_TEXCOORD0.xy;\n"
-                "}\n"
-            ),
-            make_cg_shader("fp_tex", FRAG, 
-                "void main (\n"
-                "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
-                "    uniform sampler2D mat_tex : TEXUNIT0,\n"
-                "    uniform float3 mat_colour,\n"
-                "    uniform float mat_alpha,\n"
-                "    out float4 out_COLOR0:COLOR0\n"
-                ") {\n"
-                "    float4 texel = tex2D(mat_tex, in_TEXCOORD0.xy);\n"
-                "    out_COLOR0 = float4(mat_colour, mat_alpha) * texel;\n"
-                "}\n"
-            ),
-            shader_tex_params);
-        
-        shader_text = gfx_shader_make_from_existing(
-            "/system/HudText",
-            make_cg_shader("vp_text", VERT, 
-                "void main (\n"
-                "    in float2 in_POSITION:POSITION,\n"
-                "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
-                "    in float4 in_TEXCOORD1:TEXCOORD1,\n"
-                "    uniform float4x4 global_worldViewProj,\n"
-                "    out float4 out_POSITION:POSITION,\n"
-                "    out float4 out_TEXCOORD0:TEXCOORD0,\n"
-                "    out float4 out_TEXCOORD1:TEXCOORD1\n"
-                ") {\n"
-                "    out_POSITION = mul(global_worldViewProj, float4(in_POSITION,0,1));\n"
-                "    out_TEXCOORD0.xy = in_TEXCOORD0.xy;\n"
-                "    out_TEXCOORD1 = in_TEXCOORD1;\n"
-                "}\n"
-            ),
-            make_cg_shader("fp_text", FRAG, 
-                "void main (\n"
-                "    in float4 in_TEXCOORD0:TEXCOORD0,\n"
-                "    in float4 in_TEXCOORD1:TEXCOORD1,\n"
-                "    uniform sampler2D mat_tex : TEXUNIT0,\n"
-                "    uniform float3 mat_colour,\n"
-                "    uniform float mat_alpha,\n"
-                "    out float4 out_COLOR0:COLOR0\n"
-                ") {\n"
-                "    float4 texel = tex2D(mat_tex, in_TEXCOORD0.xy);\n"
-                "    out_COLOR0 = float4(mat_colour, mat_alpha) * in_TEXCOORD1 * texel;\n"
-                "}\n"
-            ),
-            shader_text_params);
+    std::string vertex_code =
+        "frag.position = mul(global.worldViewProj, Float4(vert.position.xy, 0, 1));\n";
 
-    } else {
+    std::string colour_code1 =
+        "frag.colour = sample2D(mat.tex, vert.coord0.xy) * Float4(mat.colour, mat.alpha);\n";
 
-        shader_solid = gfx_shader_make_from_existing(
-            "/system/HudSolid",
-            make_glsl_shader("vp_solid", VERT, 
-                "void main (void) {\n"
-                "    gl_Position = global_worldViewProj * vec4(vertex.xy, 0, 1);\n"
-                "}\n"
-            ),
-            make_glsl_shader("fp_solid", FRAG, 
-                "void main (void) {\n"
-                "    frag_colour = vec4(mat_colour, mat_alpha);\n"
-                "}\n"
-            ),
-            shader_solid_params);
-        
-        shader_tex = gfx_shader_make_from_existing(
-            "/system/HudTex",
-            make_glsl_shader("vp_tex", VERT, 
-                "void main (void) {\n"
-                "    gl_Position = global_worldViewProj * vec4(vertex.xy, 0, 1);\n"
-                "    trans0.xy = uv0.xy;\n"
-                "}\n"
-            ),
-            make_glsl_shader("fp_tex", FRAG, 
-                "void main (void) {\n"
-                "    vec4 texel = texture(mat_tex, trans0.xy);\n"
-                "    frag_colour = vec4(mat_colour, mat_alpha) * texel;\n"
-                "}\n"
-            ),
-            shader_tex_params);
-        
-        shader_text = gfx_shader_make_from_existing(
-            "/system/HudText",
-            make_glsl_shader("vp_text", VERT, 
-                "void main (void) {\n"
-                "    gl_Position = global_worldViewProj * vec4(vertex.xy, 0, 1);\n"
-                "    trans0.xy = uv0.xy;\n"
-                "    trans1 = uv1;\n"
-                "}\n"
-            ),
-            make_glsl_shader("fp_text", FRAG, 
-                "void main (void) {\n"
-                "    vec4 texel = texture(mat_tex, trans0.xy);\n"
-                "    frag_colour = vec4(mat_colour, mat_alpha) * trans1 * texel;\n"
-                "}\n"
-            ),
-            shader_text_params);
-    }
+    std::string colour_code2 =
+        "frag.colour = sample2D(mat.tex, vert.coord0.xy) * vert.coord1 * "
+        "Float4(mat.colour, mat.alpha);\n";
 
-    shader_solid->validate();
-    shader_tex->validate();
-    shader_text->validate();
+    gfx_shader_check(GfxShader::HUD, vertex_code, "", colour_code1, shader_tex_params);
+    gfx_shader_check(GfxShader::HUD, vertex_code, "", colour_code2, shader_text_params);
 
-    shader_solid_binds = shader_solid->makeBindings();
-    shader_tex_binds = shader_tex->makeBindings();
-    shader_text_binds = shader_text->makeBindings();
+    shader_tex = gfx_shader_make_or_reset("/system/HudTex",
+                                          vertex_code, "", colour_code1, shader_tex_params);
 
+    
+    shader_text = gfx_shader_make_or_reset("/system/HudText",
+                                           vertex_code, "", colour_code2, shader_text_params);
 }
 
 void gfx_hud_shutdown (lua_State *L)
@@ -1270,26 +1085,23 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
     bool render_target_flipping = false;
     Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin * matrix_centre;
 
-    shader_text->bindShader();
-    shader_text->bindGlobals(matrix, I, I, win_size, render_target_flipping);
-    shader_text_binds->setBinding("colour", colour);
-    shader_text_binds->setBinding("alpha", alpha);
-    shader_text->bind(shader_text_binds);
-    shader_text->bindShaderParams();
+    GfxShaderGlobals globs = { I, I, win_size, render_target_flipping };
+
+    shader_text_binds.clear();
+    shader_text_binds["colour"] = colour;
+    shader_text_binds["alpha"] = alpha;
+
+    GfxMaterialTextureMap texs;
+    if (tex != nullptr)
+        texs["tex"] = { tex, false, 4};
+
+    shader_text->bindShader(GfxShader::HUD, globs, matrix, texs, shader_text_binds);
 
     ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
     ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
 
     ogre_rs->_setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
 
-    ogre_rs->_setTexture(0, true, tex->getOgreTexturePtr());
-    Ogre::TextureUnitState::UVWAddressingMode addr_mode = {
-        Ogre::TextureUnitState::TAM_CLAMP,
-        Ogre::TextureUnitState::TAM_CLAMP,
-        Ogre::TextureUnitState::TAM_CLAMP
-    };
-    ogre_rs->_setTextureAddressingMode(0, addr_mode);
-    ogre_rs->_setTextureUnitFiltering(0, Ogre::FO_ANISOTROPIC, Ogre::FO_ANISOTROPIC, Ogre::FO_LINEAR);
     ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
     ogre_rs->setStencilCheckEnabled(false);
     ogre_rs->_setDepthBias(0, 0);
@@ -1317,9 +1129,6 @@ void gfx_render_hud_one (GfxHudBase *base)
         }
 
         bool is_cornered = obj->isCornered() && tex != NULL;
-
-        GfxShader *shader = tex == NULL ? shader_solid : shader_tex;
-        const GfxShaderBindingsPtr &binds = tex == NULL ? shader_solid_binds : shader_tex_binds;
 
         Vector2 uv1 = obj->getUV1();
         Vector2 uv2 = obj->getUV2();
@@ -1361,35 +1170,29 @@ void gfx_render_hud_one (GfxHudBase *base)
         }
 		
         Ogre::Matrix4 matrix_scale = I;
-        matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y ,1));
+        matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y, 1));
 
         // TODO: Is there no render target flipping?
         // I guess we never rendered HUD to a texture on GL?
         bool render_target_flipping = false;
         Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin;
 
-        shader->bindShader();
-        shader->bindGlobals(matrix, I, I, win_size, render_target_flipping);
-        binds->setBinding("colour", obj->getColour());
-        binds->setBinding("alpha", obj->getAlpha());
-        shader->bind(binds);
-        shader->bindShaderParams();
+        shader_tex_binds.clear();
+        shader_tex_binds["colour"] = obj->getColour();
+        shader_tex_binds["alpha"] = obj->getAlpha();
+
+        GfxMaterialTextureMap texs;
+        if (tex != nullptr)
+            texs["tex"] = { tex, false, 4};
+
+        GfxShaderGlobals globs = { I, I, win_size, render_target_flipping };
+
+        shader_tex->bindShader(GfxShader::HUD, globs, matrix, texs, shader_tex_binds);
 
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);
         ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
 
         ogre_rs->_setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
-
-        if (tex != NULL) {
-            ogre_rs->_setTexture(0, true, tex->getOgreTexturePtr());
-            Ogre::TextureUnitState::UVWAddressingMode addr_mode = {
-                Ogre::TextureUnitState::TAM_WRAP,
-                Ogre::TextureUnitState::TAM_WRAP,
-                Ogre::TextureUnitState::TAM_WRAP
-            };
-            ogre_rs->_setTextureAddressingMode(0, addr_mode);
-            ogre_rs->_setTextureUnitFiltering(0, Ogre::FO_ANISOTROPIC, Ogre::FO_ANISOTROPIC, Ogre::FO_LINEAR);
-        }
 
         ogre_rs->_setDepthBias(0, 0);
         ogre_rs->_setPolygonMode(Ogre::PM_SOLID);

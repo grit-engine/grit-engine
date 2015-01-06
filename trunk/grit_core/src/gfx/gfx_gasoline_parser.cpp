@@ -43,7 +43,6 @@ enum TokenKind {
     IF,
     MAT,
     RETURN,
-    VAL,
     VAR,
     VERT,
 
@@ -63,7 +62,6 @@ static std::string to_string (TokenKind k)
         case IF: return "if";
         case MAT: return "mat";
         case RETURN: return "return";
-        case VAL: return "val";
         case VAR: return "var";
         case VERT: return "vert";
         case SYMBOL: return "symbol";
@@ -338,8 +336,6 @@ std::list<Token> lex (const std::string &shader)
                     r.emplace_back(MAT, "mat", here);
                 } else if (id == "return") {
                     r.emplace_back(RETURN, "return", here);
-                } else if (id == "val") {
-                    r.emplace_back(VAL, "val", here);
                 } else if (id == "var") {
                     r.emplace_back(VAR, "var", here);
                 } else if (id == "vert") {
@@ -555,13 +551,7 @@ namespace {
         GfxGslAst *parseStmt (void)
         {
             auto loc = peek().loc;
-            if (maybePopKind(VAL)) {
-                const auto &id = popKind(IDENTIFIER).val;
-                popKind(SYMBOL, "=");
-                auto *init = parseExpr(precedence_max);
-                popKind(SYMBOL, ";");
-                return alloc.makeAst<GfxGslDecl>(loc, true, id, init);
-            } else if (maybePopKind(VAR)) {
+            if (maybePopKind(VAR)) {
                 const auto &id = popKind(IDENTIFIER).val;
                 popKind(SYMBOL, "=");
                 auto *init = parseExpr(precedence_max);

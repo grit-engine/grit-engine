@@ -28,6 +28,11 @@
 // Workaround for g++ not supporting moveable streams.
 #define error(loc) (EXCEPT << "Type error: " << loc << ": ")
 
+static bool frag(GfxGslKind k)
+{
+    return k == GFX_GSL_COLOUR || k == GFX_GSL_DANGS;
+}
+
 std::ostream &operator<<(std::ostream &o, const GfxGslType *t_)
 {   
     if (auto *t = dynamic_cast<const GfxGslFloatType*>(t_)) {
@@ -112,14 +117,34 @@ GfxGslType *GfxGslTypeSystem::cloneType (const GfxGslType *t_)
     }
 }
 
-void GfxGslTypeSystem::initObjectTypes (void)
+void GfxGslTypeSystem::initObjectTypes (GfxGslKind k)
 {
-    fragFields["colour"] = FieldType(alloc.makeType<GfxGslFloatType>(4), false, false, true, true);
-    fragFields["position"] = FieldType(alloc.makeType<GfxGslFloatType>(4), true, true, false,false);
-    fragFields["screen"] = FieldType(alloc.makeType<GfxGslFloatType>(2), false, false, true, false);
+    if (k == GFX_GSL_COLOUR)
+        fragFields["colour"] = FieldType(alloc.makeType<GfxGslFloatType>(4), true, true);
+
+    if (k == GFX_GSL_DANGS) {
+        fragFields["diffuse"] = FieldType(alloc.makeType<GfxGslFloatType>(3), true, true);
+        fragFields["alpha"] = FieldType(alloc.makeType<GfxGslFloatType>(1), true, true);
+        fragFields["normal"] = FieldType(alloc.makeType<GfxGslFloatType>(3), true, true);
+        fragFields["gloss"] = FieldType(alloc.makeType<GfxGslFloatType>(1), true, true);
+        fragFields["specular"] = FieldType(alloc.makeType<GfxGslFloatType>(1), true, true);
+    }
+
+    if (k == GFX_GSL_VERTEX)
+        fragFields["position"] = FieldType(alloc.makeType<GfxGslFloatType>(4), true, true);
+
+    if (frag(k))
+        fragFields["screen"] = FieldType(alloc.makeType<GfxGslFloatType>(2));
 
     vertFields["position"] = alloc.makeType<GfxGslFloatType>(4);
     vertFields["coord0"] = alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord1"] = alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord2"] = alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord3"] = alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord4"] = alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord5"] = alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord6"] = alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord7"] = alloc.makeType<GfxGslFloatType>(4);
 
     globalFields["world"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     globalFields["worldViewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
@@ -170,7 +195,7 @@ void GfxGslTypeSystem::initFuncTypes (void)
     funcTypes["asin"] = ts;
     funcTypes["cos"] = ts;
     funcTypes["acos"] = ts;
-    if (kind == GFX_GSL_FRAG) {
+    if (frag(kind)) {
         funcTypes["ddx"] = ts;
         funcTypes["ddy"] = ts;
     }
@@ -577,12 +602,11 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             inferAndSet(stmt, c);
         }
         ast->type = alloc.makeType<GfxGslVoidType>();
-        if (kind == GFX_GSL_FRAG) {
-            if (fragFieldsWritten.find("colour") == fragFieldsWritten.end())
-                error(loc) << "Must write to frag.colour." <<  ENDL;
-        } else {
-            if (fragFieldsWritten.find("position") == fragFieldsWritten.end()) 
-                error(loc) << "Must write to frag.position." <<  ENDL;
+        for (auto f : fragFields) {
+            if (f.second.mustWrite) {
+                if (fragFieldsWritten.find(f.first) == fragFieldsWritten.end())
+                    error(loc) << "Must write to frag." << f.first << "." <<  ENDL;
+            }
         }
 
     } else if (auto *ast = dynamic_cast<GfxGslDecl*>(ast_)) {
@@ -634,13 +658,10 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
                 error(loc) << "Frag field does not exist:  " << ast->id << ENDL;
             const FieldType &f = fragFields[ast->id];
             ast->type = cloneType(f.t);
-            bool readable = kind == GFX_GSL_FRAG ? f.fr : f.vr;
-            bool writeable = kind == GFX_GSL_FRAG ? f.fw : f.vw;
+            bool writeable = f.writeable;
             ast->type->writeable = writeable;
             if (c.read) {
-                if (!readable) {
-                    error(loc) << "frag." << ast->id << " cannot be read." << ENDL;
-                } else if (!writeable) {
+                if (!writeable) {
                     fragFieldsRead.insert(ast->id);
                 }
             }
@@ -657,7 +678,7 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             ast->type = cloneType(type);
             ast->type->writeable = false;
             if (c.read) {
-                if (kind == GFX_GSL_VERT) {
+                if (kind == GFX_GSL_VERTEX) {
                     vertFieldsRead.insert(ast->id);
                 } else {
                     addTrans(loc, c.appendPath(ast->id).path, type, true);
@@ -679,7 +700,7 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
                 error(loc) << "mat." << ast->id << " does not exist." << ENDL;
             ast->type = cloneType(matFields[ast->id]);
             if (dynamic_cast<GfxGslFloatTextureType*>(ast->type)) {
-                if (kind == GFX_GSL_VERT) {
+                if (!frag(kind)) {
                     error(loc) << "Cannot use textures in vertex shader: " << ast->id << ENDL;
                 }
             }

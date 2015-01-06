@@ -78,10 +78,10 @@ int main(int argc, char **argv)
     params["alphaRejectThreshold"] = GFX_GSL_FLOAT1;
 
     try {
-        std::pair<std::string, std::string> shaders;
+        GfxGasolineResult shaders;
         GfxGslUnboundTextures ubt;
         ubt["perlinN"] = GfxGslColour(0.5, 0.5, 0.5, 0);
-        shaders = gfx_gasoline_compile(backend, vert_code, frag_code, params, ubt);
+        shaders = gfx_gasoline_compile_colour(backend, vert_code, frag_code, params, ubt);
 
         std::ofstream of;
         of.open(argv[4]);
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
             perror(argv[4]);
             return EXIT_FAILURE;
         }
-        of << shaders.first;
+        of << shaders.vertexShader;
         of.close();
         
         of.open(argv[5]);
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
             perror(argv[5]);
             return EXIT_FAILURE;
         }
-        of << shaders.second;
+        of << shaders.fragmentShader;
         of.close();
         return EXIT_SUCCESS;
     } catch (const Exception &e) {
