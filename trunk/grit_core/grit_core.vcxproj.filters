@@ -251,5 +251,8 @@
     <ClInclude Include="src\net\net_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\gfx\gfx_gasoline_backend.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

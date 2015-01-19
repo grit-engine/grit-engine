@@ -2843,10 +2843,61 @@ TRY_END
 static int global_gfx_env_cube (lua_State *L)
 {
 TRY_START
+    unsigned i = check_int(L, 1, 0, 1);
+    switch (lua_gettop(L)) {
+        case 1: {
+            if (gfx_env_cube(i) != NULL) {
+                push_string(L, gfx_env_cube(i)->getName());
+            } else {
+                lua_pushnil(L);
+            }
+            return 1;
+        }
+        case 2: {
+            if (lua_isnil(L, 2)) {
+                gfx_env_cube(i, DiskResourcePtr<GfxEnvCubeDiskResource>());
+            } else {
+                std::string v = check_path(L, 2);
+                auto dr = disk_resource_use<GfxEnvCubeDiskResource>(v);
+                if (dr == nullptr) my_lua_error(L, "Not an env cube: \"" + v + "\"");
+                gfx_env_cube(i, dr);
+            }
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 1 or 2 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_env_cube_cross_fade (lua_State *L)
+{
+TRY_START
     switch (lua_gettop(L)) {
         case 0: {
-            if (gfx_env_cube() != NULL) {
-                push_string(L, gfx_env_cube()->getName());
+            lua_pushnumber(L, gfx_env_cube_cross_fade());
+            return 1;
+        }
+        case 1: {
+            float v = check_float(L,1);
+            gfx_env_cube_cross_fade(v);
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_fade_dither_map (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 0: {
+            if (gfx_fade_dither_map() != NULL) {
+                push_string(L, gfx_shadow_pcf_noise_map()->getName());
             } else {
                 lua_pushnil(L);
             }
@@ -2854,12 +2905,42 @@ TRY_START
         }
         case 1: {
             if (lua_isnil(L, 1)) {
-                gfx_env_cube(DiskResourcePtr<GfxEnvCubeDiskResource>());
+                gfx_fade_dither_map(DiskResourcePtr<GfxTextureDiskResource>());
             } else {
-                std::string v = check_path(L,1);
-                auto dr = disk_resource_use<GfxEnvCubeDiskResource>(v);
-                if (dr == nullptr) my_lua_error(L, "Not an env cube: \"" + v + "\"");
-                gfx_env_cube(dr);
+                std::string v = check_string(L,1);
+                auto dr = disk_resource_use<GfxTextureDiskResource>(v);
+                if (dr == nullptr) my_lua_error(L, "Not a texture: \"" + v + "\"");
+                gfx_fade_dither_map(dr);
+            }
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_shadow_pcf_noise_map (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 0: {
+            if (gfx_shadow_pcf_noise_map() != NULL) {
+                push_string(L, gfx_shadow_pcf_noise_map()->getName());
+            } else {
+                lua_pushnil(L);
+            }
+            return 1;
+        }
+        case 1: {
+            if (lua_isnil(L, 1)) {
+                gfx_shadow_pcf_noise_map(DiskResourcePtr<GfxTextureDiskResource>());
+            } else {
+                std::string v = check_string(L,1);
+                auto dr = disk_resource_use<GfxTextureDiskResource>(v);
+                if (dr == nullptr) my_lua_error(L, "Not a texture: \"" + v + "\"");
+                gfx_shadow_pcf_noise_map(dr);
             }
             return 0;
         }
@@ -3622,7 +3703,7 @@ int global_gfx_particle_count (lua_State *L)
 #include "lua_wrappers_gfx.h"
 
 
-////////////////////////////////////////////////////////////////////////////////
+////////////////////float
 
 static int global_make_material (lua_State *L)
 {
@@ -3743,21 +3824,22 @@ static void add_texture (GfxMaterialTextureMap &textures, const std::string &key
 
 static void process_tex_blend (GfxMaterialTextureMap &textures, int counter, ExternalTable &src)
 {
-        std::stringstream counter_;
+    std::stringstream counter_;
+    if (counter > 0)
         counter_ << counter;
-        std::string i = counter_.str();
+    std::string i = counter_.str();
 
-        std::string diffuse_map;
-        if (src.get("diffuseMap", diffuse_map))
-            add_texture(textures, "diffuseMap" + counter, diffuse_map);
+    std::string diffuse_map;
+    if (src.get("diffuseMap", diffuse_map))
+        add_texture(textures, "diffuseMap" + i, diffuse_map);
 
-        std::string normal_map;
-        if (src.get("normalMap", normal_map))
-            add_texture(textures, "diffuseMap" + counter, normal_map);
+    std::string normal_map;
+    if (src.get("normalMap", normal_map))
+        add_texture(textures, "normalMap" + i, normal_map);
 
-        std::string gloss_map;
-        if (src.get("glossMap", gloss_map))
-            add_texture(textures, "glossMap" + counter, gloss_map);
+    std::string gloss_map;
+    if (src.get("glossMap", gloss_map))
+        add_texture(textures, "glossMap" + i, gloss_map);
 }
 
 typedef std::map<std::string, ExternalTable> MatMap;
@@ -3767,78 +3849,111 @@ static int global_register_material (lua_State *L)
 {
 TRY_START
 
-        check_args(L,2);
-        std::string name = check_path(L,1);
-        if (!lua_istable(L,2))
-            my_lua_error(L,"Second parameter should be a table");
+    check_args(L,2);
+    std::string name = check_path(L,1);
+    if (!lua_istable(L,2))
+        my_lua_error(L,"Second parameter should be a table");
 
-        //CVERB << name << std::endl;
+    //CVERB << name << std::endl;
 
-        ExternalTable &t = mat_map[name];
-        t.clear(L);
-        t.takeTableFromLuaStack(L,2);
+    ExternalTable &t = mat_map[name];
+    t.clear(L);
+    t.takeTableFromLuaStack(L,2);
 
-        GFX_MAT_SYNC;
-        GfxMaterial *gfxmat = gfx_material_add_or_get(name);
+    GfxMaterialTextureMap textures;
+    GfxShaderBindings bindings;
 
-        GfxMaterialTextureMap textures;
+    std::string shader_name;
+    t.get("shader", shader_name, std::string("/system/Default"));
+    GfxShader *shader = gfx_shader_get(shader_name);
 
-        lua_Number alpha;
-        if (t.has("alpha")) {
-            t.get("alpha", alpha, 1.0);
-        } else {
-            alpha = 1.0;
+    shader->getNativePair(GfxShader::FIRST_PERSON, std::set<std::string>());
+
+    GFX_MAT_SYNC;
+    GfxMaterial *gfxmat = gfx_material_add_or_get(name);
+
+    lua_Number alpha;
+    if (t.has("alpha")) {
+        t.get("alpha", alpha, 1.0);
+    } else {
+        alpha = 1.0;
+    }
+    bool has_alpha = alpha < 1;
+
+    bool depth_write;
+    t.get("depthWrite", depth_write, true);
+
+    bool cast_shadows;
+    t.get("castShadows", cast_shadows, true);
+   
+    gfxmat->setCastShadows(cast_shadows);
+  
+    gfxmat->setSceneBlend(has_alpha ? depth_write ? GFX_MATERIAL_ALPHA_DEPTH : GFX_MATERIAL_ALPHA : GFX_MATERIAL_OPAQUE);
+
+    gfxmat->regularMat = Ogre::MaterialManager::getSingleton().getByName(name,"GRIT");
+    gfxmat->fadingMat = gfxmat->regularMat;
+    gfxmat->worldMat = Ogre::MaterialManager::getSingleton().getByName(name+"&","GRIT");
+    gfxmat->wireframeMat = Ogre::MaterialManager::getSingleton().getByName(name+"|","GRIT");
+
+    Vector3 emissive_colour;
+    t.get("emissiveColour", emissive_colour, Vector3(0,0,0));
+    if (emissive_colour != Vector3(0,0,0)) {
+        gfxmat->emissiveMat = Ogre::MaterialManager::getSingleton().getByName(name+"^", "GRIT");
+    }
+
+    Vector3 emissive_mask;
+    if (t.get("emissiveMask", emissive_mask))
+        bindings["emissiveMask"] = GfxShaderParam(emissive_colour);
+
+    lua_Number specular_mask;
+    if (t.get("specularMask", specular_mask))
+        bindings["specularMask"] = GfxShaderParam(float(specular_mask));
+
+    lua_Number gloss_mask;
+    if (t.get("glossMask", gloss_mask))
+        bindings["glossMask"] = GfxShaderParam(float(gloss_mask));
+
+    lua_Number alpha_mask;
+    if (t.get("alphaMask", alpha_mask))
+        bindings["alphaMask"] = GfxShaderParam(float(alpha_mask));
+
+    lua_Number alpha_reject_threshold;
+    if (t.get("alphaRejectThreshold", alpha_reject_threshold))
+        bindings["alphaRejectThreshold"] = GfxShaderParam(float(alpha_reject_threshold));
+
+    Vector3 diffuse_mask;
+    if (t.get("diffuseMask", diffuse_mask))
+        bindings["diffuseMask"] = GfxShaderParam(diffuse_mask);
+
+
+    std::string emissive_map;
+    if (t.get("emissiveMap", emissive_map))
+        add_texture(textures, "emissiveMap", emissive_map);
+
+    std::string paint_map;
+    if (t.get("paintMap", paint_map))
+        add_texture(textures, "paintMap", paint_map);
+
+
+    SharedPtr<ExternalTable> blend;
+    if(t.get("blend", blend)) {
+        for (lua_Number i=1 ; i<=4 ; ++i) {
+            unsigned i_ = unsigned(i)-1;
+            SharedPtr<ExternalTable> texBlends;
+            if (!blend->get(i, texBlends))
+                break;
+            process_tex_blend(textures, i_, *texBlends);
         }
-        bool has_alpha = alpha < 1;
+    } else {
+        process_tex_blend(textures, 0, t);
+    }
 
-        bool depth_write;
-        t.get("depthWrite", depth_write, true);
+    gfxmat->setShader(shader);
+    gfxmat->setTextures(textures);
+    gfxmat->setBindings(bindings);
+    gfxmat->precompileShader(GfxShader::FIRST_PERSON);
 
-        bool cast_shadows;
-        t.get("castShadows", cast_shadows, true);
-       
-        gfxmat->setCastShadows(cast_shadows);
-      
-        gfxmat->setSceneBlend(has_alpha ? depth_write ? GFX_MATERIAL_ALPHA_DEPTH : GFX_MATERIAL_ALPHA : GFX_MATERIAL_OPAQUE);
-
-        gfxmat->regularMat = Ogre::MaterialManager::getSingleton().getByName(name,"GRIT");
-        gfxmat->fadingMat = gfxmat->regularMat;
-        gfxmat->worldMat = Ogre::MaterialManager::getSingleton().getByName(name+"&","GRIT");
-        gfxmat->wireframeMat = Ogre::MaterialManager::getSingleton().getByName(name+"|","GRIT");
-
-        Vector3 emissive_colour;
-        t.get("emissiveColour", emissive_colour, Vector3(0,0,0));
-        if (emissive_colour != Vector3(0,0,0)) {
-            gfxmat->emissiveMat = Ogre::MaterialManager::getSingleton().getByName(name+"^", "GRIT");
-        }
-
-        
-
-        std::string emissive_map;
-        if (t.get("emissiveMap", emissive_map))
-            add_texture(textures, "emissiveMap", emissive_map);
-
-        std::string paint_map;
-        if (t.get("paintMap", paint_map))
-            add_texture(textures, "paintMap", paint_map);
-
-
-        SharedPtr<ExternalTable> blend;
-        if(t.get("blend", blend)) {
-            for (lua_Number i=1 ; i<=4 ; ++i) {
-                unsigned i_ = unsigned(i)-1;
-                SharedPtr<ExternalTable> texBlends;
-                if (!blend->get(i, texBlends))
-                    break;
-                process_tex_blend(textures, i_, *texBlends);
-            }
-        } else {
-            process_tex_blend(textures, 0, t);
-        }
-
-        gfxmat->setTextures(textures);
-
-        return 0;
+    return 0;
 TRY_END
 }
 
@@ -3936,13 +4051,14 @@ TRY_START
     ExternalTable t;
     t.takeTableFromLuaStack(L,2);
 
-    GFX_MAT_SYNC;
-    GfxSkyMaterial *gfxskymat = gfx_sky_material_add_or_get(name);
-
-
     std::string shader_name;
     t.get("shader", shader_name, std::string("/system/SkyDefault"));
     GfxShader *shader = gfx_shader_get(shader_name);
+
+    shader->getNativePair(GfxShader::SKY, std::set<std::string>());
+
+    GFX_MAT_SYNC;
+    GfxSkyMaterial *gfxskymat = gfx_sky_material_add_or_get(name);
 
     std::string scene_blend;
     t.get("sceneBlend", scene_blend, std::string("OPAQUE"));
@@ -4013,16 +4129,13 @@ TRY_START
     gfxskymat->setSceneBlend(skymat_scene_blend_from_string(L, scene_blend));
     gfxskymat->setTextures(textures);
     gfxskymat->setBindings(bindings);
+    gfxskymat->precompileShader(GfxShader::SKY);
 
     return 0;
 TRY_END
 }
 
-static std::string default_vertex_code =
-"frag.position = mul(global.worldViewProj, Float4(vert.position.xyz, 1));\n"
-"frag.position.z = frag.position.w * (1 - 1.0/65536);\n";
-
-static int global_gfx_register_sky_shader (lua_State *L)
+static int global_gfx_register_shader (lua_State *L)
 {
 TRY_START
 
@@ -4034,12 +4147,14 @@ TRY_START
     ExternalTable t;
     t.takeTableFromLuaStack(L,2);
 
-    std::string fragment_code;
     std::string vertex_code;
+    std::string dangs_code;
+    std::string colour_code;
 
-    t.get("vertexCode", vertex_code, default_vertex_code);
-    if (!t.get("fragmentCode", fragment_code))
-        my_lua_error(L, "Shader \"" + name + "\" did not specify fragmentCode.");
+    if (!t.get("vertexCode", vertex_code))
+        my_lua_error(L, "Shader \"" + name + "\" did not specify vertexCode.");
+    t.get("dangsCode", dangs_code, std::string());
+    t.get("colourCode", colour_code, std::string());
 
     GfxShaderParamMap uniforms;
 
@@ -4047,8 +4162,9 @@ TRY_START
     for (KI i=t.begin(), i_=t.end() ; i!=i_ ; ++i) {
         const std::string &key = i->first; 
         if (key == "variants") continue;
-        if (key == "fragmentCode") continue;
         if (key == "vertexCode") continue;
+        if (key == "dangsCode") continue;
+        if (key == "colourCode") continue;
 
         // must be a texture or param
         GfxShaderParam uniform;
@@ -4091,7 +4207,7 @@ TRY_START
 
         } else if (uniform_kind == "TEXTURE2D") {
             Vector3 c;
-            tab->get("defaultColour", c, Vector3(1,1,1));
+            tab->get("defaultColour", c, Vector3(1, 1, 1));
 
             lua_Number a;
             tab->get("defaultAlpha", a, 1.0);
@@ -4105,8 +4221,7 @@ TRY_START
         uniforms[key] = uniform;
     }
 
-    gfx_shader_check(GfxShader::SKY, vertex_code, "", fragment_code, uniforms);
-    gfx_shader_make_or_reset(name, vertex_code, "", fragment_code, uniforms);
+    gfx_shader_make_or_reset(name, vertex_code, dangs_code, colour_code, uniforms);
 
     return 0;
 TRY_END
@@ -4275,7 +4390,7 @@ static const luaL_reg global[] = {
     {"gfx_light_make",global_gfx_light_make},
 
     {"gfx_register_sky_material", global_gfx_register_sky_material},
-    {"gfx_register_sky_shader", global_gfx_register_sky_shader},
+    {"gfx_register_shader", global_gfx_register_shader},
 
     {"gfx_font_define",global_gfx_font_define},
     {"gfx_font_line_height",global_gfx_font_line_height},
@@ -4292,6 +4407,9 @@ static const luaL_reg global[] = {
     {"gfx_hud_ray",global_gfx_hud_ray},
 
     {"gfx_env_cube",global_gfx_env_cube},
+    {"gfx_env_cube_cross_fade",global_gfx_env_cube_cross_fade},
+    {"gfx_fade_dither_map",global_gfx_fade_dither_map},
+    {"gfx_shadow_pcf_noise_map",global_gfx_shadow_pcf_noise_map},
     {"gfx_colour_grade",global_gfx_colour_grade},
     {"gfx_particle_ambient",global_gfx_particle_ambient},
     {"gfx_sunlight_diffuse",global_gfx_sunlight_diffuse},

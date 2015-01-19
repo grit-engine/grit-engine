@@ -1,0 +1,1 @@
+out.position = transform_to_world(vert.position.xyz);

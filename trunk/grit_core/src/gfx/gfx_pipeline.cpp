@@ -478,9 +478,9 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                 }
             }
 
-            if (scene_env_cube != nullptr && scene_env_cube->isLoaded()) {
-                const Ogre::TexturePtr &scene_env_cube_tex = scene_env_cube->getOgreTexturePtr();
-                ogre_rs->_setTexture(tex_index, true, scene_env_cube_tex);
+            if (global_env_cube0 != nullptr && global_env_cube0->isLoaded()) {
+                const Ogre::TexturePtr &global_env_cube_tex = global_env_cube0->getOgreTexturePtr();
+                ogre_rs->_setTexture(tex_index, true, global_env_cube_tex);
                 ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
                 ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
                 ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIP, Ogre::FO_LINEAR);
@@ -711,6 +711,39 @@ class SkyPasses : public Ogre::RenderQueueInvocation {
 
 
 
+// {{{ Reset pass
+
+class ResetPass : public Ogre::RenderQueueInvocation {
+    GfxPipeline *pipe;
+    unsigned int buffers;
+    Vector3 colour;
+    float depth;
+    unsigned short stencil;
+
+    public:
+    ResetPass (GfxPipeline *pipe, unsigned int buffers,
+               const Vector3 &colour=Vector3(1,1,1), float depth=1.0f, unsigned short stencil=0)
+      : Ogre::RenderQueueInvocation(0), pipe(pipe), buffers(buffers),
+        colour(colour), depth(depth), stencil(stencil)
+    {
+        setSuppressShadows(true);
+    }
+
+    void invoke (Ogre::RenderQueueGroup *, Ogre::SceneManager *)
+    {
+        try {
+            pipe->getCamera()->getViewport()->clear(buffers, to_ogre_cv(colour), depth, stencil);
+        } catch (Ogre::Exception &e) {
+            CERR << "While clearing buffer: " << e.getDescription() << std::endl;
+        }
+    }
+    
+};
+
+// }}}
+
+
+
 // {{{ First Person
 
 class FirstPersonPasses : public Ogre::RenderQueueInvocation {
@@ -790,15 +823,17 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_OPAQUE_EMISSIVE));
     rqisDeferred->add(new ParticlesPasses(this, false));
     rqisDeferred->add(new SkyPasses(this));
-    rqisDeferred->add(new FirstPersonPasses(this, false));
     // Alpha passes
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH_EMISSIVE));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_EMISSIVE));
     rqisDeferred->add(new ParticlesPasses(this, true));
+    // First person passes
+    rqisDeferred->add(new ResetPass(this, Ogre::FBT_DEPTH));
+    rqisDeferred->add(new FirstPersonPasses(this, false));
     rqisDeferred->add(new FirstPersonPasses(this, true));
-    // Debug basses
+    // Debug passes
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_BULLET_DEBUG_DRAWER));
 }
 
@@ -979,10 +1014,10 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
             auto fp = compositor_tonemap->getHackOgreFragmentProgram();
             try_set_named_constant(fp, "global_exposure", to_ogre(global_exposure*opts.mask));
             try_set_named_constant(fp, "global_saturation", global_saturation*opts.saturationMask);
-            if (scene_colour_grade_lut == NULL) {
+            if (colour_grade_lut == NULL) {
                 render_quad(targetViewport, RenderQuadParams<1>(compositor_tonemap, target_blend).tex(hdrFb[0]));
             } else {
-                const Ogre::TexturePtr &lut = scene_colour_grade_lut->getOgreTexturePtr();
+                const Ogre::TexturePtr &lut = colour_grade_lut->getOgreTexturePtr();
                 render_quad(targetViewport, RenderQuadParams<2>(compositor_tonemap, target_blend).tex(hdrFb[0]).tex(lut));
             }
 
@@ -1029,10 +1064,10 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
             Ogre::Vector4 viewport_size(     targetViewport->getActualWidth(),      targetViewport->getActualHeight(),
                                         1.0f/targetViewport->getActualWidth(), 1.0f/targetViewport->getActualHeight());
             try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "viewport_size", viewport_size);
-            if (scene_colour_grade_lut == NULL) {
+            if (colour_grade_lut == NULL) {
                 render_quad(targetViewport, RenderQuadParams<2>(compositor_bloom_vert_blur_combine_and_tonemap, target_blend).tex(hdrFb[1]).tex(hdrFb[0]));
             } else {
-                const Ogre::TexturePtr &lut = scene_colour_grade_lut->getOgreTexturePtr();
+                const Ogre::TexturePtr &lut = colour_grade_lut->getOgreTexturePtr();
                 render_quad(targetViewport, RenderQuadParams<3>(compositor_bloom_vert_blur_combine_and_tonemap, target_blend).tex(hdrFb[1]).tex(hdrFb[0]).tex(lut));
             }
         }

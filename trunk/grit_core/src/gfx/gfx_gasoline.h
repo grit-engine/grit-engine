@@ -42,8 +42,27 @@ enum GfxGslParamType {
     GFX_GSL_FLOAT_TEXTURE1 = 0x101,
     GFX_GSL_FLOAT_TEXTURE2 = 0x102,
     GFX_GSL_FLOAT_TEXTURE3 = 0x103,
-    GFX_GSL_FLOAT_TEXTURE4 = 0x104
+    GFX_GSL_FLOAT_TEXTURE4 = 0x104,
+    GFX_GSL_FLOAT_TEXTURE_CUBE = 0x105
 };
+
+static inline GfxGslParamType to_gfx_gsl_param_type (const std::string &s)
+{
+    if (s == "Float") return GFX_GSL_FLOAT1;
+    if (s == "Float2") return GFX_GSL_FLOAT2;
+    if (s == "Float3") return GFX_GSL_FLOAT3;
+    if (s == "Float4") return GFX_GSL_FLOAT4;
+    if (s == "Int") return GFX_GSL_INT1;
+    if (s == "Int2") return GFX_GSL_INT2;
+    if (s == "Int3") return GFX_GSL_INT3;
+    if (s == "Int4") return GFX_GSL_INT4;
+    if (s == "FloatTexture1") return GFX_GSL_FLOAT_TEXTURE1;
+    if (s == "FloatTexture2") return GFX_GSL_FLOAT_TEXTURE2;
+    if (s == "FloatTexture3") return GFX_GSL_FLOAT_TEXTURE3;
+    if (s == "FloatTexture4") return GFX_GSL_FLOAT_TEXTURE4;
+    if (s == "FloatTextureCube") return GFX_GSL_FLOAT_TEXTURE_CUBE;
+    EXCEPT << "Not a Gasoline type: " << s << ENDL;
+}
 
 static inline const char *to_string (GfxGslParamType t)
 {
@@ -60,6 +79,7 @@ static inline const char *to_string (GfxGslParamType t)
         case GFX_GSL_FLOAT_TEXTURE2: return "FloatTexture2";
         case GFX_GSL_FLOAT_TEXTURE3: return "FloatTexture3";
         case GFX_GSL_FLOAT_TEXTURE4: return "FloatTexture4";
+        case GFX_GSL_FLOAT_TEXTURE_CUBE: return "FloatTextureCube";
         default: return "Unknown";
     }
 }
@@ -75,7 +95,6 @@ static inline bool gfx_gasoline_param_is_texture (GfxGslParamType t)
 }
 
 enum GfxGslBackend {
-    GFX_GSL_BACKEND_GSL,
     GFX_GSL_BACKEND_CG,
     GFX_GSL_BACKEND_GLSL
 };
@@ -105,11 +124,21 @@ struct GfxGasolineResult {
     std::string fragmentShader;
 };
 
-GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
-                                               const std::string &vert_prog,
-                                               const std::string &colour_prog,
-                                               const GfxGslParams &params,
-                                               const GfxGslUnboundTextures &ubt);
+GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
+                                                   const std::string &vert_prog,
+                                                   const GfxGslParams &params);
+
+GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
+                                            const std::string &vert_prog,
+                                            const std::string &colour_prog,
+                                            const GfxGslParams &params,
+                                            const GfxGslUnboundTextures &ubt);
+
+GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
+                                            const std::string &vert_prog,
+                                            const std::string &colour_prog,
+                                            const GfxGslParams &params,
+                                            const GfxGslUnboundTextures &ubt);
 
 GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                      const std::string &vert_prog,

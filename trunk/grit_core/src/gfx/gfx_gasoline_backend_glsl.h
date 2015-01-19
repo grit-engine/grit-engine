@@ -18,21 +18,34 @@
  * THE SOFTWARE.
  */
 
-#include <cstdlib>
-
 #include <string>
 
-#ifndef GFX_GASOLINE_BACKEND_GLSL
-#define GFX_GASOLINE_BACKEND_GLSL
+#ifndef GFX_GASOLINE_BACKEND_GLSL_H
+#define GFX_GASOLINE_BACKEND_GLSL_H
 
 #include "gfx_gasoline.h"
 #include "gfx_gasoline_parser.h"
 #include "gfx_gasoline_type_system.h"
 
-void gfx_gasoline_unparse_glsl (const GfxGslTypeSystem *vert_ts, const GfxGslAst *vert_ast,
-                                std::string &vert_output, const GfxGslTypeSystem *frag_ts,
-                                const GfxGslAst *frag_ast, std::string &frag_output,
-                                const GfxGslUnboundTextures &ubt);
+void gfx_gasoline_unparse_glsl (GfxGslContext &ctx,
+                                const GfxGslTypeSystem *vert_ts,
+                                const GfxGslAst *vert_ast,
+                                std::string &vert_output,
+                                const GfxGslTypeSystem *frag_ts,
+                                const GfxGslAst *frag_ast,
+                                std::string &frag_output,
+                                bool flat_z);
+
+
+void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
+                                            const GfxGslTypeSystem *vert_ts,
+                                            const GfxGslAst *vert_ast,
+                                            const GfxGslTypeSystem *dangs_ts,
+                                            const GfxGslAst *dangs_ast,
+                                            const GfxGslTypeSystem *additional_ts,
+                                            const GfxGslAst *additional_ast,
+                                            std::string &vert_out,
+                                            std::string &frag_out);
 
 
 #endif

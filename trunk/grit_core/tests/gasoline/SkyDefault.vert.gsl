@@ -1,0 +1,1 @@
+out.position = mul(global.world, Float4(vert.position.xyz, 1)).xyz;

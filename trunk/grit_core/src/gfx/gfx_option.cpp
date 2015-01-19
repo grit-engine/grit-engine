@@ -51,6 +51,8 @@ GfxBoolOption gfx_bool_options[] = {
     GFX_RENDER_PARTICLES,
     GFX_POINT_LIGHTS,
     GFX_RENDER_SKY,
+    GFX_RENDER_HUD,
+    GFX_RENDER_FIRST_PERSON
 };  
 
 GfxIntOption gfx_int_options[] = {
@@ -145,6 +147,8 @@ std::string gfx_option_to_string (GfxBoolOption o)
         TO_STRING_MACRO(GFX_RENDER_PARTICLES);
         TO_STRING_MACRO(GFX_POINT_LIGHTS);
         TO_STRING_MACRO(GFX_RENDER_SKY);
+        TO_STRING_MACRO(GFX_RENDER_HUD);
+        TO_STRING_MACRO(GFX_RENDER_FIRST_PERSON);
     }
     return "UNKNOWN_BOOL_OPTION";
 }
@@ -237,6 +241,8 @@ void gfx_option_from_string (const std::string &s,
     FROM_STRING_BOOL_MACRO(GFX_RENDER_PARTICLES)
     FROM_STRING_BOOL_MACRO(GFX_POINT_LIGHTS)
     FROM_STRING_BOOL_MACRO(GFX_RENDER_SKY)
+    FROM_STRING_BOOL_MACRO(GFX_RENDER_HUD)
+    FROM_STRING_BOOL_MACRO(GFX_RENDER_FIRST_PERSON)
 
 
     FROM_STRING_INT_MACRO(GFX_FULLSCREEN_WIDTH)
@@ -335,6 +341,8 @@ static void options_update (bool flush)
             case GFX_RENDER_PARTICLES: break;
             case GFX_POINT_LIGHTS: break;
             case GFX_RENDER_SKY: break;
+            case GFX_RENDER_HUD: break;
+            case GFX_RENDER_FIRST_PERSON: break;
         }
     }
     for (unsigned i=0 ; i<sizeof(gfx_int_options)/sizeof(*gfx_int_options) ; ++i) {
@@ -545,6 +553,8 @@ void gfx_option_init (void)
     gfx_option(GFX_RENDER_PARTICLES, true);
     gfx_option(GFX_POINT_LIGHTS, true);
     gfx_option(GFX_RENDER_SKY, true);
+    gfx_option(GFX_RENDER_HUD, true);
+    gfx_option(GFX_RENDER_FIRST_PERSON, true);
 
 
     gfx_option(GFX_FULLSCREEN_WIDTH, 800);

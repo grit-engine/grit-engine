@@ -99,10 +99,14 @@ Vector3 sky_cloud_colour;
 float sky_cloud_coverage;
 Vector3 hell_colour;
 
-DiskResourcePtr<GfxEnvCubeDiskResource> scene_env_cube;
+DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube0;
+DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube1;
+float global_env_cube_cross_fade = 0;
 float global_exposure = 1;
 float global_saturation = 1;
-DiskResourcePtr<GfxColourGradeLUTDiskResource> scene_colour_grade_lut;
+DiskResourcePtr<GfxColourGradeLUTDiskResource> colour_grade_lut;
+DiskResourcePtr<GfxTextureDiskResource> fade_dither_map;
+DiskResourcePtr<GfxTextureDiskResource> shadow_pcf_noise_map;
 
 // abuse ogre fog params to store several things
 static void set_ogre_fog (void)
@@ -224,12 +228,27 @@ void gfx_particle_ambient (const Vector3 &v)
     particle_ambient = v;
 }
 
-GfxEnvCubeDiskResource *gfx_env_cube (void)
+
+float gfx_env_cube_cross_fade (void)
 {
-    return scene_env_cube;
+    return global_env_cube_cross_fade;
 }
 
-static void reset_env_cube (const Ogre::MaterialPtr &m, GfxEnvCubeDiskResource *old, GfxEnvCubeDiskResource *nu)
+void gfx_env_cube_cross_fade (float v)
+{
+    global_env_cube_cross_fade = v;
+}
+
+
+GfxEnvCubeDiskResource *gfx_env_cube (unsigned i)
+{
+    APP_ASSERT(i == 0 || i == 1);
+    const auto &ec = i == 0 ? global_env_cube0 : global_env_cube1;
+    return ec;
+}
+
+static void reset_env_cube (const Ogre::MaterialPtr &m, GfxEnvCubeDiskResource *old,
+                            GfxEnvCubeDiskResource *nu)
 {
     if (m.isNull()) return;
     Ogre::Pass *p = m->getTechnique(0)->getPass(0);
@@ -241,42 +260,70 @@ static void reset_env_cube (const Ogre::MaterialPtr &m, GfxEnvCubeDiskResource *
     }
 }
 
-void gfx_env_cube (const DiskResourcePtr<GfxEnvCubeDiskResource> &v)
+void gfx_env_cube (unsigned i, const DiskResourcePtr<GfxEnvCubeDiskResource> &v)
 {
-    if (scene_env_cube == v) return;
+    auto &ec = i == 0 ? global_env_cube0 : global_env_cube1;
+    if (ec == v) return;
     //CVERB << "Setting scene env cube to " << v << std::endl;
 
     // Alpha materials are not part of the full screen deferred shading pass, so have
     // the env cube texture bound as part of the material used to render that pass
+    // FIXME(dcunnin): This does not update materials for bodies not currently in the scene.
     for (unsigned long i=0 ; i<gfx_all_nodes.size() ; ++i) {
         GfxBody *b = dynamic_cast<GfxBody*>(gfx_all_nodes[i]);
         if (b==NULL) continue;
         for (unsigned j=0 ; j<b->getNumSubMeshes() ; ++j) {
             GfxMaterial *m = b->getMaterial(j);
             if (m->getSceneBlend() != GFX_MATERIAL_OPAQUE) {
-                reset_env_cube(m->regularMat, scene_env_cube, v);
-                reset_env_cube(m->fadingMat, scene_env_cube, v);
-                reset_env_cube(m->worldMat, scene_env_cube, v);
+                reset_env_cube(m->regularMat, ec, v);
+                reset_env_cube(m->fadingMat, ec, v);
+                reset_env_cube(m->worldMat, ec, v);
             }
         }
     }
 
-    scene_env_cube = v;
-
+    ec = v;
 }
+
+GfxTextureDiskResource *gfx_shadow_pcf_noise_map (void)
+{
+    return shadow_pcf_noise_map;
+}
+
+void gfx_shadow_pcf_noise_map (const DiskResourcePtr<GfxTextureDiskResource> &v)
+{
+    if (v == shadow_pcf_noise_map) return;
+
+    shadow_pcf_noise_map = v;
+}
+
+
+GfxTextureDiskResource *gfx_fade_dither_map (void)
+{
+    return fade_dither_map;
+}
+
+void gfx_fade_dither_map (const DiskResourcePtr<GfxTextureDiskResource> &v)
+{
+    if (v == fade_dither_map) return;
+
+    fade_dither_map = v;
+}
+
 
 GfxColourGradeLUTDiskResource *gfx_colour_grade (void)
 {
-    return scene_colour_grade_lut;
+    return colour_grade_lut;
 }
 
 void gfx_colour_grade (const DiskResourcePtr<GfxColourGradeLUTDiskResource> &v)
 {
-    if (v == scene_colour_grade_lut) return;
+    if (v == colour_grade_lut) return;
     //CVERB << "Setting colour grade to " << v << std::endl;
 
-    scene_colour_grade_lut = v;
+    colour_grade_lut = v;
 }
+
 
 float gfx_global_saturation (void)
 {
@@ -542,6 +589,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
             opts_left.particles = gfx_option(GFX_RENDER_PARTICLES);
             opts_left.pointLights = gfx_option(GFX_POINT_LIGHTS);
             opts_left.sky = gfx_option(GFX_RENDER_SKY);
+            opts_left.firstPerson = gfx_option(GFX_RENDER_FIRST_PERSON);
             if (stereoscopic()) {
 
                 float FOV = gfx_option(GFX_FOV);
@@ -584,7 +632,8 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
                 eye_left->render(opts_left);
             }
 
-            gfx_hud_render(hud_vp);
+            if (gfx_option(GFX_RENDER_HUD))
+                gfx_hud_render(hud_vp);
 
             ogre_win->_endUpdate();
 
@@ -994,7 +1043,9 @@ size_t gfx_init (GfxCallback &cb_)
         gfx_particle_init();
         gfx_hud_init();
  
-        gfx_env_cube(DiskResourcePtr<GfxEnvCubeDiskResource>());
+        gfx_env_cube(0, DiskResourcePtr<GfxEnvCubeDiskResource>());
+        gfx_env_cube(1, DiskResourcePtr<GfxEnvCubeDiskResource>());
+        global_env_cube_cross_fade = 0;
 
         return winid;
     } catch (Ogre::Exception &e) {
@@ -1058,8 +1109,8 @@ void gfx_shutdown (void)
 
 Vector3 gfx_colour_grade_look_up (const Vector3 &v)
 {
-    if (scene_colour_grade_lut == nullptr) return v;
-    return scene_colour_grade_lut->lookUp(v);
+    if (colour_grade_lut == nullptr) return v;
+    return colour_grade_lut->lookUp(v);
 }
 
 // }}}

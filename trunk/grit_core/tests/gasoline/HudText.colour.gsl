@@ -1,0 +1,3 @@
+var ca = sample(mat.tex, vert.coord0.xy) * vert.coord1;
+out.colour = ca.rgb * mat.colour;
+out.alpha = ca.a * mat.alpha;

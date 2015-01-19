@@ -19,92 +19,173 @@
  */
 
 #include <fstream>
+#include <string>
+#include <vector>
 
 #include "gfx_gasoline.h"
 
 #include <exception.h>
 
-int main(int argc, char **argv)
+const char *info =
+    "Gasoline (c) Dave Cunningham 2015  (version: 0.1)\n"
+    "A command-line compiler for the Grit Shading Language.\n"
+;
+
+const char *usage =
+    "Usage: gsl { <opt> } <vert.gsl> <dangs.gsl> <add.gsl> <kind> <vert.out> <frag.out>\n\n"
+    "where <opt> ::= -h | --help                     This message\n"
+    "              | -C | --cg                       Target CG\n"
+    "              | -p | --param <var> <type>       Declare a parameter\n"
+    "              | -u | --unbind <tex>             Unbind a texture (will be all 1s)\n"
+    "              | --                              End options passing\n"
+;
+
+
+std::string next_arg(int& so_far, int argc, char **argv)
 {
-    if (argc != 6) {
-        std::cerr << "Usage: " << argv[0] << " <vert.gsl> <frag.gsl> <targetlang> <vert.out> <frag.out>" << std::endl;
-        return EXIT_FAILURE;
-    }
+        if (so_far==argc) {
+                std::cerr<<"ERROR: Not enough commandline arguments...\n"<<std::endl;
+                std::cerr<<usage<<std::endl;
+                exit(EXIT_FAILURE);
+        }
+        return argv[so_far++];
+}
 
-    std::ifstream f;
+enum FileOrSnippet { F, S };
 
-    f.open(argv[1]);
-    if (!f.good()) {
-        std::cerr << "Opening file: ";
-        perror(argv[1]);
-        return EXIT_FAILURE;
-    }
-    std::string vert_code;
-    vert_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
-    f.close();
-
-    f.open(argv[2]);
-    if (!f.good()) {
-        std::cerr << "Opening file: ";
-        perror(argv[2]);
-        return EXIT_FAILURE;
-    }
-    std::string frag_code;
-    frag_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
-    f.close();
-
-    GfxGslBackend backend;
-    std::string language = argv[3];
-    if (language == "gsl") {
-        backend = GFX_GSL_BACKEND_GSL;
-    } else if (language == "cg") {
-        backend = GFX_GSL_BACKEND_CG;
-    } else if (language == "glsl") {
-        backend = GFX_GSL_BACKEND_GLSL;
-    } else {
-        std::cerr << "Unrecognised shader target language: " << language << std::endl;
-        return EXIT_FAILURE;
-    }
-
-
-    GfxGslParams params;
-    params["starfieldMap"] = GFX_GSL_FLOAT_TEXTURE2;
-    params["starfieldMask"] = GFX_GSL_FLOAT3;
-    params["perlin"] = GFX_GSL_FLOAT_TEXTURE2;
-    params["perlinN"] = GFX_GSL_FLOAT_TEXTURE2;
-    params["emissiveMap"] = GFX_GSL_FLOAT_TEXTURE2;
-    params["emissiveMask"] = GFX_GSL_FLOAT3;
-    params["alphaMask"] = GFX_GSL_FLOAT1;
-    params["alphaRejectThreshold"] = GFX_GSL_FLOAT1;
+int main (int argc, char **argv)
+{
 
     try {
-        GfxGasolineResult shaders;
+        int so_far = 1;
+        bool no_more_switches = false;
+        std::vector<std::string> args;
+        std::string language = "GLSL";
+        GfxGslParams params;
         GfxGslUnboundTextures ubt;
-        ubt["perlinN"] = GfxGslColour(0.5, 0.5, 0.5, 0);
-        shaders = gfx_gasoline_compile_colour(backend, vert_code, frag_code, params, ubt);
+        while (so_far < argc) {
+            std::string arg = next_arg(so_far, argc, argv);
+            if (no_more_switches) {
+                args.push_back(arg);
+            } else if (arg=="-h" || arg=="--help") {
+                std::cout<<info<<std::endl;
+                std::cout<<usage<<std::endl;
+                exit(EXIT_SUCCESS);
+            } else if (arg=="--") {
+                no_more_switches = true;
+            } else if (arg=="-C" || arg=="--cg") {
+                language = "CG";
+            } else if (arg=="-p" || arg=="--param") {
+                std::string name = next_arg(so_far, argc, argv);
+                std::string type_name = next_arg(so_far, argc, argv);
+                params[name] = to_gfx_gsl_param_type(type_name);
+            } else if (arg=="-u" || arg=="--unbind") {
+                std::string name = next_arg(so_far, argc, argv);
+                ubt[name] = GfxGslColour(1,0,1,1);
+            } else {
+                args.push_back(arg);
+            }
+        }
+
+        if (args.size() != 6) {
+            std::cerr<<info<<std::endl;
+            std::cerr<<usage<<std::endl;
+            return EXIT_FAILURE;
+        }
+
+        const std::string vert_in_filename = args[0];
+        const std::string dangs_in_filename = args[1];
+        const std::string additional_in_filename = args[2];
+        const std::string kind = args[3];
+        const std::string vert_out_filename = args[4];
+        const std::string frag_out_filename = args[5];
+
+        std::ifstream f;
+
+        f.open(vert_in_filename);
+        if (!f.good()) {
+            std::cerr << "Opening file: ";
+            perror(vert_in_filename.c_str());
+            return EXIT_FAILURE;
+        }
+        std::string vert_code;
+        vert_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+        f.close();
+
+        std::string dangs_code;
+        if (dangs_in_filename != "") {
+            f.open(dangs_in_filename);
+            if (!f.good()) {
+                std::cerr << "Opening file: ";
+                perror(dangs_in_filename.c_str());
+                return EXIT_FAILURE;
+            }
+            dangs_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+            f.close();
+        }
+
+        f.open(additional_in_filename);
+        if (!f.good()) {
+            std::cerr << "Opening file: ";
+            perror(vert_in_filename.c_str());
+            return EXIT_FAILURE;
+        }
+        std::string additional_code;
+        additional_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+        f.close();
+
+        GfxGslBackend backend;
+        if (language == "CG") {
+            backend = GFX_GSL_BACKEND_CG;
+        } else if (language == "GLSL") {
+            backend = GFX_GSL_BACKEND_GLSL;
+        } else {
+            std::cerr << "Unrecognised shader target language: " << language << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        GfxGasolineResult shaders;
+        try {
+            if (kind == "SKY") {
+                shaders = gfx_gasoline_compile_sky(backend, vert_code, additional_code, params, ubt);
+            } else if (kind == "HUD") {
+                shaders = gfx_gasoline_compile_hud(backend, vert_code, additional_code, params, ubt);
+            } else if (kind == "FIRST_PERSON") {
+                shaders = gfx_gasoline_compile_first_person(backend, vert_code, dangs_code,
+                                                            additional_code, params, ubt);
+            } else {
+                std::cerr << "Unrecognised shader kind language: " << kind << std::endl;
+                return EXIT_FAILURE;
+            }
+        } catch (const Exception &e) {
+            EXCEPT << vert_in_filename << ", " << dangs_in_filename << ", "
+                   << additional_in_filename << ": " << e.msg << ENDL;
+        }
 
         std::ofstream of;
-        of.open(argv[4]);
+        of.open(vert_out_filename);
         if (!of.good()) {
             std::cerr << "Opening file: ";
-            perror(argv[4]);
+            perror(vert_out_filename.c_str());
             return EXIT_FAILURE;
         }
         of << shaders.vertexShader;
         of.close();
         
-        of.open(argv[5]);
+        of.open(frag_out_filename);
         if (!of.good()) {
             std::cerr << "Opening file: ";
-            perror(argv[5]);
+            perror(frag_out_filename.c_str());
             return EXIT_FAILURE;
         }
         of << shaders.fragmentShader;
         of.close();
         return EXIT_SUCCESS;
+
     } catch (const Exception &e) {
         std::cerr << e << std::endl;
         return EXIT_FAILURE;
+
     }
 
 

@@ -1,0 +1,41 @@
+// need to do these in fragment shader, to stop the sun vanishing at
+// the corners of the screen
+
+var pos_ss_ = frag.screen.xy/global.viewportSize.xy*2-1;
+
+// CLOUDS
+var perlin_uv = 5*vert.coord0.xy;
+var cloud_dist = length(perlin_uv) / 4.5;
+
+var cloud_anim = Float4(0.01, 0.01, 0.02, 0.02);
+var clouduv1 = (global.time * cloud_anim.xy + perlin_uv.xy)/5;
+var clouduv2 = (global.time * cloud_anim.zw + perlin_uv.yx)/5;
+var clouduv3 = (global.time * cloud_anim.xy + perlin_uv.xy)*5;
+
+var cloud_atten = clamp(1-cloud_dist*cloud_dist, 0.0, 1.0);
+var cloud_tex1 = sample(mat.perlin, clouduv1).r;
+var cloud_tex2 = sample(mat.perlin, clouduv2).r;
+var cloud_tex3 = sample(mat.perlin, clouduv3).r;
+
+var cloud_blend = 0.48*cloud_tex1 + 0.48*cloud_tex2 + 0.04*cloud_tex3;
+var cloud = clamp((cloud_blend - (1-global.skyCloudCoverage)) / global.skyCloudCoverage,
+                  0.0, 1.0);
+var murkyness = clamp(cloud*2.0 - 0.2, 0.0, 1.0) * 0.6;
+
+var cloud_ntex1 = sample(mat.perlinN, clouduv1).rgb*2 - 1;
+var cloud_ntex2 = sample(mat.perlinN, clouduv2).grb*2 - 1;
+var cloud_ntex3 = sample(mat.perlinN, clouduv3).rgb*2 - 1;
+var cloud_n = normalize(0.48*cloud_ntex1 + 0.48*cloud_ntex2 + 0.04*cloud_ntex3);
+
+var sun_uv = Float2(pos_ss_ - sunlight_dir_ss.xy);
+var sun_distance = sqrt(dot(sun_uv,sun_uv)) * (fov.x+fov.y)/2;
+var sun_cloud_dome_pos = Float3(
+    4.51*cos(sun_pos_ss_polar_y/180*PI)
+    * Float2(sin(sun_pos_ss_polar_x/180*PI), cos(sun_pos_ss_polar_x/180*PI)),
+    4.51*sin(sun_pos_ss_polar_y/180*PI));
+if (sun_cloud_dome_pos.z<0) sun_cloud_dome_pos.z = sun_cloud_dome_pos.z * -1;
+var cloud_dome_pos = Float3(perlin_uv, 0.3);
+var cloud_sun_dir = normalize(sun_cloud_dome_pos - cloud_dome_pos);
+var emboss = lerp(dot(cloud_n, cloud_sun_dir), 1.0, 0.5);
+out.colour = emboss * global.skyCloudColour * cloud_atten * cloud;
+out.alpha = cloud_atten * cloud;

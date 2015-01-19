@@ -36,6 +36,11 @@ GfxBaseMaterial::GfxBaseMaterial(const std::string name, GfxShader *shader)
         name(name)
 { }
 
+void GfxBaseMaterial::precompileShader (GfxShader::Purpose purpose) const
+{
+    shader->getNativePair(purpose, textures);
+}
+    
 void GfxBaseMaterial::addDependencies (DiskResource *into) const
 {   
     GFX_MAT_SYNC;
@@ -115,37 +120,15 @@ bool gfx_material_has (const std::string &name)
 void gfx_material_init (void)
 {
     std::string vs =
-        "frag.position = mul(global.worldViewProj, Float4(vert.position.xyz, 1));\n";
-    std::string fs =
-        "var diff_texel = sample2D(mat.diffuseMap, vert.coord0.xy);\n"
-        "if (frag.alpha < mat.alphaRejectThreshold) discard;\n"
-        "if (mat.premultipliedAlpha) diff_texel = pma_decode(diff_texel);\n"
-        "frag.diffuse = gamma_decode(diff_texel.rgb) * mat.diffuseMask;\n"
-        "frag.alpha = diff_texel.a * mat.alphaMask;\n"
-        "var norm_texel = sample2D(mat.normalMap, vert.coord0.xy);\n"
-        "frag.normal = vert.normal;\n"
-        "var gloss_texel = sample2D(mat.glossMap, vert.coord0.xy);\n"
-        "frag.gloss = gloss_texel.r * mat.gloss;\n"
-        "frag.specular = gloss_texel.b * mat.specular;\n";
-    std::string as =
-        "var c = pma_decode(sample2D(mat.emissiveMap, vert.coord0.xy))\n"
-        "             * Float4(1, 1, 1, mat.alphaMask);\n"
-        "if (c.a <= mat.alphaRejectThreshold) discard;\n"
-        "frag.colour = Float4(gamma_decode(c.rgb) * mat.emissiveMask, c.a);\n";
+        "out.position = transform_to_world(vert.position.xyz);\n"
+        "var normal_ws = rotate_to_world(vert.normal.xyz);\n";
+    std::string fs = "out.normal = normal_ws;";
+    std::string as = "";
                      
-    gfx_shader_make_or_reset("/system/Default", vs, fs, as, {
-        { "alphaMask", GfxShaderParam(1.0f) },
-        { "alphaRejectThreshold", GfxShaderParam(-1.0f) },
-        { "diffuseMap", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1)) },
-        { "diffuseMask", GfxShaderParam(Vector3(1, 1, 1)) },
-        { "normalMap", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(0.5, 0.5, 1, 1)) },
-        { "glossMap", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1)) },
-        { "gloss", GfxShaderParam(1.0f) },
-        { "specular", GfxShaderParam(1.0f) },
-        { "emissiveMap", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1)) },
-        { "emissiveMask", GfxShaderParam(Vector3(1, 1, 1)) },
-    }); 
-    
-    gfx_material_add("/system/SkyDefault");
+    gfx_shader_make_or_reset("/system/Default", vs, fs, as, { }); 
+    GfxMaterial *m = gfx_material_add("/system/Default");
+
+    // Precompile
+    m->precompileShader(GfxShader::FIRST_PERSON);
 }   
 

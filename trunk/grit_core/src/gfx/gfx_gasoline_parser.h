@@ -75,11 +75,10 @@ struct GfxGslBlock : public GfxGslAst {
 };
 
 struct GfxGslDecl : public GfxGslAst {
-    bool immutable;
     const std::string id;
     GfxGslAst *init;
-    GfxGslDecl (const GfxGslLocation &loc, bool immutable, const std::string id, GfxGslAst *init)
-      : GfxGslAst(loc), immutable(immutable), id(id), init(init)
+    GfxGslDecl (const GfxGslLocation &loc, const std::string id, GfxGslAst *init)
+      : GfxGslAst(loc), id(id), init(init)
     { }
 };
 
@@ -216,6 +215,9 @@ struct GfxGslMat : public GfxGslAst {
 };
 struct GfxGslVert : public GfxGslAst {
     GfxGslVert (const GfxGslLocation &loc) : GfxGslAst(loc) { }
+};
+struct GfxGslOut : public GfxGslAst {
+    GfxGslOut (const GfxGslLocation &loc) : GfxGslAst(loc) { }
 };
 struct GfxGslFrag : public GfxGslAst {
     GfxGslFrag (const GfxGslLocation &loc) : GfxGslAst(loc) { }

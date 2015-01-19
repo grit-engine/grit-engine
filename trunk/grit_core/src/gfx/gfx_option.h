@@ -44,7 +44,9 @@ enum GfxBoolOption {
 
     GFX_RENDER_PARTICLES,
     GFX_POINT_LIGHTS,
-    GFX_RENDER_SKY
+    GFX_RENDER_SKY,
+    GFX_RENDER_HUD,
+    GFX_RENDER_FIRST_PERSON
 };
 
 enum GfxIntOption {

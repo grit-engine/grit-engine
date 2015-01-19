@@ -811,7 +811,7 @@ std::string GfxHudText::getText (void) const
 // {{{ RENDERING
 
 
-GfxShader *shader_text, *shader_tex;
+GfxShader *shader_text, *shader_rect;
 GfxShaderBindings shader_text_binds, shader_tex_binds;
 
 // vdata/idata be allocated later because constructor requires ogre to be initialised
@@ -893,24 +893,31 @@ void gfx_hud_init (void)
     };
 
     std::string vertex_code =
-        "frag.position = mul(global.worldViewProj, Float4(vert.position.xy, 0, 1));\n";
+        "out.position = transform_to_world(Float3(vert.position.xy, 0));\n";
 
     std::string colour_code1 =
-        "frag.colour = sample2D(mat.tex, vert.coord0.xy) * Float4(mat.colour, mat.alpha);\n";
+        "var texel = sample(mat.tex, vert.coord0.xy);\n"
+        "out.colour = texel.rgb * mat.colour;\n"
+        "out.alpha = texel.a * mat.alpha;\n";
 
     std::string colour_code2 =
-        "frag.colour = sample2D(mat.tex, vert.coord0.xy) * vert.coord1 * "
-        "Float4(mat.colour, mat.alpha);\n";
+        "var texel = sample(mat.tex, vert.coord0.xy);\n"
+        "out.colour = texel.rgb * vert.coord1.rgb * mat.colour;\n"
+        "out.alpha = texel.a * vert.coord1.a * mat.alpha;\n";
 
-    gfx_shader_check(GfxShader::HUD, vertex_code, "", colour_code1, shader_tex_params);
-    gfx_shader_check(GfxShader::HUD, vertex_code, "", colour_code2, shader_text_params);
+    gfx_shader_check("/system/HudRect", GfxShader::HUD, vertex_code, "", colour_code1, shader_tex_params);
+    gfx_shader_check("/system/HudText", GfxShader::HUD, vertex_code, "", colour_code2, shader_text_params);
 
-    shader_tex = gfx_shader_make_or_reset("/system/HudTex",
+    shader_rect = gfx_shader_make_or_reset("/system/HudRect",
                                           vertex_code, "", colour_code1, shader_tex_params);
 
     
     shader_text = gfx_shader_make_or_reset("/system/HudText",
                                            vertex_code, "", colour_code2, shader_text_params);
+
+    shader_rect->getNativePair(GfxShader::HUD, std::set<std::string>{"tex"});
+    shader_rect->getNativePair(GfxShader::HUD, std::set<std::string>{});
+    shader_text->getNativePair(GfxShader::HUD, std::set<std::string>{"tex"});
 }
 
 void gfx_hud_shutdown (lua_State *L)
@@ -1085,7 +1092,8 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
     bool render_target_flipping = false;
     Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin * matrix_centre;
 
-    GfxShaderGlobals globs = { I, I, win_size, render_target_flipping };
+    Vector3 cam_pos(0,0,0);
+    GfxShaderGlobals globs = { cam_pos, I, I, win_size, render_target_flipping };
 
     shader_text_binds.clear();
     shader_text_binds["colour"] = colour;
@@ -1185,9 +1193,10 @@ void gfx_render_hud_one (GfxHudBase *base)
         if (tex != nullptr)
             texs["tex"] = { tex, false, 4};
 
-        GfxShaderGlobals globs = { I, I, win_size, render_target_flipping };
+        Vector3 cam_pos(0,0,0);
+        GfxShaderGlobals globs = { cam_pos, I, I, win_size, render_target_flipping };
 
-        shader_tex->bindShader(GfxShader::HUD, globs, matrix, texs, shader_tex_binds);
+        shader_rect->bindShader(GfxShader::HUD, globs, matrix, texs, shader_tex_binds);
 
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);
         ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);

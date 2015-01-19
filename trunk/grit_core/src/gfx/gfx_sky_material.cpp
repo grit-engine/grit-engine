@@ -77,19 +77,25 @@ GfxSkyMaterial::GfxSkyMaterial (const std::string &name)
 
 void gfx_sky_material_init (void)
 {
-    std::string vs = "frag.position = mul(global.worldViewProj, Float4(vert.position.xyz, 1));\n"
-                     "frag.position.z = frag.position.w * (1 - 1.0/65536);\n";
-    std::string fs = "var c = pma_decode(sample2D(mat.emissiveMap, vert.coord0.xy))\n"
+    std::string vs = "out.position = transform_to_world(vert.position.xyz);\n";
+    std::string fs = "var c = pma_decode(sample(mat.emissiveMap, vert.coord0.xy))\n"
                      "             * Float4(1, 1, 1, mat.alphaMask);\n"
                      "if (c.a <= mat.alphaRejectThreshold) discard;\n"
-                     "frag.colour = Float4(gamma_decode(c.rgb) * mat.emissiveMask, c.a);\n";
+                     "out.colour = gamma_decode(c.rgb) * mat.emissiveMask;\n"
+                     "out.alpha = c.a;\n";
 
-    gfx_shader_make_or_reset("/system/SkyDefault", vs, "", fs, {
+    GfxShader *s = gfx_shader_make_or_reset("/system/SkyDefault", vs, "", fs, {
         { "alphaMask", GfxShaderParam(1.0f) },
         { "alphaRejectThreshold", GfxShaderParam(-1.0f) },
         { "emissiveMap", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1)) },
         { "emissiveMask", GfxShaderParam(Vector3(1, 1, 1)) },
     });
 
+    // Precompile
+    s->getNativePair(GfxShader::HUD, std::set<std::string>{"emissiveMap"});
+    s->getNativePair(GfxShader::HUD, std::set<std::string>{});
+
     gfx_sky_material_add("/system/SkyDefault");
+
+    
 }

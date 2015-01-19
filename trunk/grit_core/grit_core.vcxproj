@@ -158,6 +158,7 @@
     <ClCompile Include="src\win32\win32_clipboard.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\gfx\gfx_gasoline_backend.h" />
     <ClInclude Include="src\input_filter.h" />
     <ClInclude Include="src\net\lua_wrappers_net.h" />
     <ClInclude Include="src\net\net_manager.h" />

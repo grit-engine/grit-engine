@@ -45,6 +45,7 @@ enum TokenKind {
     RETURN,
     VAR,
     VERT,
+    OUT,
 
     SYMBOL,  // Has val.
     LITERAL_NUMBER,  // Has val.
@@ -64,6 +65,7 @@ static std::string to_string (TokenKind k)
         case RETURN: return "return";
         case VAR: return "var";
         case VERT: return "vert";
+        case OUT: return "out";
         case SYMBOL: return "symbol";
         case LITERAL_NUMBER: return "number";
         case END_OF_FILE: return "EOF";
@@ -340,6 +342,8 @@ std::list<Token> lex (const std::string &shader)
                     r.emplace_back(VAR, "var", here);
                 } else if (id == "vert") {
                     r.emplace_back(VERT, "vert", here);
+                } else if (id == "out") {
+                    r.emplace_back(OUT, "out", here);
                 } else {
                     r.emplace_back(IDENTIFIER, id, here);
                 }
@@ -452,6 +456,7 @@ namespace {
                     case MAT: return alloc.makeAst<GfxGslMat>(pop().loc);
                     case GLOBAL: return alloc.makeAst<GfxGslGlobal>(pop().loc);
                     case VERT: return alloc.makeAst<GfxGslVert>(pop().loc);
+                    case OUT: return alloc.makeAst<GfxGslOut>(pop().loc);
                     case FRAG: return alloc.makeAst<GfxGslFrag>(pop().loc);
                     case IDENTIFIER: {
                         auto tok = pop();
@@ -556,7 +561,7 @@ namespace {
                 popKind(SYMBOL, "=");
                 auto *init = parseExpr(precedence_max);
                 popKind(SYMBOL, ";");
-                return alloc.makeAst<GfxGslDecl>(loc, false, id, init);
+                return alloc.makeAst<GfxGslDecl>(loc, id, init);
             } else if (maybePopKind(IF)) {
                 popKind(SYMBOL, "(");
                 auto *cond = parseExpr(precedence_max);

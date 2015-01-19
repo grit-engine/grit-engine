@@ -83,7 +83,7 @@ class GfxSkyBody : public fast_erase_index {
 
     void reinitialise (void);
 
-    void render (GfxPipeline *p, const GfxShaderGlobals &g);
+    void render (const GfxShaderGlobals &g);
 
     friend class GfxSkyMaterial;
     friend class GfxMeshDiskResource;

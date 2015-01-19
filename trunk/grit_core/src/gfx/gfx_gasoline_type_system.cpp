@@ -30,7 +30,7 @@
 
 static bool frag(GfxGslKind k)
 {
-    return k == GFX_GSL_COLOUR || k == GFX_GSL_DANGS;
+    return k != GFX_GSL_VERTEX;
 }
 
 std::ostream &operator<<(std::ostream &o, const GfxGslType *t_)
@@ -45,6 +45,9 @@ std::ostream &operator<<(std::ostream &o, const GfxGslType *t_)
     } else if (auto *t = dynamic_cast<const GfxGslFloatTextureType*>(t_)) {
         o << "FloatTexture";
         if (t->dim > 1) o << t->dim;
+
+    } else if (dynamic_cast<const GfxGslFloatTextureCubeType*>(t_)) {
+        o << "FloatTextureCube";
 
     } else if (auto *t = dynamic_cast<const GfxGslIntType*>(t_)) {
         o << "Int";
@@ -64,6 +67,9 @@ std::ostream &operator<<(std::ostream &o, const GfxGslType *t_)
 
     } else if (dynamic_cast<const GfxGslVertType*>(t_)) {
         o << "Vert";
+
+    } else if (dynamic_cast<const GfxGslOutType*>(t_)) {
+        o << "Out";
 
     } else if (dynamic_cast<const GfxGslFragType*>(t_)) {
         o << "Frag";
@@ -91,27 +97,31 @@ std::ostream &operator<<(std::ostream &o, const GfxGslType *t_)
 GfxGslType *GfxGslTypeSystem::cloneType (const GfxGslType *t_)
 {
     if (auto *t = dynamic_cast<const GfxGslFloatType*>(t_)) {
-        return alloc.makeType<GfxGslFloatType>(*t);
+        return ctx.alloc.makeType<GfxGslFloatType>(*t);
     } else if (auto *t = dynamic_cast<const GfxGslFloatMatrixType*>(t_)) {
-        return alloc.makeType<GfxGslFloatMatrixType>(*t);
+        return ctx.alloc.makeType<GfxGslFloatMatrixType>(*t);
     } else if (auto *t = dynamic_cast<const GfxGslFloatTextureType*>(t_)) {
-        return alloc.makeType<GfxGslFloatTextureType>(*t);
+        return ctx.alloc.makeType<GfxGslFloatTextureType>(*t);
+    } else if (dynamic_cast<const GfxGslFloatTextureCubeType*>(t_)) {
+        return ctx.alloc.makeType<GfxGslFloatTextureCubeType>();
     } else if (auto *t = dynamic_cast<const GfxGslIntType*>(t_)) {
-        return alloc.makeType<GfxGslIntType>(*t);
+        return ctx.alloc.makeType<GfxGslIntType>(*t);
     } else if (dynamic_cast<const GfxGslBoolType*>(t_)) {
-        return alloc.makeType<GfxGslBoolType>();
+        return ctx.alloc.makeType<GfxGslBoolType>();
     } else if (dynamic_cast<const GfxGslVoidType*>(t_)) {
-        return alloc.makeType<GfxGslVoidType>();
+        return ctx.alloc.makeType<GfxGslVoidType>();
     } else if (dynamic_cast<const GfxGslGlobalType*>(t_)) {
-        return alloc.makeType<GfxGslGlobalType>();
+        return ctx.alloc.makeType<GfxGslGlobalType>();
     } else if (dynamic_cast<const GfxGslMatType*>(t_)) {
-        return alloc.makeType<GfxGslMatType>();
+        return ctx.alloc.makeType<GfxGslMatType>();
     } else if (dynamic_cast<const GfxGslVertType*>(t_)) {
-        return alloc.makeType<GfxGslVertType>();
+        return ctx.alloc.makeType<GfxGslVertType>();
+    } else if (dynamic_cast<const GfxGslOutType*>(t_)) {
+        return ctx.alloc.makeType<GfxGslOutType>();
     } else if (dynamic_cast<const GfxGslFragType*>(t_)) {
-        return alloc.makeType<GfxGslFragType>();
+        return ctx.alloc.makeType<GfxGslFragType>();
     } else if (auto *t = dynamic_cast<const GfxGslFunctionType*>(t_)) {
-        return alloc.makeType<GfxGslFunctionType>(*t);
+        return ctx.alloc.makeType<GfxGslFunctionType>(*t);
     } else {
         EXCEPTEX << "Internal error." << ENDL;
     }
@@ -119,211 +129,44 @@ GfxGslType *GfxGslTypeSystem::cloneType (const GfxGslType *t_)
 
 void GfxGslTypeSystem::initObjectTypes (GfxGslKind k)
 {
-    if (k == GFX_GSL_COLOUR)
-        fragFields["colour"] = FieldType(alloc.makeType<GfxGslFloatType>(4), true, true);
+    switch (k) {
+        case GFX_GSL_COLOUR:
+        outFields["colour"] = ctx.alloc.makeType<GfxGslFloatType>(3);
+        break;
 
-    if (k == GFX_GSL_DANGS) {
-        fragFields["diffuse"] = FieldType(alloc.makeType<GfxGslFloatType>(3), true, true);
-        fragFields["alpha"] = FieldType(alloc.makeType<GfxGslFloatType>(1), true, true);
-        fragFields["normal"] = FieldType(alloc.makeType<GfxGslFloatType>(3), true, true);
-        fragFields["gloss"] = FieldType(alloc.makeType<GfxGslFloatType>(1), true, true);
-        fragFields["specular"] = FieldType(alloc.makeType<GfxGslFloatType>(1), true, true);
+        case GFX_GSL_COLOUR_ALPHA:
+        outFields["colour"] = ctx.alloc.makeType<GfxGslFloatType>(3);
+        outFields["alpha"] = ctx.alloc.makeType<GfxGslFloatType>(1);
+        break;
+
+        case GFX_GSL_DANGS:
+        outFields["diffuse"] = ctx.alloc.makeType<GfxGslFloatType>(3);
+        outFields["alpha"] = ctx.alloc.makeType<GfxGslFloatType>(1);
+        outFields["normal"] = ctx.alloc.makeType<GfxGslFloatType>(3);
+        outFields["gloss"] = ctx.alloc.makeType<GfxGslFloatType>(1);
+        outFields["specular"] = ctx.alloc.makeType<GfxGslFloatType>(1);
+        break;
+
+        case GFX_GSL_VERTEX:
+        outFields["position"] = ctx.alloc.makeType<GfxGslFloatType>(3);
+        break;
     }
-
-    if (k == GFX_GSL_VERTEX)
-        fragFields["position"] = FieldType(alloc.makeType<GfxGslFloatType>(4), true, true);
 
     if (frag(k))
-        fragFields["screen"] = FieldType(alloc.makeType<GfxGslFloatType>(2));
+        fragFields["screen"] = ctx.alloc.makeType<GfxGslFloatType>(2);
 
-    vertFields["position"] = alloc.makeType<GfxGslFloatType>(4);
-    vertFields["coord0"] = alloc.makeType<GfxGslFloatType>(4);
-    vertFields["coord1"] = alloc.makeType<GfxGslFloatType>(4);
-    vertFields["coord2"] = alloc.makeType<GfxGslFloatType>(4);
-    vertFields["coord3"] = alloc.makeType<GfxGslFloatType>(4);
-    vertFields["coord4"] = alloc.makeType<GfxGslFloatType>(4);
-    vertFields["coord5"] = alloc.makeType<GfxGslFloatType>(4);
-    vertFields["coord6"] = alloc.makeType<GfxGslFloatType>(4);
-    vertFields["coord7"] = alloc.makeType<GfxGslFloatType>(4);
-
-    globalFields["world"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    globalFields["worldViewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    globalFields["viewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    globalFields["viewportSize"] = alloc.makeType<GfxGslFloatType>(2);
-    globalFields["fovY"] = alloc.makeType<GfxGslFloatType>(1);
-    globalFields["time"] = alloc.makeType<GfxGslFloatType>(1);
-    globalFields["hellColour"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skyCloudColour"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skyCloudCoverage"] = alloc.makeType<GfxGslFloatType>(1);
-    globalFields["skyGlareHorizonElevation"] = alloc.makeType<GfxGslFloatType>(1);
-    globalFields["skyGlareSunDistance"] = alloc.makeType<GfxGslFloatType>(1);
-    globalFields["skyDivider1"] = alloc.makeType<GfxGslFloatType>(1);
-    globalFields["skyDivider2"] = alloc.makeType<GfxGslFloatType>(1);
-    globalFields["skyDivider3"] = alloc.makeType<GfxGslFloatType>(1);
-    globalFields["skyDivider4"] = alloc.makeType<GfxGslFloatType>(1);
-    globalFields["skyColour0"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skyColour1"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skyColour2"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skyColour3"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skyColour4"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skyColour5"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skySunColour0"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skySunColour1"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skySunColour2"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skySunColour3"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["skySunColour4"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["sunColour"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["sunAlpha"] = alloc.makeType<GfxGslFloatType>(1);
-    globalFields["sunDirection"] = alloc.makeType<GfxGslFloatType>(3);
-    globalFields["sunFalloffDistance"] = alloc.makeType<GfxGslFloatType>(1);
-    globalFields["sunSize"] = alloc.makeType<GfxGslFloatType>(1);
-}
-
-void GfxGslTypeSystem::initFuncTypes (void)
-{
-    auto is = [&] (int i) -> GfxGslIntType* { return alloc.makeType<GfxGslIntType>(i); };
-    auto fs = [&] (int i) -> GfxGslFloatType* { return alloc.makeType<GfxGslFloatType>(i); };
-    auto tex = [&] (int i) -> GfxGslFloatTextureType* { return alloc.makeType<GfxGslFloatTextureType>(i); };
-    //GfxGslType *b = alloc.makeType<GfxGslBoolType>();
-    // ts holds the set of all functions: float_n -> float_n
-    std::vector<GfxGslFunctionType*> ts;
-    for (unsigned i=1 ; i<=4 ; ++i)
-        ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(i)}, fs(i)));
-    funcTypes["tan"] = ts;
-    funcTypes["atan"] = ts;
-    funcTypes["sin"] = ts;
-    funcTypes["asin"] = ts;
-    funcTypes["cos"] = ts;
-    funcTypes["acos"] = ts;
-    if (frag(kind)) {
-        funcTypes["ddx"] = ts;
-        funcTypes["ddy"] = ts;
-    }
-    funcTypes["abs"] = ts;
-    funcTypes["sqrt"] = ts;
-
-    funcTypes["pow"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1)}, fs(1)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2), fs(1)}, fs(2)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(1)}, fs(3)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(1)}, fs(4)),
-    };
-
-    funcTypes["atan2"] = { alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1)}, fs(1)) };
-
-    funcTypes["dot"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(3)}, fs(1)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2), fs(2)}, fs(1)),
-    };
-    funcTypes["normalize"] = { alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)) };
-
-    // ts holds the set of all functions: (float_n) -> float_1
-    ts.clear();
-    for (unsigned i=1 ; i<=4 ; ++i)
-        ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(i)}, fs(1)));
-    funcTypes["length"] = ts;
-
-    // ts holds the set of all functions: (float_n, float_n, float_n) -> float_n
-    ts.clear();
-    for (unsigned i=1 ; i<=4 ; ++i)
-        ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(i), fs(i), fs(i)}, fs(i)));
-    funcTypes["clamp"] = ts;
-
-    funcTypes["Float"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(1)}, fs(1)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
-    };
-    funcTypes["Float2"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(1)}, fs(2)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(2)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(2)}, fs(2)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2)}, fs(2)),
-
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1)}, fs(2))
-    };
-    funcTypes["Float3"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(1)}, fs(3)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(3)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(3)}, fs(3)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)),
-
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2), fs(1)}, fs(3)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(2)}, fs(3)),
-
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1), fs(1)}, fs(3)),
-    };
-    funcTypes["Float4"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(1)}, fs(4)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(4)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(4)}, fs(4)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
-
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(1)}, fs(4)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(3)}, fs(4)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2), fs(2)}, fs(4)),
-
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1), fs(2)}, fs(4)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(2), fs(1)}, fs(4)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2), fs(1), fs(1)}, fs(4)),
-
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1), fs(1), fs(1)}, fs(4))
-    };
-
-    // ts holds the set of all functions: (float_n, float_n, float1) -> float_n
-    ts.clear();
-    for (unsigned i=1 ; i<=4 ; ++i)
-        ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(i), fs(i), fs(1)}, fs(i)));
-    funcTypes["lerp"] = ts;
-
-        
-    // ts holds the set of all functions: (float_n, float_n) -> float_n
-    ts.clear();
-    for (unsigned i=1 ; i<=4 ; ++i)
-        ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(i), fs(i)}, fs(i)));
-    funcTypes["max"] = ts;
-    funcTypes["min"] = ts;
-
-    // ts holds the set of all functions: (float_n, float_1) -> float_n
-    ts.clear();
-    for (unsigned i=1 ; i<=4 ; ++i)
-        ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(i), fs(1)}, fs(i)));
-    funcTypes["mod"] = ts;
-
-    ts.clear();
-    for (unsigned w=1 ; w<=4 ; ++w) {
-        for (unsigned h=1 ; h<=4 ; ++h) {
-            GfxGslType *m = alloc.makeType<GfxGslFloatMatrixType>(w, h);
-            ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{m, fs(h)}, fs(h)));
-        }
-    }
-    funcTypes["mul"] = ts;
-
-    funcTypes["sample2D"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{tex(2), fs(2)}, fs(4)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{tex(2), fs(2), fs(2), fs(2)}, fs(4)),
-    };
-    funcTypes["sample3D"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{tex(3), fs(3)}, fs(4)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{tex(3), fs(3), fs(3), fs(3)}, fs(4)),
-    };
-
-    funcTypes["pma_decode"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
-    };
-
-    funcTypes["gamma_decode"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2)}, fs(2)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
-    };
-
-    funcTypes["gamma_encode"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2)}, fs(2)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)),
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
-    };
+    vertFields["coord0"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord1"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord2"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord3"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord4"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord5"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord6"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["coord7"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["normal"] = ctx.alloc.makeType<GfxGslFloatType>(3);
+    vertFields["colour"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["tangent"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["position"] = ctx.alloc.makeType<GfxGslFloatType>(4);
 
 }
 
@@ -331,23 +174,28 @@ GfxGslFunctionType *GfxGslTypeSystem::lookupFunction(const GfxGslLocation &loc,
                                                      const std::string &name,
                                                      GfxGslAsts &asts)
 {
-    auto it = funcTypes.find(name);
-    if (it == funcTypes.end()) {
+    auto it = ctx.funcTypes.find(name);
+    if (it == ctx.funcTypes.end()) {
         error(loc) << "Unrecognised function: " << name << ENDL;
     }
-    const std::vector<GfxGslFunctionType*> &overrides = it->second;
-    for (auto *o : overrides) {
+
+    // Bind if it's an exact match
+    const std::vector<GfxGslFunctionType*> &overloads = it->second;
+    for (auto *o : overloads) {
         if (o->params.size() != asts.size()) continue;
         for (unsigned i=0 ; i<asts.size() ; ++i) {
             if (!equal(o->params[i], asts[i]->type)) goto nextfunc;
         }
+        //std::cout << "Exact match: " << name << ": " << o << std::endl;
         return o;
         nextfunc:;
     }
 
+    // Otherwise search for one that matches with conversions.
+    // If there is just 1, use it, otherwise error.
     GfxGslFunctionType *found = nullptr;
-    for (auto *o : overrides) {
-        //std::cout << o << std::endl;
+    for (auto *o : overloads) {
+        //std::cout << "Trying with conversions: " << name << ": " << o << std::endl;
         if (o->params.size() != asts.size()) continue;
         for (unsigned i=0 ; i<asts.size() ; ++i) {
             if (!conversionExists(asts[i]->type, o->params[i])) goto nextfunc2;
@@ -415,6 +263,21 @@ bool GfxGslTypeSystem::equal (GfxGslType *a_, GfxGslType *b_)
         if (b == nullptr) return false;
         if (b->dim != a->dim) return false;
 
+    } else if (auto *a = dynamic_cast<GfxGslFloatMatrixType*>(a_)) {
+        auto *b = dynamic_cast<GfxGslFloatMatrixType*>(b_);
+        if (b == nullptr) return false;
+        if (b->w != a->w) return false;
+        if (b->h != a->h) return false;
+
+    } else if (auto *a = dynamic_cast<GfxGslFloatTextureType*>(a_)) {
+        auto *b = dynamic_cast<GfxGslFloatTextureType*>(b_);
+        if (b == nullptr) return false;
+        if (b->dim != a->dim) return false;
+
+    } else if (dynamic_cast<GfxGslFloatTextureCubeType*>(a_)) {
+        auto *b = dynamic_cast<GfxGslFloatTextureCubeType*>(b_);
+        if (b == nullptr) return false;
+
     } else if (dynamic_cast<GfxGslBoolType*>(a_)) {
         auto *b = dynamic_cast<GfxGslBoolType*>(b_);
         if (b == nullptr) return false;
@@ -435,6 +298,10 @@ bool GfxGslTypeSystem::equal (GfxGslType *a_, GfxGslType *b_)
         auto *b = dynamic_cast<GfxGslVertType*>(b_);
         if (b == nullptr) return false;
 
+    } else if (dynamic_cast<GfxGslOutType*>(a_)) {
+        auto *b = dynamic_cast<GfxGslOutType*>(b_);
+        if (b == nullptr) return false;
+
     } else if (dynamic_cast<GfxGslFragType*>(a_)) {
         auto *b = dynamic_cast<GfxGslFragType*>(b_);
         if (b == nullptr) return false;
@@ -447,6 +314,8 @@ bool GfxGslTypeSystem::equal (GfxGslType *a_, GfxGslType *b_)
         for (unsigned i=0 ; i<a->params.size() ; ++i) {
             if (!equal(a->params[i], b->params[i])) return false;
         }
+    } else {
+        EXCEPTEX << "Internal error: " << a_ << ENDL;
     }
     return true;
 }
@@ -493,7 +362,7 @@ void GfxGslTypeSystem::doConversion (GfxGslAst *&from, GfxGslType *to_)
         if (auto *ft = dynamic_cast<GfxGslIntType*>(from->type)) {
             if (ft->dim == 1) {
                 // Int -> Int[n]
-                from = alloc.makeAst<GfxGslCall>(from->loc, names[tt->dim-1], GfxGslAsts{from});
+                from = ctx.alloc.makeAst<GfxGslCall>(from->loc, names[tt->dim-1], GfxGslAsts{from});
                 from->type = cloneType(tt);
                 return;
             }
@@ -503,14 +372,14 @@ void GfxGslTypeSystem::doConversion (GfxGslAst *&from, GfxGslType *to_)
         if (auto *ft = dynamic_cast<GfxGslFloatType*>(from->type)) {
             if (ft->dim == 1) {
                 // Float -> Float[n]
-                from = alloc.makeAst<GfxGslCall>(from->loc, names[tt->dim-1], GfxGslAsts{from});
+                from = ctx.alloc.makeAst<GfxGslCall>(from->loc, names[tt->dim-1], GfxGslAsts{from});
                 from->type = cloneType(tt);
                 return;
             }
         } else if (auto *ft = dynamic_cast<GfxGslIntType*>(from->type)) {
             // Int1 -> Float[n]
             if (ft->dim == 1) {
-                from = alloc.makeAst<GfxGslCall>(from->loc, names[tt->dim-1], GfxGslAsts{from});
+                from = ctx.alloc.makeAst<GfxGslCall>(from->loc, names[tt->dim-1], GfxGslAsts{from});
                 from->type = cloneType(tt);
                 return;
             }
@@ -563,7 +432,8 @@ void GfxGslTypeSystem::addTrans (const GfxGslLocation &loc, const std::vector<st
         std::string last = path[1];
         for (unsigned i=0 ; i<last.length() ; ++i) {
             unsigned offset;
-            get_offset(last[i], offset);
+            if (!get_offset(last[i], offset))
+                EXCEPTEX << "Internal error." << ENDL;
             ASSERT(offset < ft->dim);
             parts.insert(offset);
         }
@@ -572,17 +442,13 @@ void GfxGslTypeSystem::addTrans (const GfxGslLocation &loc, const std::vector<st
     }
     static const char *fields = "xyzw";
     for (unsigned p : parts) {
-        Trans t;
-        t.isVert = vert;
+        GfxGslTrans t;
+        t.kind = vert ? GfxGslTrans::VERT : GfxGslTrans::USER;
         t.path.push_back(path[0]);
         if (ft->dim > 1) {
             t.path.emplace_back(1, fields[p]);
         }
-        for (const auto &tran : trans) {
-            if (tran == t) goto no_add;
-        }
-        trans.push_back(t);
-        no_add:;
+        trans.insert(t);
     }
 }
 
@@ -595,19 +461,13 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
         for (auto stmt : ast->stmts) {
             inferAndSet(stmt, c);
         }
-        ast->type = alloc.makeType<GfxGslVoidType>();
+        ast->type = ctx.alloc.makeType<GfxGslVoidType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslShader*>(ast_)) {
         for (auto stmt : ast->stmts) {
             inferAndSet(stmt, c);
         }
-        ast->type = alloc.makeType<GfxGslVoidType>();
-        for (auto f : fragFields) {
-            if (f.second.mustWrite) {
-                if (fragFieldsWritten.find(f.first) == fragFieldsWritten.end())
-                    error(loc) << "Must write to frag." << f.first << "." <<  ENDL;
-            }
-        }
+        ast->type = ctx.alloc.makeType<GfxGslVoidType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslDecl*>(ast_)) {
         inferAndSet(ast->init, Ctx().setRead(true));
@@ -616,9 +476,9 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
         if (!isFirstClass(ast->init->type))
             error(loc) << "Variable cannot have type: " << ast->init->type << ENDL;
         GfxGslType *type = cloneType(ast->init->type);
-        if (!ast->immutable) type->writeable = true;
+        type->writeable = true;
         vars[ast->id] = type;
-        ast->type = alloc.makeType<GfxGslVoidType>();
+        ast->type = ctx.alloc.makeType<GfxGslVoidType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslIf*>(ast_)) {
         inferAndSet(ast->cond, Ctx().setRead(true));
@@ -627,7 +487,7 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             inferAndSet(ast->no, c);
             unify(loc, ast->yes, ast->no);
         }
-        ast->type = alloc.makeType<GfxGslVoidType>();
+        ast->type = ctx.alloc.makeType<GfxGslVoidType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslAssign*>(ast_)) {
         inferAndSet(ast->target, Ctx().setWrite(true));
@@ -635,13 +495,13 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             error(loc) << "Cannot assign to this object." <<  ENDL;
         inferAndSet(ast->expr, c.setRead(true));
         doConversion(ast->expr, ast->target->type);
-        ast->type = alloc.makeType<GfxGslVoidType>();
+        ast->type = ctx.alloc.makeType<GfxGslVoidType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslDiscard*>(ast_)) {
-        ast->type = alloc.makeType<GfxGslVoidType>();
+        ast->type = ctx.alloc.makeType<GfxGslVoidType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslReturn*>(ast_)) {
-        ast->type = alloc.makeType<GfxGslVoidType>();
+        ast->type = ctx.alloc.makeType<GfxGslVoidType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslCall*>(ast_)) {
         if (c.write)
@@ -656,20 +516,14 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
         if (dynamic_cast<GfxGslFragType*>(ast->target->type)) {
             if (fragFields.find(ast->id) == fragFields.end())
                 error(loc) << "Frag field does not exist:  " << ast->id << ENDL;
-            const FieldType &f = fragFields[ast->id];
-            ast->type = cloneType(f.t);
-            bool writeable = f.writeable;
-            ast->type->writeable = writeable;
+            const GfxGslType *type = fragFields[ast->id];
+            ast->type = cloneType(type);
+            ast->type->writeable = false;
             if (c.read) {
-                if (!writeable) {
-                    fragFieldsRead.insert(ast->id);
-                }
+                fragFieldsRead.insert(ast->id);
             }
             if (c.write) {
-                if (!writeable)
-                    error(loc) << "frag." << ast->id << " cannot be written." << ENDL;
-                else
-                    fragFieldsWritten.insert(ast->id);
+                error(loc) << "frag." << ast->id << " cannot be written." << ENDL;
             }
         } else if (dynamic_cast<GfxGslVertType*>(ast->target->type)) {
             if (vertFields.find(ast->id) == vertFields.end())
@@ -686,20 +540,28 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             }
             if (c.write)
                 error(loc) << "vert." << ast->id << " cannot be written." << ENDL;
+        } else if (dynamic_cast<GfxGslOutType*>(ast->target->type)) {
+            if (outFields.find(ast->id) == outFields.end())
+                error(loc) << "out." << ast->id << " does not exist." << ENDL;
+            const GfxGslType *type = outFields[ast->id];
+            ast->type = cloneType(type);
+            ast->type->writeable = true;
+            if (c.write)
+                outFieldsWritten.insert(ast->id);
         } else if (dynamic_cast<GfxGslGlobalType*>(ast->target->type)) {
-            if (globalFields.find(ast->id) == globalFields.end())
+            if (ctx.globalFields.find(ast->id) == ctx.globalFields.end())
                 error(loc) << "global." << ast->id << " does not exist." << ENDL;
-            ast->type = cloneType(globalFields[ast->id]);
+            ast->type = cloneType(ctx.globalFields[ast->id]);
             ast->type->writeable = false;
             if (c.read)
                 globalFieldsRead.insert(ast->id);
             if (c.write)
                 error(loc) << "global." << ast->id << " cannot be written." << ENDL;
         } else if (dynamic_cast<GfxGslMatType*>(ast->target->type)) {
-            if (matFields.find(ast->id) == matFields.end())
+            if (ctx.matFields.find(ast->id) == ctx.matFields.end())
                 error(loc) << "mat." << ast->id << " does not exist." << ENDL;
-            ast->type = cloneType(matFields[ast->id]);
-            if (dynamic_cast<GfxGslFloatTextureType*>(ast->type)) {
+            ast->type = cloneType(ctx.matFields[ast->id]);
+            if (dynamic_cast<GfxGslTextureType*>(ast->type)) {
                 if (!frag(kind)) {
                     error(loc) << "Cannot use textures in vertex shader: " << ast->id << ENDL;
                 }
@@ -723,7 +585,7 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
                     error(loc) << "Invalid field of " << ft << ": " << ast->id << ENDL;
                 }
             }
-            ast->type = alloc.makeType<GfxGslFloatType>(id.length());
+            ast->type = ctx.alloc.makeType<GfxGslFloatType>(id.length());
             ast->type->writeable = ft->writeable;
             
         } else {
@@ -731,10 +593,10 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
         }
 
     } else if (auto *ast = dynamic_cast<GfxGslLiteralInt*>(ast_)) {
-        ast->type = alloc.makeType<GfxGslIntType>(1);
+        ast->type = ctx.alloc.makeType<GfxGslIntType>(1);
 
     } else if (auto *ast = dynamic_cast<GfxGslLiteralFloat*>(ast_)) {
-        ast->type = alloc.makeType<GfxGslFloatType>(1);
+        ast->type = ctx.alloc.makeType<GfxGslFloatType>(1);
 
     } else if (auto *ast = dynamic_cast<GfxGslVar*>(ast_)) {
         auto it = vars.find(ast->id);
@@ -761,7 +623,7 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             case GFX_GSL_OP_DIV: 
             case GFX_GSL_OP_MOD: {
                 if (auto *ct = dynamic_cast<GfxGslCoordType*>(t)) {
-                    ast->type = alloc.makeType<GfxGslFloatType>(ct->dim);
+                    ast->type = ctx.alloc.makeType<GfxGslFloatType>(ct->dim);
                 } else {
                     error(loc) << "Type error at operator " << ast->op << ENDL;
                 }
@@ -774,7 +636,7 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             case GFX_GSL_OP_GT:
             case GFX_GSL_OP_GTE: {
                 if (dynamic_cast<GfxGslCoordType*>(t)) {
-                    ast->type = alloc.makeType<GfxGslBoolType>();
+                    ast->type = ctx.alloc.makeType<GfxGslBoolType>();
                 } else {
                     error(loc) << "Type error at operator " << ast->op << ENDL;
                 }
@@ -783,7 +645,7 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             case GFX_GSL_OP_AND:
             case GFX_GSL_OP_OR: {
                 if (dynamic_cast<GfxGslBoolType*>(t)) {
-                    ast->type = alloc.makeType<GfxGslBoolType>();
+                    ast->type = ctx.alloc.makeType<GfxGslBoolType>();
                 } else {
                     error(loc) << "Type error at operator " << ast->op << ENDL;
                 }
@@ -791,16 +653,19 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
         }
 
     } else if (auto *ast = dynamic_cast<GfxGslGlobal*>(ast_)) {
-        ast->type = alloc.makeType<GfxGslGlobalType>();
+        ast->type = ctx.alloc.makeType<GfxGslGlobalType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslMat*>(ast_)) {
-        ast->type = alloc.makeType<GfxGslMatType>();
+        ast->type = ctx.alloc.makeType<GfxGslMatType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslVert*>(ast_)) {
-        ast->type = alloc.makeType<GfxGslVertType>();
+        ast->type = ctx.alloc.makeType<GfxGslVertType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslFrag*>(ast_)) {
-        ast->type = alloc.makeType<GfxGslFragType>();
+        ast->type = ctx.alloc.makeType<GfxGslFragType>();
+
+    } else if (auto *ast = dynamic_cast<GfxGslOut*>(ast_)) {
+        ast->type = ctx.alloc.makeType<GfxGslOutType>();
 
     } else {
         EXCEPTEX << "INTERNAL ERROR: Unknown Ast." << ENDL;

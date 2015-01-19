@@ -1,0 +1,13 @@
+var vert_position = vert.position;
+var vert_coord0 = vert.coord0;
+var vert_coord1 = vert.coord1.w;
+var vert_coord2 = vert.coord2.w;
+var vert_coord3 = vert.coord3.w;
+var vert_coord4 = vert.coord4.x;
+var vert_coord5 = vert.coord5.y;
+var vert_coord6 = vert.coord6.z;
+var vert_coord7 = vert.coord7.w;
+var var0 = 0.0;
+var var1 = Float2(0, 0);
+var var2 = mat.alphaMask;
+out.position = Float3(0, 0, 0);

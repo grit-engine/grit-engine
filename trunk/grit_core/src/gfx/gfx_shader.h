@@ -71,6 +71,7 @@ typedef std::map<std::string, GfxShaderParam> GfxShaderParamMap;
 
 /** Some parameters that do not change from one object to the next. */
 struct GfxShaderGlobals {
+    Vector3 cam_pos;
     Ogre::Matrix4 view;
     Ogre::Matrix4 proj;
     Vector2 viewport_dim;
@@ -95,7 +96,8 @@ class GfxShader {
         REGULAR,
         SKY,
         FIRST_PERSON,
-        HUD
+        HUD,
+        WIRE_FRAME
     };
 
     private:
@@ -161,6 +163,8 @@ class GfxShader {
 
 
     // New API, may throw compilation errors if not checked previously.
+    NativePair getNativePair (Purpose purpose, const std::set<std::string> &textures);
+    NativePair getNativePair (Purpose purpose, const GfxMaterialTextureMap &textures);
     void bindShader (Purpose purpose,
                      const GfxShaderGlobals &params,
                      const Ogre::Matrix4 &world,
@@ -202,8 +206,11 @@ class GfxShader {
     
 };
 
+void gfx_shader_bind_global_textures (const GfxShader::NativePair &np);
+
 // Ensure the given source code works for the given purpose.
-void gfx_shader_check (GfxShader::Purpose purpose,
+void gfx_shader_check (const std::string &name,
+                       GfxShader::Purpose purpose,
                        const std::string &new_vertex_code,
                        const std::string &new_dangs_code,
                        const std::string &new_additional_code,

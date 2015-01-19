@@ -40,8 +40,7 @@ static void unparse (std::stringstream &ss, const GfxGslAst *ast_, int indent)
             unparse(ss, stmt, indent);
         }
     } else if (auto ast = dynamic_cast<const GfxGslDecl*>(ast_)) {
-        ss << space << (ast->immutable ? "val" : "var");
-        ss << " " << ast->id << " = ";
+        ss << space << "var" << " " << ast->id << " = ";
         unparse(ss, ast->init, indent);
         ss << ";";
         if (ast->init->type != nullptr) ss << "  // " << ast->init->type;
@@ -112,38 +111,6 @@ static void unparse (std::stringstream &ss, const GfxGslAst *ast_, int indent)
     } else {
         EXCEPTEX << "INTERNAL ERROR: Unknown Ast." << ENDL;
     }
-}
-
-template<class T>
-static std::ostream &operator<< (std::ostream &o, const std::vector<T> &s)
-{
-    if (s.empty()) {
-        o << "[ ]";
-    } else {
-        const char *prefix = "[";
-        for (const auto &str : s) {
-            o << prefix << str;
-            prefix = ", ";
-        }
-        o << "]";
-    }
-    return o;
-}
-
-template<class T>
-static std::ostream &operator<< (std::ostream &o, const std::set<T> &s)
-{
-    if (s.empty()) {
-        o << "{ }";
-    } else {
-        const char *prefix = "{";
-        for (const auto &str : s) {
-            o << prefix << str;
-            prefix = ", ";
-        }
-        o << "}";
-    }
-    return o;
 }
 
 std::string gfx_gasoline_unparse_gsl (const GfxGslTypeSystem *ts, const GfxGslAst *ast)

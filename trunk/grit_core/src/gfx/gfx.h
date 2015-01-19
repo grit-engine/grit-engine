@@ -84,8 +84,16 @@ void gfx_bake_env_cube (const std::string &filename, unsigned size, const Vector
 
 
 // lighting parameters
-GfxEnvCubeDiskResource *gfx_env_cube (void);
-void gfx_env_cube (const DiskResourcePtr<GfxEnvCubeDiskResource> &v);
+GfxEnvCubeDiskResource *gfx_env_cube (unsigned i);
+void gfx_env_cube (unsigned i, const DiskResourcePtr<GfxEnvCubeDiskResource> &v);
+float gfx_env_cube_cross_fade (void);
+void gfx_env_cube_cross_fade (float);
+
+GfxTextureDiskResource *gfx_shadow_pcf_noise_map (void);
+void gfx_shadow_pcf_noise_map (const DiskResourcePtr<GfxTextureDiskResource> &v);
+GfxTextureDiskResource *gfx_fade_dither_map (void);
+void gfx_fade_dither_map (const DiskResourcePtr<GfxTextureDiskResource> &v);
+
 
 Vector3 gfx_particle_ambient (void);
 void gfx_particle_ambient (const Vector3 &v);

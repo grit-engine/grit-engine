@@ -133,7 +133,7 @@ GfxSkyMaterial *GfxSkyBody::getMaterial (unsigned i)
     return materials[i];
 }
 
-void GfxSkyBody::render (GfxPipeline *p, const GfxShaderGlobals &g)
+void GfxSkyBody::render (const GfxShaderGlobals &g)
 {
     if (!enabled) return;
 
@@ -211,8 +211,9 @@ void gfx_sky_render (GfxPipeline *p)
     proj[1][1] *= render_target_flipping_factor;
     proj[1][2] *= render_target_flipping_factor;
     proj[1][3] *= render_target_flipping_factor;
+    Vector3 cam_pos = from_ogre(p->getCamera()->getPosition());
     Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
-    GfxShaderGlobals g = { view, proj, viewport_dim, render_target_flipping };
+    GfxShaderGlobals g = { cam_pos, view, proj, viewport_dim, render_target_flipping };
 
     // sort by z order into separate container
     std::vector<GfxSkyBody*> sorted;
@@ -222,7 +223,7 @@ void gfx_sky_render (GfxPipeline *p)
     std::sort(sorted.begin(), sorted.end(), sky_body_compare);
 
     for (unsigned i=0 ; i<sorted.size() ; ++i) {
-        sorted[i]->render(p, g);
+        sorted[i]->render(g);
     }
 }
 

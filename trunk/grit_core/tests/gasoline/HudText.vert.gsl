@@ -1,0 +1,1 @@
+out.position = transform_to_world(Float3(vert.position.xy, 0));

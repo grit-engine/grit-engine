@@ -12,7 +12,10 @@
 #include "gfx_internal.h"
 #include "gfx_shader.h"
 
-GfxGslBackend backend = gfx_d3d9() ? GFX_GSL_BACKEND_CG : GFX_GSL_BACKEND_GLSL;
+GfxGslBackend backend = (gfx_d3d9() || getenv("GRIT_GL_CG") != nullptr)
+                      ? GFX_GSL_BACKEND_CG : GFX_GSL_BACKEND_GLSL;
+
+typedef GfxShader::NativePair NativePair;
 
 static std::string fresh_name (void)
 {
@@ -22,63 +25,6 @@ static std::string fresh_name (void)
     return ss.str();
 }
 
-
-void GfxShader::reset (const GfxShaderParamMap &p,
-                       const std::string &src_vertex,
-                       const std::string &src_dangs,
-                       const std::string &src_additional)
-{
-    params = p;
-    srcVertex = src_vertex;
-    srcDangs = src_dangs;
-    srcAdditional = src_additional;
-
-    // Destroy all currently built shaders
-    for (const auto &pair : cachedShaders) {
-        const NativePair &np = pair.second;
-        Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.vp->getName());
-        Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.fp->getName());
-    }
-    cachedShaders.clear();
-
-    // all mats must reset now
-}
-
-
-void GfxShader::validate (void)
-{
-    legacy.fp->load();
-    legacy.vp->load();
-
-    if (!legacy.vp->isLoaded())
-        EXCEPT << "Program not loaded: \"" << legacy.vp->getName() << "\"" << ENDL;
-
-    if (!legacy.fp->isLoaded())
-        EXCEPT << "Program not loaded: \"" << legacy.fp->getName() << "\"" << ENDL;
-
-    Ogre::GpuProgram *vp_bd = legacy.vp->_getBindingDelegate();
-    Ogre::GpuProgram *fp_bd = legacy.fp->_getBindingDelegate();
-
-    if (vp_bd == nullptr)
-        EXCEPT << "Program cannot be bound: \"" << legacy.vp->getName() << "\"";
-
-    if (fp_bd == nullptr)
-        EXCEPT << "Program cannot be bound: \"" << legacy.fp->getName() << "\"";
-
-    if (!gfx_d3d9()) {
-
-        auto *vp_low = dynamic_cast<Ogre::GLSL::GLSLGpuProgram*>(vp_bd);
-        auto *fp_low = dynamic_cast<Ogre::GLSL::GLSLGpuProgram*>(fp_bd);
-        
-        if (vp_low != nullptr && fp_low != nullptr) {
-            // Force the actual compilation of it...
-            Ogre::GLSL::GLSLLinkProgramManager::getSingleton().setActiveVertexShader(vp_low);
-            Ogre::GLSL::GLSLLinkProgramManager::getSingleton().setActiveFragmentShader(fp_low);
-            Ogre::GLSL::GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
-        }
-
-    }
-}
 
 void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
                        const std::string &name, const Ogre::Matrix4 &v)
@@ -134,37 +80,163 @@ template<class T> static void hack_set_constant(const Ogre::HighLevelGpuProgramP
     try_set_constant(fp, name, v);
 }
 
-template<class T> static void hack_set_constant(const GfxShader::NativePair &np,
+template<class T> static void hack_set_constant(const NativePair &np,
                                                 const std::string &name, const T&v)
 {
     hack_set_constant(np.vp, np.fp, name, v);
 }
 
-void GfxShader::bindShader (Purpose purpose,
-                            const GfxShaderGlobals &globs,
-                            const Ogre::Matrix4 &world,
-                            const GfxMaterialTextureMap &textures,
-                            const GfxShaderBindings &bindings)
+static void explicit_binding (const NativePair &np, const std::string &name, const Ogre::Matrix4 &v)
+{
+    hack_set_constant(np, name, v);
+}
+
+static void explicit_binding (const NativePair &np, const std::string &name, int v)
+{
+    hack_set_constant(np, name, v);
+}
+
+static void explicit_binding (const NativePair &np, const std::string &name, float v)
+{
+    hack_set_constant(np, name, v);
+}
+
+static void explicit_binding (const NativePair &np, const std::string &name, const Vector2 &v)
+{
+    hack_set_constant(np, name, v);
+}
+
+static void explicit_binding (const NativePair &np, const std::string &name, const Vector3 &v)
+{
+    hack_set_constant(np, name, v);
+}
+
+static void explicit_binding (const NativePair &np, const std::string &name, const Vector4 &v)
+{
+    hack_set_constant(np, name, v);
+}
+
+
+void GfxShader::explicitBinding (const std::string &name, const Ogre::Matrix4 &v)
+{
+    explicit_binding(legacy, name, v);
+}
+
+void GfxShader::explicitBinding (const std::string &name, int v)
+{
+    explicit_binding(legacy, name, v);
+}
+
+void GfxShader::explicitBinding (const std::string &name, float v)
+{
+    explicit_binding(legacy, name, v);
+}
+
+void GfxShader::explicitBinding (const std::string &name, const Vector2 &v)
+{
+    explicit_binding(legacy, name, v);
+}
+
+void GfxShader::explicitBinding (const std::string &name, const Vector3 &v)
+{
+    explicit_binding(legacy, name, v);
+}
+
+void GfxShader::explicitBinding (const std::string &name, const Vector4 &v)
+{
+    explicit_binding(legacy, name, v);
+}
+
+
+void GfxShader::reset (const GfxShaderParamMap &p,
+                       const std::string &src_vertex,
+                       const std::string &src_dangs,
+                       const std::string &src_additional)
+{
+    params = p;
+    srcVertex = src_vertex;
+    srcDangs = src_dangs;
+    srcAdditional = src_additional;
+
+    // Destroy all currently built shaders
+    for (const auto &pair : cachedShaders) {
+        const NativePair &np = pair.second;
+        Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.vp->getName());
+        Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.fp->getName());
+    }
+    cachedShaders.clear();
+
+    // all mats must reset now
+}
+
+
+void GfxShader::validate (void)
+{
+    legacy.fp->load();
+    legacy.vp->load();
+
+    if (!legacy.vp->isLoaded())
+        EXCEPT << "Program not loaded: \"" << legacy.vp->getName() << "\"" << ENDL;
+
+    if (!legacy.fp->isLoaded())
+        EXCEPT << "Program not loaded: \"" << legacy.fp->getName() << "\"" << ENDL;
+
+    Ogre::GpuProgram *vp_bd = legacy.vp->_getBindingDelegate();
+    Ogre::GpuProgram *fp_bd = legacy.fp->_getBindingDelegate();
+
+    if (vp_bd == nullptr)
+        EXCEPT << "Program cannot be bound: \"" << legacy.vp->getName() << "\"";
+
+    if (fp_bd == nullptr)
+        EXCEPT << "Program cannot be bound: \"" << legacy.fp->getName() << "\"";
+
+    if (backend == GFX_GSL_BACKEND_GLSL) {
+
+        auto *vp_low = dynamic_cast<Ogre::GLSL::GLSLGpuProgram*>(vp_bd);
+        auto *fp_low = dynamic_cast<Ogre::GLSL::GLSLGpuProgram*>(fp_bd);
+        
+        if (vp_low != nullptr && fp_low != nullptr) {
+            // Force the actual compilation of it...
+            Ogre::GLSL::GLSLLinkProgramManager::getSingleton().setActiveVertexShader(vp_low);
+            Ogre::GLSL::GLSLLinkProgramManager::getSingleton().setActiveFragmentShader(fp_low);
+            Ogre::GLSL::GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
+        }
+
+    }
+}
+
+NativePair GfxShader::getNativePair (Purpose purpose,
+                                                const GfxMaterialTextureMap &textures)
+{
+    std::set<std::string> r;
+    for (const auto &pair : textures)
+        r.insert(pair.first);
+    return getNativePair(purpose, r);
+}
+
+NativePair GfxShader::getNativePair (Purpose purpose,
+                                                const std::set<std::string> &textures)
 {
     // Need to choose / maybe compile a shader for this combination of textures and bindings.
     Split split;
     split.purpose = purpose;
-    for (const auto &pair : textures)
-        split.boundTextures.insert(pair.first);
+    split.boundTextures = textures;
     auto it = cachedShaders.find(split);
-    NativePair np;
+
 
     if (it == cachedShaders.end()) {
         // Need to build it.
         Ogre::HighLevelGpuProgramPtr vp;
         Ogre::HighLevelGpuProgramPtr fp;
 
-        std::string name = fresh_name();
+        CVERB << "Compiling: " << name << " with " << textures.size() << std::endl;
+
+        std::string oname = fresh_name();
         if (backend == GFX_GSL_BACKEND_CG) {
             vp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
-                name+"_v", RESGRP, "cg", Ogre::GPT_VERTEX_PROGRAM);
+                oname+"_v", RESGRP, "cg", Ogre::GPT_VERTEX_PROGRAM);
             fp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
-                name+"_f", RESGRP, "cg", Ogre::GPT_FRAGMENT_PROGRAM);
+                oname+"_f", RESGRP, "cg", Ogre::GPT_FRAGMENT_PROGRAM);
             Ogre::StringVector vp_profs, fp_profs;
             if (gfx_d3d9()) {
                 vp_profs.push_back("vs_3_0");
@@ -184,36 +256,49 @@ void GfxShader::bindShader (Purpose purpose,
             tmp_fp->setCompileArguments("-I. -O3");
         } else {
             vp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
-                name+"_v", RESGRP, "glsl", Ogre::GPT_VERTEX_PROGRAM);
+                oname+"_v", RESGRP, "glsl", Ogre::GPT_VERTEX_PROGRAM);
             fp = Ogre::HighLevelGpuProgramManager::getSingleton().createProgram(
-                name+"_f", RESGRP, "glsl", Ogre::GPT_FRAGMENT_PROGRAM);
+                oname+"_f", RESGRP, "glsl", Ogre::GPT_FRAGMENT_PROGRAM);
+        }
+
+        // Would probably be quicker if gsl compiler took set of textures and the
+        // GfxShaderParams map instead of GfxGslParams.
+        GfxGslUnboundTextures ubt;
+        GfxGslParams gsl_params;
+        for (const auto &u : params) {
+            // We only need the types to compile it.
+            gsl_params[u.first] = u.second.t;
+            // Find undefined textures, substitute values
+            if (gfx_gasoline_param_is_texture(u.second.t)) {
+                if (split.boundTextures.find(u.first) == split.boundTextures.end()) {
+                    Vector4 val = u.second.getVector4();
+                    ubt[u.first] = GfxGslColour(val.x, val.y, val.z, val.w);
+                }
+            }
         }
 
         GfxGasolineResult output;
-        switch (purpose) {
-            case REGULAR: EXCEPTEX << "Internal error." << ENDL;
-            case HUD:
-            case SKY: {
-                // Would probably be quicker if gsl compiler took set of textures and the
-                // GfxShaderParams map instead of GfxGslParams.
-                GfxGslUnboundTextures ubt;
-                GfxGslParams gsl_params;
-                for (const auto &u : params) {
-                    // We only need the types to compile it.
-                    gsl_params[u.first] = u.second.t;
-                    // Find undefined textures, substitute values
-                    if (gfx_gasoline_param_is_texture(u.second.t)) {
-                        if (textures.find(u.first) == textures.end()) {
-                            Vector4 val = u.second.getVector4();
-                            ubt[u.first] = GfxGslColour(val.x, val.y, val.z, val.w);
-                        }
-                    }
-                }
-
-                output = gfx_gasoline_compile_colour(backend, srcVertex, srcAdditional,
-                                                     gsl_params, ubt);
-            } break;
-            case FIRST_PERSON: EXCEPTEX << "Internal error." << ENDL;
+        try {
+            switch (purpose) {
+                case REGULAR: EXCEPTEX << "Internal error." << ENDL;
+                case HUD:
+                output = gfx_gasoline_compile_hud(backend, srcVertex, srcAdditional,
+                                                  gsl_params, ubt);
+                break;
+                case SKY:
+                output = gfx_gasoline_compile_sky(backend, srcVertex, srcAdditional,
+                                                  gsl_params, ubt);
+                break;
+                case FIRST_PERSON:
+                output = gfx_gasoline_compile_first_person(backend, srcVertex, srcDangs,
+                                                           srcAdditional, gsl_params, ubt);
+                break;
+                case WIRE_FRAME:
+                output = gfx_gasoline_compile_wire_frame(backend, srcVertex, gsl_params);
+                break;
+            }
+        } catch (const Exception &e) {
+            EXCEPT << name << ": " << e.msg << ENDL;
         }
         vp->setSource(output.vertexShader);
         fp->setSource(output.fragmentShader);
@@ -225,7 +310,7 @@ void GfxShader::bindShader (Purpose purpose,
         APP_ASSERT(vp->_getBindingDelegate() != nullptr);
         APP_ASSERT(fp->_getBindingDelegate() != nullptr);
 
-        if (!gfx_d3d9()) {
+        if (backend == GFX_GSL_BACKEND_GLSL) {
 
             auto *vp_low = dynamic_cast<Ogre::GLSL::GLSLGpuProgram*>(vp_bd);
             auto *fp_low = dynamic_cast<Ogre::GLSL::GLSLGpuProgram*>(fp_bd);
@@ -237,21 +322,31 @@ void GfxShader::bindShader (Purpose purpose,
                 Ogre::GLSL::GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
             }
         }
-        np = {vp, fp};
+        NativePair np = {vp, fp};
         cachedShaders[split] = np;
+
+        return np;
         
     } else {
 
-        np = it->second;
+        return it->second;
 
     }
-    
+}
+
+void GfxShader::bindShader (Purpose purpose,
+                            const GfxShaderGlobals &globs,
+                            const Ogre::Matrix4 &world,
+                            const GfxMaterialTextureMap &textures,
+                            const GfxShaderBindings &bindings)
+{
+    auto np = getNativePair(purpose, textures);
 
     // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
     ogre_rs->bindGpuProgram(np.vp->_getBindingDelegate());
     ogre_rs->bindGpuProgram(np.fp->_getBindingDelegate());
 
-    int counter = 0;
+    int counter = NUM_GLOBAL_TEXTURES;
     for (auto pair : params) {
         const std::string &name = pair.first;
         const auto &param = pair.second;
@@ -292,11 +387,14 @@ void GfxShader::bindShader (Purpose purpose,
                 case GFX_GSL_FLOAT_TEXTURE4: {
                     EXCEPTEX << "Not yet implemented." << ENDL;
                 } break;
+                case GFX_GSL_FLOAT_TEXTURE_CUBE: {
+                    EXCEPTEX << "Not yet implemented." << ENDL;
+                } break;
 
                 default: EXCEPTEX << "Internal error." << ENDL;
             }
-            if (!gfx_d3d9()) {
-                explicitBinding(np, "mat_" + name, counter);
+            if (backend == GFX_GSL_BACKEND_GLSL) {
+                explicit_binding(np, "mat_" + name, counter);
             }
             counter++;
 
@@ -315,23 +413,23 @@ void GfxShader::bindShader (Purpose purpose,
             const auto &v = *vptr;
             switch (v.t) {
                 case GFX_GSL_FLOAT1:
-                explicitBinding(np, "mat_" + name, v.fs[0]);
+                explicit_binding(np, "mat_" + name, v.fs[0]);
                 break;
 
                 case GFX_GSL_FLOAT2:
-                explicitBinding(np, "mat_" + name, Vector2(v.fs[0], v.fs[1]));
+                explicit_binding(np, "mat_" + name, Vector2(v.fs[0], v.fs[1]));
                 break;
 
                 case GFX_GSL_FLOAT3:
-                explicitBinding(np, "mat_" + name, Vector3(v.fs[0], v.fs[1], v.fs[2]));
+                explicit_binding(np, "mat_" + name, Vector3(v.fs[0], v.fs[1], v.fs[2]));
                 break;
 
                 case GFX_GSL_FLOAT4:
-                explicitBinding(np, "mat_" + name, Vector4(v.fs[0], v.fs[1], v.fs[2], v.fs[3]));
+                explicit_binding(np, "mat_" + name, Vector4(v.fs[0], v.fs[1], v.fs[2], v.fs[3]));
                 break;
 
                 case GFX_GSL_INT1:
-                explicitBinding(np, "mat_" + name, v.is[0]);
+                explicit_binding(np, "mat_" + name, v.is[0]);
                 break;
 
                 case GFX_GSL_INT2:
@@ -372,32 +470,34 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p,
                           1.0f/p.viewport_dim.x, 1.0f/p.viewport_dim.y);
     float render_target_flipping_factor = p.render_target_flipping ? -1.0f : 1.0f;
 
-    hack_set_constant(np, "global_world", world);
-    hack_set_constant(np, "global_view", p.view);
-    hack_set_constant(np, "global_proj", p.proj);
-    hack_set_constant(np, "global_worldView", world_view);
-    hack_set_constant(np, "global_viewProj", view_proj);
-    hack_set_constant(np, "global_worldViewProj", world_view_proj);
-    hack_set_constant(np, "global_viewportSize", viewport_size);
+    hack_set_constant(np, "global_cameraPos", p.cam_pos);
     hack_set_constant(np, "global_fovY", gfx_option(GFX_FOV));
+    hack_set_constant(np, "global_proj", p.proj);
     hack_set_constant(np, "global_time", anim_time); // FIXME:
+    hack_set_constant(np, "global_viewportSize", viewport_size);
+    hack_set_constant(np, "global_viewProj", view_proj);
+    hack_set_constant(np, "global_view", p.view);
+    hack_set_constant(np, "global_worldViewProj", world_view_proj);
+    hack_set_constant(np, "global_worldView", world_view);
+    hack_set_constant(np, "global_world", world);
 
     hack_set_constant(np, "global_particleAmbient", particle_ambient);
     hack_set_constant(np, "global_sunlightDiffuse", sunlight_diffuse);
-    hack_set_constant(np, "global_sunlightSpecular", sunlight_specular);
     hack_set_constant(np, "global_sunlightDirection", sunlight_direction);
+    hack_set_constant(np, "global_sunlightSpecular", sunlight_specular);
+
     hack_set_constant(np, "global_fogColour", fog_colour);
     hack_set_constant(np, "global_fogDensity", fog_density);
-    hack_set_constant(np, "global_sunDirection", sun_direction);
-    hack_set_constant(np, "global_sunColour", sun_colour);
-    hack_set_constant(np, "global_sunAlpha", sun_alpha);
-    hack_set_constant(np, "global_sunSize", sun_size);
-    hack_set_constant(np, "global_sunFalloffDistance", sun_falloff_distance);
-    hack_set_constant(np, "global_skyGlareSunDistance", sky_glare_sun_distance);
-    hack_set_constant(np, "global_skyGlareHorizonElevation", sky_glare_horizon_elevation);
+    hack_set_constant(np, "global_hellColour", hell_colour);
     hack_set_constant(np, "global_skyCloudColour", sky_cloud_colour);
     hack_set_constant(np, "global_skyCloudCoverage", sky_cloud_coverage);
-    hack_set_constant(np, "global_hellColour", hell_colour);
+    hack_set_constant(np, "global_skyGlareHorizonElevation", sky_glare_horizon_elevation);
+    hack_set_constant(np, "global_skyGlareSunDistance", sky_glare_sun_distance);
+    hack_set_constant(np, "global_sunAlpha", sun_alpha);
+    hack_set_constant(np, "global_sunColour", sun_colour);
+    hack_set_constant(np, "global_sunDirection", sun_direction);
+    hack_set_constant(np, "global_sunFalloffDistance", sun_falloff_distance);
+    hack_set_constant(np, "global_sunSize", sun_size);
 
     hack_set_constant(np, "global_skyDivider1", sky_divider[0]);
     hack_set_constant(np, "global_skyDivider2", sky_divider[1]);
@@ -417,68 +517,97 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p,
     hack_set_constant(np, "global_skySunColour3", sky_sun_colour[3]);
     hack_set_constant(np, "global_skySunColour4", sky_sun_colour[4]);
 
+    hack_set_constant(np, "global_envCubeCrossFade", global_env_cube_cross_fade);
+    hack_set_constant(np, "global_envCubeMipmaps0", 9.0f);
+    hack_set_constant(np, "global_envCubeMipmaps1", 9.0f);
+
     hack_set_constant(np, "internal_rt_flip", render_target_flipping_factor);
+
+    gfx_shader_bind_global_textures(np);
 }
 
-void GfxShader::explicitBinding (const NativePair &np, const std::string &name, const Ogre::Matrix4 &v)
+void gfx_shader_bind_global_textures (const NativePair &np)
 {
-    hack_set_constant(np, name, v);
-}
+    int counter = 0;
+    const auto clamp = Ogre::TextureUnitState::TAM_CLAMP;
+    const auto wrap = Ogre::TextureUnitState::TAM_WRAP;
 
-void GfxShader::explicitBinding (const NativePair &np, const std::string &name, int v)
-{
-    hack_set_constant(np, name, v);
-}
+    ogre_rs->_setTexture(counter, true, colour_grade_lut->getOgreTexturePtr());
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_POINT);
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_LINEAR);
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
+    ogre_rs->_setTextureAddressingMode(
+        counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
+    if (backend == GFX_GSL_BACKEND_GLSL)
+        explicit_binding(np, "global_colourGradeLut", counter);
+    counter++;
 
-void GfxShader::explicitBinding (const NativePair &np, const std::string &name, float v)
-{
-    hack_set_constant(np, name, v);
-}
+    ogre_rs->_setTexture(counter, true, global_env_cube0->getOgreTexturePtr());
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_LINEAR);
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_LINEAR);
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
+    ogre_rs->_setTextureAddressingMode(
+        counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
+    if (backend == GFX_GSL_BACKEND_GLSL)
+        explicit_binding(np, "global_envCube0", counter);
+    counter++;
 
-void GfxShader::explicitBinding (const NativePair &np, const std::string &name, const Vector2 &v)
-{
-    hack_set_constant(np, name, v);
-}
+    ogre_rs->_setTexture(counter, false, "");
+/*
+    ogre_rs->_setTexture(counter, true, global_env_cube1->getOgreTexturePtr());
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_LINEAR);
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_LINEAR);
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
+    ogre_rs->_setTextureAddressingMode(
+        counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
+*/
+    if (backend == GFX_GSL_BACKEND_GLSL)
+        explicit_binding(np, "global_envCube1", counter);
+    counter++;
 
-void GfxShader::explicitBinding (const NativePair &np, const std::string &name, const Vector3 &v)
-{
-    hack_set_constant(np, name, v);
-}
+    ogre_rs->_setTexture(counter, false, "");
+/*
+    ogre_rs->_setTexture(counter, true, fade_dither_map->getOgreTexturePtr());
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_POINT);
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_POINT);
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
+    ogre_rs->_setTextureAddressingMode(
+        counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
+*/
+    if (backend == GFX_GSL_BACKEND_GLSL)
+        explicit_binding(np, "global_fadeDitherMap", counter);
+    counter++;
 
-void GfxShader::explicitBinding (const NativePair &np, const std::string &name, const Vector4 &v)
-{
-    hack_set_constant(np, name, v);
-}
+    const static char *name[] = { "global_shadowMap0", "global_shadowMap1", "global_shadowMap2" };
+    for (unsigned i=0 ; i<3 ; ++i) {
+        ogre_rs->_setTexture(counter, false, "");
+/*
+        ogre_rs->_setTexture(counter, true, ogre_sm->getShadowTexture(i));
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_POINT);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_POINT);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
+        ogre_rs->_setTextureAddressingMode(
+            counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
+*/
+        if (backend == GFX_GSL_BACKEND_GLSL)
+            explicit_binding(np, name[i] , counter);
+        counter++;
+    }
 
+    ogre_rs->_setTexture(counter, false, "");
+/*
+    ogre_rs->_setTexture(counter, true, shadow_pcf_noise_map->getOgreTexturePtr());
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_POINT);
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_POINT);
+    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
+    ogre_rs->_setTextureAddressingMode(
+        counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
+*/
+    if (backend == GFX_GSL_BACKEND_GLSL)
+        explicit_binding(np, "global_shadowPcfNoiseMap", counter);
+    counter++;
 
-void GfxShader::explicitBinding (const std::string &name, const Ogre::Matrix4 &v)
-{
-    explicitBinding(legacy, name, v);
-}
-
-void GfxShader::explicitBinding (const std::string &name, int v)
-{
-    explicitBinding(legacy, name, v);
-}
-
-void GfxShader::explicitBinding (const std::string &name, float v)
-{
-    explicitBinding(legacy, name, v);
-}
-
-void GfxShader::explicitBinding (const std::string &name, const Vector2 &v)
-{
-    explicitBinding(legacy, name, v);
-}
-
-void GfxShader::explicitBinding (const std::string &name, const Vector3 &v)
-{
-    explicitBinding(legacy, name, v);
-}
-
-void GfxShader::explicitBinding (const std::string &name, const Vector4 &v)
-{
-    explicitBinding(legacy, name, v);
+    APP_ASSERT(counter == NUM_GLOBAL_TEXTURES);
 }
 
 GfxShader *gfx_shader_make_from_existing (const std::string &name,
@@ -525,26 +654,42 @@ bool gfx_shader_has (const std::string &name)
     return true;
 }
 
-void gfx_shader_check (GfxShader::Purpose purpose,
+void gfx_shader_check (const std::string &name,
+                       GfxShader::Purpose purpose,
                        const std::string &src_vertex,
                        const std::string &src_dangs,
                        const std::string &src_additional,
                        const GfxShaderParamMap &params)
 {
-    (void) src_dangs;
-    switch (purpose) {
-        case GfxShader::REGULAR: EXCEPTEX << "Internal error." << ENDL;
-        case GfxShader::HUD:
-        case GfxShader::SKY: {
-            GfxGslUnboundTextures ubt;
-            GfxGslParams gsl_params;
-            for (const auto &u : params) {
-                // We only need the types to compile it.
-                gsl_params[u.first] = u.second.t;
-            }
-            gfx_gasoline_compile_colour(backend, src_vertex, src_additional, gsl_params, ubt);
-        } break;
-        case GfxShader::FIRST_PERSON: EXCEPTEX << "Internal error." << ENDL;
+    GfxGslUnboundTextures ubt;
+    GfxGslParams gsl_params;
+    for (const auto &u : params) {
+        // We only need the types to compile it.
+        gsl_params[u.first] = u.second.t;
+    }
+
+    try {
+        switch (purpose) {
+            case GfxShader::REGULAR: EXCEPTEX << "Internal error." << ENDL;
+
+            case GfxShader::HUD:
+            gfx_gasoline_compile_hud(backend, src_vertex, src_additional, gsl_params, ubt);
+            break;
+
+            case GfxShader::SKY:
+            gfx_gasoline_compile_sky(backend, src_vertex, src_additional, gsl_params, ubt);
+            break;
+
+            case GfxShader::FIRST_PERSON:
+            gfx_gasoline_compile_first_person(backend, src_vertex, src_dangs, src_additional,
+                                              gsl_params, ubt);
+
+            case GfxShader::WIRE_FRAME:
+            gfx_gasoline_compile_wire_frame(backend, src_vertex, gsl_params);
+            break;
+        }
+    } catch (const Exception &e) {
+        EXCEPT << name << ": " << e.msg << ENDL;
     }
 }
 

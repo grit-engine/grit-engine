@@ -141,7 +141,8 @@ class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
     public:
     void reinitialise (void);
 
-    void renderFirstPerson (GfxPipeline *p, bool alpha_blend);
+    void renderFirstPerson (const GfxShaderGlobals &p, const Ogre::Matrix4 &inv_mat,
+                            bool alpha_blend);
 
     unsigned getBatches (void) const;
     unsigned getBatchesWithChildren (void) const;

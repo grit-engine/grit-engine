@@ -1,0 +1,21 @@
+var PI = 3.1415926535897932385;
+
+var aspect = global.viewportSize.x / global.viewportSize.y;
+var fov_x = aspect * global.fovY;
+
+// The world matrix encodes only sky orientation data (i.e. due to the rotation
+// of the earth).
+out.position = mul(global.world, Float4(vert.position.xyz, 1)).xyz;
+
+
+var sunlight_dir_ss_ = mul(global.viewProj, Float4(-global.sunDirection,1));
+
+// for interpolators
+var uv = vert.coord0.xy;
+var pos_ws = mul(global.world, Float4(vert.position.xyz,0)).xyz;
+var sunlight_dir_ss = sunlight_dir_ss_.xyz/sunlight_dir_ss_.w;
+var fov = Float2(fov_x, global.fovY);
+var sun_pos_ss_polar = Float2(
+    mod(atan2(-global.sunDirection.x, -global.sunDirection.y)/PI/2 + 1, 1.0) * 360,
+    tan(-global.sunDirection.z / length(global.sunDirection.xy)) / PI * 180
+);

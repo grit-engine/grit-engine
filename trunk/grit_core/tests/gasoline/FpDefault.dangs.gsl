@@ -1,0 +1,11 @@
+var diff_texel = sample(mat.diffuseMap, vert.coord0.xy);
+// if (mat.premultipliedAlpha) diff_texel = pma_decode(diff_texel);
+out.diffuse = gamma_decode(diff_texel.rgb) * mat.diffuseMask;
+out.alpha = diff_texel.a * mat.alphaMask;
+if (out.alpha < mat.alphaRejectThreshold) discard;
+var norm_texel = sample(mat.normalMap, vert.coord0.xy);
+out.normal = vert.normal;
+var gloss_texel = sample(mat.glossMap, vert.coord0.xy);
+out.gloss = gloss_texel.r * mat.gloss;
+out.specular = gloss_texel.b * mat.specular;
+

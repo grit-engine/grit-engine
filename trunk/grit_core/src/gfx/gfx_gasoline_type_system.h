@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+#include "gfx_gasoline.h"
 #include "gfx_gasoline_parser.h"
 
 #ifndef GFX_GASOLINE_TYPE_SYSTEM
@@ -33,7 +34,8 @@
 enum GfxGslKind {
     GFX_GSL_VERTEX,
     GFX_GSL_DANGS,
-    GFX_GSL_COLOUR
+    GFX_GSL_COLOUR,
+    GFX_GSL_COLOUR_ALPHA
 };
 
 typedef std::vector<GfxGslType*> GfxGslTypes;
@@ -58,9 +60,15 @@ struct GfxGslFloatMatrixType : public GfxGslType {
     GfxGslFloatMatrixType (unsigned w, unsigned h) : w(w), h(h) { }
 };
 
-struct GfxGslFloatTextureType : public GfxGslType {
+struct GfxGslTextureType : public GfxGslType { };
+
+struct GfxGslFloatTextureType : public GfxGslTextureType {
     unsigned dim;
     GfxGslFloatTextureType (unsigned dim) : dim(dim) { }
+};
+
+struct GfxGslFloatTextureCubeType : public GfxGslTextureType {
+    GfxGslFloatTextureCubeType (void) { }
 };
 
 struct GfxGslIntType : public GfxGslCoordType {
@@ -86,6 +94,10 @@ struct GfxGslMatType : public GfxGslType {
     GfxGslMatType (void) { }
 };
 
+struct GfxGslOutType : public GfxGslType {
+    GfxGslOutType (void) { }
+};
+
 struct GfxGslVertType : public GfxGslType {
     GfxGslVertType (void) { }
 };
@@ -102,24 +114,53 @@ struct GfxGslFunctionType : public GfxGslType {
 };
 
 
-class GfxGslTypeSystem {
+struct GfxGslContext {
     GfxGslAllocator &alloc;
-
     std::map<std::string, std::vector<GfxGslFunctionType*>> funcTypes;
-    struct FieldType {
-        GfxGslType *t;
-        bool writeable;
-        bool mustWrite;
-        FieldType (GfxGslType *t, bool writeable = false, bool must_write = false)
-          : t(t), writeable(writeable), mustWrite(must_write)
-        { }
-        FieldType (void)
-        { }
-    };
-    std::map<std::string, FieldType> fragFields;
-    GfxGslTypeMap vertFields;
     GfxGslTypeMap globalFields;
     GfxGslTypeMap matFields;
+    GfxGslUnboundTextures ubt;
+
+    const GfxGslType *getMatType (const std::string &f) const
+    {
+        auto it = matFields.find(f);
+        if (it == matFields.end()) return nullptr;
+        return it->second;
+    }
+
+    const GfxGslType *getGlobalType (const std::string &f) const
+    {
+        auto it = globalFields.find(f);
+        if (it == globalFields.end()) return nullptr;
+        return it->second;
+    }
+
+};
+
+struct GfxGslTrans {
+    enum Kind { USER, VERT, INTERNAL };
+    Kind kind;
+    std::vector<std::string> path;
+    bool operator== (const GfxGslTrans &other) const
+    {
+        if (kind != other.kind) return false;
+        if (path != other.path) return false;
+        return true;
+    }
+    bool operator< (const GfxGslTrans &other) const
+    {
+        if (kind < other.kind) return true;
+        if (kind > other.kind) return false;
+        return path < other.path;
+    }
+};
+
+class GfxGslTypeSystem {
+    GfxGslContext &ctx;
+
+    GfxGslTypeMap outFields;
+    GfxGslTypeMap fragFields;
+    GfxGslTypeMap vertFields;
     GfxGslTypeMap vars;
     const GfxGslTypeMap outerVars;
 
@@ -127,32 +168,13 @@ class GfxGslTypeSystem {
     std::set<std::string> vertFieldsRead;
     std::set<std::string> globalFieldsRead;
     std::set<std::string> matFieldsRead;
+    std::set<std::string> outFieldsWritten;
 
-
-    public:
-    struct Trans {
-        bool isVert;
-        std::vector<std::string> path;
-        bool operator== (const Trans &other) const
-        {
-            if (isVert != other.isVert) return false;
-            if (path != other.path) return false;
-            return true;
-        }
-    };
-
-    private:
-    std::vector<Trans> trans;
-
-    std::set<std::string> fragFieldsWritten;
-
-    GfxGslKind kind;
+    std::set<GfxGslTrans> trans;
 
     GfxGslType *cloneType (const GfxGslType *t_);
 
     void initObjectTypes (GfxGslKind k);
-
-    void initFuncTypes (void);
 
     GfxGslFunctionType *lookupFunction(const GfxGslLocation &loc, const std::string &name,
                                        GfxGslAsts &asts);
@@ -211,28 +233,40 @@ class GfxGslTypeSystem {
 
     public:
 
-    GfxGslTypeSystem (GfxGslAllocator &alloc, GfxGslKind kind, const GfxGslTypeMap &matFields,
+    const GfxGslKind kind;
+
+    GfxGslTypeSystem (GfxGslContext &ctx, GfxGslKind kind,
                       const GfxGslTypeMap &vars)
-      : alloc(alloc), matFields(matFields), vars(vars), outerVars(vars), kind(kind)
+      : ctx(ctx), vars(vars), outerVars(vars), kind(kind)
     {
-        initFuncTypes();
         initObjectTypes(kind);
     }
 
-
-    void inferAndSet (GfxGslAst *ast_)
+    /** Infer type of ast and set that type within the ast node. */
+    void inferAndSet (GfxGslAst *ast)
     {
-        inferAndSet(ast_, Ctx());
+        inferAndSet(ast, Ctx());
     }
 
+    /** Get the variables declared by this shader. */
     const GfxGslTypeMap &getVars (void) const { return vars; }
 
+    /** Get the vertex fields read by this shader (applies to all shaders). */
     const std::set<std::string> &getVertFieldsRead (void) const { return vertFieldsRead; }
-    const std::set<std::string> &getFragFieldsRead (void) const { return fragFieldsRead; }
-    const std::set<std::string> &getMatFieldsRead (void) const { return matFieldsRead; }
-    const std::set<std::string> &getGlobalFieldsRead (void) const { return globalFieldsRead; }
-    const std::set<std::string> &getFragFieldsWritten (void) const { return fragFieldsWritten; }
 
+    /** Get the fragment fields read by this shader (fragment shader only). */
+    const std::set<std::string> &getFragFieldsRead (void) const { return fragFieldsRead; }
+
+    /** Get the material fields read by this shader. */
+    const std::set<std::string> &getMatFieldsRead (void) const { return matFieldsRead; }
+
+    /** Get the global fields read by this shader. */
+    const std::set<std::string> &getGlobalFieldsRead (void) const { return globalFieldsRead; }
+
+    /** Get the out fields written by this shader. */
+    const std::set<std::string> &getOutFieldsWritten (void) const { return outFieldsWritten; }
+
+    /** Get type of a vertex attribute (only ones available to this shader). */
     const GfxGslType *getVertType (const std::string &f) const
     {
         auto it = vertFields.find(f);
@@ -240,27 +274,15 @@ class GfxGslTypeSystem {
         return it->second;
     }
 
+    /** Get type of a fragment attribute (only ones available to this shader). */
     const GfxGslType *getFragType (const std::string &f) const
     {
         auto it = fragFields.find(f);
         if (it == fragFields.end()) return nullptr;
-        return it->second.t;
-    }
-
-    const GfxGslType *getMatType (const std::string &f) const
-    {
-        auto it = matFields.find(f);
-        if (it == matFields.end()) return nullptr;
         return it->second;
     }
 
-    const GfxGslType *getGlobalType (const std::string &f) const
-    {
-        auto it = globalFields.find(f);
-        if (it == globalFields.end()) return nullptr;
-        return it->second;
-    }
-
+    /** Type of a variable declared in this shader. */
     const GfxGslType *getVarType (const std::string &v) const
     {
         auto it = vars.find(v);
@@ -268,13 +290,20 @@ class GfxGslTypeSystem {
         return it->second;
     }
 
-    const std::vector<Trans> &getTrans (void) const { return trans; }
+    /** The values (v.xy paths) that were used in this shader. */
+    const std::set<GfxGslTrans> &getTrans (void) const { return trans; }
+
+    /** Same as getTrans() but return a vector instead of a set. */
+    std::vector<GfxGslTrans> getTransVector (void) const
+    {
+        return std::vector<GfxGslTrans>(trans.begin(), trans.end());
+    }
 };
 
-static inline std::ostream &operator<< (std::ostream &o, const GfxGslTypeSystem::Trans &t)
+static inline std::ostream &operator<< (std::ostream &o, const GfxGslTrans &t)
 {
     const char *prefix = "";
-    if (t.isVert)
+    if (t.kind == GfxGslTrans::VERT)
         o << "vert.";
     for (unsigned i=0 ; i<t.path.size() ; ++i) {  
         o << prefix << t.path[i];

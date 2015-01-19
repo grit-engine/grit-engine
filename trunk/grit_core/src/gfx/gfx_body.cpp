@@ -742,12 +742,93 @@ const std::string &GfxBody::getMeshName (void)
 }
 
 
-void GfxBody::renderFirstPerson (GfxPipeline *p, bool alpha_blend)
+void GfxBody::renderFirstPerson (const GfxShaderGlobals &g, const Ogre::Matrix4 &inv_mat,
+                                 bool alpha_blend)
 {
-    (void) p;
-    (void) alpha_blend;
-    // We are inside the update() call of a particular viewport.  The camera bound to this viewport
-    // has particular front / back clip distances.  We want to use different ones.
+    if (!enabled || fade < 0.000001) return;
+
+    bool do_wireframe = (wireframe || gfx_option(GFX_WIREFRAME));
+    bool do_regular = !(do_wireframe && gfx_option(GFX_WIREFRAME_SOLID));
+
+    const Ogre::Matrix4 &world = inv_mat * _getParentNodeFullTransform();
+
+    // TODO(dcunnin): fade
+    // need a special shader for fade, depending on alpha or not
+    // need a special parameter for it
+
+    // TODO(dcunnin): object parameters
+
+    // this is to protect the material to texture mappings which might be
+    // concurrently read by the background loading thread
+    // TODO: use a RW lock to avoid stalls
+    GFX_MAT_SYNC;
+
+    for (unsigned i=0 ; i<subList.size() ; ++i) {
+
+        Sub *sub = subList[i];
+
+        GfxMaterial *mat = sub->material;
+
+        // Skip if wrong kind of material for this set of passes
+        bool mat_alpha = mat->getSceneBlend() != GFX_MATERIAL_OPAQUE;
+        if (alpha_blend != mat_alpha) continue;
+
+        Ogre::SubMesh *sm = mesh->getSubMesh(i);
+
+        if (do_regular) {
+ 
+            // render sm using mat
+            const GfxMaterialTextureMap &mat_texs = mat->getTextures();
+            mat->getShader()->bindShader(GfxShader::FIRST_PERSON,
+                                         g, world, mat_texs, mat->getBindings());
+
+            switch (mat->getSceneBlend()) {
+                case GFX_MATERIAL_OPAQUE:
+                ogre_rs->_setDepthBufferParams(true, true, Ogre::CMPF_LESS_EQUAL);
+                ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
+                break;
+                case GFX_MATERIAL_ALPHA:
+                ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
+                ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+                break;
+                case GFX_MATERIAL_ALPHA_DEPTH:
+                ogre_rs->_setDepthBufferParams(true, true, Ogre::CMPF_LESS_EQUAL);
+                ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+                break;
+            }
+
+            ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+            ogre_rs->setStencilCheckEnabled(false);
+
+            Ogre::RenderOperation op;
+            sm->_getRenderOperation(op);
+            ogre_rs->_render(op);
+
+            for (unsigned i=0 ; i<mat_texs.size() ; ++i) {
+                ogre_rs->_disableTextureUnit(i);
+            }
+        }
+
+        if (do_wireframe) {
+
+            // TODO: need a special kind of shader for this, one that has the
+            // same vertex component but uses only white for colour
+
+            mat->getShader()->bindShader(GfxShader::WIRE_FRAME,
+                                         g, world, GfxMaterialTextureMap(), mat->getBindings());
+
+            ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
+            ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
+            ogre_rs->_setPolygonMode(Ogre::PM_WIREFRAME);
+            ogre_rs->setStencilCheckEnabled(false);
+
+            Ogre::RenderOperation op;
+            sm->_getRenderOperation(op);
+            ogre_rs->_render(op);
+        }
+        
+    }
+
 }
 
 
@@ -759,12 +840,41 @@ void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
     // sample shadow buffer at a point and intersect the camera with the point lights to determine
     // the ones that should be used to light us.
 
+    Ogre::Matrix4 view = p->getCamera()->getViewMatrix();
+    // Ogre cameras point towards Z whereas in Grit the convention is that
+    // 'unrotated' means pointing towards y (north)
+    Ogre::Matrix4 orientation(to_ogre(Quaternion(Degree(90), Vector3(1, 0, 0))));
+
+    Ogre::Matrix4 inv_mat = (orientation * view).inverseAffine();
+
+    Ogre::Frustum frustum;  // Used to calculate projection matrix.
+    frustum.setFOVy(Ogre::Degree(p->getCameraOpts().fovY));
+    // TODO(dcunnin): gfx_option for these
+    frustum.setNearClipDistance(0.01f);
+    frustum.setFarClipDistance(10.0f);
+
+    // No 3d effect on first person objects
+    frustum.setFrustumOffset(0);
+    frustum.setFocalLength(1);
+
+    Ogre::Viewport *viewport = p->getCamera()->getViewport();
+    bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
+    float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
+    Ogre::Matrix4 proj = frustum.getProjectionMatrixWithRSDepth();
+    // Invert transformed y if necessary
+    proj[1][0] *= render_target_flipping_factor;
+    proj[1][1] *= render_target_flipping_factor;
+    proj[1][2] *= render_target_flipping_factor;
+    proj[1][3] *= render_target_flipping_factor; 
+    Vector3 cam_pos = from_ogre(p->getCamera()->getPosition());
+    Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
+    GfxShaderGlobals g = { cam_pos, view, proj, viewport_dim, render_target_flipping };
+
     // Render, to HDR buffer
-    // if (camera is not in shadow) sky light
-    // env box (the one local to player)
-    // emissive
+    // TODO: receive shadow
+    // TODO: env box (the one local to player)
 
     for (const auto &body : first_person_bodies) {
-        body->renderFirstPerson(p, alpha_blend);
+        body->renderFirstPerson(g, inv_mat, alpha_blend);
     }
 }
