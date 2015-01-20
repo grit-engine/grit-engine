@@ -310,11 +310,14 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
     trans_set.insert(additional_ts->getTrans().begin(), additional_ts->getTrans().end());
 
     std::vector<GfxGslTrans> trans(trans_set.begin(), trans_set.end());
-    trans.emplace_back(GfxGslTrans{GfxGslTrans::INTERNAL, {"vertex_to_cam", "x"}});
-    trans.emplace_back(GfxGslTrans{GfxGslTrans::INTERNAL, {"vertex_to_cam", "y"}});
-    trans.emplace_back(GfxGslTrans{GfxGslTrans::INTERNAL, {"vertex_to_cam", "z"}});
+	std::vector<std::string> v2c_x = { "vertex_to_cam", "x" };
+	std::vector<std::string> v2c_y = { "vertex_to_cam", "y" };
+	std::vector<std::string> v2c_z = { "vertex_to_cam", "z" };
+	trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, v2c_x });
+	trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, v2c_y });
+	trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, v2c_z });
 
-    GfxGslTypeMap vert_vars, frag_vars;
+	GfxGslTypeMap vert_vars, frag_vars;
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
     vert_in.insert("position");
     GfxGslTypeMap trans_vert;

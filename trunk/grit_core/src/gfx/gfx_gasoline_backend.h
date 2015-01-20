@@ -53,7 +53,7 @@ class GfxGslBackendUnparser {
         std::stringstream ss2;
         ss2 << "void func_user_dangs (out Float3 out_diffuse, out Float out_alpha, out Float3 out_normal, out Float out_gloss, out Float out_specular)\n";
         ss2 << "{\n";
-        ss2 << "    out_diffuse = Float3(0.5, 0.0, 0.0);\n";
+        ss2 << "    out_diffuse = Float3(0.5, 0.25, 0.0);\n";
         ss2 << "    out_alpha = 1.0;\n";
         ss2 << "    out_normal = Float3(0.0, 0.0, 1.0);\n";
         ss2 << "    out_gloss = 1.0;\n";

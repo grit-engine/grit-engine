@@ -302,16 +302,16 @@ std::string gfx_gasoline_preamble_lighting (void)
     ss << "{\n";
     ss << "    Float3 reflect_ws = -reflect(surf_to_cam, sn);\n";
     // Use 20 as the max mipmap, as we will never see a texture 2^20 big.
-    ss << "    Float3 fresnel_light = 16 * gamma_decode(sampleLod(cube, reflect_ws, 20).rgb);\n";
-    ss << "    Float3 diff_light = 16 * gamma_decode(sampleLod(cube, sn, 20).rgb);\n";
+    ss << "    Float3 fresnel_light = gamma_decode(sampleLod(cube, reflect_ws, map_mipmaps - 1).rgb);\n";
+    ss << "    Float3 diff_light = gamma_decode(sampleLod(cube, sn, map_mipmaps - 1).rgb);\n";
     ss << "    Float spec_mm = (1 - sg) * map_mipmaps;\n";  // Spec mip map
-    ss << "    Float3 spec_light = 16 * gamma_decode(sampleLod(cube, reflect_ws, spec_mm).rgb);\n";
+    ss << "    Float3 spec_light = gamma_decode(sampleLod(cube, reflect_ws, spec_mm).rgb);\n";
     ss << "    Float3 diff_component = sd * diff_light;\n";
     ss << "    Float3 spec_component = ss * spec_light;\n";
     ss << "    Float fresnel_factor = strength(1.0 - dot(sn, surf_to_cam), 5);\n";
     ss << "    Float3 fresnel_component = sg * fresnel_factor * fresnel_light;\n";
-    ss << "    return diff_component + spec_component + fresnel_component;\n";
-    ss << "}\n";
+	ss << "    return 16 * (diff_component + spec_component + fresnel_component);\n";
+	ss << "}\n";
 
     ss << "\n";
 
