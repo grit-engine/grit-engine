@@ -294,13 +294,55 @@ static GfxGslTypeMap make_mat_fields (GfxGslAllocator &alloc, const GfxGslParams
     return r;
 }
 
+void gfx_gasoline_check (const std::string &vert_prog,
+                         const std::string &dangs_prog,
+                         const std::string &additional_prog,
+                         const GfxGslParams &params)
+{
+    GfxGslAllocator alloc;
+    GfxGslContext ctx = {
+        alloc, make_func_types(alloc), make_global_fields(alloc),
+        make_mat_fields(alloc, params), {}
+    };
+
+    GfxGslAst *vert_ast;
+    GfxGslTypeSystem vert_ts(ctx, GFX_GSL_VERTEX, GfxGslTypeMap());
+
+    try {
+        vert_ast = gfx_gasoline_parse(alloc, vert_prog);
+        vert_ts.inferAndSet(vert_ast);
+    } catch (const Exception &e) {
+        EXCEPT << "Vertex shader: " << e << ENDL;
+    }
+
+
+    GfxGslAst *dangs_ast;
+    GfxGslTypeSystem dangs_ts(ctx, GFX_GSL_DANGS, vert_ts.getVars());
+
+    try {
+        dangs_ast = gfx_gasoline_parse(alloc, dangs_prog);
+        dangs_ts.inferAndSet(dangs_ast);
+    } catch (const Exception &e) {
+        EXCEPT << "DANGS shader: " << e << ENDL;
+    }
+
+    GfxGslAst *additional_ast;
+    GfxGslTypeSystem additional_ts(ctx, GFX_GSL_COLOUR_ALPHA, vert_ts.getVars());
+
+    try {
+        additional_ast = gfx_gasoline_parse(alloc, additional_prog);
+        additional_ts.inferAndSet(additional_ast);
+    } catch (const Exception &e) {
+        EXCEPT << "Additional shader: " << e << ENDL;
+    }
+}
+
 static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
                                                       const std::string &vert_prog,
                                                       const std::string &colour_prog,
                                                       const GfxGslParams &params,
                                                       const GfxGslUnboundTextures &ubt,
-                                                      bool flat_z,
-                                                      bool alpha)
+                                                      bool flat_z)
 {
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
@@ -320,7 +362,7 @@ static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
 
 
     GfxGslAst *frag_ast;
-    GfxGslTypeSystem frag_ts(ctx, alpha ? GFX_GSL_COLOUR_ALPHA : GFX_GSL_COLOUR, vert_ts.getVars());
+    GfxGslTypeSystem frag_ts(ctx, GFX_GSL_COLOUR_ALPHA, vert_ts.getVars());
 
     try {
         frag_ast = gfx_gasoline_parse(alloc, colour_prog);
@@ -352,7 +394,7 @@ GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
                                                const GfxGslParams &params,
                                                const GfxGslUnboundTextures &ubt)
 {
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, ubt, false, true);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, ubt, false);
 }
 
 GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
@@ -360,7 +402,7 @@ GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
                                                const GfxGslParams &params)
 {
     std::string colour_prog = "out.colour = Float3(1, 1, 1);\n";
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, {}, false, false);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, {}, false);
 }
 
 GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
@@ -369,7 +411,7 @@ GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
                                                const GfxGslParams &params,
                                                const GfxGslUnboundTextures &ubt)
 {
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, ubt, true, true);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, ubt, true);
 }
 
 GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
@@ -407,7 +449,7 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
     }
 
     GfxGslAst *additional_ast;
-    GfxGslTypeSystem additional_ts(ctx, GFX_GSL_COLOUR, vert_ts.getVars());
+    GfxGslTypeSystem additional_ts(ctx, GFX_GSL_COLOUR_ALPHA, vert_ts.getVars());
 
     try {
         additional_ast = gfx_gasoline_parse(alloc, additional_prog);

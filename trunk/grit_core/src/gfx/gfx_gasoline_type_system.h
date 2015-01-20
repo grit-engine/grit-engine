@@ -34,7 +34,6 @@
 enum GfxGslKind {
     GFX_GSL_VERTEX,
     GFX_GSL_DANGS,
-    GFX_GSL_COLOUR,
     GFX_GSL_COLOUR_ALPHA
 };
 

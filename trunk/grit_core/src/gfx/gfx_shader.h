@@ -210,7 +210,6 @@ void gfx_shader_bind_global_textures (const GfxShader::NativePair &np);
 
 // Ensure the given source code works for the given purpose.
 void gfx_shader_check (const std::string &name,
-                       GfxShader::Purpose purpose,
                        const std::string &new_vertex_code,
                        const std::string &new_dangs_code,
                        const std::string &new_additional_code,

@@ -655,7 +655,6 @@ bool gfx_shader_has (const std::string &name)
 }
 
 void gfx_shader_check (const std::string &name,
-                       GfxShader::Purpose purpose,
                        const std::string &src_vertex,
                        const std::string &src_dangs,
                        const std::string &src_additional,
@@ -669,25 +668,7 @@ void gfx_shader_check (const std::string &name,
     }
 
     try {
-        switch (purpose) {
-            case GfxShader::REGULAR: EXCEPTEX << "Internal error." << ENDL;
-
-            case GfxShader::HUD:
-            gfx_gasoline_compile_hud(backend, src_vertex, src_additional, gsl_params, ubt);
-            break;
-
-            case GfxShader::SKY:
-            gfx_gasoline_compile_sky(backend, src_vertex, src_additional, gsl_params, ubt);
-            break;
-
-            case GfxShader::FIRST_PERSON:
-            gfx_gasoline_compile_first_person(backend, src_vertex, src_dangs, src_additional,
-                                              gsl_params, ubt);
-
-            case GfxShader::WIRE_FRAME:
-            gfx_gasoline_compile_wire_frame(backend, src_vertex, gsl_params);
-            break;
-        }
+        gfx_gasoline_check(src_vertex, src_dangs, src_additional, gsl_params);
     } catch (const Exception &e) {
         EXCEPT << name << ": " << e.msg << ENDL;
     }

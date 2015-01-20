@@ -905,8 +905,8 @@ void gfx_hud_init (void)
         "out.colour = texel.rgb * vert.coord1.rgb * mat.colour;\n"
         "out.alpha = texel.a * vert.coord1.a * mat.alpha;\n";
 
-    gfx_shader_check("/system/HudRect", GfxShader::HUD, vertex_code, "", colour_code1, shader_tex_params);
-    gfx_shader_check("/system/HudText", GfxShader::HUD, vertex_code, "", colour_code2, shader_text_params);
+    gfx_shader_check("/system/HudRect", vertex_code, "", colour_code1, shader_tex_params);
+    gfx_shader_check("/system/HudText", vertex_code, "", colour_code2, shader_text_params);
 
     shader_rect = gfx_shader_make_or_reset("/system/HudRect",
                                           vertex_code, "", colour_code1, shader_tex_params);

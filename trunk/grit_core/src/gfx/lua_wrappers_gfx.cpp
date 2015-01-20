@@ -4221,6 +4221,8 @@ TRY_START
         uniforms[key] = uniform;
     }
 
+    gfx_shader_check(name, vertex_code, dangs_code, colour_code, uniforms);
+
     gfx_shader_make_or_reset(name, vertex_code, dangs_code, colour_code, uniforms);
 
     return 0;

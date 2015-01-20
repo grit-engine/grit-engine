@@ -124,6 +124,11 @@ struct GfxGasolineResult {
     std::string fragmentShader;
 };
 
+void gfx_gasoline_check (const std::string &vert_prog,
+                         const std::string &dangs_prog,
+                         const std::string &additional_prog,
+                         const GfxGslParams &params);
+
 GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
                                                    const std::string &vert_prog,
                                                    const GfxGslParams &params);

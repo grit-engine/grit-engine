@@ -130,10 +130,6 @@ GfxGslType *GfxGslTypeSystem::cloneType (const GfxGslType *t_)
 void GfxGslTypeSystem::initObjectTypes (GfxGslKind k)
 {
     switch (k) {
-        case GFX_GSL_COLOUR:
-        outFields["colour"] = ctx.alloc.makeType<GfxGslFloatType>(3);
-        break;
-
         case GFX_GSL_COLOUR_ALPHA:
         outFields["colour"] = ctx.alloc.makeType<GfxGslFloatType>(3);
         outFields["alpha"] = ctx.alloc.makeType<GfxGslFloatType>(1);
