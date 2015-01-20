@@ -155,6 +155,7 @@ struct GfxGslTrans {
     }
 };
 
+// TODO(dcunnin):  Disallow explicit & implicit use of ddx/ddy in conditional code.
 class GfxGslTypeSystem {
     GfxGslContext &ctx;
 
