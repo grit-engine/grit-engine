@@ -15,11 +15,11 @@ do_glsl_check() {
 do_cg_check() {
     KIND="$1"
     FILENAME="$2.cg"
-    PROFILE=hlslf
+    PROFILE=ps_3_0
     if [ "$KIND" == "vert" ] ; then
-        PROFILE=hlslv
+        PROFILE=vs_3_0
     fi
-    cgc -nocode -profile $PROFILE -strict ${FILENAME}
+    cgc -profile $PROFILE -strict ${FILENAME}
     CODE="$?"
     return "$CODE"
 }
