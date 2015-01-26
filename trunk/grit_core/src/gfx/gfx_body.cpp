@@ -750,11 +750,12 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g, const Ogre::Matrix4 
     bool do_wireframe = (wireframe || gfx_option(GFX_WIREFRAME));
     bool do_regular = !(do_wireframe && gfx_option(GFX_WIREFRAME_SOLID));
 
-    const Ogre::Matrix4 &world = inv_mat * _getParentNodeFullTransform();
+    bool fade_dither = fade < 1;
+    unsigned env_boxes = 1;
+    bool instanced = false;
+    unsigned bone_weights = 0;
 
-    // TODO(dcunnin): fade
-    // need a special shader for fade, depending on alpha or not
-    // need a special parameter for it
+    const Ogre::Matrix4 &world = inv_mat * _getParentNodeFullTransform();
 
     // TODO(dcunnin): object parameters
 
@@ -780,7 +781,8 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g, const Ogre::Matrix4 
             // render sm using mat
             const GfxMaterialTextureMap &mat_texs = mat->getTextures();
             mat->getShader()->bindShader(GfxShader::FIRST_PERSON,
-                                         g, world, mat_texs, mat->getBindings());
+                                         fade_dither, env_boxes, instanced, bone_weights,
+                                         g, world, fade, mat_texs, mat->getBindings());
 
             switch (mat->getSceneBlend()) {
                 case GFX_MATERIAL_OPAQUE:
@@ -811,11 +813,8 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g, const Ogre::Matrix4 
 
         if (do_wireframe) {
 
-            // TODO: need a special kind of shader for this, one that has the
-            // same vertex component but uses only white for colour
-
-            mat->getShader()->bindShader(GfxShader::WIRE_FRAME,
-                                         g, world, GfxMaterialTextureMap(), mat->getBindings());
+            mat->getShader()->bindShader(GfxShader::WIRE_FRAME, false, 0, false, 0,
+                                         g, world, 1, GfxMaterialTextureMap(), mat->getBindings());
 
             ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
             ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);

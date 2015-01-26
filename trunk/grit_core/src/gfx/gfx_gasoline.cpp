@@ -37,6 +37,7 @@ static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
     m["view"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["viewportSize"] = alloc.makeType<GfxGslFloatType>(2);
     m["viewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
+    // TODO(dcunnin):  Noting with 'world' in the name is truely global
     m["world"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["worldView"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["worldViewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
@@ -342,6 +343,8 @@ static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
                                                       const std::string &colour_prog,
                                                       const GfxGslParams &params,
                                                       const GfxGslUnboundTextures &ubt,
+                                                      bool instanced,
+                                                      unsigned bone_weights,
                                                       bool flat_z)
 {
     GfxGslAllocator alloc;
@@ -376,12 +379,12 @@ static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
     switch (backend) {
         case GFX_GSL_BACKEND_CG:
         gfx_gasoline_unparse_cg(ctx, &vert_ts, vert_ast, vert_out,
-                                &frag_ts, frag_ast, frag_out, flat_z);
+                                &frag_ts, frag_ast, frag_out, instanced, bone_weights, flat_z);
         break;
 
         case GFX_GSL_BACKEND_GLSL:
         gfx_gasoline_unparse_glsl(ctx, &vert_ts, vert_ast, vert_out,
-                                  &frag_ts, frag_ast, frag_out, flat_z);
+                                  &frag_ts, frag_ast, frag_out, instanced, bone_weights, flat_z);
         break;
     }
 
@@ -389,29 +392,35 @@ static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
 }
 
 GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
-                                               const std::string &vert_prog,
-                                               const std::string &colour_prog,
-                                               const GfxGslParams &params,
-                                               const GfxGslUnboundTextures &ubt)
+                                            const std::string &vert_prog,
+                                            const std::string &colour_prog,
+                                            const GfxGslParams &params,
+                                            const GfxGslUnboundTextures &ubt)
 {
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, ubt, false);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, ubt,
+                                       false, 0, false);
 }
 
 GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
-                                               const std::string &vert_prog,
-                                               const GfxGslParams &params)
+                                                   const std::string &vert_prog,
+                                                   const GfxGslParams &params,
+                                                   bool instanced,
+                                                   unsigned bone_weights)
 {
     std::string colour_prog = "out.colour = Float3(1, 1, 1);\n";
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, {}, false);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, {},
+                                       instanced, bone_weights, false);
 }
 
 GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
-                                               const std::string &vert_prog,
-                                               const std::string &colour_prog,
-                                               const GfxGslParams &params,
-                                               const GfxGslUnboundTextures &ubt)
+                                            const std::string &vert_prog,
+                                            const std::string &colour_prog,
+                                            const GfxGslParams &params,
+                                            const GfxGslUnboundTextures &ubt,
+                                            unsigned bone_weights)
 {
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, ubt, true);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, params, ubt,
+                                       false, bone_weights, true);
 }
 
 GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
@@ -419,7 +428,11 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                      const std::string &dangs_prog,
                                                      const std::string &additional_prog,
                                                      const GfxGslParams &params,
-                                                     const GfxGslUnboundTextures &ubt)
+                                                     const GfxGslUnboundTextures &ubt,
+                                                     bool fade_dither,
+                                                     unsigned env_boxes,
+                                                     bool instanced,
+                                                     unsigned bone_weights)
 {
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
@@ -465,14 +478,16 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
         gfx_gasoline_unparse_first_person_cg(ctx, &vert_ts, vert_ast,
                                              &dangs_ts, dangs_ast,
                                              &additional_ts, additional_ast,
-                                             vert_out, frag_out);
+                                             vert_out, frag_out,
+                                             fade_dither, env_boxes, instanced, bone_weights);
         break;
 
         case GFX_GSL_BACKEND_GLSL:
         gfx_gasoline_unparse_first_person_glsl(ctx, &vert_ts, vert_ast,
                                                &dangs_ts, dangs_ast,
                                                &additional_ts, additional_ast,
-                                               vert_out, frag_out);
+                                               vert_out, frag_out,
+                                               fade_dither, env_boxes, instanced, bone_weights);
         break;
     }
 

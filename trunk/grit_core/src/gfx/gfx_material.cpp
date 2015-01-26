@@ -36,11 +36,6 @@ GfxBaseMaterial::GfxBaseMaterial(const std::string name, GfxShader *shader)
         name(name)
 { }
 
-void GfxBaseMaterial::precompileShader (GfxShader::Purpose purpose) const
-{
-    shader->getNativePair(purpose, textures);
-}
-    
 void GfxBaseMaterial::addDependencies (DiskResource *into) const
 {   
     GFX_MAT_SYNC;
@@ -126,9 +121,6 @@ void gfx_material_init (void)
     std::string as = "";
                      
     gfx_shader_make_or_reset("/system/Default", vs, fs, as, { }); 
-    GfxMaterial *m = gfx_material_add("/system/Default");
-
-    // Precompile
-    m->precompileShader(GfxShader::FIRST_PERSON);
+    gfx_material_add("/system/Default");
 }   
 

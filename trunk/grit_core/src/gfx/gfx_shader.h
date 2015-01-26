@@ -94,10 +94,13 @@ class GfxShader {
     public:
     enum Purpose {
         REGULAR,
-        SKY,
+        ALPHA,
         FIRST_PERSON,
+        EMISSIVE,
+        SHADOW_CAST,
+        WIRE_FRAME,
+        SKY,
         HUD,
-        WIRE_FRAME
     };
 
     private:
@@ -106,24 +109,35 @@ class GfxShader {
     std::string srcVertex, srcDangs, srcAdditional;
     GfxShaderParamMap params;
 
+    public:
     struct Split {
         Purpose purpose;
+        bool fadeDither;
+        unsigned envBoxes;
+        bool instanced;
+        unsigned boneWeights;
         std::set<std::string> boundTextures;
-        // TODO: Split shader for (update SplitHash too)
-        // * bones count
-        // * fade status
-        // * instancing
+        // TODO: Split shader for (also update SplitHash and operator<< in cpp)
         // * enums (manual splits)
         bool operator== (const Split &other) const
         {
             return other.purpose == purpose
+                && other.fadeDither == fadeDither
+                && other.envBoxes == envBoxes
+                && other.instanced == instanced
+                && other.boneWeights == boneWeights
                 && other.boundTextures == boundTextures;
         }
     };
+    private:
     struct SplitHash {
         size_t operator()(const Split &s) const
         {
             size_t r = size_t(s.purpose) << 10;
+            r ^= s.fadeDither;
+            r ^= s.envBoxes;
+            r ^= s.instanced;
+            r ^= s.boneWeights;
             r ^= s.boundTextures.size();
             for (const auto &str : s.boundTextures)
                 r ^= std::hash<std::string>()(str);
@@ -161,26 +175,30 @@ class GfxShader {
                 const std::string &src_additional);
 
 
-
     // New API, may throw compilation errors if not checked previously.
-    NativePair getNativePair (Purpose purpose, const std::set<std::string> &textures);
-    NativePair getNativePair (Purpose purpose, const GfxMaterialTextureMap &textures);
     void bindShader (Purpose purpose,
+                     bool fade_dither, unsigned env_boxes, bool instanced, unsigned bone_weights,
                      const GfxShaderGlobals &params,
                      const Ogre::Matrix4 &world,
+                     float fade,
                      const GfxMaterialTextureMap &textures,
                      const GfxShaderBindings &bindings);
+
     protected:
+    NativePair getNativePair (Purpose purpose,
+                              bool fade_dither, unsigned env_boxes,
+                              bool instanced, unsigned bone_weights,
+                              const GfxMaterialTextureMap &textures);
     void bindGlobals (const NativePair &np, const GfxShaderGlobals &params,
-                      const Ogre::Matrix4 &world);
+                      const Ogre::Matrix4 &world, float fade);
     void explicitBinding (const NativePair &np, const std::string &name, const Ogre::Matrix4 &v);
     void explicitBinding (const NativePair &np, const std::string &name, int v);
     void explicitBinding (const NativePair &np, const std::string &name, float v);
     void explicitBinding (const NativePair &np, const std::string &name, const Vector2 &v);
     void explicitBinding (const NativePair &np, const std::string &name, const Vector3 &v);
     void explicitBinding (const NativePair &np, const std::string &name, const Vector4 &v);
-    public:
 
+    public:
     // Legacy API
     GfxShader (const std::string &name,
                const GfxShaderParamMap &params,

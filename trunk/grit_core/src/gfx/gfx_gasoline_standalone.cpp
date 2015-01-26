@@ -37,6 +37,11 @@ const char *usage =
     "              | -C | --cg                       Target CG\n"
     "              | -p | --param <var> <type>       Declare a parameter\n"
     "              | -u | --unbind <tex>             Unbind a texture (will be all 1s)\n"
+    "              | -d | --alpha_dither             Enable dithering via alpha texture\n"
+    "              | -i | --instanced               Enable instanced\n"
+    "              | -e | --env1                     One env box\n"
+    "              | -E | --env2                     Two env boxes\n"
+    "              | -b | --bones <n>                Number of blended bones\n"
     "              | --                              End options passing\n"
 ;
 
@@ -59,6 +64,10 @@ int main (int argc, char **argv)
     try {
         int so_far = 1;
         bool no_more_switches = false;
+        bool instanced = false;
+        bool alpha_dither = false;
+        unsigned env_boxes = 0;
+        unsigned bones = 0;
         std::vector<std::string> args;
         std::string language = "GLSL";
         GfxGslParams params;
@@ -82,14 +91,31 @@ int main (int argc, char **argv)
             } else if (arg=="-u" || arg=="--unbind") {
                 std::string name = next_arg(so_far, argc, argv);
                 ubt[name] = GfxGslColour(1,0,1,1);
+            } else if (arg=="-i" || arg=="--instanced") {
+                instanced = true;
+            } else if (arg=="-d" || arg=="--alpha_dither") {
+                alpha_dither = true;
+            } else if (arg=="-e" || arg=="--env1") {
+                env_boxes = 1;
+            } else if (arg=="-E" || arg=="--env2") {
+                env_boxes = 2;
+            } else if (arg=="-b" || arg=="--bones") {
+                std::string num_str = next_arg(so_far, argc, argv);
+                char **nptr;
+                long long num = strtoll(num_str.c_str(), nptr, 10);
+                if (num < 0 || num > 4) {
+                    std::cerr<<"Number of bones must be in [0,4] range." << std::endl;
+                    return EXIT_FAILURE;
+                }
+                bones = unsigned(num);
             } else {
                 args.push_back(arg);
             }
         }
 
         if (args.size() != 6) {
-            std::cerr<<info<<std::endl;
-            std::cerr<<usage<<std::endl;
+            std::cerr << info << std::endl;
+            std::cerr << usage << std::endl;
             return EXIT_FAILURE;
         }
 
@@ -147,12 +173,13 @@ int main (int argc, char **argv)
         GfxGasolineResult shaders;
         try {
             if (kind == "SKY") {
-                shaders = gfx_gasoline_compile_sky(backend, vert_code, additional_code, params, ubt);
+                shaders = gfx_gasoline_compile_sky(backend, vert_code, additional_code, params, ubt, bones);
             } else if (kind == "HUD") {
                 shaders = gfx_gasoline_compile_hud(backend, vert_code, additional_code, params, ubt);
             } else if (kind == "FIRST_PERSON") {
-                shaders = gfx_gasoline_compile_first_person(backend, vert_code, dangs_code,
-                                                            additional_code, params, ubt);
+                shaders = gfx_gasoline_compile_first_person(backend, vert_code, dangs_code, additional_code,
+                                                            params, ubt,
+                                                            alpha_dither, env_boxes, instanced, bones);
             } else {
                 std::cerr << "Unrecognised shader kind language: " << kind << std::endl;
                 return EXIT_FAILURE;

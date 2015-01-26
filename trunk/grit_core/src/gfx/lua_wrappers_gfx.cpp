@@ -2897,7 +2897,7 @@ TRY_START
     switch (lua_gettop(L)) {
         case 0: {
             if (gfx_fade_dither_map() != NULL) {
-                push_string(L, gfx_shadow_pcf_noise_map()->getName());
+                push_string(L, gfx_fade_dither_map()->getName());
             } else {
                 lua_pushnil(L);
             }
@@ -2911,6 +2911,36 @@ TRY_START
                 auto dr = disk_resource_use<GfxTextureDiskResource>(v);
                 if (dr == nullptr) my_lua_error(L, "Not a texture: \"" + v + "\"");
                 gfx_fade_dither_map(dr);
+            }
+            return 0;
+        }
+        default:
+        my_lua_error(L, "Getter/setter: expected 0 or 1 arguments");
+        return 0; // silence compiler
+    }
+TRY_END
+}
+
+static int global_gfx_corona_map (lua_State *L)
+{
+TRY_START
+    switch (lua_gettop(L)) {
+        case 0: {
+            if (gfx_corona_map() != NULL) {
+                push_string(L, gfx_corona_map()->getName());
+            } else {
+                lua_pushnil(L);
+            }
+            return 1;
+        }
+        case 1: {
+            if (lua_isnil(L, 1)) {
+                gfx_corona_map(DiskResourcePtr<GfxTextureDiskResource>());
+            } else {
+                std::string v = check_string(L,1);
+                auto dr = disk_resource_use<GfxTextureDiskResource>(v);
+                if (dr == nullptr) my_lua_error(L, "Not a texture: \"" + v + "\"");
+                gfx_corona_map(dr);
             }
             return 0;
         }
@@ -3867,8 +3897,6 @@ TRY_START
     t.get("shader", shader_name, std::string("/system/Default"));
     GfxShader *shader = gfx_shader_get(shader_name);
 
-    shader->getNativePair(GfxShader::FIRST_PERSON, std::set<std::string>());
-
     GFX_MAT_SYNC;
     GfxMaterial *gfxmat = gfx_material_add_or_get(name);
 
@@ -3951,7 +3979,6 @@ TRY_START
     gfxmat->setShader(shader);
     gfxmat->setTextures(textures);
     gfxmat->setBindings(bindings);
-    gfxmat->precompileShader(GfxShader::FIRST_PERSON);
 
     return 0;
 TRY_END
@@ -4055,8 +4082,6 @@ TRY_START
     t.get("shader", shader_name, std::string("/system/SkyDefault"));
     GfxShader *shader = gfx_shader_get(shader_name);
 
-    shader->getNativePair(GfxShader::SKY, std::set<std::string>());
-
     GFX_MAT_SYNC;
     GfxSkyMaterial *gfxskymat = gfx_sky_material_add_or_get(name);
 
@@ -4129,7 +4154,6 @@ TRY_START
     gfxskymat->setSceneBlend(skymat_scene_blend_from_string(L, scene_blend));
     gfxskymat->setTextures(textures);
     gfxskymat->setBindings(bindings);
-    gfxskymat->precompileShader(GfxShader::SKY);
 
     return 0;
 TRY_END
@@ -4379,75 +4403,76 @@ TRY_END
 
 static const luaL_reg global[] = {
 
-    {"gfx_d3d9",global_gfx_d3d9},
+    {"gfx_d3d9", global_gfx_d3d9},
 
-    {"gfx_render",global_gfx_render},
-    {"gfx_bake_env_cube",global_gfx_bake_env_cube},
-    {"gfx_screenshot",global_gfx_screenshot},
-    {"gfx_option",global_gfx_option},
-    {"gfx_body_make",global_gfx_body_make},
-    {"gfx_instances_make",global_gfx_instances_make},
-    {"gfx_ranged_instances_make",global_gfx_ranged_instances_make},
-    {"gfx_sky_body_make",global_gfx_sky_body_make},
-    {"gfx_light_make",global_gfx_light_make},
+    {"gfx_render", global_gfx_render},
+    {"gfx_bake_env_cube", global_gfx_bake_env_cube},
+    {"gfx_screenshot", global_gfx_screenshot},
+    {"gfx_option", global_gfx_option},
+    {"gfx_body_make", global_gfx_body_make},
+    {"gfx_instances_make", global_gfx_instances_make},
+    {"gfx_ranged_instances_make", global_gfx_ranged_instances_make},
+    {"gfx_sky_body_make", global_gfx_sky_body_make},
+    {"gfx_light_make", global_gfx_light_make},
 
     {"gfx_register_sky_material", global_gfx_register_sky_material},
     {"gfx_register_shader", global_gfx_register_shader},
 
-    {"gfx_font_define",global_gfx_font_define},
-    {"gfx_font_line_height",global_gfx_font_line_height},
-    {"gfx_font_list",global_gfx_font_list},
-    {"gfx_font_text_width",global_gfx_font_text_width},
+    {"gfx_font_define", global_gfx_font_define},
+    {"gfx_font_line_height", global_gfx_font_line_height},
+    {"gfx_font_list", global_gfx_font_list},
+    {"gfx_font_text_width", global_gfx_font_text_width},
 
-    {"gfx_hud_object_add",global_gfx_hud_object_add},
-    {"gfx_hud_text_add",global_gfx_hud_text_add},
-    {"gfx_hud_class_add",global_gfx_hud_class_add},
-    {"gfx_hud_class_get",global_gfx_hud_class_get},
-    {"gfx_hud_class_has",global_gfx_hud_class_has},
-    {"gfx_hud_class_all",global_gfx_hud_class_all},
-    {"gfx_hud_class_count",global_gfx_hud_class_count},
-    {"gfx_hud_ray",global_gfx_hud_ray},
+    {"gfx_hud_object_add", global_gfx_hud_object_add},
+    {"gfx_hud_text_add", global_gfx_hud_text_add},
+    {"gfx_hud_class_add", global_gfx_hud_class_add},
+    {"gfx_hud_class_get", global_gfx_hud_class_get},
+    {"gfx_hud_class_has", global_gfx_hud_class_has},
+    {"gfx_hud_class_all", global_gfx_hud_class_all},
+    {"gfx_hud_class_count", global_gfx_hud_class_count},
+    {"gfx_hud_ray", global_gfx_hud_ray},
 
-    {"gfx_env_cube",global_gfx_env_cube},
-    {"gfx_env_cube_cross_fade",global_gfx_env_cube_cross_fade},
-    {"gfx_fade_dither_map",global_gfx_fade_dither_map},
-    {"gfx_shadow_pcf_noise_map",global_gfx_shadow_pcf_noise_map},
-    {"gfx_colour_grade",global_gfx_colour_grade},
-    {"gfx_particle_ambient",global_gfx_particle_ambient},
-    {"gfx_sunlight_diffuse",global_gfx_sunlight_diffuse},
-    {"gfx_sunlight_specular",global_gfx_sunlight_specular},
-    {"gfx_sunlight_direction",global_gfx_sunlight_direction},
+    {"gfx_env_cube", global_gfx_env_cube},
+    {"gfx_env_cube_cross_fade", global_gfx_env_cube_cross_fade},
+    {"gfx_fade_dither_map", global_gfx_fade_dither_map},
+    {"gfx_corona_map", global_gfx_corona_map},
+    {"gfx_shadow_pcf_noise_map", global_gfx_shadow_pcf_noise_map},
+    {"gfx_colour_grade", global_gfx_colour_grade},
+    {"gfx_particle_ambient", global_gfx_particle_ambient},
+    {"gfx_sunlight_diffuse", global_gfx_sunlight_diffuse},
+    {"gfx_sunlight_specular", global_gfx_sunlight_specular},
+    {"gfx_sunlight_direction", global_gfx_sunlight_direction},
 
-    {"gfx_fog_colour",global_gfx_fog_colour},
-    {"gfx_fog_density",global_gfx_fog_density},
-    {"gfx_hell_colour",global_gfx_hell_colour},
+    {"gfx_fog_colour", global_gfx_fog_colour},
+    {"gfx_fog_density", global_gfx_fog_density},
+    {"gfx_hell_colour", global_gfx_hell_colour},
 
-    {"gfx_sun_direction",global_gfx_sun_direction},
-    {"gfx_sun_colour",global_gfx_sun_colour},
-    {"gfx_sun_alpha",global_gfx_sun_alpha},
-    {"gfx_sun_size",global_gfx_sun_size},
-    {"gfx_sun_falloff_distance",global_gfx_sun_falloff_distance},
+    {"gfx_sun_direction", global_gfx_sun_direction},
+    {"gfx_sun_colour", global_gfx_sun_colour},
+    {"gfx_sun_alpha", global_gfx_sun_alpha},
+    {"gfx_sun_size", global_gfx_sun_size},
+    {"gfx_sun_falloff_distance", global_gfx_sun_falloff_distance},
 
-    {"gfx_sky_glare_sun_distance",global_gfx_sky_glare_sun_distance},
-    {"gfx_sky_glare_horizon_elevation",global_gfx_sky_glare_horizon_elevation},
-    {"gfx_sky_divider",global_gfx_sky_divider},
-    {"gfx_sky_colour",global_gfx_sky_colour},
-    {"gfx_sky_alpha",global_gfx_sky_alpha},
-    {"gfx_sky_sun_colour",global_gfx_sky_sun_colour},
-    {"gfx_sky_sun_alpha",global_gfx_sky_sun_alpha},
-    {"gfx_sky_cloud_colour",global_gfx_sky_cloud_colour},
-    {"gfx_sky_cloud_coverage",global_gfx_sky_cloud_coverage},
+    {"gfx_sky_glare_sun_distance", global_gfx_sky_glare_sun_distance},
+    {"gfx_sky_glare_horizon_elevation", global_gfx_sky_glare_horizon_elevation},
+    {"gfx_sky_divider", global_gfx_sky_divider},
+    {"gfx_sky_colour", global_gfx_sky_colour},
+    {"gfx_sky_alpha", global_gfx_sky_alpha},
+    {"gfx_sky_sun_colour", global_gfx_sky_sun_colour},
+    {"gfx_sky_sun_alpha", global_gfx_sky_sun_alpha},
+    {"gfx_sky_cloud_colour", global_gfx_sky_cloud_colour},
+    {"gfx_sky_cloud_coverage", global_gfx_sky_cloud_coverage},
 
-    {"gfx_global_saturation",global_gfx_global_saturation},
-    {"gfx_global_exposure",global_gfx_global_exposure},
+    {"gfx_global_saturation", global_gfx_global_saturation},
+    {"gfx_global_exposure", global_gfx_global_exposure},
 
-    {"gfx_particle_define",global_gfx_particle_define},
-    {"gfx_particle_emit",global_gfx_particle_emit},
-    {"gfx_particle_pump",global_gfx_particle_pump},
-    {"gfx_particle_count",global_gfx_particle_count},
-    {"gfx_particle_step_size",global_gfx_particle_step_size},
+    {"gfx_particle_define", global_gfx_particle_define},
+    {"gfx_particle_emit", global_gfx_particle_emit},
+    {"gfx_particle_pump", global_gfx_particle_pump},
+    {"gfx_particle_count", global_gfx_particle_count},
+    {"gfx_particle_step_size", global_gfx_particle_step_size},
 
-    {"gfx_last_frame_stats",global_gfx_last_frame_stats},
+    {"gfx_last_frame_stats", global_gfx_last_frame_stats},
 
     {"gfx_colour_grade_look_up", global_gfx_colour_grade_look_up},
 

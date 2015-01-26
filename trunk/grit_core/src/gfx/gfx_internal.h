@@ -74,6 +74,7 @@ extern DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube1;
 extern float global_env_cube_cross_fade;
 extern Ogre::Matrix4 shadow_view_proj[3];
 extern DiskResourcePtr<GfxTextureDiskResource> fade_dither_map;
+extern DiskResourcePtr<GfxTextureDiskResource> corona_map;
 extern DiskResourcePtr<GfxTextureDiskResource> shadow_pcf_noise_map;
 
 static inline bool stereoscopic (void)

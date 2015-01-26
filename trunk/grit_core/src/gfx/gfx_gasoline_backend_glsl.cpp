@@ -103,6 +103,7 @@ static std::string generate_funcs (void)
     ss << "Float3 rotate_to_world (Float3 v) { return mul(global_world, Float4(v, 0)).xyz; }\n";
 
     ss << "uniform Float internal_rt_flip;\n";
+    ss << "uniform Float internal_fade;\n";
     ss << "\n";
 
     return ss.str();
@@ -152,7 +153,7 @@ static std::string generate_vert_header (const GfxGslContext &ctx,
 {
     std::stringstream ss;
 
-    ss << "// Vertex header2\n";
+    ss << "// Vertex header\n";
 
     // In (vertex attributes)
     for (const auto &f : vert_in) {
@@ -207,6 +208,8 @@ void gfx_gasoline_unparse_glsl (GfxGslContext &ctx,
                                 const GfxGslTypeSystem *frag_ts,
                                 const GfxGslAst *frag_ast,
                                 std::string &frag_output,
+                                bool instanced,
+                                unsigned bone_weights,
                                 bool flat_z)
 {
     GfxGslBackendUnparser vert_backend("user_");
@@ -297,7 +300,11 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
                                             const GfxGslTypeSystem *additional_ts,
                                             const GfxGslAst *additional_ast,
                                             std::string &vert_out,
-                                            std::string &frag_out)
+                                            std::string &frag_out,
+                                            bool fade_dither,
+                                            unsigned env_boxes,
+                                            bool instanced,
+                                            unsigned bone_weights)
 {
     GfxGslBackendUnparser vert_backend("uvert_");
     vert_backend.unparse(vert_ast, 1);
@@ -393,12 +400,32 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
     frag_ss << "    Float3 s2c = normalize(internal_vertex_to_cam);\n";
     frag_ss << "    Float3 sun = punctual_lighting(-global_sunlightDirection, s2c,\n";
     frag_ss << "        d, n, g, s, global_sunlightDiffuse, global_sunlightSpecular);\n";
-    frag_ss << "    Float3 env0 = env_lighting(s2c,\n";
-    frag_ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
-    frag_ss << "    Float3 env = env0;\n";
+    if (env_boxes == 1) {
+        frag_ss << "    Float3 env0 = env_lighting(s2c,\n";
+        frag_ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
+        frag_ss << "    Float3 env = env0;\n";
+    } else if (env_boxes == 2) {
+        frag_ss << "    Float3 env0 = env_lighting(s2c,\n";
+        frag_ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
+        frag_ss << "    Float3 env1 = env_lighting(s2c,\n";
+        frag_ss << "        d, n, g, s, global_envCube1, global_envCubeMipmaps1);\n";
+        frag_ss << "    Float3 env = lerp(env0, env1, global_envCubeCrossFade;\n";
+    } else {
+        frag_ss << "    Float3 env = Float3(0.0, 0.0, 0.0);\n";
+    }
     frag_ss << "    Float3 additional;\n";
     frag_ss << "    Float unused;\n";
     frag_ss << "    func_user_colour(additional, unused);\n";
+    if (fade_dither) {
+        frag_ss << "    int x = (int(frag_screen.x) % 8);\n";
+        frag_ss << "    int y = (int(frag_screen.y) % 8);\n";
+        frag_ss << "    Float fade = internal_fade * 16.0;  // 16 possibilities\n";
+        frag_ss << "    Float2 uv = Float2(x,y);\n";
+        frag_ss << "    // uv points to top left square now\n";
+        frag_ss << "    uv.x += 8.0 * (int(fade)%4);\n";
+        frag_ss << "    uv.y += 8.0 * int(fade/4);\n";
+        frag_ss << "    if (sampleLod(global_fadeDitherMap, uv / 32.0, 0).r < 0.5) discard;\n";
+    }
     frag_ss << "    out_colour_alpha = Float4(sun + env + additional, 1);\n";
     frag_ss << "}\n";
 

@@ -93,6 +93,8 @@ GfxTextureDiskResource *gfx_shadow_pcf_noise_map (void);
 void gfx_shadow_pcf_noise_map (const DiskResourcePtr<GfxTextureDiskResource> &v);
 GfxTextureDiskResource *gfx_fade_dither_map (void);
 void gfx_fade_dither_map (const DiskResourcePtr<GfxTextureDiskResource> &v);
+GfxTextureDiskResource *gfx_corona_map (void);
+void gfx_corona_map (const DiskResourcePtr<GfxTextureDiskResource> &v);
 
 
 Vector3 gfx_particle_ambient (void);

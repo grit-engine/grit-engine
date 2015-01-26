@@ -36,6 +36,8 @@ void gfx_gasoline_unparse_cg (GfxGslContext &ctx,
                               const GfxGslTypeSystem *frag_ts,
                               const GfxGslAst *frag_ast,
                               std::string &frag_output,
+                              bool instanced,
+                              unsigned bone_weights,
                               bool flat_z);
 
 
@@ -47,7 +49,11 @@ void gfx_gasoline_unparse_first_person_cg(GfxGslContext &ctx,
                                           const GfxGslTypeSystem *additional_ts,
                                           const GfxGslAst *additional_ast,
                                           std::string &vert_out,
-                                          std::string &frag_out);
+                                          std::string &frag_out,
+                                          bool fade_dither,
+                                          unsigned env_boxes,
+                                          bool instanced,
+                                          unsigned bone_weights);
 
 #endif
 

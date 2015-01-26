@@ -17,6 +17,18 @@ GfxGslBackend backend = (gfx_d3d9() || getenv("GRIT_GL_CG") != nullptr)
 
 typedef GfxShader::NativePair NativePair;
 
+static std::ostream &operator << (std::ostream &o, const GfxShader::Split &s)
+{
+    o << "[";
+    o << (s.fadeDither ? "F" : "f");
+    o << s.envBoxes;
+    o << (s.instanced ? "I" : "i");
+    o << s.boneWeights;
+    o << s.boundTextures;
+    o << "]";
+    return o;
+}
+
 static std::string fresh_name (void)
 {
     static int counter = 0;
@@ -206,21 +218,22 @@ void GfxShader::validate (void)
 }
 
 NativePair GfxShader::getNativePair (Purpose purpose,
-                                                const GfxMaterialTextureMap &textures)
+                                     bool fade_dither, unsigned env_boxes,
+                                     bool instanced, unsigned bone_weights,
+                                     const GfxMaterialTextureMap &textures)
 {
     std::set<std::string> r;
     for (const auto &pair : textures)
         r.insert(pair.first);
-    return getNativePair(purpose, r);
-}
 
-NativePair GfxShader::getNativePair (Purpose purpose,
-                                                const std::set<std::string> &textures)
-{
     // Need to choose / maybe compile a shader for this combination of textures and bindings.
     Split split;
     split.purpose = purpose;
-    split.boundTextures = textures;
+    split.fadeDither = fade_dither;
+    split.envBoxes = env_boxes;
+    split.instanced = instanced;
+    split.boneWeights = bone_weights;
+    split.boundTextures = r;
     auto it = cachedShaders.find(split);
 
 
@@ -229,7 +242,7 @@ NativePair GfxShader::getNativePair (Purpose purpose,
         Ogre::HighLevelGpuProgramPtr vp;
         Ogre::HighLevelGpuProgramPtr fp;
 
-        CVERB << "Compiling: " << name << " with " << textures.size() << std::endl;
+        CVERB << "Compiling: " << name << " " << split << std::endl;
 
         std::string oname = fresh_name();
         if (backend == GFX_GSL_BACKEND_CG) {
@@ -281,20 +294,27 @@ NativePair GfxShader::getNativePair (Purpose purpose,
         try {
             switch (purpose) {
                 case REGULAR: EXCEPTEX << "Internal error." << ENDL;
+                case ALPHA: EXCEPTEX << "Internal error." << ENDL;
+                case EMISSIVE: EXCEPTEX << "Internal error." << ENDL;
+                case SHADOW_CAST: EXCEPTEX << "Internal error." << ENDL;
                 case HUD:
                 output = gfx_gasoline_compile_hud(backend, srcVertex, srcAdditional,
                                                   gsl_params, ubt);
                 break;
                 case SKY:
                 output = gfx_gasoline_compile_sky(backend, srcVertex, srcAdditional,
-                                                  gsl_params, ubt);
+                                                  gsl_params, ubt,
+                                                  bone_weights);
                 break;
                 case FIRST_PERSON:
                 output = gfx_gasoline_compile_first_person(backend, srcVertex, srcDangs,
-                                                           srcAdditional, gsl_params, ubt);
+                                                           srcAdditional, gsl_params, ubt,
+                                                           fade_dither, env_boxes,
+                                                           instanced, bone_weights);
                 break;
                 case WIRE_FRAME:
-                output = gfx_gasoline_compile_wire_frame(backend, srcVertex, gsl_params);
+                output = gfx_gasoline_compile_wire_frame(backend, srcVertex, gsl_params,
+                                                         instanced, bone_weights);
                 break;
             }
         } catch (const Exception &e) {
@@ -335,12 +355,15 @@ NativePair GfxShader::getNativePair (Purpose purpose,
 }
 
 void GfxShader::bindShader (Purpose purpose,
+                            bool fade_dither, unsigned env_boxes,
+                            bool instanced, unsigned bone_weights,
                             const GfxShaderGlobals &globs,
                             const Ogre::Matrix4 &world,
+                            float fade,
                             const GfxMaterialTextureMap &textures,
                             const GfxShaderBindings &bindings)
 {
-    auto np = getNativePair(purpose, textures);
+    auto np = getNativePair(purpose, fade_dither, env_boxes, instanced, bone_weights, textures);
 
     // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
     ogre_rs->bindGpuProgram(np.vp->_getBindingDelegate());
@@ -442,7 +465,7 @@ void GfxShader::bindShader (Purpose purpose,
         }
     }
 
-    bindGlobals(np, globs, world);
+    bindGlobals(np, globs, world, fade);
 
     ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, np.vp->getDefaultParameters(), Ogre::GPV_ALL);
     ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, np.fp->getDefaultParameters(), Ogre::GPV_ALL);
@@ -457,11 +480,11 @@ void GfxShader::bindShaderParams (void)
 
 void GfxShader::bindGlobals (const GfxShaderGlobals &p, const Ogre::Matrix4 &world)
 {
-    bindGlobals(legacy, p, world);
+    bindGlobals(legacy, p, world, 1);
 }
 
 void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p,
-                             const Ogre::Matrix4 &world)
+                             const Ogre::Matrix4 &world, float fade)
 {
     Ogre::Matrix4 world_view = p.view * world;
     Ogre::Matrix4 view_proj = p.proj * p.view; 
@@ -522,8 +545,16 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p,
     hack_set_constant(np, "global_envCubeMipmaps1", 9.0f);
 
     hack_set_constant(np, "internal_rt_flip", render_target_flipping_factor);
+    hack_set_constant(np, "internal_fade", fade);
 
     gfx_shader_bind_global_textures(np);
+}
+
+static void inc (const NativePair &np, int &counter, const char *name)
+{
+    if (backend == GFX_GSL_BACKEND_GLSL)
+        explicit_binding(np, name, counter);
+    counter++;
 }
 
 void gfx_shader_bind_global_textures (const NativePair &np)
@@ -538,74 +569,95 @@ void gfx_shader_bind_global_textures (const NativePair &np)
     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
     ogre_rs->_setTextureAddressingMode(
         counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
-    if (backend == GFX_GSL_BACKEND_GLSL)
-        explicit_binding(np, "global_colourGradeLut", counter);
-    counter++;
+    inc(np, counter, "global_colourGradeLut");
 
-    ogre_rs->_setTexture(counter, true, global_env_cube0->getOgreTexturePtr());
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_LINEAR);
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_LINEAR);
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
-    ogre_rs->_setTextureAddressingMode(
-        counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
-    if (backend == GFX_GSL_BACKEND_GLSL)
-        explicit_binding(np, "global_envCube0", counter);
-    counter++;
+    if (global_env_cube0 != nullptr && global_env_cube1 != nullptr) {
+        // Both env cubes
+        ogre_rs->_setTexture(counter, true, global_env_cube0->getOgreTexturePtr());
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureAddressingMode(
+            counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
+        inc(np, counter, "global_envCube0");
+        ogre_rs->_setTexture(counter, true, global_env_cube1->getOgreTexturePtr());
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureAddressingMode(
+            counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
+        inc(np, counter, "global_envCube1");
 
-    ogre_rs->_setTexture(counter, false, "");
-/*
-    ogre_rs->_setTexture(counter, true, global_env_cube1->getOgreTexturePtr());
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_LINEAR);
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_LINEAR);
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
-    ogre_rs->_setTextureAddressingMode(
-        counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
-*/
-    if (backend == GFX_GSL_BACKEND_GLSL)
-        explicit_binding(np, "global_envCube1", counter);
-    counter++;
+    } else if (global_env_cube0 != nullptr) {
+        // One env cube
+        ogre_rs->_setTexture(counter, true, global_env_cube0->getOgreTexturePtr());
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureAddressingMode(
+            counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
+        inc(np, counter, "global_envCube0");
 
-    ogre_rs->_setTexture(counter, false, "");
-/*
-    ogre_rs->_setTexture(counter, true, fade_dither_map->getOgreTexturePtr());
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_POINT);
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_POINT);
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
-    ogre_rs->_setTextureAddressingMode(
-        counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
-*/
-    if (backend == GFX_GSL_BACKEND_GLSL)
-        explicit_binding(np, "global_fadeDitherMap", counter);
-    counter++;
+        ogre_rs->_setTexture(counter, false, "");
+        inc(np, counter, "global_envCube1");
+
+    } else if (global_env_cube1 != nullptr) {
+        // Other env cube
+        ogre_rs->_setTexture(counter, false, "");
+        inc(np, counter, "global_envCube0");
+
+        ogre_rs->_setTexture(counter, true, global_env_cube1->getOgreTexturePtr());
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureAddressingMode(
+            counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
+        inc(np, counter, "global_envCube1");
+    } else {
+        // No env cube
+        ogre_rs->_setTexture(counter, false, "");
+        inc(np, counter, "global_envCube0");
+
+        ogre_rs->_setTexture(counter, false, "");
+        inc(np, counter, "global_envCube1");
+    }
+    
+
+    if (fade_dither_map != nullptr) {
+        ogre_rs->_setTexture(counter, true, fade_dither_map->getOgreTexturePtr());
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_POINT);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_POINT);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
+        ogre_rs->_setTextureAddressingMode(
+            counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
+    } else {
+        ogre_rs->_setTexture(counter, false, "");
+    }
+    inc(np, counter, "global_fadeDitherMap");
 
     const static char *name[] = { "global_shadowMap0", "global_shadowMap1", "global_shadowMap2" };
     for (unsigned i=0 ; i<3 ; ++i) {
-        ogre_rs->_setTexture(counter, false, "");
-/*
         ogre_rs->_setTexture(counter, true, ogre_sm->getShadowTexture(i));
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_POINT);
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_POINT);
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
         ogre_rs->_setTextureAddressingMode(
             counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
-*/
-        if (backend == GFX_GSL_BACKEND_GLSL)
-            explicit_binding(np, name[i] , counter);
-        counter++;
+        inc(np, counter, name[i]);
     }
 
-    ogre_rs->_setTexture(counter, false, "");
-/*
-    ogre_rs->_setTexture(counter, true, shadow_pcf_noise_map->getOgreTexturePtr());
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_POINT);
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_POINT);
-    ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
-    ogre_rs->_setTextureAddressingMode(
-        counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
-*/
-    if (backend == GFX_GSL_BACKEND_GLSL)
-        explicit_binding(np, "global_shadowPcfNoiseMap", counter);
-    counter++;
+
+    if (shadow_pcf_noise_map != nullptr) {
+        ogre_rs->_setTexture(counter, true, shadow_pcf_noise_map->getOgreTexturePtr());
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_POINT);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_POINT);
+        ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
+        ogre_rs->_setTextureAddressingMode(
+            counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
+    } else {
+        ogre_rs->_setTexture(counter, false, "");
+    }
+    inc(np, counter, "global_shadowPcfNoiseMap");
 
     APP_ASSERT(counter == NUM_GLOBAL_TEXTURES);
 }
@@ -629,6 +681,7 @@ GfxShader *gfx_shader_make_or_reset (const std::string &name,
                                      const std::string &new_additional_code,
                                      const GfxShaderParamMap &params)
 {
+    gfx_shader_check(name, new_vertex_code, new_dangs_code, new_additional_code, params);
     GfxShader *shader;
     if (gfx_shader_has(name)) {
         shader = gfx_shader_get(name);

@@ -91,11 +91,5 @@ void gfx_sky_material_init (void)
         { "emissiveMask", GfxShaderParam(Vector3(1, 1, 1)) },
     });
 
-    // Precompile
-    s->getNativePair(GfxShader::HUD, std::set<std::string>{"emissiveMap"});
-    s->getNativePair(GfxShader::HUD, std::set<std::string>{});
-
     gfx_sky_material_add("/system/SkyDefault");
-
-    
 }

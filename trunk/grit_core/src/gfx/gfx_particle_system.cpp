@@ -33,10 +33,6 @@
 #include "gfx_pipeline.h"
 #include "gfx_shader.h"
 
-const unsigned cube_vertexes = 8;
-static Ogre::HardwareVertexBufferSharedPtr cubeVertexBuffer;
-static Ogre::IndexData cubeIndexData;
-
 const unsigned quad_vertexes = 4;
 static Ogre::HardwareVertexBufferSharedPtr quadVertexBuffer;
 static Ogre::IndexData quadIndexData;
@@ -50,67 +46,29 @@ static inline Ogre::HighLevelGpuProgramPtr get_shader(const std::string &name)
 
 void gfx_particle_init (void)
 {
-    {
-        // set up the cube geometry
-        const unsigned cube_triangles = 12;
+    // set up the quad geometry
+    const unsigned quad_triangles = 2;
 
-        cubeVertexBuffer =
-            Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
-                12, cube_vertexes, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
+    quadVertexBuffer =
+        Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
+            12, quad_vertexes, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
 
-        float vdata_raw[3*cube_vertexes] = {
-            -1, -1, -1,
-            -1, -1,  1,
-            -1,  1, -1,
-            -1,  1,  1,
-             1, -1, -1,
-             1, -1,  1,
-             1,  1, -1,
-             1,  1,  1,
-        };
-        cubeVertexBuffer->writeData(0, 12*cube_vertexes, &vdata_raw[0]);
+    float vdata_raw[3 * quad_vertexes] = {
+        -1, 0, -1,
+        -1, 0,  1,
+         1, 0, -1,
+         1, 0,  1,
+    };
+    quadVertexBuffer->writeData(0, 3 * quad_vertexes * sizeof(float), &vdata_raw[0]);
 
-        // Prepare index buffer
-        cubeIndexData.indexBuffer = Ogre::HardwareBufferManager::getSingleton()
-            .createIndexBuffer(Ogre::HardwareIndexBuffer::IT_16BIT, 3*cube_triangles, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
-        cubeIndexData.indexStart = 0;
-        cubeIndexData.indexCount = 3*cube_triangles;
-        uint16_t idata_raw[] = {
-            QUAD(0,4,5,1),
-            QUAD(2,0,1,3),
-            QUAD(6,2,3,7),
-            QUAD(4,6,7,5),
-            QUAD(2,6,4,0),
-            QUAD(1,5,7,3),
-        };
-        cubeIndexData.indexBuffer->writeData(cubeIndexData.indexStart, cubeIndexData.indexCount*sizeof(uint16_t), &idata_raw[0]);
-    }
-    {
-        // set up the quad geometry
-        const unsigned quad_triangles = 2;
-
-        quadVertexBuffer =
-            Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
-                12, quad_vertexes, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
-
-        float vdata_raw[3*quad_vertexes] = {
-            -1, 0, -1,
-            -1, 0,  1,
-             1, 0, -1,
-             1, 0,  1,
-        };
-        quadVertexBuffer->writeData(0, 12*quad_vertexes, &vdata_raw[0]);
-
-        // Prepare index buffer
-        quadIndexData.indexBuffer = Ogre::HardwareBufferManager::getSingleton()
-            .createIndexBuffer(Ogre::HardwareIndexBuffer::IT_16BIT, 3*quad_triangles, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
-        quadIndexData.indexStart = 0;
-        quadIndexData.indexCount = 3*quad_triangles;
-        uint16_t idata_raw[] = {
-            QUAD(0,2,3,1),
-        };
-        quadIndexData.indexBuffer->writeData(quadIndexData.indexStart, quadIndexData.indexCount*sizeof(uint16_t), &idata_raw[0]);
-    }
+    // Prepare index buffer
+    quadIndexData.indexBuffer = Ogre::HardwareBufferManager::getSingleton()
+        .createIndexBuffer(Ogre::HardwareIndexBuffer::IT_16BIT, 3*quad_triangles,
+                           Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
+    quadIndexData.indexStart = 0;
+    quadIndexData.indexCount = 3*quad_triangles;
+    uint16_t idata_raw[] = { QUAD(0,2,3,1), };
+    quadIndexData.indexBuffer->writeData(0, 3 * quad_triangles * sizeof(uint16_t), &idata_raw[0]);
 
 }
 
@@ -124,38 +82,41 @@ class ParticlesInstanceBuffer {
     float *instPtr, *instPtr0;
     unsigned maxInstances;
 
-    unsigned instancesAdded (void) { return ((instPtr - instPtr0)*sizeof(float)) / instBufVertexSize; }
+    unsigned instancesAdded (void)
+    { return ((instPtr - instPtr0)*sizeof(float)) / instBufVertexSize; }
 
 
     public:
 
     ParticlesInstanceBuffer (void)
     {
+        auto d = vertexData.vertexDeclaration;
         // Prepare vertex buffer
         vertexData.vertexStart = 0;
         vertexData.vertexCount = quad_vertexes;
 
         // Non-instanced data
         unsigned vdecl_size = 0;
-        vdecl_size += vertexData.vertexDeclaration->addElement(0, vdecl_size, Ogre::VET_FLOAT3, Ogre::VES_POSITION).getSize();
+        vdecl_size += d->addElement(0, vdecl_size, Ogre::VET_FLOAT3, Ogre::VES_POSITION).getSize();
         vertexData.vertexBufferBinding->setBinding(0, quadVertexBuffer);
 
+        auto tc = Ogre::VES_TEXTURE_COORDINATES;
         // Instanced data
         instBufVertexSize = 0;
         // mat 3xfloat
-        instBufVertexSize += vertexData.vertexDeclaration->addElement(1, instBufVertexSize, Ogre::VET_FLOAT3, Ogre::VES_TEXTURE_COORDINATES, 0).getSize();
+        instBufVertexSize += d->addElement(1, instBufVertexSize, Ogre::VET_FLOAT3, tc, 0).getSize();
         // mat 3xfloat
-        instBufVertexSize += vertexData.vertexDeclaration->addElement(1, instBufVertexSize, Ogre::VET_FLOAT3, Ogre::VES_TEXTURE_COORDINATES, 1).getSize();
+        instBufVertexSize += d->addElement(1, instBufVertexSize, Ogre::VET_FLOAT3, tc, 1).getSize();
         // mat 3xfloat
-        instBufVertexSize += vertexData.vertexDeclaration->addElement(1, instBufVertexSize, Ogre::VET_FLOAT3, Ogre::VES_TEXTURE_COORDINATES, 2).getSize();
+        instBufVertexSize += d->addElement(1, instBufVertexSize, Ogre::VET_FLOAT3, tc, 2).getSize();
         // position 3xfloat
-        instBufVertexSize += vertexData.vertexDeclaration->addElement(1, instBufVertexSize, Ogre::VET_FLOAT3, Ogre::VES_TEXTURE_COORDINATES, 3).getSize();
+        instBufVertexSize += d->addElement(1, instBufVertexSize, Ogre::VET_FLOAT3, tc, 3).getSize();
         // colour 3xfloat
-        instBufVertexSize += vertexData.vertexDeclaration->addElement(1, instBufVertexSize, Ogre::VET_FLOAT3, Ogre::VES_TEXTURE_COORDINATES, 4).getSize();
+        instBufVertexSize += d->addElement(1, instBufVertexSize, Ogre::VET_FLOAT3, tc, 4).getSize();
         // alpha
-        instBufVertexSize += vertexData.vertexDeclaration->addElement(1, instBufVertexSize, Ogre::VET_FLOAT1, Ogre::VES_TEXTURE_COORDINATES, 5).getSize();
+        instBufVertexSize += d->addElement(1, instBufVertexSize, Ogre::VET_FLOAT1, tc, 5).getSize();
         // uv1, uv2
-        instBufVertexSize += vertexData.vertexDeclaration->addElement(1, instBufVertexSize, Ogre::VET_FLOAT4, Ogre::VES_TEXTURE_COORDINATES, 6).getSize();
+        instBufVertexSize += d->addElement(1, instBufVertexSize, Ogre::VET_FLOAT4, tc, 6).getSize();
 
         renderOp.vertexData = &vertexData;
         renderOp.indexData = &quadIndexData;
@@ -305,15 +266,16 @@ class GfxParticleSystem {
         for (unsigned i=0 ; i<particles.size() ; ++i) {
             GfxParticle *p = particles[i];
             p->preProcess(cam_pos);
-            if (false) continue;
             visible.push_back(p);
-        }
-        if (alphaBlend) {
-            std::sort(visible.begin(), visible.end(), particleCompare);
         }
 
         // early out for nothing to render
         if (visible.size() == 0) return;
+
+        if (alphaBlend) {
+            std::sort(visible.begin(), visible.end(), particleCompare);
+        }
+
 
         // use particles.size() (an upper bound on visible.size()) to try and avoid frequent reallocation
         outside.beginParticles(particles.size());
@@ -381,10 +343,6 @@ class GfxParticleSystem {
 
 
             Ogre::Vector3 the_fog_params(fog_density, 1, global_exposure);
-            try_set_named_constant(fp, "the_fog_params", the_fog_params);
-            try_set_named_constant(fp, "the_fog_colour", to_ogre(fog_colour));
-            try_set_named_constant(fp, "far_clip_distance", cam->getFarClipDistance());
-            try_set_named_constant(fp, "camera_pos_ws", to_ogre(cam_pos));
             if (d3d9) {
                 Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
                                             1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());

@@ -915,9 +915,6 @@ void gfx_hud_init (void)
     shader_text = gfx_shader_make_or_reset("/system/HudText",
                                            vertex_code, "", colour_code2, shader_text_params);
 
-    shader_rect->getNativePair(GfxShader::HUD, std::set<std::string>{"tex"});
-    shader_rect->getNativePair(GfxShader::HUD, std::set<std::string>{});
-    shader_text->getNativePair(GfxShader::HUD, std::set<std::string>{"tex"});
 }
 
 void gfx_hud_shutdown (lua_State *L)
@@ -1103,7 +1100,8 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
     if (tex != nullptr)
         texs["tex"] = { tex, false, 4};
 
-    shader_text->bindShader(GfxShader::HUD, globs, matrix, texs, shader_text_binds);
+    shader_text->bindShader(GfxShader::HUD, false, 0, false, 0,
+                            globs, matrix, 1, texs, shader_text_binds);
 
     ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
     ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
@@ -1196,7 +1194,8 @@ void gfx_render_hud_one (GfxHudBase *base)
         Vector3 cam_pos(0,0,0);
         GfxShaderGlobals globs = { cam_pos, I, I, win_size, render_target_flipping };
 
-        shader_rect->bindShader(GfxShader::HUD, globs, matrix, texs, shader_tex_binds);
+        shader_rect->bindShader(GfxShader::HUD, false, 0, false, 0,
+                                globs, matrix, 1, texs, shader_tex_binds);
 
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);
         ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);

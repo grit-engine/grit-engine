@@ -106,6 +106,7 @@ float global_exposure = 1;
 float global_saturation = 1;
 DiskResourcePtr<GfxColourGradeLUTDiskResource> colour_grade_lut;
 DiskResourcePtr<GfxTextureDiskResource> fade_dither_map;
+DiskResourcePtr<GfxTextureDiskResource> corona_map;
 DiskResourcePtr<GfxTextureDiskResource> shadow_pcf_noise_map;
 
 // abuse ogre fog params to store several things
@@ -308,6 +309,19 @@ void gfx_fade_dither_map (const DiskResourcePtr<GfxTextureDiskResource> &v)
     if (v == fade_dither_map) return;
 
     fade_dither_map = v;
+}
+
+
+GfxTextureDiskResource *gfx_corona_map (void)
+{
+    return corona_map;
+}
+
+void gfx_corona_map (const DiskResourcePtr<GfxTextureDiskResource> &v)
+{
+    if (v == corona_map) return;
+
+    corona_map = v;
 }
 
 

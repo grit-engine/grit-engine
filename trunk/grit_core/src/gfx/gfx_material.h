@@ -68,8 +68,6 @@ class GfxBaseMaterial {
     
     const std::string name;
     
-    void precompileShader (GfxShader::Purpose purpose) const;
-    
     const GfxMaterialTextureMap &getTextures (void) const { return textures; } 
     void setTextures (const GfxMaterialTextureMap &v) { GFX_MAT_SYNC; textures = v; }
 

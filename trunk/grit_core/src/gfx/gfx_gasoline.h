@@ -131,7 +131,9 @@ void gfx_gasoline_check (const std::string &vert_prog,
 
 GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
                                                    const std::string &vert_prog,
-                                                   const GfxGslParams &params);
+                                                   const GfxGslParams &params,
+                                                   bool instanced,
+                                                   unsigned bone_weights);
 
 GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
                                             const std::string &vert_prog,
@@ -143,14 +145,19 @@ GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
                                             const std::string &vert_prog,
                                             const std::string &colour_prog,
                                             const GfxGslParams &params,
-                                            const GfxGslUnboundTextures &ubt);
+                                            const GfxGslUnboundTextures &ubt,
+                                            unsigned bone_weights);
 
 GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                      const std::string &vert_prog,
                                                      const std::string &dangs_prog,
                                                      const std::string &additional_prog,
                                                      const GfxGslParams &params,
-                                                     const GfxGslUnboundTextures &ubt);
+                                                     const GfxGslUnboundTextures &ubt,
+                                                     bool fade_dither,
+                                                     unsigned env_boxes,
+                                                     bool instanced,
+                                                     unsigned bone_weights);
 
 // To come!
 GfxGasolineResult gfx_gasoline_compile_forward (GfxGslBackend backend,
