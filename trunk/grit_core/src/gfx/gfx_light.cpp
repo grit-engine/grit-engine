@@ -28,7 +28,7 @@ static void ensure_coronas_init (void)
 {
     if (have_init_coronas) return;
     // this only happens once
-    gfx_particle_define("/system/Coronas", "/system/Corona.png", true, 0, true);
+    gfx_particle_define("/system/Coronas", "/system/Corona.png");
     have_init_coronas = true;
 }
 
@@ -94,7 +94,8 @@ void GfxLight::updateCorona (const Vector3 &cam_pos)
             float occlusion = std::min(std::max((angle-inner)/(outer-inner), 0.0f), 1.0f);
             col *= (1-occlusion);
     }
-    corona->colour = col;
+    corona->diffuse = Vector3(0, 0, 0);
+    corona->emissive = col;
 }
 
 float GfxLight::getCoronaSize (void)

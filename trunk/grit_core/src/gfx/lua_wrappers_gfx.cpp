@@ -3348,14 +3348,25 @@ namespace {
                 }
                 lua_pop(L,1);
 
-                lua_getfield(L, -1, "colour");
+                lua_getfield(L, -1, "diffuse");
                 if (lua_isnil(L,-1)) {
-                    p->colour = Vector3(1,1,1);
+                    p->diffuse = Vector3(1,1,1);
                 } else if (!lua_isvector3(L,-1)) {
-                    CERR << "Particle colour was not a vector3." << std::endl;
+                    CERR << "Particle diffuse was not a vector3." << std::endl;
                     destroy = true;
                 } else {
-                    p->colour = check_v3(L,-1);
+                    p->diffuse = check_v3(L,-1);
+                }
+                lua_pop(L,1);
+
+                lua_getfield(L, -1, "emissive");
+                if (lua_isnil(L,-1)) {
+                    p->emissive = Vector3(0,0,0);
+                } else if (!lua_isvector3(L,-1)) {
+                    CERR << "Particle emissive was not a vector3." << std::endl;
+                    destroy = true;
+                } else {
+                    p->emissive = check_v3(L,-1);
                 }
                 lua_pop(L,1);
 
@@ -3477,7 +3488,7 @@ namespace {
 
 }
 
-int global_gfx_particle_define (lua_State *L)
+static int global_gfx_particle_define (lua_State *L)
 {
 TRY_START
     check_args(L,2);
@@ -3490,45 +3501,6 @@ TRY_START
     lua_pop(L,1);
     lua_pushnil(L);
     lua_setfield(L, 2, "map");
-
-    lua_getfield(L, 2, "alphaBlend");
-    bool alpha_blend;
-    if (lua_isnil(L,-1)) {
-        alpha_blend = false;
-    } else if (!lua_isboolean(L,-1)) {
-        my_lua_error(L,"Particle alphaBlend must be a boolean.");
-    } else {
-        alpha_blend = lua_toboolean(L,-1);
-    }
-    lua_pop(L,1);
-    lua_pushnil(L);
-    lua_setfield(L, 2, "alphaBlend");
-
-    float alpha_rej;
-    lua_getfield(L, 2, "alphaReject");
-    if (lua_isnil(L,-1)) {
-        alpha_rej = alpha_blend ? 0 : 127;
-    } else if (!lua_isnumber(L,-1)) {
-        my_lua_error(L,"Particle alphaReject must be a number.");
-    } else {
-        alpha_rej = (float)lua_tonumber(L,-1);
-    }
-    lua_pop(L,1);
-    lua_pushnil(L);
-    lua_setfield(L, 2, "alphaReject");
-
-    bool emissive;
-    lua_getfield(L, 2, "emissive");
-    if (lua_isnil(L,-1)) {
-        emissive = false;
-    } else if (!lua_isboolean(L,-1)) {
-        my_lua_error(L,"Particle emissive must be a boolean.");
-    } else {
-        emissive = (bool)lua_toboolean(L,-1);
-    }
-    lua_pop(L,1);
-    lua_pushnil(L);
-    lua_setfield(L, 2, "emissive");
 
     lua_getfield(L, 2, "frames");
     std::vector<UVRect> frames;
@@ -3582,15 +3554,29 @@ TRY_START
 
     ParticleDefinition *newpd = new ParticleDefinition(name, frames, L, 2);
     pd = newpd;
-    gfx_particle_define(name, texture, alpha_blend, alpha_rej, emissive); // will invalidate 
+    gfx_particle_define(name, texture); // will invalidate 
     return 0;
 TRY_END
 }
 
-namespace {
+static int global_gfx_particle_all (lua_State *L)
+{
+TRY_START
+    check_args(L, 0);
+    std::vector<std::string> list = gfx_particle_all();
+    lua_newtable(L);
+    int counter = 1;
+    for (unsigned i=0 ; i<list.size() ; ++i) {
+        push_string(L, list[i]);
+        lua_rawseti(L, -2, counter);
+        counter++;
+    }
+    return 1;
+TRY_END
 }
 
-int global_gfx_particle_emit (lua_State *L)
+
+static int global_gfx_particle_emit (lua_State *L)
 {
 TRY_START
     check_args(L,3);
@@ -3651,7 +3637,7 @@ TRY_END
 float particle_step_size = 0.01f;
 float particle_step_remainder= 0.0f;
 
-int global_gfx_particle_step_size (lua_State *L)
+static int global_gfx_particle_step_size (lua_State *L)
 {
 TRY_START
     switch (lua_gettop(L)) {
@@ -3672,7 +3658,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_particle_pump (lua_State *L)
+static int global_gfx_particle_pump (lua_State *L)
 {
 TRY_START
     check_args(L,1);
@@ -3710,7 +3696,7 @@ TRY_START
 TRY_END
 }
 
-int global_gfx_particle_count (lua_State *L)
+static int global_gfx_particle_count (lua_State *L)
 {
     check_args(L,0);
         lua_pushnumber(L, particles.size());
@@ -4471,6 +4457,7 @@ static const luaL_reg global[] = {
     {"gfx_particle_pump", global_gfx_particle_pump},
     {"gfx_particle_count", global_gfx_particle_count},
     {"gfx_particle_step_size", global_gfx_particle_step_size},
+    {"gfx_particle_all", global_gfx_particle_all},
 
     {"gfx_last_frame_stats", global_gfx_last_frame_stats},
 

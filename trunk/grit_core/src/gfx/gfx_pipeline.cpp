@@ -662,18 +662,17 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
 class ParticlesPasses : public Ogre::RenderQueueInvocation {
     GfxPipeline *pipe;
-    bool alphaBlend;
 
     public:
-    ParticlesPasses (GfxPipeline *pipe, bool alpha_blend)
-      : Ogre::RenderQueueInvocation(0, Ogre::StringUtil::BLANK), pipe(pipe), alphaBlend(alpha_blend)
+    ParticlesPasses (GfxPipeline *pipe)
+      : Ogre::RenderQueueInvocation(0, Ogre::StringUtil::BLANK), pipe(pipe)
     {
         setSuppressShadows(true);
     }
 
     void invoke (Ogre::RenderQueueGroup *, Ogre::SceneManager *)
     {
-        if (pipe->getCameraOpts().particles) gfx_particle_render(pipe, alphaBlend);
+        if (pipe->getCameraOpts().particles) gfx_particle_render(pipe);
     }
     
 };
@@ -821,14 +820,13 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
     rqisDeferred->add(new DeferredLightingPasses(this));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_OPAQUE));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_OPAQUE_EMISSIVE));
-    rqisDeferred->add(new ParticlesPasses(this, false));
     rqisDeferred->add(new SkyPasses(this));
     // Alpha passes
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH_EMISSIVE));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_EMISSIVE));
-    rqisDeferred->add(new ParticlesPasses(this, true));
+    rqisDeferred->add(new ParticlesPasses(this));
     // First person passes
     rqisDeferred->add(new ResetPass(this, Ogre::FBT_DEPTH));
     rqisDeferred->add(new FirstPersonPasses(this, false));

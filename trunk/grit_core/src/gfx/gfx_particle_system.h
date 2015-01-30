@@ -40,7 +40,8 @@ protected:
 public:
     Vector3 pos;
     Vector3 dimensions;
-    Vector3 colour;
+    Vector3 diffuse;
+    Vector3 emissive;
     float alpha;
     float angle;
     float u1, v1, u2, v2;
@@ -63,13 +64,14 @@ public:
 void gfx_particle_init (void);
 
 // set up a new particle system
-void gfx_particle_define (const std::string &pname, const std::string &tex_name,
-                          bool alpha_blend, float alpha_rej, bool emissive);
+void gfx_particle_define (const std::string &pname, const std::string &tex_name);
 
 // create a new particle in a given system (get rid of it by calling particle->release())
 GfxParticle *gfx_particle_emit (const std::string &pname);
 
+std::vector<std::string> gfx_particle_all (void);
+
 // called every frame
-void gfx_particle_render (GfxPipeline *p, bool alpha_blend);
+void gfx_particle_render (GfxPipeline *p);
 
 #endif

@@ -84,7 +84,7 @@ void gfx_sky_material_init (void)
                      "out.colour = gamma_decode(c.rgb) * mat.emissiveMask;\n"
                      "out.alpha = c.a;\n";
 
-    GfxShader *s = gfx_shader_make_or_reset("/system/SkyDefault", vs, "", fs, {
+    gfx_shader_make_or_reset("/system/SkyDefault", vs, "", fs, {
         { "alphaMask", GfxShaderParam(1.0f) },
         { "alphaRejectThreshold", GfxShaderParam(-1.0f) },
         { "emissiveMap", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1)) },

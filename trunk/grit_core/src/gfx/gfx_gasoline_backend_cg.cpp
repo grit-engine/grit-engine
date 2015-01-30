@@ -92,10 +92,6 @@ static std::string generate_funcs (void)
     ss << "Float2 gamma_encode (Float2 v) { return pow(v, 1/2.2); }\n";
     ss << "Float3 gamma_encode (Float3 v) { return pow(v, 1/2.2); }\n";
     ss << "Float4 gamma_encode (Float4 v) { return pow(v, 1/2.2); }\n";
-    ss << "Float lerp (Float a, Float b, Float v) { return v*b + (1-v)*a; }\n";
-    ss << "Float2 lerp (Float2 a, Float2 b, Float v) { return v*b + (1-v)*a; }\n";
-    ss << "Float3 lerp (Float3 a, Float3 b, Float v) { return v*b + (1-v)*a; }\n";
-    ss << "Float4 lerp (Float4 a, Float4 b, Float v) { return v*b + (1-v)*a; }\n";
 
     ss << "Float3 transform_to_world (Float3 v) { return mul(global_world, Float4(v, 1)).xyz; }\n";
     ss << "Float3 rotate_to_world (Float3 v) { return mul(global_world, Float4(v, 0)).xyz; }\n";
@@ -268,7 +264,7 @@ void gfx_gasoline_unparse_cg (GfxGslContext &ctx,
     frag_ss << "void main (in Float2 wpos : WPOS, out Float4 out_colour_alpha : COLOR)\n";
     frag_ss << "{\n";
 
-    frag_ss << "    frag_screen = wpos;\n";
+    frag_ss << "    frag_screen = wpos.xy + Float2(0.5, 0.5);\n";
     frag_ss << "    if (internal_rt_flip < 0)\n";
     frag_ss << "        frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "vert_", GfxGslTrans::VERT);
@@ -384,7 +380,7 @@ void gfx_gasoline_unparse_first_person_cg(GfxGslContext &ctx,
     frag_ss << "void main (in Float2 wpos : WPOS, out Float4 out_colour_alpha : COLOR)\n";
     frag_ss << "{\n";
 
-    frag_ss << "    frag_screen = wpos + Float(0.5, 0.5);\n";
+    frag_ss << "    frag_screen = wpos.xy + Float2(0.5, 0.5);\n";
     frag_ss << "    if (internal_rt_flip < 0)\n";
     frag_ss << "        frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "vert_", GfxGslTrans::VERT);

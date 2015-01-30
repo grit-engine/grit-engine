@@ -19,7 +19,7 @@ do_cg_check() {
     if [ "$KIND" == "vert" ] ; then
         PROFILE=vs_3_0
     fi
-    cgc -profile $PROFILE -strict ${FILENAME}
+    cgc -profile $PROFILE -strict ${FILENAME} -o ${FILENAME}.asm
     CODE="$?"
     return "$CODE"
 }
@@ -84,10 +84,10 @@ test_first_person() {
 test_particle() {
     TARGET="$1"
     SHADER="$2"
-    PARAMS="-p gbuffer0 FloatTexture2"
+    PARAMS="-p gbuffer0 FloatTexture2 -p particleAtlas FloatTexture2"
     TLANG=""
     test $TARGET == "cg" && TLANG="-C"
-    echo gsl $TLANG $PARAMS $UBT "${SHADER}.vert.gsl" "" "${SHADER}.add.gsl" SKY ${SHADER}.{vert,frag}.out.$TARGET || exit 1
+    gsl $TLANG $PARAMS $UBT "${SHADER}.vert.gsl" "" "${SHADER}.add.gsl" SKY ${SHADER}.{vert,frag}.out.$TARGET || exit 1
 
     do_check ${TARGET} vert ${SHADER}.vert.out && do_check ${TARGET} frag ${SHADER}.frag.out
 }

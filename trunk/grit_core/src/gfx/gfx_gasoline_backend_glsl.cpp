@@ -95,9 +95,9 @@ static std::string generate_funcs (void)
     ss << "Float3 gamma_encode (Float3 v) { return pow(v, Float3(1/2.2, 1/2.2, 1/2.2)); }\n";
     ss << "Float4 gamma_encode (Float4 v) { return pow(v, Float4(1/2.2, 1/2.2, 1/2.2, 1/2.2)); }\n";
     ss << "Float lerp (Float a, Float b, Float v) { return v*b + (1-v)*a; }\n";
-    ss << "Float2 lerp (Float2 a, Float2 b, Float v) { return v*b + (1-v)*a; }\n";
-    ss << "Float3 lerp (Float3 a, Float3 b, Float v) { return v*b + (1-v)*a; }\n";
-    ss << "Float4 lerp (Float4 a, Float4 b, Float v) { return v*b + (1-v)*a; }\n";
+    ss << "Float2 lerp (Float2 a, Float2 b, Float2 v) { return v*b + (Float2(1,1)-v)*a; }\n";
+    ss << "Float3 lerp (Float3 a, Float3 b, Float3 v) { return v*b + (Float3(1,1,1)-v)*a; }\n";
+    ss << "Float4 lerp (Float4 a, Float4 b, Float4 v) { return v*b + (Float4(1,1,1,1)-v)*a; }\n";
 
     ss << "Float3 transform_to_world (Float3 v) { return mul(global_world, Float4(v, 1)).xyz; }\n";
     ss << "Float3 rotate_to_world (Float3 v) { return mul(global_world, Float4(v, 0)).xyz; }\n";
