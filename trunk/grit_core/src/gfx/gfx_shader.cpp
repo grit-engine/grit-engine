@@ -37,6 +37,35 @@ static std::string fresh_name (void)
     return ss.str();
 }
 
+GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam, const Ogre::Matrix4 &proj_)
+{
+    Ogre::Matrix4 view = cam->getViewMatrix();
+    // Ogre cameras point towards Z whereas in Grit the convention is that
+    // 'unrotated' means pointing towards y (north)
+    Ogre::Matrix4 orientation(to_ogre(Quaternion(Degree(90), Vector3(1, 0, 0))));
+
+    Ogre::Viewport *viewport = cam->getViewport();
+    bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
+    float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
+    Ogre::Matrix4 proj = proj_;
+    // Invert transformed y if necessary
+    proj[1][0] *= render_target_flipping_factor;
+    proj[1][1] *= render_target_flipping_factor;
+    proj[1][2] *= render_target_flipping_factor;
+    proj[1][3] *= render_target_flipping_factor;
+    Vector3 cam_pos = from_ogre(cam->getPosition());
+    Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
+
+    Vector3 ray_top_right = from_ogre(cam->getWorldSpaceCorners()[4]) - cam_pos;
+    Vector3 ray_top_left = from_ogre(cam->getWorldSpaceCorners()[5]) - cam_pos;
+    Vector3 ray_bottom_left = from_ogre(cam->getWorldSpaceCorners()[6]) - cam_pos;
+    Vector3 ray_bottom_right = from_ogre(cam->getWorldSpaceCorners()[7]) - cam_pos;
+
+    return {
+        cam_pos, view, proj, ray_top_left, ray_top_right, ray_bottom_left, ray_bottom_right,
+        viewport_dim, render_target_flipping
+    };
+}
 
 void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
                        const std::string &name, const Ogre::Matrix4 &v)
@@ -503,6 +532,10 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p,
     hack_set_constant(np, "global_worldViewProj", world_view_proj);
     hack_set_constant(np, "global_worldView", world_view);
     hack_set_constant(np, "global_world", world);
+    hack_set_constant(np, "global_rayTopLeft", p.rayTopLeft);
+    hack_set_constant(np, "global_rayTopRight", p.rayTopRight);
+    hack_set_constant(np, "global_rayBottomLeft", p.rayBottomLeft);
+    hack_set_constant(np, "global_rayBottomRight", p.rayBottomRight);
 
     hack_set_constant(np, "global_particleAmbient", particle_ambient);
     hack_set_constant(np, "global_sunlightDiffuse", sunlight_diffuse);

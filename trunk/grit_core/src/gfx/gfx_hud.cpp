@@ -1089,8 +1089,8 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
     bool render_target_flipping = false;
     Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin * matrix_centre;
 
-    Vector3 cam_pos(0,0,0);
-    GfxShaderGlobals globs = { cam_pos, I, I, win_size, render_target_flipping };
+    Vector3 zv(0,0,0);
+    GfxShaderGlobals globs = { zv, I, I, zv, zv, zv, zv, win_size, render_target_flipping };
 
     shader_text_binds.clear();
     shader_text_binds["colour"] = colour;
@@ -1191,8 +1191,8 @@ void gfx_render_hud_one (GfxHudBase *base)
         if (tex != nullptr)
             texs["tex"] = { tex, false, 4};
 
-        Vector3 cam_pos(0,0,0);
-        GfxShaderGlobals globs = { cam_pos, I, I, win_size, render_target_flipping };
+        Vector3 zv(0,0,0);
+        GfxShaderGlobals globs = { zv, I, I, zv, zv, zv, zv, win_size, render_target_flipping };
 
         shader_rect->bindShader(GfxShader::HUD, false, 0, false, 0,
                                 globs, matrix, 1, texs, shader_tex_binds);

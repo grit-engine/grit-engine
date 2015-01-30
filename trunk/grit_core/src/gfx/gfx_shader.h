@@ -74,9 +74,15 @@ struct GfxShaderGlobals {
     Vector3 cam_pos;
     Ogre::Matrix4 view;
     Ogre::Matrix4 proj;
+    Vector3 rayTopLeft;
+    Vector3 rayTopRight;
+    Vector3 rayBottomLeft;
+    Vector3 rayBottomRight;
     Vector2 viewport_dim;
     bool render_target_flipping;
 };
+
+GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam, const Ogre::Matrix4 &proj);
 
 // User always gives n strings, some of which can be empty.
 // E.g. dangs shader for sky is not needed (no lighting equation)

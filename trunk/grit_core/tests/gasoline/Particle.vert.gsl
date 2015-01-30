@@ -1,0 +1,17 @@
+var part_basis_x = vert.coord0.xyz;
+var part_half_depth = vert.coord1.x;
+var part_basis_z = vert.coord2.xyz;
+var part_pos = vert.coord3.xyz;
+var part_diffuse = vert.coord4.xyz;
+var part_alpha = vert.coord5.x;
+var part_emissive = vert.coord6.xyz;
+
+var fragment_uv = lerp(vert.coord7.xy, vert.coord7.zw, vert.position.xz / Float2(2, -2) + Float2(0.5, 0.5));
+
+var part_colour = global.particleAmbient * part_diffuse + part_emissive;
+var camera_to_fragment = out.position - global.cameraPos;
+
+out.position = vert.position.x * part_basis_x
+             + vert.position.z * part_basis_z
+             + part_pos;
+

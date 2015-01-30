@@ -852,26 +852,15 @@ void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
     frustum.setNearClipDistance(0.01f);
     frustum.setFarClipDistance(10.0f);
 
-    // No 3d effect on first person objects
+    // No 3d effect on first person objects (TODO: I think that's right, need to actually verify)
     frustum.setFrustumOffset(0);
     frustum.setFocalLength(1);
 
-    Ogre::Viewport *viewport = p->getCamera()->getViewport();
-    bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
-    float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
-    Ogre::Matrix4 proj = frustum.getProjectionMatrixWithRSDepth();
-    // Invert transformed y if necessary
-    proj[1][0] *= render_target_flipping_factor;
-    proj[1][1] *= render_target_flipping_factor;
-    proj[1][2] *= render_target_flipping_factor;
-    proj[1][3] *= render_target_flipping_factor; 
-    Vector3 cam_pos = from_ogre(p->getCamera()->getPosition());
-    Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
-    GfxShaderGlobals g = { cam_pos, view, proj, viewport_dim, render_target_flipping };
+    GfxShaderGlobals g =
+        gfx_shader_globals_cam(p->getCamera(), frustum.getProjectionMatrixWithRSDepth());
 
     // Render, to HDR buffer
     // TODO: receive shadow
-    // TODO: env box (the one local to player)
 
     for (const auto &body : first_person_bodies) {
         body->renderFirstPerson(g, inv_mat, alpha_blend);

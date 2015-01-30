@@ -384,7 +384,7 @@ void gfx_gasoline_unparse_first_person_cg(GfxGslContext &ctx,
     frag_ss << "void main (in Float2 wpos : WPOS, out Float4 out_colour_alpha : COLOR)\n";
     frag_ss << "{\n";
 
-    frag_ss << "    frag_screen = wpos;\n";
+    frag_ss << "    frag_screen = wpos + Float(0.5, 0.5);\n";
     frag_ss << "    if (internal_rt_flip < 0)\n";
     frag_ss << "        frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "vert_", GfxGslTrans::VERT);

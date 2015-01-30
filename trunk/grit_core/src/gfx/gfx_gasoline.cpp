@@ -41,6 +41,10 @@ static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
     m["world"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["worldView"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["worldViewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
+    m["rayTopLeft"] = alloc.makeType<GfxGslFloatType>(3);
+    m["rayTopRight"] = alloc.makeType<GfxGslFloatType>(3);
+    m["rayBottomLeft"] = alloc.makeType<GfxGslFloatType>(3);
+    m["rayBottomRight"] = alloc.makeType<GfxGslFloatType>(3);
 
     m["particleAmbient"] = alloc.makeType<GfxGslFloatType>(3);
     m["sunlightDiffuse"] = alloc.makeType<GfxGslFloatType>(3);
@@ -201,7 +205,7 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
     // ts holds the set of all functions: (float_n, float_n, float1) -> float_n
     ts.clear();
     for (unsigned i=1 ; i<=4 ; ++i)
-        ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(i), fs(i), fs(1)}, fs(i)));
+        ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(i), fs(i), fs(i)}, fs(i)));
     m["lerp"] = ts;
 
 

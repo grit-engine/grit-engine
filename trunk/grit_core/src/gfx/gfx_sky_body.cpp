@@ -200,21 +200,9 @@ static bool sky_body_compare (GfxSkyBody *a, GfxSkyBody *b)
 // called every frame
 void gfx_sky_render (GfxPipeline *p)
 {
-    Ogre::Matrix4 view = p->getCamera()->getViewMatrix();
-    // do not want translation part of view matrix (i.e. just camera direction)
-    view.setTrans(Ogre::Vector3(0,0,0)); 
-    Ogre::Viewport *viewport = p->getCamera()->getViewport();
-    bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
-    float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
-    Ogre::Matrix4 proj = p->getCamera()->getProjectionMatrixWithRSDepth();
-    // Invert transformed y if necessary
-    proj[1][0] *= render_target_flipping_factor;
-    proj[1][1] *= render_target_flipping_factor;
-    proj[1][2] *= render_target_flipping_factor;
-    proj[1][3] *= render_target_flipping_factor;
-    Vector3 cam_pos = from_ogre(p->getCamera()->getPosition());
-    Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
-    GfxShaderGlobals g = { cam_pos, view, proj, viewport_dim, render_target_flipping };
+    GfxShaderGlobals g =
+        gfx_shader_globals_cam(p->getCamera(), p->getCamera()->getProjectionMatrixWithRSDepth());
+    g.view.setTrans(Ogre::Vector3(0,0,0)); 
 
     // sort by z order into separate container
     std::vector<GfxSkyBody*> sorted;

@@ -1,0 +1,15 @@
+var uv = frag.screen / global.viewportSize;
+var ray = lerp(lerp(global.rayTopLeft, global.rayTopRight, uv.x),
+               lerp(global.rayBottomLeft, global.rayBottomRight, uv.x),
+               uv.y);
+
+var bytes = sample(mat.gbuffer0, uv).xyz;
+var normalised_cam_dist = 255.0 * (256.0*256.0*bytes.x + 256.0*bytes.y + bytes.z) / (256.0*256.0*256.0 - 1);
+
+var scene_dist = length(normalised_cam_dist * ray);
+var fragment_dist = length(camera_to_fragment);
+var part_exposed = clamp((scene_dist - fragment_dist + part_half_depth)/part_half_depth, 0.0, 1.0);
+
+var texel = sample(mat.particleAtlas, fragment_uv);
+out.colour = gamma_decode(texel.rgb) * part_colour * part_exposed;
+out.alpha = texel.a * part_alpha;

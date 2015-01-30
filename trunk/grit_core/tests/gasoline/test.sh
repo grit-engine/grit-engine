@@ -81,8 +81,22 @@ test_first_person() {
 }
 
 
+test_particle() {
+    TARGET="$1"
+    SHADER="$2"
+    PARAMS="-p gbuffer0 FloatTexture2"
+    TLANG=""
+    test $TARGET == "cg" && TLANG="-C"
+    echo gsl $TLANG $PARAMS $UBT "${SHADER}.vert.gsl" "" "${SHADER}.add.gsl" SKY ${SHADER}.{vert,frag}.out.$TARGET || exit 1
+
+    do_check ${TARGET} vert ${SHADER}.vert.out && do_check ${TARGET} frag ${SHADER}.frag.out
+}
+
+
 do_tests() {
     TARGET=$1
+    test_particle ${TARGET} Particle &&
+
     test_sky ${TARGET} SkyEmpty &&
     test_sky ${TARGET} SkyTest &&
     test_sky ${TARGET} SkyDefault &&
@@ -94,6 +108,7 @@ do_tests() {
 
     test_hud ${TARGET} HudRect &&
     test_hud ${TARGET} HudText &&
+
     true
     return "$?"
 }

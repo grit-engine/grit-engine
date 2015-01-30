@@ -101,7 +101,7 @@ int main (int argc, char **argv)
                 env_boxes = 2;
             } else if (arg=="-b" || arg=="--bones") {
                 std::string num_str = next_arg(so_far, argc, argv);
-                char **nptr;
+                char **nptr = nullptr;
                 long long num = strtoll(num_str.c_str(), nptr, 10);
                 if (num < 0 || num > 4) {
                     std::cerr<<"Number of bones must be in [0,4] range." << std::endl;
@@ -153,7 +153,7 @@ int main (int argc, char **argv)
         f.open(additional_in_filename);
         if (!f.good()) {
             std::cerr << "Opening file: ";
-            perror(vert_in_filename.c_str());
+            perror(additional_in_filename.c_str());
             return EXIT_FAILURE;
         }
         std::string additional_code;
