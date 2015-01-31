@@ -219,6 +219,9 @@ struct GfxGslVert : public GfxGslAst {
 struct GfxGslOut : public GfxGslAst {
     GfxGslOut (const GfxGslLocation &loc) : GfxGslAst(loc) { }
 };
+struct GfxGslBody : public GfxGslAst {
+    GfxGslBody (const GfxGslLocation &loc) : GfxGslAst(loc) { }
+};
 struct GfxGslFrag : public GfxGslAst {
     GfxGslFrag (const GfxGslLocation &loc) : GfxGslAst(loc) { }
 };

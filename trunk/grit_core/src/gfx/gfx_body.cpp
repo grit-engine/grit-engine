@@ -848,10 +848,8 @@ void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
 
     Ogre::Frustum frustum;  // Used to calculate projection matrix.
     frustum.setFOVy(Ogre::Degree(p->getCameraOpts().fovY));
-    // TODO(dcunnin): gfx_option for these
-    frustum.setNearClipDistance(0.01f);
-    frustum.setFarClipDistance(10.0f);
-
+    frustum.setNearClipDistance(gfx_option(GFX_FIRST_PERSON_NEAR_CLIP));
+    frustum.setFarClipDistance(gfx_option(GFX_FIRST_PERSON_FAR_CLIP));
     // No 3d effect on first person objects (TODO: I think that's right, need to actually verify)
     frustum.setFrustumOffset(0);
     frustum.setFocalLength(1);
@@ -861,6 +859,8 @@ void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
 
     // Render, to HDR buffer
     // TODO: receive shadow
+    // TODO: instancing
+    // TODO: skeletal animation
 
     for (const auto &body : first_person_bodies) {
         body->renderFirstPerson(g, inv_mat, alpha_blend);

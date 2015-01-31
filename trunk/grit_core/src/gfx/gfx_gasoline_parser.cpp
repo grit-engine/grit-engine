@@ -46,6 +46,7 @@ enum TokenKind {
     VAR,
     VERT,
     OUT,
+    BODY,
 
     SYMBOL,  // Has val.
     LITERAL_NUMBER,  // Has val.
@@ -66,6 +67,7 @@ static std::string to_string (TokenKind k)
         case VAR: return "var";
         case VERT: return "vert";
         case OUT: return "out";
+        case BODY: return "body";
         case SYMBOL: return "symbol";
         case LITERAL_NUMBER: return "number";
         case END_OF_FILE: return "EOF";
@@ -325,25 +327,27 @@ std::list<Token> lex (const std::string &shader)
                 }
                 --c;
                 if (id == "discard") {
-                    r.emplace_back(DISCARD, "discard", here);
+                    r.emplace_back(DISCARD, id, here);
                 } else if (id == "else") {
-                    r.emplace_back(ELSE, "else", here);
+                    r.emplace_back(ELSE, id, here);
                 } else if (id == "frag") {
-                    r.emplace_back(FRAG, "frag", here);
+                    r.emplace_back(FRAG, id, here);
                 } else if (id == "global") {
-                    r.emplace_back(GLOBAL, "global", here);
+                    r.emplace_back(GLOBAL, id, here);
                 } else if (id == "if") {
-                    r.emplace_back(IF, "if", here);
+                    r.emplace_back(IF, id, here);
                 } else if (id == "mat") {
-                    r.emplace_back(MAT, "mat", here);
+                    r.emplace_back(MAT, id, here);
                 } else if (id == "return") {
-                    r.emplace_back(RETURN, "return", here);
+                    r.emplace_back(RETURN, id, here);
                 } else if (id == "var") {
-                    r.emplace_back(VAR, "var", here);
+                    r.emplace_back(VAR, id, here);
                 } else if (id == "vert") {
-                    r.emplace_back(VERT, "vert", here);
+                    r.emplace_back(VERT, id, here);
                 } else if (id == "out") {
-                    r.emplace_back(OUT, "out", here);
+                    r.emplace_back(OUT, id, here);
+                } else if (id == "body") {
+                    r.emplace_back(BODY, id, here);
                 } else {
                     r.emplace_back(IDENTIFIER, id, here);
                 }
@@ -457,6 +461,7 @@ namespace {
                     case GLOBAL: return alloc.makeAst<GfxGslGlobal>(pop().loc);
                     case VERT: return alloc.makeAst<GfxGslVert>(pop().loc);
                     case OUT: return alloc.makeAst<GfxGslOut>(pop().loc);
+                    case BODY: return alloc.makeAst<GfxGslBody>(pop().loc);
                     case FRAG: return alloc.makeAst<GfxGslFrag>(pop().loc);
                     case IDENTIFIER: {
                         auto tok = pop();

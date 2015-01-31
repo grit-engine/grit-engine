@@ -71,6 +71,9 @@ std::ostream &operator<<(std::ostream &o, const GfxGslType *t_)
     } else if (dynamic_cast<const GfxGslOutType*>(t_)) {
         o << "Out";
 
+    } else if (dynamic_cast<const GfxGslBodyType*>(t_)) {
+        o << "Body";
+
     } else if (dynamic_cast<const GfxGslFragType*>(t_)) {
         o << "Frag";
 
@@ -118,6 +121,8 @@ GfxGslType *GfxGslTypeSystem::cloneType (const GfxGslType *t_)
         return ctx.alloc.makeType<GfxGslVertType>();
     } else if (dynamic_cast<const GfxGslOutType*>(t_)) {
         return ctx.alloc.makeType<GfxGslOutType>();
+    } else if (dynamic_cast<const GfxGslBodyType*>(t_)) {
+        return ctx.alloc.makeType<GfxGslBodyType>();
     } else if (dynamic_cast<const GfxGslFragType*>(t_)) {
         return ctx.alloc.makeType<GfxGslFragType>();
     } else if (auto *t = dynamic_cast<const GfxGslFunctionType*>(t_)) {
@@ -296,6 +301,10 @@ bool GfxGslTypeSystem::equal (GfxGslType *a_, GfxGslType *b_)
 
     } else if (dynamic_cast<GfxGslOutType*>(a_)) {
         auto *b = dynamic_cast<GfxGslOutType*>(b_);
+        if (b == nullptr) return false;
+
+    } else if (dynamic_cast<GfxGslBodyType*>(a_)) {
+        auto *b = dynamic_cast<GfxGslBodyType*>(b_);
         if (b == nullptr) return false;
 
     } else if (dynamic_cast<GfxGslFragType*>(a_)) {
@@ -544,6 +553,14 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             ast->type->writeable = true;
             if (c.write)
                 outFieldsWritten.insert(ast->id);
+        } else if (dynamic_cast<GfxGslBodyType*>(ast->target->type)) {
+            if (bodyFields.find(ast->id) == outFields.end())
+                error(loc) << "body." << ast->id << " does not exist." << ENDL;
+            const GfxGslType *type = bodyFields[ast->id];
+            ast->type = cloneType(type);
+            ast->type->writeable = true;
+            if (c.write)
+                outFieldsWritten.insert(ast->id);
         } else if (dynamic_cast<GfxGslGlobalType*>(ast->target->type)) {
             if (ctx.globalFields.find(ast->id) == ctx.globalFields.end())
                 error(loc) << "global." << ast->id << " does not exist." << ENDL;
@@ -662,6 +679,9 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
 
     } else if (auto *ast = dynamic_cast<GfxGslOut*>(ast_)) {
         ast->type = ctx.alloc.makeType<GfxGslOutType>();
+
+    } else if (auto *ast = dynamic_cast<GfxGslBody*>(ast_)) {
+        ast->type = ctx.alloc.makeType<GfxGslBodyType>();
 
     } else {
         EXCEPTEX << "INTERNAL ERROR: Unknown Ast." << ENDL;

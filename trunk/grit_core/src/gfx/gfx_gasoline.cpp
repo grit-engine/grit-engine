@@ -307,7 +307,7 @@ void gfx_gasoline_check (const std::string &vert_prog,
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, params), {}
+        make_mat_fields(alloc, params), {}, {}
     };
 
     GfxGslAst *vert_ast;
@@ -354,7 +354,7 @@ static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, params), ubt
+        make_mat_fields(alloc, params), {}, ubt
     };
 
     GfxGslAst *vert_ast;
@@ -441,7 +441,7 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, params), ubt
+        make_mat_fields(alloc, params), {}, ubt
     };
 
     GfxGslAst *vert_ast;

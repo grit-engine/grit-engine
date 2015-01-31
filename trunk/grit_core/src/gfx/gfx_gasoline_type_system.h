@@ -97,6 +97,10 @@ struct GfxGslOutType : public GfxGslType {
     GfxGslOutType (void) { }
 };
 
+struct GfxGslBodyType : public GfxGslType {
+    GfxGslBodyType (void) { }
+};
+
 struct GfxGslVertType : public GfxGslType {
     GfxGslVertType (void) { }
 };
@@ -117,6 +121,7 @@ struct GfxGslContext {
     GfxGslAllocator &alloc;
     std::map<std::string, std::vector<GfxGslFunctionType*>> funcTypes;
     GfxGslTypeMap globalFields;
+    GfxGslTypeMap bodyFields;
     GfxGslTypeMap matFields;
     GfxGslUnboundTextures ubt;
 
@@ -131,6 +136,13 @@ struct GfxGslContext {
     {
         auto it = globalFields.find(f);
         if (it == globalFields.end()) return nullptr;
+        return it->second;
+    }
+
+    const GfxGslType *getBodyType (const std::string &f) const
+    {
+        auto it = bodyFields.find(f);
+        if (it == bodyFields.end()) return nullptr;
         return it->second;
     }
 
@@ -160,6 +172,7 @@ class GfxGslTypeSystem {
 
     GfxGslTypeMap outFields;
     GfxGslTypeMap fragFields;
+    GfxGslTypeMap bodyFields;
     GfxGslTypeMap vertFields;
     GfxGslTypeMap vars;
     const GfxGslTypeMap outerVars;
@@ -167,6 +180,7 @@ class GfxGslTypeSystem {
     std::set<std::string> fragFieldsRead;
     std::set<std::string> vertFieldsRead;
     std::set<std::string> globalFieldsRead;
+    std::set<std::string> bodyFieldsRead;
     std::set<std::string> matFieldsRead;
     std::set<std::string> outFieldsWritten;
 
@@ -176,8 +190,8 @@ class GfxGslTypeSystem {
 
     void initObjectTypes (GfxGslKind k);
 
-    GfxGslFunctionType *lookupFunction(const GfxGslLocation &loc, const std::string &name,
-                                       GfxGslAsts &asts);
+    GfxGslFunctionType *lookupFunction (const GfxGslLocation &loc, const std::string &name,
+                                        GfxGslAsts &asts);
 
     bool isVoid (GfxGslType *x)
     {
@@ -262,6 +276,9 @@ class GfxGslTypeSystem {
 
     /** Get the global fields read by this shader. */
     const std::set<std::string> &getGlobalFieldsRead (void) const { return globalFieldsRead; }
+
+    /** Get the global fields read by this shader. */
+    const std::set<std::string> &getBodyFieldsRead (void) const { return bodyFieldsRead; }
 
     /** Get the out fields written by this shader. */
     const std::set<std::string> &getOutFieldsWritten (void) const { return outFieldsWritten; }

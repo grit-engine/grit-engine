@@ -1,0 +1,2 @@
+var hdr_colour = sample(mat.hdr, frag.screen / global.viewportSize).rgb;
+pixel = tone_map(hdr_colour * global_exposure);

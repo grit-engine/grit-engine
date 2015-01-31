@@ -68,6 +68,8 @@ GfxFloatOption gfx_float_options[] = {
     GFX_FOV,
     GFX_NEAR_CLIP,
     GFX_FAR_CLIP,
+    GFX_FIRST_PERSON_NEAR_CLIP,
+    GFX_FIRST_PERSON_FAR_CLIP,
     GFX_EYE_SEPARATION,
     GFX_MONITOR_HEIGHT,
 
@@ -170,6 +172,8 @@ std::string gfx_option_to_string (GfxFloatOption o)
         TO_STRING_MACRO(GFX_FOV);
         TO_STRING_MACRO(GFX_NEAR_CLIP);
         TO_STRING_MACRO(GFX_FAR_CLIP);
+        TO_STRING_MACRO(GFX_FIRST_PERSON_NEAR_CLIP);
+        TO_STRING_MACRO(GFX_FIRST_PERSON_FAR_CLIP);
         TO_STRING_MACRO(GFX_EYE_SEPARATION);
         TO_STRING_MACRO(GFX_MONITOR_HEIGHT);
 
@@ -256,6 +260,8 @@ void gfx_option_from_string (const std::string &s,
     FROM_STRING_FLOAT_MACRO(GFX_FOV)
     FROM_STRING_FLOAT_MACRO(GFX_NEAR_CLIP)
     FROM_STRING_FLOAT_MACRO(GFX_FAR_CLIP)
+    FROM_STRING_FLOAT_MACRO(GFX_FIRST_PERSON_NEAR_CLIP)
+    FROM_STRING_FLOAT_MACRO(GFX_FIRST_PERSON_FAR_CLIP)
     FROM_STRING_FLOAT_MACRO(GFX_EYE_SEPARATION)
     FROM_STRING_FLOAT_MACRO(GFX_MONITOR_HEIGHT)
 
@@ -376,6 +382,8 @@ static void options_update (bool flush)
             case GFX_FOV:
             case GFX_NEAR_CLIP:
             case GFX_FAR_CLIP:
+            case GFX_FIRST_PERSON_NEAR_CLIP:
+            case GFX_FIRST_PERSON_FAR_CLIP:
             case GFX_EYE_SEPARATION:
             case GFX_MONITOR_HEIGHT:
             case GFX_MONITOR_EYE_DISTANCE:
@@ -497,6 +505,8 @@ void gfx_option_init (void)
     valid_option(GFX_FOV, new ValidOptionRange<float>(0.0000001f,179.0f));
     valid_option(GFX_NEAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
     valid_option(GFX_FAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
+    valid_option(GFX_FIRST_PERSON_NEAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
+    valid_option(GFX_FIRST_PERSON_FAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
     valid_option(GFX_EYE_SEPARATION, new ValidOptionRange<float>(0.0f,0.5f));
     valid_option(GFX_MONITOR_HEIGHT, new ValidOptionRange<float>(0.01f,1000.0f));
 
@@ -569,6 +579,8 @@ void gfx_option_init (void)
     gfx_option(GFX_FOV, 55.0f);
     gfx_option(GFX_NEAR_CLIP, 0.355f);
     gfx_option(GFX_FAR_CLIP, 1000.0f);
+    gfx_option(GFX_FIRST_PERSON_NEAR_CLIP, 0.01f);
+    gfx_option(GFX_FIRST_PERSON_FAR_CLIP, 10.0f);
     gfx_option(GFX_EYE_SEPARATION, 0.06f);
     gfx_option(GFX_MONITOR_HEIGHT, 0.27f);
 

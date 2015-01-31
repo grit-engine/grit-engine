@@ -63,6 +63,8 @@ enum GfxFloatOption {
     GFX_FOV,
     GFX_NEAR_CLIP,
     GFX_FAR_CLIP,
+    GFX_FIRST_PERSON_NEAR_CLIP,
+    GFX_FIRST_PERSON_FAR_CLIP,
     GFX_EYE_SEPARATION, // FOR 'real' 3d
     GFX_MONITOR_HEIGHT, // FOR 'real' 3d
 
