@@ -83,6 +83,7 @@ struct GfxShaderGlobals {
 };
 
 GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam, const Ogre::Matrix4 &proj);
+GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam);
 
 // User always gives n strings, some of which can be empty.
 // E.g. dangs shader for sky is not needed (no lighting equation)

@@ -28,7 +28,8 @@ static void ensure_coronas_init (void)
 {
     if (have_init_coronas) return;
     // this only happens once
-    gfx_particle_define("/system/Coronas", "/system/Corona.png");
+    gfx_particle_define("/system/Coronas",
+                        disk_resource_use<GfxTextureDiskResource>("/system/Corona.png"));
     have_init_coronas = true;
 }
 

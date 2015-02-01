@@ -3497,7 +3497,8 @@ TRY_START
 
     lua_getfield(L, 2, "map");
     if (lua_type(L,-1) != LUA_TSTRING) my_lua_error(L,"Particle map must be a string.");
-    std::string texture = lua_tostring(L,-1);
+    std::string texture_name = lua_tostring(L,-1);
+    auto dr = disk_resource_use<GfxTextureDiskResource>(texture_name);
     lua_pop(L,1);
     lua_pushnil(L);
     lua_setfield(L, 2, "map");
@@ -3554,7 +3555,7 @@ TRY_START
 
     ParticleDefinition *newpd = new ParticleDefinition(name, frames, L, 2);
     pd = newpd;
-    gfx_particle_define(name, texture); // will invalidate 
+    gfx_particle_define(name, dr); // will invalidate 
     return 0;
 TRY_END
 }

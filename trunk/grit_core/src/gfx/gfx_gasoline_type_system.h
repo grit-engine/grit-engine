@@ -121,8 +121,8 @@ struct GfxGslContext {
     GfxGslAllocator &alloc;
     std::map<std::string, std::vector<GfxGslFunctionType*>> funcTypes;
     GfxGslTypeMap globalFields;
-    GfxGslTypeMap bodyFields;
     GfxGslTypeMap matFields;
+    GfxGslTypeMap bodyFields;
     GfxGslUnboundTextures ubt;
 
     const GfxGslType *getMatType (const std::string &f) const

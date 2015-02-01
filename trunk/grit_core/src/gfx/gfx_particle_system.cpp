@@ -44,6 +44,8 @@ static inline Ogre::HighLevelGpuProgramPtr get_shader(const std::string &name)
 
 #define QUAD(a,b,c,d) a, b, d, d, b, c
 
+static GfxShader *shader;
+
 void gfx_particle_init (void)
 {
     // set up the quad geometry
@@ -69,6 +71,54 @@ void gfx_particle_init (void)
     quadIndexData.indexCount = 3*quad_triangles;
     uint16_t idata_raw[] = { QUAD(0,2,3,1), };
     quadIndexData.indexBuffer->writeData(0, 3 * quad_triangles * sizeof(uint16_t), &idata_raw[0]);
+
+    GfxShaderParamMap shader_params = {
+        {"gbuffer0", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1))},
+        {"particleAtlas", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1))}
+    };
+
+    std::string vertex_code =
+        "var part_basis_x = vert.coord0.xyz;\n"
+        "var part_half_depth = vert.coord1.x;\n"
+        "var part_basis_z = vert.coord2.xyz;\n"
+        "var part_pos = vert.coord3.xyz;\n"
+        "var part_diffuse = vert.coord4.xyz;\n"
+        "var part_alpha = vert.coord5.x;\n"
+        "var part_emissive = vert.coord6.xyz;\n"
+
+        "var fragment_uv = lerp(vert.coord7.xy, vert.coord7.zw,\n"
+        "vert.position.xz / Float2(2, -2) + Float2(0.5, 0.5));\n"
+        "var part_colour = global.particleAmbient * part_diffuse + part_emissive;\n"
+
+        "out.position = vert.position.x * part_basis_x\n"
+        "             + vert.position.z * part_basis_z\n"
+        "             + part_pos;\n"
+
+        "var camera_to_fragment = out.position - global.cameraPos;\n";
+
+    std::string colour_code =
+        "var uv = frag.screen / global.viewportSize;\n"
+        "uv.y = 1 - uv.y;  // Textures addressed from top left, frag.screen is bottom left\n"
+        "var ray = lerp(lerp(global.rayBottomLeft, global.rayBottomRight, uv.x),\n"
+        "               lerp(global.rayTopLeft, global.rayTopRight, uv.x),\n"
+        "               uv.y);\n"
+
+        "var bytes = sample(mat.gbuffer0, uv).xyz;\n"
+        "var normalised_cam_dist = 255.0 * (256.0*256.0*bytes.x + 256.0*bytes.y + bytes.z)\n"
+        "                                / (256.0*256.0*256.0 - 1);\n"
+
+        "var scene_dist = length(normalised_cam_dist * ray);\n"
+        "var fragment_dist = length(camera_to_fragment);\n"
+        "var part_exposed_ = (scene_dist - fragment_dist + part_half_depth)\n"
+        "                    / part_half_depth;\n"
+        "var part_exposed = clamp(part_exposed_, 0.0, 1.0);\n"
+        "var texel = sample(mat.particleAtlas, fragment_uv);\n"
+        "out.colour = gamma_decode(texel.rgb) * part_colour * part_exposed;\n"
+        "out.alpha = texel.a * part_alpha * part_exposed;\n";
+
+    shader = gfx_shader_make_or_reset("/system/Particle",
+                                      vertex_code, "", colour_code, shader_params);
+
 
 }
 
@@ -181,8 +231,8 @@ class ParticlesInstanceBuffer {
         *(instPtr++) = p->emissive.y;
         *(instPtr++) = p->emissive.z;
         *(instPtr++) = p->u1 / tex_size.first;
-        *(instPtr++) = p->v1 / tex_size.first;
-        *(instPtr++) = p->u2 / tex_size.second;
+        *(instPtr++) = p->v1 / tex_size.second;
+        *(instPtr++) = p->u2 / tex_size.first;
         *(instPtr++) = p->v2 / tex_size.second;
     }
 
@@ -198,15 +248,13 @@ class ParticlesInstanceBuffer {
 };
 
 
-static GfxShader *particle_shader;
-
 // a particle system holds the buffer for particles of a particular material
 class GfxParticleSystem {
     fast_erase_vector<GfxParticle*> particles;
 
     std::string name;
 
-    Ogre::TexturePtr tex;
+    DiskResourcePtr<GfxTextureDiskResource> tex;
     unsigned texHeight;
     unsigned texWidth;
 
@@ -215,14 +263,12 @@ class GfxParticleSystem {
     // every frame, must sort particles and compute new orientations
 
     public:
-    GfxParticleSystem (const std::string &name, std::string texname)
-         : name(name)
+    GfxParticleSystem (const std::string &name, const DiskResourcePtr<GfxTextureDiskResource> &tex)
+         : name(name), tex(tex)
     {
-        APP_ASSERT(texname[0] == '/');
-        texname = texname.substr(1);
-        tex = Ogre::TextureManager::getSingleton().load(texname, RESGRP);
-        texHeight = tex->getHeight();
-        texWidth = tex->getWidth();
+        tex->getOgreTexturePtr()->load();
+        texHeight = tex->getOgreTexturePtr()->getHeight();
+        texWidth = tex->getOgreTexturePtr()->getWidth();
     }
 
     ~GfxParticleSystem (void)
@@ -248,13 +294,11 @@ class GfxParticleSystem {
         return a->fromCamDist > b->fromCamDist;
     }
 
-    void render (GfxPipeline *pipe)
+    void render (GfxPipeline *pipe, const GfxShaderGlobals &globs)
     {
         const CameraOpts &cam_opts = pipe->getCameraOpts();
         const Vector3 &cam_pos = cam_opts.pos;
-        const Vector3 &cam_up = cam_opts.dir * Vector3(0,0,1);
-        Ogre::Viewport *viewport = ogre_sm->getCurrentViewport();
-        Ogre::RenderTarget *render_target = viewport->getTarget();
+        const Vector3 &cam_up = cam_opts.dir * Vector3(0, 0, 1);
 
         // PREPARE BUFFERS
 
@@ -284,71 +328,21 @@ class GfxParticleSystem {
 
         // ISSUE RENDER COMMANDS
         try {
+            GfxMaterialTextureMap texs;
+            texs["gbuffer0"] = { nullptr, false, 0};
+            texs["particleAtlas"] = { &*tex, true, 4};
+
+            GfxShaderBindings binds;
+            binds["gbuffer0"] = GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1,1,1,1));
+            binds["particleAtlas"] = GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1,1,1,1));
 
 
-            // various camera and lighting things
-            Ogre::Camera *cam = pipe->getCamera();
-            Ogre::Matrix4 view = cam->getViewMatrix();
-            Ogre::Matrix4 proj = cam->getProjectionMatrixWithRSDepth();
-            Ogre::Matrix4 proj_view = proj * view;
+            const Ogre::Matrix4 &I = Ogre::Matrix4::IDENTITY;
 
-            // corners mapping for worldspace fragment position reconstruction:
-            // top-right near, top-left near, bottom-left near, bottom-right near,
-            // top-right far, top-left far, bottom-left far, bottom-right far. 
-            Ogre::Vector3 top_right_ray = cam->getWorldSpaceCorners()[4] - to_ogre(cam_pos);
-            Ogre::Vector3 top_left_ray = cam->getWorldSpaceCorners()[5] - to_ogre(cam_pos);
-            Ogre::Vector3 bottom_left_ray = cam->getWorldSpaceCorners()[6] - to_ogre(cam_pos);
-            Ogre::Vector3 bottom_right_ray = cam->getWorldSpaceCorners()[7] - to_ogre(cam_pos);
+            shader->bindShader(GfxShader::SKY, false, 0, false, 0,
+                               globs, I, 1, texs, binds);
 
-            GfxShader *shader = particle_shader;
-
-            if (shader == nullptr) {
-                const std::string shader_name = "particle";
-
-                const std::string vp_name = "particle_v";
-                const std::string fp_name = "particle_f";
-
-                Ogre::HighLevelGpuProgramPtr vp = get_shader(vp_name);
-                Ogre::HighLevelGpuProgramPtr fp = get_shader(fp_name);
-
-                shader = gfx_shader_make_from_existing(shader_name, vp, fp, {});
-                shader->validate();
-                particle_shader = shader;
-            }
-
-            Ogre::HighLevelGpuProgramPtr vp = shader->getHackOgreVertexProgram();
-            Ogre::HighLevelGpuProgramPtr fp = shader->getHackOgreFragmentProgram();
-
-            try_set_named_constant(vp, "view_proj", proj_view);
-            float render_target_flipping = render_target->requiresTextureFlipping() ? -1.0f : 1.0f;
-            try_set_named_constant(vp, "render_target_flipping", render_target_flipping);
-            try_set_named_constant(vp, "particle_ambient", to_ogre(gfx_particle_ambient()));
-            try_set_named_constant(vp, "camera_pos_ws", to_ogre(cam_pos));
-
-            try_set_named_constant(fp, "top_left_ray", top_left_ray);
-            try_set_named_constant(fp, "top_right_ray", top_right_ray);
-            try_set_named_constant(fp, "bottom_left_ray", bottom_left_ray);
-            try_set_named_constant(fp, "bottom_right_ray", bottom_right_ray);
-
-
-            if (d3d9) {
-                Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
-                                            1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());
-                try_set_named_constant(fp, "viewport_size", viewport_size);
-            }
-
-            ogre_rs->_setTexture(0, true, pipe->getGBufferTexture(0));
-            ogre_rs->_setTexture(1, true, tex);
-            ogre_rs->_setTextureUnitFiltering(1, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
-            ogre_rs->_setTextureUnitFiltering(1, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
-            ogre_rs->_setTextureUnitFiltering(1, Ogre::FT_MIP, Ogre::FO_LINEAR);
-
-            // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
-            ogre_rs->bindGpuProgram(vp->_getBindingDelegate());
-            ogre_rs->bindGpuProgram(fp->_getBindingDelegate());
-
-            ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fp->getDefaultParameters(), Ogre::GPV_ALL);
-            ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vp->getDefaultParameters(), Ogre::GPV_ALL);
+            ogre_rs->_setTexture(NUM_GLOBAL_TEXTURES, true, pipe->getGBufferTexture(0));
 
             ogre_rs->_setCullingMode(Ogre::CULL_NONE);
             ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
@@ -422,13 +416,12 @@ void GfxParticle::setDefaultUV (void)
 typedef std::map<std::string, GfxParticleSystem*> PSysMap;
 static PSysMap psystems;
 
-void gfx_particle_define (const std::string &pname, const std::string &tex_name)
+void gfx_particle_define (const std::string &pname,
+                          const DiskResourcePtr<GfxTextureDiskResource> &tex)
 {
-    if (pname[0] != '/') EXCEPT << "Not an absolute path: \"" << pname << "\"" << ENDL;
-    if (tex_name[0] != '/') EXCEPT << "Not an absolute path: \"" << tex_name << "\"" << ENDL;
     GfxParticleSystem *&psys = psystems[pname];
     if (psys != NULL) delete psys;
-    psys = new GfxParticleSystem(pname, tex_name);
+    psys = new GfxParticleSystem(pname, tex);
 }
 
 GfxParticle *gfx_particle_emit (const std::string &pname)
@@ -440,9 +433,11 @@ GfxParticle *gfx_particle_emit (const std::string &pname)
 
 void gfx_particle_render (GfxPipeline *p)
 {
+    GfxShaderGlobals g = gfx_shader_globals_cam(p->getCamera());
+
     for (PSysMap::iterator i=psystems.begin(),i_=psystems.end() ; i!=i_ ; ++i) {
         GfxParticleSystem *psys = i->second;
-        psys->render(p);
+        psys->render(p, g);
     }
 }
 

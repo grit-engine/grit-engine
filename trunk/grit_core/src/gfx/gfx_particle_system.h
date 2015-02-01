@@ -64,11 +64,13 @@ public:
 void gfx_particle_init (void);
 
 // set up a new particle system
-void gfx_particle_define (const std::string &pname, const std::string &tex_name);
+void gfx_particle_define (const std::string &pname,
+                          const DiskResourcePtr<GfxTextureDiskResource> &tex);
 
 // create a new particle in a given system (get rid of it by calling particle->release())
 GfxParticle *gfx_particle_emit (const std::string &pname);
 
+// A list of all particle systems
 std::vector<std::string> gfx_particle_all (void);
 
 // called every frame

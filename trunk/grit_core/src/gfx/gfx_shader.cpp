@@ -67,6 +67,11 @@ GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam, const Ogre::Matrix4 
     };
 }
 
+GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam)
+{
+    return gfx_shader_globals_cam(cam, cam->getProjectionMatrixWithRSDepth());
+}
+
 void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
                        const std::string &name, const Ogre::Matrix4 &v)
 {
@@ -418,14 +423,15 @@ void GfxShader::bindShader (Purpose purpose,
                     EXCEPTEX << "Not yet implemented." << ENDL;
                 } break;
                 case GFX_GSL_FLOAT_TEXTURE2: {
-                    APP_ASSERT(tex != NULL);
+                    // TODO(dcunnin): tex is null as a temporary hack to allow binding of gbuffer
+                    if (tex->texture == nullptr) break;
                     ogre_rs->_setTexture(counter, true, tex->texture->getOgreTexturePtr());
                     //ogre_rs->_setTextureLayerAnisotropy(counter, tex->anisotropy);
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
                     auto mode = tex->clamp ? Ogre::TextureUnitState::TAM_CLAMP
-                                               : Ogre::TextureUnitState::TAM_WRAP;
+                                           : Ogre::TextureUnitState::TAM_WRAP;
                     Ogre::TextureUnitState::UVWAddressingMode am;
                     am.u = mode;
                     am.v = mode;
