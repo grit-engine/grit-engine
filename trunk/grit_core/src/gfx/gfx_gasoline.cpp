@@ -26,6 +26,17 @@
 #include "gfx_gasoline_backend_glsl.h"
 
 
+static GfxGslTypeMap make_body_fields (GfxGslAllocator &alloc)
+{
+    GfxGslTypeMap m;
+
+    m["world"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
+    m["worldView"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
+    m["worldViewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
+
+    return m;
+}
+ 
 static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
 {
     GfxGslTypeMap m;
@@ -37,10 +48,6 @@ static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
     m["view"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["viewportSize"] = alloc.makeType<GfxGslFloatType>(2);
     m["viewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    // TODO(dcunnin):  Noting with 'world' in the name is truely global
-    m["world"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    m["worldView"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    m["worldViewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["rayTopLeft"] = alloc.makeType<GfxGslFloatType>(3);
     m["rayTopRight"] = alloc.makeType<GfxGslFloatType>(3);
     m["rayBottomLeft"] = alloc.makeType<GfxGslFloatType>(3);
@@ -85,6 +92,7 @@ static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
     m["envCubeCrossFade"] = alloc.makeType<GfxGslFloatType>(1);
     m["envCubeMipmaps0"] = alloc.makeType<GfxGslFloatType>(1);
     m["envCubeMipmaps1"] = alloc.makeType<GfxGslFloatType>(1);
+    m["saturation"] = alloc.makeType<GfxGslFloatType>(1);
 
     m["colourGradeLut"] = alloc.makeType<GfxGslFloatTextureType>(3);
     m["envCube0"] = alloc.makeType<GfxGslFloatTextureCubeType>();
@@ -307,7 +315,7 @@ void gfx_gasoline_check (const std::string &vert_prog,
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, params), {}, {}
+        make_mat_fields(alloc, params), make_body_fields(alloc), {}
     };
 
     GfxGslAst *vert_ast;
@@ -354,7 +362,7 @@ static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, params), {}, ubt
+        make_mat_fields(alloc, params), make_body_fields(alloc), ubt
     };
 
     GfxGslAst *vert_ast;
@@ -441,7 +449,7 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, params), {}, ubt
+        make_mat_fields(alloc, params), make_body_fields(alloc), ubt
     };
 
     GfxGslAst *vert_ast;

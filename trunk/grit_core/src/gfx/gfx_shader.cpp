@@ -528,6 +528,10 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p,
                           1.0f/p.viewport_dim.x, 1.0f/p.viewport_dim.y);
     float render_target_flipping_factor = p.render_target_flipping ? -1.0f : 1.0f;
 
+    hack_set_constant(np, "body_worldViewProj", world_view_proj);
+    hack_set_constant(np, "body_worldView", world_view);
+    hack_set_constant(np, "body_world", world);
+
     hack_set_constant(np, "global_cameraPos", p.cam_pos);
     hack_set_constant(np, "global_fovY", gfx_option(GFX_FOV));
     hack_set_constant(np, "global_proj", p.proj);
@@ -535,9 +539,6 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p,
     hack_set_constant(np, "global_viewportSize", viewport_size);
     hack_set_constant(np, "global_viewProj", view_proj);
     hack_set_constant(np, "global_view", p.view);
-    hack_set_constant(np, "global_worldViewProj", world_view_proj);
-    hack_set_constant(np, "global_worldView", world_view);
-    hack_set_constant(np, "global_world", world);
     hack_set_constant(np, "global_rayTopLeft", p.rayTopLeft);
     hack_set_constant(np, "global_rayTopRight", p.rayTopRight);
     hack_set_constant(np, "global_rayBottomLeft", p.rayBottomLeft);

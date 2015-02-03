@@ -93,8 +93,8 @@ static std::string generate_funcs (void)
     ss << "Float3 gamma_encode (Float3 v) { return pow(v, 1/2.2); }\n";
     ss << "Float4 gamma_encode (Float4 v) { return pow(v, 1/2.2); }\n";
 
-    ss << "Float3 transform_to_world (Float3 v) { return mul(global_world, Float4(v, 1)).xyz; }\n";
-    ss << "Float3 rotate_to_world (Float3 v) { return mul(global_world, Float4(v, 0)).xyz; }\n";
+    ss << "Float3 transform_to_world (Float3 v) { return mul(body_world, Float4(v, 1)).xyz; }\n";
+    ss << "Float3 rotate_to_world (Float3 v) { return mul(body_world, Float4(v, 0)).xyz; }\n";
 
     ss << "uniform Float internal_rt_flip;\n";
     ss << "uniform Float internal_fade;\n";

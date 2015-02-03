@@ -2,9 +2,7 @@ var PI = 3.1415926535897932385;
 
 var fov = Float2(global.viewportSize.x / global.viewportSize.y * global.fovY, global.fovY);
 
-// The world matrix encodes only sky orientation data (i.e. due to the
-// rotation of the earth).
-out.position = mul(global.world, Float4(vert.position.xyz, 1)).xyz;
+out.position = transform_to_world(vert.position.xyz);
 
 var tmp = mul(global.viewProj, Float4(-global.sunDirection, 1));
 

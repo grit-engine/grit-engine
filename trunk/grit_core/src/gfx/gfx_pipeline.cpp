@@ -422,7 +422,8 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             auto das_vp = deferred_ambient_sun->getHackOgreVertexProgram();
             auto das_fp = deferred_ambient_sun->getHackOgreFragmentProgram();
 
-            Ogre::TexturePtr noise_tex = Ogre::TextureManager::getSingleton().load("system/HiFreqNoiseGauss.64.png", RESGRP);
+            Ogre::TexturePtr noise_tex = shadow_pcf_noise_map->getOgreTexturePtr();
+            noise_tex->load();
 
 
             /////////

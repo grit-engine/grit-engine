@@ -5,14 +5,14 @@ var fov_x = aspect * global.fovY;
 
 // The world matrix encodes only sky orientation data (i.e. due to the rotation
 // of the earth).
-out.position = mul(global.world, Float4(vert.position.xyz, 1)).xyz;
+out.position = transform_to_world(vert.position.xyz);
 
 
 var sunlight_dir_ss_ = mul(global.viewProj, Float4(-global.sunDirection,1));
 
 // for interpolators
 var uv = vert.coord0.xy;
-var pos_ws = mul(global.world, Float4(vert.position.xyz,0)).xyz;
+var pos_ws = rotate_to_world(vert.position.xyz);
 var sunlight_dir_ss = sunlight_dir_ss_.xyz/sunlight_dir_ss_.w;
 var fov = Float2(fov_x, global.fovY);
 var sun_pos_ss_polar = Float2(

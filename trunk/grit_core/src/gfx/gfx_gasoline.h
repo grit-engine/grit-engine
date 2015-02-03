@@ -159,6 +159,10 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                      bool instanced,
                                                      unsigned bone_weights);
 
+GfxGasolineResult gfx_gasoline_compile_deferred_sun (GfxGslBackend backend,
+                                                     const std::string &fog_prog);
+
+
 // To come!
 GfxGasolineResult gfx_gasoline_compile_forward (GfxGslBackend backend,
                                                 const std::string &vert_prog,

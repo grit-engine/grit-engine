@@ -11,5 +11,5 @@ var fragment_dist = length(camera_to_fragment);
 var part_exposed = clamp((scene_dist - fragment_dist + part_half_depth)/part_half_depth, 0.0, 1.0);
 
 var texel = sample(mat.particleAtlas, fragment_uv);
-out.colour = gamma_decode(texel.rgb) * part_colour * part_exposed;
 out.alpha = texel.a * part_alpha;
+out.colour = gamma_decode(texel.rgb) * part_colour * part_exposed;

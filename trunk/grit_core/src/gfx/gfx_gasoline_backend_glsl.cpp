@@ -99,8 +99,8 @@ static std::string generate_funcs (void)
     ss << "Float3 lerp (Float3 a, Float3 b, Float3 v) { return v*b + (Float3(1,1,1)-v)*a; }\n";
     ss << "Float4 lerp (Float4 a, Float4 b, Float4 v) { return v*b + (Float4(1,1,1,1)-v)*a; }\n";
 
-    ss << "Float3 transform_to_world (Float3 v) { return mul(global_world, Float4(v, 1)).xyz; }\n";
-    ss << "Float3 rotate_to_world (Float3 v) { return mul(global_world, Float4(v, 0)).xyz; }\n";
+    ss << "Float3 transform_to_world (Float3 v) { return mul(body_world, Float4(v, 1)).xyz; }\n";
+    ss << "Float3 rotate_to_world (Float3 v) { return mul(body_world, Float4(v, 0)).xyz; }\n";
 
     ss << "uniform Float internal_rt_flip;\n";
     ss << "uniform Float internal_fade;\n";

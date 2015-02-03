@@ -34,7 +34,9 @@
 enum GfxGslKind {
     GFX_GSL_VERTEX,
     GFX_GSL_DANGS,
-    GFX_GSL_COLOUR_ALPHA
+    GFX_GSL_COLOUR_ALPHA,
+    GFX_GSL_TONE_MAP,
+    GFX_GSL_FOG
 };
 
 typedef std::vector<GfxGslType*> GfxGslTypes;

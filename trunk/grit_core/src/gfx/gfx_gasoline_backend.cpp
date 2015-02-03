@@ -83,6 +83,8 @@ void GfxGslBackendUnparser::unparse (const GfxGslAst *ast_, int indent)
             ss << "frag_" + ast->id;
         } else if (dynamic_cast<GfxGslOutType*>(ast->target->type)) {
             ss << "out_" + ast->id;
+        } else if (dynamic_cast<GfxGslBodyType*>(ast->target->type)) {
+            ss << "body_" + ast->id;
         } else if (auto *type = dynamic_cast<GfxGslCoordType*>(ast->target->type)) {
             if (type->dim == 1) {
                 ASSERT(ast->id == "x" || ast->id == "r");
@@ -165,6 +167,15 @@ std::string gfx_gasoline_generate_global_fields (const GfxGslContext &ctx, bool 
             }
             ss << ";\n";
         }
+    }
+    for (const auto &pair : ctx.bodyFields) {
+        ss << "uniform " << pair.second << " body_" << pair.first;
+        if (reg && dynamic_cast<const GfxGslTextureType*>(pair.second)) {
+            EXCEPTEX << "Not allowed" << ENDL;
+            ss << " : register(s" << counter << ")";
+            counter++;
+        }
+        ss << ";\n";
     }
 
     return ss.str();
