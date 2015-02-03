@@ -3164,14 +3164,26 @@ static int global_gfx_window_size_in_scene (lua_State *L)
     return 1;
 }
 
-static int global_gfx_world_to_screen(lua_State *L)
+static int global_gfx_world_to_screen (lua_State *L)
 {
 TRY_START
-    check_args(L,3);
+    check_args(L, 3);
     Vector3 cp = check_v3(L, 1);
     Quaternion cq = check_quat(L, 2);
     Vector3 p = check_v3(L, 3);
     push_v3(L, gfx_world_to_screen(cp, cq, p));
+    return 1;
+TRY_END
+}
+
+static int global_gfx_screen_to_world (lua_State *L)
+{
+TRY_START
+    check_args(L, 3);
+    Vector3 cp = check_v3(L, 1);
+    Quaternion cq = check_quat(L, 2);
+    Vector2 p = check_v2(L, 3);
+    push_v3(L, gfx_screen_to_world(cp, cq, p));
     return 1;
 TRY_END
 }
@@ -4468,6 +4480,7 @@ static const luaL_reg global[] = {
     {"gfx_window_size", global_gfx_window_size},
     {"gfx_window_size_in_scene", global_gfx_window_size_in_scene},
     {"gfx_world_to_screen", global_gfx_world_to_screen},
+    {"gfx_screen_to_world", global_gfx_screen_to_world},
 
     {"gfx_gpu_ram_available", global_gfx_gpu_ram_available},
     {"gfx_gpu_ram_used", global_gfx_gpu_ram_used},

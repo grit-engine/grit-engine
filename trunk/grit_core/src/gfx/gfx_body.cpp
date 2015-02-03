@@ -848,6 +848,8 @@ void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
 
     Ogre::Frustum frustum;  // Used to calculate projection matrix.
     frustum.setFOVy(Ogre::Degree(p->getCameraOpts().fovY));
+    frustum.setAspectRatio(p->getCamera()->getAspectRatio());
+    CVERB << frustum.getAspectRatio() << std::endl;
     frustum.setNearClipDistance(gfx_option(GFX_FIRST_PERSON_NEAR_CLIP));
     frustum.setFarClipDistance(gfx_option(GFX_FIRST_PERSON_FAR_CLIP));
     // No 3d effect on first person objects (TODO: I think that's right, need to actually verify)

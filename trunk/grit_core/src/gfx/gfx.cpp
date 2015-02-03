@@ -778,14 +778,19 @@ Vector2 gfx_window_size_in_scene (void)
 
 Vector3 gfx_world_to_screen (const Vector3 &cam_pos, const Quaternion &cam_dir, const Vector3 &p)
 {
+    Ogre::Matrix4 view =
+        Ogre::Math::makeViewMatrix(to_ogre(cam_pos),
+                                   to_ogre(cam_dir*Quaternion(Degree(90),Vector3(1,0,0))),
+                                   nullptr);
 
-    Ogre::Matrix4 view = Ogre::Math::makeViewMatrix(to_ogre(cam_pos),
-                                                    to_ogre(cam_dir*Quaternion(Degree(90),Vector3(1,0,0))),
-                                                    nullptr);
+    float w = ogre_win->getWidth();
+    float h = ogre_win->getHeight();
 
     Ogre::Frustum frustum;
-    // Ogre cameras point towards Z whereas in Grit the convention is that 'unrotated' means pointing towards y (north)
+    // Ogre cameras point towards Z whereas in Grit the convention
+    // is that 'unrotated' means pointing towards y (north)
     frustum.setFOVy(Ogre::Degree(gfx_option(GFX_FOV)));
+    frustum.setAspectRatio(w / h);
     frustum.setNearClipDistance(gfx_option(GFX_NEAR_CLIP));
     frustum.setFarClipDistance(gfx_option(GFX_FAR_CLIP));
     Ogre::Matrix4 proj = frustum.getProjectionMatrix();;
@@ -794,9 +799,36 @@ Vector3 gfx_world_to_screen (const Vector3 &cam_pos, const Quaternion &cam_dir, 
     if (sp_h.w == 0) return Vector3(0, 0, 0);
     Vector3 sp = Vector3(sp_h.x, sp_h.y, sp_h.z) / sp_h.w;
     if (sp_h.w < 0) sp *= Vector3(1, 1, -1);
+    return Vector3((sp.x+1)/2*w, (sp.y+1)/2*h, sp.z);
+}
+
+Vector3 gfx_screen_to_world (const Vector3 &cam_pos, const Quaternion &cam_dir, const Vector2 &p)
+{
+    Ogre::Matrix4 view =
+        Ogre::Math::makeViewMatrix(to_ogre(cam_pos),
+                                   to_ogre(cam_dir*Quaternion(Degree(90),Vector3(1,0,0))),
+                                   nullptr);
+
     float w = ogre_win->getWidth();
     float h = ogre_win->getHeight();
-    return Vector3((sp.x+1)/2*w, (sp.y+1)/2*h, sp.z);
+
+    Ogre::Frustum frustum;
+    // Ogre cameras point towards Z whereas in Grit the convention
+    // is that 'unrotated' means pointing towards y (north)
+    frustum.setFOVy(Ogre::Degree(gfx_option(GFX_FOV)));
+    frustum.setAspectRatio(w / h);
+    frustum.setNearClipDistance(gfx_option(GFX_NEAR_CLIP));
+    frustum.setFarClipDistance(gfx_option(GFX_FAR_CLIP));
+    Ogre::Matrix4 proj = frustum.getProjectionMatrix();;
+
+    Ogre::Matrix4 inv_view_proj = (proj * view).inverse();
+
+    Vector2 norm_p = (2 * p / Vector2(w, h)) - Vector2(1, 1);
+
+    // Get a point on the near clip plane
+    Ogre::Vector3 near_clip_p = (inv_view_proj * Ogre::Vector3(norm_p.x, norm_p.y, 0));
+
+    return (from_ogre(near_clip_p) - cam_pos).normalisedCopy();
 }
 
 static GfxLastRenderStats stats_from_rt (Ogre::RenderTarget *rt)

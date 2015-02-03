@@ -233,6 +233,7 @@ bool gfx_window_active (void);
 Vector2 gfx_window_size (void);
 Vector2 gfx_window_size_in_scene (void);
 Vector3 gfx_world_to_screen (const Vector3 &cam_pos, const Quaternion &cam_dir, const Vector3 &p);
+Vector3 gfx_screen_to_world (const Vector3 &cam_pos, const Quaternion &cam_dir, const Vector2 &p);
 
 // FIXME: everything below here is a horrible hack
 #include <OgreRoot.h>
