@@ -1,0 +1,3 @@
+var clarity = global.fogDensity * frag.toCamera;
+out.colour = clamp(exp(-clarity * clarity), 0.0, 1.0);
+

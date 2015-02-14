@@ -1,0 +1,15 @@
+// Squash [0,inf] to [0,1] but at the expense of saturation and contrast.
+var normalized = frag.colour / (1 + frag.colour);
+
+// Colour grading in gamma space, artists more comfortable and can do it in photoshop/gimp.
+// Also more fidelity (points in the curve) near 0 which is what we want.
+var gamma_encoded = gamma_encode(normalized);
+
+// Colour grading via user-supplied look up table
+var LUT_SZ = 32;
+var colour_graded = sample(global.lut, (gamma_encoded * (LUT_SZ - 1) + 0.5) / LUT_SZ).rgb;
+
+// Desaturate according to global desaturation knob
+var grey = (colour_graded.r + colour_graded.g + colour_graded.b)/3;
+out.colour = lerp(grey, colour_graded, global.saturation);
+
