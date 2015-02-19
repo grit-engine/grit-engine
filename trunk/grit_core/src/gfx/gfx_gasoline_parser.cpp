@@ -275,7 +275,7 @@ std::list<Token> lex (const std::string &shader)
             case '\n':
             this_line_number++;
             this_line = c + 1;
-            case ' ': case '\t':
+            case ' ': case '\t': case '\r':
             break;
 
             // Symbols that cannot be combined with a =
