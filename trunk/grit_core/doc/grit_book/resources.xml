@@ -2,62 +2,73 @@
 
 <section title="Resources" id="resources">
 
-    This section will be written after I resolve some problems with the paths
-    system in Lua, as the API will probably change.
-
     Resources are things like <code>/foo/bar/MyThing</code>, that are named using a path from the
     base game directory.  They may or may not actually exist as files on disk.  Typically resources
-    either represent assets defined in Lua files, such as classes, objects, etc (covered in the
-    various other chapters of this book), or the represent assets on disk, such as sound files,
-    textures, meshes, etc.  These disk resources have some special features, which are documented
-    here.
+    either represent assets defined in Lua files, such as classes, objects, materials, etc. (covered
+    in the various other chapters of this book).  Or, they represent assets on disk, such as sound
+    files, textures, meshes, etc.  The latter, <def>disk resources</def>, are the subject of this
+    chapter.
 
-    <section title="Disk Resources" id="disk_resources">
-
-        <todo>Currently it is necessary to pre-declare resources with disk_resource_add(name), or
-        Grit will raise an error.  This will be fixed to declare them lazily.</todo>
+    <section title="Disk Resource Management" id="disk_resource_management">
 
         Disk resources can either be loaded or unloaded, which means whether or not they are
-        occupying RAM (this can be CPU RAM or GPU RAM).  When a body is created that depends on a
-        resource, e.g. a GfxBody depending on mesh and texture assets, those resources will be
-        automatically loaded if needed.  However, loading the resource immediately before creating
-        the body will introduce a noticeable delay, which is not what you want in a game.  So there
-        are a number of API calls that can be used to control the loading and unloading of
-        resources.  In the following calls, <code>name</code> is an absolute path.  To give a
-        relative path, use backticks <sref id="lua_paths"/> to give a relative path.
-
-        <lua>
-            disk_resource_has(name)  // Check if loading a resource would cause an error.
-            disk_resource_load(name)
-            disk_resource_unload(name)
-            disk_resource_loaded(name)
-            disk_resource_reload(name)  // Useful if you change a texture / mesh
-        </lua>
-
-        Using the above calls, it is possible to load resources ahead of time.  This is 
-        useful in a game that is too small to need streaming, as you can load everything at the
-        beginning.  However there is a catch.  Grit manages the available memory and GPU memory.
-        If, upon load, there is not enough CPU or GPU RAM, Grit will unload the least recently used
-        resource to make space.  To tell Grit whether or not a resource is in use, the following
-        calls are used:
-
-        <lua>
-            disk_resource_acquire(name)
-            disk_resource_release(name)
-            disk_resource_users(name)
-        </lua>
-
-        It is best to <def>acquire</def> the <def>resource</def>, then <def>load</def> it.  Until
-        everyone has <def>released</def> it, it will not be unloaded automatically.  The number of
-        times a resource has been acquired is shown by the <code>users</code> call.  When you are
-        done with a resource, you can either leave it loaded or unload it, but either way you must
-        <def>release</def> it.  If you know the resource won't be used again you can unload it, but
-        otherwise it's best to leave it loaded in case you need to use it again.  Resources left
-        loaded but not released will be cleaned up if needed.
+        occupying RAM (this can be CPU RAM or GPU RAM).  Loading usually takes a noticeable amount
+        of time, so it's a bad idea to do it during gameplay.  When a body is created that depends
+        on a resource, e.g. a GfxBody depending on mesh and texture resources, those resources will
+        be automatically loaded (if needed).  However, loading the resource immediately before
+        creating the body will introduce a noticeable delay.
         
-        Note that it is <emph>not</emph> true that if a resource has users then it must be loaded.
-        You can acquire a resource before loading it.  You can also unload it before releasing it.
-        So the state of being loaded and the state of being used are independent.
+        In a streaming game, the objects declare their required resources (usually in the class) and
+        these resources are loaded in a background thread.  The object is not activated until the
+        resources are available.  In this situation you rarely have to worry about loading /
+        unloading resources.  However in a non-streaming game it can be simpler to load everything
+        before gameplay begins.
+        
+        There are a number of API calls that can be used to manually control the loading and
+        unloading of resources.  In the following calls, <code>name</code> is an absolute path.  To
+        give a relative path, use backticks <sref id="lua_paths"/>.
+
+        <lua>
+            disk_resource_load(name)  -- Note: Raises an error if it's already loaded
+            disk_resource_ensure_loaded()  -- Load, or no-op if already loaded
+            disk_resource_loaded(name)  -- Test if loaded
+            disk_resource_reload(name)  -- Useful during development to see new assets
+        </lua>
+
+        Using the above calls, it is possible to load resources way ahead of time.  This is useful
+        in a game that is not large enough to need streaming, as you can load everything before the
+        actual gameplay begins, or switch out resources between levels.  However there is a catch;
+        Grit manages the available memory and GPU memory.  If, upon load, there is not enough CPU or
+        GPU RAM, Grit will unload the least recently used resource(s) to make space for the one
+        being loaded.  A resource is used if it has at least one user:
+        
+        <lua> disk_resource_users(name)  -- How many users does a resource have?  </lua>
+
+        If you use a resource in some explicit way (e.g. create a GfxBody that uses a mesh), then
+        Grit will automatically ensure it is not unloaded by increasing the user counter for that
+        resource.  However, if you want to prevent unloading during a time when the resource is not
+        actually used, you need to tell Grit that you're really still using it.  To tell Grit that
+        you're using a resource, you create and keep a <def>hold</def> on it:
+
+        <lua>
+            myhold = disk_resource_hold_make(name)
+            -- Resource will not be unloaded by Grit but may not be loaded yet
+            disk_resource_ensure_loaded(myhold.name)  -- Load only if unloaded
+            myhold:destroy()
+            -- Now Grit may unload it if there is a RAM shortage
+            -- Or you can force the unload now:
+            disk_resource_unload(name)  -- Works only if users == 0
+        </lua>
+
+        Note that creating a hold on an object does not load it, but it will stop it being unloaded
+        by the system until the hold is released.  Loading a resource when you don't have a hold on
+        it can be dangerous because Grit may unload it again, causing a stall when you next use it.
+        The idiom is therefore always to create the hold, then load the resource, keeping the hold
+        until you don't need to use the resource anymore.
+
+    </section>
+
+    <section title="Disk Resource System" id="disk_resource_system">
 
         The following calls allow you to query the state of the system itself:
 
@@ -72,23 +83,16 @@
             gfx_gpu_ram_used()
         </lua>
 
-        Finally, there are some verbose modes you can turn on to see when various things are
-        happening:
+        The following flag helps debug stalls during rendering.  It enables a warning if resources
+        are loaded in the foreground thread.  In non-streaming games, you can turn this on after
+        loading your level to ensure that you loaded everything ahead of time.  In between levels,
+        you can disable it, do your unloading/loading work and then re-enable it.  In streaming
+        games, you can leave it on while the game is streaming to ensure you haven't forgotten to
+        declare resources used by your objects.
 
         <lua>
-            disk_resource_get_gfx_verbose_loads()
-            disk_resource_set_gfx_verbose_loads(b)
-            disk_resource_get_verbose_loads()
-            disk_resource_set_verbose_loads(b)
-            disk_resource_get_verbose_incs()
-            disk_resource_set_verbose_incs(b)
+            option("FOREGROUND_WARNINGS", true)  -- Enable warnings if resources are loaded too late
         </lua>
-
-    </section>
-    
-    <section title="Streaming" id="streaming">
-
-        
 
     </section>
 
