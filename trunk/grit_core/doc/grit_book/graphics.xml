@@ -227,7 +227,7 @@
             how the depth bias solves it, the screen shot is of a natural gas
             tank, but the diagram below is for a wall on flat ground.
 
-            The engine tries to use the minimal amonut of bias to avoid shadow
+            The engine tries to use the minimal amount of bias to avoid shadow
             acne, by using the normal of the casting surface and a small
             constant offset on everything.  Thus, you don't need to worry about
             this as a modeller, unless your surfaces are so thin that even this
@@ -244,7 +244,7 @@
             You can add additional bias yourself, in the material, in order to
             get rid of other artefacts. For example here there are unwanted
             shadows on the tank. There is simply not enough fidelity in the
-            dynamic shadows to properly render shdaows for such detailed
+            dynamic shadows to properly render shadows for such detailed
             geometry.  We would rather there were no shadows at all.
 
             One way to avoid this is to avoid these kind of nooks and crannies
