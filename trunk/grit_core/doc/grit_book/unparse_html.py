@@ -44,7 +44,7 @@ def GeneratePage(title, content, book):
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
-    <title>Grit Manual - ''' + title + '''</title>
+    <title>Grit Book - ''' + title + '''</title>
     <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
     <link rel="stylesheet" type="text/css" href="grit_book.css" />
     <link rel="icon" type="image/png" href="logo_tiny.png" />

@@ -16,7 +16,7 @@
         the Lua scripting language.  Games are created by writing scripts that
         have complete control all aspects of the engine, i.e. graphics,
         physics, game logic, audio, etc.  This is done at a very high level,
-        with an easy-to-use but powerful programming model.  This manual
+        with an easy-to-use but powerful programming model.  This book
         explains how to do this, by giving an introduction to the various APIs
         involved.  The in-game Lua console allows experimentation, debugging,
         and development of these scripts while the game is running.
@@ -63,7 +63,7 @@
         C++.  Even so, you would probably add a Lua binding for your new code,
         because developing high level code in Lua, using the in-game console is
         far easier than rebuilding the whole engine and debugging it in a C++
-        debugger.  This manual concentrates on the Lua APIs, there are some
+        debugger.  This book concentrates on the Lua APIs, there are some
         <web url="http://gritengine.com/internal_api_doc/">doxygen docs</web>
         for the C++ code.
 
