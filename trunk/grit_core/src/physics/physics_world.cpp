@@ -475,7 +475,7 @@ static void init_options (void)
 
     physics_option(PHYSICS_GRAVITY_X, 0.0f);
     physics_option(PHYSICS_GRAVITY_Y, 0.0f);
-    physics_option(PHYSICS_GRAVITY_Z, -9.981f);
+    physics_option(PHYSICS_GRAVITY_Z, -9.807f);
     physics_option(PHYSICS_STEP_SIZE, 1/200.0f);
     physics_option(PHYSICS_CONTACT_BREAKING_THRESHOLD, 0.02f);
     physics_option(PHYSICS_DEACTIVATION_TIME, 2.0f);
