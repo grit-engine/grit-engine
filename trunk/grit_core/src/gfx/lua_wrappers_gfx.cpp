@@ -89,6 +89,19 @@ TRY_START
 TRY_END
 }
 
+static int gfxnode_set_all_materials (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxNodePtr,self,1,GFXNODE_TAG);
+    const char *mname = luaL_checkstring(L,2);
+    GfxMaterial *m = gfx_material_get(mname);
+    (void) self;
+    (void) m;
+    return 0;
+TRY_END
+}
+
 static int gfxnode_destroy (lua_State *L)
 {
 TRY_START
@@ -124,6 +137,8 @@ TRY_START
         } else {
             push_string(L, self->getParentBoneName());
         }
+    } else if (!::strcmp(key,"setAllMaterials")) {
+        push_cfunction(L,gfxnode_set_all_materials);
     } else if (!::strcmp(key,"batchesWithChildren")) {
         lua_pushnumber(L, self->getBatchesWithChildren());
     } else if (!::strcmp(key,"trianglesWithChildren")) {
