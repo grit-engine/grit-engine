@@ -740,64 +740,54 @@ TRY_END
 static int global_include (lua_State *L)
 {
 TRY_START
-        check_args(L, 1);
-        std::string filename = check_path(L, 1);
+    check_args(L, 1);
+    std::string filename = check_path(L, 1);
 
-        lua_pushcfunction(L, my_lua_error_handler);
-        int error_handler = lua_gettop(L);
+    // stack: []
+    int status = aux_include(L,filename);
+    if (status) {
+        // stack: [error_string]
+        const char *str = lua_tostring(L, -1);
+        // call error function manually, lua will not do this for us in lua_load
+        my_lua_error(L, str);
+    } else {
+        // stack: [function]
+        lua_call(L, 0, 0);
+        // stack: []
+    }
+    // stack: []
 
-        int status = aux_include(L,filename);
-        if (status) {
-                const char *str = lua_tostring(L, -1);
-                // call error function manually, lua will not do this for us in lua_load
-                my_lua_error(L,str);
-        } else {
-                status = lua_pcall(L,0,0,error_handler);
-                if (status) {
-                        //my_lua_error(L, "Failed to include file.");
-                        lua_pop(L,1); //message
-                }
-        }
-
-        lua_pop(L, 1); // error handler
-        return 0;
+    return 0;
 TRY_END
 }
 
 static int global_safe_include (lua_State *L)
 {
 TRY_START
-        check_args(L, 1);
-        std::string filename = check_path(L, 1);
+    check_args(L, 1);
+    std::string filename = check_path(L, 1);
 
-        lua_pushcfunction(L, my_lua_error_handler);
-        // stack: [error_handler]
-        int error_handler = lua_gettop(L);
-
-        int status = aux_include(L,filename);
-        if (status) {
-                // stack: [error_handler, error_string]
-                // call error function manually, lua will not do this for us in lua_load
-                // (but we want to fail silently if it's a file not found)
-                if (status!=LUA_ERRFILE) {
-                        const char *str = lua_tostring(L,-1);
-                        my_lua_error(L,str);
-                }
-                // stack: [error_handler, error_string]
-                lua_pop(L,1);
-                // stack: [error_handler]
-        } else {
-                // stack: [error_handler, function]
-                // stack: [error_handler, function]
-                status = lua_pcall(L,0,0,error_handler);
-                if (status) {
-                        // stack: [error_handler, error string]
-                        lua_pop(L,1); //message
-                }
+    // stack: []
+    int status = aux_include(L,filename);
+    if (status) {
+        // stack: [error_string]
+        // call error function manually, lua will not do this for us in lua_load
+        // (but we want to fail silently if it's a file not found)
+        if (status!=LUA_ERRFILE) {
+            const char *str = lua_tostring(L,-1);
+            my_lua_error(L,str);
         }
+        // stack: [error_string]
+        lua_pop(L,1);
+        // stack: []
+    } else {
+        // stack: [function]
+        lua_call(L, 0, 0);
+        // stack: []
+    }
+    // stack: []
 
-        lua_pop(L, 1); // error handler
-        return 0;
+    return 0;
 TRY_END
 }
 
