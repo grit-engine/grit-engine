@@ -409,7 +409,7 @@ void extract (const Config &cfg, std::ostream &out)
         for (unsigned i=0 ; i<surfinfo.surfaces.size() ; ++i) {
             SurfInfo &surf = surfinfo.surfaces[i];
             db[i] = surf.name;
-            physmats_lua<<"physical_material \""<<surf.name<<"\" {"<<std::endl;
+            physmats_lua<<"physical_material `"<<surf.name<<"` {"<<std::endl;
             float rtf, ortf;
             if (surf.adhesion_group=="RUBBER") {
                 physmats_lua<<"    interactionGroup=StickyGroup;"<<std::endl;
@@ -666,7 +666,7 @@ void extract (const Config &cfg, std::ostream &out)
             if (use_col) {
                 //out<<"col: \""<<gcol_name<<"\" "<<std::endl;
                 // add col to grit class
-                col_field << ",colMesh=\""<<gcol_name<<"\"";
+                col_field << ",colMesh=`"<<gcol_name<<"`";
                 cls = "ColClass";
             }
             if (dff.geometries.size()==1) {
@@ -694,7 +694,7 @@ void extract (const Config &cfg, std::ostream &out)
                 cast_shadow = false;
 
             classes<<"class_add("
-                   <<"\"/gtasa/"<<o.id<<"\","
+                   <<"`/gtasa/"<<o.id<<"`,"
                    <<cls<<",{"
                    <<"castShadows="<<(cast_shadow?"true":"false")
                    <<",renderingDistance="<<(o.draw_distance+rad)
@@ -732,7 +732,7 @@ void extract (const Config &cfg, std::ostream &out)
         lua_file.open(s.c_str(), std::ios::binary);
         APP_ASSERT_IO_SUCCESSFUL(lua_file, "opening "+s);
 
-        vehicles_lua << "include \""<<vname<<"/init.lua\"" << std::endl;
+        vehicles_lua << "include `"<<vname<<"/init.lua`" << std::endl;
             
         struct dff dff;
         std::string dff_name = v.dff+".dff";
@@ -867,10 +867,10 @@ void extract (const Config &cfg, std::ostream &out)
             }
 
             if (v.type == "car") {
-                lua_file << "class_add(\"/gtasa/"<<vname<<"\", extends(Vehicle) {\n";
+                lua_file << "class_add(`/gtasa/"<<vname<<"`, extends(Vehicle) {\n";
                 lua_file << "    castShadows = true;\n";
-                lua_file << "    gfxMesh = \""<<vname<<"/chassis.mesh\";\n";
-                lua_file << "    colMesh = \""<<vname<<"/chassis.gcol\";\n";
+                lua_file << "    gfxMesh = `"<<vname<<"/chassis.mesh`;\n";
+                lua_file << "    colMesh = `"<<vname<<"/chassis.gcol`;\n";
                 lua_file << "    placementZOffset=0.4;\n";
                 lua_file << "    powerPlots = {\n";
                 float torque = vdata->mass * vdata->engine_accel * v.rear_wheel_size/2 * 0.5f; // 0.75 is a fudge factor
@@ -881,7 +881,7 @@ void extract (const Config &cfg, std::ostream &out)
                 lua_file << "    meshWheelInfo = {\n";
 
                 std::stringstream all_wheels;
-                all_wheels << "castRadius=0.05;" << "mesh=\""<<vname<<"/wheel.mesh\";"
+                all_wheels << "castRadius=0.05;" << "mesh=`"<<vname<<"/wheel.mesh`;"
                            << "slack="<<(vdata->susp_upper)<<";"
                            << "len="<<(- vdata->susp_lower)<<";"
                            << "hookeFactor=1.0;";
@@ -949,9 +949,9 @@ void extract (const Config &cfg, std::ostream &out)
                 lua_file << "},{})" << std::endl;
             } else {
                 lua_file << std::endl;
-                lua_file << "class \"../"<<vname<<"\" (ColClass) {\n";
-                lua_file << "    gfxMesh=\""<<vname<<"/chassis.mesh\";\n";
-                lua_file << "    colMesh=\""<<vname<<"/chassis.gcol\";\n";
+                lua_file << "class `../"<<vname<<"` (ColClass) {\n";
+                lua_file << "    gfxMesh=`"<<vname<<"/chassis.mesh`;\n";
+                lua_file << "    colMesh=`"<<vname<<"/chassis.gcol`;\n";
                 lua_file << "    castShadows = true;\n";
                 lua_file << "    colourSpec = {\n";
                 std::vector<int> cols2 = carcols_2[vname];
@@ -982,7 +982,7 @@ void extract (const Config &cfg, std::ostream &out)
     vehicles_lua << "all_vehicles = { ";
 
     for (Vehicles::iterator i=vehicles.begin(),i_=vehicles.end() ; i!=i_ ; ++i) {
-        vehicles_lua << "\""<<i->dff<<"\", ";
+        vehicles_lua << "`"<<i->dff<<"`, ";
     }
     vehicles_lua << "}" << std::endl;
 
@@ -1008,7 +1008,7 @@ void extract (const Config &cfg, std::ostream &out)
                 if (inst.is_low_detail) continue;
                 if (!ids_written_out[inst.id]) continue;
                 if (inst.near_for==-1) {
-                    map<<"object_add(\"/gtasa/"<<inst.id<<"\","
+                    map<<"object_add(`/gtasa/"<<inst.id<<"`,"
                        <<"vector3("<<inst.x<<","<<inst.y<<","<<inst.z<<")";
                     if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
                         map<<",{rot=quat("
@@ -1018,7 +1018,7 @@ void extract (const Config &cfg, std::ostream &out)
                     map<<")\n";
                 } else {
                     const Inst &far_inst = insts[inst.near_for];
-                    map<<"last=object_add(\"/gtasa/"<<inst.id<<"\","
+                    map<<"last=object_add(`/gtasa/"<<inst.id<<"`,"
                        <<"vector3("<<inst.x<<","<<inst.y<<","<<inst.z<<")";
                     if (inst.rx!=0 || inst.ry!=0 || inst.rz!=0) {
                         map<<",{rot=quat("
@@ -1026,7 +1026,7 @@ void extract (const Config &cfg, std::ostream &out)
                            <<inst.ry<<","<<inst.rz<<")}";
                     }
                     map<<")\n";
-                    map<<"object_add(\"/gtasa/"<<far_inst.id<<"\","
+                    map<<"object_add(`/gtasa/"<<far_inst.id<<"`,"
                        <<"vector3("<<far_inst.x<<","<<far_inst.y<<","<<far_inst.z<<")";
                     map<<",{";
                     if (far_inst.rx!=0 || far_inst.ry!=0 || far_inst.rz!=0) {

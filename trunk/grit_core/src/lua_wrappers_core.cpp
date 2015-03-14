@@ -767,9 +767,12 @@ TRY_START
     check_args(L, 1);
     std::string filename = check_path(L, 1);
 
+    bool successful;
+
     // stack: []
     int status = aux_include(L,filename);
     if (status) {
+        successful = false;
         // stack: [error_string]
         // call error function manually, lua will not do this for us in lua_load
         // (but we want to fail silently if it's a file not found)
@@ -781,13 +784,15 @@ TRY_START
         lua_pop(L,1);
         // stack: []
     } else {
+        successful = true;
         // stack: [function]
         lua_call(L, 0, 0);
         // stack: []
     }
     // stack: []
 
-    return 0;
+    lua_pushboolean(L, successful);
+    return 1;
 TRY_END
 }
 
