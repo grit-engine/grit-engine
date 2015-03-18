@@ -1311,7 +1311,7 @@ export_or_provide_mat (const StringSet &texs,
         return mat;
 
     
-    lua_file << "material \"" << mname.str() << "\" { ";
+    lua_file << "material `" << mname.str() << "` { ";
     if (g.vertex_cols.size() > 0) {
             lua_file << "vertexDiffuse=true, ";
             lua_file << "vertexAlpha=true, ";
@@ -1359,7 +1359,7 @@ export_or_provide_mat (const StringSet &texs,
             lua_file<<"diffuseColour=0x"<<std::hex<<m.colour<<std::dec<<", ";
         }
     }
-    if (textures[0]!="") lua_file << "diffuseMap=\""<<textures[0]<<"\", ";
+    if (textures[0]!="") lua_file << "diffuseMap=`"<<textures[0]<<"`, ";
     lua_file << "}\n";
 
     return mat;
@@ -2057,9 +2057,9 @@ int main(int argc, char **argv)
                     }
 
                     lua_file << std::endl;
-                    lua_file << "class \""<<oname<<"\" (ColClass) {" << std::endl;
-                    lua_file << "    gfxMesh=\""<<oname<<".chassis.mesh\";" << std::endl;
-                    lua_file << "    colMesh=\""<<col_name<<"\";" << std::endl;
+                    lua_file << "class `"<<oname<<"` (ColClass) {" << std::endl;
+                    lua_file << "    gfxMesh=`"<<oname<<".chassis.mesh`;" << std::endl;
+                    lua_file << "    colMesh=`"<<col_name<<"`;" << std::endl;
                     lua_file << "}" << std::endl;
                 }
 
