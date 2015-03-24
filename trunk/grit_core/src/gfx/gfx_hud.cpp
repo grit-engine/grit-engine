@@ -417,6 +417,22 @@ void GfxHudObject::setParent (lua_State *L, GfxHudObject *v)
     triggerParentResized(L);
 }
 
+static GfxHudObject *ray (const Vector2 &screen_pos)
+{
+    for (int i=GFX_HUD_ZORDER_MAX ; i>=0 ; --i) {
+        for (unsigned j=0 ; j<root_elements.size() ; ++j) {
+            GfxHudBase *base = root_elements[j];
+            if (base->destroyed()) continue;
+            GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+            if (base->getZOrder() != i) continue;
+            GfxHudObject *hit = obj->shootRay(screen_pos);
+            if (hit != NULL) return hit;
+        }
+    }
+
+    return NULL;
+}
+
 GfxHudObject *GfxHudObject::shootRay (const Vector2 &screen_pos)
 {
     if (!isEnabled()) return NULL; // can't hit any children either
@@ -429,18 +445,21 @@ GfxHudObject *GfxHudObject::shootRay (const Vector2 &screen_pos)
     //if (!inside) return NULL;
     
     // look at children, ensure not inside one of them
-    for (unsigned j=0 ; j<children.size() ; ++j) {
-        GfxHudBase *base = children[j];
+    for (int i=GFX_HUD_ZORDER_MAX ; i>=0 ; --i) {
+        for (unsigned j=0 ; j<children.size() ; ++j) {
+            GfxHudBase *base = children[j];
 
-        if (base->destroyed()) continue;
+            if (base->destroyed()) continue;
+            if (base->getZOrder() != i) continue;
 
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        if (obj == NULL) continue;
-        GfxHudObject *hit = obj->shootRay(screen_pos);
-        if (hit != NULL) return hit;
+            GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+            if (obj == NULL) continue;
+            GfxHudObject *hit = obj->shootRay(screen_pos);
+            if (hit != NULL) return hit;
+        }
     }
     
-    // TODO: look at parent's z order > this one
+    // Child was not hit
 
     return getNeedsInputCallbacks() && inside ? this : NULL;
 }
@@ -485,7 +504,7 @@ void GfxHudObject::triggerMouseMove (lua_State *L, const Vector2 &screen_pos)
         Vector2 local_pos = (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
         push_v2(L, local_pos);
         push_v2(L, screen_pos);
-        lua_pushboolean(L, this->shootRay(screen_pos)==this);
+        lua_pushboolean(L, ray(screen_pos)==this);
         //stack: err,callback,object,local_pos,screen_pos,inside
 
         STACK_CHECK_N(6);
@@ -1227,7 +1246,8 @@ void gfx_render_hud_one (GfxHudBase *base)
 
         for (unsigned i=0 ; i<=GFX_HUD_ZORDER_MAX ; ++i) {
             for (unsigned j=0 ; j<obj->children.size() ; ++j) {
-                GfxHudBase *child = obj->children[j];
+                // Draw in reverse order, for consistency with ray priority
+                GfxHudBase *child = obj->children[obj->children.size() - j - 1];
                 if (child->getZOrder() != i) continue;
                 gfx_render_hud_one(child);
             }
@@ -1256,7 +1276,7 @@ void gfx_hud_render (Ogre::Viewport *vp)
 
         for (unsigned i=0 ; i<=GFX_HUD_ZORDER_MAX ; ++i) {
             for (unsigned j=0 ; j<root_elements.size() ; ++j) {
-                GfxHudBase *el = root_elements[j];
+                GfxHudBase *el = root_elements[root_elements.size() - j - 1];
                 if (el->getZOrder() != i) continue;
                 gfx_render_hud_one(el);
             }
@@ -1319,16 +1339,7 @@ void gfx_hud_call_per_frame_callbacks (lua_State *L, float elapsed)
 GfxHudObject *gfx_hud_ray (int x, int y)
 {
     Vector2 screen_pos(x,y);
-
-    for (unsigned j=0 ; j<root_elements.size() ; ++j) {
-        GfxHudBase *base = root_elements[j];
-        if (base->destroyed()) continue;
-        GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
-        GfxHudObject *hit = obj->shootRay(screen_pos);
-        if (hit != NULL) return hit;
-    }
-
-    return NULL;
+    return ray(screen_pos);
 }
 
 static Vector2 last_mouse_abs;
