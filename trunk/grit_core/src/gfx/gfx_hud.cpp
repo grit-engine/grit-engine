@@ -423,8 +423,9 @@ static GfxHudObject *ray (const Vector2 &screen_pos)
         for (unsigned j=0 ; j<root_elements.size() ; ++j) {
             GfxHudBase *base = root_elements[j];
             if (base->destroyed()) continue;
-            GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
             if (base->getZOrder() != i) continue;
+            GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+            if (obj == nullptr) continue;
             GfxHudObject *hit = obj->shootRay(screen_pos);
             if (hit != NULL) return hit;
         }
