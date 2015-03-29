@@ -862,6 +862,9 @@ def export_gcol_internal (scene, obj, gcol_static, mass, linear_damping, angular
         # triangles to add
         mesh = obj.to_mesh(scene, True, "PREVIEW")
 
+        if not gcol_static:
+            errors.append("Grit gcol \""+obj.name+"\" has trimesh but is not static")
+
         if len(mesh.materials) == 0:
             errors.append("Grit gcol \""+obj.name+"\" has no materials")
 
