@@ -261,6 +261,11 @@ fn grit_tcol_export out_file propobj objs = ( -- {{{
     
     --trimesh
     if num_trimeshes > 0 then (
+        if getUserProp propobj "gritDynamic" == true then (
+            local errmsg = stringstream ""
+            format "gcol has trimesh but is not static: \"%\"" out_file to:errmsg
+            messageBox (Errmsg AS string) title:"ERROR!"
+        )
         format "trimesh {\n" to:savetcol
         format "    vertexes {\n" to:savetcol
         format "Started exporting trimesh...\n" to:listener
