@@ -29,9 +29,7 @@
 
 #include <LinearMath/btGeometryUtil.h>
 #include <btBulletCollisionCommon.h>
-#include <BulletCollision/Gimpact/btGImpactShape.h>
 #include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
-//#include <../Extras/GIMPACTUtils/btGImpactConvexDecompositionShape.h>
 
 #include "../centralised_log.h"
 #include "../path_util.h"
@@ -315,17 +313,7 @@ void CollisionMesh::loadImpl (void)
 
                 btGenerateInternalEdgeInfo(tm,tri_info_map);
             } else {
-                btGImpactShapeInterface *s2 = new btGImpactMeshShape(v);
-                //assume mesh is already shrunk to the given margin
-                s2->setMargin(bcol.triMeshMargin);
-                /* this is hopelessly awful in comparison (but faster)
-                btGImpactShapeInterface *s2 =
-                    new btGImpactConvexDecompositionShape(v,
-                                          Vector3(1,1,1),
-                                          0.01);
-                */
-                s2->updateBound();
-                s = s2;
+                // skip over dynamic trimesh
             }
 
             masterShape->addChildShape(btTransform::getIdentity(), s);
@@ -475,17 +463,7 @@ void CollisionMesh::loadImpl (void)
 
                 btGenerateInternalEdgeInfo(tm,tri_info_map);
             } else {
-                btGImpactShapeInterface *s2 = new btGImpactMeshShape(v);
-                //assume mesh is already shrunk to the given margin
-                s2->setMargin(t.margin);
-                /* this is hopelessly awful in comparison (but faster)
-                btGImpactShapeInterface *s2 =
-                    new btGImpactConvexDecompositionShape(v,
-                                          Vector3(1,1,1),
-                                          0.01);
-                */
-                s2->updateBound();
-                s = s2;
+                // Skip over dynamic trimesh
             }
 
             masterShape->addChildShape(btTransform::getIdentity(), s);
@@ -511,7 +489,7 @@ void CollisionMesh::loadImpl (void)
         setInertia(Vector3(0,0,0));
     } else {
         if (faceMaterials.size() > 0) {
-            CERR << "While loading \"" + name + "\": Dynamic trimesh is deprecated." << std::endl;
+            CERR << "While loading \"" + name + "\": Dynamic trimesh not supported." << std::endl;
         }
         if (compute_inertia) {
             btVector3 i;
