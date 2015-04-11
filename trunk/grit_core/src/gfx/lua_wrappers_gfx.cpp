@@ -1612,7 +1612,7 @@ TRY_START
                 self.setParent(L, &v);
             }
         } else if (!::strcmp(key,"zOrder")) {
-            unsigned char v = check_int(L,3,0,7);
+            unsigned char v = check_int(L,3,0,15);
             self.setZOrder(v);
 
         } else if (!::strcmp(key,"needsInputCallbacks")) {

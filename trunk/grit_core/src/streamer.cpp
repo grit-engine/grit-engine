@@ -55,8 +55,10 @@ void streamer_init (void)
 }
 
 
-void streamer_centre (lua_State *L, const Vector3 &new_pos)
+void streamer_centre (lua_State *L, const Vector3 &new_pos, bool everything)
 {
+        int step_size = everything ? INT_MAX : core_option(CORE_STEP_SIZE);
+
         Space::Cargo fnd = fresh;
         fresh.clear();
 
@@ -138,7 +140,7 @@ void streamer_centre (lua_State *L, const Vector3 &new_pos)
         ////////////////////////////////////////////////////////////////////////
         // note: since fnd is prepopulated by new objects and the lods of deactivated objects
         // it may have duplicates after the rangespace has gone through
-        rs.getPresent(new_pos.x,new_pos.y,new_pos.z,core_option(CORE_STEP_SIZE),tpF,fnd);
+        rs.getPresent(new_pos.x, new_pos.y, new_pos.z, step_size, tpF, fnd);
         for (Space::Cargo::iterator i=fnd.begin(),i_=fnd.end() ; i!=i_ ; ++i) {
                 const GritObjectPtr &o = *i;
 

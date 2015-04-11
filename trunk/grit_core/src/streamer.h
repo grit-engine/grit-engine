@@ -54,7 +54,7 @@ void streamer_init();
  * \param L Lua state for calling object activation callbacks.
  * \param new_pos The player's position.
  */
-void streamer_centre (lua_State *L, const Vector3 &new_pos);
+void streamer_centre (lua_State *L, const Vector3 &new_pos, bool everything);
 
 /** Called by objects when they change position or rendering distance.
  * \param index The index of the object within the streamer.

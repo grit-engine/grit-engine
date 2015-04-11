@@ -362,7 +362,17 @@ static int global_streamer_centre (lua_State *L)
 TRY_START
         check_args(L,1);
         Vector3 pos = check_v3(L,1);
-        streamer_centre(L, pos);
+        streamer_centre(L, pos, false);
+        return 0;
+TRY_END
+}
+
+static int global_streamer_centre_full (lua_State *L)
+{
+TRY_START
+        check_args(L,1);
+        Vector3 pos = check_v3(L,1);
+        streamer_centre(L, pos, true);
         return 0;
 TRY_END
 }
@@ -705,6 +715,7 @@ TRY_END
 
 static const luaL_reg global[] = {
     {"streamer_centre",global_streamer_centre},
+    {"streamer_centre_full",global_streamer_centre_full},
     {"class_add",global_class_add},
     {"class_del",global_class_del},
     {"class_all_del",global_class_all_del},

@@ -50,7 +50,7 @@ extern "C" {
 #include "gfx_font.h"
 #include "gfx_text_buffer.h"
 
-#define GFX_HUD_ZORDER_MAX 7
+#define GFX_HUD_ZORDER_MAX 15
 
 class GfxHudClass {
 
