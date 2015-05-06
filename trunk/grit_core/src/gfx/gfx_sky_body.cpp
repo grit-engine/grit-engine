@@ -159,7 +159,7 @@ void GfxSkyBody::render (const GfxShaderGlobals &g)
  
         const GfxMaterialTextureMap &mat_texs = mat->getTextures();
         mat->getShader()->bindShader(GfxShader::SKY, 0, false, 0, false,
-                                     g, world, 1, mat_texs, mat->getBindings());
+                                     g, world, nullptr, 0, 1, mat_texs, mat->getBindings());
 
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);
         // read but don't write depth buffer

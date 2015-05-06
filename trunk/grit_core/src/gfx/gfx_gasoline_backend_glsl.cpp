@@ -36,6 +36,8 @@ static std::map<std::string, std::string> vert_global = {
     {"coord5", "uv5"},
     {"coord6", "uv6"},
     {"coord7", "uv7"},
+    {"boneWeights", "blendWeights"},
+    {"boneAssignments", "blendIndices"},
 };
 
 static std::string preamble (void)
@@ -51,13 +53,13 @@ static std::string preamble (void)
     ss << "#define Float3 vec3\n";
     ss << "#define Float4 vec4\n";
     ss << "#define Float2x2 mat2x2\n";
-    ss << "#define Float2x3 mat2x3\n";
-    ss << "#define Float2x4 mat2x4\n";
-    ss << "#define Float3x2 mat3x2\n";
+    ss << "#define Float2x3 mat3x2\n";
+    ss << "#define Float2x4 mat4x2\n";
+    ss << "#define Float3x2 mat2x3\n";
     ss << "#define Float3x3 mat3x3\n";
-    ss << "#define Float3x4 mat3x4\n";
-    ss << "#define Float4x2 mat4x2\n";
-    ss << "#define Float4x3 mat4x3\n";
+    ss << "#define Float3x4 mat4x3\n";
+    ss << "#define Float4x2 mat2x4\n";
+    ss << "#define Float4x3 mat3x4\n";
     ss << "#define Float4x4 mat4x4\n";
     ss << "#define FloatTexture sampler1D\n";
     ss << "#define FloatTexture2 sampler2D\n";
@@ -76,13 +78,13 @@ static std::string generate_funcs (void)
     ss << "Float strength (Float p, Float n) { return pow(max(0.00000001, p), n); }\n";
     ss << "Float atan2 (Float y, Float x) { return atan(y, x); }\n";
     ss << "Float2 mul (Float2x2 m, Float2 v) { return m * v; }\n";
-    ss << "Float3 mul (Float2x3 m, Float2 v) { return m * v; }\n";
-    ss << "Float4 mul (Float2x4 m, Float2 v) { return m * v; }\n";
-    ss << "Float2 mul (Float3x2 m, Float3 v) { return m * v; }\n";
+    ss << "Float2 mul (Float2x3 m, Float3 v) { return m * v; }\n";
+    ss << "Float2 mul (Float2x4 m, Float4 v) { return m * v; }\n";
+    ss << "Float3 mul (Float3x2 m, Float2 v) { return m * v; }\n";
     ss << "Float3 mul (Float3x3 m, Float3 v) { return m * v; }\n";
-    ss << "Float4 mul (Float3x4 m, Float3 v) { return m * v; }\n";
-    ss << "Float2 mul (Float4x2 m, Float4 v) { return m * v; }\n";
-    ss << "Float3 mul (Float4x3 m, Float4 v) { return m * v; }\n";
+    ss << "Float3 mul (Float3x4 m, Float4 v) { return m * v; }\n";
+    ss << "Float4 mul (Float4x2 m, Float2 v) { return m * v; }\n";
+    ss << "Float4 mul (Float4x3 m, Float3 v) { return m * v; }\n";
     ss << "Float4 mul (Float4x4 m, Float4 v) { return m * v; }\n";
     ss << "Float3 normalise (Float3 v) { return normalize(v); }\n";
     ss << "Float4 pma_decode (Float4 v) { return Float4(v.xyz/v.w, v.w); }\n";
@@ -99,11 +101,20 @@ static std::string generate_funcs (void)
     ss << "Float3 lerp (Float3 a, Float3 b, Float3 v) { return v*b + (Float3(1,1,1)-v)*a; }\n";
     ss << "Float4 lerp (Float4 a, Float4 b, Float4 v) { return v*b + (Float4(1,1,1,1)-v)*a; }\n";
 
-    ss << "Float3 transform_to_world (Float3 v) { return mul(body_world, Float4(v, 1)).xyz; }\n";
-    ss << "Float3 rotate_to_world (Float3 v) { return mul(body_world, Float4(v, 0)).xyz; }\n";
+    // TODO(dcunnin): Move this to a body section
+    ss << "uniform Float4x4 body_boneWorlds[50];\n";
 
     ss << "uniform Float internal_rt_flip;\n";
     ss << "uniform Float internal_fade;\n";
+    ss << "\n";
+
+    return ss.str();
+}
+
+static std::string generate_funcs_vert (void)
+{
+    std::stringstream ss;
+    ss << "// Standard library (vertex shader specific calls)\n";
     ss << "\n";
 
     return ss.str();
@@ -221,6 +232,10 @@ void gfx_gasoline_unparse_glsl (GfxGslContext &ctx,
     auto trans = frag_ts->getTransVector();
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
     vert_in.insert("position");
+    if (bone_weights > 0) {
+        vert_in.insert("boneAssignments");
+        vert_in.insert("boneWeights");
+    }
     for (const auto &tran : trans) {
         const std::string &tv = tran.path[0];
         switch (tran.kind) {
@@ -245,6 +260,8 @@ void gfx_gasoline_unparse_glsl (GfxGslContext &ctx,
     vert_ss << preamble();
     vert_ss << generate_vert_header(ctx, vert_ts, trans, vert_in);
     vert_ss << generate_funcs();
+    vert_ss << gfx_gasoline_preamble_transformation(false, bone_weights, instanced);
+    vert_ss << generate_funcs_vert();
     vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
     vert_ss << vert_backend.getUserVertexFunction();
     vert_ss << "void main (void)\n";
@@ -327,6 +344,10 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
 	GfxGslTypeMap vert_vars, frag_vars;
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
     vert_in.insert("position");
+    if (bone_weights > 0) {
+        vert_in.insert("boneAssignments");
+        vert_in.insert("boneWeights");
+    }
     GfxGslTypeMap trans_vert;
     for (const auto &tran : trans) {
         const std::string &tv = tran.path[0];
@@ -351,6 +372,8 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
     vert_ss << preamble();
     vert_ss << generate_vert_header(ctx, vert_ts, trans, vert_in);
     vert_ss << generate_funcs();
+    vert_ss << gfx_gasoline_preamble_transformation(true, bone_weights, instanced);
+    vert_ss << generate_funcs_vert();
     vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
     vert_ss << vert_backend.getUserVertexFunction();
     vert_ss << "void main (void)\n";

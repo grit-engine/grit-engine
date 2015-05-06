@@ -340,7 +340,7 @@ class GfxParticleSystem {
             const Ogre::Matrix4 &I = Ogre::Matrix4::IDENTITY;
 
             shader->bindShader(GfxShader::SKY, false, 0, false, 0,
-                               globs, I, 1, texs, binds);
+                               globs, I, nullptr, 0, 1, texs, binds);
 
             ogre_rs->_setTexture(NUM_GLOBAL_TEXTURES, true, pipe->getGBufferTexture(0));
 

@@ -87,4 +87,7 @@ std::string gfx_gasoline_generate_trans_decode(const std::vector<GfxGslTrans> &t
                                                GfxGslTrans::Kind only);
 
 std::string gfx_gasoline_preamble_lighting (void);
+
+std::string gfx_gasoline_preamble_transformation (bool first_person, unsigned bone_weights,
+                                                  bool instanced);
 #endif

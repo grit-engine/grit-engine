@@ -204,7 +204,7 @@ std::string gfx_gasoline_generate_trans_encode (const std::vector<GfxGslTrans> &
 
     if (trans.size() == 0) return "";
 
-    ss << "// Encode interpolated vars\n";
+    ss << "    // Encode interpolated vars\n";
 
     for (unsigned i=0 ; i<trans.size() ; i+=4) {
         unsigned sz = trans.size()-i > 4 ? 4 : trans.size()-i;
@@ -328,3 +328,63 @@ std::string gfx_gasoline_preamble_lighting (void)
 
     return ss.str();
 }
+
+
+std::string gfx_gasoline_preamble_transformation (bool first_person, unsigned bone_weights,
+                                                  bool instanced)
+{
+    (void) instanced;
+    // TODO(dcunnin): Need to specialise transform_to_world and rotate_to_world for instanced
+    // geometry.
+
+    std::stringstream ss;
+    ss << "// Standard library (vertex shader specific calls)\n";
+
+    ss << "Float3 transform_to_world (Float3 v)\n";
+    ss << "{\n";
+    ss << "    Float3 r = Float3(0, 0, 0);\n";
+    if (bone_weights == 0) {
+        ss << "    r = mul(body_world, Float4(v, 1)).xyz;\n";
+    } else {
+        // The bone weights are supposed to sum to 1, we could remove this overconservative divide
+        // if we could assert that property at mesh loading time.
+        ss << "    Float total = 0;\n";
+        for (unsigned i=0 ; i < bone_weights ; ++i) {
+            ss << "    r += vert_boneWeights[" << i
+               << "] * mul(body_boneWorlds[int(vert_boneAssignments[" << i
+               << "])], Float4(v, 1)).xyz;\n";
+            ss << "    total += vert_boneWeights[" << i << "];\n";
+        }
+        ss << "    r /= total;\n";
+    }
+    if (first_person)
+        ss << "    r = mul(global_invView, Float4(r, 1)).xyz;\n";
+    ss << "    return r;\n";
+    ss << "}\n";
+    ss << "Float3 rotate_to_world (Float3 v)\n";
+    ss << "{\n";
+    ss << "    Float3 r = Float3(0, 0, 0);\n";
+    if (bone_weights == 0) {
+        ss << "    r = mul(body_world, Float4(v, 0)).xyz;\n";
+    } else {
+        // The bone weights are supposed to sum to 1, we could remove this overconservative divide
+        // if we could assert that property at mesh loading time.
+        ss << "    Float total = 0;\n";
+        for (unsigned i=0 ; i < bone_weights ; ++i) {
+            ss << "    r += vert_boneWeights[" << i
+               << "] * mul(body_boneWorlds[int(vert_boneAssignments[" << i
+               << "])], Float4(v, 0)).xyz;\n";
+            ss << "    total += vert_boneWeights[" << i << "];\n";
+        }
+        ss << "    r /= total;\n";
+    }
+    if (first_person)
+        ss << "    r = mul(global_invView, Float4(r, 0)).xyz;\n";
+    ss << "    return r;\n";
+    ss << "}\n";
+    ss << "\n";
+
+    return ss.str();
+}
+
+

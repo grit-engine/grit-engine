@@ -168,6 +168,8 @@ void GfxGslTypeSystem::initObjectTypes (GfxGslKind k)
     vertFields["colour"] = ctx.alloc.makeType<GfxGslFloatType>(4);
     vertFields["tangent"] = ctx.alloc.makeType<GfxGslFloatType>(4);
     vertFields["position"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["boneWeights"] = ctx.alloc.makeType<GfxGslFloatType>(4);
+    vertFields["boneAssignments"] = ctx.alloc.makeType<GfxGslFloatType>(4);
 
 }
 

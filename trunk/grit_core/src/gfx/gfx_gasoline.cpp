@@ -34,6 +34,8 @@ static GfxGslTypeMap make_body_fields (GfxGslAllocator &alloc)
     m["worldView"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["worldViewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
 
+    // TODO: add bones here?
+
     return m;
 }
  
@@ -46,6 +48,7 @@ static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
     m["proj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["time"] = alloc.makeType<GfxGslFloatType>(1);
     m["view"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
+    m["invView"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["viewportSize"] = alloc.makeType<GfxGslFloatType>(2);
     m["viewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["rayTopLeft"] = alloc.makeType<GfxGslFloatType>(3);

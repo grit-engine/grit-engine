@@ -93,9 +93,9 @@ class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
     protected:
     Ogre::SkeletonInstance* skeleton;
     Ogre::AnimationStateSet animationState;
-    Ogre::Matrix4 *boneWorldMatrices;
-    Ogre::Matrix4 *boneMatrices;
-    unsigned short numBoneMatrices;
+    Ogre::Matrix4 *boneWorldMatrixes;
+    Ogre::Matrix4 *boneMatrixes;
+    unsigned short numBoneMatrixes;
     
 
 

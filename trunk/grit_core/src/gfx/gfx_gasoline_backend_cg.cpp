@@ -35,6 +35,8 @@ static std::map<std::string, std::string> vert_semantic = {
     {"normal", "NORMAL"},
     {"tangent", "TANGENT"},
     {"colour", "COLOR"},
+    {"boneWeights", "BLENDWEIGHT"},
+    {"boneAssignments", "BLENDINDICES"},
 };
 
 static std::map<std::string, std::string> frag_semantic = {
@@ -93,11 +95,12 @@ static std::string generate_funcs (void)
     ss << "Float3 gamma_encode (Float3 v) { return pow(v, 1/2.2); }\n";
     ss << "Float4 gamma_encode (Float4 v) { return pow(v, 1/2.2); }\n";
 
-    ss << "Float3 transform_to_world (Float3 v) { return mul(body_world, Float4(v, 1)).xyz; }\n";
-    ss << "Float3 rotate_to_world (Float3 v) { return mul(body_world, Float4(v, 0)).xyz; }\n";
-
     ss << "uniform Float internal_rt_flip;\n";
     ss << "uniform Float internal_fade;\n";
+
+    // TODO(dcunnin): Move this to a body section 
+    ss << "uniform Float4x4 body_boneWorlds[50];\n";
+
 
     ss << "\n";
 
@@ -201,6 +204,10 @@ void gfx_gasoline_unparse_cg (GfxGslContext &ctx,
     auto trans = frag_ts->getTransVector();
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
     vert_in.insert("position");
+    if (bone_weights > 0) {
+        vert_in.insert("boneWeights");
+        vert_in.insert("boneAssignments");
+    }
     for (const auto &tran : trans) {
         const std::string &tv = tran.path[0];
         switch (tran.kind) {
@@ -224,6 +231,7 @@ void gfx_gasoline_unparse_cg (GfxGslContext &ctx,
     vert_ss << cg_preamble();
     vert_ss << generate_vert_header(ctx, vert_ts, vert_in);
     vert_ss << generate_funcs();
+    vert_ss << gfx_gasoline_preamble_transformation(false, bone_weights, instanced);
     vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
     vert_ss << vert_backend.getUserVertexFunction();
 
@@ -315,6 +323,10 @@ void gfx_gasoline_unparse_first_person_cg(GfxGslContext &ctx,
     GfxGslTypeMap vert_vars, frag_vars;
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
     vert_in.insert("position");
+    if (bone_weights > 0) {
+        vert_in.insert("boneWeights");
+        vert_in.insert("boneAssignments");
+    }
     GfxGslTypeMap trans_vert;
     for (const auto &tran : trans) {
         const std::string &tv = tran.path[0];
@@ -339,6 +351,7 @@ void gfx_gasoline_unparse_first_person_cg(GfxGslContext &ctx,
     vert_ss << cg_preamble();
     vert_ss << generate_vert_header(ctx, vert_ts, vert_in);
     vert_ss << generate_funcs();
+    vert_ss << gfx_gasoline_preamble_transformation(true, bone_weights, instanced);
     vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
     vert_ss << vert_backend.getUserVertexFunction();
     vert_ss << "void main (\n";

@@ -43,7 +43,7 @@ static std::set<GfxBody*> first_person_bodies;
 
 unsigned short GfxBody::Sub::getNumWorldTransforms(void) const
 {
-    if (!parent->numBoneMatrices) {
+    if (!parent->numBoneMatrixes) {
         // No skeletal animation, or software skinning
         return 1;
     }
@@ -51,14 +51,14 @@ unsigned short GfxBody::Sub::getNumWorldTransforms(void) const
     // Hardware skinning, count all actually used matrices
     const Ogre::Mesh::IndexMap& indexMap = subMesh->useSharedVertices ?
         subMesh->parent->sharedBlendIndexToBoneIndexMap : subMesh->blendIndexToBoneIndexMap;
-    APP_ASSERT(indexMap.size() <= parent->numBoneMatrices);
+    APP_ASSERT(indexMap.size() <= parent->numBoneMatrixes);
 
     return static_cast<unsigned short>(indexMap.size());
 }
 
 void GfxBody::Sub::getWorldTransforms(Ogre::Matrix4* xform) const
 {
-    if (!parent->numBoneMatrices) {
+    if (!parent->numBoneMatrixes) {
         // No skeletal animation, or software skinning
         *xform = parent->_getParentNodeFullTransform();
         return;
@@ -67,13 +67,13 @@ void GfxBody::Sub::getWorldTransforms(Ogre::Matrix4* xform) const
     // Hardware skinning, pass all actually used matrices
     const Ogre::Mesh::IndexMap& indexMap = subMesh->useSharedVertices ?
         subMesh->parent->sharedBlendIndexToBoneIndexMap : subMesh->blendIndexToBoneIndexMap;
-    APP_ASSERT(indexMap.size() <= parent->numBoneMatrices);
+    APP_ASSERT(indexMap.size() <= parent->numBoneMatrixes);
 
-    if (parent->boneWorldMatrices) {
+    if (parent->boneWorldMatrixes) {
 
         // Bones, use cached matrices built when _updateRenderQueue was called
         for (Ogre::Mesh::IndexMap::const_iterator i=indexMap.begin(),i_=indexMap.end() ; i!=i_; ++i) {
-            *(xform++) = parent->boneWorldMatrices[*i];
+            *(xform++) = parent->boneWorldMatrixes[*i];
         }
 
     } else {
@@ -118,15 +118,30 @@ void GfxBody::updateBoneMatrixes (void)
 
         //update the current hardware animation state
         skeleton->setAnimationState(animationState);
-        skeleton->_getBoneMatrices(boneMatrices);
+        skeleton->_getBoneMatrices(boneMatrixes);
 
         updateWorldTransform();
 
+        Ogre::Matrix4 world = _getParentNodeFullTransform();
+
+/*
+        if (firstPerson) {
+            Ogre::Matrix4 view = p->getCamera()->getViewMatrix();
+            // Ogre cameras point towards Z whereas in Grit the convention is that
+            // 'unrotated' means pointing towards y (north)
+            Ogre::Matrix4 orientation(to_ogre(Quaternion(Degree(90), Vector3(1, 0, 0))));
+
+            Ogre::Matrix4 inv_mat = (orientation * view).inverseAffine();
+
+            world = inv_mat * world;  // Also transform to be 'glued' to the camera.
+        }
+*/
+
         Ogre::OptimisedUtil::getImplementation()->concatenateAffineMatrices(
-            _getParentNodeFullTransform(),
-            boneMatrices,
-            boneWorldMatrices,
-            numBoneMatrices);
+            world,
+            boneMatrixes,
+            boneWorldMatrixes,
+            numBoneMatrixes);
     }
 }
 
@@ -331,9 +346,9 @@ void GfxBody::destroyGraphics (void)
     subList.clear();
     
     if (skeleton) {
-        OGRE_FREE_SIMD(boneWorldMatrices, Ogre::MEMCATEGORY_ANIMATION);
+        OGRE_FREE_SIMD(boneWorldMatrixes, Ogre::MEMCATEGORY_ANIMATION);
         OGRE_DELETE skeleton;
-        OGRE_FREE_SIMD(boneMatrices, Ogre::MEMCATEGORY_ANIMATION);
+        OGRE_FREE_SIMD(boneMatrixes, Ogre::MEMCATEGORY_ANIMATION);
     }
 }
 
@@ -361,16 +376,16 @@ void GfxBody::reinitialise (void)
     if (!mesh->getSkeleton().isNull()) {
         skeleton = OGRE_NEW Ogre::SkeletonInstance(mesh->getSkeleton());
         skeleton->load();
-        numBoneMatrices = skeleton->getNumBones();
-        boneMatrices      = static_cast<Ogre::Matrix4*>(OGRE_MALLOC_SIMD(sizeof(Ogre::Matrix4) * numBoneMatrices, Ogre::MEMCATEGORY_ANIMATION));
-        boneWorldMatrices = static_cast<Ogre::Matrix4*>(OGRE_MALLOC_SIMD(sizeof(Ogre::Matrix4) * numBoneMatrices, Ogre::MEMCATEGORY_ANIMATION));
+        numBoneMatrixes = skeleton->getNumBones();
+        boneMatrixes      = static_cast<Ogre::Matrix4*>(OGRE_MALLOC_SIMD(sizeof(Ogre::Matrix4) * numBoneMatrixes, Ogre::MEMCATEGORY_ANIMATION));
+        boneWorldMatrixes = static_cast<Ogre::Matrix4*>(OGRE_MALLOC_SIMD(sizeof(Ogre::Matrix4) * numBoneMatrixes, Ogre::MEMCATEGORY_ANIMATION));
 
         mesh->_initAnimationState(&animationState);
     } else {
         skeleton = NULL;
-        numBoneMatrices = 0;
-        boneMatrices      = NULL;
-        boneWorldMatrices = NULL;
+        numBoneMatrixes = 0;
+        boneMatrixes      = NULL;
+        boneWorldMatrixes = NULL;
     }
 
     updateBones();
@@ -753,9 +768,9 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g, const Ogre::Matrix4 
     bool fade_dither = fade < 1;
     unsigned env_boxes = 1;
     bool instanced = false;
-    unsigned bone_weights = 0;
+    unsigned bone_weights = mesh->getNumBlendWeightsPerVertex();
 
-    const Ogre::Matrix4 &world = inv_mat * _getParentNodeFullTransform();
+    const Ogre::Matrix4 &world = /*inv_mat * */_getParentNodeFullTransform();
 
     // TODO(dcunnin): object parameters
 
@@ -782,7 +797,8 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g, const Ogre::Matrix4 
             const GfxMaterialTextureMap &mat_texs = mat->getTextures();
             mat->getShader()->bindShader(GfxShader::FIRST_PERSON,
                                          fade_dither, env_boxes, instanced, bone_weights,
-                                         g, world, fade, mat_texs, mat->getBindings());
+                                         g, world, boneWorldMatrixes, numBoneMatrixes, fade,
+                                         mat_texs, mat->getBindings());
 
             switch (mat->getSceneBlend()) {
                 case GFX_MATERIAL_OPAQUE:
@@ -814,7 +830,8 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g, const Ogre::Matrix4 
         if (do_wireframe) {
 
             mat->getShader()->bindShader(GfxShader::WIRE_FRAME, false, 0, false, 0,
-                                         g, world, 1, GfxMaterialTextureMap(), mat->getBindings());
+                                         g, world, boneWorldMatrixes, numBoneMatrixes, 1,
+                                         GfxMaterialTextureMap(), mat->getBindings());
 
             ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
             ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);

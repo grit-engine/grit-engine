@@ -73,6 +73,7 @@ typedef std::map<std::string, GfxShaderParam> GfxShaderParamMap;
 struct GfxShaderGlobals {
     Vector3 cam_pos;
     Ogre::Matrix4 view;
+    Ogre::Matrix4 invView;  // For first person rendering
     Ogre::Matrix4 proj;
     Vector3 rayTopLeft;
     Vector3 rayTopRight;
@@ -187,6 +188,8 @@ class GfxShader {
                      bool fade_dither, unsigned env_boxes, bool instanced, unsigned bone_weights,
                      const GfxShaderGlobals &params,
                      const Ogre::Matrix4 &world,
+                     const Ogre::Matrix4 *bone_world_matrixes,
+                     unsigned num_bone_world_matrixes,
                      float fade,
                      const GfxMaterialTextureMap &textures,
                      const GfxShaderBindings &bindings);
@@ -196,8 +199,11 @@ class GfxShader {
                               bool fade_dither, unsigned env_boxes,
                               bool instanced, unsigned bone_weights,
                               const GfxMaterialTextureMap &textures);
-    void bindGlobals (const NativePair &np, const GfxShaderGlobals &params,
-                      const Ogre::Matrix4 &world, float fade);
+    void bindBodyParams (const NativePair &np, const GfxShaderGlobals &p,
+                         const Ogre::Matrix4 &world,
+                         const Ogre::Matrix4 *bone_world_matrixes,
+                         unsigned num_bone_world_matrixes, float fade);
+    void bindGlobals (const NativePair &np, const GfxShaderGlobals &params);
     void explicitBinding (const NativePair &np, const std::string &name, const Ogre::Matrix4 &v);
     void explicitBinding (const NativePair &np, const std::string &name, int v);
     void explicitBinding (const NativePair &np, const std::string &name, float v);
@@ -217,7 +223,10 @@ class GfxShader {
     }
 
     NativePair legacy;
-    void bindGlobals (const GfxShaderGlobals &params, const Ogre::Matrix4 &world);
+/*
+    void bindBodyParams (const GfxShaderGlobals &params, const Ogre::Matrix4 &world, float fade);
+    void bindGlobals (const GfxShaderGlobals &params);
+*/
     void bindShaderParams (void);
     void validate (void);
     void explicitBinding (const std::string &name, const Ogre::Matrix4 &v);

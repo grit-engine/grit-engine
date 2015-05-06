@@ -495,7 +495,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             ogre_rs->setStencilCheckEnabled(false);
             ogre_rs->_setDepthBias(0, 0);
 
-            // render the instances
+            // Sun + ambient render
             Ogre::RenderOperation op;
             op.useIndexes = false;
             op.vertexData = screen_quad_vdata;

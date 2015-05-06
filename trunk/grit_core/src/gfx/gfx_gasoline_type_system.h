@@ -112,6 +112,11 @@ struct GfxGslFragType : public GfxGslType {
 };
 
 
+struct GfxGslArrayType : public GfxGslType {
+    GfxGslType *element;
+    GfxGslArrayType (GfxGslType *element) : element(element) { }
+};
+
 struct GfxGslFunctionType : public GfxGslType {
     GfxGslTypes params;
     GfxGslType *ret;

@@ -44,6 +44,9 @@ GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam, const Ogre::Matrix4 
     // 'unrotated' means pointing towards y (north)
     Ogre::Matrix4 orientation(to_ogre(Quaternion(Degree(90), Vector3(1, 0, 0))));
 
+    // Why does invView have orientation in it?
+    Ogre::Matrix4 inv_view = (orientation * view).inverseAffine();
+
     Ogre::Viewport *viewport = cam->getViewport();
     bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
     float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
@@ -62,7 +65,8 @@ GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam, const Ogre::Matrix4 
     Vector3 ray_bottom_right = from_ogre(cam->getWorldSpaceCorners()[7]) - cam_pos;
 
     return {
-        cam_pos, view, proj, ray_top_left, ray_top_right, ray_bottom_left, ray_bottom_right,
+        cam_pos, view, inv_view, proj,
+        ray_top_left, ray_top_right, ray_bottom_left, ray_bottom_right,
         viewport_dim, render_target_flipping
     };
 }
@@ -77,6 +81,13 @@ void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
 {
     p->getDefaultParameters()->setIgnoreMissingParams(true);
     p->getDefaultParameters()->setNamedConstant(name, v);
+}
+
+void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
+                       const std::string &name, const Ogre::Matrix4 *v, unsigned n)
+{
+    p->getDefaultParameters()->setIgnoreMissingParams(true);
+    p->getDefaultParameters()->setNamedConstant(name, v, n);
 }
 
 void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
@@ -117,6 +128,20 @@ void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
     p->getDefaultParameters()->setNamedConstant(name, to_ogre(v));
 }
 
+
+template<class T> static void hack_set_constant(const Ogre::HighLevelGpuProgramPtr &vp,
+                                                const Ogre::HighLevelGpuProgramPtr &fp,
+                                                const std::string &name, const T&v, unsigned n)
+{
+    try_set_constant(vp, name, v, n);
+    try_set_constant(fp, name, v, n);
+}
+
+template<class T> static void hack_set_constant(const NativePair &np,
+                                                const std::string &name, const T&v, unsigned n)
+{
+    hack_set_constant(np.vp, np.fp, name, v, n);
+}
 
 template<class T> static void hack_set_constant(const Ogre::HighLevelGpuProgramPtr &vp,
                                                 const Ogre::HighLevelGpuProgramPtr &fp,
@@ -393,6 +418,8 @@ void GfxShader::bindShader (Purpose purpose,
                             bool instanced, unsigned bone_weights,
                             const GfxShaderGlobals &globs,
                             const Ogre::Matrix4 &world,
+                            const Ogre::Matrix4 *bone_world_matrixes,
+                            unsigned num_bone_world_matrixes,
                             float fade,
                             const GfxMaterialTextureMap &textures,
                             const GfxShaderBindings &bindings)
@@ -500,7 +527,8 @@ void GfxShader::bindShader (Purpose purpose,
         }
     }
 
-    bindGlobals(np, globs, world, fade);
+    bindBodyParams(np, globs, world, bone_world_matrixes, num_bone_world_matrixes, fade);
+    bindGlobals(np, globs);
 
     ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, np.vp->getDefaultParameters(), Ogre::GPV_ALL);
     ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, np.fp->getDefaultParameters(), Ogre::GPV_ALL);
@@ -513,24 +541,34 @@ void GfxShader::bindShaderParams (void)
     ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, legacy.fp->getDefaultParameters(), Ogre::GPV_ALL);
 }
 
-void GfxShader::bindGlobals (const GfxShaderGlobals &p, const Ogre::Matrix4 &world)
-{
-    bindGlobals(legacy, p, world, 1);
-}
-
-void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p,
-                             const Ogre::Matrix4 &world, float fade)
+void GfxShader::bindBodyParams (const NativePair &np, const GfxShaderGlobals &p,
+                                const Ogre::Matrix4 &world,
+                                const Ogre::Matrix4 *bone_world_matrixes,
+                                unsigned num_bone_world_matrixes, float fade)
 {
     Ogre::Matrix4 world_view = p.view * world;
-    Ogre::Matrix4 view_proj = p.proj * p.view; 
     Ogre::Matrix4 world_view_proj = p.proj * world_view;
-    Vector4 viewport_size(p.viewport_dim.x, p.viewport_dim.y,
-                          1.0f/p.viewport_dim.x, 1.0f/p.viewport_dim.y);
-    float render_target_flipping_factor = p.render_target_flipping ? -1.0f : 1.0f;
 
     hack_set_constant(np, "body_worldViewProj", world_view_proj);
     hack_set_constant(np, "body_worldView", world_view);
     hack_set_constant(np, "body_world", world);
+    hack_set_constant(np, "body_boneWorlds", bone_world_matrixes, num_bone_world_matrixes);
+    hack_set_constant(np, "internal_fade", fade);
+}
+
+/*
+void GfxShader::bindGlobals (const GfxShaderGlobals &p)
+{
+    bindGlobals(legacy, p);
+}
+*/
+
+void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p)
+{
+    Ogre::Matrix4 view_proj = p.proj * p.view; 
+    Vector4 viewport_size(p.viewport_dim.x, p.viewport_dim.y,
+                          1.0f/p.viewport_dim.x, 1.0f/p.viewport_dim.y);
+    float render_target_flipping_factor = p.render_target_flipping ? -1.0f : 1.0f;
 
     hack_set_constant(np, "global_cameraPos", p.cam_pos);
     hack_set_constant(np, "global_fovY", gfx_option(GFX_FOV));
@@ -539,6 +577,7 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p,
     hack_set_constant(np, "global_viewportSize", viewport_size);
     hack_set_constant(np, "global_viewProj", view_proj);
     hack_set_constant(np, "global_view", p.view);
+    hack_set_constant(np, "global_invView", p.invView);
     hack_set_constant(np, "global_rayTopLeft", p.rayTopLeft);
     hack_set_constant(np, "global_rayTopRight", p.rayTopRight);
     hack_set_constant(np, "global_rayBottomLeft", p.rayBottomLeft);
@@ -585,7 +624,6 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p,
     hack_set_constant(np, "global_envCubeMipmaps1", 9.0f);
 
     hack_set_constant(np, "internal_rt_flip", render_target_flipping_factor);
-    hack_set_constant(np, "internal_fade", fade);
 
     gfx_shader_bind_global_textures(np);
 }
