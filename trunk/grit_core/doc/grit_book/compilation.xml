@@ -86,11 +86,11 @@
             contact us if you needed more):
             
             <pre>
-                apt-get install subversion wget patch mercurial g++ make cmake \
+                sudo apt-get install subversion wget patch mercurial g++ make cmake \
                 gdb valgrind libfreeimage-dev libzzip-dev libfreetype6-dev libglu1-mesa-dev \
                 libxt-dev libxaw7-dev libglew1.5-dev libxrandr-dev \
                 libgoogle-perftools-dev libopenal-dev libreadline-dev freeglut3-dev \
-                nvidia-cg-toolkit libvorbis-dev xutils-dev libicu-dev
+                nvidia-cg-toolkit libvorbis-dev xutils-dev libicu-dev pkg-config
             </pre>
 
         </section>
