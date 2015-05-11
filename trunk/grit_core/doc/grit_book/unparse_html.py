@@ -105,9 +105,9 @@ def GeneratePage(title, content, book):
 
 <div class="header">'''
     if book:
-        s += '\n    <div id="complete"><a href="complete.html">Print Version</a></div>'
+        s += '\n    <div id="complete"><a href="complete.html">Go to print version</a></div>'
     else:
-        s += '\n    <div id="complete"><a href="index.html">Web Version</a></div>'
+        s += '\n    <div id="complete"><a href="index.html">Go to web version</a></div>'
     s += '\n    <div class="logo"> </div>'
     if book:
         s += '\n<ol id="menubar">'
