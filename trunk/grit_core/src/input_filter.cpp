@@ -52,16 +52,20 @@ static void update_grabbed (void)
     }
     if (!keyboard->hasFocus()) should_be_captured = false;
     bool should_hide = should_be_captured || cursor_hidden;
-    mouse->setHide(should_hide);
-    if (is_captured == should_be_captured) return;
+    if (is_captured == should_be_captured) {
+        mouse->setHide(should_hide);
+        return;
+    }
     is_captured = should_be_captured;
     if (should_be_captured) {
         prior_grab_mouse_pos = last_mouse_pos;
+        mouse->setHide(should_hide);
         mouse->setGrab(true);
     } else {
         mouse->setPos(prior_grab_mouse_pos.x, prior_grab_mouse_pos.y);
         last_mouse_pos = prior_grab_mouse_pos;
         mouse->setGrab(false);
+        mouse->setHide(should_hide);
     }
 }
 
