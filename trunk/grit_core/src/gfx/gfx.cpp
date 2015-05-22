@@ -67,6 +67,7 @@ Ogre::Light *ogre_sun = NULL;
 
 GfxCallback *gfx_cb = NULL;
 bool shutting_down = false;
+// I think this is for render targets only.
 bool use_hwgamma = false; //getenv("GRIT_NOHWGAMMA")==NULL;
 
 static bool reset_frame_buffer_on_next_render = false;
