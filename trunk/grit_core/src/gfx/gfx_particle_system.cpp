@@ -113,7 +113,7 @@ void gfx_particle_init (void)
         "                    / part_half_depth;\n"
         "var part_exposed = clamp(part_exposed_, 0.0, 1.0);\n"
         "var texel = sample(mat.particleAtlas, fragment_uv);\n"
-        "out.colour = gamma_decode(texel.rgb) * part_colour * part_exposed;\n"
+        "out.colour = texel.rgb * part_colour * part_exposed;\n"
         "out.alpha = texel.a * part_alpha * part_exposed;\n";
 
     shader = gfx_shader_make_or_reset("/system/Particle",
@@ -266,6 +266,8 @@ class GfxParticleSystem {
     GfxParticleSystem (const std::string &name, const DiskResourcePtr<GfxTextureDiskResource> &tex)
          : name(name), tex(tex)
     {
+        tex->getOgreTexturePtr()->unload();
+        tex->getOgreTexturePtr()->setHardwareGammaEnabled(true);
         tex->getOgreTexturePtr()->load();
         texHeight = tex->getOgreTexturePtr()->getHeight();
         texWidth = tex->getOgreTexturePtr()->getWidth();
