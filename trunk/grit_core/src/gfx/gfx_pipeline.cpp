@@ -828,12 +828,12 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_EMISSIVE));
     rqisDeferred->add(new ParticlesPasses(this));
+    // Debug passes
+    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_BULLET_DEBUG_DRAWER));
     // First person passes
     rqisDeferred->add(new ResetPass(this, Ogre::FBT_DEPTH));
     rqisDeferred->add(new FirstPersonPasses(this, false));
     rqisDeferred->add(new FirstPersonPasses(this, true));
-    // Debug passes
-    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_BULLET_DEBUG_DRAWER));
 }
 
 GfxPipeline::~GfxPipeline (void) {
