@@ -102,7 +102,7 @@ Vector3 hell_colour;
 
 DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube0;
 DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube1;
-float global_env_cube_cross_fade = 0;
+float env_cube_cross_fade = 0;
 float global_exposure = 1;
 float global_saturation = 1;
 DiskResourcePtr<GfxColourGradeLUTDiskResource> colour_grade_lut;
@@ -113,7 +113,8 @@ DiskResourcePtr<GfxTextureDiskResource> shadow_pcf_noise_map;
 // abuse ogre fog params to store several things
 static void set_ogre_fog (void)
 {
-    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour), fog_density, 1, 0);
+    ogre_sm->setFog(Ogre::FOG_EXP2, to_ogre_cv(fog_colour),
+                    fog_density, env_cube_cross_fade, /*unused*/ 0);
 }
 
 
@@ -233,12 +234,13 @@ void gfx_particle_ambient (const Vector3 &v)
 
 float gfx_env_cube_cross_fade (void)
 {
-    return global_env_cube_cross_fade;
+    return env_cube_cross_fade;
 }
 
 void gfx_env_cube_cross_fade (float v)
 {
-    global_env_cube_cross_fade = v;
+    env_cube_cross_fade = v;
+    set_ogre_fog();
 }
 
 
@@ -271,6 +273,7 @@ void gfx_env_cube (unsigned i, const DiskResourcePtr<GfxEnvCubeDiskResource> &v)
     // Alpha materials are not part of the full screen deferred shading pass, so have
     // the env cube texture bound as part of the material used to render that pass
     // FIXME(dcunnin): This does not update materials for bodies not currently in the scene.
+    // FIXME(dcunnin): Keep a list of alpha materials, iterate over those instead.
     for (unsigned long i=0 ; i<gfx_all_nodes.size() ; ++i) {
         GfxBody *b = dynamic_cast<GfxBody*>(gfx_all_nodes[i]);
         if (b==NULL) continue;
@@ -1092,7 +1095,7 @@ size_t gfx_init (GfxCallback &cb_)
  
         gfx_env_cube(0, DiskResourcePtr<GfxEnvCubeDiskResource>());
         gfx_env_cube(1, DiskResourcePtr<GfxEnvCubeDiskResource>());
-        global_env_cube_cross_fade = 0;
+        env_cube_cross_fade = 0;
 
         return winid;
     } catch (Ogre::Exception &e) {

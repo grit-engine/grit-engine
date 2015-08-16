@@ -452,7 +452,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             try_set_named_constant(das_fp, "sun_diffuse", to_ogre(sunlight_diffuse));
             try_set_named_constant(das_fp, "sun_specular", to_ogre(sunlight_specular));
 
-            Ogre::Vector3 the_fog_params(fog_density, 1, 0);
+            Ogre::Vector3 the_fog_params(fog_density, env_cube_cross_fade, /*unused*/ 0);
             try_set_named_constant(das_fp, "the_fog_params", the_fog_params);
             if (gfx_option(GFX_FOG)) {
                 try_set_named_constant(das_fp, "the_fog_colour", to_ogre(fog_colour));
@@ -481,6 +481,15 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
             if (global_env_cube0 != nullptr && global_env_cube0->isLoaded()) {
                 const Ogre::TexturePtr &global_env_cube_tex = global_env_cube0->getOgreTexturePtr();
+                ogre_rs->_setTexture(tex_index, true, global_env_cube_tex);
+                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
+                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
+                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIP, Ogre::FO_LINEAR);
+            }
+            tex_index++;
+
+            if (global_env_cube1 != nullptr && global_env_cube1->isLoaded()) {
+                const Ogre::TexturePtr &global_env_cube_tex = global_env_cube1->getOgreTexturePtr();
                 ogre_rs->_setTexture(tex_index, true, global_env_cube_tex);
                 ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
                 ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
@@ -610,7 +619,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                 try_set_named_constant(dl_fp, "bottom_left_ray", bottom_left_ray);
                 try_set_named_constant(dl_fp, "bottom_right_ray", bottom_right_ray);
 
-                Ogre::Vector3 the_fog_params(fog_density, 1, 0);
+                Ogre::Vector3 the_fog_params(fog_density, env_cube_cross_fade, /*unused*/ 0);
                 try_set_named_constant(dl_fp, "the_fog_params", the_fog_params);
                 try_set_named_constant(dl_fp, "far_clip_distance", cam->getFarClipDistance());
                 try_set_named_constant(dl_fp, "camera_pos_ws", cam_pos);

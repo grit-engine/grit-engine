@@ -71,7 +71,7 @@ extern Ogre::SceneNode *ogre_root_node;
 extern Ogre::Light *ogre_sun;
 extern DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube0;
 extern DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube1;
-extern float global_env_cube_cross_fade;
+extern float env_cube_cross_fade;
 extern Ogre::Matrix4 shadow_view_proj[3];
 extern DiskResourcePtr<GfxTextureDiskResource> fade_dither_map;
 extern DiskResourcePtr<GfxTextureDiskResource> corona_map;
@@ -84,7 +84,6 @@ extern bool use_hwgamma;
 extern GfxCallback *gfx_cb;
 extern bool shutting_down;
 
-extern float env_cube_cross_fade;
 extern Vector3 particle_ambient;
 extern Vector3 fog_colour;
 extern float fog_density;

@@ -619,7 +619,7 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p)
     hack_set_constant(np, "global_skySunColour3", sky_sun_colour[3]);
     hack_set_constant(np, "global_skySunColour4", sky_sun_colour[4]);
 
-    hack_set_constant(np, "global_envCubeCrossFade", global_env_cube_cross_fade);
+    hack_set_constant(np, "global_envCubeCrossFade", env_cube_cross_fade);
     hack_set_constant(np, "global_envCubeMipmaps0", 9.0f);
     hack_set_constant(np, "global_envCubeMipmaps1", 9.0f);
 
