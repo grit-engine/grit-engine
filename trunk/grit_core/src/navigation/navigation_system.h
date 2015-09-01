@@ -23,8 +23,8 @@
 #define navigation_system_h
 
 #include"ogre.h"
-#include"../../gfx/gfx_body.h"
-#include"../../physics/physics_world.h"
+#include"../gfx/gfx_body.h"
+#include"../physics/physics_world.h"
 #include<vector>
 
 extern Ogre::Vector3 swap_yz(Ogre::Vector3 from);

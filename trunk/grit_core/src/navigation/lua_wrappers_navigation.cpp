@@ -23,11 +23,11 @@
 #include"navigation_system.h"
 #include"navigation.h"
 #include <iostream>
-#include "../../gfx/lua_wrappers_gfx.h"
-#include"../../physics/lua_wrappers_physics.h"
-#include "../../external_table.h"
-#include "../../lua_ptr.h"
-#include "../../path_util.h"
+#include "../gfx/lua_wrappers_gfx.h"
+#include"../physics/lua_wrappers_physics.h"
+#include "../external_table.h"
+#include "../lua_ptr.h"
+#include "../path_util.h"
 
 #include "input_geom.h"
 

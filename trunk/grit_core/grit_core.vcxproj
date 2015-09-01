@@ -35,6 +35,7 @@
     <Import Project="..\dependencies\quex.props" />
     <Import Project="..\dependencies\lua-5.2.3.props" />
     <Import Project="..\dependencies\ogre.props" />
+    <Import Project="..\dependencies\recast.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -44,6 +45,7 @@
     <Import Project="..\dependencies\quex.props" />
     <Import Project="..\dependencies\lua-5.2.3.props" />
     <Import Project="..\dependencies\ogre.props" />
+    <Import Project="..\dependencies\recast.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -78,6 +80,9 @@
     <ProjectReference Include="..\dependencies\ogre.vcxproj">
       <Project>{25549847-21c8-47eb-842d-6392f7e3fb77}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\dependencies\recast.vcxproj">
+      <Project>{c3782bb5-2225-4ac5-a6e4-a03d5688d5db}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -138,6 +143,15 @@
     <ClCompile Include="src\lua_wrappers_gritobj.cpp" />
     <ClCompile Include="src\lua_wrappers_primitives.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\navigation\chunky_tri_mesh.cpp" />
+    <ClCompile Include="src\navigation\Contrib\fastlz\fastlz.c" />
+    <ClCompile Include="src\navigation\crowd_manager.cpp" />
+    <ClCompile Include="src\navigation\input_geom.cpp" />
+    <ClCompile Include="src\navigation\lua_wrappers_navigation.cpp" />
+    <ClCompile Include="src\navigation\mesh_loader_obj.cpp" />
+    <ClCompile Include="src\navigation\navigation.cpp" />
+    <ClCompile Include="src\navigation\navigation_interfaces.cpp" />
+    <ClCompile Include="src\navigation\navigation_manager.cpp" />
     <ClCompile Include="src\net\lua_wrappers_net.cpp" />
     <ClCompile Include="src\net\net.cpp" />
     <ClCompile Include="src\net\net_address.cpp" />

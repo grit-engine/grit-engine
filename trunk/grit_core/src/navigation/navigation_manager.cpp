@@ -37,7 +37,7 @@
 #include "crowd_manager.h"
 #include "RecastAlloc.h"
 #include "RecastAssert.h"
-#include "fastlz.h"
+#include "Contrib/fastlz/fastlz.h"
 
 #include "DetourNavMeshQuery.h"
 #include "DetourCrowd.h"

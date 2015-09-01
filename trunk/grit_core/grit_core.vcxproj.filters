@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="Source Files\navigation">
+      <UniqueIdentifier>{f9079387-a6a4-4171-851c-00b80f4acdb5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ldbglue.cpp">
@@ -242,6 +245,33 @@
     </ClCompile>
     <ClCompile Include="src\gfx\gfx_gasoline_backend.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\navigation\mesh_loader_obj.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\navigation\chunky_tri_mesh.cpp">
+      <Filter>Source Files\navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\navigation\crowd_manager.cpp">
+      <Filter>Source Files\navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\navigation\lua_wrappers_navigation.cpp">
+      <Filter>Source Files\navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\navigation\navigation_manager.cpp">
+      <Filter>Source Files\navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\navigation\navigation_interfaces.cpp">
+      <Filter>Source Files\navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\navigation\input_geom.cpp">
+      <Filter>Source Files\navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\navigation\navigation.cpp">
+      <Filter>Source Files\navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\navigation\Contrib\fastlz\fastlz.c">
+      <Filter>Source Files\navigation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

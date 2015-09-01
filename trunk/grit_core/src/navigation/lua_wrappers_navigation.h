@@ -19,6 +19,6 @@
  * THE SOFTWARE.
  */
  
-#include "../../grit_lua_util.h"
+#include "../grit_lua_util.h"
 
 void navigation_lua_init(lua_State *L);
