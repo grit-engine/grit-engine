@@ -22,7 +22,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "NavigationInterfaces.h"
+#include "navigation_interfaces.h"
 #include "Recast.h"
 #include "RecastDebugDraw.h"
 #include "DetourDebugDraw.h"

@@ -16,7 +16,7 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#include "ChunkyTriMesh.h"
+#include "chunky_tri_mesh.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

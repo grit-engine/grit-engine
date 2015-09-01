@@ -23,15 +23,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
-#include "CrowdManager.h"
-#include "InputGeom.h"
-#include "NavigationManager.h"
+#include "crowd_manager.h"
+#include "input_geom.h"
+#include "navigation_manager.h"
 #include "DetourCrowd.h"
 #include "DetourDebugDraw.h"
 #include "DetourObstacleAvoidance.h"
 #include "DetourCommon.h"
 #include "DetourNode.h"
-#include "NavigationInterfaces.h"
+#include "navigation_interfaces.h"
 
 #include"navigation_system.h"
 

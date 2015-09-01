@@ -21,11 +21,11 @@
 
 // May have some code of Recast Demo
 
-#include"Navigation.h"
+#include"navigation.h"
 #include"DetourCommon.h"
 #include"DetourTileCache.h"
-#include"CrowdManager.h"
-#include "InputGeom.h"
+#include"crowd_manager.h"
+#include "input_geom.h"
 
 NavigationSystem* nvsys = nullptr;
 

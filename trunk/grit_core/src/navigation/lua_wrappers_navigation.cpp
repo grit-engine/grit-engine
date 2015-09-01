@@ -21,7 +21,7 @@
 
 #include "lua_wrappers_navigation.h"
 #include"navigation_system.h"
-#include"Navigation.h"
+#include"navigation.h"
 #include <iostream>
 #include "../../gfx/lua_wrappers_gfx.h"
 #include"../../physics/lua_wrappers_physics.h"
@@ -29,7 +29,7 @@
 #include "../../lua_ptr.h"
 #include "../../path_util.h"
 
-#include "InputGeom.h"
+#include "input_geom.h"
 
 static int navigation_system_update(lua_State *L)
 {

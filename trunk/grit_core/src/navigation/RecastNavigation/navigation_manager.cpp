@@ -24,8 +24,8 @@
 #include <string.h>
 #include <float.h>
 #include <new>
-#include "InputGeom.h"
-#include "NavigationManager.h"
+#include "input_geom.h"
+#include "navigation_manager.h"
 #include "Recast.h"
 #include "RecastDebugDraw.h"
 #include "DetourAssert.h"
@@ -34,7 +34,7 @@
 #include "DetourDebugDraw.h"
 #include "DetourCommon.h"
 #include "DetourTileCache.h"
-#include "CrowdManager.h"
+#include "crowd_manager.h"
 #include "RecastAlloc.h"
 #include "RecastAssert.h"
 #include "fastlz.h"

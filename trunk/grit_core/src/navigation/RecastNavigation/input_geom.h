@@ -19,8 +19,8 @@
 #ifndef INPUTGEOM_H
 #define INPUTGEOM_H
 
-#include "ChunkyTriMesh.h"
-#include "MeshLoaderObj.h"
+#include "chunky_tri_mesh.h"
+#include "mesh_loader_obj.h"
 
 #include"navigation_system.h"
 

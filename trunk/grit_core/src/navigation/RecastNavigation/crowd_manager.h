@@ -19,7 +19,7 @@
 #ifndef CROWDMANAGER_H
 #define CROWDMANAGER_H
 
-#include "NavigationManager.h"
+#include "navigation_manager.h"
 #include "DetourNavMesh.h"
 #include "DetourObstacleAvoidance.h"
 #include "DetourCrowd.h"

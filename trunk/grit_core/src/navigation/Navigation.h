@@ -23,7 +23,7 @@
 #define NAVIGATION_H
 
 #include"navigation_system.h"
-#include"NavigationManager.h"
+#include"navigation_manager.h"
 
 class NavigationSystem
 {

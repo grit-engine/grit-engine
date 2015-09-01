@@ -18,10 +18,10 @@
 
 #ifndef NAVIGATIONMANAGER_H
 #define NAVIGATIONMANAGER_H
-#include "NavigationInterfaces.h"
+#include "navigation_interfaces.h"
 #include "DetourNavMesh.h"
 #include "Recast.h"
-#include "ChunkyTriMesh.h"
+#include "chunky_tri_mesh.h"
 
 /// These are just sample areas to use consistent values across the samples.
 /// The use should specify these base on his needs.

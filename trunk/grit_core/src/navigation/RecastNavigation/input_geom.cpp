@@ -22,9 +22,9 @@
 #include <ctype.h>
 #include <string.h>
 #include "Recast.h"
-#include "InputGeom.h"
-#include "ChunkyTriMesh.h"
-#include "MeshLoaderObj.h"
+#include "input_geom.h"
+#include "chunky_tri_mesh.h"
+#include "mesh_loader_obj.h"
 #include "DebugDraw.h"
 #include "RecastDebugDraw.h"
 #include "DetourNavMesh.h"

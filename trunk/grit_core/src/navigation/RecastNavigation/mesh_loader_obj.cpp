@@ -16,7 +16,7 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#include "MeshLoaderObj.h"
+#include "mesh_loader_obj.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
