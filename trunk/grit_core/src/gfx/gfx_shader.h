@@ -142,9 +142,9 @@ class GfxShader {
         size_t operator()(const Split &s) const
         {
             size_t r = size_t(s.purpose) << 10;
-            r ^= s.fadeDither;
+            r ^= (s.fadeDither ? 1 : 0);
             r ^= s.envBoxes;
-            r ^= s.instanced;
+            r ^= (s.instanced ? 1 : 0);
             r ^= s.boneWeights;
             r ^= s.boundTextures.size();
             for (const auto &str : s.boundTextures)
