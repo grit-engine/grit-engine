@@ -57,6 +57,7 @@
 #include "audio/lua_wrappers_audio.h"
 #include "physics/lua_wrappers_physics.h"
 #include "net/lua_wrappers_net.h"
+// #include "lua_wrappers_navigation.h"
 
 #define IFILTER_TAG "Grit/InputFilter"
 
@@ -1095,7 +1096,8 @@ lua_State *init_lua(const char *filename)
     audio_lua_init(L);
     disk_resource_lua_init(L);
     net_lua_init(L);
-
+	// navigation_lua_init(L);
+	
     status = aux_include(L,filename);
     if (status) {
         const char *str = lua_tostring(L,-1);

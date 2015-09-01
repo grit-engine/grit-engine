@@ -47,6 +47,7 @@
 #include "physics/physics_world.h"
 #include "audio/audio.h"
 #include "net/net.h"
+// #include"navigation_system.h"
 
 
 CentralisedLog clog;
@@ -126,6 +127,8 @@ int main (int argc, const char **argv)
         core_option_init();
         streamer_init();
 
+		// navigation_init();
+		
         // audio_init(getenv("GRIT_AUDIO_DEV"));
         audio_init(NULL);
 
@@ -176,6 +179,8 @@ int main (int argc, const char **argv)
 
         net_shutdown(core_L);
 
+		// navigation_shutdown();
+		
         object_all_del(core_L);  // Will remove all demands from background loader.
 
         CVERB << "Shutting down Lua graphics subsystem..." << std::endl;
