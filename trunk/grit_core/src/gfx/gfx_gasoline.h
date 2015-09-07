@@ -129,51 +129,73 @@ void gfx_gasoline_check (const std::string &vert_prog,
                          const std::string &additional_prog,
                          const GfxGslParams &params);
 
+struct GslCompileParams {
+    GfxGslParams params;
+    GfxGslUnboundTextures ubt;
+    bool fadeDither;
+    unsigned envBoxes;
+    bool instanced;
+    unsigned boneWeights;
+    unsigned shadowRes;
+    float shadowDist[3];
+    float shadowSpread[3];
+    float shadowFadeStart;
+    float shadowFadeEnd;
+    float shadowFactor;
+    unsigned shadowFilterTaps;
+    enum ShadowDitherMode {
+        SHADOW_DITHER_NONE,
+        SHADOW_DITHER_NOISE,
+        SHADOW_DITHER_PLAIN
+    } shadowDitherMode; // 0: none, 1: noise, 2: dither
+    GslCompileParams (void)
+        : fadeDither(false), envBoxes(0), instanced(false), boneWeights(0),
+          shadowRes(512), shadowFadeStart(1), shadowFadeEnd(10), shadowFactor(5000),
+          shadowFilterTaps(0), shadowDitherMode(SHADOW_DITHER_NONE)
+    {
+        shadowDist[0] = 0; 
+        shadowDist[1] = 1; 
+        shadowDist[2] = 2; 
+        shadowSpread[0] = 1; 
+        shadowSpread[1] = 1; 
+        shadowSpread[2] = 1; 
+    }
+};
+
 GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
                                                    const std::string &vert_prog,
-                                                   const GfxGslParams &params,
-                                                   bool instanced,
-                                                   unsigned bone_weights);
+                                                   const GslCompileParams &scp);
 
 GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
                                             const std::string &vert_prog,
                                             const std::string &colour_prog,
-                                            const GfxGslParams &params,
-                                            const GfxGslUnboundTextures &ubt);
+                                            const GslCompileParams &scp);
 
 GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
                                             const std::string &vert_prog,
                                             const std::string &colour_prog,
-                                            const GfxGslParams &params,
-                                            const GfxGslUnboundTextures &ubt,
-                                            unsigned bone_weights);
+                                            const GslCompileParams &scp);
 
 GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                      const std::string &vert_prog,
                                                      const std::string &dangs_prog,
                                                      const std::string &additional_prog,
-                                                     const GfxGslParams &params,
-                                                     const GfxGslUnboundTextures &ubt,
-                                                     bool fade_dither,
-                                                     unsigned env_boxes,
-                                                     bool instanced,
-                                                     unsigned bone_weights);
+                                                     const GslCompileParams &scp);
 
 GfxGasolineResult gfx_gasoline_compile_deferred_sun (GfxGslBackend backend,
-                                                     const std::string &fog_prog);
+                                                     const std::string &fog_prog,
+                                                     const GslCompileParams &scp);
 
 
 // To come!
 GfxGasolineResult gfx_gasoline_compile_forward (GfxGslBackend backend,
                                                 const std::string &vert_prog,
                                                 const std::string &fwd_prog,
-                                                const GfxGslParams &params,
-                                                const GfxGslUnboundTextures &ubt);
+                                                const GslCompileParams &scp);
 
 GfxGasolineResult gfx_gasoline_compile_shadow_cast (GfxGslBackend backend,
                                                     const std::string &vert_prog,
                                                     const std::string &fwd_prog,
-                                                    const GfxGslParams &params,
-                                                    const GfxGslUnboundTextures &ubt);
+                                                    const GslCompileParams &scp);
 
 #endif

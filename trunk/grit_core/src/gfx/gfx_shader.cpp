@@ -349,6 +349,15 @@ NativePair GfxShader::getNativePair (Purpose purpose,
             }
         }
 
+
+        GslCompileParams scp;
+        scp.params = gsl_params;
+        scp.ubt = ubt;
+        scp.fadeDither = fade_dither;
+        scp.envBoxes = env_boxes;
+        scp.instanced = instanced;
+        scp.boneWeights = bone_weights;
+
         GfxGasolineResult output;
         try {
             switch (purpose) {
@@ -357,23 +366,17 @@ NativePair GfxShader::getNativePair (Purpose purpose,
                 case EMISSIVE: EXCEPTEX << "Internal error." << ENDL;
                 case SHADOW_CAST: EXCEPTEX << "Internal error." << ENDL;
                 case HUD:
-                output = gfx_gasoline_compile_hud(backend, srcVertex, srcAdditional,
-                                                  gsl_params, ubt);
+                output = gfx_gasoline_compile_hud(backend, srcVertex, srcAdditional, scp);
                 break;
                 case SKY:
-                output = gfx_gasoline_compile_sky(backend, srcVertex, srcAdditional,
-                                                  gsl_params, ubt,
-                                                  bone_weights);
+                output = gfx_gasoline_compile_sky(backend, srcVertex, srcAdditional, scp);
                 break;
                 case FIRST_PERSON:
                 output = gfx_gasoline_compile_first_person(backend, srcVertex, srcDangs,
-                                                           srcAdditional, gsl_params, ubt,
-                                                           fade_dither, env_boxes,
-                                                           instanced, bone_weights);
+                                                           srcAdditional, scp);
                 break;
                 case WIRE_FRAME:
-                output = gfx_gasoline_compile_wire_frame(backend, srcVertex, gsl_params,
-                                                         instanced, bone_weights);
+                output = gfx_gasoline_compile_wire_frame(backend, srcVertex, scp);
                 break;
             }
         } catch (const Exception &e) {
@@ -582,6 +585,10 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p)
     hack_set_constant(np, "global_rayTopRight", p.rayTopRight);
     hack_set_constant(np, "global_rayBottomLeft", p.rayBottomLeft);
     hack_set_constant(np, "global_rayBottomRight", p.rayBottomRight);
+
+    hack_set_constant(np, "global_shadowViewProj0", shadow_view_proj[0]);
+    hack_set_constant(np, "global_shadowViewProj1", shadow_view_proj[1]);
+    hack_set_constant(np, "global_shadowViewProj2", shadow_view_proj[2]);
 
     hack_set_constant(np, "global_particleAmbient", particle_ambient);
     hack_set_constant(np, "global_sunlightDiffuse", sunlight_diffuse);

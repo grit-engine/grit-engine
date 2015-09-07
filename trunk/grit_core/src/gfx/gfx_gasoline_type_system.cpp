@@ -151,6 +151,10 @@ void GfxGslTypeSystem::initObjectTypes (GfxGslKind k)
         case GFX_GSL_VERTEX:
         outFields["position"] = ctx.alloc.makeType<GfxGslFloatType>(3);
         break;
+
+        case GFX_GSL_TONE_MAP:
+        case GFX_GSL_FOG:
+        break;
     }
 
     if (frag(k))

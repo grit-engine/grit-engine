@@ -69,7 +69,8 @@ struct GfxShaderParam {
 
 typedef std::map<std::string, GfxShaderParam> GfxShaderParamMap;
 
-/** Some parameters that do not change from one object to the next. */
+/** Some parameters that do not change from one object to the next, but do change from one
+ * camera or target to another. */
 struct GfxShaderGlobals {
     Vector3 cam_pos;
     Ogre::Matrix4 view;

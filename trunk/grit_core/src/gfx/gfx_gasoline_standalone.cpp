@@ -170,16 +170,23 @@ int main (int argc, char **argv)
             return EXIT_FAILURE;
         }
 
+        GslCompileParams scp;
+        scp.params = params;
+        scp.ubt = ubt;
+        scp.fadeDither = alpha_dither;
+        scp.envBoxes = env_boxes;
+        scp.instanced = instanced;
+        scp.boneWeights = bones;
+
         GfxGasolineResult shaders;
         try {
             if (kind == "SKY") {
-                shaders = gfx_gasoline_compile_sky(backend, vert_code, additional_code, params, ubt, bones);
+                shaders = gfx_gasoline_compile_sky(backend, vert_code, additional_code, scp);
             } else if (kind == "HUD") {
-                shaders = gfx_gasoline_compile_hud(backend, vert_code, additional_code, params, ubt);
+                shaders = gfx_gasoline_compile_hud(backend, vert_code, additional_code, scp);
             } else if (kind == "FIRST_PERSON") {
-                shaders = gfx_gasoline_compile_first_person(backend, vert_code, dangs_code, additional_code,
-                                                            params, ubt,
-                                                            alpha_dither, env_boxes, instanced, bones);
+                shaders = gfx_gasoline_compile_first_person(backend, vert_code, dangs_code,
+                                                            additional_code, scp);
             } else {
                 std::cerr << "Unrecognised shader kind language: " << kind << std::endl;
                 return EXIT_FAILURE;

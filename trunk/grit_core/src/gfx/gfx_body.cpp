@@ -757,7 +757,7 @@ const std::string &GfxBody::getMeshName (void)
 }
 
 
-void GfxBody::renderFirstPerson (const GfxShaderGlobals &g, const Ogre::Matrix4 &inv_mat,
+void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
                                  bool alpha_blend)
 {
     if (!enabled || fade < 0.000001) return;
@@ -770,7 +770,7 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g, const Ogre::Matrix4 
     bool instanced = false;
     unsigned bone_weights = mesh->getNumBlendWeightsPerVertex();
 
-    const Ogre::Matrix4 &world = /*inv_mat * */_getParentNodeFullTransform();
+    const Ogre::Matrix4 &world = _getParentNodeFullTransform();
 
     // TODO(dcunnin): object parameters
 
@@ -856,12 +856,9 @@ void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
     // sample shadow buffer at a point and intersect the camera with the point lights to determine
     // the ones that should be used to light us.
 
-    Ogre::Matrix4 view = p->getCamera()->getViewMatrix();
     // Ogre cameras point towards Z whereas in Grit the convention is that
     // 'unrotated' means pointing towards y (north)
     Ogre::Matrix4 orientation(to_ogre(Quaternion(Degree(90), Vector3(1, 0, 0))));
-
-    Ogre::Matrix4 inv_mat = (orientation * view).inverseAffine();
 
     Ogre::Frustum frustum;  // Used to calculate projection matrix.
     frustum.setFOVy(Ogre::Degree(p->getCameraOpts().fovY));
@@ -878,9 +875,8 @@ void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
     // Render, to HDR buffer
     // TODO: receive shadow
     // TODO: instancing
-    // TODO: skeletal animation
 
     for (const auto &body : first_person_bodies) {
-        body->renderFirstPerson(g, inv_mat, alpha_blend);
+        body->renderFirstPerson(g, alpha_blend);
     }
 }
