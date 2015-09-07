@@ -334,9 +334,9 @@ NativePair GfxShader::getNativePair (Purpose purpose,
         }
 
         // Would probably be quicker if gsl compiler took set of textures and the
-        // GfxShaderParams map instead of GfxGslParams.
+        // GfxShaderParams map instead of GfxGslRunParams.
         GfxGslUnboundTextures ubt;
-        GfxGslParams gsl_params;
+        GfxGslRunParams gsl_params;
         for (const auto &u : params) {
             // We only need the types to compile it.
             gsl_params[u.first] = u.second.t;
@@ -350,13 +350,13 @@ NativePair GfxShader::getNativePair (Purpose purpose,
         }
 
 
-        GslCompileParams scp;
-        scp.params = gsl_params;
-        scp.ubt = ubt;
-        scp.fadeDither = fade_dither;
-        scp.envBoxes = env_boxes;
-        scp.instanced = instanced;
-        scp.boneWeights = bone_weights;
+        GfxGslMetadata md;
+        md.params = gsl_params;
+        md.ubt = ubt;
+        md.fadeDither = fade_dither;
+        md.envBoxes = env_boxes;
+        md.instanced = instanced;
+        md.boneWeights = bone_weights;
 
         GfxGasolineResult output;
         try {
@@ -366,17 +366,17 @@ NativePair GfxShader::getNativePair (Purpose purpose,
                 case EMISSIVE: EXCEPTEX << "Internal error." << ENDL;
                 case SHADOW_CAST: EXCEPTEX << "Internal error." << ENDL;
                 case HUD:
-                output = gfx_gasoline_compile_hud(backend, srcVertex, srcAdditional, scp);
+                output = gfx_gasoline_compile_hud(backend, srcVertex, srcAdditional, md);
                 break;
                 case SKY:
-                output = gfx_gasoline_compile_sky(backend, srcVertex, srcAdditional, scp);
+                output = gfx_gasoline_compile_sky(backend, srcVertex, srcAdditional, md);
                 break;
                 case FIRST_PERSON:
                 output = gfx_gasoline_compile_first_person(backend, srcVertex, srcDangs,
-                                                           srcAdditional, scp);
+                                                           srcAdditional, md);
                 break;
                 case WIRE_FRAME:
-                output = gfx_gasoline_compile_wire_frame(backend, srcVertex, scp);
+                output = gfx_gasoline_compile_wire_frame(backend, srcVertex, md);
                 break;
             }
         } catch (const Exception &e) {
@@ -799,7 +799,7 @@ void gfx_shader_check (const std::string &name,
                        const GfxShaderParamMap &params)
 {
     GfxGslUnboundTextures ubt;
-    GfxGslParams gsl_params;
+    GfxGslRunParams gsl_params;
     for (const auto &u : params) {
         // We only need the types to compile it.
         gsl_params[u.first] = u.second.t;

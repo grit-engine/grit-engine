@@ -274,7 +274,7 @@ std::string gfx_gasoline_generate_trans_decode(const std::vector<GfxGslTrans> &t
     return ss.str();
 }
 
-std::string gfx_gasoline_preamble_lighting (const GslCompileParams &scp) 
+std::string gfx_gasoline_preamble_lighting (const GfxGslMetadata &md) 
 {
     std::stringstream ss;
 
@@ -314,24 +314,25 @@ std::string gfx_gasoline_preamble_lighting (const GslCompileParams &scp)
     ss << "                  FloatTexture2 tex,\n";
     ss << "                  Float spread)\n";
     ss << "{\n";
-    ss << "    Float sun_dist = -dot(pos_ws, global_sunlightDirection) / " << scp.shadowFactor << ";\n";
+    ss << "    Float sun_dist = -dot(pos_ws, global_sunlightDirection)\n";
+    ss << "                     / " << md.shadowFactor << ";\n";
     ss << "    Float3 pos_ls = mul(shadow_view_proj, Float4(pos_ws, 1)).xyw;\n";
     ss << "    pos_ls.xy /= pos_ls.z;\n";
-    auto filter_taps_side = unsigned(::sqrt(scp.shadowFilterTaps) + 0.5);
+    auto filter_taps_side = unsigned(::sqrt(md.shadowFilterTaps) + 0.5);
     float half_filter_taps_side = filter_taps_side / 2.0;
     ss << "    Int filter_taps_side = " << filter_taps_side << ";\n";
     ss << "    Float half_filter_taps_side = " << half_filter_taps_side << ";\n";
-    switch (scp.shadowDitherMode) {
-        case GslCompileParams::SHADOW_DITHER_NONE:
+    switch (md.shadowDitherMode) {
+        case GfxGslMetadata::SHADOW_DITHER_NONE:
         ss << "    Float2 fragment_uv_offset = Float2(0,0);\n";
         break;
-        case GslCompileParams::SHADOW_DITHER_NOISE:
+        case GfxGslMetadata::SHADOW_DITHER_NOISE:
         ss << "    Float2 noise_uv = frag_screen.xy / 64;\n";
         ss << "    Float2 noise_texel = sampleLod(global_shadowPcfNoiseMap, noise_uv, 0).rg;\n";
         ss << "    Float2 noise_offset = (2 * noise_texel - 1);  // length(offset) <= 1\n";
         ss << "    Float2 fragment_uv_offset = 0.8 * noise_offset;\n";
         break;
-        case GslCompileParams::SHADOW_DITHER_PLAIN:
+        case GfxGslMetadata::SHADOW_DITHER_PLAIN:
         ss << "    Float2 dithered_offset;\n";
         ss << "    if ((Int(frag_screen.x) % 2) == 1) {\n";
         ss << "        if ((Int(frag_screen.y)%2)==1) {\n";
@@ -349,36 +350,36 @@ std::string gfx_gasoline_preamble_lighting (const GslCompileParams &scp)
         ss << "    Float2 fragment_uv_offset = 0.6 * dithered_offset;\n";
         break;
     }
-    ss << "    fragment_uv_offset *= spread / filter_taps_side / " << scp.shadowRes << ";\n";
+    ss << "    fragment_uv_offset *= spread / filter_taps_side / " << md.shadowRes << ";\n";
     ss << "    Float total = 0;\n";
     ss << "    for (Int y=0 ; y < filter_taps_side ; y++) {\n";
     ss << "        for (Int x=0 ; x < filter_taps_side ; x++) {\n";
     ss << "            Float2 tap_uv = Float2(x - half_filter_taps_side + 0.5,\n";
     ss << "                                   y - half_filter_taps_side + 0.5);\n";
-    ss << "            tap_uv *= spread / " << scp.shadowRes << " / half_filter_taps_side;\n";
+    ss << "            tap_uv *= spread / " << md.shadowRes << " / half_filter_taps_side;\n";
     ss << "            tap_uv += pos_ls.xy + fragment_uv_offset;\n";
     ss << "            total += sun_dist > textureLod(tex, tap_uv, 0).r ? 1.0 : 0.0;\n";
     ss << "        }\n";
     ss << "    }\n";
-    ss << "    return total / " << scp.shadowFilterTaps << ";\n";
+    ss << "    return total / " << md.shadowFilterTaps << ";\n";
     ss << "}\n";
 
     ss << "Float unshadowyness(Float3 pos_ws, Float cam_dist)\n";
     ss << "{\n";
     ss << "    Float shadowyness = 0.0;\n";
-    ss << "    if (cam_dist < " << scp.shadowDist[0] << ") {\n";
+    ss << "    if (cam_dist < " << md.shadowDist[0] << ") {\n";
     ss << "        shadowyness = test_shadow(pos_ws, global_shadowViewProj0,\n";
-    ss << "                                  global_shadowMap0, " << scp.shadowSpread[0] << ");\n";
-    ss << "    } else if (cam_dist < " << scp.shadowDist[1] << ") {\n";
+    ss << "                                  global_shadowMap0, " << md.shadowSpread[0] << ");\n";
+    ss << "    } else if (cam_dist < " << md.shadowDist[1] << ") {\n";
     ss << "        shadowyness = test_shadow(pos_ws, global_shadowViewProj1,\n";
-    ss << "                                  global_shadowMap1, " << scp.shadowSpread[1] << ");\n";
-    ss << "    } else if (cam_dist < " << scp.shadowDist[2] << ") {\n";
+    ss << "                                  global_shadowMap1, " << md.shadowSpread[1] << ");\n";
+    ss << "    } else if (cam_dist < " << md.shadowDist[2] << ") {\n";
     ss << "        shadowyness = test_shadow(pos_ws, global_shadowViewProj2,\n";
-    ss << "                                  global_shadowMap2, " << scp.shadowSpread[2] << ");\n";
+    ss << "                                  global_shadowMap2, " << md.shadowSpread[2] << ");\n";
     ss << "    }\n";
     ss << "    Float fade = 1;\n";
-    ss << "    Float sf_end = " << scp.shadowFadeEnd << ";\n";
-    ss << "    Float sf_start = " << scp.shadowFadeStart << ";\n";
+    ss << "    Float sf_end = " << md.shadowFadeEnd << ";\n";
+    ss << "    Float sf_start = " << md.shadowFadeStart << ";\n";
     ss << "    if (sf_end != sf_start) {\n";
     ss << "        fade = min(1.0, (sf_end - cam_dist) / (sf_end - sf_start));\n";
     ss << "    }\n";
@@ -410,7 +411,7 @@ std::string gfx_gasoline_preamble_lighting (const GslCompileParams &scp)
 }
 
 
-std::string gfx_gasoline_preamble_transformation (bool first_person, const GslCompileParams &scp)
+std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGslMetadata &md)
 {
     // TODO(dcunnin): Need to specialise transform_to_world and rotate_to_world for instanced
     // geometry.
@@ -421,13 +422,13 @@ std::string gfx_gasoline_preamble_transformation (bool first_person, const GslCo
     ss << "Float3 transform_to_world (Float3 v)\n";
     ss << "{\n";
     ss << "    Float3 r = Float3(0, 0, 0);\n";
-    if (scp.boneWeights == 0) {
+    if (md.boneWeights == 0) {
         ss << "    r = mul(body_world, Float4(v, 1)).xyz;\n";
     } else {
         // The bone weights are supposed to sum to 1, we could remove this overconservative divide
         // if we could assert that property at mesh loading time.
         ss << "    Float total = 0;\n";
-        for (unsigned i=0 ; i < scp.boneWeights ; ++i) {
+        for (unsigned i=0 ; i < md.boneWeights ; ++i) {
             ss << "    r += vert_boneWeights[" << i
                << "] * mul(body_boneWorlds[int(vert_boneAssignments[" << i
                << "])], Float4(v, 1)).xyz;\n";
@@ -442,13 +443,13 @@ std::string gfx_gasoline_preamble_transformation (bool first_person, const GslCo
     ss << "Float3 rotate_to_world (Float3 v)\n";
     ss << "{\n";
     ss << "    Float3 r = Float3(0, 0, 0);\n";
-    if (scp.boneWeights == 0) {
+    if (md.boneWeights == 0) {
         ss << "    r = mul(body_world, Float4(v, 0)).xyz;\n";
     } else {
         // The bone weights are supposed to sum to 1, we could remove this overconservative divide
         // if we could assert that property at mesh loading time.
         ss << "    Float total = 0;\n";
-        for (unsigned i=0 ; i < scp.boneWeights ; ++i) {
+        for (unsigned i=0 ; i < md.boneWeights ; ++i) {
             ss << "    r += vert_boneWeights[" << i
                << "] * mul(body_boneWorlds[int(vert_boneAssignments[" << i
                << "])], Float4(v, 0)).xyz;\n";

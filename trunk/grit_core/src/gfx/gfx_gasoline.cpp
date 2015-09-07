@@ -305,7 +305,7 @@ static GfxGslType *to_type (GfxGslAllocator &alloc, GfxGslParamType t)
     EXCEPTEX << ENDL;
 }
 
-static GfxGslTypeMap make_mat_fields (GfxGslAllocator &alloc, const GfxGslParams &params)
+static GfxGslTypeMap make_mat_fields (GfxGslAllocator &alloc, const GfxGslRunParams &params)
 {
     GfxGslTypeMap r;
     for (auto pair : params)
@@ -316,7 +316,7 @@ static GfxGslTypeMap make_mat_fields (GfxGslAllocator &alloc, const GfxGslParams
 void gfx_gasoline_check (const std::string &vert_prog,
                          const std::string &dangs_prog,
                          const std::string &additional_prog,
-                         const GfxGslParams &params)
+                         const GfxGslRunParams &params)
 {
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
@@ -359,13 +359,13 @@ void gfx_gasoline_check (const std::string &vert_prog,
 static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
                                                       const std::string &vert_prog,
                                                       const std::string &colour_prog,
-                                                      const GslCompileParams &scp,
+                                                      const GfxGslMetadata &md,
                                                       bool flat_z)
 {
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, scp.params), make_body_fields(alloc), scp.ubt
+        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.ubt
     };
 
     GfxGslAst *vert_ast;
@@ -394,12 +394,12 @@ static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
     switch (backend) {
         case GFX_GSL_BACKEND_CG:
         gfx_gasoline_unparse_cg(ctx, &vert_ts, vert_ast, vert_out,
-                                &frag_ts, frag_ast, frag_out, scp, flat_z);
+                                &frag_ts, frag_ast, frag_out, md, flat_z);
         break;
 
         case GFX_GSL_BACKEND_GLSL:
         gfx_gasoline_unparse_glsl(ctx, &vert_ts, vert_ast, vert_out,
-                                  &frag_ts, frag_ast, frag_out, scp, flat_z);
+                                  &frag_ts, frag_ast, frag_out, md, flat_z);
         break;
     }
 
@@ -409,37 +409,37 @@ static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
 GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
                                             const std::string &vert_prog,
                                             const std::string &colour_prog,
-                                            const GslCompileParams &scp)
+                                            const GfxGslMetadata &md)
 {
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, scp, false);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false);
 }
 
 GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
                                                    const std::string &vert_prog,
-                                                   const GslCompileParams &scp)
+                                                   const GfxGslMetadata &md)
 {
     std::string colour_prog = "out.colour = Float3(1, 1, 1);\n";
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, scp, false);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false);
 }
 
 GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
                                             const std::string &vert_prog,
                                             const std::string &colour_prog,
-                                            const GslCompileParams &scp)
+                                            const GfxGslMetadata &md)
 {
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, scp, true);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, true);
 }
 
 GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                      const std::string &vert_prog,
                                                      const std::string &dangs_prog,
                                                      const std::string &additional_prog,
-                                                     const GslCompileParams &scp)
+                                                     const GfxGslMetadata &md)
 {
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, scp.params), make_body_fields(alloc), scp.ubt
+        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.ubt
     };
 
     GfxGslAst *vert_ast;
@@ -481,7 +481,7 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                              &dangs_ts, dangs_ast,
                                              &additional_ts, additional_ast,
                                              vert_out, frag_out,
-                                             scp);
+                                             md);
         break;
 
         case GFX_GSL_BACKEND_GLSL:
@@ -489,7 +489,7 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                &dangs_ts, dangs_ast,
                                                &additional_ts, additional_ast,
                                                vert_out, frag_out,
-                                               scp);
+                                               md);
         break;
     }
 

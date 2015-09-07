@@ -113,7 +113,7 @@ static inline std::ostream &operator<< (std::ostream &o, const GfxGslColour &c)
     return o;
 }
 
-typedef std::map<std::string, GfxGslParamType> GfxGslParams;
+typedef std::map<std::string, GfxGslParamType> GfxGslRunParams;
 typedef std::map<std::string, GfxGslColour> GfxGslUnboundTextures;
 
 /** Return the shader code that defines things needsd by the generated code. */
@@ -127,10 +127,12 @@ struct GfxGasolineResult {
 void gfx_gasoline_check (const std::string &vert_prog,
                          const std::string &dangs_prog,
                          const std::string &additional_prog,
-                         const GfxGslParams &params);
+                         const GfxGslRunParams &params);
 
-struct GslCompileParams {
-    GfxGslParams params;
+/** All additional metadata for building a given shader. */
+struct GfxGslMetadata {
+    GfxGslRunParams params;
+    // The following can vary from one build to the next.
     GfxGslUnboundTextures ubt;
     bool fadeDither;
     unsigned envBoxes;
@@ -147,8 +149,8 @@ struct GslCompileParams {
         SHADOW_DITHER_NONE,
         SHADOW_DITHER_NOISE,
         SHADOW_DITHER_PLAIN
-    } shadowDitherMode; // 0: none, 1: noise, 2: dither
-    GslCompileParams (void)
+    } shadowDitherMode;
+    GfxGslMetadata (void)
         : fadeDither(false), envBoxes(0), instanced(false), boneWeights(0),
           shadowRes(512), shadowFadeStart(1), shadowFadeEnd(10), shadowFactor(5000),
           shadowFilterTaps(0), shadowDitherMode(SHADOW_DITHER_NONE)
@@ -164,38 +166,38 @@ struct GslCompileParams {
 
 GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
                                                    const std::string &vert_prog,
-                                                   const GslCompileParams &scp);
+                                                   const GfxGslMetadata &md);
 
 GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
                                             const std::string &vert_prog,
                                             const std::string &colour_prog,
-                                            const GslCompileParams &scp);
+                                            const GfxGslMetadata &md);
 
 GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
                                             const std::string &vert_prog,
                                             const std::string &colour_prog,
-                                            const GslCompileParams &scp);
+                                            const GfxGslMetadata &md);
 
 GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                      const std::string &vert_prog,
                                                      const std::string &dangs_prog,
                                                      const std::string &additional_prog,
-                                                     const GslCompileParams &scp);
+                                                     const GfxGslMetadata &md);
 
 GfxGasolineResult gfx_gasoline_compile_deferred_sun (GfxGslBackend backend,
                                                      const std::string &fog_prog,
-                                                     const GslCompileParams &scp);
+                                                     const GfxGslMetadata &md);
 
 
 // To come!
 GfxGasolineResult gfx_gasoline_compile_forward (GfxGslBackend backend,
                                                 const std::string &vert_prog,
                                                 const std::string &fwd_prog,
-                                                const GslCompileParams &scp);
+                                                const GfxGslMetadata &md);
 
 GfxGasolineResult gfx_gasoline_compile_shadow_cast (GfxGslBackend backend,
                                                     const std::string &vert_prog,
                                                     const std::string &fwd_prog,
-                                                    const GslCompileParams &scp);
+                                                    const GfxGslMetadata &md);
 
 #endif

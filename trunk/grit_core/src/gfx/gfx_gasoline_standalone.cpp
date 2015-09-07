@@ -70,7 +70,7 @@ int main (int argc, char **argv)
         unsigned bones = 0;
         std::vector<std::string> args;
         std::string language = "GLSL";
-        GfxGslParams params;
+        GfxGslRunParams params;
         GfxGslUnboundTextures ubt;
         while (so_far < argc) {
             std::string arg = next_arg(so_far, argc, argv);
@@ -170,23 +170,23 @@ int main (int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        GslCompileParams scp;
-        scp.params = params;
-        scp.ubt = ubt;
-        scp.fadeDither = alpha_dither;
-        scp.envBoxes = env_boxes;
-        scp.instanced = instanced;
-        scp.boneWeights = bones;
+        GfxGslMetadata md;
+        md.params = params;
+        md.ubt = ubt;
+        md.fadeDither = alpha_dither;
+        md.envBoxes = env_boxes;
+        md.instanced = instanced;
+        md.boneWeights = bones;
 
         GfxGasolineResult shaders;
         try {
             if (kind == "SKY") {
-                shaders = gfx_gasoline_compile_sky(backend, vert_code, additional_code, scp);
+                shaders = gfx_gasoline_compile_sky(backend, vert_code, additional_code, md);
             } else if (kind == "HUD") {
-                shaders = gfx_gasoline_compile_hud(backend, vert_code, additional_code, scp);
+                shaders = gfx_gasoline_compile_hud(backend, vert_code, additional_code, md);
             } else if (kind == "FIRST_PERSON") {
                 shaders = gfx_gasoline_compile_first_person(backend, vert_code, dangs_code,
-                                                            additional_code, scp);
+                                                            additional_code, md);
             } else {
                 std::cerr << "Unrecognised shader kind language: " << kind << std::endl;
                 return EXIT_FAILURE;

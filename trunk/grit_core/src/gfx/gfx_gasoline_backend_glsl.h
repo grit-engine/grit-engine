@@ -36,7 +36,7 @@ void gfx_gasoline_unparse_glsl (GfxGslContext &ctx,
                                 const GfxGslTypeSystem *frag_ts,
                                 const GfxGslAst *frag_ast,
                                 std::string &frag_output,
-                                const GslCompileParams &scp,
+                                const GfxGslMetadata &md,
                                 bool flat_z);
 
 
@@ -49,7 +49,7 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
                                             const GfxGslAst *additional_ast,
                                             std::string &vert_out,
                                             std::string &frag_out,
-                                            const GslCompileParams &scp);
+                                            const GfxGslMetadata &md);
 
 
 #endif

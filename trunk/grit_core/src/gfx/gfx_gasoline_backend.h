@@ -86,8 +86,8 @@ std::string gfx_gasoline_generate_trans_decode(const std::vector<GfxGslTrans> &t
                                                const std::string &pref,
                                                GfxGslTrans::Kind only);
 
-std::string gfx_gasoline_preamble_lighting (const GslCompileParams &scp);
+std::string gfx_gasoline_preamble_lighting (const GfxGslMetadata &md);
 
-std::string gfx_gasoline_preamble_transformation (bool first_person, const GslCompileParams &scp);
+std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGslMetadata &md);
 
 #endif
