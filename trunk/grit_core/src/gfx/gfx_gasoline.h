@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <cstdint>
 
+#include <array>
 #include <map>
 #include <ostream>
 #include <string>
@@ -72,9 +73,9 @@ namespace std {
 }
 
 struct GfxGslIntVec {
-    float r, g, b, a;
+    int32_t r, g, b, a;
     GfxGslIntVec (void) { }
-    GfxGslIntVec (float r, float g=0, float b=0, float a=0)
+    GfxGslIntVec (int32_t r, int32_t g=0, int32_t b=0, int32_t a=0)
       : r(r), g(g), b(b), a(a)
     { }
     bool operator== (const GfxGslIntVec &other) const
@@ -85,7 +86,7 @@ struct GfxGslIntVec {
 
 static inline std::ostream &operator<< (std::ostream &o, const GfxGslIntVec &c)
 {
-    o << "Float4(" << c.r << ", " << c.g << ", " << c.b << ", " << c.a << ")";
+    o << "Int4(" << c.r << ", " << c.g << ", " << c.b << ", " << c.a << ")";
     return o;
 }
 
