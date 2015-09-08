@@ -105,8 +105,8 @@ GfxGslType *GfxGslTypeSystem::cloneType (const GfxGslType *t_)
         return ctx.alloc.makeType<GfxGslFloatMatrixType>(*t);
     } else if (auto *t = dynamic_cast<const GfxGslFloatTextureType*>(t_)) {
         return ctx.alloc.makeType<GfxGslFloatTextureType>(*t);
-    } else if (dynamic_cast<const GfxGslFloatTextureCubeType*>(t_)) {
-        return ctx.alloc.makeType<GfxGslFloatTextureCubeType>();
+    } else if (auto *t = dynamic_cast<const GfxGslFloatTextureCubeType*>(t_)) {
+        return ctx.alloc.makeType<GfxGslFloatTextureCubeType>(*t);
     } else if (auto *t = dynamic_cast<const GfxGslIntType*>(t_)) {
         return ctx.alloc.makeType<GfxGslIntType>(*t);
     } else if (dynamic_cast<const GfxGslBoolType*>(t_)) {

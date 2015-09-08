@@ -61,15 +61,23 @@ struct GfxGslFloatMatrixType : public GfxGslType {
     GfxGslFloatMatrixType (unsigned w, unsigned h) : w(w), h(h) { }
 };
 
-struct GfxGslTextureType : public GfxGslType { };
+struct GfxGslTextureType : public GfxGslType {
+    GfxGslFloatVec solid;
+    GfxGslTextureType(const GfxGslFloatVec &solid)
+      : solid(solid) { }
+};
 
 struct GfxGslFloatTextureType : public GfxGslTextureType {
     unsigned dim;
-    GfxGslFloatTextureType (unsigned dim) : dim(dim) { }
+    GfxGslFloatTextureType (const GfxGslFloatVec &solid, unsigned dim)
+      : GfxGslTextureType(solid), dim(dim)
+    { }
 };
 
 struct GfxGslFloatTextureCubeType : public GfxGslTextureType {
-    GfxGslFloatTextureCubeType (void) { }
+    GfxGslFloatTextureCubeType (const GfxGslFloatVec &solid)
+      : GfxGslTextureType(solid)
+    { }
 };
 
 struct GfxGslIntType : public GfxGslCoordType {

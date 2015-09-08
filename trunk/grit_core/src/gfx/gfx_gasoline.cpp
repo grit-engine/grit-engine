@@ -26,6 +26,8 @@
 #include "gfx_gasoline_backend_glsl.h"
 
 
+static const GfxGslFloatVec GSL_BLACK(0, 0, 0, 0);
+
 static GfxGslTypeMap make_body_fields (GfxGslAllocator &alloc)
 {
     GfxGslTypeMap m;
@@ -100,14 +102,14 @@ static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
     m["shadowViewProj1"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["shadowViewProj2"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
 
-    m["colourGradeLut"] = alloc.makeType<GfxGslFloatTextureType>(3);
-    m["envCube0"] = alloc.makeType<GfxGslFloatTextureCubeType>();
-    m["envCube1"] = alloc.makeType<GfxGslFloatTextureCubeType>();
-    m["fadeDitherMap"] = alloc.makeType<GfxGslFloatTextureType>(2);
-    m["shadowPcfNoiseMap"] = alloc.makeType<GfxGslFloatTextureType>(2);
-    m["shadowMap0"] = alloc.makeType<GfxGslFloatTextureType>(2);
-    m["shadowMap1"] = alloc.makeType<GfxGslFloatTextureType>(2);
-    m["shadowMap2"] = alloc.makeType<GfxGslFloatTextureType>(2);
+    m["colourGradeLut"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 3);
+    m["envCube0"] = alloc.makeType<GfxGslFloatTextureCubeType>(GSL_BLACK);
+    m["envCube1"] = alloc.makeType<GfxGslFloatTextureCubeType>(GSL_BLACK);
+    m["fadeDitherMap"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
+    m["shadowPcfNoiseMap"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
+    m["shadowMap0"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
+    m["shadowMap1"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
+    m["shadowMap2"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
 
     return m;
 }
@@ -118,9 +120,11 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
 
     auto is = [&] (int i) -> GfxGslIntType* { return alloc.makeType<GfxGslIntType>(i); };
     auto fs = [&] (int i) -> GfxGslFloatType* { return alloc.makeType<GfxGslFloatType>(i); };
-    auto tex = [&] (int i) -> GfxGslFloatTextureType* { return alloc.makeType<GfxGslFloatTextureType>(i); };
+    auto tex = [&] (int i) -> GfxGslFloatTextureType* {
+        return alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, i);
+    };
 
-    auto *cube = alloc.makeType<GfxGslFloatTextureCubeType>();
+    auto *cube = alloc.makeType<GfxGslFloatTextureCubeType>(GSL_BLACK);
 
     //GfxGslType *b = alloc.makeType<GfxGslBoolType>();
     // ts holds the set of all functions: float_n -> float_n
@@ -285,9 +289,9 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
 
 
 
-static GfxGslType *to_type (GfxGslAllocator &alloc, GfxGslParamType t)
+static GfxGslType *to_type (GfxGslAllocator &alloc, const GfxGslParam &p)
 {
-    switch (t) {
+    switch (p.t) {
         case GFX_GSL_INT1: return alloc.makeType<GfxGslIntType>(1);
         case GFX_GSL_INT2: return alloc.makeType<GfxGslIntType>(2);
         case GFX_GSL_INT3: return alloc.makeType<GfxGslIntType>(3);
@@ -296,11 +300,11 @@ static GfxGslType *to_type (GfxGslAllocator &alloc, GfxGslParamType t)
         case GFX_GSL_FLOAT2: return alloc.makeType<GfxGslFloatType>(2);
         case GFX_GSL_FLOAT3: return alloc.makeType<GfxGslFloatType>(3);
         case GFX_GSL_FLOAT4: return alloc.makeType<GfxGslFloatType>(4);
-        case GFX_GSL_FLOAT_TEXTURE1: return alloc.makeType<GfxGslFloatTextureType>(1);
-        case GFX_GSL_FLOAT_TEXTURE2: return alloc.makeType<GfxGslFloatTextureType>(2);
-        case GFX_GSL_FLOAT_TEXTURE3: return alloc.makeType<GfxGslFloatTextureType>(3);
-        case GFX_GSL_FLOAT_TEXTURE4: return alloc.makeType<GfxGslFloatTextureType>(4);
-        case GFX_GSL_FLOAT_TEXTURE_CUBE: return alloc.makeType<GfxGslFloatTextureCubeType>();
+        case GFX_GSL_FLOAT_TEXTURE1: return alloc.makeType<GfxGslFloatTextureType>(p.fs, 1);
+        case GFX_GSL_FLOAT_TEXTURE2: return alloc.makeType<GfxGslFloatTextureType>(p.fs, 2);
+        case GFX_GSL_FLOAT_TEXTURE3: return alloc.makeType<GfxGslFloatTextureType>(p.fs, 3);
+        case GFX_GSL_FLOAT_TEXTURE4: return alloc.makeType<GfxGslFloatTextureType>(p.fs, 4);
+        case GFX_GSL_FLOAT_TEXTURE_CUBE: return alloc.makeType<GfxGslFloatTextureCubeType>(p.fs);
     }
     EXCEPTEX << ENDL;
 }
@@ -365,7 +369,7 @@ static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.ubt
+        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.env.ubt
     };
 
     GfxGslAst *vert_ast;
@@ -394,12 +398,12 @@ static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
     switch (backend) {
         case GFX_GSL_BACKEND_CG:
         gfx_gasoline_unparse_cg(ctx, &vert_ts, vert_ast, vert_out,
-                                &frag_ts, frag_ast, frag_out, md, flat_z);
+                                &frag_ts, frag_ast, frag_out, md.env, flat_z);
         break;
 
         case GFX_GSL_BACKEND_GLSL:
         gfx_gasoline_unparse_glsl(ctx, &vert_ts, vert_ast, vert_out,
-                                  &frag_ts, frag_ast, frag_out, md, flat_z);
+                                  &frag_ts, frag_ast, frag_out, md.env, flat_z);
         break;
     }
 
@@ -439,7 +443,7 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.ubt
+        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.env.ubt
     };
 
     GfxGslAst *vert_ast;
@@ -481,7 +485,7 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                              &dangs_ts, dangs_ast,
                                              &additional_ts, additional_ast,
                                              vert_out, frag_out,
-                                             md);
+                                             md.env);
         break;
 
         case GFX_GSL_BACKEND_GLSL:
@@ -489,7 +493,7 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                &dangs_ts, dangs_ast,
                                                &additional_ts, additional_ast,
                                                vert_out, frag_out,
-                                               md);
+                                               md.env);
         break;
     }
 

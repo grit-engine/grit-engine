@@ -223,7 +223,7 @@ void gfx_gasoline_unparse_glsl (GfxGslContext &ctx,
                                 const GfxGslTypeSystem *frag_ts,
                                 const GfxGslAst *frag_ast,
                                 std::string &frag_output,
-                                const GfxGslMetadata &md,
+                                const GfxGslEnvironment &env,
                                 bool flat_z)
 {
     GfxGslBackendUnparser vert_backend("user_");
@@ -235,7 +235,7 @@ void gfx_gasoline_unparse_glsl (GfxGslContext &ctx,
     auto trans = frag_ts->getTransVector();
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
     vert_in.insert("position");
-    if (md.boneWeights > 0) {
+    if (env.boneWeights > 0) {
         vert_in.insert("boneAssignments");
         vert_in.insert("boneWeights");
     }
@@ -263,7 +263,7 @@ void gfx_gasoline_unparse_glsl (GfxGslContext &ctx,
     vert_ss << preamble();
     vert_ss << generate_vert_header(ctx, vert_ts, trans, vert_in);
     vert_ss << generate_funcs();
-    vert_ss << gfx_gasoline_preamble_transformation(false, md);
+    vert_ss << gfx_gasoline_preamble_transformation(false, env);
     vert_ss << generate_funcs_vert();
     vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
     vert_ss << vert_backend.getUserVertexFunction();
@@ -321,7 +321,7 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
                                             const GfxGslAst *additional_ast,
                                             std::string &vert_out,
                                             std::string &frag_out,
-                                            const GfxGslMetadata &md)
+                                            const GfxGslEnvironment &env)
 {
     GfxGslBackendUnparser vert_backend("uvert_");
     vert_backend.unparse(vert_ast, 1);
@@ -345,7 +345,7 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
 	GfxGslTypeMap vert_vars, frag_vars;
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
     vert_in.insert("position");
-    if (md.boneWeights > 0) {
+    if (env.boneWeights > 0) {
         vert_in.insert("boneAssignments");
         vert_in.insert("boneWeights");
     }
@@ -377,7 +377,7 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
     vert_ss << preamble();
     vert_ss << generate_vert_header(ctx, vert_ts, trans, vert_in);
     vert_ss << generate_funcs();
-    vert_ss << gfx_gasoline_preamble_transformation(true, md);
+    vert_ss << gfx_gasoline_preamble_transformation(true, env);
     vert_ss << generate_funcs_vert();
     vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
     vert_ss << vert_backend.getUserVertexFunction();
@@ -404,7 +404,7 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
     frag_ss << generate_funcs();
     frag_ss << generate_funcs_frag();
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
-    frag_ss << gfx_gasoline_preamble_lighting(md);
+    frag_ss << gfx_gasoline_preamble_lighting(env);
     frag_ss << "Float2 frag_screen;\n";
     frag_ss << dangs_backend.getUserDangsFunction();
     frag_ss << additional_backend.getUserColourAlphaFunction();
@@ -430,10 +430,10 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
     frag_ss << "    Float3 sun = punctual_lighting(-global_sunlightDirection, s2c,\n";
     frag_ss << "        d, n, g, s, global_sunlightDiffuse, global_sunlightSpecular);\n";
     frag_ss << "    sun *= unshadowyness(global_cameraPos, 0);\n";
-    if (md.envBoxes == 1) {
+    if (env.envBoxes == 1) {
         frag_ss << "    Float3 env = env_lighting(s2c,\n";
         frag_ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
-    } else if (md.envBoxes == 2) {
+    } else if (env.envBoxes == 2) {
         frag_ss << "    Float3 env0 = env_lighting(s2c,\n";
         frag_ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
         frag_ss << "    Float3 env1 = env_lighting(s2c,\n";
@@ -445,7 +445,7 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
     frag_ss << "    Float3 additional;\n";
     frag_ss << "    Float unused;\n";
     frag_ss << "    func_user_colour(additional, unused);\n";
-    if (md.fadeDither) {
+    if (env.fadeDither) {
         frag_ss << "    int x = (int(frag_screen.x) % 8);\n";
         frag_ss << "    int y = (int(frag_screen.y) % 8);\n";
         frag_ss << "    Float fade = internal_fade * 16.0;  // 16 possibilities\n";

@@ -58,6 +58,25 @@ std::string next_arg(int& so_far, int argc, char **argv)
 
 enum FileOrSnippet { F, S };
 
+static GfxGslParam from_string (const std::string &type_name)
+{
+    if (type_name == "Float") return GfxGslParam::float1(0);
+    if (type_name == "Float2") return GfxGslParam::float2(0, 0);;
+    if (type_name == "Float3") return GfxGslParam::float3(0, 0, 0);;
+    if (type_name == "Float4") return GfxGslParam::float4(0, 0, 0, 0);
+    if (type_name == "Int") return GfxGslParam::int1(0);
+    if (type_name == "Int2") return GfxGslParam::int2(0, 0);
+    if (type_name == "Int3") return GfxGslParam::int3(0, 0, 0);
+    if (type_name == "Int4") return GfxGslParam::int4(0, 0, 0, 0);
+    if (type_name == "FloatTexture1") return GfxGslParam(GFX_GSL_FLOAT_TEXTURE1, 0,0,0,0);
+    if (type_name == "FloatTexture2") return GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 0,0,0,0);
+    if (type_name == "FloatTexture3") return GfxGslParam(GFX_GSL_FLOAT_TEXTURE3, 0,0,0,0);
+    if (type_name == "FloatTexture4") return GfxGslParam(GFX_GSL_FLOAT_TEXTURE4, 0,0,0,0);
+    if (type_name == "FloatTextureCube") return GfxGslParam(GFX_GSL_FLOAT_TEXTURE_CUBE, 0,0,0,0);
+    EXCEPT << "Not a Gasoline type: " << type_name << ENDL;
+}
+
+
 int main (int argc, char **argv)
 {
 
@@ -87,10 +106,10 @@ int main (int argc, char **argv)
             } else if (arg=="-p" || arg=="--param") {
                 std::string name = next_arg(so_far, argc, argv);
                 std::string type_name = next_arg(so_far, argc, argv);
-                params[name] = to_gfx_gsl_param_type(type_name);
+                params[name] = from_string(type_name);
             } else if (arg=="-u" || arg=="--unbind") {
                 std::string name = next_arg(so_far, argc, argv);
-                ubt[name] = GfxGslColour(1,0,1,1);
+                ubt.insert(name);
             } else if (arg=="-i" || arg=="--instanced") {
                 instanced = true;
             } else if (arg=="-d" || arg=="--alpha_dither") {
@@ -172,11 +191,11 @@ int main (int argc, char **argv)
 
         GfxGslMetadata md;
         md.params = params;
-        md.ubt = ubt;
-        md.fadeDither = alpha_dither;
-        md.envBoxes = env_boxes;
-        md.instanced = instanced;
-        md.boneWeights = bones;
+        md.env.ubt = ubt;
+        md.env.fadeDither = alpha_dither;
+        md.env.envBoxes = env_boxes;
+        md.env.instanced = instanced;
+        md.env.boneWeights = bones;
 
         GfxGasolineResult shaders;
         try {

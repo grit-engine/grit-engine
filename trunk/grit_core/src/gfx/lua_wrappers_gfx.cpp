@@ -3905,7 +3905,7 @@ TRY_START
     t.takeTableFromLuaStack(L,2);
 
     GfxMaterialTextureMap textures;
-    GfxShaderBindings bindings;
+    GfxGslRunParams bindings;
 
     std::string shader_name;
     t.get("shader", shader_name, std::string("/system/Default"));
@@ -3945,27 +3945,27 @@ TRY_START
 
     Vector3 emissive_mask;
     if (t.get("emissiveMask", emissive_mask))
-        bindings["emissiveMask"] = GfxShaderParam(emissive_colour);
+        bindings["emissiveMask"] = emissive_colour;
 
     lua_Number specular_mask;
     if (t.get("specularMask", specular_mask))
-        bindings["specularMask"] = GfxShaderParam(float(specular_mask));
+        bindings["specularMask"] = GfxGslParam::float1(specular_mask);
 
     lua_Number gloss_mask;
     if (t.get("glossMask", gloss_mask))
-        bindings["glossMask"] = GfxShaderParam(float(gloss_mask));
+        bindings["glossMask"] = GfxGslParam::float1(gloss_mask);
 
     lua_Number alpha_mask;
     if (t.get("alphaMask", alpha_mask))
-        bindings["alphaMask"] = GfxShaderParam(float(alpha_mask));
+        bindings["alphaMask"] = GfxGslParam::float1(alpha_mask);
 
     lua_Number alpha_reject_threshold;
     if (t.get("alphaRejectThreshold", alpha_reject_threshold))
-        bindings["alphaRejectThreshold"] = GfxShaderParam(float(alpha_reject_threshold));
+        bindings["alphaRejectThreshold"] = GfxGslParam::float1(alpha_reject_threshold);
 
     Vector3 diffuse_mask;
     if (t.get("diffuseMask", diffuse_mask))
-        bindings["diffuseMask"] = GfxShaderParam(diffuse_mask);
+        bindings["diffuseMask"] = diffuse_mask;
 
 
     std::string emissive_map;
@@ -4131,7 +4131,7 @@ TRY_START
             }
 
             if (value_kind=="FLOAT") {
-                GfxShaderParam bind;
+                GfxGslParam bind;
                 std::vector<float> vs;
                 for (unsigned i=1 ; true ; ++i) {
                     lua_Number def;
@@ -4141,10 +4141,10 @@ TRY_START
                 }
                 switch (vs.size()) {
                     case 0: my_lua_error(L, "Uniform \"" + key + "\" must have a default value");
-                    case 1: bind = GfxShaderParam(vs[0]); break;
-                    case 2: bind = GfxShaderParam(Vector2(vs[0], vs[1])); break;
-                    case 3: bind = GfxShaderParam(Vector3(vs[0], vs[1], vs[2])); break;
-                    case 4: bind = GfxShaderParam(Vector4(vs[0], vs[1], vs[2], vs[3])); break;
+                    case 1: bind = GfxGslParam::float1(vs[0]); break;
+                    case 2: bind = GfxGslParam::float2(vs[0], vs[1]); break;
+                    case 3: bind = GfxGslParam::float3(vs[0], vs[1], vs[2]); break;
+                    case 4: bind = GfxGslParam::float4(vs[0], vs[1], vs[2], vs[3]); break;
                     default: my_lua_error(L, "Uniform \"" + key + "\" unsupported number of default values");
                 }
                 bindings[key] = bind;
@@ -4194,7 +4194,7 @@ TRY_START
     t.get("dangsCode", dangs_code, std::string());
     t.get("colourCode", colour_code, std::string());
 
-    GfxShaderParamMap uniforms;
+    GfxGslRunParams uniforms;
 
     typedef ExternalTable::KeyIterator KI;
     for (KI i=t.begin(), i_=t.end() ; i!=i_ ; ++i) {
@@ -4205,7 +4205,7 @@ TRY_START
         if (key == "colourCode") continue;
 
         // must be a texture or param
-        GfxShaderParam uniform;
+        GfxGslParam uniform;
 
         SharedPtr<ExternalTable> tab;
         if (!t.get(key, tab)) {
@@ -4233,10 +4233,10 @@ TRY_START
                 }
                 switch (vs.size()) {
                     case 0: my_lua_error(L, "Uniform \"" + key + "\" must have a default value");
-                    case 1: uniform = GfxShaderParam(vs[0]); break;
-                    case 2: uniform = GfxShaderParam(Vector2(vs[0], vs[1])); break;
-                    case 3: uniform = GfxShaderParam(Vector3(vs[0], vs[1], vs[2])); break;
-                    case 4: uniform = GfxShaderParam(Vector4(vs[0], vs[1], vs[2], vs[3])); break;
+                    case 1: uniform = GfxGslParam::float1(vs[0]); break;
+                    case 2: uniform = GfxGslParam::float2(vs[0], vs[1]); break;
+                    case 3: uniform = GfxGslParam::float3(vs[0], vs[1], vs[2]); break;
+                    case 4: uniform = GfxGslParam::float4(vs[0], vs[1], vs[2], vs[3]); break;
                     default: my_lua_error(L, "Uniform \"" + key + "\" unsupported number of default values");
                 }
             } else {
@@ -4250,7 +4250,7 @@ TRY_START
             lua_Number a;
             tab->get("defaultAlpha", a, 1.0);
 
-            uniform = GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(c.x, c.y, c.z, a));
+            uniform = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, c.x, c.y, c.z, a);
 
         } else {
             my_lua_error(L, "Did not understand 'uniformKind' value \"" + uniform_kind + "\"");

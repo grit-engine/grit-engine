@@ -39,35 +39,13 @@
 #include "gfx_material.h"
 
 class GfxShader;
-struct GfxShaderParam;
 
 // Bindings reuse the Param type as an easy way to store primitive values.
 // Textures are specified along side in a different structure.
-typedef std::map<std::string, GfxShaderParam> GfxShaderBindings;
+typedef std::map<std::string, GfxGslParam> GfxShaderBindings;
 
 #ifndef GFX_SHADER_H
 #define GFX_SHADER_H
-
-/** Tagged union of the various values that can go into a shader param. */
-struct GfxShaderParam {
-    GfxGslParamType t; 
-    // Use std::array instead of c-style array to work around a bug in Microsoft Visual Studio 2013
-    typedef std::array<float, 4> F4;
-    F4 fs;
-    typedef std::array<int32_t, 4> I4;
-    I4 is;
-    Vector4 getVector4 (void) const { return Vector4(fs[0], fs[1], fs[2], fs[3]); }
-    GfxShaderParam (void) { }
-    // This form for textures
-    GfxShaderParam (GfxGslParamType t, const Vector4 &v) : t(t), fs(F4{{v.x, v.y, v.z, v.w}}), is(I4{{0}}) { }
-    GfxShaderParam (int v) : t(GFX_GSL_INT1), fs(F4{{0}}), is(I4{{v}}) { }
-    GfxShaderParam (float v) : t(GFX_GSL_FLOAT1), fs(F4{{v}}), is(I4{{0}}) { }
-    GfxShaderParam (const Vector2 &v) : t(GFX_GSL_FLOAT2), fs(F4{{v.x, v.y}}), is(I4{{0}}) { }
-    GfxShaderParam (const Vector3 &v) : t(GFX_GSL_FLOAT3), fs(F4{{v.x, v.y, v.z}}), is(I4{{0}}) { }
-    GfxShaderParam (const Vector4 &v) : t(GFX_GSL_FLOAT4), fs(F4{{v.x, v.y, v.z, v.w}}), is(I4{{0}}) { }
-};
-
-typedef std::map<std::string, GfxShaderParam> GfxShaderParamMap;
 
 /** Some parameters that do not change from one object to the next, but do change from one
  * camera or target to another. */
@@ -116,40 +94,26 @@ class GfxShader {
 
     // These changed together, completely invalidate shader.
     std::string srcVertex, srcDangs, srcAdditional;
-    GfxShaderParamMap params;
+    GfxGslRunParams params;
 
     public:
     struct Split {
         Purpose purpose;
-        bool fadeDither;
-        unsigned envBoxes;
-        bool instanced;
-        unsigned boneWeights;
-        std::set<std::string> boundTextures;
-        // TODO: Split shader for (also update SplitHash and operator<< in cpp)
-        // * enums (manual splits)
+        GfxGslEnvironment env;
+        // TODO: Split shader for (also update std::hash)
+        // * user-defined enums
         bool operator== (const Split &other) const
         {
             return other.purpose == purpose
-                && other.fadeDither == fadeDither
-                && other.envBoxes == envBoxes
-                && other.instanced == instanced
-                && other.boneWeights == boneWeights
-                && other.boundTextures == boundTextures;
+                && other.env == env;
         }
     };
     private:
     struct SplitHash {
         size_t operator()(const Split &s) const
         {
-            size_t r = size_t(s.purpose) << 10;
-            r ^= (s.fadeDither ? 1 : 0);
-            r ^= s.envBoxes;
-            r ^= (s.instanced ? 1 : 0);
-            r ^= s.boneWeights;
-            r ^= s.boundTextures.size();
-            for (const auto &str : s.boundTextures)
-                r ^= std::hash<std::string>()(str);
+            size_t r = my_hash(unsigned(s.purpose));
+            r = r * 31 + my_hash(s.env);
             return r;
         }
     };
@@ -168,7 +132,7 @@ class GfxShader {
 
     // Gasoline shaders
     GfxShader (const std::string &name,
-               const GfxShaderParamMap &params,
+               const GfxGslRunParams &params,
                const std::string &src_vertex,
                const std::string &src_dangs,
                const std::string &src_additional)
@@ -178,7 +142,7 @@ class GfxShader {
     }
 
 
-    void reset (const GfxShaderParamMap &params,
+    void reset (const GfxGslRunParams &params,
                 const std::string &src_vertex,
                 const std::string &src_dangs,
                 const std::string &src_additional);
@@ -215,7 +179,7 @@ class GfxShader {
     public:
     // Legacy API
     GfxShader (const std::string &name,
-               const GfxShaderParamMap &params,
+               const GfxGslRunParams &params,
                const Ogre::HighLevelGpuProgramPtr &vp,
                const Ogre::HighLevelGpuProgramPtr &fp)
       : params(params), name(name)
@@ -248,19 +212,19 @@ void gfx_shader_check (const std::string &name,
                        const std::string &new_vertex_code,
                        const std::string &new_dangs_code,
                        const std::string &new_additional_code,
-                       const GfxShaderParamMap &params);
+                       const GfxGslRunParams &params);
 
 /** Temporary hack to allow transition to a purely gasoline setup. */
 GfxShader *gfx_shader_make_from_existing (const std::string &name,
                                           const Ogre::HighLevelGpuProgramPtr &vp,
                                           const Ogre::HighLevelGpuProgramPtr &fp,
-                                          const GfxShaderParamMap &params);
+                                          const GfxGslRunParams &params);
 
 GfxShader *gfx_shader_make_or_reset (const std::string &name,
                                      const std::string &new_vertex_code,
                                      const std::string &new_dangs_code,
                                      const std::string &new_additional_code,
-                                     const GfxShaderParamMap &params);
+                                     const GfxGslRunParams &params);
 
 GfxShader *gfx_shader_get (const std::string &name);
 bool gfx_shader_has (const std::string &name);

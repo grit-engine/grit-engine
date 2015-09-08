@@ -72,9 +72,9 @@ void gfx_particle_init (void)
     uint16_t idata_raw[] = { QUAD(0,2,3,1), };
     quadIndexData.indexBuffer->writeData(0, 3 * quad_triangles * sizeof(uint16_t), &idata_raw[0]);
 
-    GfxShaderParamMap shader_params = {
-        {"gbuffer0", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1))},
-        {"particleAtlas", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1))}
+    GfxGslRunParams shader_params = {
+        {"gbuffer0", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
+        {"particleAtlas", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)}
     };
 
     std::string vertex_code =
@@ -335,8 +335,8 @@ class GfxParticleSystem {
             texs["particleAtlas"] = { &*tex, true, 4};
 
             GfxShaderBindings binds;
-            binds["gbuffer0"] = GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1,1,1,1));
-            binds["particleAtlas"] = GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1,1,1,1));
+            binds["gbuffer0"] = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1,1,1,1);
+            binds["particleAtlas"] = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1,1,1,1);
 
 
             const Ogre::Matrix4 &I = Ogre::Matrix4::IDENTITY;

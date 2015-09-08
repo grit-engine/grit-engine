@@ -900,16 +900,16 @@ void gfx_hud_init (void)
 
     cornered_quad_ibuf->writeData(0, cornered_quad_indexes*sizeof(uint16_t), &cornered_quad_idata_raw[0], true);
 
-    GfxShaderParamMap shader_tex_params = {
-        {"colour", GfxShaderParam(Vector3(1, 1, 1))},
-        {"alpha", GfxShaderParam(1.0f)},
-        {"tex", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1))}
+    GfxGslRunParams shader_tex_params = {
+        {"colour", GfxGslParam::float3(1, 1, 1)},
+        {"alpha", GfxGslParam::float1(1.0f)},
+        {"tex", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)}
     };
 
-    GfxShaderParamMap shader_text_params = {
-        {"colour", GfxShaderParam(Vector3(1, 1, 1))},
-        {"alpha", GfxShaderParam(1.0f)},
-        {"tex", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1))}
+    GfxGslRunParams shader_text_params = {
+        {"colour", GfxGslParam::float3(1, 1, 1)},
+        {"alpha", GfxGslParam::float1(1.0f)},
+        {"tex", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)}
     };
 
     std::string vertex_code =
@@ -1114,7 +1114,7 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
 
     shader_text_binds.clear();
     shader_text_binds["colour"] = colour;
-    shader_text_binds["alpha"] = alpha;
+    shader_text_binds["alpha"] = GfxGslParam::float1(alpha);
 
     GfxMaterialTextureMap texs;
     if (tex != nullptr)
@@ -1205,7 +1205,7 @@ void gfx_render_hud_one (GfxHudBase *base)
 
         shader_tex_binds.clear();
         shader_tex_binds["colour"] = obj->getColour();
-        shader_tex_binds["alpha"] = obj->getAlpha();
+        shader_tex_binds["alpha"] = GfxGslParam::float1(obj->getAlpha());
 
         GfxMaterialTextureMap texs;
         if (tex != nullptr)

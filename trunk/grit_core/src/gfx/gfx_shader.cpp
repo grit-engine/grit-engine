@@ -19,13 +19,7 @@ typedef GfxShader::NativePair NativePair;
 
 static std::ostream &operator << (std::ostream &o, const GfxShader::Split &s)
 {
-    o << "[";
-    o << (s.fadeDither ? "F" : "f");
-    o << s.envBoxes;
-    o << (s.instanced ? "I" : "i");
-    o << s.boneWeights;
-    o << s.boundTextures;
-    o << "]";
+    o << s.env;
     return o;
 }
 
@@ -219,7 +213,7 @@ void GfxShader::explicitBinding (const std::string &name, const Vector4 &v)
 }
 
 
-void GfxShader::reset (const GfxShaderParamMap &p,
+void GfxShader::reset (const GfxGslRunParams &p,
                        const std::string &src_vertex,
                        const std::string &src_dangs,
                        const std::string &src_additional)
@@ -281,20 +275,29 @@ NativePair GfxShader::getNativePair (Purpose purpose,
                                      bool instanced, unsigned bone_weights,
                                      const GfxMaterialTextureMap &textures)
 {
-    std::set<std::string> r;
-    for (const auto &pair : textures)
-        r.insert(pair.first);
+    GfxGslUnboundTextures ubt;
+    for (const auto &u : params) {
+        // We only need the types to compile it.
+        // Find undefined textures, substitute values
+        if (gfx_gasoline_param_is_texture(u.second)) {
+            if (textures.find(u.first) == textures.end()) {
+                ubt.insert(u.first);
+            }
+        }
+    }
 
     // Need to choose / maybe compile a shader for this combination of textures and bindings.
+    GfxGslEnvironment env;
+    env.fadeDither = fade_dither;
+    env.envBoxes = env_boxes;
+    env.instanced = instanced;
+    env.boneWeights = bone_weights;
+    env.ubt = ubt;
+
     Split split;
     split.purpose = purpose;
-    split.fadeDither = fade_dither;
-    split.envBoxes = env_boxes;
-    split.instanced = instanced;
-    split.boneWeights = bone_weights;
-    split.boundTextures = r;
+    split.env = env;
     auto it = cachedShaders.find(split);
-
 
     if (it == cachedShaders.end()) {
         // Need to build it.
@@ -333,30 +336,10 @@ NativePair GfxShader::getNativePair (Purpose purpose,
                 oname+"_f", RESGRP, "glsl", Ogre::GPT_FRAGMENT_PROGRAM);
         }
 
-        // Would probably be quicker if gsl compiler took set of textures and the
-        // GfxShaderParams map instead of GfxGslRunParams.
-        GfxGslUnboundTextures ubt;
-        GfxGslRunParams gsl_params;
-        for (const auto &u : params) {
-            // We only need the types to compile it.
-            gsl_params[u.first] = u.second.t;
-            // Find undefined textures, substitute values
-            if (gfx_gasoline_param_is_texture(u.second.t)) {
-                if (split.boundTextures.find(u.first) == split.boundTextures.end()) {
-                    Vector4 val = u.second.getVector4();
-                    ubt[u.first] = GfxGslColour(val.x, val.y, val.z, val.w);
-                }
-            }
-        }
-
 
         GfxGslMetadata md;
-        md.params = gsl_params;
-        md.ubt = ubt;
-        md.fadeDither = fade_dither;
-        md.envBoxes = env_boxes;
-        md.instanced = instanced;
-        md.boneWeights = bone_weights;
+        md.params = params;
+        md.env = env;
 
         GfxGasolineResult output;
         try {
@@ -437,7 +420,7 @@ void GfxShader::bindShader (Purpose purpose,
     for (auto pair : params) {
         const std::string &name = pair.first;
         const auto &param = pair.second;
-        if (gfx_gasoline_param_is_texture(param.t)) {
+        if (gfx_gasoline_param_is_texture(param)) {
 
             auto it = textures.find(name);
 
@@ -487,7 +470,7 @@ void GfxShader::bindShader (Purpose purpose,
             counter++;
 
         } else {
-            const GfxShaderParam *vptr = &param;
+            const GfxGslParam *vptr = &param;
             auto bind = bindings.find(name);
             if (bind != bindings.end()) {
                 GfxGslParamType bt = bind->second.t;
@@ -501,23 +484,23 @@ void GfxShader::bindShader (Purpose purpose,
             const auto &v = *vptr;
             switch (v.t) {
                 case GFX_GSL_FLOAT1:
-                explicit_binding(np, "mat_" + name, v.fs[0]);
+                explicit_binding(np, "mat_" + name, v.fs.r);
                 break;
 
                 case GFX_GSL_FLOAT2:
-                explicit_binding(np, "mat_" + name, Vector2(v.fs[0], v.fs[1]));
+                explicit_binding(np, "mat_" + name, Vector2(v.fs.r, v.fs.g));
                 break;
 
                 case GFX_GSL_FLOAT3:
-                explicit_binding(np, "mat_" + name, Vector3(v.fs[0], v.fs[1], v.fs[2]));
+                explicit_binding(np, "mat_" + name, Vector3(v.fs.r, v.fs.g, v.fs.b));
                 break;
 
                 case GFX_GSL_FLOAT4:
-                explicit_binding(np, "mat_" + name, Vector4(v.fs[0], v.fs[1], v.fs[2], v.fs[3]));
+                explicit_binding(np, "mat_" + name, Vector4(v.fs.r, v.fs.g, v.fs.b, v.fs.a));
                 break;
 
                 case GFX_GSL_INT1:
-                explicit_binding(np, "mat_" + name, v.is[0]);
+                explicit_binding(np, "mat_" + name, v.is.r);
                 break;
 
                 case GFX_GSL_INT2:
@@ -750,7 +733,7 @@ void gfx_shader_bind_global_textures (const NativePair &np)
 GfxShader *gfx_shader_make_from_existing (const std::string &name,
                                           const Ogre::HighLevelGpuProgramPtr &vp,
                                           const Ogre::HighLevelGpuProgramPtr &fp,
-                                          const GfxShaderParamMap &params)
+                                          const GfxGslRunParams &params)
 {
     if (gfx_shader_has(name))
         EXCEPT << "Shader already exists: " << name << ENDL;
@@ -764,7 +747,7 @@ GfxShader *gfx_shader_make_or_reset (const std::string &name,
                                      const std::string &new_vertex_code,
                                      const std::string &new_dangs_code,
                                      const std::string &new_additional_code,
-                                     const GfxShaderParamMap &params)
+                                     const GfxGslRunParams &params)
 {
     gfx_shader_check(name, new_vertex_code, new_dangs_code, new_additional_code, params);
     GfxShader *shader;
@@ -796,17 +779,12 @@ void gfx_shader_check (const std::string &name,
                        const std::string &src_vertex,
                        const std::string &src_dangs,
                        const std::string &src_additional,
-                       const GfxShaderParamMap &params)
+                       const GfxGslRunParams &params)
 {
     GfxGslUnboundTextures ubt;
-    GfxGslRunParams gsl_params;
-    for (const auto &u : params) {
-        // We only need the types to compile it.
-        gsl_params[u.first] = u.second.t;
-    }
 
     try {
-        gfx_gasoline_check(src_vertex, src_dangs, src_additional, gsl_params);
+        gfx_gasoline_check(src_vertex, src_dangs, src_additional, params);
     } catch (const Exception &e) {
         EXCEPT << name << ": " << e.msg << ENDL;
     }

@@ -85,10 +85,10 @@ void gfx_sky_material_init (void)
                      "out.alpha = c.a;\n";
 
     gfx_shader_make_or_reset("/system/SkyDefault", vs, "", fs, {
-        { "alphaMask", GfxShaderParam(1.0f) },
-        { "alphaRejectThreshold", GfxShaderParam(-1.0f) },
-        { "emissiveMap", GfxShaderParam(GFX_GSL_FLOAT_TEXTURE2, Vector4(1, 1, 1, 1)) },
-        { "emissiveMask", GfxShaderParam(Vector3(1, 1, 1)) },
+        { "alphaMask", GfxGslParam::float1(1.0f) },
+        { "alphaRejectThreshold", GfxGslParam::float1(-1.0f) },
+        { "emissiveMap", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1) },
+        { "emissiveMask", GfxGslParam::float3(1, 1, 1) },
     });
 
     gfx_sky_material_add("/system/SkyDefault");
