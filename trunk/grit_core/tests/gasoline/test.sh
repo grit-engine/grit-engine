@@ -1,8 +1,9 @@
 #!/bin/bash
 
-make -C ~/gritengine/grit_core/linux gsl.linux.x86_64 || exit 1
+(cd ~/gritengine/grit_core/linux && make gsl.linux.x86_64) || exit 1
 
 
+TMP=$(tempfile)
 
 do_glsl_check() {
     KIND="$1"
@@ -28,14 +29,15 @@ do_check() {
     TARGET="$1"
     KIND="$2"
     FILENAME="$3"
-    echo "Checking ${TARGET} ${KIND} shader: ${FILENAME}"
     if [ "$TARGET" == "cg" ] ; then
-        do_cg_check $KIND $FILENAME
+        do_cg_check $KIND $FILENAME > $TMP 2>&1
     else
-        do_glsl_check $KIND $FILENAME
+        do_glsl_check $KIND $FILENAME > $TMP 2>&1
     fi
     CODE="$?"
     if [ "$CODE" -ne 0 ] ; then
+        echo "While checking ${TARGET} ${KIND} shader: ${FILENAME}"
+        cat $TMP
         nl -b a ${FILENAME}
     fi
     return "$CODE"
