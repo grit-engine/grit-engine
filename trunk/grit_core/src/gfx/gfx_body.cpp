@@ -856,10 +856,6 @@ void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
     // sample shadow buffer at a point and intersect the camera with the point lights to determine
     // the ones that should be used to light us.
 
-    // Ogre cameras point towards Z whereas in Grit the convention is that
-    // 'unrotated' means pointing towards y (north)
-    Ogre::Matrix4 orientation(to_ogre(Quaternion(Degree(90), Vector3(1, 0, 0))));
-
     Ogre::Frustum frustum;  // Used to calculate projection matrix.
     frustum.setFOVy(Ogre::Degree(p->getCameraOpts().fovY));
     frustum.setAspectRatio(p->getCamera()->getAspectRatio());

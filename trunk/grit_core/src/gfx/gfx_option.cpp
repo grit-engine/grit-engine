@@ -305,6 +305,8 @@ static void options_update (bool flush)
     bool reset_shadows = flush;
     bool reset_pcss = flush;
     bool reset_framebuffer = flush;
+    bool reset_shadow_spread = flush;
+    bool reset_shadow_dither_mode = flush;
 
     for (unsigned i=0 ; i<sizeof(gfx_bool_options)/sizeof(*gfx_bool_options) ; ++i) {
         GfxBoolOption o = gfx_bool_options[i];
@@ -340,8 +342,10 @@ static void options_update (bool flush)
             case GFX_SHADOW_AGGRESSIVE_FOCUS_REGION:
             reset_pcss = true;
             break;
-            case GFX_SHADOW_FILTER_DITHER: break;
-            case GFX_SHADOW_FILTER_DITHER_TEXTURE: break;
+            case GFX_SHADOW_FILTER_DITHER:
+            case GFX_SHADOW_FILTER_DITHER_TEXTURE:
+            reset_shadow_dither_mode = true;
+            break;
             case GFX_SHADOW_EMULATE_PCF: break;
             case GFX_POST_PROCESSING: break;
             case GFX_RENDER_PARTICLES: break;
@@ -366,9 +370,12 @@ static void options_update (bool flush)
             case GFX_RAM:
             break;
             case GFX_SHADOW_RES:
+            shader_scene_env.shadowRes = v_new;
             reset_shadowmaps = true;
             break;
-            case GFX_SHADOW_FILTER_TAPS: break;
+            case GFX_SHADOW_FILTER_TAPS:
+            shader_scene_env.shadowFilterTaps = v_new;
+            break;
             case GFX_BLOOM_ITERATIONS: break;
         }
     }
@@ -391,9 +398,23 @@ static void options_update (bool flush)
             case GFX_MAX_PERCEIVED_DEPTH:
             break;
             case GFX_SHADOW_START:
+            shader_scene_env.shadowFadeStart = v_new;
+            reset_pcss = true;
+            break;
             case GFX_SHADOW_END0:
+            shader_scene_env.shadowDist[0] = v_new;
+            reset_pcss = true;
+            break;
+            break;
             case GFX_SHADOW_END1:
+            shader_scene_env.shadowDist[1] = v_new;
+            reset_pcss = true;
+            break;
             case GFX_SHADOW_END2:
+            shader_scene_env.shadowDist[2] = v_new;
+            shader_scene_env.shadowFadeEnd = v_new;
+            reset_pcss = true;
+            break;
             case GFX_SHADOW_OPTIMAL_ADJUST0:
             case GFX_SHADOW_OPTIMAL_ADJUST1:
             case GFX_SHADOW_OPTIMAL_ADJUST2:
@@ -401,11 +422,21 @@ static void options_update (bool flush)
             case GFX_SHADOW_PADDING:
             reset_pcss = true;
             break;
-            case GFX_SHADOW_SPREAD_FACTOR0: break;
-            case GFX_SHADOW_SPREAD_FACTOR1: break;
-            case GFX_SHADOW_SPREAD_FACTOR2: break;
+            case GFX_SHADOW_SPREAD_FACTOR0:
+            reset_shadow_spread = true;
+            break;
+            case GFX_SHADOW_SPREAD_FACTOR1:
+            reset_shadow_spread = true;
+            break;
+            case GFX_SHADOW_SPREAD_FACTOR2:
+            reset_shadow_spread = true;
+            break;
             case GFX_SHADOW_FADE_START: break;
+            shader_scene_env.shadowFadeEnd = v_new;
+            break;
             case GFX_SHADOW_FILTER_SIZE: break;
+            reset_shadow_spread = true;
+            break;
             case GFX_ANAGLYPH_LEFT_RED_MASK:
             case GFX_ANAGLYPH_LEFT_GREEN_MASK:
             case GFX_ANAGLYPH_LEFT_BLUE_MASK:
@@ -422,6 +453,25 @@ static void options_update (bool flush)
     options_bool = new_options_bool;
     options_int = new_options_int;
     options_float = new_options_float;
+
+    if (reset_shadow_dither_mode) {
+        if (gfx_option(GFX_SHADOW_FILTER_DITHER_TEXTURE)) {
+            shader_scene_env.shadowDitherMode = GfxGslEnvironment::SHADOW_DITHER_NOISE;
+        } else if (gfx_option(GFX_SHADOW_FILTER_DITHER)) {
+            shader_scene_env.shadowDitherMode = GfxGslEnvironment::SHADOW_DITHER_PLAIN;
+        } else {
+            shader_scene_env.shadowDitherMode = GfxGslEnvironment::SHADOW_DITHER_NONE;
+        }
+    }
+
+    if (reset_shadow_spread) {
+        shader_scene_env.shadowSpread[0] = gfx_option(GFX_SHADOW_SPREAD_FACTOR0)
+                                         * gfx_option(GFX_SHADOW_FILTER_SIZE);
+        shader_scene_env.shadowSpread[1] = gfx_option(GFX_SHADOW_SPREAD_FACTOR0)
+                                         * gfx_option(GFX_SHADOW_FILTER_SIZE);
+        shader_scene_env.shadowSpread[2] = gfx_option(GFX_SHADOW_SPREAD_FACTOR0)
+                                         * gfx_option(GFX_SHADOW_FILTER_SIZE);
+    }
 
     if (reset_shadowmaps) {
         ogre_sm->setShadowTextureCountPerLightType(Ogre::Light::LT_DIRECTIONAL, 3);

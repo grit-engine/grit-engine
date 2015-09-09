@@ -43,6 +43,7 @@
 
 #include "gfx.h"
 #include "gfx_option.h"
+#include "gfx_gasoline.h"
 
 #define RESGRP "GRIT"
 
@@ -131,6 +132,8 @@ class GfxShader;
 typedef std::map<std::string,GfxShader*> GfxShaderDB;
 
 extern GfxShaderDB shader_db;
+
+extern GfxGslEnvironment shader_scene_env;
 
 
 template<class T> void try_set_named_constant_ (const Ogre::GpuProgramParametersSharedPtr &p,

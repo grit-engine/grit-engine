@@ -110,6 +110,8 @@ DiskResourcePtr<GfxTextureDiskResource> fade_dither_map;
 DiskResourcePtr<GfxTextureDiskResource> corona_map;
 DiskResourcePtr<GfxTextureDiskResource> shadow_pcf_noise_map;
 
+GfxGslEnvironment shader_scene_env;
+
 // abuse ogre fog params to store several things
 static void set_ogre_fog (void)
 {
@@ -1096,6 +1098,9 @@ size_t gfx_init (GfxCallback &cb_)
         gfx_env_cube(0, DiskResourcePtr<GfxEnvCubeDiskResource>());
         gfx_env_cube(1, DiskResourcePtr<GfxEnvCubeDiskResource>());
         env_cube_cross_fade = 0;
+        shader_scene_env.envBoxes = 2;       
+
+        shader_scene_env.shadowFactor = 5000;  // See uber.cgh also
 
         return winid;
     } catch (Ogre::Exception &e) {

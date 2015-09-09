@@ -38,9 +38,6 @@ GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam, const Ogre::Matrix4 
     // 'unrotated' means pointing towards y (north)
     Ogre::Matrix4 orientation(to_ogre(Quaternion(Degree(90), Vector3(1, 0, 0))));
 
-    // Why does invView have orientation in it?
-    Ogre::Matrix4 inv_view = (orientation * view).inverseAffine();
-
     Ogre::Viewport *viewport = cam->getViewport();
     bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
     float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
@@ -59,7 +56,7 @@ GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam, const Ogre::Matrix4 
     Vector3 ray_bottom_right = from_ogre(cam->getWorldSpaceCorners()[7]) - cam_pos;
 
     return {
-        cam_pos, view, inv_view, proj,
+        cam_pos, view, view.inverseAffine(), proj,
         ray_top_left, ray_top_right, ray_bottom_left, ray_bottom_right,
         viewport_dim, render_target_flipping
     };
@@ -287,7 +284,7 @@ NativePair GfxShader::getNativePair (Purpose purpose,
     }
 
     // Need to choose / maybe compile a shader for this combination of textures and bindings.
-    GfxGslEnvironment env;
+    GfxGslEnvironment env = shader_scene_env;
     env.fadeDither = fade_dither;
     env.envBoxes = env_boxes;
     env.instanced = instanced;

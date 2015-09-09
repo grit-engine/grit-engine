@@ -384,8 +384,8 @@ void gfx_gasoline_unparse_first_person_cg(GfxGslContext &ctx,
     frag_ss << generate_funcs();
     frag_ss << generate_funcs_frag();
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
-    frag_ss << gfx_gasoline_preamble_lighting(env);
     frag_ss << "Float2 frag_screen;\n";
+    frag_ss << gfx_gasoline_preamble_lighting(env);
     frag_ss << dangs_backend.getUserDangsFunction();
     frag_ss << additional_backend.getUserColourAlphaFunction();
 
@@ -410,10 +410,10 @@ void gfx_gasoline_unparse_first_person_cg(GfxGslContext &ctx,
     frag_ss << "    Float3 s2c = normalize(internal_vertex_to_cam);\n";
     frag_ss << "    Float3 sun = punctual_lighting(-global_sunlightDirection, s2c,\n";
     frag_ss << "        d, n, g, s, global_sunlightDiffuse, global_sunlightSpecular);\n";
+    frag_ss << "    sun *= unshadowyness(global_cameraPos, 0);\n";
     if (env.envBoxes == 1) {
-        frag_ss << "    Float3 env0 = env_lighting(s2c,\n";
+        frag_ss << "    Float3 env = env_lighting(s2c,\n";
         frag_ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
-        frag_ss << "    Float3 env = env0;\n";
     } else if (env.envBoxes == 2) {
         frag_ss << "    Float3 env0 = env_lighting(s2c,\n";
         frag_ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
@@ -441,5 +441,4 @@ void gfx_gasoline_unparse_first_person_cg(GfxGslContext &ctx,
 
     frag_out = frag_ss.str();
 }
-
 

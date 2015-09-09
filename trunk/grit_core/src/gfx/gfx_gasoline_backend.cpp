@@ -318,7 +318,7 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
     ss << "                  FloatTexture2 tex,\n";
     ss << "                  Float spread)\n";
     ss << "{\n";
-    ss << "    Float sun_dist = -dot(pos_ws, global_sunlightDirection)\n";
+    ss << "    Float sun_dist = dot(pos_ws, global_sunlightDirection)\n";
     ss << "                     / " << env.shadowFactor << ";\n";
     ss << "    Float3 pos_ls = mul(shadow_view_proj, Float4(pos_ws, 1)).xyw;\n";
     ss << "    pos_ls.xy /= pos_ls.z;\n";
@@ -440,8 +440,16 @@ std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGs
         }
         ss << "    r /= total;\n";
     }
-    if (first_person)
-        ss << "    r = mul(global_invView, Float4(r, 1)).xyz;\n";
+    // If we're in first person mode, the "world space" coord is actually a space that is centered
+    // at the camera with Y pointing into the distance, Z up and X right.  To convert that to true
+    // world space we just use the inverse view matrix.  However, since the view matrix converts to
+    // a coordinate frame where Z points into the distance, we do a conversion fully into that
+    // coordinate frame first.  Then we apply the inverse view matrix which rewinds that and also
+    // takes us all the way back to actual world space.
+    if (first_person) {
+        ss << "    Float3 r2 = Float3(r.x, r.z, -r.y);\n";
+        ss << "    r = mul(global_invView, Float4(r2, 1)).xyz;\n";
+    }
     ss << "    return r;\n";
     ss << "}\n";
     ss << "Float3 rotate_to_world (Float3 v)\n";
@@ -461,8 +469,11 @@ std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGs
         }
         ss << "    r /= total;\n";
     }
-    if (first_person)
-        ss << "    r = mul(global_invView, Float4(r, 0)).xyz;\n";
+    // See comment about first person mode, above.
+    if (first_person) {
+        ss << "    Float3 r2 = Float3(r.x, r.z, -r.y);\n";
+        ss << "    r = mul(global_invView, Float4(r2, 0)).xyz;\n";
+    }
     ss << "    return r;\n";
     ss << "}\n";
     ss << "\n";

@@ -404,8 +404,8 @@ void gfx_gasoline_unparse_first_person_glsl(GfxGslContext &ctx,
     frag_ss << generate_funcs();
     frag_ss << generate_funcs_frag();
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
-    frag_ss << gfx_gasoline_preamble_lighting(env);
     frag_ss << "Float2 frag_screen;\n";
+    frag_ss << gfx_gasoline_preamble_lighting(env);
     frag_ss << dangs_backend.getUserDangsFunction();
     frag_ss << additional_backend.getUserColourAlphaFunction();
 
