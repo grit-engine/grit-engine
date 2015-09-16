@@ -47,9 +47,7 @@
 #include "physics/physics_world.h"
 #include "audio/audio.h"
 #include "net/net.h"
-#ifdef _WIN32
 #include"navigation/navigation_system.h"
-#endif
 
 CentralisedLog clog;
 bool clicked_close = false;
@@ -127,9 +125,9 @@ int main (int argc, const char **argv)
 
         core_option_init();
         streamer_init();
-		#ifdef _WIN32
+
 		navigation_init();
-		#endif
+
         // audio_init(getenv("GRIT_AUDIO_DEV"));
         audio_init(NULL);
 
@@ -179,9 +177,9 @@ int main (int argc, const char **argv)
         CVERB << "Shutting down Lua net subsystem..." << std::endl;
 
         net_shutdown(core_L);
-		#ifdef _WIN32
+
 		navigation_shutdown();
-		#endif
+
         object_all_del(core_L);  // Will remove all demands from background loader.
 
         CVERB << "Shutting down Lua graphics subsystem..." << std::endl;
