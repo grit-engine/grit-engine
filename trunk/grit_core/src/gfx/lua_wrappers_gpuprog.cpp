@@ -465,6 +465,9 @@ TRY_START
         } else if (key=="source") {
                 std::string v = luaL_checkstring(L, 3);
                 self->setSource(v);
+        } else if (key=="ignoreMissingParams") {
+                bool v = check_bool(L, 3);
+                self->getDefaultParameters()->setIgnoreMissingParams(v);
         } else if (key=="syntaxCode") {
                 std::string v = luaL_checkstring(L, 3);
                 self->setSyntaxCode(v);

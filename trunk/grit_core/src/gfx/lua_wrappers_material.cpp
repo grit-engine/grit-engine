@@ -313,6 +313,7 @@ TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
         p->setVertexProgram(luaL_checkstring(L,4));
+        p->getVertexProgramParameters()->setIgnoreMissingParams(true);
         return 0;
 TRY_END
 }
@@ -323,6 +324,7 @@ TRY_START
         check_args(L,3+1);
         Ogre::Pass *p = mat_get_pass(L);
         p->setFragmentProgram(luaL_checkstring(L,4));
+        p->getFragmentProgramParameters()->setIgnoreMissingParams(true);
         return 0;
 TRY_END
 }
