@@ -270,7 +270,7 @@
     <ClCompile Include="src\navigation\navigation.cpp">
       <Filter>Source Files\navigation</Filter>
     </ClCompile>
-    <ClCompile Include="src\navigation\Contrib\fastlz\fastlz.c">
+    <ClCompile Include="src\navigation\fastlz.cpp">
       <Filter>Source Files\navigation</Filter>
     </ClCompile>
   </ItemGroup>

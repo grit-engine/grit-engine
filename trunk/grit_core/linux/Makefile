@@ -16,13 +16,14 @@ all: $(TARGETS)
 
 
 depend:
-	makedepend -Y -f Makefile ../src/*.cpp ../src/linux/*.cpp ../src/win32/*.cpp ../src/gfx/*.cpp ../src/physics/*.cpp ../src/audio/*.cpp ../src/net/*.cpp -I $(ROOT)/dependencies/util -I ../depend_stubs
+	makedepend -Y -f Makefile ../src/*.cpp ../src/linux/*.cpp ../src/win32/*.cpp ../src/gfx/*.cpp ../src/physics/*.cpp ../src/audio/*.cpp ../src/net/*.cpp ../src/navigation/*.cpp -I $(ROOT)/dependencies/util -I ../depend_stubs
 	sed -i 's_^[.][.]/src/linux/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/win32/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/gfx/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/physics/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/audio/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/net/\([^.]*[.]o:\)_\1_g' Makefile
+	sed -i 's_^[.][.]/src/navigation/\([^.]*[.]o:\)_\1_g' Makefile
 	sed -i 's_^[.][.]/src/\([^.]*[.]o:\)_\1_g' Makefile
 	rm Makefile.bak
 
@@ -69,6 +70,10 @@ endif
 	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
 %.o: ../src/net/%.cpp
+	@$(COMPILING)
+	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
+
+%.o: ../src/navigation/%.cpp
 	@$(COMPILING)
 	@$(CXX) -pedantic -c $< -o $@ $(CXXFLAGS)
 
@@ -137,6 +142,7 @@ GRIT_OBJ=\
         lua_wrappers_gritobj.o \
         lua_wrappers_material.o \
         lua_wrappers_net.o \
+        lua_wrappers_navigation.o \
         lua_wrappers_physics.o \
         lua_wrappers_primitives.o \
         main.o \
@@ -145,6 +151,14 @@ GRIT_OBJ=\
         net_manager.o \
         net_message.o \
         net.o \
+        fastlz.o \
+        navigation.o \
+        chunky_tri_mesh.o \
+        crowd_manager.o \
+        input_geom.o \
+        mesh_loader_obj.o \
+        navigation_interfaces.o \
+        navigation_manager.o \
         ogg_vorbis_decoder.o \
         path_util.o \
         physical_material.o \
@@ -691,6 +705,8 @@ lua_wrappers_core.o: ../depend_stubs/sys/param.h
 lua_wrappers_core.o: ../depend_stubs/sys/types.h
 lua_wrappers_core.o: ../depend_stubs/netdb.h
 lua_wrappers_core.o: ../depend_stubs/sys/ioctl.h
+lua_wrappers_core.o: ../src/navigation/navigation_system.h
+lua_wrappers_core.o: ../src/navigation/navigation.h
 lua_wrappers_disk_resource.o: ../src/grit_lua_util.h
 lua_wrappers_disk_resource.o: ../depend_stubs/string
 lua_wrappers_disk_resource.o: ../depend_stubs/lua.h
@@ -879,6 +895,8 @@ main.o: ../depend_stubs/OgreResourceGroupManager.h ../src/net/net.h
 main.o: ../depend_stubs/sys/socket.h ../depend_stubs/arpa/inet.h
 main.o: ../depend_stubs/sys/param.h ../depend_stubs/sys/types.h
 main.o: ../depend_stubs/netdb.h ../depend_stubs/sys/ioctl.h
+main.o: ../src/navigation/navigation_system.h
+main.o: ../src/navigation/navigation.h
 path_util.o: ../src/centralised_log.h ../src/path_util.h
 path_util.o: ../depend_stubs/vector ../depend_stubs/string
 path_util.o: ../src/grit_lua_util.h ../depend_stubs/lua.h
@@ -2854,3 +2872,68 @@ net_message.o: ../depend_stubs/arpa/inet.h
 net_message.o: ../depend_stubs/sys/param.h
 net_message.o: ../depend_stubs/sys/types.h ../depend_stubs/netdb.h
 net_message.o: ../depend_stubs/sys/ioctl.h
+fastlz.o: ../src/navigation/fastlz.h
+lua_wrappers_navigation.o: ../src/navigation/lua_wrappers_navigation.h
+lua_wrappers_navigation.o: ../src/navigation/navigation.h
+lua_wrappers_navigation.o: ../src/navigation/navigation_system.h
+lua_wrappers_navigation.o: ../src/gfx/lua_wrappers_gfx.h
+lua_wrappers_navigation.o: ../src/physics/lua_wrappers_physics.h
+lua_wrappers_navigation.o: ../src/external_table.h
+lua_wrappers_navigation.o: ../src/lua_ptr.h
+lua_wrappers_navigation.o: ../src/path_util.h
+lua_wrappers_navigation.o: ../src/navigation/input_geom.h
+navigation.o: ../src/navigation/navigation.h
+navigation.o: ../../dependencies/recast_navigation/Detour/Include/DetourCommon.h
+navigation.o: ../../dependencies/recast_navigation/DetourTileCache/Include/DetourTileCache.h
+navigation.o: ../src/navigation/crowd_manager.h
+navigation.o: ../src/navigation/input_geom.h
+navigation.o: ../src/navigation/navigation_system.h
+navigation.o: ../src/navigation/navigation_manager.h
+chunky_tri_mesh.o: ../src/navigation/chunky_tri_mesh.h
+crowd_manager.o: ../src/navigation/crowd_manager.h
+crowd_manager.o: ../src/navigation/input_geom.h
+crowd_manager.o: ../src/navigation/navigation_system.h
+crowd_manager.o: ../src/navigation/navigation_manager.h
+crowd_manager.o: ../src/navigation/navigation_interfaces.h
+crowd_manager.o: ../../dependencies/recast_navigation/DetourCrowd/Include/DetourCrowd.h
+crowd_manager.o: ../../dependencies/recast_navigation/DebugUtils/Include/DetourDebugDraw.h
+crowd_manager.o: ../../dependencies/recast_navigation/DetourCrowd/Include/DetourObstacleAvoidance.h
+crowd_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourCommon.h
+crowd_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourNode.h
+input_geom.o: ../../dependencies/recast_navigation/Recast/Include/Recast.h
+input_geom.o: ../src/navigation/input_geom.h
+input_geom.o: ../src/navigation/chunky_tri_mesh.h
+input_geom.o: ../src/navigation/mesh_loader_obj.h
+input_geom.o: ../../dependencies/recast_navigation/DebugUtils/Include/DebugDraw.h
+input_geom.o: ../../dependencies/recast_navigation/DebugUtils/Include/RecastDebugDraw.h
+input_geom.o: ../../dependencies/recast_navigation/Detour/Include/DetourNavMesh.h
+input_geom.o: ../src/navigation/navigation_system.h
+mesh_loader_obj.o: ../src/navigation/mesh_loader_obj.h
+mesh_loader_obj.o: ../src/navigation/navigation_system.h
+navigation_interfaces.o: ../src/navigation/navigation_interfaces.h
+navigation_interfaces.o: ../../dependencies/recast_navigation/Recast/Include/Recast.h
+navigation_interfaces.o: ../../dependencies/recast_navigation/DebugUtils/Include/RecastDebugDraw.h
+navigation_interfaces.o: ../../dependencies/recast_navigation/DebugUtils/Include/DetourDebugDraw.h
+navigation_interfaces.o: ../src/navigation/navigation_system.h
+navigation_interfaces.o: ../../dependencies/recast_navigation/DebugUtils/Include/DebugDraw.h
+navigation_interfaces.o: ../../dependencies/recast_navigation/DebugUtils/Include/RecastDump.h
+navigation_manager.o: ../src/navigation/fastlz.h
+navigation_manager.o: ../src/navigation/navigation_manager.h
+navigation_manager.o: ../src/navigation/navigation_interfaces.h
+navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourNavMesh.h
+navigation_manager.o: ../../dependencies/recast_navigation/Recast/Include/Recast.h
+navigation_manager.o: ../src/navigation/chunky_tri_mesh.h
+navigation_manager.o: ../src/navigation/input_geom.h
+navigation_manager.o: ../../dependencies/recast_navigation/DebugUtils/Include/RecastDebugDraw.h
+navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourAssert.h
+navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourNavMeshBuilder.h
+navigation_manager.o: ../../dependencies/recast_navigation/DebugUtils/Include/DetourDebugDraw.h
+navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourCommon.h
+navigation_manager.o: ../../dependencies/recast_navigation/DetourTileCache/Include/DetourTileCache.h
+navigation_manager.o: ../src/navigation/crowd_manager.h
+navigation_manager.o: ../../dependencies/recast_navigation/Recast/Include/RecastAlloc.h
+navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourAlloc.h
+navigation_manager.o: ../../dependencies/recast_navigation/Recast/Include/RecastAssert.h
+navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourNavMeshQuery.h
+navigation_manager.o: ../../dependencies/recast_navigation/DetourCrowd/Include/DetourCrowd.h
+navigation_manager.o: ../src/navigation/navigation_system.h

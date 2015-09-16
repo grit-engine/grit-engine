@@ -144,7 +144,7 @@
     <ClCompile Include="src\lua_wrappers_primitives.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\navigation\chunky_tri_mesh.cpp" />
-    <ClCompile Include="src\navigation\Contrib\fastlz\fastlz.c" />
+    <ClCompile Include="src\navigation\fastlz.cpp" />
     <ClCompile Include="src\navigation\crowd_manager.cpp" />
     <ClCompile Include="src\navigation\input_geom.cpp" />
     <ClCompile Include="src\navigation\lua_wrappers_navigation.cpp" />
