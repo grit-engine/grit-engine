@@ -22,7 +22,7 @@
 #ifndef navigation_system_h
 #define navigation_system_h
 
-#include"ogre.h"
+#include"Ogre.h"
 #include"../gfx/gfx_body.h"
 #include"../physics/physics_world.h"
 #include<vector>
