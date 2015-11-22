@@ -77,6 +77,6 @@ namespace NavSysDebug
 	void redrawAllActiveObjects(void);
 	void updateNavmeshMaterial(void);
 	void destroy(void);
-};
+}
 
 #endif // navigation_system_h
