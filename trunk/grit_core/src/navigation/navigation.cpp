@@ -195,7 +195,7 @@ namespace NavSysDebug
 		DebugMatObj.setNull();
 		DebugMatObjWireframe.setNull();
 	}
-};
+}
 
 void navigation_init()
 {
@@ -246,6 +246,7 @@ void NavigationSystem::Update(const Ogre::Real tslf)
 
 void NavigationSystem::updateDebug(const Ogre::Real tslf)
 {
+    (void) tslf;
 	if (nvmgr && NavSysDebug::Enabled)
 	{
 		nvmgr->render();
@@ -358,6 +359,7 @@ void NavigationSystem::addTempObstacle(Ogre::Vector3 pos)
 // TODO
 void NavigationSystem::removeTempObstacle(Ogre::Vector3 pos)
 {
+    (void) pos;
 	if (anyNavmeshLoaded())
 	{
 		//nvmgr->removeTempObstacle(Vec3ToFloat(swap_yz(pos)));
@@ -438,7 +440,7 @@ bool NavigationSystem::getRandomNavMeshPoint(Ogre::Vector3 &resultPoint)
 	{
 		float resPoint[3];
 		dtPolyRef resultPoly;
-		float ext[3];
+		// float ext[3];
 		dtStatus sts = nvmgr->getNavMeshQuery()->findRandomPoint(nvmgr->getCrowd()->getFilter(0), frand, &resultPoly, resPoint);
 
 		if ((sts & DT_FAILURE) || (sts & DT_STATUS_DETAIL_MASK))
@@ -524,7 +526,7 @@ void NavigationSystem::setAgentMoveTarget(int idx, Ogre::Vector3 pos, bool adjus
 	if (!nvmgr) return;
 
 	dtPolyRef m_targetRef;
-	Ogre::Vector3 targetPnt;
+	Ogre::Vector3 targetPnt(0, 0, 0);  // Actually initialised below, but compiler can't tell.
 
 	dtCrowd* crowd = nvmgr->getCrowd();
 
@@ -573,11 +575,13 @@ float NavigationSystem::getDistanceToGoal(int idx, const float max_range)
 
 float NavigationSystem::getAgentHeight(int idx)
 {
+    (void) idx;
 	return nvmgr->getAgentHeight();
 }
 
 float NavigationSystem::getAgentRadius(int idx)
 {
+    (void) idx;
 	return nvmgr->getAgentRadius();
 }
 
