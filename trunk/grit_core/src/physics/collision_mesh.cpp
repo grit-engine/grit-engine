@@ -302,21 +302,18 @@ void CollisionMesh::loadImpl (void)
                 bcolFaces.size(), reinterpret_cast<int*>(&(bcolFaces[0].v1)), sizeof(BColFace),
                 bcolVerts.size(), &(bcolVerts[0].x), sizeof(BColVert));
 
-            btCollisionShape *s;
 
             if (is_static) {
                 btBvhTriangleMeshShape *tm = new btBvhTriangleMeshShape(v,true,true);
-                s = tm;
-                s->setMargin(bcol.triMeshMargin);
+                tm->setMargin(bcol.triMeshMargin);
                 btTriangleInfoMap* tri_info_map = new btTriangleInfoMap();
                 tri_info_map->m_edgeDistanceThreshold = bcol.triMeshEdgeDistanceThreshold;
 
                 btGenerateInternalEdgeInfo(tm,tri_info_map);
+                masterShape->addChildShape(btTransform::getIdentity(), tm);
             } else {
                 // skip over dynamic trimesh
             }
-
-            masterShape->addChildShape(btTransform::getIdentity(), s);
         }
 
         setMass(bcol.mass);
@@ -452,21 +449,18 @@ void CollisionMesh::loadImpl (void)
                 faces.size(), &(faces[0].v1), sizeof(TColFace),
                 verts.size(), &(verts[0].x), sizeof(Vector3));
 
-            btCollisionShape *s;
-
             if (is_static) {
                 btBvhTriangleMeshShape *tm = new btBvhTriangleMeshShape(v,true,true);
-                s = tm;
-                s->setMargin(t.margin);
+                tm->setMargin(t.margin);
                 btTriangleInfoMap* tri_info_map = new btTriangleInfoMap();
                 tri_info_map->m_edgeDistanceThreshold = t.edgeDistanceThreshold;
 
                 btGenerateInternalEdgeInfo(tm,tri_info_map);
+                masterShape->addChildShape(btTransform::getIdentity(), tm);
             } else {
                 // Skip over dynamic trimesh
             }
 
-            masterShape->addChildShape(btTransform::getIdentity(), s);
         }
 
         setMass(tcol.mass);
