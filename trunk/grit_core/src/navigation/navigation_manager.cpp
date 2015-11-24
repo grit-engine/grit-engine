@@ -574,9 +574,12 @@ void drawDetailOverlay(const dtTileCache* tc, const int tx, const int ty, double
 	if (!ntiles)
 		return;
 	
-	const int rawSize = calcLayerBufferSize(tc->getParams()->width, tc->getParams()->height);
+    (void) model;
+    (void) view;
+    (void) proj;
+	//const int rawSize = calcLayerBufferSize(tc->getParams()->width, tc->getParams()->height);
 	
-	char text[128];
+	//char text[128];
 
 	for (int i = 0; i < ntiles; ++i)
 	{
@@ -586,6 +589,7 @@ void drawDetailOverlay(const dtTileCache* tc, const int tx, const int ty, double
 		pos[0] = (tile->header->bmin[0]+tile->header->bmax[0])/2.0f;
 		pos[1] = tile->header->bmin[1];
 		pos[2] = (tile->header->bmin[2]+tile->header->bmax[2])/2.0f;
+        (void) pos;
 		//-- TODO: replace this using Ogre "MoveableTextOverlay"
 		//GLdouble x, y, z;
 		//if (gluProject((GLdouble)pos[0], (GLdouble)pos[1], (GLdouble)pos[2],
@@ -650,6 +654,10 @@ void drawObstacles(duDebugDraw* dd, const dtTileCache* tc)
 }
 
 NavigationManager::NavigationManager() :
+	m_geom(nullptr),
+	m_navMesh(nullptr),
+	m_navMeshDrawFlags(DU_DRAWNAVMESH_OFFMESHCONS | DU_DRAWNAVMESH_CLOSEDLIST),
+	m_ctx(nullptr),
 	m_keepInterResults(false),
 	m_tileCache(0),
 	m_cacheBuildTimeMs(0),
@@ -660,14 +668,7 @@ NavigationManager::NavigationManager() :
 	m_drawMode(DRAWMODE_NAVMESH),
 	m_maxTiles(0),
 	m_maxPolysPerTile(0),
-	m_tileSize(48),
-
-	m_geom(0),
-	m_navMesh(0),
-	m_navQuery(0),
-	m_crowd(0),
-	m_navMeshDrawFlags(DU_DRAWNAVMESH_OFFMESHCONS | DU_DRAWNAVMESH_CLOSEDLIST),
-	m_ctx(0)
+	m_tileSize(48)
 {
 	m_navQuery = dtAllocNavMeshQuery();
 	m_crowd = dtAllocCrowd();
@@ -697,7 +698,7 @@ void NavigationManager::updateMaxTiles()
 	{
 		const float* bmin = m_geom->getMeshBoundsMin();
 		const float* bmax = m_geom->getMeshBoundsMax();
-		char text[64];
+		// char text[64];
 		int gw = 0, gh = 0;
 		rcCalcGridSize(bmin, bmax, m_cellSize, &gw, &gh);
 		const int ts = (int)m_tileSize;
@@ -853,7 +854,7 @@ void NavigationManager::render()
 
 	DebugDrawGL dd;
 
-	const float texScale = 1.0f / (m_cellSize * 10.0f);
+	// const float texScale = 1.0f / (m_cellSize * 10.0f);
 
 	if (!navmesh_from_disk)
 	{
@@ -1263,7 +1264,8 @@ bool NavigationManager::loadAll(const char* path)
 
 	// Read header.
 	TileCacheSetHeader header;
-	fread(&header, sizeof(TileCacheSetHeader), 1, fp);
+	size_t bytes = fread(&header, sizeof(TileCacheSetHeader), 1, fp);
+    APP_ASSERT(bytes != sizeof(TileCacheSetHeader));
 	if (header.magic != TILECACHESET_MAGIC)
 	{
 		fclose(fp);
@@ -1305,14 +1307,16 @@ bool NavigationManager::loadAll(const char* path)
 	for (int i = 0; i < header.numTiles; ++i)
 	{
 		TileCacheTileHeader tileHeader;
-		fread(&tileHeader, sizeof(tileHeader), 1, fp);
+		bytes = fread(&tileHeader, sizeof(tileHeader), 1, fp);
+        APP_ASSERT(bytes != sizeof(tileHeader));
 		if (!tileHeader.tileRef || !tileHeader.dataSize)
 			break;
 
 		unsigned char* data = (unsigned char*)dtAlloc(tileHeader.dataSize, DT_ALLOC_PERM);
 		if (!data) break;
 		memset(data, 0, tileHeader.dataSize);
-		fread(data, tileHeader.dataSize, 1, fp);
+		bytes = fread(data, tileHeader.dataSize, 1, fp);
+        APP_ASSERT((long long)(bytes) != tileHeader.dataSize);
 		
 		dtCompressedTileRef tile = 0;
 		m_tileCache->addTile(data, tileHeader.dataSize, DT_COMPRESSEDTILE_FREE_DATA, &tile);

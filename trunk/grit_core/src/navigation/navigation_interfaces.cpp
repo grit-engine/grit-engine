@@ -145,14 +145,17 @@ Ogre::ColourValue uintColorToOgre(unsigned int colour)
 
 void DebugDrawGL::depthMask(bool state)
 {
+    (void) state;
 }
 
 void DebugDrawGL::texture(bool state)
 {
+    (void) state;
 }
 
 void DebugDrawGL::begin(duDebugDrawPrimitives prim, float size)
 {
+    (void)size;
 	switch (prim)
 	{
 		case DU_DRAW_POINTS:
@@ -184,11 +187,14 @@ void DebugDrawGL::vertex(const float x, const float y, const float z, unsigned i
 
 void DebugDrawGL::vertex(const float* pos, unsigned int color, const float* uv)
 {
+    (void) uv;
 	NavSysDebug::DebugObject->position(-pos[0], pos[2], pos[1]);
 	NavSysDebug::DebugObject->colour(uintColorToOgre(color));
 }
 void DebugDrawGL::vertex(const float x, const float y, const float z, unsigned int color, const float u, const float v)
 {
+    (void) u;
+    (void) v;
 	NavSysDebug::DebugObject->position(-x, z, y);
 	NavSysDebug::DebugObject->colour(uintColorToOgre(color));
 }
