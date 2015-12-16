@@ -70,6 +70,7 @@ test_hud() {
     do_check ${TARGET} vert ${SHADER}.vert.out && do_check ${TARGET} frag ${SHADER}.frag.out
 }
 
+# TODO(dcunnin): Need to test with -e and -E not to mention -d
 test_first_person() {
     TARGET="$1"
     SHADER="$2"
@@ -79,6 +80,21 @@ test_first_person() {
     TLANG=""
     test $TARGET == "cg" && TLANG="-C"
     gsl $TLANG $PARAMS $UBT "${SHADER}.vert.gsl" "${SHADER}.dangs.gsl" "${SHADER}.add.gsl" FIRST_PERSON ${SHADER}.${BONE_WEIGHTS}.{vert,frag}.out.$TARGET || exit 1
+
+    do_check ${TARGET} vert ${SHADER}.${BONE_WEIGHTS}.vert.out && do_check ${TARGET} frag ${SHADER}.${BONE_WEIGHTS}.frag.out
+}
+
+
+# TODO(dcunnin): Need to test with -e and -E not to mention -d
+test_decal() {
+    TARGET="$1"
+    SHADER="$2"
+    BONE_WEIGHTS="$3"
+    PARAMS="-p alphaMask Float -p alphaRejectThreshold Float -p diffuseMap FloatTexture2 -p diffuseMask Float3 -p normalMap FloatTexture2 -p glossMap FloatTexture2 -p gloss Float -p specular Float -p emissiveMap FloatTexture2 -p emissiveMask Float3 -b $BONE_WEIGHTS"
+    UBT="-u normalMap"
+    TLANG=""
+    test $TARGET == "cg" && TLANG="-C"
+    gsl $TLANG $PARAMS $UBT "" "${SHADER}.dangs.gsl" "${SHADER}.add.gsl" DECAL ${SHADER}.${BONE_WEIGHTS}.{vert,frag}.out.$TARGET || exit 1
 
     do_check ${TARGET} vert ${SHADER}.${BONE_WEIGHTS}.vert.out && do_check ${TARGET} frag ${SHADER}.${BONE_WEIGHTS}.frag.out
 }
@@ -100,16 +116,16 @@ do_tests() {
     TARGET=$1
     test_particle ${TARGET} Particle &&
 
-    test_sky ${TARGET} SkyEmpty &&
+    test_sky ${TARGET} Empty &&
     test_sky ${TARGET} SkyTest &&
     test_sky ${TARGET} SkyDefault &&
     test_sky ${TARGET} SkyClouds &&
     test_sky ${TARGET} SkyBackground &&
 
     test_first_person ${TARGET} FpDefault 0 &&
-    test_first_person ${TARGET} FpEmpty 0 &&
+    test_first_person ${TARGET} Empty 0 &&
     test_first_person ${TARGET} FpDefault 3 &&
-    test_first_person ${TARGET} FpEmpty 3 &&
+    test_first_person ${TARGET} Empty 3 &&
 
     test_hud ${TARGET} HudRect &&
     test_hud ${TARGET} HudText &&
@@ -125,3 +141,5 @@ fi
 if [ "$SKIP_CG" != "1" ] ; then
     do_tests cg
 fi
+
+test_decal glsl Empty 0

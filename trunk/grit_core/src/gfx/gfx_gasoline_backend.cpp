@@ -161,7 +161,7 @@ std::string gfx_gasoline_generate_global_fields (const GfxGslContext &ctx, bool 
         auto it = ctx.ubt.find(pair.first);
         if (auto *tt = dynamic_cast<const GfxGslTextureType*>(pair.second)) {
             if (it != ctx.ubt.end()) {
-                ss << "const Float4 mat_" << pair.first << " = " << tt->solid << ";\n";
+                ss << "const Float4 mat_" << pair.first << " = " << tt->solid;
             } else {
                 ss << "uniform " << pair.second << " mat_" << pair.first;
                 if (reg) {
@@ -409,8 +409,55 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
 	ss << "    return 16 * (diff_component + spec_component + fresnel_component);\n";
 	ss << "}\n";
 
+    ss << "Float3 sunlight(Float3 shadow_pos, Float3 s2c, Float3 d, Float3 n, Float g, Float s)\n";
+    ss << "{\n";
+    ss << "    Float3 sun = punctual_lighting(-global_sunlightDirection, s2c,\n";
+    ss << "        d, n, g, s, global_sunlightDiffuse, global_sunlightSpecular);\n";
+    ss << "    sun *= unshadowyness(shadow_pos, 0);\n";
+    ss << "    return sun;\n";
+    ss << "}\n";
+
+    ss << "Float3 envlight(Float3 s2c, Float3 d, Float3 n, Float g, Float s)\n";
+    ss << "{\n";
+    if (env.envBoxes == 1) {
+        ss << "    Float3 env = env_lighting(s2c,\n";
+        ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
+    } else if (env.envBoxes == 2) {
+        ss << "    Float3 env0 = env_lighting(s2c,\n";
+        ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
+        ss << "    Float3 env1 = env_lighting(s2c,\n";
+        ss << "        d, n, g, s, global_envCube1, global_envCubeMipmaps1);\n";
+        ss << "    Float3 env = lerp(env0, env1, global_envCubeCrossFade);\n";
+    } else {
+        ss << "    Float3 env = Float3(0.0, 0.0, 0.0);\n";
+    }
+    ss << "    return env;\n";
+    ss << "}\n";
+
     ss << "\n";
 
+    return ss.str();
+}
+
+
+std::string gfx_gasoline_preamble_fade (const GfxGslEnvironment &env) 
+{
+    (void) env;
+    std::stringstream ss;
+
+    ss << "void fade (void)\n";
+    ss << "{\n";
+    ss << "    int x = (int(frag_screen.x) % 8);\n";
+    ss << "    int y = (int(frag_screen.y) % 8);\n";
+    ss << "    Float fade = internal_fade * 16.0;  // 16 possibilities\n";
+    ss << "    Float2 uv = Float2(x,y);\n";
+    ss << "    // uv points to top left square now\n";
+    ss << "    uv.x += 8.0 * (int(fade)%4);\n";
+    ss << "    uv.y += 8.0 * int(fade/4);\n";
+    ss << "    if (sampleLod(global_fadeDitherMap, uv / 32.0, 0).r < 0.5) discard;\n";
+    ss << "}\n";
+
+    ss << "\n";
     return ss.str();
 }
 

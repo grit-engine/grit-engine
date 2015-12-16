@@ -147,15 +147,17 @@ int main (int argc, char **argv)
 
         std::ifstream f;
 
-        f.open(vert_in_filename);
-        if (!f.good()) {
-            std::cerr << "Opening file: ";
-            perror(vert_in_filename.c_str());
-            return EXIT_FAILURE;
-        }
         std::string vert_code;
-        vert_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
-        f.close();
+        if (vert_in_filename != "")  {
+            f.open(vert_in_filename);
+            if (!f.good()) {
+                std::cerr << "Opening file: ";
+                perror(vert_in_filename.c_str());
+                return EXIT_FAILURE;
+            }
+            vert_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+            f.close();
+        }
 
         std::string dangs_code;
         if (dangs_in_filename != "") {
@@ -206,6 +208,8 @@ int main (int argc, char **argv)
             } else if (kind == "FIRST_PERSON") {
                 shaders = gfx_gasoline_compile_first_person(backend, vert_code, dangs_code,
                                                             additional_code, md);
+            } else if (kind == "DECAL") {
+                shaders = gfx_gasoline_compile_decal(backend, dangs_code, additional_code, md);
             } else {
                 std::cerr << "Unrecognised shader kind language: " << kind << std::endl;
                 return EXIT_FAILURE;

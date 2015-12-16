@@ -273,6 +273,9 @@
     <ClCompile Include="src\navigation\fastlz.cpp">
       <Filter>Source Files\navigation</Filter>
     </ClCompile>
+    <ClCompile Include="src\gfx\gfx_decal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\net\lua_wrappers_net.h">

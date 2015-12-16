@@ -322,7 +322,8 @@ class GfxGslTypeSystem {
         return it->second;
     }
 
-    /** The values (v.xy paths) that were used in this shader. */
+    /** The values (v.xy paths) that were used in this shader and captured from the one before it.
+     */
     const std::set<GfxGslTrans> &getTrans (void) const { return trans; }
 
     /** Same as getTrans() but return a vector instead of a set. */

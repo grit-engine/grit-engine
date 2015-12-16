@@ -43,6 +43,7 @@ struct CameraOpts {
     float frustumOffset;
     float saturationMask;
     Vector3 mask; // colour
+    bool decals;
     bool bloomAndToneMap;
     bool pointLights;
     bool particles;
@@ -56,7 +57,7 @@ struct CameraOpts {
     Quaternion dir;
     CameraOpts (void)
       : fovY(55), nearClip(0.3f), farClip(800),
-        frustumOffset(0), saturationMask(1), mask(1,1,1),
+        frustumOffset(0), saturationMask(1), mask(1,1,1), decals(true),
         bloomAndToneMap(true), pointLights(true), particles(true), sky(true), sun(true),
         firstPerson(true), reflect(false), reflectPlaneNormal(0,0,1), reflectPlaneDist(0),
         pos(0,0,0), dir(0,0,0,1) { }

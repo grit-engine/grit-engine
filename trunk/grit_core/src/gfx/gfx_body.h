@@ -38,6 +38,8 @@ struct GfxPaintColour {
     float met; // metallic paint (0 -> 1)
 };
 
+// Must extend Ogre::MovableObject so that we can become attached to a node and
+// rendered by the regular Ogre scenemanager-based pipeline.
 class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
 
     protected:

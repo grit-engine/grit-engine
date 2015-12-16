@@ -820,6 +820,113 @@ MT_MACRO_NEWINDEX(gfxbody);
 //}}}
 
 
+// GFXDECAL ============================================================== {{{
+
+void push_gfxdecal (lua_State *L, const GfxDecalPtr &self)
+{
+    if (self.isNull())
+        lua_pushnil(L);
+    else
+        push(L,new GfxDecalPtr(self),GFXDECAL_TAG);
+}
+
+GC_MACRO(GfxDecalPtr,gfxdecal,GFXDECAL_TAG)
+
+static int gfxdecal_destroy (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(GfxDecalPtr,self,1,GFXDECAL_TAG);
+    self->destroy();
+    return 0;
+TRY_END
+}
+
+
+
+TOSTRING_SMART_PTR_MACRO (gfxdecal,GfxDecalPtr,GFXDECAL_TAG)
+
+
+static int gfxdecal_index (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(GfxDecalPtr,self,1,GFXDECAL_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"localPosition")) {
+        push_v3(L, self->getLocalPosition());
+    } else if (!::strcmp(key,"localOrientation")) {
+        push_quat(L, self->getLocalOrientation());
+    } else if (!::strcmp(key,"localScale")) {
+        push_v3(L, self->getLocalScale());
+    } else if (!::strcmp(key,"material")) {
+        GfxMaterial *m = self->getMaterial();
+        lua_pushstring(L, m->name.c_str());
+    } else if (!::strcmp(key,"fade")) {
+        lua_pushnumber(L, self->getFade());
+    } else if (!::strcmp(key,"enabled")) {
+        lua_pushboolean(L, self->isEnabled());
+    } else if (!::strcmp(key,"parent")) {
+        push_gfx_node_concrete(L, self->getParent());
+
+    } else if (!::strcmp(key,"destroyed")) {
+        lua_pushboolean(L,self->destroyed());
+    } else if (!::strcmp(key,"destroy")) {
+        push_cfunction(L,gfxdecal_destroy);
+    } else {
+        my_lua_error(L,"Not a readable GfxDecal member: "+std::string(key));
+    }
+    return 1;
+TRY_END
+}
+
+
+static int gfxdecal_newindex (lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(GfxDecalPtr,self,1,GFXDECAL_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"localPosition")) {
+        Vector3 v = check_v3(L,3);
+        self->setLocalPosition(v);
+    } else if (!::strcmp(key,"localOrientation")) {
+        Quaternion v = check_quat(L,3);
+        self->setLocalOrientation(v);
+    } else if (!::strcmp(key,"localScale")) {
+        Vector3 v = check_v3(L,3);
+        self->setLocalScale(v);
+    } else if (!::strcmp(key,"material")) {
+        const char *m_name = luaL_checkstring(L,3);
+        GfxMaterial *m = gfx_material_get(m_name);
+        self->setMaterial(m);
+    } else if (!::strcmp(key,"fade")) {
+        float v = check_float(L,3);
+        self->setFade(v);
+    } else if (!::strcmp(key,"enabled")) {
+        bool v = check_bool(L,3);
+        self->setEnabled(v);
+    } else if (!::strcmp(key,"parent")) {
+        if (lua_isnil(L,3)) {
+            self->setParent(GfxNodePtr(NULL));
+        } else {
+            GfxNodePtr par = check_gfx_node(L, 3);
+            self->setParent(par);
+        }
+    } else {
+           my_lua_error(L,"Not a writeable GfxDecal member: "+std::string(key));
+    }
+    return 0;
+TRY_END
+}
+
+EQ_MACRO(GfxDecalPtr,gfxdecal,GFXDECAL_TAG)
+
+MT_MACRO_NEWINDEX(gfxdecal);
+
+//}}}
+
+
 // GFXRANGEDINSTANCES ============================================================== {{{
 
 void push_gfxrangedinstances (lua_State *L, const GfxRangedInstancesPtr &self)
@@ -2010,6 +2117,17 @@ TRY_START
     check_args(L,1);
     std::string meshname = check_path(L,1);
     push_gfxrangedinstances(L, GfxRangedInstances::make(meshname));
+    return 1;
+TRY_END
+}
+
+static int global_gfx_decal_make (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    std::string mat_name = check_path(L,1);
+    GfxMaterial *mat = gfx_material_get(mat_name);
+    push_gfxdecal(L, GfxDecal::make(mat));
     return 1;
 TRY_END
 }
@@ -4428,6 +4546,7 @@ static const luaL_reg global[] = {
     {"gfx_ranged_instances_make", global_gfx_ranged_instances_make},
     {"gfx_sky_body_make", global_gfx_sky_body_make},
     {"gfx_light_make", global_gfx_light_make},
+    {"gfx_decal_make", global_gfx_decal_make},
 
     {"gfx_register_sky_material", global_gfx_register_sky_material},
     {"gfx_register_shader", global_gfx_register_shader},
@@ -4552,6 +4671,7 @@ void gfx_lua_init (lua_State *L)
     ADD_MT_MACRO(gfxlight,GFXLIGHT_TAG);
     ADD_MT_MACRO(gfxinstances,GFXINSTANCES_TAG);
     ADD_MT_MACRO(gfxrangedinstances,GFXRANGEDINSTANCES_TAG);
+    ADD_MT_MACRO(gfxdecal,GFXDECAL_TAG);
 
     ADD_MT_MACRO(gfxhudobj,GFXHUDOBJECT_TAG);
     ADD_MT_MACRO(gfxhudtext,GFXHUDTEXT_TAG);

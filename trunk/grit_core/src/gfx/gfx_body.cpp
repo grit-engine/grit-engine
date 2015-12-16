@@ -60,7 +60,7 @@ void GfxBody::Sub::getWorldTransforms(Ogre::Matrix4* xform) const
 {
     if (!parent->numBoneMatrixes) {
         // No skeletal animation, or software skinning
-        *xform = parent->_getParentNodeFullTransform();
+        *xform = parent->node->_getFullTransform();
         return;
     }
 
@@ -79,18 +79,20 @@ void GfxBody::Sub::getWorldTransforms(Ogre::Matrix4* xform) const
     } else {
 
         // All animations disabled, use parent GfxBody world transform only
-        std::fill_n(xform, indexMap.size(), parent->_getParentNodeFullTransform());
+        std::fill_n(xform, indexMap.size(), parent->node->_getFullTransform());
     }
 }
 
 Ogre::Real GfxBody::Sub::getSquaredViewDepth (const Ogre::Camera* cam) const
 {
-    return parent->getParentSceneNode()->getSquaredViewDepth(cam);
+    return parent->node->getSquaredViewDepth(cam);
 }
+
+static Ogre::LightList EMPTY_LIGHTS;
 
 const Ogre::LightList& GfxBody::Sub::getLights (void) const
 {
-    return parent->queryLights();
+    return EMPTY_LIGHTS;
 }
 
 bool GfxBody::Sub::getCastShadows (void) const
@@ -122,20 +124,7 @@ void GfxBody::updateBoneMatrixes (void)
 
         updateWorldTransform();
 
-        Ogre::Matrix4 world = _getParentNodeFullTransform();
-
-/*
-        if (firstPerson) {
-            Ogre::Matrix4 view = p->getCamera()->getViewMatrix();
-            // Ogre cameras point towards Z whereas in Grit the convention is that
-            // 'unrotated' means pointing towards y (north)
-            Ogre::Matrix4 orientation(to_ogre(Quaternion(Degree(90), Vector3(1, 0, 0))));
-
-            Ogre::Matrix4 inv_mat = (orientation * view).inverseAffine();
-
-            world = inv_mat * world;  // Also transform to be 'glued' to the camera.
-        }
-*/
+        Ogre::Matrix4 world = node->_getFullTransform();
 
         Ogre::OptimisedUtil::getImplementation()->concatenateAffineMatrices(
             world,
@@ -770,7 +759,7 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
     bool instanced = false;
     unsigned bone_weights = mesh->getNumBlendWeightsPerVertex();
 
-    const Ogre::Matrix4 &world = _getParentNodeFullTransform();
+    const Ogre::Matrix4 &world = node->_getFullTransform();
 
     // TODO(dcunnin): object parameters
 
@@ -866,7 +855,7 @@ void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
     frustum.setFocalLength(1);
 
     GfxShaderGlobals g =
-        gfx_shader_globals_cam(p->getCamera(), frustum.getProjectionMatrixWithRSDepth());
+        gfx_shader_globals_cam(p, frustum.getProjectionMatrixWithRSDepth());
 
     // Render, to HDR buffer
     // TODO: receive shadow

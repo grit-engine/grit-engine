@@ -60,10 +60,11 @@ struct GfxShaderGlobals {
     Vector3 rayBottomRight;
     Vector2 viewport_dim;
     bool render_target_flipping;
+    GfxPipeline *pipe;
 };
 
-GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam, const Ogre::Matrix4 &proj);
-GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam);
+GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe, const Ogre::Matrix4 &proj);
+GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe);
 
 // User always gives n strings, some of which can be empty.
 // E.g. dangs shader for sky is not needed (no lighting equation)
@@ -88,6 +89,7 @@ class GfxShader {
         WIRE_FRAME,
         SKY,
         HUD,
+        DECAL,
     };
 
     private:
@@ -168,7 +170,7 @@ class GfxShader {
                          const Ogre::Matrix4 &world,
                          const Ogre::Matrix4 *bone_world_matrixes,
                          unsigned num_bone_world_matrixes, float fade);
-    void bindGlobals (const NativePair &np, const GfxShaderGlobals &params);
+    void bindGlobals (const NativePair &np, const GfxShaderGlobals &params, Purpose purpose);
     void explicitBinding (const NativePair &np, const std::string &name, const Ogre::Matrix4 &v);
     void explicitBinding (const NativePair &np, const std::string &name, int v);
     void explicitBinding (const NativePair &np, const std::string &name, float v);
@@ -204,8 +206,6 @@ class GfxShader {
     const Ogre::HighLevelGpuProgramPtr &getHackOgreFragmentProgram (void) { return legacy.fp; }
     
 };
-
-void gfx_shader_bind_global_textures (const GfxShader::NativePair &np);
 
 // Ensure the given source code works for the given purpose.
 void gfx_shader_check (const std::string &name,

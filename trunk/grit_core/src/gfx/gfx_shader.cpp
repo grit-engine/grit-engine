@@ -31,8 +31,9 @@ static std::string fresh_name (void)
     return ss.str();
 }
 
-GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam, const Ogre::Matrix4 &proj_)
+GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe, const Ogre::Matrix4 &proj_)
 {
+    Ogre::Camera *cam = pipe->getCamera();
     Ogre::Matrix4 view = cam->getViewMatrix();
     // Ogre cameras point towards Z whereas in Grit the convention is that
     // 'unrotated' means pointing towards y (north)
@@ -58,13 +59,14 @@ GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam, const Ogre::Matrix4 
     return {
         cam_pos, view, view.inverseAffine(), proj,
         ray_top_left, ray_top_right, ray_bottom_left, ray_bottom_right,
-        viewport_dim, render_target_flipping
+        viewport_dim, render_target_flipping, pipe
     };
 }
 
-GfxShaderGlobals gfx_shader_globals_cam (Ogre::Camera *cam)
+GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe)
 {
-    return gfx_shader_globals_cam(cam, cam->getProjectionMatrixWithRSDepth());
+    Ogre::Camera *cam = pipe->getCamera();
+    return gfx_shader_globals_cam(pipe, cam->getProjectionMatrixWithRSDepth());
 }
 
 void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
@@ -358,6 +360,9 @@ NativePair GfxShader::getNativePair (Purpose purpose,
                 case WIRE_FRAME:
                 output = gfx_gasoline_compile_wire_frame(backend, srcVertex, md);
                 break;
+                case DECAL:
+                output = gfx_gasoline_compile_decal(backend, srcDangs, srcAdditional, md);
+                break;
             }
         } catch (const Exception &e) {
             EXCEPT << name << ": " << e.msg << ENDL;
@@ -511,7 +516,7 @@ void GfxShader::bindShader (Purpose purpose,
     }
 
     bindBodyParams(np, globs, world, bone_world_matrixes, num_bone_world_matrixes, fade);
-    bindGlobals(np, globs);
+    bindGlobals(np, globs, purpose);
 
     ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, np.vp->getDefaultParameters(), Ogre::GPV_ALL);
     ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, np.fp->getDefaultParameters(), Ogre::GPV_ALL);
@@ -546,75 +551,6 @@ void GfxShader::bindGlobals (const GfxShaderGlobals &p)
 }
 */
 
-void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &p)
-{
-    Ogre::Matrix4 view_proj = p.proj * p.view; 
-    Vector4 viewport_size(p.viewport_dim.x, p.viewport_dim.y,
-                          1.0f/p.viewport_dim.x, 1.0f/p.viewport_dim.y);
-    float render_target_flipping_factor = p.render_target_flipping ? -1.0f : 1.0f;
-
-    hack_set_constant(np, "global_cameraPos", p.cam_pos);
-    hack_set_constant(np, "global_fovY", gfx_option(GFX_FOV));
-    hack_set_constant(np, "global_proj", p.proj);
-    hack_set_constant(np, "global_time", anim_time); // FIXME:
-    hack_set_constant(np, "global_viewportSize", viewport_size);
-    hack_set_constant(np, "global_viewProj", view_proj);
-    hack_set_constant(np, "global_view", p.view);
-    hack_set_constant(np, "global_invView", p.invView);
-    hack_set_constant(np, "global_rayTopLeft", p.rayTopLeft);
-    hack_set_constant(np, "global_rayTopRight", p.rayTopRight);
-    hack_set_constant(np, "global_rayBottomLeft", p.rayBottomLeft);
-    hack_set_constant(np, "global_rayBottomRight", p.rayBottomRight);
-
-    hack_set_constant(np, "global_shadowViewProj0", shadow_view_proj[0]);
-    hack_set_constant(np, "global_shadowViewProj1", shadow_view_proj[1]);
-    hack_set_constant(np, "global_shadowViewProj2", shadow_view_proj[2]);
-
-    hack_set_constant(np, "global_particleAmbient", particle_ambient);
-    hack_set_constant(np, "global_sunlightDiffuse", sunlight_diffuse);
-    hack_set_constant(np, "global_sunlightDirection", sunlight_direction);
-    hack_set_constant(np, "global_sunlightSpecular", sunlight_specular);
-
-    hack_set_constant(np, "global_fogColour", fog_colour);
-    hack_set_constant(np, "global_fogDensity", fog_density);
-    hack_set_constant(np, "global_hellColour", hell_colour);
-    hack_set_constant(np, "global_skyCloudColour", sky_cloud_colour);
-    hack_set_constant(np, "global_skyCloudCoverage", sky_cloud_coverage);
-    hack_set_constant(np, "global_skyGlareHorizonElevation", sky_glare_horizon_elevation);
-    hack_set_constant(np, "global_skyGlareSunDistance", sky_glare_sun_distance);
-    hack_set_constant(np, "global_sunAlpha", sun_alpha);
-    hack_set_constant(np, "global_sunColour", sun_colour);
-    hack_set_constant(np, "global_sunDirection", sun_direction);
-    hack_set_constant(np, "global_sunFalloffDistance", sun_falloff_distance);
-    hack_set_constant(np, "global_sunSize", sun_size);
-
-    hack_set_constant(np, "global_skyDivider1", sky_divider[0]);
-    hack_set_constant(np, "global_skyDivider2", sky_divider[1]);
-    hack_set_constant(np, "global_skyDivider3", sky_divider[2]);
-    hack_set_constant(np, "global_skyDivider4", sky_divider[3]);
-
-    hack_set_constant(np, "global_skyColour0", sky_colour[0]);
-    hack_set_constant(np, "global_skyColour1", sky_colour[1]);
-    hack_set_constant(np, "global_skyColour2", sky_colour[2]);
-    hack_set_constant(np, "global_skyColour3", sky_colour[3]);
-    hack_set_constant(np, "global_skyColour4", sky_colour[4]);
-    hack_set_constant(np, "global_skyColour5", sky_colour[5]);
-
-    hack_set_constant(np, "global_skySunColour0", sky_sun_colour[0]);
-    hack_set_constant(np, "global_skySunColour1", sky_sun_colour[1]);
-    hack_set_constant(np, "global_skySunColour2", sky_sun_colour[2]);
-    hack_set_constant(np, "global_skySunColour3", sky_sun_colour[3]);
-    hack_set_constant(np, "global_skySunColour4", sky_sun_colour[4]);
-
-    hack_set_constant(np, "global_envCubeCrossFade", env_cube_cross_fade);
-    hack_set_constant(np, "global_envCubeMipmaps0", 9.0f);
-    hack_set_constant(np, "global_envCubeMipmaps1", 9.0f);
-
-    hack_set_constant(np, "internal_rt_flip", render_target_flipping_factor);
-
-    gfx_shader_bind_global_textures(np);
-}
-
 static void inc (const NativePair &np, int &counter, const char *name)
 {
     if (backend == GFX_GSL_BACKEND_GLSL)
@@ -622,7 +558,8 @@ static void inc (const NativePair &np, int &counter, const char *name)
     counter++;
 }
 
-void gfx_shader_bind_global_textures (const NativePair &np)
+void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
+                           const GfxShaderGlobals &g)
 {
     int counter = 0;
     const auto clamp = Ogre::TextureUnitState::TAM_CLAMP;
@@ -724,7 +661,84 @@ void gfx_shader_bind_global_textures (const NativePair &np)
     }
     inc(np, counter, "global_shadowPcfNoiseMap");
 
+    if (purpose == GfxShader::DECAL) {
+        ogre_rs->_setTexture(counter, true, g.pipe->getGBufferTexture(0));
+    } else {
+        ogre_rs->_setTexture(counter, false, "");
+    }
+    inc(np, counter, "gbuffer0");
+
     APP_ASSERT(counter == NUM_GLOBAL_TEXTURES);
+
+}
+
+void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &g, Purpose purpose)
+{
+    Ogre::Matrix4 view_proj = g.proj * g.view; 
+    Vector4 viewport_size(g.viewport_dim.x, g.viewport_dim.y,
+                          1.0f/g.viewport_dim.x, 1.0f/g.viewport_dim.y);
+    float render_target_flipping_factor = g.render_target_flipping ? -1.0f : 1.0f;
+
+    hack_set_constant(np, "global_cameraPos", g.cam_pos);
+    hack_set_constant(np, "global_fovY", gfx_option(GFX_FOV));
+    hack_set_constant(np, "global_proj", g.proj);
+    hack_set_constant(np, "global_time", anim_time); // FIXME:
+    hack_set_constant(np, "global_viewportSize", viewport_size);
+    hack_set_constant(np, "global_viewProj", view_proj);
+    hack_set_constant(np, "global_view", g.view);
+    hack_set_constant(np, "global_invView", g.invView);
+    hack_set_constant(np, "global_rayTopLeft", g.rayTopLeft);
+    hack_set_constant(np, "global_rayTopRight", g.rayTopRight);
+    hack_set_constant(np, "global_rayBottomLeft", g.rayBottomLeft);
+    hack_set_constant(np, "global_rayBottomRight", g.rayBottomRight);
+
+    hack_set_constant(np, "global_shadowViewProj0", shadow_view_proj[0]);
+    hack_set_constant(np, "global_shadowViewProj1", shadow_view_proj[1]);
+    hack_set_constant(np, "global_shadowViewProj2", shadow_view_proj[2]);
+
+    hack_set_constant(np, "global_particleAmbient", particle_ambient);
+    hack_set_constant(np, "global_sunlightDiffuse", sunlight_diffuse);
+    hack_set_constant(np, "global_sunlightDirection", sunlight_direction);
+    hack_set_constant(np, "global_sunlightSpecular", sunlight_specular);
+
+    hack_set_constant(np, "global_fogColour", fog_colour);
+    hack_set_constant(np, "global_fogDensity", fog_density);
+    hack_set_constant(np, "global_hellColour", hell_colour);
+    hack_set_constant(np, "global_skyCloudColour", sky_cloud_colour);
+    hack_set_constant(np, "global_skyCloudCoverage", sky_cloud_coverage);
+    hack_set_constant(np, "global_skyGlareHorizonElevation", sky_glare_horizon_elevation);
+    hack_set_constant(np, "global_skyGlareSunDistance", sky_glare_sun_distance);
+    hack_set_constant(np, "global_sunAlpha", sun_alpha);
+    hack_set_constant(np, "global_sunColour", sun_colour);
+    hack_set_constant(np, "global_sunDirection", sun_direction);
+    hack_set_constant(np, "global_sunFalloffDistance", sun_falloff_distance);
+    hack_set_constant(np, "global_sunSize", sun_size);
+
+    hack_set_constant(np, "global_skyDivider1", sky_divider[0]);
+    hack_set_constant(np, "global_skyDivider2", sky_divider[1]);
+    hack_set_constant(np, "global_skyDivider3", sky_divider[2]);
+    hack_set_constant(np, "global_skyDivider4", sky_divider[3]);
+
+    hack_set_constant(np, "global_skyColour0", sky_colour[0]);
+    hack_set_constant(np, "global_skyColour1", sky_colour[1]);
+    hack_set_constant(np, "global_skyColour2", sky_colour[2]);
+    hack_set_constant(np, "global_skyColour3", sky_colour[3]);
+    hack_set_constant(np, "global_skyColour4", sky_colour[4]);
+    hack_set_constant(np, "global_skyColour5", sky_colour[5]);
+
+    hack_set_constant(np, "global_skySunColour0", sky_sun_colour[0]);
+    hack_set_constant(np, "global_skySunColour1", sky_sun_colour[1]);
+    hack_set_constant(np, "global_skySunColour2", sky_sun_colour[2]);
+    hack_set_constant(np, "global_skySunColour3", sky_sun_colour[3]);
+    hack_set_constant(np, "global_skySunColour4", sky_sun_colour[4]);
+
+    hack_set_constant(np, "global_envCubeCrossFade", env_cube_cross_fade);
+    hack_set_constant(np, "global_envCubeMipmaps0", 9.0f);
+    hack_set_constant(np, "global_envCubeMipmaps1", 9.0f);
+
+    hack_set_constant(np, "internal_rt_flip", render_target_flipping_factor);
+
+    bind_global_textures(np, purpose, g);
 }
 
 GfxShader *gfx_shader_make_from_existing (const std::string &name,
@@ -778,10 +792,10 @@ void gfx_shader_check (const std::string &name,
                        const std::string &src_additional,
                        const GfxGslRunParams &params)
 {
-    GfxGslUnboundTextures ubt;
-
+    GfxGslMetadata md;
+    md.params = params;
     try {
-        gfx_gasoline_check(src_vertex, src_dangs, src_additional, params);
+        gfx_gasoline_check(src_vertex, src_dangs, src_additional, md);
     } catch (const Exception &e) {
         EXCEPT << name << ": " << e.msg << ENDL;
     }

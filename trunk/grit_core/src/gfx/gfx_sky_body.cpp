@@ -200,7 +200,7 @@ static bool sky_body_compare (GfxSkyBody *a, GfxSkyBody *b)
 // called every frame
 void gfx_sky_render (GfxPipeline *p)
 {
-    GfxShaderGlobals g = gfx_shader_globals_cam(p->getCamera());
+    GfxShaderGlobals g = gfx_shader_globals_cam(p);
     g.view.setTrans(Ogre::Vector3(0,0,0)); 
 
     // sort by z order into separate container

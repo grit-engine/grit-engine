@@ -260,11 +260,6 @@ namespace std {
     };
 }
 
-void gfx_gasoline_check (const std::string &vert_prog,
-                         const std::string &dangs_prog,
-                         const std::string &additional_prog,
-                         const GfxGslRunParams &params);
-
 /** These are things the shader needs that are not in the material.
  */
 struct GfxGslEnvironment {
@@ -362,6 +357,11 @@ struct GfxGslMetadata {
 
 };
 
+void gfx_gasoline_check (const std::string &vert_prog,
+                         const std::string &dangs_prog,
+                         const std::string &additional_prog,
+                         const GfxGslMetadata &md);
+
 GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
                                                    const std::string &vert_prog,
                                                    const GfxGslMetadata &md);
@@ -386,6 +386,11 @@ GfxGasolineResult gfx_gasoline_compile_deferred_sun (GfxGslBackend backend,
                                                      const std::string &fog_prog,
                                                      const GfxGslMetadata &md);
 
+
+GfxGasolineResult gfx_gasoline_compile_decal (GfxGslBackend backend,
+                                              const std::string &dangs_prog,
+                                              const std::string &additional_prog,
+                                              const GfxGslMetadata &md);
 
 // To come!
 GfxGasolineResult gfx_gasoline_compile_forward (GfxGslBackend backend,

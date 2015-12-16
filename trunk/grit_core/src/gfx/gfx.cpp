@@ -28,16 +28,17 @@
 #include "../main.h"
 #include "../clipboard.h"
 
-#include "gfx_internal.h"
-#include "gfx_pipeline.h"
-#include "gfx_option.h"
 #include "clutter.h"
-#include "gfx_material.h"
 #include "gfx_body.h"
-#include "gfx_light.h"
-#include "gfx_sky_material.h"
-#include "gfx_sky_body.h"
+#include "gfx_decal.h"
 #include "gfx_hud.h"
+#include "gfx_internal.h"
+#include "gfx_light.h"
+#include "gfx_material.h"
+#include "gfx_option.h"
+#include "gfx_pipeline.h"
+#include "gfx_sky_body.h"
+#include "gfx_sky_material.h"
 
 #ifdef WIN32
 bool d3d9 = getenv("GRIT_GL")==NULL;
@@ -1094,6 +1095,7 @@ size_t gfx_init (GfxCallback &cb_)
         gfx_option_init();
         gfx_particle_init();
         gfx_hud_init();
+        gfx_decal_init();
  
         gfx_env_cube(0, DiskResourcePtr<GfxEnvCubeDiskResource>());
         gfx_env_cube(1, DiskResourcePtr<GfxEnvCubeDiskResource>());
@@ -1140,6 +1142,7 @@ void gfx_shutdown (void)
 {
     try {
         if (shutting_down) return;
+        gfx_decal_shutdown();
         shutting_down = true;
         delete eye_left;
         delete eye_right;

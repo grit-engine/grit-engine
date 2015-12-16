@@ -23,10 +23,11 @@
 #include <math_util.h>
 #include <sleep.h>
 
-#include "gfx_pipeline.h"
-#include "gfx_particle_system.h"
-#include "gfx_sky_body.h"
 #include "gfx_body.h"
+#include "gfx_decal.h"
+#include "gfx_particle_system.h"
+#include "gfx_pipeline.h"
+#include "gfx_sky_body.h"
 
 static inline Ogre::HighLevelGpuProgramPtr get_shader(const char *name)
 {
@@ -668,6 +669,29 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
 
 
+// {{{ Decals passes 
+
+class DecalPasses : public Ogre::RenderQueueInvocation {
+    GfxPipeline *pipe;
+
+    public:
+    DecalPasses (GfxPipeline *pipe)
+      : Ogre::RenderQueueInvocation(0, Ogre::StringUtil::BLANK), pipe(pipe)
+    {
+        setSuppressShadows(true);
+    }
+
+    void invoke (Ogre::RenderQueueGroup *, Ogre::SceneManager *)
+    {
+        if (pipe->getCameraOpts().decals) gfx_decal_render(pipe);
+    }
+    
+};
+
+// }}}
+
+
+
 // {{{ Particles passes 
 
 class ParticlesPasses : public Ogre::RenderQueueInvocation {
@@ -832,6 +856,7 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_OPAQUE_EMISSIVE));
     rqisDeferred->add(new SkyPasses(this));
     // Alpha passes
+    rqisDeferred->add(new DecalPasses(this));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_DEPTH_EMISSIVE));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA));

@@ -106,6 +106,7 @@
     <ClCompile Include="src\external_table.cpp" />
     <ClCompile Include="src\gfx\gfx.cpp" />
     <ClCompile Include="src\gfx\gfx_body.cpp" />
+    <ClCompile Include="src\gfx\gfx_decal.cpp" />
     <ClCompile Include="src\gfx\gfx_fertile_node.cpp" />
     <ClCompile Include="src\gfx\gfx_font.cpp" />
     <ClCompile Include="src\gfx\gfx_gasoline.cpp" />

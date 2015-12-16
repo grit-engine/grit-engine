@@ -23,38 +23,50 @@
 
 #include "gfx.h"
 
-#include "gfx_fertile_node.h"
 #include "gfx_body.h"
-#include "gfx_sky_body.h"
-#include "gfx_material.h"
-#include "gfx_sky_material.h"
-#include "gfx_light.h"
-#include "gfx_instances.h"
-#include "gfx_ranged_instances.h"
+#include "gfx_decal.h"
+#include "gfx_fertile_node.h"
 #include "gfx_hud.h"
+#include "gfx_instances.h"
+#include "gfx_light.h"
+#include "gfx_material.h"
+#include "gfx_ranged_instances.h"
+#include "gfx_sky_body.h"
+#include "gfx_sky_material.h"
 
-#define GFXNODE_TAG "Grit/GfxFertileNode"
-#define GFXBODY_TAG "Grit/GfxBody"
-#define GFXSKYBODY_TAG "Grit/GfxSkyBody"
-#define GFXINSTANCES_TAG "Grit/GfxInstances"
-#define GFXRANGEDINSTANCES_TAG "Grit/GfxRangedInstances"
-#define GFXLIGHT_TAG "Grit/GfxLight"
-
-#define GFXHUDOBJECT_TAG "Grit/GfxHudObject"
-#define GFXHUDTEXT_TAG "Grit/GfxHudText"
-#define GFXHUDCLASS_TAG "Grit/GfxHudClass"
 
 void gfx_lua_init (lua_State *L);
 
-void push_gfxnode (lua_State *L, const GfxNodePtr &self);
+
+#define GFXBODY_TAG "Grit/GfxBody"
 void push_gfxbody (lua_State *L, const GfxBodyPtr &self);
-void push_gfxrangedinstances (lua_State *L, const GfxRangedInstancesPtr &self);
+
+#define GFXDECAL_TAG "Grit/GfxDecal"
+void push_gfxdecal (lua_State *L, const GfxDecalPtr &self);
+
+#define GFXINSTANCES_TAG "Grit/GfxInstances"
 void push_gfxinstances (lua_State *L, const GfxInstancesPtr &self);
-void push_gfxskybody (lua_State *L, const GfxSkyBodyPtr &self);
+
+#define GFXLIGHT_TAG "Grit/GfxLight"
 void push_gfxlight (lua_State *L, const GfxLightPtr &self);
 
+#define GFXNODE_TAG "Grit/GfxFertileNode"
+void push_gfxnode (lua_State *L, const GfxNodePtr &self);
+
+#define GFXRANGEDINSTANCES_TAG "Grit/GfxRangedInstances"
+void push_gfxrangedinstances (lua_State *L, const GfxRangedInstancesPtr &self);
+
+#define GFXSKYBODY_TAG "Grit/GfxSkyBody"
+void push_gfxskybody (lua_State *L, const GfxSkyBodyPtr &self);
+
+
+#define GFXHUDCLASS_TAG "Grit/GfxHudClass"
 void push_gfxhudclass (lua_State *L, GfxHudClass *self);
+
+#define GFXHUDOBJECT_TAG "Grit/GfxHudObject"
 void push_gfxhudobj (lua_State *L, GfxHudObject *self);
+
+#define GFXHUDTEXT_TAG "Grit/GfxHudText"
 void push_gfxhudtext (lua_State *L, GfxHudText *self);
 
 // vim: shiftwidth=8:tabstop=8:expandtab

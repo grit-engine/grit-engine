@@ -36,7 +36,7 @@ static GfxGslTypeMap make_body_fields (GfxGslAllocator &alloc)
     m["worldView"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["worldViewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
 
-    // TODO: add bones here?
+    // Direct access to bone matrixes not allowed -- use transform_to_world.
 
     return m;
 }
@@ -317,15 +317,27 @@ static GfxGslTypeMap make_mat_fields (GfxGslAllocator &alloc, const GfxGslRunPar
     return r;
 }
 
-void gfx_gasoline_check (const std::string &vert_prog,
-                         const std::string &dangs_prog,
-                         const std::string &additional_prog,
-                         const GfxGslRunParams &params)
+typedef GfxGasolineResult Continuation (const GfxGslContext &ctx,
+                                        const GfxGslTypeSystem &vert_ts,
+                                        const GfxGslAst *vert_ast,
+                                        const GfxGslTypeSystem &dangs_ts,
+                                        const GfxGslAst *dangs_ast,
+                                        const GfxGslTypeSystem &additional_ts,
+                                        const GfxGslAst *additional_ast,
+                                        const GfxGslMetadata &md);
+
+// Intended to be called with lambdas that finish off compilation.
+template<class Continuation>
+static GfxGasolineResult type_check (const std::string &vert_prog,
+                                     const std::string &dangs_prog,
+                                     const std::string &additional_prog,
+                                     const GfxGslMetadata &md,
+                                     Continuation cont)
 {
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, params), make_body_fields(alloc), {}
+        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.env.ubt
     };
 
     GfxGslAst *vert_ast;
@@ -358,56 +370,65 @@ void gfx_gasoline_check (const std::string &vert_prog,
     } catch (const Exception &e) {
         EXCEPT << "Additional shader: " << e << ENDL;
     }
+
+    return cont(ctx, vert_ts, vert_ast, dangs_ts, dangs_ast, additional_ts, additional_ast, md);
 }
 
-static GfxGasolineResult gfx_gasoline_compile_colour (GfxGslBackend backend,
+void gfx_gasoline_check (const std::string &vert_prog,
+                         const std::string &dangs_prog,
+                         const std::string &additional_prog,
+                         const GfxGslMetadata &md)
+{
+    auto cont = [] (const GfxGslContext &,
+                    const GfxGslTypeSystem &,
+                    const GfxGslAst *,
+                    const GfxGslTypeSystem &,
+                    const GfxGslAst *,
+                    const GfxGslTypeSystem &,
+                    const GfxGslAst *,
+                    const GfxGslMetadata &)
+    -> GfxGasolineResult
+    {
+        return GfxGasolineResult();
+    };
+
+    type_check(vert_prog, dangs_prog, additional_prog, md, cont);
+}
+
+static GfxGasolineResult gfx_gasoline_compile_colour (const GfxGslBackend backend,
                                                       const std::string &vert_prog,
                                                       const std::string &colour_prog,
                                                       const GfxGslMetadata &md,
-                                                      bool flat_z)
+                                                      const bool flat_z)
 {
-    GfxGslAllocator alloc;
-    GfxGslContext ctx = {
-        alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.env.ubt
+    auto cont = [backend, flat_z] (const GfxGslContext &ctx,
+                                   const GfxGslTypeSystem &vert_ts,
+                                   const GfxGslAst *vert_ast,
+                                   const GfxGslTypeSystem &dangs_ts,
+                                   const GfxGslAst *dangs_ast,
+                                   const GfxGslTypeSystem &additional_ts,
+                                   const GfxGslAst *additional_ast,
+                                   const GfxGslMetadata &md)
+    -> GfxGasolineResult
+    {
+        (void) dangs_ts; (void) dangs_ast;
+        std::string vert_out;
+        std::string frag_out;
+        switch (backend) {
+            case GFX_GSL_BACKEND_CG:
+            gfx_gasoline_unparse_cg(ctx, &vert_ts, vert_ast, vert_out,
+                                    &additional_ts, additional_ast, frag_out, md.env, flat_z);
+            break;
+
+            case GFX_GSL_BACKEND_GLSL:
+            gfx_gasoline_unparse_glsl(ctx, &vert_ts, vert_ast, vert_out,
+                                      &additional_ts, additional_ast, frag_out, md.env, flat_z);
+            break;
+        }
+        return {vert_out, frag_out};
     };
 
-    GfxGslAst *vert_ast;
-    GfxGslTypeSystem vert_ts(ctx, GFX_GSL_VERTEX, GfxGslTypeMap());
-
-    try {
-        vert_ast = gfx_gasoline_parse(alloc, vert_prog);
-        vert_ts.inferAndSet(vert_ast);
-    } catch (const Exception &e) {
-        EXCEPT << "Vertex shader: " << e << ENDL;
-    }
-
-
-    GfxGslAst *frag_ast;
-    GfxGslTypeSystem frag_ts(ctx, GFX_GSL_COLOUR_ALPHA, vert_ts.getVars());
-
-    try {
-        frag_ast = gfx_gasoline_parse(alloc, colour_prog);
-        frag_ts.inferAndSet(frag_ast);
-    } catch (const Exception &e) {
-        EXCEPT << "Fragment shader: " << e << ENDL;
-    }
-
-    std::string vert_out;
-    std::string frag_out;
-    switch (backend) {
-        case GFX_GSL_BACKEND_CG:
-        gfx_gasoline_unparse_cg(ctx, &vert_ts, vert_ast, vert_out,
-                                &frag_ts, frag_ast, frag_out, md.env, flat_z);
-        break;
-
-        case GFX_GSL_BACKEND_GLSL:
-        gfx_gasoline_unparse_glsl(ctx, &vert_ts, vert_ast, vert_out,
-                                  &frag_ts, frag_ast, frag_out, md.env, flat_z);
-        break;
-    }
-
-    return {vert_out, frag_out};
+    return type_check(vert_prog, "", colour_prog, md, cont);
 }
 
 GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
@@ -440,63 +461,79 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                      const std::string &additional_prog,
                                                      const GfxGslMetadata &md)
 {
-    GfxGslAllocator alloc;
-    GfxGslContext ctx = {
-        alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.env.ubt
+    auto cont = [backend] (const GfxGslContext &ctx,
+                           const GfxGslTypeSystem &vert_ts,
+                           const GfxGslAst *vert_ast,
+                           const GfxGslTypeSystem &dangs_ts,
+                           const GfxGslAst *dangs_ast,
+                           const GfxGslTypeSystem &additional_ts,
+                           const GfxGslAst *additional_ast,
+                           const GfxGslMetadata &md)
+    -> GfxGasolineResult
+    {
+        std::string vert_out;
+        std::string frag_out;
+        switch (backend) {
+            case GFX_GSL_BACKEND_CG:
+            gfx_gasoline_unparse_first_person_cg(ctx, &vert_ts, vert_ast,
+                                                 &dangs_ts, dangs_ast,
+                                                 &additional_ts, additional_ast,
+                                                 vert_out, frag_out,
+                                                 md.env);
+            break;
+
+            case GFX_GSL_BACKEND_GLSL:
+            gfx_gasoline_unparse_first_person_glsl(ctx, &vert_ts, vert_ast,
+                                                   &dangs_ts, dangs_ast,
+                                                   &additional_ts, additional_ast,
+                                                   vert_out, frag_out,
+                                                   md.env);
+            break;
+        }
+        return {vert_out, frag_out};
     };
 
-    GfxGslAst *vert_ast;
-    GfxGslTypeSystem vert_ts(ctx, GFX_GSL_VERTEX, GfxGslTypeMap());
+    return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
+}
 
-    try {
-        vert_ast = gfx_gasoline_parse(alloc, vert_prog);
-        vert_ts.inferAndSet(vert_ast);
-    } catch (const Exception &e) {
-        EXCEPT << "Vertex shader: " << e << ENDL;
-    }
+GfxGasolineResult gfx_gasoline_compile_decal (GfxGslBackend backend,
+                                              const std::string &dangs_prog,
+                                              const std::string &additional_prog,
+                                              const GfxGslMetadata &md)
+{
+    auto cont = [backend] (const GfxGslContext &ctx,
+                           const GfxGslTypeSystem &vert_ts,
+                           const GfxGslAst *vert_ast,
+                           const GfxGslTypeSystem &dangs_ts,
+                           const GfxGslAst *dangs_ast,
+                           const GfxGslTypeSystem &additional_ts,
+                           const GfxGslAst *additional_ast,
+                           const GfxGslMetadata &md)
+    -> GfxGasolineResult
+    {
+        // TODO: Ensure the dangs & additional shaders do not use vertex fields.
+        (void) vert_ts;
+        (void) vert_ast;
+        std::string vert_out;
+        std::string frag_out;
+        switch (backend) {
+            case GFX_GSL_BACKEND_CG:
+            gfx_gasoline_unparse_decal_cg(ctx, &dangs_ts, dangs_ast,
+                                          &additional_ts, additional_ast,
+                                          vert_out, frag_out,
+                                          md.env);
+            break;
 
+            case GFX_GSL_BACKEND_GLSL:
+            gfx_gasoline_unparse_decal_glsl(ctx, &dangs_ts, dangs_ast,
+                                            &additional_ts, additional_ast,
+                                            vert_out, frag_out,
+                                            md.env);
+            break;
+        }
+        return {vert_out, frag_out};
+    };
 
-    GfxGslAst *dangs_ast;
-    GfxGslTypeSystem dangs_ts(ctx, GFX_GSL_DANGS, vert_ts.getVars());
-
-    try {
-        dangs_ast = gfx_gasoline_parse(alloc, dangs_prog);
-        dangs_ts.inferAndSet(dangs_ast);
-    } catch (const Exception &e) {
-        EXCEPT << "DANGS shader: " << e << ENDL;
-    }
-
-    GfxGslAst *additional_ast;
-    GfxGslTypeSystem additional_ts(ctx, GFX_GSL_COLOUR_ALPHA, vert_ts.getVars());
-
-    try {
-        additional_ast = gfx_gasoline_parse(alloc, additional_prog);
-        additional_ts.inferAndSet(additional_ast);
-    } catch (const Exception &e) {
-        EXCEPT << "Additional shader: " << e << ENDL;
-    }
-
-    std::string vert_out;
-    std::string frag_out;
-    switch (backend) {
-        case GFX_GSL_BACKEND_CG:
-        gfx_gasoline_unparse_first_person_cg(ctx, &vert_ts, vert_ast,
-                                             &dangs_ts, dangs_ast,
-                                             &additional_ts, additional_ast,
-                                             vert_out, frag_out,
-                                             md.env);
-        break;
-
-        case GFX_GSL_BACKEND_GLSL:
-        gfx_gasoline_unparse_first_person_glsl(ctx, &vert_ts, vert_ast,
-                                               &dangs_ts, dangs_ast,
-                                               &additional_ts, additional_ast,
-                                               vert_out, frag_out,
-                                               md.env);
-        break;
-    }
-
-    return {vert_out, frag_out};
+    return type_check("", dangs_prog, additional_prog, md, cont);
 }
 

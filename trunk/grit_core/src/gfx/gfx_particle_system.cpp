@@ -87,7 +87,7 @@ void gfx_particle_init (void)
         "var part_emissive = vert.coord6.xyz;\n"
 
         "var fragment_uv = lerp(vert.coord7.xy, vert.coord7.zw,\n"
-        "vert.position.xz / Float2(2, -2) + Float2(0.5, 0.5));\n"
+        "                       vert.position.xz / Float2(2, -2) + Float2(0.5, 0.5));\n"
         "var part_colour = global.particleAmbient * part_diffuse + part_emissive;\n"
 
         "out.position = vert.position.x * part_basis_x\n"
@@ -98,10 +98,10 @@ void gfx_particle_init (void)
 
     std::string colour_code =
         "var uv = frag.screen / global.viewportSize;\n"
-        "uv.y = 1 - uv.y;  // Textures addressed from top left, frag.screen is bottom left\n"
         "var ray = lerp(lerp(global.rayBottomLeft, global.rayBottomRight, uv.x),\n"
         "               lerp(global.rayTopLeft, global.rayTopRight, uv.x),\n"
         "               uv.y);\n"
+        "uv.y = 1 - uv.y;  // Textures addressed from top left, frag.screen is bottom left\n"
 
         "var bytes = sample(mat.gbuffer0, uv).xyz;\n"
         "var normalised_cam_dist = 255.0 * (256.0*256.0*bytes.x + 256.0*bytes.y + bytes.z)\n"
@@ -341,6 +341,8 @@ class GfxParticleSystem {
 
             const Ogre::Matrix4 &I = Ogre::Matrix4::IDENTITY;
 
+            // Since we're disabling depth checks (so soft particles work properly), we may
+            // as well use the SKY GfxShader::Purpose as it has exactly the behavior needed.
             shader->bindShader(GfxShader::SKY, false, 0, false, 0,
                                globs, I, nullptr, 0, 1, texs, binds);
 
@@ -435,7 +437,7 @@ GfxParticle *gfx_particle_emit (const std::string &pname)
 
 void gfx_particle_render (GfxPipeline *p)
 {
-    GfxShaderGlobals g = gfx_shader_globals_cam(p->getCamera());
+    GfxShaderGlobals g = gfx_shader_globals_cam(p);
 
     for (PSysMap::iterator i=psystems.begin(),i_=psystems.end() ; i!=i_ ; ++i) {
         GfxParticleSystem *psys = i->second;

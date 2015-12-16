@@ -82,12 +82,17 @@ std::string gfx_gasoline_generate_var_decls (const GfxGslTypeMap &vars);
 std::string gfx_gasoline_generate_trans_encode (const std::vector<GfxGslTrans> &trans,
                                                 const std::string &var_pref);
 
-std::string gfx_gasoline_generate_trans_decode(const std::vector<GfxGslTrans> &trans,
-                                               const std::string &pref,
-                                               GfxGslTrans::Kind only);
+std::string gfx_gasoline_generate_trans_decode (const std::vector<GfxGslTrans> &trans,
+                                                const std::string &pref,
+                                                GfxGslTrans::Kind only);
 
+/** Generate general purpose utility functions for computing lighting. */
 std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env);
 
+/** Generate general purpose utility functions for dither fading. */
+std::string gfx_gasoline_preamble_fade (const GfxGslEnvironment &env);
+
+/** Generate general purpose utility functions for transforming geometry to world space. */
 std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGslEnvironment &env);
 
 #endif

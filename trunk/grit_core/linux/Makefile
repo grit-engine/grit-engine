@@ -107,6 +107,7 @@ GRIT_OBJ=\
         disk_resource.o \
         external_table.o \
         gfx_body.o \
+        gfx_decal.o \
         gfx_disk_resource.o \
         gfx_fertile_node.o \
         gfx_font.o \

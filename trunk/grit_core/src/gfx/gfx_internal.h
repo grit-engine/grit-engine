@@ -60,7 +60,7 @@
 #ifndef GFX_INTERNAL_H
 #define GFX_INTERNAL_H
 
-#define NUM_GLOBAL_TEXTURES 8
+#define NUM_GLOBAL_TEXTURES 9
 
 extern bool d3d9;
 extern Ogre::Root *ogre_root;
