@@ -509,7 +509,6 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
     frag_ss << gfx_gasoline_preamble_fade(env);
     frag_ss << dangs_backend.getUserDangsFunction();
     frag_ss << additional_backend.getUserColourAlphaFunction();
-    frag_ss << "uniform FloatTexture2 gbuffer0;\n";
 
     // Main function
     frag_ss << "void main (void)\n";
@@ -524,7 +523,7 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
     frag_ss << "                      lerp(global_rayTopLeft, global_rayTopRight, Float3(uv.x)),\n";
     frag_ss << "                      Float3(uv.y));\n";
     frag_ss << "    uv.y = 1 - uv.y;\n";
-    frag_ss << "    Float3 bytes = 255 * sample(gbuffer0, uv).xyz;\n";
+    frag_ss << "    Float3 bytes = 255 * sample(global_gbuffer0, uv).xyz;\n";
     frag_ss << "    Float depth_int = 256.0*256.0*bytes.x + 256.0*bytes.y + bytes.z;\n";
     frag_ss << "    Float normalised_cam_dist = depth_int / (256.0*256.0*256.0 - 1);\n";
     frag_ss << "    Float3 internal_pos_ws = normalised_cam_dist * ray + global_cameraPos;\n";

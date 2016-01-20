@@ -110,6 +110,7 @@ static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
     m["shadowMap0"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
     m["shadowMap1"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
     m["shadowMap2"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
+    m["gbuffer0"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
 
     return m;
 }

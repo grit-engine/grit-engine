@@ -666,7 +666,7 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
     } else {
         ogre_rs->_setTexture(counter, false, "");
     }
-    inc(np, counter, "gbuffer0");
+    inc(np, counter, "global_gbuffer0");
 
     APP_ASSERT(counter == NUM_GLOBAL_TEXTURES);
 
