@@ -133,7 +133,7 @@ namespace NavSysDebug
 		AgentsObject = createDebugObject("AgentsDebug");
 		BoundsObject = createDebugObject("BoundsDebug");
 		TilingGridObject = createDebugObject("TilingGridDebug");
-		ConvexVolumeObjects = createDebugObject("TilingGridDebug");
+		ConvexVolumeObjects = createDebugObject("ConvexVolumeDebug");
 	}
 
 	void clearAllObjects(void)
