@@ -23,7 +23,7 @@ extern "C" {
     #include "lua.h"
 }
 
-lua_State *init_lua (const char *filename);
+void init_lua (const char *filename, const std::vector<std::string> &args, lua_State *&L);
 
 void shutdown_lua (lua_State *L);
 

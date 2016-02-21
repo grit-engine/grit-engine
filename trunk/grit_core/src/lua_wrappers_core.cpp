@@ -1046,38 +1046,15 @@ TRY_START
 TRY_END
 }
 
-lua_State *init_lua(const char *filename)
+void init_lua (const char *filename, const std::vector<std::string> &args, lua_State *&L)
 {
-    lua_State *L = lua_newstate(lua_alloc, NULL);
+    L = lua_newstate(lua_alloc, NULL);
     lua_atpanic(L,lua_panic);
 
     luaL_openlibs(L);
 
     push_cfunction(L, my_lua_error_handler);
     int error_handler = lua_gettop(L);
-    int status;
-
-/*
-    lua_getglobal(L,"package");
-    lua_pushstring(L,"./system/?.lua");
-    lua_setfield(L,-2,"path");
-    lua_pushstring(L,"");
-    lua_setfield(L,-2,"cpath");
-    lua_pop(L,1);
-
-    lua_getglobal(L, "require");
-    lua_pushstring(L, "ldb");
-    // error handler should print stacktrace and stuff
-    status = lua_pcall(L,1,1,error_handler);
-    if (status) {
-        lua_pop(L,1); //message
-        CLOG<<"The most common cause of this is running the executable "
-              "from the wrong directory."<<std::endl;
-        app_fatal();
-    }
-    lua_setfield(L, LUA_REGISTRYINDEX, "ldb");
-*/
-
 
     ADD_MT_MACRO(ifilter,IFILTER_TAG);
     ADD_MT_MACRO(plot,PLOT_TAG);
@@ -1098,24 +1075,24 @@ lua_State *init_lua(const char *filename)
     net_lua_init(L);
 	navigation_lua_init(L);
 
-    status = aux_include(L,filename);
+    int status = aux_include(L, filename);
     if (status) {
-        const char *str = lua_tostring(L,-1);
-        CERR << "loading lua file: " << str << std::endl;
+        std::string str = lua_tostring(L,-1);
         lua_pop(L,1); // message
-        app_fatal();
+        EXCEPT << "Loading Lua file: " << str << std::endl;
     } else {
+        check_stack(L, args.size());
+        for (const auto &arg : args) {
+            push_string(L, arg);
+        }
         // error handler should print stacktrace and stuff
-        status = lua_pcall(L,0,0,error_handler);
+        status = lua_pcall(L, args.size(), 0, error_handler);
         if (status) {
             lua_pop(L,1); //message
-            app_fatal();
+            EXCEPT << "Error running init script." << ENDL;
         }
     }
     lua_pop(L,1); //error handler
-
-    return L;
-
 }
 
 void shutdown_lua (lua_State *L)

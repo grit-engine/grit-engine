@@ -94,6 +94,8 @@ void app_fatal()
 int main (int argc, const char **argv)
 {
 
+    int exit_code = EXIT_SUCCESS;
+
     try {
 
         // Experiment with floating point masks.
@@ -126,50 +128,23 @@ int main (int argc, const char **argv)
         core_option_init();
         streamer_init();
 
-		navigation_init();
+        navigation_init();
 
         // audio_init(getenv("GRIT_AUDIO_DEV"));
         audio_init(NULL);
 
-        core_L = init_lua("/system/init.lua");
+        std::vector<std::string> args;
+        for (int i=0 ; i<argc ; i++) {
+            args.push_back(argv[i]);
+        }
 
-        // Now call out to lua.
-        {
-            int error_handler;
-            lua_State *L = core_L;
-
-            push_cfunction(L, my_lua_error_handler);
-            error_handler = lua_gettop(L);
-
-            lua_getglobal(L, "main");
-            if (lua_isnil(L,-1)) {
-                lua_pop(L,1); // nil 'main object'
-                lua_pop(L,1); //handler
-                CERR << "invoking main:run(...): object \"main\" not found" << std::endl;
-                app_fatal();
-            }
-
-            lua_getfield(L, -1, "run");
-            if (lua_isnil(L,-1)) {
-                lua_pop(L,1); // nil 'run function'
-                lua_pop(L,1); //handler
-                CERR << "invoking main:run(...): function \"run\" not found" << std::endl;
-                app_fatal();
-            }
-
-            // arguments
-            lua_getglobal(L, "main");
-            for (int i=0 ; i<argc ; i++) {
-                check_stack(L,1);
-                lua_pushstring(L,argv[i]);
-            }
-
-            int status = lua_pcall(L, argc+1, 0, error_handler);
-            if (status) {
-                lua_pop(L,1); // error message
-            }
-
-            lua_pop(L,1); // error_handler
+        try {
+            const char *init_file = getenv("GRIT_INIT");
+            if (init_file == nullptr) init_file = "/system/init.lua";
+            init_lua(init_file, args, core_L);
+        } catch (Exception &e) {
+            CERR << "Fatal error: " << e << std::endl;
+            exit_code = EXIT_FAILURE;
         }
 
         // Lua returns - we quit.
@@ -178,7 +153,7 @@ int main (int argc, const char **argv)
 
         net_shutdown(core_L);
 
-		navigation_shutdown();
+        navigation_shutdown();
 
         object_all_del(core_L);  // Will remove all demands from background loader.
 
@@ -220,7 +195,7 @@ int main (int argc, const char **argv)
         return EXIT_FAILURE;
     }
 
-    return EXIT_SUCCESS;
+    return exit_code;
 }
 
 // vim: shiftwidth=8:tabstop=8:expandtab
