@@ -31,7 +31,10 @@
 
 static inline Ogre::HighLevelGpuProgramPtr get_shader(const char *name)
 {
-    return Ogre::HighLevelGpuProgramManager::getSingleton().getByName(name, RESGRP);
+    auto ptr = Ogre::HighLevelGpuProgramManager::getSingleton().getByName(name, RESGRP);
+    if (ptr.isNull())
+        EXCEPT << "Shader does not exist: " << name << ENDL;
+    return ptr;
 }
 
 static void render_with_progs (GfxShader *shader, const Ogre::RenderOperation &op)
