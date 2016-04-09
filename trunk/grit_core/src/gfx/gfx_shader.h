@@ -63,6 +63,7 @@ struct GfxShaderGlobals {
     GfxPipeline *pipe;
 };
 
+GfxShaderGlobals gfx_shader_globals_verbatim (GfxPipeline *pipe);
 GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe, const Ogre::Matrix4 &proj);
 GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe);
 
@@ -70,12 +71,16 @@ GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe);
 // E.g. dangs shader for sky is not needed (no lighting equation)
 // 
 
-/** Rrepresents the behavioural information provided by the user
+/** Represents the behavioural information provided by the user
  * (artist) for rendering a particular pass.
  *
  * From this, native shaders are generated on demand for different instantiations
- * of this shaders (in different materials) and also for different purposes
+ * of this shader (i.e., in different materials) and also for different purposes
  * (e.g. shadow casting vs emissive passes, etc).
+ *
+ * The rationale is that a material may define a Gasoline shader, but various rendering
+ * ops are needed in practice to render objects using that material.  So we will recompile
+ * the shdaer for these various purposes when neeeded.
  */
 class GfxShader {
 
@@ -87,9 +92,13 @@ class GfxShader {
         EMISSIVE,
         SHADOW_CAST,
         WIRE_FRAME,
-        SKY,
+
+        // The following are internal cases.  It may make more sense
+        // to have a completely different path for them.
+        SKY,  // Also used for "misc" rendering.
         HUD,
         DECAL,
+        DEFERRED_AMBIENT_SUN,
     };
 
     private:

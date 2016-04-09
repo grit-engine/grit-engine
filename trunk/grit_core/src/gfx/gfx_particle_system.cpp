@@ -331,6 +331,7 @@ class GfxParticleSystem {
         // ISSUE RENDER COMMANDS
         try {
             GfxMaterialTextureMap texs;
+            // Bind this manually underneath as it is an Ogre internal texture.
             texs["gbuffer0"] = { nullptr, false, 0};
             texs["particleAtlas"] = { &*tex, true, 4};
 
@@ -343,7 +344,8 @@ class GfxParticleSystem {
 
             // Since we're disabling depth checks (so soft particles work properly), we may
             // as well use the SKY GfxShader::Purpose as it has exactly the behavior needed.
-            shader->bindShader(GfxShader::SKY, false, 0, false, 0,
+            // ACTUALLY... HUD is the same as SKY but without pushing all depth to the backplane.
+            shader->bindShader(GfxShader::HUD, false, 0, false, 0,
                                globs, I, nullptr, 0, 1, texs, binds);
 
             ogre_rs->_setTexture(NUM_GLOBAL_TEXTURES, true, pipe->getGBufferTexture(0));

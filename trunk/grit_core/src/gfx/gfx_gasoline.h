@@ -263,7 +263,7 @@ namespace std {
 /** These are things the shader needs that are not in the material.
  */
 struct GfxGslEnvironment {
-    // Varies dependning on the material.
+    // Varies depending on the material.
     bool fadeDither;
     // What textures should be bound as a solid colour.
     GfxGslUnboundTextures ubt;
@@ -382,9 +382,10 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                      const std::string &additional_prog,
                                                      const GfxGslMetadata &md);
 
-GfxGasolineResult gfx_gasoline_compile_deferred_sun (GfxGslBackend backend,
-                                                     const std::string &fog_prog,
-                                                     const GfxGslMetadata &md);
+GfxGasolineResult gfx_gasoline_compile_das (GfxGslBackend backend,
+                                            const std::string &vert_prog,
+                                            const std::string &colour_prog,
+                                            const GfxGslMetadata &md);
 
 
 GfxGasolineResult gfx_gasoline_compile_decal (GfxGslBackend backend,

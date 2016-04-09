@@ -755,6 +755,8 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
     bool do_regular = !(do_wireframe && gfx_option(GFX_WIREFRAME_SOLID));
 
     bool fade_dither = fade < 1;
+    // TODO: Why are we not using the true value?  In fact shouldn't bindShader figure this out
+    // internally?
     unsigned env_boxes = 1;
     bool instanced = false;
     unsigned bone_weights = mesh->getNumBlendWeightsPerVertex();

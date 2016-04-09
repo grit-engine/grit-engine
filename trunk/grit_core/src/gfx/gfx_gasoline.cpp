@@ -57,6 +57,8 @@ static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
     m["rayTopRight"] = alloc.makeType<GfxGslFloatType>(3);
     m["rayBottomLeft"] = alloc.makeType<GfxGslFloatType>(3);
     m["rayBottomRight"] = alloc.makeType<GfxGslFloatType>(3);
+    m["nearClipDistance"] = alloc.makeType<GfxGslFloatType>(1);
+    m["farClipDistance"] = alloc.makeType<GfxGslFloatType>(1);
 
     m["particleAmbient"] = alloc.makeType<GfxGslFloatType>(3);
     m["sunlightDiffuse"] = alloc.makeType<GfxGslFloatType>(3);
@@ -285,6 +287,47 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
     };
 
+    m["punctual_lighting"] = {
+        alloc.makeType<GfxGslFunctionType>(
+            GfxGslTypes{fs(3), fs(3), fs(3), fs(3), fs(1), fs(1), fs(3), fs(3)},
+            fs(3)),
+    };
+
+
+    m["sunlight"] = {
+        alloc.makeType<GfxGslFunctionType>(
+            GfxGslTypes{fs(3), fs(3), fs(3), fs(3), fs(1), fs(1), fs(1)},
+            fs(3)),
+    };
+
+    m["envlight"] = {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(3), fs(3), fs(1), fs(1)}, fs(3)),
+    };
+
+    m["punctual_lighting"] = {
+        alloc.makeType<GfxGslFunctionType>(
+            GfxGslTypes{fs(3), fs(3), fs(3), fs(3), fs(1), fs(1), fs(3), fs(3)}, fs(3)),
+    };
+
+    m["unpack_deferred_diffuse_colour"] = {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(3))
+    };
+    m["unpack_deferred_specular"] = {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
+    };
+    m["unpack_deferred_shadow_cutoff"] = {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
+    };
+    m["unpack_deferred_gloss"] = {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
+    };
+    m["unpack_deferred_cam_dist"] = {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
+    };
+    m["unpack_deferred_normal"] = {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(3))
+    };
+
     return m;
 }
 
@@ -400,16 +443,17 @@ static GfxGasolineResult gfx_gasoline_compile_colour (const GfxGslBackend backen
                                                       const std::string &vert_prog,
                                                       const std::string &colour_prog,
                                                       const GfxGslMetadata &md,
-                                                      const bool flat_z)
+                                                      const bool flat_z, const bool das)
 {
-    auto cont = [backend, flat_z] (const GfxGslContext &ctx,
-                                   const GfxGslTypeSystem &vert_ts,
-                                   const GfxGslAst *vert_ast,
-                                   const GfxGslTypeSystem &dangs_ts,
-                                   const GfxGslAst *dangs_ast,
-                                   const GfxGslTypeSystem &additional_ts,
-                                   const GfxGslAst *additional_ast,
-                                   const GfxGslMetadata &md)
+    auto cont = [backend, flat_z, das] (
+        const GfxGslContext &ctx,
+        const GfxGslTypeSystem &vert_ts,
+        const GfxGslAst *vert_ast,
+        const GfxGslTypeSystem &dangs_ts,
+        const GfxGslAst *dangs_ast,
+        const GfxGslTypeSystem &additional_ts,
+        const GfxGslAst *additional_ast,
+        const GfxGslMetadata &md)
     -> GfxGasolineResult
     {
         (void) dangs_ts; (void) dangs_ast;
@@ -417,13 +461,15 @@ static GfxGasolineResult gfx_gasoline_compile_colour (const GfxGslBackend backen
         std::string frag_out;
         switch (backend) {
             case GFX_GSL_BACKEND_CG:
-            gfx_gasoline_unparse_cg(ctx, &vert_ts, vert_ast, vert_out,
-                                    &additional_ts, additional_ast, frag_out, md.env, flat_z);
+            gfx_gasoline_unparse_cg(
+                ctx, &vert_ts, vert_ast, vert_out, &additional_ts, additional_ast, frag_out, md.env,
+                flat_z, das);
             break;
 
             case GFX_GSL_BACKEND_GLSL:
-            gfx_gasoline_unparse_glsl(ctx, &vert_ts, vert_ast, vert_out,
-                                      &additional_ts, additional_ast, frag_out, md.env, flat_z);
+            gfx_gasoline_unparse_glsl(
+                ctx, &vert_ts, vert_ast, vert_out, &additional_ts, additional_ast, frag_out, md.env,
+                flat_z, das);
             break;
         }
         return {vert_out, frag_out};
@@ -437,7 +483,15 @@ GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
                                             const std::string &colour_prog,
                                             const GfxGslMetadata &md)
 {
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false, false);
+}
+
+GfxGasolineResult gfx_gasoline_compile_das (GfxGslBackend backend,
+                                            const std::string &vert_prog,
+                                            const std::string &colour_prog,
+                                            const GfxGslMetadata &md)
+{
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false, true);
 }
 
 GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
@@ -445,7 +499,7 @@ GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
                                                    const GfxGslMetadata &md)
 {
     std::string colour_prog = "out.colour = Float3(1, 1, 1);\n";
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false, false);
 }
 
 GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
@@ -453,7 +507,7 @@ GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
                                             const std::string &colour_prog,
                                             const GfxGslMetadata &md)
 {
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, true);
+    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, true, false);
 }
 
 GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,

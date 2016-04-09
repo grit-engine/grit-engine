@@ -75,6 +75,8 @@ class GfxGslBackendUnparser {
     }
 };
 
+std::string gfx_gasoline_generate_preamble_functions (void);
+
 std::string gfx_gasoline_generate_global_fields (const GfxGslContext &ctx, bool reg);
 
 std::string gfx_gasoline_generate_var_decls (const GfxGslTypeMap &vars);

@@ -55,6 +55,11 @@ static void render_with_progs (GfxShader *shader, const Ogre::RenderOperation &o
 Ogre::VertexData *screen_quad_vdata;
 Ogre::HardwareVertexBufferSharedPtr screen_quad_vbuf;
 
+// The 0th one is the real one, the others are for debug display.
+static GfxShader *deferred_ambient_sun[6];
+static GfxShader *deferred_lights;
+//static GfxShader *compositor_tonemap;
+
 void gfx_pipeline_init (void)
 {
     // Prepare vertex buffer
@@ -79,6 +84,157 @@ void gfx_pipeline_init (void)
         -1,  1 // top left
     };
     screen_quad_vbuf->writeData(screen_quad_vdata->vertexStart, screen_quad_vdata->vertexCount*vdecl_size, vdata_raw);
+
+    GfxGslRunParams shader_params = {
+        {"gbuffer0", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
+        {"gbuffer1", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
+        {"gbuffer2", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
+        {"gbuffer3", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
+    };
+
+    std::string das_vertex_code =
+        "var pos_ss = vert.position.xy;\n"
+        "out.position = Float3(pos_ss, 0.5);\n"
+
+        "var uv = pos_ss / Float2(2, -2) + Float2(0.5, 0.5);\n"
+        "var ray = lerp(lerp(global.rayTopLeft, global.rayTopRight, uv.x),\n"
+        "               lerp(global.rayBottomLeft, global.rayBottomRight, uv.x),\n"
+        "               uv.y);\n"
+        + std::string(gfx_d3d9() ? "uv = uv + Float2(0.5, 0.5) / global.viewportSize.xy;\n" : "");
+
+    std::string deferred_colour_code =
+        "var texel0 = sample(mat.gbuffer0, uv);\n"
+        "var texel1 = sample(mat.gbuffer1, uv);\n"
+        "var texel2 = sample(mat.gbuffer2, uv);\n"
+        "var shadow_oblique_cutoff = unpack_deferred_shadow_cutoff(texel0, texel1, texel2);\n"
+        "var d = unpack_deferred_diffuse_colour(texel0, texel1, texel2);\n"
+        "var s = unpack_deferred_specular(texel0, texel1, texel2);\n"
+        "var g = unpack_deferred_gloss(texel0, texel1, texel2);\n"
+        "var normalised_cam_dist = unpack_deferred_cam_dist(texel0, texel1, texel2);\n"
+        "var normal_vs = unpack_deferred_normal(texel0, texel1, texel2);\n"
+        "if (normalised_cam_dist>=1) discard;\n"
+        "var pos_ws = global.cameraPos + normalised_cam_dist*ray;\n"
+        "var cam_dist = normalised_cam_dist * global.farClipDistance;\n"
+        "var v2c = -normalize(ray);\n"
+        "var normal_ws = mul(global.invView, Float4(normal_vs, 0)).xyz;\n";
+
+    deferred_ambient_sun[0] = gfx_shader_make_or_reset(
+        "/system/DeferredAmbientSun0",
+        das_vertex_code,
+        "",
+        deferred_colour_code +
+        "var sun = sunlight(pos_ws, v2c, d, normal_ws, g, s, cam_dist);\n"
+        "var env = envlight(v2c, d, normal_ws, g, s);\n"
+        "out.colour = sun + env;\n",
+        shader_params);
+
+
+    deferred_ambient_sun[1] = gfx_shader_make_or_reset(
+        "/system/DeferredAmbientSun1",
+        das_vertex_code,
+        "",
+        deferred_colour_code +
+        "out.colour = d;\n",
+        shader_params);
+
+    deferred_ambient_sun[2] = gfx_shader_make_or_reset(
+        "/system/DeferredAmbientSun2",
+        das_vertex_code,
+        "",
+        deferred_colour_code +
+        "out.colour = 0.5 + normal_ws/2;\n",
+        shader_params);
+
+    deferred_ambient_sun[3] = gfx_shader_make_or_reset(
+        "/system/DeferredAmbientSun3",
+        das_vertex_code,
+        "",
+        deferred_colour_code +
+        "out.colour = s;\n",
+        shader_params);
+
+    deferred_ambient_sun[4] = gfx_shader_make_or_reset(
+        "/system/DeferredAmbientSun4",
+        das_vertex_code,
+        "",
+        deferred_colour_code +
+        "out.colour = g;\n",
+        shader_params);
+
+    deferred_ambient_sun[5] = gfx_shader_make_or_reset(
+        "/system/DeferredAmbientSun5",
+        das_vertex_code,
+        "",
+        deferred_colour_code +
+        "out.colour = (pos_ws % 1 + 1) % 1;\n",
+        shader_params);
+
+
+    std::string lights_vertex_code =
+        "out.position = vert.position.xyz;\n"
+        "var pos_cs = mul(global.viewProj, Float4(out.position, 1));\n"
+        "var uv_ = pos_cs.xyw;\n";
+
+    std::string lights_colour_code =
+        "var uv = uv_.xy/uv_.z;\n"
+        "uv = uv * Float2(0.5,-0.5) + Float2(0.5,0.5);\n"
+        "var ray = lerp(lerp(global.rayBottomLeft, global.rayBottomRight, uv.x),\n"
+        "               lerp(global.rayTopLeft, global.rayTopRight, uv.x),\n"
+        "               uv.y);\n"
+        + std::string(gfx_d3d9() ? "uv = uv + Float2(0.5, 0.5) / global.viewportSize.xy;\n" : "")
+        + deferred_colour_code +
+        "var light_aim_ws = vert.normal;\n"
+        "var light_pos_ws = vert.coord0.xyz;\n"
+        "var inner = vert.coord1.x;\n"
+        "var outer = vert.coord1.y;\n"
+        "var range = vert.coord1.z;\n"
+        "var diff_colour = vert.coord2.xyz;\n"
+        "var spec_colour = vert.coord3.xyz;\n"
+
+        "var light_ray_ws = light_pos_ws - pos_ws;\n"
+        "var light_dist = length(light_ray_ws);\n"
+        "var light_dir_ws = light_ray_ws / light_dist;\n"
+
+        "var dist = min(1.0, light_dist / range);\n"
+        // This is the fadeoff equation that should probably be changed.
+        "var light_intensity = 2*dist*dist*dist - 3*dist*dist + 1;\n"
+
+        "var angle = -dot(light_aim_ws, light_dir_ws);\n"
+        "if (outer != inner) {\n"
+        "    var occlusion = clamp((angle-inner)/(outer-inner), 0.0, 1.0);\n"
+        "    light_intensity = light_intensity * (1 - occlusion);\n"
+        "}\n"
+
+        "out.colour = light_intensity * punctual_lighting(\n"
+        "    -light_dir_ws,\n"
+        "    v2c,\n"
+        "    d,\n"
+        "    normal_ws,\n"
+        "    g,\n"
+        "    s,\n"
+        "    diff_colour,\n"
+        "    spec_colour\n"
+        ");\n";
+
+    deferred_lights = gfx_shader_make_or_reset("/system/DeferredLights",
+                                               lights_vertex_code, "", lights_colour_code,
+                                               shader_params);
+
+
+    /*
+    GfxGslRunParams hdr_shader_params = {
+        {"hdr", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
+    };
+
+    std::string compositor_tonemap_colour =
+        "out.colour = tone_map(sample(mat.hdr, vert.coord0));\n";
+
+    compositor_tonemap = gfx_shader_make_or_reset("/system/Tonemap",
+                                                  das_vertex_code, "", compositor_tonemap_colour,
+                                                  hdr_shader_params);
+    */
+
+
 }
 
 
@@ -126,14 +282,6 @@ public:
         mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
                                                                 Ogre::VES_NORMAL);
         mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-        // diffuse colour (same for all 8 corners of the cube)
-        mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
-                                                                Ogre::VES_DIFFUSE);
-        mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-        // specular colou (same for all 8 corners of the cube)
-        mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
-                                                                Ogre::VES_SPECULAR);
-        mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
         // light centre (same for all 8 corners of the cube)
         mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
                                                                 Ogre::VES_TEXTURE_COORDINATES, 0);
@@ -141,6 +289,14 @@ public:
         // inner/outer cone dot product and range (same for all 8 corners of the cube)
         mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
                                                                 Ogre::VES_TEXTURE_COORDINATES, 1);
+        mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+        // diffuse colour (same for all 8 corners of the cube)
+        mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
+                                                                Ogre::VES_TEXTURE_COORDINATES, 2);
+        mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+        // specular colour (same for all 8 corners of the cube)
+        mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
+                                                                Ogre::VES_TEXTURE_COORDINATES, 3);
         mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
 
     }
@@ -301,35 +457,14 @@ public:
 // }}}
 
 
-static GfxShader *deferred_ambient_sun = nullptr;
-static GfxShader *get_deferred_ambient_sun (void)
-{
-    if (deferred_ambient_sun == nullptr) {
-        auto vp = get_shader("deferred_ambient_sun_v");
-        auto fp = get_shader("deferred_ambient_sun_f");
-        deferred_ambient_sun = gfx_shader_make_from_existing("deferred_ambient_sun", vp, fp, {});
-    }
-    return deferred_ambient_sun;
-}
-
-static GfxShader *deferred_lights = nullptr;
-static GfxShader *get_deferred_lights (void)
-{
-    if (deferred_lights == nullptr) {
-        auto vp = get_shader("deferred_lights_v");
-        auto fp = get_shader("deferred_lights_f");
-        deferred_lights = gfx_shader_make_from_existing("deferred_lights", vp, fp, {});
-    }
-    return deferred_lights;
-}
-
 static GfxShader *compositor_tonemap = nullptr;
 static GfxShader *get_compositor_tonemap (void)
 {
     if (compositor_tonemap == nullptr) {
         auto vp = get_shader("compositor_v");
-        auto fp = get_shader("tonemap");
-        compositor_tonemap = gfx_shader_make_from_existing("compositor_tonemap", vp, fp, {});
+        auto fp = get_shader("bloom_filter_then_horz_blur");
+        compositor_tonemap =
+            gfx_shader_make_from_existing("compositor_tonemap", vp, fp, {});
     }
     return compositor_tonemap;
 }
@@ -400,106 +535,32 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
     {
         Ogre::Camera *cam = pipe->getCamera();
         Ogre::Vector3 cam_pos = cam->getPosition();
-        Ogre::Viewport *viewport = ogre_sm->getCurrentViewport();
-        Ogre::RenderTarget *render_target = viewport->getTarget();
-        float render_target_flipping = render_target->requiresTextureFlipping() ? -1 : 1;
-        Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
-                                    1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());
 
-        // various camera and lighting things
-        Ogre::Matrix4 view = cam->getViewMatrix();
-        Ogre::Matrix4 inv_view = view.inverse();
-        Ogre::Matrix4 proj = cam->getProjectionMatrixWithRSDepth();
-        Ogre::Matrix4 view_proj = proj*view;
-        Ogre::Vector3 sun_pos_ws = ogre_sun->getDirection();
+        GfxMaterialTextureMap texs;
+        // fill these in later as they are are Ogre internal textures
+        texs["gbuffer0"] = { nullptr, false, 0 };
+        texs["gbuffer1"] = { nullptr, false, 0 };
+        texs["gbuffer2"] = { nullptr, false, 0 };
+        texs["gbuffer3"] = { nullptr, false, 0 };
 
-        // corners mapping for worldspace fragment position reconstruction:
-        // top-right near, top-left near, bottom-left near, bottom-right near,
-        // top-right far, top-left far, bottom-left far, bottom-right far. 
-        Ogre::Vector3 top_right_ray = cam->getWorldSpaceCorners()[4] - cam_pos;
-        Ogre::Vector3 top_left_ray = cam->getWorldSpaceCorners()[5] - cam_pos;
-        Ogre::Vector3 bottom_left_ray = cam->getWorldSpaceCorners()[6] - cam_pos;
-        Ogre::Vector3 bottom_right_ray = cam->getWorldSpaceCorners()[7] - cam_pos;
+        GfxShaderBindings binds;
+        binds["gbuffer0"] = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1,1,1,1);
+        binds["gbuffer1"] = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1,1,1,1);
+        binds["gbuffer2"] = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1,1,1,1);
+        binds["gbuffer3"] = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1,1,1,1);
+
+        const Ogre::Matrix4 &I = Ogre::Matrix4::IDENTITY;
 
         try {
-            get_deferred_ambient_sun()->validate();
-            auto das_vp = deferred_ambient_sun->getHackOgreVertexProgram();
-            auto das_fp = deferred_ambient_sun->getHackOgreFragmentProgram();
+            GfxShaderGlobals globs = gfx_shader_globals_cam(pipe);
 
-            Ogre::TexturePtr noise_tex = shadow_pcf_noise_map->getOgreTexturePtr();
-            noise_tex->load();
+            unsigned env_boxes = 1;
+            GfxShader *shader = deferred_ambient_sun[pipe->getCameraOpts().debugMode];
+            shader->bindShader(GfxShader::DEFERRED_AMBIENT_SUN, false, env_boxes,
+                               false, 0, globs, I, nullptr, 0, 1, texs, binds);
 
-
-            /////////
-            // sun //
-            /////////
-            try_set_named_constant(das_vp, "top_left_ray", top_left_ray);
-            try_set_named_constant(das_vp, "top_right_ray", top_right_ray);
-            try_set_named_constant(das_vp, "bottom_left_ray", bottom_left_ray);
-            try_set_named_constant(das_vp, "bottom_right_ray", bottom_right_ray);
-            try_set_named_constant(das_vp, "render_target_flipping", render_target_flipping);
-            if (d3d9) {
-                try_set_named_constant(das_vp, "viewport_size",viewport_size);
-            }
-
-            //try_set_named_constant(f_params, "near_clip_distance", cam->getNearClipDistance());
-            try_set_named_constant(das_fp, "far_clip_distance", cam->getFarClipDistance());
-            try_set_named_constant(das_fp, "camera_pos_ws", cam_pos);
-
-            // actually we need only the z and w rows but this is just one renderable per frame so
-            // not a big deal
-            Ogre::Matrix4 special_proj = cam->getProjectionMatrix();
-            Ogre::Matrix4 special_view_proj = special_proj*view;
-            try_set_named_constant(das_fp, "view_proj", special_view_proj);
-            try_set_named_constant(das_fp, "inv_view", inv_view);
-            try_set_named_constant(das_fp, "sun_pos_ws", -sun_pos_ws);
-            try_set_named_constant(das_fp, "sun_diffuse", to_ogre(sunlight_diffuse));
-            try_set_named_constant(das_fp, "sun_specular", to_ogre(sunlight_specular));
-
-            Ogre::Vector3 the_fog_params(fog_density, env_cube_cross_fade, /*unused*/ 0);
-            try_set_named_constant(das_fp, "the_fog_params", the_fog_params);
-            if (gfx_option(GFX_FOG)) {
-                try_set_named_constant(das_fp, "the_fog_colour", to_ogre(fog_colour));
-            }
-
-            if (gfx_option(GFX_SHADOW_RECEIVE)) {
-                try_set_named_constant(das_fp, "shadow_view_proj1", shadow_view_proj[0]);
-                try_set_named_constant(das_fp, "shadow_view_proj2", shadow_view_proj[1]);
-                try_set_named_constant(das_fp, "shadow_view_proj3", shadow_view_proj[2]);
-            }
-
-
-            unsigned tex_index = 0;
-            for (unsigned i=0 ; i<3 ; ++i) {
-                ogre_rs->_setTexture(tex_index++, true, pipe->getGBufferTexture(i));
-            }
-
-            if (gfx_option(GFX_SHADOW_RECEIVE)) {
-                for (unsigned i=0 ; i<3 ; ++i) {
-                    ogre_rs->_setTexture(tex_index++, true, ogre_sm->getShadowTexture(i));
-                }
-                if (gfx_option(GFX_SHADOW_FILTER_DITHER_TEXTURE)) {
-                    ogre_rs->_setTexture(tex_index++, true, noise_tex);
-                }
-            }
-
-            if (global_env_cube0 != nullptr && global_env_cube0->isLoaded()) {
-                const Ogre::TexturePtr &global_env_cube_tex = global_env_cube0->getOgreTexturePtr();
-                ogre_rs->_setTexture(tex_index, true, global_env_cube_tex);
-                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
-                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
-                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIP, Ogre::FO_LINEAR);
-            }
-            tex_index++;
-
-            if (global_env_cube1 != nullptr && global_env_cube1->isLoaded()) {
-                const Ogre::TexturePtr &global_env_cube_tex = global_env_cube1->getOgreTexturePtr();
-                ogre_rs->_setTexture(tex_index, true, global_env_cube_tex);
-                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIN, Ogre::FO_ANISOTROPIC);
-                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MAG, Ogre::FO_ANISOTROPIC);
-                ogre_rs->_setTextureUnitFiltering(tex_index, Ogre::FT_MIP, Ogre::FO_LINEAR);
-            }
-            tex_index++;
+            for (unsigned i=0 ; i<3 ; ++i)
+                ogre_rs->_setTexture(NUM_GLOBAL_TEXTURES + i, true, pipe->getGBufferTexture(i));
 
             ogre_rs->_setCullingMode(Ogre::CULL_NONE);
             ogre_rs->_setDepthBufferParams(true, true, Ogre::CMPF_LESS_EQUAL);
@@ -513,9 +574,10 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             op.useIndexes = false;
             op.vertexData = screen_quad_vdata;
             op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
-            render_with_progs(deferred_ambient_sun, op);
+            ogre_rs->_render(op);
 
-            for (unsigned i=0 ; i<tex_index ; ++i) {
+            // This should be in shader.
+            for (unsigned i=0 ; i<NUM_GLOBAL_TEXTURES + 3 ; ++i) {
                 ogre_rs->_disableTextureUnit(i);
             }
 
@@ -610,31 +672,13 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
             if (light_counter > 0) {
 
-                get_deferred_lights()->validate();
-                auto dl_vp = deferred_lights->getHackOgreVertexProgram();
-                auto dl_fp = deferred_lights->getHackOgreFragmentProgram();
+                GfxShaderGlobals globs = gfx_shader_globals_cam(pipe);
 
-                try_set_named_constant(dl_vp, "view_proj", view_proj);
-                try_set_named_constant(dl_vp, "render_target_flipping", render_target_flipping);
+                deferred_lights->bindShader(GfxShader::HUD, false, 0, false, 0,
+                                            globs, I, nullptr, 0, 1, texs, binds);
 
-                try_set_named_constant(dl_fp, "inv_view", inv_view);
-                try_set_named_constant(dl_fp, "top_left_ray", top_left_ray);
-                try_set_named_constant(dl_fp, "top_right_ray", top_right_ray);
-                try_set_named_constant(dl_fp, "bottom_left_ray", bottom_left_ray);
-                try_set_named_constant(dl_fp, "bottom_right_ray", bottom_right_ray);
-
-                Ogre::Vector3 the_fog_params(fog_density, env_cube_cross_fade, /*unused*/ 0);
-                try_set_named_constant(dl_fp, "the_fog_params", the_fog_params);
-                try_set_named_constant(dl_fp, "far_clip_distance", cam->getFarClipDistance());
-                try_set_named_constant(dl_fp, "camera_pos_ws", cam_pos);
-                if (d3d9) {
-                    try_set_named_constant(dl_fp, "viewport_size",viewport_size);
-                }
-
-                unsigned tex_index = 0;
-                for (unsigned i=0 ; i<3 ; ++i) {
-                    ogre_rs->_setTexture(tex_index++, true, pipe->getGBufferTexture(i));
-                }
+                for (unsigned i=0 ; i<3 ; ++i)
+                    ogre_rs->_setTexture(NUM_GLOBAL_TEXTURES + i, true, pipe->getGBufferTexture(i));
 
                 ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
                 ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
@@ -644,16 +688,16 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
                 if (mdl.indexesUsed() > 0) {
                     ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
                     ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
-                    render_with_progs(deferred_lights, mdl.getRenderOperation());
+                    ogre_rs->_render(mdl.getRenderOperation());
                 }
 
                 if (mdlInside.indexesUsed() > 0) {
                     ogre_rs->_setCullingMode(Ogre::CULL_ANTICLOCKWISE);
                     ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_GREATER_EQUAL);
-                    render_with_progs(deferred_lights, mdlInside.getRenderOperation());
+                    ogre_rs->_render(mdlInside.getRenderOperation());
                 }
 
-                for (unsigned i=0 ; i<tex_index ; ++i) {
+                for (unsigned i=0 ; i<NUM_GLOBAL_TEXTURES + 3 ; ++i) {
                     ogre_rs->_disableTextureUnit(i);
                 }
             }

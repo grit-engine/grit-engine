@@ -143,6 +143,75 @@ void GfxGslBackendUnparser::unparse (const GfxGslAst *ast_, int indent)
     }
 }
 
+std::string gfx_gasoline_generate_preamble_functions (void)
+{
+    std::stringstream ss;
+
+    ss << "Float3 normalise (Float3 v) { return normalize(v); }\n";
+    ss << "Float4 pma_decode (Float4 v) { return Float4(v.xyz/v.w, v.w); }\n";
+    ss << "Float  gamma_decode (Float v)  { return pow(v, 2.2); }\n";
+    ss << "Float2 gamma_decode (Float2 v) { return pow(v, Float2(2.2, 2.2)); }\n";
+    ss << "Float3 gamma_decode (Float3 v) { return pow(v, Float3(2.2, 2.2, 2.2)); }\n";
+    ss << "Float4 gamma_decode (Float4 v) { return pow(v, Float4(2.2, 2.2, 2.2, 2.2)); }\n";
+    ss << "Float  gamma_encode (Float v)  { return pow(v, 1/2.2); }\n";
+    ss << "Float2 gamma_encode (Float2 v) { return pow(v, Float2(1/2.2, 1/2.2)); }\n";
+    ss << "Float3 gamma_encode (Float3 v) { return pow(v, Float3(1/2.2, 1/2.2, 1/2.2)); }\n";
+    ss << "Float4 gamma_encode (Float4 v) { return pow(v, Float4(1/2.2, 1/2.2, 1/2.2, 1/2.2)); }\n";
+
+    ss << "Float3 unpack_deferred_diffuse_colour(Float4 texel0, Float4 texel1, Float4 texel2)\n";
+    ss << "{\n";
+    ss << "    return gamma_decode(texel2.rgb);\n";
+    ss << "}\n\n";
+
+    ss << "Float unpack_deferred_specular(Float4 texel0, Float4 texel1, Float4 texel2)\n";
+    ss << "{\n";
+    ss << "    return gamma_decode(texel2.a);\n";
+    ss << "}\n\n";
+
+    ss << "Float unpack_deferred_shadow_cutoff(Float4 texel0, Float4 texel1, Float4 texel2)\n";
+    ss << "{\n";
+    ss << "    texel0.a *= 255;\n";
+    ss << "    if (texel0.a >= 128) {\n";
+    ss << "        texel0.a -= 128;\n";
+    ss << "    }\n";
+    ss << "    return texel1.a;\n";
+    ss << "}\n\n";
+
+    ss << "Float unpack_deferred_gloss(Float4 texel0, Float4 texel1, Float4 texel2)\n";
+    ss << "{\n";
+    ss << "    return texel1.a;\n";
+    ss << "}\n\n";
+
+    ss << "Float unpack_deferred_cam_dist(Float4 texel0, Float4 texel1, Float4 texel2)\n";
+    ss << "{\n";
+    ss << "    return 255.0\n";
+    ss << "           * (256.0*256.0*texel0.x + 256.0*texel0.y + texel0.z)\n";
+    ss << "           / (256.0*256.0*256.0 - 1);\n";
+    ss << "}\n\n";
+
+    ss << "Float3 unpack_deferred_normal(Float4 texel0, Float4 texel1, Float4 texel2)\n";
+    ss << "{\n";
+    ss << "    Float up = -1;\n";  // 1 or -1
+    ss << "    texel0.a *= 255;\n";
+    ss << "    if (texel0.a >= 128) {\n";
+    ss << "        up = 1;\n";
+    ss << "    }\n";
+    // This algorithm is described as USE_NORMAL_ENCODING == 2 in the original uber.cgh.
+    ss << "    Float2 low2 = texel1.xy * 255;\n";  // range: [0,256)
+    ss << "    Float hi_mixed = texel1.z * 255;\n";  // range: [0,256)
+    ss << "    Float2 hi2;\n";  // range: [0, 16)
+    ss << "    hi2.y = int(hi_mixed/16);\n";
+    ss << "    hi2.x = hi_mixed - hi2.y*16;\n";
+    ss << "    Float2 tmp = low2 + hi2*256;\n";  // range: [0, 4096)
+    ss << "    Float3 normal;\n";  // range: [0, 1]
+    ss << "    normal.xy = (tmp/4095) * Float2(2,2) - Float2(1,1);\n";
+    ss << "    normal.z = up * (sqrt(1 - min(1.0, normal.x*normal.x + normal.y*normal.y)));\n";
+    ss << "    return normal;\n";
+    ss << "}\n\n";
+
+    return ss.str();
+}
+
 std::string gfx_gasoline_generate_global_fields (const GfxGslContext &ctx, bool reg)
 {
     std::stringstream ss;
@@ -362,7 +431,7 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
     ss << "                                   y - half_filter_taps_side + 0.5);\n";
     ss << "            tap_uv *= spread / " << env.shadowRes << " / half_filter_taps_side;\n";
     ss << "            tap_uv += pos_ls.xy + fragment_uv_offset;\n";
-    ss << "            total += sun_dist > textureLod(tex, tap_uv, 0).r ? 1.0 : 0.0;\n";
+    ss << "            total += sun_dist > sampleLod(tex, tap_uv, 0).r ? 1.0 : 0.0;\n";
     ss << "        }\n";
     ss << "    }\n";
     ss << "    return total / " << env.shadowFilterTaps << ";\n";
@@ -398,7 +467,8 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
     ss << "{\n";
     ss << "    Float3 reflect_ws = -reflect(surf_to_cam, sn);\n";
     // Use 20 as the max mipmap, as we will never see a texture 2^20 big.
-    ss << "    Float3 fresnel_light = gamma_decode(sampleLod(cube, reflect_ws, map_mipmaps - 1).rgb);\n";
+    ss << "    Float3 fresnel_light = \n";
+    ss << "        gamma_decode(sampleLod(cube, reflect_ws, map_mipmaps - 1).rgb);\n";
     ss << "    Float3 diff_light = gamma_decode(sampleLod(cube, sn, map_mipmaps - 1).rgb);\n";
     ss << "    Float spec_mm = (1 - sg) * map_mipmaps;\n";  // Spec mip map
     ss << "    Float3 spec_light = gamma_decode(sampleLod(cube, reflect_ws, spec_mm).rgb);\n";
@@ -406,14 +476,15 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
     ss << "    Float3 spec_component = ss * spec_light;\n";
     ss << "    Float fresnel_factor = strength(1.0 - dot(sn, surf_to_cam), 5);\n";
     ss << "    Float3 fresnel_component = sg * fresnel_factor * fresnel_light;\n";
-	ss << "    return 16 * (diff_component + spec_component + fresnel_component);\n";
-	ss << "}\n";
+    ss << "    return 16 * (diff_component + spec_component + fresnel_component);\n";
+    ss << "}\n";
 
-    ss << "Float3 sunlight(Float3 shadow_pos, Float3 s2c, Float3 d, Float3 n, Float g, Float s)\n";
+    ss << "Float3 sunlight(Float3 shadow_pos, Float3 s2c, Float3 d, Float3 n, Float g, Float s,\n";
+    ss << "                Float cam_dist)\n";
     ss << "{\n";
     ss << "    Float3 sun = punctual_lighting(-global_sunlightDirection, s2c,\n";
     ss << "        d, n, g, s, global_sunlightDiffuse, global_sunlightSpecular);\n";
-    ss << "    sun *= unshadowyness(shadow_pos, 0);\n";
+    ss << "    sun *= unshadowyness(shadow_pos, cam_dist);\n";
     ss << "    return sun;\n";
     ss << "}\n";
 
@@ -427,7 +498,7 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
         ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
         ss << "    Float3 env1 = env_lighting(s2c,\n";
         ss << "        d, n, g, s, global_envCube1, global_envCubeMipmaps1);\n";
-        ss << "    Float3 env = lerp(env0, env1, global_envCubeCrossFade);\n";
+        ss << "    Float3 env = lerp(env0, env1, global_envCubeCrossFade * Float3(1,1,1));\n";
     } else {
         ss << "    Float3 env = Float3(0.0, 0.0, 0.0);\n";
     }

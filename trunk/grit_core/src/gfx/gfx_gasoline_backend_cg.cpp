@@ -78,6 +78,8 @@ static std::string cg_preamble (void)
 
     ss << "\n";
 
+    ss << gfx_gasoline_generate_preamble_functions();
+
     return ss.str();
 }
 
@@ -88,16 +90,6 @@ static std::string generate_funcs (void)
 
     ss << "// Standard library\n";
     ss << "Float strength (Float p, Float n) { return pow(max(0.00000001, p), n); }\n";
-    ss << "Float3 normalise (Float3 v) { return normalize(v); }\n";
-    ss << "Float4 pma_decode (Float4 v) { return Float4(v.xyz/v.w, v.w); }\n";
-    ss << "Float  gamma_decode (Float v)  { return pow(v, 2.2); }\n";
-    ss << "Float2 gamma_decode (Float2 v) { return pow(v, 2.2); }\n";
-    ss << "Float3 gamma_decode (Float3 v) { return pow(v, 2.2); }\n";
-    ss << "Float4 gamma_decode (Float4 v) { return pow(v, 2.2); }\n";
-    ss << "Float  gamma_encode (Float v)  { return pow(v, 1/2.2); }\n";
-    ss << "Float2 gamma_encode (Float2 v) { return pow(v, 1/2.2); }\n";
-    ss << "Float3 gamma_encode (Float3 v) { return pow(v, 1/2.2); }\n";
-    ss << "Float4 gamma_encode (Float4 v) { return pow(v, 1/2.2); }\n";
 
     ss << "uniform Float internal_rt_flip;\n";
     ss << "uniform Float internal_fade;\n";
@@ -196,7 +188,8 @@ void gfx_gasoline_unparse_cg (const GfxGslContext &ctx,
                               const GfxGslAst *frag_ast,
                               std::string &frag_output,
                               const GfxGslEnvironment &env,
-                              bool flat_z)
+                              bool flat_z,
+                              bool das)
 {
     GfxGslBackendUnparser vert_backend("user_");
     vert_backend.unparse(vert_ast, 1);
@@ -251,7 +244,12 @@ void gfx_gasoline_unparse_cg (const GfxGslContext &ctx,
     vert_ss << ") {\n";
     vert_ss << "    Float3 world_pos;\n";
     vert_ss << "    func_user_vertex(world_pos);\n";
-    vert_ss << "    Float4 clip_pos = mul(global_viewProj, Float4(world_pos, 1));\n";
+    if (das) {
+        vert_ss << "    Float4 clip_pos = Float4(world_pos, 1);\n";
+        vert_ss << "    clip_pos.y *= internal_rt_flip;\n";
+    } else {
+        vert_ss << "    Float4 clip_pos = mul(global_viewProj, Float4(world_pos, 1));\n";
+    }
     // Hack to maximum depth, but avoid hitting the actual backplane.
     // (Without this dcunnin saw some black lightning-like artifacts on Nvidia.)
     if (flat_z)
@@ -268,12 +266,16 @@ void gfx_gasoline_unparse_cg (const GfxGslContext &ctx,
     frag_ss << "Float2 frag_screen;\n";
     frag_ss << generate_funcs();
     frag_ss << generate_funcs_frag();
+    frag_ss << gfx_gasoline_preamble_lighting(env);
+    frag_ss << gfx_gasoline_preamble_fade(env);
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
     frag_ss << frag_backend.getUserColourAlphaFunction();
 
 
-    frag_ss << "void main (in Float2 wpos : WPOS, out Float4 out_colour_alpha : COLOR)\n";
-    frag_ss << "{\n";
+    frag_ss << "void main (in Float2 wpos : WPOS,\n";
+    frag_ss << "           out Float4 out_colour_alpha : COLOR,\n";
+    frag_ss << "           out Float out_depth : DEPTH\n";
+    frag_ss << ") {\n";
 
     frag_ss << "    frag_screen = wpos.xy + Float2(0.5, 0.5);\n";
     frag_ss << "    if (internal_rt_flip < 0)\n";
@@ -285,6 +287,14 @@ void gfx_gasoline_unparse_cg (const GfxGslContext &ctx,
     frag_ss << "    Float out_alpha;\n";
     frag_ss << "    func_user_colour(out_colour, out_alpha);\n";
     frag_ss << "    out_colour_alpha = Float4(out_colour, out_alpha);\n";
+    if (das) {
+        // Whether we are using d3d9 or gl rendersystems,
+        // ogre gives us the view_proj in a 'standard' form, which is
+        // right-handed with a depth range of [-1,+1].
+        // Since we are outputing depth in the fragment shader, the range is [0,1]
+        frag_ss << "Float4 projected = mul(global_viewProj, Float4(user_pos_ws, 1));\n";
+        frag_ss << "out_depth = 0.5 + (projected.z / projected.w) / 2.0;\n";
+    }
     frag_ss << "}\n";
 
     vert_output = vert_ss.str();
@@ -408,7 +418,7 @@ void gfx_gasoline_unparse_first_person_cg(const GfxGslContext &ctx,
     frag_ss << "    func_user_dangs(d, a, n, g, s);\n";
     frag_ss << "    n = normalise(n);\n";
     frag_ss << "    Float3 v2c = normalize(internal_vertex_to_cam);\n";
-    frag_ss << "    Float3 sun = sunlight(global_cameraPos, v2c, d, n, g, s);\n";
+    frag_ss << "    Float3 sun = sunlight(global_cameraPos, v2c, d, n, g, s, 0);\n";
     frag_ss << "    Float3 env = envlight(v2c, d, n, g, s);\n";
 
     frag_ss << "    Float3 additional;\n";

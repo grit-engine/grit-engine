@@ -31,13 +31,40 @@ static std::string fresh_name (void)
     return ss.str();
 }
 
+GfxShaderGlobals gfx_shader_globals_verbatim (GfxPipeline *pipe)
+{
+    const Ogre::Matrix4 &I = Ogre::Matrix4::IDENTITY;
+
+    Ogre::Camera *cam = pipe->getCamera();
+
+    Ogre::Viewport *viewport = cam->getViewport();
+    bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
+    float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
+    Ogre::Matrix4 proj = I;
+    // Invert transformed y if necessary
+    proj[1][0] *= render_target_flipping_factor;
+    proj[1][1] *= render_target_flipping_factor;
+    proj[1][2] *= render_target_flipping_factor;
+    proj[1][3] *= render_target_flipping_factor;
+    Vector3 cam_pos = from_ogre(cam->getPosition());
+    Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
+
+    Vector3 ray_top_right = from_ogre(cam->getWorldSpaceCorners()[4]) - cam_pos;
+    Vector3 ray_top_left = from_ogre(cam->getWorldSpaceCorners()[5]) - cam_pos;
+    Vector3 ray_bottom_left = from_ogre(cam->getWorldSpaceCorners()[6]) - cam_pos;
+    Vector3 ray_bottom_right = from_ogre(cam->getWorldSpaceCorners()[7]) - cam_pos;
+
+    return {
+        cam_pos, I, I, proj,
+        ray_top_left, ray_top_right, ray_bottom_left, ray_bottom_right,
+        viewport_dim, render_target_flipping, pipe
+    };
+}
+
 GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe, const Ogre::Matrix4 &proj_)
 {
     Ogre::Camera *cam = pipe->getCamera();
     Ogre::Matrix4 view = cam->getViewMatrix();
-    // Ogre cameras point towards Z whereas in Grit the convention is that
-    // 'unrotated' means pointing towards y (north)
-    Ogre::Matrix4 orientation(to_ogre(Quaternion(Degree(90), Vector3(1, 0, 0))));
 
     Ogre::Viewport *viewport = cam->getViewport();
     bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
@@ -345,23 +372,26 @@ NativePair GfxShader::getNativePair (Purpose purpose,
             switch (purpose) {
                 case REGULAR: EXCEPTEX << "Internal error." << ENDL;
                 case ALPHA: EXCEPTEX << "Internal error." << ENDL;
-                case EMISSIVE: EXCEPTEX << "Internal error." << ENDL;
-                case SHADOW_CAST: EXCEPTEX << "Internal error." << ENDL;
-                case HUD:
-                output = gfx_gasoline_compile_hud(backend, srcVertex, srcAdditional, md);
-                break;
-                case SKY:
-                output = gfx_gasoline_compile_sky(backend, srcVertex, srcAdditional, md);
-                break;
                 case FIRST_PERSON:
                 output = gfx_gasoline_compile_first_person(backend, srcVertex, srcDangs,
                                                            srcAdditional, md);
                 break;
+                case EMISSIVE: EXCEPTEX << "Internal error." << ENDL;
+                case SHADOW_CAST: EXCEPTEX << "Internal error." << ENDL;
                 case WIRE_FRAME:
                 output = gfx_gasoline_compile_wire_frame(backend, srcVertex, md);
                 break;
+                case SKY:
+                output = gfx_gasoline_compile_sky(backend, srcVertex, srcAdditional, md);
+                break;
+                case HUD:
+                output = gfx_gasoline_compile_hud(backend, srcVertex, srcAdditional, md);
+                break;
                 case DECAL:
                 output = gfx_gasoline_compile_decal(backend, srcDangs, srcAdditional, md);
+                break;
+                case DEFERRED_AMBIENT_SUN:
+                output = gfx_gasoline_compile_das(backend, srcVertex, srcAdditional, md);
                 break;
             }
         } catch (const Exception &e) {
@@ -544,13 +574,6 @@ void GfxShader::bindBodyParams (const NativePair &np, const GfxShaderGlobals &p,
     hack_set_constant(np, "internal_fade", fade);
 }
 
-/*
-void GfxShader::bindGlobals (const GfxShaderGlobals &p)
-{
-    bindGlobals(legacy, p);
-}
-*/
-
 static void inc (const NativePair &np, int &counter, const char *name)
 {
     if (backend == GFX_GSL_BACKEND_GLSL)
@@ -637,6 +660,13 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
     }
     inc(np, counter, "global_fadeDitherMap");
 
+    if (purpose == GfxShader::DECAL) {
+        ogre_rs->_setTexture(counter, true, g.pipe->getGBufferTexture(0));
+    } else {
+        ogre_rs->_setTexture(counter, false, "");
+    }
+    inc(np, counter, "global_gbuffer0");
+
     const static char *name[] = { "global_shadowMap0", "global_shadowMap1", "global_shadowMap2" };
     for (unsigned i=0 ; i<3 ; ++i) {
         ogre_rs->_setTexture(counter, true, ogre_sm->getShadowTexture(i));
@@ -647,7 +677,6 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
             counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
         inc(np, counter, name[i]);
     }
-
 
     if (shadow_pcf_noise_map != nullptr) {
         ogre_rs->_setTexture(counter, true, shadow_pcf_noise_map->getOgreTexturePtr());
@@ -661,12 +690,7 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
     }
     inc(np, counter, "global_shadowPcfNoiseMap");
 
-    if (purpose == GfxShader::DECAL) {
-        ogre_rs->_setTexture(counter, true, g.pipe->getGBufferTexture(0));
-    } else {
-        ogre_rs->_setTexture(counter, false, "");
-    }
-    inc(np, counter, "global_gbuffer0");
+    // CAUTION!!! These texture bindings must be in alphabetical order.
 
     APP_ASSERT(counter == NUM_GLOBAL_TEXTURES);
 
@@ -691,6 +715,8 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &g, Pu
     hack_set_constant(np, "global_rayTopRight", g.rayTopRight);
     hack_set_constant(np, "global_rayBottomLeft", g.rayBottomLeft);
     hack_set_constant(np, "global_rayBottomRight", g.rayBottomRight);
+    hack_set_constant(np, "global_nearClipDistance", gfx_option(GFX_NEAR_CLIP));
+    hack_set_constant(np, "global_farClipDistance", gfx_option(GFX_FAR_CLIP));
 
     hack_set_constant(np, "global_shadowViewProj0", shadow_view_proj[0]);
     hack_set_constant(np, "global_shadowViewProj1", shadow_view_proj[1]);

@@ -37,7 +37,8 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
                                 const GfxGslAst *frag_ast,
                                 std::string &frag_output,
                                 const GfxGslEnvironment &env,
-                                bool flat_z);
+                                bool flat_z,
+                                bool das);
 
 
 void gfx_gasoline_unparse_first_person_glsl(const GfxGslContext &ctx,

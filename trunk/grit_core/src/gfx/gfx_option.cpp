@@ -40,18 +40,19 @@ GfxBoolOption gfx_bool_options[] = {
     GFX_WIREFRAME_SOLID,
     GFX_ANAGLYPH,
     GFX_CROSS_EYE,
-    GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST,
 
+    GFX_SHADOW_SIMPLE_OPTIMAL_ADJUST,
     GFX_SHADOW_AGGRESSIVE_FOCUS_REGION,
     GFX_SHADOW_FILTER_DITHER,
     GFX_SHADOW_FILTER_DITHER_TEXTURE,
     GFX_SHADOW_EMULATE_PCF,
-    GFX_POST_PROCESSING,
 
+    GFX_POST_PROCESSING,
     GFX_RENDER_PARTICLES,
     GFX_POINT_LIGHTS,
     GFX_RENDER_SKY,
     GFX_RENDER_HUD,
+
     GFX_RENDER_FIRST_PERSON
 };  
 
@@ -62,6 +63,7 @@ GfxIntOption gfx_int_options[] = {
     GFX_SHADOW_FILTER_TAPS,
     GFX_BLOOM_ITERATIONS,
     GFX_RAM,
+    GFX_DEBUG_MODE,
 };      
         
 GfxFloatOption gfx_float_options[] = {
@@ -163,6 +165,7 @@ std::string gfx_option_to_string (GfxIntOption o)
         TO_STRING_MACRO(GFX_SHADOW_FILTER_TAPS);
         TO_STRING_MACRO(GFX_BLOOM_ITERATIONS);
         TO_STRING_MACRO(GFX_RAM);
+        TO_STRING_MACRO(GFX_DEBUG_MODE);
     }
     return "UNKNOWN_INT_OPTION";
 }
@@ -255,6 +258,7 @@ void gfx_option_from_string (const std::string &s,
     FROM_STRING_INT_MACRO(GFX_SHADOW_FILTER_TAPS)
     FROM_STRING_INT_MACRO(GFX_BLOOM_ITERATIONS)
     FROM_STRING_INT_MACRO(GFX_RAM)
+    FROM_STRING_INT_MACRO(GFX_DEBUG_MODE)
 
 
     FROM_STRING_FLOAT_MACRO(GFX_FOV)
@@ -369,6 +373,8 @@ static void options_update (bool flush)
             break;
             case GFX_RAM:
             break;
+            case GFX_DEBUG_MODE:
+            break;
             case GFX_SHADOW_RES:
             shader_scene_env.shadowRes = v_new;
             reset_shadowmaps = true;
@@ -431,10 +437,10 @@ static void options_update (bool flush)
             case GFX_SHADOW_SPREAD_FACTOR2:
             reset_shadow_spread = true;
             break;
-            case GFX_SHADOW_FADE_START: break;
-            shader_scene_env.shadowFadeEnd = v_new;
+            case GFX_SHADOW_FADE_START:
+            shader_scene_env.shadowFadeStart = v_new;
             break;
-            case GFX_SHADOW_FILTER_SIZE: break;
+            case GFX_SHADOW_FILTER_SIZE:
             reset_shadow_spread = true;
             break;
             case GFX_ANAGLYPH_LEFT_RED_MASK:
@@ -467,9 +473,9 @@ static void options_update (bool flush)
     if (reset_shadow_spread) {
         shader_scene_env.shadowSpread[0] = gfx_option(GFX_SHADOW_SPREAD_FACTOR0)
                                          * gfx_option(GFX_SHADOW_FILTER_SIZE);
-        shader_scene_env.shadowSpread[1] = gfx_option(GFX_SHADOW_SPREAD_FACTOR0)
+        shader_scene_env.shadowSpread[1] = gfx_option(GFX_SHADOW_SPREAD_FACTOR1)
                                          * gfx_option(GFX_SHADOW_FILTER_SIZE);
-        shader_scene_env.shadowSpread[2] = gfx_option(GFX_SHADOW_SPREAD_FACTOR0)
+        shader_scene_env.shadowSpread[2] = gfx_option(GFX_SHADOW_SPREAD_FACTOR2)
                                          * gfx_option(GFX_SHADOW_FILTER_SIZE);
     }
 
@@ -550,6 +556,7 @@ void gfx_option_init (void)
     valid_option(GFX_SHADOW_FILTER_TAPS, new ValidOptionList<int,int[5]>(filter_taps_list));
     valid_option(GFX_BLOOM_ITERATIONS, new ValidOptionRange<int>(0,255));
     valid_option(GFX_RAM, new ValidOptionRange<int>(0,16384));
+    valid_option(GFX_DEBUG_MODE, new ValidOptionRange<int>(0,5));
 
 
     valid_option(GFX_FOV, new ValidOptionRange<float>(0.0000001f,179.0f));
@@ -624,6 +631,7 @@ void gfx_option_init (void)
     gfx_option(GFX_SHADOW_FILTER_TAPS, 4);
 
     gfx_option(GFX_RAM, 128);
+    gfx_option(GFX_DEBUG_MODE, 0);
 
 
     gfx_option(GFX_FOV, 55.0f);

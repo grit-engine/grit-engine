@@ -158,13 +158,14 @@ static inline std::string to_string (GfxGslOp op)
         case GFX_GSL_OP_DIV: return "/";
         case GFX_GSL_OP_MOD: return "%";
         case GFX_GSL_OP_EQ: return "==";
+        case GFX_GSL_OP_NE: return "!=";
         case GFX_GSL_OP_LT: return "<";
         case GFX_GSL_OP_LTE: return "<=";
         case GFX_GSL_OP_GT: return ">";
         case GFX_GSL_OP_GTE: return ">=";
         case GFX_GSL_OP_AND: return "&&";
         case GFX_GSL_OP_OR: return "||";
-        default: EXCEPTEX << "INTERNAL ERROR: Unknown binary operator: " << op << ENDL;
+        default: EXCEPTEX << "INTERNAL ERROR: Unknown binary operator: " << int(op) << ENDL;
     }
 }
 
