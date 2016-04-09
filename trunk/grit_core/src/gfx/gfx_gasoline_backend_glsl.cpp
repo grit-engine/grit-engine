@@ -276,10 +276,10 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     vert_ss << "    func_user_vertex(world_pos);\n";
     if (das) {
         vert_ss << "    Float4 clip_pos = Float4(world_pos, 1);\n";
-        vert_ss << "    clip_pos.y *= internal_rt_flip;\n";
     } else {
         vert_ss << "    Float4 clip_pos = mul(global_viewProj, Float4(world_pos, 1));\n";
     }
+    vert_ss << "    clip_pos.y *= internal_rt_flip;\n";
     // Hack to maximum depth, but avoid hitting the actual backplane.
     // (Without this dcunnin saw some black lightning-like artifacts on Nvidia.)
     if (flat_z)
@@ -402,6 +402,7 @@ void gfx_gasoline_unparse_first_person_glsl(const GfxGslContext &ctx,
     vert_ss << "    func_user_vertex(internal_pos_ws);\n";
     vert_ss << "    Float3 pos_vs = mul(global_view, Float4(internal_pos_ws, 1)).xyz;\n";
     vert_ss << "    gl_Position = mul(global_proj, Float4(pos_vs, 1));\n";
+    vert_ss << "    gl_Position.y *= internal_rt_flip;\n";
     vert_ss << "    internal_vertex_to_cam = global_cameraPos - internal_pos_ws;\n";
     vert_ss << "    internal_cam_dist = -pos_vs.z;\n";
     vert_ss << gfx_gasoline_generate_trans_encode(trans, "uvert_");

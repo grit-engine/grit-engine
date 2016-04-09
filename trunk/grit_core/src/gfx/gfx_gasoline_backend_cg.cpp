@@ -247,7 +247,6 @@ void gfx_gasoline_unparse_cg(const GfxGslContext &ctx,
     vert_ss << "    func_user_vertex(world_pos);\n";
     if (das) {
         vert_ss << "    Float4 clip_pos = Float4(world_pos, 1);\n";
-        vert_ss << "    clip_pos.y *= internal_rt_flip;\n";
     } else {
         vert_ss << "    Float4 clip_pos = mul(global_viewProj, Float4(world_pos, 1));\n";
     }
@@ -258,6 +257,8 @@ void gfx_gasoline_unparse_cg(const GfxGslContext &ctx,
     }
     if (ctx.d3d9) {
         vert_ss << "    clip_pos.z = (clip_pos.z + clip_pos.w) / 2.0;\n";
+    } else {
+        vert_ss << "    clip_pos.y *= internal_rt_flip;\n";
     }
     vert_ss << "    out_position = clip_pos;\n";
     vert_ss << gfx_gasoline_generate_trans_encode(trans, "user_");
@@ -389,6 +390,8 @@ void gfx_gasoline_unparse_first_person_cg(const GfxGslContext &ctx,
     vert_ss << "    out_position = mul(global_viewProj, Float4(world_pos, 1));\n";
     if (ctx.d3d9) {
         vert_ss << "    out_position.z = (out_position.z + out_position.w) / 2.0;\n";
+    } else {
+        vert_ss << "    out_position.y *= internal_rt_flip;\n";
     }
     vert_ss << "    internal_vertex_to_cam = global_cameraPos - world_pos;\n";
     vert_ss << gfx_gasoline_generate_trans_encode(trans, "uvert_");

@@ -71,10 +71,12 @@ GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe, const Ogre::Matrix4 
     float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
     Ogre::Matrix4 proj = proj_;
     // Invert transformed y if necessary
+    /*
     proj[1][0] *= render_target_flipping_factor;
     proj[1][1] *= render_target_flipping_factor;
     proj[1][2] *= render_target_flipping_factor;
     proj[1][3] *= render_target_flipping_factor;
+    */
     Vector3 cam_pos = from_ogre(cam->getPosition());
     Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
 
