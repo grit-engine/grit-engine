@@ -15,6 +15,8 @@
 GfxGslBackend backend = (gfx_d3d9() || getenv("GRIT_GL_CG") != nullptr)
                       ? GFX_GSL_BACKEND_CG : GFX_GSL_BACKEND_GLSL;
 
+static std::string dump_shader(getenv("GRIT_DUMP_SHADER"));
+
 typedef GfxShader::NativePair NativePair;
 
 static std::ostream &operator << (std::ostream &o, const GfxShader::Split &s)
@@ -42,10 +44,12 @@ GfxShaderGlobals gfx_shader_globals_verbatim (GfxPipeline *pipe)
     float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
     Ogre::Matrix4 proj = I;
     // Invert transformed y if necessary
+    /*
     proj[1][0] *= render_target_flipping_factor;
     proj[1][1] *= render_target_flipping_factor;
     proj[1][2] *= render_target_flipping_factor;
     proj[1][3] *= render_target_flipping_factor;
+    */
     Vector3 cam_pos = from_ogre(cam->getPosition());
     Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
 
@@ -399,6 +403,10 @@ NativePair GfxShader::getNativePair (Purpose purpose,
             }
         } catch (const Exception &e) {
             EXCEPT << name << ": " << e.msg << ENDL;
+        }
+        if (dump_shader == "*" || dump_shader == name) {
+            CVERB << name << " (vertex)\n" << output.vertexShader << std::endl;
+            CVERB << name << " (fragment)\n" << output.fragmentShader << std::endl;
         }
         vp->setSource(output.vertexShader);
         fp->setSource(output.fragmentShader);
@@ -823,6 +831,7 @@ void gfx_shader_check (const std::string &name,
 {
     GfxGslMetadata md;
     md.params = params;
+    md.d3d9 = gfx_d3d9();
     try {
         gfx_gasoline_check(src_vertex, src_dangs, src_additional, md);
     } catch (const Exception &e) {

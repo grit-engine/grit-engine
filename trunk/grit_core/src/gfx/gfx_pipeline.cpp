@@ -214,7 +214,8 @@ void gfx_pipeline_init (void)
         "    s,\n"
         "    diff_colour,\n"
         "    spec_colour\n"
-        ");\n";
+        ");\n"
+    ;
 
     deferred_lights = gfx_shader_make_or_reset("/system/DeferredLights",
                                                lights_vertex_code, "", lights_colour_code,

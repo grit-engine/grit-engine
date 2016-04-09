@@ -106,9 +106,9 @@ void GfxGslBackendUnparser::unparse (const GfxGslAst *ast_, int indent)
             ss << ast->id;
         }
     } else if (auto ast = dynamic_cast<const GfxGslLiteralInt*>(ast_)) {
-        ss << ast->val;
+        ss << "Int(" << ast->val << ")";
     } else if (auto ast = dynamic_cast<const GfxGslLiteralFloat*>(ast_)) {
-        ss << ast->val;
+        ss << "Float(" << ast->val << ")";
     } else if (auto ast = dynamic_cast<const GfxGslLiteralBoolean*>(ast_)) {
         ss << (ast->val ? "true" : "false");
     } else if (auto ast = dynamic_cast<const GfxGslVar*>(ast_)) {
