@@ -18,6 +18,7 @@
  * THE SOFTWARE.
  */
 
+#include "gfx.h"
 #include "gfx_gasoline_backend.h"
 #include "gfx_gasoline_backend_cg.h"
 #include "gfx_gasoline_type_system.h"
@@ -180,16 +181,16 @@ static std::string generate_frag_header(const GfxGslContext &ctx,
 
 
 
-void gfx_gasoline_unparse_cg (const GfxGslContext &ctx,
-                              const GfxGslTypeSystem *vert_ts,
-                              const GfxGslAst *vert_ast,
-                              std::string &vert_output,
-                              const GfxGslTypeSystem *frag_ts,
-                              const GfxGslAst *frag_ast,
-                              std::string &frag_output,
-                              const GfxGslEnvironment &env,
-                              bool flat_z,
-                              bool das)
+void gfx_gasoline_unparse_cg(const GfxGslContext &ctx,
+                             const GfxGslTypeSystem *vert_ts,
+                             const GfxGslAst *vert_ast,
+                             std::string &vert_output,
+                             const GfxGslTypeSystem *frag_ts,
+                             const GfxGslAst *frag_ast,
+                             std::string &frag_output,
+                             const GfxGslEnvironment &env,
+                             bool flat_z,
+                             bool das)
 {
     GfxGslBackendUnparser vert_backend("user_");
     vert_backend.unparse(vert_ast, 1);
@@ -211,6 +212,7 @@ void gfx_gasoline_unparse_cg (const GfxGslContext &ctx,
             vert_in.insert(tv);
             frag_vars["vert_" + tv] = frag_ts->getVertType(tv);
             break;
+
             case GfxGslTrans::INTERNAL:
             frag_vars["internal_" + tv] = frag_ts->getVertType(tv);
             break;
@@ -233,8 +235,8 @@ void gfx_gasoline_unparse_cg (const GfxGslContext &ctx,
 
     vert_ss << "void main (\n";
     // Out (trans)
-    for (unsigned i=0 ; i<trans.size() ; i+=4) {
-        unsigned sz = trans.size()-i > 4 ? 4 : trans.size()-i;
+    for (unsigned i = 0; i < trans.size(); i += 4) {
+        unsigned sz = trans.size() - i > 4 ? 4 : trans.size() - i;
         std::stringstream type;
         type << "Float";
         if (sz > 1) type << sz;
@@ -250,10 +252,14 @@ void gfx_gasoline_unparse_cg (const GfxGslContext &ctx,
     } else {
         vert_ss << "    Float4 clip_pos = mul(global_viewProj, Float4(world_pos, 1));\n";
     }
-    // Hack to maximum depth, but avoid hitting the actual backplane.
-    // (Without this dcunnin saw some black lightning-like artifacts on Nvidia.)
-    if (flat_z)
+    if (flat_z) {
+        // Hack to maximum depth, but avoid hitting the actual backplane.
+        // (Without this dcunnin saw some black lightning-like artifacts on Nvidia.)
         vert_ss << "    clip_pos.z = clip_pos.w * (1 - 1.0/65536);\n";
+    }
+    if (gfx_d3d9()) {
+        vert_ss << "    clip_pos.z = (clip_pos.z + clip_pos.w) / 2.0;\n";
+    }
     vert_ss << "    out_position = clip_pos;\n";
     vert_ss << gfx_gasoline_generate_trans_encode(trans, "user_");
     vert_ss << "}\n";
@@ -278,6 +284,10 @@ void gfx_gasoline_unparse_cg (const GfxGslContext &ctx,
     frag_ss << ") {\n";
 
     frag_ss << "    frag_screen = wpos.xy + Float2(0.5, 0.5);\n";
+    // Due to a bug in CG targeting ps_3_0, wpos is origin top right, so correct that:
+    if (gfx_d3d9()) {
+        frag_ss << "    frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
+    }
     frag_ss << "    if (internal_rt_flip < 0)\n";
     frag_ss << "        frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "vert_", GfxGslTrans::VERT);
@@ -291,9 +301,9 @@ void gfx_gasoline_unparse_cg (const GfxGslContext &ctx,
         // Whether we are using d3d9 or gl rendersystems,
         // ogre gives us the view_proj in a 'standard' form, which is
         // right-handed with a depth range of [-1,+1].
-        // Since we are outputing depth in the fragment shader, the range is [0,1]
-        frag_ss << "Float4 projected = mul(global_viewProj, Float4(user_pos_ws, 1));\n";
-        frag_ss << "out_depth = 0.5 + (projected.z / projected.w) / 2.0;\n";
+        // Since we are outputing depth in the fragment shader, the range either way is [0,1]
+        frag_ss << "    Float4 projected = mul(global_viewProj, Float4(user_pos_ws, 1));\n";
+        frag_ss << "    out_depth = 0.5 + (projected.z / projected.w) / 2.0;\n";
     }
     frag_ss << "}\n";
 
@@ -378,6 +388,9 @@ void gfx_gasoline_unparse_first_person_cg(const GfxGslContext &ctx,
     vert_ss << "    Float3 world_pos;\n";
     vert_ss << "    func_user_vertex(world_pos);\n";
     vert_ss << "    out_position = mul(global_viewProj, Float4(world_pos, 1));\n";
+    if (gfx_d3d9()) {
+        vert_ss << "    out_position.z = (out_position.z + out_position.w) / 2.0;\n";
+    }
     vert_ss << "    internal_vertex_to_cam = global_cameraPos - world_pos;\n";
     vert_ss << gfx_gasoline_generate_trans_encode(trans, "uvert_");
     vert_ss << "}\n";
@@ -404,6 +417,10 @@ void gfx_gasoline_unparse_first_person_cg(const GfxGslContext &ctx,
     frag_ss << "{\n";
 
     frag_ss << "    frag_screen = wpos.xy + Float2(0.5, 0.5);\n";
+    // Due to a bug in CG targeting ps_3_0, wpos is origin top right, so correct that:
+    if (gfx_d3d9()) {
+        frag_ss << "    frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
+    }
     frag_ss << "    if (internal_rt_flip < 0)\n";
     frag_ss << "        frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "vert_", GfxGslTrans::VERT);

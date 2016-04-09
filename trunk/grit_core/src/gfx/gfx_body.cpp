@@ -857,7 +857,7 @@ void gfx_body_render_first_person (GfxPipeline *p, bool alpha_blend)
     frustum.setFocalLength(1);
 
     GfxShaderGlobals g =
-        gfx_shader_globals_cam(p, frustum.getProjectionMatrixWithRSDepth());
+        gfx_shader_globals_cam(p, frustum.getProjectionMatrix());
 
     // Render, to HDR buffer
     // TODO: receive shadow

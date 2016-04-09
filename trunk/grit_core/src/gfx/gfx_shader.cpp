@@ -93,7 +93,7 @@ GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe, const Ogre::Matrix4 
 GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe)
 {
     Ogre::Camera *cam = pipe->getCamera();
-    return gfx_shader_globals_cam(pipe, cam->getProjectionMatrixWithRSDepth());
+    return gfx_shader_globals_cam(pipe, cam->getProjectionMatrix());
 }
 
 void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
