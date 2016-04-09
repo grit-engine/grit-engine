@@ -18,7 +18,6 @@
  * THE SOFTWARE.
  */
 
-#include "gfx.h"
 #include "gfx_gasoline_backend.h"
 #include "gfx_gasoline_backend_cg.h"
 #include "gfx_gasoline_type_system.h"
@@ -257,7 +256,7 @@ void gfx_gasoline_unparse_cg(const GfxGslContext &ctx,
         // (Without this dcunnin saw some black lightning-like artifacts on Nvidia.)
         vert_ss << "    clip_pos.z = clip_pos.w * (1 - 1.0/65536);\n";
     }
-    if (gfx_d3d9()) {
+    if (ctx.d3d9) {
         vert_ss << "    clip_pos.z = (clip_pos.z + clip_pos.w) / 2.0;\n";
     }
     vert_ss << "    out_position = clip_pos;\n";
@@ -285,7 +284,7 @@ void gfx_gasoline_unparse_cg(const GfxGslContext &ctx,
 
     frag_ss << "    frag_screen = wpos.xy + Float2(0.5, 0.5);\n";
     // Due to a bug in CG targeting ps_3_0, wpos is origin top right, so correct that:
-    if (gfx_d3d9()) {
+    if (ctx.d3d9) {
         frag_ss << "    frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
     }
     frag_ss << "    if (internal_rt_flip < 0)\n";
@@ -388,7 +387,7 @@ void gfx_gasoline_unparse_first_person_cg(const GfxGslContext &ctx,
     vert_ss << "    Float3 world_pos;\n";
     vert_ss << "    func_user_vertex(world_pos);\n";
     vert_ss << "    out_position = mul(global_viewProj, Float4(world_pos, 1));\n";
-    if (gfx_d3d9()) {
+    if (ctx.d3d9) {
         vert_ss << "    out_position.z = (out_position.z + out_position.w) / 2.0;\n";
     }
     vert_ss << "    internal_vertex_to_cam = global_cameraPos - world_pos;\n";
@@ -418,7 +417,7 @@ void gfx_gasoline_unparse_first_person_cg(const GfxGslContext &ctx,
 
     frag_ss << "    frag_screen = wpos.xy + Float2(0.5, 0.5);\n";
     // Due to a bug in CG targeting ps_3_0, wpos is origin top right, so correct that:
-    if (gfx_d3d9()) {
+    if (ctx.d3d9) {
         frag_ss << "    frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
     }
     frag_ss << "    if (internal_rt_flip < 0)\n";

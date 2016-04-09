@@ -198,6 +198,7 @@ int main (int argc, char **argv)
         md.env.envBoxes = env_boxes;
         md.env.instanced = instanced;
         md.env.boneWeights = bones;
+        md.d3d9 = true;
 
         GfxGasolineResult shaders;
         try {

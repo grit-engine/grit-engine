@@ -171,42 +171,42 @@ void gfx_pipeline_init (void)
 
 
     std::string lights_vertex_code =
-        "out.position = vert.position.xyz;\n"
-        "var pos_cs = mul(global.viewProj, Float4(out.position, 1));\n"
-        "var uv_ = pos_cs.xyw;\n";
+        "out.position = vert.position.xyz;\n";
+
 
     std::string lights_colour_code =
-        "var uv = uv_.xy/uv_.z;\n"
-        "uv = uv * Float2(0.5,-0.5) + Float2(0.5,0.5);\n"
-        "var ray = lerp(lerp(global.rayBottomLeft, global.rayBottomRight, uv.x),\n"
-        "               lerp(global.rayTopLeft, global.rayTopRight, uv.x),\n"
+        "var uv = frag.screen / global.viewportSize;\n"
+        "uv.y = 1 - uv.y;\n"
+        "var ray = lerp(lerp(global.rayTopLeft, global.rayTopRight, uv.x),\n"
+        "               lerp(global.rayBottomLeft, global.rayBottomRight, uv.x),\n"
         "               uv.y);\n"
-        + std::string(gfx_d3d9() ? "uv = uv + Float2(0.5, 0.5) / global.viewportSize.xy;\n" : "")
+        // This code shouldn't be needed if frag.screen is working properly.
+        //+ std::string(gfx_d3d9() ? "uv = uv + Float2(0.5, 0.5) / global.viewportSize.xy;\n" : "")
         + deferred_colour_code +
         "var light_aim_ws = vert.normal;\n"
-        "var light_pos_ws = vert.coord0.xyz;\n"
-        "var inner = vert.coord1.x;\n"
-        "var outer = vert.coord1.y;\n"
-        "var range = vert.coord1.z;\n"
-        "var diff_colour = vert.coord2.xyz;\n"
-        "var spec_colour = vert.coord3.xyz;\n"
+        "var light_pos_ws = vert.coord2.xyz;\n"
+        "var inner = vert.coord3.x;\n"
+        "var outer = vert.coord3.y;\n"
+        "var range = vert.coord3.z;\n"
+        "var diff_colour = vert.coord0.xyz;\n"
+        "var spec_colour = vert.coord1.xyz;\n"
 
         "var light_ray_ws = light_pos_ws - pos_ws;\n"
         "var light_dist = length(light_ray_ws);\n"
-        "var light_dir_ws = light_ray_ws / light_dist;\n"
+        "var surf_to_light = light_ray_ws / light_dist;\n"
 
         "var dist = min(1.0, light_dist / range);\n"
         // This is the fadeoff equation that should probably be changed.
         "var light_intensity = 2*dist*dist*dist - 3*dist*dist + 1;\n"
 
-        "var angle = -dot(light_aim_ws, light_dir_ws);\n"
+        "var angle = -dot(light_aim_ws, surf_to_light);\n"
         "if (outer != inner) {\n"
         "    var occlusion = clamp((angle-inner)/(outer-inner), 0.0, 1.0);\n"
         "    light_intensity = light_intensity * (1 - occlusion);\n"
         "}\n"
 
         "out.colour = light_intensity * punctual_lighting(\n"
-        "    -light_dir_ws,\n"
+        "    surf_to_light,\n"
         "    v2c,\n"
         "    d,\n"
         "    normal_ws,\n"
@@ -282,19 +282,19 @@ public:
         mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
                                                                 Ogre::VES_NORMAL);
         mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-        // light centre (same for all 8 corners of the cube)
+        // diffuse colour (same for all 8 corners of the cube)
         mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
                                                                 Ogre::VES_TEXTURE_COORDINATES, 0);
         mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-        // inner/outer cone dot product and range (same for all 8 corners of the cube)
+        // specular colour (same for all 8 corners of the cube)
         mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
                                                                 Ogre::VES_TEXTURE_COORDINATES, 1);
         mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-        // diffuse colour (same for all 8 corners of the cube)
+        // light centre (same for all 8 corners of the cube)
         mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
                                                                 Ogre::VES_TEXTURE_COORDINATES, 2);
         mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-        // specular colour (same for all 8 corners of the cube)
+        // inner/outer cone dot product and range (same for all 8 corners of the cube)
         mVertexData.vertexDeclaration->addElement(0, mDeclSize, Ogre::VET_FLOAT3,
                                                                 Ogre::VES_TEXTURE_COORDINATES, 3);
         mDeclSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);

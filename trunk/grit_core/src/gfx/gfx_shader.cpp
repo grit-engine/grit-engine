@@ -366,6 +366,7 @@ NativePair GfxShader::getNativePair (Purpose purpose,
         GfxGslMetadata md;
         md.params = params;
         md.env = env;
+        md.d3d9 = gfx_d3d9();
 
         GfxGasolineResult output;
         try {

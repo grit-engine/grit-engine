@@ -354,7 +354,7 @@ struct GfxGslMetadata {
     GfxGslRunParams params;
     // Environment
     GfxGslEnvironment env;
-
+    bool d3d9;
 };
 
 void gfx_gasoline_check (const std::string &vert_prog,

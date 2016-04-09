@@ -139,6 +139,7 @@ struct GfxGslContext {
     GfxGslTypeMap matFields;
     GfxGslTypeMap bodyFields;
     GfxGslUnboundTextures ubt;
+    bool d3d9;
 
     const GfxGslType *getMatType (const std::string &f) const
     {

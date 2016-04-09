@@ -381,7 +381,8 @@ static GfxGasolineResult type_check (const std::string &vert_prog,
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.env.ubt
+        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.env.ubt,
+        md.d3d9,
     };
 
     GfxGslAst *vert_ast;
