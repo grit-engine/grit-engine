@@ -1,0 +1,90 @@
+// -*- C++ -*-
+// PURPOSE: File containing definition of token-identifier and
+//          a function that maps token identifiers to a string
+//          name.
+//
+// NOTE: This file has been created automatically by a
+//       quex program.
+//
+// DATE: Tue Oct  7 17:53:08 2008
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+#ifndef __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2008y10m7d_17h53m08s__
+#define __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2008y10m7d_17h53m08s__
+
+#include<cstdio> // for: 'std::sprintf'
+#include<map>    // for: 'token-id' <-> 'name map'
+
+/* Definition of essential token identifiers that the analyser engine requires. */
+#if defined(__QUEX_TOKEN_ID_TERMINATION) || defined(__QUEX_TOKEN_ID_UNINITIALIZED)
+#    error "Token identifiers for 'termination' and/or 'unilitialized' have been defined previously. This indicates that the inclusion sequence is incorrect. For example the file 'quex/code_base/descriptions' shall **not** be included before this file."
+#endif
+/* Note, we can very well refer in macros to things that are defined below. */
+#define __QUEX_TOKEN_ID_TERMINATION    (QUEX_TKN_TERMINATION)
+#define __QUEX_TOKEN_ID_UNINITIALIZED  (QUEX_TKN_UNINITIALIZED)
+
+/* The token class definition file can only be included after the two token identifiers have
+ * been defined. Otherwise, it would rely on default values. */
+#include "quex/code_base/Token"
+
+#define QUEX_TKN_BRACKET_CLOSE ((QUEX_TOKEN_ID_TYPE)10000)
+#define QUEX_TKN_BRACKET_OPEN  ((QUEX_TOKEN_ID_TYPE)10001)
+#define QUEX_TKN_EXPECT        ((QUEX_TOKEN_ID_TYPE)10002)
+#define QUEX_TKN_IDENTIFIER    ((QUEX_TOKEN_ID_TYPE)10003)
+#define QUEX_TKN_NUMBER        ((QUEX_TOKEN_ID_TYPE)10004)
+#define QUEX_TKN_SEMICOLON     ((QUEX_TOKEN_ID_TYPE)10005)
+#define QUEX_TKN_SEND          ((QUEX_TOKEN_ID_TYPE)10006)
+#define QUEX_TKN_STRUCT        ((QUEX_TOKEN_ID_TYPE)10007)
+#define QUEX_TKN_TERMINATION   ((QUEX_TOKEN_ID_TYPE)0)
+#define QUEX_TKN_TYPE_DOUBLE   ((QUEX_TOKEN_ID_TYPE)10008)
+#define QUEX_TKN_TYPE_INT      ((QUEX_TOKEN_ID_TYPE)10009)
+#define QUEX_TKN_UNINITIALIZED ((QUEX_TOKEN_ID_TYPE)1)
+
+
+namespace quex {
+
+
+    inline const std::string&
+    Token::map_id_to_name(const QUEX_TOKEN_ID_TYPE TokenID)
+    {
+       static bool virginity_f = true;
+       static std::map<QUEX_TOKEN_ID_TYPE, std::string>  db;
+       static std::string  error_string("");
+       static std::string  uninitialized_string("<UNINITIALIZED>");
+       static std::string  termination_string("<TERMINATION>");
+       
+       // NOTE: In general no assumptions can be made that the QUEX_TOKEN_ID_TYPE
+       //       is an integer. Thus, no switch statement is used. 
+       if( virginity_f ) {
+           virginity_f = false;
+           // Create the Database mapping TokenID -> TokenName
+           
+           db[QUEX_TKN_UNINITIALIZED] = std::string("UNINITIALIZED");
+           db[QUEX_TKN_BRACKET_CLOSE] = std::string("BRACKET_CLOSE");
+           db[QUEX_TKN_TYPE_INT]      = std::string("TYPE_INT");
+           db[QUEX_TKN_STRUCT]        = std::string("STRUCT");
+           db[QUEX_TKN_SEMICOLON]     = std::string("SEMICOLON");
+           db[QUEX_TKN_BRACKET_OPEN]  = std::string("BRACKET_OPEN");
+           db[QUEX_TKN_NUMBER]        = std::string("NUMBER");
+           db[QUEX_TKN_SEND]          = std::string("SEND");
+           db[QUEX_TKN_TYPE_DOUBLE]   = std::string("TYPE_DOUBLE");
+           db[QUEX_TKN_EXPECT]        = std::string("EXPECT");
+           db[QUEX_TKN_TERMINATION]   = std::string("TERMINATION");
+           db[QUEX_TKN_IDENTIFIER]    = std::string("IDENTIFIER");
+       }
+
+       if     ( TokenID == __QUEX_TOKEN_ID_TERMINATION ) return termination_string;
+       else if( TokenID == __QUEX_TOKEN_ID_UNINITIALIZED ) return uninitialized_string;
+       std::map<QUEX_TOKEN_ID_TYPE, std::string>::const_iterator it = db.find(TokenID);
+       if( it != db.end() ) return (*it).second;
+       else {
+          char tmp[64];
+          std::sprintf(tmp, "<UNKNOWN TOKEN-ID: %i>", int(TokenID));
+          error_string = std::string(tmp);
+          return error_string;
+       }
+    }
+
+
+}
+#endif // __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_GENERATED__

@@ -1,0 +1,25 @@
+// This file has to be encoded in UTF-8
+token {
+	DUMMY
+}
+
+start = ONE_AND_ONLY;
+
+mode ONE_AND_ONLY
+{
+	
+	<<EOF>>     => TKN_TERMINATION;
+	([0-9]+[.][0-9]*)|([.][0-9]+)|([0-9]+)		=> TKN_NUM(Lexeme);//{self.send(TKN_NUM, Lexeme);RETURN;}
+	[ \t]+		{}
+	['\n']		{self.send('\n');RETURN;}
+	['+']		{self.send('+');RETURN;}
+	['\-']		{self.send('-');RETURN;}
+	['*']		{self.send('*');RETURN;}
+	['/']		{self.send('/');RETURN;}
+	['^']		{self.send('^');RETURN;}
+	['(']		{self.send('(');RETURN;}
+	[')']		{self.send(')');RETURN;}
+	
+}
+
+

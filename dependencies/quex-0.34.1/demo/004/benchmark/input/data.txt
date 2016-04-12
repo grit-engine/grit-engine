@@ -1,0 +1,76 @@
+#include {P_INCLUDE_FILE2}
+#  include{P_INCLUDE_FILE1}
+#define 
+#if     
+#ifdef  
+#ifndef 
+#endif  
+#else   
+#  pragma 
+#     error  
+defined           
+\
+unsigned 
+int      
+long     
+float    
+double   
+char     
+#          
+##         
+?          
+~          
+(          
+)          
+[          
+]          
+{          
+}          
+=          
++          
+-          
+*          
+/          
+%          
++=         
+-=         
+*=         
+/=         
+==         
+!=         
+>          
+>=         
+<          
+<=         
+!          
+|          
+^          
+||         
+&          
+&&         
+:          
+struct       
+const        
+if           
+else         
+switch       
+for          
+do           
+while        
+break        
+continue     
+;          
+.          
+,          
+
+OttoWalkes
+3.142
+"This is a string"
+'\0'
+/* This is a nice little comment */
+// This is another comment
+// This is another comment
+// This is another comment
+// This is another comment
+// This is another comment
+// This is another comm

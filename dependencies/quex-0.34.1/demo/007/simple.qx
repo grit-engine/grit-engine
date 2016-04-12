@@ -1,0 +1,41 @@
+// -*- C++ -*- vim: set syntax=cpp:
+start = DERIVED;
+
+mode BASE :
+<inheritable: only>  
+{    
+    <<EOF>> {
+        self.send(quex::token::ID_TERMINATION);
+        RETURN;
+    }
+    "."         => QUEX_TKN_PERIOD;
+    ","         => QUEX_TKN_PERIOD;
+    "Fischer's" => QUEX_TKN_FISCHERS;
+    [a-z]+      => QUEX_TKN_FISCHES(Lexeme);
+    "Fritz"     => QUEX_TKN_FRITZ;
+    [A-Z][a-z]+ => QUEX_TKN_FISCH(Lexeme);
+    "Nothing"   => QUEX_TKN_NOTHING;
+
+    // Test, that the skippers follow the same rule as every other pattern:
+    // longer match precedes. Earlier match precedes.
+    "/*-+"      => QUEX_TKN_MATH_OPERATOR_LIST;
+}
+
+
+mode DERIVED : BASE
+<skip:       [ \n\t]>
+<skip_range: "/*" "*/">
+<skip_range: "//" "\n">
+{
+    "Nothing"     DELETION;
+
+    "grabs"       => QUEX_TKN_GRABS;
+    "Swordfish"   => QUEX_TKN_SWORDFISH;
+    [a-z]+        PRIORITY-MARK;
+    "hunts"       => QUEX_TKN_FOOLS_AROUND;
+    "Trouts"      => QUEX_TKN_TROUTS;
+    [A-Z][a-z]+   PRIORITY-MARK;
+    "catches"     => QUEX_TKN_FOOLS_AROUND;
+    "Sharks"      => QUEX_TKN_SOMETHING_IMPOSSIBLE;
+}
+

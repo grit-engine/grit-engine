@@ -1,0 +1,5 @@
+0.25.8:  Replacement of empty functions with empty macros. This guided
+         suprisingly to significant speed improvements.
+0.25.9:  Improvement of line and column number handling. The side effects
+         on scenarios where no line/column counting was required were
+         avoided.

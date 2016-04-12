@@ -1,0 +1,37 @@
+// -*- C++ -*-
+header {
+#include <cstdlib>  // for: atoi()
+}
+
+token {
+   IDENTIFIER
+   STRUCT
+   TYPE_INT
+   TYPE_DOUBLE
+   SEND
+   EXPECT
+   SEMICOLON
+   BRACKET_OPEN
+   BRACKET_CLOSE
+   NUMBER
+}
+
+mode ONE_AND_ONLY
+{
+    <<EOF>>     => QUEX_TKN_TERMINATION;
+
+    [ \t\r\n]+  { }
+    "struct"    => QUEX_TKN_STRUCT;
+    "int"       => QUEX_TKN_TYPE_INT;
+    "double"    => QUEX_TKN_TYPE_DOUBLE;
+    "send"      => QUEX_TKN_SEND;
+    "expect"    => QUEX_TKN_EXPECT;
+    ";"         => QUEX_TKN_SEMICOLON;
+    "{"         => QUEX_TKN_BRACKET_OPEN;
+    "}"         => QUEX_TKN_BRACKET_CLOSE;
+    [0-9]+      => QUEX_TKN_NUMBER(atoi((char*)Lexeme));
+    [_a-zA-Z]+  { self.send(QUEX_TKN_IDENTIFIER, Lexeme); RETURN; }
+}
+
+
+

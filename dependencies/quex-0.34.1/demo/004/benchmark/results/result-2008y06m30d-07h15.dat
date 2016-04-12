@@ -1,0 +1,576 @@
+// TokenN: 59917 [1]
+// FileSize: 59918 [Byte] = 58.5137 [kB] = 0.0571423 [MB].
+//Benchmark (including overhead)
+//    TokenN: 59918
+//    Total Time:  10 [sec]
+//    Runs:        6200 [1]
+//    TimePerRun:  0.0016129 [sec]
+//    Time / Char:         2.69185e-08
+//    Clock Cycles / Char: 50.2504
+// Overhead:
+//     Checksum (meaningless): 12413389 [1]
+//    Total Time:  2.42 [sec]
+//    Runs:        6200 [1]
+//    TimePerRun:  0.000390323 [sec]
+//    Time / Char:         6.51428e-09
+//    Clock Cycles / Char: 12.1606
+//Result:
+//   Time / Run:          0.00122258
+//   Time / Char:         2.04042e-08
+//   Clock Cycles / Char: 38.0898
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98319}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {many-tiny-tokens.c}, 
+   file_size    = {59918}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {true},
+   column_count = {true},
+   note         = {}, 
+   repetition_n               = {6200}, 
+   time_per_repetition        = {0.00122258},
+   token_n                    = {59917}, 
+   clock_cycles_per_character = {38.0898}, 
+   clock_cycles_per_token     = {38.0904}, 
+}
+
+// TokenN: 1 [1]
+// FileSize: 38149 [Byte] = 37.2549 [kB] = 0.0363817 [MB].
+//Benchmark (including overhead)
+//    TokenN: 1.99998
+//    Total Time:  10 [sec]
+//    Runs:        41865 [1]
+//    TimePerRun:  0.000238863 [sec]
+//    Time / Char:         6.26132e-09
+//    Clock Cycles / Char: 11.6884
+// Overhead:
+//     Checksum (meaningless): 10680225 [1]
+//    Total Time:  0.68 [sec]
+//    Runs:        41865 [1]
+//    TimePerRun:  1.62427e-05 [sec]
+//    Time / Char:         4.2577e-10
+//    Clock Cycles / Char: 0.79481
+//Result:
+//   Time / Run:          0.00022262
+//   Time / Char:         5.83555e-09
+//   Clock Cycles / Char: 10.8936
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98319}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {single-large-token.c}, 
+   file_size    = {38149}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {true},
+   column_count = {true},
+   note         = {}, 
+   repetition_n               = {41865}, 
+   time_per_repetition        = {0.00022262},
+   token_n                    = {1}, 
+   clock_cycles_per_character = {10.8936}, 
+   clock_cycles_per_token     = {415579}, 
+}
+
+// TokenN: 244822 [1]
+// FileSize: 1585337 [Byte] = 1548.18 [kB] = 1.5119 [MB].
+//Benchmark (including overhead)
+//    TokenN: 244823
+//    Total Time:  10.01 [sec]
+//    Runs:        400 [1]
+//    TimePerRun:  0.025025 [sec]
+//    Time / Char:         1.57853e-08
+//    Clock Cycles / Char: 29.4673
+// Overhead:
+//     Checksum (meaningless): 10567244 [1]
+//    Total Time:  0.62 [sec]
+//    Runs:        400 [1]
+//    TimePerRun:  0.00155 [sec]
+//    Time / Char:         9.7771e-10
+//    Clock Cycles / Char: 1.82515
+//Result:
+//   Time / Run:          0.023475
+//   Time / Char:         1.48076e-08
+//   Clock Cycles / Char: 27.6422
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98319}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {linux-2.6.22.17-kernel-dir.c}, 
+   file_size    = {1585337}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {true},
+   column_count = {true},
+   note         = {}, 
+   repetition_n               = {400}, 
+   time_per_repetition        = {0.023475},
+   token_n                    = {244822}, 
+   clock_cycles_per_character = {27.6422}, 
+   clock_cycles_per_token     = {178.996}, 
+}
+
+// TokenN: 59917 [1]
+// FileSize: 59918 [Byte] = 58.5137 [kB] = 0.0571423 [MB].
+//Benchmark (including overhead)
+//    TokenN: 59918
+//    Total Time:  10 [sec]
+//    Runs:        6849 [1]
+//    TimePerRun:  0.00146007 [sec]
+//    Time / Char:         2.43678e-08
+//    Clock Cycles / Char: 45.4888
+// Overhead:
+//     Checksum (meaningless): 12596530 [1]
+//    Total Time:  2.64 [sec]
+//    Runs:        6849 [1]
+//    TimePerRun:  0.000385458 [sec]
+//    Time / Char:         6.43309e-09
+//    Clock Cycles / Char: 12.009
+//Result:
+//   Time / Run:          0.00107461
+//   Time / Char:         1.79347e-08
+//   Clock Cycles / Char: 33.4797
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98257}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {many-tiny-tokens.c}, 
+   file_size    = {59918}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {false},
+   column_count = {false},
+   note         = {}, 
+   repetition_n               = {6849}, 
+   time_per_repetition        = {0.00107461},
+   token_n                    = {59917}, 
+   clock_cycles_per_character = {33.4797}, 
+   clock_cycles_per_token     = {33.4803}, 
+}
+
+// TokenN: 1 [1]
+// FileSize: 38149 [Byte] = 37.2549 [kB] = 0.0363817 [MB].
+//Benchmark (including overhead)
+//    TokenN: 1.99998
+//    Total Time:  10 [sec]
+//    Runs:        40756 [1]
+//    TimePerRun:  0.000245363 [sec]
+//    Time / Char:         6.43169e-09
+//    Clock Cycles / Char: 12.0064
+// Overhead:
+//     Checksum (meaningless): 10680246 [1]
+//    Total Time:  0.68 [sec]
+//    Runs:        40756 [1]
+//    TimePerRun:  1.66847e-05 [sec]
+//    Time / Char:         4.37355e-10
+//    Clock Cycles / Char: 0.816437
+//Result:
+//   Time / Run:          0.000228678
+//   Time / Char:         5.99434e-09
+//   Clock Cycles / Char: 11.19
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98257}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {single-large-token.c}, 
+   file_size    = {38149}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {false},
+   column_count = {false},
+   note         = {}, 
+   repetition_n               = {40756}, 
+   time_per_repetition        = {0.000228678},
+   token_n                    = {1}, 
+   clock_cycles_per_character = {11.19}, 
+   clock_cycles_per_token     = {426887}, 
+}
+
+// TokenN: 244822 [1]
+// FileSize: 1585337 [Byte] = 1548.18 [kB] = 1.5119 [MB].
+//Benchmark (including overhead)
+//    TokenN: 244823
+//    Total Time:  10.02 [sec]
+//    Runs:        445 [1]
+//    TimePerRun:  0.0225169 [sec]
+//    Time / Char:         1.42032e-08
+//    Clock Cycles / Char: 26.514
+// Overhead:
+//     Checksum (meaningless): 10487523 [1]
+//    Total Time:  0.69 [sec]
+//    Runs:        445 [1]
+//    TimePerRun:  0.00155056 [sec]
+//    Time / Char:         9.78064e-10
+//    Clock Cycles / Char: 1.82581
+//Result:
+//   Time / Run:          0.0209663
+//   Time / Char:         1.32251e-08
+//   Clock Cycles / Char: 24.6881
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98257}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {linux-2.6.22.17-kernel-dir.c}, 
+   file_size    = {1585337}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {false},
+   column_count = {false},
+   note         = {}, 
+   repetition_n               = {445}, 
+   time_per_repetition        = {0.0209663},
+   token_n                    = {244822}, 
+   clock_cycles_per_character = {24.6881}, 
+   clock_cycles_per_token     = {159.867}, 
+}
+
+// TokenN: 59917 [1]
+// FileSize: 59918 [Byte] = 58.5137 [kB] = 0.0571423 [MB].
+//Benchmark (including overhead)
+//    TokenN: 59918
+//    Total Time:  10 [sec]
+//    Runs:        6167 [1]
+//    TimePerRun:  0.00162153 [sec]
+//    Time / Char:         2.70626e-08
+//    Clock Cycles / Char: 50.5193
+// Overhead:
+//     Checksum (meaningless): 12331679 [1]
+//    Total Time:  2.37 [sec]
+//    Runs:        6167 [1]
+//    TimePerRun:  0.000384304 [sec]
+//    Time / Char:         6.41382e-09
+//    Clock Cycles / Char: 11.9731
+//Result:
+//   Time / Run:          0.00123723
+//   Time / Char:         2.06487e-08
+//   Clock Cycles / Char: 38.5462
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98319}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {many-tiny-tokens.c}, 
+   file_size    = {59918}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {true},
+   column_count = {true},
+   note         = {}, 
+   repetition_n               = {6167}, 
+   time_per_repetition        = {0.00123723},
+   token_n                    = {59917}, 
+   clock_cycles_per_character = {38.5462}, 
+   clock_cycles_per_token     = {38.5469}, 
+}
+
+// TokenN: 1 [1]
+// FileSize: 38149 [Byte] = 37.2549 [kB] = 0.0363817 [MB].
+//Benchmark (including overhead)
+//    TokenN: 1.99998
+//    Total Time:  10 [sec]
+//    Runs:        42406 [1]
+//    TimePerRun:  0.000235816 [sec]
+//    Time / Char:         6.18144e-09
+//    Clock Cycles / Char: 11.5393
+// Overhead:
+//     Checksum (meaningless): 10700101 [1]
+//    Total Time:  0.7 [sec]
+//    Runs:        42406 [1]
+//    TimePerRun:  1.65071e-05 [sec]
+//    Time / Char:         4.32701e-10
+//    Clock Cycles / Char: 0.807748
+//Result:
+//   Time / Run:          0.000219309
+//   Time / Char:         5.74874e-09
+//   Clock Cycles / Char: 10.7315
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98319}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {single-large-token.c}, 
+   file_size    = {38149}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {true},
+   column_count = {true},
+   note         = {}, 
+   repetition_n               = {42406}, 
+   time_per_repetition        = {0.000219309},
+   token_n                    = {1}, 
+   clock_cycles_per_character = {10.7315}, 
+   clock_cycles_per_token     = {409397}, 
+}
+
+// TokenN: 244822 [1]
+// FileSize: 1585337 [Byte] = 1548.18 [kB] = 1.5119 [MB].
+//Benchmark (including overhead)
+//    TokenN: 244823
+//    Total Time:  10.01 [sec]
+//    Runs:        400 [1]
+//    TimePerRun:  0.025025 [sec]
+//    Time / Char:         1.57853e-08
+//    Clock Cycles / Char: 29.4673
+// Overhead:
+//     Checksum (meaningless): 10588001 [1]
+//    Total Time:  0.6 [sec]
+//    Runs:        400 [1]
+//    TimePerRun:  0.0015 [sec]
+//    Time / Char:         9.46171e-10
+//    Clock Cycles / Char: 1.76627
+//Result:
+//   Time / Run:          0.023525
+//   Time / Char:         1.48391e-08
+//   Clock Cycles / Char: 27.7011
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98319}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {linux-2.6.22.17-kernel-dir.c}, 
+   file_size    = {1585337}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {true},
+   column_count = {true},
+   note         = {}, 
+   repetition_n               = {400}, 
+   time_per_repetition        = {0.023525},
+   token_n                    = {244822}, 
+   clock_cycles_per_character = {27.7011}, 
+   clock_cycles_per_token     = {179.377}, 
+}
+
+// TokenN: 59917 [1]
+// FileSize: 59918 [Byte] = 58.5137 [kB] = 0.0571423 [MB].
+//Benchmark (including overhead)
+//    TokenN: 59918
+//    Total Time:  10 [sec]
+//    Runs:        6799 [1]
+//    TimePerRun:  0.0014708 [sec]
+//    Time / Char:         2.4547e-08
+//    Clock Cycles / Char: 45.8233
+// Overhead:
+//     Checksum (meaningless): 12657669 [1]
+//    Total Time:  2.7 [sec]
+//    Runs:        6799 [1]
+//    TimePerRun:  0.000397117 [sec]
+//    Time / Char:         6.62768e-09
+//    Clock Cycles / Char: 12.3723
+//Result:
+//   Time / Run:          0.00107369
+//   Time / Char:         1.79193e-08
+//   Clock Cycles / Char: 33.451
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98257}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {many-tiny-tokens.c}, 
+   file_size    = {59918}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {false},
+   column_count = {false},
+   note         = {}, 
+   repetition_n               = {6799}, 
+   time_per_repetition        = {0.00107369},
+   token_n                    = {59917}, 
+   clock_cycles_per_character = {33.451}, 
+   clock_cycles_per_token     = {33.4516}, 
+}
+
+// TokenN: 1 [1]
+// FileSize: 38149 [Byte] = 37.2549 [kB] = 0.0363817 [MB].
+//Benchmark (including overhead)
+//    TokenN: 1.99998
+//    Total Time:  10 [sec]
+//    Runs:        40839 [1]
+//    TimePerRun:  0.000244864 [sec]
+//    Time / Char:         6.41862e-09
+//    Clock Cycles / Char: 11.982
+// Overhead:
+//     Checksum (meaningless): 10670004 [1]
+//    Total Time:  0.67 [sec]
+//    Runs:        40839 [1]
+//    TimePerRun:  1.64059e-05 [sec]
+//    Time / Char:         4.30048e-10
+//    Clock Cycles / Char: 0.802796
+//Result:
+//   Time / Run:          0.000228458
+//   Time / Char:         5.98857e-09
+//   Clock Cycles / Char: 11.1792
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98257}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {single-large-token.c}, 
+   file_size    = {38149}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {false},
+   column_count = {false},
+   note         = {}, 
+   repetition_n               = {40839}, 
+   time_per_repetition        = {0.000228458},
+   token_n                    = {1}, 
+   clock_cycles_per_character = {11.1792}, 
+   clock_cycles_per_token     = {426476}, 
+}
+
+// TokenN: 244822 [1]
+// FileSize: 1585337 [Byte] = 1548.18 [kB] = 1.5119 [MB].
+//Benchmark (including overhead)
+//    TokenN: 244823
+//    Total Time:  10.02 [sec]
+//    Runs:        444 [1]
+//    TimePerRun:  0.0225676 [sec]
+//    Time / Char:         1.42352e-08
+//    Clock Cycles / Char: 26.5737
+// Overhead:
+//     Checksum (meaningless): 10549581 [1]
+//    Total Time:  0.66 [sec]
+//    Runs:        444 [1]
+//    TimePerRun:  0.00148649 [sec]
+//    Time / Char:         9.37647e-10
+//    Clock Cycles / Char: 1.75036
+//Result:
+//   Time / Run:          0.0210811
+//   Time / Char:         1.32975e-08
+//   Clock Cycles / Char: 24.8233
+{
+   quex_version    = {0.30.1}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2350}, 
+   cpu_freq_mhz    = {1866.76}, 
+   cc_name         = {icpc}, 
+   cc_version      = {10.1}, 
+   cc_opt_flags    = {-O3 -msse3 -ipo -no-prec-div -static}, 
+   executable_size = {98257}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {6},
+   day          = {30},
+   file_name    = {linux-2.6.22.17-kernel-dir.c}, 
+   file_size    = {1585337}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {false},
+   column_count = {false},
+   note         = {}, 
+   repetition_n               = {444}, 
+   time_per_repetition        = {0.0210811},
+   token_n                    = {244822}, 
+   clock_cycles_per_character = {24.8233}, 
+   clock_cycles_per_token     = {160.743}, 
+}
+

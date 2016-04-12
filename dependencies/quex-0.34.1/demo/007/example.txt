@@ -1,0 +1,19 @@
+Fischer's Fritz grabs Swordfish// Fischer's Fritz
+.
+/*
+ * General relativity is a theory of gravitation developed by Einstein in the
+ * years 1907–1915. The development of general relativity began with the
+ * equivalence principle, under which the states of accelerated motion and being
+ * at rest in a gravitational field (for example when standing on the surface of
+ * the Earth) are physically identical. The upshot of this is that free fall is
+ * inertial motion: In other words an object in free fall is falling because that
+ * is how objects move when there is no force being exerted on them, instead of
+ * this being due to the force of gravity as is the case in classical mechanics.
+ * This is incompatible with classical mechanics and special relativity because
+ * in those theories inertially moving objects cannot accelerate with respect to
+ * each other, but objects in free fall do so. To resolve this difficulty
+ * Einstein first proposed that spacetime is curved. In 1915, he devised the
+ * Einstein field equations which relate the curvature of spacetime with the
+ * mass, energy, and momentum within it.                                          */
+Fischer's Fritz /* comment */hunts/**/ /**/Trouts/**/. /* comment */
+Fischer's /*Fritz*/ Fritz catches /**/Sharks./*-+ 

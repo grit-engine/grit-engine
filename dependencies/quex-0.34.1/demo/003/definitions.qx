@@ -1,0 +1,51 @@
+start = PROGRAM;
+
+header {
+#include <cstdlib>  // C++ adapted 'stdlib.h'
+//                  // gets:  atoi(const char*) 
+}
+
+define {
+    // \G{Nd}       is the set of characters with the general category property 'decimal number'
+    // [\X0-\XFFFF] is the set of characters below 0-65536 to restrict characters to two bytes.
+    LATIN_DIGIT        [: [0-9] :]
+    THAI_DIGIT         [: intersection(\P{Script=Thai}, \G{Nd},       [\X0-\XFFFF]) :]
+    ARABIC_DIGIT       [: intersection(\P{Block=Arabic}, \G{Nd},      [\X660-\X6D0]) :]
+    DEVANGARI_DIGIT    [: intersection(\P{Script=Devanagari}, \G{Nd}, [\X0-\XFFFF]) :]
+
+    LATIN_NUMBER       ({LATIN_DIGIT}+".")?{LATIN_DIGIT}+
+    THAI_NUMBER        ({THAI_DIGIT}+".")?{THAI_DIGIT}+
+    ARABIC_NUMBER      ({ARABIC_DIGIT}+".")?{ARABIC_DIGIT}+
+    DEVANGARI_NUMBER   ({DEVANGARI_DIGIT}+".")?{DEVANGARI_DIGIT}+
+
+    LATIN_ID_START     [: intersection(\P{Script=Latin}, \P{ID_Start}, [\X0-\XFFFF]) :]
+    LATIN_ID_CONTINUE  [: intersection(\P{Script=Latin}, \P{ID_Continue}, [\X0-\XFFFF]) :]
+    LATIN_IDENTIFIER   {LATIN_ID_START}({LATIN_ID_CONTINUE})*
+
+    GREEK_ID_START     [: intersection(\P{Script=Greek}, \P{ID_Start}, [\X0-\XFFFF]) :]
+    GREEK_ID_CONTINUE  [: intersection(\P{Script=Greek}, \P{ID_Continue}, [\X0-\XFFFF]) :]
+    GREEK_IDENTIFIER   {GREEK_ID_START}({GREEK_ID_CONTINUE})*
+}
+
+token {
+    NUMBER
+    OK
+    COPYRIGHT
+    DJAMEEL
+    ALPHA
+    INFINITY
+    CLOSE_FRENCH_QUOTE
+    OPEN_FRENCH_QUOTE
+    L_BRACKET
+    R_BRACKET
+    ARROW
+    DEGREE_CELSIUS
+    PI
+    ALLMOST_EQUAL
+    LATIN_IDENTIFIER
+    LATIN_NUMBER
+    // The follwing 'error' is by purpose to see if the correct error messages
+    // is reported.
+    QUEX_TKN_GREEK_IDENTIFIER
+}
+

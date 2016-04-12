@@ -10,3 +10,9 @@
 [submodule "dependencies/grit-ogre"]
 	path = dependencies/grit-ogre
 	url = git@github.com:sparkprime/grit-ogre.git
+[submodule "dependencies/recastnavigation"]
+	path = dependencies/recastnavigation
+	url = git@github.com:recastnavigation/recastnavigation.git
+[submodule "dependencies/jsonxx"]
+	path = dependencies/jsonxx
+	url = git@github.com:hjiang/jsonxx.git

@@ -1,0 +1,216 @@
+// -*- C++ -*- vim: set syntax=cpp:
+// PURPOSE: File containing definition of token-identifier and
+//          a function that maps token identifiers to a string
+//          name.
+//
+// NOTE: This file has been created automatically by a
+//       quex program.
+//
+// DATE: Fri Dec  5 08:09:37 2008
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+#ifndef __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2008y12m5d_8h09m37s__
+#define __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_2008y12m5d_8h09m37s__
+
+#include<cstdio> // for: 'std::sprintf'
+#include<map>    // for: 'token-id' <-> 'name map'
+
+/* Definition of essential token identifiers that the analyser engine requires. */
+#if defined(__QUEX_TOKEN_ID_TERMINATION) || defined(__QUEX_TOKEN_ID_UNINITIALIZED)
+#    error "Token identifiers for 'termination' and/or 'unilitialized' have been defined previously. This indicates that the inclusion sequence is incorrect. For example the file 'quex/code_base/descriptions' shall **not** be included before this file."
+#endif
+/* Note, we can very well refer in macros to things that are defined below. */
+#define __QUEX_TOKEN_ID_TERMINATION    (QUEX_TKN_TERMINATION)
+#define __QUEX_TOKEN_ID_UNINITIALIZED  (QUEX_TKN_UNINITIALIZED)
+
+/* The token class definition file can only be included after the two token identifiers have
+ * been defined. Otherwise, it would rely on default values. */
+#include "quex/code_base/Token"
+
+#define QUEX_TKN_AMPERSANT          ((QUEX_TOKEN_ID_TYPE)3)
+#define QUEX_TKN_AND                ((QUEX_TOKEN_ID_TYPE)4)
+#define QUEX_TKN_ASSIGN_DIV         ((QUEX_TOKEN_ID_TYPE)5)
+#define QUEX_TKN_ASSIGN_MINUS       ((QUEX_TOKEN_ID_TYPE)6)
+#define QUEX_TKN_ASSIGN_MULT        ((QUEX_TOKEN_ID_TYPE)7)
+#define QUEX_TKN_ASSIGN_PLUS        ((QUEX_TOKEN_ID_TYPE)8)
+#define QUEX_TKN_BACKLASHED_NEWLINE ((QUEX_TOKEN_ID_TYPE)9)
+#define QUEX_TKN_BRACKET_C          ((QUEX_TOKEN_ID_TYPE)10)
+#define QUEX_TKN_BRACKET_O          ((QUEX_TOKEN_ID_TYPE)11)
+#define QUEX_TKN_BREAK              ((QUEX_TOKEN_ID_TYPE)12)
+#define QUEX_TKN_CATCH              ((QUEX_TOKEN_ID_TYPE)13)
+#define QUEX_TKN_CLASS              ((QUEX_TOKEN_ID_TYPE)14)
+#define QUEX_TKN_COLON              ((QUEX_TOKEN_ID_TYPE)15)
+#define QUEX_TKN_COMMA              ((QUEX_TOKEN_ID_TYPE)16)
+#define QUEX_TKN_COMMENT            ((QUEX_TOKEN_ID_TYPE)17)
+#define QUEX_TKN_CONST              ((QUEX_TOKEN_ID_TYPE)18)
+#define QUEX_TKN_CONTINUE           ((QUEX_TOKEN_ID_TYPE)19)
+#define QUEX_TKN_CORNER_BRACKET_C   ((QUEX_TOKEN_ID_TYPE)20)
+#define QUEX_TKN_CORNER_BRACKET_O   ((QUEX_TOKEN_ID_TYPE)21)
+#define QUEX_TKN_CURLY_BRACKET_C    ((QUEX_TOKEN_ID_TYPE)22)
+#define QUEX_TKN_CURLY_BRACKET_O    ((QUEX_TOKEN_ID_TYPE)23)
+#define QUEX_TKN_DIV                ((QUEX_TOKEN_ID_TYPE)24)
+#define QUEX_TKN_DO                 ((QUEX_TOKEN_ID_TYPE)25)
+#define QUEX_TKN_DOT                ((QUEX_TOKEN_ID_TYPE)26)
+#define QUEX_TKN_DOUBLE_COLON       ((QUEX_TOKEN_ID_TYPE)27)
+#define QUEX_TKN_DOUBLE_HASH        ((QUEX_TOKEN_ID_TYPE)28)
+#define QUEX_TKN_ELSE               ((QUEX_TOKEN_ID_TYPE)29)
+#define QUEX_TKN_EQ                 ((QUEX_TOKEN_ID_TYPE)30)
+#define QUEX_TKN_EXCLUSIVE_OR       ((QUEX_TOKEN_ID_TYPE)31)
+#define QUEX_TKN_FOR                ((QUEX_TOKEN_ID_TYPE)32)
+#define QUEX_TKN_GREATER            ((QUEX_TOKEN_ID_TYPE)33)
+#define QUEX_TKN_GR_EQ              ((QUEX_TOKEN_ID_TYPE)34)
+#define QUEX_TKN_HASH               ((QUEX_TOKEN_ID_TYPE)35)
+#define QUEX_TKN_IDENTIFIER         ((QUEX_TOKEN_ID_TYPE)36)
+#define QUEX_TKN_IF                 ((QUEX_TOKEN_ID_TYPE)37)
+#define QUEX_TKN_LESS               ((QUEX_TOKEN_ID_TYPE)38)
+#define QUEX_TKN_LE_EQ              ((QUEX_TOKEN_ID_TYPE)39)
+#define QUEX_TKN_LOGICAL_OR         ((QUEX_TOKEN_ID_TYPE)40)
+#define QUEX_TKN_MINUS              ((QUEX_TOKEN_ID_TYPE)41)
+#define QUEX_TKN_MODULO             ((QUEX_TOKEN_ID_TYPE)42)
+#define QUEX_TKN_MULT               ((QUEX_TOKEN_ID_TYPE)43)
+#define QUEX_TKN_NOT                ((QUEX_TOKEN_ID_TYPE)44)
+#define QUEX_TKN_NOT_EQ             ((QUEX_TOKEN_ID_TYPE)45)
+#define QUEX_TKN_NUMBER             ((QUEX_TOKEN_ID_TYPE)46)
+#define QUEX_TKN_OP_ASSIGNMENT      ((QUEX_TOKEN_ID_TYPE)47)
+#define QUEX_TKN_OR                 ((QUEX_TOKEN_ID_TYPE)48)
+#define QUEX_TKN_PLUS               ((QUEX_TOKEN_ID_TYPE)49)
+#define QUEX_TKN_PP_DEFINE          ((QUEX_TOKEN_ID_TYPE)50)
+#define QUEX_TKN_PP_DEFINED         ((QUEX_TOKEN_ID_TYPE)51)
+#define QUEX_TKN_PP_ELIF            ((QUEX_TOKEN_ID_TYPE)52)
+#define QUEX_TKN_PP_ELSE            ((QUEX_TOKEN_ID_TYPE)53)
+#define QUEX_TKN_PP_ENDIF           ((QUEX_TOKEN_ID_TYPE)54)
+#define QUEX_TKN_PP_ERROR           ((QUEX_TOKEN_ID_TYPE)55)
+#define QUEX_TKN_PP_IF              ((QUEX_TOKEN_ID_TYPE)56)
+#define QUEX_TKN_PP_IFDEF           ((QUEX_TOKEN_ID_TYPE)57)
+#define QUEX_TKN_PP_IFNDEF          ((QUEX_TOKEN_ID_TYPE)58)
+#define QUEX_TKN_PP_INCLUDE         ((QUEX_TOKEN_ID_TYPE)59)
+#define QUEX_TKN_PP_PRAGMA          ((QUEX_TOKEN_ID_TYPE)60)
+#define QUEX_TKN_QUESTION_MARK      ((QUEX_TOKEN_ID_TYPE)61)
+#define QUEX_TKN_QUOTE              ((QUEX_TOKEN_ID_TYPE)62)
+#define QUEX_TKN_QUOTED_CHAR        ((QUEX_TOKEN_ID_TYPE)63)
+#define QUEX_TKN_SEMICOLON          ((QUEX_TOKEN_ID_TYPE)64)
+#define QUEX_TKN_STRING             ((QUEX_TOKEN_ID_TYPE)65)
+#define QUEX_TKN_STRUCT             ((QUEX_TOKEN_ID_TYPE)66)
+#define QUEX_TKN_SWITCH             ((QUEX_TOKEN_ID_TYPE)67)
+#define QUEX_TKN_TERMINATION        ((QUEX_TOKEN_ID_TYPE)0)
+#define QUEX_TKN_TILDE              ((QUEX_TOKEN_ID_TYPE)68)
+#define QUEX_TKN_TYPE_CHAR          ((QUEX_TOKEN_ID_TYPE)69)
+#define QUEX_TKN_TYPE_DOUBLE        ((QUEX_TOKEN_ID_TYPE)70)
+#define QUEX_TKN_TYPE_FLOAT         ((QUEX_TOKEN_ID_TYPE)71)
+#define QUEX_TKN_TYPE_INT           ((QUEX_TOKEN_ID_TYPE)72)
+#define QUEX_TKN_TYPE_LONG          ((QUEX_TOKEN_ID_TYPE)73)
+#define QUEX_TKN_TYPE_UNSIGNED      ((QUEX_TOKEN_ID_TYPE)74)
+#define QUEX_TKN_UNINITIALIZED      ((QUEX_TOKEN_ID_TYPE)1)
+#define QUEX_TKN_WHILE              ((QUEX_TOKEN_ID_TYPE)75)
+
+
+namespace quex {
+
+
+    inline const std::string&
+    Token::map_id_to_name(const QUEX_TOKEN_ID_TYPE TokenID)
+    {
+       static bool virginity_f = true;
+       static std::map<QUEX_TOKEN_ID_TYPE, std::string>  db;
+       static std::string  error_string("");
+       static std::string  uninitialized_string("<UNINITIALIZED>");
+       static std::string  termination_string("<TERMINATION>");
+       
+       // NOTE: In general no assumptions can be made that the QUEX_TOKEN_ID_TYPE
+       //       is an integer. Thus, no switch statement is used. 
+       if( virginity_f ) {
+           virginity_f = false;
+           // Create the Database mapping TokenID -> TokenName
+           
+           db[QUEX_TKN_DO]                 = std::string("DO");
+           db[QUEX_TKN_TYPE_INT]           = std::string("TYPE_INT");
+           db[QUEX_TKN_CONST]              = std::string("CONST");
+           db[QUEX_TKN_LESS]               = std::string("LESS");
+           db[QUEX_TKN_PP_INCLUDE]         = std::string("PP_INCLUDE");
+           db[QUEX_TKN_PP_IFDEF]           = std::string("PP_IFDEF");
+           db[QUEX_TKN_NUMBER]             = std::string("NUMBER");
+           db[QUEX_TKN_ASSIGN_MINUS]       = std::string("ASSIGN_MINUS");
+           db[QUEX_TKN_PP_ENDIF]           = std::string("PP_ENDIF");
+           db[QUEX_TKN_WHILE]              = std::string("WHILE");
+           db[QUEX_TKN_CORNER_BRACKET_O]   = std::string("CORNER_BRACKET_O");
+           db[QUEX_TKN_IF]                 = std::string("IF");
+           db[QUEX_TKN_PP_DEFINE]          = std::string("PP_DEFINE");
+           db[QUEX_TKN_CORNER_BRACKET_C]   = std::string("CORNER_BRACKET_C");
+           db[QUEX_TKN_HASH]               = std::string("HASH");
+           db[QUEX_TKN_DIV]                = std::string("DIV");
+           db[QUEX_TKN_MINUS]              = std::string("MINUS");
+           db[QUEX_TKN_DOT]                = std::string("DOT");
+           db[QUEX_TKN_STRING]             = std::string("STRING");
+           db[QUEX_TKN_COMMENT]            = std::string("COMMENT");
+           db[QUEX_TKN_BACKLASHED_NEWLINE] = std::string("BACKLASHED_NEWLINE");
+           db[QUEX_TKN_BRACKET_C]          = std::string("BRACKET_C");
+           db[QUEX_TKN_OP_ASSIGNMENT]      = std::string("OP_ASSIGNMENT");
+           db[QUEX_TKN_QUESTION_MARK]      = std::string("QUESTION_MARK");
+           db[QUEX_TKN_LE_EQ]              = std::string("LE_EQ");
+           db[QUEX_TKN_PP_ELIF]            = std::string("PP_ELIF");
+           db[QUEX_TKN_BRACKET_O]          = std::string("BRACKET_O");
+           db[QUEX_TKN_EXCLUSIVE_OR]       = std::string("EXCLUSIVE_OR");
+           db[QUEX_TKN_SWITCH]             = std::string("SWITCH");
+           db[QUEX_TKN_DOUBLE_COLON]       = std::string("DOUBLE_COLON");
+           db[QUEX_TKN_COLON]              = std::string("COLON");
+           db[QUEX_TKN_MULT]               = std::string("MULT");
+           db[QUEX_TKN_TILDE]              = std::string("TILDE");
+           db[QUEX_TKN_CATCH]              = std::string("CATCH");
+           db[QUEX_TKN_COMMA]              = std::string("COMMA");
+           db[QUEX_TKN_NOT_EQ]             = std::string("NOT_EQ");
+           db[QUEX_TKN_IDENTIFIER]         = std::string("IDENTIFIER");
+           db[QUEX_TKN_QUOTED_CHAR]        = std::string("QUOTED_CHAR");
+           db[QUEX_TKN_CLASS]              = std::string("CLASS");
+           db[QUEX_TKN_SEMICOLON]          = std::string("SEMICOLON");
+           db[QUEX_TKN_TYPE_UNSIGNED]      = std::string("TYPE_UNSIGNED");
+           db[QUEX_TKN_PLUS]               = std::string("PLUS");
+           db[QUEX_TKN_AND]                = std::string("AND");
+           db[QUEX_TKN_STRUCT]             = std::string("STRUCT");
+           db[QUEX_TKN_CURLY_BRACKET_C]    = std::string("CURLY_BRACKET_C");
+           db[QUEX_TKN_AMPERSANT]          = std::string("AMPERSANT");
+           db[QUEX_TKN_GR_EQ]              = std::string("GR_EQ");
+           db[QUEX_TKN_FOR]                = std::string("FOR");
+           db[QUEX_TKN_ASSIGN_PLUS]        = std::string("ASSIGN_PLUS");
+           db[QUEX_TKN_CURLY_BRACKET_O]    = std::string("CURLY_BRACKET_O");
+           db[QUEX_TKN_TYPE_LONG]          = std::string("TYPE_LONG");
+           db[QUEX_TKN_TYPE_DOUBLE]        = std::string("TYPE_DOUBLE");
+           db[QUEX_TKN_PP_IFNDEF]          = std::string("PP_IFNDEF");
+           db[QUEX_TKN_TYPE_CHAR]          = std::string("TYPE_CHAR");
+           db[QUEX_TKN_TERMINATION]        = std::string("TERMINATION");
+           db[QUEX_TKN_ELSE]               = std::string("ELSE");
+           db[QUEX_TKN_EQ]                 = std::string("EQ");
+           db[QUEX_TKN_GREATER]            = std::string("GREATER");
+           db[QUEX_TKN_UNINITIALIZED]      = std::string("UNINITIALIZED");
+           db[QUEX_TKN_PP_PRAGMA]          = std::string("PP_PRAGMA");
+           db[QUEX_TKN_MODULO]             = std::string("MODULO");
+           db[QUEX_TKN_DOUBLE_HASH]        = std::string("DOUBLE_HASH");
+           db[QUEX_TKN_PP_ERROR]           = std::string("PP_ERROR");
+           db[QUEX_TKN_TYPE_FLOAT]         = std::string("TYPE_FLOAT");
+           db[QUEX_TKN_BREAK]              = std::string("BREAK");
+           db[QUEX_TKN_LOGICAL_OR]         = std::string("LOGICAL_OR");
+           db[QUEX_TKN_PP_IF]              = std::string("PP_IF");
+           db[QUEX_TKN_CONTINUE]           = std::string("CONTINUE");
+           db[QUEX_TKN_ASSIGN_DIV]         = std::string("ASSIGN_DIV");
+           db[QUEX_TKN_QUOTE]              = std::string("QUOTE");
+           db[QUEX_TKN_NOT]                = std::string("NOT");
+           db[QUEX_TKN_PP_DEFINED]         = std::string("PP_DEFINED");
+           db[QUEX_TKN_ASSIGN_MULT]        = std::string("ASSIGN_MULT");
+           db[QUEX_TKN_OR]                 = std::string("OR");
+           db[QUEX_TKN_PP_ELSE]            = std::string("PP_ELSE");
+       }
+
+       if     ( TokenID == __QUEX_TOKEN_ID_TERMINATION ) return termination_string;
+       else if( TokenID == __QUEX_TOKEN_ID_UNINITIALIZED ) return uninitialized_string;
+       std::map<QUEX_TOKEN_ID_TYPE, std::string>::const_iterator it = db.find(TokenID);
+       if( it != db.end() ) return (*it).second;
+       else {
+          char tmp[64];
+          std::sprintf(tmp, "<UNKNOWN TOKEN-ID: %i>", int(TokenID));
+          error_string = std::string(tmp);
+          return error_string;
+       }
+    }
+
+
+}
+#endif // __INCLUDE_GUARD__QUEX__TOKEN_IDS__AUTO_GENERATED__

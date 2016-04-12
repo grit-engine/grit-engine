@@ -1,0 +1,21 @@
+// -*- C++ -*- vim: set syntax=cpp:
+token {
+    HELLO
+    WORLD
+    NUMBER
+    BYE
+}
+
+mode ONE_AND_ONLY :
+<skip: [ \n\t]>
+{
+    <<EOF>>     => QUEX_TKN_TERMINATION;
+
+    "hello"|"bonjour"|"hallo" => QUEX_TKN_HELLO(Lexeme);
+    "world"|"le monde"|"welt" => QUEX_TKN_WORLD(Lexeme);
+    [0-9]+                    => QUEX_TKN_NUMBER(Lexeme);
+    "bye"                     => QUEX_TKN_BYE;
+}
+
+
+

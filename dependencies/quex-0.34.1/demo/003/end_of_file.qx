@@ -1,0 +1,10 @@
+mode END_OF_FILE :
+<inheritable: only>  
+{    
+    <<EOF>> {
+	    self.send(quex::token::ID_TERMINATION);
+        RETURN;
+    }
+}
+
+

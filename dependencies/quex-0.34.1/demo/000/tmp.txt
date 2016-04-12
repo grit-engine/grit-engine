@@ -1,0 +1,505 @@
+
+tiny_lexer-core-engine.o:     file format elf32-i386
+
+
+Disassembly of section .text:
+
+00000000 <_Z41__static_initialization_and_destruction_0ii>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 18             	sub    $0x18,%esp
+   6:	83 7d 08 01          	cmpl   $0x1,0x8(%ebp)
+   a:	75 32                	jne    3e <_Z41__static_initialization_and_destruction_0ii+0x3e>
+   c:	81 7d 0c ff ff 00 00 	cmpl   $0xffff,0xc(%ebp)
+  13:	75 29                	jne    3e <_Z41__static_initialization_and_destruction_0ii+0x3e>
+  15:	c7 04 24 00 00 00 00 	movl   $0x0,(%esp)
+  1c:	e8 fc ff ff ff       	call   1d <_Z41__static_initialization_and_destruction_0ii+0x1d>
+  21:	b8 00 00 00 00       	mov    $0x0,%eax
+  26:	c7 44 24 08 00 00 00 	movl   $0x0,0x8(%esp)
+  2d:	00 
+  2e:	c7 44 24 04 00 00 00 	movl   $0x0,0x4(%esp)
+  35:	00 
+  36:	89 04 24             	mov    %eax,(%esp)
+  39:	e8 fc ff ff ff       	call   3a <_Z41__static_initialization_and_destruction_0ii+0x3a>
+  3e:	c9                   	leave  
+  3f:	c3                   	ret    
+
+00000040 <_GLOBAL__I_tiny_lexer_core_engine.cpp>:
+  40:	55                   	push   %ebp
+  41:	89 e5                	mov    %esp,%ebp
+  43:	83 ec 08             	sub    $0x8,%esp
+  46:	c7 44 24 04 ff ff 00 	movl   $0xffff,0x4(%esp)
+  4d:	00 
+  4e:	c7 04 24 01 00 00 00 	movl   $0x1,(%esp)
+  55:	e8 a6 ff ff ff       	call   0 <_Z41__static_initialization_and_destruction_0ii>
+  5a:	c9                   	leave  
+  5b:	c3                   	ret    
+
+Disassembly of section .text._ZN4quex10tiny_lexer10on_includeEPKc:
+
+00000000 <_ZN4quex10tiny_lexer10on_includeEPKc>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	5d                   	pop    %ebp
+   4:	c3                   	ret    
+
+Disassembly of section .text._ZN4quex10tiny_lexer15on_include_exitEv:
+
+00000000 <_ZN4quex10tiny_lexer15on_include_exitEv>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	5d                   	pop    %ebp
+   4:	c3                   	ret    
+
+Disassembly of section .text._ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EE19_M_get_Tp_allocatorEv:
+
+00000000 <_ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EE19_M_get_Tp_allocatorEv>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	8b 45 08             	mov    0x8(%ebp),%eax
+   6:	5d                   	pop    %ebp
+   7:	c3                   	ret    
+
+Disassembly of section .text._ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EE19_M_get_Tp_allocatorEv:
+
+00000000 <_ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EE19_M_get_Tp_allocatorEv>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	8b 45 08             	mov    0x8(%ebp),%eax
+   6:	5d                   	pop    %ebp
+   7:	c3                   	ret    
+
+Disassembly of section .text._ZSt8_DestroyIPPN4quex8QuexModeEEvT_S4_:
+
+00000000 <_ZSt8_DestroyIPPN4quex8QuexModeEEvT_S4_>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	5d                   	pop    %ebp
+   4:	c3                   	ret    
+
+Disassembly of section .text._ZSt8_DestroyIPPN4quex8QuexModeES2_EvT_S4_RSaIT0_E:
+
+00000000 <_ZSt8_DestroyIPPN4quex8QuexModeES2_EvT_S4_RSaIT0_E>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 08             	sub    $0x8,%esp
+   6:	8b 45 0c             	mov    0xc(%ebp),%eax
+   9:	89 44 24 04          	mov    %eax,0x4(%esp)
+   d:	8b 45 08             	mov    0x8(%ebp),%eax
+  10:	89 04 24             	mov    %eax,(%esp)
+  13:	e8 fc ff ff ff       	call   14 <_ZSt8_DestroyIPPN4quex8QuexModeES2_EvT_S4_RSaIT0_E+0x14>
+  18:	c9                   	leave  
+  19:	c3                   	ret    
+
+Disassembly of section .text._ZSt8_DestroyIPN4quex12IncludeStack7mementoEEvT_S4_:
+
+00000000 <_ZSt8_DestroyIPN4quex12IncludeStack7mementoEEvT_S4_>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	5d                   	pop    %ebp
+   4:	c3                   	ret    
+
+Disassembly of section .text._ZSt8_DestroyIPN4quex12IncludeStack7mementoES2_EvT_S4_RSaIT0_E:
+
+00000000 <_ZSt8_DestroyIPN4quex12IncludeStack7mementoES2_EvT_S4_RSaIT0_E>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 08             	sub    $0x8,%esp
+   6:	8b 45 0c             	mov    0xc(%ebp),%eax
+   9:	89 44 24 04          	mov    %eax,0x4(%esp)
+   d:	8b 45 08             	mov    0x8(%ebp),%eax
+  10:	89 04 24             	mov    %eax,(%esp)
+  13:	e8 fc ff ff ff       	call   14 <_ZSt8_DestroyIPN4quex12IncludeStack7mementoES2_EvT_S4_RSaIT0_E+0x14>
+  18:	c9                   	leave  
+  19:	c3                   	ret    
+
+Disassembly of section .text._ZN9__gnu_cxx13new_allocatorIPN4quex8QuexModeEED2Ev:
+
+00000000 <_ZN9__gnu_cxx13new_allocatorIPN4quex8QuexModeEED2Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	5d                   	pop    %ebp
+   4:	c3                   	ret    
+
+Disassembly of section .text._ZNSaIPN4quex8QuexModeEED2Ev:
+
+00000000 <_ZNSaIPN4quex8QuexModeEED2Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 08             	sub    $0x8,%esp
+   6:	8b 45 08             	mov    0x8(%ebp),%eax
+   9:	89 04 24             	mov    %eax,(%esp)
+   c:	e8 fc ff ff ff       	call   d <_ZNSaIPN4quex8QuexModeEED2Ev+0xd>
+  11:	c9                   	leave  
+  12:	c3                   	ret    
+
+Disassembly of section .text._ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EE12_Vector_implD1Ev:
+
+00000000 <_ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EE12_Vector_implD1Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 08             	sub    $0x8,%esp
+   6:	8b 45 08             	mov    0x8(%ebp),%eax
+   9:	89 04 24             	mov    %eax,(%esp)
+   c:	e8 fc ff ff ff       	call   d <_ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EE12_Vector_implD1Ev+0xd>
+  11:	c9                   	leave  
+  12:	c3                   	ret    
+
+Disassembly of section .text._ZN9__gnu_cxx13new_allocatorIN4quex12IncludeStack7mementoEED2Ev:
+
+00000000 <_ZN9__gnu_cxx13new_allocatorIN4quex12IncludeStack7mementoEED2Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	5d                   	pop    %ebp
+   4:	c3                   	ret    
+
+Disassembly of section .text._ZNSaIN4quex12IncludeStack7mementoEED2Ev:
+
+00000000 <_ZNSaIN4quex12IncludeStack7mementoEED2Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 08             	sub    $0x8,%esp
+   6:	8b 45 08             	mov    0x8(%ebp),%eax
+   9:	89 04 24             	mov    %eax,(%esp)
+   c:	e8 fc ff ff ff       	call   d <_ZNSaIN4quex12IncludeStack7mementoEED2Ev+0xd>
+  11:	c9                   	leave  
+  12:	c3                   	ret    
+
+Disassembly of section .text._ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EE12_Vector_implD1Ev:
+
+00000000 <_ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EE12_Vector_implD1Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 08             	sub    $0x8,%esp
+   6:	8b 45 08             	mov    0x8(%ebp),%eax
+   9:	89 04 24             	mov    %eax,(%esp)
+   c:	e8 fc ff ff ff       	call   d <_ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EE12_Vector_implD1Ev+0xd>
+  11:	c9                   	leave  
+  12:	c3                   	ret    
+
+Disassembly of section .text._ZN9__gnu_cxx13new_allocatorIN4quex12IncludeStack7mementoEE10deallocateEPS3_j:
+
+00000000 <_ZN9__gnu_cxx13new_allocatorIN4quex12IncludeStack7mementoEE10deallocateEPS3_j>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 08             	sub    $0x8,%esp
+   6:	8b 45 0c             	mov    0xc(%ebp),%eax
+   9:	89 04 24             	mov    %eax,(%esp)
+   c:	e8 fc ff ff ff       	call   d <_ZN9__gnu_cxx13new_allocatorIN4quex12IncludeStack7mementoEE10deallocateEPS3_j+0xd>
+  11:	c9                   	leave  
+  12:	c3                   	ret    
+
+Disassembly of section .text._ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EE13_M_deallocateEPS2_j:
+
+00000000 <_ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EE13_M_deallocateEPS2_j>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 18             	sub    $0x18,%esp
+   6:	83 7d 0c 00          	cmpl   $0x0,0xc(%ebp)
+   a:	74 1b                	je     27 <_ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EE13_M_deallocateEPS2_j+0x27>
+   c:	8b 45 08             	mov    0x8(%ebp),%eax
+   f:	89 c2                	mov    %eax,%edx
+  11:	8b 45 10             	mov    0x10(%ebp),%eax
+  14:	89 44 24 08          	mov    %eax,0x8(%esp)
+  18:	8b 45 0c             	mov    0xc(%ebp),%eax
+  1b:	89 44 24 04          	mov    %eax,0x4(%esp)
+  1f:	89 14 24             	mov    %edx,(%esp)
+  22:	e8 fc ff ff ff       	call   23 <_ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EE13_M_deallocateEPS2_j+0x23>
+  27:	c9                   	leave  
+  28:	c3                   	ret    
+
+Disassembly of section .text._ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EED2Ev:
+
+00000000 <_ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EED2Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 18             	sub    $0x18,%esp
+   6:	8b 45 08             	mov    0x8(%ebp),%eax
+   9:	8b 40 08             	mov    0x8(%eax),%eax
+   c:	89 c2                	mov    %eax,%edx
+   e:	8b 45 08             	mov    0x8(%ebp),%eax
+  11:	8b 00                	mov    (%eax),%eax
+  13:	89 d1                	mov    %edx,%ecx
+  15:	29 c1                	sub    %eax,%ecx
+  17:	89 c8                	mov    %ecx,%eax
+  19:	c1 f8 03             	sar    $0x3,%eax
+  1c:	69 c0 b7 6d db b6    	imul   $0xb6db6db7,%eax,%eax
+  22:	89 c2                	mov    %eax,%edx
+  24:	8b 45 08             	mov    0x8(%ebp),%eax
+  27:	8b 00                	mov    (%eax),%eax
+  29:	89 54 24 08          	mov    %edx,0x8(%esp)
+  2d:	89 44 24 04          	mov    %eax,0x4(%esp)
+  31:	8b 45 08             	mov    0x8(%ebp),%eax
+  34:	89 04 24             	mov    %eax,(%esp)
+  37:	e8 fc ff ff ff       	call   38 <_ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EED2Ev+0x38>
+  3c:	8b 45 08             	mov    0x8(%ebp),%eax
+  3f:	89 04 24             	mov    %eax,(%esp)
+  42:	e8 fc ff ff ff       	call   43 <_ZNSt12_Vector_baseIN4quex12IncludeStack7mementoESaIS2_EED2Ev+0x43>
+  47:	c9                   	leave  
+  48:	c3                   	ret    
+
+Disassembly of section .text._ZNSt6vectorIN4quex12IncludeStack7mementoESaIS2_EED1Ev:
+
+00000000 <_ZNSt6vectorIN4quex12IncludeStack7mementoESaIS2_EED1Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 18             	sub    $0x18,%esp
+   6:	8b 45 08             	mov    0x8(%ebp),%eax
+   9:	89 04 24             	mov    %eax,(%esp)
+   c:	e8 fc ff ff ff       	call   d <_ZNSt6vectorIN4quex12IncludeStack7mementoESaIS2_EED1Ev+0xd>
+  11:	89 c2                	mov    %eax,%edx
+  13:	8b 45 08             	mov    0x8(%ebp),%eax
+  16:	8b 48 04             	mov    0x4(%eax),%ecx
+  19:	8b 45 08             	mov    0x8(%ebp),%eax
+  1c:	8b 00                	mov    (%eax),%eax
+  1e:	89 54 24 08          	mov    %edx,0x8(%esp)
+  22:	89 4c 24 04          	mov    %ecx,0x4(%esp)
+  26:	89 04 24             	mov    %eax,(%esp)
+  29:	e8 fc ff ff ff       	call   2a <_ZNSt6vectorIN4quex12IncludeStack7mementoESaIS2_EED1Ev+0x2a>
+  2e:	8b 45 08             	mov    0x8(%ebp),%eax
+  31:	89 04 24             	mov    %eax,(%esp)
+  34:	e8 fc ff ff ff       	call   35 <_ZNSt6vectorIN4quex12IncludeStack7mementoESaIS2_EED1Ev+0x35>
+  39:	c9                   	leave  
+  3a:	c3                   	ret    
+
+Disassembly of section .text._ZN4quex12IncludeStackD1Ev:
+
+00000000 <_ZN4quex12IncludeStackD1Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 08             	sub    $0x8,%esp
+   6:	8b 45 08             	mov    0x8(%ebp),%eax
+   9:	89 04 24             	mov    %eax,(%esp)
+   c:	e8 fc ff ff ff       	call   d <_ZN4quex12IncludeStackD1Ev+0xd>
+  11:	c9                   	leave  
+  12:	c3                   	ret    
+
+Disassembly of section .text._ZN9__gnu_cxx13new_allocatorIPN4quex8QuexModeEE10deallocateEPS3_j:
+
+00000000 <_ZN9__gnu_cxx13new_allocatorIPN4quex8QuexModeEE10deallocateEPS3_j>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 08             	sub    $0x8,%esp
+   6:	8b 45 0c             	mov    0xc(%ebp),%eax
+   9:	89 04 24             	mov    %eax,(%esp)
+   c:	e8 fc ff ff ff       	call   d <_ZN9__gnu_cxx13new_allocatorIPN4quex8QuexModeEE10deallocateEPS3_j+0xd>
+  11:	c9                   	leave  
+  12:	c3                   	ret    
+
+Disassembly of section .text._ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EE13_M_deallocateEPS2_j:
+
+00000000 <_ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EE13_M_deallocateEPS2_j>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 18             	sub    $0x18,%esp
+   6:	83 7d 0c 00          	cmpl   $0x0,0xc(%ebp)
+   a:	74 1b                	je     27 <_ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EE13_M_deallocateEPS2_j+0x27>
+   c:	8b 45 08             	mov    0x8(%ebp),%eax
+   f:	89 c2                	mov    %eax,%edx
+  11:	8b 45 10             	mov    0x10(%ebp),%eax
+  14:	89 44 24 08          	mov    %eax,0x8(%esp)
+  18:	8b 45 0c             	mov    0xc(%ebp),%eax
+  1b:	89 44 24 04          	mov    %eax,0x4(%esp)
+  1f:	89 14 24             	mov    %edx,(%esp)
+  22:	e8 fc ff ff ff       	call   23 <_ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EE13_M_deallocateEPS2_j+0x23>
+  27:	c9                   	leave  
+  28:	c3                   	ret    
+
+Disassembly of section .text._ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EED2Ev:
+
+00000000 <_ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EED2Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 18             	sub    $0x18,%esp
+   6:	8b 45 08             	mov    0x8(%ebp),%eax
+   9:	8b 40 08             	mov    0x8(%eax),%eax
+   c:	89 c2                	mov    %eax,%edx
+   e:	8b 45 08             	mov    0x8(%ebp),%eax
+  11:	8b 00                	mov    (%eax),%eax
+  13:	89 d1                	mov    %edx,%ecx
+  15:	29 c1                	sub    %eax,%ecx
+  17:	89 c8                	mov    %ecx,%eax
+  19:	c1 f8 02             	sar    $0x2,%eax
+  1c:	89 c2                	mov    %eax,%edx
+  1e:	8b 45 08             	mov    0x8(%ebp),%eax
+  21:	8b 00                	mov    (%eax),%eax
+  23:	89 54 24 08          	mov    %edx,0x8(%esp)
+  27:	89 44 24 04          	mov    %eax,0x4(%esp)
+  2b:	8b 45 08             	mov    0x8(%ebp),%eax
+  2e:	89 04 24             	mov    %eax,(%esp)
+  31:	e8 fc ff ff ff       	call   32 <_ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EED2Ev+0x32>
+  36:	8b 45 08             	mov    0x8(%ebp),%eax
+  39:	89 04 24             	mov    %eax,(%esp)
+  3c:	e8 fc ff ff ff       	call   3d <_ZNSt12_Vector_baseIPN4quex8QuexModeESaIS2_EED2Ev+0x3d>
+  41:	c9                   	leave  
+  42:	c3                   	ret    
+
+Disassembly of section .text._ZNSt6vectorIPN4quex8QuexModeESaIS2_EED1Ev:
+
+00000000 <_ZNSt6vectorIPN4quex8QuexModeESaIS2_EED1Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 ec 18             	sub    $0x18,%esp
+   6:	8b 45 08             	mov    0x8(%ebp),%eax
+   9:	89 04 24             	mov    %eax,(%esp)
+   c:	e8 fc ff ff ff       	call   d <_ZNSt6vectorIPN4quex8QuexModeESaIS2_EED1Ev+0xd>
+  11:	89 c2                	mov    %eax,%edx
+  13:	8b 45 08             	mov    0x8(%ebp),%eax
+  16:	8b 48 04             	mov    0x4(%eax),%ecx
+  19:	8b 45 08             	mov    0x8(%ebp),%eax
+  1c:	8b 00                	mov    (%eax),%eax
+  1e:	89 54 24 08          	mov    %edx,0x8(%esp)
+  22:	89 4c 24 04          	mov    %ecx,0x4(%esp)
+  26:	89 04 24             	mov    %eax,(%esp)
+  29:	e8 fc ff ff ff       	call   2a <_ZNSt6vectorIPN4quex8QuexModeESaIS2_EED1Ev+0x2a>
+  2e:	8b 45 08             	mov    0x8(%ebp),%eax
+  31:	89 04 24             	mov    %eax,(%esp)
+  34:	e8 fc ff ff ff       	call   35 <_ZNSt6vectorIPN4quex8QuexModeESaIS2_EED1Ev+0x35>
+  39:	c9                   	leave  
+  3a:	c3                   	ret    
+
+Disassembly of section .text._ZN4quex10tiny_lexerD0Ev:
+
+00000000 <_ZN4quex10tiny_lexerD0Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	56                   	push   %esi
+   4:	53                   	push   %ebx
+   5:	83 ec 20             	sub    $0x20,%esp
+   8:	8b 45 08             	mov    0x8(%ebp),%eax
+   b:	c7 00 08 00 00 00    	movl   $0x8,(%eax)
+  11:	8b 45 08             	mov    0x8(%ebp),%eax
+  14:	8b 40 40             	mov    0x40(%eax),%eax
+  17:	85 c0                	test   %eax,%eax
+  19:	74 18                	je     33 <_ZN4quex10tiny_lexerD0Ev+0x33>
+  1b:	8b 45 08             	mov    0x8(%ebp),%eax
+  1e:	8b 40 40             	mov    0x40(%eax),%eax
+  21:	8b 00                	mov    (%eax),%eax
+  23:	83 c0 04             	add    $0x4,%eax
+  26:	8b 10                	mov    (%eax),%edx
+  28:	8b 45 08             	mov    0x8(%ebp),%eax
+  2b:	8b 40 40             	mov    0x40(%eax),%eax
+  2e:	89 04 24             	mov    %eax,(%esp)
+  31:	ff d2                	call   *%edx
+  33:	8b 45 08             	mov    0x8(%ebp),%eax
+  36:	83 c0 48             	add    $0x48,%eax
+  39:	89 45 f0             	mov    %eax,-0x10(%ebp)
+  3c:	8b 45 f0             	mov    -0x10(%ebp),%eax
+  3f:	89 04 24             	mov    %eax,(%esp)
+  42:	e8 fc ff ff ff       	call   43 <_ZN4quex10tiny_lexerD0Ev+0x43>
+  47:	8b 45 08             	mov    0x8(%ebp),%eax
+  4a:	83 c0 34             	add    $0x34,%eax
+  4d:	89 45 f4             	mov    %eax,-0xc(%ebp)
+  50:	8b 45 f4             	mov    -0xc(%ebp),%eax
+  53:	89 04 24             	mov    %eax,(%esp)
+  56:	e8 fc ff ff ff       	call   57 <_ZN4quex10tiny_lexerD0Ev+0x57>
+  5b:	b8 01 00 00 00       	mov    $0x1,%eax
+  60:	84 c0                	test   %al,%al
+  62:	74 5e                	je     c2 <_ZN4quex10tiny_lexerD0Ev+0xc2>
+  64:	eb 51                	jmp    b7 <_ZN4quex10tiny_lexerD0Ev+0xb7>
+  66:	89 45 e8             	mov    %eax,-0x18(%ebp)
+  69:	89 55 ec             	mov    %edx,-0x14(%ebp)
+  6c:	8b 75 ec             	mov    -0x14(%ebp),%esi
+  6f:	8b 5d e8             	mov    -0x18(%ebp),%ebx
+  72:	8b 45 08             	mov    0x8(%ebp),%eax
+  75:	83 c0 48             	add    $0x48,%eax
+  78:	89 45 f0             	mov    %eax,-0x10(%ebp)
+  7b:	8b 45 f0             	mov    -0x10(%ebp),%eax
+  7e:	89 04 24             	mov    %eax,(%esp)
+  81:	e8 fc ff ff ff       	call   82 <_ZN4quex10tiny_lexerD0Ev+0x82>
+  86:	89 5d e8             	mov    %ebx,-0x18(%ebp)
+  89:	89 75 ec             	mov    %esi,-0x14(%ebp)
+  8c:	8b 75 ec             	mov    -0x14(%ebp),%esi
+  8f:	8b 5d e8             	mov    -0x18(%ebp),%ebx
+  92:	8b 45 08             	mov    0x8(%ebp),%eax
+  95:	83 c0 34             	add    $0x34,%eax
+  98:	89 45 f4             	mov    %eax,-0xc(%ebp)
+  9b:	8b 45 f4             	mov    -0xc(%ebp),%eax
+  9e:	89 04 24             	mov    %eax,(%esp)
+  a1:	e8 fc ff ff ff       	call   a2 <_ZN4quex10tiny_lexerD0Ev+0xa2>
+  a6:	89 5d e8             	mov    %ebx,-0x18(%ebp)
+  a9:	89 75 ec             	mov    %esi,-0x14(%ebp)
+  ac:	8b 45 e8             	mov    -0x18(%ebp),%eax
+  af:	89 04 24             	mov    %eax,(%esp)
+  b2:	e8 fc ff ff ff       	call   b3 <_ZN4quex10tiny_lexerD0Ev+0xb3>
+  b7:	8b 45 08             	mov    0x8(%ebp),%eax
+  ba:	89 04 24             	mov    %eax,(%esp)
+  bd:	e8 fc ff ff ff       	call   be <_ZN4quex10tiny_lexerD0Ev+0xbe>
+  c2:	83 c4 20             	add    $0x20,%esp
+  c5:	5b                   	pop    %ebx
+  c6:	5e                   	pop    %esi
+  c7:	5d                   	pop    %ebp
+  c8:	c3                   	ret    
+
+Disassembly of section .text._ZN4quex10tiny_lexerD1Ev:
+
+00000000 <_ZN4quex10tiny_lexerD1Ev>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	56                   	push   %esi
+   4:	53                   	push   %ebx
+   5:	83 ec 20             	sub    $0x20,%esp
+   8:	8b 45 08             	mov    0x8(%ebp),%eax
+   b:	c7 00 08 00 00 00    	movl   $0x8,(%eax)
+  11:	8b 45 08             	mov    0x8(%ebp),%eax
+  14:	8b 40 40             	mov    0x40(%eax),%eax
+  17:	85 c0                	test   %eax,%eax
+  19:	74 18                	je     33 <_ZN4quex10tiny_lexerD1Ev+0x33>
+  1b:	8b 45 08             	mov    0x8(%ebp),%eax
+  1e:	8b 40 40             	mov    0x40(%eax),%eax
+  21:	8b 00                	mov    (%eax),%eax
+  23:	83 c0 04             	add    $0x4,%eax
+  26:	8b 10                	mov    (%eax),%edx
+  28:	8b 45 08             	mov    0x8(%ebp),%eax
+  2b:	8b 40 40             	mov    0x40(%eax),%eax
+  2e:	89 04 24             	mov    %eax,(%esp)
+  31:	ff d2                	call   *%edx
+  33:	8b 45 08             	mov    0x8(%ebp),%eax
+  36:	83 c0 48             	add    $0x48,%eax
+  39:	89 45 f0             	mov    %eax,-0x10(%ebp)
+  3c:	8b 45 f0             	mov    -0x10(%ebp),%eax
+  3f:	89 04 24             	mov    %eax,(%esp)
+  42:	e8 fc ff ff ff       	call   43 <_ZN4quex10tiny_lexerD1Ev+0x43>
+  47:	8b 45 08             	mov    0x8(%ebp),%eax
+  4a:	83 c0 34             	add    $0x34,%eax
+  4d:	89 45 f4             	mov    %eax,-0xc(%ebp)
+  50:	8b 45 f4             	mov    -0xc(%ebp),%eax
+  53:	89 04 24             	mov    %eax,(%esp)
+  56:	e8 fc ff ff ff       	call   57 <_ZN4quex10tiny_lexerD1Ev+0x57>
+  5b:	b8 00 00 00 00       	mov    $0x0,%eax
+  60:	84 c0                	test   %al,%al
+  62:	74 5e                	je     c2 <_ZN4quex10tiny_lexerD1Ev+0xc2>
+  64:	eb 51                	jmp    b7 <_ZN4quex10tiny_lexerD1Ev+0xb7>
+  66:	89 45 e8             	mov    %eax,-0x18(%ebp)
+  69:	89 55 ec             	mov    %edx,-0x14(%ebp)
+  6c:	8b 75 ec             	mov    -0x14(%ebp),%esi
+  6f:	8b 5d e8             	mov    -0x18(%ebp),%ebx
+  72:	8b 45 08             	mov    0x8(%ebp),%eax
+  75:	83 c0 48             	add    $0x48,%eax
+  78:	89 45 f0             	mov    %eax,-0x10(%ebp)
+  7b:	8b 45 f0             	mov    -0x10(%ebp),%eax
+  7e:	89 04 24             	mov    %eax,(%esp)
+  81:	e8 fc ff ff ff       	call   82 <_ZN4quex10tiny_lexerD1Ev+0x82>
+  86:	89 5d e8             	mov    %ebx,-0x18(%ebp)
+  89:	89 75 ec             	mov    %esi,-0x14(%ebp)
+  8c:	8b 75 ec             	mov    -0x14(%ebp),%esi
+  8f:	8b 5d e8             	mov    -0x18(%ebp),%ebx
+  92:	8b 45 08             	mov    0x8(%ebp),%eax
+  95:	83 c0 34             	add    $0x34,%eax
+  98:	89 45 f4             	mov    %eax,-0xc(%ebp)
+  9b:	8b 45 f4             	mov    -0xc(%ebp),%eax
+  9e:	89 04 24             	mov    %eax,(%esp)
+  a1:	e8 fc ff ff ff       	call   a2 <_ZN4quex10tiny_lexerD1Ev+0xa2>
+  a6:	89 5d e8             	mov    %ebx,-0x18(%ebp)
+  a9:	89 75 ec             	mov    %esi,-0x14(%ebp)
+  ac:	8b 45 e8             	mov    -0x18(%ebp),%eax
+  af:	89 04 24             	mov    %eax,(%esp)
+  b2:	e8 fc ff ff ff       	call   b3 <_ZN4quex10tiny_lexerD1Ev+0xb3>
+  b7:	8b 45 08             	mov    0x8(%ebp),%eax
+  ba:	89 04 24             	mov    %eax,(%esp)
+  bd:	e8 fc ff ff ff       	call   be <_ZN4quex10tiny_lexerD1Ev+0xbe>
+  c2:	83 c4 20             	add    $0x20,%esp
+  c5:	5b                   	pop    %ebx
+  c6:	5e                   	pop    %esi
+  c7:	5d                   	pop    %ebp
+  c8:	c3                   	ret    

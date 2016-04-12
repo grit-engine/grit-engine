@@ -1,0 +1,182 @@
+// -*- C++ -*- vim: set syntax=cpp:
+start = PROGRAM;
+
+define {
+    // Pattern definitions for example application
+    P_WHITESPACE          [ \t\n]+
+    P_IDENTIFIER          [_a-zA-Z][_a-zA-Z0-9]*
+    P_NUMBER              [0-9]+
+    //
+    // String: 
+    //    Quote " followe by either \" or something different from " and then a final "
+    P_STRING              "\""(\\"\""|[^"])*"\""
+    P_QUOTED_CHAR_1       ("'\\''")|("'"[^']?"'")
+    P_QUOTED_CHAR_2       "'\\"[0-9abcfnrtv\\]"'"
+    P_QUOTED_CHAR         ({P_QUOTED_CHAR_1}|{P_QUOTED_CHAR_2})
+    P_INCLUDE_FILE1       "<"[^>]+">"
+    P_INCLUDE_FILE2       "\""[^"]+"\""
+}
+
+token {
+    AMPERSANT
+    AND
+    ASSIGN_DIV
+    ASSIGN_MINUS
+    ASSIGN_MULT
+    ASSIGN_PLUS
+    BACKLASHED_NEWLINE
+    BRACKET_C
+    BRACKET_C
+    BRACKET_O
+    BRACKET_O
+    BREAK
+    CATCH
+    CLASS
+    COLON
+    COMMA
+    COMMENT
+    CONST
+    CONTINUE
+    CORNER_BRACKET_C
+    CORNER_BRACKET_O
+    CURLY_BRACKET_C
+    CURLY_BRACKET_O
+    DIV
+    DO
+    DOT
+    DOUBLE_COLON
+    DOUBLE_HASH
+    ELSE
+    EQ
+    EXCLUSIVE_OR
+    FOR
+    GREATER
+    GR_EQ
+    HASH
+    IDENTIFIER
+    IF
+    LESS
+    LE_EQ
+    LOGICAL_OR
+    MINUS
+    MODULO
+    MULT
+    NOT
+    NOT_EQ
+    NUMBER
+    OP_ASSIGNMENT
+    OR
+    PLUS
+    PP_DEFINE
+    PP_DEFINED
+    PP_ELSE
+    PP_ENDIF
+    PP_ERROR
+    PP_ELIF
+    PP_IF
+    PP_IFDEF
+    PP_IFNDEF
+    PP_INCLUDE
+    PP_PRAGMA
+    QUESTION_MARK
+    QUOTE
+    QUOTED_CHAR
+    SEMICOLON
+    STRING
+    STRUCT
+    SWITCH
+    TILDE
+    TYPE_CHAR
+    TYPE_DOUBLE
+    TYPE_FLOAT
+    TYPE_INT
+    TYPE_LONG
+    TYPE_UNSIGNED
+    WHILE
+}
+
+mode PROGRAM :
+<skip:       [ \n\t]>
+<skip_range: "/*" "*/">
+<skip_range: "//" "\n">
+{
+    <<EOF>>       => QUEX_TKN_TERMINATION;
+
+    "#"[ \t]*"include"[ \t]*{P_INCLUDE_FILE2} => QUEX_TKN_PP_INCLUDE;
+    "#"[ \t]*"include"[ \t]*{P_INCLUDE_FILE1} => QUEX_TKN_PP_INCLUDE;
+    "#"[ \t]*"define"  => QUEX_TKN_PP_DEFINE;
+    "#"[ \t]*"if"      => QUEX_TKN_PP_IF;
+    "#"[ \t]*"elif"    => QUEX_TKN_PP_ELIF;
+    "#"[ \t]*"ifdef"   => QUEX_TKN_PP_IFDEF;
+    "#"[ \t]*"ifndef"  => QUEX_TKN_PP_IFNDEF;
+    "#"[ \t]*"endif"   => QUEX_TKN_PP_ENDIF;
+    "#"[ \t]*"else"    => QUEX_TKN_PP_ELSE;
+    "#"[ \t]*"pragma"  => QUEX_TKN_PP_PRAGMA;
+    "#"[ \t]*"error"   => QUEX_TKN_PP_ERROR;
+    defined            => QUEX_TKN_PP_DEFINED;
+    "\\\n"             => QUEX_TKN_BACKLASHED_NEWLINE;
+
+    unsigned  => QUEX_TKN_TYPE_UNSIGNED;
+    int       => QUEX_TKN_TYPE_INT;
+    long      => QUEX_TKN_TYPE_LONG;
+    float     => QUEX_TKN_TYPE_FLOAT;
+    double    => QUEX_TKN_TYPE_DOUBLE;
+    char      => QUEX_TKN_TYPE_CHAR;
+
+    "#"           => QUEX_TKN_HASH;
+    "##"          => QUEX_TKN_DOUBLE_HASH;
+    "?"           => QUEX_TKN_QUESTION_MARK;
+    "~"           => QUEX_TKN_TILDE;
+    "("           => QUEX_TKN_BRACKET_O;
+    ")"           => QUEX_TKN_BRACKET_C;
+    "["           => QUEX_TKN_CORNER_BRACKET_O;
+    "]"           => QUEX_TKN_CORNER_BRACKET_C;
+    "{"           => QUEX_TKN_CURLY_BRACKET_O;
+    "}"           => QUEX_TKN_CURLY_BRACKET_C;
+    "="           => QUEX_TKN_OP_ASSIGNMENT;
+    "+"           => QUEX_TKN_PLUS;
+    "-"           => QUEX_TKN_MINUS;
+    "*"           => QUEX_TKN_MULT;
+    "/"           => QUEX_TKN_DIV;
+    "%"           => QUEX_TKN_MODULO;
+    "+="          => QUEX_TKN_ASSIGN_PLUS;
+    "-="          => QUEX_TKN_ASSIGN_MINUS;
+    "*="          => QUEX_TKN_ASSIGN_MULT;
+    "/="          => QUEX_TKN_ASSIGN_DIV;
+    "=="          => QUEX_TKN_EQ;
+    "!="          => QUEX_TKN_NOT_EQ;
+    ">"           => QUEX_TKN_GREATER;
+    ">="          => QUEX_TKN_GR_EQ;
+    "<"           => QUEX_TKN_LESS;
+    "<="          => QUEX_TKN_LE_EQ;
+    "!"           => QUEX_TKN_NOT;
+    "|"           => QUEX_TKN_LOGICAL_OR;
+    "^"           => QUEX_TKN_EXCLUSIVE_OR;
+    "||"          => QUEX_TKN_OR;
+    "&"           => QUEX_TKN_AMPERSANT;
+    "&&"          => QUEX_TKN_AND;
+    ":"           => QUEX_TKN_COLON;
+    struct        => QUEX_TKN_STRUCT;
+    const         => QUEX_TKN_CONST;
+    if            => QUEX_TKN_IF;
+    else          => QUEX_TKN_ELSE;
+    switch        => QUEX_TKN_SWITCH;
+    for           => QUEX_TKN_FOR;
+    do            => QUEX_TKN_DO;
+    while         => QUEX_TKN_WHILE;
+    break         => QUEX_TKN_BREAK;
+    continue      => QUEX_TKN_CONTINUE;
+    ";"           => QUEX_TKN_SEMICOLON;
+    "."           => QUEX_TKN_DOT;
+    ","           => QUEX_TKN_COMMA;
+
+    {P_IDENTIFIER}  => QUEX_TKN_IDENTIFIER;
+    {P_NUMBER}      => QUEX_TKN_NUMBER;
+    {P_STRING}      => QUEX_TKN_STRING;
+    {P_QUOTED_CHAR} => QUEX_TKN_QUOTED_CHAR;
+
+    // {P_WHITESPACE}           { }
+    //"/*"([^*]|("*"[^/]))*"*/" { } // => QUEX_TKN_COMMENT;
+    // "//"[^\n]*"\n"           { } // => QUEX_TKN_COMMENT;
+}
+

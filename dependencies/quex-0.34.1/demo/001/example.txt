@@ -1,0 +1,8 @@
+struct example {
+  int    x;
+  double y;
+};
+
+if {
+  "hallo world";
+}

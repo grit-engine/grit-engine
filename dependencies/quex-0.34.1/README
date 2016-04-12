@@ -1,0 +1,106 @@
+Quex - A Mode Oriented Lexical Analyser Generator
+(C) 2006-2007 Frank-Rene Schaefer
+--------------------------------------------------------------------------------
+
+LICENSE:
+
+The Software is distributed under LPGL, provided the following restriction:
+
+-- There is no license for products targeting military purpose.
+
+Note, that if any part of the LPGL contradicts with the former restrictions,
+the former restrictions have precedence. The 'no warranty clause' holds
+in any case. 
+
+The LPGL:
+
+Quex is  free software;  you can  redistribute it and/or  modify it  under the
+terms  of the  GNU Lesser  General  Public License  as published  by the  Free
+Software Foundation;  either version 2.1 of  the License, or  (at your option)
+any later version.
+
+This software is  distributed in the hope that it will  be useful, but WITHOUT
+ANY WARRANTY; without even the  implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the  GNU Lesser General Public License for more
+details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with this  library; if not,  write to the  Free Software Foundation,  Inc., 59
+Temple Place, Suite 330, Boston, MA 02111-1307 USA
+--------------------------------------------------------------------------------
+
+BRIEF:
+
+   Quex is a  generator for lexical analysers with  extended features, such as
+   event handling  for mode transitions, mode inheritance  and the indentation
+   event. Quex comes with an extensive documentation in pdf format located in
+   the ./DOC subdirectory. Note, that not all distributions of quex contain
+   the documentation. It is always available on the web under quex.sf.net. The
+   ./demo subdirectory  contains examples  that should get you quickly up and
+   running.
+
+NOTE: Quex requires python to be installed. 
+
+INSTALLATION:
+
+  The installation process is simple:
+
+  -- Extract  the file  'quex-x.x.x.tar.gz' into  a directory  that  fits your
+     little heart's desires.
+
+  -- Set the  environment variable 'QUEX_PATH'  in your system  environment to
+     the place  where you installed quex. If  you are using a  Unix system and
+     the bash-shell, and your are user 'elvis' then add something like the 
+     following line to your .bashrc-file:
+
+         export QUEX_PATH=/home/elvis/downloads/quex-0.11.2/
+
+     provided that you extracted the files into the directory /downloads/quex-0.11.2
+
+  -- Make a link from the file $QUEX_PATH/quex-exe.py to $EXE_PATH/quex where
+     $EXEC_PATH is a path where executables can be found by your system.
+     If you work on a unix system, you might want to type
+
+        > ln -s /home/elvis/downloads/quex-0.11.2/quex-exe.py \
+                /home/elvis/bin/quex
+     
+     In order to create a private directory where your system finds executable
+     files add the directory '/home/elvis/bin' to your path. Under Unix with a 
+     bash shell, you need to append
+
+        export PATH=/home/elvis/bin:$PATH
+
+     to your .bashrc file in your /home/elvis directory.  You might want to
+     ensure executable rights with
+ 
+        > chmod a+rx /home/elvis/downloads/quex-0.11.2/quex-exe.py
+        > chmod a+rx /home/elvis/bin/quex
+
+  -- Supply your c++ compiler with the include path '$QUEX_PATH/code_base'. If
+     you are using g++ simply add the option
+
+         -I$(QUEX_PATH)/code_base 
+
+     to the  list of compiler flags. In the subdirectory ./demo you find a list
+     of examples that have ready-to-rumble makefiles. You may use these 
+     to startup your project.
+
+
+CONTACT:
+
+     Please, send feedback! Any bug you find is likely to result in a unit test
+     that is executed at any build. Thus, providing bug reports is an essential
+     support to the stability and quality of the software. If you are using
+     quex for a famous software project or you just think that quex is just
+     marvelous, then it also helps if you send me your inputs. Such support
+     encourages me to work on it harder and more often ...
+
+     Please, feel free to send me any coments, critiques or suggestions to
+
+     fschaef@users.sourceforge.net.
+
+AUTHOR:
+
+     1. June, 2007 
+     Frank-Rene Schaefer
+

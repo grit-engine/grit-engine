@@ -1,0 +1,48 @@
+// TokenN: 245252 [1]
+// FileSize: 1585337 [Byte] = 1548.18 [kB] = 1.5119 [MB].
+//Benchmark (including overhead)
+//    TokenN: 245252
+//    Total Time:  10.02 [sec]
+//    Runs:        200 [1]
+//    TimePerRun:  0.0501 [sec]
+//    Time / Char:         3.16021e-08
+//    Clock Cycles / Char: 57.9267
+// Overhead:
+//     Checksum (meaningless): 10964348 [1]
+//    Total Time:  0.75 [sec]
+//    Runs:        200 [1]
+//    TimePerRun:  0.00375 [sec]
+//    Time / Char:         2.36543e-09
+//    Clock Cycles / Char: 4.33583
+//Result:
+//   Time / Run:          0.04635
+//   Time / Char:         2.92367e-08
+//   Clock Cycles / Char: 53.5908
+{
+   quex_version    = {0.33.7-pre}, 
+   cpu_name        = {IntelCoreDuo}, 
+   cpu_code        = {T2400}, 
+   cpu_freq_mhz    = {1833}, 
+   cc_name         = {g++    }, 
+   cc_version      = {4.3.1  }, 
+   cc_opt_flags    = {}, 
+   executable_size = {71557}, 
+   os_name         = {linux-2}, 
+   tester_email    = {fschaef@users.sourceforge.net}, 
+   year         = {2008},
+   month        = {12},
+   day          = {5},
+   file_name    = {linux-2.6.22.17-kernel-dir.c}, 
+   file_size    = {1585337}, 
+   char_size    = {1}, 
+   buffer_size  = {65536}, 
+   line_count   = {false},
+   column_count = {false},
+   note         = {}, 
+   repetition_n               = {200}, 
+   time_per_repetition        = {0.04635},
+   token_n                    = {245252}, 
+   clock_cycles_per_character = {53.5908}, 
+   clock_cycles_per_token     = {346.417}, 
+}
+

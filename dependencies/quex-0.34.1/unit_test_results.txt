@@ -1,0 +1,962 @@
+===============================================================================
+ENTER: TEST
+DATE:  Fri Dec  5 08:08:11 2008
+TITLE: Regression Tests on Fixed Bugs
+
+-------------------------------------------------------------------------------
+
+ -- attardi:
+
+    2001602 RE matching UTF8 l quote uno
+        bug-2001602.sh ..................................................[OK]
+    2001787 RE Problem with inverted whitespace
+        bug-2001787.sh ..................................................[OK]
+    2002070 Output buffer overflow
+        bug-2002070.sh ..................................................[OK]
+    2002474 Segmentation Fault while UTF-8 Decoding
+        bug-2002474.sh ........................................[NO GOOD FILE]
+    2004927 UTF-8 RE Extra Comma Matched
+        bug-2004927.sh ..................................................[OK]
+
+ -- fschaef:
+
+    1948456 (feature) Inheritance Info
+        feature-1948456.sh ..............................................[OK]
+    1952133 0.24.11 Crash in Buffer Handling with tiny buffer size
+        bug-1952133.sh 29 ...............................................[OK]
+                       30 ...............................................[OK]
+                       127 ..............................................[OK]
+                       128 ..............................................[OK]
+                       129 ..............................................[OK]
+                       2499 .............................................[OK]
+                       2500 .............................................[OK]
+                       2501 .............................................[OK]
+                       2502 .............................................[OK]
+    1952747 TKN_TERMINATION
+        bug-1952747.sh ..................................................[OK]
+    2078087 (feature) Mode transition shortcuts GOTO, GOSUB, GOUP
+        feature-2078087.sh GOTO .........................................[OK]
+                           GOSUB ........................................[OK]
+                           GOSUB-2 ......................................[OK]
+    2161098 0.32.1 Range Skipper Line Number Counter
+        bug-2161098.sh c_comments .......................................[OK]
+                       shell_comments ...................................[OK]
+                       funny_comments ...................................[OK]
+    2209142 0.33.1-pre-release
+        bug-2209142.sh error ............................................[OK]
+                       good .............................................[OK]
+    2277660 character count pre-determination
+        bug-2277660.sh ..................................................[OK]
+    2349109 0.33.5 Line and Column number counts with Set skippers;
+        bug-2349109.sh newline-skipper ..................................[OK]
+                       non-newline-skipper ..............................[OK]
+                       newline-skipper-utf8 .............................[OK]
+
+ -- marcoantonelli:
+
+    2219383 Parse foreign token id file
+        feature-2219383.sh ..............................................[OK]
+    2251359 (feature) Single-character token without name
+        feature-2251359.sh good .........................................[OK]
+                           1 ............................................[OK]
+                           2 ............................................[OK]
+                           3 ............................................[OK]
+                           4 ............................................[OK]
+                           5 ............................................[OK]
+                           6 ............................................[OK]
+    2257908 Quex does not terminate lexer generation
+        bug-2257908.sh ..................................................[OK]
+    2262537 (feature) Allow Nothing is fine in define section
+        feature-2262537.sh ..............................................[OK]
+
+ -- sphericalcow:
+
+    1885304 Problems with files with DOS CR/LF line endings
+        bug-1885304.sh ..................................................[OK]
+    1885846 Empty RE in define section
+        bug-1885846.sh ..................................................[OK]
+    1885855 P{ ...} syntax does not work outside of [
+        bug-1885855.sh ..................................................[OK]
+    1887163 Single state mode causes quex to crash
+        bug-1887163.sh ..................................................[OK]
+    1889086 Single state mode causes quex to crash
+        bug-1889086.sh ..................................................[OK]
+    1889089 Single state mode causes quex to crash
+        bug-1889089.sh ..................................................[OK]
+    1889321 Quex does not handle actions including quote literal
+        bug-1889321.sh ..................................................[OK]
+    1889692 0.19.4 does not gracefully handle unbalanced quotations
+        bug-1889692.sh ..................................................[OK]
+    1889702 0.19.4 forbids derived modes that only add event handlers
+        bug-1889702.sh ..................................................[OK]
+    1889871 0.19.4 crashes if [] expression contains unescaped -
+        bug-1889871.sh ..................................................[OK]
+    1889877 '*' or '+' without prececing expression crashes 0.19.4
+        bug-1889877.sh ..................................................[OK]
+    1889892 x, X or followed by a non-hex digit crashes 0.19.4
+        bug-1889892.sh ..................................................[OK]
+    1890828 0.19.9 crashes trying to call error handler in several cases
+        bug-1890828.sh ..................................................[OK]
+    1890876 {} handled oddly in define blocks in 0.19.9
+        bug-1890876.sh ..................................................[OK]
+    1891254 Lone ? as regex does not give an error in 0.19.9
+        bug-1891254.sh ..................................................[OK]
+    1892227 accepted as identifiers in def
+        bug-1892227.sh ..................................................[OK]
+    1892809
+        bug-1892809.sh ..................................................[OK]
+    1893849 0.20.5 allows engine names that are not valid identifiers
+        bug-1893849.sh ..................................................[OK]
+    1893874 Missing colon in mode definition crashes 0.20.5
+        bug-1893874.sh ..................................................[OK]
+    1893880 0.20.5 allows inheritable
+        bug-1893880.sh ..................................................[OK]
+    1894130 0.20.6 can list wrong mode as circuluar inheritance
+        bug-1894130.sh ..................................................[OK]
+    1894185 Unbalanced quote and double quote in header/init/body blocks in 0.20.6
+        bug-1894185.sh ..................................................[OK]
+    1894578 header block not added to -core-engine.cpp file in 0.20.6
+        bug-1894578.sh ..................................................[OK]
+    1895066
+        bug-1895066.sh ..................................................[OK]
+    1895500 assertion error running generated 0.20.8 lexer with Unicode
+        bug-1895500.sh ..................................................[OK]
+    1898125 invalid argument for --token-offset can crash 0.21.4
+        bug-1898125.sh ..................................................[OK]
+    1900391 malformed --set-by-expression can crash 0.21.8
+        bug-1900391.sh ..................................................[OK]
+    1902175 invalid escape in character set expression crashes 0.21.12
+        bug-1902175.sh ..................................................[OK]
+    1905768
+        bug-1905768.sh ..................................................[OK]
+    1908092 0.23.5 uses --token-class without --token-class-file
+        bug-1908092.sh ..................................................[OK]
+    1908436 0.23.6 rule precedence reversed for identical patterns
+        bug-1908436.sh ..................................................[OK]
+    1935701 - 0.24.7 buffer handling size mismatch
+        bug-1935701.exe FILE ............................................[OK]
+                        fstream .........................................[OK]
+    1936707 0.24.10 --plot flag doesnt seem to work
+        bug-1936707.sh ..................................................[OK]
+    1969629 0.25.4 token list with just TERMINATION treated empty
+        bug-1969629.sh ..................................................[OK]
+    2087087 0.31.1 --set-by switches suppress command error diagnostics
+        bug-2087087.sh ..................................................[OK]
+    2095970 (without token queue)
+        bug-2095970-ntq.sh Normal .......................................[OK]
+                           NormalNoAsserts ..............................[OK]
+                           NoModeDetection ..............................[OK]
+                           NoModeDetectionNoAsserts .....................[OK]
+                           NoModeDetection_ErrorCase ....................[OK]
+    2095970 0.31.3 Mode change without immediate return
+        bug-2095970.sh Normal ...........................................[OK]
+                       NormalNoAsserts ..................................[OK]
+                       NoModeDetection ..................................[OK]
+                       NoModeDetectionNoAsserts .........................[OK]
+                       NoModeDetection_ErrorCase ........................[OK]
+
+ -- yaroslav_xp:
+
+    2146712 (feature) output directory parameter for the command line;
+        feature-2146712.sh Normal .......................................[OK]
+                           NotExist .....................................[OK]
+                           NoWrite ......................................[OK]
+    2163753 0.32.1 Incorrect on_failure behavior
+        bug-2163753.sh ..................................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: demo/TEST
+DATE:  Fri Dec  5 08:10:24 2008
+TITLE: Demo-Applications
+
+-------------------------------------------------------------------------------
+
+ -- Other Compilers than g++:
+
+    Intel's icpc
+        other-compilers-intel.sh 000 ....................................[OK]
+                                 001 ....................................[OK]
+                                 002 ....................................[OK]
+                                 003 ....................................[OK]
+                                 005 ....................................[OK]
+                                 006 ....................................[OK]
+    Sun Microsystem's sunCC
+        other-compilers-sun.sh 000 ......................................[OK]
+                               001 ......................................[OK]
+                               002 ......................................[OK]
+                               003 ......................................[OK]
+                               005 ......................................[OK]
+                               006 ......................................[OK]
+
+ -- demo/000:
+
+    Single Mode Example
+        000.sh NDEBUG ...................................................[OK]
+               DEBUG ....................................................[OK]
+
+ -- demo/001:
+
+    Multiple Modes, Mode Transitions
+        001.sh NDEBUG ...................................................[OK]
+               DEBUG ....................................................[OK]
+
+ -- demo/002:
+
+    Indentation Based Scopes
+        002.sh NDEBUG ...................................................[OK]
+               DEBUG ....................................................[OK]
+
+ -- demo/003:
+
+    Unicode Based Lexical Analyzis
+        003.sh BPC=2 ....................................................[OK]
+               BPC=2_NDEBUG .............................................[OK]
+               BPC=4 ....................................................[OK]
+               BPC=4_NDEBUG .............................................[OK]
+               BPC=wchar_t ..............................................[OK]
+
+ -- demo/004:
+
+    Benchmarking a C-Lexical Analyser
+        004.sh ..........................................................[OK]
+
+ -- demo/005:
+
+    Including Files
+        005.sh 1 ........................................................[OK]
+               1_NDEBUG .................................................[OK]
+               2 ........................................................[OK]
+               2_NDEBUG .................................................[OK]
+
+ -- demo/006:
+
+    Pseudo Ambiguous Post Conditions
+        006.sh NDEBUG ...................................................[OK]
+               DEBUG ....................................................[OK]
+
+ -- demo/007:
+
+    Miscellaneous Features
+        007.sh NDEBUG ...................................................[OK]
+               DEBUG ....................................................[OK]
+
+ -- demo/008:
+
+    Interface to Bison/Yacc (Contributed by Marco Antonelli)
+        008.sh NDEBUG ...................................................[OK]
+               DEBUG ....................................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/TEST
+DATE:  Fri Dec  5 08:10:24 2008
+TITLE: Miscellaneous Basic Tests
+
+-------------------------------------------------------------------------------
+ -- Prepare Pattern Information for Code Generation
+        test-coder-get_generator_input.py ...............................[OK]
+
+ -- User defined token id file:
+
+    __parse_token_id_file
+        test-token_id_file-find_ids.py ..................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/code_base/buffer/TEST
+DATE:  Fri Dec  5 08:10:28 2008
+TITLE: <no file 'ADM/title.txt'>
+-------------------------------------------------------------------------------
+
+ -- Backward:
+
+    Copy Region (BPC=1);
+        BufferFiller_backward_copy.exe Normal ...........................[OK]
+                                       StartOfStream ....................[OK]
+    Copy Region (BPC=4);
+        BufferFiller_backward_copy-32.exe Normal ........................[OK]
+                                          StartOfStream .................[OK]
+
+ -- Forward:
+
+    Copy Fallback Region (BPC=1);
+        BufferFiller_forward_copy.exe ...................................[OK]
+    Copy Fallback Region (BPC=4);
+        BufferFiller_forward_copy-32.exe ................................[OK]
+
+ -- Move by Offset:
+
+    Backward (BPC=1);
+        Buffer_move_backward.exe 1 ......................................[OK]
+                                 2 ......................................[OK]
+                                 3 ......................................[OK]
+                                 4 ......................................[OK]
+                                 5 ......................................[OK]
+    Backward (BPC=4);
+        Buffer_move_backward-32.exe 1 ...................................[OK]
+                                    2 ...................................[OK]
+                                    3 ...................................[OK]
+                                    4 ...................................[OK]
+                                    5 ...................................[OK]
+    Forward (BPC=1);
+        Buffer_move_forward.exe 1 .......................................[OK]
+                                2 .......................................[OK]
+                                3 .......................................[OK]
+                                4 .......................................[OK]
+                                5 .......................................[OK]
+    Forward (BPC=4);
+        Buffer_move_forward-32.exe 1 ....................................[OK]
+                                   2 ....................................[OK]
+                                   3 ....................................[OK]
+                                   4 ....................................[OK]
+                                   5 ....................................[OK]
+
+ -- Tell and Seek:
+
+    Bytes Per Character (BPC)=1;
+        Buffer_tell_and_seek.exe ........................................[OK]
+    Bytes Per Character (BPC)=4;
+        Buffer_tell_and_seek-32.exe .....................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/code_base/buffer/iconv/TEST
+DATE:  Fri Dec  5 08:10:33 2008
+TITLE: Input Buffers Based on the IConv - Library
+
+-------------------------------------------------------------------------------
+
+ -- Move by Offset:
+
+    Backward (BPC=4);
+        Buffer_move_backward.exe 1 ......................................[OK]
+                                 2 ......................................[OK]
+                                 3 ......................................[OK]
+                                 4 ......................................[OK]
+                                 5 ......................................[OK]
+    Forward (BPC=4);
+        Buffer_move_forward.exe 1 .......................................[OK]
+                                2 .......................................[OK]
+                                3 .......................................[OK]
+                                4 .......................................[OK]
+                                5 .......................................[OK]
+
+ -- Stream Position Seek:
+
+    Plain search
+        seek_character_index.exe Forward ................................[OK]
+                                 Backward ...............................[OK]
+    Total Zik-Zak
+        seek_character_index-zikzak.exe Fixed ...........................[OK]
+                                        Dynamic .........................[OK]
+
+ -- Tell and Seek:
+
+    Bytes Per Character (BPC)=4;
+        Buffer_tell_and_seek.exe ........................................[OK]
+
+ -- read_characters:
+
+    Raw buffer size varries (UTF-8)
+        one-beat.exe 6 ..................................................[OK]
+                     7 ..................................................[OK]
+                     8 ..................................................[OK]
+                     9 ..................................................[OK]
+    User buffer size varries (UTF-8)
+        n-beat.exe 3 ....................................................[OK]
+                   4 ....................................................[OK]
+                   5 ....................................................[OK]
+                   6 ....................................................[OK]
+                   8 ....................................................[OK]
+                   9 ....................................................[OK]
+                   1 ....................................................[OK]
+                   2 ....................................................[OK]
+                   7 ....................................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/code_base/buffer/plain/TEST
+DATE:  Fri Dec  5 08:10:49 2008
+TITLE: <no file 'ADM/title.txt'>
+-------------------------------------------------------------------------------
+
+ -- Load Backward:
+
+    Character=1 Byte(s), Fallback=0
+        BufferFiller_backward_load-1.exe ................................[OK]
+    Character=2 Byte(s), Fallback=0
+        BufferFiller_backward_load-2.exe ................................[OK]
+    Character=4 Byte(s), Fallback=0
+        BufferFiller_backward_load-4.exe ................................[OK]
+
+ -- Load Forward:
+
+    Character=1 Byte(s), Fallback=0
+        BufferFiller_forward_load-1-fb0.exe .............................[OK]
+    Character=1 Byte(s), Fallback=1
+        BufferFiller_forward_load-1-fb1.exe .............................[OK]
+    Character=1 Byte(s), Fallback=5
+        BufferFiller_forward_load-1-fb5.exe .............................[OK]
+    Character=2 Byte(s), Fallback=0
+        BufferFiller_forward_load-2-fb0.exe .............................[OK]
+    Character=2 Byte(s), Fallback=1
+        BufferFiller_forward_load-2-fb1.exe .............................[OK]
+    Character=2 Byte(s), Fallback=5
+        BufferFiller_forward_load-2-fb5.exe .............................[OK]
+    Character=4 Byte(s), Fallback=0
+        BufferFiller_forward_load-4-fb0.exe .............................[OK]
+    Character=4 Byte(s), Fallback=1
+        BufferFiller_forward_load-4-fb1.exe .............................[OK]
+    Character=4 Byte(s), Fallback=5
+        BufferFiller_forward_load-4-fb5.exe .............................[OK]
+    With Error in Stream (Character=4 Byte(s))
+        BufferFiller_forward_load-error.exe .............................[OK]
+
+ -- Move by Offset:
+
+    Backward (BPC=1);
+        Buffer_move_backward-1-fb1.exe 1 ................................[OK]
+                                       2 ................................[OK]
+                                       3 ................................[OK]
+                                       4 ................................[OK]
+                                       5 ................................[OK]
+    Backward (BPC=1);
+        Buffer_move_backward-1-fb0.exe 1 ................................[OK]
+                                       2 ................................[OK]
+                                       3 ................................[OK]
+                                       4 ................................[OK]
+                                       5 ................................[OK]
+    Backward (BPC=4);
+        Buffer_move_backward-4-fb0.exe 1 ................................[OK]
+                                       2 ................................[OK]
+                                       3 ................................[OK]
+                                       4 ................................[OK]
+                                       5 ................................[OK]
+    Forward (BPC=1);
+        Buffer_move_forward-1-fb0.exe 1 .................................[OK]
+                                      2 .................................[OK]
+                                      3 .................................[OK]
+                                      4 .................................[OK]
+                                      5 .................................[OK]
+    Forward (BPC=1);
+        Buffer_move_forward-1-fb1.exe 1 .................................[OK]
+                                      2 .................................[OK]
+                                      3 .................................[OK]
+                                      4 .................................[OK]
+                                      5 .................................[OK]
+    Forward (BPC=4);
+        Buffer_move_forward-4-fb0.exe 1 .................................[OK]
+                                      2 .................................[OK]
+                                      3 .................................[OK]
+                                      4 .................................[OK]
+                                      5 .................................[OK]
+
+ -- Tell and Seek:
+
+    Bytes Per Character (BPC)=1;
+        Buffer_tell_and_seek-1-fb0.exe ..................................[OK]
+    Bytes Per Character (BPC)=1;
+        Buffer_tell_and_seek-1-fb1.exe ..................................[OK]
+    Bytes Per Character (BPC)=4;
+        Buffer_tell_and_seek-4-fb0.exe ..................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/code_base/template/TEST
+DATE:  Fri Dec  5 08:10:49 2008
+TITLE: Lexical Analyzer Class Template
+
+-------------------------------------------------------------------------------
+
+ -- Count Line and Column:
+
+    With Indentation
+        test-simple-2 ...................................................[OK]
+    Without Indentation Count
+        test-simple .....................................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/core_engine/TEST
+DATE:  Fri Dec  5 08:10:50 2008
+TITLE: Core Functionalities
+
+-------------------------------------------------------------------------------
+
+ -- NumberSet:
+
+    Condition Code Generation
+        test-NumberSet-condition-code.py ................................[OK]
+    Cut Interval
+        test-NumberSet-cut_interval.py ..................................[OK]
+    Difference
+        test-NumberSet-difference.py ....................................[OK]
+    Intersection
+        test-NumberSet-intersection.py ..................................[OK]
+    Inverse
+        test-NumberSet-inverse.py .......................................[OK]
+    Union
+        test-NumberSet-union.py .........................................[OK]
+
+ -- Utf8-Module:
+
+    Map UTF8 String To Unicode Values
+        test-utf8-UCS-to-UTF8.py ........................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/core_engine/generator/TEST
+DATE:  Fri Dec  5 08:12:49 2008
+TITLE: Code Generation for Lexical Analyzer
+
+
+-------------------------------------------------------------------------------
+
+ -- Buffer Reload:
+
+    Backwards;
+        test-backward_loading.py Cpp_ASSERTS ............................[OK]
+                                 Cpp ....................................[OK]
+                                 ANSI-C-ASSERTS .........................[OK]
+                                 ANSI-C .................................[OK]
+    Forward Position Adaption
+        test-position_adaption.py Cpp_ASSERTS ...........................[OK]
+                                  Cpp ...................................[OK]
+                                  ANSI-C-ASSERTS ........................[OK]
+                                  ANSI-C ................................[OK]
+    No Backward Reload -- Precondition at Border
+        test-no-backward-reloading.py Cpp_ASSERTS .......................[OK]
+                                      Cpp ...............................[OK]
+                                      ANSI-C-ASSERTS ....................[OK]
+                                      ANSI-C ............................[OK]
+
+ -- CONTINUE:
+
+    (special use case)
+        test-continue-without-return-2.py ANSI-C-PlainMemory ............[OK]
+                                          ANSI-C ........................[OK]
+                                          Cpp ...........................[OK]
+    Mode Changes
+        test-mode-changes.py ANSI-C-PlainMemory .........................[OK]
+                             ANSI-C .....................................[OK]
+                             Cpp ........................................[OK]
+    Reentry analysis without return from function
+        test-continue-without-return.py ANSI-C-PlainMemory ..............[OK]
+                                        ANSI-C ..........................[OK]
+                                        Cpp .............................[OK]
+
+ -- Post Conditions:
+
+    Part 1
+        test-post-conditions.py ANSI-C-PlainMemory ......................[OK]
+                                ANSI-C ..................................[OK]
+                                Cpp .....................................[OK]
+    Part 2
+        test-post-conditions-2.py ANSI-C-PlainMemory ....................[OK]
+                                  ANSI-C ................................[OK]
+                                  Cpp ...................................[OK]
+    Part 3
+        test-post-conditions-3.py ANSI-C-PlainMemory ....................[OK]
+                                  ANSI-C ................................[OK]
+                                  Cpp ...................................[OK]
+
+ -- Pre Conditions:
+
+    Multiple Identical Pre-Conditions
+        test-pre-conditions-3.py ANSI-C-PlainMemory .....................[OK]
+                                 ANSI-C .................................[OK]
+                                 Cpp ....................................[OK]
+    Part 1
+        test-pre-conditions.py ANSI-C-PlainMemory .......................[OK]
+                               ANSI-C ...................................[OK]
+                               Cpp ......................................[OK]
+    Part 2
+        test-pre-conditions-2.py ANSI-C-PlainMemory .....................[OK]
+                                 ANSI-C .................................[OK]
+                                 Cpp ....................................[OK]
+
+ -- Pre- and Post- Conditions:
+
+    Simple
+        test-pre-post-condition.py ANSI-C-PlainMemory ...................[OK]
+                                   ANSI-C ...............................[OK]
+                                   Cpp ..................................[OK]
+
+ -- Pseudo Ambgiguous Post Condition:
+
+    Part I
+        test-pseudo_ambiguous_post_conditions.py ANSI-C-PlainMemory .....[OK]
+                                                 ANSI-C .................[OK]
+                                                 Cpp ....................[OK]
+    Part II
+        test-pseudo_ambiguous_post_conditions-2.py ANSI-C-PlainMemory ...[OK]
+                                                   ANSI-C ...............[OK]
+                                                   Cpp ..................[OK]
+
+ -- Simple:
+
+    Begin of Line (BOL), End of Line (EOL)
+        test-bol-eol.py ANSI-C-PlainMemory ..............................[OK]
+                        ANSI-C ..........................................[OK]
+                        Cpp .............................................[OK]
+    Keywords 'for', 'forest', 'forester', and 'formidable'
+        test-simple-5.py ANSI-C-PlainMemory .............................[OK]
+                         ANSI-C .........................................[OK]
+                         Cpp ............................................[OK]
+    Maximum Length Match
+        test-simple-2.py ANSI-C-PlainMemory .............................[OK]
+                         ANSI-C .........................................[OK]
+                         Cpp ............................................[OK]
+    Special Case '.' (drop out on valid target state)
+        test-simple-3.py ANSI-C-PlainMemory .............................[OK]
+                         ANSI-C .........................................[OK]
+                         Cpp ............................................[OK]
+    Tiny Expressions
+        test-simple.py ANSI-C-PlainMemory ...............................[OK]
+                       ANSI-C ...........................................[OK]
+                       Cpp ..............................................[OK]
+
+ -- Single State:
+
+    Extensive Transition Code Generation
+        test-single-state-transitions-x.py ..............................[OK]
+    Extensive Transition Code Generation II
+        test-single-state-transitions-y.py ..............................[OK]
+    Transition Code Generation
+        test-single-state-transitions.py ................................[OK]
+
+ -- Skip-Characters:
+
+    Large Buffer
+        test-skip-trigger-set.py ANSI-C-PlainMemory .....................[OK]
+                                 ANSI-C .................................[OK]
+                                 Cpp ....................................[OK]
+    Varrying Buffer Size
+        test-skip-trigger-set-2.py 3 ....................................[OK]
+                                   4 ....................................[OK]
+                                   5 ....................................[OK]
+                                   6 ....................................[OK]
+                                   7 ....................................[OK]
+                                   8 ....................................[OK]
+
+ -- Skip-Range:
+
+    DelimiterLength=2, Large Buffer
+        test-skip-simple.py ANSI-C-PlainMemory ..........................[OK]
+                            ANSI-C ......................................[OK]
+                            Cpp .........................................[OK]
+    Semi-Complete Delimiters, BufferSize = DelimiterLength + 2
+        test-skip-simple-4.py 2 .........................................[OK]
+                              3 .........................................[OK]
+                              4 .........................................[OK]
+                              5 .........................................[OK]
+    Varrying DelimiterLength, BufferSize = DelimiterLength + 2
+        test-skip-simple-3.py 1 .........................................[OK]
+                              2 .........................................[OK]
+                              3 .........................................[OK]
+                              4 .........................................[OK]
+    Varrying DelimiterLength, Large Buffer
+        test-skip-simple-2.py DL=1 ......................................[OK]
+                              DL=2 ......................................[OK]
+                              DL=3 ......................................[OK]
+                              DL=4 ......................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/core_engine/regular_expression/TEST
+DATE:  Fri Dec  5 08:12:54 2008
+TITLE: Regular Expression Parsing
+
+-------------------------------------------------------------------------------
+ -- State Machine Pattern Matching
+        test-pattern-matching.py ........................................[OK]
+
+ -- Backslashed Characters:
+
+    General
+        test-snap_backslashed_character.py ..............................[OK]
+
+ -- Basics:
+
+    Lonestanding characters
+        test-lonely-characters.py .......................................[OK]
+    Map character *range* to state machine
+        test-set.py .....................................................[OK]
+    Map character *string* to state machine
+        test-string.py ..................................................[OK]
+    Pattern identifier replacement
+        test-replacement.py .............................................[OK]
+    Snap string until (low level function)
+        test-snap_until.py ..............................................[OK]
+
+ -- Combination:
+
+    Alternative Expressions
+        test-alternatives.py ............................................[OK]
+    Alternative Expressions
+        test-set-expressions.py .........................................[OK]
+    Simple repeated expressions
+        test-repeated-expressions.py ....................................[OK]
+
+ -- Conditional Analysis:
+
+    Begin of Line '^', End of Line '$'
+        test-bol-eol.py .................................................[OK]
+    End of Line '$' (with DOS/Windows '\r\n')
+        test-eol-carriage-return-newline.py .............................[OK]
+    post conditions
+        test-post-condition.py ..........................................[OK]
+    pre conditions
+        test-pre-condition.py ...........................................[OK]
+    pre- and post-conditions
+        test-pre-and-post-condition.py ..................................[OK]
+
+ -- Unicode properties:
+
+    Set Operations
+        test-properties-2.py ............................................[OK]
+    Simple
+        test-properties.py ..............................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/core_engine/state_machine/TEST
+DATE:  Fri Dec  5 08:12:58 2008
+TITLE: State Machine Operations
+
+-------------------------------------------------------------------------------
+
+ -- DFA:
+
+    Get Trigger Map (intervals --> target states)
+        test-StateInfo-trigger-map.py ...................................[OK]
+    Hopcroft optimization (minimize state set)
+        test-hopcroft-minimization.py NEW ...............................[OK]
+                                      ADAPT .............................[OK]
+
+ -- NFA:
+
+    Conversion to DFA (subset construction)
+        test-nfa-to-dfa.py ..............................................[OK]
+    Conversion to DFA - Special Case
+        test-nfa-to-dfa-special.py ......................................[OK]
+    Epsilon closure (single state)
+        test-StateMachine-epsilon-closure.py ............................[OK]
+    Get elementary trigger sets (target index --> trigger sets)
+        test-StateMachine-elementary_trigger_sets.py ....................[OK]
+    Get elementary trigger sets II
+        test-StateMachine-elementary_trigger_sets-2.py ..................[OK]
+
+ -- Plot:
+
+    Get graphviz string of state machine.
+        test-StateMachine-get_graphviz_string.py 1 ......................[OK]
+                                                 2 ......................[OK]
+
+ -- Predetermined Character Count:
+
+    Characters
+        test-count_character_n.py .......................................[OK]
+    Contains only Spaces
+        test-count_contains_only_spaces.py ..............................[OK]
+    Newlines
+        test-count_newline_n.py .........................................[OK]
+
+ -- Pseudo Ambigous Post Condition:
+
+    Replace Drop-Out with Adjacent Target
+        test-StateInfo-replace_drop_out_with_adjacent_target.py .........[OK]
+    The Philosophical Cut
+        test-ambiguous_post_condition-philosophical_cut.py ..............[OK]
+
+ -- StateMachine:
+
+    Cloning
+        test-StateMachine-clone.py ......................................[OK]
+
+ -- StateMachine Operations:
+
+    Append Post Condition
+        test-setup_post_condition.py ....................................[OK]
+    Append Post Condition
+        test-setup_border_conditions.py .................................[OK]
+    Inverse
+        test-StateMachine-inverse.py ....................................[OK]
+    Paralell
+        test-parallelize.py .............................................[OK]
+    Repetition with min and max repetition numbers
+        test-repeat.py ..................................................[OK]
+    Repetitions Kleene closure 0 or arbitrary repetitions
+        test-repeat-pure.py .............................................[OK]
+    Sequence
+        test-sequentialize.py ...........................................[OK]
+    Setup Pre-Condition
+        test-setup_pre_condition.py .....................................[OK]
+
+ -- Tracing origin:
+
+    Cloning
+        test-StateMachine-trace-origin-clone.py .........................[OK]
+    Hopcroft optimization (minimize state set)
+        test-StateMachine-trace-origin-hopcroft-optimization.py .........[OK]
+    NFA to DFA (subset construction)
+        test-StateMachine-trace-origin-create-DFA.py ....................[OK]
+    NFA to DFA (subset construction) II
+        test-StateMachine-trace-origin-create-DFA-2.py ..................[OK]
+    Paralellization
+        test-parallelize-trace-origin.py ................................[OK]
+
+ -- Trigger Set Check:
+
+    Has Trigger
+        test-StateInfo-has_trigger.py ...................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/frs_py/TEST
+DATE:  Fri Dec  5 08:12:59 2008
+TITLE: Frank-Rene Schaefers Little Python Library
+
+-------------------------------------------------------------------------------
+
+ -- File Input:
+
+    Function delete_comment(...)
+        test-delete_comment.py ..........................................[OK]
+    Function extract_identifiers_with_specific_prefix(...)
+        test-extract_identifiers_with_specific_prefix.py ................[OK]
+    Function read_until_closing_bracket(...)
+        test-read_until_closing_bracket.py ..............................[OK]
+
+ -- String Handling:
+
+    Trim (replaced by string.strip(..))
+        test-trim.py ....................................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/input/TEST
+DATE:  Fri Dec  5 08:13:18 2008
+TITLE: Character Set Queries
+
+-------------------------------------------------------------------------------
+
+ -- Quex Queries:
+
+    Character Sets for Property Settings
+        test-query-character-set.py .....................................[OK]
+    Character Sets for Property Settings II
+        test-query-character-set-by-expression.py .......................[OK]
+    Information about Properties
+        test-query.py PropertyList ......................................[OK]
+                      PropertyInfo ......................................[OK]
+    Wildcard Property Values
+        test-query-property-wildcard-values.py ..........................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+ENTER: quex/output/graphviz/TEST
+DATE:  Fri Dec  5 08:13:19 2008
+TITLE: <no file 'ADM/title.txt'>
+-------------------------------------------------------------------------------
+ -- Check supported formats.
+        get_supported_formats.py ........................................[OK]
+
+ -- Plot:
+
+    Backward Detector (for pseudo-ambiguous post context).
+        plot-papc.py ....................................................[OK]
+    Core state machine.
+        plot-core.py ....................................................[OK]
+    Pre-Context.
+        plot-pre-context.py .............................................[OK]
+-------------------------------------------------------------------------------
+  ___  _ _   _  __                        _     _
+ / _ \| | | | |/ /___  _ __ _ __ ___  ___| |_  | |
+| | | | | | | ' // _ \| '__| '__/ _ \/ __| __| | |
+| |_| | | | | . \ (_) | |  | | |  __/ (__| |_  |_|
+ \___/|_|_| |_|\_\___/|_|  |_|  \___|\___|\__| (_)
+
+===============================================================================
+SUMMARY:
+.//TEST .................................................................[OK]
+./demo/TEST .............................................................[OK]
+./quex/TEST .............................................................[OK]
+./quex/code_base/buffer/TEST ............................................[OK]
+./quex/code_base/buffer/iconv/TEST ......................................[OK]
+./quex/code_base/buffer/plain/TEST ......................................[OK]
+./quex/code_base/template/TEST ..........................................[OK]
+./quex/core_engine/TEST .................................................[OK]
+./quex/core_engine/generator/TEST .......................................[OK]
+./quex/core_engine/regular_expression/TEST ..............................[OK]
+./quex/core_engine/state_machine/TEST ...................................[OK]
+./quex/frs_py/TEST ......................................................[OK]
+./quex/input/TEST .......................................................[OK]
+./quex/output/graphviz/TEST .............................................[OK]
+===============================================================================

@@ -1,0 +1,93 @@
+%defines
+%define "parser_class_name" "Calc_parser"
+%debug
+%pure-parser
+%error-verbose
+%lex-param {quex::Calc_lexer  *qlex}
+%parse-param {quex::Calc_lexer  *qlex}
+%name-prefix="Calc_yy"
+
+%{
+#include "Calc_lexer"
+#include <iostream>
+#include <math.h>
+%}
+
+%union
+{
+	double dbl;
+	std::string *str;
+};
+
+%{
+int Calc_yylex(YYSTYPE *yylval, quex::Calc_lexer *qlex);
+void Calc_yyerror(quex::Calc_lexer *qlex, const std::string& m);
+%}
+
+%type<dbl> exp num
+
+%token<str> TKN_NUM
+%left '-' '+'
+%left '*' '/'
+%left TKN_NEG     /* negation--unary minus */
+%right '^'    /* exponentiation */
+
+%%
+
+%start input;
+
+input:    /* empty */
+        | input line
+;
+
+line:	'\n'
+        | exp '\n'  { printf("\t%.10g\n", $1); }
+;
+
+exp:      num                { $$ = $1;         }
+        | exp '+' exp        { $$ = $1 + $3;    }
+        | exp '-' exp        { $$ = $1 - $3;    }
+        | exp '*' exp        { $$ = $1 * $3;    }
+        | exp '/' exp        { $$ = $1 / $3;    }
+        | '-' exp  %prec TKN_NEG { $$ = -$2;        }
+        | exp '^' exp        { $$ = pow ($1, $3); }
+        | '(' exp ')'        { $$ = $2;         }
+;
+
+num:	TKN_NUM
+{
+	char *endptr;
+	const char *str = $1->c_str();
+	double val;
+	val = strtod(str, &endptr);
+	
+	/* Check for various possible errors */
+	if (errno == ERANGE || endptr == str)
+	{
+		std::string err = std::string("strtod failed");
+		Calc_yyerror(qlex, err);
+		YYABORT;
+	}
+	$$ = val;
+	delete $1;
+}
+        
+%%
+
+void Calc_yyerror(quex::Calc_lexer *qlex, const std::string& m)
+{
+	std::cout << "Parsing error at " << qlex->line_number() 
+		<< ":" << qlex->column_number() << " : " << m;
+}
+
+int Calc_yylex(YYSTYPE *yylval, quex::Calc_lexer *qlex)
+{
+	quex::Token token;
+	qlex->get_token(&token);
+	if (token.text().length()>0)
+	{
+		yylval->str = new std::string((const char *)token.text().c_str());
+		//printit(yylval->str);
+	}
+	return (int)token.type_id();
+}

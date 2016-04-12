@@ -1,0 +1,16 @@
+// -*- C++ -*-
+mode ONE_AND_ONLY
+{
+    <<EOF>>   => QUEX_TKN_TERMINATION;
+
+    "hey"                    => QUEX_TKN_HEY________________(Lexeme);
+    "hallo"                  => QUEX_TKN_HALLO______________(Lexeme);
+    [a-z]                    => QUEX_TKN_LETTER_____________(Lexeme);
+    (hey)+/hey               => QUEX_TKN_HEY_P___HEY________(Lexeme);
+    hey/(hey|hallo)+         => QUEX_TKN_HEY_____HEY_HALLO_P(Lexeme);
+    (hey)+/((he[y]?)|hallo)+ => QUEX_TKN_HEY_P___HEY_ETC____(Lexeme);
+    hey/hey                  => QUEX_TKN_HEY_____HEY________(Lexeme);
+    heyhey                   => QUEX_TKN_HEY_HEY____________(Lexeme);
+    [ \n]+                   => QUEX_TKN_WHITESPACE();
+}
+

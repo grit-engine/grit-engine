@@ -1,0 +1,89 @@
+// -*- C++ -*-
+start = PROGRAM;
+
+header {
+#include <cstdlib>  // C++ adapted 'stdlib.h'
+//                  // gets:  atoi(const char*) 
+}
+
+define {
+    // -*- C -*- // just to color it in emacs
+    // Pattern definitions for example application
+    P_IDENTIFIER          [a-zA-Z]+
+    P_NUMBER              [0-9]+
+    //
+    P_STRING_DELIMITER                "\""
+    P_BACKSLASHED_STRING_DELIMITER    "\\\""
+    P_BACKSLASHED_BACKSLASH           "\\\\"
+}
+
+token {
+    BRACKET_O
+    BRACKET_C
+    CURLY_BRACKET_O
+    CURLY_BRACKET_C
+    OP_ASSIGNMENT
+    IF
+    IDENTIFIER
+    STRUCT
+    SEMICOLON
+    NUMBER
+    STRING
+    QUOTE
+}
+
+mode END_OF_FILE :
+<inheritable: only>  
+{    
+    <<EOF>> {
+        self.send(quex::token::ID_TERMINATION);
+        RETURN;
+    }
+}
+
+
+mode PROGRAM :
+     END_OF_FILE
+<entry: STRING_READER>
+<exit:  STRING_READER>
+{
+    "{"         { self.send(QUEX_TKN_CURLY_BRACKET_O); RETURN; }
+    "}"         => QUEX_TKN_CURLY_BRACKET_C;
+    "="         => QUEX_TKN_OP_ASSIGNMENT;
+    "struct"    => QUEX_TKN_STRUCT;
+    if          => QUEX_TKN_IF;
+    ";"         => QUEX_TKN_SEMICOLON;
+
+    [a-z]+      { self.send(QUEX_TKN_IDENTIFIER, Lexeme); }
+    {P_NUMBER}  => QUEX_TKN_NUMBER(atoi((const char*)Lexeme));
+
+    [ \t\n]     { }
+
+    {P_STRING_DELIMITER} {
+        self.send(QUEX_TKN_QUOTE);
+        self << STRING_READER;
+        RETURN;
+    }
+}
+
+mode STRING_READER :
+     END_OF_FILE
+<entry: PROGRAM>
+<exit:  PROGRAM>
+{
+    on_entry { self.accumulator.clear(); }
+    on_exit  { 
+        self.accumulator.flush(QUEX_TKN_STRING); 
+        self.send(QUEX_TKN_QUOTE);
+    }
+
+    {P_BACKSLASHED_STRING_DELIMITER} { self.accumulator.add(Lexeme); }
+    {P_BACKSLASHED_BACKSLASH}        { self.accumulator.add(Lexeme); }
+
+    {P_STRING_DELIMITER}             { self << PROGRAM; RETURN; }
+
+    <<FAIL>> {
+        self.accumulator.add(Lexeme);
+    }
+}
+
