@@ -1,0 +1,13 @@
+/* -*- C++ -*- vim: set syntax=cpp:
+ *
+ * PURPOSE: Deactivate a set of handy macros that have been defined in
+ *          'code_base/template_macros_on'. */
+#ifndef __INCLUDE_GUARD_QUEX__CODE_BASE__TEMPORARY_MACRO_DEFINITIONS__
+#error "File " __FILE__ " was included without previous inclusion of the correspondent\n" + \
+       "'template_macros_on' file."
+#endif
+#undef __INCLUDE_GUARD_QUEX__CODE_BASE__TEMPORARY_MACRO_DEFINITIONS__
+
+#undef STREAM_POSITION_TYPE
+#undef STREAM_OFFSET_TYPE
+

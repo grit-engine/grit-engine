@@ -1,0 +1,428 @@
+// -*- C++ -*- vim: set syntax=cpp:
+//
+// NOTE: This circular queue is about three times as fast as the std::deque!
+//       (To the astonishment of the author).
+//
+// AUTHOR:  Frank-Rene Schaefer
+// DATE:    May, 25 2006
+//
+// VERSION: 0.0.1
+// 
+// (C) 2006/2007 Frank-Rene Schaefer
+////////////////////////////////////////////////////////////////////////////////
+
+#ifndef __INCLUDE_GUARD__FRANK_RENE_SCHAEFER__CIRCULAR_QUEUE__
+#define __INCLUDE_GUARD__FRANK_RENE_SCHAEFER__CIRCULAR_QUEUE__
+
+#include <iostream>
+#if (! defined(NDEBUG)) || defined(___UNIT_TEST__FRANK_RENE_SCHAEFER__CIRCULAR_QUEUE___)
+#include <cstdlib>
+#endif
+
+template<typename T>
+class circular_queue {
+    //-------------------------------------------------------------------------------------
+    //
+    // create a stack of fixed size in the wrap around style.
+    // this is a *very* fast way of popping and pushing elements
+    //
+    // _bottom + 1  points on first element to leave the stack
+    //              (in case _bottom = _end_buffer - 1, the first
+    //               element is located at _begin_buffer)
+    // _top         points after the last element to leave the stack
+    //
+    //////////////////////////////////////////////////////////////////////////////////////
+public:
+    // (*) constructor, destructor, and assignment operator
+    circular_queue(const circular_queue& That);
+    circular_queue(const unsigned Size=2048);
+   
+    virtual ~circular_queue();
+
+    circular_queue& operator=(const circular_queue& That);
+
+    void      append(const circular_queue& That);
+
+
+    // (*) access functions
+    T*       top() const;
+    T*       bottom() const;
+    T*       begin_buffer() const;
+    T*       end_buffer() const;
+    T*       pop();
+    void     push(const T& That);
+    T*       quick_pop();
+    void     drop_last();
+
+    void     __increment_top();
+    void     __increment_bottom();    
+
+
+    int  element_n() const; 
+    int  size() const;
+    bool is_empty() const;
+    void reset();
+
+protected:
+    T*       _begin_buffer;
+    T*       _top;          // pointer to the top of stack
+    T*       _bottom;       // pointer to the bottom of stack
+    T*       _end_buffer;   // pointer to the end of the buffer of stack
+    int      _size;
+
+private:
+    void __init(const int Size);
+    void __copy(const circular_queue& Other);
+    void __resize(const int& NewSize);
+    void __append(T* That_bottom, T* That_top, T* That_begin_buffer, T* That_end_buffer);
+
+public:
+    void __brief_info(std::ostream& ostr) const {
+	ostr << "this = " << this << "\n";
+	ostr << "(" << element_n() << " elements, ";
+	ostr << "bottom       = "  << std::hex << bottom()       << ", ";
+	ostr << "top          = "  << top()          << ", ";
+	ostr << "begin_buffer = "  << begin_buffer() << ", ";
+	ostr << "end_buffer   = "  << end_buffer();
+	ostr << std::dec << "):\n";
+    }
+
+#if defined(QUEX_OPTION_ASSERTS) && (! defined(NDEBUG)) || defined(___UNIT_TEST__FRANK_RENE_SCHAEFER__CIRCULAR_QUEUE___)
+    void assert_consistency() {
+	// NOTE: If NDEBUG is define, the following asserts are taken out
+	//       and this function is a null function that is deleted by the compiler.
+	if( ! (_end_buffer > _begin_buffer) )            std::abort(); 
+	if( ! (_top        >= _begin_buffer) )           std::abort(); 
+	if( ! (_bottom     >= _begin_buffer) )           std::abort(); 
+	if( ! (_top        < _end_buffer) )              std::abort();
+	if( ! (_bottom     < _end_buffer) )              std::abort();
+	if( ! (_end_buffer - _begin_buffer) == _size )   std::abort();
+    }
+#else 
+    void assert_consistency() { }
+#endif
+};
+
+/*
+template<class T> inline  std::ostream&
+operator<<(std::ostream& ostr, const circular_queue<T>& That)
+{
+    That.__brief_info(ostr);
+
+    if( That.bottom() > That.top() ) {
+	// [1]
+	//   ############|---------------------------|###################
+	//   --->      _top                        _bottom --->
+	T* it = That.bottom();
+	while( it != That.end_buffer() ) 
+	    ostr << "circular_queue: " << *(++it) << std::endl;     // start from bottom() + 1
+
+	it = That.begin_buffer();
+	while( it <= That.top()) 
+	    ostr << "circular_queue: " << *(it++) << std::endl;     // start from _begin_buffer + 1
+    }
+    else {
+	// [2]
+	//   --------|####################################|--------------
+	//         bottom()             --->             top()
+	T* it = That.bottom();
+	while( it < That.top()) 
+	    ostr << "circular_queue: " << *(++it) << std::endl; // start from bottom() + 1
+    }	  
+    assert_consistency();   
+    return ostr;
+}
+*/
+
+template<typename T> inline 
+circular_queue<T>::circular_queue(const circular_queue& That) 
+{ 
+    _size         = -1;
+    _begin_buffer = 0x0;
+    __copy(That);  
+    assert_consistency();   
+}
+
+
+template<typename T> inline 
+circular_queue<T>::circular_queue(const unsigned Size /* = 2048*/) 
+{
+    __init(Size);
+    assert_consistency();   
+}
+
+
+template<typename T> inline void
+circular_queue<T>::__init(const int Size) 
+{
+    _size         = Size;
+    _begin_buffer = new T[_size];
+    _bottom       = _begin_buffer;
+    _top          = _begin_buffer;
+    _end_buffer   = &(_begin_buffer[Size]);
+
+#ifdef DEBUG_circular_queue
+    cerr << "circular_queue::__init() ";
+    __brief_info(cerr); 
+#endif    
+    assert_consistency();   
+}
+
+template<typename T> inline void
+circular_queue<T>::__copy(const circular_queue& That) 
+    // if called from a constructor, make sure, that begin_buffer = 0x0
+    // so that the delete statement has no effect
+{
+    if( _size < That._size ) {
+	// (in standard c++ this check is not necessary)
+	if( _begin_buffer != 0x0 ) delete [] _begin_buffer;	
+	_size         = That._size;
+	_begin_buffer = new T[_size];
+
+    }    
+    // _bottom and _top are brought into possition, according to the call to 'append'
+    _bottom       = _begin_buffer;
+    _top          = _begin_buffer;
+    _end_buffer   = &(_begin_buffer[_size]);
+ 
+    // copy content of buffer (only _bottom to _top is interesting ...)
+    append(That);
+
+#ifdef DEBUG_circular_queue
+    cerr << "circular_queue::__copy():\n";
+    this->__brief_info(cerr); 
+    cerr << "FROM\n";
+    That.__brief_info(cerr);
+    cerr << "END\n";
+#endif    
+    assert_consistency();   
+}
+
+
+template<typename T> inline void
+circular_queue<T>::__resize(const int& NewSize) 
+{
+    if( _size > NewSize ) return;
+
+    T* _old_begin_buffer = _begin_buffer;
+    T* _old_bottom       = _bottom;
+    T* _old_top          = _top;
+    T* _old_end_buffer   = _end_buffer;
+
+    __init(NewSize);
+
+    // copy content of buffer (only _bottom to _top is interesting ...)
+    __append(_old_bottom, _old_top, _old_begin_buffer, _old_end_buffer);
+
+    delete [] _old_begin_buffer;
+
+    assert_consistency();   
+}
+
+
+   
+template<typename T> inline 
+circular_queue<T>::~circular_queue() 
+{ delete [] _begin_buffer; }
+
+
+template<typename T> inline circular_queue<T>& 
+circular_queue<T>::operator=(const circular_queue<T>& That) 
+{
+    __copy(That);
+
+    assert_consistency();   
+	
+    return *this;
+}
+
+
+template<typename T> inline int  
+circular_queue<T>::size() const 
+{ return _size; }
+
+
+
+// only for the specialist
+template<typename T> inline void
+circular_queue<T>::__increment_bottom() {
+    // MAKE SURE THAT: if( _bottom == _top ) return;
+    //                 is checked before this function is called
+    _bottom++;
+    if( _bottom == _end_buffer ) _bottom = _begin_buffer;
+
+    assert_consistency();   
+}
+
+template<typename T> inline void
+circular_queue<T>::__increment_top() {
+    _top++;
+    // wrap around ?
+    if( _top == _end_buffer ) _top = _begin_buffer;
+
+    // if after incrementing _top it is equal to _bottom,
+    // then there happend a overflow !
+    if( _top == _bottom ) {
+	// std::cerr << "## resize needed \n";
+	__resize(int(_size * 1.5) + 1);
+	// std::cerr << "## new size " << _size << std::endl;
+	// std::cerr << *this << "AFTER RESIZE" << std::endl;
+    }
+
+    assert_consistency();   
+}
+
+    
+template<typename T> inline void
+circular_queue<T>::__append(T* That_bottom, T* That_top, T* That_begin_buffer, T* That_end_buffer) {
+    // NOTE: if That_bottom == That_top
+    //       --> nothing happens: [2] does not enter loop
+
+    // copy content of buffer (only _bottom to _top is interesting ...)
+    if( That_bottom > That_top ) {
+	// [1]
+	//   ############|---------------------------|###################
+	//   --->      _top                        _bottom --->
+	T* source_it = That_bottom;
+	while( source_it != That_end_buffer) {
+	    __increment_top(); 
+	    source_it++;
+	    *_top = *source_it;                     // start from _bottom + 1
+	}
+
+	source_it = That_begin_buffer;
+	while( source_it <= That_top) {
+	    __increment_top(); 
+	    *_top = *source_it;                     // start from _bottom + 1
+	    source_it++;
+	}
+    }
+    else if( That_bottom < That_top ) {
+	// [2]
+	//   --------|####################################|--------------
+	//         _bottom             --->             _top
+	T* source_it = That_bottom;
+	while( source_it < That_top) {
+	    __increment_top();
+	    source_it++;                            // start from bottom to top
+	    *_top = *source_it; 
+	}
+    }	
+    else {
+	// [3] 
+	//   buffer full (_bottom == _top) --> the thing is empty !
+	//   --> do not do anything
+	;
+    }
+
+    assert_consistency();   
+}
+
+template<typename T> inline void
+circular_queue<T>::append(const circular_queue<T>& That) {
+
+    if( element_n() + That.element_n() > _size - 2 ) {
+	int NewSize = int(element_n() + That.element_n() * 1.5) + 1;
+	__resize(NewSize);
+    }
+
+    __append(That._bottom, That._top, That._begin_buffer, That._end_buffer);
+
+    assert_consistency();   
+}
+
+
+template<typename T> inline T* 
+circular_queue<T>::top() const    
+{ return _top; }
+
+
+template<typename T> inline T* 
+circular_queue<T>::bottom() const 
+{ return _bottom; }
+
+template<typename T> inline T* 
+circular_queue<T>::begin_buffer() const    
+{ return _begin_buffer; }
+
+
+template<typename T> inline T* 
+circular_queue<T>::end_buffer() const 
+{ return _end_buffer; }
+
+
+
+template<typename T> inline void
+circular_queue<T>::push(const T& Something) 
+{ 
+    __increment_top(); 
+    // requesting operator= if implemented (non-agregate types)
+    *_top = Something; 
+
+    assert_consistency();   
+}
+
+template<typename T> inline T*
+circular_queue<T>::pop() {
+    if( is_empty() ) return 0x0;
+
+    assert_consistency();   
+
+    return quick_pop();
+}
+
+template<typename T> inline T*
+circular_queue<T>::quick_pop() {
+    // same as pop(), only that it is assumed that _bottom != _top has
+    // been checked already
+    __increment_bottom();
+#ifdef DEBUG_circular_queue
+    cerr << "circular_queue::quick_pop() ";
+    __brief_info(cerr); 
+#endif    
+    assert_consistency();   
+    return _bottom;
+}
+
+
+template<typename T> inline void 
+circular_queue<T>::drop_last() {
+#ifdef DEBUG_circular_queue
+    cerr << "circular_queue::drop_last() ";
+    __brief_info(cerr); 
+#endif    
+    if( _top == _bottom )       return;
+    if( _top == _begin_buffer ) _top = _end_buffer;
+    _top--;
+    assert_consistency();   
+}
+
+
+template<typename T> inline int  
+circular_queue<T>::element_n() const
+{ 
+    T*  it = _bottom;
+    int number = 0;
+    while( it != _top ) {
+	if( it == _end_buffer ) it = _begin_buffer;
+	else                    it++;
+	number++;
+    }
+    assert_consistency();   
+    return number;
+}
+
+
+template<typename T> inline bool 
+circular_queue<T>::is_empty() const    
+{ return _bottom == _top; }
+
+
+template<typename T> inline void 
+circular_queue<T>::reset()
+{
+    _bottom = (_top = _begin_buffer); 
+    assert_consistency();   
+}
+
+#endif // __INCLUDE_GUARD__FRANK_RENE_SCHAEFER__CIRCULAR_QUEUE__

@@ -1,0 +1,74 @@
+// -*- C++ -*- vim: set syntax=cpp:
+
+#ifndef __INCLUDE_GUARD__QUEX__TOKEN_QUEUE__
+#define __INCLUDE_GUARD__QUEX__TOKEN_QUEUE__
+
+#include <quex/code_base/circular_queue>
+#include <quex/code_base/definitions>
+
+namespace quex {
+
+    template <typename TokenT>
+    class TokenQueue : 
+        public circular_queue<TokenT> {
+        // NOTES: benchmarks have shown that this circular_queue is 
+        //        trice as fast as the std::deque. So, do not even
+        //        think about replacing it by the standard version!
+    public:
+
+        // TODO: orthonormal: constructors, destructors, assignment op
+        TokenQueue(const unsigned Size=2048);
+        TokenQueue(const TokenQueue& That) 
+            : circular_queue<TokenT>(That) {}
+    
+        TokenQueue& operator=(const TokenQueue& That)
+            { return (TokenQueue&)circular_queue<TokenT>::operator=(That); }
+
+        // (*) push operation:
+        //     increment the top-pointer, then write.
+        void    push(const TokenT& That);
+        void    push(QUEX_TOKEN_ID_TYPE Type);
+        template <typename ContentT> 
+        void    push(QUEX_TOKEN_ID_TYPE Type, ContentT Text);
+
+    protected:
+        /* IDEA: use registered iterators to let tokens live in token stack
+           std::vector<iterator>   _registered_iterators;
+           friend class            TokenQueue::iterator;
+        */
+    };
+
+    template<typename TokenT>
+    inline 
+    TokenQueue<TokenT>::TokenQueue(const unsigned Size /* = 2048 */) 
+        : circular_queue<TokenT>(Size) {}
+
+
+    template<typename TokenT>
+    inline  void   
+    TokenQueue<TokenT>::push(const TokenT& That) 
+    { circular_queue<TokenT>::push(That); }    
+
+
+    template<typename TokenT>
+    inline void 
+    TokenQueue<TokenT>::push(QUEX_TOKEN_ID_TYPE Type)
+    { 
+        circular_queue<TokenT>::__increment_top(); 
+        circular_queue<TokenT>::_top->set(Type); 
+    }
+
+    template<typename TokenT>
+    template<typename ContentT>
+    inline void  
+    TokenQueue<TokenT>::push(QUEX_TOKEN_ID_TYPE Type, ContentT Content)
+    { 
+        circular_queue<TokenT>::__increment_top(); 
+        circular_queue<TokenT>::_top->set(Type, Content); 
+    }
+
+
+}
+
+#endif // __INCLUDE_GUARD__QUEX__TOKEN_QUEUE__
+

@@ -1,0 +1,133 @@
+/* -*- C++ -*- vim: set syntax=cpp: */
+#ifndef __INCLUDE_GUARD_QUEX__CODE_BASE__BUFFER__BUFFER_CORE__
+#define __INCLUDE_GUARD_QUEX__CODE_BASE__BUFFER__BUFFER_CORE__
+
+#include<quex/code_base/definitions>
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+#    if defined(QUEX_OPTION_ASSERTS)
+#       include<quex/code_base/buffer/MemoryPositionMimiker>
+#    endif
+#endif
+
+#include <quex/code_base/temporary_macros_on>
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+namespace quex { 
+#endif
+
+    typedef struct { 
+#       if ! defined(__QUEX_SETTING_PLAIN_C)
+#          if defined (QUEX_OPTION_ASSERTS)
+           typedef MemoryPositionMimiker<QUEX_CHARACTER_TYPE>   Position;
+#          else
+           typedef QUEX_CHARACTER_TYPE*                         Position;
+#          endif
+#       endif
+        /* (*) Buffer Memory Setup:
+         *      memory[0]             = lower buffer limit code character
+         *      memory[1]             = first char of content
+         *      ...
+         *      memory[BUFFER_SIZE-2] = last char of content
+         *      memory[BUFFER_SIZE-1] = upper buffer limit code character */
+        QUEX_CHARACTER_TYPE*  _front;   /* first character in buffer      */
+        QUEX_CHARACTER_TYPE*  _back;    /* last character in buffer       */
+    } QuexBufferMemory;
+
+    QUEX_INLINE void    QuexBufferMemory_setup(QuexBufferMemory*, 
+                                               QUEX_CHARACTER_TYPE* memory, size_t Size, 
+                                               bool ExternalOwnerF); 
+    QUEX_INLINE size_t  QuexBufferMemory_size(QuexBufferMemory*);
+
+#   if ! defined(__QUEX_SETTING_PLAIN_C)
+    typedef QuexBufferMemory::Position  QUEX_CHARACTER_POSITION_TYPE;
+#   else
+    typedef QUEX_CHARACTER_TYPE* QUEX_CHARACTER_POSITION_TYPE;
+#   endif
+
+    
+    typedef struct { 
+        QuexBufferMemory      _memory;
+
+        /* (*) Iterator positions for lexical analysis */
+        QUEX_CHARACTER_TYPE*  _input_p;
+        QUEX_CHARACTER_TYPE*  _lexeme_start_p;
+
+        /* (*) Origin of the content in the input stream:
+         *     -- pointer to position in buffer that corresponds EOF */
+        QUEX_CHARACTER_TYPE*  _end_of_file_p;  
+        /*     -- character index in the stream that corresponds to the character
+         *        at the first character (see above: _front[1]) */
+        size_t                _content_first_character_index;
+        
+        /* (*) Information about characters that passed.
+         *     This is required to temporarily store a terminating zero and to
+         *     check for the 'begin of line' pre-condition.
+         *
+         *     NOTE: The terminating zero is stored in the first character **after** the
+         *           lexeme (matching character sequence). The begin of line pre-condition
+         *           is concerned with the last character in the lexeme, which is the one
+         *           before the 'char_covered_by_terminating_zero'. */
+        QUEX_CHARACTER_TYPE   _character_at_lexeme_start;      /* --> terminating zero helper */
+#       ifdef __QUEX_OPTION_SUPPORT_BEGIN_OF_LINE_PRE_CONDITION
+        QUEX_CHARACTER_TYPE   _character_before_lexeme_start;  /* --> begin of line           */
+#       endif
+
+        struct __QuexBufferFiller_tag*  filler;
+    } QuexBuffer;
+
+    TEMPLATE_IN(InputHandleT) void
+    QuexBuffer_construct(QuexBuffer* me, InputHandleT* input_handle,
+                         QuexBufferFillerTypeEnum InputCodingType, const char* IANA_InputCodingName, 
+                         const size_t BufferMemorySize,
+                         const size_t TranslationBufferMemorySize);
+
+    QUEX_INLINE void
+    QuexBuffer_reset(QuexBuffer* me);
+
+    QUEX_INLINE void
+    QuexBuffer_destruct(QuexBuffer* me);
+
+    QUEX_INLINE QUEX_CHARACTER_TYPE   QuexBuffer_input_get(QuexBuffer*);
+    QUEX_INLINE void                  QuexBuffer_input_p_increment(QuexBuffer*);
+    QUEX_INLINE void                  QuexBuffer_input_p_decrement(QuexBuffer*);
+    QUEX_INLINE void                  QuexBuffer_mark_lexeme_start(QuexBuffer*);
+    QUEX_INLINE void                  QuexBuffer_seek_lexeme_start(QuexBuffer*);
+    QUEX_INLINE void                  QuexBuffer_store_last_character_of_lexeme_for_next_run(QuexBuffer*);
+    QUEX_INLINE QUEX_CHARACTER_TYPE*  QuexBuffer_content_front(QuexBuffer*);
+    QUEX_INLINE QUEX_CHARACTER_TYPE*  QuexBuffer_content_back(QuexBuffer*);
+    QUEX_INLINE QUEX_CHARACTER_TYPE*  QuexBuffer_text_end(QuexBuffer*);
+    QUEX_INLINE size_t                QuexBuffer_content_size(QuexBuffer*);
+
+    QUEX_INLINE QUEX_CHARACTER_POSITION_TYPE  QuexBuffer_tell_memory_adr(QuexBuffer*);
+    QUEX_INLINE void                          QuexBuffer_seek_memory_adr(QuexBuffer*, 
+                                                                         QUEX_CHARACTER_POSITION_TYPE);
+    
+    QUEX_INLINE void    QuexBuffer_move_forward(QuexBuffer*, const size_t CharacterN);
+    QUEX_INLINE void    QuexBuffer_move_backward(QuexBuffer*, const size_t CharacterN);
+    QUEX_INLINE size_t  QuexBuffer_tell(QuexBuffer*);
+    QUEX_INLINE void    QuexBuffer_seek(QuexBuffer*, const size_t CharacterIndex);
+
+    QUEX_INLINE void  QuexBuffer_set_terminating_zero_for_lexeme(QuexBuffer*);
+    QUEX_INLINE void  QuexBuffer_undo_terminating_zero_for_lexeme(QuexBuffer*);
+    QUEX_INLINE void  QuexBuffer_end_of_file_set(QuexBuffer*, QUEX_CHARACTER_TYPE* Position);
+    QUEX_INLINE void  QuexBuffer_end_of_file_unset(QuexBuffer*);
+    QUEX_INLINE bool  QuexBuffer_is_end_of_file(QuexBuffer*);
+    QUEX_INLINE bool  QuexBuffer_is_begin_of_file(QuexBuffer*);
+
+    QUEX_INLINE void  QuexBufferMemory_init(QuexBufferMemory* me, 
+                                            QUEX_CHARACTER_TYPE* memory, size_t Size);
+#ifdef QUEX_OPTION_ASSERTS
+    QUEX_INLINE void  QUEX_BUFFER_ASSERT_CONTENT_CONSISTENCY(const QuexBuffer* buffer);
+#else
+#   define QUEX_BUFFER_ASSERT_CONTENT_CONSISTENCY(BUFFER) /* Nothing */
+#endif
+
+
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+} /* namespace quex */
+#endif
+#include <quex/code_base/temporary_macros_off>
+
+#endif /* __INCLUDE_GUARD_QUEX__CODE_BASE__BUFFER__BUFFER_CORE__ */

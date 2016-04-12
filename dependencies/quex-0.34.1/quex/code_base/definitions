@@ -1,0 +1,250 @@
+/* -*- C++ -*- vim: set syntax=cpp: */
+#ifndef __INCLUDE_GUARD_QUEX__CODE_BASE__DEFINITIONS__
+#define __INCLUDE_GUARD_QUEX__CODE_BASE__DEFINITIONS__
+
+#include<quex/code_base/asserts>
+#include<cstdint>
+#include<quex/code_base/compatibility/pseudo-stdbool.h>
+
+#ifndef    QUEX_TOKEN_ID_TYPE
+#   define QUEX_TOKEN_ID_TYPE  uint32_t
+#endif
+#ifndef    __QUEX_TOKEN_ID_UNINITIALIZED 
+#   define __QUEX_TOKEN_ID_UNINITIALIZED (QUEX_TOKEN_ID_TYPE)(1)
+#endif
+#ifndef    __QUEX_TOKEN_ID_TERMINATION 
+#   define __QUEX_TOKEN_ID_TERMINATION   (QUEX_TOKEN_ID_TYPE)(0)
+#endif
+
+#ifdef QUEX_SETTING_BUFFER_MIN_FALLBACK_N 
+    /* QUEX_SETTING_BUFFER_MIN_FALLBACK_N remains as desired */
+#else
+#   if defined (QUEX_SETTING_BUFFER_SIZE) 
+       /* If your compiler brings you here to this position, then this may be because
+        * you defined the QUEX_SETTING_BUFFER_SIZE with something different than just
+        * an integer number. Indeed something like
+        *
+        *   #define QUEX_SETTING_BUFFER_SIZE  (size_t)4096
+        *
+        * would be propper, but does not allow to do some math. So, please erase whatever
+        * is not a number in the definition (e.g. delete the '(size_t)' type cast.        */
+#      if   QUEX_SETTING_BUFFER_SIZE >= 1024
+#         define QUEX_SETTING_BUFFER_MIN_FALLBACK_N  (256)
+#      elif QUEX_SETTING_BUFFER_SIZE >= 8
+#         define QUEX_SETTING_BUFFER_MIN_FALLBACK_N  (size_t)((float)(QUEX_SETTING_BUFFER_SIZE)/16.0)
+#      else
+#         define QUEX_SETTING_BUFFER_MIN_FALLBACK_N  (0)
+#      endif
+#   else   
+#      define QUEX_SETTING_BUFFER_MIN_FALLBACK_N     (0) 
+#   endif
+#endif
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+#   include <cstring>  // gets: memmove, memcpy
+#   include <cstdio>   // gets: fprintf
+#   include <cstdlib>
+#   include <stdexcept>
+#   define __QUEX_STD_memmove  std::memmove
+#   define __QUEX_STD_memcpy   std::memcpy
+#   define __QUEX_STD_memset   std::memset
+#   define __QUEX_STD_strncat  std::strncat
+#   define __QUEX_STD_fprintf  std::fprintf
+#   define __QUEX_STD_printf   std::printf
+#   define __QUEX_STD_fseek    std::fseek 
+#   define __QUEX_STD_ftell    std::ftell 
+#   define __QUEX_STD_fread    std::fread 
+
+#   define QUEX_INLINE     inline
+    /* Input handle type is determined automagically via templates */
+#else
+#   include <string.h>  /* gets: memmove, memcpy     */
+#   include <stdio.h>   /* gets: fprintf             */
+#   include <stdlib.h>
+#   define __QUEX_STD_memmove  memmove
+#   define __QUEX_STD_memcpy   memcpy
+#   define __QUEX_STD_memset   memset
+#   define __QUEX_STD_strncat  strncat
+#   define __QUEX_STD_fprintf  fprintf
+#   define __QUEX_STD_printf   printf
+#   define __QUEX_STD_fseek    fseek 
+#   define __QUEX_STD_ftell    ftell 
+#   define __QUEX_STD_fread    fread 
+
+#   define QUEX_INLINE     static
+#   define QUEX_INPUT_HANDLE_TYPE  /* stdio.h's */ FILE 
+#endif
+
+#ifndef    QUEX_SETTING_BUFFER_LIMIT_CODE
+#   define QUEX_SETTING_BUFFER_LIMIT_CODE  (QUEX_CHARACTER_TYPE)(0x0)
+#endif
+#ifndef    QUEX_SETTING_BUFFER_FILLER_SEEK_TEMP_BUFFER_SIZE
+#   define QUEX_SETTING_BUFFER_FILLER_SEEK_TEMP_BUFFER_SIZE  ((const size_t)(512))
+#endif
+
+/* Detect the compiler */
+#if defined(QUEX_OPTION_ALLOW_COMPUTED_GOTOS)
+#   if    defined(__GNUC__) \
+       && ((__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ >= 3))
+#       if ! defined(__QUEX_OPTION_USE_COMPUTED_GOTOS)
+#           define __QUEX_OPTION_USE_COMPUTED_GOTOS
+#       endif
+#   endif
+#endif
+ 
+/* Support of computed goto */
+#ifdef __QUEX_OPTION_USE_COMPUTED_GOTOS
+    typedef  void*    QUEX_GOTO_LABEL_TYPE;
+#   define QUEX_GOTO_TERMINAL_LABEL_INIT_VALUE       &&TERMINAL_DEFAULT
+#   define QUEX_GOTO_STATE_LABEL_INIT_VALUE          (0x0)
+#   define QUEX_SET_drop_out_state_index(StateIndex) drop_out_state_index = &&STATE_ ##StateIndex ##_INPUT; 
+#   define QUEX_SET_last_acceptance(TerminalIndex)   last_acceptance      = &&TERMINAL_ ##TerminalIndex; 
+#   define QUEX_GOTO_drop_out_state_index()          goto *drop_out_state_index;
+#   define QUEX_GOTO_last_acceptance()               goto *last_acceptance;
+
+#else
+    typedef  uint32_t QUEX_GOTO_LABEL_TYPE;
+#   define QUEX_GOTO_TERMINAL_LABEL_INIT_VALUE       (-1)
+#   define QUEX_GOTO_STATE_LABEL_INIT_VALUE          (-1)
+#   define QUEX_SET_drop_out_state_index(StateIndex) do drop_out_state_index = StateIndex; 
+#   define QUEX_SET_last_acceptance(TerminalIndex)   last_acceptance         = TerminalIndex; 
+#   define QUEX_GOTO_drop_out_state_index()          goto __DROP_OUT_STATE_ROUTER;
+#   define QUEX_GOTO_last_acceptance()               goto __TERMINAL_ROUTER;
+#endif
+
+/* Return type of analyser function */
+#ifdef QUEX_OPTION_TOKEN_SENDING_VIA_QUEUE
+    typedef void                 __QUEX_SETTING_ANALYSER_FUNCTION_RETURN_TYPE;
+#else
+    typedef QUEX_TOKEN_ID_TYPE   __QUEX_SETTING_ANALYSER_FUNCTION_RETURN_TYPE;
+#endif
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+#    define __QUEX_ALLOCATE_MEMORY(N)   (new uint8_t[(size_t)N])
+#    define __QUEX_FREE_MEMORY(OBJECT)  (delete[] OBJECT)
+#else
+#    define __QUEX_ALLOCATE_MEMORY(N)   (uint8_t*)malloc((size_t)N)
+#    define __QUEX_FREE_MEMORY(OBJECT)  (free(OBJECT))
+#endif
+       
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+namespace quex {
+#endif
+
+    typedef enum { 
+        QUEX_AUTO,
+        QUEX_PLAIN,
+        QUEX_ICONV
+    } QuexBufferFillerTypeEnum;
+
+#   ifndef     QUEX_SETTING_CORE_ENGINE_DEFAULT_CHARACTER_CODING
+#       define QUEX_SETTING_CORE_ENGINE_DEFAULT_CHARACTER_CODING ((char*)0x0)
+#   endif
+
+    struct  __QuexAnalyser_tag;
+    typedef __QUEX_SETTING_ANALYSER_FUNCTION_RETURN_TYPE (*QUEX_ANALYSER_FUNCTION_TYPE)(struct __QuexAnalyser_tag*);
+
+    QUEX_INLINE size_t QuexBufferFiller_get_memory_size(QuexBufferFillerTypeEnum FillerType);
+
+    QUEX_INLINE void
+    QUEX_ERROR_EXIT(const char* Msg)
+    {
+#       if ! defined(__QUEX_SETTING_PLAIN_C)
+        throw std::runtime_error(Msg);
+#       else
+        __QUEX_STD_fprintf(stderr, Msg);
+        exit(-1);
+#       endif
+    }
+
+#  if ! defined (__QUEX_OPTION_DEBUG_STATE_TRANSITION_REPORTS)
+#   define QUEX_DEBUG_PRINT(Buffer, FormatStr)       /* empty */
+#   define QUEX_DEBUG_PRINT2(Buffer, FormatStr, Arg) /* empty */
+#   define QUEX_DEBUG_PRINT_INPUT(Buffer, Character) /* empty */
+#  else
+#   define __QUEX_PRINT_SOURCE_POSITION(Buffer)                       \
+          __QUEX_STD_fprintf(stdout, "%s:%i: @%08X \t", __FILE__, __LINE__, \
+                             (int)((Buffer)->_input_p - (Buffer)->_memory._front));            
+
+#   define QUEX_DEBUG_PRINT(Buffer, FormatStr)        \
+           __QUEX_PRINT_SOURCE_POSITION(Buffer)       \
+           __QUEX_STD_fprintf(stdout, FormatStr "\n")
+
+#   define QUEX_DEBUG_PRINT2(Buffer, FormatStr, Arg)  \
+           __QUEX_PRINT_SOURCE_POSITION(Buffer)       \
+           __QUEX_STD_fprintf(stdout, FormatStr "\n", Arg)
+
+#   define QUEX_DEBUG_PRINT_INPUT(Buffer, Character)                       \
+           __QUEX_PRINT_SOURCE_POSITION(Buffer)                            \
+             Character == '\n' ? __QUEX_STD_fprintf(stdout, "input:    '\\n'\n") \
+           : Character == '\t' ? __QUEX_STD_fprintf(stdout, "input:    '\\t'\n") \
+           :                     __QUEX_STD_fprintf(stdout, "input:    (%x) '%c'\n", (char)Character, (int)Character) 
+#  endif /* ! __QUEX_OPTION_DEBUG_STATE_TRANSITION_REPORTS */
+
+#  if ! defined(__QUEX_OPTION_UNIT_TEST_QUEX_BUFFER_LOADS) 
+
+#    define QUEX_DEBUG_PRINT_BUFFER_LOAD(Filler, Msg) /* empty */
+
+#  else
+
+#    define QUEX_DEBUG_PRINT_BUFFER_LOAD(Filler, Msg)                   \
+            BufferFiller_x_show_content(Filler); /* empty */
+
+#  endif /* ! __QUEX_OPTION_UNIT_TEST_QUEX_BUFFER_LOADS */
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+} /* namespace quex */
+#endif
+
+#ifdef QUEX_OPTION_ASSERTS
+
+/* NOTE: In some cases, we cannot make the assumption that the end of the content text
+ *       is terminated by the buffer limit code. Skippers set the content of this cell
+ *       temporarily to another value for the sake of speed efficiency. Thus, it is 
+ *       distinguished between 'light' and normal consistency.                           */
+#    define  QUEX_BUFFER_ASSERT_CONSISTENCY_LIGHT(B)                                      \
+     {                                                                                    \
+         __quex_assert( (B) != 0x0 );                                                     \
+         if( (*B)._memory._front != 0 || (*B)._memory._back != 0x0 ) {                    \
+             __quex_assert((*B)._memory._front < (*B)._memory._back);                     \
+             __quex_assert(*((*B)._memory._front) == QUEX_SETTING_BUFFER_LIMIT_CODE );    \
+             __quex_assert((*B)._input_p          >= (*B)._memory._front);                \
+             __quex_assert((*B)._lexeme_start_p   >= (*B)._memory._front);                \
+             if( (*B)._end_of_file_p == 0x0 ) {                                           \
+                 __quex_assert((*B)._input_p        <= (*B)._memory._back);               \
+                 __quex_assert((*B)._lexeme_start_p <= (*B)._memory._back);               \
+             } else {                                                                     \
+                 __quex_assert((*B)._input_p        <= (*B)._end_of_file_p);              \
+                 __quex_assert((*B)._lexeme_start_p <= (*B)._end_of_file_p);              \
+                 /**/                                                                     \
+                 __quex_assert((*B)._end_of_file_p  >= (*B)._memory._front + 1);          \
+                 __quex_assert((*B)._end_of_file_p  <= (*B)._memory._back);               \
+                 /**/                                                                     \
+             }                                                                            \
+         }                                                                                \
+     }
+
+#    define  QUEX_BUFFER_ASSERT_CONSISTENCY(B)                                            \
+     QUEX_BUFFER_ASSERT_CONSISTENCY_LIGHT(B)                                              \
+     {                                                                                    \
+         /* NOTE: No assumptions can be made in general on the relation between    */     \
+         /*       _input_p and _lexeme_start_p, since for forwards lexing          */     \
+         /*       _input_p comes before _lexeme_start_p, wherelse for back-        */     \
+         /*       ward lexing this is vice versa.                                  */     \
+         /*       See "code_base/core_engine/definitions-quex-buffer.h"            */     \
+         if( (*B)._memory._front != 0 || (*B)._memory._back != 0x0 ) {                    \
+             __quex_assert(*((*B)._memory._back)  == QUEX_SETTING_BUFFER_LIMIT_CODE );    \
+             if( (*B)._end_of_file_p != 0x0 ) {                                           \
+                 __quex_assert(*(*B)._end_of_file_p == QUEX_SETTING_BUFFER_LIMIT_CODE);   \
+             }                                                                            \
+         }                                                                                \
+     }
+#else
+#   define  QUEX_BUFFER_ASSERT_CONSISTENCY_LIGHT(B)  /* empty */
+#   define  QUEX_BUFFER_ASSERT_CONSISTENCY(B)  /* empty */
+#endif
+
+        
+
+#endif /* __INCLUDE_GUARD_QUEX__CODE_BASE__DEFINITIONS__ */

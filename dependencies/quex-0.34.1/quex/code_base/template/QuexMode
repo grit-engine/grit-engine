@@ -1,0 +1,57 @@
+/* -*- C++ -*- vim: set syntax=cpp: */
+#ifndef __INCLUDE_GUARD_QUEX__CODE_BASE__QUEX_MODE__
+#define __INCLUDE_GUARD_QUEX__CODE_BASE__QUEX_MODE__
+
+#include<quex/code_base/definitions>
+#include<quex/code_base/template/Analyser>
+
+#include<quex/code_base/temporary_macros_on>
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+#    if defined(QUEX_OPTION_ASSERTS)
+#       include<quex/code_base/buffer/MemoryPositionMimiker>
+#    endif
+#endif
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+namespace quex { 
+#endif
+    
+    struct QuexMode {  
+        int            id;
+        const char*    name;
+        QuexAnalyser*  the_lexer;
+
+        __QUEX_SETTING_ANALYSER_FUNCTION_RETURN_TYPE (*(analyser_function))(QuexAnalyser*);
+
+#       ifdef __QUEX_OPTION_INDENTATION_TRIGGER_SUPPORT        
+        void (*on_indentation)(CLASS*, const int Indentation);
+#       endif
+        void (*on_entry)(CLASS*, const QuexMode* FromMode);
+        void (*on_exit)(CLASS*, const QuexMode* ToMode);
+#       ifdef QUEX_OPTION_RUNTIME_MODE_TRANSITION_CHECK        
+        bool (*has_base)(const QuexMode* Mode);
+        bool (*has_entry_from)(const QuexMode* Mode);
+        bool (*has_exit_to)(const QuexMode* Mode);
+#       endif
+    };
+    
+    QUEX_INLINE __QUEX_SETTING_ANALYSER_FUNCTION_RETURN_TYPE
+    QuexMode_uncallable_analyser_function(QuexAnalyser*)
+    { __quex_assert(0); return (__QUEX_SETTING_ANALYSER_FUNCTION_RETURN_TYPE)(0); }
+
+    QUEX_INLINE void
+    QuexMode_on_indentation_null_function(CLASS*, const int) 
+    { }
+
+    QUEX_INLINE void
+    QuexMode_on_entry_exit_null_function(CLASS*, const QuexMode*) 
+    { }
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+} // namespace quex 
+#endif
+
+#include <quex/code_base/temporary_macros_off>
+
+#endif /* __INCLUDE_GUARD_QUEX__CODE_BASE__BUFFER__BUFFER_CORE__ */

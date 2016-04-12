@@ -1,0 +1,479 @@
+// -*- C++ -*-  vim: set syntax=cpp:
+// (C) 2007-2008 Frank-Rene Schaefer
+#ifndef __INCLUDE_GUARD__QUEX_BUFFER_INPUT_STRATEGY_ICONV__
+#define __INCLUDE_GUARD__QUEX_BUFFER_INPUT_STRATEGY_ICONV__
+//
+//  PURPOSE:
+//  
+//  Reads data from a stream and converts the incoming characters into a
+//  character format required by the user. The user can specify the coding
+//  format of the input stream as well as the coding format in which he
+//  wants it to be put into his buffer.
+//
+//  NOTE: Streams for the quex::buffer comply to three simple requirements:
+//
+//        tell()          returning a value of the current input position
+//        seek(pos)       sets the the current input position in the stream
+//        read_characters(buffer, N) fills the buffer with N characters from the stream.
+//                                   returns the number of actually filled characters.
+//  
+//
+//  MAIN GOAL: The main goal of a 'fixed_size_character_stream' class is to 
+//             fill a buffer with N characters starting from consecutive 
+//             stream positions.
+//
+//  ASSUMPTION: 
+//  
+//  -- The input character format is arbitrary. It can be anything that is
+//     supported by 'ICU'. Flexible character length codings are supported.
+//  
+//  -- The user's characters format has a fixed character size for each
+//     character. Any coding that involves different byte numbers for different
+//     characters or 'history' cannot be provided as user format.
+//  
+//  PRINCIPLE: 
+//  
+//               ________             _______            ________
+//              |        |           |       ¦          |        |
+//              |  FILE  |  ------>  |  raw  |  ------> | Buffer |
+//              |________|           |_______|          |________|
+//
+//  A data stream (FILE) delivers characters in an arbitrary coding format.
+//  These characters are stored bytewise inside a 'raw buffer'. Then this data is
+//  transformed into the users coding format. The result is directly put into
+//  the user's buffer. 
+//  
+//  (1) Fill as many bytes from the stream into the raw buffer
+//                                                                stream_position
+//                                                                |           
+//       Stream:         ||aa.aa.aa.bb.cc.cc.cc.cc.dd.dd.ee.ee.ee.ee.ff.ff.gg.||
+//                         
+//                         raw_buffer.position
+//                         |                        
+//       Raw Buffer:     ||aa.aa.aa.bb.cc.cc.cc.cc.dd.dd.ee.ee.ee||
+//  
+//  
+//  (2) Convert characters in the raw buffer and store into users buffer
+//
+//
+//        User's Buffer: ||AA.AA.BB.BB.CC.CC________________________||
+//  
+//
+//                                   yes
+//  (2b) User's buffer is filled? --------> **EXIT/DONE**
+//         |
+//         |  no
+//         *
+//  (3a) Copy unconverted bytes to the beginning of the raw buffer
+//  
+//        Raw Buffer:    ||ee.ee.ee______________________________||
+//  
+//
+//  (3b) Load remaining bytes from the stream into raw buffer
+//
+//                         raw_buffer.position
+//                         |
+//        Raw Buffer:    ||ee.ee.ee.ee.ff.ff.gg.hh.ii.ii.________||
+//         
+//        Goto (2)
+//  
+//  (4) Convert characters from raw buffer and store them into user's buffer
+//  
+//        User's Buffer: ||AA.AA.BB.BB.CC.CC.DD.DD.EE.EE.FF.FF.GG.GG||
+//  
+//  (4b) goto (2b)
+//
+//  NOTE: The 'raw_buffer.position' remains between calls to "read_characters()".
+//        This is equivalent to having some bytes in the pipeline.
+
+
+
+#include <quex/code_base/asserts>
+#include <quex/code_base/buffer/input_policy>
+#include <quex/code_base/buffer/fixed_size_character_stream>
+
+#include <iostream>       // for: fixed_size_character_stream_base<istream*>
+#include <cstdio>         // for: fixed_size_character_stream_base<FILE*>
+#include <cerrno>
+#include <stdexcept>
+#include <cstring>
+extern "C" { 
+#include <ucnv.h>
+#include <quex/code_base/compatibility/inttypes.h>
+}
+
+namespace quex {
+
+    template <class QUEX_CHARACTER_TYPE, class QUEX_CHARACTER_TYPE>
+    class fixed_size_character_stream_icu
+        : public fixed_size_character_stream<QUEX_CHARACTER_TYPE> {
+
+
+        static const size_t SizeOfCharacter = sizeof(QUEX_CHARACTER_TYPE);
+        typedef typename InputPolicy<QUEX_CHARACTER_TYPE*>::stream_position stream_position;
+        typedef typename InputPolicy<QUEX_CHARACTER_TYPE*>::stream_offset   stream_offset;
+       
+        /* DISABLED */ fixed_size_character_stream_icu();
+
+     public:
+        // NOTE: It makes sense to have multiple fixed_size_character_stream_icu objects use
+        //       the same raw buffer, since this buffer is only used temporarily
+        //       while loading.
+        fixed_size_character_stream_icu(QUEX_CHARACTER_TYPE* input_handle, 
+                                          uint8_t* raw_buffer_p, size_t raw_buffer_size,
+                                          const char* FromCoding, const char* ToCoding);
+        ~fixed_size_character_stream_icu();
+
+        virtual size_t    tell_character_index()                 { return end_character_index; }
+        virtual void      seek_character_index(const size_t CharacterIndex) { 
+            // seek_character_index(Pos) means that the next time when a character buffer
+            // is to be filled, this has to happen from position 'Pos'.
+            if( has_input_format_dynamic_character_width() ) { 
+                long avoid_tmp_arg = (long)(CharacterIndex * SizeOfCharacter + start_position); 
+                InputPolicy<QUEX_CHARACTER_TYPE*>::seek(ih, avoid_tmp_arg);
+            } 
+            else {
+                if( CharacterIndex == end_character_index ) { 
+                    return;
+                }
+                else if( begin_info.character_index != 0 && CharacterIndex > begin_info.character_index ) {
+                    __seek_character_index_in_stream(begin_info.position, 
+                                                     begin_info.character_index, 
+                                                     CharacterIndex);
+                } 
+                else {
+                    __seek_character_index_in_stream(start_position, 0, CharacterIndex);
+                } 
+                raw_buffer.position = raw_buffer.begin;
+                raw_buffer.bytes_left_n = 0;
+            }
+        }
+        virtual void      close()                                {  }
+
+        virtual size_t    read_characters(QUEX_CHARACTER_TYPE* buffer, const size_t N);
+        virtual void      register_begin_of_file();
+        virtual void      seek_begin_of_file();
+
+    private:
+        struct character_index_info { 
+            /* Associate a character index with a stream position */
+            size_t          character_index;
+            stream_position position;
+        };
+
+        struct buffer_info {
+            buffer_info(uint8_t* Begin, size_t SizeInBytes);
+
+            uint8_t*  begin;
+            size_t    size;
+            uint8_t*  position;
+            size_t    bytes_left_n;
+
+            void   print(const char* name, int until_idx=-1); 
+        };
+
+        QUEX_CHARACTER_TYPE* ih;
+        stream_position  start_position;  // position in stream where analysis started
+        size_t           end_character_index; // character index where analysis ended (last + 1)
+
+        // -- conversion data
+        iconv_t          iconv_handle;
+        buffer_info      raw_buffer;
+
+        character_index_info  end_info;
+        character_index_info  begin_info;
+
+        void   __fill_raw_buffer();
+        bool   __convert(buffer_info* user_buffer);
+        void   __seek_character_index_in_stream(stream_position   HintStreamPos, 
+                                                const size_t HintCharacterIndex,
+                                                const size_t CharacterIndex);
+        bool   has_input_format_dynamic_character_width();
+
+#       ifdef __QUEX_OPTION_UNIT_TEST_INPUT_STRATEGY_ICONV
+        void QUEX_UNIT_TEST_ICONV_INPUT_STRATEGY_PRINT_CONSTRUCTOR(const char* From, const char* To,
+                                                                   iconv_t IconvResult);
+        void QUEX_UNIT_TEST_ICONV_INPUT_STRATEGY_PRINT_RAW_BUFFER_LOAD(size_t LoadedByteN);
+        void QUEX_UNIT_TEST_ICONV_INPUT_STRATEGY_PRINT_ICONV_REPORT(size_t Report);
+        void QUEX_UNIT_TEST_ICONV_INPUT_STRATEGY_PRINT_RAW_AND_USER_BUFFER(buffer_info* user_buffer);
+#       endif
+    };
+}
+
+#include <quex/code_base/buffer/iconv/debug.i>
+
+#define QUEX_INLINE  template<class QUEX_CHARACTER_TYPE, class QUEX_CHARACTER_TYPE>
+#define CLASS        fixed_size_character_stream_icu<QUEX_CHARACTER_TYPE, QUEX_CHARACTER_TYPE>
+
+namespace quex {
+
+    QUEX_INLINE CLASS::fixed_size_character_stream_icu(QUEX_CHARACTER_TYPE* input_handle, 
+                                                 uint8_t*    raw_buffer_p, size_t      raw_buffer_size,
+                                                 const char* FromCoding,   const char* ToCoding) 
+        // Initialize the raw buffer that holds the plain bytes of the input file
+        // (setup to trigger initial reload)
+        : raw_buffer(raw_buffer_p, raw_buffer_size)
+    { 
+        ih = input_handle;
+
+        // Initialize the conversion operations
+        iconv_handle = iconv_open(ToCoding, FromCoding);
+
+        // Setup the tell/seek of character positions
+        start_info.position        = InputPolicy<QUEX_CHARACTER_TYPE*>::tell(input_handle);
+        start_info.character_index = 0;
+        end_info.position          = start_info.position;
+        end_info.character_index   = 0;
+
+        QUEX_UNIT_TEST_ICONV_INPUT_STRATEGY_PRINT_CONSTRUCTOR(FromCoding, ToCoding, iconv_handle);
+    }
+
+    QUEX_INLINE CLASS::~fixed_size_character_stream_icu() 
+    { iconv_close(iconv_handle); }
+
+    QUEX_INLINE size_t 
+    CLASS::read_characters(QUEX_CHARACTER_TYPE* user_buffer_p, const size_t N) 
+    {
+        buffer_info  user_buffer((uint8_t*)user_buffer_p, N * SizeOfCharacter);
+        // TWO CASES:
+        // (1) There are still some bytes in the raw buffer from the last load.
+        //     in this case, first translate them and then maybe load the raw buffer
+        //     again. (raw_buffer.bytes_left_n != 0)
+        // (2) The raw buffer is empty. Then it must be loaded in order to get some
+        //     basis for conversion. (raw_buffer.bytes_left_n == 0)
+        if( raw_buffer.bytes_left_n == 0 ) __fill_raw_buffer(); 
+
+        while( __convert(&user_buffer) == false ) { 
+            QUEX_UNIT_TEST_ICONV_INPUT_STRATEGY_PRINT_RAW_AND_USER_BUFFER(&user_buffer);
+            __fill_raw_buffer(); 
+        }
+        QUEX_UNIT_TEST_ICONV_INPUT_STRATEGY_PRINT_RAW_AND_USER_BUFFER(&user_buffer);
+
+        if( user_buffer.bytes_left_n == 0 ) { 
+            // The buffer was filled to its limits. All 'N' characters have been written.
+            end_character_index += N;
+            return N;
+        } else { 
+            // The buffer was not filled completely, because the end of the file was 
+            // reached. The fill level of the user buffer computes as:
+            const size_t ConvertedByteN = (user_buffer.size - user_buffer.bytes_left_n) / SizeOfCharacter;
+            end_character_index += ConvertedByteN;
+            return ConvertedByteN;
+        }
+    }
+
+    QUEX_INLINE void CLASS::__fill_raw_buffer() 
+    {
+        // Try to fill the raw buffer to its limits with data from the file.
+        // The filling starts from its current position, thus the remaining bytes
+        // to be translated are exactly the number of bytes in the buffer.
+        const size_t FillLevel       = raw_buffer.position - raw_buffer.begin;
+        const size_t RemainingBytesN = raw_buffer.bytes_left_n;
+
+        // There are cases (e.g. when a broken multibyte sequence occured at the end of 
+        // the buffer) where there are bytes left in the raw buffer. These need to be
+        // moved to the beginning of the buffer.
+        if( raw_buffer.position != raw_buffer.begin ) {
+            // Be careful: Maybe one can use 'memcpy()' which is a bit faster but the following
+            // is safe against overlaps.
+            std::memmove(raw_buffer.begin, raw_buffer.position, RemainingBytesN);
+            // Reset the position, so that new conversion get's the whole character.
+            raw_buffer.position = raw_buffer.begin; 
+        }
+
+        uint8_t*     FillStartPosition = raw_buffer.begin + raw_buffer.bytes_left_n;
+        size_t       FillSize          = raw_buffer.size - raw_buffer.bytes_left_n;
+        const size_t LoadedByteN = \
+                     InputPolicy<QUEX_CHARACTER_TYPE*>::load_bytes(ih, FillStartPosition, FillSize);
+
+        raw_buffer.bytes_left_n = LoadedByteN + RemainingBytesN; // Bytes left for conversion in next run.
+
+        QUEX_UNIT_TEST_ICONV_INPUT_STRATEGY_PRINT_RAW_BUFFER_LOAD(LoadedByteN);
+    }
+
+    QUEX_INLINE bool CLASS::__convert(buffer_info* user_buffer) 
+        // RETURNS:  true  --> User buffer is filled as much as possible with converted characters.
+        //           false --> More raw bytes are needed to fill the user buffer.
+    {
+
+const char dest_type[] = "UTF-32LE";
+const char source_type[] = "UTF-8";
+
+UErrorCode err = U_ZERO_ERROR;
+int32_t length = ucnv_convert(dest_type, source_type,
+                              0, 0,
+                              source.c_str(),
+                              source.length(),
+                              &err);
+std::vector<char> buffer(length);
+err = U_ZERO_ERROR;
+ucnv_convert(dest_type, source_type,
+             &buffer[0], buffer.size(),
+             source.c_str(),
+             source.length(),
+             &err);
+if (U_FAILURE(err)) {
+    std::stringstream error_string;
+    error_string << "Error converting to " << dest_type << ": " <<
+        u_errorName(err);
+    throw std::runtime_error(error_string.str());
+}
+
+
+
+        /*  IF YOU GET AN ERROR HERE, THEN PLEASE HAVE A LOOK AT THE FILE:
+         *
+         *      quex/code_base/compatibility/iconv-argument-types.h
+         * 
+         *  The issue is, that 'iconv' is defined on different systems with different
+         *  types of the second argument. There are two variants 'const char**'
+         *  and 'char **'. If your system is not treated correctly, please
+         *  contact the author <fschaef@users.sourceforge.net>. */
+        size_t report = iconv(iconv_handle, 
+                              (__Adapter_FuncIconv_SecondArgument)(&raw_buffer.position), &raw_buffer.bytes_left_n,
+                              (char**)&(user_buffer->position),                           &(user_buffer->bytes_left_n));
+
+        QUEX_UNIT_TEST_ICONV_INPUT_STRATEGY_PRINT_ICONV_REPORT(report);
+
+        if( report != (size_t)-1 ) { 
+            // (*) The input sequence (raw buffer content) has been converted completely.
+            //     But, is the user buffer filled to its limits?
+            if( user_buffer->bytes_left_n == 0 ) return true; 
+            // If the buffer was not filled completely, then was it because we reached EOF?
+            // NOTE: Here, 'raw_buffer.position' points to the position after the last byte
+            //       that has been converted. If this is the end of the buffer, then it means
+            //       that the raw buffer was read. If not, it means that the buffer has not been
+            //       filled to its border which happens only if End of File occured.
+            if( raw_buffer.position != raw_buffer.begin + raw_buffer.size ) return true;
+            // Else: The raw buffer needs more bytes. Since, everything went well, the new bytes
+            //       can be stored at the position '0' of the raw_buffer.
+            raw_buffer.position = raw_buffer.begin;
+            return false; // please, refill ...
+        }
+
+        switch( errno ) {
+        default:
+            throw std::range_error("Unexpected setting of 'errno' after call to GNU's iconv().");
+
+        case EILSEQ:
+            throw std::range_error("Invalid byte sequence encountered for given character coding.");
+
+        case EINVAL:
+            // (*) Incomplete byte sequence for character conversion
+            //     ('raw_buffer.position' points to the beginning of the incomplete sequence.)
+            return false; // please, refill the buffer (consider copying the bytes from  
+            //            // raw_buffer.position to the end of the buffer in front of the new buffer)
+
+        case E2BIG:
+            // (*) The input buffer was not able to hold the number of converted characters.
+            //     (in other words we're filled up the limit and that's what we actually wanted.)
+            return true;
+        }
+    }
+
+
+    QUEX_INLINE size_t CLASS::tell_character_index()
+    { return end_character_index; }
+
+    QUEX_INLINE void CLASS::seek_character_index(const size_t CharacterIndex) 
+    { 
+        // Seek_character_index(Pos) means that the next time when a character buffer
+        // is to be filled, this has to happen from position 'CharacterIndex'. NOTE: The
+        // reference for character positioning is **not** directly the stream. Moreover,
+        // it is the internal raw_buffer.position. It determines what characters are
+        // converted next into the user's buffer.
+        if( CharacterIndex == end_character_index ) { return; }
+
+        if( has_input_format_dynamic_character_width() ) { 
+            long avoid_tmp_arg = (long)(CharacterIndex * SizeOfCharacter + start_position); 
+            InputPolicy<QUEX_CHARACTER_TYPE*>::seek(ih, avoid_tmp_arg);
+        } 
+        else if( begin_info.character_index != 0 && CharacterIndex > begin_info.character_index ) {
+            __seek_character_index_in_stream(begin_info.position, begin_info.character_index, 
+                                             CharacterIndex);
+        } 
+        else {
+            __seek_character_index_in_stream(start_position, 0, CharacterIndex);
+        } 
+        // Indicate: buffer reload required on next run!
+        raw_buffer.position     = raw_buffer.begin;
+        raw_buffer.bytes_left_n = 0;
+    }
+
+    QUEX_INLINE void CLASS::__seek_character_index_in_stream(stream_position   HintStreamPos, 
+                                                             const size_t HintCharacterIndex,
+                                                             const size_t CharacterIndex)
+    { 
+        const int             ChunkSize = 512;
+        QUEX_CHARACTER_TYPE  chunk[512];
+        // This type of seek is not thought to be for cases where character positions
+        // can be computed--as is the case for fixed character width encodings.
+        __quex_assert(has_input_format_dynamic_character_width());
+        __quex_assert(HintCharacterIndex < CharacterIndex);  // NOT: '<=' !
+
+        // STRATEGY: Starting from a certain point in the file we read characters
+        //           (we convert them one by one) until we reach the given character
+        //           index.
+        size_t  remaining_character_n = CharacterIndex - HintCharacterIndex;
+
+        if( begin_info.position == HintStreamPos ) { 
+            // The 'read_characters()' function works on the content of the bytes
+            // in the raw_buffer. The only thing that has to happen is to reset 
+            // the raw buffer's position pointer to '0'.
+            raw_buffer.bytes_left_n += (raw_buffer.position - raw_buffer.begin);
+            raw_buffer.position     = raw_buffer.begin;
+        }
+        else {
+            // We cannot make any assumptions about the relation between stream position
+            // and character index--trigger reload:
+            raw_buffer.position     = raw_buffer.begin;
+            raw_buffer.bytes_left_n = 0; 
+            if ( end_info.position == HintStreamPos ) { 
+                // Here, no seek in the stream has to happen either, because the position
+                // points already to the right place. 
+                __quex_assert(end_info.character_index == HintCharacterIndex);
+            } else { 
+                InputPolicy<QUEX_CHARACTER_TYPE*>::seek(ih, HintStreamPos);
+            }
+        }
+        for(; remaining_character_n > ChunkSize; remaining_character_n -= ChunkSize ) { 
+            read_characters(chunk, ChunkSize);
+        }
+        if( remaining_character_n ) {
+            read_characters(chunk, remaining_character_n);
+        }
+        end_character_index = CharacterIndex;
+    }
+
+    QUEX_INLINE void  CLASS::register_begin_of_file() 
+    { 
+        start_position = InputPolicy<QUEX_CHARACTER_TYPE*>::tell(ih); 
+    }
+
+    QUEX_INLINE void  CLASS::seek_begin_of_file()
+    {
+        InputPolicy<QUEX_CHARACTER_TYPE*>::seek(ih, start_position);
+    }
+
+    QUEX_INLINE bool CLASS::has_input_format_dynamic_character_width() 
+    {
+        return true; // TODO: distinguish between different coding formats
+        //           //       'true' is safe, but possibly a little slower.
+    }
+
+    QUEX_INLINE CLASS::buffer_info::buffer_info(uint8_t* Begin, size_t SizeInBytes)
+    {
+        begin        = Begin;
+        size         = SizeInBytes;
+        position     = user_buffer.begin;
+        bytes_left_n = user_buffer.size;
+    }
+
+
+
+#undef CLASS
+#undef QUEX_INLINE
+
+}
+
+#endif // __INCLUDE_GUARD__QUEX_BUFFER_INPUT_STRATEGY_ICONV__

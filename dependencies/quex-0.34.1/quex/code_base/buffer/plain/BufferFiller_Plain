@@ -1,0 +1,59 @@
+/*  -*- C++ -*-  vim: set syntax=cpp: */
+/* (C) 2008 Frank-Rene Schaefer*/
+#ifndef __INCLUDE_GUARD__QUEX_BUFFER__BUFFER_FILLER_PLAIN__
+#define __INCLUDE_GUARD__QUEX_BUFFER__BUFFER_FILLER_PLAIN__
+/**/
+
+#if ! defined (__QUEX_SETTING_PLAIN_C)
+#   include <iostream> 
+#   include <cerrno>
+#   include <stdexcept>
+#endif
+#include <quex/code_base/definitions>
+#include <quex/code_base/buffer/InputPolicy>
+#include <quex/code_base/buffer/Buffer>
+#include <quex/code_base/buffer/BufferFiller>
+
+#include <quex/code_base/temporary_macros_on>
+
+#if ! defined (__QUEX_SETTING_PLAIN_C)
+namespace quex {
+#endif
+
+    TEMPLATIFIER(InputHandleT)
+#   ifndef __QUEX_SETTING_PLAIN_C
+    struct QuexBufferFiller_Plain { 
+#   else
+    struct __QuexBufferFiller_Plain_tag { 
+#   endif
+        /* Derived QuexBufferFiller from implemented as 'first member is base class'.
+         * (This is the 'C' way to express derivation) */
+        QuexBufferFiller   base;
+
+        InputHandleT*      ih;
+
+        /* position in stream where analysis started */
+        STREAM_POSITION_TYPE(InputHandleT)  start_position;  
+    };
+
+#   ifndef __QUEX_SETTING_PLAIN_C
+#   define TEMPLATED_CLASS   QuexBufferFiller_Plain<InputHandleT>
+#   else
+    typedef struct __QuexBufferFiller_Plain_tag    QuexBufferFiller_Plain;
+#   define TEMPLATED_CLASS   QuexBufferFiller_Plain
+#   endif
+
+    TEMPLATE_IN(InputHandleT) void
+    QuexBufferFiller_Plain_init(TEMPLATED_CLASS* me, InputHandleT* input_handle);
+    /* input_handle  is the file handle or pointer to the input stream from where the
+     *               incoming characters are to be read. */
+
+#   undef TEMPLATED_CLASS
+
+#if ! defined (__QUEX_SETTING_PLAIN_C)
+}  // namespace quex
+#endif
+
+#include <quex/code_base/temporary_macros_off>
+
+#endif /* __INCLUDE_GUARD__QUEX_BUFFER_INPUT_STRATEGY_PLAIN__ */

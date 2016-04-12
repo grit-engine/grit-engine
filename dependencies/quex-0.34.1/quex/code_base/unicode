@@ -1,0 +1,108 @@
+/* -*- C++ -*- vim: set syntax=cpp: */
+#ifndef __INCLUDE_GUARD_QUEX__CODE_BASE__UNICODE
+#define __INCLUDE_GUARD_QUEX__CODE_BASE__UNICODE
+
+#include <quex/code_base/definitions>
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+#   include <stdexcept>
+namespace quex { 
+#endif
+
+    QUEX_INLINE int 
+    Quex_unicode_to_utf8(QUEX_CHARACTER_TYPE  UCS_CharacterCode, uint8_t* utf8_result)
+    {
+        /* PURPOSE: This function converts the specified unicode character
+         *          into its utf8 representation. The result is stored
+         *          at the location where utf8_result points to. Thus, the
+         *          user has to make sure, that enough space is allocated!
+         *
+         * NOTE:    For general applicability let utf8_result point to a space
+         *          of 7 bytes! This way you can store always a terminating
+         *          zero after the last byte of the representation.
+         *
+         * RETURNS: Number of bytes that was required to convert the character
+         *          into its utf8 representation.
+         *
+         * ACKNOWLEDGEMENT: The following function was derived from segments of the
+         * utf8 conversion library of Alexey Vatchenko <av@bsdua.org>.                */
+        const uint8_t NEXT	= 0x80;
+        const uint8_t LEN2	= 0xc0;
+        const uint8_t LEN3	= 0xe0;
+        const uint8_t LEN4	= 0xf0;
+        const uint8_t LEN5	= 0xf8;
+        const uint8_t LEN6	= 0xfc;
+        /**/
+        uint8_t*  p = utf8_result;
+        size_t    n = 0;
+
+        __quex_assert(UCS_CharacterCode >= 0);
+
+        /* cannot convert surrogate pairs */
+        if (UCS_CharacterCode >= 0xd800 && UCS_CharacterCode <= 0xdfff) return -1;
+
+        /* Determine number of bytes in the utf8 representation of the character */
+        if      (UCS_CharacterCode <= 0x0000007f)       n = 1;
+        else if (UCS_CharacterCode <= 0x000007ff)       n = 2;
+        else if (UCS_CharacterCode <= 0x0000ffff)       n = 3;
+        else if (UCS_CharacterCode <= 0x001fffff)       n = 4;
+        else if (UCS_CharacterCode <= 0x03ffffff)       n = 5;
+        else /* if (UCS_CharacterCode <= 0x7fffffff) */ n = 6;
+
+        /* make it work under different endians */
+        uint8_t byte3 = (UCS_CharacterCode & 0xFF);
+        uint8_t byte2 = (UCS_CharacterCode & 0xFF00) >> 8;
+        uint8_t byte1 = (UCS_CharacterCode & 0xFF0000) >> 16;
+        uint8_t byte0 = (UCS_CharacterCode & 0xFF000000) >> 24;
+
+        switch (n) {
+        case 1:
+            *p = UCS_CharacterCode;
+            break;
+
+        case 2:
+            p[1] = NEXT | (byte3 & 0x3f);
+            p[0] = LEN2 | (byte3 >> 6) | ((byte2 & 0x07) << 2);
+            break;
+
+        case 3:
+            p[2] = NEXT | (byte3 & 0x3f);
+            p[1] = NEXT | (byte3 >> 6) | ((byte2 & 0x0f) << 2);
+            p[0] = LEN3 | ((byte2 & 0xf0) >> 4);
+            break;
+
+        case 4:
+            p[3] = NEXT | (byte3 & 0x3f);
+            p[2] = NEXT | (byte3 >> 6) | ((byte2 & 0x0f) << 2);
+            p[1] = NEXT | ((byte2 & 0xf0) >> 4) | ((byte1 & 0x03) << 4);
+            p[0] = LEN4 | ((byte1 & 0x1f) >> 2);
+            break;
+
+        case 5:
+            p[4] = NEXT | (byte3 & 0x3f);
+            p[3] = NEXT | (byte3 >> 6) | ((byte2 & 0x0f) << 2);
+            p[2] = NEXT | ((byte2 & 0xf0) >> 4) | ((byte1 & 0x03) << 4);
+            p[1] = NEXT | (byte1 >> 2);
+            p[0] = LEN5 | (byte0 & 0x03);
+            break;
+
+        case 6:
+            p[5] = NEXT | (byte3 & 0x3f);
+            p[4] = NEXT | (byte3 >> 6) | ((byte2 & 0x0f) << 2);
+            p[3] = NEXT | (byte2 >> 4) | ((byte1 & 0x03) << 4);
+            p[2] = NEXT | (byte1 >> 2);
+            p[1] = NEXT | (byte0 & 0x3f);
+            p[0] = LEN6 | ((byte0 & 0x40) >> 6);
+            break;
+        }
+
+        /* NOTE: Do not check here for forbitten UTF-8 characters.
+         * They cannot appear here because we do proper convertion. */
+        return n;
+    }
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+} // namespace quex
+#endif
+
+#endif // __INCLUDE_GUARD_QUEX__CODE_BASE__UNICODE

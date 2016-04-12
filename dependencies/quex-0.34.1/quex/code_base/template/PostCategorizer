@@ -1,0 +1,35 @@
+// -*- C++ -*- vim:set syntax=cpp:
+#ifndef __INCLUDE_GUARD__QUEX__POST_CATEGORIZER
+#define __INCLUDE_GUARD__QUEX__POST_CATEGORIZER
+
+namespace quex { 
+    //________________________________________________________________________________
+    // Post Categorization of Lexemes:
+    //
+    // Particular patterns may trigger a particular token type which is defined
+    // during the parsing process: example 'units' in safertex. imagine the
+    // user defined a new unit 'mB' for milli Bernoulli or whatsoever. the token
+    // action 'identifier' can compare the content against the tokens and find, that
+    // it has to send a TOKEN_UNIT_IDENTIFIER instead of a normal TOKEN_IDENTIFIER
+    //
+    // NOTE: This map has to be used inside an action, such as for {IDENTIFIER}.
+    //       The lexer itself will **not** react to any tokens entered here.
+    //
+    //       Inside the actions use:
+    //
+    //              int token_id = map_post_defined_lexeme_to_token_id(yytext);
+    //              if( token_id == -1 ) ... no known lexeme to be post-categorized.
+    //
+    //       in order to find out, if the identifier belongs to a certain type.
+    //       the return value is the token id of this identifier type. if it is
+    //       equal to '-1' then no post defined lexeme exists.
+    //________________________________________________________________________________
+    struct PostCategorizer {
+        void             enter(const QUEX_CHARACTER_TYPE* Lexeme, const int TokenID);
+        $$TOKEN_CLASS$$::id_type  get_token_id(const QUEX_CHARACTER_TYPE* Lexeme) const;
+    private:
+        std::map<std::string, int>  lexeme_to_token_id_map;
+    };
+}
+
+#endif // __INCLUDE_GUARD__QUEX__POST_CATEGORIZER

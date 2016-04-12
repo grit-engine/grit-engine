@@ -1,0 +1,84 @@
+// -*- C++ -*-   vim: set syntax=cpp:
+// (C) Frank-Rene Schaefer
+#ifndef __INCLUDE_GUARD__QUEX__COUNTER__
+#define __INCLUDE_GUARD__QUEX__COUNTER__
+
+namespace quex {
+
+    struct Counter {
+        Counter();
+        Counter(const Counter&);
+        void  init();
+
+        void  count(QUEX_CHARACTER_TYPE* Begin, QUEX_CHARACTER_TYPE* End);
+        void  count_NoNewline(const int CharacterN);
+        void  count_FixNewlineN(QUEX_CHARACTER_TYPE* Begin, QUEX_CHARACTER_TYPE* End,
+                                const int LineNIncrement);
+#       ifdef  QUEX_OPTION_LINE_NUMBER_COUNTING
+        int  _line_number_at_begin;   // line where current pattern starts
+        int  _line_number_at_end;     // line after current pattern
+#       endif
+#       ifdef  QUEX_OPTION_COLUMN_NUMBER_COUNTING
+        int  _column_number_at_begin;  // column where current pattern starts
+        int  _column_number_at_end;    // column after current pattern
+#       endif
+
+        // (*) helper functions
+        void  __shift_end_values_to_start_values();
+        void  __count_newline_n_backwards(QUEX_CHARACTER_TYPE* it,
+                                          QUEX_CHARACTER_TYPE* Begin);
+
+        QUEX_CHARACTER_TYPE* __count_chars_to_newline_backwards(QUEX_CHARACTER_TYPE* Begin,
+                                                                QUEX_CHARACTER_TYPE* End,
+                                                                const int    LexemeLength,
+                                                                const bool   LicenseToIncrementLineCountF=false);
+    };
+
+    struct CounterPseudo {
+        // PURPOSE: Act as a 'no operation object' in case that no line or column
+        //          counting is required.
+        CounterPseudo() { }
+        CounterPseudo(const CounterPseudo&) { }
+        void  init() { }
+
+        void  count(QUEX_CHARACTER_TYPE* Begin, QUEX_CHARACTER_TYPE* End) { }
+        void  count_NoNewline(const int CharacterN) { }
+        void  count_FixNewlineN(QUEX_CHARACTER_TYPE* Begin, QUEX_CHARACTER_TYPE* End,
+                                const int LineNIncrement) { }
+        void  __shift_end_values_to_start_values() { }
+    };
+
+    struct CounterWithIndentation 
+        : public Counter { 
+        CounterWithIndentation(CLASS*);
+        CounterWithIndentation(const CounterWithIndentation&);
+        void  init();
+        void  on_end_of_file();
+
+        void  disable_next_indentation_event() { _indentation_event_enabled_f = false; }
+
+        void  icount(QUEX_CHARACTER_TYPE* Begin, QUEX_CHARACTER_TYPE*  End);
+        void  icount_NoNewline(QUEX_CHARACTER_TYPE* Begin, const int CharacterN);
+        void  icount_NoNewline_NeverStartOnWhitespace(const int CharacterN);
+        void  icount_NoNewline_ContainsOnlySpace(const int CharacterN);
+
+        CLASS*  _the_lexer;
+        int     _indentation;                 // number of columns to first non-whitespace
+        //                                    // in the current line.
+        bool    _indentation_count_enabled_f; // count whitespace for indentation?
+        bool    _indentation_event_enabled_f; // trigger when first non-whitespace occurs?
+
+        // (*) Helper functions
+        void  __count_indentation_aux(QUEX_CHARACTER_TYPE* start_consideration_it,
+                                      QUEX_CHARACTER_TYPE* Begin,
+                                      QUEX_CHARACTER_TYPE* End, 
+                                      const bool       LicenseToCountF);
+
+        void  __count_whitespace_to_first_non_whitespace(QUEX_CHARACTER_TYPE* start_consideration, 
+                                                         QUEX_CHARACTER_TYPE* Begin,
+                                                         QUEX_CHARACTER_TYPE* End,
+                                                         const bool       LicenseToCountF);
+    };
+}
+
+#endif // __INCLUDE_GUARD__QUEX__COUNTER__

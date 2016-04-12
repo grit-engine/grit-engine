@@ -1,0 +1,59 @@
+# vim: set syntax=make: -*- makefile -*-
+
+# HELPER:  find -path "*.svn*" -or -path "*TEST*" -prune -or -print > tmp.txt
+QUEX_CODE_BASE_PATH = $(QUEX_PATH)/quex/code_base
+
+QUEX_CORE = \
+       $(addprefix $(QUEX_CODE_BASE_PATH)/, \
+                Token                                \
+                MemoryManager                        \
+                TokenQueue                           \
+                compatibility/inttypes.h             \
+                compatibility/pseudo-stdbool.h       \
+                compatibility/iconv-argument-types.h \
+                compatibility/win/borland_inttypes.h \
+                compatibility/win/msc_inttypes.h     \
+                compatibility/win/msc_stdint.h       \
+                compatibility/stdbool.h              \
+                buffer/BufferFiller                  \
+                buffer/Buffer                        \
+                buffer/BufferFiller.i                \
+                buffer/Buffer.i                      \
+                buffer/BufferInitFactory.i \
+                buffer/iconv/BufferFiller_IConv \
+                buffer/iconv/BufferFiller_IConv.i \
+                buffer/iconv/debug.i \
+                buffer/MemoryPositionMimiker \
+                buffer/Buffer_debug.i \
+                buffer/InputPolicy \
+                buffer/TEST/Buffer_test_common.i \
+                buffer/plain/BufferFiller_Plain \
+                buffer/plain/BufferFiller_Plain.i \
+                template/IncludeStack.i \
+                template/token_receiving_via_queue.i \
+                template/buffer_access.i \
+                template/dumpster.i \
+                template/Accumulator \
+                template/QuexMode \
+                template/Analyser.i \
+                template/mode_handling.i \
+                template/token_receiving_via_singleton.i \
+                template/PostCategorizer \
+                template/token_sending_via_queue.i \
+                template/lexical_analyzer_class \
+                template/constructor.i \
+                template/token_sending_via_singleton.i \
+                template/Accumulator.i \
+                template/misc.i \
+                template/Analyser \
+                template/count_common \
+                template/Counter.i \
+                template/CounterWithIndentation.i \
+                template/Counter \
+                template/IncludeStack \
+                asserts \
+                definitions \
+                circular_queue \
+                temporary_macros_on \
+                temporary_macros_off)
+

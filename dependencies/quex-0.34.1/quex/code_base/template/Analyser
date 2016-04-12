@@ -1,0 +1,64 @@
+/* -*- C++ -*- vim: set syntax=cpp: */
+#ifndef __INCLUDE_GUARD__QUEX__CODE_BASE__ANALYSER_MINIMAL__
+#define __INCLUDE_GUARD__QUEX__CODE_BASE__ANALYSER_MINIMAL__
+
+#include <quex/code_base/definitions>
+#include <quex/code_base/buffer/Buffer>
+#include <quex/code_base/buffer/BufferFiller>
+
+#include <quex/code_base/temporary_macros_on>
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+namespace quex {
+#endif
+
+    /* The following presents a minimal structure for a lexical analyser to work with the 
+     * constructed engine. Actually, it should only be useful for unit tests. Else, it has
+     * more a documentary character telling: This is the heart of the matter--anything else
+     * is just decoration! Any 'real' lexical analyser should be derived from this class. */
+    struct __QuexAnalyser_tag {
+        QuexBuffer                   buffer;
+        QUEX_ANALYSER_FUNCTION_TYPE  current_analyser_function;
+#if    defined(QUEX_OPTION_AUTOMATIC_ANALYSIS_CONTINUATION_ON_MODE_CHANGE) \
+    || defined(QUEX_OPTION_ASSERTS)
+        /* When a mode change happens and the user does not 'return' but 'CONTINUE'
+         * an error must be logged, since the following characters are still swallowed
+         * by the current function and not the new one. For this one needs to return and
+         * then continue further. */
+        QUEX_ANALYSER_FUNCTION_TYPE  DEBUG_analyser_function_at_entry;
+#       endif
+    };
+    typedef struct __QuexAnalyser_tag QuexAnalyser;
+
+    TEMPLATE_IN(InputHandleT) void
+    QuexAnalyser_construct(QuexAnalyser* me,
+                           QUEX_ANALYSER_FUNCTION_TYPE  AnalyserFunction,
+                           InputHandleT*                input_handle,
+                           QuexBufferFillerTypeEnum     InputCodingType,
+                           const char*                  IANA_InputCodingName, 
+                           const size_t                 BufferMemorySize,
+                           const size_t                 TranslationBufferMemorySize);
+
+    QUEX_INLINE void 
+    QuexAnalyser_destruct(QuexAnalyser* me);
+
+    QUEX_INLINE void
+    QuexAnalyser_reset(QuexAnalyser* me);
+
+    QUEX_INLINE bool 
+    QuexAnalyser_buffer_reload_backward(QuexBuffer* buffer);
+
+    QUEX_INLINE bool 
+    QuexAnalyser_buffer_reload_forward(QuexBuffer* buffer, 
+                                       QUEX_CHARACTER_POSITION_TYPE* last_acceptance_input_position,
+                                       QUEX_CHARACTER_POSITION_TYPE* post_context_start_position,
+                                       const size_t                  PostContextN);
+
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+} /* namespace quex */
+#endif
+
+#include <quex/code_base/temporary_macros_off>
+
+#endif /* __INCLUDE_GUARD__QUEX__CODE_BASE__ANALYSER_MINIMAL__ */

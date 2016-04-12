@@ -1,0 +1,62 @@
+/* -*- C++ -*- vim: set syntax=cpp: */
+#ifndef __INCLUDE_GUARD_QUEX__CODE_BASE__MEMORY_MANAGER__
+#define __INCLUDE_GUARD_QUEX__CODE_BASE__MEMORY_MANAGER__
+
+#include <quex/code_base/definitions>
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+namespace quex { 
+#endif
+    struct __QuexBufferFiller_tag;
+
+    QUEX_INLINE QUEX_CHARACTER_TYPE*
+        MemoryManager_get_BufferMemory(const size_t CharacterN)
+        {
+            QUEX_CHARACTER_TYPE* tmp = (QUEX_CHARACTER_TYPE*)\
+                  __QUEX_ALLOCATE_MEMORY((size_t)(CharacterN * sizeof(QUEX_CHARACTER_TYPE)));
+#           ifdef QUEX_OPTION_ASSERTS
+            /* Cast to uint8_t to avoid that some smart guy provides a C++ overloading function */
+            __QUEX_STD_memset((uint8_t*)tmp, 0xFF, CharacterN * sizeof(QUEX_CHARACTER_TYPE));
+#           endif
+            return tmp;
+        }
+
+    QUEX_INLINE struct __QuexBufferFiller_tag*
+        MemoryManager_get_BufferFiller(QuexBufferFillerTypeEnum FillerType)
+        {
+            return (struct __QuexBufferFiller_tag*)__QUEX_ALLOCATE_MEMORY(QuexBufferFiller_get_memory_size(FillerType));
+        }
+
+    QUEX_INLINE uint8_t*
+        MemoryManager_get_BufferFiller_RawBuffer(const size_t ByteN)
+        {
+            uint8_t* tmp = __QUEX_ALLOCATE_MEMORY(ByteN);
+#           ifdef QUEX_OPTION_ASSERTS
+            /* Cast to uint8_t to avoid that some smart guy provides a C++ overloading function */
+            __QUEX_STD_memset((uint8_t*)tmp, 0xFF, ByteN);
+#           endif
+            return tmp;
+        }
+
+    QUEX_INLINE void
+        MemoryManager_free_BufferMemory(QUEX_CHARACTER_TYPE* memory)
+        {
+            if( memory != 0x0 ) __QUEX_FREE_MEMORY((uint8_t*)memory);
+        }
+
+    QUEX_INLINE void
+        MemoryManager_free_BufferFiller(QuexBufferFiller* memory)
+        {
+            if( memory != 0x0 ) __QUEX_FREE_MEMORY((uint8_t*)memory);
+        }
+
+    QUEX_INLINE void
+        MemoryManager_free_BufferFiller_RawBuffer(uint8_t* memory)
+        {
+            if( memory != 0x0 ) __QUEX_FREE_MEMORY(memory);
+        }
+
+#if ! defined(__QUEX_SETTING_PLAIN_C)
+} // namespace quex
+#endif
+
+#endif /* __INCLUDE_GUARD_QUEX__CODE_BASE__MEMORY_MANAGER__ */

@@ -1,0 +1,31 @@
+// -*- C++ -*- vim: set syntax=cpp:
+#ifndef __INCLUDE_GUARD__QUEX_LEXER_CLASS_COUNT_COMMON
+#define __INCLUDE_GUARD__QUEX_LEXER_CLASS_COUNT_COMMON
+
+#ifdef QUEX_OPTION_ASSERTS
+#   if defined(QUEX_OPTION_LINE_NUMBER_COUNTING) && defined(QUEX_OPTION_COLUMN_NUMBER_COUNTING)
+#      define __QUEX_LEXER_COUNT_ASSERT_CONSISTENCY()                                         \
+       {                                                                                      \
+          __quex_assert(_line_number_at_begin   <= _line_number_at_end);                      \
+          /* if line number remained the same, then column number **must** have increased. */ \
+          /* there is not pattern of a length less than 1                                  */ \
+          __quex_assert(_line_number_at_begin != _line_number_at_end ||                       \
+                        _column_number_at_begin < _column_number_at_end);                     \
+       } 
+#   elif defined(QUEX_OPTION_LINE_NUMBER_COUNTING) && ! defined(QUEX_OPTION_COLUMN_NUMBER_COUNTING)
+#      define __QUEX_LEXER_COUNT_ASSERT_CONSISTENCY()                                          \
+       {                                                                                       \
+           __quex_assert(_line_number_at_begin   <= _line_number_at_end);                      \
+       }  
+#   else
+       /* If only column numbers are counted, then no assumptions can be made about increase */ \
+       /* or decrease. If a newline appearse, for example, the column number may decrease.   */
+#      define __QUEX_LEXER_COUNT_ASSERT_CONSISTENCY()
+#   endif
+#else
+#   define __QUEX_LEXER_COUNT_ASSERT_CONSISTENCY()
+#endif
+
+
+#endif /* __INCLUDE_GUARD__QUEX_LEXER_CLASS_COUNT_LINE_COLUMN_COMMON */
+

@@ -1,0 +1,146 @@
+// -*- C++ -*-    vim: set syntax=cpp:
+//
+// Token handling is **very** time critical ! We have two types of tokens:
+//
+//   class Token: a token as presented to the 'parser' for example.
+//                such tokens are reference counted. they can therefore
+//                be copied arround very efficiently and speedy.
+//
+//   Both classes share the Token_data_core, i.e. the content of a token
+//   is in both cases the same and defined in the base class of both
+//   token classes.
+//
+//
+//   (C) 2006-2008 Frank R. Schaefer
+//////////////////////////////////////////////////////////////////////////////////////////
+#ifndef __INCLUDE_GUARD__QUEX__TOKEN__
+#define __INCLUDE_GUARD__QUEX__TOKEN__
+
+// Depends on 'QUEX_CHARACTER_TYPE' being defined!
+
+#include<iostream>
+#include<string>
+
+/* Do not include <quex/code_base/definitions> at this point, since it defines the
+ * token id type, if it is not defined. */
+#include<quex/code_base/asserts>
+#include<quex/code_base/unicode>
+#include<quex/code_base/compatibility/inttypes.h>
+
+#ifndef    QUEX_TOKEN_ID_TYPE 
+#   define QUEX_TOKEN_ID_TYPE uint32_t
+#endif
+
+namespace quex {
+
+    class Token {
+    public:
+        // Quex Token Policy: _____________________________________________________
+        static const std::string&  map_id_to_name(QUEX_TOKEN_ID_TYPE);
+        //_________________________________________________________________________
+
+    private:
+        typedef std::basic_string<QUEX_CHARACTER_TYPE> __string;
+
+        QUEX_TOKEN_ID_TYPE _id;
+        __string           _text;
+        int                _number;
+
+    public:
+        Token() {} 
+        Token(const Token& That) { __copy(That); }     
+
+        // note, that tokens are created in a bunch on the token stack and only
+        // set with the .set(..) functions when pushed.
+        //
+        Token(QUEX_TOKEN_ID_TYPE ID, const QUEX_CHARACTER_TYPE* Text) { set(ID, Text); }
+
+        // (*) convert data to string
+        const __string   type_string() const;
+        operator         const std::string() const;
+        __string         xml(const int Depth) const;
+
+
+        // (*) member acces
+        //     -- read
+        const QUEX_TOKEN_ID_TYPE  type_id() const      { return _id; }
+        const std::string&        type_id_name() const { return map_id_to_name(_id); }
+        const __string&           text() const         { return _text; }
+        const std::string         utf8_text() const;
+        const int                 number()             { return _number; }
+
+        //     -- write 
+        void    set(QUEX_TOKEN_ID_TYPE ID);
+        void    set(QUEX_TOKEN_ID_TYPE ID, const QUEX_CHARACTER_TYPE* Text);
+        void    set(QUEX_TOKEN_ID_TYPE ID, const int   Number1);
+
+    private:
+        void __copy(const Token& That);
+    };
+
+    inline void 
+    Token::__copy(const Token& That) 
+    {
+        _id     = That._id;
+        _text   = That._text;
+        _number = That._number;
+    }
+
+    inline void    
+    Token::set(QUEX_TOKEN_ID_TYPE Type, const QUEX_CHARACTER_TYPE* Text)
+    { _id = Type; _text = __string(Text); }
+
+    inline void    
+    Token::set(QUEX_TOKEN_ID_TYPE Type, const int Number1)
+    { _id = Type; _number = Number1; }
+
+    inline void    
+    Token::set(QUEX_TOKEN_ID_TYPE Type) 
+    { _id = Type; }
+
+    inline std::ostream&
+    operator<<(std::ostream& ostr, const Token& Tok)
+    { ostr << std::string(Tok); return ostr; }
+
+    inline
+    Token::operator const std::string() const
+    {
+        std::string             tmp;
+        std::string::size_type  pos  = 0;
+
+        tmp = map_id_to_name(this->_id);
+
+        tmp += " '" + utf8_text() + "' ";
+
+        while( (pos = tmp.find("\n") ) != __string::npos )
+            tmp.replace(pos, 1, std::string("\\n"));
+        while( (pos = tmp.find("\t") ) != __string::npos ) 
+            tmp.replace(pos, 1, std::string("\\t"));
+
+        return tmp;
+    }
+    
+    inline const std::string
+    Token::utf8_text() const
+    {
+        uint8_t          utf8[7];
+        int              utf8_length = -1;
+        std::string      tmp;
+        Token::__string  tmp2 = _text;
+
+        if( tmp2.length() > 48 ) tmp2 = tmp2.substr(0, 48);
+
+        for(Token::__string::iterator it = tmp2.begin(); it != tmp2.end() ; ++it) {
+            /* Convert Character To UTF-8 */
+            utf8_length = Quex_unicode_to_utf8((int)*it, utf8);
+            if( utf8_length < 0 || utf8_length > 6) continue;
+            utf8[utf8_length] = '\0';
+            tmp += std::string((const char*)utf8);        
+        }
+        return tmp;
+    }
+
+
+}
+
+#endif // #define __INCLUDE_GUARD__QUEX__TOKEN__
