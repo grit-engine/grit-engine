@@ -1,0 +1,12 @@
+[submodule "dependencies/grit-bullet"]
+	path = dependencies/grit-bullet
+	url = git@github.com:sparkprime/grit-bullet.git
+[submodule "dependencies/grit-lua"]
+	path = dependencies/grit-lua
+	url = git@github.com:sparkprime/grit-lua
+[submodule "dependencies/grit-util"]
+	path = dependencies/grit-util
+	url = git@github.com:sparkprime/grit-util
+[submodule "dependencies/grit-ogre"]
+	path = dependencies/grit-ogre
+	url = git@github.com:sparkprime/grit-ogre.git
