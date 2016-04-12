@@ -345,7 +345,7 @@ class GfxParticleSystem {
             // Since we're disabling depth checks (so soft particles work properly), we may
             // as well use the SKY GfxShader::Purpose as it has exactly the behavior needed.
             // ACTUALLY... HUD is the same as SKY but without pushing all depth to the backplane.
-            shader->bindShader(GfxShader::HUD, false, 0, false, 0,
+            shader->bindShader(GfxShader::HUD, false, false, 0,
                                globs, I, nullptr, 0, 1, texs, binds);
 
             ogre_rs->_setTexture(NUM_GLOBAL_TEXTURES, true, pipe->getGBufferTexture(0));

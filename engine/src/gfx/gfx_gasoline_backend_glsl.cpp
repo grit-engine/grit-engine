@@ -132,12 +132,21 @@ static std::string generate_funcs_frag (const GfxGslEnvironment &env)
     ss << "Float4 ddy (Float4 v) { return dFdy(v); }\n";
 
     // Real texture lookups
+    // 2D
     ss << "Float4 sample (FloatTexture2 tex, Float2 uv) { return texture(tex, uv); }\n";
     ss << "Float4 sampleGrad (FloatTexture2 tex, Float2 uv, Float2 ddx, Float2 ddy)\n";
     ss << "{ return textureGrad(tex, uv, ddx, ddy); }\n";
     ss << "Float4 sampleLod (FloatTexture2 tex, Float2 uv, Float lod)\n";
     ss << "{ return textureLod(tex, uv, lod); }\n";
 
+    // 3D (volumetric)
+    ss << "Float4 sample (FloatTexture3 tex, Float3 uvw) { return texture(tex, uvw); }\n";
+    ss << "Float4 sampleGrad (FloatTexture3 tex, Float3 uvw, Float3 ddx, Float3 ddy)\n";
+    ss << "{ return textureGrad(tex, uvw, ddx, ddy); }\n";
+    ss << "Float4 sampleLod (FloatTexture3 tex, Float3 uvw, Float lod)\n";
+    ss << "{ return textureLod(tex, uvw, lod); }\n";
+
+    // Cube
     ss << "Float4 sample (FloatTextureCube tex, Float3 uvw) { return texture(tex, uvw); }\n";
     ss << "Float4 sampleGrad (FloatTextureCube tex, Float3 uvw, Float3 ddx, Float3 ddy)\n";
     ss << "{ return textureGrad(tex, uvw, ddx, ddy); }\n";

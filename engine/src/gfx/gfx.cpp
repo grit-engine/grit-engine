@@ -103,6 +103,7 @@ Vector3 hell_colour;
 
 DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube0;
 DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube1;
+unsigned env_cube_count = 0;
 float env_cube_cross_fade = 0;
 float global_exposure = 1;
 float global_saturation = 1;
@@ -272,6 +273,8 @@ void gfx_env_cube (unsigned i, const DiskResourcePtr<GfxEnvCubeDiskResource> &v)
     auto &ec = i == 0 ? global_env_cube0 : global_env_cube1;
     if (ec == v) return;
     //CVERB << "Setting scene env cube to " << v << std::endl;
+    env_cube_count = unsigned(global_env_cube0 != nullptr)
+                   + unsigned(global_env_cube1 != nullptr);
 
     // Alpha materials are not part of the full screen deferred shading pass, so have
     // the env cube texture bound as part of the material used to render that pass

@@ -15,7 +15,8 @@
 GfxGslBackend backend = (gfx_d3d9() || getenv("GRIT_GL_CG") != nullptr)
                       ? GFX_GSL_BACKEND_CG : GFX_GSL_BACKEND_GLSL;
 
-static std::string dump_shader(getenv("GRIT_DUMP_SHADER"));
+static const std::string dump_shader(getenv("GRIT_DUMP_SHADER") == nullptr
+                                     ? "" : getenv("GRIT_DUMP_SHADER"));
 
 typedef GfxShader::NativePair NativePair;
 
@@ -33,23 +34,13 @@ static std::string fresh_name (void)
     return ss.str();
 }
 
-GfxShaderGlobals gfx_shader_globals_verbatim (GfxPipeline *pipe)
+GfxShaderGlobals gfx_shader_globals_cam_ss (GfxPipeline *pipe, Ogre::Viewport *viewport)
 {
-    const Ogre::Matrix4 &I = Ogre::Matrix4::IDENTITY;
-
     Ogre::Camera *cam = pipe->getCamera();
+    Ogre::Matrix4 view = Ogre::Matrix4::IDENTITY;
+    Ogre::Matrix4 proj = Ogre::Matrix4::IDENTITY;
 
-    Ogre::Viewport *viewport = cam->getViewport();
     bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
-    float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
-    Ogre::Matrix4 proj = I;
-    // Invert transformed y if necessary
-    /*
-    proj[1][0] *= render_target_flipping_factor;
-    proj[1][1] *= render_target_flipping_factor;
-    proj[1][2] *= render_target_flipping_factor;
-    proj[1][3] *= render_target_flipping_factor;
-    */
     Vector3 cam_pos = from_ogre(cam->getPosition());
     Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
 
@@ -59,28 +50,19 @@ GfxShaderGlobals gfx_shader_globals_verbatim (GfxPipeline *pipe)
     Vector3 ray_bottom_right = from_ogre(cam->getWorldSpaceCorners()[7]) - cam_pos;
 
     return {
-        cam_pos, I, I, proj,
+        cam_pos, view, view.inverseAffine(), proj,
         ray_top_left, ray_top_right, ray_bottom_left, ray_bottom_right,
         viewport_dim, render_target_flipping, pipe
     };
 }
 
-GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe, const Ogre::Matrix4 &proj_)
+GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe, const Ogre::Matrix4 &proj)
 {
     Ogre::Camera *cam = pipe->getCamera();
     Ogre::Matrix4 view = cam->getViewMatrix();
 
     Ogre::Viewport *viewport = cam->getViewport();
     bool render_target_flipping = viewport->getTarget()->requiresTextureFlipping();
-    float render_target_flipping_factor = render_target_flipping ? -1.0f : 1.0f;
-    Ogre::Matrix4 proj = proj_;
-    // Invert transformed y if necessary
-    /*
-    proj[1][0] *= render_target_flipping_factor;
-    proj[1][1] *= render_target_flipping_factor;
-    proj[1][2] *= render_target_flipping_factor;
-    proj[1][3] *= render_target_flipping_factor;
-    */
     Vector3 cam_pos = from_ogre(cam->getPosition());
     Vector2 viewport_dim(viewport->getActualWidth(), viewport->getActualHeight());
 
@@ -443,8 +425,9 @@ NativePair GfxShader::getNativePair (Purpose purpose,
 }
 
 void GfxShader::bindShader (Purpose purpose,
-                            bool fade_dither, unsigned env_boxes,
-                            bool instanced, unsigned bone_weights,
+                            bool fade_dither,
+                            bool instanced,
+                            unsigned bone_weights,
                             const GfxShaderGlobals &globs,
                             const Ogre::Matrix4 &world,
                             const Ogre::Matrix4 *bone_world_matrixes,
@@ -453,7 +436,8 @@ void GfxShader::bindShader (Purpose purpose,
                             const GfxMaterialTextureMap &textures,
                             const GfxShaderBindings &bindings)
 {
-    auto np = getNativePair(purpose, fade_dither, env_boxes, instanced, bone_weights, textures);
+    auto np = getNativePair(purpose, fade_dither, env_cube_count, instanced, bone_weights,
+                            textures);
 
     // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
     ogre_rs->bindGpuProgram(np.vp->_getBindingDelegate());
@@ -710,11 +694,11 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
 void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &g, Purpose purpose)
 {
     Ogre::Matrix4 view_proj = g.proj * g.view; 
-    Vector4 viewport_size(g.viewport_dim.x, g.viewport_dim.y,
-                          1.0f/g.viewport_dim.x, 1.0f/g.viewport_dim.y);
-    float render_target_flipping_factor = g.render_target_flipping ? -1.0f : 1.0f;
+    Vector4 viewport_size(g.viewportDim.x, g.viewportDim.y,
+                          1.0f/g.viewportDim.x, 1.0f/g.viewportDim.y);
+    float render_target_flipping_factor = g.renderTargetFlipping ? -1.0f : 1.0f;
 
-    hack_set_constant(np, "global_cameraPos", g.cam_pos);
+    hack_set_constant(np, "global_cameraPos", g.camPos);
     hack_set_constant(np, "global_fovY", gfx_option(GFX_FOV));
     hack_set_constant(np, "global_proj", g.proj);
     hack_set_constant(np, "global_time", anim_time); // FIXME:
@@ -772,6 +756,10 @@ void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &g, Pu
     hack_set_constant(np, "global_envCubeCrossFade", env_cube_cross_fade);
     hack_set_constant(np, "global_envCubeMipmaps0", 9.0f);
     hack_set_constant(np, "global_envCubeMipmaps1", 9.0f);
+
+    hack_set_constant(np, "global_saturation", global_saturation);
+    hack_set_constant(np, "global_exposure", global_exposure);
+    hack_set_constant(np, "global_bloomThreshold", gfx_option(GFX_BLOOM_THRESHOLD));
 
     hack_set_constant(np, "internal_rt_flip", render_target_flipping_factor);
 

@@ -293,6 +293,8 @@ bullet_debug_drawer.o: ../depend_stubs/OgreGLSLGpuProgram.h
 bullet_debug_drawer.o: ../depend_stubs/OgreGLSLProgram.h
 bullet_debug_drawer.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
 bullet_debug_drawer.o: ../src/gfx/gfx.h ../src/gfx/gfx_option.h
+bullet_debug_drawer.o: ../src/gfx/gfx_gasoline.h
+bullet_debug_drawer.o: ../depend_stubs/cstdint ../depend_stubs/array
 bullet_debug_drawer.o: ../src/gfx/gfx_particle_system.h
 bullet_debug_drawer.o: ../depend_stubs/utility ../depend_stubs/lua.h
 bullet_debug_drawer.o: ../depend_stubs/lauxlib.h
@@ -538,6 +540,10 @@ input_filter.o: ../depend_stubs/OgreGLSLGpuProgram.h
 input_filter.o: ../depend_stubs/OgreGLSLProgram.h
 input_filter.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
 input_filter.o: ../src/gfx/gfx.h ../src/gfx/gfx_option.h
+input_filter.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdint
+input_filter.o: ../depend_stubs/array ../depend_stubs/ostream
+input_filter.o: ../src/centralised_log.h
+input_filter.o: ../../dependencies/util/console.h
 input_filter.o: ../src/gfx/gfx_font.h ../src/background_loader.h
 input_filter.o: ../src/vect_util.h ../depend_stubs/condition_variable
 input_filter.o: ../depend_stubs/list ../depend_stubs/mutex
@@ -551,10 +557,8 @@ input_filter.o: ../depend_stubs/btBulletCollisionCommon.h
 input_filter.o: ../src/gfx/gfx_disk_resource.h
 input_filter.o: ../depend_stubs/OgreResource.h
 input_filter.o: ../depend_stubs/OgreTexture.h
-input_filter.o: ../depend_stubs/OgreMesh.h ../src/centralised_log.h
-input_filter.o: ../../dependencies/util/console.h
-input_filter.o: ../depend_stubs/ostream ../src/gfx/gfx_text_buffer.h
-input_filter.o: ../depend_stubs/cstdint
+input_filter.o: ../depend_stubs/OgreMesh.h
+input_filter.o: ../src/gfx/gfx_text_buffer.h
 input_filter.o: ../depend_stubs/OgreHardwareBufferManager.h
 input_filter.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 input_filter.o: ../depend_stubs/OgreHardwareIndexBuffer.h
@@ -611,7 +615,7 @@ lua_wrappers_core.o: ../src/lua_wrappers_disk_resource.h
 lua_wrappers_core.o: ../src/gfx/lua_wrappers_gfx.h
 lua_wrappers_core.o: ../src/grit_lua_util.h ../src/gfx/gfx.h
 lua_wrappers_core.o: ../src/vect_util.h ../src/shared_ptr.h
-lua_wrappers_core.o: ../depend_stubs/functional
+lua_wrappers_core.o: ../depend_stubs/functional ../src/gfx/gfx_body.h
 lua_wrappers_core.o: ../src/gfx/gfx_fertile_node.h
 lua_wrappers_core.o: ../src/gfx/gfx_node.h
 lua_wrappers_core.o: ../depend_stubs/OgreSceneNode.h
@@ -630,34 +634,31 @@ lua_wrappers_core.o: ../depend_stubs/OgreGLGpuProgram.h
 lua_wrappers_core.o: ../depend_stubs/OgreGLSLGpuProgram.h
 lua_wrappers_core.o: ../depend_stubs/OgreGLSLProgram.h
 lua_wrappers_core.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
-lua_wrappers_core.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_body.h
+lua_wrappers_core.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_gasoline.h
+lua_wrappers_core.o: ../depend_stubs/cstdint ../depend_stubs/array
 lua_wrappers_core.o: ../src/gfx/gfx_material.h
 lua_wrappers_core.o: ../depend_stubs/OgreMaterial.h
-lua_wrappers_core.o: ../src/gfx/gfx_shader.h ../depend_stubs/cstdint
-lua_wrappers_core.o: ../depend_stubs/array
+lua_wrappers_core.o: ../src/gfx/gfx_shader.h
 lua_wrappers_core.o: ../depend_stubs/unordered_map
 lua_wrappers_core.o: ../depend_stubs/OgreHighLevelGpuProgram.h
-lua_wrappers_core.o: ../src/gfx/gfx_gasoline.h
-lua_wrappers_core.o: ../src/gfx/gfx_pipeline.h
-lua_wrappers_core.o: ../src/gfx/gfx_sky_body.h
-lua_wrappers_core.o: ../src/gfx/gfx_disk_resource.h
-lua_wrappers_core.o: ../src/gfx/gfx_sky_material.h
-lua_wrappers_core.o: ../src/gfx/gfx_light.h
+lua_wrappers_core.o: ../src/gfx/gfx_pipeline.h ../src/gfx/gfx_decal.h
 lua_wrappers_core.o: ../src/gfx/gfx_particle_system.h
-lua_wrappers_core.o: ../depend_stubs/utility
-lua_wrappers_core.o: ../src/gfx/gfx_instances.h
-lua_wrappers_core.o: ../depend_stubs/OgreMovableObject.h
-lua_wrappers_core.o: ../src/dense_index_map.h
-lua_wrappers_core.o: ../src/gfx/gfx_ranged_instances.h
-lua_wrappers_core.o: ../src/streamer.h
-lua_wrappers_core.o: ../src/cache_friendly_range_space_simd.h
-lua_wrappers_core.o: ../src/sse_allocator.h ../src/gfx/gfx_hud.h
+lua_wrappers_core.o: ../depend_stubs/utility ../src/gfx/gfx_hud.h
 lua_wrappers_core.o: ../src/external_table.h ../src/lua_ptr.h
 lua_wrappers_core.o: ../src/path_util.h ../src/gfx/gfx_font.h
-lua_wrappers_core.o: ../src/main.h ../src/gfx/gfx_text_buffer.h
+lua_wrappers_core.o: ../src/main.h ../src/gfx/gfx_disk_resource.h
+lua_wrappers_core.o: ../src/gfx/gfx_text_buffer.h
 lua_wrappers_core.o: ../depend_stubs/OgreHardwareBufferManager.h
 lua_wrappers_core.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 lua_wrappers_core.o: ../depend_stubs/OgreHardwareIndexBuffer.h
+lua_wrappers_core.o: ../src/gfx/gfx_instances.h
+lua_wrappers_core.o: ../depend_stubs/OgreMovableObject.h
+lua_wrappers_core.o: ../src/dense_index_map.h ../src/gfx/gfx_light.h
+lua_wrappers_core.o: ../src/gfx/gfx_ranged_instances.h
+lua_wrappers_core.o: ../src/streamer.h
+lua_wrappers_core.o: ../src/cache_friendly_range_space_simd.h
+lua_wrappers_core.o: ../src/sse_allocator.h ../src/gfx/gfx_sky_body.h
+lua_wrappers_core.o: ../src/gfx/gfx_sky_material.h
 lua_wrappers_core.o: ../src/audio/lua_wrappers_audio.h
 lua_wrappers_core.o: ../src/audio/audio.h ../depend_stubs/AL/al.h
 lua_wrappers_core.o: ../src/disk_resource.h
@@ -706,8 +707,7 @@ lua_wrappers_core.o: ../depend_stubs/sys/param.h
 lua_wrappers_core.o: ../depend_stubs/sys/types.h
 lua_wrappers_core.o: ../depend_stubs/netdb.h
 lua_wrappers_core.o: ../depend_stubs/sys/ioctl.h
-lua_wrappers_core.o: ../src/navigation/navigation_system.h
-lua_wrappers_core.o: ../src/navigation/navigation.h
+lua_wrappers_core.o: ../src/navigation/lua_wrappers_navigation.h
 lua_wrappers_disk_resource.o: ../src/grit_lua_util.h
 lua_wrappers_disk_resource.o: ../depend_stubs/string
 lua_wrappers_disk_resource.o: ../depend_stubs/lua.h
@@ -851,9 +851,10 @@ main.o: ../depend_stubs/OgreGLGpuProgram.h
 main.o: ../depend_stubs/OgreGLSLGpuProgram.h
 main.o: ../depend_stubs/OgreGLSLProgram.h
 main.o: ../depend_stubs/OgreGLSLLinkProgramManager.h ../src/gfx/gfx.h
-main.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_particle_system.h
-main.o: ../depend_stubs/utility ../depend_stubs/OgreRoot.h
-main.o: ../depend_stubs/OgreRenderWindow.h
+main.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_gasoline.h
+main.o: ../depend_stubs/cstdint ../depend_stubs/array
+main.o: ../src/gfx/gfx_particle_system.h ../depend_stubs/utility
+main.o: ../depend_stubs/OgreRoot.h ../depend_stubs/OgreRenderWindow.h
 main.o: ../src/physics/physics_world.h
 main.o: ../depend_stubs/btBulletDynamicsCommon.h
 main.o: ../src/physics/tcol_parser.h ../src/physics/tcol_lexer
@@ -896,8 +897,12 @@ main.o: ../depend_stubs/OgreResourceGroupManager.h ../src/net/net.h
 main.o: ../depend_stubs/sys/socket.h ../depend_stubs/arpa/inet.h
 main.o: ../depend_stubs/sys/param.h ../depend_stubs/sys/types.h
 main.o: ../depend_stubs/netdb.h ../depend_stubs/sys/ioctl.h
-main.o: ../src/navigation/navigation_system.h
-main.o: ../src/navigation/navigation.h
+main.o: ../src/navigation/navigation_system.h ../src/gfx/gfx_body.h
+main.o: ../src/gfx/gfx_fertile_node.h ../src/gfx/gfx_material.h
+main.o: ../depend_stubs/OgreMaterial.h ../src/gfx/gfx_shader.h
+main.o: ../depend_stubs/unordered_map
+main.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+main.o: ../src/gfx/gfx_pipeline.h ../src/physics/physics_world.h
 path_util.o: ../src/centralised_log.h ../src/path_util.h
 path_util.o: ../depend_stubs/vector ../depend_stubs/string
 path_util.o: ../src/grit_lua_util.h ../depend_stubs/lua.h
@@ -1045,8 +1050,20 @@ gfx.o: ../src/bullet_debug_drawer.h
 gfx.o: ../depend_stubs/OgreFrameListener.h
 gfx.o: ../depend_stubs/OgreManualObject.h
 gfx.o: ../depend_stubs/btBulletCollisionCommon.h
-gfx.o: ../src/clipboard.h ../src/gfx/gfx_internal.h
-gfx.o: ../depend_stubs/Ogre.h ../depend_stubs/OgreMeshManager.h
+gfx.o: ../src/clipboard.h ../src/gfx/clutter.h
+gfx.o: ../depend_stubs/cfloat ../depend_stubs/OgreMovableObject.h
+gfx.o: ../depend_stubs/OgreVertexIndexData.h
+gfx.o: ../depend_stubs/OgreMaterial.h ../depend_stubs/OgreMesh.h
+gfx.o: ../../dependencies/util/math_util.h
+gfx.o: ../depend_stubs/iostream ../depend_stubs/cmath
+gfx.o: ../src/cache_friendly_range_space_simd.h
+gfx.o: ../depend_stubs/map ../src/sse_allocator.h
+gfx.o: ../src/streamer.h ../src/gfx/gfx_body.h ../src/shared_ptr.h
+gfx.o: ../depend_stubs/cstdlib ../depend_stubs/functional
+gfx.o: ../src/gfx/gfx_fertile_node.h ../src/gfx/gfx_node.h
+gfx.o: ../depend_stubs/OgreSceneNode.h ../src/vect_util.h
+gfx.o: ../src/gfx/gfx_internal.h ../depend_stubs/Ogre.h
+gfx.o: ../depend_stubs/OgreMeshManager.h
 gfx.o: ../depend_stubs/OgreOctreeSceneManager.h
 gfx.o: ../depend_stubs/OgreVector3.h
 gfx.o: ../depend_stubs/OgreQuaternion.h
@@ -1060,35 +1077,17 @@ gfx.o: ../depend_stubs/OgreGLGpuProgram.h
 gfx.o: ../depend_stubs/OgreGLSLGpuProgram.h
 gfx.o: ../depend_stubs/OgreGLSLProgram.h
 gfx.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
-gfx.o: ../src/gfx/gfx.h ../src/vect_util.h ../src/shared_ptr.h
-gfx.o: ../depend_stubs/cstdlib ../depend_stubs/functional
-gfx.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_pipeline.h
-gfx.o: ../src/gfx/clutter.h ../depend_stubs/cfloat
-gfx.o: ../depend_stubs/OgreMovableObject.h
-gfx.o: ../depend_stubs/OgreVertexIndexData.h
-gfx.o: ../depend_stubs/OgreMaterial.h ../depend_stubs/OgreMesh.h
-gfx.o: ../../dependencies/util/math_util.h
-gfx.o: ../depend_stubs/iostream ../depend_stubs/cmath
-gfx.o: ../src/cache_friendly_range_space_simd.h
-gfx.o: ../depend_stubs/map ../src/sse_allocator.h
-gfx.o: ../src/streamer.h ../src/gfx/gfx_material.h
-gfx.o: ../depend_stubs/mutex ../src/gfx/gfx_shader.h
-gfx.o: ../depend_stubs/cstdint ../depend_stubs/array
-gfx.o: ../depend_stubs/unordered_map
-gfx.o: ../depend_stubs/OgreHighLevelGpuProgram.h
-gfx.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/ostream
+gfx.o: ../src/gfx/gfx.h ../src/gfx/gfx_option.h
+gfx.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdint
+gfx.o: ../depend_stubs/array ../depend_stubs/ostream
 gfx.o: ../src/centralised_log.h ../../dependencies/util/console.h
 gfx.o: ../depend_stubs/set ../../dependencies/util/exception.h
-gfx.o: ../../dependencies/util/intrinsics.h ../src/gfx/gfx_body.h
-gfx.o: ../src/gfx/gfx_fertile_node.h ../src/gfx/gfx_node.h
-gfx.o: ../depend_stubs/OgreSceneNode.h ../src/gfx/gfx_light.h
+gfx.o: ../../dependencies/util/intrinsics.h
+gfx.o: ../src/gfx/gfx_material.h ../depend_stubs/mutex
+gfx.o: ../src/gfx/gfx_shader.h ../depend_stubs/unordered_map
+gfx.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+gfx.o: ../src/gfx/gfx_pipeline.h ../src/gfx/gfx_decal.h
 gfx.o: ../src/gfx/gfx_particle_system.h ../depend_stubs/utility
-gfx.o: ../src/gfx/gfx_sky_material.h ../src/gfx/gfx_sky_body.h
-gfx.o: ../src/gfx/gfx_disk_resource.h
-gfx.o: ../depend_stubs/OgreResource.h
-gfx.o: ../depend_stubs/OgreTexture.h ../src/background_loader.h
-gfx.o: ../depend_stubs/condition_variable ../depend_stubs/list
-gfx.o: ../depend_stubs/thread ../src/disk_resource.h
 gfx.o: ../src/gfx/gfx_hud.h ../depend_stubs/lauxlib.h
 gfx.o: ../depend_stubs/lualib.h ../src/external_table.h
 gfx.o: ../src/shared_ptr.h ../src/lua_ptr.h
@@ -1097,10 +1096,17 @@ gfx.o: ../src/grit_lua_util.h ../depend_stubs/OgreException.h
 gfx.o: ../../dependencies/util/lua_util.h ../depend_stubs/limits
 gfx.o: ../../dependencies/util/lua_wrappers_common.h
 gfx.o: ../src/lua_ptr.h ../src/gfx/gfx_font.h
-gfx.o: ../src/gfx/gfx_text_buffer.h
+gfx.o: ../src/background_loader.h
+gfx.o: ../depend_stubs/condition_variable ../depend_stubs/list
+gfx.o: ../depend_stubs/thread ../src/disk_resource.h
+gfx.o: ../src/gfx/gfx_disk_resource.h
+gfx.o: ../depend_stubs/OgreResource.h
+gfx.o: ../depend_stubs/OgreTexture.h ../src/gfx/gfx_text_buffer.h
 gfx.o: ../depend_stubs/OgreHardwareBufferManager.h
 gfx.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 gfx.o: ../depend_stubs/OgreHardwareIndexBuffer.h
+gfx.o: ../src/gfx/gfx_light.h ../src/gfx/gfx_sky_body.h
+gfx.o: ../src/gfx/gfx_sky_material.h
 gfx_body.o: ../depend_stubs/OgreSceneManager.h
 gfx_body.o: ../depend_stubs/OgreSkeleton.h
 gfx_body.o: ../depend_stubs/OgreAxisAlignedBox.h
@@ -1134,18 +1140,56 @@ gfx_body.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
 gfx_body.o: ../src/gfx/gfx.h ../src/vect_util.h
 gfx_body.o: ../depend_stubs/algorithm ../src/centralised_log.h
 gfx_body.o: ../src/shared_ptr.h ../depend_stubs/functional
-gfx_body.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_body.h
-gfx_body.o: ../depend_stubs/OgreMesh.h
-gfx_body.o: ../src/gfx/gfx_fertile_node.h ../src/gfx/gfx_node.h
-gfx_body.o: ../depend_stubs/OgreSceneNode.h
+gfx_body.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_gasoline.h
+gfx_body.o: ../depend_stubs/cstdint ../depend_stubs/array
 gfx_body.o: ../../dependencies/util/math_util.h
 gfx_body.o: ../depend_stubs/cmath ../depend_stubs/cfloat
+gfx_body.o: ../src/gfx/gfx_body.h ../depend_stubs/OgreMesh.h
+gfx_body.o: ../src/gfx/gfx_fertile_node.h ../src/gfx/gfx_node.h
+gfx_body.o: ../depend_stubs/OgreSceneNode.h
 gfx_body.o: ../src/gfx/gfx_material.h ../depend_stubs/mutex
 gfx_body.o: ../depend_stubs/OgreMaterial.h ../src/gfx/gfx_shader.h
-gfx_body.o: ../depend_stubs/cstdint ../depend_stubs/array
 gfx_body.o: ../depend_stubs/unordered_map
 gfx_body.o: ../depend_stubs/OgreHighLevelGpuProgram.h
-gfx_body.o: ../src/gfx/gfx_gasoline.h ../src/gfx/gfx_pipeline.h
+gfx_body.o: ../src/gfx/gfx_pipeline.h
+gfx_decal.o: ../src/gfx/gfx_internal.h ../depend_stubs/string
+gfx_decal.o: ../depend_stubs/sstream ../depend_stubs/Ogre.h
+gfx_decal.o: ../depend_stubs/OgreMeshManager.h
+gfx_decal.o: ../depend_stubs/OgreOctreeSceneManager.h
+gfx_decal.o: ../depend_stubs/OgreVector3.h
+gfx_decal.o: ../depend_stubs/OgreQuaternion.h
+gfx_decal.o: ../depend_stubs/OgreCustomCompositionPass.h
+gfx_decal.o: ../depend_stubs/OgreCompositor.h
+gfx_decal.o: ../depend_stubs/OgreOctreePlugin.h
+gfx_decal.o: ../depend_stubs/OgreCgPlugin.h
+gfx_decal.o: ../depend_stubs/OgreRenderSystem.h
+gfx_decal.o: ../depend_stubs/OgreGLRenderSystem.h
+gfx_decal.o: ../depend_stubs/OgreGLGpuProgram.h
+gfx_decal.o: ../depend_stubs/OgreGLSLGpuProgram.h
+gfx_decal.o: ../depend_stubs/OgreGLSLProgram.h
+gfx_decal.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
+gfx_decal.o: ../src/gfx/gfx.h ../src/vect_util.h
+gfx_decal.o: ../depend_stubs/vector ../depend_stubs/algorithm
+gfx_decal.o: ../src/centralised_log.h ../src/shared_ptr.h
+gfx_decal.o: ../depend_stubs/cstdlib ../depend_stubs/functional
+gfx_decal.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_gasoline.h
+gfx_decal.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_decal.o: ../depend_stubs/map ../depend_stubs/ostream
+gfx_decal.o: ../../dependencies/util/math_util.h
+gfx_decal.o: ../depend_stubs/iostream ../depend_stubs/cmath
+gfx_decal.o: ../depend_stubs/cfloat ../src/centralised_log.h
+gfx_decal.o: ../../dependencies/util/console.h ../depend_stubs/set
+gfx_decal.o: ../../dependencies/util/exception.h
+gfx_decal.o: ../../dependencies/util/intrinsics.h
+gfx_decal.o: ../src/gfx/gfx_decal.h ../src/gfx/gfx_fertile_node.h
+gfx_decal.o: ../src/gfx/gfx_node.h ../depend_stubs/OgreSceneNode.h
+gfx_decal.o: ../src/gfx/gfx_material.h ../depend_stubs/mutex
+gfx_decal.o: ../depend_stubs/OgreMaterial.h
+gfx_decal.o: ../src/gfx/gfx_shader.h ../depend_stubs/unordered_map
+gfx_decal.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+gfx_decal.o: ../src/gfx/gfx_pipeline.h
+gfx_decal.o: ../src/gfx/gfx_particle_system.h
+gfx_decal.o: ../depend_stubs/utility
 gfx_disk_resource.o: ../depend_stubs/OgreMesh.h
 gfx_disk_resource.o: ../depend_stubs/OgreMeshManager.h
 gfx_disk_resource.o: ../depend_stubs/OgreTexture.h
@@ -1191,13 +1235,13 @@ gfx_disk_resource.o: ../src/gfx/gfx.h ../src/vect_util.h
 gfx_disk_resource.o: ../src/shared_ptr.h
 gfx_disk_resource.o: ../depend_stubs/functional
 gfx_disk_resource.o: ../src/gfx/gfx_option.h
+gfx_disk_resource.o: ../src/gfx/gfx_gasoline.h
+gfx_disk_resource.o: ../depend_stubs/cstdint ../depend_stubs/array
 gfx_disk_resource.o: ../src/gfx/gfx_material.h
 gfx_disk_resource.o: ../depend_stubs/OgreMaterial.h
 gfx_disk_resource.o: ../src/gfx/gfx_shader.h
-gfx_disk_resource.o: ../depend_stubs/cstdint ../depend_stubs/array
 gfx_disk_resource.o: ../depend_stubs/unordered_map
 gfx_disk_resource.o: ../depend_stubs/OgreHighLevelGpuProgram.h
-gfx_disk_resource.o: ../src/gfx/gfx_gasoline.h
 gfx_disk_resource.o: ../src/gfx/gfx_pipeline.h
 gfx_disk_resource.o: ../src/gfx/gfx_body.h
 gfx_disk_resource.o: ../src/gfx/gfx_fertile_node.h
@@ -1234,6 +1278,14 @@ gfx_fertile_node.o: ../depend_stubs/OgreGLSLGpuProgram.h
 gfx_fertile_node.o: ../depend_stubs/OgreGLSLProgram.h
 gfx_fertile_node.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
 gfx_fertile_node.o: ../src/gfx/gfx.h ../src/gfx/gfx_option.h
+gfx_fertile_node.o: ../src/gfx/gfx_gasoline.h
+gfx_fertile_node.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_fertile_node.o: ../depend_stubs/map ../depend_stubs/ostream
+gfx_fertile_node.o: ../src/centralised_log.h
+gfx_fertile_node.o: ../../dependencies/util/console.h
+gfx_fertile_node.o: ../depend_stubs/set
+gfx_fertile_node.o: ../../dependencies/util/exception.h
+gfx_fertile_node.o: ../../dependencies/util/intrinsics.h
 gfx_font.o: ../src/gfx/gfx_font.h ../depend_stubs/vector
 gfx_font.o: ../depend_stubs/map
 gfx_font.o: ../../dependencies/util/math_util.h
@@ -1262,8 +1314,9 @@ gfx_font.o: ../../dependencies/util/exception.h
 gfx_font.o: ../depend_stubs/cstdlib
 gfx_font.o: ../../dependencies/util/intrinsics.h
 gfx_gasoline.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdlib
-gfx_gasoline.o: ../depend_stubs/cstdint ../depend_stubs/map
-gfx_gasoline.o: ../depend_stubs/ostream ../depend_stubs/string
+gfx_gasoline.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_gasoline.o: ../depend_stubs/map ../depend_stubs/ostream
+gfx_gasoline.o: ../depend_stubs/string
 gfx_gasoline.o: ../../dependencies/util/math_util.h
 gfx_gasoline.o: ../depend_stubs/iostream ../depend_stubs/cmath
 gfx_gasoline.o: ../depend_stubs/cfloat ../src/centralised_log.h
@@ -1291,6 +1344,7 @@ gfx_gasoline_backend.o: ../../dependencies/util/intrinsics.h
 gfx_gasoline_backend.o: ../src/gfx/gfx_gasoline_type_system.h
 gfx_gasoline_backend.o: ../depend_stubs/set
 gfx_gasoline_backend.o: ../src/gfx/gfx_gasoline.h
+gfx_gasoline_backend.o: ../depend_stubs/array
 gfx_gasoline_backend.o: ../depend_stubs/ostream
 gfx_gasoline_backend.o: ../../dependencies/util/math_util.h
 gfx_gasoline_backend.o: ../depend_stubs/cfloat
@@ -1310,6 +1364,7 @@ gfx_gasoline_backend_cg.o: ../../dependencies/util/intrinsics.h
 gfx_gasoline_backend_cg.o: ../src/gfx/gfx_gasoline_type_system.h
 gfx_gasoline_backend_cg.o: ../depend_stubs/set
 gfx_gasoline_backend_cg.o: ../src/gfx/gfx_gasoline.h
+gfx_gasoline_backend_cg.o: ../depend_stubs/array
 gfx_gasoline_backend_cg.o: ../depend_stubs/ostream
 gfx_gasoline_backend_cg.o: ../../dependencies/util/math_util.h
 gfx_gasoline_backend_cg.o: ../depend_stubs/cmath
@@ -1334,6 +1389,7 @@ gfx_gasoline_backend_glsl.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_backend_glsl.o: ../depend_stubs/cstdint
 gfx_gasoline_backend_glsl.o: ../src/gfx/gfx_gasoline_type_system.h
 gfx_gasoline_backend_glsl.o: ../src/gfx/gfx_gasoline.h
+gfx_gasoline_backend_glsl.o: ../depend_stubs/array
 gfx_gasoline_backend_glsl.o: ../../dependencies/util/math_util.h
 gfx_gasoline_backend_glsl.o: ../depend_stubs/cmath
 gfx_gasoline_backend_glsl.o: ../depend_stubs/cfloat
@@ -1355,6 +1411,7 @@ gfx_gasoline_backend_gsl.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_backend_gsl.o: ../depend_stubs/cstdint
 gfx_gasoline_backend_gsl.o: ../src/gfx/gfx_gasoline_type_system.h
 gfx_gasoline_backend_gsl.o: ../src/gfx/gfx_gasoline.h
+gfx_gasoline_backend_gsl.o: ../depend_stubs/array
 gfx_gasoline_backend_gsl.o: ../../dependencies/util/math_util.h
 gfx_gasoline_backend_gsl.o: ../depend_stubs/cmath
 gfx_gasoline_backend_gsl.o: ../depend_stubs/cfloat
@@ -1377,6 +1434,7 @@ gfx_gasoline_standalone.o: ../depend_stubs/vector
 gfx_gasoline_standalone.o: ../src/gfx/gfx_gasoline.h
 gfx_gasoline_standalone.o: ../depend_stubs/cstdlib
 gfx_gasoline_standalone.o: ../depend_stubs/cstdint
+gfx_gasoline_standalone.o: ../depend_stubs/array
 gfx_gasoline_standalone.o: ../depend_stubs/map
 gfx_gasoline_standalone.o: ../depend_stubs/ostream
 gfx_gasoline_standalone.o: ../../dependencies/util/math_util.h
@@ -1405,6 +1463,7 @@ gfx_gasoline_type_system.o: ../src/gfx/gfx_gasoline_parser.h
 gfx_gasoline_type_system.o: ../depend_stubs/cstdint
 gfx_gasoline_type_system.o: ../src/gfx/gfx_gasoline_type_system.h
 gfx_gasoline_type_system.o: ../src/gfx/gfx_gasoline.h
+gfx_gasoline_type_system.o: ../depend_stubs/array
 gfx_gasoline_type_system.o: ../../dependencies/util/math_util.h
 gfx_gasoline_type_system.o: ../depend_stubs/cmath
 gfx_gasoline_type_system.o: ../depend_stubs/cfloat
@@ -1431,7 +1490,8 @@ gfx_hud.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 gfx_hud.o: ../../dependencies/util/lua_wrappers_common.h
 gfx_hud.o: ../src/gfx/gfx.h ../src/vect_util.h
 gfx_hud.o: ../depend_stubs/algorithm ../src/shared_ptr.h
-gfx_hud.o: ../depend_stubs/functional
+gfx_hud.o: ../depend_stubs/functional ../src/gfx/gfx_body.h
+gfx_hud.o: ../depend_stubs/OgreMesh.h
 gfx_hud.o: ../src/gfx/gfx_fertile_node.h ../src/gfx/gfx_node.h
 gfx_hud.o: ../depend_stubs/OgreSceneNode.h
 gfx_hud.o: ../src/gfx/gfx_internal.h ../depend_stubs/Ogre.h
@@ -1448,40 +1508,40 @@ gfx_hud.o: ../depend_stubs/OgreGLRenderSystem.h
 gfx_hud.o: ../depend_stubs/OgreGLGpuProgram.h
 gfx_hud.o: ../depend_stubs/OgreGLSLGpuProgram.h
 gfx_hud.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
-gfx_hud.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_body.h
-gfx_hud.o: ../depend_stubs/OgreMesh.h ../src/gfx/gfx_material.h
-gfx_hud.o: ../depend_stubs/mutex ../depend_stubs/OgreMaterial.h
-gfx_hud.o: ../src/gfx/gfx_shader.h ../depend_stubs/cstdint
-gfx_hud.o: ../depend_stubs/array ../depend_stubs/unordered_map
+gfx_hud.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_gasoline.h
+gfx_hud.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_hud.o: ../src/gfx/gfx_material.h ../depend_stubs/mutex
+gfx_hud.o: ../depend_stubs/OgreMaterial.h ../src/gfx/gfx_shader.h
+gfx_hud.o: ../depend_stubs/unordered_map
 gfx_hud.o: ../depend_stubs/OgreHighLevelGpuProgram.h
-gfx_hud.o: ../src/gfx/gfx_gasoline.h ../src/gfx/gfx_pipeline.h
-gfx_hud.o: ../src/gfx/gfx_sky_body.h
-gfx_hud.o: ../src/gfx/gfx_disk_resource.h
-gfx_hud.o: ../depend_stubs/OgreResource.h
-gfx_hud.o: ../depend_stubs/OgreTexture.h
+gfx_hud.o: ../src/gfx/gfx_pipeline.h ../src/gfx/gfx_decal.h
+gfx_hud.o: ../src/gfx/gfx_particle_system.h
+gfx_hud.o: ../depend_stubs/utility ../src/gfx/gfx_hud.h
+gfx_hud.o: ../src/external_table.h ../src/shared_ptr.h
+gfx_hud.o: ../src/lua_ptr.h ../../dependencies/util/spline_table.h
+gfx_hud.o: ../src/lua_ptr.h ../src/gfx/gfx_font.h
 gfx_hud.o: ../src/background_loader.h ../src/vect_util.h
 gfx_hud.o: ../depend_stubs/condition_variable ../depend_stubs/list
 gfx_hud.o: ../depend_stubs/thread ../src/disk_resource.h
-gfx_hud.o: ../src/gfx/gfx_sky_material.h ../src/gfx/gfx_light.h
-gfx_hud.o: ../src/gfx/gfx_particle_system.h
-gfx_hud.o: ../depend_stubs/utility ../src/gfx/gfx_instances.h
-gfx_hud.o: ../depend_stubs/OgreMovableObject.h
-gfx_hud.o: ../src/dense_index_map.h
-gfx_hud.o: ../src/gfx/gfx_ranged_instances.h ../src/streamer.h
-gfx_hud.o: ../src/cache_friendly_range_space_simd.h
-gfx_hud.o: ../src/sse_allocator.h ../src/gfx/gfx_hud.h
-gfx_hud.o: ../src/external_table.h ../src/shared_ptr.h
-gfx_hud.o: ../src/lua_ptr.h ../../dependencies/util/spline_table.h
-gfx_hud.o: ../src/lua_ptr.h ../src/gfx/gfx_font.h ../src/main.h
-gfx_hud.o: ../src/mouse.h ../src/keyboard.h
+gfx_hud.o: ../src/main.h ../src/mouse.h ../src/keyboard.h
 gfx_hud.o: ../src/background_loader.h ../src/bullet_debug_drawer.h
 gfx_hud.o: ../depend_stubs/OgreFrameListener.h
 gfx_hud.o: ../depend_stubs/OgreManualObject.h
 gfx_hud.o: ../depend_stubs/btBulletCollisionCommon.h
+gfx_hud.o: ../src/gfx/gfx_disk_resource.h
+gfx_hud.o: ../depend_stubs/OgreResource.h
+gfx_hud.o: ../depend_stubs/OgreTexture.h
 gfx_hud.o: ../src/gfx/gfx_text_buffer.h
 gfx_hud.o: ../depend_stubs/OgreHardwareBufferManager.h
 gfx_hud.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 gfx_hud.o: ../depend_stubs/OgreHardwareIndexBuffer.h
+gfx_hud.o: ../src/gfx/gfx_instances.h
+gfx_hud.o: ../depend_stubs/OgreMovableObject.h
+gfx_hud.o: ../src/dense_index_map.h ../src/gfx/gfx_light.h
+gfx_hud.o: ../src/gfx/gfx_ranged_instances.h ../src/streamer.h
+gfx_hud.o: ../src/cache_friendly_range_space_simd.h
+gfx_hud.o: ../src/sse_allocator.h ../src/gfx/gfx_sky_body.h
+gfx_hud.o: ../src/gfx/gfx_sky_material.h
 gfx_instances.o: ../depend_stubs/algorithm ../src/main.h
 gfx_instances.o: ../depend_stubs/lua.h ../src/mouse.h
 gfx_instances.o: ../depend_stubs/vector ../src/keyboard.h
@@ -1510,21 +1570,21 @@ gfx_instances.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
 gfx_instances.o: ../src/gfx/gfx.h ../src/vect_util.h
 gfx_instances.o: ../src/shared_ptr.h ../depend_stubs/cstdlib
 gfx_instances.o: ../depend_stubs/functional
-gfx_instances.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_material.h
-gfx_instances.o: ../depend_stubs/mutex
-gfx_instances.o: ../depend_stubs/OgreMaterial.h
-gfx_instances.o: ../src/gfx/gfx_shader.h ../depend_stubs/cstdint
-gfx_instances.o: ../depend_stubs/array ../depend_stubs/map
-gfx_instances.o: ../depend_stubs/unordered_map
-gfx_instances.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+gfx_instances.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_gasoline.h
+gfx_instances.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_instances.o: ../depend_stubs/map ../depend_stubs/ostream
 gfx_instances.o: ../../dependencies/util/math_util.h
 gfx_instances.o: ../depend_stubs/iostream ../depend_stubs/cmath
-gfx_instances.o: ../depend_stubs/cfloat ../src/gfx/gfx_gasoline.h
-gfx_instances.o: ../depend_stubs/ostream ../src/centralised_log.h
+gfx_instances.o: ../depend_stubs/cfloat ../src/centralised_log.h
 gfx_instances.o: ../../dependencies/util/console.h
 gfx_instances.o: ../depend_stubs/set
 gfx_instances.o: ../../dependencies/util/exception.h
 gfx_instances.o: ../../dependencies/util/intrinsics.h
+gfx_instances.o: ../src/gfx/gfx_material.h ../depend_stubs/mutex
+gfx_instances.o: ../depend_stubs/OgreMaterial.h
+gfx_instances.o: ../src/gfx/gfx_shader.h
+gfx_instances.o: ../depend_stubs/unordered_map
+gfx_instances.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_instances.o: ../src/gfx/gfx_pipeline.h
 gfx_instances.o: ../src/gfx/gfx_instances.h
 gfx_instances.o: ../depend_stubs/OgreMovableObject.h
@@ -1559,12 +1619,17 @@ gfx_light.o: ../src/gfx/gfx.h ../src/vect_util.h
 gfx_light.o: ../depend_stubs/vector ../depend_stubs/algorithm
 gfx_light.o: ../src/centralised_log.h ../src/shared_ptr.h
 gfx_light.o: ../depend_stubs/cstdlib ../depend_stubs/functional
-gfx_light.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_light.h
-gfx_light.o: ../src/gfx/gfx_fertile_node.h ../src/gfx/gfx_node.h
-gfx_light.o: ../depend_stubs/OgreSceneNode.h
+gfx_light.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_gasoline.h
+gfx_light.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_light.o: ../depend_stubs/map ../depend_stubs/ostream
 gfx_light.o: ../../dependencies/util/math_util.h
 gfx_light.o: ../depend_stubs/iostream ../depend_stubs/cmath
-gfx_light.o: ../depend_stubs/cfloat
+gfx_light.o: ../depend_stubs/cfloat ../src/centralised_log.h
+gfx_light.o: ../../dependencies/util/console.h ../depend_stubs/set
+gfx_light.o: ../../dependencies/util/exception.h
+gfx_light.o: ../../dependencies/util/intrinsics.h
+gfx_light.o: ../src/gfx/gfx_light.h ../src/gfx/gfx_fertile_node.h
+gfx_light.o: ../src/gfx/gfx_node.h ../depend_stubs/OgreSceneNode.h
 gfx_light.o: ../src/gfx/gfx_particle_system.h
 gfx_light.o: ../depend_stubs/utility
 gfx_material.o: ../depend_stubs/set ../src/gfx/gfx_internal.h
@@ -1588,20 +1653,20 @@ gfx_material.o: ../src/gfx/gfx.h ../src/vect_util.h
 gfx_material.o: ../depend_stubs/vector ../depend_stubs/algorithm
 gfx_material.o: ../src/centralised_log.h ../src/shared_ptr.h
 gfx_material.o: ../depend_stubs/cstdlib ../depend_stubs/functional
-gfx_material.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_material.h
-gfx_material.o: ../depend_stubs/mutex
-gfx_material.o: ../depend_stubs/OgreMaterial.h
-gfx_material.o: ../src/gfx/gfx_shader.h ../depend_stubs/cstdint
-gfx_material.o: ../depend_stubs/array ../depend_stubs/map
-gfx_material.o: ../depend_stubs/unordered_map
-gfx_material.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+gfx_material.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_gasoline.h
+gfx_material.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_material.o: ../depend_stubs/map ../depend_stubs/ostream
 gfx_material.o: ../../dependencies/util/math_util.h
 gfx_material.o: ../depend_stubs/iostream ../depend_stubs/cmath
-gfx_material.o: ../depend_stubs/cfloat ../src/gfx/gfx_gasoline.h
-gfx_material.o: ../depend_stubs/ostream ../src/centralised_log.h
+gfx_material.o: ../depend_stubs/cfloat ../src/centralised_log.h
 gfx_material.o: ../../dependencies/util/console.h
 gfx_material.o: ../../dependencies/util/exception.h
 gfx_material.o: ../../dependencies/util/intrinsics.h
+gfx_material.o: ../src/gfx/gfx_material.h ../depend_stubs/mutex
+gfx_material.o: ../depend_stubs/OgreMaterial.h
+gfx_material.o: ../src/gfx/gfx_shader.h
+gfx_material.o: ../depend_stubs/unordered_map
+gfx_material.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_material.o: ../src/gfx/gfx_pipeline.h ../src/gfx/gfx_body.h
 gfx_material.o: ../depend_stubs/OgreMesh.h
 gfx_material.o: ../src/gfx/gfx_fertile_node.h
@@ -1627,22 +1692,21 @@ gfx_node.o: ../src/gfx/gfx.h ../src/vect_util.h
 gfx_node.o: ../depend_stubs/vector ../depend_stubs/algorithm
 gfx_node.o: ../src/centralised_log.h ../src/shared_ptr.h
 gfx_node.o: ../depend_stubs/cstdlib ../depend_stubs/functional
-gfx_node.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_node.h
-gfx_node.o: ../depend_stubs/OgreSceneNode.h
+gfx_node.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_gasoline.h
+gfx_node.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_node.o: ../depend_stubs/map ../depend_stubs/ostream
 gfx_node.o: ../../dependencies/util/math_util.h
 gfx_node.o: ../depend_stubs/iostream ../depend_stubs/cmath
-gfx_node.o: ../depend_stubs/cfloat ../src/gfx/gfx_fertile_node.h
-gfx_node.o: ../src/gfx/gfx_body.h ../depend_stubs/OgreMesh.h
-gfx_node.o: ../src/gfx/gfx_material.h ../depend_stubs/mutex
-gfx_node.o: ../depend_stubs/OgreMaterial.h ../src/gfx/gfx_shader.h
-gfx_node.o: ../depend_stubs/cstdint ../depend_stubs/array
-gfx_node.o: ../depend_stubs/map ../depend_stubs/unordered_map
-gfx_node.o: ../depend_stubs/OgreHighLevelGpuProgram.h
-gfx_node.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/ostream
-gfx_node.o: ../src/centralised_log.h
+gfx_node.o: ../depend_stubs/cfloat ../src/centralised_log.h
 gfx_node.o: ../../dependencies/util/console.h ../depend_stubs/set
 gfx_node.o: ../../dependencies/util/exception.h
 gfx_node.o: ../../dependencies/util/intrinsics.h
+gfx_node.o: ../src/gfx/gfx_node.h ../depend_stubs/OgreSceneNode.h
+gfx_node.o: ../src/gfx/gfx_fertile_node.h ../src/gfx/gfx_body.h
+gfx_node.o: ../depend_stubs/OgreMesh.h ../src/gfx/gfx_material.h
+gfx_node.o: ../depend_stubs/mutex ../depend_stubs/OgreMaterial.h
+gfx_node.o: ../src/gfx/gfx_shader.h ../depend_stubs/unordered_map
+gfx_node.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_node.o: ../src/gfx/gfx_pipeline.h
 gfx_option.o: ../depend_stubs/string ../depend_stubs/map
 gfx_option.o: ../src/gfx/gfx_internal.h ../depend_stubs/sstream
@@ -1665,14 +1729,17 @@ gfx_option.o: ../src/gfx/gfx.h ../src/vect_util.h
 gfx_option.o: ../depend_stubs/vector ../depend_stubs/algorithm
 gfx_option.o: ../src/centralised_log.h ../src/shared_ptr.h
 gfx_option.o: ../depend_stubs/cstdlib ../depend_stubs/functional
-gfx_option.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_pipeline.h
-gfx_option.o: ../src/option.h ../depend_stubs/ostream
-gfx_option.o: ../../dependencies/util/exception.h
-gfx_option.o: ../depend_stubs/iostream
-gfx_option.o: ../../dependencies/util/intrinsics.h
-gfx_option.o: ../src/centralised_log.h
+gfx_option.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_gasoline.h
+gfx_option.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_option.o: ../depend_stubs/ostream
+gfx_option.o: ../../dependencies/util/math_util.h
+gfx_option.o: ../depend_stubs/iostream ../depend_stubs/cmath
+gfx_option.o: ../depend_stubs/cfloat ../src/centralised_log.h
 gfx_option.o: ../../dependencies/util/console.h
 gfx_option.o: ../depend_stubs/set
+gfx_option.o: ../../dependencies/util/exception.h
+gfx_option.o: ../../dependencies/util/intrinsics.h
+gfx_option.o: ../src/gfx/gfx_pipeline.h ../src/option.h
 gfx_particle_system.o: ../depend_stubs/string
 gfx_particle_system.o: ../depend_stubs/algorithm
 gfx_particle_system.o: ../depend_stubs/map
@@ -1702,21 +1769,21 @@ gfx_particle_system.o: ../depend_stubs/OgreGLSLGpuProgram.h
 gfx_particle_system.o: ../depend_stubs/OgreGLSLProgram.h
 gfx_particle_system.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
 gfx_particle_system.o: ../src/gfx/gfx_option.h
-gfx_particle_system.o: ../src/gfx/gfx_particle_system.h
-gfx_particle_system.o: ../depend_stubs/utility
-gfx_particle_system.o: ../src/gfx/gfx_pipeline.h
-gfx_particle_system.o: ../src/gfx/gfx_shader.h
+gfx_particle_system.o: ../src/gfx/gfx_gasoline.h
 gfx_particle_system.o: ../depend_stubs/cstdint
 gfx_particle_system.o: ../depend_stubs/array
-gfx_particle_system.o: ../depend_stubs/unordered_map
-gfx_particle_system.o: ../depend_stubs/OgreHighLevelGpuProgram.h
-gfx_particle_system.o: ../src/gfx/gfx_gasoline.h
 gfx_particle_system.o: ../depend_stubs/ostream
 gfx_particle_system.o: ../src/centralised_log.h
 gfx_particle_system.o: ../../dependencies/util/console.h
 gfx_particle_system.o: ../depend_stubs/set
 gfx_particle_system.o: ../../dependencies/util/exception.h
 gfx_particle_system.o: ../../dependencies/util/intrinsics.h
+gfx_particle_system.o: ../src/gfx/gfx_particle_system.h
+gfx_particle_system.o: ../depend_stubs/utility
+gfx_particle_system.o: ../src/gfx/gfx_pipeline.h
+gfx_particle_system.o: ../src/gfx/gfx_shader.h
+gfx_particle_system.o: ../depend_stubs/unordered_map
+gfx_particle_system.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_particle_system.o: ../src/gfx/gfx_material.h
 gfx_particle_system.o: ../depend_stubs/mutex
 gfx_particle_system.o: ../depend_stubs/OgreMaterial.h
@@ -1725,12 +1792,15 @@ gfx_pipeline.o: ../../dependencies/util/math_util.h
 gfx_pipeline.o: ../depend_stubs/string ../depend_stubs/iostream
 gfx_pipeline.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 gfx_pipeline.o: ../../dependencies/util/sleep.h
-gfx_pipeline.o: ../src/gfx/gfx_pipeline.h ../src/shared_ptr.h
+gfx_pipeline.o: ../src/gfx/gfx_body.h ../src/shared_ptr.h
 gfx_pipeline.o: ../depend_stubs/cstdlib ../depend_stubs/functional
-gfx_pipeline.o: ../src/vect_util.h ../depend_stubs/vector
-gfx_pipeline.o: ../depend_stubs/algorithm ../src/centralised_log.h
-gfx_pipeline.o: ../src/gfx/gfx_internal.h ../depend_stubs/sstream
-gfx_pipeline.o: ../depend_stubs/Ogre.h
+gfx_pipeline.o: ../depend_stubs/OgreMesh.h
+gfx_pipeline.o: ../src/gfx/gfx_fertile_node.h
+gfx_pipeline.o: ../src/gfx/gfx_node.h
+gfx_pipeline.o: ../depend_stubs/OgreSceneNode.h ../src/vect_util.h
+gfx_pipeline.o: ../depend_stubs/vector ../depend_stubs/algorithm
+gfx_pipeline.o: ../src/centralised_log.h ../src/gfx/gfx_internal.h
+gfx_pipeline.o: ../depend_stubs/sstream ../depend_stubs/Ogre.h
 gfx_pipeline.o: ../depend_stubs/OgreMeshManager.h
 gfx_pipeline.o: ../depend_stubs/OgreOctreeSceneManager.h
 gfx_pipeline.o: ../depend_stubs/OgreVector3.h
@@ -1746,32 +1816,29 @@ gfx_pipeline.o: ../depend_stubs/OgreGLSLGpuProgram.h
 gfx_pipeline.o: ../depend_stubs/OgreGLSLProgram.h
 gfx_pipeline.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
 gfx_pipeline.o: ../src/gfx/gfx.h ../src/gfx/gfx_option.h
-gfx_pipeline.o: ../src/gfx/gfx_particle_system.h
-gfx_pipeline.o: ../depend_stubs/utility ../src/gfx/gfx_sky_body.h
-gfx_pipeline.o: ../depend_stubs/OgreMesh.h
-gfx_pipeline.o: ../depend_stubs/OgreSceneNode.h
-gfx_pipeline.o: ../src/gfx/gfx_disk_resource.h
-gfx_pipeline.o: ../depend_stubs/OgreResource.h
-gfx_pipeline.o: ../depend_stubs/OgreTexture.h
-gfx_pipeline.o: ../src/centralised_log.h
+gfx_pipeline.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdint
+gfx_pipeline.o: ../depend_stubs/array ../depend_stubs/map
+gfx_pipeline.o: ../depend_stubs/ostream ../src/centralised_log.h
 gfx_pipeline.o: ../../dependencies/util/console.h
-gfx_pipeline.o: ../depend_stubs/map ../depend_stubs/ostream
 gfx_pipeline.o: ../depend_stubs/set
 gfx_pipeline.o: ../../dependencies/util/exception.h
 gfx_pipeline.o: ../../dependencies/util/intrinsics.h
-gfx_pipeline.o: ../src/background_loader.h ../src/vect_util.h
-gfx_pipeline.o: ../depend_stubs/condition_variable
-gfx_pipeline.o: ../depend_stubs/list ../depend_stubs/mutex
-gfx_pipeline.o: ../depend_stubs/thread ../src/disk_resource.h
-gfx_pipeline.o: ../src/gfx/gfx_sky_material.h
+gfx_pipeline.o: ../src/gfx/gfx_material.h ../depend_stubs/mutex
 gfx_pipeline.o: ../depend_stubs/OgreMaterial.h
-gfx_pipeline.o: ../src/gfx/gfx_material.h ../src/gfx/gfx_shader.h
-gfx_pipeline.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_pipeline.o: ../src/gfx/gfx_shader.h
 gfx_pipeline.o: ../depend_stubs/unordered_map
 gfx_pipeline.o: ../depend_stubs/OgreHighLevelGpuProgram.h
-gfx_pipeline.o: ../src/gfx/gfx_gasoline.h ../src/gfx/gfx_body.h
-gfx_pipeline.o: ../src/gfx/gfx_fertile_node.h
-gfx_pipeline.o: ../src/gfx/gfx_node.h
+gfx_pipeline.o: ../src/gfx/gfx_pipeline.h ../src/gfx/gfx_decal.h
+gfx_pipeline.o: ../src/gfx/gfx_particle_system.h
+gfx_pipeline.o: ../depend_stubs/utility ../src/gfx/gfx_sky_body.h
+gfx_pipeline.o: ../src/gfx/gfx_disk_resource.h
+gfx_pipeline.o: ../depend_stubs/OgreResource.h
+gfx_pipeline.o: ../depend_stubs/OgreTexture.h
+gfx_pipeline.o: ../src/background_loader.h ../src/vect_util.h
+gfx_pipeline.o: ../depend_stubs/condition_variable
+gfx_pipeline.o: ../depend_stubs/list ../depend_stubs/thread
+gfx_pipeline.o: ../src/disk_resource.h
+gfx_pipeline.o: ../src/gfx/gfx_sky_material.h
 gfx_ranged_instances.o: ../depend_stubs/algorithm ../src/main.h
 gfx_ranged_instances.o: ../depend_stubs/lua.h ../src/mouse.h
 gfx_ranged_instances.o: ../depend_stubs/vector ../src/keyboard.h
@@ -1805,12 +1872,22 @@ gfx_ranged_instances.o: ../src/shared_ptr.h
 gfx_ranged_instances.o: ../depend_stubs/cstdlib
 gfx_ranged_instances.o: ../depend_stubs/functional
 gfx_ranged_instances.o: ../src/gfx/gfx_option.h
+gfx_ranged_instances.o: ../src/gfx/gfx_gasoline.h
+gfx_ranged_instances.o: ../depend_stubs/cstdint
+gfx_ranged_instances.o: ../depend_stubs/array ../depend_stubs/map
+gfx_ranged_instances.o: ../depend_stubs/ostream
+gfx_ranged_instances.o: ../../dependencies/util/math_util.h
+gfx_ranged_instances.o: ../depend_stubs/iostream
+gfx_ranged_instances.o: ../depend_stubs/cmath
+gfx_ranged_instances.o: ../depend_stubs/cfloat
+gfx_ranged_instances.o: ../src/centralised_log.h
+gfx_ranged_instances.o: ../../dependencies/util/console.h
+gfx_ranged_instances.o: ../depend_stubs/set
+gfx_ranged_instances.o: ../../dependencies/util/exception.h
+gfx_ranged_instances.o: ../../dependencies/util/intrinsics.h
 gfx_ranged_instances.o: ../src/gfx/gfx_ranged_instances.h
 gfx_ranged_instances.o: ../src/streamer.h
 gfx_ranged_instances.o: ../src/cache_friendly_range_space_simd.h
-gfx_ranged_instances.o: ../depend_stubs/map
-gfx_ranged_instances.o: ../depend_stubs/iostream
-gfx_ranged_instances.o: ../depend_stubs/cmath
 gfx_ranged_instances.o: ../src/sse_allocator.h
 gfx_ranged_instances.o: ../src/gfx/gfx_instances.h
 gfx_ranged_instances.o: ../depend_stubs/OgreMovableObject.h
@@ -1819,14 +1896,6 @@ gfx_ranged_instances.o: ../src/gfx/gfx_disk_resource.h
 gfx_ranged_instances.o: ../depend_stubs/OgreResource.h
 gfx_ranged_instances.o: ../depend_stubs/OgreTexture.h
 gfx_ranged_instances.o: ../depend_stubs/OgreMesh.h
-gfx_ranged_instances.o: ../../dependencies/util/math_util.h
-gfx_ranged_instances.o: ../depend_stubs/cfloat
-gfx_ranged_instances.o: ../src/centralised_log.h
-gfx_ranged_instances.o: ../../dependencies/util/console.h
-gfx_ranged_instances.o: ../depend_stubs/ostream
-gfx_ranged_instances.o: ../depend_stubs/set
-gfx_ranged_instances.o: ../../dependencies/util/exception.h
-gfx_ranged_instances.o: ../../dependencies/util/intrinsics.h
 gfx_ranged_instances.o: ../src/background_loader.h
 gfx_ranged_instances.o: ../depend_stubs/condition_variable
 gfx_ranged_instances.o: ../depend_stubs/list ../depend_stubs/mutex
@@ -1853,6 +1922,7 @@ gfx_shader.o: ../src/gfx/gfx.h ../src/vect_util.h
 gfx_shader.o: ../depend_stubs/algorithm ../src/centralised_log.h
 gfx_shader.o: ../src/shared_ptr.h ../depend_stubs/functional
 gfx_shader.o: ../src/gfx/gfx_gasoline.h ../depend_stubs/cstdint
+gfx_shader.o: ../depend_stubs/array
 gfx_shader.o: ../../dependencies/util/math_util.h
 gfx_shader.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 gfx_shader.o: ../src/gfx/gfx_internal.h ../depend_stubs/Ogre.h
@@ -1867,7 +1937,7 @@ gfx_shader.o: ../depend_stubs/OgreCgPlugin.h
 gfx_shader.o: ../depend_stubs/OgreRenderSystem.h
 gfx_shader.o: ../depend_stubs/OgreGLRenderSystem.h
 gfx_shader.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_shader.h
-gfx_shader.o: ../depend_stubs/array ../depend_stubs/unordered_map
+gfx_shader.o: ../depend_stubs/unordered_map
 gfx_shader.o: ../depend_stubs/OgreHighLevelGpuProgram.h
 gfx_shader.o: ../src/gfx/gfx_pipeline.h ../src/gfx/gfx_material.h
 gfx_shader.o: ../depend_stubs/mutex ../depend_stubs/OgreMaterial.h
@@ -1891,21 +1961,22 @@ gfx_sky_body.o: ../src/gfx/gfx.h ../src/vect_util.h
 gfx_sky_body.o: ../depend_stubs/vector ../depend_stubs/algorithm
 gfx_sky_body.o: ../src/centralised_log.h ../src/shared_ptr.h
 gfx_sky_body.o: ../depend_stubs/cstdlib ../depend_stubs/functional
-gfx_sky_body.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_sky_body.h
-gfx_sky_body.o: ../depend_stubs/OgreMesh.h
-gfx_sky_body.o: ../depend_stubs/OgreSceneNode.h
+gfx_sky_body.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_gasoline.h
+gfx_sky_body.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_sky_body.o: ../depend_stubs/map ../depend_stubs/ostream
 gfx_sky_body.o: ../../dependencies/util/math_util.h
 gfx_sky_body.o: ../depend_stubs/iostream ../depend_stubs/cmath
-gfx_sky_body.o: ../depend_stubs/cfloat
-gfx_sky_body.o: ../src/gfx/gfx_disk_resource.h
-gfx_sky_body.o: ../depend_stubs/OgreResource.h
-gfx_sky_body.o: ../depend_stubs/OgreTexture.h
-gfx_sky_body.o: ../src/centralised_log.h
+gfx_sky_body.o: ../depend_stubs/cfloat ../src/centralised_log.h
 gfx_sky_body.o: ../../dependencies/util/console.h
-gfx_sky_body.o: ../depend_stubs/map ../depend_stubs/ostream
 gfx_sky_body.o: ../depend_stubs/set
 gfx_sky_body.o: ../../dependencies/util/exception.h
 gfx_sky_body.o: ../../dependencies/util/intrinsics.h
+gfx_sky_body.o: ../src/gfx/gfx_sky_body.h
+gfx_sky_body.o: ../depend_stubs/OgreMesh.h
+gfx_sky_body.o: ../depend_stubs/OgreSceneNode.h
+gfx_sky_body.o: ../src/gfx/gfx_disk_resource.h
+gfx_sky_body.o: ../depend_stubs/OgreResource.h
+gfx_sky_body.o: ../depend_stubs/OgreTexture.h
 gfx_sky_body.o: ../src/background_loader.h ../src/vect_util.h
 gfx_sky_body.o: ../depend_stubs/condition_variable
 gfx_sky_body.o: ../depend_stubs/list ../depend_stubs/mutex
@@ -1913,10 +1984,8 @@ gfx_sky_body.o: ../depend_stubs/thread ../src/disk_resource.h
 gfx_sky_body.o: ../src/gfx/gfx_sky_material.h
 gfx_sky_body.o: ../depend_stubs/OgreMaterial.h
 gfx_sky_body.o: ../src/gfx/gfx_material.h ../src/gfx/gfx_shader.h
-gfx_sky_body.o: ../depend_stubs/cstdint ../depend_stubs/array
 gfx_sky_body.o: ../depend_stubs/unordered_map
 gfx_sky_body.o: ../depend_stubs/OgreHighLevelGpuProgram.h
-gfx_sky_body.o: ../src/gfx/gfx_gasoline.h
 gfx_sky_body.o: ../src/gfx/gfx_pipeline.h
 gfx_sky_material.o: ../depend_stubs/string ../depend_stubs/map
 gfx_sky_material.o: ../depend_stubs/OgreMaterial.h
@@ -1951,15 +2020,15 @@ gfx_sky_material.o: ../depend_stubs/algorithm
 gfx_sky_material.o: ../src/centralised_log.h ../src/shared_ptr.h
 gfx_sky_material.o: ../depend_stubs/functional
 gfx_sky_material.o: ../src/gfx/gfx_option.h
+gfx_sky_material.o: ../src/gfx/gfx_gasoline.h
+gfx_sky_material.o: ../depend_stubs/cstdint ../depend_stubs/array
+gfx_sky_material.o: ../../dependencies/util/math_util.h
+gfx_sky_material.o: ../depend_stubs/cmath ../depend_stubs/cfloat
 gfx_sky_material.o: ../src/gfx/gfx_sky_material.h
 gfx_sky_material.o: ../src/gfx/gfx_material.h
 gfx_sky_material.o: ../depend_stubs/mutex ../src/gfx/gfx_shader.h
-gfx_sky_material.o: ../depend_stubs/cstdint ../depend_stubs/array
 gfx_sky_material.o: ../depend_stubs/unordered_map
 gfx_sky_material.o: ../depend_stubs/OgreHighLevelGpuProgram.h
-gfx_sky_material.o: ../../dependencies/util/math_util.h
-gfx_sky_material.o: ../depend_stubs/cmath ../depend_stubs/cfloat
-gfx_sky_material.o: ../src/gfx/gfx_gasoline.h
 gfx_sky_material.o: ../src/gfx/gfx_pipeline.h
 gfx_sky_material.o: ../src/gfx/gfx_sky_body.h
 gfx_sky_material.o: ../depend_stubs/OgreMesh.h
@@ -2039,6 +2108,8 @@ lua_wrappers_gfx.o: ../src/path_util.h
 lua_wrappers_gfx.o: ../src/gfx/lua_wrappers_gfx.h ../src/gfx/gfx.h
 lua_wrappers_gfx.o: ../src/vect_util.h ../src/shared_ptr.h
 lua_wrappers_gfx.o: ../depend_stubs/functional
+lua_wrappers_gfx.o: ../src/gfx/gfx_body.h
+lua_wrappers_gfx.o: ../depend_stubs/OgreMesh.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_fertile_node.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_node.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreSceneNode.h
@@ -2058,44 +2129,44 @@ lua_wrappers_gfx.o: ../depend_stubs/OgreGLGpuProgram.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreGLSLGpuProgram.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreGLSLProgram.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
-lua_wrappers_gfx.o: ../src/gfx/gfx_option.h ../src/gfx/gfx_body.h
-lua_wrappers_gfx.o: ../depend_stubs/OgreMesh.h
-lua_wrappers_gfx.o: ../src/gfx/gfx_material.h
-lua_wrappers_gfx.o: ../depend_stubs/mutex
-lua_wrappers_gfx.o: ../depend_stubs/OgreMaterial.h
-lua_wrappers_gfx.o: ../src/gfx/gfx_shader.h
-lua_wrappers_gfx.o: ../depend_stubs/cstdint ../depend_stubs/array
-lua_wrappers_gfx.o: ../depend_stubs/unordered_map
-lua_wrappers_gfx.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_option.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_gasoline.h
+lua_wrappers_gfx.o: ../depend_stubs/cstdint ../depend_stubs/array
 lua_wrappers_gfx.o: ../depend_stubs/ostream
 lua_wrappers_gfx.o: ../src/centralised_log.h
 lua_wrappers_gfx.o: ../../dependencies/util/console.h
-lua_wrappers_gfx.o: ../depend_stubs/set ../src/gfx/gfx_pipeline.h
-lua_wrappers_gfx.o: ../src/gfx/gfx_sky_body.h
-lua_wrappers_gfx.o: ../src/gfx/gfx_disk_resource.h
-lua_wrappers_gfx.o: ../depend_stubs/OgreResource.h
-lua_wrappers_gfx.o: ../depend_stubs/OgreTexture.h
+lua_wrappers_gfx.o: ../depend_stubs/set ../src/gfx/gfx_material.h
+lua_wrappers_gfx.o: ../depend_stubs/mutex
+lua_wrappers_gfx.o: ../depend_stubs/OgreMaterial.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_shader.h
+lua_wrappers_gfx.o: ../depend_stubs/unordered_map
+lua_wrappers_gfx.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_pipeline.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_decal.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_particle_system.h
+lua_wrappers_gfx.o: ../depend_stubs/utility ../src/gfx/gfx_hud.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_font.h
 lua_wrappers_gfx.o: ../src/background_loader.h
 lua_wrappers_gfx.o: ../depend_stubs/condition_variable
 lua_wrappers_gfx.o: ../depend_stubs/list ../depend_stubs/thread
 lua_wrappers_gfx.o: ../src/disk_resource.h
-lua_wrappers_gfx.o: ../src/gfx/gfx_sky_material.h
-lua_wrappers_gfx.o: ../src/gfx/gfx_light.h
-lua_wrappers_gfx.o: ../src/gfx/gfx_particle_system.h
-lua_wrappers_gfx.o: ../depend_stubs/utility
-lua_wrappers_gfx.o: ../src/gfx/gfx_instances.h
-lua_wrappers_gfx.o: ../depend_stubs/OgreMovableObject.h
-lua_wrappers_gfx.o: ../src/dense_index_map.h
-lua_wrappers_gfx.o: ../src/gfx/gfx_ranged_instances.h
-lua_wrappers_gfx.o: ../src/streamer.h
-lua_wrappers_gfx.o: ../src/cache_friendly_range_space_simd.h
-lua_wrappers_gfx.o: ../src/sse_allocator.h ../src/gfx/gfx_hud.h
-lua_wrappers_gfx.o: ../src/gfx/gfx_font.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_disk_resource.h
+lua_wrappers_gfx.o: ../depend_stubs/OgreResource.h
+lua_wrappers_gfx.o: ../depend_stubs/OgreTexture.h
 lua_wrappers_gfx.o: ../src/gfx/gfx_text_buffer.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreHardwareBufferManager.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreHardwareIndexBuffer.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_instances.h
+lua_wrappers_gfx.o: ../depend_stubs/OgreMovableObject.h
+lua_wrappers_gfx.o: ../src/dense_index_map.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_light.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_ranged_instances.h
+lua_wrappers_gfx.o: ../src/streamer.h
+lua_wrappers_gfx.o: ../src/cache_friendly_range_space_simd.h
+lua_wrappers_gfx.o: ../src/sse_allocator.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_sky_body.h
+lua_wrappers_gfx.o: ../src/gfx/gfx_sky_material.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreHighLevelGpuProgramManager.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreTextureManager.h
 lua_wrappers_gfx.o: ../depend_stubs/OgreSkeletonManager.h
@@ -2359,6 +2430,9 @@ lua_wrappers_physics.o: ../depend_stubs/OgreGLSLProgram.h
 lua_wrappers_physics.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
 lua_wrappers_physics.o: ../src/gfx/gfx.h
 lua_wrappers_physics.o: ../src/gfx/gfx_option.h
+lua_wrappers_physics.o: ../src/gfx/gfx_gasoline.h
+lua_wrappers_physics.o: ../depend_stubs/cstdint
+lua_wrappers_physics.o: ../depend_stubs/array
 lua_wrappers_physics.o: ../src/gfx/gfx_fertile_node.h
 lua_wrappers_physics.o: ../src/lua_wrappers_gritobj.h
 lua_wrappers_physics.o: ../src/grit_lua_util.h
@@ -2389,16 +2463,10 @@ lua_wrappers_physics.o: ../src/gfx/gfx_body.h
 lua_wrappers_physics.o: ../src/gfx/gfx_material.h
 lua_wrappers_physics.o: ../depend_stubs/OgreMaterial.h
 lua_wrappers_physics.o: ../src/gfx/gfx_shader.h
-lua_wrappers_physics.o: ../depend_stubs/cstdint
-lua_wrappers_physics.o: ../depend_stubs/array
 lua_wrappers_physics.o: ../depend_stubs/unordered_map
 lua_wrappers_physics.o: ../depend_stubs/OgreHighLevelGpuProgram.h
-lua_wrappers_physics.o: ../src/gfx/gfx_gasoline.h
 lua_wrappers_physics.o: ../src/gfx/gfx_pipeline.h
-lua_wrappers_physics.o: ../src/gfx/gfx_sky_body.h
-lua_wrappers_physics.o: ../src/gfx/gfx_sky_material.h
-lua_wrappers_physics.o: ../src/gfx/gfx_light.h
-lua_wrappers_physics.o: ../src/gfx/gfx_ranged_instances.h
+lua_wrappers_physics.o: ../src/gfx/gfx_decal.h
 lua_wrappers_physics.o: ../src/gfx/gfx_hud.h
 lua_wrappers_physics.o: ../src/external_table.h
 lua_wrappers_physics.o: ../src/lua_ptr.h
@@ -2408,6 +2476,10 @@ lua_wrappers_physics.o: ../src/gfx/gfx_text_buffer.h
 lua_wrappers_physics.o: ../depend_stubs/OgreHardwareBufferManager.h
 lua_wrappers_physics.o: ../depend_stubs/OgreHardwareVertexBuffer.h
 lua_wrappers_physics.o: ../depend_stubs/OgreHardwareIndexBuffer.h
+lua_wrappers_physics.o: ../src/gfx/gfx_light.h
+lua_wrappers_physics.o: ../src/gfx/gfx_ranged_instances.h
+lua_wrappers_physics.o: ../src/gfx/gfx_sky_body.h
+lua_wrappers_physics.o: ../src/gfx/gfx_sky_material.h
 lua_wrappers_physics.o: ../src/physics/physics_world.h
 lua_wrappers_physics.o: ../depend_stubs/btBulletDynamicsCommon.h
 lua_wrappers_physics.o: ../src/physics/tcol_parser.h
@@ -2873,68 +2945,511 @@ net_message.o: ../depend_stubs/arpa/inet.h
 net_message.o: ../depend_stubs/sys/param.h
 net_message.o: ../depend_stubs/sys/types.h ../depend_stubs/netdb.h
 net_message.o: ../depend_stubs/sys/ioctl.h
-fastlz.o: ../src/navigation/fastlz.h
-lua_wrappers_navigation.o: ../src/navigation/lua_wrappers_navigation.h
-lua_wrappers_navigation.o: ../src/navigation/navigation.h
-lua_wrappers_navigation.o: ../src/navigation/navigation_system.h
-lua_wrappers_navigation.o: ../src/gfx/lua_wrappers_gfx.h
-lua_wrappers_navigation.o: ../src/physics/lua_wrappers_physics.h
-lua_wrappers_navigation.o: ../src/external_table.h
-lua_wrappers_navigation.o: ../src/lua_ptr.h
-lua_wrappers_navigation.o: ../src/path_util.h
-lua_wrappers_navigation.o: ../src/navigation/input_geom.h
-navigation.o: ../src/navigation/navigation.h
-navigation.o: ../../dependencies/recast_navigation/Detour/Include/DetourCommon.h
-navigation.o: ../../dependencies/recast_navigation/DetourTileCache/Include/DetourTileCache.h
-navigation.o: ../src/navigation/crowd_manager.h
-navigation.o: ../src/navigation/input_geom.h
-navigation.o: ../src/navigation/navigation_system.h
-navigation.o: ../src/navigation/navigation_manager.h
 chunky_tri_mesh.o: ../src/navigation/chunky_tri_mesh.h
+chunky_tri_mesh.o: ../depend_stubs/stdio.h
+chunky_tri_mesh.o: ../depend_stubs/math.h
+crowd_manager.o: ../depend_stubs/math.h
+crowd_manager.o: ../depend_stubs/stdio.h
+crowd_manager.o: ../depend_stubs/float.h
 crowd_manager.o: ../src/navigation/crowd_manager.h
-crowd_manager.o: ../src/navigation/input_geom.h
-crowd_manager.o: ../src/navigation/navigation_system.h
 crowd_manager.o: ../src/navigation/navigation_manager.h
 crowd_manager.o: ../src/navigation/navigation_interfaces.h
-crowd_manager.o: ../../dependencies/recast_navigation/DetourCrowd/Include/DetourCrowd.h
-crowd_manager.o: ../../dependencies/recast_navigation/DebugUtils/Include/DetourDebugDraw.h
-crowd_manager.o: ../../dependencies/recast_navigation/DetourCrowd/Include/DetourObstacleAvoidance.h
-crowd_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourCommon.h
-crowd_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourNode.h
-input_geom.o: ../../dependencies/recast_navigation/Recast/Include/Recast.h
+crowd_manager.o: ../src/navigation/chunky_tri_mesh.h
+crowd_manager.o: ../src/navigation/input_geom.h
+crowd_manager.o: ../src/navigation/mesh_loader_obj.h
+crowd_manager.o: ../src/navigation/navigation_system.h
+crowd_manager.o: ../depend_stubs/Ogre.h
+crowd_manager.o: ../src/gfx/gfx_body.h ../src/shared_ptr.h
+crowd_manager.o: ../depend_stubs/cstdlib
+crowd_manager.o: ../depend_stubs/functional
+crowd_manager.o: ../depend_stubs/OgreMesh.h
+crowd_manager.o: ../src/gfx/gfx_fertile_node.h
+crowd_manager.o: ../src/gfx/gfx_node.h
+crowd_manager.o: ../depend_stubs/OgreSceneNode.h
+crowd_manager.o: ../../dependencies/util/math_util.h
+crowd_manager.o: ../depend_stubs/string
+crowd_manager.o: ../depend_stubs/iostream
+crowd_manager.o: ../depend_stubs/cmath
+crowd_manager.o: ../depend_stubs/cfloat ../src/vect_util.h
+crowd_manager.o: ../depend_stubs/vector
+crowd_manager.o: ../depend_stubs/algorithm
+crowd_manager.o: ../src/centralised_log.h
+crowd_manager.o: ../src/gfx/gfx_internal.h
+crowd_manager.o: ../depend_stubs/sstream
+crowd_manager.o: ../depend_stubs/OgreMeshManager.h
+crowd_manager.o: ../depend_stubs/OgreOctreeSceneManager.h
+crowd_manager.o: ../depend_stubs/OgreVector3.h
+crowd_manager.o: ../depend_stubs/OgreQuaternion.h
+crowd_manager.o: ../depend_stubs/OgreCustomCompositionPass.h
+crowd_manager.o: ../depend_stubs/OgreCompositor.h
+crowd_manager.o: ../depend_stubs/OgreOctreePlugin.h
+crowd_manager.o: ../depend_stubs/OgreCgPlugin.h
+crowd_manager.o: ../depend_stubs/OgreRenderSystem.h
+crowd_manager.o: ../depend_stubs/OgreGLRenderSystem.h
+crowd_manager.o: ../depend_stubs/OgreGLGpuProgram.h
+crowd_manager.o: ../depend_stubs/OgreGLSLGpuProgram.h
+crowd_manager.o: ../depend_stubs/OgreGLSLProgram.h
+crowd_manager.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
+crowd_manager.o: ../src/gfx/gfx.h ../src/gfx/gfx_option.h
+crowd_manager.o: ../src/gfx/gfx_gasoline.h
+crowd_manager.o: ../depend_stubs/cstdint
+crowd_manager.o: ../depend_stubs/array ../depend_stubs/map
+crowd_manager.o: ../depend_stubs/ostream
+crowd_manager.o: ../src/centralised_log.h
+crowd_manager.o: ../../dependencies/util/console.h
+crowd_manager.o: ../depend_stubs/set
+crowd_manager.o: ../../dependencies/util/exception.h
+crowd_manager.o: ../../dependencies/util/intrinsics.h
+crowd_manager.o: ../src/gfx/gfx_material.h
+crowd_manager.o: ../depend_stubs/mutex
+crowd_manager.o: ../depend_stubs/OgreMaterial.h
+crowd_manager.o: ../src/gfx/gfx_shader.h
+crowd_manager.o: ../depend_stubs/unordered_map
+crowd_manager.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+crowd_manager.o: ../src/gfx/gfx_pipeline.h
+crowd_manager.o: ../src/physics/physics_world.h
+fastlz.o: ../src/navigation/fastlz.cpp
+input_geom.o: ../depend_stubs/math.h
+input_geom.o: ../depend_stubs/stdio.h
 input_geom.o: ../src/navigation/input_geom.h
 input_geom.o: ../src/navigation/chunky_tri_mesh.h
 input_geom.o: ../src/navigation/mesh_loader_obj.h
-input_geom.o: ../../dependencies/recast_navigation/DebugUtils/Include/DebugDraw.h
-input_geom.o: ../../dependencies/recast_navigation/DebugUtils/Include/RecastDebugDraw.h
-input_geom.o: ../../dependencies/recast_navigation/Detour/Include/DetourNavMesh.h
 input_geom.o: ../src/navigation/navigation_system.h
+input_geom.o: ../depend_stubs/Ogre.h ../src/gfx/gfx_body.h
+input_geom.o: ../src/shared_ptr.h ../depend_stubs/cstdlib
+input_geom.o: ../depend_stubs/functional
+input_geom.o: ../depend_stubs/OgreMesh.h
+input_geom.o: ../src/gfx/gfx_fertile_node.h
+input_geom.o: ../src/gfx/gfx_node.h
+input_geom.o: ../depend_stubs/OgreSceneNode.h
+input_geom.o: ../../dependencies/util/math_util.h
+input_geom.o: ../depend_stubs/string
+input_geom.o: ../depend_stubs/iostream
+input_geom.o: ../depend_stubs/cmath ../depend_stubs/cfloat
+input_geom.o: ../src/vect_util.h ../depend_stubs/vector
+input_geom.o: ../depend_stubs/algorithm
+input_geom.o: ../src/centralised_log.h
+input_geom.o: ../src/gfx/gfx_internal.h
+input_geom.o: ../depend_stubs/sstream
+input_geom.o: ../depend_stubs/OgreMeshManager.h
+input_geom.o: ../depend_stubs/OgreOctreeSceneManager.h
+input_geom.o: ../depend_stubs/OgreVector3.h
+input_geom.o: ../depend_stubs/OgreQuaternion.h
+input_geom.o: ../depend_stubs/OgreCustomCompositionPass.h
+input_geom.o: ../depend_stubs/OgreCompositor.h
+input_geom.o: ../depend_stubs/OgreOctreePlugin.h
+input_geom.o: ../depend_stubs/OgreCgPlugin.h
+input_geom.o: ../depend_stubs/OgreRenderSystem.h
+input_geom.o: ../depend_stubs/OgreGLRenderSystem.h
+input_geom.o: ../depend_stubs/OgreGLGpuProgram.h
+input_geom.o: ../depend_stubs/OgreGLSLGpuProgram.h
+input_geom.o: ../depend_stubs/OgreGLSLProgram.h
+input_geom.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
+input_geom.o: ../src/gfx/gfx.h ../src/gfx/gfx_option.h
+input_geom.o: ../src/gfx/gfx_gasoline.h
+input_geom.o: ../depend_stubs/cstdint ../depend_stubs/array
+input_geom.o: ../depend_stubs/map ../depend_stubs/ostream
+input_geom.o: ../src/centralised_log.h
+input_geom.o: ../../dependencies/util/console.h
+input_geom.o: ../depend_stubs/set
+input_geom.o: ../../dependencies/util/exception.h
+input_geom.o: ../../dependencies/util/intrinsics.h
+input_geom.o: ../src/gfx/gfx_material.h
+input_geom.o: ../depend_stubs/mutex
+input_geom.o: ../depend_stubs/OgreMaterial.h
+input_geom.o: ../src/gfx/gfx_shader.h
+input_geom.o: ../depend_stubs/unordered_map
+input_geom.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+input_geom.o: ../src/gfx/gfx_pipeline.h
+input_geom.o: ../src/physics/physics_world.h
+lua_wrappers_navigation.o: ../src/navigation/lua_wrappers_navigation.h
+lua_wrappers_navigation.o: ../src/grit_lua_util.h
+lua_wrappers_navigation.o: ../depend_stubs/string
+lua_wrappers_navigation.o: ../depend_stubs/lua.h
+lua_wrappers_navigation.o: ../depend_stubs/lauxlib.h
+lua_wrappers_navigation.o: ../depend_stubs/lualib.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreException.h
+lua_wrappers_navigation.o: ../src/centralised_log.h
+lua_wrappers_navigation.o: ../../dependencies/util/lua_util.h
+lua_wrappers_navigation.o: ../depend_stubs/sstream
+lua_wrappers_navigation.o: ../depend_stubs/limits
+lua_wrappers_navigation.o: ../depend_stubs/vector
+lua_wrappers_navigation.o: ../../dependencies/util/exception.h
+lua_wrappers_navigation.o: ../depend_stubs/cstdlib
+lua_wrappers_navigation.o: ../depend_stubs/iostream
+lua_wrappers_navigation.o: ../../dependencies/util/intrinsics.h
+lua_wrappers_navigation.o: ../../dependencies/util/math_util.h
+lua_wrappers_navigation.o: ../depend_stubs/cmath
+lua_wrappers_navigation.o: ../depend_stubs/cfloat
+lua_wrappers_navigation.o: ../../dependencies/util/lua_wrappers_common.h
+lua_wrappers_navigation.o: ../src/navigation/navigation_system.h
+lua_wrappers_navigation.o: ../depend_stubs/Ogre.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_body.h
+lua_wrappers_navigation.o: ../src/shared_ptr.h
+lua_wrappers_navigation.o: ../depend_stubs/functional
+lua_wrappers_navigation.o: ../depend_stubs/OgreMesh.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_fertile_node.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_node.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreSceneNode.h
+lua_wrappers_navigation.o: ../src/vect_util.h
+lua_wrappers_navigation.o: ../depend_stubs/algorithm
+lua_wrappers_navigation.o: ../src/gfx/gfx_internal.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreMeshManager.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreOctreeSceneManager.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreVector3.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreQuaternion.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreCustomCompositionPass.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreCompositor.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreOctreePlugin.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreCgPlugin.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreRenderSystem.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreGLRenderSystem.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreGLGpuProgram.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreGLSLGpuProgram.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreGLSLProgram.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
+lua_wrappers_navigation.o: ../src/gfx/gfx.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_option.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_gasoline.h
+lua_wrappers_navigation.o: ../depend_stubs/cstdint
+lua_wrappers_navigation.o: ../depend_stubs/array
+lua_wrappers_navigation.o: ../depend_stubs/map
+lua_wrappers_navigation.o: ../depend_stubs/ostream
+lua_wrappers_navigation.o: ../src/centralised_log.h
+lua_wrappers_navigation.o: ../../dependencies/util/console.h
+lua_wrappers_navigation.o: ../depend_stubs/set
+lua_wrappers_navigation.o: ../src/gfx/gfx_material.h
+lua_wrappers_navigation.o: ../depend_stubs/mutex
+lua_wrappers_navigation.o: ../depend_stubs/OgreMaterial.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_shader.h
+lua_wrappers_navigation.o: ../depend_stubs/unordered_map
+lua_wrappers_navigation.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_pipeline.h
+lua_wrappers_navigation.o: ../src/physics/physics_world.h
+lua_wrappers_navigation.o: ../src/navigation/navigation.h
+lua_wrappers_navigation.o: ../src/navigation/navigation_manager.h
+lua_wrappers_navigation.o: ../src/navigation/navigation_interfaces.h
+lua_wrappers_navigation.o: ../src/navigation/chunky_tri_mesh.h
+lua_wrappers_navigation.o: ../src/gfx/lua_wrappers_gfx.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_body.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_decal.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_particle_system.h
+lua_wrappers_navigation.o: ../depend_stubs/utility
+lua_wrappers_navigation.o: ../src/gfx/gfx_hud.h
+lua_wrappers_navigation.o: ../src/external_table.h
+lua_wrappers_navigation.o: ../src/shared_ptr.h
+lua_wrappers_navigation.o: ../src/lua_ptr.h
+lua_wrappers_navigation.o: ../../dependencies/util/spline_table.h
+lua_wrappers_navigation.o: ../src/lua_ptr.h
+lua_wrappers_navigation.o: ../src/path_util.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_font.h
+lua_wrappers_navigation.o: ../src/background_loader.h
+lua_wrappers_navigation.o: ../src/vect_util.h
+lua_wrappers_navigation.o: ../depend_stubs/condition_variable
+lua_wrappers_navigation.o: ../depend_stubs/list
+lua_wrappers_navigation.o: ../depend_stubs/thread
+lua_wrappers_navigation.o: ../src/disk_resource.h
+lua_wrappers_navigation.o: ../src/main.h ../src/mouse.h
+lua_wrappers_navigation.o: ../src/keyboard.h
+lua_wrappers_navigation.o: ../src/background_loader.h
+lua_wrappers_navigation.o: ../src/bullet_debug_drawer.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreFrameListener.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreManualObject.h
+lua_wrappers_navigation.o: ../depend_stubs/btBulletCollisionCommon.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_disk_resource.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreResource.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreTexture.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_text_buffer.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreHardwareBufferManager.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreHardwareVertexBuffer.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreHardwareIndexBuffer.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_instances.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreMovableObject.h
+lua_wrappers_navigation.o: ../src/dense_index_map.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_light.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_ranged_instances.h
+lua_wrappers_navigation.o: ../src/streamer.h
+lua_wrappers_navigation.o: ../src/cache_friendly_range_space_simd.h
+lua_wrappers_navigation.o: ../src/sse_allocator.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_sky_body.h
+lua_wrappers_navigation.o: ../src/gfx/gfx_sky_material.h
+lua_wrappers_navigation.o: ../src/physics/lua_wrappers_physics.h
+lua_wrappers_navigation.o: ../src/physics/physics_world.h
+lua_wrappers_navigation.o: ../depend_stubs/btBulletDynamicsCommon.h
+lua_wrappers_navigation.o: ../src/physics/tcol_parser.h
+lua_wrappers_navigation.o: ../src/physics/tcol_lexer
+lua_wrappers_navigation.o: ../depend_stubs/istream
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/compatibility/inttypes.h
+lua_wrappers_navigation.o: ../src/physics/tcol_lexer-token_ids
+lua_wrappers_navigation.o: ../depend_stubs/cstdio
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/Token
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/definitions
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/buffer/Buffer
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/buffer/plain/BufferFiller_Plain
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/QuexMode
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/Analyser
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/Counter
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/Accumulator
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/TokenQueue
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/IncludeStack
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/temporary_macros_on
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/temporary_macros_off
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/constructor.i
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/Counter.i
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/Accumulator.i
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/token_receiving_via_queue.i
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/token_sending_via_queue.i
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/mode_handling.i
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/IncludeStack.i
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/misc.i
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/buffer_access.i
+lua_wrappers_navigation.o: ../depend_stubs/quex/code_base/template/Analyser.i
+lua_wrappers_navigation.o: ../src/physics/collision_mesh.h
+lua_wrappers_navigation.o: ../depend_stubs/OgreDataStream.h
+lua_wrappers_navigation.o: ../../dependencies/util/sleep.h
+lua_wrappers_navigation.o: ../src/disk_resource.h
+lua_wrappers_navigation.o: ../src/physics/bcol_parser.h
+lua_wrappers_navigation.o: ../depend_stubs/stdint.h
+lua_wrappers_navigation.o: ../src/physics/loose_end.h
+lua_wrappers_navigation.o: ../src/physics/physical_material.h
+lua_wrappers_navigation.o: ../src/grit_object.h
+lua_wrappers_navigation.o: ../src/streamer.h
+lua_wrappers_navigation.o: ../src/grit_object.h
+lua_wrappers_navigation.o: ../src/external_table.h
+lua_wrappers_navigation.o: ../src/navigation/input_geom.h
+lua_wrappers_navigation.o: ../src/navigation/mesh_loader_obj.h
 mesh_loader_obj.o: ../src/navigation/mesh_loader_obj.h
 mesh_loader_obj.o: ../src/navigation/navigation_system.h
+mesh_loader_obj.o: ../depend_stubs/Ogre.h
+mesh_loader_obj.o: ../src/gfx/gfx_body.h
+mesh_loader_obj.o: ../src/shared_ptr.h
+mesh_loader_obj.o: ../depend_stubs/cstdlib
+mesh_loader_obj.o: ../depend_stubs/functional
+mesh_loader_obj.o: ../depend_stubs/OgreMesh.h
+mesh_loader_obj.o: ../src/gfx/gfx_fertile_node.h
+mesh_loader_obj.o: ../src/gfx/gfx_node.h
+mesh_loader_obj.o: ../depend_stubs/OgreSceneNode.h
+mesh_loader_obj.o: ../../dependencies/util/math_util.h
+mesh_loader_obj.o: ../depend_stubs/string
+mesh_loader_obj.o: ../depend_stubs/iostream
+mesh_loader_obj.o: ../depend_stubs/cmath
+mesh_loader_obj.o: ../depend_stubs/cfloat
+mesh_loader_obj.o: ../src/vect_util.h
+mesh_loader_obj.o: ../depend_stubs/vector
+mesh_loader_obj.o: ../depend_stubs/algorithm
+mesh_loader_obj.o: ../src/centralised_log.h
+mesh_loader_obj.o: ../src/gfx/gfx_internal.h
+mesh_loader_obj.o: ../depend_stubs/sstream
+mesh_loader_obj.o: ../depend_stubs/OgreMeshManager.h
+mesh_loader_obj.o: ../depend_stubs/OgreOctreeSceneManager.h
+mesh_loader_obj.o: ../depend_stubs/OgreVector3.h
+mesh_loader_obj.o: ../depend_stubs/OgreQuaternion.h
+mesh_loader_obj.o: ../depend_stubs/OgreCustomCompositionPass.h
+mesh_loader_obj.o: ../depend_stubs/OgreCompositor.h
+mesh_loader_obj.o: ../depend_stubs/OgreOctreePlugin.h
+mesh_loader_obj.o: ../depend_stubs/OgreCgPlugin.h
+mesh_loader_obj.o: ../depend_stubs/OgreRenderSystem.h
+mesh_loader_obj.o: ../depend_stubs/OgreGLRenderSystem.h
+mesh_loader_obj.o: ../depend_stubs/OgreGLGpuProgram.h
+mesh_loader_obj.o: ../depend_stubs/OgreGLSLGpuProgram.h
+mesh_loader_obj.o: ../depend_stubs/OgreGLSLProgram.h
+mesh_loader_obj.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
+mesh_loader_obj.o: ../src/gfx/gfx.h ../src/gfx/gfx_option.h
+mesh_loader_obj.o: ../src/gfx/gfx_gasoline.h
+mesh_loader_obj.o: ../depend_stubs/cstdint
+mesh_loader_obj.o: ../depend_stubs/array
+mesh_loader_obj.o: ../depend_stubs/map
+mesh_loader_obj.o: ../depend_stubs/ostream
+mesh_loader_obj.o: ../src/centralised_log.h
+mesh_loader_obj.o: ../../dependencies/util/console.h
+mesh_loader_obj.o: ../depend_stubs/set
+mesh_loader_obj.o: ../../dependencies/util/exception.h
+mesh_loader_obj.o: ../../dependencies/util/intrinsics.h
+mesh_loader_obj.o: ../src/gfx/gfx_material.h
+mesh_loader_obj.o: ../depend_stubs/mutex
+mesh_loader_obj.o: ../depend_stubs/OgreMaterial.h
+mesh_loader_obj.o: ../src/gfx/gfx_shader.h
+mesh_loader_obj.o: ../depend_stubs/unordered_map
+mesh_loader_obj.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+mesh_loader_obj.o: ../src/gfx/gfx_pipeline.h
+mesh_loader_obj.o: ../src/physics/physics_world.h
+mesh_loader_obj.o: ../depend_stubs/stdio.h
+mesh_loader_obj.o: ../depend_stubs/math.h
+navigation.o: ../src/navigation/navigation.h
+navigation.o: ../src/navigation/navigation_system.h
+navigation.o: ../depend_stubs/Ogre.h ../src/gfx/gfx_body.h
+navigation.o: ../src/shared_ptr.h ../depend_stubs/cstdlib
+navigation.o: ../depend_stubs/functional
+navigation.o: ../depend_stubs/OgreMesh.h
+navigation.o: ../src/gfx/gfx_fertile_node.h
+navigation.o: ../src/gfx/gfx_node.h
+navigation.o: ../depend_stubs/OgreSceneNode.h
+navigation.o: ../../dependencies/util/math_util.h
+navigation.o: ../depend_stubs/string
+navigation.o: ../depend_stubs/iostream
+navigation.o: ../depend_stubs/cmath ../depend_stubs/cfloat
+navigation.o: ../src/vect_util.h ../depend_stubs/vector
+navigation.o: ../depend_stubs/algorithm
+navigation.o: ../src/centralised_log.h
+navigation.o: ../src/gfx/gfx_internal.h
+navigation.o: ../depend_stubs/sstream
+navigation.o: ../depend_stubs/OgreMeshManager.h
+navigation.o: ../depend_stubs/OgreOctreeSceneManager.h
+navigation.o: ../depend_stubs/OgreVector3.h
+navigation.o: ../depend_stubs/OgreQuaternion.h
+navigation.o: ../depend_stubs/OgreCustomCompositionPass.h
+navigation.o: ../depend_stubs/OgreCompositor.h
+navigation.o: ../depend_stubs/OgreOctreePlugin.h
+navigation.o: ../depend_stubs/OgreCgPlugin.h
+navigation.o: ../depend_stubs/OgreRenderSystem.h
+navigation.o: ../depend_stubs/OgreGLRenderSystem.h
+navigation.o: ../depend_stubs/OgreGLGpuProgram.h
+navigation.o: ../depend_stubs/OgreGLSLGpuProgram.h
+navigation.o: ../depend_stubs/OgreGLSLProgram.h
+navigation.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
+navigation.o: ../src/gfx/gfx.h ../src/gfx/gfx_option.h
+navigation.o: ../src/gfx/gfx_gasoline.h
+navigation.o: ../depend_stubs/cstdint ../depend_stubs/array
+navigation.o: ../depend_stubs/map ../depend_stubs/ostream
+navigation.o: ../src/centralised_log.h
+navigation.o: ../../dependencies/util/console.h
+navigation.o: ../depend_stubs/set
+navigation.o: ../../dependencies/util/exception.h
+navigation.o: ../../dependencies/util/intrinsics.h
+navigation.o: ../src/gfx/gfx_material.h
+navigation.o: ../depend_stubs/mutex
+navigation.o: ../depend_stubs/OgreMaterial.h
+navigation.o: ../src/gfx/gfx_shader.h
+navigation.o: ../depend_stubs/unordered_map
+navigation.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+navigation.o: ../src/gfx/gfx_pipeline.h
+navigation.o: ../src/physics/physics_world.h
+navigation.o: ../src/navigation/navigation_manager.h
+navigation.o: ../src/navigation/navigation_interfaces.h
+navigation.o: ../src/navigation/chunky_tri_mesh.h
+navigation.o: ../src/navigation/crowd_manager.h
+navigation.o: ../src/navigation/input_geom.h
+navigation.o: ../src/navigation/mesh_loader_obj.h
+navigation_interfaces.o: ../depend_stubs/math.h
+navigation_interfaces.o: ../depend_stubs/stdio.h
 navigation_interfaces.o: ../src/navigation/navigation_interfaces.h
-navigation_interfaces.o: ../../dependencies/recast_navigation/Recast/Include/Recast.h
-navigation_interfaces.o: ../../dependencies/recast_navigation/DebugUtils/Include/RecastDebugDraw.h
-navigation_interfaces.o: ../../dependencies/recast_navigation/DebugUtils/Include/DetourDebugDraw.h
 navigation_interfaces.o: ../src/navigation/navigation_system.h
-navigation_interfaces.o: ../../dependencies/recast_navigation/DebugUtils/Include/DebugDraw.h
-navigation_interfaces.o: ../../dependencies/recast_navigation/DebugUtils/Include/RecastDump.h
-navigation_manager.o: ../src/navigation/fastlz.h
+navigation_interfaces.o: ../depend_stubs/Ogre.h
+navigation_interfaces.o: ../src/gfx/gfx_body.h
+navigation_interfaces.o: ../src/shared_ptr.h
+navigation_interfaces.o: ../depend_stubs/cstdlib
+navigation_interfaces.o: ../depend_stubs/functional
+navigation_interfaces.o: ../depend_stubs/OgreMesh.h
+navigation_interfaces.o: ../src/gfx/gfx_fertile_node.h
+navigation_interfaces.o: ../src/gfx/gfx_node.h
+navigation_interfaces.o: ../depend_stubs/OgreSceneNode.h
+navigation_interfaces.o: ../../dependencies/util/math_util.h
+navigation_interfaces.o: ../depend_stubs/string
+navigation_interfaces.o: ../depend_stubs/iostream
+navigation_interfaces.o: ../depend_stubs/cmath
+navigation_interfaces.o: ../depend_stubs/cfloat
+navigation_interfaces.o: ../src/vect_util.h
+navigation_interfaces.o: ../depend_stubs/vector
+navigation_interfaces.o: ../depend_stubs/algorithm
+navigation_interfaces.o: ../src/centralised_log.h
+navigation_interfaces.o: ../src/gfx/gfx_internal.h
+navigation_interfaces.o: ../depend_stubs/sstream
+navigation_interfaces.o: ../depend_stubs/OgreMeshManager.h
+navigation_interfaces.o: ../depend_stubs/OgreOctreeSceneManager.h
+navigation_interfaces.o: ../depend_stubs/OgreVector3.h
+navigation_interfaces.o: ../depend_stubs/OgreQuaternion.h
+navigation_interfaces.o: ../depend_stubs/OgreCustomCompositionPass.h
+navigation_interfaces.o: ../depend_stubs/OgreCompositor.h
+navigation_interfaces.o: ../depend_stubs/OgreOctreePlugin.h
+navigation_interfaces.o: ../depend_stubs/OgreCgPlugin.h
+navigation_interfaces.o: ../depend_stubs/OgreRenderSystem.h
+navigation_interfaces.o: ../depend_stubs/OgreGLRenderSystem.h
+navigation_interfaces.o: ../depend_stubs/OgreGLGpuProgram.h
+navigation_interfaces.o: ../depend_stubs/OgreGLSLGpuProgram.h
+navigation_interfaces.o: ../depend_stubs/OgreGLSLProgram.h
+navigation_interfaces.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
+navigation_interfaces.o: ../src/gfx/gfx.h
+navigation_interfaces.o: ../src/gfx/gfx_option.h
+navigation_interfaces.o: ../src/gfx/gfx_gasoline.h
+navigation_interfaces.o: ../depend_stubs/cstdint
+navigation_interfaces.o: ../depend_stubs/array
+navigation_interfaces.o: ../depend_stubs/map
+navigation_interfaces.o: ../depend_stubs/ostream
+navigation_interfaces.o: ../src/centralised_log.h
+navigation_interfaces.o: ../../dependencies/util/console.h
+navigation_interfaces.o: ../depend_stubs/set
+navigation_interfaces.o: ../../dependencies/util/exception.h
+navigation_interfaces.o: ../../dependencies/util/intrinsics.h
+navigation_interfaces.o: ../src/gfx/gfx_material.h
+navigation_interfaces.o: ../depend_stubs/mutex
+navigation_interfaces.o: ../depend_stubs/OgreMaterial.h
+navigation_interfaces.o: ../src/gfx/gfx_shader.h
+navigation_interfaces.o: ../depend_stubs/unordered_map
+navigation_interfaces.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+navigation_interfaces.o: ../src/gfx/gfx_pipeline.h
+navigation_interfaces.o: ../src/physics/physics_world.h
+navigation_manager.o: ../depend_stubs/math.h
+navigation_manager.o: ../depend_stubs/stdio.h
+navigation_manager.o: ../depend_stubs/float.h
+navigation_manager.o: ../src/navigation/input_geom.h
+navigation_manager.o: ../src/navigation/chunky_tri_mesh.h
+navigation_manager.o: ../src/navigation/mesh_loader_obj.h
+navigation_manager.o: ../src/navigation/navigation_system.h
+navigation_manager.o: ../depend_stubs/Ogre.h
+navigation_manager.o: ../src/gfx/gfx_body.h
+navigation_manager.o: ../src/shared_ptr.h
+navigation_manager.o: ../depend_stubs/cstdlib
+navigation_manager.o: ../depend_stubs/functional
+navigation_manager.o: ../depend_stubs/OgreMesh.h
+navigation_manager.o: ../src/gfx/gfx_fertile_node.h
+navigation_manager.o: ../src/gfx/gfx_node.h
+navigation_manager.o: ../depend_stubs/OgreSceneNode.h
+navigation_manager.o: ../../dependencies/util/math_util.h
+navigation_manager.o: ../depend_stubs/string
+navigation_manager.o: ../depend_stubs/iostream
+navigation_manager.o: ../depend_stubs/cmath
+navigation_manager.o: ../depend_stubs/cfloat
+navigation_manager.o: ../src/vect_util.h
+navigation_manager.o: ../depend_stubs/vector
+navigation_manager.o: ../depend_stubs/algorithm
+navigation_manager.o: ../src/centralised_log.h
+navigation_manager.o: ../src/gfx/gfx_internal.h
+navigation_manager.o: ../depend_stubs/sstream
+navigation_manager.o: ../depend_stubs/OgreMeshManager.h
+navigation_manager.o: ../depend_stubs/OgreOctreeSceneManager.h
+navigation_manager.o: ../depend_stubs/OgreVector3.h
+navigation_manager.o: ../depend_stubs/OgreQuaternion.h
+navigation_manager.o: ../depend_stubs/OgreCustomCompositionPass.h
+navigation_manager.o: ../depend_stubs/OgreCompositor.h
+navigation_manager.o: ../depend_stubs/OgreOctreePlugin.h
+navigation_manager.o: ../depend_stubs/OgreCgPlugin.h
+navigation_manager.o: ../depend_stubs/OgreRenderSystem.h
+navigation_manager.o: ../depend_stubs/OgreGLRenderSystem.h
+navigation_manager.o: ../depend_stubs/OgreGLGpuProgram.h
+navigation_manager.o: ../depend_stubs/OgreGLSLGpuProgram.h
+navigation_manager.o: ../depend_stubs/OgreGLSLProgram.h
+navigation_manager.o: ../depend_stubs/OgreGLSLLinkProgramManager.h
+navigation_manager.o: ../src/gfx/gfx.h
+navigation_manager.o: ../src/gfx/gfx_option.h
+navigation_manager.o: ../src/gfx/gfx_gasoline.h
+navigation_manager.o: ../depend_stubs/cstdint
+navigation_manager.o: ../depend_stubs/array
+navigation_manager.o: ../depend_stubs/map
+navigation_manager.o: ../depend_stubs/ostream
+navigation_manager.o: ../src/centralised_log.h
+navigation_manager.o: ../../dependencies/util/console.h
+navigation_manager.o: ../depend_stubs/set
+navigation_manager.o: ../../dependencies/util/exception.h
+navigation_manager.o: ../../dependencies/util/intrinsics.h
+navigation_manager.o: ../src/gfx/gfx_material.h
+navigation_manager.o: ../depend_stubs/mutex
+navigation_manager.o: ../depend_stubs/OgreMaterial.h
+navigation_manager.o: ../src/gfx/gfx_shader.h
+navigation_manager.o: ../depend_stubs/unordered_map
+navigation_manager.o: ../depend_stubs/OgreHighLevelGpuProgram.h
+navigation_manager.o: ../src/gfx/gfx_pipeline.h
+navigation_manager.o: ../src/physics/physics_world.h
 navigation_manager.o: ../src/navigation/navigation_manager.h
 navigation_manager.o: ../src/navigation/navigation_interfaces.h
-navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourNavMesh.h
-navigation_manager.o: ../../dependencies/recast_navigation/Recast/Include/Recast.h
-navigation_manager.o: ../src/navigation/chunky_tri_mesh.h
-navigation_manager.o: ../src/navigation/input_geom.h
-navigation_manager.o: ../../dependencies/recast_navigation/DebugUtils/Include/RecastDebugDraw.h
-navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourAssert.h
-navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourNavMeshBuilder.h
-navigation_manager.o: ../../dependencies/recast_navigation/DebugUtils/Include/DetourDebugDraw.h
-navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourCommon.h
-navigation_manager.o: ../../dependencies/recast_navigation/DetourTileCache/Include/DetourTileCache.h
 navigation_manager.o: ../src/navigation/crowd_manager.h
-navigation_manager.o: ../../dependencies/recast_navigation/Recast/Include/RecastAlloc.h
-navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourAlloc.h
-navigation_manager.o: ../../dependencies/recast_navigation/Recast/Include/RecastAssert.h
-navigation_manager.o: ../../dependencies/recast_navigation/Detour/Include/DetourNavMeshQuery.h
-navigation_manager.o: ../../dependencies/recast_navigation/DetourCrowd/Include/DetourCrowd.h
-navigation_manager.o: ../src/navigation/navigation_system.h
+navigation_manager.o: ../src/navigation/fastlz.h

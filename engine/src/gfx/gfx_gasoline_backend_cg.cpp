@@ -109,12 +109,21 @@ static std::string generate_funcs_frag (void)
     ss << "// Standard library (fragment shader specific calls)\n";
 
     // Real ones
+    // 2D
     ss << "Float4 sample (FloatTexture2 tex, Float2 uv) { return tex2D(tex, uv); }\n";
     ss << "Float4 sampleGrad (FloatTexture2 tex, Float2 uv, Float2 ddx, Float2 ddy)\n";
     ss << "{ return tex2DGrad(tex, uv, ddx, ddy); }\n";
     ss << "Float4 sampleLod (FloatTexture2 tex, Float2 uv, Float lod)\n";
     ss << "{ return tex2Dlod(tex, Float4(uv, 0, lod)); }\n";
 
+    // 3D (volumetric)
+    ss << "Float4 sample (FloatTexture3 tex, Float3 uvw) { return tex3D(tex, uvw); }\n";
+    ss << "Float4 sampleGrad (FloatTexture3 tex, Float3 uvw, Float3 ddx, Float3 ddy)\n";
+    ss << "{ return tex3Dgrad(tex, uvw, ddx, ddy); }\n";
+    ss << "Float4 sampleLod (FloatTexture3 tex, Float3 uvw, Float lod)\n";
+    ss << "{ return tex3Dlod(tex, Float4(uvw, lod)); }\n";
+
+    // Cube
     ss << "Float4 sample (FloatTextureCube tex, Float3 uvw) { return texCUBE(tex, uvw); }\n";
     ss << "Float4 sampleGrad (FloatTextureCube tex, Float3 uvw, Float3 ddx, Float3 ddy)\n";
     ss << "{ return texCUBEgrad(tex, uvw, ddx, ddy); }\n";
@@ -283,9 +292,10 @@ void gfx_gasoline_unparse_cg(const GfxGslContext &ctx,
     frag_ss << "           out Float out_depth : DEPTH\n";
     frag_ss << ") {\n";
 
-    frag_ss << "    frag_screen = wpos.xy + Float2(0.5, 0.5);\n";
-    // Due to a bug in CG targeting ps_3_0, wpos is origin top right, so correct that:
+    frag_ss << "    frag_screen = wpos.xy;\n";
     if (ctx.d3d9) {
+        // CG targeting ps_3_0 exposes VPOS as WPOS, which is not what we want.
+        frag_ss << "    frag_screen = frag_screen + Float2(0.5, 0.5);\n";
         frag_ss << "    frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
     }
     frag_ss << "    if (internal_rt_flip < 0)\n";

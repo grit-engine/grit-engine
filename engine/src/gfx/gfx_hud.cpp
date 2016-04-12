@@ -1122,7 +1122,7 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
     if (tex != nullptr)
         texs["tex"] = { tex, false, 4};
 
-    shader_text->bindShader(GfxShader::HUD, false, 0, false, 0,
+    shader_text->bindShader(GfxShader::HUD, false, false, 0,
                             globs, matrix, nullptr, 0, 1, texs, shader_text_binds);
 
     ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
@@ -1217,7 +1217,7 @@ void gfx_render_hud_one (GfxHudBase *base)
         GfxShaderGlobals globs = { zv, I, I, I, zv, zv, zv, zv, win_size, render_target_flipping,
                                    nullptr };
 
-        shader_rect->bindShader(GfxShader::HUD, false, 0, false, 0,
+        shader_rect->bindShader(GfxShader::HUD, false, false, 0,
                                 globs, matrix, nullptr, 0, 1, texs, shader_tex_binds);
 
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);

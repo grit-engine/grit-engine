@@ -755,9 +755,6 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
     bool do_regular = !(do_wireframe && gfx_option(GFX_WIREFRAME_SOLID));
 
     bool fade_dither = fade < 1;
-    // TODO: Why are we not using the true value?  In fact shouldn't bindShader figure this out
-    // internally?
-    unsigned env_boxes = 1;
     bool instanced = false;
     unsigned bone_weights = mesh->getNumBlendWeightsPerVertex();
 
@@ -787,7 +784,7 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
             // render sm using mat
             const GfxMaterialTextureMap &mat_texs = mat->getTextures();
             mat->getShader()->bindShader(GfxShader::FIRST_PERSON,
-                                         fade_dither, env_boxes, instanced, bone_weights,
+                                         fade_dither, instanced, bone_weights,
                                          g, world, boneWorldMatrixes, numBoneMatrixes, fade,
                                          mat_texs, mat->getBindings());
 
@@ -820,7 +817,7 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
 
         if (do_wireframe) {
 
-            mat->getShader()->bindShader(GfxShader::WIRE_FRAME, false, 0, false, 0,
+            mat->getShader()->bindShader(GfxShader::WIRE_FRAME, false, false, 0,
                                          g, world, boneWorldMatrixes, numBoneMatrixes, 1,
                                          GfxMaterialTextureMap(), mat->getBindings());
 

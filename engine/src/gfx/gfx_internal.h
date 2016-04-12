@@ -73,6 +73,7 @@ extern Ogre::Light *ogre_sun;
 extern DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube0;
 extern DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube1;
 extern float env_cube_cross_fade;
+extern unsigned env_cube_count;
 extern Ogre::Matrix4 shadow_view_proj[3];
 extern DiskResourcePtr<GfxTextureDiskResource> fade_dither_map;
 extern DiskResourcePtr<GfxTextureDiskResource> corona_map;

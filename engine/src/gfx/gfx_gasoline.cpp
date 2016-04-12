@@ -100,6 +100,8 @@ static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
     m["envCubeMipmaps0"] = alloc.makeType<GfxGslFloatType>(1);
     m["envCubeMipmaps1"] = alloc.makeType<GfxGslFloatType>(1);
     m["saturation"] = alloc.makeType<GfxGslFloatType>(1);
+    m["exposure"] = alloc.makeType<GfxGslFloatType>(1);
+    m["bloomThreshold"] = alloc.makeType<GfxGslFloatType>(1);
     m["shadowViewProj0"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["shadowViewProj1"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["shadowViewProj2"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
@@ -307,6 +309,10 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
     m["punctual_lighting"] = {
         alloc.makeType<GfxGslFunctionType>(
             GfxGslTypes{fs(3), fs(3), fs(3), fs(3), fs(1), fs(1), fs(3), fs(3)}, fs(3)),
+    };
+
+    m["tonemap"] = {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3))
     };
 
     m["unpack_deferred_diffuse_colour"] = {

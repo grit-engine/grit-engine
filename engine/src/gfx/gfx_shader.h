@@ -48,9 +48,9 @@ typedef std::map<std::string, GfxGslParam> GfxShaderBindings;
 #define GFX_SHADER_H
 
 /** Some parameters that do not change from one object to the next, but do change from one
- * camera or target to another. */
+ * camera / target to another. */
 struct GfxShaderGlobals {
-    Vector3 cam_pos;
+    Vector3 camPos;
     Ogre::Matrix4 view;
     Ogre::Matrix4 invView;  // For first person rendering
     Ogre::Matrix4 proj;
@@ -58,13 +58,17 @@ struct GfxShaderGlobals {
     Vector3 rayTopRight;
     Vector3 rayBottomLeft;
     Vector3 rayBottomRight;
-    Vector2 viewport_dim;
-    bool render_target_flipping;
+    Vector2 viewportDim;
+    bool renderTargetFlipping;
     GfxPipeline *pipe;
 };
 
-GfxShaderGlobals gfx_shader_globals_verbatim (GfxPipeline *pipe);
+/** Specify a viewport other than the one bound to the camera. */
+GfxShaderGlobals gfx_shader_globals_cam_ss (GfxPipeline *pipe, Ogre::Viewport *viewport);
+
+/** Use an alternative projection matrix, e.g. for screen-space effects. */
 GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe, const Ogre::Matrix4 &proj);
+
 GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe);
 
 // User always gives n strings, some of which can be empty.
@@ -161,7 +165,7 @@ class GfxShader {
 
     // New API, may throw compilation errors if not checked previously.
     void bindShader (Purpose purpose,
-                     bool fade_dither, unsigned env_boxes, bool instanced, unsigned bone_weights,
+                     bool fade_dither, bool instanced, unsigned bone_weights,
                      const GfxShaderGlobals &params,
                      const Ogre::Matrix4 &world,
                      const Ogre::Matrix4 *bone_world_matrixes,

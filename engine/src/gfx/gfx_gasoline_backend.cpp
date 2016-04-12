@@ -158,6 +158,12 @@ std::string gfx_gasoline_generate_preamble_functions (void)
     ss << "Float3 gamma_encode (Float3 v) { return pow(v, Float3(1/2.2, 1/2.2, 1/2.2)); }\n";
     ss << "Float4 gamma_encode (Float4 v) { return pow(v, Float4(1/2.2, 1/2.2, 1/2.2, 1/2.2)); }\n";
 
+    ss << "Float3 desaturate (Float3 c, Float sat)\n";
+    ss << "{\n";
+    ss << "    Float grey = (c.x + c.y + c.z) / 3;\n";
+    ss << "    return lerp(Float3(grey, grey, grey), c, Float3(sat, sat, sat));\n";
+    ss << "}\n";
+
     ss << "Float3 unpack_deferred_diffuse_colour(Float4 texel0, Float4 texel1, Float4 texel2)\n";
     ss << "{\n";
     ss << "    return gamma_decode(texel2.rgb);\n";
@@ -458,7 +464,7 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
     ss << "    }\n";
     ss << "    shadowyness *= fade;\n";
     ss << "    return max(0.0, 1 - shadowyness);\n";
-    ss << "}\n";
+    ss << "}\n\n";
 
     // Env cube lighting simulates global illumination (i.e. light from all directions).
     ss << "Float3 env_lighting(Float3 surf_to_cam,\n"
@@ -477,7 +483,7 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
     ss << "    Float fresnel_factor = strength(1.0 - dot(sn, surf_to_cam), 5);\n";
     ss << "    Float3 fresnel_component = sg * fresnel_factor * fresnel_light;\n";
     ss << "    return 16 * (diff_component + spec_component + fresnel_component);\n";
-    ss << "}\n";
+    ss << "}\n\n";
 
     ss << "Float3 sunlight(Float3 shadow_pos, Float3 s2c, Float3 d, Float3 n, Float g, Float s,\n";
     ss << "                Float cam_dist)\n";
@@ -486,7 +492,7 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
     ss << "        d, n, g, s, global_sunlightDiffuse, global_sunlightSpecular);\n";
     ss << "    sun *= unshadowyness(shadow_pos, cam_dist);\n";
     ss << "    return sun;\n";
-    ss << "}\n";
+    ss << "}\n\n";
 
     ss << "Float3 envlight(Float3 s2c, Float3 d, Float3 n, Float g, Float s)\n";
     ss << "{\n";
@@ -503,9 +509,17 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
         ss << "    Float3 env = Float3(0.0, 0.0, 0.0);\n";
     }
     ss << "    return env;\n";
-    ss << "}\n";
+    ss << "}\n\n";
 
-    ss << "\n";
+    ss << "Float3 tonemap(Float3 colour)\n";
+    ss << "{\n";
+    ss << "    colour = colour / (1 + colour);\n";
+    ss << "    colour = gamma_encode(colour);\n";
+    ss << "    Float3 lut_uv = (colour * 31 + 0.5) / 32;\n";  // Hardcode 32x32x32 dimensions.
+    ss << "    colour = sample(global_colourGradeLut, lut_uv).rgb;\n";
+    ss << "    colour = desaturate(colour, global_saturation);\n";
+    ss << "    return colour;\n";
+    ss << "}\n\n";
 
     return ss.str();
 }

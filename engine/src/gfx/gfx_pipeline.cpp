@@ -29,36 +29,17 @@
 #include "gfx_pipeline.h"
 #include "gfx_sky_body.h"
 
-static inline Ogre::HighLevelGpuProgramPtr get_shader(const char *name)
-{
-    auto ptr = Ogre::HighLevelGpuProgramManager::getSingleton().getByName(name, RESGRP);
-    if (ptr.isNull())
-        EXCEPT << "Shader does not exist: " << name << ENDL;
-    return ptr;
-}
-
-static void render_with_progs (GfxShader *shader, const Ogre::RenderOperation &op)
-{
-    auto vp = shader->getHackOgreVertexProgram();
-    auto fp = shader->getHackOgreFragmentProgram();
-
-    // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
-    ogre_rs->bindGpuProgram(vp->_getBindingDelegate());
-    ogre_rs->bindGpuProgram(fp->_getBindingDelegate());
-
-    ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fp->getDefaultParameters(), Ogre::GPV_ALL);
-    ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vp->getDefaultParameters(), Ogre::GPV_ALL);
-
-    ogre_rs->_render(op);
-}
-
 Ogre::VertexData *screen_quad_vdata;
 Ogre::HardwareVertexBufferSharedPtr screen_quad_vbuf;
 
 // The 0th one is the real one, the others are for debug display.
 static GfxShader *deferred_ambient_sun[6];
 static GfxShader *deferred_lights;
-//static GfxShader *compositor_tonemap;
+static GfxShader *compositor_tonemap;
+static GfxShader *compositor_exposure_filter_then_horz_blur;
+static GfxShader *compositor_vert_blur;
+static GfxShader *compositor_horz_blur;
+static GfxShader *compositor_vert_blur_combine_tonemap;
 
 void gfx_pipeline_init (void)
 {
@@ -85,7 +66,7 @@ void gfx_pipeline_init (void)
     };
     screen_quad_vbuf->writeData(screen_quad_vdata->vertexStart, screen_quad_vdata->vertexCount*vdecl_size, vdata_raw);
 
-    GfxGslRunParams shader_params = {
+    GfxGslRunParams gbuffer_shader_params = {
         {"gbuffer0", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
         {"gbuffer1", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
         {"gbuffer2", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
@@ -126,7 +107,7 @@ void gfx_pipeline_init (void)
         "var sun = sunlight(pos_ws, v2c, d, normal_ws, g, s, cam_dist);\n"
         "var env = envlight(v2c, d, normal_ws, g, s);\n"
         "out.colour = sun + env;\n",
-        shader_params);
+        gbuffer_shader_params);
 
 
     deferred_ambient_sun[1] = gfx_shader_make_or_reset(
@@ -135,7 +116,7 @@ void gfx_pipeline_init (void)
         "",
         deferred_colour_code +
         "out.colour = d;\n",
-        shader_params);
+        gbuffer_shader_params);
 
     deferred_ambient_sun[2] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun2",
@@ -143,7 +124,7 @@ void gfx_pipeline_init (void)
         "",
         deferred_colour_code +
         "out.colour = 0.5 + normal_ws/2;\n",
-        shader_params);
+        gbuffer_shader_params);
 
     deferred_ambient_sun[3] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun3",
@@ -151,7 +132,7 @@ void gfx_pipeline_init (void)
         "",
         deferred_colour_code +
         "out.colour = s;\n",
-        shader_params);
+        gbuffer_shader_params);
 
     deferred_ambient_sun[4] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun4",
@@ -159,7 +140,7 @@ void gfx_pipeline_init (void)
         "",
         deferred_colour_code +
         "out.colour = g;\n",
-        shader_params);
+        gbuffer_shader_params);
 
     deferred_ambient_sun[5] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun5",
@@ -167,16 +148,17 @@ void gfx_pipeline_init (void)
         "",
         deferred_colour_code +
         "out.colour = (pos_ws % 1 + 1) % 1;\n",
-        shader_params);
+        gbuffer_shader_params);
 
 
-    std::string lights_vertex_code =
+    // TODO: Not clear if it's more efficient to compute ray at the vertexes.
+    std::string identity_vertex_code =
         "out.position = vert.position.xyz;\n";
 
 
     std::string lights_colour_code =
         "var uv = frag.screen / global.viewportSize;\n"
-        "uv.y = 1 - uv.y;\n"
+        "uv.y = 1 - uv.y;\n"  // frag.screen is lower-left, textures upper-right.
         "var ray = lerp(lerp(global.rayTopLeft, global.rayTopRight, uv.x),\n"
         "               lerp(global.rayBottomLeft, global.rayBottomRight, uv.x),\n"
         "               uv.y);\n"
@@ -218,23 +200,123 @@ void gfx_pipeline_init (void)
     ;
 
     deferred_lights = gfx_shader_make_or_reset("/system/DeferredLights",
-                                               lights_vertex_code, "", lights_colour_code,
-                                               shader_params);
+                                               identity_vertex_code, "", lights_colour_code,
+                                               gbuffer_shader_params);
 
 
-    /*
+    //////////////
+    // TONE MAP //
+    //////////////
+
     GfxGslRunParams hdr_shader_params = {
         {"hdr", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
     };
 
     std::string compositor_tonemap_colour =
-        "out.colour = tone_map(sample(mat.hdr, vert.coord0));\n";
+        "var uv = frag.screen / global.viewportSize;\n"
+        "uv.y = 1 - uv.y;\n"  // frag.screen is origin lower-left, textures origin upper-left.
+        "out.colour = tonemap(global.exposure * sample(mat.hdr, uv).xyz);\n";
 
-    compositor_tonemap = gfx_shader_make_or_reset("/system/Tonemap",
-                                                  das_vertex_code, "", compositor_tonemap_colour,
-                                                  hdr_shader_params);
-    */
+    // TODO: dithering
+    compositor_tonemap = gfx_shader_make_or_reset("/system/TonemapOnly",
+                                                  identity_vertex_code, "",
+                                                  compositor_tonemap_colour, hdr_shader_params);
 
+    ///////////
+    // BLOOM //
+    ///////////
+
+    GfxGslRunParams bloom_params = {
+        {"srcTex", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
+        {"original", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)},
+        {"bloomTexScale", GfxGslParam::float1(1.0f)},
+    };
+
+    
+    static float pascal_row11[] = { 252/638.0, 210/638.0, 120/638.0, 45/638.0, 10/638.0, 1/638.0 };
+
+    std::stringstream ss;  // FIRST HORZ
+    ss << "var uv = frag.screen / global.viewportSize;\n";
+    ss << "uv.y = 1 - uv.y;\n";  // frag.screen is origin lower-left, textures origin upper-left.
+    ss << "var off = mat.bloomTexScale / global.viewportSize.x;\n";
+    ss << "var bloom_uv = Float2(0, 0);\n";
+    ss << "var t = Float3(0, 0, 0);\n";
+    ss << "var colour = Float3(0, 0, 0);\n";
+    for (int i=-4 ; i<=4 ; ++i) {
+        ss << "bloom_uv = uv * mat.bloomTexScale + off * Float2(" << i << ", 0);\n";
+        ss << "bloom_uv = clamp(bloom_uv,\n";
+        ss << "                 Float2(off, off) * mat.bloomTexScale,\n";
+        ss << "                 Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
+        ss << "colour = global.exposure * sample(mat.srcTex, bloom_uv).xyz;\n";
+        // First iteration takes unfiltered unscaled hdr fb as input.
+        ss << "t = colour - global.bloomThreshold;\n";
+        ss << "colour = colour * clamp((t.r + t.g + t.b)/3.0 + 1, 0.0, 1.0);\n";
+        ss << "out.colour = out.colour + " << pascal_row11[i<0 ? -i : i] << " * colour;\n";
+    }
+
+    compositor_exposure_filter_then_horz_blur = gfx_shader_make_or_reset(
+        "/system/ExposureFilterThenHorzBlur", identity_vertex_code, "", ss.str(),
+        bloom_params);
+
+
+    ss.str(""); // VERT
+    ss << "var uv = frag.screen / global.viewportSize;\n";
+    ss << "uv.y = 1 - uv.y;\n";  // frag.screen is origin lower-left, textures origin upper-left.
+    ss << "var off = mat.bloomTexScale / global.viewportSize.x;\n";
+    ss << "var bloom_uv = Float2(0, 0);\n";
+    ss << "var colour = Float3(0, 0, 0);\n";
+    for (int i=-4 ; i<=4 ; ++i) {
+        ss << "bloom_uv = uv * mat.bloomTexScale + off * Float2(0, " << i << ");\n";
+        ss << "bloom_uv = clamp(bloom_uv,\n";
+        ss << "                 Float2(off, off) * mat.bloomTexScale,\n";
+        ss << "                 Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
+        ss << "colour = sample(mat.srcTex, bloom_uv).xyz;\n";
+        ss << "out.colour = out.colour + " << pascal_row11[i<0 ? -i : i] << " * colour;\n";
+    }
+
+    compositor_vert_blur = gfx_shader_make_or_reset(
+        "/system/VertBlur", identity_vertex_code, "", ss.str(),
+        bloom_params);
+
+    ss.str(""); // HORZ
+    ss << "var uv = frag.screen / global.viewportSize;\n";
+    ss << "uv.y = 1 - uv.y;\n";  // frag.screen is origin lower-left, textures origin upper-left.
+    ss << "var off = mat.bloomTexScale / global.viewportSize.x;\n";
+    ss << "var bloom_uv = Float2(0, 0);\n";
+    ss << "var colour = Float3(0, 0, 0);\n";
+    for (int i=-4 ; i<=4 ; ++i) {
+        ss << "bloom_uv = uv * mat.bloomTexScale + off * Float2(" << i << ", 0);\n";
+        ss << "bloom_uv = clamp(bloom_uv,\n";
+        ss << "                 Float2(off, off) * mat.bloomTexScale,\n";
+        ss << "                 Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
+        ss << "colour = sample(mat.srcTex, bloom_uv).xyz;\n";
+        ss << "out.colour = out.colour + " << pascal_row11[i<0 ? -i : i] << " * colour;\n";
+    }
+
+    compositor_horz_blur = gfx_shader_make_or_reset(
+        "/system/HorzBlur", identity_vertex_code, "", ss.str(),
+        bloom_params);
+
+    ss.str(""); // LAST VERT
+    ss << "var uv = frag.screen / global.viewportSize;\n";
+    ss << "uv.y = 1 - uv.y;\n";  // frag.screen is origin lower-left, textures origin upper-left.
+    ss << "var off = mat.bloomTexScale / global.viewportSize.x;\n";
+    ss << "var bloom_uv = Float2(0, 0);\n";
+    ss << "var colour = Float3(0, 0, 0);\n";
+    for (int i=-4 ; i<=4 ; ++i) {
+        ss << "bloom_uv = uv * mat.bloomTexScale + off * Float2(0, " << i << ");\n";
+        ss << "bloom_uv = clamp(bloom_uv,\n";
+        ss << "                 Float2(off, off) * mat.bloomTexScale,\n";
+        ss << "                 Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
+        ss << "colour = sample(mat.srcTex, bloom_uv).xyz;\n";
+        ss << "out.colour = out.colour + " << pascal_row11[i<0 ? -i : i] << " * colour;\n";
+    }
+    ss << "out.colour = out.colour + sample(mat.original, uv).xyz;\n";
+    ss << "out.colour = tonemap(out.colour);\n";
+
+    compositor_vert_blur_combine_tonemap = gfx_shader_make_or_reset(
+        "/system/VertBlurCombineTonemap", identity_vertex_code, "", ss.str(),
+        bloom_params);
 
 }
 
@@ -458,64 +540,6 @@ public:
 // }}}
 
 
-static GfxShader *compositor_tonemap = nullptr;
-static GfxShader *get_compositor_tonemap (void)
-{
-    if (compositor_tonemap == nullptr) {
-        auto vp = get_shader("compositor_v");
-        auto fp = get_shader("bloom_filter_then_horz_blur");
-        compositor_tonemap =
-            gfx_shader_make_from_existing("compositor_tonemap", vp, fp, {});
-    }
-    return compositor_tonemap;
-}
-
-static GfxShader *compositor_bloom_filter_then_horz_blur = nullptr;
-static GfxShader *get_compositor_bloom_filter_then_horz_blur (void)
-{
-    if (compositor_bloom_filter_then_horz_blur == nullptr) {
-        auto vp = get_shader("compositor_v");
-        auto fp = get_shader("bloom_filter_then_horz_blur");
-        compositor_bloom_filter_then_horz_blur =
-            gfx_shader_make_from_existing("compositor_bloom_filter_then_horz_blur", vp, fp, {});
-    }
-    return compositor_bloom_filter_then_horz_blur;
-}
-
-static GfxShader *compositor_bloom_vert_blur = nullptr;
-static GfxShader *get_compositor_bloom_vert_blur (void)
-{
-    if (compositor_bloom_vert_blur == nullptr) {
-        auto vp = get_shader("compositor_v");
-        auto fp = get_shader("bloom_vert_blur");
-        compositor_bloom_vert_blur = gfx_shader_make_from_existing("compositor_bloom_vert_blur", vp, fp, {});
-    }
-    return compositor_bloom_vert_blur;
-}
-
-static GfxShader *compositor_bloom_horz_blur = nullptr;
-static GfxShader *get_compositor_bloom_horz_blur (void)
-{
-    if (compositor_bloom_horz_blur == nullptr) {
-        auto vp = get_shader("compositor_v");
-        auto fp = get_shader("bloom_horz_blur");
-        compositor_bloom_horz_blur = gfx_shader_make_from_existing("compositor_bloom_horz_blur", vp, fp, {});
-    }
-    return compositor_bloom_horz_blur;
-}
-
-static GfxShader *compositor_bloom_vert_blur_combine_and_tonemap = nullptr;
-static GfxShader *get_compositor_bloom_vert_blur_combine_and_tonemap (void)
-{
-    if (compositor_bloom_vert_blur_combine_and_tonemap == nullptr) {
-        auto vp = get_shader("compositor_v");
-        auto fp = get_shader("bloom_vert_blur_combine_and_tonemap");
-        compositor_bloom_vert_blur_combine_and_tonemap =
-            gfx_shader_make_from_existing("compositor_bloom_vert_blur_combine_and_tonemap", vp, fp, {});
-    }
-    return compositor_bloom_vert_blur_combine_and_tonemap;
-}
-
 // {{{ (Deferred rendering) DeferredLightingPasses
 
 class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
@@ -555,9 +579,8 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
         try {
             GfxShaderGlobals globs = gfx_shader_globals_cam(pipe);
 
-            unsigned env_boxes = 1;
             GfxShader *shader = deferred_ambient_sun[pipe->getCameraOpts().debugMode];
-            shader->bindShader(GfxShader::DEFERRED_AMBIENT_SUN, false, env_boxes,
+            shader->bindShader(GfxShader::DEFERRED_AMBIENT_SUN, false,
                                false, 0, globs, I, nullptr, 0, 1, texs, binds);
 
             for (unsigned i=0 ; i<3 ; ++i)
@@ -675,7 +698,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
                 GfxShaderGlobals globs = gfx_shader_globals_cam(pipe);
 
-                deferred_lights->bindShader(GfxShader::HUD, false, 0, false, 0,
+                deferred_lights->bindShader(GfxShader::HUD, false, false, 0,
                                             globs, I, nullptr, 0, 1, texs, binds);
 
                 for (unsigned i=0 ; i<3 ; ++i)
@@ -951,74 +974,96 @@ template<unsigned n> struct RenderQuadParams {
     };
 };
 
-template<unsigned n>
-static void render_quad (const Ogre::TexturePtr &rtt, const Ogre::Vector4 &win, bool vpsz, const RenderQuadParams<n> &opts)
+// Must assign textures in alphabetical order by name in tex_binds
+static void render_quad (
+    GfxPipeline *p,
+    Ogre::Viewport *viewport,
+    GfxShader *shader,
+    const GfxMaterialTextureMap &texs,
+    const GfxShaderBindings &binds,
+    size_t num_texs,
+    Ogre::TexturePtr *tex_arr,  // array of length num_texs
+    Ogre::SceneBlendFactor target_blend)
 {
-    render_quad(rtt->getBuffer()->getRenderTarget(), win, vpsz, opts);
+    ogre_rs->_setViewport(viewport);
+    ogre_rs->_beginFrame();
+
+    GfxShaderGlobals globs = gfx_shader_globals_cam_ss(p, viewport);
+
+    shader->bindShader(
+        GfxShader::HUD, false, false, 0, globs,
+        Ogre::Matrix4::IDENTITY, nullptr, 0, 1, texs, binds);
+
+    ogre_rs->_setCullingMode(Ogre::CULL_NONE);
+    ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
+
+    for (unsigned i=0 ; i<num_texs ; ++i) {
+        unsigned index = NUM_GLOBAL_TEXTURES + i;
+        ogre_rs->_setTexture(index, true, tex_arr[i]);
+        ogre_rs->_setTextureUnitFiltering(index, Ogre::FT_MIN, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureUnitFiltering(index, Ogre::FT_MAG, Ogre::FO_LINEAR);
+        ogre_rs->_setTextureUnitFiltering(index, Ogre::FT_MIP, Ogre::FO_NONE);
+        Ogre::TextureUnitState::UVWAddressingMode am;
+        am.u = Ogre::TextureUnitState::TAM_CLAMP;
+        am.v = Ogre::TextureUnitState::TAM_CLAMP;
+        am.w = Ogre::TextureUnitState::TAM_CLAMP;
+        ogre_rs->_setTextureAddressingMode(index, am);
+    }
+
+    ogre_rs->_setCullingMode(Ogre::CULL_NONE);
+    ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
+    ogre_rs->_setSceneBlending(Ogre::SBF_ONE, target_blend);
+    ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+    ogre_rs->setStencilCheckEnabled(false);
+    ogre_rs->_setDepthBias(0, 0);
+
+
+    // render the quad
+    Ogre::RenderOperation op;
+    op.useIndexes = false;
+    op.vertexData = screen_quad_vdata;
+    op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+    ogre_rs->_render(op);
+
+    for (unsigned i=0 ; i<num_texs ; ++i)
+        ogre_rs->_disableTextureUnit(NUM_GLOBAL_TEXTURES + i);
+
+    ogre_rs->_endFrame();
+
 }
 
-template<unsigned n>
-static void render_quad (Ogre::RenderTarget *rt, const Ogre::Vector4 &win, bool vpsz, const RenderQuadParams<n> &opts)
+// Render onto the given RTT, set appropriate viewport_size and manage a
+// temporary viewport for this render.
+static void render_quad (
+    GfxPipeline *p,
+    Ogre::RenderTarget *rt,
+    const Ogre::Vector4 &win,
+    GfxShader *shader,
+    const GfxMaterialTextureMap &texs,
+    const GfxShaderBindings &binds,
+    size_t num_texs,
+    Ogre::TexturePtr *tex_arr,  // array of length num_texs
+    Ogre::SceneBlendFactor target_blend)
 {
     Ogre::Viewport *vp = rt->addViewport(NULL, 0, win.x, win.y, win.z, win.w);
-    if (vpsz) {
-        Ogre::Vector4 viewport_size(     vp->getActualWidth(),      vp->getActualHeight(),
-                                    1.0f/vp->getActualWidth(), 1.0f/vp->getActualHeight());
-        try_set_named_constant(opts.shader->getHackOgreFragmentProgram(), "viewport_size", viewport_size);
-    }
-    render_quad(vp, opts);
+    render_quad(p, vp, shader, texs, binds, num_texs, tex_arr, target_blend);
     rt->removeViewport(vp->getZOrder());
 }
 
-template<unsigned n>
-static void render_quad (Ogre::Viewport *viewport, const RenderQuadParams<n> &opts)
+// Render onto the given RTT
+static void render_quad (
+    GfxPipeline *p,
+    const Ogre::TexturePtr &rtt,
+    const Ogre::Vector4 &win,
+    GfxShader *shader,
+    const GfxMaterialTextureMap &texs,
+    const GfxShaderBindings &binds,
+    size_t num_texs,
+    Ogre::TexturePtr *tex_arr,  // array of length num_texs
+    Ogre::SceneBlendFactor target_blend)
 {
-        Ogre::HighLevelGpuProgramPtr vp = opts.shader->getHackOgreVertexProgram();
-        float render_target_flipping = viewport->getTarget()->requiresTextureFlipping() ? -1.0f : 1.0f;
-        try_set_named_constant(vp, "render_target_flipping", render_target_flipping);
-        if (d3d9) {
-            Ogre::Vector4 viewport_size(     viewport->getActualWidth(),      viewport->getActualHeight(),
-                                        1.0f/viewport->getActualWidth(), 1.0f/viewport->getActualHeight());
-            try_set_named_constant(vp, "viewport_size", viewport_size);
-        }
-
-        ogre_rs->_setViewport(viewport);
-        ogre_rs->_beginFrame();
-
-        ogre_rs->_setCullingMode(Ogre::CULL_NONE);
-        ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
-
-        for (unsigned i=0 ; i<n ; ++i) {
-            ogre_rs->_setTexture(i, true, opts.texs[i]);
-            ogre_rs->_setTextureUnitFiltering(i, Ogre::FT_MIN, Ogre::FO_LINEAR);
-            ogre_rs->_setTextureUnitFiltering(i, Ogre::FT_MAG, Ogre::FO_LINEAR);
-            ogre_rs->_setTextureUnitFiltering(i, Ogre::FT_MIP, Ogre::FO_NONE);
-            Ogre::TextureUnitState::UVWAddressingMode am;
-            am.u = Ogre::TextureUnitState::TAM_CLAMP;
-            am.v = Ogre::TextureUnitState::TAM_CLAMP;
-            am.w = Ogre::TextureUnitState::TAM_CLAMP;
-            ogre_rs->_setTextureAddressingMode(i, am);
-        }
-
-        ogre_rs->_setCullingMode(Ogre::CULL_NONE);
-        ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
-        ogre_rs->_setSceneBlending(Ogre::SBF_ONE, opts.targetBlend);
-        ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
-        ogre_rs->setStencilCheckEnabled(false);
-        ogre_rs->_setDepthBias(0, 0);
-
-
-        // render the quad
-        Ogre::RenderOperation op;
-        op.useIndexes = false;
-        op.vertexData = screen_quad_vdata;
-        op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
-        render_with_progs(opts.shader, op);
-
-        for (unsigned i=0 ; i<n ; ++i) ogre_rs->_disableTextureUnit(i);
-
-        ogre_rs->_endFrame();
-
+    render_quad(p, rtt->getBuffer()->getRenderTarget(), win,
+                 shader, texs, binds, num_texs, tex_arr, target_blend);
 }
 
 static void clear_rt (Ogre::RenderTarget *rt)
@@ -1029,6 +1074,10 @@ static void clear_rt (Ogre::RenderTarget *rt)
     rt->removeViewport(vp->getZOrder());
 }
 
+static void clear_rt (const Ogre::TexturePtr &rtt)
+{
+    return clear_rt(rtt->getBuffer()->getRenderTarget());
+}
 
 void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
 {
@@ -1091,35 +1140,23 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
         unsigned bloom_iterations = gfx_option(GFX_BLOOM_ITERATIONS);
         if (bloom_iterations == 0) {
 
-            get_compositor_tonemap()->validate();
-            auto fp = compositor_tonemap->getHackOgreFragmentProgram();
-            try_set_named_constant(fp, "global_exposure", to_ogre(global_exposure*opts.mask));
-            try_set_named_constant(fp, "global_saturation", global_saturation*opts.saturationMask);
-            if (colour_grade_lut == NULL) {
-                render_quad(targetViewport, RenderQuadParams<1>(compositor_tonemap, target_blend).tex(hdrFb[0]));
-            } else {
-                const Ogre::TexturePtr &lut = colour_grade_lut->getOgreTexturePtr();
-                render_quad(targetViewport, RenderQuadParams<2>(compositor_tonemap, target_blend).tex(hdrFb[0]).tex(lut));
-            }
+            // hdrFb[0] is an Ogre::TexturePtr and will never be a GfxDiskResource, so
+            // bind it explicitly with Ogre-level calls in render_quad.
+            GfxMaterialTextureMap texs;
+            texs["hdr"] = GfxMaterialTexture{nullptr , false, 0 };
+            GfxShaderBindings binds;
+            binds["hdr"] = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1,1,1,1);
+
+            render_quad(this, targetViewport, compositor_tonemap, texs, binds,
+                         1, &hdrFb[0], target_blend);
 
         } else {
 
-            float bloom_threshold = gfx_option(GFX_BLOOM_THRESHOLD);
-
-            get_compositor_bloom_filter_then_horz_blur()->validate();
-            auto bloom_filter_then_horz_blur = compositor_bloom_filter_then_horz_blur->getHackOgreFragmentProgram();
-            try_set_named_constant(bloom_filter_then_horz_blur, "bloom_threshold", bloom_threshold/global_exposure);
-
-            get_compositor_bloom_vert_blur()->validate();
-            auto bloom_vert_blur = compositor_bloom_vert_blur->getHackOgreFragmentProgram();
-
-            get_compositor_bloom_horz_blur()->validate();
-            auto bloom_horz_blur = compositor_bloom_horz_blur->getHackOgreFragmentProgram();
-
-            get_compositor_bloom_vert_blur_combine_and_tonemap()->validate();
-            auto bloom_vert_blur_combine_and_tonemap = compositor_bloom_vert_blur_combine_and_tonemap->getHackOgreFragmentProgram();
-            try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_exposure", to_ogre(global_exposure*opts.mask));
-            try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "global_saturation", global_saturation*opts.saturationMask);
+            GfxMaterialTextureMap texs;
+            texs["srcTex"] = GfxMaterialTexture{nullptr , false, 0 };
+            GfxShaderBindings binds;
+            binds["srcTex"] = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1,1,1,1);
+            binds["original"] = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1,1,1,1);
 
             // half_bloom = filter_then_horz_blur(raw)
             // loop 1..n-1 {
@@ -1130,27 +1167,27 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
 
             Ogre::Vector4 vp_dim(0,0,1,1);
 
-            try_set_named_constant(bloom_filter_then_horz_blur, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
-            render_quad(hdrFb[1], vp_dim, true, RenderQuadParams<1>(compositor_bloom_filter_then_horz_blur).tex(hdrFb[0]));
+            binds["bloomTexScale"] = GfxGslParam::float1(vp_dim.z);
+
+            render_quad(this, hdrFb[1], vp_dim, compositor_exposure_filter_then_horz_blur,
+                         texs, binds, 1, &hdrFb[0], Ogre::SBF_ZERO);
+
             for (unsigned i=1 ; i<bloom_iterations ; ++i) {
-                try_set_named_constant(bloom_vert_blur, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
-                clear_rt(hdrFb[2]->getBuffer()->getRenderTarget());
-                render_quad(hdrFb[2], vp_dim, true, RenderQuadParams<1>(compositor_bloom_vert_blur).tex(hdrFb[1]));
-                try_set_named_constant(bloom_horz_blur, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
+                clear_rt(hdrFb[2]);
+                render_quad(this, hdrFb[2], vp_dim, compositor_vert_blur,
+                             texs, binds, 1, &hdrFb[1], Ogre::SBF_ZERO);
                 vp_dim /= 2;
-                clear_rt(hdrFb[1]->getBuffer()->getRenderTarget());
-                render_quad(hdrFb[1], vp_dim, true, RenderQuadParams<1>(compositor_bloom_horz_blur).tex(hdrFb[2]));
+
+                clear_rt(hdrFb[1]);
+                render_quad(this, hdrFb[1], vp_dim, compositor_horz_blur,
+                             texs, binds, 1, &hdrFb[2], Ogre::SBF_ZERO);
+
+                binds["bloomTexScale"] = GfxGslParam::float1(vp_dim.z);
             }
-            try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "bloom_tex_scale", Ogre::Vector4(vp_dim.z, 0, 0, 0));
-            Ogre::Vector4 viewport_size(     targetViewport->getActualWidth(),      targetViewport->getActualHeight(),
-                                        1.0f/targetViewport->getActualWidth(), 1.0f/targetViewport->getActualHeight());
-            try_set_named_constant(bloom_vert_blur_combine_and_tonemap, "viewport_size", viewport_size);
-            if (colour_grade_lut == NULL) {
-                render_quad(targetViewport, RenderQuadParams<2>(compositor_bloom_vert_blur_combine_and_tonemap, target_blend).tex(hdrFb[1]).tex(hdrFb[0]));
-            } else {
-                const Ogre::TexturePtr &lut = colour_grade_lut->getOgreTexturePtr();
-                render_quad(targetViewport, RenderQuadParams<3>(compositor_bloom_vert_blur_combine_and_tonemap, target_blend).tex(hdrFb[1]).tex(hdrFb[0]).tex(lut));
-            }
+            // Note that hdrFb[0] is original, hdrFb[1] is srcTex, which are in alphabetical order.
+            texs["original"] = GfxMaterialTexture{nullptr , false, 0 };
+            render_quad(this, targetViewport, compositor_vert_blur_combine_tonemap,
+                         texs, binds, 2, &hdrFb[0], target_blend);
         }
     }
 
