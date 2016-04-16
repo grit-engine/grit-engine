@@ -1,6 +1,6 @@
 #!/bin/bash
 
-(cd ~/gritengine/grit_core/linux && make gsl.linux.x86_64) || exit 1
+make -C ../../.. gsl || exit 1
 
 
 TMP=$(tempfile)

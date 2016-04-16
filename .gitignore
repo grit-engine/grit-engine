@@ -1,0 +1,7 @@
+*~
+.*.swp
+build
+grit
+grit_col_conv
+gsl
+GritXMLConverter
