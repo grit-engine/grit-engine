@@ -1,18 +1,18 @@
 [submodule "dependencies/grit-bullet"]
 	path = dependencies/grit-bullet
-	url = git@github.com:sparkprime/grit-bullet.git
+	url = https://github.com/sparkprime/grit-bullet.git
 [submodule "dependencies/grit-lua"]
 	path = dependencies/grit-lua
-	url = git@github.com:sparkprime/grit-lua
+	url = https://github.com/sparkprime/grit-lua.git
 [submodule "dependencies/grit-util"]
 	path = dependencies/grit-util
-	url = git@github.com:sparkprime/grit-util
+	url = https://github.com/sparkprime/grit-util.git
 [submodule "dependencies/grit-ogre"]
 	path = dependencies/grit-ogre
-	url = git@github.com:sparkprime/grit-ogre.git
+	url = https://github.com/sparkprime/grit-ogre.git
 [submodule "dependencies/recastnavigation"]
 	path = dependencies/recastnavigation
-	url = git@github.com:recastnavigation/recastnavigation.git
+	url = https://github.com/recastnavigation/recastnavigation.git
 [submodule "dependencies/jsonxx"]
 	path = dependencies/jsonxx
-	url = git@github.com:hjiang/jsonxx.git
+	url = https://github.com/hjiang/jsonxx.git
