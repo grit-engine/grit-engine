@@ -155,23 +155,29 @@ LDLIBS= \
 	-lreadline \
 	-lm \
 
-GRIT_OBJS= \
-	$(addprefix build/,$(GRIT_WEAK_CPP_SRCS:%.cpp=%.weak_cpp_o)) \
-	$(addprefix build/,$(GRIT_WEAK_C_SRCS:%.c=%.weak_c_o)) \
-	$(addprefix build/,$(GRIT_CPP_SRCS:%.cpp=%.cpp_o)) \
-	$(addprefix build/,$(GRIT_C_SRCS:%.c=%.c_o)) \
+GRIT_TARGETS= \
+	$(addprefix build/,$(GRIT_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
+	$(addprefix build/,$(GRIT_WEAK_C_SRCS:%.c=%.weak_c)) \
+	$(addprefix build/,$(GRIT_CPP_SRCS)) \
+	$(addprefix build/,$(GRIT_C_SRCS)) \
 
-GSL_OBJS= \
-	$(addprefix build/engine/,$(GSL_STANDALONE_CPP_SRCS:%.cpp=%.cpp_o)) \
+GSL_TARGETS= \
+	$(addprefix build/engine/,$(GSL_STANDALONE_CPP_SRCS)) \
 
-COL_CONV_OBJS= \
-	$(addprefix build/engine/,$(COL_CONV_STANDALONE_CPP_SRCS:%.cpp=%.cpp_o)) \
+COL_CONV_TARGETS= \
+	$(addprefix build/engine/,$(COL_CONV_STANDALONE_CPP_SRCS)) \
 
-XMLCONVERTER_OBJS= \
-	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_WEAK_CPP_SRCS:%.cpp=%.weak_cpp_o)) \
-	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_WEAK_C_SRCS:%.c=%.weak_c_o)) \
-	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_CPP_SRCS:%.cpp=%.cpp_o)) \
-	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_C_SRCS:%.c=%.c_o)) \
+XMLCONVERTER_TARGETS= \
+	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
+	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_WEAK_C_SRCS:%.c=%.weak_c)) \
+	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_CPP_SRCS)) \
+	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_C_SRCS)) \
+
+ALL_TARGETS= \
+	$(GRIT_TARGETS) \
+	$(GSL_TARGETS) \
+	$(COL_CONV_TARGETS) \
+	$(XMLCONVERTER_TARGETS) \
 
 CODEGEN= \
     $(OPT) \
@@ -186,51 +192,52 @@ CODEGEN= \
 # Build rules
 # -----------
 
-COMPILING= echo "Compiling: [32m$<[0m"
-LINKING= echo "Linking: [1;32m$@[0m"
+COMPUTING_DEPENDENCIES= echo -e '\e[0mComputing dependencies: \e[33m$<\e[0m'
+COMPILING= echo -e '\e[0mCompiling: \e[32m$<\e[0m'
+LINKING= echo -e '\e[0mLinking: \e[1;32m$@\e[0m'
 
 
-build/%.cpp_o: %.cpp
+build/%.cpp.o: %.cpp
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) -c $(CODEGEN) -std=c++11 -pedantic -Wall -Wextra $(CFLAGS) $< -o $@
 
-build/%.c_o: %.c
+build/%.c.o: %.c
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
 	@$(CC) -c $(CODEGEN) -std=c99 -pedantic -Wall -Wextra $(CFLAGS) $< -o $@
 
-build/%.weak_cpp_o: %.cpp
+build/%.weak_cpp.o: %.cpp
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) -c $(CODEGEN) -std=c++11 $(CFLAGS) $< -o $@
 
 # Hack to also support dependencies that use .cc
-build/%.weak_cpp_o: %.cc
+build/%.weak_cpp.o: %.cc
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) -c $(CODEGEN) -std=c++11 $(CFLAGS) $< -o $@
 
-build/%.weak_c_o: %.c
+build/%.weak_c.o: %.c
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
 	@$(CC) -c $(CODEGEN) $(CFLAGS) $< -o $@
 
 all: grit GritXMLConverter
 
-grit: $(GRIT_OBJS)
+grit: $(addsuffix .o,$(GRIT_TARGETS))
 	@$(LINKING)
 	@$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-gsl: $(GSL_OBJS)
+gsl: $(addsuffix .o,$(GSL_TARGETS))
 	@$(LINKING)
 	@$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-grit_col_conv: $(COL_CONV_OBJS)
+grit_col_conv: $(addsuffix .o,$(COL_CONV_TARGETS))
 	@$(LINKING)
 	@$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-GritXMLConverter: $(XMLCONVERTER_OBJS)
+GritXMLConverter: $(addsuffix .o,$(XMLCONVERTER_TARGETS))
 	@$(LINKING)
 	@$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
@@ -239,15 +246,37 @@ GritXMLConverter: $(XMLCONVERTER_OBJS)
 # Dev stuff
 # ---------
 
-depend:
-	makedepend -f- $(CFLAGS) $(WEAK_CPP_SRCS) | sed 's|\([^.]*\)[.]o:|build/\1.weak_cpp_o:|g' > makedepend.mk
-	makedepend -f- $(CFLAGS) $(WEAK_C_SRCS) | sed 's|\([^.]*\)[.]o:|build/\1.weak_c_o:|g' >> makedepend.mk
-	makedepend -f- $(CFLAGS) $(CPP_SRCS) | sed 's|\([^.]*\)[.]o:|build/\1.cpp_o:|g' >> makedepend.mk
-	makedepend -f- $(CFLAGS) $(C_SRCS) | sed 's|\([^.]*\)[.]o:|build/\1.c_o:|g' >> makedepend.mk
+build/%.cpp.d: %.cpp
+	@$(COMPUTING_DEPENDENCIES)
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) -MM -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+
+build/%.c.d: %.c
+	@$(COMPUTING_DEPENDENCIES)
+	@mkdir -p $(shell dirname $@)
+	@$(CC) -MM -std=c99 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+
+build/%.weak_cpp.d: %.cpp
+	@$(COMPUTING_DEPENDENCIES)
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) -MM -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+
+# Hack to also support dependencies that use .cc
+build/%.weak_cpp.d: %.cc
+	@$(COMPUTING_DEPENDENCIES)
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) -MM -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+
+build/%.weak_c.d: %.c
+	@$(COMPUTING_DEPENDENCIES)
+	@mkdir -p $(shell dirname $@)
+	@$(CC) -MM $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+
+ALL_DEPS = $(addsuffix .d,$(ALL_TARGETS))
+depend: $(ALL_DEPS)
 
 
 clean:
-	rm -rfv luaimg build
+	rm -rfv grit gsl grit_col_conv GritXMLConverter build
 
--include makedepend.mk
-
+-include $(ALL_DEPS)
