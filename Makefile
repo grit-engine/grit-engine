@@ -234,7 +234,8 @@ build/%.weak_c.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@$(CC) -c $(CODEGEN) $(CFLAGS) $< -o $@
 
-all: extract grit gsl grit_col_conv GritXMLConverter
+ALL_EXECUTABLES= extract grit gsl grit_col_conv GritXMLConverter
+all: $(ALL_EXECUTABLES)
 
 extract: $(addsuffix .o,$(EXTRACT_TARGETS))
 	@$(LINKING)
@@ -294,6 +295,6 @@ clean_depend:
 	@echo Dependencies cleaned.
 
 clean:
-	rm -rfv extract grit gsl grit_col_conv GritXMLConverter build
+	rm -rfv $(ALL_EXECUTABLES) build
 
 -include $(ALL_DEPS)
