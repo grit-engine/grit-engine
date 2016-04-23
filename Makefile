@@ -223,7 +223,7 @@ build/%.weak_c.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@$(CC) -c $(CODEGEN) $(CFLAGS) $< -o $@
 
-all: grit GritXMLConverter
+all: grit gsl grit_col_conv GritXMLConverter
 
 grit: $(addsuffix .o,$(GRIT_TARGETS))
 	@$(LINKING)
