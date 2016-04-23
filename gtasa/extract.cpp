@@ -32,7 +32,7 @@
 #include "tex_dups.h"
 #include "dffread.h"
 #include "txdread.h"
-#include "physics/tcol_parser.h"
+//#include "physics/tcol_parser.h"
 #include "physics/bcol_parser.h"
 #include "col_parser.h"
 

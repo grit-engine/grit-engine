@@ -23,7 +23,7 @@
 
 #include <sstream>
 
-#include "../portable_io.h"
+#include <portable_io.h>
 
 #include "col_defaults.h"
 #include "bcol_parser.h"

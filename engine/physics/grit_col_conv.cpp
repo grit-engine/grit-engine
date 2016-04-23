@@ -32,7 +32,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
-#include "../portable_io.h"
+#include <portable_io.h>
 #include "tcol_parser.h"
 #include "bcol_parser.h"
 

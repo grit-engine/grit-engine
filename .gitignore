@@ -1,6 +1,7 @@
 *~
 .*.swp
 build
+extract
 grit
 grit_col_conv
 gsl

@@ -18,6 +18,7 @@ ARCH?= -march=native -mtune=native
 # -----------------
 
 include engine/grit.mk
+include gtasa/grit.mk
 
 include dependencies/grit-bullet/grit.mk
 include dependencies/grit-lua/grit.mk
@@ -100,7 +101,9 @@ GRIT_CPP_SRCS= \
 	$(addprefix engine/,$(ENGINE_CPP_SRCS)) \
 
 
+# TODO: remove EXTRACT_INCLUDE_DIRS from here, refactor to put stuff in dependencies/
 INCLUDE_DIRS= \
+    $(addprefix gtasa/,$(EXTRACT_INCLUDE_DIRS)) \
     $(addprefix dependencies/grit-bullet/,$(BULLET_INCLUDE_DIRS)) \
     $(addprefix dependencies/grit-lua/,$(LUA_INCLUDE_DIRS)) \
     $(addprefix dependencies/grit-ogre/,$(OGRE_INCLUDE_DIRS)) \
@@ -155,6 +158,16 @@ LDLIBS= \
 	-lreadline \
 	-lm \
 
+COL_CONV_TARGETS= \
+	$(addprefix build/engine/,$(COL_CONV_STANDALONE_CPP_SRCS)) \
+
+EXTRACT_TARGETS= \
+	$(addprefix build/gtasa/,$(EXTRACT_CPP_SRCS)) \
+	$(addprefix build/dependencies/grit-ogre/,$(OGRE_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
+	$(addprefix build/dependencies/grit-ogre/,$(OGRE_WEAK_C_SRCS:%.c=%.weak_c)) \
+	$(addprefix build/dependencies/grit-ogre/,$(OGRE_CPP_SRCS)) \
+	$(addprefix build/dependencies/grit-ogre/,$(OGRE_C_SRCS)) \
+
 GRIT_TARGETS= \
 	$(addprefix build/,$(GRIT_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
 	$(addprefix build/,$(GRIT_WEAK_C_SRCS:%.c=%.weak_c)) \
@@ -164,9 +177,6 @@ GRIT_TARGETS= \
 GSL_TARGETS= \
 	$(addprefix build/engine/,$(GSL_STANDALONE_CPP_SRCS)) \
 
-COL_CONV_TARGETS= \
-	$(addprefix build/engine/,$(COL_CONV_STANDALONE_CPP_SRCS)) \
-
 XMLCONVERTER_TARGETS= \
 	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
 	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_WEAK_C_SRCS:%.c=%.weak_c)) \
@@ -174,9 +184,10 @@ XMLCONVERTER_TARGETS= \
 	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_C_SRCS)) \
 
 ALL_TARGETS= \
+	$(COL_CONV_TARGETS) \
+	$(EXTRACT_TARGETS) \
 	$(GRIT_TARGETS) \
 	$(GSL_TARGETS) \
-	$(COL_CONV_TARGETS) \
 	$(XMLCONVERTER_TARGETS) \
 
 CODEGEN= \
@@ -223,7 +234,11 @@ build/%.weak_c.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@$(CC) -c $(CODEGEN) $(CFLAGS) $< -o $@
 
-all: grit gsl grit_col_conv GritXMLConverter
+all: extract grit gsl grit_col_conv GritXMLConverter
+
+extract: $(addsuffix .o,$(EXTRACT_TARGETS))
+	@$(LINKING)
+	@$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 grit: $(addsuffix .o,$(GRIT_TARGETS))
 	@$(LINKING)
@@ -273,10 +288,12 @@ build/%.weak_c.d: %.c
 	@$(CC) -MM $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
 
 ALL_DEPS = $(addsuffix .d,$(ALL_TARGETS))
-depend: $(ALL_DEPS)
 
+clean_depend:
+	@rm -f $(ALL_DEPS)
+	@echo Dependencies cleaned.
 
 clean:
-	rm -rfv grit gsl grit_col_conv GritXMLConverter build
+	rm -rfv extract grit gsl grit_col_conv GritXMLConverter build
 
 -include $(ALL_DEPS)

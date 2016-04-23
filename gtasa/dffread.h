@@ -27,7 +27,7 @@
 #include <vector>
 
 #include "ideread.h"
-#include "physics/tcol_parser.h"
+// #include "physics/tcol_parser.h"
 
 #include "col_parser.h"
 

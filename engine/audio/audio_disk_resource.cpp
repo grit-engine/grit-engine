@@ -21,7 +21,7 @@
 
 #include "audio_disk_resource.h"
 #include "audio.h"
-#include "../portable_io.h"
+#include <portable_io.h>
 #include "ogg_vorbis_decoder.h"
 
 void AudioDiskResource::loadImpl (void)
