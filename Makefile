@@ -2,6 +2,10 @@
 # Makefile for building luaimg
 # ============================
 
+# Disable  built-in rules, in particular they interfere with C++ headers that have no file
+# extension.
+.SUFFIXES:
+
 
 # -----------------------
 # User-overrideable parts
