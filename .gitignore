@@ -11,3 +11,5 @@ GritXMLConverter
 Debug
 Normal
 *.suo
+*.opensdf
+*.sdf
