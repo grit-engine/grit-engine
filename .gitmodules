@@ -19,3 +19,6 @@
 [submodule "dependencies/grit-freeimage"]
 	path = dependencies/grit-freeimage
 	url = https://github.com/sparkprime/grit-freeimage.git
+[submodule "dependencies/grit-windows-prebuilt-dependencies"]
+	path = dependencies/grit-windows-prebuilt-dependencies
+	url = https://github.com/sparkprime/grit-windows-prebuilt-dependencies.git

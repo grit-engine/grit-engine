@@ -6,3 +6,8 @@ grit
 grit_col_conv
 gsl
 GritXMLConverter
+
+# Visual Studio files
+Debug
+Normal
+*.suo

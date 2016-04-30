@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(OutDir)int\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <BuildLogFile>$(IntDir)\$(MSBuildProjectName).log</BuildLogFile>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;$(SolutionDir)dependencies\grit-windows-prebuilt-dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <CompileAsManaged>false</CompileAsManaged>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;NOMINMAX;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
+      <DisableSpecificWarnings>4355;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <StringPooling>true</StringPooling>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(DXSDK_DIR)Lib\x86;$(SolutionDir)\dependencies\grit-windows-prebuilt-dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>dxguid.lib;dinput8.lib;OPENGL32.lib;GLU32.lib;d3d9.lib;d3dx9.lib;dxerr.lib;openal32.lib;icudt.lib;icuin.lib;icuuc.lib;cg.lib;libogg_static.lib;libvorbisfile_static.lib;libvorbis_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

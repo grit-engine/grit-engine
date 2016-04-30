@@ -1,0 +1,184 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Normal|Win32">
+      <Configuration>Normal</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FD57655E-0527-4173-BADD-D8DA0E0EF531}</ProjectGuid>
+    <RootNamespace>grit_core</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\solution.props" />
+    <Import Project="..\solution_normal.props" />
+    <Import Project="..\dependencies\grit-bullet\grit-bullet.props" />
+    <Import Project="..\dependencies\quex-0.34.1\quex-0.34.1.props" />
+    <Import Project="..\dependencies\grit-lua\grit-lua.props" />
+    <Import Project="..\dependencies\grit-ogre\grit-ogre.props" />
+    <Import Project="..\dependencies\recastnavigation.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\solution.props" />
+    <Import Project="..\solution_debug.props" />
+    <Import Project="..\dependencies\grit-bullet\grit-bullet.props" />
+    <Import Project="..\dependencies\quex-0.34.1\quex-0.34.1.props" />
+    <Import Project="..\dependencies\grit-lua\grit-lua.props" />
+    <Import Project="..\dependencies\grit-ogre\grit-ogre.props" />
+    <Import Project="..\dependencies\recastnavigation.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <BuildLog />
+    <ClCompile>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(ProjectDir)src\win32\Resources.res;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">
+    <BuildLog />
+    <ClCompile />
+    <Link>
+      <AdditionalDependencies>$(ProjectDir)src\win32\Resources.res;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "$(SolutionDir)grit_core\media\Grit.dat"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\dependencies\grit-bullet\grit-bullet.vcxproj">
+      <Project>{589b7665-3757-4fd2-a33b-008e4af0e5db}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\dependencies\grit-lua\grit-lua.vcxproj">
+      <Project>{3c0ade66-31cb-42d5-8727-b1b792e19b42}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\dependencies\grit-ogre\grit-ogre.vcxproj">
+      <Project>{25549847-21c8-47eb-842d-6392f7e3fb77}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\dependencies\recastnavigation.vcxproj">
+      <Project>{c3782bb5-2225-4ac5-a6e4-a03d5688d5db}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\dependencies\util\colour_conversion.cpp" />
+    <ClCompile Include="..\dependencies\util\console.cpp" />
+    <ClCompile Include="..\dependencies\util\io_util.cpp" />
+    <ClCompile Include="..\dependencies\util\lua_stack.cpp" />
+    <ClCompile Include="..\dependencies\util\lua_utf8.cpp" />
+    <ClCompile Include="..\dependencies\util\lua_util.cpp" />
+    <ClCompile Include="..\dependencies\util\unicode_util.cpp" />
+    <ClCompile Include="..\dependencies\util\win32_sleep.cpp" />
+    <ClCompile Include="audio\audio.cpp" />
+    <ClCompile Include="audio\audio_disk_resource.cpp" />
+    <ClCompile Include="audio\lua_wrappers_audio.cpp" />
+    <ClCompile Include="audio\ogg_vorbis_decoder.cpp" />
+    <ClCompile Include="background_loader.cpp" />
+    <ClCompile Include="bullet_debug_drawer.cpp" />
+    <ClCompile Include="core_option.cpp" />
+    <ClCompile Include="dense_index_map.cpp" />
+    <ClCompile Include="disk_resource.cpp" />
+    <ClCompile Include="external_table.cpp" />
+    <ClCompile Include="gfx\gfx.cpp" />
+    <ClCompile Include="gfx\gfx_body.cpp" />
+    <ClCompile Include="gfx\gfx_decal.cpp" />
+    <ClCompile Include="gfx\gfx_fertile_node.cpp" />
+    <ClCompile Include="gfx\gfx_font.cpp" />
+    <ClCompile Include="gfx\gfx_gasoline.cpp" />
+    <ClCompile Include="gfx\gfx_gasoline_backend.cpp" />
+    <ClCompile Include="gfx\gfx_gasoline_backend_cg.cpp" />
+    <ClCompile Include="gfx\gfx_gasoline_backend_glsl.cpp" />
+    <ClCompile Include="gfx\gfx_gasoline_backend_gsl.cpp" />
+    <ClCompile Include="gfx\gfx_gasoline_parser.cpp" />
+    <ClCompile Include="gfx\gfx_gasoline_type_system.cpp" />
+    <ClCompile Include="gfx\gfx_instances.cpp" />
+    <ClCompile Include="gfx\gfx_light.cpp" />
+    <ClCompile Include="gfx\gfx_material.cpp" />
+    <ClCompile Include="gfx\gfx_node.cpp" />
+    <ClCompile Include="gfx\gfx_particle_system.cpp" />
+    <ClCompile Include="gfx\gfx_pipeline.cpp" />
+    <ClCompile Include="gfx\gfx_ranged_instances.cpp" />
+    <ClCompile Include="gfx\gfx_shader.cpp" />
+    <ClCompile Include="gfx\gfx_sky_body.cpp" />
+    <ClCompile Include="gfx\gfx_sky_material.cpp" />
+    <ClCompile Include="gfx\gfx_text_buffer.cpp" />
+    <ClCompile Include="gfx\gfx_disk_resource.cpp" />
+    <ClCompile Include="gfx\gfx_hud.cpp" />
+    <ClCompile Include="gfx\gfx_option.cpp" />
+    <ClCompile Include="gfx\lua_wrappers_gfx.cpp" />
+    <ClCompile Include="gfx\lua_wrappers_gpuprog.cpp" />
+    <ClCompile Include="gfx\lua_wrappers_material.cpp" />
+    <ClCompile Include="gfx\ray.cpp" />
+    <ClCompile Include="grit_class.cpp" />
+    <ClCompile Include="grit_object.cpp" />
+    <ClCompile Include="grit_lua_util.cpp" />
+    <ClCompile Include="input_filter.cpp" />
+    <ClCompile Include="ldbglue.cpp" />
+    <ClCompile Include="lua_wrappers_core.cpp" />
+    <ClCompile Include="lua_wrappers_disk_resource.cpp" />
+    <ClCompile Include="lua_wrappers_gritobj.cpp" />
+    <ClCompile Include="lua_wrappers_primitives.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="navigation\chunky_tri_mesh.cpp" />
+    <ClCompile Include="navigation\fastlz.cpp" />
+    <ClCompile Include="navigation\crowd_manager.cpp" />
+    <ClCompile Include="navigation\input_geom.cpp" />
+    <ClCompile Include="navigation\lua_wrappers_navigation.cpp" />
+    <ClCompile Include="navigation\mesh_loader_obj.cpp" />
+    <ClCompile Include="navigation\navigation.cpp" />
+    <ClCompile Include="navigation\navigation_interfaces.cpp" />
+    <ClCompile Include="navigation\navigation_manager.cpp" />
+    <ClCompile Include="net\lua_wrappers_net.cpp" />
+    <ClCompile Include="net\net.cpp" />
+    <ClCompile Include="net\net_address.cpp" />
+    <ClCompile Include="net\net_manager.cpp" />
+    <ClCompile Include="net\net_message.cpp" />
+    <ClCompile Include="path_util.cpp" />
+    <ClCompile Include="physics\bcol_parser.cpp" />
+    <ClCompile Include="physics\collision_mesh.cpp" />
+    <ClCompile Include="physics\lua_wrappers_physics.cpp" />
+    <ClCompile Include="physics\physical_material.cpp" />
+    <ClCompile Include="physics\physics_world.cpp" />
+    <ClCompile Include="physics\tcol_lexer-core-engine.cpp" />
+    <ClCompile Include="physics\tcol_lexer.cpp" />
+    <ClCompile Include="physics\tcol_parser.cpp" />
+    <ClCompile Include="streamer.cpp" />
+    <ClCompile Include="win32\keyboard_direct_input8.cpp" />
+    <ClCompile Include="win32\keyboard_win_api.cpp" />
+    <ClCompile Include="win32\mouse_direct_input8.cpp" />
+    <ClCompile Include="win32\win32_clipboard.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="input_filter.h" />
+    <ClInclude Include="net\lua_wrappers_net.h" />
+    <ClInclude Include="net\net_manager.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

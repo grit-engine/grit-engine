@@ -29,13 +29,13 @@
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\gritengine.props" />
-    <Import Project="..\gritengine_normal.props" />
+    <Import Project="..\solution.props" />
+    <Import Project="..\solution_normal.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\gritengine.props" />
-    <Import Project="..\gritengine_debug.props" />
+    <Import Project="..\solution.props" />
+    <Import Project="..\solution_debug.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -58,9 +58,6 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <BuildLog />
-    <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "$(SolutionDir)grit_core\media\Grit.exe"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="launcher.cpp" />
