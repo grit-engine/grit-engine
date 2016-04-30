@@ -28,14 +28,14 @@
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\solution.props" />
-    <Import Project="..\..\solution_normal.props" />
+    <Import Project="$(SolutionDir)\solution.props" />
+    <Import Project="$(SolutionDir)\solution_normal.props" />
     <Import Project="recastnavigation.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\solution.props" />
-    <Import Project="..\..\solution_debug.props" />
+    <Import Project="$(SolutionDir)\solution.props" />
+    <Import Project="$(SolutionDir)\solution_debug.props" />
     <Import Project="recastnavigation.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
