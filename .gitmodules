@@ -16,3 +16,6 @@
 [submodule "dependencies/jsonxx"]
 	path = dependencies/jsonxx
 	url = https://github.com/hjiang/jsonxx.git
+[submodule "dependencies/grit-freeimage"]
+	path = dependencies/grit-freeimage
+	url = https://github.com/sparkprime/grit-freeimage.git
