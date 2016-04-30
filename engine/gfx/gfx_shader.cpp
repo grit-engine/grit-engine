@@ -5,7 +5,7 @@
 #include <OgreCgProgram.h>
 
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 #include "gfx.h"
 #include "gfx_gasoline.h"

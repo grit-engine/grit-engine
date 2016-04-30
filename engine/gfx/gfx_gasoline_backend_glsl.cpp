@@ -18,7 +18,7 @@
  * THE SOFTWARE.
  */
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 #include "gfx_gasoline_backend.h"
 #include "gfx_gasoline_backend_cg.h"

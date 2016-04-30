@@ -33,7 +33,7 @@
 
 #include "../grit_object.h"
 #include "../main.h"
-#include "../centralised_log.h"
+#include <centralised_log.h>
 #include "../option.h"
 #include "../grit_lua_util.h"
 

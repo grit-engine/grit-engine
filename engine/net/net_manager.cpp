@@ -2,7 +2,7 @@
 
 #include <sleep.h>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 #include "../grit_lua_util.h"
 
 #include "net.h"

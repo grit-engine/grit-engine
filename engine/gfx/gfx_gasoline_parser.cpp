@@ -26,7 +26,7 @@
 
 #include <exception.h>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 #include "gfx_gasoline_parser.h"
 

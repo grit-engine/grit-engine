@@ -31,7 +31,7 @@ typedef std::vector<DiskResource*> DiskResources;
 
 #include <string>
 
-#include "centralised_log.h"
+#include <centralised_log.h>
 
 
 /** \file

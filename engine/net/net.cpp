@@ -1,6 +1,6 @@
 #include <sleep.h>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 #include "net.h"
 
 #include "net_manager.h"

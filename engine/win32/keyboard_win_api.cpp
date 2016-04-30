@@ -25,7 +25,7 @@
 #include <unicode_util.h>
 
 #include "keyboard_win_api.h"
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 typedef std::map<HWND, KeyboardWinAPI*> WindowMap;
 static WindowMap wmap;

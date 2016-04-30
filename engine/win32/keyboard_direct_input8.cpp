@@ -23,7 +23,7 @@
 #include <iostream>
 
 #include "keyboard_direct_input8.h"
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 
 #define BUFFSZ 128

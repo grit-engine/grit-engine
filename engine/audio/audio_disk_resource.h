@@ -28,7 +28,7 @@ class AudioDiskResource;
 
 #include <OgreResourceGroupManager.h>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 #include "../background_loader.h"
 
 /** A disk resource that represents a sound file on disk.  Currently only .wav is supported.  Can be stereo or mono (detected at load time).

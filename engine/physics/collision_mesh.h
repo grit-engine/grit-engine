@@ -32,7 +32,7 @@ class btCompoundShape;
 
 #include <sleep.h>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 #include "../disk_resource.h"
 #include "../shared_ptr.h"
 

@@ -33,7 +33,7 @@ class GfxColourGradeLUTDiskResource;
 
 #include <math_util.h>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 #include "../background_loader.h"
 
 /** Representation for Ogre resources.  Just hold the name, leave the rest to subclasses

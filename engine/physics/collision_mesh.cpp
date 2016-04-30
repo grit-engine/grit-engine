@@ -31,7 +31,7 @@
 #include <btBulletCollisionCommon.h>
 #include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 #include "../path_util.h"
 
 #include "collision_mesh.h"

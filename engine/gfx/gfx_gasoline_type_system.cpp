@@ -20,7 +20,7 @@
 
 #include <cstdlib>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 #include "gfx_gasoline_parser.h"
 #include "gfx_gasoline_type_system.h"

@@ -37,7 +37,7 @@
 
 #include "clipboard.h"
 
-#include "centralised_log.h"
+#include <centralised_log.h>
 #include "core_option.h"
 #include "grit_lua_util.h"
 #include "lua_wrappers_core.h"

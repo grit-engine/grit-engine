@@ -42,7 +42,7 @@
 #include "mouse.h"
 #include "background_loader.h"
 #include "clipboard.h"
-#include "centralised_log.h"
+#include <centralised_log.h>
 #include "main.h"
 
 #include "gfx/gfx_disk_resource.h"

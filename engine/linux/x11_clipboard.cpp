@@ -25,7 +25,7 @@
 #include <X11/Xatom.h>
 
 #include "../clipboard.h"
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 static Display *display = NULL;
 Window window = None;

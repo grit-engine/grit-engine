@@ -27,7 +27,7 @@
 #include <OgreRoot.h>
 
 #include "bullet_debug_drawer.h"
-#include "centralised_log.h"
+#include <centralised_log.h>
 
 #include "gfx/gfx.h"
 #include "gfx/gfx_internal.h"

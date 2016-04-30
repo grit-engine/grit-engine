@@ -23,7 +23,7 @@
 
 #include "mouse_x11.h"
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 MouseX11::MouseX11(size_t window)
 {

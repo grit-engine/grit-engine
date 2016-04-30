@@ -28,7 +28,7 @@ extern "C" {
         #include <lualib.h>
 }
 
-#include "centralised_log.h"
+#include <centralised_log.h>
 
 /** A smart pointer that holds a pointer to an object on the lua heap.  The
  * smarts here are to do with ensuring lua GC works correctly, using the Lua

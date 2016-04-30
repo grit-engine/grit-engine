@@ -35,7 +35,7 @@ typedef fast_erase_vector<Demand*> Demands;
 #include <mutex>
 #include <thread>
 
-#include "centralised_log.h"
+#include <centralised_log.h>
 #include "disk_resource.h"
 
 /** A least recently used queue, used to select resources to unload in the

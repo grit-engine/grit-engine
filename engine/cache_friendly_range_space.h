@@ -31,7 +31,7 @@ template <typename T> class CacheFriendlyRangeSpace;
 #include <cmath>
 
 
-#include "centralised_log.h"
+#include <centralised_log.h>
 
 template <typename T>
 class CacheFriendlyRangeSpace {

@@ -21,7 +21,7 @@
 
 #include <map>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 #include "../shared_ptr.h"
 
 class RigidBody;

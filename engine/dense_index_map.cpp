@@ -23,7 +23,7 @@
 #include <sstream>
 
 #include "dense_index_map.h"
-#include "centralised_log.h"
+#include <centralised_log.h>
 
 unsigned DenseIndexMap::reserve (unsigned new_capacity)
 {

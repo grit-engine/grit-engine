@@ -25,7 +25,7 @@
 #include <unicode_util.h>
 
 #include "keyboard_x11.h"
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 KeyboardX11::KeyboardX11 (size_t window)
       : focussed(true)

@@ -36,7 +36,7 @@ template <typename T> class CacheFriendlyRangeSpaceSIMD;
 
 #include "sse_allocator.h"
 
-#include "centralised_log.h"
+#include <centralised_log.h>
 
 class SIMDVector4 {
 

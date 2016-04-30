@@ -23,7 +23,7 @@
 #include <OgreCgProgram.h>
 #include <OgreGLSLProgram.h>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 #include "../path_util.h"
 
 #include "lua_wrappers_gfx.h"

@@ -25,7 +25,7 @@
 #include <math_util.h>
 
 #include "../path_util.h"
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 #include "tcol_lexer"
 #include "tcol_parser.h"

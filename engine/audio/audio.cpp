@@ -22,7 +22,7 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 #include "../vect_util.h"
 #include "../option.h"
 

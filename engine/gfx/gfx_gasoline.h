@@ -28,7 +28,7 @@
 
 #include <math_util.h>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 #ifndef GFX_GASOLINE_H
 #define GFX_GASOLINE_H

@@ -28,7 +28,7 @@
 #include <OgreOptimisedUtil.h>
 #include <OgreSubMesh.h>
 
-#include "../centralised_log.h"
+#include <centralised_log.h>
 
 #include "gfx_internal.h"
 

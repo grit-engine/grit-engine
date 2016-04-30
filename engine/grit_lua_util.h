@@ -29,7 +29,7 @@ extern "C" {
 
 #include <OgreException.h>
 
-#include "centralised_log.h"
+#include <centralised_log.h>
 #include <lua_util.h>
 #include <lua_wrappers_common.h>
 
