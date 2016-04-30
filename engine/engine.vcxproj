@@ -58,18 +58,15 @@
     <ClCompile>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)src\win32\Resources.res;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)\win32\Resources.res;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">
     <BuildLog />
     <ClCompile />
     <Link>
-      <AdditionalDependencies>$(ProjectDir)src\win32\Resources.res;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)\win32\Resources.res;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "$(SolutionDir)grit_core\media\Grit.dat"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ProjectReference Include="..\dependencies\grit-bullet\grit-bullet.vcxproj">
