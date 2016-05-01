@@ -1,0 +1,8 @@
+No hardware pcf
+No depth-only shadow maps
+No 3dc
+Hardware gamma corrected textures are broken in gl
+Vertex attributes can only be float if using shaders
+Performance problems with large numbers of batches
+Compositor bug, see broken.program
+Cannot use MRT with different formats
