@@ -37,6 +37,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "engine", "engine\engine.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GritXMLConverter", "dependencies\grit-ogre\GritXMLConverter.vcxproj", "{194226D7-E1B0-470C-980D-54BA3BC44003}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "extract", "gtasa\extract.vcxproj", "{6753DB1A-C006-4C70-9FA0-97390152AC43}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -111,6 +113,10 @@ Global
 		{194226D7-E1B0-470C-980D-54BA3BC44003}.Debug|Win32.Build.0 = Debug|Win32
 		{194226D7-E1B0-470C-980D-54BA3BC44003}.Normal|Win32.ActiveCfg = Normal|Win32
 		{194226D7-E1B0-470C-980D-54BA3BC44003}.Normal|Win32.Build.0 = Normal|Win32
+		{6753DB1A-C006-4C70-9FA0-97390152AC43}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6753DB1A-C006-4C70-9FA0-97390152AC43}.Debug|Win32.Build.0 = Debug|Win32
+		{6753DB1A-C006-4C70-9FA0-97390152AC43}.Normal|Win32.ActiveCfg = Normal|Win32
+		{6753DB1A-C006-4C70-9FA0-97390152AC43}.Normal|Win32.Build.0 = Normal|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
