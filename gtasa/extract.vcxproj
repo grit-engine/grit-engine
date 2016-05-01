@@ -31,15 +31,17 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)\solution.props" />
     <Import Project="$(SolutionDir)\solution_normal.props" />
-    <Import Project="..\dependencies\grit-ogre\grit-ogre.props" />
-    <Import Project="..\dependencies\quex-0.34.1\quex-0.34.1.props" />
+    <Import Project="$(SolutionDir)\dependencies\grit-ogre\grit-ogre.props" />
+    <Import Project="$(SolutionDir)\dependencies\grit-util\grit-util.props" />
+    <Import Project="$(SolutionDir)\dependencies\quex-0.34.1\quex-0.34.1.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)\solution.props" />
     <Import Project="$(SolutionDir)\solution_debug.props" />
-    <Import Project="..\dependencies\grit-ogre\grit-ogre.props" />
-    <Import Project="..\dependencies\quex-0.34.1\quex-0.34.1.props" />
+    <Import Project="$(SolutionDir)\dependencies\grit-ogre\grit-ogre.props" />
+    <Import Project="$(SolutionDir)\dependencies\grit-util\grit-util.props" />
+    <Import Project="$(SolutionDir)\dependencies\quex-0.34.1\quex-0.34.1.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -52,13 +54,13 @@
     </Link>
     <BuildLog />
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\grit_core\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">
     <BuildLog />
     <Link>
-      <AdditionalDependencies>$(ProjectDir)src\Resources.res;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)Resources.res;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <BuildLog />
     <ClCompile>
@@ -77,11 +79,11 @@
     <ClInclude Include="src\txdread.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\dependencies\bullet.vcxproj">
+    <ProjectReference Include="..\dependencies\grit-bullet\grit-bullet.vcxproj">
       <Project>{589b7665-3757-4fd2-a33b-008e4af0e5db}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="..\dependencies\ogre.vcxproj">
+    <ProjectReference Include="..\dependencies\grit-ogre\grit-ogre.vcxproj">
       <Project>{25549847-21c8-47eb-842d-6392f7e3fb77}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
