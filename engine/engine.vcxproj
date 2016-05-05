@@ -132,7 +132,6 @@
     <ClCompile Include="gfx\lua_wrappers_gfx.cpp" />
     <ClCompile Include="gfx\lua_wrappers_gpuprog.cpp" />
     <ClCompile Include="gfx\lua_wrappers_material.cpp" />
-    <ClCompile Include="gfx\ray.cpp" />
     <ClCompile Include="grit_class.cpp" />
     <ClCompile Include="grit_object.cpp" />
     <ClCompile Include="grit_lua_util.cpp" />

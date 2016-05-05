@@ -24,7 +24,6 @@
 #include <ctime>
 
 #include <OgreException.h>
-#include <OgreTimer.h>
 #include <OgreResourceGroupManager.h>
 
 #include <LinearMath/btGeometryUtil.h>
