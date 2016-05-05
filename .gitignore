@@ -1,5 +1,11 @@
+# Put SVN in media
+media
+
+* Text editor temporary files
 *~
 .*.swp
+
+# Linux build files
 build
 extract
 grit
