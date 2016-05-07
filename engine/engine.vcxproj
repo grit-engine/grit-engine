@@ -97,6 +97,7 @@
     <ClCompile Include="..\dependencies\grit-util\win32_sleep.cpp" />
     <ClCompile Include="..\dependencies\stdafx\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="audio\audio.cpp" />
     <ClCompile Include="audio\audio_disk_resource.cpp" />

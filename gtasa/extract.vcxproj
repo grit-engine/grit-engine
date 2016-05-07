@@ -93,6 +93,7 @@
   <ItemGroup>
     <ClCompile Include="..\dependencies\stdafx\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\engine\physics\bcol_parser.cpp" />
     <ClCompile Include="..\engine\physics\tcol_parser.cpp" />
