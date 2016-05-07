@@ -60,6 +60,7 @@ files.  They are structured as follows:
   same for all object files live here.
 * `solution_normal.props`: Additional options when compiling in normal mode.  Options that are the
   same for all object files live here.
+* `pch.props`: Options for enabling the precompiled header, used for top-level apps.
 * `path/to/my-project/my-project.vcxproj`: An executable or library to build.  Build options that
   are specific to the library itself (like warning levels) live here.
 * `path/to/my-project/my-project.props`: Build options required by clients of a library and the
