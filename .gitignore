@@ -16,6 +16,7 @@ GritXMLConverter
 # Visual Studio files
 Debug
 Normal
+ipch
 *.suo
 *.opensdf
 *.sdf
