@@ -28,6 +28,31 @@ RECAST_WEAK_CPP_SRCS= \
 	Recast/Source/RecastRasterization.cpp \
 	Recast/Source/RecastRegion.cpp \
 
+RECAST_INCLUDE_SRCS= \
+	DetourCrowd/Include/DetourPathCorridor.h \
+	DetourCrowd/Include/DetourLocalBoundary.h \
+	DetourCrowd/Include/DetourProximityGrid.h \
+	DetourCrowd/Include/DetourCrowd.h \
+	DetourCrowd/Include/DetourPathQueue.h \
+	DetourCrowd/Include/DetourObstacleAvoidance.h \
+	DetourTileCache/Include/DetourTileCacheBuilder.h \
+	DetourTileCache/Include/DetourTileCache.h \
+	Recast/Include/RecastAssert.h \
+	Recast/Include/RecastAlloc.h \
+	Recast/Include/Recast.h \
+	DebugUtils/Include/DebugDraw.h \
+	DebugUtils/Include/RecastDump.h \
+	DebugUtils/Include/RecastDebugDraw.h \
+	DebugUtils/Include/DetourDebugDraw.h \
+	Detour/Include/DetourNavMesh.h \
+	Detour/Include/DetourStatus.h \
+	Detour/Include/DetourCommon.h \
+	Detour/Include/DetourAlloc.h \
+	Detour/Include/DetourNavMeshBuilder.h \
+	Detour/Include/DetourMath.h \
+	Detour/Include/DetourAssert.h \
+	Detour/Include/DetourNavMeshQuery.h \
+	Detour/Include/DetourNode.h \
 
 RECAST_INCLUDE_DIRS= \
 	DebugUtils/Include \

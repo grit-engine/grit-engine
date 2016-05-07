@@ -104,6 +104,20 @@ GRIT_CPP_SRCS= \
     $(VORBIS_CPP_SRCS) \
 	$(addprefix engine/,$(ENGINE_CPP_SRCS)) \
 
+GRIT_INCLUDE_SRCS= \
+    $(addprefix dependencies/grit-bullet/,$(BULLET_INCLUDE_SRCS)) \
+    $(addprefix dependencies/grit-lua/,$(LUA_INCLUDE_SRCS)) \
+    $(addprefix dependencies/grit-ogre/,$(OGRE_INCLUDE_SRCS)) \
+    $(addprefix dependencies/grit-util/,$(UTIL_INCLUDE_SRCS)) \
+    $(addprefix dependencies/jsonxx/,$(JSONXX_INCLUDE_SRCS)) \
+    $(addprefix dependencies/quex-0.34.1/,$(QUEX_INCLUDE_SRCS)) \
+    $(addprefix dependencies/recastnavigation/,$(RECAST_INCLUDE_SRCS)) \
+    $(FREEIMAGE_INCLUDE_SRCS) \
+    $(ICU_INCLUDE_SRCS) \
+    $(OPENAL_INCLUDE_SRCS) \
+    $(VORBIS_INCLUDE_SRCS) \
+	$(addprefix engine/,$(ENGINE_INCLUDE_SRCS)) \
+
 
 # TODO: remove EXTRACT_INCLUDE_DIRS from here, refactor to put stuff in dependencies/
 INCLUDE_DIRS= \
@@ -162,37 +176,37 @@ LDLIBS= \
 	-lreadline \
 	-lm \
 
-COL_CONV_TARGETS= \
+COL_CONV_OBJECTS= \
 	$(addprefix build/engine/,$(COL_CONV_STANDALONE_CPP_SRCS)) \
 
-EXTRACT_TARGETS= \
+EXTRACT_OBJECTS= \
 	$(addprefix build/gtasa/,$(EXTRACT_CPP_SRCS)) \
 	$(addprefix build/dependencies/grit-ogre/,$(OGRE_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
 	$(addprefix build/dependencies/grit-ogre/,$(OGRE_WEAK_C_SRCS:%.c=%.weak_c)) \
 	$(addprefix build/dependencies/grit-ogre/,$(OGRE_CPP_SRCS)) \
 	$(addprefix build/dependencies/grit-ogre/,$(OGRE_C_SRCS)) \
 
-GRIT_TARGETS= \
+GRIT_OBJECTS= \
 	$(addprefix build/,$(GRIT_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
 	$(addprefix build/,$(GRIT_WEAK_C_SRCS:%.c=%.weak_c)) \
 	$(addprefix build/,$(GRIT_CPP_SRCS)) \
 	$(addprefix build/,$(GRIT_C_SRCS)) \
 
-GSL_TARGETS= \
+GSL_OBJECTS= \
 	$(addprefix build/engine/,$(GSL_STANDALONE_CPP_SRCS)) \
 
-XMLCONVERTER_TARGETS= \
+XMLCONVERTER_OBJECTS= \
 	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
 	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_WEAK_C_SRCS:%.c=%.weak_c)) \
 	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_CPP_SRCS)) \
 	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_C_SRCS)) \
 
-ALL_TARGETS= \
-	$(COL_CONV_TARGETS) \
-	$(EXTRACT_TARGETS) \
-	$(GRIT_TARGETS) \
-	$(GSL_TARGETS) \
-	$(XMLCONVERTER_TARGETS) \
+ALL_OBJECTS= \
+	$(COL_CONV_OBJECTS) \
+	$(EXTRACT_OBJECTS) \
+	$(GRIT_OBJECTS) \
+	$(GSL_OBJECTS) \
+	$(XMLCONVERTER_OBJECTS) \
 
 CODEGEN= \
     $(OPT) \
@@ -208,9 +222,9 @@ CODEGEN= \
 # Build rules
 # -----------
 
-PRECOMPILED_HEADER= echo -e '\e[0mPrecompiling header: \e[1;34m$<\e[0m'
-COMPUTING_DEPENDENCIES= echo -e '\e[0mComputing dependencies: \e[33m$<\e[0m'
-COMPILING= echo -e '\e[0mCompiling: \e[32m$<\e[0m'
+PRECOMPILED_HEADER= echo -e '\e[0mPrecompiling header: \e[1;34m$@\e[0m'
+COMPUTING_DEPENDENCIES= echo -e '\e[0mComputing dependencies: \e[33m$@\e[0m'
+COMPILING= echo -e '\e[0mCompiling: \e[32m$@\e[0m'
 LINKING= echo -e '\e[0mLinking: \e[1;32m$@\e[0m'
 ALL_EXECUTABLES= extract grit gsl grit_col_conv GritXMLConverter
 
@@ -252,23 +266,23 @@ build/%.weak_c.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@$(CC) -c $(CODEGEN) $(CFLAGS) $< -o $@
 
-extract: $(addsuffix .o,$(EXTRACT_TARGETS))
+extract: $(addsuffix .o,$(EXTRACT_OBJECTS))
 	@$(LINKING)
 	@$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-grit: $(addsuffix .o,$(GRIT_TARGETS))
+grit: $(addsuffix .o,$(GRIT_OBJECTS))
 	@$(LINKING)
 	@$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-gsl: $(addsuffix .o,$(GSL_TARGETS))
+gsl: $(addsuffix .o,$(GSL_OBJECTS))
 	@$(LINKING)
 	@$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-grit_col_conv: $(addsuffix .o,$(COL_CONV_TARGETS))
+grit_col_conv: $(addsuffix .o,$(COL_CONV_OBJECTS))
 	@$(LINKING)
 	@$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-GritXMLConverter: $(addsuffix .o,$(XMLCONVERTER_TARGETS))
+GritXMLConverter: $(addsuffix .o,$(XMLCONVERTER_OBJECTS))
 	@$(LINKING)
 	@$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
@@ -282,6 +296,11 @@ build/stdafx.h.gch.d: dependencies/stdafx/stdafx.h
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) -MM -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%)
 	
+build/%.h.d: %.h
+	@$(COMPUTING_DEPENDENCIES)
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) -MM -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.h.d=%.h)
+
 build/%.cpp.d: %.cpp
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
@@ -308,7 +327,7 @@ build/%.weak_c.d: %.c
 	@mkdir -p $(shell dirname $@)
 	@$(CC) -MM $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
 
-ALL_DEPS = $(addsuffix .d,$(ALL_TARGETS))
+ALL_DEPS = $(addsuffix .o.d,$(ALL_OBJECTS)) $(GRIT_INCLUDE_SRCS:%=build/%.d)
 
 clean_depend:
 	@rm -f $(ALL_DEPS)
