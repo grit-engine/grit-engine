@@ -28,8 +28,6 @@
 #include <unordered_map>
 #include <string>
 
-#include <OgreHighLevelGpuProgram.h>
-
 #include <math_util.h>
 
 #include "../shared_ptr.h"

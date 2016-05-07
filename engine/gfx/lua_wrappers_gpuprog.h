@@ -19,8 +19,6 @@
  * THE SOFTWARE.
  */
 
-#include <OgreGpuProgram.h>
-
 #include "../grit_lua_util.h"
 
 

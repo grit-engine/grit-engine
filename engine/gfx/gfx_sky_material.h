@@ -27,8 +27,6 @@ typedef std::vector<GfxSkyMaterial*> GfxSkyMaterials;
 #ifndef GFX_SKY_MATERIAL_H
 #define GFX_SKY_MATERIAL_H
 
-#include <OgreMaterial.h>
-
 #include "gfx_material.h"
 #include "gfx_internal.h"
 #include "gfx_gasoline.h"

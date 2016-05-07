@@ -28,8 +28,6 @@ typedef SharedPtr<GfxInstances> GfxInstancesPtr;
 #ifndef GFX_INSTANCES_H
 #define GFX_INSTANCES_H
 
-#include <OgreMovableObject.h>
-
 #include "../dense_index_map.h"
 
 #include "gfx_disk_resource.h"

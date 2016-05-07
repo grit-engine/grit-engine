@@ -19,16 +19,6 @@
  * THE SOFTWARE.
  */
 
-#include <OgreVector3.h>
-#include <OgreVector4.h>
-
-#include <OgreCgProgram.h>
-#include <OgreGLSLProgram.h>
-#include <OgreGLSLGpuProgram.h>
-#ifdef WIN32
-#include <OgreD3D9HLSLProgram.h>
-#endif
-
 #include "lua_wrappers_gpuprog.h"
 
 void push_gpuprog (lua_State *L, const Ogre::HighLevelGpuProgramPtr &self)

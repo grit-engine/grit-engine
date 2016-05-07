@@ -27,8 +27,6 @@ typedef SharedPtr<GfxBody> GfxBodyPtr;
 #ifndef GfxBody_h
 #define GfxBody_h
 
-#include <OgreMesh.h>
-
 #include "gfx_fertile_node.h"
 #include "gfx_material.h"
 

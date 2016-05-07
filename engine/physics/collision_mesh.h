@@ -28,8 +28,6 @@ class btCompoundShape;
 
 #include <string>
 
-#include <OgreDataStream.h>
-
 #include <sleep.h>
 
 #include <centralised_log.h>

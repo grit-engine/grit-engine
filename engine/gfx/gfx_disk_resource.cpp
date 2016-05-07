@@ -19,13 +19,6 @@
  * THE SOFTWARE.
  */
 
-#include <OgreMesh.h>
-#include <OgreMeshManager.h>
-#include <OgreTexture.h>
-#include <OgreTextureManager.h>
-#include <OgreMeshSerializer.h>
-#include <OgreMeshFileFormat.h>
-
 #include "gfx_disk_resource.h"
 #include "gfx_internal.h"
 #include "gfx_material.h"

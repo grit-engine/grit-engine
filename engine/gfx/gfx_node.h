@@ -28,8 +28,6 @@ typedef SharedPtr<GfxFertileNode> GfxNodePtr;
 #ifndef GfxLeaf_h
 #define GfxLeaf_h
 
-#include <OgreSceneNode.h>
-
 #include <math_util.h>
 
 #include "../vect_util.h"

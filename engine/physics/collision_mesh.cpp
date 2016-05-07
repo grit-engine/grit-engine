@@ -23,9 +23,6 @@
 #include <cstdlib>
 #include <ctime>
 
-#include <OgreException.h>
-#include <OgreResourceGroupManager.h>
-
 #include <LinearMath/btGeometryUtil.h>
 #include <btBulletCollisionCommon.h>
 #include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>

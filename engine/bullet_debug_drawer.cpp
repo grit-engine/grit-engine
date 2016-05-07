@@ -22,10 +22,6 @@
 // Based on http://www.ogre3d.org/wiki/index.php/BulletDebugDrawer
 // copyright ownership unknown
 
-#include <OgreSceneManager.h>
-#include <OgreMaterialManager.h>
-#include <OgreRoot.h>
-
 #include "bullet_debug_drawer.h"
 #include <centralised_log.h>
 

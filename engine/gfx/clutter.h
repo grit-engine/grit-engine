@@ -27,12 +27,6 @@ class ClutterFactory;
 
 #include <cfloat>
 
-#include <OgreMovableObject.h>
-#include <OgreVertexIndexData.h>
-#include <OgreMaterial.h>
-#include <OgreMesh.h>
-
-
 #include <math_util.h>
 
 #include "../cache_friendly_range_space_simd.h"

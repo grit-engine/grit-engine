@@ -197,6 +197,7 @@ ALL_TARGETS= \
 CODEGEN= \
     $(OPT) \
     $(ARCH) \
+	-Winvalid-pch \
     -Wno-type-limits \
     -Wno-deprecated \
     -g \
@@ -207,39 +208,49 @@ CODEGEN= \
 # Build rules
 # -----------
 
+PRECOMPILED_HEADER= echo -e '\e[0mPrecompiling header: \e[1;34m$<\e[0m'
 COMPUTING_DEPENDENCIES= echo -e '\e[0mComputing dependencies: \e[33m$<\e[0m'
 COMPILING= echo -e '\e[0mCompiling: \e[32m$<\e[0m'
 LINKING= echo -e '\e[0mLinking: \e[1;32m$@\e[0m'
+ALL_EXECUTABLES= extract grit gsl grit_col_conv GritXMLConverter
 
+all: $(ALL_EXECUTABLES)
 
-build/%.cpp.o: %.cpp
+# Precopmiled header
+build/stdafx.h.gch: dependencies/stdafx/stdafx.h
+	@$(PRECOMPILED_HEADER)
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) -c $(CODEGEN) -std=c++11 $(CFLAGS) $< -o $@
+	
+build/stdafx.h: dependencies/stdafx/stdafx.h
+	cp $< $@
+	
+
+build/%.cpp.o: %.cpp build/stdafx.h build/stdafx.h.gch
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -c $(CODEGEN) -std=c++11 -pedantic -Wall -Wextra $(CFLAGS) $< -o $@
+	@$(CXX) -c $(CODEGEN) -std=c++11 -pedantic -Wall -Wextra -include build/stdafx.h $(CFLAGS) $< -o $@
 
 build/%.c.o: %.c
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
 	@$(CC) -c $(CODEGEN) -std=c99 -pedantic -Wall -Wextra $(CFLAGS) $< -o $@
 
-build/%.weak_cpp.o: %.cpp
+build/%.weak_cpp.o: %.cpp build/stdafx.h build/stdafx.h.gch
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -c $(CODEGEN) -std=c++11 $(CFLAGS) $< -o $@
+	@$(CXX) -c $(CODEGEN) -std=c++11 -include build/stdafx.h $(CFLAGS) $< -o $@
 
 # Hack to also support dependencies that use .cc
-build/%.weak_cpp.o: %.cc
+build/%.weak_cpp.o: %.cc build/stdafx.h build/stdafx.h.gch
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -c $(CODEGEN) -std=c++11 $(CFLAGS) $< -o $@
+	@$(CXX) -c $(CODEGEN) -std=c++11 -include build/stdafx.h $(CFLAGS) $< -o $@
 
 build/%.weak_c.o: %.c
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
 	@$(CC) -c $(CODEGEN) $(CFLAGS) $< -o $@
-
-ALL_EXECUTABLES= extract grit gsl grit_col_conv GritXMLConverter
-all: $(ALL_EXECUTABLES)
 
 extract: $(addsuffix .o,$(EXTRACT_TARGETS))
 	@$(LINKING)
@@ -266,6 +277,11 @@ GritXMLConverter: $(addsuffix .o,$(XMLCONVERTER_TARGETS))
 # Dev stuff
 # ---------
 
+build/stdafx.h.gch.d: dependencies/stdafx/stdafx.h
+	@$(COMPUTING_DEPENDENCIES)
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) -MM -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%)
+	
 build/%.cpp.d: %.cpp
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)

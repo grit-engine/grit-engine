@@ -19,8 +19,6 @@
  * THE SOFTWARE.
  */
 
-#include <OgreCommon.h>
-
 #include "../grit_lua_util.h"
 
 #define MAT_TAG "Grit/Material"

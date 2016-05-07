@@ -19,11 +19,6 @@
  * THE SOFTWARE.
  */
 
-#include <OgreMaterial.h>
-#include <OgreTechnique.h>
-#include <OgrePass.h>
-#include <OgreTextureUnitState.h>
-
 #include "lua_wrappers_material.h"
 
 

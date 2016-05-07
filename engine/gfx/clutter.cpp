@@ -19,16 +19,8 @@
  * THE SOFTWARE.
  */
 
-#include <OgreHardwareBufferManager.h>
-#include <OgreMaterialManager.h>
-#include <OgreSubMesh.h>
-#include <OgreMesh.h>
-
-
-
 #include "../main.h"
 #include "gfx.h"
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

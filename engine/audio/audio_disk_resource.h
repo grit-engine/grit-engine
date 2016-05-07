@@ -26,8 +26,6 @@ class AudioDiskResource;
 
 #include <AL/al.h>
 
-#include <OgreResourceGroupManager.h>
-
 #include <centralised_log.h>
 #include "../background_loader.h"
 

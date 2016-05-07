@@ -19,9 +19,6 @@
  * THE SOFTWARE.
  */
 
-
-#include <OgreMeshManager.h>
-
 #include "gfx_internal.h"
 #include "gfx_sky_body.h"
 #include "gfx_sky_material.h"

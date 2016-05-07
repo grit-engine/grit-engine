@@ -25,7 +25,6 @@
 #include <string>
 #include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
-#include <OgreResourceGroupManager.h>
 #include <centralised_log.h>
 
 class OggVorbisDecoder {

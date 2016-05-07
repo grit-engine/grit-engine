@@ -236,9 +236,6 @@ Vector3 gfx_world_to_screen (const Vector3 &cam_pos, const Quaternion &cam_dir, 
 Vector3 gfx_screen_to_world (const Vector3 &cam_pos, const Quaternion &cam_dir, const Vector2 &p);
 
 // FIXME: everything below here is a horrible hack
-#include <OgreRoot.h>
-#include <OgreOctreeSceneManager.h>
-#include <OgreRenderWindow.h>
 extern Ogre::Root *ogre_root; // FIXME: hack
 extern Ogre::OctreeSceneManager *ogre_sm; // FIXME: hack
 extern Ogre::RenderWindow *ogre_win; // FIXME: hack

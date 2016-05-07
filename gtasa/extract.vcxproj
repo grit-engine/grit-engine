@@ -34,6 +34,7 @@
     <Import Project="$(SolutionDir)\dependencies\grit-ogre\grit-ogre.props" />
     <Import Project="$(SolutionDir)\dependencies\grit-util\grit-util.props" />
     <Import Project="$(SolutionDir)\dependencies\quex-0.34.1\quex-0.34.1.props" />
+    <Import Project="..\pch.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -42,6 +43,7 @@
     <Import Project="$(SolutionDir)\dependencies\grit-ogre\grit-ogre.props" />
     <Import Project="$(SolutionDir)\dependencies\grit-util\grit-util.props" />
     <Import Project="$(SolutionDir)\dependencies\quex-0.34.1\quex-0.34.1.props" />
+    <Import Project="..\pch.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -89,6 +91,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\dependencies\stdafx\stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Normal|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\engine\physics\bcol_parser.cpp" />
     <ClCompile Include="..\engine\physics\tcol_parser.cpp" />
     <ClCompile Include="col_parser.cpp" />

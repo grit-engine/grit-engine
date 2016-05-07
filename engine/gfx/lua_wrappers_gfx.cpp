@@ -3854,12 +3854,6 @@ static int global_gfx_particle_count (lua_State *L)
 
 
 
-#include <OgreHighLevelGpuProgramManager.h>
-#include <OgreTextureManager.h>
-#include <OgreSkeletonManager.h>
-#include <OgreMeshManager.h>
-#include <OgreGpuProgramManager.h>
-
 #include "lua_wrappers_material.h"
 #include "lua_wrappers_gpuprog.h"
 #include "lua_wrappers_gfx.h"

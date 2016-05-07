@@ -22,25 +22,6 @@
 #include <string>
 #include <sstream>
 
-#include <Ogre.h>
-#include <OgreMeshManager.h>
-#include <OgreOctreeSceneManager.h>
-#include <OgreVector3.h>
-#include <OgreQuaternion.h>
-#include <OgreCustomCompositionPass.h>
-#include <OgreCompositor.h>
-#include <OgreOctreePlugin.h>
-#include <OgreCgPlugin.h>
-#include <OgreRenderSystem.h>
-#include <OgreGLRenderSystem.h>
-#include <OgreGLGpuProgram.h>
-#include <OgreGLSLGpuProgram.h>
-#include <OgreGLSLProgram.h>
-#include <OgreGLSLLinkProgramManager.h>
-#ifdef WIN32
-#  include <OgreD3D9RenderSystem.h>
-#endif
-
 #include "gfx.h"
 #include "gfx_option.h"
 #include "gfx_gasoline.h"

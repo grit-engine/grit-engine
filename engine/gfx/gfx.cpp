@@ -20,8 +20,6 @@
 
 #include <sstream>
 
-#include <OgreAutoParamDataSource.h>
-
 #include <sleep.h>
 
 #include "../path_util.h"

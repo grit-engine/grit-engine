@@ -22,9 +22,6 @@
 #include <string>
 #include <map>
 
-#include <OgreMaterial.h>
-#include <OgreCgProgram.h>
-
 #include <centralised_log.h>
 
 #include "gfx_internal.h"

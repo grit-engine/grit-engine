@@ -28,8 +28,6 @@ typedef std::map<std::string, GfxMaterialTexture> GfxMaterialTextureMap;
 
 #include <mutex>
 
-#include <OgreMaterial.h>
-
 #include "gfx.h"
 #include "gfx_internal.h"
 #include "gfx_shader.h"

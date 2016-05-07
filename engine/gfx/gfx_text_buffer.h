@@ -26,10 +26,6 @@ class GfxTextBuffer;
 
 #include <cstdint>
 
-#include <OgreHardwareBufferManager.h>
-#include <OgreHardwareVertexBuffer.h>
-#include <OgreHardwareIndexBuffer.h>
-
 #include <math_util.h>
 
 #include "gfx_font.h"

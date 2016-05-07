@@ -19,15 +19,6 @@
  * THE SOFTWARE.
  */
 
-#include <OgreSceneManager.h>
-#include <OgreSkeleton.h>
-#include <OgreAxisAlignedBox.h>
-#include <OgreVector4.h>
-#include <OgreSkeletonInstance.h>
-#include <OgreAnimation.h>
-#include <OgreOptimisedUtil.h>
-#include <OgreSubMesh.h>
-
 #include <centralised_log.h>
 
 #include "gfx_internal.h"

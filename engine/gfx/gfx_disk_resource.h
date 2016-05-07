@@ -27,10 +27,6 @@ class GfxColourGradeLUTDiskResource;
 #ifndef GFX_DISK_RESOURCE_H
 #define GFX_DISK_RESOURCE_H
 
-#include <OgreResource.h>
-#include <OgreTexture.h>
-#include <OgreMesh.h>
-
 #include <math_util.h>
 
 #include <centralised_log.h>

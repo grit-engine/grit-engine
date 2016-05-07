@@ -25,9 +25,6 @@
 #ifndef BulletDebugDrawer_h
 #define BulletDebugDrawer_h
 
-#include <OgreFrameListener.h>
-#include <OgreManualObject.h>
-
 #include <btBulletCollisionCommon.h>
 
 class BulletDebugDrawer: public btIDebugDraw
