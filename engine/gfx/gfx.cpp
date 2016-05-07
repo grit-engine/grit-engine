@@ -1148,6 +1148,15 @@ void gfx_shutdown (void)
         shutting_down = true;
         delete eye_left;
         delete eye_right;
+
+        // Allow these smart pointers to be unloaded.
+        global_env_cube0 = nullptr;
+        global_env_cube1 = nullptr;
+        fade_dither_map = nullptr;
+        corona_map = nullptr;
+        shadow_pcf_noise_map = nullptr;
+        colour_grade_lut = nullptr;
+
         gfx_shader_shutdown();
         ftcv.setNull();
         if (ogre_sm && ogre_root) ogre_root->destroySceneManager(ogre_sm);

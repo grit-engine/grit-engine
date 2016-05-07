@@ -51,11 +51,16 @@ extern Ogre::RenderSystem *ogre_rs;
 extern Ogre::OctreeSceneManager *ogre_sm;
 extern Ogre::SceneNode *ogre_root_node;
 extern Ogre::Light *ogre_sun;
+
+// Note: Must be cleaned up in gfx_shutdown.
 extern DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube0;
 extern DiskResourcePtr<GfxEnvCubeDiskResource> global_env_cube1;
+
 extern float env_cube_cross_fade;
 extern unsigned env_cube_count;
 extern Ogre::Matrix4 shadow_view_proj[3];
+
+// Note: Must be cleaned up in gfx_shutdown.
 extern DiskResourcePtr<GfxTextureDiskResource> fade_dither_map;
 extern DiskResourcePtr<GfxTextureDiskResource> corona_map;
 extern DiskResourcePtr<GfxTextureDiskResource> shadow_pcf_noise_map;
@@ -73,6 +78,8 @@ extern float fog_density;
 extern float env_brightness;
 extern float global_exposure;
 extern float global_saturation;
+
+// Note: Must be cleaned up in gfx_shutdown.
 extern DiskResourcePtr<GfxColourGradeLUTDiskResource> colour_grade_lut;
 
 extern Vector3 sun_direction;
