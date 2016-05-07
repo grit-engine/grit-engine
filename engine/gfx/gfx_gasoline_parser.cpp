@@ -30,6 +30,11 @@
 
 #include "gfx_gasoline_parser.h"
 
+// Thankyou, Windows...
+#ifdef OUT
+#undef OUT
+#endif
+
 // Workaround for g++ not supporting moveable streams.
 #define error(loc) (EXCEPT << "Parse error: " << loc << ": ")
 
