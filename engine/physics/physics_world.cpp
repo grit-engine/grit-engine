@@ -19,16 +19,13 @@
  * THE SOFTWARE.
  */
 
-//#include <GIMPACT/Bullet/btGImpactShape.h>
-//#include <GIMPACT/Bullet/btGImpactCollisionAlgorithm.h>
-
 
 #ifdef WIN32
 #include <float.h>
 #define isnan _isnan
 #endif
 
-#include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
+#include <BulletCollision/CollisionShapes/btTriangleShape.h>
 #include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
 
 #include "../grit_object.h"
@@ -1805,8 +1802,6 @@ void physics_init (void)
     con_solver = new btSequentialImpulseConstraintSolver();
 
     world = new DynamicsWorld(col_disp,broadphase,con_solver,col_conf);
-
-    btGImpactCollisionAlgorithm::registerAlgorithm(col_disp);
 
     gContactAddedCallback = contact_added_callback;
     
