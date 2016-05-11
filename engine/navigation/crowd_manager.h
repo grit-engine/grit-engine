@@ -76,8 +76,8 @@ class CrowdTool
 
 public:
 	CrowdTool();
-	virtual ~CrowdTool();
-
+	~CrowdTool();
+	
 	virtual void init(NavigationManager* nvmgr);
 	virtual void reset();
 	virtual void step();
