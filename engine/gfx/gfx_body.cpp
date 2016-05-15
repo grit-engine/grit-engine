@@ -133,7 +133,7 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
     if (!enabled || fade < 0.000001 || firstPerson) return;
 
     bool do_wireframe = (wireframe || gfx_option(GFX_WIREFRAME));
-    bool do_regular = !(do_wireframe && gfx_option(GFX_WIREFRAME_SOLID));
+    bool do_regular = !do_wireframe || gfx_option(GFX_WIREFRAME_SOLID);
 
     // fade is used by both shadow_cast and regular pass
     // we could potentially move this out of the frame loop if it affects performance
