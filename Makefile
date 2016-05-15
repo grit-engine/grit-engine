@@ -327,7 +327,7 @@ build/%.weak_c.d: %.c
 	@mkdir -p $(shell dirname $@)
 	@$(CC) -MM $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
 
-ALL_DEPS = $(addsuffix .o.d,$(ALL_OBJECTS)) $(GRIT_INCLUDE_SRCS:%=build/%.d)
+ALL_DEPS = $(addsuffix .d,$(ALL_OBJECTS)) $(GRIT_INCLUDE_SRCS:%=build/%.d)
 
 clean_depend:
 	@rm -f $(ALL_DEPS)
