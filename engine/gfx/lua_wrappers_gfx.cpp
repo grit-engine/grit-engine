@@ -3882,8 +3882,8 @@ static int global_load_material (lua_State *L)
 TRY_START
         check_args(L,1);
         const char *name = luaL_checkstring(L,1);
-        Ogre::MaterialPtr t = Ogre::MaterialManager::getSingleton()
-                                .load(name,"GRIT");
+        Ogre::MaterialPtr t =
+            Ogre::MaterialManager::getSingleton().load(name,"GRIT").staticCast<Ogre::Material>();
         push(L, new Ogre::MaterialPtr(t),MAT_TAG);
         return 1;
 TRY_END
@@ -3900,7 +3900,7 @@ TRY_START
         lua_createtable(L, 0, 0);
         int counter = 0;
         while (rmi.hasMoreElements()) {
-                const Ogre::MaterialPtr &mat = rmi.getNext();
+                const Ogre::MaterialPtr &mat = rmi.getNext().staticCast<Ogre::Material>();
                 lua_pushnumber(L,counter+1);
                 push(L, new Ogre::MaterialPtr(mat), MAT_TAG);
                 lua_settable(L,-3);
@@ -4418,7 +4418,8 @@ TRY_START
     lua_createtable(L, 0, 0);
     int counter = 0;
     while (rmi.hasMoreElements()) {
-        const Ogre::HighLevelGpuProgramPtr &self = rmi.getNext();
+        const Ogre::HighLevelGpuProgramPtr &self =
+            rmi.getNext().staticCast<Ogre::HighLevelGpuProgram>();
         lua_pushnumber(L,counter+1);
         push(L, new Ogre::HighLevelGpuProgramPtr(self), GPUPROG_TAG);
         lua_settable(L,-3);

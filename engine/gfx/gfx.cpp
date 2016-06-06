@@ -660,7 +660,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 
             ogre_win->_endUpdate();
 
-            ogre_rs->_swapAllRenderTargetBuffers(true);
+            ogre_rs->_swapAllRenderTargetBuffers();
         } else {
             // corresponds to 100fps
             mysleep(10000);

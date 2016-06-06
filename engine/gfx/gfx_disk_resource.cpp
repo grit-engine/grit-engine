@@ -50,8 +50,9 @@ GfxMeshDiskResource::GfxMeshDiskResource (const std::string &name)
     try {
         std::string ogre_name = name.substr(1);
         Ogre::HardwareBuffer::Usage u = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
-        rp = Ogre::MeshManager::getSingleton()
-                .createOrRetrieve(ogre_name,RESGRP, false,0, 0, u,u,false,false).first;
+        auto result = Ogre::MeshManager::getSingleton()
+                .createOrRetrieve(ogre_name,RESGRP, false,0, 0, u, u, false, false);
+        rp = result.first.staticCast<Ogre::Mesh>();
     } catch (Ogre::Exception &e) { 
         GRIT_EXCEPT("Couldn't find graphics resource: "+e.getFullDescription());
     }       
@@ -258,7 +259,8 @@ GfxTextureDiskResource::GfxTextureDiskResource (const std::string &name)
 {
     try {
         std::string ogre_name = name.substr(1);
-        rp = Ogre::TextureManager::getSingleton().createOrRetrieve(ogre_name,RESGRP).first;
+        auto result = Ogre::TextureManager::getSingleton().createOrRetrieve(ogre_name,RESGRP);
+        rp = result.first.staticCast<Ogre::Texture>();
     } catch (Ogre::Exception &e) { 
         GRIT_EXCEPT("Couldn't find graphics resource: "+e.getFullDescription());
     }       

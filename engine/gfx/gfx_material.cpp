@@ -54,7 +54,7 @@ void GfxBaseMaterial::setShader (GfxShader *v)
 
 GfxMaterial::GfxMaterial (const std::string &name)
   : GfxBaseMaterial(name, gfx_shader_get("/system/Default")),
-    fadingMat(nullptr),
+    fadingMat(static_cast<Ogre::Material*>(nullptr)),
     sceneBlend(GFX_MATERIAL_OPAQUE)
 {
 }

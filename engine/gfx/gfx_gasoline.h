@@ -260,10 +260,10 @@ namespace std {
     };
 }
 
-/** These are things the shader needs that are not in the material.
+/** These are things the shader needs that are not in custom material attributes.
  */
 struct GfxGslEnvironment {
-    // Varies depending on the material.
+    // Varies depending on whether we're blending alpha or not.
     bool fadeDither;
     // What textures should be bound as a solid colour.
     GfxGslUnboundTextures ubt;
