@@ -21,3 +21,4 @@ ipch
 *.opensdf
 *.sdf
 *.user
+*.VC.db
