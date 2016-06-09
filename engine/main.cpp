@@ -93,6 +93,22 @@ void app_fatal()
 
 int main (int argc, const char **argv)
 {
+#ifdef WIN32
+	{
+		// set the console to accept escape sequences (Win10+)
+		HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+
+		if (console != INVALID_HANDLE_VALUE)
+		{
+			DWORD consoleMode = 0;
+			GetConsoleMode(console, &consoleMode);
+
+			consoleMode |= 4; // ENABLE_VIRTUAL_TERMINAL_PROCESSING; but that isn't available in our current SDK target
+
+			SetConsoleMode(console, consoleMode);
+		}
+	}
+#endif
 
     int exit_code = EXIT_SUCCESS;
 
