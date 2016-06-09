@@ -22,3 +22,4 @@ ipch
 *.sdf
 *.user
 *.VC.db
+*.VC.opendb
