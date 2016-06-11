@@ -121,18 +121,7 @@ void GfxNode::doUpdateWorldTransform (void)
         }
         worldTransform = parentTransform * Transform(localPos, localOrientation, localScale);
     }
-    Ogre::Matrix4 trans;
-    for (int col=0 ; col<3 ; ++col) {
-        for (int row=0 ; row<3 ; ++row) {
-            trans[row][col] = worldTransform.mat[row][col];
-        }
-    }
-    trans[0][3] = worldTransform.pos.x;
-    trans[1][3] = worldTransform.pos.y;
-    trans[2][3] = worldTransform.pos.z;
-    trans[3][0] = trans[3][1] = trans[3][2] = 0;
-    trans[3][3] = 1;
-    node->overrideCachedTransform(trans);
+    node->overrideCachedTransform(toOgre());
     //dirtyWorldTransform = false;
 }
 
