@@ -104,20 +104,6 @@ GRIT_CPP_SRCS= \
     $(VORBIS_CPP_SRCS) \
 	$(addprefix engine/,$(ENGINE_CPP_SRCS)) \
 
-GRIT_INCLUDE_SRCS= \
-    $(addprefix dependencies/grit-bullet/,$(BULLET_INCLUDE_SRCS)) \
-    $(addprefix dependencies/grit-lua/,$(LUA_INCLUDE_SRCS)) \
-    $(addprefix dependencies/grit-ogre/,$(OGRE_INCLUDE_SRCS)) \
-    $(addprefix dependencies/grit-util/,$(UTIL_INCLUDE_SRCS)) \
-    $(addprefix dependencies/jsonxx/,$(JSONXX_INCLUDE_SRCS)) \
-    $(addprefix dependencies/quex-0.34.1/,$(QUEX_INCLUDE_SRCS)) \
-    $(addprefix dependencies/recastnavigation/,$(RECAST_INCLUDE_SRCS)) \
-    $(FREEIMAGE_INCLUDE_SRCS) \
-    $(ICU_INCLUDE_SRCS) \
-    $(OPENAL_INCLUDE_SRCS) \
-    $(VORBIS_INCLUDE_SRCS) \
-	$(addprefix engine/,$(ENGINE_INCLUDE_SRCS)) \
-
 
 # TODO: remove EXTRACT_INCLUDE_DIRS from here, refactor to put stuff in dependencies/
 INCLUDE_DIRS= \
@@ -294,40 +280,35 @@ GritXMLConverter: $(addsuffix .o,$(XMLCONVERTER_OBJECTS))
 build/stdafx.h.gch.d: dependencies/stdafx/stdafx.h
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -MM -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%)
+	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%)
 	
-build/%.h.d: %.h
-	@$(COMPUTING_DEPENDENCIES)
-	@mkdir -p $(shell dirname $@)
-	@$(CXX) -MM -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.h.d=%.h)
-
 build/%.cpp.d: %.cpp
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -MM -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
 
 build/%.c.d: %.c
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CC) -MM -std=c99 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+	@$(CC) -M -std=c99 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
 
 build/%.weak_cpp.d: %.cpp
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -MM -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
 
 # Hack to also support dependencies that use .cc
 build/%.weak_cpp.d: %.cc
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -MM -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
 
 build/%.weak_c.d: %.c
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CC) -MM $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+	@$(CC) -M $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
 
-ALL_DEPS = $(addsuffix .d,$(ALL_OBJECTS)) $(GRIT_INCLUDE_SRCS:%=build/%.d)
+ALL_DEPS = $(addsuffix .d,$(ALL_OBJECTS))
 
 clean_depend:
 	@rm -f $(ALL_DEPS)

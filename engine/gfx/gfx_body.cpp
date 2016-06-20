@@ -29,7 +29,6 @@ const std::string GfxBody::className = "GfxBody";
 
 static std::set<GfxBody*> first_person_bodies;
 
-
 // {{{ Sub
 
 unsigned short GfxBody::Sub::getNumWorldTransforms(void) const
@@ -51,7 +50,7 @@ void GfxBody::Sub::getWorldTransforms(Ogre::Matrix4* xform) const
 {
     if (!parent->numBoneMatrixes) {
         // No skeletal animation, or software skinning
-        *xform = parent->node->_getFullTransform();
+        *xform = parent->toOgre();
         return;
     }
 
@@ -70,13 +69,14 @@ void GfxBody::Sub::getWorldTransforms(Ogre::Matrix4* xform) const
     } else {
 
         // All animations disabled, use parent GfxBody world transform only
-        std::fill_n(xform, indexMap.size(), parent->node->_getFullTransform());
+        std::fill_n(xform, indexMap.size(), parent->toOgre());
     }
 }
 
 Ogre::Real GfxBody::Sub::getSquaredViewDepth (const Ogre::Camera* cam) const
 {
-    return parent->node->getSquaredViewDepth(cam);
+    Ogre::Vector3 diff = to_ogre(parent->worldTransform.pos) - cam->getDerivedPosition();
+    return diff.squaredLength();
 }
 
 static Ogre::LightList EMPTY_LIGHTS;
@@ -115,10 +115,8 @@ void GfxBody::updateBoneMatrixes (void)
 
         updateWorldTransform();
 
-        Ogre::Matrix4 world = node->_getFullTransform();
-
         Ogre::OptimisedUtil::getImplementation()->concatenateAffineMatrices(
-            world,
+            toOgre(),
             boneMatrixes,
             boneWorldMatrixes,
             numBoneMatrixes);
@@ -749,7 +747,7 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
     bool instanced = false;
     unsigned bone_weights = mesh->getNumBlendWeightsPerVertex();
 
-    const Ogre::Matrix4 &world = node->_getFullTransform();
+    const Ogre::Matrix4 world = toOgre();
 
     // TODO(dcunnin): object parameters
 

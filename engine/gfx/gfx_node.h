@@ -40,23 +40,43 @@ typedef SharedPtr<GfxFertileNode> GfxNodePtr;
 // Objects should typically extend GfxFertileNode so they can have children attached.
 // Objects that do not exist in the Ogre scene graph are currenty not GfxFertileNode since they have no internal scene node.
 
-/* OH FUCK FUCK FUCK
- * The parent can change its localTransform, thereby needing to make its children dirty.  Oh, the humanity.
+/* A "scenegraph" implementation (really a tree) where each node has a corresponding
+ * Ogre::SceneNode, however those nodes are all immediately beneath the Ogre::Root node.  Our
+ * scenegraph uses the Grit Transform struct which has correct handling of non-uniform scaling
+ * (where !(x == y == z)).
  */
-
-// this should rarely need to be used by users of this API
 class GfxNode : public fast_erase_index {
     protected:
     static const std::string className;
     Vector3 localPos, localScale;
     Quaternion localOrientation;
     Transform worldTransform;
+    /* dirtyWorldTransform is commented out because that implementation did not dirty children when
+     * the parent's localTransform was updated.  The current implementation updates the world
+     * transform every time, which is inefficient because we might make many changes to individual
+     * nodes of the tree without needing to know the intermediate derived transforms.
+     */
     //bool dirtyWorldTransform;
     GfxNodePtr par;
     std::string parentBoneName;
-    int parentBoneId;
+    int parentBoneId;  // Will be >= 0 if parent != null and parentBoneName != ""
     Ogre::SceneNode *node;
     bool dead;
+
+    Ogre::Matrix4 toOgre (void) {
+        Ogre::Matrix4 m;
+        for (int col=0 ; col<3 ; ++col) {
+            for (int row=0 ; row<3 ; ++row) {
+                m[row][col] = worldTransform.mat[row][col];
+            }
+        }
+        m[0][3] = worldTransform.pos.x;
+        m[1][3] = worldTransform.pos.y;
+        m[2][3] = worldTransform.pos.z;
+        m[3][0] = m[3][1] = m[3][2] = 0;
+        m[3][3] = 1;
+        return m;
+    }
 
     GfxNode (const GfxNodePtr &par_);
     virtual ~GfxNode ();

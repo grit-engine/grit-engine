@@ -548,7 +548,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
 
     public:
     DeferredLightingPasses (GfxPipeline *pipe)
-      : Ogre::RenderQueueInvocation(0, Ogre::StringUtil::BLANK), pipe(pipe)
+      : Ogre::RenderQueueInvocation(0, ""), pipe(pipe)
     {
 
         setSuppressShadows(true);
@@ -745,7 +745,7 @@ class DecalPasses : public Ogre::RenderQueueInvocation {
 
     public:
     DecalPasses (GfxPipeline *pipe)
-      : Ogre::RenderQueueInvocation(0, Ogre::StringUtil::BLANK), pipe(pipe)
+      : Ogre::RenderQueueInvocation(0, ""), pipe(pipe)
     {
         setSuppressShadows(true);
     }
@@ -768,7 +768,7 @@ class ParticlesPasses : public Ogre::RenderQueueInvocation {
 
     public:
     ParticlesPasses (GfxPipeline *pipe)
-      : Ogre::RenderQueueInvocation(0, Ogre::StringUtil::BLANK), pipe(pipe)
+      : Ogre::RenderQueueInvocation(0, ""), pipe(pipe)
     {
         setSuppressShadows(true);
     }
