@@ -216,7 +216,7 @@ ALL_EXECUTABLES= extract grit gsl grit_col_conv GritXMLConverter
 
 all: $(ALL_EXECUTABLES)
 
-# Precopmiled header
+# Precompiled header
 build/stdafx.h.gch: dependencies/stdafx/stdafx.h
 	@$(PRECOMPILED_HEADER)
 	@mkdir -p $(shell dirname $@)
