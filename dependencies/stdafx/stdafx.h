@@ -1,7 +1,7 @@
 #include <Ogre.h>
 #include <OgreMeshFileFormat.h>
 #include <OgreOptimisedUtil.h>
-
+#include <OgrePredefinedControllers.h>
 
 #ifdef WIN32
 #include <OgreD3D9RenderSystem.h>
