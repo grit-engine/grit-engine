@@ -1,15 +1,15 @@
 [submodule "dependencies/grit-bullet"]
 	path = dependencies/grit-bullet
-	url = https://github.com/sparkprime/grit-bullet.git
+	url = https://github.com/grit-engine/grit-bullet.git
 [submodule "dependencies/grit-lua"]
 	path = dependencies/grit-lua
-	url = https://github.com/sparkprime/grit-lua.git
+	url = https://github.com/grit-engine/grit-lua.git
 [submodule "dependencies/grit-util"]
 	path = dependencies/grit-util
-	url = https://github.com/sparkprime/grit-util.git
+	url = https://github.com/grit-engine/grit-util.git
 [submodule "dependencies/grit-ogre"]
 	path = dependencies/grit-ogre
-	url = https://github.com/sparkprime/grit-ogre.git
+	url = https://github.com/grit-engine/grit-ogre.git
 [submodule "dependencies/recastnavigation"]
 	path = dependencies/recastnavigation
 	url = https://github.com/recastnavigation/recastnavigation.git
@@ -18,7 +18,7 @@
 	url = https://github.com/hjiang/jsonxx.git
 [submodule "dependencies/grit-freeimage"]
 	path = dependencies/grit-freeimage
-	url = https://github.com/sparkprime/grit-freeimage.git
+	url = https://github.com/grit-engine/grit-freeimage.git
 [submodule "dependencies/grit-windows-prebuilt-dependencies"]
 	path = dependencies/grit-windows-prebuilt-dependencies
-	url = https://github.com/sparkprime/grit-windows-prebuilt-dependencies.git
+	url = https://github.com/grit-engine/grit-windows-prebuilt-dependencies.git
