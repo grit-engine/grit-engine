@@ -216,7 +216,7 @@ ALL_EXECUTABLES= extract grit gsl grit_col_conv GritXMLConverter
 
 all: $(ALL_EXECUTABLES)
 
-# Precopmiled header
+# Precompiled header
 build/stdafx.h.gch: dependencies/stdafx/stdafx.h
 	@$(PRECOMPILED_HEADER)
 	@mkdir -p $(shell dirname $@)
@@ -236,16 +236,16 @@ build/%.c.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@$(CC) -c $(CODEGEN) -std=c99 -pedantic -Wall -Wextra $(CFLAGS) $< -o $@
 
-build/%.weak_cpp.o: %.cpp build/stdafx.h build/stdafx.h.gch
+build/%.weak_cpp.o: %.cpp
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -c $(CODEGEN) -std=c++11 -include build/stdafx.h $(CFLAGS) $< -o $@
+	@$(CXX) -c $(CODEGEN) -std=c++11 $(CFLAGS) $< -o $@
 
 # Hack to also support dependencies that use .cc
-build/%.weak_cpp.o: %.cc build/stdafx.h build/stdafx.h.gch
+build/%.weak_cpp.o: %.cc
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -c $(CODEGEN) -std=c++11 -include build/stdafx.h $(CFLAGS) $< -o $@
+	@$(CXX) -c $(CODEGEN) -std=c++11 $(CFLAGS) $< -o $@
 
 build/%.weak_c.o: %.c
 	@$(COMPILING)
@@ -277,38 +277,42 @@ GritXMLConverter: $(addsuffix .o,$(XMLCONVERTER_OBJECTS))
 # Dev stuff
 # ---------
 
+# Note the two -MT are to ensure that if any of the discovered headers change, the dependencies will
+# be re-computed.  This avoids a problem where if you include a new header from an existing header,
+# the .d would never be updated and the build would be wrong.
+
 build/stdafx.h.gch.d: dependencies/stdafx/stdafx.h
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%)
+	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%) -MT $@
 	
 build/%.cpp.d: %.cpp
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o) -MT $@
 
 build/%.c.d: %.c
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CC) -M -std=c99 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+	@$(CC) -M -std=c99 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o) -MT $@
 
 build/%.weak_cpp.d: %.cpp
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o) -MT $@
 
 # Hack to also support dependencies that use .cc
 build/%.weak_cpp.d: %.cc
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+	@$(CXX) -M -std=c++11 $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o) -MT $@
 
 build/%.weak_c.d: %.c
 	@$(COMPUTING_DEPENDENCIES)
 	@mkdir -p $(shell dirname $@)
-	@$(CC) -M $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o)
+	@$(CC) -M $(CFLAGS) $< -o $@ -MT $(@:%.d=%.o) -MT $@
 
-ALL_DEPS = $(addsuffix .d,$(ALL_OBJECTS))
+ALL_DEPS = $(addsuffix .d,$(ALL_OBJECTS)) build/stdafx.h.gch.d
 
 clean_depend:
 	@rm -f $(ALL_DEPS)

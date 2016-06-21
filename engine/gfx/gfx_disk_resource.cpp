@@ -131,7 +131,6 @@ class MyMeshDeserializer : public Ogre::Serializer {
                 case Ogre::M_MESH: 
                 case Ogre::M_MESH_BONE_ASSIGNMENT: 
                 case Ogre::M_MESH_BOUNDS: 
-                case Ogre::M_MESH_LOD: 
                 case Ogre::M_MESH_LOD_GENERATED: 
                 case Ogre::M_MESH_LOD_MANUAL: 
                 case Ogre::M_MESH_LOD_USAGE: 
