@@ -123,11 +123,11 @@ struct FastLZCompressor : public dtTileCacheCompressor
 struct LinearAllocator : public dtTileCacheAlloc
 {
 	unsigned char* buffer;
-	int capacity;
-	int top;
-	int high;
+	size_t capacity;
+	size_t top;
+	size_t high;
 	
-	LinearAllocator(const int cap) : buffer(0), capacity(0), top(0), high(0)
+	LinearAllocator(const size_t cap) : buffer(0), capacity(0), top(0), high(0)
 	{
 		resize(cap);
 	}
@@ -137,7 +137,7 @@ struct LinearAllocator : public dtTileCacheAlloc
 		dtFree(buffer);
 	}
 
-	void resize(const int cap)
+	void resize(const size_t cap)
 	{
 		if (buffer) dtFree(buffer);
 		buffer = (unsigned char*)dtAlloc(cap, DT_ALLOC_PERM);
@@ -150,7 +150,7 @@ struct LinearAllocator : public dtTileCacheAlloc
 		top = 0;
 	}
 	
-	virtual void* alloc(const int size)
+	virtual void* alloc(const size_t size)
 	{
 		if (!buffer)
 			return 0;
@@ -341,7 +341,8 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 		rcMarkWalkableTriangles(ctx, tcfg.walkableSlopeAngle,
 								verts, nverts, tris, ntris, rc.triareas);
 		
-		rcRasterizeTriangles(ctx, verts, nverts, tris, rc.triareas, ntris, *rc.solid, tcfg.walkableClimb);
+		if (!rcRasterizeTriangles(ctx, verts, nverts, tris, rc.triareas, ntris, *rc.solid, tcfg.walkableClimb))
+			return 0;
 	}
 	
 	// Once all geometry is rasterized, we do initial pass of filtering to
@@ -696,8 +697,8 @@ void NavigationManager::updateMaxTiles()
 {
 	if (m_geom)
 	{
-		const float* bmin = m_geom->getMeshBoundsMin();
-		const float* bmax = m_geom->getMeshBoundsMax();
+		const float* bmin = m_geom->getNavMeshBoundsMin();
+		const float* bmax = m_geom->getNavMeshBoundsMax();
 		// char text[64];
 		int gw = 0, gh = 0;
 		rcCalcGridSize(bmin, bmax, m_cellSize, &gw, &gh);
@@ -870,8 +871,8 @@ void NavigationManager::render()
 		}
 
 		// Draw bounds
-		const float* bmin = m_geom->getMeshBoundsMin();
-		const float* bmax = m_geom->getMeshBoundsMax();
+		const float* bmin = m_geom->getNavMeshBoundsMin();
+		const float* bmax = m_geom->getNavMeshBoundsMax();
 
 		if (NavSysDebug::ShowBounds && NavSysDebug::RedrawBounds)
 		{
@@ -1022,8 +1023,8 @@ bool NavigationManager::build()
 	m_tmproc->init(m_geom);
 	
 	// Init cache
-	const float* bmin = m_geom->getMeshBoundsMin();
-	const float* bmax = m_geom->getMeshBoundsMax();
+	const float* bmin = m_geom->getNavMeshBoundsMin();
+	const float* bmax = m_geom->getNavMeshBoundsMax();
 	int gw = 0, gh = 0;
 	rcCalcGridSize(bmin, bmax, m_cellSize, &gw, &gh);
 	const int ts = (int)m_tileSize;
@@ -1094,7 +1095,7 @@ bool NavigationManager::build()
 
 	dtNavMeshParams params;
 	memset(&params, 0, sizeof(params));
-	rcVcopy(params.orig, m_geom->getMeshBoundsMin());
+	rcVcopy(params.orig, bmin);
 	params.tileWidth = m_tileSize*m_cellSize;
 	params.tileHeight = m_tileSize*m_cellSize;
 	params.maxTiles = m_maxTiles;
@@ -1191,7 +1192,7 @@ void NavigationManager::getTilePos(const float* pos, int& tx, int& ty)
 {
 	if (!m_geom) return;
 	
-	const float* bmin = m_geom->getMeshBoundsMin();
+	const float* bmin = m_geom->getNavMeshBoundsMin();
 	
 	const float ts = m_tileSize*m_cellSize;
 	tx = (int)((pos[0] - bmin[0]) / ts);
@@ -1350,13 +1351,13 @@ void NavigationManager::resetCommonSettings()
 const float* NavigationManager::getBoundsMin()
 {
 	if (!m_geom) return 0;
-	return m_geom->getMeshBoundsMin();
+	return m_geom->getNavMeshBoundsMin();
 }
 
 const float* NavigationManager::getBoundsMax()
 {
 	if (!m_geom) return 0;
-	return m_geom->getMeshBoundsMax();
+	return m_geom->getNavMeshBoundsMax();
 }
 
 void NavigationManager::step()
