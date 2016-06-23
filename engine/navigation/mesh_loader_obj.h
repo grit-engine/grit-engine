@@ -30,7 +30,7 @@ public:
 	bool load(const std::string& fileName);
 
 	bool convertGfxBody(std::vector<GfxBodyPtr> srcBodies);
-	bool convertRigidBody(std::vector<RigidBodyPtr> srcBodies);
+	bool convertRigidBody(std::vector<RigidBody*> srcBodies);
 
 	const float* getVerts() const { return m_verts; }
 	const float* getNormals() const { return m_normals; }

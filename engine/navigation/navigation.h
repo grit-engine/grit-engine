@@ -44,7 +44,7 @@ public:
 	void addObj(const char* mesh_name);
 	void addGfxBody(GfxBodyPtr bd);
 	void addGfxBodies(std::vector<GfxBodyPtr> bds);
-	void addRigidBody(RigidBodyPtr bd);
+	void addRigidBody(RigidBody *bd);
 
 	void addTempObstacle(Ogre::Vector3 pos);
 	void removeTempObstacle(Ogre::Vector3 pos);

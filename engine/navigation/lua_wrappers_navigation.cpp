@@ -118,12 +118,12 @@ TRY_END
 
 static int global_navigation_add_rigid_body(lua_State *L)
 {
-	TRY_START
-		check_args(L, 1);
-	GET_UD_MACRO(RigidBodyPtr, body, 1, "Grit/RigidBody");
-	nvsys->addRigidBody(body);
-	return 0;
-	TRY_END
+TRY_START
+    check_args(L, 1);
+    GET_UD_MACRO(RigidBody, body, 1, "Grit/RigidBody");
+    nvsys->addRigidBody(&body);
+    return 0;
+TRY_END
 }
 
 static int global_add_temp_obstacle(lua_State *L)

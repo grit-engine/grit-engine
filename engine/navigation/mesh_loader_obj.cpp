@@ -460,7 +460,7 @@ void getMeshInformation(const Ogre::MeshPtr mesh, size_t &vertex_count, Ogre::Ve
 }
 
 // TODO
-bool rcMeshLoaderObj::convertRigidBody(std::vector<RigidBodyPtr> srcBodies)
+bool rcMeshLoaderObj::convertRigidBody(std::vector<RigidBody*> srcBodies)
 {
     (void) srcBodies;
 	return true;

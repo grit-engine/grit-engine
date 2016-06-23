@@ -849,7 +849,7 @@ extern ContactAddedCallback gContactAddedCallback;
 // C++ requires this to not be a local class
 namespace {
     struct Info {
-        RigidBodyPtr body, other;
+        RigidBody *body, *other;
         float life, imp, dist;
         unsigned mat, matOther;
         Vector3 pos, posOther, norm;
@@ -918,14 +918,14 @@ void physics_update (lua_State *L)
             unsigned mat0 = p.m_partId0;
             unsigned mat1 = p.m_partId1;
             Info infoA = {
-                rb_a->getPtr(), rb_b->getPtr(), 
+                rb_a, rb_b, 
                 (float)p.getLifeTime(), p.getAppliedImpulse(), -p.getDistance(),
                 mat0, mat1, from_bullet(p.m_positionWorldOnA),
                 from_bullet(p.m_positionWorldOnB), -from_bullet(p.m_normalWorldOnB)
             };
             infos.push_back(infoA);
             Info infoB = {
-                rb_b->getPtr(), rb_a->getPtr(), 
+                rb_b, rb_a, 
                 (float)p.getLifeTime(), p.getAppliedImpulse(), p.getDistance(),
                 mat1, mat0, from_bullet(p.m_positionWorldOnB),
                 from_bullet(p.m_positionWorldOnA), from_bullet(p.m_normalWorldOnB)
@@ -1213,7 +1213,7 @@ void physics_draw (void)
 RigidBody::RigidBody (const std::string &col_mesh,
                       const Vector3 &pos,
                       const Quaternion &quat)
-      : lastXform(to_bullet(quat),to_bullet(pos))
+      : lastXform(to_bullet(quat),to_bullet(pos)), refCount(0)
 {
     DiskResource *dr = disk_resource_get_or_make(col_mesh);
     colMesh = dynamic_cast<CollisionMesh*>(dr);
@@ -1223,15 +1223,6 @@ RigidBody::RigidBody (const std::string &col_mesh,
     colMesh->registerReloadWatcher(this);
     body = NULL;
     addToWorld();
-
-    self = RigidBodyPtr(this);
-    // Make the self pointer a weak reference, otherwise
-    // the object will not be destructed until after its own destructor...
-    // We instead want the object to print a warning if it is destructed
-    // without first being destroy()ed.
-    // RigidBody must only be constructed as follows:
-    // RigidBodyPtr blah = (new RigidBody(...))->getPtr()
-    self.useCount()--;
 }
 
 
@@ -1306,10 +1297,24 @@ void RigidBody::destroy (lua_State *L)
     updateCallbackPtr.setNil(L);
     collisionCallbackPtr.setNil(L);
     stabiliseCallbackPtr.setNil(L);
-    // the next line prevents the RigidBody being destructed prematurely
-    // as we set the weak reference to null
-    self.useCount()++;
-    self.setNull();
+}
+
+void RigidBody::incRefCount (void)
+{
+    refCount++;
+}
+
+void RigidBody::decRefCount (lua_State *L)
+{
+    refCount--;
+    if (refCount == 0) {
+        destroy(L);
+        // We don't have a destroy callback so no need to add extra complexity
+        // like we have in HudObject.  We should probably unify all these approaches into
+        // a generic superclass.
+        APP_ASSERT(refCount == 0);
+        delete this;
+    }
 }
 
 RigidBody::~RigidBody (void)
@@ -1407,7 +1412,7 @@ void RigidBody::stepCallback (lua_State *L, float step_size)
 }
 
 void RigidBody::collisionCallback (lua_State *L, int lifetime, float impulse,
-                                   const RigidBodyPtr &other, int m, int m2,
+                                   RigidBody *other, int m, int m2,
                                    float penetration, const Vector3 &pos, const Vector3 &pos2,
                                    const Vector3 &wnormal)
 {

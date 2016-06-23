@@ -21,7 +21,7 @@
 
 #include "physics_world.h"
 
-void push_rbody (lua_State *L, const RigidBodyPtr &self);
+void push_rbody (lua_State *L, RigidBody *self);
 
 void physics_lua_init (lua_State *L);
 
