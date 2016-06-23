@@ -618,6 +618,9 @@ TRY_START
         } else if (!::strcmp(key, "setPartOrientationOffset")) {
                 push_cfunction(L, rbody_set_part_orientation_offset);
 
+        } else if (!::strcmp(key, "meshName")) {
+                push_string(L, self.colMesh->getName());
+
         } else if (!::strcmp(key, "owner")) {
                 if (self.owner.isNull()) {
                         lua_pushnil(L);
