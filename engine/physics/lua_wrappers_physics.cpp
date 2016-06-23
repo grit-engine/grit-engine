@@ -81,6 +81,7 @@ static int rbody_gc (lua_State *L)
 TRY_START
         check_args(L,1);
         GET_UD_MACRO_OFFSET(RigidBodyPtr,self,1,RBODY_TAG,0);
+        (*self)->destroy(L);
         delete self;
         return 0;
 TRY_END
