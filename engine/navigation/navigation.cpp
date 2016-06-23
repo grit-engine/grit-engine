@@ -329,12 +329,12 @@ void NavigationSystem::addGfxBodies(std::vector<GfxBodyPtr> bds)
 	nvmgr->changeMesh(geom);
 }
 
-void NavigationSystem::addRigidBody(RigidBodyPtr bd)
+void NavigationSystem::addRigidBody(RigidBody *bd)
 {
 	delete geom;
 	geom = 0;
 
-	std::vector<RigidBodyPtr> yu;
+	std::vector<RigidBody*> yu;
 	yu.push_back(bd);
 
 	geom = new InputGeom;

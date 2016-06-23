@@ -200,7 +200,7 @@ bool InputGeom::loadGfxBody(rcContext* ctx, std::vector<GfxBodyPtr> bodies)
 	return true;
 }
 
-bool InputGeom::loadRigidBody(rcContext* ctx, std::vector<RigidBodyPtr> bodies)
+bool InputGeom::loadRigidBody(rcContext* ctx, std::vector<RigidBody*> bodies)
 {
 	if (m_mesh)
 	{

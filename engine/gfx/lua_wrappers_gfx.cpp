@@ -1769,7 +1769,7 @@ TRY_START
 TRY_END
 }
 
-EQ_PTR_MACRO(GfxBodyPtr,gfxhudobj,GFXHUDOBJECT_TAG)
+EQ_PTR_MACRO(GfxHudObject, gfxhudobj, GFXHUDOBJECT_TAG)
 
 MT_MACRO_NEWINDEX(gfxhudobj);
 

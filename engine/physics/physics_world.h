@@ -25,7 +25,6 @@
 #include "../shared_ptr.h"
 
 class RigidBody;
-typedef SharedPtr<RigidBody> RigidBodyPtr;
 
 #ifndef physics_h
 #define physics_h
@@ -203,7 +202,7 @@ class RigidBody : public btMotionState, public CollisionMesh::ReloadWatcher {
 
     void stepCallback (lua_State *L, float step_size);
     void collisionCallback (lua_State *L, int lifetime, float impulse,
-                const RigidBodyPtr &other,
+                RigidBody *other,
                 int m, int m2, float penetration,
                 const Vector3 &pos, const Vector3 &pos2, const Vector3 &wnormal);
     void stabiliseCallback (lua_State *L, float elapsed);
@@ -250,7 +249,8 @@ class RigidBody : public btMotionState, public CollisionMesh::ReloadWatcher {
     Vector3 getInertia (void) const;
     void setInertia (const Vector3 &v);
 
-    RigidBodyPtr getPtr (void) const { return self; }
+    void incRefCount (void);
+    void decRefCount (lua_State *L);
 
     CollisionMesh * colMesh;
 
@@ -297,8 +297,7 @@ class RigidBody : public btMotionState, public CollisionMesh::ReloadWatcher {
     btRigidBody *body;
     btCompoundShape *shape;
 
-    // yes, it's stupid, but it must be done
-    RigidBodyPtr self;
+    unsigned refCount;
 
     struct CompElement {
         bool enabled;

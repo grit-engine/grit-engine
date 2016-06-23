@@ -106,7 +106,7 @@ public:
 	bool loadGeomSet(class rcContext* ctx, const std::string& filepath);
 	
 	bool loadGfxBody(rcContext* ctx, std::vector<GfxBodyPtr> body);
-	bool loadRigidBody(rcContext* ctx, std::vector<RigidBodyPtr> bodies);
+	bool loadRigidBody(rcContext* ctx, std::vector<RigidBody*> bodies);
 
 	bool load(class rcContext* ctx, const std::string& filepath);
 	bool saveGeomSet(const BuildSettings* settings);
