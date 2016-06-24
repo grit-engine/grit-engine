@@ -561,6 +561,11 @@ float anim_time = 0;
 
 static float time_since_started_rendering = 0;
 
+void gfx_window_events_pump (void)
+{
+    Ogre::WindowEventUtilities::messagePump();
+}
+
 void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir)
 {
     time_since_started_rendering += elapsed;
@@ -587,7 +592,6 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
     }
 
     try {
-        Ogre::WindowEventUtilities::messagePump();
         if (reset_frame_buffer_on_next_render) {
             reset_frame_buffer_on_next_render = false;
             do_reset_framebuffer();
