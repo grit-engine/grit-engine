@@ -1015,6 +1015,7 @@ static void set_cornered_vertex_data (GfxTextureDiskResource *tex,
     struct Vertex { Vector2 position; Vector2 uv; };
 
     const Ogre::TexturePtr &texptr = tex->getOgreTexturePtr();
+    texptr->load();
     const Vector2 whole_tex_size(texptr->getWidth(), texptr->getHeight());
     
     const Vector2 tex_size = whole_tex_size * Vector2(::fabsf(uv2.x-uv1.x), ::fabsf(uv2.y-uv1.y));
