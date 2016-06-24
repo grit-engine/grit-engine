@@ -6,8 +6,10 @@ if [ ! -d media ] ; then
     exit 1
 fi
 
-cp -v grit media/Grit.linux.x86_64
-cp -v gsl media/Tools/gsl.linux.x86_64
-cp -v extract media/Tools/extract.linux.x86_64
-cp -v grit_col_conv media/Tools/extract.linux.x86_64
-cp -v GritXMLConverter media/Tools/GritXMLConverter.x86_64
+STRIP="strip -v --strip-all"
+
+${STRIP} grit -o media/Grit.linux.x86_64
+${STRIP} gsl -o media/Tools/gsl.linux.x86_64
+${STRIP} extract -o media/Tools/extract.linux.x86_64
+${STRIP} grit_col_conv -o media/Tools/extract.linux.x86_64
+${STRIP} GritXMLConverter -o media/Tools/GritXMLConverter.x86_64
