@@ -18,8 +18,14 @@ function do_test(ray_start, ray)
     return sweep_end - cast_end
 end
 
-print_stdout(do_test(vec(-150, 310, 1.5)))
-print_stdout(do_test(vec(98, 14, 1.5)))
-print_stdout(do_test(vec(192, -370, 1.5)))
-print_stdout(do_test(vec(0, 0, 1.5)))
+function assert_small(v)
+    if #v > 0.0001 then
+        error("Difference between sphere cast and ray cast is too great: " .. v)
+    end
+end
+
+assert_small(do_test(vec(-150, 310, 1.5)))
+assert_small(do_test(vec(98, 14, 1.5)))
+assert_small(do_test(vec(192, -370, 1.5)))
+assert_small(do_test(vec(0, 0, 1.5)))
 
