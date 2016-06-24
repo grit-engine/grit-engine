@@ -1110,6 +1110,7 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
 
         // render gbuffer and alpha, sky, etc into ldr window
         vp = targetViewport;
+        vp->setBackgroundColour(Ogre::ColourValue(0.3, 0.3, 0.3));
         vp->setCamera(cam);
         vp->setShadowsEnabled(false);
         vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
@@ -1123,6 +1124,7 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
 
         // render from gbuffer, the alpha passes, sky, etc into hdr viewport
         vp = hdrFb[0]->getBuffer()->getRenderTarget()->addViewport(cam);
+        vp->setBackgroundColour(Ogre::ColourValue(0.3, 0.3, 0.3));
         vp->setShadowsEnabled(false);
         vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
         vp->update();
