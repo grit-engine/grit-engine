@@ -76,6 +76,8 @@ bool gfx_d3d9 (void);
 
 size_t gfx_init (GfxCallback &cb);
 
+void gfx_window_events_pump (void);
+
 void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_dir);
 
 void gfx_screenshot (const std::string &filename);

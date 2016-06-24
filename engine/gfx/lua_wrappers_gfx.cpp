@@ -2033,6 +2033,7 @@ TRY_START
     float elapsed = check_float(L,1);
     Vector3 cam_pos = check_v3(L,2);
     Quaternion cam_dir = check_quat(L,3);
+    gfx_window_events_pump();
     gfx_hud_call_per_frame_callbacks(L, elapsed);
     gfx_render(elapsed, cam_pos, cam_dir);
     return 0;
