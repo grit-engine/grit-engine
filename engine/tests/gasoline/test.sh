@@ -50,7 +50,7 @@ test_sky() {
     UBT="-u perlinN"
     TLANG=""
     test $TARGET == "cg" && TLANG="-C"
-    gsl $TLANG $PARAMS $UBT "${SHADER}.vert.gsl" "" "${SHADER}.colour.gsl" SKY ${SHADER}.{vert,frag}.out.$TARGET || exit 1
+    gsl $TLANG $PARAMS $UBT "${SHADER}.vert.gsl" "::none::" "${SHADER}.colour.gsl" SKY ${SHADER}.{vert,frag}.out.$TARGET || exit 1
 
     do_check ${TARGET} vert ${SHADER}.vert.out && do_check ${TARGET} frag ${SHADER}.frag.out
 }
@@ -65,7 +65,7 @@ test_hud() {
     UBT=""
     TLANG=""
     test $TARGET == "cg" && TLANG="-C"
-    gsl $TLANG $PARAMS $UBT "${SHADER}.vert.gsl" "" "${SHADER}.colour.gsl" HUD ${SHADER}.{vert,frag}.out.$TARGET || exit 1
+    gsl $TLANG $PARAMS $UBT "${SHADER}.vert.gsl" "::none::" "${SHADER}.colour.gsl" HUD ${SHADER}.{vert,frag}.out.$TARGET || exit 1
 
     do_check ${TARGET} vert ${SHADER}.vert.out && do_check ${TARGET} frag ${SHADER}.frag.out
 }
@@ -94,7 +94,7 @@ test_decal() {
     UBT="-u normalMap"
     TLANG=""
     test $TARGET == "cg" && TLANG="-C"
-    gsl $TLANG $PARAMS $UBT "" "${SHADER}.dangs.gsl" "${SHADER}.add.gsl" DECAL ${SHADER}.${BONE_WEIGHTS}.{vert,frag}.out.$TARGET || exit 1
+    gsl $TLANG $PARAMS $UBT "::none::" "${SHADER}.dangs.gsl" "${SHADER}.add.gsl" DECAL ${SHADER}.${BONE_WEIGHTS}.{vert,frag}.out.$TARGET || exit 1
 
     do_check ${TARGET} vert ${SHADER}.${BONE_WEIGHTS}.vert.out && do_check ${TARGET} frag ${SHADER}.${BONE_WEIGHTS}.frag.out
 }
@@ -106,7 +106,7 @@ test_particle() {
     PARAMS="-p gbuffer0 FloatTexture2 -p particleAtlas FloatTexture2"
     TLANG=""
     test $TARGET == "cg" && TLANG="-C"
-    gsl $TLANG $PARAMS $UBT "${SHADER}.vert.gsl" "" "${SHADER}.add.gsl" SKY ${SHADER}.{vert,frag}.out.$TARGET || exit 1
+    gsl $TLANG $PARAMS $UBT "${SHADER}.vert.gsl" "::none::" "${SHADER}.add.gsl" SKY ${SHADER}.{vert,frag}.out.$TARGET || exit 1
 
     do_check ${TARGET} vert ${SHADER}.vert.out && do_check ${TARGET} frag ${SHADER}.frag.out
 }
