@@ -28,7 +28,9 @@
 
 #include <centralised_log.h>
 
+#include "gfx_gasoline.h"
 #include "gfx_gasoline_parser.h"
+#include "gfx_gasoline_type_system.h"
 
 // Thankyou, Windows...
 #ifdef OUT
@@ -39,45 +41,122 @@
 #define error(loc) (EXCEPT << "Parse error: " << loc << ": ")
 
 enum TokenKind {
-    IDENTIFIER,  // Has val.
-
+    BODY,
     DISCARD,
     ELSE,
+    END_OF_FILE,  // Holds location info if EOF error.
+    FOR,
     FRAG,
     GLOBAL,
+    IDENTIFIER,  // Has val.
     IF,
+    LITERAL_NUMBER,  // Has val.
     MAT,
+    OUT,
     RETURN,
+    SYMBOL,  // Has val.
     VAR,
     VERT,
-    OUT,
-    BODY,
 
-    SYMBOL,  // Has val.
-    LITERAL_NUMBER,  // Has val.
-    END_OF_FILE  // Holds location info if EOF error.
+    // Type tokens are distinguished by having capital letters.
+    TYPE_FLOAT,
+    TYPE_FLOAT2,
+    TYPE_FLOAT3,
+    TYPE_FLOAT4,
+    TYPE_FLOAT1x1,
+    TYPE_FLOAT2x1,
+    TYPE_FLOAT3x1,
+    TYPE_FLOAT4x1,
+    TYPE_FLOAT1x2,
+    TYPE_FLOAT2x2,
+    TYPE_FLOAT3x2,
+    TYPE_FLOAT4x2,
+    TYPE_FLOAT1x3,
+    TYPE_FLOAT2x3,
+    TYPE_FLOAT3x3,
+    TYPE_FLOAT4x3,
+    TYPE_FLOAT1x4,
+    TYPE_FLOAT2x4,
+    TYPE_FLOAT3x4,
+    TYPE_FLOAT4x4,
+    TYPE_FLOAT_TEXTURE1,
+    TYPE_FLOAT_TEXTURE2,
+    TYPE_FLOAT_TEXTURE3,
+    TYPE_FLOAT_TEXTURE4,
+    TYPE_FLOAT_TEXTURE_CUBE,
+    TYPE_INT,
+    TYPE_INT2,
+    TYPE_INT3,
+    TYPE_INT4,
+    TYPE_BOOL,
+    TYPE_VOID,
+    TYPE_GLOBAL,
+    TYPE_MAT,
+    TYPE_VERT,
+    TYPE_OUT,
+    TYPE_BODY,
+    TYPE_FRAG,
 };
 
 static std::string to_string (TokenKind k)
 {
     switch (k) {
-        case IDENTIFIER: return "identifier";
+        case BODY: return "body";
         case DISCARD: return "discard";
         case ELSE: return "else";
+        case END_OF_FILE: return "EOF";
+        case FOR: return "for";
         case FRAG: return "frag";
         case GLOBAL: return "global";
+        case IDENTIFIER: return "identifier";
         case IF: return "if";
+        case LITERAL_NUMBER: return "number";
         case MAT: return "mat";
+        case OUT: return "out";
         case RETURN: return "return";
+        case SYMBOL: return "symbol";
         case VAR: return "var";
         case VERT: return "vert";
-        case OUT: return "out";
-        case BODY: return "body";
-        case SYMBOL: return "symbol";
-        case LITERAL_NUMBER: return "number";
-        case END_OF_FILE: return "EOF";
-        default: EXCEPTEX << "Internal error: Unknown token kind: " << k << ENDL;
+
+        case TYPE_FLOAT: return "Float";
+        case TYPE_FLOAT2: return "Float2";
+        case TYPE_FLOAT3: return "Float3";
+        case TYPE_FLOAT4: return "Float4";
+        case TYPE_FLOAT1x1: return "Float1x1";
+        case TYPE_FLOAT2x1: return "Float2x1";
+        case TYPE_FLOAT3x1: return "Float3x1";
+        case TYPE_FLOAT4x1: return "Float4x1";
+        case TYPE_FLOAT1x2: return "Float1x2";
+        case TYPE_FLOAT2x2: return "Float2x2";
+        case TYPE_FLOAT3x2: return "Float3x2";
+        case TYPE_FLOAT4x2: return "Float4x2";
+        case TYPE_FLOAT1x3: return "Float1x3";
+        case TYPE_FLOAT2x3: return "Float2x3";
+        case TYPE_FLOAT3x3: return "Float3x3";
+        case TYPE_FLOAT4x3: return "Float4x3";
+        case TYPE_FLOAT1x4: return "Float1x4";
+        case TYPE_FLOAT2x4: return "Float2x4";
+        case TYPE_FLOAT3x4: return "Float3x4";
+        case TYPE_FLOAT4x4: return "Float4x4";
+        case TYPE_FLOAT_TEXTURE1: return "FloatTexture1";
+        case TYPE_FLOAT_TEXTURE2: return "FloatTexture2";
+        case TYPE_FLOAT_TEXTURE3: return "FloatTexture3";
+        case TYPE_FLOAT_TEXTURE4: return "FloatTexture4";
+        case TYPE_FLOAT_TEXTURE_CUBE: return "FloatTextureCube";
+        case TYPE_INT: return "Int";
+        case TYPE_INT2: return "Int2";
+        case TYPE_INT3: return "Int3";
+        case TYPE_INT4: return "Int4";
+        case TYPE_BOOL: return "Bool";
+        case TYPE_VOID: return "Void";
+        case TYPE_GLOBAL: return "Global";
+        case TYPE_MAT: return "Mat";
+        case TYPE_VERT: return "Vert";
+        case TYPE_OUT: return "Out";
+        case TYPE_BODY: return "Body";
+        case TYPE_FRAG: return "Frag";
     }
+    EXCEPT << "Internal error." << ENDL;
 }
 
 struct Token {
@@ -110,6 +189,7 @@ bool is_symbol (char c)
         case '=': case '!': case '+': case '-': case '*': case '/': case '%': case '^':
         case '<': case '>':
         case '&': case '|':
+        case ':': case '[': case ']':
         return true;
     }
     return false;
@@ -335,6 +415,8 @@ std::list<Token> lex (const std::string &shader)
                     r.emplace_back(DISCARD, id, here);
                 } else if (id == "else") {
                     r.emplace_back(ELSE, id, here);
+                } else if (id == "for") {
+                    r.emplace_back(FOR, id, here);
                 } else if (id == "frag") {
                     r.emplace_back(FRAG, id, here);
                 } else if (id == "global") {
@@ -353,6 +435,82 @@ std::list<Token> lex (const std::string &shader)
                     r.emplace_back(OUT, id, here);
                 } else if (id == "body") {
                     r.emplace_back(BODY, id, here);
+
+                } else if (id == "Float") {
+                    r.emplace_back(TYPE_FLOAT, id, here);
+                } else if (id == "Float2") {
+                    r.emplace_back(TYPE_FLOAT2, id, here);
+                } else if (id == "Float3") {
+                    r.emplace_back(TYPE_FLOAT3, id, here);
+                } else if (id == "Float4") {
+                    r.emplace_back(TYPE_FLOAT4, id, here);
+                } else if (id == "Float1x1") {
+                    r.emplace_back(TYPE_FLOAT1x1, id, here);
+                } else if (id == "Float2x1") {
+                    r.emplace_back(TYPE_FLOAT2x1, id, here);
+                } else if (id == "Float3x1") {
+                    r.emplace_back(TYPE_FLOAT3x1, id, here);
+                } else if (id == "Float4x1") {
+                    r.emplace_back(TYPE_FLOAT4x1, id, here);
+                } else if (id == "Float1x2") {
+                    r.emplace_back(TYPE_FLOAT1x2, id, here);
+                } else if (id == "Float2x2") {
+                    r.emplace_back(TYPE_FLOAT2x2, id, here);
+                } else if (id == "Float3x2") {
+                    r.emplace_back(TYPE_FLOAT3x2, id, here);
+                } else if (id == "Float4x2") {
+                    r.emplace_back(TYPE_FLOAT4x2, id, here);
+                } else if (id == "Float1x3") {
+                    r.emplace_back(TYPE_FLOAT1x3, id, here);
+                } else if (id == "Float2x3") {
+                    r.emplace_back(TYPE_FLOAT2x3, id, here);
+                } else if (id == "Float3x3") {
+                    r.emplace_back(TYPE_FLOAT3x3, id, here);
+                } else if (id == "Float4x3") {
+                    r.emplace_back(TYPE_FLOAT4x3, id, here);
+                } else if (id == "Float1x4") {
+                    r.emplace_back(TYPE_FLOAT1x4, id, here);
+                } else if (id == "Float2x4") {
+                    r.emplace_back(TYPE_FLOAT2x4, id, here);
+                } else if (id == "Float3x4") {
+                    r.emplace_back(TYPE_FLOAT3x4, id, here);
+                } else if (id == "Float4x4") {
+                    r.emplace_back(TYPE_FLOAT4x4, id, here);
+                } else if (id == "FloatTexture1") {
+                    r.emplace_back(TYPE_FLOAT_TEXTURE1, id, here);
+                } else if (id == "FloatTexture2") {
+                    r.emplace_back(TYPE_FLOAT_TEXTURE2, id, here);
+                } else if (id == "FloatTexture3") {
+                    r.emplace_back(TYPE_FLOAT_TEXTURE3, id, here);
+                } else if (id == "FloatTexture4") {
+                    r.emplace_back(TYPE_FLOAT_TEXTURE4, id, here);
+                } else if (id == "FloatTextureCube") {
+                    r.emplace_back(TYPE_FLOAT_TEXTURE_CUBE, id, here);
+                } else if (id == "Int") {
+                    r.emplace_back(TYPE_INT, id, here);
+                } else if (id == "Int2") {
+                    r.emplace_back(TYPE_INT2, id, here);
+                } else if (id == "Int3") {
+                    r.emplace_back(TYPE_INT3, id, here);
+                } else if (id == "Int4") {
+                    r.emplace_back(TYPE_INT4, id, here);
+                } else if (id == "Bool") {
+                    r.emplace_back(TYPE_BOOL, id, here);
+                } else if (id == "Void") {
+                    r.emplace_back(TYPE_VOID, id, here);
+                } else if (id == "Global") {
+                    r.emplace_back(TYPE_GLOBAL, id, here);
+                } else if (id == "Mat") {
+                    r.emplace_back(TYPE_MAT, id, here);
+                } else if (id == "Vert") {
+                    r.emplace_back(TYPE_VERT, id, here);
+                } else if (id == "Out") {
+                    r.emplace_back(TYPE_OUT, id, here);
+                } else if (id == "Body") {
+                    r.emplace_back(TYPE_BODY, id, here);
+                } else if (id == "Frag") {
+                    r.emplace_back(TYPE_FRAG, id, here);
+
                 } else {
                     r.emplace_back(IDENTIFIER, id, here);
                 }
@@ -457,6 +615,68 @@ namespace {
           : alloc(alloc), tokens(tokens)
         { }
 
+        GfxGslType *parseType (void)
+        {
+            GfxGslFloatVec black(0);  // TODO(dcunnin): This is a hack.
+            auto tok = pop();
+            switch (tok.kind) {
+                case TYPE_FLOAT: return alloc.makeType<GfxGslFloatType>(1);
+                case TYPE_FLOAT2: return alloc.makeType<GfxGslFloatType>(2);
+                case TYPE_FLOAT3: return alloc.makeType<GfxGslFloatType>(3);
+                case TYPE_FLOAT4: return alloc.makeType<GfxGslFloatType>(4);
+                case TYPE_FLOAT1x1: return alloc.makeType<GfxGslFloatMatrixType>(1, 1);
+                case TYPE_FLOAT2x1: return alloc.makeType<GfxGslFloatMatrixType>(2, 1);
+                case TYPE_FLOAT3x1: return alloc.makeType<GfxGslFloatMatrixType>(3, 1);
+                case TYPE_FLOAT4x1: return alloc.makeType<GfxGslFloatMatrixType>(4, 1);
+                case TYPE_FLOAT1x2: return alloc.makeType<GfxGslFloatMatrixType>(1, 2);
+                case TYPE_FLOAT2x2: return alloc.makeType<GfxGslFloatMatrixType>(2, 2);
+                case TYPE_FLOAT3x2: return alloc.makeType<GfxGslFloatMatrixType>(3, 2);
+                case TYPE_FLOAT4x2: return alloc.makeType<GfxGslFloatMatrixType>(4, 2);
+                case TYPE_FLOAT1x3: return alloc.makeType<GfxGslFloatMatrixType>(1, 3);
+                case TYPE_FLOAT2x3: return alloc.makeType<GfxGslFloatMatrixType>(2, 3);
+                case TYPE_FLOAT3x3: return alloc.makeType<GfxGslFloatMatrixType>(3, 3);
+                case TYPE_FLOAT4x3: return alloc.makeType<GfxGslFloatMatrixType>(4, 3);
+                case TYPE_FLOAT1x4: return alloc.makeType<GfxGslFloatMatrixType>(1, 4);
+                case TYPE_FLOAT2x4: return alloc.makeType<GfxGslFloatMatrixType>(2, 4);
+                case TYPE_FLOAT3x4: return alloc.makeType<GfxGslFloatMatrixType>(3, 4);
+                case TYPE_FLOAT4x4: return alloc.makeType<GfxGslFloatMatrixType>(4, 4);
+                case TYPE_FLOAT_TEXTURE1: return alloc.makeType<GfxGslFloatTextureType>(black, 1);
+                case TYPE_FLOAT_TEXTURE2: return alloc.makeType<GfxGslFloatTextureType>(black, 2);
+                case TYPE_FLOAT_TEXTURE3: return alloc.makeType<GfxGslFloatTextureType>(black, 3);
+                case TYPE_FLOAT_TEXTURE4: return alloc.makeType<GfxGslFloatTextureType>(black, 4);
+                case TYPE_FLOAT_TEXTURE_CUBE:
+                    return alloc.makeType<GfxGslFloatTextureCubeType>(black);
+                case TYPE_INT: return alloc.makeType<GfxGslIntType>(1);
+                case TYPE_INT2: return alloc.makeType<GfxGslIntType>(2);
+                case TYPE_INT3: return alloc.makeType<GfxGslIntType>(3);
+                case TYPE_INT4: return alloc.makeType<GfxGslIntType>(4);
+                case TYPE_BOOL: return alloc.makeType<GfxGslBoolType>();
+                case TYPE_VOID: return alloc.makeType<GfxGslVoidType>();
+                case TYPE_GLOBAL: return alloc.makeType<GfxGslGlobalType>();
+                case TYPE_MAT: return alloc.makeType<GfxGslMatType>();
+                case TYPE_VERT: return alloc.makeType<GfxGslVertType>();
+                case TYPE_OUT: return alloc.makeType<GfxGslOutType>();
+                case TYPE_BODY: return alloc.makeType<GfxGslBodyType>();
+                case TYPE_FRAG: return alloc.makeType<GfxGslFragType>();
+                case SYMBOL: {
+                    if (tok.val == "[") {
+                        GfxGslAst *sz_ast = parseExpr(precedence_max);
+                        auto *sz_ast2 = dynamic_cast<GfxGslLiteralInt*>(sz_ast);
+                        if (sz_ast2 == nullptr || sz_ast2->val <= 0) {
+                            error(tok.loc) << "Array size must be a positive integer" << ENDL;
+                        }
+                        unsigned sz = unsigned(sz_ast2->val);
+                        popKind(SYMBOL, "]");
+                        GfxGslType *el = parseType();
+                        return alloc.makeType<GfxGslArrayType>(sz, el);
+                    }
+                    // Would put function type parsing here but we don't actually need it.
+                } // Carry on to default case for bad symbol.
+                default:
+                    error(tok.loc) << "Expected a type, got " << tok << ENDL;
+            }
+        }
+
         GfxGslAst *parseExpr (int precedence)
         {
             auto tok = peek();
@@ -468,7 +688,8 @@ namespace {
                     case OUT: return alloc.makeAst<GfxGslOut>(pop().loc);
                     case BODY: return alloc.makeAst<GfxGslBody>(pop().loc);
                     case FRAG: return alloc.makeAst<GfxGslFrag>(pop().loc);
-                    case IDENTIFIER: {
+                    case IDENTIFIER:
+                    case TYPE_FLOAT: case TYPE_FLOAT2: case TYPE_FLOAT3: case TYPE_FLOAT4: {
                         auto tok = pop();
                         return alloc.makeAst<GfxGslVar>(tok.loc, tok.val);
                     }
@@ -563,16 +784,22 @@ namespace {
             return a;
         }
 
+        // Currently this does not allow an expression on a line as expressions
+        // do not have side-effects.  However, if we were to add user-defined functions
+        // that had side-effects then we would want to at least allow calls as well.
+        GfxGslAst *parseAssignment (void)
+        {
+            auto loc = peek().loc;
+            auto *lhs = parseExpr(precedence_max);
+            popKind(SYMBOL, "=");
+            auto *rhs = parseExpr(precedence_max);
+            return alloc.makeAst<GfxGslAssign>(loc, lhs, rhs);
+        }
+
         GfxGslAst *parseStmt (void)
         {
             auto loc = peek().loc;
-            if (maybePopKind(VAR)) {
-                const auto &id = popKind(IDENTIFIER).val;
-                popKind(SYMBOL, "=");
-                auto *init = parseExpr(precedence_max);
-                popKind(SYMBOL, ";");
-                return alloc.makeAst<GfxGslDecl>(loc, id, init);
-            } else if (maybePopKind(IF)) {
+            if (maybePopKind(IF)) {
                 popKind(SYMBOL, "(");
                 auto *cond = parseExpr(precedence_max);
                 popKind(SYMBOL, ")");
@@ -582,6 +809,29 @@ namespace {
                     return alloc.makeAst<GfxGslIf>(loc, cond, yes, no);
                 }
                 return alloc.makeAst<GfxGslIf>(loc, cond, yes, nullptr);
+            } else if (maybePopKind(FOR)) {
+                popKind(SYMBOL, "(");
+                GfxGslAst *init = nullptr;
+                GfxGslType *annot = nullptr;
+                std::string id;
+                if (maybePopKind(VAR)) {
+                    id = popKind(IDENTIFIER).val;
+                    if (maybePopKind(SYMBOL, ":")) {
+                        annot = parseType();
+                    }
+                    if (maybePopKind(SYMBOL, "=")) {
+                        init = parseExpr(precedence_max);
+                    }
+                } else {
+                    init = parseAssignment();
+                }
+                popKind(SYMBOL, ";");
+                auto *cond = parseExpr(precedence_max);
+                popKind(SYMBOL, ";");
+                auto *inc = parseAssignment();
+                popKind(SYMBOL, ")");
+                auto *body = parseStmt();
+                return alloc.makeAst<GfxGslFor>(loc, id, annot, init, cond, inc, body);
             } else if (maybePopKind(SYMBOL, "{")) {
                 GfxGslAsts stmts;
                 while (!maybePopKind(SYMBOL, "}")) {
@@ -594,16 +844,26 @@ namespace {
             } else if (maybePopKind(RETURN)) {
                 popKind(SYMBOL, ";");
                 return alloc.makeAst<GfxGslReturn>(loc);
-            } else {
-                auto *lhs = parseExpr(precedence_max);
-                popKind(SYMBOL, "=");
-                auto *rhs = parseExpr(precedence_max);
+            } else if (maybePopKind(VAR)) {
+                const auto &id = popKind(IDENTIFIER).val;
+                GfxGslType *annot = nullptr;
+                if (maybePopKind(SYMBOL, ":")) {
+                    annot = parseType();
+                }
+                GfxGslAst *init = nullptr;
+                if (maybePopKind(SYMBOL, "=")) {
+                    init = parseExpr(precedence_max);
+                }
                 popKind(SYMBOL, ";");
-                return alloc.makeAst<GfxGslAssign>(loc, lhs, rhs);
+                return alloc.makeAst<GfxGslDecl>(loc, id, annot, init);
+            } else {
+                GfxGslAst *ast = parseAssignment();
+                popKind(SYMBOL, ";");
+                return ast;
             }
         }
 
-        GfxGslAst *parseShader (void)
+        GfxGslShader *parseShader (void)
         {
             GfxGslAsts stmts;
             auto loc = peek().loc;
@@ -615,7 +875,7 @@ namespace {
     };
 }
 
-GfxGslAst *gfx_gasoline_parse (GfxGslAllocator &alloc, const std::string &shader)
+GfxGslShader *gfx_gasoline_parse (GfxGslAllocator &alloc, const std::string &shader)
 {
     auto tokens = lex(shader);
     Parser parser(alloc, tokens);

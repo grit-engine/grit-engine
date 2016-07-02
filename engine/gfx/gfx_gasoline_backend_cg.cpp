@@ -218,19 +218,22 @@ void gfx_gasoline_unparse_cg(const GfxGslContext &ctx,
         switch (tran.kind) {
             case GfxGslTrans::VERT:
             vert_in.insert(tv);
-            frag_vars["vert_" + tv] = frag_ts->getVertType(tv);
+            frag_vars["vert_" + tv] = tran.type;
             break;
 
             case GfxGslTrans::INTERNAL:
-            frag_vars["internal_" + tv] = frag_ts->getVertType(tv);
+            frag_vars["internal_" + tv] = tran.type;
             break;
-            default:;
+
+            case GfxGslTrans::USER:
+            frag_vars["user_" + tv] = tran.type;
+            break;
         }
     }
     for (const auto &pair : vert_ts->getVars())
-        vert_vars["user_" + pair.first] = pair.second;
+        vert_vars["user_" + pair.first] = pair.second->type;
     for (const auto &pair : frag_ts->getVars())
-        frag_vars["user_" + pair.first] = pair.second;
+        frag_vars["user_" + pair.first] = pair.second->type;
 
 
     std::stringstream vert_ss;
@@ -346,9 +349,10 @@ void gfx_gasoline_unparse_first_person_cg(const GfxGslContext &ctx,
     std::vector<std::string> v2c_x = { "vertex_to_cam", "x" };
     std::vector<std::string> v2c_y = { "vertex_to_cam", "y" };
     std::vector<std::string> v2c_z = { "vertex_to_cam", "z" };
-    trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, v2c_x });
-    trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, v2c_y });
-    trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, v2c_z });
+    GfxGslType *f3 = ctx.alloc.makeType<GfxGslFloatType>(3);
+    trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, v2c_x, f3 });
+    trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, v2c_y, f3 });
+    trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, v2c_z, f3 });
 
     GfxGslTypeMap vert_vars, frag_vars;
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
@@ -360,17 +364,27 @@ void gfx_gasoline_unparse_first_person_cg(const GfxGslContext &ctx,
     GfxGslTypeMap trans_vert;
     for (const auto &tran : trans) {
         const std::string &tv = tran.path[0];
-        if (tran.kind == GfxGslTrans::VERT) {
-            frag_vars["vert_" + tv] = vert_ts->getVertType(tv);  // Any type system object will do
+        switch (tran.kind) {
+            case GfxGslTrans::VERT:
             vert_in.insert(tv);
+            frag_vars["vert_" + tv] = tran.type;
+            break;
+
+            case GfxGslTrans::INTERNAL:
+            frag_vars["internal_" + tv] = tran.type;
+            break;
+
+            case GfxGslTrans::USER:
+            frag_vars["user_" + tv] = tran.type;
+            break;
         }
     }
     for (const auto &pair : vert_ts->getVars())
-        vert_vars["uvert_" + pair.first] = pair.second;
+        vert_vars["uvert_" + pair.first] = pair.second->type;
     for (const auto &pair : dangs_ts->getVars())
-        frag_vars["udangs_" + pair.first] = pair.second;
+        frag_vars["udangs_" + pair.first] = pair.second->type;
     for (const auto &pair : additional_ts->getVars())
-        frag_vars["uadd_" + pair.first] = pair.second;
+        frag_vars["uadd_" + pair.first] = pair.second->type;
     vert_vars["internal_vertex_to_cam"] = ctx.alloc.makeType<GfxGslFloatType>(3);
     frag_vars["internal_vertex_to_cam"] = ctx.alloc.makeType<GfxGslFloatType>(3);
 
@@ -478,6 +492,14 @@ void gfx_gasoline_unparse_decal_cg(const GfxGslContext &ctx,
                                    std::string &frag_out,
                                    const GfxGslEnvironment &env)
 {
+    (void) ctx;
+    (void) dangs_ts;
+    (void) dangs_ast;
+    (void) additional_ts;
+    (void) additional_ast;
+    (void) vert_out;
+    (void) frag_out;
+    (void) env;
 /*
     GfxGslBackendUnparser dangs_backend( "udangs_");
     dangs_backend.unparse(dangs_ast, 1);
@@ -510,12 +532,14 @@ void gfx_gasoline_unparse_decal_cg(const GfxGslContext &ctx,
             vert_in.insert(tv);
         }
     }
+    #if 0
     for (const auto &pair : vert_ts->getVars())
         vert_vars["uvert_" + pair.first] = pair.second;
     for (const auto &pair : dangs_ts->getVars())
         frag_vars["udangs_" + pair.first] = pair.second;
     for (const auto &pair : additional_ts->getVars())
         frag_vars["uadd_" + pair.first] = pair.second;
+    #endif
     vert_vars["internal_vertex_to_cam"] = ctx.alloc.makeType<GfxGslFloatType>(3);
     frag_vars["internal_vertex_to_cam"] = ctx.alloc.makeType<GfxGslFloatType>(3);
 

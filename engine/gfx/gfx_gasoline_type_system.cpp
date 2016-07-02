@@ -77,6 +77,9 @@ std::ostream &operator<<(std::ostream &o, const GfxGslType *t_)
     } else if (dynamic_cast<const GfxGslFragType*>(t_)) {
         o << "Frag";
 
+    } else if (auto *t = dynamic_cast<const GfxGslArrayType*>(t_)) {
+        o << "[" << t->size << "]" << t->elementType;
+
     } else if (auto *t = dynamic_cast<const GfxGslFunctionType*>(t_)) {
         if (t->params.size() == 0) {
             o << "( )";
@@ -125,8 +128,15 @@ GfxGslType *GfxGslTypeSystem::cloneType (const GfxGslType *t_)
         return ctx.alloc.makeType<GfxGslBodyType>();
     } else if (dynamic_cast<const GfxGslFragType*>(t_)) {
         return ctx.alloc.makeType<GfxGslFragType>();
+    } else if (auto *t = dynamic_cast<const GfxGslArrayType*>(t_)) {
+        GfxGslType *el = cloneType(t->elementType);
+        return ctx.alloc.makeType<GfxGslArrayType>(t->size, el);
     } else if (auto *t = dynamic_cast<const GfxGslFunctionType*>(t_)) {
-        return ctx.alloc.makeType<GfxGslFunctionType>(*t);
+        std::vector<GfxGslType*> params(t->params.size());
+        for (unsigned i=0 ; i<t->params.size() ; ++i)
+            params[i] = cloneType(t->params[i]);
+        GfxGslType *ret = cloneType(t->ret);
+        return ctx.alloc.makeType<GfxGslFunctionType>(params, ret);
     } else {
         EXCEPTEX << "Internal error." << ENDL;
     }
@@ -246,14 +256,16 @@ GfxGslFunctionType *GfxGslTypeSystem::lookupFunction(const GfxGslLocation &loc,
     error(loc) << "No override found for " << name << ss.str() << ENDL;
 }
 
-bool GfxGslTypeSystem::isFirstClass (GfxGslType *x)
+bool GfxGslTypeSystem::isFirstClass (const GfxGslType *x)
 {
-    if (dynamic_cast<GfxGslFloatType*>(x)) {
+    if (dynamic_cast<const GfxGslFloatType*>(x)) {
         return true;
-    } else if (dynamic_cast<GfxGslIntType*>(x)) {
+    } else if (dynamic_cast<const GfxGslIntType*>(x)) {
         return true;
-    } else if (dynamic_cast<GfxGslBoolType*>(x)) {
+    } else if (dynamic_cast<const GfxGslBoolType*>(x)) {
         return true;
+    } else if (auto *xa = dynamic_cast<const GfxGslArrayType*>(x)) {
+        return isFirstClass(xa->elementType);
     }
     return false;
 }
@@ -316,6 +328,12 @@ bool GfxGslTypeSystem::equal (GfxGslType *a_, GfxGslType *b_)
     } else if (dynamic_cast<GfxGslFragType*>(a_)) {
         auto *b = dynamic_cast<GfxGslFragType*>(b_);
         if (b == nullptr) return false;
+
+    } else if (auto *a = dynamic_cast<GfxGslArrayType*>(a_)) {
+        auto *b = dynamic_cast<GfxGslArrayType*>(b_);
+        if (b == nullptr) return false;
+        if (a->size != b->size) return false;
+        if (!equal(a->elementType, b->elementType)) return false;
 
     } else if (auto *a = dynamic_cast<GfxGslFunctionType*>(a_)) {
         auto *b = dynamic_cast<GfxGslFunctionType*>(b_);
@@ -433,7 +451,7 @@ void GfxGslTypeSystem::addTrans (const GfxGslLocation &loc, const std::vector<st
 {
     auto *ft = dynamic_cast<const GfxGslFloatType *>(type);
     if (ft == nullptr)
-        error(loc) << "Can only capture floating point vertex attributes." << ENDL;
+        error(loc) << "Can only capture floating point values." << ENDL;
     std::set<unsigned> parts;
     if (path.size() == 1) {
         for (unsigned i=0 ; i<ft->dim ; ++i) {
@@ -459,8 +477,25 @@ void GfxGslTypeSystem::addTrans (const GfxGslLocation &loc, const std::vector<st
         if (ft->dim > 1) {
             t.path.emplace_back(1, fields[p]);
         }
+        t.type = ft;
         trans.insert(t);
     }
+}
+
+void GfxGslTypeSystem::inferAndSet (GfxGslShader *ast, const GfxGslDefMap &outer)
+{
+    Ctx root;
+    GfxGslDefMap outer2;
+    for (const auto &pair : outer) {
+        GfxGslDef *def = ctx.alloc.makeDef<GfxGslDef>(pair.second->type, true, false);
+        outer2[pair.first] = def;
+    }
+    Ctx c = root.appendVars(&outer2);
+    for (GfxGslAst *stmt : ast->stmts) {
+        inferAndSet(stmt, c.appendVars(&ast->vars).setTopLevel(true));
+    }
+    ast->type = ctx.alloc.makeType<GfxGslVoidType>();
+    vars = ast->vars;
 }
 
 void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
@@ -470,38 +505,84 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
 
     if (auto *ast = dynamic_cast<GfxGslBlock*>(ast_)) {
         for (auto stmt : ast->stmts) {
-            inferAndSet(stmt, c);
-        }
-        ast->type = ctx.alloc.makeType<GfxGslVoidType>();
-
-    } else if (auto *ast = dynamic_cast<GfxGslShader*>(ast_)) {
-        for (auto stmt : ast->stmts) {
-            inferAndSet(stmt, c);
+            inferAndSet(stmt, c.appendVars(&ast->vars));
         }
         ast->type = ctx.alloc.makeType<GfxGslVoidType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslDecl*>(ast_)) {
-        inferAndSet(ast->init, Ctx().setRead(true));
-        if (vars.find(ast->id) != vars.end())
+        if (c.lookupVar(ast->id) != nullptr)
             error(loc) << "Variable already defined: " << ast->id << ENDL;
-        if (!isFirstClass(ast->init->type))
-            error(loc) << "Variable cannot have type: " << ast->init->type << ENDL;
-        GfxGslType *type = cloneType(ast->init->type);
+        GfxGslType *type = nullptr;
+        if (ast->init != nullptr) {
+            inferAndSet(ast->init, c.setRead(true));
+            type = cloneType(ast->init->type);
+        }
+        if (ast->annot != nullptr) {
+            // Change our minds, use the annotation.
+            type = cloneType(ast->annot);
+            if (ast->init != nullptr)
+                doConversion(ast->init, type);
+        }
+        if (type == nullptr) {
+            error(loc) << "Variable must have type annotation or initialiser: " << ast->id << ENDL;
+        }
+        if (!isFirstClass(type))
+            error(loc) << "Variable cannot have type: " << type << ENDL;
         type->writeable = true;
-        vars[ast->id] = type;
+        GfxGslDef *def = ctx.alloc.makeDef<GfxGslDef>(type, false, c.topLevel);
+        (*c.vars)[ast->id] = def;
+        ast->def = def;
         ast->type = ctx.alloc.makeType<GfxGslVoidType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslIf*>(ast_)) {
-        inferAndSet(ast->cond, Ctx().setRead(true));
-        inferAndSet(ast->yes, c);
+        inferAndSet(ast->cond, c.setRead(true));
+        inferAndSet(ast->yes, c.appendVars(&ast->yesVars));
         if (ast->no) {
-            inferAndSet(ast->no, c);
+            inferAndSet(ast->no, c.appendVars(&ast->noVars));
             unify(loc, ast->yes, ast->no);
         }
         ast->type = ctx.alloc.makeType<GfxGslVoidType>();
 
+    } else if (auto *ast = dynamic_cast<GfxGslFor*>(ast_)) {
+        Ctx c2 = c.appendVars(&ast->vars);
+        if (ast->id != "") {
+            // var form -- augment with new var
+            if (c.lookupVar(ast->id) != nullptr)
+                error(loc) << "Loop variable already defined: " << ast->id << ENDL;
+            GfxGslType *type = nullptr;
+            if (ast->init != nullptr) {
+                inferAndSet(ast->init, c.setRead(true));
+                type = cloneType(ast->init->type);
+            }
+            if (ast->annot != nullptr) {
+                // Change our minds, use the annotation.
+                type = cloneType(ast->annot);
+                if (ast->init != nullptr)
+                    doConversion(ast->init, type);
+            }
+            if (type == nullptr) {
+                error(loc) << "Variable must have type annotation or initialiser: "
+                           << ast->id << ENDL;
+            }
+            type->writeable = true;
+            GfxGslDef *def = ctx.alloc.makeDef<GfxGslDef>(type, false, false);
+            ast->vars[ast->id] = def;
+            ast->def = def;
+            if (!isFirstClass(ast->def->type))
+                error(loc) << "Loop variable cannot have type: " << ast->def->type << ENDL;
+            inferAndSet(ast->cond, c2.setRead(true));
+            inferAndSet(ast->inc, c2);
+            inferAndSet(ast->body, c2);
+        } else {
+            inferAndSet(ast->init, c);
+            inferAndSet(ast->cond, c.setRead(true));
+            inferAndSet(ast->inc, c);
+            inferAndSet(ast->body, c2);
+        }
+        ast->type = ctx.alloc.makeType<GfxGslVoidType>();
+
     } else if (auto *ast = dynamic_cast<GfxGslAssign*>(ast_)) {
-        inferAndSet(ast->target, Ctx().setWrite(true));
+        inferAndSet(ast->target, c.setWrite(true));
         if (!ast->target->type->writeable)
             error(loc) << "Cannot assign to this object." <<  ENDL;
         inferAndSet(ast->expr, c.setRead(true));
@@ -518,7 +599,7 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
         if (c.write)
             error(loc) << "Cannot assign to result of function call." <<  ENDL;
         for (unsigned i=0 ; i<ast->args.size() ; ++i)
-            inferAndSet(ast->args[i], Ctx().setRead(true));
+            inferAndSet(ast->args[i], c.setRead(true));
         GfxGslFunctionType *t = lookupFunction(loc, ast->func, ast->args);
         ast->type = t->ret;
 
@@ -618,17 +699,16 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
         ast->type = ctx.alloc.makeType<GfxGslFloatType>(1);
 
     } else if (auto *ast = dynamic_cast<GfxGslVar*>(ast_)) {
-        auto it = vars.find(ast->id);
-        if (it == vars.end()) {
+        const GfxGslDef *def = c.lookupVar(ast->id);
+        if (def == nullptr) {
             error(loc) << "Unknown variable: " << ast->id << ENDL;
         }
-        ast->type = cloneType(vars[ast->id]);
+        ast->type = cloneType(def->type);
         if (c.write && !ast->type->writeable)
             error(loc) << "Cannot write to variable: " << ast->id << ENDL;
 
-        if (outerVars.find(ast->id) != outerVars.end()) {
+        if (def->trans)
             addTrans(loc, c.appendPath(ast->id).path, ast->type, false);
-        }
 
     } else if (auto *ast = dynamic_cast<GfxGslBinary*>(ast_)) {
         inferAndSet(ast->a, c.setRead(true));
@@ -641,8 +721,8 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             case GFX_GSL_OP_MUL: 
             case GFX_GSL_OP_DIV: 
             case GFX_GSL_OP_MOD: {
-                if (auto *ct = dynamic_cast<GfxGslCoordType*>(t)) {
-                    ast->type = ctx.alloc.makeType<GfxGslFloatType>(ct->dim);
+                if (dynamic_cast<GfxGslCoordType*>(t)) {
+                    ast->type = cloneType(t);
                 } else {
                     error(loc) << "Type error at operator " << ast->op << ENDL;
                 }

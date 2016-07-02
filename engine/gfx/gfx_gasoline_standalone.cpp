@@ -77,6 +77,8 @@ static GfxGslParam from_string (const std::string &type_name)
 }
 
 
+CentralisedLog clog;
+
 int main (int argc, char **argv)
 {
 
@@ -148,7 +150,7 @@ int main (int argc, char **argv)
         std::ifstream f;
 
         std::string vert_code;
-        if (vert_in_filename != "")  {
+        if (vert_in_filename != "::none::")  {
             f.open(vert_in_filename);
             if (!f.good()) {
                 std::cerr << "Opening file: ";
@@ -160,7 +162,7 @@ int main (int argc, char **argv)
         }
 
         std::string dangs_code;
-        if (dangs_in_filename != "") {
+        if (dangs_in_filename != "::none::") {
             f.open(dangs_in_filename);
             if (!f.good()) {
                 std::cerr << "Opening file: ";

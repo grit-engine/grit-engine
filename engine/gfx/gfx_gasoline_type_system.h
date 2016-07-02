@@ -40,11 +40,18 @@ enum GfxGslKind {
 };
 
 typedef std::vector<GfxGslType*> GfxGslTypes;
-typedef std::map<std::string, const GfxGslType*> GfxGslTypeMap;
 
 std::ostream &operator<<(std::ostream &o, const GfxGslType *t_);
 
 // Primitives
+
+struct GfxGslArrayType : public GfxGslType {
+    unsigned size;
+    GfxGslType *elementType;
+    GfxGslArrayType (unsigned size, GfxGslType *element_type)
+      : size(size), elementType(element_type)
+    { }
+};
 
 struct GfxGslCoordType : public GfxGslType {
     unsigned dim;
@@ -62,7 +69,7 @@ struct GfxGslFloatMatrixType : public GfxGslType {
 };
 
 struct GfxGslTextureType : public GfxGslType {
-    GfxGslFloatVec solid;
+    GfxGslFloatVec solid;  // This should not be in the type, it should be in the GfxGslContext
     GfxGslTextureType(const GfxGslFloatVec &solid)
       : solid(solid) { }
 };
@@ -120,11 +127,6 @@ struct GfxGslFragType : public GfxGslType {
 };
 
 
-struct GfxGslArrayType : public GfxGslType {
-    GfxGslType *element;
-    GfxGslArrayType (GfxGslType *element) : element(element) { }
-};
-
 struct GfxGslFunctionType : public GfxGslType {
     GfxGslTypes params;
     GfxGslType *ret;
@@ -168,6 +170,7 @@ struct GfxGslTrans {
     enum Kind { USER, VERT, INTERNAL };
     Kind kind;
     std::vector<std::string> path;
+    const GfxGslType *type;  // Of path[0]
     bool operator== (const GfxGslTrans &other) const
     {
         if (kind != other.kind) return false;
@@ -190,8 +193,7 @@ class GfxGslTypeSystem {
     GfxGslTypeMap fragFields;
     GfxGslTypeMap bodyFields;
     GfxGslTypeMap vertFields;
-    GfxGslTypeMap vars;
-    const GfxGslTypeMap outerVars;
+    GfxGslDefMap vars;
 
     std::set<std::string> fragFieldsRead;
     std::set<std::string> vertFieldsRead;
@@ -214,7 +216,7 @@ class GfxGslTypeSystem {
         return dynamic_cast<GfxGslVoidType*>(x) != nullptr;
     }
 
-    bool isFirstClass (GfxGslType *x);
+    bool isFirstClass (const GfxGslType *x);
 
     bool equal (GfxGslType *a_, GfxGslType *b_);
 
@@ -232,20 +234,39 @@ class GfxGslTypeSystem {
          * write indicates that the object that the expression resolves to (if any) may be written
          * path is the field path we will read from this object
          */
+        const Ctx *parent;
         bool read;
         bool write;
+        bool topLevel;
         std::vector<std::string> path;
-        Ctx (void) : read(false), write(false) { }
+        GfxGslDefMap *vars;
+        Ctx (void)
+          : parent(nullptr), read(false), write(false), topLevel(true), vars(nullptr)
+        { }
         Ctx setRead (bool v) const
         {
-            Ctx c = *this;
+            Ctx c = resetPath();
             c.read = v;
             return c;
         }
         Ctx setWrite (bool v) const
         {
-            Ctx c = *this;
+            Ctx c = resetPath();
             c.write = v;
+            return c;
+        }
+        Ctx setTopLevel (bool v)const
+        {
+            Ctx c = *this;
+            c.topLevel = v;
+            return c;
+        }
+        Ctx appendVars (GfxGslDefMap *v)const
+        {
+            Ctx c = *this;
+            c.parent = this;
+            c.vars = v;
+            c.topLevel = false;
             return c;
         }
         Ctx appendPath (const std::string &v) const
@@ -253,6 +274,23 @@ class GfxGslTypeSystem {
             Ctx c = *this;
             c.path.insert(c.path.begin(), v);
             return c;
+        }
+        Ctx resetPath (void) const
+        {
+            Ctx c = *this;
+            c.path.clear();
+            return c;
+        }
+        const GfxGslDef *lookupVar(const std::string &id) const
+        {
+            if (vars != nullptr) {
+                auto it = vars->find(id);
+                if (it != vars->end())
+                    return it->second;
+            }
+            if (parent != nullptr)
+                return parent->lookupVar(id);
+            return nullptr;
         }
     };
 
@@ -265,21 +303,20 @@ class GfxGslTypeSystem {
 
     const GfxGslKind kind;
 
-    GfxGslTypeSystem (GfxGslContext &ctx, GfxGslKind kind,
-                      const GfxGslTypeMap &vars)
-      : ctx(ctx), vars(vars), outerVars(vars), kind(kind)
+    GfxGslTypeSystem (GfxGslContext &ctx, GfxGslKind kind)
+      : ctx(ctx), kind(kind)
     {
         initObjectTypes(kind);
     }
 
-    /** Infer type of ast and set that type within the ast node. */
-    void inferAndSet (GfxGslAst *ast)
-    {
-        inferAndSet(ast, Ctx());
-    }
+    /** For all nodes in the AST, infer type and set that type within the node.
+     *
+     * This is the core type inference algorithm.
+     */
+    void inferAndSet (GfxGslShader *ast, const GfxGslDefMap &outer);
 
     /** Get the variables declared by this shader. */
-    const GfxGslTypeMap &getVars (void) const { return vars; }
+    const GfxGslDefMap &getVars (void) const { return vars; }
 
     /** Get the vertex fields read by this shader (applies to all shaders). */
     const std::set<std::string> &getVertFieldsRead (void) const { return vertFieldsRead; }
@@ -312,14 +349,6 @@ class GfxGslTypeSystem {
     {
         auto it = fragFields.find(f);
         if (it == fragFields.end()) return nullptr;
-        return it->second;
-    }
-
-    /** Type of a variable declared in this shader. */
-    const GfxGslType *getVarType (const std::string &v) const
-    {
-        auto it = vars.find(v);
-        if (it == vars.end()) return nullptr;
         return it->second;
     }
 
