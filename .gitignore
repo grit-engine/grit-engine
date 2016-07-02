@@ -12,6 +12,7 @@ grit
 grit_col_conv
 gsl
 GritXMLConverter
+engine/tests/gasoline/glsl_check
 
 # Visual Studio files
 Debug
