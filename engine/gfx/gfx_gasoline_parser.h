@@ -44,11 +44,27 @@ static inline std::ostream &operator<<(std::ostream &o, const GfxGslLocation &lo
 }
 
 struct GfxGslType {
-    bool writeable;
-    bool readable;
-    GfxGslType() : writeable(false), readable(true) { }
+    bool writeable;  // When the type represents an object, if fields of that object can be written.
+    GfxGslType() : writeable(false) { }
     virtual ~GfxGslType (void) { }
 };
+typedef std::vector<GfxGslType*> GfxGslTypes;
+typedef std::map<std::string, const GfxGslType*> GfxGslTypeMap;
+
+// When a variable is in scope, features of that variable are stored here.
+// This would be a good place for constness, volatile, or things like that.
+struct GfxGslDef {
+    GfxGslType *type;  // Of the values that can be assigned to the variable.
+    bool trans;  // Whether it is interpolated.
+    bool topLevel;  // Whether it can be captured by fragment shader.
+    GfxGslDef(GfxGslType *type, bool trans, bool top_level)
+      : type(type), trans(trans), topLevel(top_level)
+    { }
+};  
+typedef std::map<std::string, const GfxGslDef*> GfxGslDefMap;
+
+std::ostream &operator<<(std::ostream &o, const GfxGslType *t_);
+
 
 // Abstract Syntax Tree
 struct GfxGslAst {
@@ -62,6 +78,7 @@ typedef std::vector<GfxGslAst*> GfxGslAsts;
 
 struct GfxGslShader : public GfxGslAst {
     GfxGslAsts stmts;
+    GfxGslDefMap vars;
     GfxGslShader (const GfxGslLocation &loc, const GfxGslAsts &stmts)
       : GfxGslAst(loc), stmts(stmts)
     { }
@@ -69,23 +86,45 @@ struct GfxGslShader : public GfxGslAst {
 
 struct GfxGslBlock : public GfxGslAst {
     GfxGslAsts stmts;
+    GfxGslDefMap vars;
     GfxGslBlock (const GfxGslLocation &loc, const GfxGslAsts &stmts)
       : GfxGslAst(loc), stmts(stmts)
     { }
 };
 
 struct GfxGslDecl : public GfxGslAst {
-    const std::string id;
+    std::string id;
+    GfxGslDef *def;
+    GfxGslType *annot;
     GfxGslAst *init;
-    GfxGslDecl (const GfxGslLocation &loc, const std::string id, GfxGslAst *init)
-      : GfxGslAst(loc), id(id), init(init)
+    GfxGslDecl (const GfxGslLocation &loc, const std::string &id, GfxGslType *annot,
+                GfxGslAst *init)
+      : GfxGslAst(loc), id(id), def(nullptr), annot(annot), init(init)
+    { }
+};
+
+struct GfxGslFor : public GfxGslAst {
+    std::string id;  // If id != "" then of the form for (var x = init; ...)
+    GfxGslDef *def;
+    GfxGslType *annot;
+    GfxGslAst *init;  // Otherwise, of the form for (init; ...)
+    GfxGslDefMap vars;
+    GfxGslAst *cond;
+    GfxGslAst *inc;
+    GfxGslAst *body;
+    GfxGslFor (const GfxGslLocation &loc, const std::string &id, GfxGslType *annot, GfxGslAst *init,
+               GfxGslAst *cond, GfxGslAst *inc, GfxGslAst *body)
+      : GfxGslAst(loc), id(id), def(nullptr), annot(annot), init(init), cond(cond), inc(inc),
+        body(body)
     { }
 };
 
 struct GfxGslIf : public GfxGslAst {
     GfxGslAst *cond;
     GfxGslAst *yes;
+    GfxGslDefMap yesVars;
     GfxGslAst *no;
+    GfxGslDefMap noVars;
     GfxGslIf (const GfxGslLocation &loc, GfxGslAst *cond, GfxGslAst *yes, GfxGslAst *no)
       : GfxGslAst(loc), cond(cond), yes(yes), no(no)
     { }
@@ -125,6 +164,21 @@ template<class T> struct GfxGslLiteral : public GfxGslAst {
 typedef GfxGslLiteral<int32_t> GfxGslLiteralInt;
 typedef GfxGslLiteral<float> GfxGslLiteralFloat;
 typedef GfxGslLiteral<bool> GfxGslLiteralBoolean;
+
+struct GfxGslLiteralArray : public GfxGslAst {
+    std::vector<GfxGslAst*> elements;
+    GfxGslLiteralArray (const GfxGslLocation &loc, const std::vector<GfxGslAst*> &elements)
+      : GfxGslAst(loc), elements(elements)
+    { }
+};
+
+struct GfxGslArrayLookup : public GfxGslAst {
+    GfxGslAst *target;
+    GfxGslAst *index;
+    GfxGslArrayLookup (const GfxGslLocation &loc, GfxGslAst *target, GfxGslAst *index)
+      : GfxGslAst(loc), target(target), index(index)
+    { }
+};
 
 struct GfxGslVar : public GfxGslAst {
     const std::string id;
@@ -236,14 +290,16 @@ struct GfxGslReturn : public GfxGslAst {
 class GfxGslAllocator {
     std::vector<GfxGslAst*> poolAst;
     std::vector<GfxGslType*> poolType;
+    std::vector<GfxGslDef*> poolDef;
     public:
     GfxGslAllocator (void) { }
     ~GfxGslAllocator (void)
     {
         for (auto a : poolAst) delete a;
         for (auto t : poolType) delete t;
+        for (auto t : poolDef) delete t;
     }
-    template<class T, class... Args> GfxGslAst *makeAst (Args... args)
+    template<class T, class... Args> T *makeAst (Args... args)
     {
         auto *r = new T(args...);
         poolAst.push_back(r);
@@ -255,8 +311,14 @@ class GfxGslAllocator {
         poolType.push_back(r);
         return r;
     }
+    template<class T, class... Args> T *makeDef (Args... args)
+    {
+        auto *r = new T(args...);
+        poolDef.push_back(r);
+        return r;
+    }
 };
 
-GfxGslAst *gfx_gasoline_parse (GfxGslAllocator &alloc, const std::string &shader);
+GfxGslShader *gfx_gasoline_parse (GfxGslAllocator &alloc, const std::string &shader);
 
 #endif

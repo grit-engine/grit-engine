@@ -23,6 +23,68 @@
 #include "gfx_gasoline_backend.h"
 
 
+void GfxGslBackendUnparser::unparseType (const GfxGslType *t_)
+{
+    if (auto *t = dynamic_cast<const GfxGslArrayType*>(t_)) {
+        unparseType(t->elementType);
+        ss << "[" << t->size << "]";
+
+    } else if (dynamic_cast<const GfxGslFunctionType*>(t_)) {
+        EXCEPTEX << "Cannot unparse function type." << ENDL;
+    } else {
+        ss << t_;
+    }
+}
+
+void GfxGslBackendUnparser::zeroInitialise(const std::string &space, const std::string &name,
+                                           GfxGslType *t_)
+{
+
+    if (auto *t = dynamic_cast<const GfxGslFloatType*>(t_)) {
+        switch (t->dim) {
+            case 4:
+            ss << space << name << ".w = 0.0;\n";
+            case 3:
+            ss << space << name << ".z = 0.0;\n";
+            case 2:
+            ss << space << name << ".y = 0.0;\n";
+            ss << space << name << ".x = 0.0;\n";
+            return;
+            case 1:
+            ss << space << name << " = 0.0;\n";
+            return;
+        }
+
+    } else if (auto *t = dynamic_cast<const GfxGslIntType*>(t_)) {
+        switch (t->dim) {
+            case 4:
+            ss << space << name << ".w = 0;\n";
+            case 3:
+            ss << space << name << ".z = 0;\n";
+            case 2:
+            ss << space << name << ".y = 0;\n";
+            ss << space << name << ".x = 0;\n";
+            return;
+            case 1:
+            ss << space << name << " = 0;\n";
+            return;
+        }
+
+    } else if (dynamic_cast<const GfxGslBoolType*>(t_)) {
+        ss << space << name << " = false;\n";
+
+    } else if (auto *t = dynamic_cast<const GfxGslArrayType*>(t_)) {
+        for (unsigned i=0 ; i<t->size ; ++i) {
+            std::stringstream name2;
+            name2 << name << "[" << i << "]";
+            zeroInitialise(space, name2.str(), t->elementType);
+        }
+
+    } else {
+        EXCEPTEX << "Cannot zero initialise type: " << t << ENDL;
+    }
+}
+
 void GfxGslBackendUnparser::unparse (const GfxGslAst *ast_, int indent)
 {
     std::string space(4 * indent, ' ');
@@ -37,9 +99,21 @@ void GfxGslBackendUnparser::unparse (const GfxGslAst *ast_, int indent)
             unparse(stmt, indent);
         }
     } else if (auto ast = dynamic_cast<const GfxGslDecl*>(ast_)) {
-        ss << space << varPref << ast->id << " = ";
-        unparse(ast->init, indent);
-        ss << ";\n";
+        std::string name = varPref + ast->id;
+        // Define it.
+        if (!ast->def->topLevel) {
+            ss << space;
+            unparseType(ast->def->type);
+            ss << " " << name << ";\n";
+        }
+        // Initialise it.
+        if (ast->init != nullptr) {
+            ss << space << name << " = ";
+            unparse(ast->init, indent);
+            ss << ";\n";
+        } else {
+            zeroInitialise(space, name, ast->def->type);
+        }
     } else if (auto ast = dynamic_cast<const GfxGslIf*>(ast_)) {
         ss << space << "if (";
         unparse(ast->cond, indent);
@@ -49,6 +123,42 @@ void GfxGslBackendUnparser::unparse (const GfxGslAst *ast_, int indent)
             ss << space << "} else {\n";
             unparse(ast->no, indent+1);
         }
+        ss << space << "}\n";
+    } else if (auto ast = dynamic_cast<const GfxGslFor*>(ast_)) {
+        std::string space2(4 * (indent + 1), ' ');
+        ss << space << "{\n";
+        if (ast->id != "") {
+            std::string name = varPref + ast->id;
+            // Define it.
+            ss << space2;
+            unparseType(ast->def->type);
+            ss << " " << name << ";\n";
+            // Initialise it.
+            if (ast->init != nullptr) {
+                ss << space2 << name << " = ";
+                unparse(ast->init, indent);
+                ss << ";\n";
+            } else {
+                zeroInitialise(space2, name, ast->def->type);
+            }
+        } else if (ast->init != nullptr) {
+            unparse(ast->init, indent + 1);
+            ss << ";\n";
+        }
+        ss << space2 << "for (";
+        ss << " ; ";
+        unparse(ast->cond, indent + 1);
+        ss << " ; ";
+        if (auto inc_ass = dynamic_cast<const GfxGslAssign*>(ast->inc)) {
+            unparse(inc_ass->target, indent + 2);
+            ss << " = ";
+            unparse(inc_ass->expr, indent + 2);
+        } else {
+            unparse(ast->inc, indent + 2);
+        }
+        ss << ") {\n";
+        unparse(ast->body, indent + 2);
+        ss << space2 << "}\n";
         ss << space << "}\n";
     } else if (auto ast = dynamic_cast<const GfxGslAssign*>(ast_)) {
         ss << space;

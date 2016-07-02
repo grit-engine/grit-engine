@@ -391,33 +391,33 @@ static GfxGasolineResult type_check (const std::string &vert_prog,
         md.d3d9,
     };
 
-    GfxGslAst *vert_ast;
-    GfxGslTypeSystem vert_ts(ctx, GFX_GSL_VERTEX, GfxGslTypeMap());
+    GfxGslShader *vert_ast;
+    GfxGslTypeSystem vert_ts(ctx, GFX_GSL_VERTEX);
 
     try {
         vert_ast = gfx_gasoline_parse(alloc, vert_prog);
-        vert_ts.inferAndSet(vert_ast);
+        vert_ts.inferAndSet(vert_ast, GfxGslDefMap { });
     } catch (const Exception &e) {
         EXCEPT << "Vertex shader: " << e << ENDL;
     }
 
 
-    GfxGslAst *dangs_ast;
-    GfxGslTypeSystem dangs_ts(ctx, GFX_GSL_DANGS, vert_ts.getVars());
+    GfxGslShader *dangs_ast;
+    GfxGslTypeSystem dangs_ts(ctx, GFX_GSL_DANGS);
 
     try {
         dangs_ast = gfx_gasoline_parse(alloc, dangs_prog);
-        dangs_ts.inferAndSet(dangs_ast);
+        dangs_ts.inferAndSet(dangs_ast, vert_ast->vars);
     } catch (const Exception &e) {
         EXCEPT << "DANGS shader: " << e << ENDL;
     }
 
-    GfxGslAst *additional_ast;
-    GfxGslTypeSystem additional_ts(ctx, GFX_GSL_COLOUR_ALPHA, vert_ts.getVars());
+    GfxGslShader *additional_ast;
+    GfxGslTypeSystem additional_ts(ctx, GFX_GSL_COLOUR_ALPHA);
 
     try {
         additional_ast = gfx_gasoline_parse(alloc, additional_prog);
-        additional_ts.inferAndSet(additional_ast);
+        additional_ts.inferAndSet(additional_ast, vert_ast->vars);
     } catch (const Exception &e) {
         EXCEPT << "Additional shader: " << e << ENDL;
     }

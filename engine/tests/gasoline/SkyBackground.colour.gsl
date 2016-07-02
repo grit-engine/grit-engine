@@ -35,7 +35,7 @@ if (rel_polar.x < -180) rel_polar.x = rel_polar.x + 360;
 //if (dot(rel_polar, rel_polar) < 10*10) frag.colour.rgb *= Float3(1,1,0);
 
 // sunnyness is the amount this sky pixel is affected by the sun
-var sunnyness = 0.0;
+var sunnyness : Float;
 {
     // needs max to avoid a big reflection on far side of the skysphere
     var qty = max(0.0, - (rel_polar.x-90)/90 * (rel_polar.x+90)/90
@@ -54,7 +54,7 @@ var sunnyness = 0.0;
 out.colour = mat.starfieldMask * gamma_decode(sample(mat.starfieldMap, uv).rgb);
 
 // SKY GRADIENT
-var sky = Float3(0, 0, 0);
+var sky : Float3;
 var ssky = Float3(0, 0, 0);
 var alpha = 0.0;
 if (el < global.skyDivider1) {

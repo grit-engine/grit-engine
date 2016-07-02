@@ -36,6 +36,8 @@ class GfxGslBackendUnparser {
       : varPref(var_pref)
     { }
 
+    void zeroInitialise(const std::string &space, const std::string &name, GfxGslType *t);
+    void unparseType (const GfxGslType *t_);
     void unparse (const GfxGslAst *ast_, int indent);
 
     std::string getUserVertexFunction (void)
