@@ -121,6 +121,7 @@ do_tests() {
     test_sky ${TARGET} SkyDefault &&
     test_sky ${TARGET} SkyClouds &&
     test_sky ${TARGET} SkyBackground &&
+    test_sky ${TARGET} ForLoop &&
 
     test_first_person ${TARGET} FpDefault 0 &&
     test_first_person ${TARGET} Empty 0 &&

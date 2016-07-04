@@ -189,7 +189,6 @@ bool is_symbol (char c)
         case '=': case '!': case '+': case '-': case '*': case '/': case '%': case '^':
         case '<': case '>':
         case '&': case '|':
-        case ':': case '[': case ']':
         return true;
     }
     return false;
@@ -365,6 +364,7 @@ std::list<Token> lex (const std::string &shader)
 
             // Symbols that cannot be combined with a =
             case '{': case '}': case '(': case ')': case '.': case ',': case ';':
+            case '[': case ']': case ':':
             r.emplace_back(SYMBOL, std::string({*c}), here);
             break;
 
@@ -707,12 +707,30 @@ namespace {
                     }
                     case SYMBOL:
                     if (tok.val == "(") {
+                        // Parentheses
                         pop();
                         auto *expr = parseExpr(precedence_max);
                         popKind(SYMBOL, ")");
                         return expr;
+                    } else if (tok.val == "[") {
+                        // Array Literal
+                        pop();
+                        popKind(SYMBOL, "]");
+                        GfxGslType *element_type = parseType();
+                        popKind(SYMBOL, "{");
+                        GfxGslAsts elements;
+                        bool comma = true;
+                        while (true) {
+                            if (!comma && maybePopKind(SYMBOL, ","))
+                                comma = true;
+                            if (maybePopKind(SYMBOL, "}")) break;
+                            elements.push_back(parseExpr(precedence_max));
+                            comma = false;
+                        }
+                        return alloc.makeAst<GfxGslLiteralArray>(tok.loc, element_type, elements);
                     }
                     // else follow into error
+
                     default: 
                     error(tok.loc) << "Unexpected: " << tok << ENDL;
                 }
@@ -747,6 +765,7 @@ namespace {
                 // special cases for things that arent binary operators
                 if (precedence == precedence_apply) {
                     if (sym == "(") {
+                        // Call
                         Token lparen = pop();
                         GfxGslAsts args;
                         bool comma = true;
@@ -762,9 +781,14 @@ namespace {
                         } else {
                             error(tok.loc) << "Invalid call syntax: " << lparen << ENDL;
                         }
+                    } else if (sym == "[") {
+                        Token lbracket = pop();
+                        GfxGslAst *index = parseExpr(precedence_max);
+                        popKind(SYMBOL, "]");
+                        a = alloc.makeAst<GfxGslArrayLookup>(lbracket.loc, a, index);
                     } else if (sym == ".") {
-                        auto dot = pop();
-                        const auto &id = popKind(IDENTIFIER).val;
+                        Token dot = pop();
+                        const std::string &id = popKind(IDENTIFIER).val;
                         a = alloc.makeAst<GfxGslField>(dot.loc, a, id);
                     } else {
                         break;  // Process this token at higher precedence.
