@@ -396,14 +396,29 @@ std::list<Token> lex (const std::string &shader)
                     break;
                 }
 
-                // Accumulate all symbol chars.
+                // Lex operator -- sequence of symbols chars that ends at the first /* // and
+                // cannot end with a - ! ~ or + (unless the operator is that single char).
+                const char *operator_begin = c;
                 std::stringstream ss;
                 while (is_symbol(*c)) {
-                    ss << *c;
+                    // Not allowed // in operators
+                    if (*c == '/' && *(c+1) == '/') break;
+                    // Not allowed /* in operators
+                    if (*c == '/' && *(c+1) == '*') break;
                     ++c;
                 }
+                while (c > operator_begin + 1) {
+                    switch (*(c - 1)) {
+                        case '+': case '-': case '~': case '!':
+                        c--;
+                        break;
+                        default:
+                        goto operator_done;
+                    }
+                }
+                operator_done:
+                r.emplace_back(SYMBOL, std::string(operator_begin, c), here);
                 c--;  // Leave it on the last symbol.
-                r.emplace_back(SYMBOL, ss.str(), here);
 
             } else if (is_identifier1(*c)) {
                 std::string id;
