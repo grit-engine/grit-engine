@@ -147,6 +147,17 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
     m["abs"] = ts;
     m["sqrt"] = ts;
 
+    m["abs"] = {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2)}, fs(2)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(1)}, is(1)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(2)}, is(2)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(3)}, is(3)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(4)}, is(4)),
+    };
+
     m["pow"] = {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1)}, fs(1)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2), fs(1)}, fs(2)),

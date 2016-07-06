@@ -231,26 +231,27 @@ void gfx_pipeline_init (void)
     };
 
     
-    static float pascal_row11[] = { 252/638.0, 210/638.0, 120/638.0, 45/638.0, 10/638.0, 1/638.0 };
 
     std::stringstream ss;  // FIRST HORZ
+    ss << "var pascal_row11 = []Float{ 252/638.0, 210/638.0, 120/638.0,\n";
+    ss << "                            45/638.0, 10/638.0, 1/638.0 };\n";
     ss << "var uv = frag.screen / global.viewportSize;\n";
     ss << "uv.y = 1 - uv.y;\n";  // frag.screen is origin lower-left, textures origin upper-left.
     ss << "var off = mat.bloomTexScale / global.viewportSize.x;\n";
     ss << "var bloom_uv = Float2(0, 0);\n";
     ss << "var t = Float3(0, 0, 0);\n";
     ss << "var colour = Float3(0, 0, 0);\n";
-    for (int i=-4 ; i<=4 ; ++i) {
-        ss << "bloom_uv = uv * mat.bloomTexScale + off * Float2(" << i << ", 0);\n";
-        ss << "bloom_uv = clamp(bloom_uv,\n";
-        ss << "                 Float2(off, off) * mat.bloomTexScale,\n";
-        ss << "                 Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
-        ss << "colour = global.exposure * sample(mat.srcTex, bloom_uv).xyz;\n";
-        // First iteration takes unfiltered unscaled hdr fb as input.
-        ss << "t = colour - global.bloomThreshold;\n";
-        ss << "colour = colour * clamp((t.r + t.g + t.b)/3.0 + 1, 0.0, 1.0);\n";
-        ss << "out.colour = out.colour + " << pascal_row11[i<0 ? -i : i] << " * colour;\n";
-    }
+    ss << "for (var i=-4 ; i<=4 ; i = i + 1) {\n";
+    ss << "    bloom_uv = uv * mat.bloomTexScale + off * Float2(i, 0);\n";
+    ss << "    bloom_uv = clamp(bloom_uv,\n";
+    ss << "                     Float2(off, off) * mat.bloomTexScale,\n";
+    ss << "                     Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
+    ss << "    colour = global.exposure * sample(mat.srcTex, bloom_uv).xyz;\n";
+    // First iteration takes unfiltered unscaled hdr fb as input.
+    ss << "    t = colour - global.bloomThreshold;\n";
+    ss << "    colour = colour * clamp((t.r + t.g + t.b)/3.0 + 1, 0.0, 1.0);\n";
+    ss << "    out.colour = out.colour + pascal_row11[abs(i)] * colour;\n";
+    ss << "}\n";
 
     compositor_exposure_filter_then_horz_blur = gfx_shader_make_or_reset(
         "/system/ExposureFilterThenHorzBlur", identity_vertex_code, "", ss.str(),
@@ -258,57 +259,63 @@ void gfx_pipeline_init (void)
 
 
     ss.str(""); // VERT
+    ss << "var pascal_row11 = []Float{ 252/638.0, 210/638.0, 120/638.0,\n";
+    ss << "                            45/638.0, 10/638.0, 1/638.0 };\n";
     ss << "var uv = frag.screen / global.viewportSize;\n";
     ss << "uv.y = 1 - uv.y;\n";  // frag.screen is origin lower-left, textures origin upper-left.
     ss << "var off = mat.bloomTexScale / global.viewportSize.x;\n";
     ss << "var bloom_uv = Float2(0, 0);\n";
     ss << "var colour = Float3(0, 0, 0);\n";
-    for (int i=-4 ; i<=4 ; ++i) {
-        ss << "bloom_uv = uv * mat.bloomTexScale + off * Float2(0, " << i << ");\n";
-        ss << "bloom_uv = clamp(bloom_uv,\n";
-        ss << "                 Float2(off, off) * mat.bloomTexScale,\n";
-        ss << "                 Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
-        ss << "colour = sample(mat.srcTex, bloom_uv).xyz;\n";
-        ss << "out.colour = out.colour + " << pascal_row11[i<0 ? -i : i] << " * colour;\n";
-    }
+    ss << "for (var i=-4 ; i<=4 ; i = i + 1) {\n";
+    ss << "    bloom_uv = uv * mat.bloomTexScale + off * Float2(0, i);\n";
+    ss << "    bloom_uv = clamp(bloom_uv,\n";
+    ss << "                     Float2(off, off) * mat.bloomTexScale,\n";
+    ss << "                     Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
+    ss << "    colour = sample(mat.srcTex, bloom_uv).xyz;\n";
+    ss << "    out.colour = out.colour + pascal_row11[abs(i)] * colour;\n";
+    ss << "}\n";
 
     compositor_vert_blur = gfx_shader_make_or_reset(
         "/system/VertBlur", identity_vertex_code, "", ss.str(),
         bloom_params);
 
     ss.str(""); // HORZ
+    ss << "var pascal_row11 = []Float{ 252/638.0, 210/638.0, 120/638.0,\n";
+    ss << "                            45/638.0, 10/638.0, 1/638.0 };\n";
     ss << "var uv = frag.screen / global.viewportSize;\n";
     ss << "uv.y = 1 - uv.y;\n";  // frag.screen is origin lower-left, textures origin upper-left.
     ss << "var off = mat.bloomTexScale / global.viewportSize.x;\n";
     ss << "var bloom_uv = Float2(0, 0);\n";
     ss << "var colour = Float3(0, 0, 0);\n";
-    for (int i=-4 ; i<=4 ; ++i) {
-        ss << "bloom_uv = uv * mat.bloomTexScale + off * Float2(" << i << ", 0);\n";
-        ss << "bloom_uv = clamp(bloom_uv,\n";
-        ss << "                 Float2(off, off) * mat.bloomTexScale,\n";
-        ss << "                 Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
-        ss << "colour = sample(mat.srcTex, bloom_uv).xyz;\n";
-        ss << "out.colour = out.colour + " << pascal_row11[i<0 ? -i : i] << " * colour;\n";
-    }
+    ss << "for (var i=-4 ; i<=4 ; i = i + 1) {\n";
+    ss << "    bloom_uv = uv * mat.bloomTexScale + off * Float2(i, 0);\n";
+    ss << "    bloom_uv = clamp(bloom_uv,\n";
+    ss << "                     Float2(off, off) * mat.bloomTexScale,\n";
+    ss << "                     Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
+    ss << "    colour = sample(mat.srcTex, bloom_uv).xyz;\n";
+    ss << "    out.colour = out.colour + pascal_row11[abs(i)] * colour;\n";
+    ss << "}\n";
 
     compositor_horz_blur = gfx_shader_make_or_reset(
         "/system/HorzBlur", identity_vertex_code, "", ss.str(),
         bloom_params);
 
     ss.str(""); // LAST VERT
+    ss << "var pascal_row11 = []Float{ 252/638.0, 210/638.0, 120/638.0,\n";
+    ss << "                            45/638.0, 10/638.0, 1/638.0 };\n";
     ss << "var uv = frag.screen / global.viewportSize;\n";
     ss << "uv.y = 1 - uv.y;\n";  // frag.screen is origin lower-left, textures origin upper-left.
     ss << "var off = mat.bloomTexScale / global.viewportSize.x;\n";
     ss << "var bloom_uv = Float2(0, 0);\n";
     ss << "var colour = Float3(0, 0, 0);\n";
-    for (int i=-4 ; i<=4 ; ++i) {
-        ss << "bloom_uv = uv * mat.bloomTexScale + off * Float2(0, " << i << ");\n";
-        ss << "bloom_uv = clamp(bloom_uv,\n";
-        ss << "                 Float2(off, off) * mat.bloomTexScale,\n";
-        ss << "                 Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
-        ss << "colour = sample(mat.srcTex, bloom_uv).xyz;\n";
-        ss << "out.colour = out.colour + " << pascal_row11[i<0 ? -i : i] << " * colour;\n";
-    }
+    ss << "for (var i=-4 ; i<=4 ; i = i + 1) {\n";
+    ss << "    bloom_uv = uv * mat.bloomTexScale + off * Float2(0, i);\n";
+    ss << "    bloom_uv = clamp(bloom_uv,\n";
+    ss << "                     Float2(off, off) * mat.bloomTexScale,\n";
+    ss << "                     Float2(1 - off, 1 - off) * mat.bloomTexScale);\n";
+    ss << "    colour = sample(mat.srcTex, bloom_uv).xyz;\n";
+    ss << "    out.colour = out.colour + pascal_row11[abs(i)] * colour;\n";
+    ss << "}\n";
     ss << "out.colour = out.colour + sample(mat.original, uv).xyz;\n";
     ss << "out.colour = tonemap(out.colour);\n";
 

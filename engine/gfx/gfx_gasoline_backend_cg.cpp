@@ -90,6 +90,21 @@ static std::string generate_funcs (void)
 
     ss << "// Standard library\n";
     ss << "Float strength (Float p, Float n) { return pow(max(0.00000001, p), n); }\n";
+    ss << "Int abs (Int v) { return v < 0 ? -v : v; }\n";
+    ss << "Int2 abs (Int2 v) { return Float2(v.x < 0 ? -v.x : v.x, v.y < 0 ? -v.y : v.y); }\n";
+    ss << "Int3 abs (Int3 v) {\n";
+    ss << "    return Float3(v.x < 0 ? -v.x : v.x,\n";
+    ss << "                  v.y < 0 ? -v.y : v.y,\n";
+    ss << "                  v.z < 0 ? -v.z : v.z\n";
+    ss << "    );\n";
+    ss << "}\n";
+    ss << "Int4 abs (Int4 v) {\n";
+    ss << "    return Float4(v.x < 0 ? -v.x : v.x,\n";
+    ss << "                  v.y < 0 ? -v.y : v.y,\n";
+    ss << "                  v.z < 0 ? -v.z : v.z,\n";
+    ss << "                  v.w < 0 ? -v.w : v.w\n";
+    ss << "    );\n";
+    ss << "}\n";
 
     ss << "uniform Float internal_rt_flip;\n";
     ss << "uniform Float internal_fade;\n";
