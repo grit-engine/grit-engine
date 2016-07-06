@@ -23,17 +23,23 @@
 #include "gfx_gasoline_backend.h"
 
 
-void GfxGslBackendUnparser::unparseType (const GfxGslType *t_)
+static std::string unparse_type (const GfxGslType *t_)
 {
+    std::stringstream ss;
     if (auto *t = dynamic_cast<const GfxGslArrayType*>(t_)) {
-        unparseType(t->elementType);
+        ss << unparse_type(t->elementType);
         ss << "[" << t->size << "]";
-
     } else if (dynamic_cast<const GfxGslFunctionType*>(t_)) {
         EXCEPTEX << "Cannot unparse function type." << ENDL;
     } else {
         ss << t_;
     }
+    return ss.str();
+}
+
+void GfxGslBackendUnparser::unparseType (const GfxGslType *t_)
+{
+    ss << unparse_type(t_);
 }
 
 void GfxGslBackendUnparser::zeroInitialise(const std::string &space, const std::string &name,
@@ -107,7 +113,13 @@ void GfxGslBackendUnparser::unparse (const GfxGslAst *ast_, int indent)
             ss << " " << name << ";\n";
         }
         // Initialise it.
-        if (ast->init != nullptr) {
+        if (auto arrLit = dynamic_cast<const GfxGslLiteralArray*>(ast->init)) {
+            for (size_t i=0 ; i<arrLit->elements.size() ; ++i) {
+                ss << space << name << "[" << i << "] = ";
+                unparse(arrLit->elements[i], indent);
+                ss << ";\n";
+            }
+        } else if (ast->init != nullptr) {
             ss << space << name << " = ";
             unparse(ast->init, indent);
             ss << ";\n";
@@ -184,6 +196,14 @@ void GfxGslBackendUnparser::unparse (const GfxGslAst *ast_, int indent)
             }
             ss << ")";
         }
+
+    } else if (auto ast = dynamic_cast<const GfxGslArrayLookup*>(ast_)) {
+        ss << "(";
+        unparse(ast->target, indent);
+        ss << ")[";
+        unparse(ast->index, indent);
+        ss << "]";
+
     } else if (auto ast = dynamic_cast<const GfxGslField*>(ast_)) {
         if (dynamic_cast<GfxGslGlobalType*>(ast->target->type)) {
             ss << "global_" << ast->id;
@@ -381,7 +401,7 @@ std::string gfx_gasoline_generate_var_decls (const GfxGslTypeMap &vars)
     ss << "// Variable declarations\n";
 
     for (const auto &pair : vars)
-        ss << pair.second << " " << pair.first << ";\n";
+        ss << unparse_type(pair.second) << " " << pair.first << ";\n";
 
     ss << "\n";
 

@@ -166,9 +166,11 @@ typedef GfxGslLiteral<float> GfxGslLiteralFloat;
 typedef GfxGslLiteral<bool> GfxGslLiteralBoolean;
 
 struct GfxGslLiteralArray : public GfxGslAst {
+    GfxGslType *elementType;
     std::vector<GfxGslAst*> elements;
-    GfxGslLiteralArray (const GfxGslLocation &loc, const std::vector<GfxGslAst*> &elements)
-      : GfxGslAst(loc), elements(elements)
+    GfxGslLiteralArray (const GfxGslLocation &loc, GfxGslType *element_type,
+                        const std::vector<GfxGslAst*> &elements)
+      : GfxGslAst(loc), elementType(element_type), elements(elements)
     { }
 };
 

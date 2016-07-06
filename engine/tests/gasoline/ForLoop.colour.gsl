@@ -1,0 +1,12 @@
+var r : Float = 0.8;
+for (var i : Int; i < 10; i = i + 1) {
+    var tmp = r * r;
+    r = tmp;
+}
+
+var arr = []Float{1, 2, 3, 4, 5, 6, 7};
+arr[3] = 7;
+arr[4] = arr[3];
+
+out.colour = Float3(r, 0, 0);
+out.alpha = 1;

@@ -272,7 +272,7 @@ class GfxGslTypeSystem {
         Ctx appendPath (const std::string &v) const
         {
             Ctx c = *this;
-            c.path.insert(c.path.begin(), v);
+            c.path.insert(c.path.begin(), v);  // O(path.size())
             return c;
         }
         Ctx resetPath (void) const
