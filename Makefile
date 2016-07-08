@@ -220,7 +220,7 @@ all: $(ALL_EXECUTABLES)
 build/stdafx.h.gch: dependencies/stdafx/stdafx.h
 	@$(PRECOMPILED_HEADER)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -c $(CODEGEN) -std=c++11 $(CFLAGS) $< -o $@
+	@$(CXX) -c $(CODEGEN) -std=c++11 -pedantic $(CFLAGS) $< -o $@
 	
 build/stdafx.h: dependencies/stdafx/stdafx.h
 	cp $< $@
