@@ -8,7 +8,7 @@ Sourceforge via Subversion.  Therefore to get everything, execute the following:
 
 ```
 git clone --recursive https://github.com/sparkprime/grit-engine.git grit-engine
-svn clone https://svn.code.sf.net/p/gritengine/code/trunk grit-engine/media
+svn checkout https://svn.code.sf.net/p/gritengine/code/trunk grit-engine/media
 ```
 
 The subversion tree also contains prebuilt up-to-date executables (Linux & Windows) so the majority
