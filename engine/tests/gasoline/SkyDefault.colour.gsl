@@ -1,4 +1,8 @@
-var colour = pma_decode(sample(mat.emissiveMap, vert.coord0.xy)) * Float4(1, 1, 1, mat.alphaMask);
+var colour = sample(mat.emissiveMap, vert.coord0.xy);
+if (mat.premultipliedAlpha > 0) {
+    colour = pma_decode(colour);
+}
+colour = colour * Float4(1, 1, 1, mat.alphaMask);
 if (colour.a <= mat.alphaRejectThreshold) discard;
 out.colour = gamma_decode(colour.rgb) * mat.emissiveMask;
 out.alpha = colour.a;

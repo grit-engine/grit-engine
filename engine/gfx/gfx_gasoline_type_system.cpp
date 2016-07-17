@@ -548,6 +548,9 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
 
     } else if (auto *ast = dynamic_cast<GfxGslIf*>(ast_)) {
         inferAndSet(ast->cond, c.setRead(true));
+        auto *btype = ctx.alloc.makeType<GfxGslBoolType>();
+        doConversion(ast->cond, btype);
+        
         inferAndSet(ast->yes, c.appendVars(&ast->yesVars));
         if (ast->no) {
             inferAndSet(ast->no, c.appendVars(&ast->noVars));
@@ -591,6 +594,8 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             inferAndSet(ast->inc, c);
             inferAndSet(ast->body, c2);
         }
+        auto *btype = ctx.alloc.makeType<GfxGslBoolType>();
+        doConversion(ast->cond, btype);
         ast->type = ctx.alloc.makeType<GfxGslVoidType>();
 
     } else if (auto *ast = dynamic_cast<GfxGslAssign*>(ast_)) {
@@ -758,7 +763,9 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             case GFX_GSL_OP_LTE:
             case GFX_GSL_OP_GT:
             case GFX_GSL_OP_GTE: {
-                if (dynamic_cast<GfxGslCoordType*>(t)) {
+                if (auto *coord_type = dynamic_cast<GfxGslCoordType*>(t)) {
+                    if (coord_type->dim != 1)
+                        error(loc) << "Expected scalar type, got " << coord_type << ENDL;
                     ast->type = ctx.alloc.makeType<GfxGslBoolType>();
                 } else {
                     error(loc) << "Type error at operator " << ast->op << ENDL;
