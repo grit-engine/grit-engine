@@ -301,19 +301,25 @@ void GfxShader::validate (void)
 NativePair GfxShader::getNativePair (Purpose purpose,
                                      bool fade_dither, unsigned env_boxes,
                                      bool instanced, unsigned bone_weights,
-                                     const GfxMaterialTextureMap &textures)
+                                     const GfxMaterialTextureMap &textures,
+                                     const GfxShaderBindings &bindings)
 {
     GfxGslUnboundTextures ubt;
     for (const auto &u : params) {
-        // We only need the types to compile it.
-        // Find undefined textures, substitute values
+        // Find undefined textures.
         if (gfx_gasoline_param_is_texture(u.second)) {
             if (textures.find(u.first) == textures.end()) {
                 ubt.insert(u.first);
             }
         }
     }
-
+    GfxShaderBindings statics;
+    for (const auto &bind : bindings) {
+        // Find undefined textures.
+        if (gfx_gasoline_param_is_static(bind.second)) {
+            statics[bind.first] = bind.second;
+        }
+    }
     // Need to choose / maybe compile a shader for this combination of textures and bindings.
     GfxGslEnvironment env = shader_scene_env;
     env.fadeDither = fade_dither;
@@ -321,6 +327,7 @@ NativePair GfxShader::getNativePair (Purpose purpose,
     env.instanced = instanced;
     env.boneWeights = bone_weights;
     env.ubt = ubt;
+    env.staticValues = statics;
 
     Split split;
     split.purpose = purpose;
@@ -451,7 +458,7 @@ void GfxShader::bindShader (Purpose purpose,
                             const GfxShaderBindings &bindings)
 {
     auto np = getNativePair(purpose, fade_dither, env_cube_count, instanced, bone_weights,
-                            textures);
+                            textures, bindings);
 
     // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
     ogre_rs->bindGpuProgram(np.vp->_getBindingDelegate());

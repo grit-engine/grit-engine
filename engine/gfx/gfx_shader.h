@@ -113,8 +113,6 @@ class GfxShader {
     struct Split {
         Purpose purpose;
         GfxGslEnvironment env;
-        // TODO: Split shader for (also update std::hash)
-        // * user-defined enums
         bool operator== (const Split &other) const
         {
             return other.purpose == purpose
@@ -176,7 +174,8 @@ class GfxShader {
     NativePair getNativePair (Purpose purpose,
                               bool fade_dither, unsigned env_boxes,
                               bool instanced, unsigned bone_weights,
-                              const GfxMaterialTextureMap &textures);
+                              const GfxMaterialTextureMap &textures,
+                              const GfxShaderBindings &statics);
     void bindBodyParams (const NativePair &np, const GfxShaderGlobals &p,
                          const Ogre::Matrix4 &world,
                          const Ogre::Matrix4 *bone_world_matrixes,

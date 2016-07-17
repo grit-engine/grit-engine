@@ -348,6 +348,15 @@ std::string gfx_gasoline_generate_preamble_functions (void)
     return ss.str();
 }
 
+static std::string unparse_param_value(const GfxGslParam &p)
+{
+    std::stringstream ss;
+    // whether float or int, use << for each
+    ASSERT(gfx_gasoline_param_is_static(p));
+    ss << p;
+    return ss.str();
+}
+
 std::string gfx_gasoline_generate_global_fields (const GfxGslContext &ctx, bool reg)
 {
     std::stringstream ss;
@@ -375,7 +384,13 @@ std::string gfx_gasoline_generate_global_fields (const GfxGslContext &ctx, bool 
                 }
             }
         } else {
-            ss << "uniform " << pair.second << " mat_" << pair.first;
+            auto it2 = ctx.staticValues.find(pair.first);
+            if (it2 != ctx.staticValues.end()) {
+                ss << pair.second << " mat_" << pair.first << " = "
+                   << unparse_param_value(it2->second);
+            } else {
+                ss << "uniform " << pair.second << " mat_" << pair.first;
+            }
         }
         ss << ";\n";
     }

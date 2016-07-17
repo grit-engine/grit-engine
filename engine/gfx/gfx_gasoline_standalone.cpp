@@ -73,11 +73,20 @@ static GfxGslParam from_string (const std::string &type_name)
     if (type_name == "FloatTexture3") return GfxGslParam(GFX_GSL_FLOAT_TEXTURE3, 0,0,0,0);
     if (type_name == "FloatTexture4") return GfxGslParam(GFX_GSL_FLOAT_TEXTURE4, 0,0,0,0);
     if (type_name == "FloatTextureCube") return GfxGslParam(GFX_GSL_FLOAT_TEXTURE_CUBE, 0,0,0,0);
+    if (type_name == "StaticFloat") return GfxGslParam::float1(0).setStatic();
+    if (type_name == "StaticFloat2") return GfxGslParam::float2(0, 0).setStatic();
+    if (type_name == "StaticFloat3") return GfxGslParam::float3(0, 0, 0).setStatic();
+    if (type_name == "StaticFloat4") return GfxGslParam::float4(0, 0, 0, 0).setStatic();
+    if (type_name == "StaticInt") return GfxGslParam::int1(0).setStatic();
+    if (type_name == "StaticInt2") return GfxGslParam::int2(0, 0).setStatic();
+    if (type_name == "StaticInt3") return GfxGslParam::int3(0, 0, 0).setStatic();
+    if (type_name == "StaticInt4") return GfxGslParam::int4(0, 0, 0, 0).setStatic();
     EXCEPT << "Not a Gasoline type: " << type_name << ENDL;
 }
 
 
 CentralisedLog clog;
+void assert_triggered (void) { }
 
 int main (int argc, char **argv)
 {
@@ -93,6 +102,7 @@ int main (int argc, char **argv)
         std::string language = "GLSL";
         GfxGslRunParams params;
         GfxGslUnboundTextures ubt;
+        GfxGslRunParams static_values;
         while (so_far < argc) {
             std::string arg = next_arg(so_far, argc, argv);
             if (no_more_switches) {
@@ -108,7 +118,11 @@ int main (int argc, char **argv)
             } else if (arg=="-p" || arg=="--param") {
                 std::string name = next_arg(so_far, argc, argv);
                 std::string type_name = next_arg(so_far, argc, argv);
-                params[name] = from_string(type_name);
+                GfxGslParam param = from_string(type_name);
+                params[name] = param;
+                if (gfx_gasoline_param_is_static(param)) {
+                    static_values[name] = param;  // Use the default colour.
+                }
             } else if (arg=="-u" || arg=="--unbind") {
                 std::string name = next_arg(so_far, argc, argv);
                 ubt.insert(name);
@@ -196,6 +210,7 @@ int main (int argc, char **argv)
         GfxGslMetadata md;
         md.params = params;
         md.env.ubt = ubt;
+        md.env.staticValues = static_values;
         md.env.fadeDither = alpha_dither;
         md.env.envBoxes = env_boxes;
         md.env.instanced = instanced;

@@ -50,6 +50,10 @@ struct GfxGslFloatVec {
     {
         return other.r == r && other.g == g && other.b == b && other.a == a;
     }
+    bool operator!= (const GfxGslFloatVec &other) const
+    {
+        return !(*this == other);
+    }
 };
 
 static inline std::ostream &operator<< (std::ostream &o, const GfxGslFloatVec &c)
@@ -81,6 +85,10 @@ struct GfxGslIntVec {
     bool operator== (const GfxGslIntVec &other) const
     {
         return other.r == r && other.g == g && other.b == b && other.a == a;
+    }
+    bool operator!= (const GfxGslIntVec &other) const
+    {
+        return !(*this == other);
     }
 };
 
@@ -117,14 +125,47 @@ enum GfxGslParamType {
     GFX_GSL_FLOAT_TEXTURE2 = 0x102,
     GFX_GSL_FLOAT_TEXTURE3 = 0x103,
     GFX_GSL_FLOAT_TEXTURE4 = 0x104,
-    GFX_GSL_FLOAT_TEXTURE_CUBE = 0x105
+    GFX_GSL_FLOAT_TEXTURE_CUBE = 0x105,
+    GFX_GSL_STATIC_FLOAT1 = 0x201,
+    GFX_GSL_STATIC_FLOAT2 = 0x202,
+    GFX_GSL_STATIC_FLOAT3 = 0x203,
+    GFX_GSL_STATIC_FLOAT4 = 0x204,
+    GFX_GSL_STATIC_INT1 = 0x211,
+    GFX_GSL_STATIC_INT2 = 0x212,
+    GFX_GSL_STATIC_INT3 = 0x213,
+    GFX_GSL_STATIC_INT4 = 0x214,
 };
+
+namespace std {
+    template<> struct hash<GfxGslParamType> {
+        size_t operator()(const GfxGslParamType &a) const
+        {
+            return a;
+        }
+    };
+}
+
+
+static inline bool gfx_gasoline_param_type_is_texture (GfxGslParamType t)
+{
+    return t & 0x100;
+}
+
+static inline bool gfx_gasoline_param_type_is_static (GfxGslParamType t)
+{
+    return t & 0x200;
+}
+
+static inline bool gfx_gasoline_param_type_is_int (GfxGslParamType t)
+{
+    return t & 0x010;
+}
 
 /** Tagged union of the various values that can go into a shader param. */
 struct GfxGslParam {
     GfxGslParamType t; 
 
-    // Default value, which is important for shader compilation only if t is a texture typ.
+    // Default value, which is important for shader compilation only if t is a texture type.
     GfxGslFloatVec fs;
     GfxGslIntVec is;
 
@@ -165,32 +206,47 @@ struct GfxGslParam {
     GfxGslParam (const Vector2 &v) : t(GFX_GSL_FLOAT2), fs(v.x, v.y, 0, 0), is(0) { }
     GfxGslParam (const Vector3 &v) : t(GFX_GSL_FLOAT3), fs(v.x, v.y, v.z, 0), is(0) { }
     GfxGslParam (const Vector4 &v) : t(GFX_GSL_FLOAT4), fs(v.x, v.y, v.z, v.w), is(0) { }
+    GfxGslParam setStatic(void) {
+        APP_ASSERT(!gfx_gasoline_param_type_is_texture(t));
+        GfxGslParam r = *this;
+        r.t = GfxGslParamType(r.t | 0x200);
+        return r;
+    }
 };      
             
-static inline const char *to_string (GfxGslParamType t)
+static inline bool gfx_gasoline_param_is_texture (const GfxGslParam &p)
 {
-    switch (t) {
-        case GFX_GSL_FLOAT1: return "Float";
-        case GFX_GSL_FLOAT2: return "Float2";
-        case GFX_GSL_FLOAT3: return "Float3";
-        case GFX_GSL_FLOAT4: return "Float4";
-        case GFX_GSL_INT1: return "Int";
-        case GFX_GSL_INT2: return "Int2";
-        case GFX_GSL_INT3: return "Int3";
-        case GFX_GSL_INT4: return "Int4";
-        case GFX_GSL_FLOAT_TEXTURE1: return "FloatTexture1";
-        case GFX_GSL_FLOAT_TEXTURE2: return "FloatTexture2";
-        case GFX_GSL_FLOAT_TEXTURE3: return "FloatTexture3";
-        case GFX_GSL_FLOAT_TEXTURE4: return "FloatTexture4";
-        case GFX_GSL_FLOAT_TEXTURE_CUBE: return "FloatTextureCube";
-        default: return "Unknown";
-    }
+    return gfx_gasoline_param_type_is_texture(p.t);
 }
-static inline std::ostream &operator<< (std::ostream &o, GfxGslParamType t)
+
+static inline bool gfx_gasoline_param_is_static (const GfxGslParam &p)
 {
-    o << to_string(t);
-    return o;
+    return gfx_gasoline_param_type_is_static(p.t);
 }
+
+static inline bool gfx_gasoline_param_is_int (const GfxGslParam &p)
+{
+    return gfx_gasoline_param_type_is_int(p.t);
+}
+
+std::ostream &operator<< (std::ostream &o, const GfxGslParam &p);
+bool operator== (const GfxGslParam &a, const GfxGslParam &b);
+
+namespace std {
+    template<> struct hash<GfxGslParam> {
+        size_t operator()(const GfxGslParam &a) const
+        {
+            size_t r = 0;
+            r = r * 31 + my_hash(a.t);
+            if (gfx_gasoline_param_is_int(a))
+                r = r * 31 + my_hash(a.is);
+            else
+                r = r * 31 + my_hash(a.fs);
+            return r;
+        }
+    };
+}
+
 
 /*
 static inline const char *to_string (const GfxGslParam &p)
@@ -204,16 +260,8 @@ static inline std::ostream &operator<< (std::ostream &o, const GfxGslParam &p)
 }
 */
 
-static inline bool gfx_gasoline_param_is_texture (const GfxGslParam &p)
-{
-    return p.t & 0x100;
-}
-
 typedef std::map<std::string, GfxGslParam> GfxGslRunParams;
 typedef std::set<std::string> GfxGslUnboundTextures;
-
-/** Return the shader code that defines things needsd by the generated code. */
-std::string gfx_gasoline_preamble (GfxGslBackend backend);
 
 struct GfxGasolineResult {
     std::string vertexShader;
@@ -260,13 +308,15 @@ namespace std {
     };
 }
 
-/** These are things the shader needs that are not in custom material attributes.
+/** Things that affect gsl compilation.
  */
 struct GfxGslEnvironment {
     // Varies depending on whether we're blending alpha or not.
     bool fadeDither;
     // What textures should be bound as a solid colour.
     GfxGslUnboundTextures ubt;
+    // Actual values for static params that will be inlined in the generated code.
+    GfxGslRunParams staticValues;
 
     // Varies depending on the geometry.
     unsigned boneWeights;
@@ -298,6 +348,7 @@ struct GfxGslEnvironment {
     {
         return other.fadeDither == fadeDither
             && other.ubt == ubt
+            && other.staticValues == staticValues
             && other.boneWeights == boneWeights
             && other.instanced == instanced
             && other.envBoxes == envBoxes
@@ -318,6 +369,7 @@ namespace std {
             size_t r = 0;
             r = r * 31 + my_hash(a.fadeDither);
             r = r * 31 + my_hash(a.ubt);
+            r = r * 31 + my_hash(a.staticValues);
             r = r * 31 + my_hash(a.boneWeights);
             r = r * 31 + my_hash(a.instanced);
             r = r * 31 + my_hash(a.envBoxes);

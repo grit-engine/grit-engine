@@ -28,6 +28,68 @@
 
 static const GfxGslFloatVec GSL_BLACK(0, 0, 0, 0);
 
+std::ostream &operator<< (std::ostream &o, const GfxGslParam &p)
+{
+    switch (p.t) {
+        case GFX_GSL_STATIC_INT1:
+        case GFX_GSL_INT1:
+        o << "Int(" << p.is.r << ")";
+        break;
+        case GFX_GSL_STATIC_INT2:
+        case GFX_GSL_INT2:
+        o << "Int2(" << p.is.r << ", " << p.is.g << ")";
+        break;
+        case GFX_GSL_STATIC_INT3:
+        case GFX_GSL_INT3:
+        o << "Int3(" << p.is.r << ", " << p.is.g << ", " << p.is.b << ")";
+        break;
+        case GFX_GSL_STATIC_INT4:
+        case GFX_GSL_INT4:
+        o << "Int4(" << p.is.r << ", " << p.is.g << ", " << p.is.b << ", " << p.is.a << ")";
+        break;
+        case GFX_GSL_STATIC_FLOAT1:
+        case GFX_GSL_FLOAT1:
+        o << "Float(" << p.fs.r << ")";
+        break;
+        case GFX_GSL_STATIC_FLOAT2:
+        case GFX_GSL_FLOAT2:
+        o << "Float2(" << p.fs.r << ", " << p.fs.g << ")";
+        break;
+        case GFX_GSL_STATIC_FLOAT3:
+        case GFX_GSL_FLOAT3:
+        o << "Float3(" << p.fs.r << ", " << p.fs.g << ", " << p.fs.b << ")";
+        break;
+        case GFX_GSL_STATIC_FLOAT4:
+        case GFX_GSL_FLOAT4:
+        case GFX_GSL_FLOAT_TEXTURE1:
+        case GFX_GSL_FLOAT_TEXTURE2:
+        case GFX_GSL_FLOAT_TEXTURE3:
+        case GFX_GSL_FLOAT_TEXTURE4:
+        case GFX_GSL_FLOAT_TEXTURE_CUBE:
+        o << "Float4(" << p.fs.r << ", " << p.fs.g << ", " << p.fs.b << ", " << p.fs.a << ")";
+        break;
+        default:
+        EXCEPTEX << "Not a first class parameter value." << ENDL;
+    }
+    if (gfx_gasoline_param_is_static(p)) {
+        o << "  /* static */";
+    } else if (gfx_gasoline_param_is_texture(p)) {
+        o << "  /* Texture */";
+    }
+    return o;
+}
+
+bool operator== (const GfxGslParam &a, const GfxGslParam &b)
+{
+    if (a.t != b.t) return false;
+    if (gfx_gasoline_param_is_int(a)) {
+        if (a.is != b.is) return false;
+    } else {
+        if (a.fs != b.fs) return false;
+    }
+    return true;
+}
+
 static GfxGslTypeMap make_body_fields (GfxGslAllocator &alloc)
 {
     GfxGslTypeMap m;
@@ -353,14 +415,14 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
 static GfxGslType *to_type (GfxGslAllocator &alloc, const GfxGslParam &p)
 {
     switch (p.t) {
-        case GFX_GSL_INT1: return alloc.makeType<GfxGslIntType>(1);
-        case GFX_GSL_INT2: return alloc.makeType<GfxGslIntType>(2);
-        case GFX_GSL_INT3: return alloc.makeType<GfxGslIntType>(3);
-        case GFX_GSL_INT4: return alloc.makeType<GfxGslIntType>(4);
-        case GFX_GSL_FLOAT1: return alloc.makeType<GfxGslFloatType>(1);
-        case GFX_GSL_FLOAT2: return alloc.makeType<GfxGslFloatType>(2);
-        case GFX_GSL_FLOAT3: return alloc.makeType<GfxGslFloatType>(3);
-        case GFX_GSL_FLOAT4: return alloc.makeType<GfxGslFloatType>(4);
+        case GFX_GSL_INT1: case GFX_GSL_STATIC_INT1: return alloc.makeType<GfxGslIntType>(1);
+        case GFX_GSL_INT2: case GFX_GSL_STATIC_INT2: return alloc.makeType<GfxGslIntType>(2);
+        case GFX_GSL_INT3: case GFX_GSL_STATIC_INT3: return alloc.makeType<GfxGslIntType>(3);
+        case GFX_GSL_INT4: case GFX_GSL_STATIC_INT4: return alloc.makeType<GfxGslIntType>(4);
+        case GFX_GSL_FLOAT1: case GFX_GSL_STATIC_FLOAT1: return alloc.makeType<GfxGslFloatType>(1);
+        case GFX_GSL_FLOAT2: case GFX_GSL_STATIC_FLOAT2: return alloc.makeType<GfxGslFloatType>(2);
+        case GFX_GSL_FLOAT3: case GFX_GSL_STATIC_FLOAT3: return alloc.makeType<GfxGslFloatType>(3);
+        case GFX_GSL_FLOAT4: case GFX_GSL_STATIC_FLOAT4: return alloc.makeType<GfxGslFloatType>(4);
         case GFX_GSL_FLOAT_TEXTURE1: return alloc.makeType<GfxGslFloatTextureType>(p.fs, 1);
         case GFX_GSL_FLOAT_TEXTURE2: return alloc.makeType<GfxGslFloatTextureType>(p.fs, 2);
         case GFX_GSL_FLOAT_TEXTURE3: return alloc.makeType<GfxGslFloatTextureType>(p.fs, 3);
@@ -399,7 +461,7 @@ static GfxGasolineResult type_check (const std::string &vert_prog,
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
         make_mat_fields(alloc, md.params), make_body_fields(alloc), md.env.ubt,
-        md.d3d9,
+        md.env.staticValues, md.d3d9,
     };
 
     GfxGslShader *vert_ast;
