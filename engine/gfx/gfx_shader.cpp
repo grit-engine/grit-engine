@@ -130,10 +130,7 @@ void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
                        const std::string &name, const Vector2 &v)
 {
     p->getDefaultParameters()->setIgnoreMissingParams(true);
-    (void) name;
-    (void) v;
-    EXCEPTEX << "Ogre does not implement this." << ENDL;
-    //p->getDefaultParameters()->setNamedConstant(name, to_ogre(v));
+    p->getDefaultParameters()->setNamedConstant(name, to_ogre(v));
 }
 
 void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
