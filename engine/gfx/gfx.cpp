@@ -284,7 +284,7 @@ void gfx_env_cube (unsigned i, const DiskResourcePtr<GfxEnvCubeDiskResource> &v)
         for (unsigned j=0 ; j<b->getNumSubMeshes() ; ++j) {
             GfxMaterial *m = b->getMaterial(j);
             if (m->getSceneBlend() != GFX_MATERIAL_OPAQUE) {
-                reset_env_cube(m->regularMat, ec, v);
+                reset_env_cube(m->forwardMat, ec, v);
                 reset_env_cube(m->fadingMat, ec, v);
                 reset_env_cube(m->worldMat, ec, v);
             }

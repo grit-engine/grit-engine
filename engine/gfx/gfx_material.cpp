@@ -55,25 +55,77 @@ void GfxBaseMaterial::setShader (GfxShader *v)
 GfxMaterial::GfxMaterial (const std::string &name)
   : GfxBaseMaterial(name, gfx_shader_get("/system/Default")),
     fadingMat(static_cast<Ogre::Material*>(nullptr)),
-    sceneBlend(GFX_MATERIAL_OPAQUE)
+    sceneBlend(GFX_MATERIAL_OPAQUE),
+    castShadows(true),
+    additionalLighting(false),
+    boneBlendWeights(0)
 {
 }
 
-// FIXME:  certain updates to material properties need to be propagated to the GfxBodies that use
-// them...
-
 void GfxMaterial::setSceneBlend (GfxMaterialSceneBlend v)
 {
-    GFX_MAT_SYNC;
     sceneBlend = v;
 }
 
 void GfxMaterial::setCastShadows (bool v)
 {   
-    GFX_MAT_SYNC;
     castShadows = v;
 }       
         
+void GfxMaterial::setAdditionalLighting (bool v)
+{   
+    additionalLighting = v;
+}       
+        
+void GfxMaterial::setBoneBlendWeights (unsigned v)
+{
+    boneBlendWeights = v;
+}
+
+
+static Ogre::Pass *create_or_reset_material (const std::string &name)
+{
+    auto &mm = Ogre::MaterialManager::getSingleton();
+    Ogre::MaterialPtr m = mm.createOrRetrieve(name, RESGRP).first.staticCast<Ogre::Material>();
+    m->removeAllTechniques();
+    Ogre::Technique *t = m->createTechnique();
+    return t->createPass();
+}
+
+void GfxMaterial::rebuildOgreMaterials (const GfxShaderGlobals &globs)
+{
+    GFX_MAT_SYNC;
+    Ogre::Pass *p;
+    bool fade_dither = sceneBlend == GFX_MATERIAL_OPAQUE;
+    bool instanced = false;  // TODO: Should be a material for both possibilities
+
+    p = create_or_reset_material(name + ":wireframe");
+    shader->bindShaderPass(p, GfxShader::WIREFRAME, fade_dither, instanced, boneBlendWeights,
+                           globs, textures, bindings);
+    p->setCullingMode(Ogre::CULL_NONE);
+    p->setPolygonMode(Ogre::PM_WIREFRAME);
+    p->setDepthWriteEnabled(false);
+    p->setDepthBias(1, 0);
+    wireframeMat = Ogre::MaterialManager::getSingleton().getByName(name + ":wireframe", "GRIT");
+
+    forwardMat = Ogre::MaterialManager::getSingleton().getByName(name, "GRIT");
+    fadingMat = forwardMat;
+    worldMat = Ogre::MaterialManager::getSingleton().getByName(name + "&", "GRIT");
+
+    p = create_or_reset_material(name + ":additional");
+    shader->bindShaderPass(p, GfxShader::ADDITIONAL, false, instanced, boneBlendWeights,
+                           globs, textures, bindings);
+    p->setDepthWriteEnabled(false);
+    // TODO(dcunnin): hack as we get z fighting and i don't know why.  Perhaps because of different
+    // rounding error between old shader and gsl?  But code looks the same.
+    p->setDepthBias(1000, 0);
+    p->setDepthFunction(Ogre::CMPF_LESS_EQUAL);
+    p->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
+
+    additionalMat = Ogre::MaterialManager::getSingleton().getByName(name + ":additional", "GRIT");
+
+}
+
 GfxMaterial *gfx_material_add (const std::string &name)
 {
     GFX_MAT_SYNC;

@@ -91,9 +91,10 @@ class GfxShader {
         REGULAR,
         ALPHA,
         FIRST_PERSON,
-        EMISSIVE,
+        FIRST_PERSON_WIREFRAME,
+        ADDITIONAL,
         SHADOW_CAST,
-        WIRE_FRAME,
+        WIREFRAME,
 
         // The following are internal cases.  It may make more sense
         // to have a completely different path for them.
@@ -170,23 +171,44 @@ class GfxShader {
                      const GfxMaterialTextureMap &textures,
                      const GfxShaderBindings &bindings);
 
+    void bindShaderPass (Ogre::Pass *p, Purpose purpose,
+                         bool fade_dither, bool instanced, unsigned bone_weights,
+                         const GfxShaderGlobals &params,
+                         const GfxMaterialTextureMap &textures,
+                         const GfxShaderBindings &bindings);
+
     protected:
+    NativePair getNativePair (Purpose purpose,
+                              bool fade_dither, unsigned env_boxes,
+                              bool instanced, unsigned bone_weights,
+                              const GfxGslUnboundTextures &ubt,
+                              const GfxShaderBindings &statics);
+    public:
     NativePair getNativePair (Purpose purpose,
                               bool fade_dither, unsigned env_boxes,
                               bool instanced, unsigned bone_weights,
                               const GfxMaterialTextureMap &textures,
                               const GfxShaderBindings &statics);
-    void bindBodyParams (const NativePair &np, const GfxShaderGlobals &p,
+    protected:
+    void bindShaderParams (const Ogre::GpuProgramParametersSharedPtr &vparams,
+                           const Ogre::GpuProgramParametersSharedPtr &fparams,
+                           const GfxMaterialTextureMap &textures,
+                           const GfxShaderBindings &bindings);
+    void bindShaderParamsPass (Ogre::Pass *p, const GfxMaterialTextureMap &textures);
+    void bindShaderParamsRs (const GfxMaterialTextureMap &textures);
+    void bindBodyParamsPass (const Ogre::GpuProgramParametersSharedPtr &vparams,
+                             const Ogre::GpuProgramParametersSharedPtr &fparams);
+    void bindBodyParams (const Ogre::GpuProgramParametersSharedPtr &vparams,
+                         const Ogre::GpuProgramParametersSharedPtr &fparams,
+                         const GfxShaderGlobals &p,
                          const Ogre::Matrix4 &world,
                          const Ogre::Matrix4 *bone_world_matrixes,
                          unsigned num_bone_world_matrixes, float fade);
-    void bindGlobals (const NativePair &np, const GfxShaderGlobals &params, Purpose purpose);
-    void explicitBinding (const NativePair &np, const std::string &name, const Ogre::Matrix4 &v);
-    void explicitBinding (const NativePair &np, const std::string &name, int v);
-    void explicitBinding (const NativePair &np, const std::string &name, float v);
-    void explicitBinding (const NativePair &np, const std::string &name, const Vector2 &v);
-    void explicitBinding (const NativePair &np, const std::string &name, const Vector3 &v);
-    void explicitBinding (const NativePair &np, const std::string &name, const Vector4 &v);
+    void bindGlobals (const Ogre::GpuProgramParametersSharedPtr &vparams,
+                      const Ogre::GpuProgramParametersSharedPtr &fparams,
+                      const GfxShaderGlobals &params);
+    void bindGlobalsPass (Ogre::Pass *p, Purpose purpose);
+    void bindGlobalsRs (const GfxShaderGlobals &params, Purpose purpose);
 
     public:
     // Legacy API
@@ -204,14 +226,7 @@ class GfxShader {
     void bindBodyParams (const GfxShaderGlobals &params, const Ogre::Matrix4 &world, float fade);
     void bindGlobals (const GfxShaderGlobals &params);
 */
-    void bindShaderParams (void);
     void validate (void);
-    void explicitBinding (const std::string &name, const Ogre::Matrix4 &v);
-    void explicitBinding (const std::string &name, int v);
-    void explicitBinding (const std::string &name, float v);
-    void explicitBinding (const std::string &name, const Vector2 &v);
-    void explicitBinding (const std::string &name, const Vector3 &v);
-    void explicitBinding (const std::string &name, const Vector4 &v);
     const Ogre::HighLevelGpuProgramPtr &getHackOgreVertexProgram (void) { return legacy.vp; }
     const Ogre::HighLevelGpuProgramPtr &getHackOgreFragmentProgram (void) { return legacy.fp; }
     

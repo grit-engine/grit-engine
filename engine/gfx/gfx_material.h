@@ -90,9 +90,9 @@ enum GfxMaterialSceneBlend { GFX_MATERIAL_OPAQUE, GFX_MATERIAL_ALPHA, GFX_MATERI
 
 class GfxMaterial : public GfxBaseMaterial {
     public: // hack
-    Ogre::MaterialPtr regularMat;     // no suffix
+    Ogre::MaterialPtr forwardMat;     // no suffix
     Ogre::MaterialPtr fadingMat;      // ' can be NULL
-    Ogre::MaterialPtr emissiveMat;
+    Ogre::MaterialPtr additionalMat;
     //Ogre::MaterialPtr shadowMat;      // ! can be simply a link to the default
     Ogre::MaterialPtr worldMat;       // & 
     //Ogre::MaterialPtr worldShadowMat; // % can be simply a link to the default
@@ -102,17 +102,30 @@ class GfxMaterial : public GfxBaseMaterial {
     GfxMaterial (const std::string &name);
     GfxMaterialSceneBlend sceneBlend;
     bool castShadows;
+    // TODO(dcunnin):  Infer this from the shader GSL (constant propagation).
+    // In particular, first person does not honour this annotation.
+    bool additionalLighting;
+    // How many bones can be blended at a given vertex.
+    unsigned boneBlendWeights;
     // backfaces  // vface semantic should be available in shader
     // shadowAlphaReject  // Whether to use discard from dangs shader
     // shadowBias  // as shadow shader not available
     // various addressing modes
 
     public:
-    GfxMaterialSceneBlend getSceneBlend (void) const { GFX_MAT_SYNC; return sceneBlend; }
+    GfxMaterialSceneBlend getSceneBlend (void) const { return sceneBlend; }
     void setSceneBlend (GfxMaterialSceneBlend v);
+
+    unsigned getBoneBlendWeights (void) const { return boneBlendWeights; }
+    void setBoneBlendWeights (unsigned v);
 
     bool getCastShadows (void) const { GFX_MAT_SYNC; return castShadows; }
     void setCastShadows (bool v);
+
+    bool getAdditionalLighting (void) const { GFX_MAT_SYNC; return additionalLighting; }
+    void setAdditionalLighting (bool v);
+
+    void rebuildOgreMaterials (const GfxShaderGlobals &globs);
 
     friend GfxMaterial *gfx_material_add(const std::string &);
     friend class GfxBody;

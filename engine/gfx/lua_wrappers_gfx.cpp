@@ -4041,24 +4041,20 @@ TRY_START
     bool cast_shadows;
     t.get("castShadows", cast_shadows, true);
    
-    gfxmat->setCastShadows(cast_shadows);
+    bool additional_lighting;
+    t.get("additionalLighting", additional_lighting, false);
+   
   
+    gfxmat->setCastShadows(cast_shadows);
     gfxmat->setSceneBlend(has_alpha ? depth_write ? GFX_MATERIAL_ALPHA_DEPTH : GFX_MATERIAL_ALPHA : GFX_MATERIAL_OPAQUE);
-
-    gfxmat->regularMat = Ogre::MaterialManager::getSingleton().getByName(name,"GRIT");
-    gfxmat->fadingMat = gfxmat->regularMat;
-    gfxmat->worldMat = Ogre::MaterialManager::getSingleton().getByName(name+"&","GRIT");
-    gfxmat->wireframeMat = Ogre::MaterialManager::getSingleton().getByName(name+"|","GRIT");
+    gfxmat->setAdditionalLighting(additional_lighting);
 
     Vector3 emissive_colour;
     t.get("emissiveColour", emissive_colour, Vector3(0,0,0));
-    if (emissive_colour != Vector3(0,0,0)) {
-        gfxmat->emissiveMat = Ogre::MaterialManager::getSingleton().getByName(name+"^", "GRIT");
-    }
 
     Vector3 emissive_mask;
     if (t.get("emissiveMask", emissive_mask))
-        bindings["emissiveMask"] = emissive_colour;
+        bindings["emissiveMask"] = emissive_mask;
 
     lua_Number specular_mask;
     if (t.get("specularMask", specular_mask))
@@ -4089,6 +4085,11 @@ TRY_START
     if (t.get("paintMap", paint_map))
         add_texture(textures, "paintMap", paint_map);
 
+    lua_Number blended_bones;
+    t.get("blendedBones", blended_bones, 0.0);
+    if (blended_bones != floor(blended_bones) || blended_bones < 0) {
+        my_lua_error(L,"blendedBones must be a non-negative integer");
+    }
 
     SharedPtr<ExternalTable> blend;
     if(t.get("blend", blend)) {
@@ -4106,6 +4107,7 @@ TRY_START
     gfxmat->setShader(shader);
     gfxmat->setTextures(textures);
     gfxmat->setBindings(bindings);
+    gfxmat->setBoneBlendWeights(blended_bones);
 
     return 0;
 TRY_END
@@ -4331,6 +4333,8 @@ TRY_START
         }
 
         if (uniform_kind == "PARAM") {
+            bool static_value;
+            tab->get("static", static_value, false);
             std::string value_kind; // type of the actual data (e.g. FLOAT)
             if (!tab->get("valueKind", value_kind)) {
                 my_lua_error(L, "Uniform \""+key+"\" expected string 'valueKind' field.");
@@ -4355,6 +4359,8 @@ TRY_START
             } else {
                 my_lua_error(L, "Uniform \""+key+"\" unrecognised 'valueKind' field: \""+value_kind+"\"");
             }
+
+            if (static_value) uniform = uniform.setStatic();
 
         } else if (uniform_kind == "TEXTURE2D") {
             Vector3 c;

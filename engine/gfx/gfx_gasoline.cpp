@@ -574,9 +574,9 @@ GfxGasolineResult gfx_gasoline_compile_das (GfxGslBackend backend,
     return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false, true);
 }
 
-GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
-                                                   const std::string &vert_prog,
-                                                   const GfxGslMetadata &md)
+GfxGasolineResult gfx_gasoline_compile_wireframe (GfxGslBackend backend,
+                                                  const std::string &vert_prog,
+                                                  const GfxGslMetadata &md)
 {
     std::string colour_prog = "out.colour = Float3(1, 1, 1);\n";
     return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false, false);
@@ -631,6 +631,46 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
     return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
 }
 
+GfxGasolineResult gfx_gasoline_compile_first_person_wireframe (GfxGslBackend backend,
+                                                               const std::string &vert_prog,
+                                                               const GfxGslMetadata &md)
+{
+    std::string colour_prog = "out.colour = Float3(1, 1, 1);\n";
+    auto cont = [backend] (const GfxGslContext &ctx,
+                           const GfxGslTypeSystem &vert_ts,
+                           const GfxGslAst *vert_ast,
+                           const GfxGslTypeSystem &dangs_ts,
+                           const GfxGslAst *dangs_ast,
+                           const GfxGslTypeSystem &additional_ts,
+                           const GfxGslAst *additional_ast,
+                           const GfxGslMetadata &md)
+    -> GfxGasolineResult
+    {
+        (void) dangs_ts;
+        (void) dangs_ast;
+        std::string vert_out;
+        std::string frag_out;
+        switch (backend) {
+            case GFX_GSL_BACKEND_CG:
+            gfx_gasoline_unparse_first_person_wireframe_cg(ctx, &vert_ts, vert_ast,
+                                                           &additional_ts, additional_ast,
+                                                           vert_out, frag_out,
+                                                           md.env);
+            break;
+
+            case GFX_GSL_BACKEND_GLSL:
+            gfx_gasoline_unparse_first_person_wireframe_glsl(ctx, &vert_ts, vert_ast,
+                                                             &additional_ts, additional_ast,
+                                                             vert_out, frag_out,
+                                                             md.env);
+            break;
+        }
+        return {vert_out, frag_out};
+    };
+
+    return type_check(vert_prog, "", colour_prog, md, cont);
+}
+
 GfxGasolineResult gfx_gasoline_compile_decal (GfxGslBackend backend,
                                               const std::string &dangs_prog,
                                               const std::string &additional_prog,
@@ -672,3 +712,11 @@ GfxGasolineResult gfx_gasoline_compile_decal (GfxGslBackend backend,
     return type_check("", dangs_prog, additional_prog, md, cont);
 }
 
+
+GfxGasolineResult gfx_gasoline_compile_additional (GfxGslBackend backend,
+                                                   const std::string &vert_prog,
+                                                   const std::string &additional_prog,
+                                                   const GfxGslMetadata &md)
+{
+    return gfx_gasoline_compile_colour(backend, vert_prog, additional_prog, md, false, false);
+}

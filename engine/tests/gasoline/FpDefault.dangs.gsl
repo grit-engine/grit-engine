@@ -3,9 +3,10 @@ var diff_texel = sample(mat.diffuseMap, vert.coord0.xy);
 out.diffuse = gamma_decode(diff_texel.rgb) * mat.diffuseMask;
 out.alpha = diff_texel.a * mat.alphaMask;
 if (out.alpha < mat.alphaRejectThreshold) discard;
-var norm_texel = sample(mat.normalMap, vert.coord0.xy);
-out.normal = vert.normal;
+var normal_texel = sample(mat.normalMap, vert.coord0.xy).xyz;
+var normal_ts = normal_texel * Float3(-2, 2, 2) + Float3(1, -1, -1);
+// TODO(dcunnin): double sided faces
+out.normal = normal_ts.x*tangent_ws + normal_ts.y*binormal_ws + normal_ts.z*normal_ws;
 var gloss_texel = sample(mat.glossMap, vert.coord0.xy);
-out.gloss = gloss_texel.r * mat.gloss;
-out.specular = gloss_texel.b * mat.specular;
-
+out.gloss = gloss_texel.b * mat.glossMask;
+out.specular = gamma_decode(gloss_texel.r) * mat.specularMask;
