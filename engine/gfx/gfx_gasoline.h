@@ -414,9 +414,9 @@ void gfx_gasoline_check (const std::string &vert_prog,
                          const std::string &additional_prog,
                          const GfxGslMetadata &md);
 
-GfxGasolineResult gfx_gasoline_compile_wire_frame (GfxGslBackend backend,
-                                                   const std::string &vert_prog,
-                                                   const GfxGslMetadata &md);
+GfxGasolineResult gfx_gasoline_compile_wireframe (GfxGslBackend backend,
+                                                  const std::string &vert_prog,
+                                                  const GfxGslMetadata &md);
 
 GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
                                             const std::string &vert_prog,
@@ -434,6 +434,10 @@ GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
                                                      const std::string &additional_prog,
                                                      const GfxGslMetadata &md);
 
+GfxGasolineResult gfx_gasoline_compile_first_person_wireframe (GfxGslBackend backend,
+                                                               const std::string &vert_prog,
+                                                               const GfxGslMetadata &md);
+
 GfxGasolineResult gfx_gasoline_compile_das (GfxGslBackend backend,
                                             const std::string &vert_prog,
                                             const std::string &colour_prog,
@@ -444,6 +448,11 @@ GfxGasolineResult gfx_gasoline_compile_decal (GfxGslBackend backend,
                                               const std::string &dangs_prog,
                                               const std::string &additional_prog,
                                               const GfxGslMetadata &md);
+
+GfxGasolineResult gfx_gasoline_compile_additional (GfxGslBackend backend,
+                                                   const std::string &vert_prog,
+                                                   const std::string &additional_prog,
+                                                   const GfxGslMetadata &md);
 
 // To come!
 GfxGasolineResult gfx_gasoline_compile_forward (GfxGslBackend backend,

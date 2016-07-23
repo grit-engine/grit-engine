@@ -175,6 +175,7 @@ void GfxSkyBody::render (const GfxShaderGlobals &g)
 
         ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
         ogre_rs->setStencilCheckEnabled(false);
+        ogre_rs->_setDepthBias(0, 0);
 
         Ogre::RenderOperation op;    
         sm->_getRenderOperation(op);

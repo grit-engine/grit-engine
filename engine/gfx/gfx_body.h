@@ -105,6 +105,7 @@ class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
     Ogre::MeshPtr mesh;
     protected:
     float fade;
+    // Hack to pass material into queue->addRenderable
     Ogre::MaterialPtr renderMaterial;
     GfxPaintColour colours[4];
     bool enabled;

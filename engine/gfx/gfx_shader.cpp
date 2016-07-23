@@ -98,143 +98,75 @@ GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe)
     return gfx_shader_globals_cam(pipe, cam->getProjectionMatrix());
 }
 
-void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
+void try_set_constant (const Ogre::GpuProgramParametersSharedPtr &p,
                        const std::string &name, const Ogre::Matrix4 &v)
 {
-    p->getDefaultParameters()->setIgnoreMissingParams(true);
-    p->getDefaultParameters()->setNamedConstant(name, v);
+    p->setNamedConstant(name, v);
 }
 
-void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
+void try_set_constant (const Ogre::GpuProgramParametersSharedPtr &p,
                        const std::string &name, const Ogre::Matrix4 *v, unsigned n)
 {
-    p->getDefaultParameters()->setIgnoreMissingParams(true);
-    p->getDefaultParameters()->setNamedConstant(name, v, n);
+    p->setNamedConstant(name, v, n);
 }
 
-void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
+void try_set_constant (const Ogre::GpuProgramParametersSharedPtr &p,
                        const std::string &name, int v)
 {
-    p->getDefaultParameters()->setIgnoreMissingParams(true);
-    p->getDefaultParameters()->setNamedConstant(name, v);
+    p->setNamedConstant(name, v);
 }
 
-void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
+void try_set_constant (const Ogre::GpuProgramParametersSharedPtr &p,
                        const std::string &name, float v)
 {
-    p->getDefaultParameters()->setIgnoreMissingParams(true);
-    p->getDefaultParameters()->setNamedConstant(name, v);
+    p->setNamedConstant(name, v);
 }
 
-void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
+void try_set_constant (const Ogre::GpuProgramParametersSharedPtr &p,
                        const std::string &name, const Vector2 &v)
 {
-    p->getDefaultParameters()->setIgnoreMissingParams(true);
-    p->getDefaultParameters()->setNamedConstant(name, to_ogre(v));
+    p->setNamedConstant(name, to_ogre(v));
 }
 
-void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
+void try_set_constant (const Ogre::GpuProgramParametersSharedPtr &p,
                        const std::string &name, const Vector3 &v)
 {
-    p->getDefaultParameters()->setIgnoreMissingParams(true);
-    p->getDefaultParameters()->setNamedConstant(name, to_ogre(v));
+    p->setNamedConstant(name, to_ogre(v));
 }
 
-void try_set_constant (const Ogre::HighLevelGpuProgramPtr &p,
+void try_set_constant (const Ogre::GpuProgramParametersSharedPtr &p,
                        const std::string &name, const Vector4 &v)
 {
-    p->getDefaultParameters()->setIgnoreMissingParams(true);
-    p->getDefaultParameters()->setNamedConstant(name, to_ogre(v));
+    p->setNamedConstant(name, to_ogre(v));
 }
 
 
-template<class T> static void hack_set_constant(const Ogre::HighLevelGpuProgramPtr &vp,
-                                                const Ogre::HighLevelGpuProgramPtr &fp,
+template<class T> static void hack_set_constant(const Ogre::GpuProgramParametersSharedPtr &p,
                                                 const std::string &name, const T&v, unsigned n)
 {
-    try_set_constant(vp, name, v, n);
-    try_set_constant(fp, name, v, n);
+    try_set_constant(p, name, v, n);
 }
 
-template<class T> static void hack_set_constant(const NativePair &np,
+template<class T> static void hack_set_constant(const Ogre::GpuProgramParametersSharedPtr &vp,
+                                                const Ogre::GpuProgramParametersSharedPtr &fp,
                                                 const std::string &name, const T&v, unsigned n)
 {
-    hack_set_constant(np.vp, np.fp, name, v, n);
+    hack_set_constant(vp, name, v, n);
+    hack_set_constant(fp, name, v, n);
 }
 
-template<class T> static void hack_set_constant(const Ogre::HighLevelGpuProgramPtr &vp,
-                                                const Ogre::HighLevelGpuProgramPtr &fp,
+template<class T> static void hack_set_constant(const Ogre::GpuProgramParametersSharedPtr &p,
                                                 const std::string &name, const T&v)
 {
-    try_set_constant(vp, name, v);
-    try_set_constant(fp, name, v);
+    try_set_constant(p, name, v);
 }
 
-template<class T> static void hack_set_constant(const NativePair &np,
+template<class T> static void hack_set_constant(const Ogre::GpuProgramParametersSharedPtr &vp,
+                                                const Ogre::GpuProgramParametersSharedPtr &fp,
                                                 const std::string &name, const T&v)
 {
-    hack_set_constant(np.vp, np.fp, name, v);
-}
-
-static void explicit_binding (const NativePair &np, const std::string &name, const Ogre::Matrix4 &v)
-{
-    hack_set_constant(np, name, v);
-}
-
-static void explicit_binding (const NativePair &np, const std::string &name, int v)
-{
-    hack_set_constant(np, name, v);
-}
-
-static void explicit_binding (const NativePair &np, const std::string &name, float v)
-{
-    hack_set_constant(np, name, v);
-}
-
-static void explicit_binding (const NativePair &np, const std::string &name, const Vector2 &v)
-{
-    hack_set_constant(np, name, v);
-}
-
-static void explicit_binding (const NativePair &np, const std::string &name, const Vector3 &v)
-{
-    hack_set_constant(np, name, v);
-}
-
-static void explicit_binding (const NativePair &np, const std::string &name, const Vector4 &v)
-{
-    hack_set_constant(np, name, v);
-}
-
-
-void GfxShader::explicitBinding (const std::string &name, const Ogre::Matrix4 &v)
-{
-    explicit_binding(legacy, name, v);
-}
-
-void GfxShader::explicitBinding (const std::string &name, int v)
-{
-    explicit_binding(legacy, name, v);
-}
-
-void GfxShader::explicitBinding (const std::string &name, float v)
-{
-    explicit_binding(legacy, name, v);
-}
-
-void GfxShader::explicitBinding (const std::string &name, const Vector2 &v)
-{
-    explicit_binding(legacy, name, v);
-}
-
-void GfxShader::explicitBinding (const std::string &name, const Vector3 &v)
-{
-    explicit_binding(legacy, name, v);
-}
-
-void GfxShader::explicitBinding (const std::string &name, const Vector4 &v)
-{
-    explicit_binding(legacy, name, v);
+    hack_set_constant(vp, name, v);
+    hack_set_constant(fp, name, v);
 }
 
 
@@ -317,6 +249,15 @@ NativePair GfxShader::getNativePair (Purpose purpose,
             statics[bind.first] = bind.second;
         }
     }
+    return getNativePair(purpose, fade_dither, env_boxes, instanced, bone_weights,ubt, statics);
+}
+
+NativePair GfxShader::getNativePair (Purpose purpose,
+                                     bool fade_dither, unsigned env_boxes,
+                                     bool instanced, unsigned bone_weights,
+                                     const GfxGslUnboundTextures &ubt,
+                                     const GfxShaderBindings &statics)
+{
     // Need to choose / maybe compile a shader for this combination of textures and bindings.
     GfxGslEnvironment env = shader_scene_env;
     env.fadeDither = fade_dither;
@@ -383,10 +324,15 @@ NativePair GfxShader::getNativePair (Purpose purpose,
                 output = gfx_gasoline_compile_first_person(backend, srcVertex, srcDangs,
                                                            srcAdditional, md);
                 break;
-                case EMISSIVE: EXCEPTEX << "Internal error." << ENDL;
+                case FIRST_PERSON_WIREFRAME:
+                output = gfx_gasoline_compile_first_person_wireframe(backend, srcVertex, md);
+                break;
+                case ADDITIONAL:
+                output = gfx_gasoline_compile_additional(backend, srcVertex, srcAdditional, md);
+                break;
                 case SHADOW_CAST: EXCEPTEX << "Internal error." << ENDL;
-                case WIRE_FRAME:
-                output = gfx_gasoline_compile_wire_frame(backend, srcVertex, md);
+                case WIREFRAME:
+                output = gfx_gasoline_compile_wireframe(backend, srcVertex, md);
                 break;
                 case SKY:
                 output = gfx_gasoline_compile_sky(backend, srcVertex, srcAdditional, md);
@@ -442,25 +388,138 @@ NativePair GfxShader::getNativePair (Purpose purpose,
     }
 }
 
-void GfxShader::bindShader (Purpose purpose,
-                            bool fade_dither,
-                            bool instanced,
-                            unsigned bone_weights,
-                            const GfxShaderGlobals &globs,
-                            const Ogre::Matrix4 &world,
-                            const Ogre::Matrix4 *bone_world_matrixes,
-                            unsigned num_bone_world_matrixes,
-                            float fade,
-                            const GfxMaterialTextureMap &textures,
-                            const GfxShaderBindings &bindings)
+
+void GfxShader::bindShaderParams (const Ogre::GpuProgramParametersSharedPtr &vparams,
+                                  const Ogre::GpuProgramParametersSharedPtr &fparams,
+                                  const GfxMaterialTextureMap &textures,
+                                  const GfxShaderBindings &bindings)
 {
-    auto np = getNativePair(purpose, fade_dither, env_cube_count, instanced, bone_weights,
-                            textures, bindings);
+    int counter = NUM_GLOBAL_TEXTURES;
+    for (auto pair : params) {
+        const std::string &name = pair.first;
+        const auto &param = pair.second;
+        if (gfx_gasoline_param_is_texture(param)) {
 
-    // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
-    ogre_rs->bindGpuProgram(np.vp->_getBindingDelegate());
-    ogre_rs->bindGpuProgram(np.fp->_getBindingDelegate());
+            auto it = textures.find(name);
+            // material might leave a given texture undefined in which case we
+            // are using the shader without that texture so do not bind it
+            if (it == textures.end()) continue;
+            if (backend == GFX_GSL_BACKEND_GLSL) {
+                hack_set_constant(vparams, fparams, "mat_" + name, counter);
+            }
+            counter++;
 
+        } else {
+            const GfxGslParam *vptr = &param;
+            auto bind = bindings.find(name);
+            if (bind != bindings.end()) {
+                GfxGslParamType bt = bind->second.t;
+                if (bt == param.t) {
+                    vptr = &bind->second;
+                } else {
+                    CERR << "Binding \"" << name << "\" had wrong type in shader "
+                         << "\"" << name << "\": got " << bt << " but expected " << vptr->t << std::endl;
+                }
+            }
+            const auto &v = *vptr;
+            switch (v.t) {
+                case GFX_GSL_FLOAT1:
+                hack_set_constant(vparams, fparams, "mat_" + name, v.fs.r);
+                break;
+
+                case GFX_GSL_FLOAT2:
+                hack_set_constant(vparams, fparams, "mat_" + name, Vector2(v.fs.r, v.fs.g));
+                break;
+
+                case GFX_GSL_FLOAT3:
+                hack_set_constant(vparams, fparams, "mat_" + name, Vector3(v.fs.r, v.fs.g, v.fs.b));
+                break;
+
+                case GFX_GSL_FLOAT4:
+                hack_set_constant(vparams, fparams, "mat_" + name, Vector4(v.fs.r, v.fs.g, v.fs.b, v.fs.a));
+                break;
+
+                case GFX_GSL_INT1:
+                hack_set_constant(vparams, fparams, "mat_" + name, v.is.r);
+                break;
+
+                case GFX_GSL_INT2:
+                case GFX_GSL_INT3:
+                case GFX_GSL_INT4:
+                EXCEPTEX << "Not implemented." << ENDL;
+
+                case GFX_GSL_STATIC_FLOAT1:
+                case GFX_GSL_STATIC_FLOAT2:
+                case GFX_GSL_STATIC_FLOAT3:
+                case GFX_GSL_STATIC_FLOAT4:
+                case GFX_GSL_STATIC_INT1:
+                case GFX_GSL_STATIC_INT2:
+                case GFX_GSL_STATIC_INT3:
+                case GFX_GSL_STATIC_INT4:
+                // Do nothing -- these are baked into the shader already.
+                break;
+
+                default: EXCEPTEX << "Internal error." << ENDL;
+            }
+        }
+    }
+
+}
+
+void GfxShader::bindShaderParamsPass (Ogre::Pass *p, const GfxMaterialTextureMap &textures)
+{
+    // Must be called after globals.
+    for (auto pair : params) {
+        const std::string &name = pair.first;
+        const auto &param = pair.second;
+        if (gfx_gasoline_param_is_texture(param)) {
+
+            auto it = textures.find(name);
+
+            // material might leave a given texture undefined in which case we
+            // are using the shader without that texture so do not bind it
+
+            if (it == textures.end()) continue;
+
+            const GfxMaterialTexture *tex = &it->second;
+
+            switch (param.t) {
+                case GFX_GSL_FLOAT_TEXTURE1: {
+                    EXCEPTEX << "Not yet implemented." << ENDL;
+                } break;
+                case GFX_GSL_FLOAT_TEXTURE2: {
+                    Ogre::TextureUnitState *tus = p->createTextureUnitState();
+                    // TODO(dcunnin): tex is null as a temporary hack to allow binding of gbuffer
+                    if (tex->texture == nullptr) break;
+                    tus->setTextureName(tex->texture->getOgreTexturePtr()->getName());
+                    //tus->setTextureAnisotropy(tex->anisotropy);
+                    tus->setTextureFiltering(Ogre::FO_ANISOTROPIC,
+                                             Ogre::FO_ANISOTROPIC, Ogre::FO_LINEAR);
+                    auto mode = tex->clamp ? Ogre::TextureUnitState::TAM_CLAMP
+                                           : Ogre::TextureUnitState::TAM_WRAP;
+                    Ogre::TextureUnitState::UVWAddressingMode am = { mode, mode, mode };
+                    tus->setTextureAddressingMode(am);
+                }
+                break;
+                case GFX_GSL_FLOAT_TEXTURE3: {
+                    EXCEPTEX << "Not yet implemented." << ENDL;
+                } break;
+                case GFX_GSL_FLOAT_TEXTURE4: {
+                    EXCEPTEX << "Not yet implemented." << ENDL;
+                } break;
+                case GFX_GSL_FLOAT_TEXTURE_CUBE: {
+                    EXCEPTEX << "Not yet implemented." << ENDL;
+                } break;
+
+                default: EXCEPTEX << "Internal error." << ENDL;
+            }
+        }
+    }
+
+}
+
+void GfxShader::bindShaderParamsRs (const GfxMaterialTextureMap &textures)
+{
     int counter = NUM_GLOBAL_TEXTURES;
     for (auto pair : params) {
         const std::string &name = pair.first;
@@ -490,10 +549,7 @@ void GfxShader::bindShader (Purpose purpose,
                     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
                     auto mode = tex->clamp ? Ogre::TextureUnitState::TAM_CLAMP
                                            : Ogre::TextureUnitState::TAM_WRAP;
-                    Ogre::TextureUnitState::UVWAddressingMode am;
-                    am.u = mode;
-                    am.v = mode;
-                    am.w = mode;
+                    Ogre::TextureUnitState::UVWAddressingMode am = { mode, mode, mode };
                     ogre_rs->_setTextureAddressingMode(counter, am);
                 }
                 break;
@@ -509,93 +565,302 @@ void GfxShader::bindShader (Purpose purpose,
 
                 default: EXCEPTEX << "Internal error." << ENDL;
             }
-            if (backend == GFX_GSL_BACKEND_GLSL) {
-                explicit_binding(np, "mat_" + name, counter);
-            }
             counter++;
-
-        } else {
-            const GfxGslParam *vptr = &param;
-            auto bind = bindings.find(name);
-            if (bind != bindings.end()) {
-                GfxGslParamType bt = bind->second.t;
-                if (bt == param.t) {
-                    vptr = &bind->second;
-                } else {
-                    CERR << "Binding \"" << name << "\" had wrong type in shader "
-                         << "\"" << name << "\": got " << bt << " but expected " << vptr->t << std::endl;
-                }
-            }
-            const auto &v = *vptr;
-            switch (v.t) {
-                case GFX_GSL_FLOAT1:
-                explicit_binding(np, "mat_" + name, v.fs.r);
-                break;
-
-                case GFX_GSL_FLOAT2:
-                explicit_binding(np, "mat_" + name, Vector2(v.fs.r, v.fs.g));
-                break;
-
-                case GFX_GSL_FLOAT3:
-                explicit_binding(np, "mat_" + name, Vector3(v.fs.r, v.fs.g, v.fs.b));
-                break;
-
-                case GFX_GSL_FLOAT4:
-                explicit_binding(np, "mat_" + name, Vector4(v.fs.r, v.fs.g, v.fs.b, v.fs.a));
-                break;
-
-                case GFX_GSL_INT1:
-                explicit_binding(np, "mat_" + name, v.is.r);
-                break;
-
-                case GFX_GSL_INT2:
-                case GFX_GSL_INT3:
-                case GFX_GSL_INT4:
-                EXCEPTEX << "Not implemented." << ENDL;
-
-                default: EXCEPTEX << "Internal error." << ENDL;
-            }
         }
     }
 
-    bindBodyParams(np, globs, world, bone_world_matrixes, num_bone_world_matrixes, fade);
-    bindGlobals(np, globs, purpose);
-
-    ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, np.vp->getDefaultParameters(), Ogre::GPV_ALL);
-    ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, np.fp->getDefaultParameters(), Ogre::GPV_ALL);
-
 }
 
-void GfxShader::bindShaderParams (void)
+void GfxShader::bindShader (Purpose purpose,
+                            bool fade_dither,
+                            bool instanced,
+                            unsigned bone_weights,
+                            const GfxShaderGlobals &globs,
+                            const Ogre::Matrix4 &world,
+                            const Ogre::Matrix4 *bone_world_matrixes,
+                            unsigned num_bone_world_matrixes,
+                            float fade,
+                            const GfxMaterialTextureMap &textures,
+                            const GfxShaderBindings &bindings)
 {
-    ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, legacy.vp->getDefaultParameters(), Ogre::GPV_ALL);
-    ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, legacy.fp->getDefaultParameters(), Ogre::GPV_ALL);
+    auto np = getNativePair(purpose, fade_dither, env_cube_count, instanced, bone_weights,
+                            textures, bindings);
+
+    // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
+    ogre_rs->bindGpuProgram(np.vp->_getBindingDelegate());
+    ogre_rs->bindGpuProgram(np.fp->_getBindingDelegate());
+
+    const Ogre::GpuProgramParametersSharedPtr &vparams = np.vp->getDefaultParameters();
+    const Ogre::GpuProgramParametersSharedPtr &fparams = np.fp->getDefaultParameters();
+    vparams->setIgnoreMissingParams(true);
+    fparams->setIgnoreMissingParams(true);
+
+    bindGlobals(vparams, fparams, globs);
+    bindGlobalsRs(globs, purpose);
+    bindShaderParams(vparams, fparams, textures, bindings);
+    bindShaderParamsRs(textures);
+    bindBodyParams(vparams, fparams, globs, world, bone_world_matrixes, num_bone_world_matrixes,
+                   fade);
+
+    ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vparams, Ogre::GPV_ALL);
+    ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fparams, Ogre::GPV_ALL);
 }
 
-void GfxShader::bindBodyParams (const NativePair &np, const GfxShaderGlobals &p,
+void GfxShader::bindShaderPass (Ogre::Pass *p,
+                                Purpose purpose,
+                                bool fade_dither,
+                                bool instanced,
+                                unsigned bone_weights,
+                                const GfxShaderGlobals &globs,
+                                const GfxMaterialTextureMap &textures,
+                                const GfxShaderBindings &bindings)
+{
+    auto np = getNativePair(purpose, fade_dither, env_cube_count, instanced, bone_weights,
+                            textures, bindings);
+
+    p->setFragmentProgram(np.fp->getName());
+    p->setVertexProgram(np.vp->getName());
+
+    const Ogre::GpuProgramParametersSharedPtr &vparams = p->getVertexProgramParameters();
+    const Ogre::GpuProgramParametersSharedPtr &fparams = p->getFragmentProgramParameters();
+    vparams->setIgnoreMissingParams(true);
+    fparams->setIgnoreMissingParams(true);
+
+    bindGlobals(vparams, fparams, globs);
+    bindGlobalsPass(p, purpose);
+    bindShaderParams(vparams, fparams, textures, bindings);
+    bindShaderParamsPass(p, textures);
+    bindBodyParamsPass(vparams, fparams);
+
+}
+
+void GfxShader::bindBodyParams (const Ogre::GpuProgramParametersSharedPtr &vp,
+                                const Ogre::GpuProgramParametersSharedPtr &fp,
+                                const GfxShaderGlobals &p, 
                                 const Ogre::Matrix4 &world,
                                 const Ogre::Matrix4 *bone_world_matrixes,
-                                unsigned num_bone_world_matrixes, float fade)
-{
+                                unsigned num_bone_world_matrixes,
+                                float fade)
+{   
     Ogre::Matrix4 world_view = p.view * world;
     Ogre::Matrix4 world_view_proj = p.proj * world_view;
-
-    hack_set_constant(np, "body_worldViewProj", world_view_proj);
-    hack_set_constant(np, "body_worldView", world_view);
-    hack_set_constant(np, "body_world", world);
-    hack_set_constant(np, "body_boneWorlds", bone_world_matrixes, num_bone_world_matrixes);
-    hack_set_constant(np, "internal_fade", fade);
+    
+    hack_set_constant(vp, fp, "body_worldViewProj", world_view_proj);
+    hack_set_constant(vp, fp, "body_worldView", world_view);
+    hack_set_constant(vp, fp, "body_world", world);
+    hack_set_constant(vp, fp, "body_boneWorlds", bone_world_matrixes, num_bone_world_matrixes);
+    hack_set_constant(vp, fp, "internal_fade", fade);
 }
 
-static void inc (const NativePair &np, int &counter, const char *name)
+
+void GfxShader::bindBodyParamsPass (const Ogre::GpuProgramParametersSharedPtr &vp,
+                                    const Ogre::GpuProgramParametersSharedPtr &fp)
+{
+    std::array<Ogre::GpuProgramParametersSharedPtr, 2> params = {vp, fp};
+
+    for (const auto &p : params) { 
+        p->setNamedAutoConstant("body_worldViewProj",
+                                Ogre::GpuProgramParameters::ACT_WORLDVIEWPROJ_MATRIX);
+        p->setNamedAutoConstant("body_worldView",
+                                Ogre::GpuProgramParameters::ACT_WORLDVIEW_MATRIX);
+        p->setNamedAutoConstant("body_world",
+                                Ogre::GpuProgramParameters::ACT_WORLD_MATRIX);
+        p->setNamedAutoConstant("body_boneWorlds",
+                                Ogre::GpuProgramParameters::ACT_WORLD_MATRIX_ARRAY);
+        p->setNamedAutoConstant("internal_fade",
+                                Ogre::GpuProgramParameters::ACT_CUSTOM, 0);
+    }
+}
+
+static void inc (const Ogre::GpuProgramParametersSharedPtr &vp,
+                 const Ogre::GpuProgramParametersSharedPtr &fp,
+                 int &counter,
+                 const char *name)
 {
     if (backend == GFX_GSL_BACKEND_GLSL)
-        explicit_binding(np, name, counter);
+        hack_set_constant(vp, fp, name, counter);
     counter++;
 }
 
-void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
-                           const GfxShaderGlobals &g)
+void GfxShader::bindGlobals (const Ogre::GpuProgramParametersSharedPtr &vp,
+                             const Ogre::GpuProgramParametersSharedPtr &fp,
+                             const GfxShaderGlobals &g)
+{
+    Ogre::Matrix4 view_proj = g.proj * g.view; 
+    Vector4 viewport_size(g.viewportDim.x, g.viewportDim.y,
+                          1.0f/g.viewportDim.x, 1.0f/g.viewportDim.y);
+    float render_target_flipping_factor = g.renderTargetFlipping ? -1.0f : 1.0f;
+
+    hack_set_constant(vp, fp, "global_cameraPos", g.camPos);
+    hack_set_constant(vp, fp, "global_fovY", gfx_option(GFX_FOV));
+    hack_set_constant(vp, fp, "global_proj", g.proj);
+    hack_set_constant(vp, fp, "global_time", anim_time); // FIXME:
+    hack_set_constant(vp, fp, "global_viewportSize", viewport_size);
+    hack_set_constant(vp, fp, "global_viewProj", view_proj);
+    hack_set_constant(vp, fp, "global_view", g.view);
+    hack_set_constant(vp, fp, "global_invView", g.invView);
+    hack_set_constant(vp, fp, "global_rayTopLeft", g.rayTopLeft);
+    hack_set_constant(vp, fp, "global_rayTopRight", g.rayTopRight);
+    hack_set_constant(vp, fp, "global_rayBottomLeft", g.rayBottomLeft);
+    hack_set_constant(vp, fp, "global_rayBottomRight", g.rayBottomRight);
+    hack_set_constant(vp, fp, "global_nearClipDistance", gfx_option(GFX_NEAR_CLIP));
+    hack_set_constant(vp, fp, "global_farClipDistance", gfx_option(GFX_FAR_CLIP));
+
+    hack_set_constant(vp, fp, "global_shadowViewProj0", shadow_view_proj[0]);
+    hack_set_constant(vp, fp, "global_shadowViewProj1", shadow_view_proj[1]);
+    hack_set_constant(vp, fp, "global_shadowViewProj2", shadow_view_proj[2]);
+
+    hack_set_constant(vp, fp, "global_particleAmbient", particle_ambient);
+    hack_set_constant(vp, fp, "global_sunlightDiffuse", sunlight_diffuse);
+    hack_set_constant(vp, fp, "global_sunlightDirection", sunlight_direction);
+    hack_set_constant(vp, fp, "global_sunlightSpecular", sunlight_specular);
+
+    hack_set_constant(vp, fp, "global_fogColour", fog_colour);
+    hack_set_constant(vp, fp, "global_fogDensity", fog_density);
+    hack_set_constant(vp, fp, "global_hellColour", hell_colour);
+    hack_set_constant(vp, fp, "global_skyCloudColour", sky_cloud_colour);
+    hack_set_constant(vp, fp, "global_skyCloudCoverage", sky_cloud_coverage);
+    hack_set_constant(vp, fp, "global_skyGlareHorizonElevation", sky_glare_horizon_elevation);
+    hack_set_constant(vp, fp, "global_skyGlareSunDistance", sky_glare_sun_distance);
+    hack_set_constant(vp, fp, "global_sunAlpha", sun_alpha);
+    hack_set_constant(vp, fp, "global_sunColour", sun_colour);
+    hack_set_constant(vp, fp, "global_sunDirection", sun_direction);
+    hack_set_constant(vp, fp, "global_sunFalloffDistance", sun_falloff_distance);
+    hack_set_constant(vp, fp, "global_sunSize", sun_size);
+
+    hack_set_constant(vp, fp, "global_skyDivider1", sky_divider[0]);
+    hack_set_constant(vp, fp, "global_skyDivider2", sky_divider[1]);
+    hack_set_constant(vp, fp, "global_skyDivider3", sky_divider[2]);
+    hack_set_constant(vp, fp, "global_skyDivider4", sky_divider[3]);
+
+    hack_set_constant(vp, fp, "global_skyColour0", sky_colour[0]);
+    hack_set_constant(vp, fp, "global_skyColour1", sky_colour[1]);
+    hack_set_constant(vp, fp, "global_skyColour2", sky_colour[2]);
+    hack_set_constant(vp, fp, "global_skyColour3", sky_colour[3]);
+    hack_set_constant(vp, fp, "global_skyColour4", sky_colour[4]);
+    hack_set_constant(vp, fp, "global_skyColour5", sky_colour[5]);
+
+    hack_set_constant(vp, fp, "global_skySunColour0", sky_sun_colour[0]);
+    hack_set_constant(vp, fp, "global_skySunColour1", sky_sun_colour[1]);
+    hack_set_constant(vp, fp, "global_skySunColour2", sky_sun_colour[2]);
+    hack_set_constant(vp, fp, "global_skySunColour3", sky_sun_colour[3]);
+    hack_set_constant(vp, fp, "global_skySunColour4", sky_sun_colour[4]);
+
+    hack_set_constant(vp, fp, "global_envCubeCrossFade", env_cube_cross_fade);
+    hack_set_constant(vp, fp, "global_envCubeMipmaps0", 9.0f);
+    hack_set_constant(vp, fp, "global_envCubeMipmaps1", 9.0f);
+
+    hack_set_constant(vp, fp, "global_saturation", global_saturation);
+    hack_set_constant(vp, fp, "global_exposure", global_exposure);
+    hack_set_constant(vp, fp, "global_bloomThreshold", gfx_option(GFX_BLOOM_THRESHOLD));
+
+    hack_set_constant(vp, fp, "internal_rt_flip", render_target_flipping_factor);
+
+    int counter = 0;
+
+    // CAUTION!!! These texture bindings must be in alphabetical order.
+    // And match those in bind_global_textures
+
+    inc(vp, fp, counter, "global_colourGradeLut");
+    inc(vp, fp, counter, "global_envCube0");
+    inc(vp, fp, counter, "global_envCube1");
+    inc(vp, fp, counter, "global_fadeDitherMap");
+    inc(vp, fp, counter, "global_gbuffer0");
+    const static char *name[] = { "global_shadowMap0", "global_shadowMap1", "global_shadowMap2" };
+    for (unsigned i=0 ; i<3 ; ++i) inc(vp, fp, counter, name[i]);
+    inc(vp, fp, counter, "global_shadowPcfNoiseMap");
+
+    APP_ASSERT(counter == NUM_GLOBAL_TEXTURES);
+}
+
+void GfxShader::bindGlobalsPass (Ogre::Pass *p, Purpose purpose)
+{
+    const auto clamp = Ogre::TextureUnitState::TAM_CLAMP;
+    const auto wrap = Ogre::TextureUnitState::TAM_WRAP;
+    Ogre::TextureUnitState *tus;
+
+    // CAUTION!!! These texture bindings must be in alphabetical order.
+    tus = p->createTextureUnitState();
+    tus->setTextureName(colour_grade_lut->getOgreTexturePtr()->getName());
+    tus->setTextureFiltering(Ogre::FO_POINT, Ogre::FO_LINEAR, Ogre::FO_NONE);
+    tus->setTextureAddressingMode(
+        Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
+
+    if (global_env_cube0 != nullptr && global_env_cube1 != nullptr) {
+        // Both env cubes
+        tus = p->createTextureUnitState();
+        tus->setTextureName(global_env_cube0->getOgreTexturePtr()->getName());
+        tus->setTextureFiltering(Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_LINEAR);
+        tus->setTextureAddressingMode(
+            Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
+
+        tus = p->createTextureUnitState();
+        tus->setTextureName(global_env_cube1->getOgreTexturePtr()->getName());
+        tus->setTextureFiltering(Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_LINEAR);
+        tus->setTextureAddressingMode(
+            Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
+
+    } else if (global_env_cube0 != nullptr) {
+        // One env cube
+        tus = p->createTextureUnitState();
+        tus->setTextureName(global_env_cube0->getOgreTexturePtr()->getName());
+        tus->setTextureFiltering(Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_LINEAR);
+        tus->setTextureAddressingMode(
+            Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
+
+        tus = p->createTextureUnitState();
+
+    } else if (global_env_cube1 != nullptr) {
+        // Other env cube
+        tus = p->createTextureUnitState();
+
+        tus = p->createTextureUnitState();
+        tus->setTextureName(global_env_cube1->getOgreTexturePtr()->getName());
+        tus->setTextureFiltering(Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_LINEAR);
+        tus->setTextureAddressingMode(
+            Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
+    } else {
+        // No env cube
+        tus = p->createTextureUnitState();
+
+        tus = p->createTextureUnitState();
+    }
+    
+
+    tus = p->createTextureUnitState();
+    if (fade_dither_map != nullptr) {
+        tus->setTextureName(fade_dither_map->getOgreTexturePtr()->getName());
+        tus->setTextureFiltering(Ogre::FO_POINT, Ogre::FO_POINT, Ogre::FO_NONE);
+        tus->setTextureAddressingMode(
+            Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
+    }
+
+    tus = p->createTextureUnitState();
+    if (purpose == GfxShader::DECAL) {
+        // Decals will never be rendered by Ogre::Pass.
+    }
+
+    for (unsigned i=0 ; i<3 ; ++i) {
+        tus = p->createTextureUnitState();
+        tus->setTextureName(ogre_sm->getShadowTexture(i)->getName());
+        tus->setTextureFiltering(Ogre::FO_POINT, Ogre::FO_POINT, Ogre::FO_NONE);
+        tus->setTextureAddressingMode(
+            Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
+    }
+
+    tus = p->createTextureUnitState();
+    if (shadow_pcf_noise_map != nullptr) {
+        tus->setTextureName(shadow_pcf_noise_map->getOgreTexturePtr()->getName());
+        tus->setTextureFiltering(Ogre::FO_POINT, Ogre::FO_POINT, Ogre::FO_NONE);
+        tus->setTextureAddressingMode(
+            Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
+    }
+
+    APP_ASSERT(p->getNumTextureUnitStates() == NUM_GLOBAL_TEXTURES);
+
+}
+
+void GfxShader::bindGlobalsRs (const GfxShaderGlobals &g, Purpose purpose)
 {
     int counter = 0;
     const auto clamp = Ogre::TextureUnitState::TAM_CLAMP;
@@ -607,7 +872,7 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
     ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
     ogre_rs->_setTextureAddressingMode(
         counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
-    inc(np, counter, "global_colourGradeLut");
+    counter++;
 
     if (global_env_cube0 != nullptr && global_env_cube1 != nullptr) {
         // Both env cubes
@@ -617,14 +882,14 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
         ogre_rs->_setTextureAddressingMode(
             counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
-        inc(np, counter, "global_envCube0");
+        counter++;
         ogre_rs->_setTexture(counter, true, global_env_cube1->getOgreTexturePtr());
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_LINEAR);
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MAG, Ogre::FO_LINEAR);
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
         ogre_rs->_setTextureAddressingMode(
             counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
-        inc(np, counter, "global_envCube1");
+        counter++;
 
     } else if (global_env_cube0 != nullptr) {
         // One env cube
@@ -634,15 +899,15 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
         ogre_rs->_setTextureAddressingMode(
             counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
-        inc(np, counter, "global_envCube0");
+        counter++;
 
         ogre_rs->_setTexture(counter, false, "");
-        inc(np, counter, "global_envCube1");
+        counter++;
 
     } else if (global_env_cube1 != nullptr) {
         // Other env cube
         ogre_rs->_setTexture(counter, false, "");
-        inc(np, counter, "global_envCube0");
+        counter++;
 
         ogre_rs->_setTexture(counter, true, global_env_cube1->getOgreTexturePtr());
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_LINEAR);
@@ -650,14 +915,14 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_LINEAR);
         ogre_rs->_setTextureAddressingMode(
             counter, Ogre::TextureUnitState::UVWAddressingMode {wrap, wrap, wrap});
-        inc(np, counter, "global_envCube1");
+        counter++;
     } else {
         // No env cube
         ogre_rs->_setTexture(counter, false, "");
-        inc(np, counter, "global_envCube0");
+        counter++;
 
         ogre_rs->_setTexture(counter, false, "");
-        inc(np, counter, "global_envCube1");
+        counter++;
     }
     
 
@@ -671,16 +936,15 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
     } else {
         ogre_rs->_setTexture(counter, false, "");
     }
-    inc(np, counter, "global_fadeDitherMap");
+    counter++;
 
     if (purpose == GfxShader::DECAL) {
         ogre_rs->_setTexture(counter, true, g.pipe->getGBufferTexture(0));
     } else {
         ogre_rs->_setTexture(counter, false, "");
     }
-    inc(np, counter, "global_gbuffer0");
+    counter++;
 
-    const static char *name[] = { "global_shadowMap0", "global_shadowMap1", "global_shadowMap2" };
     for (unsigned i=0 ; i<3 ; ++i) {
         ogre_rs->_setTexture(counter, true, ogre_sm->getShadowTexture(i));
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIN, Ogre::FO_POINT);
@@ -688,7 +952,7 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
         ogre_rs->_setTextureUnitFiltering(counter, Ogre::FT_MIP, Ogre::FO_NONE);
         ogre_rs->_setTextureAddressingMode(
             counter, Ogre::TextureUnitState::UVWAddressingMode {clamp, clamp, clamp});
-        inc(np, counter, name[i]);
+        counter++;
     }
 
     if (shadow_pcf_noise_map != nullptr) {
@@ -701,87 +965,12 @@ void bind_global_textures (const NativePair &np, GfxShader::Purpose purpose,
     } else {
         ogre_rs->_setTexture(counter, false, "");
     }
-    inc(np, counter, "global_shadowPcfNoiseMap");
+    counter++;
 
     // CAUTION!!! These texture bindings must be in alphabetical order.
 
     APP_ASSERT(counter == NUM_GLOBAL_TEXTURES);
 
-}
-
-void GfxShader::bindGlobals (const NativePair &np, const GfxShaderGlobals &g, Purpose purpose)
-{
-    Ogre::Matrix4 view_proj = g.proj * g.view; 
-    Vector4 viewport_size(g.viewportDim.x, g.viewportDim.y,
-                          1.0f/g.viewportDim.x, 1.0f/g.viewportDim.y);
-    float render_target_flipping_factor = g.renderTargetFlipping ? -1.0f : 1.0f;
-
-    hack_set_constant(np, "global_cameraPos", g.camPos);
-    hack_set_constant(np, "global_fovY", gfx_option(GFX_FOV));
-    hack_set_constant(np, "global_proj", g.proj);
-    hack_set_constant(np, "global_time", anim_time); // FIXME:
-    hack_set_constant(np, "global_viewportSize", viewport_size);
-    hack_set_constant(np, "global_viewProj", view_proj);
-    hack_set_constant(np, "global_view", g.view);
-    hack_set_constant(np, "global_invView", g.invView);
-    hack_set_constant(np, "global_rayTopLeft", g.rayTopLeft);
-    hack_set_constant(np, "global_rayTopRight", g.rayTopRight);
-    hack_set_constant(np, "global_rayBottomLeft", g.rayBottomLeft);
-    hack_set_constant(np, "global_rayBottomRight", g.rayBottomRight);
-    hack_set_constant(np, "global_nearClipDistance", gfx_option(GFX_NEAR_CLIP));
-    hack_set_constant(np, "global_farClipDistance", gfx_option(GFX_FAR_CLIP));
-
-    hack_set_constant(np, "global_shadowViewProj0", shadow_view_proj[0]);
-    hack_set_constant(np, "global_shadowViewProj1", shadow_view_proj[1]);
-    hack_set_constant(np, "global_shadowViewProj2", shadow_view_proj[2]);
-
-    hack_set_constant(np, "global_particleAmbient", particle_ambient);
-    hack_set_constant(np, "global_sunlightDiffuse", sunlight_diffuse);
-    hack_set_constant(np, "global_sunlightDirection", sunlight_direction);
-    hack_set_constant(np, "global_sunlightSpecular", sunlight_specular);
-
-    hack_set_constant(np, "global_fogColour", fog_colour);
-    hack_set_constant(np, "global_fogDensity", fog_density);
-    hack_set_constant(np, "global_hellColour", hell_colour);
-    hack_set_constant(np, "global_skyCloudColour", sky_cloud_colour);
-    hack_set_constant(np, "global_skyCloudCoverage", sky_cloud_coverage);
-    hack_set_constant(np, "global_skyGlareHorizonElevation", sky_glare_horizon_elevation);
-    hack_set_constant(np, "global_skyGlareSunDistance", sky_glare_sun_distance);
-    hack_set_constant(np, "global_sunAlpha", sun_alpha);
-    hack_set_constant(np, "global_sunColour", sun_colour);
-    hack_set_constant(np, "global_sunDirection", sun_direction);
-    hack_set_constant(np, "global_sunFalloffDistance", sun_falloff_distance);
-    hack_set_constant(np, "global_sunSize", sun_size);
-
-    hack_set_constant(np, "global_skyDivider1", sky_divider[0]);
-    hack_set_constant(np, "global_skyDivider2", sky_divider[1]);
-    hack_set_constant(np, "global_skyDivider3", sky_divider[2]);
-    hack_set_constant(np, "global_skyDivider4", sky_divider[3]);
-
-    hack_set_constant(np, "global_skyColour0", sky_colour[0]);
-    hack_set_constant(np, "global_skyColour1", sky_colour[1]);
-    hack_set_constant(np, "global_skyColour2", sky_colour[2]);
-    hack_set_constant(np, "global_skyColour3", sky_colour[3]);
-    hack_set_constant(np, "global_skyColour4", sky_colour[4]);
-    hack_set_constant(np, "global_skyColour5", sky_colour[5]);
-
-    hack_set_constant(np, "global_skySunColour0", sky_sun_colour[0]);
-    hack_set_constant(np, "global_skySunColour1", sky_sun_colour[1]);
-    hack_set_constant(np, "global_skySunColour2", sky_sun_colour[2]);
-    hack_set_constant(np, "global_skySunColour3", sky_sun_colour[3]);
-    hack_set_constant(np, "global_skySunColour4", sky_sun_colour[4]);
-
-    hack_set_constant(np, "global_envCubeCrossFade", env_cube_cross_fade);
-    hack_set_constant(np, "global_envCubeMipmaps0", 9.0f);
-    hack_set_constant(np, "global_envCubeMipmaps1", 9.0f);
-
-    hack_set_constant(np, "global_saturation", global_saturation);
-    hack_set_constant(np, "global_exposure", global_exposure);
-    hack_set_constant(np, "global_bloomThreshold", gfx_option(GFX_BLOOM_THRESHOLD));
-
-    hack_set_constant(np, "internal_rt_flip", render_target_flipping_factor);
-
-    bind_global_textures(np, purpose, g);
 }
 
 GfxShader *gfx_shader_make_from_existing (const std::string &name,

@@ -152,7 +152,7 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
             if (!sub->getCastShadows()) continue;
             if (!m->getCastShadows()) continue;
 
-            renderMaterial = m->regularMat;
+            renderMaterial = m->forwardMat;
 
             queue->addRenderable(sub, 0, 0);
         }
@@ -183,10 +183,10 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
                  * World: false/true
                  */
 
-                if (fade < 1 && m->getSceneBlend() != GFX_MATERIAL_OPAQUE) {
+                if (fade < 1 && m->getSceneBlend() == GFX_MATERIAL_OPAQUE) {
                     renderMaterial = m->fadingMat;
                 } else {
-                    renderMaterial = m->regularMat;
+                    renderMaterial = m->forwardMat;
                 }
 
                 int queue_group = RQ_GBUFFER_OPAQUE;
@@ -197,8 +197,8 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
                 }
                 queue->addRenderable(sub, queue_group, 0);
 
-                if (!m->emissiveMat.isNull() && sub->emissiveEnabled) {
-                    renderMaterial = m->emissiveMat;
+                if (m->getAdditionalLighting() && sub->emissiveEnabled) {
+                    renderMaterial = m->additionalMat;
                     switch (m->getSceneBlend()) {
                         case GFX_MATERIAL_OPAQUE:      queue_group = RQ_FORWARD_OPAQUE_EMISSIVE; break;
                         case GFX_MATERIAL_ALPHA:       queue_group = RQ_FORWARD_ALPHA_EMISSIVE; break;
@@ -226,7 +226,8 @@ void GfxBody::visitRenderables(Ogre::Renderable::Visitor* visitor, bool)
     // Visit each Sub
     for (SubList::iterator i = subList.begin(); i != subList.end(); ++i) {
         GfxMaterial *m = (*i)->material;
-        renderMaterial = m->regularMat;
+        // Commenting these out as they appear to be set anyway in _updateRenderQueue
+        renderMaterial = m->forwardMat;
         visitor->visit(*i, 0, false);
         renderMaterial.setNull();
     }
@@ -741,7 +742,7 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
     if (!enabled || fade < 0.000001) return;
 
     bool do_wireframe = (wireframe || gfx_option(GFX_WIREFRAME));
-    bool do_regular = !(do_wireframe && gfx_option(GFX_WIREFRAME_SOLID));
+    bool do_regular = !do_wireframe || gfx_option(GFX_WIREFRAME_SOLID);
 
     bool fade_dither = fade < 1;
     bool instanced = false;
@@ -794,6 +795,7 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
 
             ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
             ogre_rs->setStencilCheckEnabled(false);
+            ogre_rs->_setDepthBias(0, 0);
 
             Ogre::RenderOperation op;
             sm->_getRenderOperation(op);
@@ -806,14 +808,17 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
 
         if (do_wireframe) {
 
-            mat->getShader()->bindShader(GfxShader::WIRE_FRAME, false, false, 0,
-                                         g, world, boneWorldMatrixes, numBoneMatrixes, 1,
-                                         GfxMaterialTextureMap(), mat->getBindings());
+            mat->getShader()->bindShader(GfxShader::FIRST_PERSON_WIREFRAME, fade_dither, instanced,
+                                         bone_weights, g, world, boneWorldMatrixes,
+                                         numBoneMatrixes, fade, GfxMaterialTextureMap(),
+                                         mat->getBindings());
 
             ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
             ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
             ogre_rs->_setPolygonMode(Ogre::PM_WIREFRAME);
+            ogre_rs->_setCullingMode(Ogre::CULL_NONE);
             ogre_rs->setStencilCheckEnabled(false);
+            ogre_rs->_setDepthBias(1, 0);
 
             Ogre::RenderOperation op;
             sm->_getRenderOperation(op);

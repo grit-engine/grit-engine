@@ -226,6 +226,9 @@ int main (int argc, char **argv)
             } else if (kind == "FIRST_PERSON") {
                 shaders = gfx_gasoline_compile_first_person(backend, vert_code, dangs_code,
                                                             additional_code, md);
+            } else if (kind == "FIRST_PERSON_WIREFRAME") {
+                shaders = gfx_gasoline_compile_first_person_wireframe(backend, vert_code,
+                                                                      md);
             } else if (kind == "DECAL") {
                 shaders = gfx_gasoline_compile_decal(backend, dangs_code, additional_code, md);
             } else {
