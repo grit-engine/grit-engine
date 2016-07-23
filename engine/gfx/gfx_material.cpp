@@ -105,7 +105,7 @@ void GfxMaterial::rebuildOgreMaterials (const GfxShaderGlobals &globs)
     p->setCullingMode(Ogre::CULL_NONE);
     p->setPolygonMode(Ogre::PM_WIREFRAME);
     p->setDepthWriteEnabled(false);
-    p->setDepthBias(1, 0);
+    p->setDepthBias(0, 0);
     wireframeMat = Ogre::MaterialManager::getSingleton().getByName(name + ":wireframe", "GRIT");
 
     forwardMat = Ogre::MaterialManager::getSingleton().getByName(name, "GRIT");
@@ -118,7 +118,7 @@ void GfxMaterial::rebuildOgreMaterials (const GfxShaderGlobals &globs)
     p->setDepthWriteEnabled(false);
     // TODO(dcunnin): hack as we get z fighting and i don't know why.  Perhaps because of different
     // rounding error between old shader and gsl?  But code looks the same.
-    p->setDepthBias(1000, 0);
+    p->setDepthBias(0, 0);
     p->setDepthFunction(Ogre::CMPF_LESS_EQUAL);
     p->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
 

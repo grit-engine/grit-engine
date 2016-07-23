@@ -283,6 +283,7 @@ void gfx_gasoline_unparse_cg(const GfxGslContext &ctx,
         vert_ss << "    clip_pos.z = clip_pos.w * (1 - 1.0/65536);\n";
     }
     if (ctx.d3d9) {
+        // Convert z/w from -1 to 1 range to 0 to 1 range by modifying z only.
         vert_ss << "    clip_pos.z = (clip_pos.z + clip_pos.w) / 2.0;\n";
     } else {
         vert_ss << "    clip_pos.y *= internal_rt_flip;\n";

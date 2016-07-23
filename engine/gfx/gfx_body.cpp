@@ -227,9 +227,9 @@ void GfxBody::visitRenderables(Ogre::Renderable::Visitor* visitor, bool)
     for (SubList::iterator i = subList.begin(); i != subList.end(); ++i) {
         GfxMaterial *m = (*i)->material;
         // Commenting these out as they appear to be set anyway in _updateRenderQueue
-        //renderMaterial = m->forwardMat;
+        renderMaterial = m->forwardMat;
         visitor->visit(*i, 0, false);
-        //renderMaterial.setNull();
+        renderMaterial.setNull();
     }
 }
 
@@ -795,6 +795,7 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
 
             ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
             ogre_rs->setStencilCheckEnabled(false);
+            ogre_rs->_setDepthBias(0, 0);
 
             Ogre::RenderOperation op;
             sm->_getRenderOperation(op);
@@ -817,7 +818,7 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
             ogre_rs->_setPolygonMode(Ogre::PM_WIREFRAME);
             ogre_rs->_setCullingMode(Ogre::CULL_NONE);
             ogre_rs->setStencilCheckEnabled(false);
-            ogre_rs->_setDepthBias(3, 0);
+            ogre_rs->_setDepthBias(1, 0);
 
             Ogre::RenderOperation op;
             sm->_getRenderOperation(op);

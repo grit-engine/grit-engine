@@ -186,6 +186,7 @@ void GfxDecal::render (const GfxShaderGlobals &g)
 
         ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
         ogre_rs->setStencilCheckEnabled(false);
+        ogre_rs->_setDepthBias(0, 0);
 
         ogre_rs->_render(box_op);
 

@@ -355,7 +355,8 @@ class GfxParticleSystem {
             ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
             ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
             ogre_rs->setStencilCheckEnabled(false);
-        
+            ogre_rs->_setDepthBias(0, 0);
+
             ogre_rs->_render(buffer.getRenderOperation());
 
             ogre_rs->_disableTextureUnit(0);
