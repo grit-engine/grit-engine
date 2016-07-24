@@ -1238,6 +1238,47 @@ TRY_START
 TRY_END
 }
 
+static int gfxskybody_get_materials (lua_State *L)
+{
+TRY_START
+    check_args(L, 1);
+    GET_UD_MACRO(GfxSkyBodyPtr, self, 1, GFXSKYBODY_TAG);
+    for (unsigned i=0 ; i<self->getNumSubMeshes() ; ++i) {
+        GfxSkyMaterial *m = self->getMaterial(i);
+        push_string(L, m->name);
+    }
+    return self->getNumSubMeshes();
+TRY_END
+}
+
+static int gfxskybody_set_material (lua_State *L)
+{
+TRY_START
+    check_args(L, 3);
+    GET_UD_MACRO(GfxSkyBodyPtr, self, 1, GFXSKYBODY_TAG);
+    const std::string &n = luaL_checkstring(L, 2);
+    unsigned n2 = self->getSubMeshByOriginalMaterialName(n);
+    const char *mname = luaL_checkstring(L, 3);
+    GfxSkyMaterial *m = gfx_sky_material_get(mname);
+    self->setMaterial(n2, m);
+    return 0;
+TRY_END
+}
+
+static int gfxskybody_set_all_materials (lua_State *L)
+{
+TRY_START
+    check_args(L, 2);
+    GET_UD_MACRO(GfxSkyBodyPtr, self, 1, GFXSKYBODY_TAG);
+    const char *mname = luaL_checkstring(L, 2);
+    GfxSkyMaterial *m = gfx_sky_material_get(mname);
+    for (unsigned i=0 ; i<self->getNumSubMeshes() ; ++i) {
+        self->setMaterial(i, m);
+    }
+    return 0;
+TRY_END
+}
+
 
 
 TOSTRING_SMART_PTR_MACRO (gfxskybody,GfxSkyBodyPtr,GFXSKYBODY_TAG)
@@ -1256,6 +1297,13 @@ TRY_START
 
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self->isEnabled());
+
+    } else if (!::strcmp(key,"getMaterials")) {
+        push_cfunction(L,gfxskybody_get_materials);
+    } else if (!::strcmp(key,"setMaterial")) {
+        push_cfunction(L,gfxskybody_set_material);
+    } else if (!::strcmp(key,"setAllMaterials")) {
+        push_cfunction(L,gfxskybody_set_all_materials);
 
     } else if (!::strcmp(key,"destroyed")) {
         lua_pushboolean(L,self->destroyed());
