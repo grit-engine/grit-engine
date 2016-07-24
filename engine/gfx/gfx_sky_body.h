@@ -65,6 +65,8 @@ class GfxSkyBody : public fast_erase_index {
 
     unsigned getNumSubMeshes (void) { return materials.size(); }
     GfxSkyMaterial *getMaterial (unsigned i);
+    void setMaterial (unsigned i, GfxSkyMaterial *m);
+    unsigned getSubMeshByOriginalMaterialName (const std::string &n);
 
     void destroy (void);
     virtual bool destroyed (void) const { return dead; }

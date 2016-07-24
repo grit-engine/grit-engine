@@ -52,8 +52,6 @@ class GfxSkyMaterial : public GfxBaseMaterial {
 
     void addDependencies (DiskResource *into);
 
-    const std::string name;
-
     friend GfxSkyMaterial *gfx_sky_material_add(const std::string &);
     friend class GfxSkyBody;
 };  

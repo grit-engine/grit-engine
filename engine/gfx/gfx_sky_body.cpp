@@ -130,6 +130,27 @@ GfxSkyMaterial *GfxSkyBody::getMaterial (unsigned i)
     return materials[i];
 }
 
+unsigned GfxSkyBody::getSubMeshByOriginalMaterialName (const std::string &n)
+{
+    for (unsigned i=0 ; i<mesh->getNumSubMeshes() ; ++i) {
+        Ogre::SubMesh *sm = mesh->getSubMesh(i);
+        if (sm->getMaterialName() == n) {
+            return i;
+        }
+    }
+    CERR << "Mesh did not contain material \""<<n<<"\"" <<std::endl;
+    return 0;
+}
+
+void GfxSkyBody::setMaterial (unsigned i, GfxSkyMaterial *m)
+{
+    if (i >= materials.size()) GRIT_EXCEPT("Submesh id out of range. ");
+    if (materials[i] == m) return;
+    materials[i] = m;
+}
+
+
+
 void GfxSkyBody::render (const GfxShaderGlobals &g)
 {
     if (!enabled) return;
