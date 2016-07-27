@@ -1,9 +1,9 @@
 // Squash [0,inf] to [0,1] but at the expense of saturation and contrast.
-var normalized = frag.colour / (1 + frag.colour);
+var normalised = frag.colour / (1 + frag.colour);
 
 // Colour grading in gamma space, artists more comfortable and can do it in photoshop/gimp.
 // Also more fidelity (points in the curve) near 0 which is what we want.
-var gamma_encoded = gamma_encode(normalized);
+var gamma_encoded = gamma_encode(normalised);
 
 // Colour grading via user-supplied look up table
 var LUT_SZ = 32;

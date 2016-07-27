@@ -25,7 +25,7 @@ var murkyness = clamp(cloud*2.0 - 0.2, 0.0, 1.0) * 0.6;
 var cloud_ntex1 = sample(mat.perlinN, clouduv1).rgb*2 - 1;
 var cloud_ntex2 = sample(mat.perlinN, clouduv2).grb*2 - 1;
 var cloud_ntex3 = sample(mat.perlinN, clouduv3).rgb*2 - 1;
-var cloud_n = normalize(0.48*cloud_ntex1 + 0.48*cloud_ntex2 + 0.04*cloud_ntex3);
+var cloud_n = normalise(0.48*cloud_ntex1 + 0.48*cloud_ntex2 + 0.04*cloud_ntex3);
 
 var sun_uv = Float2(pos_ss_ - sunlight_dir_ss.xy);
 var sun_distance = sqrt(dot(sun_uv,sun_uv)) * (fov.x+fov.y)/2;
@@ -35,7 +35,7 @@ var sun_cloud_dome_pos = Float3(
     4.51*sin(sun_pos_ss_polar_y/180*PI));
 if (sun_cloud_dome_pos.z<0) sun_cloud_dome_pos.z = sun_cloud_dome_pos.z * -1;
 var cloud_dome_pos = Float3(perlin_uv, 0.3);
-var cloud_sun_dir = normalize(sun_cloud_dome_pos - cloud_dome_pos);
+var cloud_sun_dir = normalise(sun_cloud_dome_pos - cloud_dome_pos);
 var emboss = lerp(dot(cloud_n, cloud_sun_dir), 1.0, 0.5);
 out.colour = emboss * global.skyCloudColour * cloud_atten * cloud;
 out.alpha = cloud_atten * cloud;

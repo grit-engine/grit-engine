@@ -74,7 +74,7 @@ static std::string preamble (void)
     return ss.str();
 }
 
-static std::string generate_funcs (void)
+static std::string generate_funcs (const GfxGslEnvironment &env)
 {
     std::stringstream ss;
 
@@ -98,8 +98,15 @@ static std::string generate_funcs (void)
     // TODO(dcunnin): Move this to a body section
     ss << "uniform Float4x4 body_boneWorlds[50];\n";
 
+    // Shadow casting:
+    ss << "uniform Float4x4 internal_shadow_view_proj;\n";
+    ss << "uniform Float internal_shadow_additional_bias;\n";
+
     ss << "uniform Float internal_rt_flip;\n";
-    ss << "uniform Float internal_fade;\n";
+    if (!env.instanced) {
+        // When instanced, comes from vertex coord.
+        ss << "uniform Float internal_fade;\n";
+    }
     ss << "\n";
 
     ss << gfx_gasoline_generate_preamble_functions();
@@ -107,11 +114,23 @@ static std::string generate_funcs (void)
     return ss.str();
 }
 
-static std::string generate_funcs_vert (void)
+static std::string generate_funcs_vert (const GfxGslEnvironment &env)
 {
     std::stringstream ss;
     ss << "// Standard library (vertex shader specific calls)\n";
     ss << "\n";
+
+    if (env.instanced) {
+        ss << "Float4x4 get_inst_matrix()\n";
+        ss << "{\n";
+        ss << "    return Float4x4(\n";
+        ss << "        vert_coord1[0], vert_coord2[0], vert_coord3[0], 0.0,\n";
+        ss << "        vert_coord1[1], vert_coord2[1], vert_coord3[1], 0.0,\n";
+        ss << "        vert_coord1[2], vert_coord2[2], vert_coord3[2], 0.0,\n";
+        ss << "        vert_coord4[0], vert_coord4[1], vert_coord4[2], 1.0);\n";
+        ss << "}\n";
+        ss << "\n";
+    }
 
     return ss.str();
 }
@@ -195,13 +214,12 @@ static std::string generate_vert_header (const GfxGslContext &ctx,
 }
 
 static std::string generate_frag_header(const GfxGslContext &ctx,
-                                        const std::vector<GfxGslTrans> &trans)
+                                        const std::vector<GfxGslTrans> &trans, bool gbuffer)
 {
     std::stringstream ss;
 
     ss << "// Fragment header\n";
 
-    // Store gl_FragCoord in a variable with the right type.
     ss << "Float2 frag_screen;\n";
 
     // In (trans)
@@ -216,7 +234,17 @@ static std::string generate_frag_header(const GfxGslContext &ctx,
     ss << gfx_gasoline_generate_global_fields(ctx, false);
 
     // Out
-    ss << "out Float4 out_colour_alpha;\n";
+    if (gbuffer) {
+        /*
+        ss << "layout(location = 0) out Float4 out_gbuffer0;\n";
+        ss << "layout(location = 1) out Float4 out_gbuffer1;\n";
+        ss << "layout(location = 2) out Float4 out_gbuffer2;\n";
+        */
+        // #version 130 only supports this:
+        ss << "out Float4 out_gbuffer0, out_gbuffer1, out_gbuffer2;\n";
+    } else {
+        ss << "out Float4 out_colour_alpha;\n";
+    }
     //ss << "layout (depth_any) out Float out_depth;\n";
 
 
@@ -245,6 +273,13 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     auto trans = frag_ts->getTransVector();
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
     vert_in.insert("position");
+    if (env.instanced) {
+        vert_in.insert("coord1");
+        vert_in.insert("coord2");
+        vert_in.insert("coord3");
+        vert_in.insert("coord4");
+        vert_in.insert("coord5");
+    }
     if (env.boneWeights > 0) {
         vert_in.insert("boneAssignments");
         vert_in.insert("boneWeights");
@@ -274,9 +309,9 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     std::stringstream vert_ss;
     vert_ss << preamble();
     vert_ss << generate_vert_header(ctx, vert_ts, trans, vert_in);
-    vert_ss << generate_funcs();
+    vert_ss << generate_funcs(env);
+    vert_ss << generate_funcs_vert(env);
     vert_ss << gfx_gasoline_preamble_transformation(false, env);
-    vert_ss << generate_funcs_vert();
     vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
     vert_ss << vert_backend.getUserVertexFunction();
     vert_ss << "void main (void)\n";
@@ -306,10 +341,11 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
 
     std::stringstream frag_ss;
     frag_ss << preamble();
-    frag_ss << generate_frag_header(ctx, trans);
-    frag_ss << generate_funcs();
+    frag_ss << generate_frag_header(ctx, trans, false);
+    frag_ss << generate_funcs(env);
     frag_ss << generate_funcs_frag(env);
-    frag_ss << gfx_gasoline_preamble_lighting(env);
+    if (ctx.lightingTextures)
+        frag_ss << gfx_gasoline_preamble_lighting(env);
     frag_ss << gfx_gasoline_preamble_fade(env);
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
     frag_ss << frag_backend.getUserColourAlphaFunction();
@@ -341,172 +377,86 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     frag_output = frag_ss.str();
 }
 
-void gfx_gasoline_unparse_first_person_glsl(const GfxGslContext &ctx,
-                                            const GfxGslTypeSystem *vert_ts,
-                                            const GfxGslAst *vert_ast,
-                                            const GfxGslTypeSystem *dangs_ts,
-                                            const GfxGslAst *dangs_ast,
-                                            const GfxGslTypeSystem *additional_ts,
-                                            const GfxGslAst *additional_ast,
-                                            std::string &vert_out,
-                                            std::string &frag_out,
-                                            const GfxGslEnvironment &env)
+void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
+                                    const GfxGslTypeSystem *vert_ts,
+                                    const GfxGslAst *vert_ast,
+                                    const GfxGslTypeSystem *dangs_ts,
+                                    const GfxGslAst *dangs_ast,
+                                    const GfxGslTypeSystem *additional_ts,
+                                    const GfxGslAst *additional_ast,
+                                    std::string &vert_out,
+                                    std::string &frag_out,
+                                    const GfxGslEnvironment &env,
+                                    bool first_person,
+                                    bool wireframe,
+                                    bool forward_only,
+                                    bool cast)
 {
+	GfxGslTypeMap vert_vars, frag_vars;
+    std::set<GfxGslTrans> trans_set;
+    std::stringstream header;
+    header << "// env: " << env << "\n";
+    header << "// first_person: " << first_person << "\n";
+    header << "// wireframe: " << wireframe << "\n";
+    header << "// forward_only: " << forward_only << "\n";
+    header << "// cast: " << cast << "\n";
+    header << "\n";
+
     GfxGslBackendUnparser vert_backend("uvert_");
-    vert_backend.unparse(vert_ast, 1);
     GfxGslBackendUnparser dangs_backend( "udangs_");
-    dangs_backend.unparse(dangs_ast, 1);
     GfxGslBackendUnparser additional_backend("uadd_");
-    additional_backend.unparse(additional_ast, 1);
 
-    std::set<GfxGslTrans> trans_set = dangs_ts->getTrans();
-    trans_set.insert(additional_ts->getTrans().begin(), additional_ts->getTrans().end());
-
-    std::vector<GfxGslTrans> trans(trans_set.begin(), trans_set.end());
-    GfxGslType *f1 = ctx.alloc.makeType<GfxGslFloatType>(1);
-    GfxGslType *f3 = ctx.alloc.makeType<GfxGslFloatType>(3);
-	trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, { "pos_ws", "x" }, f3 });
-	trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, { "pos_ws", "y" }, f3});
-	trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, { "pos_ws", "z" }, f3});
-	trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, { "vertex_to_cam", "x" }, f3});
-	trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, { "vertex_to_cam", "y" }, f3});
-	trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, { "vertex_to_cam", "z" }, f3});
-	trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, {"cam_dist"}, f1 });
-
-	GfxGslTypeMap vert_vars, frag_vars;
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
-    vert_in.insert("position");
-    if (env.boneWeights > 0) {
-        vert_in.insert("boneAssignments");
-        vert_in.insert("boneWeights");
-    }
-    for (const auto &tran : trans) {
-        const std::string &tv = tran.path[0];
-        switch (tran.kind) {
-            case GfxGslTrans::VERT:
-            vert_in.insert(tv);
-            frag_vars["vert_" + tv] = tran.type;
-            break;
-            case GfxGslTrans::INTERNAL:
-            frag_vars["internal_" + tv] = tran.type;
-            break;
-            case GfxGslTrans::USER:
-            frag_vars["udangs_" + tv] = tran.type;
-            frag_vars["uadd_" + tv] = tran.type;
-            break;
-        }
-    }
     for (const auto &pair : vert_ts->getVars())
         vert_vars["uvert_" + pair.first] = pair.second->type;
-    for (const auto &pair : dangs_ts->getVars())
-        frag_vars["udangs_" + pair.first] = pair.second->type;
-    for (const auto &pair : additional_ts->getVars())
-        frag_vars["uadd_" + pair.first] = pair.second->type;
-    vert_vars["internal_pos_ws"] = ctx.alloc.makeType<GfxGslFloatType>(3);
-    frag_vars["internal_pos_ws"] = ctx.alloc.makeType<GfxGslFloatType>(3);
-    vert_vars["internal_vertex_to_cam"] = ctx.alloc.makeType<GfxGslFloatType>(3);
-    frag_vars["internal_vertex_to_cam"] = ctx.alloc.makeType<GfxGslFloatType>(3);
-    vert_vars["internal_cam_dist"] = ctx.alloc.makeType<GfxGslFloatType>(1);
-    frag_vars["internal_cam_dist"] = ctx.alloc.makeType<GfxGslFloatType>(1);
-
-
-    // VERTEX
-
-    std::stringstream vert_ss;
-    vert_ss << preamble();
-    vert_ss << generate_vert_header(ctx, vert_ts, trans, vert_in);
-    vert_ss << generate_funcs();
-    vert_ss << gfx_gasoline_preamble_transformation(true, env);
-    vert_ss << generate_funcs_vert();
-    vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
-    vert_ss << vert_backend.getUserVertexFunction();
-    vert_ss << "void main (void)\n";
-    vert_ss << "{\n";
-    for (const auto &f : vert_in)
-        vert_ss << "    vert_" << f << " = " << vert_global[f] << ";\n";
-    vert_ss << "    func_user_vertex(internal_pos_ws);\n";
-    vert_ss << "    Float3 pos_vs = mul(global_view, Float4(internal_pos_ws, 1)).xyz;\n";
-    vert_ss << "    gl_Position = mul(global_proj, Float4(pos_vs, 1));\n";
-    vert_ss << "    gl_Position.y *= internal_rt_flip;\n";
-    vert_ss << "    internal_vertex_to_cam = global_cameraPos - internal_pos_ws;\n";
-    vert_ss << "    internal_cam_dist = -pos_vs.z;\n";
-    vert_ss << gfx_gasoline_generate_trans_encode(trans, "uvert_");
-    vert_ss << "}\n";
-
-    vert_out = vert_ss.str();
-
-
-    // FRAGMENT
-
-    std::stringstream frag_ss;
-    frag_ss << preamble();
-    frag_ss << generate_frag_header(ctx, trans);
-    frag_ss << generate_funcs();
-    frag_ss << generate_funcs_frag(env);
-    frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
-    frag_ss << gfx_gasoline_preamble_lighting(env);
-    frag_ss << gfx_gasoline_preamble_fade(env);
-    frag_ss << dangs_backend.getUserDangsFunction();
-    frag_ss << additional_backend.getUserColourAlphaFunction();
-
-    // Main function
-    frag_ss << "void main (void)\n";
-    frag_ss << "{\n";
-    frag_ss << "    frag_screen = gl_FragCoord.xy;\n";
-    frag_ss << "    if (internal_rt_flip < 0)\n";
-    frag_ss << "        frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
-    frag_ss << gfx_gasoline_generate_trans_decode(trans, "vert_", GfxGslTrans::VERT);
-    frag_ss << gfx_gasoline_generate_trans_decode(trans, "udangs_", GfxGslTrans::USER);
-    frag_ss << gfx_gasoline_generate_trans_decode(trans, "uadd_", GfxGslTrans::USER);
-    frag_ss << gfx_gasoline_generate_trans_decode(trans, "internal_", GfxGslTrans::INTERNAL);
-    frag_ss << "    Float3 d;\n";
-    frag_ss << "    Float a;\n";
-    frag_ss << "    Float3 n;\n";
-    frag_ss << "    Float g;\n";
-    frag_ss << "    Float s;\n";
-    frag_ss << "    func_user_dangs(d, a, n, g, s);\n";
-    frag_ss << "    n = normalise(n);\n";
-    frag_ss << "    Float3 v2c = normalize(internal_vertex_to_cam);\n";
-    frag_ss << "    Float3 sun = sunlight(global_cameraPos, v2c, d, n, g, s, 0);\n";
-    frag_ss << "    Float3 env = envlight(v2c, d, n, g, s);\n";
-    frag_ss << "    Float3 additional;\n";
-    frag_ss << "    Float unused;\n";
-    frag_ss << "    func_user_colour(additional, unused);\n";
-    if (env.fadeDither) {
-        frag_ss << "    fade();\n";
-    }
-    frag_ss << "    out_colour_alpha = Float4(sun + env + additional, a);\n";
-    frag_ss << "}\n";
-
-    frag_out = frag_ss.str();
-}
-
-
-void gfx_gasoline_unparse_first_person_wireframe_glsl(const GfxGslContext &ctx,
-                                                      const GfxGslTypeSystem *vert_ts,
-                                                      const GfxGslAst *vert_ast,
-                                                      const GfxGslTypeSystem *additional_ts,
-                                                      const GfxGslAst *additional_ast,
-                                                      std::string &vert_out,
-                                                      std::string &frag_out,
-                                                      const GfxGslEnvironment &env)
-{
-    GfxGslBackendUnparser vert_backend("uvert_");
     vert_backend.unparse(vert_ast, 1);
-    GfxGslBackendUnparser additional_backend("uadd_");
-    additional_backend.unparse(additional_ast, 1);
 
-    std::set<GfxGslTrans> trans_set = additional_ts->getTrans();
+    bool using_additional = !(cast || forward_only);
 
+    if (!wireframe) {
+        for (const auto &pair : dangs_ts->getVars())
+            frag_vars["udangs_" + pair.first] = pair.second->type;
+        dangs_backend.unparse(dangs_ast, 1);
+        trans_set.insert(dangs_ts->getTrans().begin(), dangs_ts->getTrans().end());
+    }
+
+    if (using_additional) {
+        for (const auto &pair : additional_ts->getVars())
+            frag_vars["uadd_" + pair.first] = pair.second->type;
+        additional_backend.unparse(additional_ast, 1);
+        trans_set.insert(additional_ts->getTrans().begin(), additional_ts->getTrans().end());
+    }
+
+    std::map<std::string, const GfxGslFloatType *> internals;
     std::vector<GfxGslTrans> trans(trans_set.begin(), trans_set.end());
+    auto *f1 = ctx.alloc.makeType<GfxGslFloatType>(1);
+    auto *f3 = ctx.alloc.makeType<GfxGslFloatType>(3);
+    if (cast) {
+        internals["light_dist"] = f1;
+    } else if (!wireframe) {
+        internals["vertex_to_cam"] = f3;
+        if (!first_person)
+            internals["cam_dist"] = f1;
+    }
+    if (env.instanced) {
+        internals["fade"] = f1;
+    }
 
-	GfxGslTypeMap vert_vars, frag_vars;
-    std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
+    gfx_gasoline_add_internal_trans(internals, trans, vert_vars, frag_vars);
+
     vert_in.insert("position");
+    if (env.instanced) {
+        vert_in.insert("coord1");
+        vert_in.insert("coord2");
+        vert_in.insert("coord3");
+        vert_in.insert("coord4");
+        vert_in.insert("coord5");
+    }
     if (env.boneWeights > 0) {
         vert_in.insert("boneAssignments");
         vert_in.insert("boneWeights");
     }
+
     for (const auto &tran : trans) {
         const std::string &tv = tran.path[0];
         switch (tran.kind) {
@@ -514,27 +464,30 @@ void gfx_gasoline_unparse_first_person_wireframe_glsl(const GfxGslContext &ctx,
             vert_in.insert(tv);
             frag_vars["vert_" + tv] = tran.type;
             break;
+
             case GfxGslTrans::INTERNAL:
             frag_vars["internal_" + tv] = tran.type;
             break;
+
             case GfxGslTrans::USER:
-            frag_vars["uadd_" + tv] = tran.type;
+            if (!wireframe)
+                frag_vars["udangs_" + tv] = tran.type;
+            if (using_additional)
+                frag_vars["uadd_" + tv] = tran.type;
             break;
         }
     }
-    for (const auto &pair : vert_ts->getVars())
-        vert_vars["uvert_" + pair.first] = pair.second->type;
-    for (const auto &pair : additional_ts->getVars())
-        frag_vars["uadd_" + pair.first] = pair.second->type;
+
 
     // VERTEX
 
     std::stringstream vert_ss;
     vert_ss << preamble();
+    vert_ss << header.str();
     vert_ss << generate_vert_header(ctx, vert_ts, trans, vert_in);
-    vert_ss << generate_funcs();
-    vert_ss << gfx_gasoline_preamble_transformation(true, env);
-    vert_ss << generate_funcs_vert();
+    vert_ss << generate_funcs(env);
+    vert_ss << generate_funcs_vert(env);
+    vert_ss << gfx_gasoline_preamble_transformation(first_person, env);
     vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
     vert_ss << vert_backend.getUserVertexFunction();
     vert_ss << "void main (void)\n";
@@ -543,9 +496,22 @@ void gfx_gasoline_unparse_first_person_wireframe_glsl(const GfxGslContext &ctx,
         vert_ss << "    vert_" << f << " = " << vert_global[f] << ";\n";
     vert_ss << "    Float3 pos_ws;\n";
     vert_ss << "    func_user_vertex(pos_ws);\n";
-    vert_ss << "    Float3 pos_vs = mul(global_view, Float4(pos_ws, 1)).xyz;\n";
-    vert_ss << "    gl_Position = mul(global_proj, Float4(pos_vs, 1));\n";
-    vert_ss << "    gl_Position.y *= internal_rt_flip;\n";
+    if (cast) {
+        vert_ss << "    gl_Position = mul(internal_shadow_view_proj, Float4(pos_ws, 1));\n";
+        vert_ss << "    internal_light_dist = dot(global_sunlightDirection, pos_ws);\n";
+    } else {
+        vert_ss << "    Float3 pos_vs = mul(global_view, Float4(pos_ws, 1)).xyz;\n";
+        vert_ss << "    gl_Position = mul(global_proj, Float4(pos_vs, 1));\n";
+        vert_ss << "    gl_Position.y *= internal_rt_flip;\n";
+        if (!wireframe)
+            vert_ss << "    internal_vertex_to_cam = global_cameraPos - pos_ws;\n";
+        if (!first_person)
+            vert_ss << "    internal_cam_dist = -pos_vs.z;\n";
+    }
+    if (env.instanced) {
+        // The 0.5/255 is necessary because apparently we lose some precision through rasterisation.
+        vert_ss << "    internal_fade = vert_coord5.x + 0.5/255;\n";
+    }
     vert_ss << gfx_gasoline_generate_trans_encode(trans, "uvert_");
     vert_ss << "}\n";
 
@@ -556,13 +522,18 @@ void gfx_gasoline_unparse_first_person_wireframe_glsl(const GfxGslContext &ctx,
 
     std::stringstream frag_ss;
     frag_ss << preamble();
-    frag_ss << generate_frag_header(ctx, trans);
-    frag_ss << generate_funcs();
+    frag_ss << header.str();
+    frag_ss << generate_frag_header(ctx, trans, forward_only);
+    frag_ss << generate_funcs(env);
     frag_ss << generate_funcs_frag(env);
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
-    frag_ss << gfx_gasoline_preamble_lighting(env);
+    if (ctx.lightingTextures)
+        frag_ss << gfx_gasoline_preamble_lighting(env);
     frag_ss << gfx_gasoline_preamble_fade(env);
-    frag_ss << additional_backend.getUserColourAlphaFunction();
+    if (!wireframe)
+        frag_ss << dangs_backend.getUserDangsFunction();
+    if (using_additional)
+        frag_ss << additional_backend.getUserColourAlphaFunction();
 
     // Main function
     frag_ss << "void main (void)\n";
@@ -571,16 +542,87 @@ void gfx_gasoline_unparse_first_person_wireframe_glsl(const GfxGslContext &ctx,
     frag_ss << "    if (internal_rt_flip < 0)\n";
     frag_ss << "        frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "vert_", GfxGslTrans::VERT);
-    frag_ss << gfx_gasoline_generate_trans_decode(trans, "uadd_", GfxGslTrans::USER);
+    if (!wireframe)
+        frag_ss << gfx_gasoline_generate_trans_decode(trans, "udangs_", GfxGslTrans::USER);
+    if (using_additional)
+        frag_ss << gfx_gasoline_generate_trans_decode(trans, "uadd_", GfxGslTrans::USER);
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "internal_", GfxGslTrans::INTERNAL);
-
-    frag_ss << "    Float3 additional;\n";
-    frag_ss << "    Float unused;\n";
-    frag_ss << "    func_user_colour(additional, unused);\n";
     if (env.fadeDither) {
         frag_ss << "    fade();\n";
     }
-    frag_ss << "    out_colour_alpha = Float4(additional, 1);\n";
+    if (cast) {
+        // Run this only for the discard.  Ignore actual value outputs.
+        frag_ss << "    Float3 d;\n";
+        frag_ss << "    Float a;\n";
+        frag_ss << "    Float3 n;\n";
+        frag_ss << "    Float g;\n";
+        frag_ss << "    Float s;\n";
+        frag_ss << "    func_user_dangs(d, a, n, g, s);\n";
+
+        // Bias
+        // TODO: Consider using http://www.dissidentlogic.com/old/#Normal%20Offset%20Shadows
+        frag_ss << "    Float slope_bias = abs(ddx(internal_light_dist))\n";
+        frag_ss << "                       + abs(ddy(internal_light_dist));\n";
+
+        // On large flat surfaces, with the light coming in at an
+        // oblique angle, the required bias can get very high.
+        // We may need to review this cap of 1m.
+        // Especially for the 3rd shadow zone where the shadow texels
+        // cover a large amount of space, and low shadow resolutions too.
+        // - the 0.5 is the error due to the rounding to discrete texels
+        frag_ss << "    Float bias = internal_shadow_additional_bias\n";
+        frag_ss << "                 + (0.5 + " << env.shadowFilterSize << ") * slope_bias;\n";
+        frag_ss << "    bias = min(bias, 1.0);\n";
+        frag_ss << "    internal_light_dist += bias;\n";
+
+        frag_ss << "    out_colour_alpha.x = internal_light_dist / " << env.shadowFactor << ";\n";
+    } else {
+        if (wireframe) {
+            frag_ss << "    Float3 additional;\n";
+            frag_ss << "    Float unused;\n";
+            frag_ss << "    func_user_colour(additional, unused);\n";
+            frag_ss << "    out_colour_alpha.xyzw = Float4(additional, 1);\n";
+        } else {
+            frag_ss << "    Float shadow_oblique_cutoff = 0;\n";  // TODO(dcunnin)
+            frag_ss << "    Float3 d;\n";
+            frag_ss << "    Float a;\n";
+            frag_ss << "    Float3 n;\n";
+            frag_ss << "    Float g;\n";
+            frag_ss << "    Float s;\n";
+            frag_ss << "    func_user_dangs(d, a, n, g, s);\n";
+            frag_ss << "    n = normalise(n);\n";
+            if (forward_only) {
+                frag_ss << "    Float3 n_vs = mul(global_view, Float4(n, 0)).xyz;\n";
+                frag_ss << "    internal_cam_dist /= global_farClipDistance;\n";
+                frag_ss << "    pack_deferred(out_gbuffer0, out_gbuffer1, out_gbuffer2,\n";
+                frag_ss << "                  shadow_oblique_cutoff, d, n_vs, s,\n";
+                frag_ss << "                  internal_cam_dist, g);\n";
+            } else {
+                frag_ss << "    Float3 v2c = normalise(internal_vertex_to_cam);\n";
+                if (first_person) {
+                    // Always use 'near' shadows.
+                    frag_ss << "    Float internal_cam_dist = 0;\n";
+                }
+                frag_ss << "    Float3 sun = sunlight(global_cameraPos, v2c, d, n, g, s,\n";
+                frag_ss << "                          internal_cam_dist);\n";
+                frag_ss << "    Float3 env = envlight(v2c, d, n, g, s);\n";
+                frag_ss << "    out_colour_alpha.xyz = sun + env;\n";
+                // Fog applied here.
+                frag_ss << "    Float fw = fog_weakness(internal_cam_dist);\n";
+                frag_ss << "    out_colour_alpha.xyz = lerp(global_fogColour,\n";
+                frag_ss << "                                out_colour_alpha.xyz,\n";
+                frag_ss << "                                fw * Float3(1, 1, 1));\n",
+
+                frag_ss << "    out_colour_alpha.w = a;\n";
+                frag_ss << "    Float3 additional;\n";
+                frag_ss << "    Float unused;\n";
+                frag_ss << "    func_user_colour(additional, unused);\n";
+                // Fog applied here too.
+                frag_ss << "    out_colour_alpha.xyz += additional\n";
+                frag_ss << "                            * fog_weakness(internal_cam_dist);\n";
+            }
+        }
+    }
     frag_ss << "}\n";
 
     frag_out = frag_ss.str();
@@ -619,9 +661,9 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
     std::stringstream vert_ss;
     vert_ss << preamble();
     vert_ss << generate_vert_header(ctx, dangs_ts, trans, vert_in);
-    vert_ss << generate_funcs();
+    vert_ss << generate_funcs(env);
+    vert_ss << generate_funcs_vert(env);
     vert_ss << gfx_gasoline_preamble_transformation(false, env);
-    vert_ss << generate_funcs_vert();
     vert_ss << "void main (void)\n";
     vert_ss << "{\n";
     for (const auto &f : vert_in)
@@ -643,11 +685,12 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
 
     std::stringstream frag_ss;
     frag_ss << preamble();
-    frag_ss << generate_frag_header(ctx, trans);
-    frag_ss << generate_funcs();
+    frag_ss << generate_frag_header(ctx, trans, false);
+    frag_ss << generate_funcs(env);
     frag_ss << generate_funcs_frag(env);
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
-    frag_ss << gfx_gasoline_preamble_lighting(env);
+    if (ctx.lightingTextures)
+        frag_ss << gfx_gasoline_preamble_lighting(env);
     frag_ss << gfx_gasoline_preamble_fade(env);
     frag_ss << dangs_backend.getUserDangsFunction();
     frag_ss << additional_backend.getUserColourAlphaFunction();
@@ -669,6 +712,7 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
     frag_ss << "    Float depth_int = 256.0*256.0*bytes.x + 256.0*bytes.y + bytes.z;\n";
     frag_ss << "    Float normalised_cam_dist = depth_int / (256.0*256.0*256.0 - 1);\n";
     frag_ss << "    Float3 internal_pos_ws = normalised_cam_dist * ray + global_cameraPos;\n";
+/*
     frag_ss << "    Float cam_dist = normalised_cam_dist * global_farClipDistance;\n";
 
 
@@ -680,13 +724,14 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
     frag_ss << "    func_user_dangs(d, a, n, g, s);\n";
     frag_ss << "    n = normalise(n);\n";
     frag_ss << "    Float3 internal_vertex_to_cam = Float3(0,0,1);\n";
-    frag_ss << "    Float3 v2c = normalize(internal_vertex_to_cam);\n";
+    frag_ss << "    Float3 v2c = normalise(internal_vertex_to_cam);\n";
     frag_ss << "    Float3 sun = sunlight(global_cameraPos, v2c, d, n, g, s, cam_dist);\n";
     frag_ss << "    Float3 env = envlight(v2c, d, n, g, s);\n";
     frag_ss << "    Float3 additional;\n";
     frag_ss << "    Float unused;\n";
     frag_ss << "    func_user_colour(additional, unused);\n";
     frag_ss << "    out_colour_alpha = Float4(sun + env + additional, a);\n";
+*/
     frag_ss << "    out_colour_alpha = Float4(fract(internal_pos_ws), a);\n";
 
     if (env.fadeDither) {

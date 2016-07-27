@@ -1,0 +1,50 @@
+var uv = vert.coord0.xy;
+var diff_texel = sample(mat.diffuseMap, uv);
+out.diffuse = gamma_decode(diff_texel.rgb) * mat.diffuseMask;
+var gloss_texel = sample(mat.glossMap, uv);
+out.gloss = gloss_texel.b * mat.glossMask;
+out.specular = gamma_decode(gloss_texel.r) * mat.specularMask;
+
+var paint_selector = sample(mat.paintSelectionMap, uv) * mat.paintSelectionMask;
+var paint_diffuse = paint_selector.x * body.paintDiffuse0
+                  + paint_selector.y * body.paintDiffuse1
+                  + paint_selector.z * body.paintDiffuse2
+                  + paint_selector.w * body.paintDiffuse3;
+var paint_metallic = paint_selector.x * body.paintMetallic0
+                   + paint_selector.y * body.paintMetallic1
+                   + paint_selector.z * body.paintMetallic2
+                   + paint_selector.w * body.paintMetallic3;
+var paint_specular = paint_selector.x * body.paintSpecular0
+                + paint_selector.y * body.paintSpecular1
+                + paint_selector.z * body.paintSpecular2
+                + paint_selector.w * body.paintSpecular3;
+var paint_gloss = paint_selector.x * body.paintGloss0
+                + paint_selector.y * body.paintGloss1
+                + paint_selector.z * body.paintGloss2
+                + paint_selector.w * body.paintGloss3;
+
+var microflakes_mask = 0.0;
+
+if (mat.paintByDiffuseAlpha > 0) {
+    out.diffuse = lerp(paint_diffuse, out.diffuse, diff_texel.a);
+    out.gloss = lerp(paint_gloss, out.gloss, diff_texel.a);
+    out.specular = lerp(paint_specular, out.specular, diff_texel.a);
+    microflakes_mask = lerp(paint_metallic, 0.0, diff_texel.a);
+} else {
+    out.diffuse = out.diffuse * paint_diffuse;
+    out.gloss = out.gloss * paint_gloss;
+    out.specular = out.specular * paint_specular;
+    microflakes_mask = paint_metallic;
+}
+
+var scale = 16.0;
+var microflakes_uvw = scale * vert.position.xyz;
+var microflakes_uv = Float2(microflakes_uvw.x, mod(microflakes_uvw.y, 1.0) / 32 + floor(microflakes_uvw.y * 32) / 32);
+var microflakes = sample(mat.microflakesMap, microflakes_uv).r;
+microflakes = microflakes_mask * pow(microflakes, 3.0);
+out.gloss = out.gloss - microflakes;
+out.specular = lerp(out.specular, 0.3, microflakes);
+
+var normal_texel = sample(mat.normalMap, uv).xyz;
+var normal_ts = normal_texel * Float3(-2, 2, 2) + Float3(1, -1, -1);
+out.normal = normal_ts.x*tangent_ws + normal_ts.y*binormal_ws + normal_ts.z*normal_ws;

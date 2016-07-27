@@ -30,12 +30,6 @@ typedef SharedPtr<GfxBody> GfxBodyPtr;
 #include "gfx_fertile_node.h"
 #include "gfx_material.h"
 
-struct GfxPaintColour {
-    Vector3 diff;
-    Vector3 spec; // spec, unused, gloss
-    float met; // metallic paint (0 -> 1)
-};
-
 // Must extend Ogre::MovableObject so that we can become attached to a node and
 // rendered by the regular Ogre scenemanager-based pipeline.
 class GfxBody : public GfxFertileNode, public Ogre::MovableObject {

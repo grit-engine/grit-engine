@@ -99,4 +99,25 @@ std::string gfx_gasoline_preamble_fade (const GfxGslEnvironment &env);
 /** Generate general purpose utility functions for transforming geometry to world space. */
 std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGslEnvironment &env);
 
+typedef std::map<std::string, const GfxGslFloatType *> GfxGslInternalMap;
+static inline void gfx_gasoline_add_internal_trans(const GfxGslInternalMap &internals,
+                                                   std::vector<GfxGslTrans> &trans,
+                                                   GfxGslTypeMap &vert_vars,
+                                                   GfxGslTypeMap &frag_vars)
+{
+    for (const auto &pair : internals) {
+        if (pair.second->dim == 1) {
+            trans.emplace_back(GfxGslTrans{ GfxGslTrans::INTERNAL, {pair.first}, pair.second });
+        } else {
+            const char *chars[] = {"x", "y", "z"};
+            for (unsigned i = 0; i < pair.second->dim ; ++i) {
+                trans.emplace_back(
+                    GfxGslTrans{ GfxGslTrans::INTERNAL, {pair.first, chars[i]}, pair.second });
+            }
+        }
+        frag_vars["internal_" + pair.first] = pair.second;
+        vert_vars["internal_" + pair.first] = pair.second;
+    }
+}
+
 #endif

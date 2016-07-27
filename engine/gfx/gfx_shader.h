@@ -34,7 +34,7 @@
 
 #include "gfx_gasoline.h"
 #include "gfx_pipeline.h"
-#include "gfx_material.h"
+#include "gfx_texture_state.h"
 
 class GfxShader;
 
@@ -44,6 +44,13 @@ typedef std::map<std::string, GfxGslParam> GfxShaderBindings;
 
 #ifndef GFX_SHADER_H
 #define GFX_SHADER_H
+
+struct GfxPaintColour {
+    Vector3 diff;
+    float met; // metallic paint (0 -> 1)
+    float gloss;
+    float spec;
+};
 
 /** Some parameters that do not change from one object to the next, but do change from one
  * camera / target to another. */
@@ -86,33 +93,16 @@ GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe);
  */
 class GfxShader {
 
-    public:
-    enum Purpose {
-        REGULAR,
-        ALPHA,
-        FIRST_PERSON,
-        FIRST_PERSON_WIREFRAME,
-        ADDITIONAL,
-        SHADOW_CAST,
-        WIREFRAME,
-
-        // The following are internal cases.  It may make more sense
-        // to have a completely different path for them.
-        SKY,  // Also used for "misc" rendering.
-        HUD,
-        DECAL,
-        DEFERRED_AMBIENT_SUN,
-    };
-
     private:
 
     // These changed together, completely invalidate shader.
     std::string srcVertex, srcDangs, srcAdditional;
     GfxGslRunParams params;
+    bool internal;
 
     public:
     struct Split {
-        Purpose purpose;
+        GfxGslPurpose purpose;
         GfxGslEnvironment env;
         bool operator== (const Split &other) const
         {
@@ -147,109 +137,124 @@ class GfxShader {
                const GfxGslRunParams &params,
                const std::string &src_vertex,
                const std::string &src_dangs,
-               const std::string &src_additional)
+               const std::string &src_additional,
+               bool internal)
       : name(name)
     {
-        reset(params, src_vertex, src_dangs, src_additional);
+        reset(params, src_vertex, src_dangs, src_additional, internal);
     }
 
 
     void reset (const GfxGslRunParams &params,
                 const std::string &src_vertex,
                 const std::string &src_dangs,
-                const std::string &src_additional);
+                const std::string &src_additional,
+                bool internal);
+
+    const GfxGslRunParams &getParams(void) const { return params; }
 
 
     // New API, may throw compilation errors if not checked previously.
-    void bindShader (Purpose purpose,
+    void bindShader (GfxGslPurpose purpose,
                      bool fade_dither, bool instanced, unsigned bone_weights,
                      const GfxShaderGlobals &params,
                      const Ogre::Matrix4 &world,
                      const Ogre::Matrix4 *bone_world_matrixes,
                      unsigned num_bone_world_matrixes,
                      float fade,
-                     const GfxMaterialTextureMap &textures,
+                     const GfxPaintColour *paint_colours,  // Array of 4
+                     const GfxTextureStateMap &textures,
                      const GfxShaderBindings &bindings);
 
-    void bindShaderPass (Ogre::Pass *p, Purpose purpose,
-                         bool fade_dither, bool instanced, unsigned bone_weights,
-                         const GfxShaderGlobals &params,
-                         const GfxMaterialTextureMap &textures,
-                         const GfxShaderBindings &bindings);
+    // Defaults the paint_colours for the many cases that don't use them.
+    void bindShader (GfxGslPurpose purpose,
+                     bool fade_dither, bool instanced, unsigned bone_weights,
+                     const GfxShaderGlobals &params,
+                     const Ogre::Matrix4 &world,
+                     const Ogre::Matrix4 *bone_world_matrixes,
+                     unsigned num_bone_world_matrixes,
+                     float fade,
+                     const GfxTextureStateMap &textures,
+                     const GfxShaderBindings &bindings);
+
+    // When the material is created (or reset)
+    void initPass (Ogre::Pass *p, GfxGslPurpose purpose,
+                   bool fade_dither, bool instanced, unsigned bone_weights,
+                   const GfxTextureStateMap &textures,
+                   const GfxShaderBindings &bindings);
+
+    // Every frame
+    void updatePass (Ogre::Pass *p, GfxGslPurpose purpose,
+                     const GfxShaderGlobals &globs,
+                     const GfxTextureStateMap &textures,
+                     const GfxShaderBindings &bindings);
 
     protected:
-    NativePair getNativePair (Purpose purpose,
+    NativePair getNativePair (GfxGslPurpose purpose,
                               bool fade_dither, unsigned env_boxes,
                               bool instanced, unsigned bone_weights,
                               const GfxGslUnboundTextures &ubt,
                               const GfxShaderBindings &statics);
     public:
-    NativePair getNativePair (Purpose purpose,
+    NativePair getNativePair (GfxGslPurpose purpose,
                               bool fade_dither, unsigned env_boxes,
                               bool instanced, unsigned bone_weights,
-                              const GfxMaterialTextureMap &textures,
+                              const GfxTextureStateMap &textures,
                               const GfxShaderBindings &statics);
     protected:
-    void bindShaderParams (const Ogre::GpuProgramParametersSharedPtr &vparams,
-                           const Ogre::GpuProgramParametersSharedPtr &fparams,
-                           const GfxMaterialTextureMap &textures,
-                           const GfxShaderBindings &bindings);
-    void bindShaderParamsPass (Ogre::Pass *p, const GfxMaterialTextureMap &textures);
-    void bindShaderParamsRs (const GfxMaterialTextureMap &textures);
-    void bindBodyParamsPass (const Ogre::GpuProgramParametersSharedPtr &vparams,
-                             const Ogre::GpuProgramParametersSharedPtr &fparams);
-    void bindBodyParams (const Ogre::GpuProgramParametersSharedPtr &vparams,
-                         const Ogre::GpuProgramParametersSharedPtr &fparams,
-                         const GfxShaderGlobals &p,
-                         const Ogre::Matrix4 &world,
-                         const Ogre::Matrix4 *bone_world_matrixes,
-                         unsigned num_bone_world_matrixes, float fade);
+    // Generic: binds uniforms (not textures, but texture indexes) for both RS and passes
     void bindGlobals (const Ogre::GpuProgramParametersSharedPtr &vparams,
                       const Ogre::GpuProgramParametersSharedPtr &fparams,
-                      const GfxShaderGlobals &params);
-    void bindGlobalsPass (Ogre::Pass *p, Purpose purpose);
-    void bindGlobalsRs (const GfxShaderGlobals &params, Purpose purpose);
+                      const GfxShaderGlobals &params, GfxGslPurpose purpose);
+    void bindShaderParams (int counter,
+                           const Ogre::GpuProgramParametersSharedPtr &vparams,
+                           const Ogre::GpuProgramParametersSharedPtr &fparams,
+                           const GfxTextureStateMap &textures,
+                           const GfxShaderBindings &bindings);
 
-    public:
-    // Legacy API
-    GfxShader (const std::string &name,
-               const GfxGslRunParams &params,
-               const Ogre::HighLevelGpuProgramPtr &vp,
-               const Ogre::HighLevelGpuProgramPtr &fp)
-      : params(params), name(name)
-    {
-        legacy = {vp, fp};
-    }
+    // RenderSystem bindings
+    // gloal textures
+    int bindGlobalTexturesRs (const GfxShaderGlobals &params, GfxGslPurpose purpose);
+    // user-defined textures
+    void bindShaderParamsRs (int counter, const GfxTextureStateMap &textures);
+    // body stuff
+    void bindBodyParamsRS (const Ogre::GpuProgramParametersSharedPtr &vparams,
+                           const Ogre::GpuProgramParametersSharedPtr &fparams,
+                           const GfxShaderGlobals &p,
+                           const Ogre::Matrix4 &world,
+                           const Ogre::Matrix4 *bone_world_matrixes,
+                           unsigned num_bone_world_matrixes,
+                           float fade,
+                           const GfxPaintColour *paint_colours);  // Array of 4
 
-    NativePair legacy;
-/*
-    void bindBodyParams (const GfxShaderGlobals &params, const Ogre::Matrix4 &world, float fade);
-    void bindGlobals (const GfxShaderGlobals &params);
-*/
-    void validate (void);
-    const Ogre::HighLevelGpuProgramPtr &getHackOgreVertexProgram (void) { return legacy.vp; }
-    const Ogre::HighLevelGpuProgramPtr &getHackOgreFragmentProgram (void) { return legacy.fp; }
+    // Init pass (set up everything)
+    void initPassGlobalTextures (Ogre::Pass *p, GfxGslPurpose purpose);
+    void initPassTextures (Ogre::Pass *p, const GfxTextureStateMap &textures);
+    void initPassBodyParams (const Ogre::GpuProgramParametersSharedPtr &vparams,
+                             const Ogre::GpuProgramParametersSharedPtr &fparams);
+
+    void updatePassGlobalTextures (Ogre::Pass *p, GfxGslPurpose purpose);
+    void updatePassTextures (Ogre::Pass *p, int counter, const GfxTextureStateMap &textures);
+    void updatePassGlobals (const Ogre::GpuProgramParametersSharedPtr &vparams,
+                            const Ogre::GpuProgramParametersSharedPtr &fparams,
+                            const GfxShaderGlobals &params, GfxGslPurpose purpose);
     
 };
 
-// Ensure the given source code works for the given purpose.
+// Ensure the given source code is statically correct.
 void gfx_shader_check (const std::string &name,
                        const std::string &new_vertex_code,
                        const std::string &new_dangs_code,
                        const std::string &new_additional_code,
-                       const GfxGslRunParams &params);
-
-/** Temporary hack to allow transition to a purely gasoline setup. */
-GfxShader *gfx_shader_make_from_existing (const std::string &name,
-                                          const Ogre::HighLevelGpuProgramPtr &vp,
-                                          const Ogre::HighLevelGpuProgramPtr &fp,
-                                          const GfxGslRunParams &params);
+                       const GfxGslRunParams &params,
+                       bool internal);
 
 GfxShader *gfx_shader_make_or_reset (const std::string &name,
                                      const std::string &new_vertex_code,
                                      const std::string &new_dangs_code,
                                      const std::string &new_additional_code,
-                                     const GfxGslRunParams &params);
+                                     const GfxGslRunParams &params,
+                                     bool internal);
 
 GfxShader *gfx_shader_get (const std::string &name);
 bool gfx_shader_has (const std::string &name);

@@ -20,8 +20,6 @@
  */
 
 class GfxMaterial;
-struct GfxMaterialTexture;
-typedef std::map<std::string, GfxMaterialTexture> GfxMaterialTextureMap;
 
 #ifndef GFX_MATERIAL_H
 #define GFX_MATERIAL_H
@@ -31,6 +29,7 @@ typedef std::map<std::string, GfxMaterialTexture> GfxMaterialTextureMap;
 #include "gfx.h"
 #include "gfx_internal.h"
 #include "gfx_shader.h"
+#include "gfx_texture_state.h"
 
 
 /* LOCKING STRATEGY:
@@ -44,20 +43,13 @@ extern std::recursive_mutex gfx_material_lock;
 #define GFX_MAT_SYNC std::lock_guard<std::recursive_mutex> _scoped_lock(gfx_material_lock)
 
 
-struct GfxMaterialTexture {
-    GfxTextureDiskResource *texture;
-    bool clamp;
-    int anisotropy;
-};
-
-        
 class GfxBaseMaterial {
 
     protected:
 
     GfxShader *shader;
     GfxShaderBindings bindings;
-    GfxMaterialTextureMap textures;
+    GfxTextureStateMap textures;
     
     public:
 
@@ -66,8 +58,8 @@ class GfxBaseMaterial {
     
     const std::string name;
     
-    const GfxMaterialTextureMap &getTextures (void) const { return textures; } 
-    void setTextures (const GfxMaterialTextureMap &v) { GFX_MAT_SYNC; textures = v; }
+    const GfxTextureStateMap &getTextures (void) const { return textures; } 
+    void setTextures (const GfxTextureStateMap &v) { GFX_MAT_SYNC; textures = v; }
 
     void addDependencies (DiskResource *into) const;
 
@@ -86,46 +78,62 @@ extern GfxMaterialDB material_db;
 
 typedef std::vector<GfxMaterial*> GfxMaterials;
 
-enum GfxMaterialSceneBlend { GFX_MATERIAL_OPAQUE, GFX_MATERIAL_ALPHA, GFX_MATERIAL_ALPHA_DEPTH };
+enum GfxMaterialSceneBlend {
+    GFX_MATERIAL_OPAQUE,
+    GFX_MATERIAL_ALPHA,
+    GFX_MATERIAL_ALPHA_DEPTH,
+};
 
 class GfxMaterial : public GfxBaseMaterial {
     public: // hack
-    Ogre::MaterialPtr forwardMat;     // no suffix
-    Ogre::MaterialPtr fadingMat;      // ' can be NULL
-    Ogre::MaterialPtr additionalMat;
-    //Ogre::MaterialPtr shadowMat;      // ! can be simply a link to the default
-    Ogre::MaterialPtr worldMat;       // & 
-    //Ogre::MaterialPtr worldShadowMat; // % can be simply a link to the default
-    Ogre::MaterialPtr wireframeMat;     // |
+    Ogre::MaterialPtr regularMat;     // Either just forward or complete (for alpha, etc)
+    Ogre::MaterialPtr additionalMat;  // Just the additional lighting as an additive pass
+    Ogre::MaterialPtr castMat;        // For shadow cast phase
+    Ogre::MaterialPtr instancingMat;  // For rendering with instanced geometry
+    Ogre::MaterialPtr instancingCastMat; // Shadow cast phase (instanced geometry)
+    Ogre::MaterialPtr wireframeMat;     // Just white (complete shader).
 
     private:
     GfxMaterial (const std::string &name);
     GfxMaterialSceneBlend sceneBlend;
+    bool backfaces;
     bool castShadows;
-    // TODO(dcunnin):  Infer this from the shader GSL (constant propagation).
-    // In particular, first person does not honour this annotation.
+    // TODO(dcunnin):  Infer this from the additional gasoline (constant propagation).
+    // In particular, first person and alpha do not honour this annotation (so it's broken).
     bool additionalLighting;
     // How many bones can be blended at a given vertex.
     unsigned boneBlendWeights;
-    // backfaces  // vface semantic should be available in shader
-    // shadowAlphaReject  // Whether to use discard from dangs shader
-    // shadowBias  // as shadow shader not available
-    // various addressing modes
+    // Whether to use discard from dangs shader
+    // TODO(dcunnin): Infer this from the dangs gasoline (is it possible to discard a fragment?)
+    bool shadowAlphaReject;
+    float shadowBias;
+
+    // TODO: various addressing modes for textures
 
     public:
     GfxMaterialSceneBlend getSceneBlend (void) const { return sceneBlend; }
     void setSceneBlend (GfxMaterialSceneBlend v);
 
+    bool getBackfaces (void) const { return backfaces; }
+    void setBackfaces (bool v);
+
     unsigned getBoneBlendWeights (void) const { return boneBlendWeights; }
     void setBoneBlendWeights (unsigned v);
 
-    bool getCastShadows (void) const { GFX_MAT_SYNC; return castShadows; }
+    bool getCastShadows (void) const { return castShadows; }
     void setCastShadows (bool v);
 
-    bool getAdditionalLighting (void) const { GFX_MAT_SYNC; return additionalLighting; }
+    bool getAdditionalLighting (void) const { return additionalLighting; }
     void setAdditionalLighting (bool v);
 
-    void rebuildOgreMaterials (const GfxShaderGlobals &globs);
+    bool getShadowBias (void) const { return shadowBias; }
+    void setShadowBias (float v);
+
+    bool getShadowAlphaReject (void) const { return shadowAlphaReject; }
+    void setShadowAlphaReject (bool v);
+
+    void buildOgreMaterials (void);
+    void updateOgreMaterials (const GfxShaderGlobals &globs);
 
     friend GfxMaterial *gfx_material_add(const std::string &);
     friend class GfxBody;

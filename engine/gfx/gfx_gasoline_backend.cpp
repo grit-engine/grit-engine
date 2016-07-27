@@ -332,7 +332,7 @@ std::string gfx_gasoline_generate_preamble_functions (void)
     ss << "    if (texel0.a >= 128) {\n";
     ss << "        up = 1;\n";
     ss << "    }\n";
-    // This algorithm is described as USE_NORMAL_ENCODING == 2 in the original uber.cgh.
+    // This algorithm is described as USE_NORMAL_ENCODING == 1 in the original uber.cgh.
     ss << "    Float2 low2 = texel1.xy * 255;\n";  // range: [0,256)
     ss << "    Float hi_mixed = texel1.z * 255;\n";  // range: [0,256)
     ss << "    Float2 hi2;\n";  // range: [0, 16)
@@ -345,6 +345,76 @@ std::string gfx_gasoline_generate_preamble_functions (void)
     ss << "    return normal;\n";
     ss << "}\n\n";
 
+    ss << "void pack_deferred(\n";
+    ss << "    out Float4 texel0,\n";
+    ss << "    out Float4 texel1,\n";
+    ss << "    out Float4 texel2,\n";
+    ss << "    in Float shadow_oblique_cutoff,\n";
+    ss << "    in Float3 diff_colour,\n";
+    ss << "    in Float3 normal,\n";  // normalised, view space
+    ss << "    in Float specular,\n";
+    ss << "    in Float cam_dist,\n"; // normalised
+    ss << "    in Float gloss\n";
+    ss << ") {\n";
+
+    // Encode normal:
+    // range [0, 1]
+    ss << "    Float2 normal1 = (normal.xy + Float2(1, 1)) / 2;\n";
+    // range [0, 4096)
+    ss << "    Float2 normal2 = floor(normal1 * 4095);\n";
+    // range [0, 16)
+    ss << "    Float2 hi2 = floor(normal2 / 256);\n";
+    // range [0, 256)
+    ss << "    Float2 low2 = normal2 - hi2*256;\n";
+    // range [0, 256)
+    ss << "    Float hi_mixed = hi2.x + hi2.y*16;\n";
+    // range [0, 1]
+    ss << "    Float4 encoded_normal = \n";
+    ss << "        Float4(low2.x/255, low2.y/255, hi_mixed/255, normal.z >= 0.0 ? 1 : 0);\n";
+
+    // Encode distance from camera
+    ss << "    Float v = cam_dist * (256.0*256.0*256.0 - 1);\n";
+    ss << "    Float3 r;\n";
+    ss << "    r.x = floor(v / 256.0 / 256.0);\n";  // most significant
+    ss << "    r.y = floor((v - r.x * 256.0 * 256.0) / 256.0);\n";  // middle significant
+    ss << "    r.z = (v - r.x * 256.0 * 256.0 - r.y * 256.0);\n";  // least significant
+    // Note that z component is not floored, but this should not cause a problem as gbuffer write
+    // will implicitly floor it.
+    ss << "    Float3 split_cam_dist = r / 255.0;\n";
+
+    ss << "    texel0.xyz = split_cam_dist;\n";
+    ss << "    texel0.w = (shadow_oblique_cutoff * 127 + encoded_normal.w * 128) / 255;\n";
+    ss << "    texel1 = Float4(encoded_normal.xyz, gloss);\n";
+    ss << "    texel2 = Float4(gamma_encode(diff_colour), gamma_encode(specular));\n";
+    ss << "}\n";
+
+    // Punctual lighting simulates the lighting of a fragment by rays all eminating from
+    // the same point.  Arguments light_diffuse and light_specular are usually the same value.
+    //     surf_to_light: surface to light vector
+    //     surf_to_cam: surface to camera vector (typically computed in vertex shader)
+    //     sd: surface diffuse colour
+    //     sn: surface normal vector
+    //     sg: surface gloss (0 to 1)
+    //     ss: surface spec (0 to 1)
+    //     light_diffuse: light intensity 0 to 1 or greater for hdr (number of photons, basically)
+    //     light_specular: light intensity 0 to 1 or greater for hdr (number of photons, basically)
+    ss << "Float3 punctual_lighting(Float3 surf_to_light, Float3 surf_to_cam,\n"
+       << "                         Float3 sd, Float3 sn, Float sg, Float ss,\n";
+    ss << "                         Float3 light_diffuse, Float3 light_specular)\n";
+    ss << "{\n";
+
+    ss << "    Float3 diff_component = light_diffuse * sd;\n";
+
+    // specular component
+    ss << "    Float3 surf_to_half = normalise(0.5*(surf_to_cam + surf_to_light));\n";
+    ss << "    Float fresnel = ss + (1-ss)\n";
+    ss << "                   * strength(1.0 - dot(surf_to_light, surf_to_half), 5);\n";
+    ss << "    Float gloss = pow(4096.0, sg);\n";
+    ss << "    Float highlight = 1.0/8 * (gloss+2) * strength(dot(sn, surf_to_half), gloss);\n";
+    ss << "    Float3 spec_component = light_specular * fresnel * highlight;\n";
+
+    ss << "    return (spec_component + diff_component) * max(0.0, dot(sn, surf_to_light));\n";
+    ss << "}\n";
     return ss.str();
 }
 
@@ -364,8 +434,9 @@ std::string gfx_gasoline_generate_global_fields (const GfxGslContext &ctx, bool 
     unsigned counter = 0;
 
     for (const auto &pair : ctx.globalFields) {
-        ss << "uniform " << pair.second << " global_" << pair.first;
-        if (reg && dynamic_cast<const GfxGslTextureType*>(pair.second)) {
+        if (pair.second.lighting && !ctx.lightingTextures) continue;
+        ss << "uniform " << pair.second.t << " global_" << pair.first;
+        if (reg && dynamic_cast<const GfxGslTextureType*>(pair.second.t)) {
             ss << " : register(s" << counter << ")";
             counter++;
         }
@@ -373,11 +444,11 @@ std::string gfx_gasoline_generate_global_fields (const GfxGslContext &ctx, bool 
     }
     for (const auto &pair : ctx.matFields) {
         auto it = ctx.ubt.find(pair.first);
-        if (auto *tt = dynamic_cast<const GfxGslTextureType*>(pair.second)) {
+        if (auto *tt = dynamic_cast<const GfxGslTextureType*>(pair.second.t)) {
             if (it != ctx.ubt.end()) {
                 ss << "const Float4 mat_" << pair.first << " = " << tt->solid;
             } else {
-                ss << "uniform " << pair.second << " mat_" << pair.first;
+                ss << "uniform " << pair.second.t << " mat_" << pair.first;
                 if (reg) {
                     ss << " : register(s" << counter << ")";
                     counter++;
@@ -395,8 +466,8 @@ std::string gfx_gasoline_generate_global_fields (const GfxGslContext &ctx, bool 
         ss << ";\n";
     }
     for (const auto &pair : ctx.bodyFields) {
-        ss << "uniform " << pair.second << " body_" << pair.first;
-        if (reg && dynamic_cast<const GfxGslTextureType*>(pair.second)) {
+        ss << "uniform " << pair.second.t << " body_" << pair.first;
+        if (reg && dynamic_cast<const GfxGslTextureType*>(pair.second.t)) {
             EXCEPTEX << "Not allowed" << ENDL;
             ss << " : register(s" << counter << ")";
             counter++;
@@ -503,34 +574,6 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
     std::stringstream ss;
 
     ss << "// Lighting functions\n";
-
-    // Punctual lighting simulates the lighting of a fragment by rays all eminating from
-    // the same point.  Arguments light_diffuse and light_specular are usually the same value.
-    //     surf_to_light: surface to light vector
-    //     surf_to_cam: surface to camera vector (typically computed in vertex shader)
-    //     sd: surface diffuse colour
-    //     sn: surface normal vector
-    //     sg: surface gloss (0 to 1)
-    //     ss: surface spec (0 to 1)
-    //     light_diffuse: light intensity 0 to 1 or greater for hdr (number of photons, basically)
-    //     light_specular: light intensity 0 to 1 or greater for hdr (number of photons, basically)
-    ss << "Float3 punctual_lighting(Float3 surf_to_light, Float3 surf_to_cam,\n"
-       << "                         Float3 sd, Float3 sn, Float sg, Float ss,\n";
-    ss << "                         Float3 light_diffuse, Float3 light_specular)\n";
-    ss << "{\n";
-
-    ss << "    Float3 diff_component = light_diffuse * sd;\n";
-
-    // specular component
-    ss << "    Float3 surf_to_half = normalize(0.5*(surf_to_cam + surf_to_light));\n";
-    ss << "    Float fresnel = ss + (1-ss)\n";
-    ss << "                   * strength(1.0 - dot(surf_to_light, surf_to_half), 5);\n";
-    ss << "    Float gloss = pow(4096.0, sg);\n";
-    ss << "    Float highlight = 1.0/8 * (gloss+2) * strength(dot(sn, surf_to_half), gloss);\n";
-    ss << "    Float3 spec_component = light_specular * fresnel * highlight;\n";
-
-    ss << "    return (spec_component + diff_component) * max(0.0, dot(sn, surf_to_light));\n";
-    ss << "}\n";
 
     // Test a single shadow map at a single position (world space).
     ss << "Float test_shadow(Float3 pos_ws,\n";
@@ -656,15 +699,11 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
     ss << "    return env;\n";
     ss << "}\n\n";
 
-    ss << "Float3 tonemap(Float3 colour)\n";
+    ss << "Float fog_weakness(Float cam_dist)\n";
     ss << "{\n";
-    ss << "    colour = colour / (1 + colour);\n";
-    ss << "    colour = gamma_encode(colour);\n";
-    ss << "    Float3 lut_uv = (colour * 31 + 0.5) / 32;\n";  // Hardcode 32x32x32 dimensions.
-    ss << "    colour = sample(global_colourGradeLut, lut_uv).rgb;\n";
-    ss << "    colour = desaturate(colour, global_saturation);\n";
-    ss << "    return colour;\n";
-    ss << "}\n\n";
+    ss << "    Float num_particles = global_fogDensity * cam_dist;\n";
+    ss << "    return clamp(exp(-num_particles * num_particles), 0.0, 1.0);\n";
+    ss << "}\n";
 
     return ss.str();
 }
@@ -694,28 +733,29 @@ std::string gfx_gasoline_preamble_fade (const GfxGslEnvironment &env)
 
 std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGslEnvironment &env)
 {
-    // TODO(dcunnin): Need to specialise transform_to_world and rotate_to_world for instanced
-    // geometry.
-
     std::stringstream ss;
     ss << "// Standard library (vertex shader specific calls)\n";
 
-    ss << "Float3 transform_to_world (Float3 v)\n";
+    ss << "Float4 transform_to_world_aux (Float4 v)\n";
     ss << "{\n";
-    ss << "    Float3 r = Float3(0, 0, 0);\n";
+
+    if (env.instanced) {
+        ss << "    v = mul(get_inst_matrix(), v);\n";
+    }
+
     if (env.boneWeights == 0) {
-        ss << "    r = mul(body_world, Float4(v, 1)).xyz;\n";
+        ss << "    v = mul(body_world, v);\n";
     } else {
         // The bone weights are supposed to sum to 1, we could remove this overconservative divide
         // if we could assert that property at mesh loading time.
         ss << "    Float total = 0;\n";
+        ss << "    Float4 r = Float4(0, 0, 0, 0);\n";
         for (unsigned i=0 ; i < env.boneWeights ; ++i) {
-            ss << "    r += vert_boneWeights[" << i
-               << "] * mul(body_boneWorlds[int(vert_boneAssignments[" << i
-               << "])], Float4(v, 1)).xyz;\n";
+            ss << "    r += vert_boneWeights[" << i << "]\n";
+            ss << "         * mul(body_boneWorlds[int(vert_boneAssignments[" << i << "])], v);\n";
             ss << "    total += vert_boneWeights[" << i << "];\n";
         }
-        ss << "    r /= total;\n";
+        ss << "    v = r / total;\n";
     }
     // If we're in first person mode, the "world space" coord is actually a space that is centered
     // at the camera with Y pointing into the distance, Z up and X right.  To convert that to true
@@ -724,36 +764,22 @@ std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGs
     // coordinate frame first.  Then we apply the inverse view matrix which rewinds that and also
     // takes us all the way back to actual world space.
     if (first_person) {
-        ss << "    Float3 r2 = Float3(r.x, r.z, -r.y);\n";
-        ss << "    r = mul(global_invView, Float4(r2, 1)).xyz;\n";
+        ss << "    v = Float4(v.x, v.z, -v.y, v.w);\n";
+        ss << "    v = mul(global_invView, v);\n";
     }
-    ss << "    return r;\n";
+    ss << "    return v;\n";
     ss << "}\n";
+
+
+    ss << "Float3 transform_to_world (Float3 v)\n";
+    ss << "{\n";
+    ss << "    return transform_to_world_aux(Float4(v, 1)).xyz;\n";
+    ss << "}\n";
+
     ss << "Float3 rotate_to_world (Float3 v)\n";
     ss << "{\n";
-    ss << "    Float3 r = Float3(0, 0, 0);\n";
-    if (env.boneWeights == 0) {
-        ss << "    r = mul(body_world, Float4(v, 0)).xyz;\n";
-    } else {
-        // The bone weights are supposed to sum to 1, we could remove this overconservative divide
-        // if we could assert that property at mesh loading time.
-        ss << "    Float total = 0;\n";
-        for (unsigned i=0 ; i < env.boneWeights ; ++i) {
-            ss << "    r += vert_boneWeights[" << i
-               << "] * mul(body_boneWorlds[int(vert_boneAssignments[" << i
-               << "])], Float4(v, 0)).xyz;\n";
-            ss << "    total += vert_boneWeights[" << i << "];\n";
-        }
-        ss << "    r /= total;\n";
-    }
-    // See comment about first person mode, above.
-    if (first_person) {
-        ss << "    Float3 r2 = Float3(r.x, r.z, -r.y);\n";
-        ss << "    r = mul(global_invView, Float4(r2, 0)).xyz;\n";
-    }
-    ss << "    return r;\n";
+    ss << "    return transform_to_world_aux(Float4(v, 0)).xyz;\n";
     ss << "}\n";
-    ss << "\n";
 
     return ss.str();
 }

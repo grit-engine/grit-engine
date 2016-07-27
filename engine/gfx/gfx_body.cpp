@@ -152,7 +152,9 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
             if (!sub->getCastShadows()) continue;
             if (!m->getCastShadows()) continue;
 
-            renderMaterial = m->forwardMat;
+            // Ogre chases ->getTechnique(0)->getShadowCasterMaterial() to get the actual one
+            // which is m->castMat
+            renderMaterial = m->regularMat;
 
             queue->addRenderable(sub, 0, 0);
         }
@@ -167,27 +169,34 @@ void GfxBody::_updateRenderQueue(Ogre::RenderQueue* queue)
             // car paint
             for (int k=0 ; k<4 ; ++k) {
                 const GfxPaintColour &c = colours[k];
-                sub->setCustomParameter(2*k+1, Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, c.met));
-                sub->setCustomParameter(2*k+2, Ogre::Vector4(c.spec.x, c.spec.y, c.spec.z, 0.0f));
+                // The 0th one is fade
+                sub->setCustomParameter(4*k+1, Ogre::Vector4(c.diff.x, c.diff.y, c.diff.z, 0));
+                sub->setCustomParameter(4*k+2, Ogre::Vector4(c.met, 0, 0, 0));
+                sub->setCustomParameter(4*k+3, Ogre::Vector4(c.gloss, 0, 0, 0));
+                sub->setCustomParameter(4*k+4, Ogre::Vector4(c.spec, 0, 0, 0));
             }
 
             GfxMaterial *m = sub->material;
 
             if (do_regular) {
 
-                /* TODO: include other criteria to pick a specific Ogre::Material:
+                // TODO: Warn if mesh does not have required vertex attributes for this material
+                // taking into account dead code due to particular uniform values.
+                // E.g. vertex coluors, alpha, normals, tangents, extra tex coords.
+
+                /* TODO: Pick a specific material by
                  * bones: 1 2 3 4
-                 * vertex colours: false/true
-                 * vertex alpha: false/true
                  * Fading: false/true
-                 * World: false/true
                  */
 
+                /*
                 if (fade < 1 && m->getSceneBlend() == GFX_MATERIAL_OPAQUE) {
                     renderMaterial = m->fadingMat;
                 } else {
-                    renderMaterial = m->forwardMat;
+                    renderMaterial = m->regularMat;
                 }
+                */
+                renderMaterial = m->regularMat;
 
                 int queue_group = RQ_GBUFFER_OPAQUE;
                 switch (m->getSceneBlend()) {
@@ -227,7 +236,7 @@ void GfxBody::visitRenderables(Ogre::Renderable::Visitor* visitor, bool)
     for (SubList::iterator i = subList.begin(); i != subList.end(); ++i) {
         GfxMaterial *m = (*i)->material;
         // Commenting these out as they appear to be set anyway in _updateRenderQueue
-        renderMaterial = m->forwardMat;
+        renderMaterial = m->regularMat;
         visitor->visit(*i, 0, false);
         renderMaterial.setNull();
     }
@@ -772,11 +781,10 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
         if (do_regular) {
  
             // render sm using mat
-            const GfxMaterialTextureMap &mat_texs = mat->getTextures();
-            mat->getShader()->bindShader(GfxShader::FIRST_PERSON,
-                                         fade_dither, instanced, bone_weights,
-                                         g, world, boneWorldMatrixes, numBoneMatrixes, fade,
-                                         mat_texs, mat->getBindings());
+            const GfxTextureStateMap &mat_texs = mat->getTextures();
+            mat->getShader()->bindShader(
+                GFX_GSL_PURPOSE_FIRST_PERSON, fade_dither, instanced, bone_weights, g, world,
+                boneWorldMatrixes, numBoneMatrixes, fade, colours, mat_texs, mat->getBindings());
 
             switch (mat->getSceneBlend()) {
                 case GFX_MATERIAL_OPAQUE:
@@ -808,10 +816,10 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
 
         if (do_wireframe) {
 
-            mat->getShader()->bindShader(GfxShader::FIRST_PERSON_WIREFRAME, fade_dither, instanced,
-                                         bone_weights, g, world, boneWorldMatrixes,
-                                         numBoneMatrixes, fade, GfxMaterialTextureMap(),
-                                         mat->getBindings());
+            mat->getShader()->bindShader(
+                GFX_GSL_PURPOSE_FIRST_PERSON_WIREFRAME, fade_dither, instanced, bone_weights, g,
+                world, boneWorldMatrixes, numBoneMatrixes, fade, colours, GfxTextureStateMap(),
+                mat->getBindings());
 
             ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
             ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);

@@ -86,7 +86,7 @@ void gfx_sky_material_init (void)
         { "alphaRejectThreshold", GfxGslParam::float1(-1.0f) },
         { "emissiveMap", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1) },
         { "emissiveMask", GfxGslParam::float3(1, 1, 1) },
-    });
+    }, false);
 
     gfx_sky_material_add("/system/SkyDefault");
 }

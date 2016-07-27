@@ -921,15 +921,15 @@ void gfx_hud_init (void)
         "out.colour = texel.rgb * vert.coord1.rgb * mat.colour;\n"
         "out.alpha = texel.a * vert.coord1.a * mat.alpha;\n";
 
-    gfx_shader_check("/system/HudRect", vertex_code, "", colour_code1, shader_tex_params);
-    gfx_shader_check("/system/HudText", vertex_code, "", colour_code2, shader_text_params);
+    gfx_shader_check("/system/HudRect", vertex_code, "", colour_code1, shader_tex_params, false);
+    gfx_shader_check("/system/HudText", vertex_code, "", colour_code2, shader_text_params, false);
 
     shader_rect = gfx_shader_make_or_reset("/system/HudRect",
-                                          vertex_code, "", colour_code1, shader_tex_params);
+                                          vertex_code, "", colour_code1, shader_tex_params, false);
 
     
     shader_text = gfx_shader_make_or_reset("/system/HudText",
-                                           vertex_code, "", colour_code2, shader_text_params);
+                                          vertex_code, "", colour_code2, shader_text_params, false);
 
 }
 
@@ -1115,11 +1115,11 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
     shader_text_binds["colour"] = colour;
     shader_text_binds["alpha"] = GfxGslParam::float1(alpha);
 
-    GfxMaterialTextureMap texs;
+    GfxTextureStateMap texs;
     if (tex != nullptr)
-        texs["tex"] = { tex, false, 4};
+        texs["tex"] = gfx_texture_state_anisotropic(tex);
 
-    shader_text->bindShader(GfxShader::HUD, false, false, 0,
+    shader_text->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
                             globs, matrix, nullptr, 0, 1, texs, shader_text_binds);
 
     ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
@@ -1206,15 +1206,15 @@ void gfx_render_hud_one (GfxHudBase *base)
         shader_tex_binds["colour"] = obj->getColour();
         shader_tex_binds["alpha"] = GfxGslParam::float1(obj->getAlpha());
 
-        GfxMaterialTextureMap texs;
+        GfxTextureStateMap texs;
         if (tex != nullptr)
-            texs["tex"] = { tex, false, 4};
+            texs["tex"] = gfx_texture_state_anisotropic(tex);
 
         Vector3 zv(0,0,0);
         GfxShaderGlobals globs = { zv, I, I, I, zv, zv, zv, zv, win_size, render_target_flipping,
                                    nullptr };
 
-        shader_rect->bindShader(GfxShader::HUD, false, false, 0,
+        shader_rect->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
                                 globs, matrix, nullptr, 0, 1, texs, shader_tex_binds);
 
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);

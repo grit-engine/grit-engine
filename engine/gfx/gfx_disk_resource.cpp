@@ -255,7 +255,7 @@ void GfxMeshDiskResource::unloadImpl(void)
 
 
 GfxTextureDiskResource::GfxTextureDiskResource (const std::string &name)
-    : GfxGPUDiskResource(name)
+    : GfxBaseTextureDiskResource(name)
 {
     try {
         std::string ogre_name = name.substr(1);
@@ -310,7 +310,7 @@ void GfxTextureDiskResource::unloadImpl(void)
 
 
 GfxEnvCubeDiskResource::GfxEnvCubeDiskResource (const std::string &name)
-    : GfxGPUDiskResource(name)
+    : GfxBaseTextureDiskResource(name)
 {
     APP_ASSERT(name.length()>0 && name[0]=='/');
     try {
@@ -399,7 +399,7 @@ void GfxEnvCubeDiskResource::unloadImpl(void)
 
 
 GfxColourGradeLUTDiskResource::GfxColourGradeLUTDiskResource (const std::string &name)
-    : GfxGPUDiskResource(name)
+    : GfxBaseTextureDiskResource(name)
 {
     APP_ASSERT(name.length()>0 && name[0]=='/');
     try {

@@ -75,20 +75,33 @@ class GfxGPUDiskResource : public GfxBaseDiskResource {
 
 };
 
+/** Base representation for textures.  Textures have no dependencies.
+ */
+class GfxBaseTextureDiskResource : public GfxGPUDiskResource {
+
+  public:
+    /** Use disk_resource_get_or_make to create a new disk resource. */
+    GfxBaseTextureDiskResource (const std::string &name)
+    : GfxGPUDiskResource(name) { }
+
+    /** Return the internal Ogre object. */
+    const Ogre::TexturePtr &getOgreTexturePtr (void) { return rp; }
+
+  protected:
+    /** The ogre representaiton. */
+    Ogre::TexturePtr rp;
+
+};
+
 /** Representation for textures.  Textures have no dependencies.
  */
-class GfxTextureDiskResource : public GfxGPUDiskResource {
+class GfxTextureDiskResource : public GfxBaseTextureDiskResource {
 
   public:
     /** Use disk_resource_get_or_make to create a new disk resource. */
     GfxTextureDiskResource (const std::string &name);
 
-    /** Return the internal Ogre object. */
-    const Ogre::TexturePtr &getOgreTexturePtr (void) { return rp; }
-
-  private:
-    /** The ogre representaiton. */
-    Ogre::TexturePtr rp;
+  protected:
 
     /** Load via Ogre (i.e. prepare it in Ogre terminology). */
     virtual void loadImpl (void);
@@ -130,18 +143,13 @@ class GfxMeshDiskResource : public GfxGPUDiskResource {
 
 /** Representation for environmental lighting cubes.
  */
-class GfxEnvCubeDiskResource : public GfxGPUDiskResource {
+class GfxEnvCubeDiskResource : public GfxBaseTextureDiskResource {
 
   public:
     /** Use disk_resource_get_or_make to create a new disk resource. */
     GfxEnvCubeDiskResource (const std::string &name);
 
-    /** Return the internal Ogre object. */
-    const Ogre::TexturePtr &getOgreTexturePtr (void) { return rp; }
-
   private:
-    /** The ogre representation. */
-    Ogre::TexturePtr rp;
 
     /** Load via Ogre (i.e. prepare it in Ogre terminology). */
     virtual void loadImpl (void);
@@ -152,22 +160,16 @@ class GfxEnvCubeDiskResource : public GfxGPUDiskResource {
 
 /** Representation for colour grading 3D LUT.
  */
-class GfxColourGradeLUTDiskResource : public GfxGPUDiskResource {
+class GfxColourGradeLUTDiskResource : public GfxBaseTextureDiskResource {
 
   public:
     /** Use disk_resource_get_or_make to create a new disk resource. */
     GfxColourGradeLUTDiskResource (const std::string &name);
 
-    /** Return the internal Ogre object. */
-    const Ogre::TexturePtr &getOgreTexturePtr (void) { return rp; }
-
     /** Look up a single colour in the LUT.  The resource must be loaded (onto the GPU). */
     Vector3 lookUp (const Vector3 &v) const;
 
   private:
-    /** The ogre representation. */
-    Ogre::TexturePtr rp;
-
     /** The original image, kept on the CPU for lua or c++ lookups. */
     Ogre::Image img;
 

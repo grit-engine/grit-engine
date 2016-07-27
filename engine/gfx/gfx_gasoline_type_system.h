@@ -134,35 +134,74 @@ struct GfxGslFunctionType : public GfxGslType {
 };
 
 
+struct GfxGslFieldType {
+    const GfxGslType *t;
+    bool internal;
+    bool lighting;  // Should this be only available in shaders that do lighting?
+    GfxGslFieldType() { }
+    GfxGslFieldType(const GfxGslType *t)
+      : t(t), internal(false), lighting(false)
+    { }
+    GfxGslFieldType(const GfxGslType *t, bool internal, bool lighting)
+      : t(t), internal(internal), lighting(lighting)
+    { }
+};
+
+typedef std::vector<const GfxGslFunctionType *> GfxGslFunctionTypes;
+
+struct GfxGslGlobalFuncType {
+    GfxGslFunctionTypes ts;
+    bool internal;
+    bool lighting;  // Should this be only available in shaders that do lighting?
+    GfxGslGlobalFuncType() { }
+    GfxGslGlobalFuncType(const GfxGslFunctionTypes &ts)
+      : ts(ts), internal(false), lighting(false)
+    { }
+    GfxGslGlobalFuncType(const GfxGslFunctionTypes &ts, bool internal, bool lighting)
+      : ts(ts), internal(internal), lighting(lighting)
+    { }
+};
+
+static inline std::ostream &operator << (std::ostream &o, const GfxGslFieldType &ft)
+{
+    o << ft.t << (ft.internal ? " (internal)" : "");
+    return o;
+}
+
+typedef std::map<std::string, GfxGslFieldType> GfxGslFieldTypeMap;
+typedef std::map<std::string, GfxGslGlobalFuncType> GfxGslGlobalFuncTypeMap;
+
 struct GfxGslContext {
     GfxGslAllocator &alloc;
-    std::map<std::string, std::vector<GfxGslFunctionType*>> funcTypes;
-    GfxGslTypeMap globalFields;
-    GfxGslTypeMap matFields;
-    GfxGslTypeMap bodyFields;
+    GfxGslGlobalFuncTypeMap funcTypes;
+    GfxGslFieldTypeMap globalFields;
+    GfxGslFieldTypeMap matFields;
+    GfxGslFieldTypeMap bodyFields;
     GfxGslUnboundTextures ubt;
     GfxGslRunParams staticValues;
 
     bool d3d9;
+    bool internal;
+    bool lightingTextures;
 
-    const GfxGslType *getMatType (const std::string &f) const
+    GfxGslFieldType getMatType (const std::string &f) const
     {
         auto it = matFields.find(f);
-        if (it == matFields.end()) return nullptr;
+        if (it == matFields.end()) return GfxGslFieldType();
         return it->second;
     }
 
-    const GfxGslType *getGlobalType (const std::string &f) const
+    GfxGslFieldType getGlobalType (const std::string &f) const
     {
         auto it = globalFields.find(f);
-        if (it == globalFields.end()) return nullptr;
+        if (it == globalFields.end()) return GfxGslFieldType();
         return it->second;
     }
 
-    const GfxGslType *getBodyType (const std::string &f) const
+    GfxGslFieldType getBodyType (const std::string &f) const
     {
         auto it = bodyFields.find(f);
-        if (it == bodyFields.end()) return nullptr;
+        if (it == bodyFields.end()) return GfxGslFieldType();
         return it->second;
     }
 
@@ -193,7 +232,6 @@ class GfxGslTypeSystem {
 
     GfxGslTypeMap outFields;
     GfxGslTypeMap fragFields;
-    GfxGslTypeMap bodyFields;
     GfxGslTypeMap vertFields;
     GfxGslDefMap vars;
 
@@ -210,8 +248,8 @@ class GfxGslTypeSystem {
 
     void initObjectTypes (GfxGslKind k);
 
-    GfxGslFunctionType *lookupFunction (const GfxGslLocation &loc, const std::string &name,
-                                        GfxGslAsts &asts);
+    const GfxGslFunctionType *lookupFunction (const GfxGslLocation &loc, const std::string &name,
+                                              GfxGslAsts &asts);
 
     bool isVoid (GfxGslType *x)
     {

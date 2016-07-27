@@ -41,7 +41,8 @@
 #ifndef GFX_INTERNAL_H
 #define GFX_INTERNAL_H
 
-#define NUM_GLOBAL_TEXTURES 9
+#define NUM_GLOBAL_TEXTURES_LIGHTING 8
+#define NUM_GLOBAL_TEXTURES_NO_LIGHTING 2
 
 extern bool d3d9;
 extern Ogre::Root *ogre_root;
@@ -101,7 +102,8 @@ extern Vector3 sky_cloud_colour;
 extern float sky_cloud_coverage;
 extern Vector3 hell_colour;
 
-#define ANIM_TIME_MAX 2310.0f
+// ANIM_TIME_MAX is a number that can be divided cleanly by many other numbers.
+#define ANIM_TIME_MAX (2.0 * 3.0 * 5.0 * 7.0 * 11.0)
 extern float anim_time;
 
 std::string freshname (const std::string &prefix);

@@ -166,9 +166,9 @@ void GfxDecal::render (const GfxShaderGlobals &g)
     
     // ISSUE RENDER COMMANDS
     try {
-        const GfxMaterialTextureMap &mat_texs = material->getTextures();
+        const GfxTextureStateMap &mat_texs = material->getTextures();
         material->getShader()->bindShader(
-            GfxShader::DECAL, 0, false,  false, g, world, nullptr, 0, 1,
+            GFX_GSL_PURPOSE_DECAL, 0, false,  false, g, world, nullptr, 0, 1,
             mat_texs, material->getBindings());
 
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);

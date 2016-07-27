@@ -190,17 +190,28 @@ void GfxGslTypeSystem::initObjectTypes (GfxGslKind k)
 
 }
 
-GfxGslFunctionType *GfxGslTypeSystem::lookupFunction(const GfxGslLocation &loc,
-                                                     const std::string &name,
-                                                     GfxGslAsts &asts)
+const GfxGslFunctionType *GfxGslTypeSystem::lookupFunction(const GfxGslLocation &loc,
+                                                           const std::string &name,
+                                                           GfxGslAsts &asts)
 {
     auto it = ctx.funcTypes.find(name);
     if (it == ctx.funcTypes.end()) {
         error(loc) << "Unrecognised function: " << name << ENDL;
     }
 
+    // The "internal" status is the same no matter the compilation purpose.
+    if (it->second.internal && !ctx.internal)
+        error(loc) << "Unrecognised function: " << name << ENDL;
+
+    // Since lightingTextures is a property of the GfxPurpose, we cannot use it
+    // in the type system.  Shaders are type-checked for all purposes.
+    /*
+    if (it->second.lighting && !ctx.lightingTextures)
+        error(loc) << "Unrecognised function: " << name << ENDL;
+    */
+
     // Bind if it's an exact match
-    const std::vector<GfxGslFunctionType*> &overloads = it->second;
+    const GfxGslFunctionTypes &overloads = it->second.ts;
     for (auto *o : overloads) {
         if (o->params.size() != asts.size()) continue;
         for (unsigned i=0 ; i<asts.size() ; ++i) {
@@ -213,7 +224,7 @@ GfxGslFunctionType *GfxGslTypeSystem::lookupFunction(const GfxGslLocation &loc,
 
     // Otherwise search for one that matches with conversions.
     // If there is just 1, use it, otherwise error.
-    GfxGslFunctionType *found = nullptr;
+    const GfxGslFunctionType *found = nullptr;
     for (auto *o : overloads) {
         //std::cout << "Trying with conversions: " << name << ": " << o << std::endl;
         if (o->params.size() != asts.size()) continue;
@@ -617,8 +628,8 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             error(loc) << "Cannot assign to result of function call." << ENDL;
         for (unsigned i=0 ; i<ast->args.size() ; ++i)
             inferAndSet(ast->args[i], c.setRead(true));
-        GfxGslFunctionType *t = lookupFunction(loc, ast->func, ast->args);
-        ast->type = t->ret;
+        const GfxGslFunctionType *t = lookupFunction(loc, ast->func, ast->args);
+        ast->type = cloneType(t->ret);
 
     } else if (auto *ast = dynamic_cast<GfxGslArrayLookup*>(ast_)) {
         inferAndSet(ast->target, c);
@@ -670,17 +681,22 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             if (c.write)
                 outFieldsWritten.insert(ast->id);
         } else if (dynamic_cast<GfxGslBodyType*>(ast->target->type)) {
-            if (bodyFields.find(ast->id) == outFields.end())
+            if (ctx.bodyFields.find(ast->id) == ctx.bodyFields.end())
                 error(loc) << "body." << ast->id << " does not exist." << ENDL;
-            const GfxGslType *type = bodyFields[ast->id];
-            ast->type = cloneType(type);
+            GfxGslFieldType field_t = ctx.bodyFields[ast->id];
+            if (field_t.internal && !ctx.internal)
+                error(loc) << "body." << ast->id << " does not exist." << ENDL;
+            ast->type = cloneType(field_t.t);
             ast->type->writeable = true;
             if (c.write)
                 outFieldsWritten.insert(ast->id);
         } else if (dynamic_cast<GfxGslGlobalType*>(ast->target->type)) {
             if (ctx.globalFields.find(ast->id) == ctx.globalFields.end())
                 error(loc) << "global." << ast->id << " does not exist." << ENDL;
-            ast->type = cloneType(ctx.globalFields[ast->id]);
+            GfxGslFieldType field_t = ctx.globalFields[ast->id];
+            if (field_t.internal && !ctx.internal)
+                error(loc) << "global." << ast->id << " does not exist." << ENDL;
+            ast->type = cloneType(field_t.t);
             ast->type->writeable = false;
             if (c.read)
                 globalFieldsRead.insert(ast->id);
@@ -689,7 +705,10 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
         } else if (dynamic_cast<GfxGslMatType*>(ast->target->type)) {
             if (ctx.matFields.find(ast->id) == ctx.matFields.end())
                 error(loc) << "mat." << ast->id << " does not exist." << ENDL;
-            ast->type = cloneType(ctx.matFields[ast->id]);
+            GfxGslFieldType field_t = ctx.matFields[ast->id];
+            if (field_t.internal && !ctx.internal)
+                error(loc) << "mat." << ast->id << " does not exist." << ENDL;
+            ast->type = cloneType(field_t.t);
             if (dynamic_cast<GfxGslTextureType*>(ast->type)) {
                 if (!frag(kind)) {
                     error(loc) << "Cannot use textures in vertex shader: " << ast->id << ENDL;
@@ -718,7 +737,8 @@ void GfxGslTypeSystem::inferAndSet (GfxGslAst *ast_, const Ctx &c)
             ast->type->writeable = ft->writeable;
             
         } else {
-            error(loc) << "Cannot access " << ft << " of type: " << ast->target->type << ENDL;
+            error(loc) << "Cannot access field \"" << ast->id << "\" from non-object type: "
+                       << ast->target->type << ENDL;
         }
 
     } else if (auto *ast = dynamic_cast<GfxGslLiteralInt*>(ast_)) {
