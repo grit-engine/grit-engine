@@ -13,8 +13,8 @@
 
 CXX?= g++
 CC?= gcc
-OPT?=-O3 -DNDEBUG
-ARCH?= -march=native -mtune=native
+OPT?=-O3 -DNDEBUG -D__JOYSTICK_DEVJS__
+ARCH?= -march=native -mtune=native 
 
 
 # -----------------
@@ -218,7 +218,7 @@ all: $(ALL_EXECUTABLES)
 
 # Precompiled header
 build/stdafx.h.gch: dependencies/stdafx/stdafx.h
-	@$(PRECOMPILED_HEADER)
+	@$(PRECOMPILED_HEADER) 
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) -c $(CODEGEN) -std=c++11 -pedantic $(CFLAGS) $< -o $@
 	

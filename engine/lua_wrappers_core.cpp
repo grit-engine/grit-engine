@@ -40,6 +40,9 @@
 #include "input_filter.h"
 #include "keyboard.h"
 #include "mouse.h"
+#if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
+#include "joystick.h"
+#endif
 #include "background_loader.h"
 #include "clipboard.h"
 #include <centralised_log.h>
@@ -298,6 +301,75 @@ TRY_START
         return 6;
 TRY_END
 }
+
+#if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
+static int global_get_joystick_events (lua_State *L)
+{
+TRY_START
+
+        check_args(L,0);
+
+        std::vector<signed char> buttons_indexes_and_values;
+        std::vector<signed char> axes_indexes;
+        std::vector<short int> axes_values; 
+
+        bool moved = joystick->getEvents(&buttons_indexes_and_values,&axes_indexes,&axes_values);
+
+        lua_pushboolean(L,moved);
+
+        lua_createtable(L, buttons_indexes_and_values.size(), 0);
+        for (unsigned int i=0 ; i<buttons_indexes_and_values.size() ; i++) {
+                int button = buttons_indexes_and_values[i];
+                lua_pushnumber(L,i+1);
+                const char *button_ = "unknown";
+                
+                switch (button) {
+                        case Joystick::JOYSTICK_BUTTON1: button_="+js01" ; break;
+                        case -Joystick::JOYSTICK_BUTTON1: button_="-js01" ; break;
+                        case Joystick::JOYSTICK_BUTTON2: button_="+js02" ; break;
+                        case -Joystick::JOYSTICK_BUTTON2: button_="-js02" ; break;
+                        case Joystick::JOYSTICK_BUTTON3: button_="+js03" ; break;
+                        case -Joystick::JOYSTICK_BUTTON3: button_="-js03" ; break;
+                        case Joystick::JOYSTICK_BUTTON4: button_="+js04" ; break;
+                        case -Joystick::JOYSTICK_BUTTON4: button_="-js04" ;break;
+                        case Joystick::JOYSTICK_BUTTON5: button_="+js05" ; break;
+                        case -Joystick::JOYSTICK_BUTTON5: button_="-js05" ;break;
+                        case Joystick::JOYSTICK_BUTTON6: button_="+js06" ; break;
+                        case -Joystick::JOYSTICK_BUTTON6: button_="-js06" ; break;
+                        case Joystick::JOYSTICK_BUTTON7: button_="+js07" ; break;
+                        case -Joystick::JOYSTICK_BUTTON7: button_="-js07" ; break;
+                        case Joystick::JOYSTICK_BUTTON8: button_="+js08" ; break;
+                        case -Joystick::JOYSTICK_BUTTON8: button_="-js08" ; break;
+                        case Joystick::JOYSTICK_BUTTON9: button_="+js09" ; break;
+                        case -Joystick::JOYSTICK_BUTTON9: button_="-js09" ;break;
+                        case Joystick::JOYSTICK_BUTTON10: button_="+js10" ; break;
+                        case -Joystick::JOYSTICK_BUTTON10: button_="-js10" ;break;
+                        case Joystick::JOYSTICK_BUTTON11: button_="+js11" ; break;
+                        case -Joystick::JOYSTICK_BUTTON11: button_="-js11" ;break;
+                }
+
+                lua_pushstring(L,button_);
+                lua_settable(L,-3);
+        }
+
+        if( axes_indexes.size() == axes_values.size() )
+        {
+           lua_createtable(L, axes_indexes.size(), 0);
+           for (unsigned int i=0 ; i<axes_indexes.size() ; i++) {
+                double axe_index = axes_indexes[i];
+                double axe_value = axes_values[i];
+                double pushvalue = (axe_value/32767.0);  
+                lua_pushnumber(L,i+1);
+                lua_pushvector2(L,axe_index,pushvalue);
+                lua_settable(L,-3);
+           }
+
+           return 3;
+        }
+        return 2;
+TRY_END
+}
+#endif // defined(__linux__) && defined(__JOYSTICK_DEVJS__)
 
 static int global_input_filter_trickle_mouse_move (lua_State *L)
 {
@@ -976,7 +1048,9 @@ static const luaL_reg global[] = {
     {"set_keyb_verbose", global_set_keyb_verbose},
     {"get_keyb_verbose", global_get_keyb_verbose},
     {"get_mouse_events", global_get_mouse_events},
-
+#if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
+    {"get_joystick_events", global_get_joystick_events},
+#endif
     {"micros", global_micros},
     {"seconds", global_seconds},
     {"sleep_seconds", global_sleep_seconds},
