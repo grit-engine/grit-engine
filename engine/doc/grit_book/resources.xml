@@ -30,7 +30,7 @@
 
         <lua>
             disk_resource_load(name)  -- Note: Raises an error if it's already loaded
-            disk_resource_ensure_loaded()  -- Load, or no-op if already loaded
+            disk_resource_ensure_loaded(name)  -- Load, or no-op if already loaded
             disk_resource_loaded(name)  -- Test if loaded
             disk_resource_reload(name)  -- Useful during development to see new assets
         </lua>
