@@ -19,12 +19,6 @@
  * THE SOFTWARE.
  */
 
-
-#ifdef WIN32
-#include <float.h>
-#define isnan _isnan
-#endif
-
 #include <BulletCollision/CollisionShapes/btTriangleShape.h>
 #include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
 
@@ -530,7 +524,7 @@ float physics_option (PhysicsFloatOption o)
 
 static inline btVector3 check_nan_ (const btVector3 &v, const char *file, int line)
 {
-    if (isnan(v.x()) || isnan(v.y()) || isnan(v.z())) {
+    if (std::isnan(v.x()) || std::isnan(v.y()) || std::isnan(v.z())) {
         CLog(file,line,true) << "Vect3 NaN from Bullet." << std::endl;
         return btVector3(0,0,0);
     }
@@ -539,7 +533,7 @@ static inline btVector3 check_nan_ (const btVector3 &v, const char *file, int li
 
 static inline Vector3 check_nan_ (const Vector3 &v, const char *file, int line)
 {
-    if (isnan(v.x) || isnan(v.y) || isnan(v.z)) {
+    if (std::isnan(v.x) || std::isnan(v.y) || std::isnan(v.z)) {
         CLog(file,line,true) << "Vect3 NaN from Grit." << std::endl;
         return Vector3(0,0,0);
     }
@@ -548,7 +542,7 @@ static inline Vector3 check_nan_ (const Vector3 &v, const char *file, int line)
 
 static inline btQuaternion check_nan_ (const btQuaternion &v, const char *file, int line)
 {
-    if (isnan(v.w()) || isnan(v.x()) || isnan(v.y()) || isnan(v.z())) {
+    if (std::isnan(v.w()) || std::isnan(v.x()) || std::isnan(v.y()) || std::isnan(v.z())) {
         CLog(file,line,true) << "Quat NaN from Bullet." << std::endl;
         return btQuaternion(0,0,0,1);
     }
@@ -557,7 +551,7 @@ static inline btQuaternion check_nan_ (const btQuaternion &v, const char *file, 
 
 static inline Quaternion check_nan_ (const Quaternion &v, const char *file, int line)
 {
-    if (isnan(v.w) || isnan(v.x) || isnan(v.y) || isnan(v.z)) {
+    if (std::isnan(v.w) || std::isnan(v.x) || std::isnan(v.y) || std::isnan(v.z)) {
         CLog(file,line,true) << "Quat NaN from Grit." << std::endl;
         return Quaternion(1,0,0,0);
     }
@@ -877,8 +871,8 @@ void physics_update (lua_State *L)
         current_xform.getBasis().getRotation(quat);
         float x=pos.x(), y=pos.y(), z=pos.z();
         float qw=quat.w(), qx=quat.x(), qy=quat.y(), qz=quat.z();
-        if (isnan(x) || isnan(y) || isnan(z) ||
-            isnan(qw) || isnan(qx) || isnan(qy) || isnan(qz)) {
+        if (std::isnan(x) || std::isnan(y) || std::isnan(z) ||
+            std::isnan(qw) || std::isnan(qx) || std::isnan(qy) || std::isnan(qz)) {
             CERR << "NaN from physics engine position update." << std::endl;
             nan_bodies.push_back(rb);
         }
@@ -1476,7 +1470,7 @@ void RigidBody::stabiliseCallback (lua_State *L, float elapsed)
 
 void RigidBody::force (const Vector3 &force)
 {
-    if (isnan(force.x) || isnan(force.y) || isnan(force.z))
+    if (std::isnan(force.x) || std::isnan(force.y) || std::isnan(force.z))
         GRIT_EXCEPT("RigidBody::force received NaN element in force vector");
     if (body==NULL) return;
     body->applyCentralImpulse(to_bullet(force*physics_option(PHYSICS_STEP_SIZE)));
@@ -1486,9 +1480,9 @@ void RigidBody::force (const Vector3 &force)
 void RigidBody::force (const Vector3 &force,
                const Vector3 &rel_pos)
 {
-    if (isnan(force.x) || isnan(force.y) || isnan(force.z))
+    if (std::isnan(force.x) || std::isnan(force.y) || std::isnan(force.z))
         GRIT_EXCEPT("RigidBody::force received NaN element in force vector");
-    if (isnan(rel_pos.x) || isnan(rel_pos.y) || isnan(rel_pos.z))
+    if (std::isnan(rel_pos.x) || std::isnan(rel_pos.y) || std::isnan(rel_pos.z))
         GRIT_EXCEPT("RigidBody::force received NaN element in position vector");
     if (body==NULL) return;
     body->applyImpulse(to_bullet(force*physics_option(PHYSICS_STEP_SIZE)),
@@ -1498,7 +1492,7 @@ void RigidBody::force (const Vector3 &force,
 
 void RigidBody::impulse (const Vector3 &impulse)
 {
-    if (isnan(impulse.x) || isnan(impulse.y) || isnan(impulse.z))
+    if (std::isnan(impulse.x) || std::isnan(impulse.y) || std::isnan(impulse.z))
         GRIT_EXCEPT("RigidBody::impulse received NaN element in impulse vector");
     if (body==NULL) return;
     body->applyCentralImpulse(to_bullet(impulse));
@@ -1508,9 +1502,9 @@ void RigidBody::impulse (const Vector3 &impulse)
 void RigidBody::impulse (const Vector3 &impulse,
              const Vector3 &rel_pos)
 {
-    if (isnan(impulse.x) || isnan(impulse.y) || isnan(impulse.z))
+    if (std::isnan(impulse.x) || std::isnan(impulse.y) || std::isnan(impulse.z))
         GRIT_EXCEPT("RigidBody::impulse received NaN element in impulse vector");
-    if (isnan(rel_pos.x) || isnan(rel_pos.y) || isnan(rel_pos.z))
+    if (std::isnan(rel_pos.x) || std::isnan(rel_pos.y) || std::isnan(rel_pos.z))
         GRIT_EXCEPT("RigidBody::impulse received NaN element in position vector");
     if (body==NULL) return;
     body->applyImpulse(to_bullet(impulse),to_bullet(rel_pos));
@@ -1519,7 +1513,7 @@ void RigidBody::impulse (const Vector3 &impulse,
 
 void RigidBody::torque (const Vector3 &torque)
 {
-    if (isnan(torque.x) || isnan(torque.y) || isnan(torque.z))
+    if (std::isnan(torque.x) || std::isnan(torque.y) || std::isnan(torque.z))
         GRIT_EXCEPT("RigidBody::torque received NaN element in torque vector");
     if (body==NULL) return;
     body->applyTorqueImpulse(to_bullet(torque*physics_option(PHYSICS_STEP_SIZE)));
@@ -1528,7 +1522,7 @@ void RigidBody::torque (const Vector3 &torque)
 
 void RigidBody::torqueImpulse (const Vector3 &torque)
 {
-    if (isnan(torque.x) || isnan(torque.y) || isnan(torque.z))
+    if (std::isnan(torque.x) || std::isnan(torque.y) || std::isnan(torque.z))
         GRIT_EXCEPT("RigidBody::torque received NaN element in torque vector");
     if (body==NULL) return;
     body->applyTorqueImpulse(to_bullet(torque));
