@@ -18,14 +18,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-//#include <cmath>
-
-#ifdef WIN32
-#include <float.h>
-#define isnan _isnan
-//#else
-//#define isnan std::isnan
-#endif
 
 #include <BulletCollision/CollisionShapes/btTriangleShape.h>
 #include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
