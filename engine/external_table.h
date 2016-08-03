@@ -138,6 +138,14 @@ class ExternalTable {
                 return true;
         }
 
+        bool get (const std::string &key, Vector4 &v)
+        {
+                if (!has(key)) return false;
+                if (fields[key].type != 10) return false;
+                v = fields[key].v4;
+                return true;
+        }
+
         bool get (lua_Number key, lua_Number &v)
         {
                 if (!has(key)) return false;
@@ -210,6 +218,14 @@ class ExternalTable {
                 return true;
         }
 
+        bool get (lua_Number key, Vector4 &v)
+        {
+                if (!has(key)) return false;
+                if (elements[key].type != 10) return false;
+                v = elements[key].v4;
+                return true;
+        }
+
 
         void set (const std::string &key, const lua_Number r)
         {
@@ -263,6 +279,12 @@ class ExternalTable {
         {
                 fields[key].type = 9;
                 fields[key].v2 = v2;
+        }
+
+        void set (const std::string &key, const Vector4 &v4)
+        {
+                fields[key].type = 10;
+                fields[key].v4 = v4;
         }
 
         void set (lua_Number key, const lua_Number r)
@@ -319,6 +341,12 @@ class ExternalTable {
                 elements[key].v2 = v2;
         }
 
+        void set (lua_Number &key, const Vector4 &v4)
+        {
+                elements[key].type = 10;
+                elements[key].v4 = v4;
+        }
+
         const char *luaGet (lua_State *L);
         const char *luaSet (lua_State *L);
 
@@ -358,6 +386,7 @@ class ExternalTable {
                 PlotV3 plot_v3;
                 LuaPtr func;
                 Vector2 v2;
+                Vector4 v4;
         };
 
         typedef std::map<std::string,Value> StringMap;
