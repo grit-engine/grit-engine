@@ -97,10 +97,11 @@ class MyMeshDeserializer : public Ogre::Serializer {
         // Jump back to start
         mStream->seek(0);
 
-        if (ver != mVersion) {
+        if (ver != "[MeshSerializer_v1.8]" && ver != "[MeshSerializer_v1.100]" ) {
             GRIT_EXCEPT("Mesh \""+pMesh->getName()+"\" wrong version "+ver);
         }
 
+        mVersion = ver;
         readFileHeader(mStream);
 
         unsigned short streamID = readChunk(mStream);
