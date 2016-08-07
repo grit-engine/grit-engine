@@ -253,19 +253,6 @@ GfxEnvCubeDiskResource *gfx_env_cube (unsigned i)
     return ec;
 }
 
-static void reset_env_cube (const Ogre::MaterialPtr &m, GfxEnvCubeDiskResource *old,
-                            GfxEnvCubeDiskResource *nu)
-{
-    if (m.isNull()) return;
-    Ogre::Pass *p = m->getTechnique(0)->getPass(0);
-    for (unsigned i=0 ; i<p->getNumTextureUnitStates() ; ++i) {
-        Ogre::TextureUnitState *tus = p->getTextureUnitState(i);
-        if (tus->getTextureName() == old->getOgreTexturePtr()->getName()) {
-            tus->setTextureName(nu->getOgreTexturePtr()->getName());
-        }
-    }
-}
-
 void gfx_env_cube (unsigned i, const DiskResourcePtr<GfxEnvCubeDiskResource> &v)
 {
     auto &ec = i == 0 ? global_env_cube0 : global_env_cube1;
@@ -273,24 +260,6 @@ void gfx_env_cube (unsigned i, const DiskResourcePtr<GfxEnvCubeDiskResource> &v)
     //CVERB << "Setting scene env cube to " << v << std::endl;
     env_cube_count = unsigned(global_env_cube0 != nullptr)
                    + unsigned(global_env_cube1 != nullptr);
-
-    // Alpha materials are not part of the full screen deferred shading pass, so have
-    // the env cube texture bound as part of the material used to render that pass
-    // FIXME(dcunnin): This does not update materials for bodies not currently in the scene.
-    // FIXME(dcunnin): Keep a list of alpha materials, iterate over those instead.
-    for (unsigned long i=0 ; i<gfx_all_nodes.size() ; ++i) {
-        GfxBody *b = dynamic_cast<GfxBody*>(gfx_all_nodes[i]);
-        if (b==NULL) continue;
-        for (unsigned j=0 ; j<b->getNumSubMeshes() ; ++j) {
-            GfxMaterial *m = b->getMaterial(j);
-            if (m->getSceneBlend() != GFX_MATERIAL_OPAQUE) {
-                reset_env_cube(m->forwardMat, ec, v);
-                reset_env_cube(m->fadingMat, ec, v);
-                reset_env_cube(m->worldMat, ec, v);
-            }
-        }
-    }
-
     ec = v;
 }
 

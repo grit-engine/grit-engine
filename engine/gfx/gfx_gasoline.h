@@ -212,6 +212,19 @@ struct GfxGslParam {
         r.t = GfxGslParamType(r.t | 0x200);
         return r;
     }
+    GfxGslParam clearStatic(void) {
+        APP_ASSERT(!gfx_gasoline_param_type_is_texture(t));
+        GfxGslParam r = *this;
+        r.t = GfxGslParamType(r.t & ~0x200);
+        return r;
+    }
+    GfxGslParam copyStaticFrom(const GfxGslParam &other) {
+        APP_ASSERT(!gfx_gasoline_param_type_is_texture(t));
+        GfxGslParam r = this->clearStatic();
+        if (gfx_gasoline_param_type_is_static(other.t))
+            r = r.setStatic();
+        return r;
+    }
 };      
             
 static inline bool gfx_gasoline_param_is_texture (const GfxGslParam &p)
@@ -331,6 +344,7 @@ struct GfxGslEnvironment {
     float shadowFadeStart;
     float shadowFadeEnd;
     float shadowFactor;
+    float shadowFilterSize;
     unsigned shadowFilterTaps;
     enum ShadowDitherMode {
         SHADOW_DITHER_NONE,
@@ -341,7 +355,7 @@ struct GfxGslEnvironment {
     GfxGslEnvironment (void)
         : fadeDither(false), boneWeights(0), instanced(false),
           envBoxes(0), shadowRes(512), shadowDist(F3{{10, 20, 30}}), shadowSpread(F3{{1, 1, 1}}),
-          shadowFadeStart(50), shadowFadeEnd(60), shadowFactor(5000),
+          shadowFadeStart(50), shadowFadeEnd(60), shadowFactor(5000), shadowFilterSize(1),
           shadowFilterTaps(0), shadowDitherMode(SHADOW_DITHER_NONE)
     { }
     bool operator== (const GfxGslEnvironment &other) const
@@ -358,6 +372,7 @@ struct GfxGslEnvironment {
             && other.shadowFadeStart == shadowFadeStart
             && other.shadowFadeEnd == shadowFadeEnd
             && other.shadowFactor == shadowFactor
+            && other.shadowFilterSize == shadowFilterSize
             && other.shadowFilterTaps == shadowFilterTaps
             && other.shadowDitherMode == shadowDitherMode;
     }
@@ -379,12 +394,20 @@ namespace std {
             r = r * 31 + my_hash(a.shadowFadeStart);
             r = r * 31 + my_hash(a.shadowFadeEnd);
             r = r * 31 + my_hash(a.shadowFactor);
+            r = r * 31 + my_hash(a.shadowFilterSize);
             r = r * 31 + my_hash(a.shadowFilterTaps);
             r = r * 31 + my_hash(unsigned(a.shadowDitherMode));
             return r;
         }
     };
 }
+
+static inline std::ostream &operator << (std::ostream &o, const GfxGslEnvironment::F3 &v)
+{
+    o << "(" << v[0] << "," << v[1] << "," << v[2] << ")";
+    return o;
+}
+
 static inline std::ostream &operator << (std::ostream &o, const GfxGslEnvironment &e)
 {
     o << "[";
@@ -393,6 +416,11 @@ static inline std::ostream &operator << (std::ostream &o, const GfxGslEnvironmen
     o << (e.instanced ? "I" : "i");
     o << e.boneWeights;
     o << e.ubt;
+    o << "S(" << e.shadowRes << "," << e.shadowDist << "," << e.shadowSpread << ","
+      << e.shadowFadeStart << "," << e.shadowFadeEnd << "," << e.shadowFactor << ","
+      << e.shadowFilterSize << "," << e.shadowFilterTaps << "," << unsigned(e.shadowDitherMode)
+      << ")";
+    o << e.staticValues;
     o << "]";
     return o;
 }
@@ -407,6 +435,8 @@ struct GfxGslMetadata {
     // Environment
     GfxGslEnvironment env;
     bool d3d9;
+    bool internal;
+    bool lightingTextures;
 };
 
 void gfx_gasoline_check (const std::string &vert_prog,
@@ -414,55 +444,69 @@ void gfx_gasoline_check (const std::string &vert_prog,
                          const std::string &additional_prog,
                          const GfxGslMetadata &md);
 
-GfxGasolineResult gfx_gasoline_compile_wireframe (GfxGslBackend backend,
-                                                  const std::string &vert_prog,
-                                                  const GfxGslMetadata &md);
+enum GfxGslPurpose {
+    // Rasterise model, write dangs to gbuffer
+    GFX_GSL_PURPOSE_FORWARD,
 
-GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
-                                            const std::string &vert_prog,
-                                            const std::string &colour_prog,
-                                            const GfxGslMetadata &md);
+    // Rasterise model, compute sun + env lighting
+    GFX_GSL_PURPOSE_ALPHA,
 
-GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
-                                            const std::string &vert_prog,
-                                            const std::string &colour_prog,
-                                            const GfxGslMetadata &md);
+    // Rasterise model in view space, compute sun, env, additional lighting
+    GFX_GSL_PURPOSE_FIRST_PERSON,
 
-GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
-                                                     const std::string &vert_prog,
-                                                     const std::string &dangs_prog,
-                                                     const std::string &additional_prog,
-                                                     const GfxGslMetadata &md);
+    // Rasterise model in view space, Fragments are all white
+    GFX_GSL_PURPOSE_FIRST_PERSON_WIREFRAME,
 
-GfxGasolineResult gfx_gasoline_compile_first_person_wireframe (GfxGslBackend backend,
-                                                               const std::string &vert_prog,
-                                                               const GfxGslMetadata &md);
+    // Rasterise model, write additional lighting to hdr buf (additive)
+    GFX_GSL_PURPOSE_ADDITIONAL,
 
-GfxGasolineResult gfx_gasoline_compile_das (GfxGslBackend backend,
-                                            const std::string &vert_prog,
-                                            const std::string &colour_prog,
-                                            const GfxGslMetadata &md);
+    // Rasterise model, use dangs but ignore result (discard only)
+    GFX_GSL_PURPOSE_SHADOW_CAST,
+
+    // Rasterise model, fragments are all white
+    GFX_GSL_PURPOSE_WIREFRAME,
 
 
-GfxGasolineResult gfx_gasoline_compile_decal (GfxGslBackend backend,
-                                              const std::string &dangs_prog,
-                                              const std::string &additional_prog,
-                                              const GfxGslMetadata &md);
+    // Rasterise model at camera, flatten z to max range
+    GFX_GSL_PURPOSE_SKY,
 
-GfxGasolineResult gfx_gasoline_compile_additional (GfxGslBackend backend,
-                                                   const std::string &vert_prog,
-                                                   const std::string &additional_prog,
-                                                   const GfxGslMetadata &md);
+    // Rasterise model, only additional used
+    GFX_GSL_PURPOSE_HUD,
 
-// To come!
-GfxGasolineResult gfx_gasoline_compile_forward (GfxGslBackend backend,
-                                                const std::string &vert_prog,
-                                                const std::string &fwd_prog,
-                                                const GfxGslMetadata &md);
+    // Not yet implemented.
+    GFX_GSL_PURPOSE_DECAL,
 
-GfxGasolineResult gfx_gasoline_compile_shadow_cast (GfxGslBackend backend,
-                                                    const std::string &vert_prog,
-                                                    const std::string &fwd_prog,
-                                                    const GfxGslMetadata &md);
+    // Fullscreen quad for deferred lighting, writes depth from gbuffer.
+    GFX_GSL_PURPOSE_DEFERRED_AMBIENT_SUN,
 
+    // Render appropriately-biased depth into a depth shadowmap (float32), honours discard from
+    // dangs.
+    GFX_GSL_PURPOSE_CAST,
+};
+
+static inline bool gfx_gasoline_does_lighting(GfxGslPurpose p)
+{
+    switch (p) {
+        case GFX_GSL_PURPOSE_FORWARD: return false;
+        case GFX_GSL_PURPOSE_ALPHA: return true;
+        case GFX_GSL_PURPOSE_FIRST_PERSON: return true;
+        case GFX_GSL_PURPOSE_FIRST_PERSON_WIREFRAME: return false;
+        case GFX_GSL_PURPOSE_ADDITIONAL: return false;
+        case GFX_GSL_PURPOSE_SHADOW_CAST: return false;
+        case GFX_GSL_PURPOSE_WIREFRAME: return false;
+        case GFX_GSL_PURPOSE_SKY: return false;
+        case GFX_GSL_PURPOSE_HUD: return false;
+        case GFX_GSL_PURPOSE_DECAL: return false;
+        case GFX_GSL_PURPOSE_DEFERRED_AMBIENT_SUN: return true;
+        case GFX_GSL_PURPOSE_CAST: return false;
+    }
+    return false;  // Why does compiler need this?
+}
+
+GfxGasolineResult gfx_gasoline_compile (GfxGslPurpose purpose,
+                                        GfxGslBackend backend,
+                                        const std::string &vert_prog,
+                                        const std::string &dangs_prog,
+                                        const std::string &additional_prog,
+                                        const GfxGslMetadata &md);
 #endif

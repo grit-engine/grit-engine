@@ -477,6 +477,7 @@ static void options_update (bool flush)
                                          * gfx_option(GFX_SHADOW_FILTER_SIZE);
         shader_scene_env.shadowSpread[2] = gfx_option(GFX_SHADOW_SPREAD_FACTOR2)
                                          * gfx_option(GFX_SHADOW_FILTER_SIZE);
+        shader_scene_env.shadowFilterSize = gfx_option(GFX_SHADOW_FILTER_SIZE);
     }
 
     if (reset_shadowmaps) {

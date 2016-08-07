@@ -40,37 +40,29 @@ void gfx_gasoline_unparse_cg (const GfxGslContext &ctx,
                               bool flat_z,
                               bool das);
 
-
-void gfx_gasoline_unparse_first_person_cg(const GfxGslContext &ctx,
-                                          const GfxGslTypeSystem *vert_ts,
-                                          const GfxGslAst *vert_ast,
-                                          const GfxGslTypeSystem *dangs_ts,
-                                          const GfxGslAst *dangs_ast,
-                                          const GfxGslTypeSystem *additional_ts,
-                                          const GfxGslAst *additional_ast,
-                                          std::string &vert_out,
-                                          std::string &frag_out,
-                                          const GfxGslEnvironment &env);
-
-
-void gfx_gasoline_unparse_first_person_wireframe_cg(const GfxGslContext &ctx,
-                                                    const GfxGslTypeSystem *vert_ts,
-                                                    const GfxGslAst *vert_ast,
-                                                    const GfxGslTypeSystem *additional_ts,
-                                                    const GfxGslAst *additional_ast,
-                                                    std::string &vert_out,
-                                                    std::string &frag_out,
-                                                    const GfxGslEnvironment &env);
-
-
-void gfx_gasoline_unparse_decal_cg(const GfxGslContext &ctx,
+void gfx_gasoline_unparse_body_cg (const GfxGslContext &ctx,
+                                   const GfxGslTypeSystem *vert_ts,
+                                   const GfxGslAst *vert_ast,
                                    const GfxGslTypeSystem *dangs_ts,
                                    const GfxGslAst *dangs_ast,
                                    const GfxGslTypeSystem *additional_ts,
                                    const GfxGslAst *additional_ast,
                                    std::string &vert_out,
                                    std::string &frag_out,
-                                   const GfxGslEnvironment &env);
+                                   const GfxGslEnvironment &env,
+                                   bool first_person,
+                                   bool wireframe,
+                                   bool forward_only,
+                                   bool cast);
+
+void gfx_gasoline_unparse_decal_cg (const GfxGslContext &ctx,
+                                    const GfxGslTypeSystem *dangs_ts,
+                                    const GfxGslAst *dangs_ast,
+                                    const GfxGslTypeSystem *additional_ts,
+                                    const GfxGslAst *additional_ast,
+                                    std::string &vert_out,
+                                    std::string &frag_out,
+                                    const GfxGslEnvironment &env);
 
 #endif
 

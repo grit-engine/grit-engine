@@ -90,35 +90,52 @@ bool operator== (const GfxGslParam &a, const GfxGslParam &b)
     return true;
 }
 
-static GfxGslTypeMap make_body_fields (GfxGslAllocator &alloc)
+static GfxGslFieldTypeMap make_body_fields (GfxGslAllocator &alloc)
 {
-    GfxGslTypeMap m;
+    GfxGslFieldTypeMap m;
 
     m["world"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    m["worldView"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    m["worldViewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
+    m["worldView"] = GfxGslFieldType(alloc.makeType<GfxGslFloatMatrixType>(4,4), true, false);
+    m["worldViewProj"] = GfxGslFieldType(alloc.makeType<GfxGslFloatMatrixType>(4,4), true, false);
+
+    m["paintDiffuse0"] = alloc.makeType<GfxGslFloatType>(3);
+    m["paintDiffuse1"] = alloc.makeType<GfxGslFloatType>(3);
+    m["paintDiffuse2"] = alloc.makeType<GfxGslFloatType>(3);
+    m["paintDiffuse3"] = alloc.makeType<GfxGslFloatType>(3);
+    m["paintMetallic0"] = alloc.makeType<GfxGslFloatType>(1);
+    m["paintMetallic1"] = alloc.makeType<GfxGslFloatType>(1);
+    m["paintMetallic2"] = alloc.makeType<GfxGslFloatType>(1);
+    m["paintMetallic3"] = alloc.makeType<GfxGslFloatType>(1);
+    m["paintSpecular0"] = alloc.makeType<GfxGslFloatType>(1);
+    m["paintSpecular1"] = alloc.makeType<GfxGslFloatType>(1);
+    m["paintSpecular2"] = alloc.makeType<GfxGslFloatType>(1);
+    m["paintSpecular3"] = alloc.makeType<GfxGslFloatType>(1);
+    m["paintGloss0"] = alloc.makeType<GfxGslFloatType>(1);
+    m["paintGloss1"] = alloc.makeType<GfxGslFloatType>(1);
+    m["paintGloss2"] = alloc.makeType<GfxGslFloatType>(1);
+    m["paintGloss3"] = alloc.makeType<GfxGslFloatType>(1);
 
     // Direct access to bone matrixes not allowed -- use transform_to_world.
 
     return m;
 }
  
-static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
+static GfxGslFieldTypeMap make_global_fields (GfxGslAllocator &alloc)
 {
-    GfxGslTypeMap m;
+    GfxGslFieldTypeMap m;
 
     m["cameraPos"] = alloc.makeType<GfxGslFloatType>(3);
     m["fovY"] = alloc.makeType<GfxGslFloatType>(1);
     m["proj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
     m["time"] = alloc.makeType<GfxGslFloatType>(1);
-    m["view"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    m["invView"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    m["viewportSize"] = alloc.makeType<GfxGslFloatType>(2);
-    m["viewProj"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    m["rayTopLeft"] = alloc.makeType<GfxGslFloatType>(3);
-    m["rayTopRight"] = alloc.makeType<GfxGslFloatType>(3);
-    m["rayBottomLeft"] = alloc.makeType<GfxGslFloatType>(3);
-    m["rayBottomRight"] = alloc.makeType<GfxGslFloatType>(3);
+    m["view"] = GfxGslFieldType(alloc.makeType<GfxGslFloatMatrixType>(4,4), true, false);
+    m["invView"] = GfxGslFieldType(alloc.makeType<GfxGslFloatMatrixType>(4,4), true, false);
+    m["viewportSize"] = GfxGslFieldType(alloc.makeType<GfxGslFloatType>(2), false, false);
+    m["viewProj"] = GfxGslFieldType(alloc.makeType<GfxGslFloatMatrixType>(4,4), false, false);
+    m["rayTopLeft"] = GfxGslFieldType(alloc.makeType<GfxGslFloatType>(3), true, false);
+    m["rayTopRight"] = GfxGslFieldType(alloc.makeType<GfxGslFloatType>(3), true, false);
+    m["rayBottomLeft"] = GfxGslFieldType(alloc.makeType<GfxGslFloatType>(3), true, false);
+    m["rayBottomRight"] = GfxGslFieldType(alloc.makeType<GfxGslFloatType>(3), true, false);
     m["nearClipDistance"] = alloc.makeType<GfxGslFloatType>(1);
     m["farClipDistance"] = alloc.makeType<GfxGslFloatType>(1);
 
@@ -158,32 +175,39 @@ static GfxGslTypeMap make_global_fields (GfxGslAllocator &alloc)
     m["skySunColour3"] = alloc.makeType<GfxGslFloatType>(3);
     m["skySunColour4"] = alloc.makeType<GfxGslFloatType>(3);
 
-    m["envCubeCrossFade"] = alloc.makeType<GfxGslFloatType>(1);
-    m["envCubeMipmaps0"] = alloc.makeType<GfxGslFloatType>(1);
-    m["envCubeMipmaps1"] = alloc.makeType<GfxGslFloatType>(1);
-    m["saturation"] = alloc.makeType<GfxGslFloatType>(1);
-    m["exposure"] = alloc.makeType<GfxGslFloatType>(1);
-    m["bloomThreshold"] = alloc.makeType<GfxGslFloatType>(1);
-    m["shadowViewProj0"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    m["shadowViewProj1"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
-    m["shadowViewProj2"] = alloc.makeType<GfxGslFloatMatrixType>(4,4);
+    m["envCubeCrossFade"] = GfxGslFieldType(alloc.makeType<GfxGslFloatType>(1), true, true);
+    m["envCubeMipmaps0"] = GfxGslFieldType(alloc.makeType<GfxGslFloatType>(1), true, true);
+    m["envCubeMipmaps1"] = GfxGslFieldType(alloc.makeType<GfxGslFloatType>(1), true, true);
+    m["saturation"] = GfxGslFieldType(alloc.makeType<GfxGslFloatType>(1), true, false);
+    m["exposure"] = GfxGslFieldType(alloc.makeType<GfxGslFloatType>(1), true, false);
+    m["bloomThreshold"] = GfxGslFieldType(alloc.makeType<GfxGslFloatType>(1), true, false);
+    m["shadowViewProj0"] = GfxGslFieldType(alloc.makeType<GfxGslFloatMatrixType>(4,4), true, true);
+    m["shadowViewProj1"] = GfxGslFieldType(alloc.makeType<GfxGslFloatMatrixType>(4,4), true, true);
+    m["shadowViewProj2"] = GfxGslFieldType(alloc.makeType<GfxGslFloatMatrixType>(4,4), true, true);
 
-    m["colourGradeLut"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 3);
-    m["envCube0"] = alloc.makeType<GfxGslFloatTextureCubeType>(GSL_BLACK);
-    m["envCube1"] = alloc.makeType<GfxGslFloatTextureCubeType>(GSL_BLACK);
-    m["fadeDitherMap"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
-    m["shadowPcfNoiseMap"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
-    m["shadowMap0"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
-    m["shadowMap1"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
-    m["shadowMap2"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
-    m["gbuffer0"] = alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
+    m["envCube0"] =
+        GfxGslFieldType(alloc.makeType<GfxGslFloatTextureCubeType>(GSL_BLACK), true, true);
+    m["envCube1"] =
+        GfxGslFieldType(alloc.makeType<GfxGslFloatTextureCubeType>(GSL_BLACK), true, true);
+    m["fadeDitherMap"] =
+        alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2);
+    m["gbuffer0"] =
+        GfxGslFieldType(alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2), true, false);
+    m["shadowPcfNoiseMap"] =
+        GfxGslFieldType(alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2), true, true);
+    m["shadowMap0"] =
+        GfxGslFieldType(alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2), true, true);
+    m["shadowMap1"] =
+        GfxGslFieldType(alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2), true, true);
+    m["shadowMap2"] =
+        GfxGslFieldType(alloc.makeType<GfxGslFloatTextureType>(GSL_BLACK, 2), true, true);
 
     return m;
 }
  
-std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslAllocator &alloc)
+GfxGslGlobalFuncTypeMap make_func_types (GfxGslAllocator &alloc)
 {
-    std::map<std::string, std::vector<GfxGslFunctionType*>> m;
+    GfxGslGlobalFuncTypeMap m;
 
     auto is = [&] (int i) -> GfxGslIntType* { return alloc.makeType<GfxGslIntType>(i); };
     auto fs = [&] (int i) -> GfxGslFloatType* { return alloc.makeType<GfxGslFloatType>(i); };
@@ -195,7 +219,7 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
 
     //GfxGslType *b = alloc.makeType<GfxGslBoolType>();
     // ts holds the set of all functions: float_n -> float_n
-    std::vector<GfxGslFunctionType*> ts;
+    std::vector<const GfxGslFunctionType*> ts;
     for (unsigned i=1 ; i<=4 ; ++i)
         ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(i)}, fs(i)));
     m["tan"] = ts;
@@ -209,7 +233,21 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
     m["abs"] = ts;
     m["sqrt"] = ts;
 
-    m["abs"] = {
+    m["floor"] = GfxGslFunctionTypes {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2)}, fs(2)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
+    };
+
+    m["ceil"] = GfxGslFunctionTypes {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2)}, fs(2)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
+    };
+
+    m["abs"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2)}, fs(2)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)),
@@ -220,30 +258,48 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(4)}, is(4)),
     };
 
-    m["pow"] = {
+    m["pow"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1)}, fs(1)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2), fs(1)}, fs(2)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(1)}, fs(3)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(1)}, fs(4)),
     };
 
-    m["strength"] = { alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1)}, fs(1)), };
+    m["strength"] = GfxGslFunctionTypes {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1)}, fs(1)),
+    };
 
-    m["atan2"] = { alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1)}, fs(1)) };
+    m["atan2"] = GfxGslFunctionTypes {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1)}, fs(1))
+    };
 
-    m["dot"] = {
+    m["dot"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(3)}, fs(1)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2), fs(2)}, fs(1)),
     };
-    m["normalize"] = { alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)) };
-    m["reflect"] = { alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(3)}, fs(3)) };
-    m["cross"] = { alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(3)}, fs(3)) };
+    m["normalise"] = GfxGslFunctionTypes {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3))
+    };
+    m["reflect"] = GfxGslFunctionTypes {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(3)}, fs(3))
+    };
+    m["cross"] = GfxGslFunctionTypes {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(3)}, fs(3))
+    };
 
-    m["rotate_to_world"] =
-        { alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)) };
+    m["desaturate"] = GfxGslFunctionTypes {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(1)}, fs(3))
+    };
 
-    m["transform_to_world"] =
-        { alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)) };
+    // TODO: only available in vertex shader -- needs a lot of varyings for instanced geometry.
+    m["rotate_to_world"] = GfxGslFunctionTypes {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3))
+    };
+
+    // TODO: only available in vertex shader -- needs a lot of varyings for instanced geometry.
+    m["transform_to_world"] = GfxGslFunctionTypes {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3))
+    };
 
     // ts holds the set of all functions: (float_n) -> float_1
     ts.clear();
@@ -257,11 +313,11 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
         ts.push_back(alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(i), fs(i), fs(i)}, fs(i)));
     m["clamp"] = ts;
 
-    m["Float"] = {
+    m["Float"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(1)}, fs(1)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
     };
-    m["Float2"] = {
+    m["Float2"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(1)}, fs(2)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(2)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(2)}, fs(2)),
@@ -269,7 +325,7 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
 
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1)}, fs(2))
     };
-    m["Float3"] = {
+    m["Float3"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(1)}, fs(3)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(3)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(3)}, fs(3)),
@@ -281,7 +337,7 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1), fs(1), fs(1)}, fs(3)),
     };
 
-    m["Float4"] = {
+    m["Float4"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(1)}, fs(4)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(4)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{is(4)}, fs(4)),
@@ -327,85 +383,89 @@ std::map<std::string, std::vector<GfxGslFunctionType*>> make_func_types (GfxGslA
     }
     m["mul"] = ts;
 
-    m["sample"] = {
+    m["sample"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{tex(2), fs(2)}, fs(4)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{tex(3), fs(3)}, fs(4)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{cube, fs(3)}, fs(4)),
     };
-    m["sampleGrad"] = {
+    m["sampleGrad"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{tex(2), fs(2), fs(2), fs(2)}, fs(4)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{tex(3), fs(3), fs(3), fs(3)}, fs(4)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{cube, fs(3), fs(3), fs(3)}, fs(4)),
     };
 
-    m["sampleLod"] = {
+    m["sampleLod"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{tex(2), fs(2), fs(1)}, fs(4)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{tex(3), fs(3), fs(1)}, fs(4)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{cube, fs(3), fs(1)}, fs(4)),
     };
 
-    m["pma_decode"] = {
+    m["pma_decode"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
     };
 
-    m["gamma_decode"] = {
+    m["gamma_decode"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2)}, fs(2)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
     };
 
-    m["gamma_encode"] = {
+    m["gamma_encode"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2)}, fs(2)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
     };
 
-    m["punctual_lighting"] = {
-        alloc.makeType<GfxGslFunctionType>(
-            GfxGslTypes{fs(3), fs(3), fs(3), fs(3), fs(1), fs(1), fs(3), fs(3)},
-            fs(3)),
-    };
+    m["sunlight"] = GfxGslGlobalFuncType(
+        GfxGslFunctionTypes {
+            alloc.makeType<GfxGslFunctionType>(
+                GfxGslTypes{fs(3), fs(3), fs(3), fs(3), fs(1), fs(1), fs(1)}, fs(3)),
+        }, true, true);
+        
 
+    m["envlight"] = GfxGslGlobalFuncType(
+        GfxGslFunctionTypes {
+            alloc.makeType<GfxGslFunctionType>(
+                GfxGslTypes{fs(3), fs(3), fs(3), fs(1), fs(1)}, fs(3)),
+        }, true, true);
 
-    m["sunlight"] = {
-        alloc.makeType<GfxGslFunctionType>(
-            GfxGslTypes{fs(3), fs(3), fs(3), fs(3), fs(1), fs(1), fs(1)},
-            fs(3)),
-    };
+    m["punctual_lighting"] = GfxGslGlobalFuncType(
+        GfxGslFunctionTypes {
+            alloc.makeType<GfxGslFunctionType>(
+                GfxGslTypes{fs(3), fs(3), fs(3), fs(3), fs(1), fs(1), fs(3), fs(3)}, fs(3)),
+        }, true, false);
 
-    m["envlight"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3), fs(3), fs(3), fs(1), fs(1)}, fs(3)),
-    };
+    m["unpack_deferred_diffuse_colour"] = GfxGslGlobalFuncType(
+        GfxGslFunctionTypes {
+            alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(3))
+        }, true, false);
+    m["unpack_deferred_specular"] = GfxGslGlobalFuncType(
+        GfxGslFunctionTypes {
+            alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
+        }, true, false);
+    m["unpack_deferred_shadow_cutoff"] = GfxGslGlobalFuncType(
+        GfxGslFunctionTypes {
+            alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
+        }, true, false);
+    m["unpack_deferred_gloss"] = GfxGslGlobalFuncType(
+        GfxGslFunctionTypes {
+            alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
+        }, true, false);
+    m["unpack_deferred_cam_dist"] = GfxGslGlobalFuncType(
+        GfxGslFunctionTypes {
+            alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
+        }, true, false);
+    m["unpack_deferred_normal"] = GfxGslGlobalFuncType(
+        GfxGslFunctionTypes {
+            alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(3))
+        }, true, false);
 
-    m["punctual_lighting"] = {
-        alloc.makeType<GfxGslFunctionType>(
-            GfxGslTypes{fs(3), fs(3), fs(3), fs(3), fs(1), fs(1), fs(3), fs(3)}, fs(3)),
-    };
-
-    m["tonemap"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3))
-    };
-
-    m["unpack_deferred_diffuse_colour"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(3))
-    };
-    m["unpack_deferred_specular"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
-    };
-    m["unpack_deferred_shadow_cutoff"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
-    };
-    m["unpack_deferred_gloss"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
-    };
-    m["unpack_deferred_cam_dist"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(1))
-    };
-    m["unpack_deferred_normal"] = {
-        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4), fs(4), fs(4)}, fs(3))
-    };
+    m["fog_weakness"] = GfxGslGlobalFuncType(
+        GfxGslFunctionTypes {
+            alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1))
+        }, true, false);
 
     return m;
 }
@@ -432,9 +492,9 @@ static GfxGslType *to_type (GfxGslAllocator &alloc, const GfxGslParam &p)
     EXCEPTEX << ENDL;
 }
 
-static GfxGslTypeMap make_mat_fields (GfxGslAllocator &alloc, const GfxGslRunParams &params)
+static GfxGslFieldTypeMap make_mat_fields (GfxGslAllocator &alloc, const GfxGslRunParams &params)
 {
-    GfxGslTypeMap r;
+    GfxGslFieldTypeMap r;
     for (auto pair : params)
         r[pair.first] = to_type(alloc, pair.second);
     return r;
@@ -461,7 +521,7 @@ static GfxGasolineResult type_check (const std::string &vert_prog,
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
         make_mat_fields(alloc, md.params), make_body_fields(alloc), md.env.ubt,
-        md.env.staticValues, md.d3d9,
+        md.env.staticValues, md.d3d9, md.internal, md.lightingTextures
     };
 
     GfxGslShader *vert_ast;
@@ -558,165 +618,253 @@ static GfxGasolineResult gfx_gasoline_compile_colour (const GfxGslBackend backen
     return type_check(vert_prog, "", colour_prog, md, cont);
 }
 
-GfxGasolineResult gfx_gasoline_compile_hud (GfxGslBackend backend,
-                                            const std::string &vert_prog,
-                                            const std::string &colour_prog,
-                                            const GfxGslMetadata &md)
+GfxGasolineResult gfx_gasoline_compile (GfxGslPurpose purpose,
+                                        GfxGslBackend backend,
+                                        const std::string &vert_prog,
+                                        const std::string &dangs_prog,
+                                        const std::string &additional_prog,
+                                        const GfxGslMetadata &md)
 {
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false, false);
-}
-
-GfxGasolineResult gfx_gasoline_compile_das (GfxGslBackend backend,
-                                            const std::string &vert_prog,
-                                            const std::string &colour_prog,
-                                            const GfxGslMetadata &md)
-{
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false, true);
-}
-
-GfxGasolineResult gfx_gasoline_compile_wireframe (GfxGslBackend backend,
-                                                  const std::string &vert_prog,
-                                                  const GfxGslMetadata &md)
-{
-    std::string colour_prog = "out.colour = Float3(1, 1, 1);\n";
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, false, false);
-}
-
-GfxGasolineResult gfx_gasoline_compile_sky (GfxGslBackend backend,
-                                            const std::string &vert_prog,
-                                            const std::string &colour_prog,
-                                            const GfxGslMetadata &md)
-{
-    return gfx_gasoline_compile_colour(backend, vert_prog, colour_prog, md, true, false);
-}
-
-GfxGasolineResult gfx_gasoline_compile_first_person (GfxGslBackend backend,
-                                                     const std::string &vert_prog,
-                                                     const std::string &dangs_prog,
-                                                     const std::string &additional_prog,
-                                                     const GfxGslMetadata &md)
-{
-    auto cont = [backend] (const GfxGslContext &ctx,
-                           const GfxGslTypeSystem &vert_ts,
-                           const GfxGslAst *vert_ast,
-                           const GfxGslTypeSystem &dangs_ts,
-                           const GfxGslAst *dangs_ast,
-                           const GfxGslTypeSystem &additional_ts,
-                           const GfxGslAst *additional_ast,
-                           const GfxGslMetadata &md)
-    -> GfxGasolineResult
-    {
-        std::string vert_out;
-        std::string frag_out;
-        switch (backend) {
-            case GFX_GSL_BACKEND_CG:
-            gfx_gasoline_unparse_first_person_cg(ctx, &vert_ts, vert_ast,
+    switch (purpose) {
+        case GFX_GSL_PURPOSE_FORWARD: {
+            auto cont = [backend] (const GfxGslContext &ctx,
+                                   const GfxGslTypeSystem &vert_ts,
+                                   const GfxGslAst *vert_ast,
+                                   const GfxGslTypeSystem &dangs_ts,
+                                   const GfxGslAst *dangs_ast,
+                                   const GfxGslTypeSystem &additional_ts,
+                                   const GfxGslAst *additional_ast,
+                                   const GfxGslMetadata &md)
+            -> GfxGasolineResult
+            {
+                std::string vert_out;
+                std::string frag_out;
+                switch (backend) {
+                    case GFX_GSL_BACKEND_CG:
+                    gfx_gasoline_unparse_body_cg(ctx, &vert_ts, vert_ast,
                                                  &dangs_ts, dangs_ast,
                                                  &additional_ts, additional_ast,
                                                  vert_out, frag_out,
-                                                 md.env);
-            break;
+                                                 md.env, false, false, true, false);
+                    break;
 
-            case GFX_GSL_BACKEND_GLSL:
-            gfx_gasoline_unparse_first_person_glsl(ctx, &vert_ts, vert_ast,
+                    case GFX_GSL_BACKEND_GLSL:
+                    gfx_gasoline_unparse_body_glsl(ctx, &vert_ts, vert_ast,
                                                    &dangs_ts, dangs_ast,
                                                    &additional_ts, additional_ast,
                                                    vert_out, frag_out,
-                                                   md.env);
-            break;
+                                                   md.env, false, false, true, false);
+                    break;
+                }
+                return {vert_out, frag_out};
+            };
+
+            return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
         }
-        return {vert_out, frag_out};
-    };
 
-    return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
-}
+        case GFX_GSL_PURPOSE_ALPHA: {
+            auto cont = [backend] (const GfxGslContext &ctx,
+                                   const GfxGslTypeSystem &vert_ts,
+                                   const GfxGslAst *vert_ast,
+                                   const GfxGslTypeSystem &dangs_ts,
+                                   const GfxGslAst *dangs_ast,
+                                   const GfxGslTypeSystem &additional_ts,
+                                   const GfxGslAst *additional_ast,
+                                   const GfxGslMetadata &md)
+            -> GfxGasolineResult
+            {
+                std::string vert_out;
+                std::string frag_out;
+                switch (backend) {
+                    case GFX_GSL_BACKEND_CG:
+                    gfx_gasoline_unparse_body_cg(ctx, &vert_ts, vert_ast,
+                                                 &dangs_ts, dangs_ast,
+                                                 &additional_ts, additional_ast,
+                                                 vert_out, frag_out,
+                                                 md.env, false, false, false, false);
+                    break;
 
-GfxGasolineResult gfx_gasoline_compile_first_person_wireframe (GfxGslBackend backend,
-                                                               const std::string &vert_prog,
-                                                               const GfxGslMetadata &md)
-{
-    std::string colour_prog = "out.colour = Float3(1, 1, 1);\n";
-    auto cont = [backend] (const GfxGslContext &ctx,
-                           const GfxGslTypeSystem &vert_ts,
-                           const GfxGslAst *vert_ast,
-                           const GfxGslTypeSystem &dangs_ts,
-                           const GfxGslAst *dangs_ast,
-                           const GfxGslTypeSystem &additional_ts,
-                           const GfxGslAst *additional_ast,
-                           const GfxGslMetadata &md)
-    -> GfxGasolineResult
-    {
-        (void) dangs_ts;
-        (void) dangs_ast;
-        std::string vert_out;
-        std::string frag_out;
-        switch (backend) {
-            case GFX_GSL_BACKEND_CG:
-            gfx_gasoline_unparse_first_person_wireframe_cg(ctx, &vert_ts, vert_ast,
-                                                           &additional_ts, additional_ast,
-                                                           vert_out, frag_out,
-                                                           md.env);
-            break;
+                    case GFX_GSL_BACKEND_GLSL:
+                    gfx_gasoline_unparse_body_glsl(ctx, &vert_ts, vert_ast,
+                                                   &dangs_ts, dangs_ast,
+                                                   &additional_ts, additional_ast,
+                                                   vert_out, frag_out,
+                                                   md.env, false, false, false, false);
+                    break;
+                }
+                return {vert_out, frag_out};
+            };
 
-            case GFX_GSL_BACKEND_GLSL:
-            gfx_gasoline_unparse_first_person_wireframe_glsl(ctx, &vert_ts, vert_ast,
-                                                             &additional_ts, additional_ast,
-                                                             vert_out, frag_out,
-                                                             md.env);
-            break;
+            return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
         }
-        return {vert_out, frag_out};
-    };
 
-    return type_check(vert_prog, "", colour_prog, md, cont);
-}
+        case GFX_GSL_PURPOSE_FIRST_PERSON: {
+            auto cont = [backend] (const GfxGslContext &ctx,
+                                   const GfxGslTypeSystem &vert_ts,
+                                   const GfxGslAst *vert_ast,
+                                   const GfxGslTypeSystem &dangs_ts,
+                                   const GfxGslAst *dangs_ast,
+                                   const GfxGslTypeSystem &additional_ts,
+                                   const GfxGslAst *additional_ast,
+                                   const GfxGslMetadata &md)
+            -> GfxGasolineResult
+            {
+                std::string vert_out;
+                std::string frag_out;
+                switch (backend) {
+                    case GFX_GSL_BACKEND_CG:
+                    gfx_gasoline_unparse_body_cg(ctx, &vert_ts, vert_ast,
+                                                 &dangs_ts, dangs_ast,
+                                                 &additional_ts, additional_ast,
+                                                 vert_out, frag_out,
+                                                 md.env, true, false, false, false);
+                    break;
 
-GfxGasolineResult gfx_gasoline_compile_decal (GfxGslBackend backend,
-                                              const std::string &dangs_prog,
-                                              const std::string &additional_prog,
-                                              const GfxGslMetadata &md)
-{
-    auto cont = [backend] (const GfxGslContext &ctx,
-                           const GfxGslTypeSystem &vert_ts,
-                           const GfxGslAst *vert_ast,
-                           const GfxGslTypeSystem &dangs_ts,
-                           const GfxGslAst *dangs_ast,
-                           const GfxGslTypeSystem &additional_ts,
-                           const GfxGslAst *additional_ast,
-                           const GfxGslMetadata &md)
-    -> GfxGasolineResult
-    {
-        // TODO: Ensure the dangs & additional shaders do not use vertex fields.
-        (void) vert_ts;
-        (void) vert_ast;
-        std::string vert_out;
-        std::string frag_out;
-        switch (backend) {
-            case GFX_GSL_BACKEND_CG:
-            gfx_gasoline_unparse_decal_cg(ctx, &dangs_ts, dangs_ast,
-                                          &additional_ts, additional_ast,
-                                          vert_out, frag_out,
-                                          md.env);
-            break;
+                    case GFX_GSL_BACKEND_GLSL:
+                    gfx_gasoline_unparse_body_glsl(ctx, &vert_ts, vert_ast,
+                                                   &dangs_ts, dangs_ast,
+                                                   &additional_ts, additional_ast,
+                                                   vert_out, frag_out,
+                                                   md.env, true, false, false, false);
+                    break;
+                }
+                return {vert_out, frag_out};
+            };
 
-            case GFX_GSL_BACKEND_GLSL:
-            gfx_gasoline_unparse_decal_glsl(ctx, &dangs_ts, dangs_ast,
-                                            &additional_ts, additional_ast,
-                                            vert_out, frag_out,
-                                            md.env);
-            break;
+            return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
         }
-        return {vert_out, frag_out};
-    };
 
-    return type_check("", dangs_prog, additional_prog, md, cont);
-}
+        case GFX_GSL_PURPOSE_FIRST_PERSON_WIREFRAME: {
+            std::string colour_prog = "out.colour = Float3(1, 1, 1);\n";
+            auto cont = [backend] (const GfxGslContext &ctx,
+                                   const GfxGslTypeSystem &vert_ts,
+                                   const GfxGslAst *vert_ast,
+                                   const GfxGslTypeSystem &dangs_ts,
+                                   const GfxGslAst *dangs_ast,
+                                   const GfxGslTypeSystem &additional_ts,
+                                   const GfxGslAst *additional_ast,
+                                   const GfxGslMetadata &md)
+            -> GfxGasolineResult
+            {
+                std::string vert_out;
+                std::string frag_out;
+                switch (backend) {
+                    case GFX_GSL_BACKEND_CG:
+                    gfx_gasoline_unparse_body_cg(ctx, &vert_ts, vert_ast,
+                                                 &dangs_ts, dangs_ast,
+                                                 &additional_ts, additional_ast,
+                                                 vert_out, frag_out,
+                                                 md.env, true, true, false, false);
+                    break;
 
+                    case GFX_GSL_BACKEND_GLSL:
+                    gfx_gasoline_unparse_body_glsl(ctx, &vert_ts, vert_ast,
+                                                   &dangs_ts, dangs_ast,
+                                                   &additional_ts, additional_ast,
+                                                   vert_out, frag_out,
+                                                   md.env, true, true, false, false);
+                    break;
+                }
+                return {vert_out, frag_out};
+            };
 
-GfxGasolineResult gfx_gasoline_compile_additional (GfxGslBackend backend,
-                                                   const std::string &vert_prog,
-                                                   const std::string &additional_prog,
-                                                   const GfxGslMetadata &md)
-{
-    return gfx_gasoline_compile_colour(backend, vert_prog, additional_prog, md, false, false);
+            return type_check(vert_prog, "", colour_prog, md, cont);
+        }
+
+        case GFX_GSL_PURPOSE_ADDITIONAL:
+        return gfx_gasoline_compile_colour(backend, vert_prog, additional_prog, md, false, false);
+
+        case GFX_GSL_PURPOSE_SHADOW_CAST:
+        EXCEPTEX << "Not implemented yet." << ENDL;
+
+        case GFX_GSL_PURPOSE_WIREFRAME: {
+            std::string white_prog = "out.colour = Float3(1, 1, 1);\n";
+            return gfx_gasoline_compile_colour(backend, vert_prog, white_prog, md, false, false);
+        }
+
+        case GFX_GSL_PURPOSE_SKY:
+        return gfx_gasoline_compile_colour(backend, vert_prog, additional_prog, md, true, false);
+
+        case GFX_GSL_PURPOSE_HUD:
+        return gfx_gasoline_compile_colour(backend, vert_prog, additional_prog, md, false, false);
+
+        case GFX_GSL_PURPOSE_DECAL: {
+            auto cont = [backend] (const GfxGslContext &ctx,
+                                   const GfxGslTypeSystem &vert_ts,
+                                   const GfxGslAst *vert_ast,
+                                   const GfxGslTypeSystem &dangs_ts,
+                                   const GfxGslAst *dangs_ast,
+                                   const GfxGslTypeSystem &additional_ts,
+                                   const GfxGslAst *additional_ast,
+                                   const GfxGslMetadata &md)
+            -> GfxGasolineResult
+            {
+                // TODO: Ensure the dangs & additional shaders do not use vertex fields.
+                (void) vert_ts;
+                (void) vert_ast;
+                std::string vert_out;
+                std::string frag_out;
+                switch (backend) {
+                    case GFX_GSL_BACKEND_CG:
+                    gfx_gasoline_unparse_decal_cg(ctx, &dangs_ts, dangs_ast,
+                                                  &additional_ts, additional_ast,
+                                                  vert_out, frag_out,
+                                                  md.env);
+                    break;
+
+                    case GFX_GSL_BACKEND_GLSL:
+                    gfx_gasoline_unparse_decal_glsl(ctx, &dangs_ts, dangs_ast,
+                                                    &additional_ts, additional_ast,
+                                                    vert_out, frag_out,
+                                                    md.env);
+                    break;
+                }
+                return {vert_out, frag_out};
+            };
+
+            return type_check("", dangs_prog, additional_prog, md, cont);
+        }
+
+        case GFX_GSL_PURPOSE_DEFERRED_AMBIENT_SUN:
+        return gfx_gasoline_compile_colour(backend, vert_prog, additional_prog, md, false, true);
+
+        case GFX_GSL_PURPOSE_CAST: {
+            auto cont = [backend] (const GfxGslContext &ctx,
+                                   const GfxGslTypeSystem &vert_ts,
+                                   const GfxGslAst *vert_ast,
+                                   const GfxGslTypeSystem &dangs_ts,
+                                   const GfxGslAst *dangs_ast,
+                                   const GfxGslTypeSystem &additional_ts,
+                                   const GfxGslAst *additional_ast,
+                                   const GfxGslMetadata &md)
+            -> GfxGasolineResult
+            {
+                std::string vert_out;
+                std::string frag_out;
+                switch (backend) {
+                    case GFX_GSL_BACKEND_CG:
+                    gfx_gasoline_unparse_body_cg(ctx, &vert_ts, vert_ast,
+                                                 &dangs_ts, dangs_ast,
+                                                 &additional_ts, additional_ast,
+                                                 vert_out, frag_out,
+                                                 md.env, false, false, false, true);
+                    break;
+
+                    case GFX_GSL_BACKEND_GLSL:
+                    gfx_gasoline_unparse_body_glsl(ctx, &vert_ts, vert_ast,
+                                                   &dangs_ts, dangs_ast,
+                                                   &additional_ts, additional_ast,
+                                                   vert_out, frag_out,
+                                                   md.env, false, false, false, true);
+                    break;
+                }
+                return {vert_out, frag_out};
+            };
+
+            return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
+        }
+
+    }
+
+    EXCEPTEX << "Unreachable" << ENDL;  // g++ bug requires this.
 }

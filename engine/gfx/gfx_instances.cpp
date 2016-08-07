@@ -263,7 +263,7 @@ void GfxInstances::updateProperties (void)
 
         GfxMaterial *gfx_material = s->getGritMaterial();
 
-        s->setMaterial(gfx_material->worldMat);
+        s->setMaterial(gfx_material->instancingMat);
 
         switch (gfx_material->getSceneBlend()) {
             case GFX_MATERIAL_OPAQUE:

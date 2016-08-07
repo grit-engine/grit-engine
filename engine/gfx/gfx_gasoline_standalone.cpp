@@ -38,7 +38,7 @@ const char *usage =
     "              | -p | --param <var> <type>       Declare a parameter\n"
     "              | -u | --unbind <tex>             Unbind a texture (will be all 1s)\n"
     "              | -d | --alpha_dither             Enable dithering via alpha texture\n"
-    "              | -i | --instanced               Enable instanced\n"
+    "              | -i | --instanced                Enable instanced\n"
     "              | -e | --env1                     One env box\n"
     "              | -E | --env2                     Two env boxes\n"
     "              | -b | --bones <n>                Number of blended bones\n"
@@ -96,6 +96,7 @@ int main (int argc, char **argv)
         bool no_more_switches = false;
         bool instanced = false;
         bool alpha_dither = false;
+        bool internal = false;
         unsigned env_boxes = 0;
         unsigned bones = 0;
         std::vector<std::string> args;
@@ -126,6 +127,8 @@ int main (int argc, char **argv)
             } else if (arg=="-u" || arg=="--unbind") {
                 std::string name = next_arg(so_far, argc, argv);
                 ubt.insert(name);
+            } else if (arg=="-I" || arg=="--internal") {
+                internal = true;
             } else if (arg=="-i" || arg=="--instanced") {
                 instanced = true;
             } else if (arg=="-d" || arg=="--alpha_dither") {
@@ -164,28 +167,24 @@ int main (int argc, char **argv)
         std::ifstream f;
 
         std::string vert_code;
-        if (vert_in_filename != "::none::")  {
-            f.open(vert_in_filename);
-            if (!f.good()) {
-                std::cerr << "Opening file: ";
-                perror(vert_in_filename.c_str());
-                return EXIT_FAILURE;
-            }
-            vert_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
-            f.close();
+        f.open(vert_in_filename);
+        if (!f.good()) {
+            std::cerr << "Opening file: ";
+            perror(vert_in_filename.c_str());
+            return EXIT_FAILURE;
         }
+        vert_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+        f.close();
 
         std::string dangs_code;
-        if (dangs_in_filename != "::none::") {
-            f.open(dangs_in_filename);
-            if (!f.good()) {
-                std::cerr << "Opening file: ";
-                perror(dangs_in_filename.c_str());
-                return EXIT_FAILURE;
-            }
-            dangs_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
-            f.close();
+        f.open(dangs_in_filename);
+        if (!f.good()) {
+            std::cerr << "Opening file: ";
+            perror(dangs_in_filename.c_str());
+            return EXIT_FAILURE;
         }
+        dangs_code.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+        f.close();
 
         f.open(additional_in_filename);
         if (!f.good()) {
@@ -207,34 +206,43 @@ int main (int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        GfxGslMetadata md;
-        md.params = params;
-        md.env.ubt = ubt;
-        md.env.staticValues = static_values;
-        md.env.fadeDither = alpha_dither;
-        md.env.envBoxes = env_boxes;
-        md.env.instanced = instanced;
-        md.env.boneWeights = bones;
-        md.d3d9 = true;
 
         GfxGasolineResult shaders;
         try {
+            GfxGslPurpose purpose;
             if (kind == "SKY") {
-                shaders = gfx_gasoline_compile_sky(backend, vert_code, additional_code, md);
+                purpose = GFX_GSL_PURPOSE_SKY;
             } else if (kind == "HUD") {
-                shaders = gfx_gasoline_compile_hud(backend, vert_code, additional_code, md);
+                purpose = GFX_GSL_PURPOSE_HUD;
+            } else if (kind == "FORWARD") {
+                purpose = GFX_GSL_PURPOSE_FORWARD;
+            } else if (kind == "ALPHA") {
+                purpose = GFX_GSL_PURPOSE_ALPHA;
             } else if (kind == "FIRST_PERSON") {
-                shaders = gfx_gasoline_compile_first_person(backend, vert_code, dangs_code,
-                                                            additional_code, md);
+                purpose = GFX_GSL_PURPOSE_FIRST_PERSON;
             } else if (kind == "FIRST_PERSON_WIREFRAME") {
-                shaders = gfx_gasoline_compile_first_person_wireframe(backend, vert_code,
-                                                                      md);
+                purpose = GFX_GSL_PURPOSE_FIRST_PERSON_WIREFRAME;
             } else if (kind == "DECAL") {
-                shaders = gfx_gasoline_compile_decal(backend, dangs_code, additional_code, md);
+                purpose = GFX_GSL_PURPOSE_DECAL;
+            } else if (kind == "CAST") {
+                purpose = GFX_GSL_PURPOSE_CAST;
             } else {
                 std::cerr << "Unrecognised shader kind language: " << kind << std::endl;
                 return EXIT_FAILURE;
             }
+            GfxGslMetadata md;
+            md.params = params;
+            md.env.ubt = ubt;
+            md.env.staticValues = static_values;
+            md.env.fadeDither = alpha_dither;
+            md.env.envBoxes = env_boxes;
+            md.env.instanced = instanced;
+            md.env.boneWeights = bones;
+            md.d3d9 = true;
+            md.internal = internal;
+            md.lightingTextures = gfx_gasoline_does_lighting(purpose);
+            shaders = gfx_gasoline_compile(purpose, backend, vert_code, dangs_code,
+                                           additional_code, md);
         } catch (const Exception &e) {
             EXCEPT << vert_in_filename << ", " << dangs_in_filename << ", "
                    << additional_in_filename << ": " << e.msg << ENDL;

@@ -117,7 +117,7 @@ void gfx_particle_init (void)
         "out.alpha = texel.a * part_alpha * part_exposed;\n";
 
     shader = gfx_shader_make_or_reset("/system/Particle",
-                                      vertex_code, "", colour_code, shader_params);
+                                      vertex_code, "", colour_code, shader_params, true);
 
 
 }
@@ -330,10 +330,10 @@ class GfxParticleSystem {
 
         // ISSUE RENDER COMMANDS
         try {
-            GfxMaterialTextureMap texs;
+            GfxTextureStateMap texs;
             // Bind this manually underneath as it is an Ogre internal texture.
-            texs["gbuffer0"] = { nullptr, false, 0};
-            texs["particleAtlas"] = { &*tex, true, 4};
+            texs["gbuffer0"] = gfx_texture_state_point(nullptr);
+            texs["particleAtlas"] = gfx_texture_state_anisotropic(&*tex, GFX_AM_CLAMP);
 
             GfxShaderBindings binds;
             binds["gbuffer0"] = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1,1,1,1);
@@ -342,13 +342,11 @@ class GfxParticleSystem {
 
             const Ogre::Matrix4 &I = Ogre::Matrix4::IDENTITY;
 
-            // Since we're disabling depth checks (so soft particles work properly), we may
-            // as well use the SKY GfxShader::Purpose as it has exactly the behavior needed.
-            // ACTUALLY... HUD is the same as SKY but without pushing all depth to the backplane.
-            shader->bindShader(GfxShader::HUD, false, false, 0,
+            // We may use a special particle "purpose" in future but this works for now.
+            shader->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
                                globs, I, nullptr, 0, 1, texs, binds);
 
-            ogre_rs->_setTexture(NUM_GLOBAL_TEXTURES, true, pipe->getGBufferTexture(0));
+            ogre_rs->_setTexture(NUM_GLOBAL_TEXTURES_NO_LIGHTING, true, pipe->getGBufferTexture(0));
 
             ogre_rs->_setCullingMode(Ogre::CULL_NONE);
             ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);

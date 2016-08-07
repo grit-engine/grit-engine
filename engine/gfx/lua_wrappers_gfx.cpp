@@ -298,27 +298,30 @@ TRY_END
 static int gfxbody_get_paint_colour (lua_State *L)
 {
 TRY_START
-    check_args(L,2);
-    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    int i = check_int(L,2,0,3);
+    check_args(L, 2);
+    GET_UD_MACRO(GfxBodyPtr, self, 1, GFXBODY_TAG);
+    int i = check_int(L, 2, 0, 3);
     GfxPaintColour col = self->getPaintColour(i);
+
     push_v3(L, col.diff);
     lua_pushnumber(L, col.met);
-    push_v3(L, col.spec);
-    return 3;
+    lua_pushnumber(L, col.gloss);
+    lua_pushnumber(L, col.spec);
+    return 4;
 TRY_END
 }
 
 static int gfxbody_set_paint_colour (lua_State *L)
 {
 TRY_START
-    check_args(L,5);
-    GET_UD_MACRO(GfxBodyPtr,self,1,GFXBODY_TAG);
-    int i = check_int(L,2,0,3);
+    check_args(L, 6);
+    GET_UD_MACRO(GfxBodyPtr, self, 1, GFXBODY_TAG);
+    int i = check_int(L, 2, 0, 3);
     GfxPaintColour col;
-    col.diff = check_v3(L,3);
-    col.met    = check_float(L,4);
-    col.spec = check_v3(L,5);
+    col.diff = check_v3(L, 3);
+    col.met = check_float(L, 4);
+    col.gloss = check_float(L, 5);
+    col.spec = check_float(L, 6);
     self->setPaintColour(i, col);
     return 0;
 TRY_END
@@ -3384,6 +3387,48 @@ static int global_gfx_gpu_ram_used (lua_State *L)
     return 1;
 }
 
+static lua_Number anim_rate (lua_Number n)
+{
+    // n * ANIM_TIME_MAX must be an integer k, since this means the animation
+    // will repeat k times within the period that the master time repeats.
+    return floor(n * ANIM_TIME_MAX + 0.5) / ANIM_TIME_MAX;
+}
+
+static int global_gfx_anim_rate (lua_State *L)
+{
+    check_args(L, 1);
+    switch (lua_type(L, 1)) {
+        case LUA_TNUMBER: {
+            lua_Number n = luaL_checknumber(L, 1);
+            lua_pushnumber(L, anim_rate(n));
+        }
+        break;
+
+        case LUA_TVECTOR2: {
+            Vector2 v = check_v2(L, 1);
+            push_v2(L, Vector2(anim_rate(v.x), anim_rate(v.y)));
+        }
+        break;
+
+        case LUA_TVECTOR3: {
+            Vector3 v = check_v3(L, 1);
+            push_v3(L, Vector3(anim_rate(v.x), anim_rate(v.y), anim_rate(v.z)));
+        }
+        break;
+
+        case LUA_TVECTOR4: {
+            Vector4 v = check_v4(L, 1);
+            push_v4(L, Vector4(anim_rate(v.x), anim_rate(v.y), anim_rate(v.z), anim_rate(v.w)));
+        }
+        break;
+
+        default:
+        my_lua_error(L, "Expected number or vec2/3/4.");
+    }
+    
+    return 1;
+}
+
 static int global_rgb_to_hsl (lua_State *L)
 {
     check_args(L,1);
@@ -4018,54 +4063,180 @@ TRY_END
 
 // new material interface
 
-static void add_texture (GfxMaterialTextureMap &textures, const std::string &key,
-                         const std::string &tex_name, bool clamp=false, int anisotropy=16)
-{
-    auto *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
-    if (tex == NULL) EXCEPT << "Resource is not a texture \"" << tex_name << "\"" << ENDL;
-    textures[key] = { tex, clamp, anisotropy };
-    //CVERB << key << " bound to texture " << tex_name << std::endl;
-}
-
-static void process_tex_blend (GfxMaterialTextureMap &textures, int counter, ExternalTable &src)
-{
-    std::stringstream counter_;
-    if (counter > 0)
-        counter_ << counter;
-    std::string i = counter_.str();
-
-    std::string diffuse_map;
-    if (src.get("diffuseMap", diffuse_map))
-        add_texture(textures, "diffuseMap" + i, diffuse_map);
-
-    std::string normal_map;
-    if (src.get("normalMap", normal_map))
-        add_texture(textures, "normalMap" + i, normal_map);
-
-    std::string gloss_map;
-    if (src.get("glossMap", gloss_map))
-        add_texture(textures, "glossMap" + i, gloss_map);
-}
-
 typedef std::map<std::string, ExternalTable> MatMap;
 static MatMap mat_map;
 
+static std::set<std::string> system_fields = {
+    "shader",
+    "sceneBlend",
+    "backfaces",
+    "shadowAlphaReject",
+    "castShadows",
+    "shadowBias",
+    "additionalLighting",
+    "blendedBones",
+};
+
+GfxTextureAddrMode addr_mode_from_string(const std::string &kind, const std::string &mat_name,
+                                         const std::string &param_name, const std::string &v)
+{
+    if (v == "WRAP")
+        return GFX_AM_WRAP;
+    else if (v == "MIRROR")
+        return GFX_AM_MIRROR;
+    else if (v == "CLAMP")
+        return GFX_AM_CLAMP;
+    else if (v == "BORDER")
+        return GFX_AM_BORDER;
+    else
+        EXCEPTEX << kind << " \"" << mat_name << "\" param " << param_name
+                 << " had invalid texture addressing mode: " << v << ENDL;
+}
+
+GfxTextureFilterMode filter_mode_from_string(const std::string &kind, const std::string &mat_name,
+                                             const std::string &param_name, const std::string &v)
+{
+    if (v == "NONE")
+        return GFX_FILTER_NONE;
+    else if (v == "POINT")
+        return GFX_FILTER_POINT;
+    else if (v == "LINEAR")
+        return GFX_FILTER_LINEAR;
+    else if (v == "ANISOTROPIC")
+        return GFX_FILTER_ANISOTROPIC;
+    else
+        EXCEPTEX << kind << " \"" << mat_name << "\" param " << param_name
+                 << " had invalid texture filtering mode: " << v << ENDL;
+}
+
+static void handle_param_binding(const std::string &kind, const std::string &mat_name,
+                                 GfxGslRunParams &bindings, GfxTextureStateMap &textures,
+                                 const GfxGslParam &p, ExternalTable &t, const std::string &k)
+{
+    APP_ASSERT(t.has(k));
+    lua_Number number;
+    Vector2 v2;
+    Vector3 v3;
+    Vector4 v4;
+    switch (p.t) {
+        case GFX_GSL_STATIC_FLOAT1:
+        case GFX_GSL_FLOAT1:
+        if (t.get(k, number)) {
+            bindings[k] = GfxGslParam::float1(number).copyStaticFrom(p);
+        } else {
+            EXCEPT << kind << " \"" << mat_name << "\" expected param " << k << " to have type: "
+                   << "number" << std::endl;
+        }
+        break;
+
+        case GFX_GSL_STATIC_FLOAT2:
+        case GFX_GSL_FLOAT2:
+        if (t.get(k, v2)) {
+            bindings[k] = GfxGslParam(v2).copyStaticFrom(p);
+        } else {
+            EXCEPT << kind << " \"" << mat_name << "\" expected param " << k << " to have type: "
+                   << "vector2" << std::endl;
+        }
+        break;
+
+        case GFX_GSL_STATIC_FLOAT3:
+        case GFX_GSL_FLOAT3:
+        if (t.get(k, v3)) {
+            bindings[k] = GfxGslParam(v3).copyStaticFrom(p);
+        } else {
+            EXCEPT << kind << " \"" << mat_name << "\" expected param " << k << " to have type: "
+                   << "vector3" << std::endl;
+        }
+        break;
+
+        case GFX_GSL_STATIC_FLOAT4:
+        case GFX_GSL_FLOAT4:
+        if (t.get(k, v4)) {
+            bindings[k] = GfxGslParam(v4).copyStaticFrom(p);
+        } else {
+            EXCEPT << kind << " \"" << mat_name << "\" expected param " << k << " to have type: "
+                   << "vector4" << std::endl;
+        }
+        break;
+
+        case GFX_GSL_STATIC_INT1:
+        case GFX_GSL_INT1:
+        EXCEPTEX << "Not implemented." << ENDL;
+
+        case GFX_GSL_STATIC_INT2:
+        case GFX_GSL_INT2:
+        EXCEPTEX << "Not implemented." << ENDL;
+
+        case GFX_GSL_STATIC_INT3:
+        case GFX_GSL_INT3:
+        EXCEPTEX << "Not implemented." << ENDL;
+
+        case GFX_GSL_STATIC_INT4:
+        case GFX_GSL_INT4:
+        EXCEPTEX << "Not implemented." << ENDL;
+
+        case GFX_GSL_FLOAT_TEXTURE1:
+        case GFX_GSL_FLOAT_TEXTURE2:
+        case GFX_GSL_FLOAT_TEXTURE3:
+        case GFX_GSL_FLOAT_TEXTURE4:
+        case GFX_GSL_FLOAT_TEXTURE_CUBE:
+        GfxTextureState state;
+        std::string tex_name;
+        SharedPtr<ExternalTable> t2;
+        if (t.get(k, tex_name)) {
+            auto *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
+            if (tex == NULL) EXCEPT << "Resource is not a texture \"" << tex_name << "\"" << ENDL;
+            state = gfx_texture_state_anisotropic(tex);
+        } else if (t.get(k, t2)) {
+            if (!t2->get("image", tex_name)) {
+                EXCEPT << kind << " \"" << mat_name << "\" param " << k
+                       << " texture assignment lacks 'image' field." << std::endl;
+            }
+            auto *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
+            if (tex == NULL) EXCEPT << "Resource is not a texture \"" << tex_name << "\"" << ENDL;
+            state.texture = tex;
+            std::string mode_u_str, mode_v_str, mode_w_str;
+            t2->get("modeU", mode_u_str, std::string("WRAP"));
+            t2->get("modeV", mode_v_str, std::string("WRAP"));
+            t2->get("modeW", mode_w_str, std::string("WRAP"));
+            state.modeU = addr_mode_from_string(kind, mat_name, k, mode_u_str);
+            state.modeV = addr_mode_from_string(kind, mat_name, k, mode_v_str);
+            state.modeW = addr_mode_from_string(kind, mat_name, k, mode_w_str);
+            std::string filter_min_str, filter_max_str, filter_mip_str;
+            t2->get("filterMin", filter_min_str, std::string("LINEAR"));
+            t2->get("filterMax", filter_max_str, std::string("LINEAR"));
+            t2->get("filterMip", filter_mip_str, std::string("ANISOTROPIC"));
+            state.filterMin = filter_mode_from_string(kind, mat_name, k, filter_min_str);
+            state.filterMax = filter_mode_from_string(kind, mat_name, k, filter_max_str);
+            state.filterMip = filter_mode_from_string(kind, mat_name, k, filter_mip_str);
+            lua_Number anisotropy;
+            t2->get("anisotropy", anisotropy, 16.0);
+            state.anisotropy = anisotropy;
+        } else {
+            EXCEPT << kind << " \"" << mat_name << "\" expected param " << k
+                   << " to be a texture assignment (name or table)." << std::endl;
+        }
+        //CVERB << key << " bound to texture " << state->getName() << std::endl;
+        textures[k] = state;
+        break;
+    }
+}
 static int global_register_material (lua_State *L)
 {
 TRY_START
 
-    check_args(L,2);
-    std::string name = check_path(L,1);
-    if (!lua_istable(L,2))
-        my_lua_error(L,"Second parameter should be a table");
+    check_args(L, 2);
+    std::string name = check_path(L, 1);
+    if (!lua_istable(L, 2))
+        my_lua_error(L, "Second parameter should be a table");
 
     //CVERB << name << std::endl;
 
     ExternalTable &t = mat_map[name];
     t.clear(L);
-    t.takeTableFromLuaStack(L,2);
+    t.takeTableFromLuaStack(L, 2);
 
-    GfxMaterialTextureMap textures;
+    GfxTextureStateMap textures;
     GfxGslRunParams bindings;
 
     std::string shader_name;
@@ -4075,87 +4246,71 @@ TRY_START
     GFX_MAT_SYNC;
     GfxMaterial *gfxmat = gfx_material_add_or_get(name);
 
-    lua_Number alpha;
-    if (t.has("alpha")) {
-        t.get("alpha", alpha, 1.0);
+    std::string scene_blend_str;
+    t.get("sceneBlend", scene_blend_str, std::string("OPAQUE"));
+    GfxMaterialSceneBlend scene_blend;
+    if (scene_blend_str == "OPAQUE") {
+        scene_blend = GFX_MATERIAL_OPAQUE;
+    } else if (scene_blend_str == "ALPHA") {
+        scene_blend = GFX_MATERIAL_ALPHA;
+    } else if (scene_blend_str == "ALPHA_DEPTH") {
+        scene_blend = GFX_MATERIAL_ALPHA_DEPTH;
     } else {
-        alpha = 1.0;
+        my_lua_error(L, "Unknown sceneBlend: " + scene_blend_str);
     }
-    bool has_alpha = alpha < 1;
+    gfxmat->setSceneBlend(scene_blend);
+    
+    bool backfaces;
+    t.get("backfaces", backfaces, true);
+    gfxmat->setBackfaces(backfaces);
 
-    bool depth_write;
-    t.get("depthWrite", depth_write, true);
-
+    bool shadow_alpha_reject;
+    t.get("shadowAlphaReject", shadow_alpha_reject, false);
+    gfxmat->setShadowAlphaReject(shadow_alpha_reject);
+   
     bool cast_shadows;
     t.get("castShadows", cast_shadows, true);
+    gfxmat->setCastShadows(cast_shadows);
+   
+    lua_Number shadow_bias;
+    t.get("shadowBias", shadow_bias, 0.0);
+    gfxmat->setShadowBias(shadow_bias);
    
     bool additional_lighting;
     t.get("additionalLighting", additional_lighting, false);
    
-  
-    gfxmat->setCastShadows(cast_shadows);
-    gfxmat->setSceneBlend(has_alpha ? depth_write ? GFX_MATERIAL_ALPHA_DEPTH : GFX_MATERIAL_ALPHA : GFX_MATERIAL_OPAQUE);
-    gfxmat->setAdditionalLighting(additional_lighting);
-
-    Vector3 emissive_colour;
-    t.get("emissiveColour", emissive_colour, Vector3(0,0,0));
-
-    Vector3 emissive_mask;
-    if (t.get("emissiveMask", emissive_mask))
-        bindings["emissiveMask"] = emissive_mask;
-
-    lua_Number specular_mask;
-    if (t.get("specularMask", specular_mask))
-        bindings["specularMask"] = GfxGslParam::float1(specular_mask);
-
-    lua_Number gloss_mask;
-    if (t.get("glossMask", gloss_mask))
-        bindings["glossMask"] = GfxGslParam::float1(gloss_mask);
-
-    lua_Number alpha_mask;
-    if (t.get("alphaMask", alpha_mask))
-        bindings["alphaMask"] = GfxGslParam::float1(alpha_mask);
-
-    lua_Number alpha_reject_threshold;
-    if (t.get("alphaRejectThreshold", alpha_reject_threshold))
-        bindings["alphaRejectThreshold"] = GfxGslParam::float1(alpha_reject_threshold);
-
-    Vector3 diffuse_mask;
-    if (t.get("diffuseMask", diffuse_mask))
-        bindings["diffuseMask"] = diffuse_mask;
-
-
-    std::string emissive_map;
-    if (t.get("emissiveMap", emissive_map))
-        add_texture(textures, "emissiveMap", emissive_map);
-
-    std::string paint_map;
-    if (t.get("paintMap", paint_map))
-        add_texture(textures, "paintMap", paint_map);
-
     lua_Number blended_bones;
     t.get("blendedBones", blended_bones, 0.0);
     if (blended_bones != floor(blended_bones) || blended_bones < 0) {
         my_lua_error(L,"blendedBones must be a non-negative integer");
     }
+    gfxmat->setBoneBlendWeights(blended_bones);
+  
+    gfxmat->setAdditionalLighting(additional_lighting);
 
-    SharedPtr<ExternalTable> blend;
-    if(t.get("blend", blend)) {
-        for (lua_Number i=1 ; i<=4 ; ++i) {
-            unsigned i_ = unsigned(i)-1;
-            SharedPtr<ExternalTable> texBlends;
-            if (!blend->get(i, texBlends))
-                break;
-            process_tex_blend(textures, i_, *texBlends);
+
+    const GfxGslRunParams &params = shader->getParams();
+    for (const auto &pair : t) {
+        const std::string &k = pair.first;
+        if (system_fields.find(k) != system_fields.end()) continue;
+        auto it = params.find(k);
+        if (it == params.end()) {
+            EXCEPT << "Material \"" << name << "\" references unknown uniform: "
+                   << pair.first << std::endl;
         }
-    } else {
-        process_tex_blend(textures, 0, t);
+        handle_param_binding("Material", name, bindings, textures, it->second, t, k);
+    }
+    for (const auto &pair : params) {
+        if (t.has(pair.first)) continue;
+        // Use default.
+        bindings[pair.first] = pair.second;
     }
 
     gfxmat->setShader(shader);
     gfxmat->setTextures(textures);
     gfxmat->setBindings(bindings);
-    gfxmat->setBoneBlendWeights(blended_bones);
+
+    gfxmat->buildOgreMaterials();
 
     return 0;
 TRY_END
@@ -4265,66 +4420,20 @@ TRY_START
     std::string scene_blend;
     t.get("sceneBlend", scene_blend, std::string("OPAQUE"));
 
-    GfxMaterialTextureMap textures;
+    GfxTextureStateMap textures;
     GfxShaderBindings bindings;
 
-    typedef ExternalTable::KeyIterator KI;
-    for (KI i=t.begin(), i_=t.end() ; i!=i_ ; ++i) {
-        const std::string &key = i->first; 
-        if (key == "shader") continue;
-        if (key == "sceneBlend") continue;
-
-        // must be a texture or param
-
-        SharedPtr<ExternalTable> tab;
-        if (!t.get(key, tab)) {
-            my_lua_error(L, "Uniform \""+key+"\" incorrectly defined");
+    const GfxGslRunParams &params = shader->getParams();
+    for (const auto &pair : t) {
+        const std::string &k = pair.first;
+        if (k == "shader") continue;
+        if (k == "sceneBlend") continue;
+        auto it = params.find(k);
+        if (it == params.end()) {
+            CERR << "Material \"" << name << "\" references unknown uniform: "
+                 << pair.first << std::endl;
         }
-
-        std::string uniform_kind;
-        if (!tab->get("uniformKind", uniform_kind)) {
-            my_lua_error(L, "Uniform \""+key+"\" expected string 'uniformKind' field.");
-        }
-
-        if (uniform_kind == "PARAM") {
-
-            std::string value_kind; // type of the actual data (e.g. FLOAT)
-            if (!tab->get("valueKind", value_kind)) {
-                my_lua_error(L, "Uniform \""+key+"\" expected string 'valueKind' field.");
-            }
-
-            if (value_kind=="FLOAT") {
-                GfxGslParam bind;
-                std::vector<float> vs;
-                for (unsigned i=1 ; true ; ++i) {
-                    lua_Number def;
-                    if (tab->get(i, def)) {
-                        vs.push_back(def);
-                    } else break;
-                }
-                switch (vs.size()) {
-                    case 0: my_lua_error(L, "Uniform \"" + key + "\" must have a default value");
-                    case 1: bind = GfxGslParam::float1(vs[0]); break;
-                    case 2: bind = GfxGslParam::float2(vs[0], vs[1]); break;
-                    case 3: bind = GfxGslParam::float3(vs[0], vs[1], vs[2]); break;
-                    case 4: bind = GfxGslParam::float4(vs[0], vs[1], vs[2], vs[3]); break;
-                    default: my_lua_error(L, "Uniform \"" + key + "\" unsupported number of default values");
-                }
-                bindings[key] = bind;
-            } else {
-                my_lua_error(L, "Uniform \""+key+"\" unrecognised 'valueKind' field: \""+value_kind+"\"");
-            }
-
-        } else if (uniform_kind == "TEXTURE2D") {
-
-            std::string tex_name;
-            bool has_tex = tab->get("name", tex_name);
-            APP_ASSERT(has_tex);
-            add_texture(textures, key, tex_name);
-
-        } else {
-            my_lua_error(L, "Did not understand 'uniformKind' value \""+uniform_kind+"\"");
-        }
+        handle_param_binding("Sky material", name, bindings, textures, it->second, t, k);
     }
 
     gfxskymat->setShader(shader);
@@ -4426,9 +4535,9 @@ TRY_START
         uniforms[key] = uniform;
     }
 
-    gfx_shader_check(name, vertex_code, dangs_code, colour_code, uniforms);
+    gfx_shader_check(name, vertex_code, dangs_code, colour_code, uniforms, false);
 
-    gfx_shader_make_or_reset(name, vertex_code, dangs_code, colour_code, uniforms);
+    gfx_shader_make_or_reset(name, vertex_code, dangs_code, colour_code, uniforms, false);
 
     return 0;
 TRY_END
@@ -4668,6 +4777,8 @@ static const luaL_reg global[] = {
 
     {"gfx_gpu_ram_available", global_gfx_gpu_ram_available},
     {"gfx_gpu_ram_used", global_gfx_gpu_ram_used},
+
+    {"gfx_anim_rate", global_gfx_anim_rate},
 
     {"RGBtoHSL", global_rgb_to_hsl},
     {"HSLtoRGB", global_hsl_to_rgb},

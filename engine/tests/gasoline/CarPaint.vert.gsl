@@ -1,0 +1,4 @@
+out.position = transform_to_world(vert.position.xyz);
+var normal_ws = rotate_to_world(vert.normal.xyz);
+var tangent_ws = rotate_to_world(vert.tangent.xyz);
+var binormal_ws = vert.tangent.w * cross(normal_ws, tangent_ws);
