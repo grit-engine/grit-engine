@@ -4246,6 +4246,9 @@ TRY_START
     GFX_MAT_SYNC;
     GfxMaterial *gfxmat = gfx_material_add_or_get(name);
 
+    // In case we crash early, leave the materials in a reasonable state.
+    gfxmat->buildOgreMaterials();
+
     std::string scene_blend_str;
     t.get("sceneBlend", scene_blend_str, std::string("OPAQUE"));
     GfxMaterialSceneBlend scene_blend;
