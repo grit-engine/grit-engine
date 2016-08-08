@@ -11,4 +11,4 @@ arr[4] = arr[3];
 var test = abs(-3);
 
 out.colour = Float3(r, 0, 0);
-out.alpha = 1;
+out.alpha = fract(0.0) + 1;

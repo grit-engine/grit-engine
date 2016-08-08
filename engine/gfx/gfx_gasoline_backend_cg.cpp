@@ -141,6 +141,11 @@ static std::string generate_funcs (const GfxGslEnvironment &env)
     ss << "Float2 abs (Float2 v) { return max(v, -v); }\n";
     ss << "Float3 abs (Float3 v) { return max(v, -v); }\n";
     ss << "Float4 abs (Float4 v) { return max(v, -v); }\n";
+    // Rename frac to fract
+    ss << "Float fract (Float v) { return frac(v); }\n";
+    ss << "Float2 fract (Float2 v) { return frac(v); }\n";
+    ss << "Float3 fract (Float3 v) { return frac(v); }\n";
+    ss << "Float4 fract (Float4 v) { return frac(v); }\n";
     ss << "\n";
 
     ss << "Float4x4 get_inst_matrix()\n";
