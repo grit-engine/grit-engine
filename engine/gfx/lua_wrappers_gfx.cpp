@@ -4264,7 +4264,7 @@ TRY_START
     gfxmat->setSceneBlend(scene_blend);
     
     bool backfaces;
-    t.get("backfaces", backfaces, true);
+    t.get("backfaces", backfaces, false);
     gfxmat->setBackfaces(backfaces);
 
     bool shadow_alpha_reject;
