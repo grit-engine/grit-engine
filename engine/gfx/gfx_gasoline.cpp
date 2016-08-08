@@ -233,6 +233,13 @@ GfxGslGlobalFuncTypeMap make_func_types (GfxGslAllocator &alloc)
     m["abs"] = ts;
     m["sqrt"] = ts;
 
+    m["fract"] = GfxGslFunctionTypes {
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2)}, fs(2)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(3)}, fs(3)),
+        alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(4)}, fs(4)),
+    };
+
     m["floor"] = GfxGslFunctionTypes {
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(1)}, fs(1)),
         alloc.makeType<GfxGslFunctionType>(GfxGslTypes{fs(2)}, fs(2)),
