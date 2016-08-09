@@ -4183,6 +4183,7 @@ static void handle_param_binding(const std::string &kind, const std::string &mat
         GfxTextureState state;
         std::string tex_name;
         SharedPtr<ExternalTable> t2;
+        Vector4 solid_colour;
         if (t.get(k, tex_name)) {
             auto *tex = dynamic_cast<GfxTextureDiskResource*>(disk_resource_get_or_make(tex_name));
             if (tex == NULL) EXCEPT << "Resource is not a texture \"" << tex_name << "\"" << ENDL;
@@ -4212,6 +4213,9 @@ static void handle_param_binding(const std::string &kind, const std::string &mat
             lua_Number anisotropy;
             t2->get("anisotropy", anisotropy, 16.0);
             state.anisotropy = anisotropy;
+        } else if (t.get(k, solid_colour)) {
+            bindings[k] = GfxGslParam(solid_colour).copyStaticFrom(p);
+            break;
         } else {
             EXCEPT << kind << " \"" << mat_name << "\" expected param " << k
                    << " to be a texture assignment (name or table)." << std::endl;
@@ -4306,6 +4310,7 @@ TRY_START
     for (const auto &pair : params) {
         if (t.has(pair.first)) continue;
         // Use default.
+        if (gfx_gasoline_param_is_texture(pair.second)) continue;
         bindings[pair.first] = pair.second;
     }
 

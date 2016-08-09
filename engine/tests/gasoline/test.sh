@@ -45,7 +45,7 @@ do_check() {
 test_sky() {
     local TARGET="$1"
     local SHADER="$2"
-    local PARAMS="-p starfieldMap FloatTexture2 -p starfieldMask Float3 -p perlin FloatTexture2 -p perlinN FloatTexture2 -p emissiveMap FloatTexture2 -p emissiveMask Float3 -p alphaMask Float -p alphaRejectThreshold Float -p premultipliedAlpha StaticFloat"
+    local PARAMS="-p starfieldMap FloatTexture2 -p starfieldMask Float3 -p perlin FloatTexture2 -p perlinN FloatTexture2 -p emissiveMap FloatTexture2 -p emissiveMask Float3 -p alphaMask Float -p alphaRejectThreshold Float -p premultipliedAlpha StaticFloat -U emissiveMap"
     local UBT="-u perlinN"
     local TLANG=""
     test $TARGET == "cg" && TLANG="-C"
@@ -76,7 +76,7 @@ test_body() {
     local BONE_WEIGHTS="$3"
     local KIND="$4"
     local INSTANCED="$5"
-    local PARAMS="$INSTANCED -p alphaMask Float -p alphaRejectThreshold Float -p diffuseMap FloatTexture2 -p diffuseMask Float3 -p normalMap FloatTexture2 -p glossMap FloatTexture2 -p glossMask Float -p specularMask Float -p emissiveMap FloatTexture2 -p emissiveMask Float3 -b $BONE_WEIGHTS"
+    local PARAMS="$INSTANCED -p alphaMask Float -p alphaRejectThreshold Float -p diffuseMap FloatTexture2 -p diffuseMask Float3 -p normalMap FloatTexture2 -p glossMap FloatTexture2 -p glossMask Float -p specularMask Float -p emissiveMap FloatTexture2 -p emissiveMask Float3 -b $BONE_WEIGHTS -U paintSelectionMap"
     local UBT="-u normalMap"
     local TLANG=""
     test $TARGET == "cg" && TLANG="-C"

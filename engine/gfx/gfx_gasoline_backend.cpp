@@ -446,7 +446,11 @@ std::string gfx_gasoline_generate_global_fields (const GfxGslContext &ctx, bool 
         auto it = ctx.ubt.find(pair.first);
         if (auto *tt = dynamic_cast<const GfxGslTextureType*>(pair.second.t)) {
             if (it != ctx.ubt.end()) {
-                ss << "const Float4 mat_" << pair.first << " = " << tt->solid;
+                if (it->second) {
+                    ss << "uniform Float4 mat_" << pair.first;
+                } else {
+                    ss << "const Float4 mat_" << pair.first << " = " << tt->solid;
+                }
             } else {
                 ss << "uniform " << pair.second.t << " mat_" << pair.first;
                 if (reg) {
