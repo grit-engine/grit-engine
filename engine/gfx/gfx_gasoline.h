@@ -274,7 +274,26 @@ static inline std::ostream &operator<< (std::ostream &o, const GfxGslParam &p)
 */
 
 typedef std::map<std::string, GfxGslParam> GfxGslRunParams;
-typedef std::set<std::string> GfxGslUnboundTextures;
+// If maps to false, texture should use static value (from TextureType).
+// If maps to true, texture is a solid uniform with the same name.
+typedef std::map<std::string, bool> GfxGslUnboundTextures;
+
+static inline std::ostream &operator<< (std::ostream &o, const GfxGslUnboundTextures &ubt)
+{
+    bool any = false;
+    const char *prefix = "{";
+    for (const auto &pair : ubt) {
+        any = true;
+        o << prefix;
+        o << pair.first;
+        o << ":";
+        o << pair.second;
+        prefix = ",";
+    }
+    if (!any) o << "{";
+    o << "}";
+    return o;
+}
 
 struct GfxGasolineResult {
     std::string vertexShader;
@@ -326,7 +345,8 @@ namespace std {
 struct GfxGslEnvironment {
     // Varies depending on whether we're blending alpha or not.
     bool fadeDither;
-    // What textures should be bound as a solid colour.
+    // What textures should be bound as a uniform (true) or static solid colour (false)
+    // The static solid colour is found in the params (it's the default).
     GfxGslUnboundTextures ubt;
     // Actual values for static params that will be inlined in the generated code.
     GfxGslRunParams staticValues;

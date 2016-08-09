@@ -220,7 +220,7 @@ NativePair GfxShader::getNativePair (GfxGslPurpose purpose,
         // Find undefined textures.
         if (gfx_gasoline_param_is_texture(u.second)) {
             if (textures.find(u.first) == textures.end()) {
-                ubt.insert(u.first);
+                ubt[u.first] = bindings.find(u.first) != bindings.end();
             }
         }
     }
@@ -231,7 +231,7 @@ NativePair GfxShader::getNativePair (GfxGslPurpose purpose,
             statics[bind.first] = bind.second;
         }
     }
-    return getNativePair(purpose, fade_dither, env_boxes, instanced, bone_weights,ubt, statics);
+    return getNativePair(purpose, fade_dither, env_boxes, instanced, bone_weights, ubt, statics);
 }
 
 NativePair GfxShader::getNativePair (GfxGslPurpose purpose,
@@ -358,11 +358,27 @@ void GfxShader::bindShaderParams (int counter,
             auto it = textures.find(name);
             // material might leave a given texture undefined in which case we
             // are using the shader without that texture so do not bind it
-            if (it == textures.end()) continue;
-            if (backend == GFX_GSL_BACKEND_GLSL) {
-                hack_set_constant(vparams, fparams, "mat_" + name, counter);
+            if (it == textures.end()) {
+                auto bind = bindings.find(name);
+                if (bind == bindings.end()) {
+                    // Completely unbound texture, must be in ubt
+                    continue;
+                }
+                // Solid colour texture, bind as a non-texture uniform.
+                const GfxGslParam &v = bind->second;
+                if (v.t != GFX_GSL_FLOAT4) {
+                    EXCEPTEX << "Solid texture \"" << name << "\" had wrong type in shader "
+                             << "\"" << this->name << "\": got " << v.t << " but expected "
+                             << GFX_GSL_FLOAT4 << ENDL;
+                }
+                hack_set_constant(vparams, fparams, "mat_" + name,
+                                  Vector4(v.fs.r, v.fs.g, v.fs.b, v.fs.a));
+            } else {
+                if (backend == GFX_GSL_BACKEND_GLSL) {
+                    hack_set_constant(vparams, fparams, "mat_" + name, counter);
+                }
+                counter++;
             }
-            counter++;
 
         } else {
             const GfxGslParam *vptr = &param;
@@ -372,8 +388,9 @@ void GfxShader::bindShaderParams (int counter,
                 if (bt == param.t) {
                     vptr = &bind->second;
                 } else {
-                    CERR << "Binding \"" << name << "\" had wrong type in shader "
-                         << "\"" << name << "\": got " << bt << " but expected " << vptr->t << std::endl;
+                    EXCEPTEX << "Binding \"" << name << "\" had wrong type in shader "
+                             << "\"" << this->name << "\": got " << bt << " but expected "
+                             << vptr->t << ENDL;
                 }
             }
             const auto &v = *vptr;
@@ -387,11 +404,13 @@ void GfxShader::bindShaderParams (int counter,
                 break;
 
                 case GFX_GSL_FLOAT3:
-                hack_set_constant(vparams, fparams, "mat_" + name, Vector3(v.fs.r, v.fs.g, v.fs.b));
+                hack_set_constant(vparams, fparams, "mat_" + name,
+                                  Vector3(v.fs.r, v.fs.g, v.fs.b));
                 break;
 
                 case GFX_GSL_FLOAT4:
-                hack_set_constant(vparams, fparams, "mat_" + name, Vector4(v.fs.r, v.fs.g, v.fs.b, v.fs.a));
+                hack_set_constant(vparams, fparams, "mat_" + name,
+                                  Vector4(v.fs.r, v.fs.g, v.fs.b, v.fs.a));
                 break;
 
                 case GFX_GSL_INT1:

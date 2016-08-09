@@ -126,7 +126,10 @@ int main (int argc, char **argv)
                 }
             } else if (arg=="-u" || arg=="--unbind") {
                 std::string name = next_arg(so_far, argc, argv);
-                ubt.insert(name);
+                ubt[name] = false;
+            } else if (arg=="-U" || arg=="--unbind-to-uniform") {
+                std::string name = next_arg(so_far, argc, argv);
+                ubt[name] = true;
             } else if (arg=="-I" || arg=="--internal") {
                 internal = true;
             } else if (arg=="-i" || arg=="--instanced") {
