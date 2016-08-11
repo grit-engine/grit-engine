@@ -4467,22 +4467,21 @@ TRY_START
 
     std::string vertex_code;
     std::string dangs_code;
-    std::string colour_code;
+    std::string additional_code;
 
     if (!t.get("vertexCode", vertex_code))
         my_lua_error(L, "Shader \"" + name + "\" did not specify vertexCode.");
     t.get("dangsCode", dangs_code, std::string());
-    t.get("colourCode", colour_code, std::string());
+    t.get("additionalCode", additional_code, std::string());
 
     GfxGslRunParams uniforms;
 
     typedef ExternalTable::KeyIterator KI;
     for (KI i=t.begin(), i_=t.end() ; i!=i_ ; ++i) {
         const std::string &key = i->first; 
-        if (key == "variants") continue;
         if (key == "vertexCode") continue;
         if (key == "dangsCode") continue;
-        if (key == "colourCode") continue;
+        if (key == "additionalCode") continue;
 
         // must be a texture or param
         GfxGslParam uniform;
@@ -4543,9 +4542,9 @@ TRY_START
         uniforms[key] = uniform;
     }
 
-    gfx_shader_check(name, vertex_code, dangs_code, colour_code, uniforms, false);
+    gfx_shader_check(name, vertex_code, dangs_code, additional_code, uniforms, false);
 
-    gfx_shader_make_or_reset(name, vertex_code, dangs_code, colour_code, uniforms, false);
+    gfx_shader_make_or_reset(name, vertex_code, dangs_code, additional_code, uniforms, false);
 
     return 0;
 TRY_END
