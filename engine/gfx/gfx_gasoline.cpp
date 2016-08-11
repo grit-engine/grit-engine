@@ -781,9 +781,6 @@ GfxGasolineResult gfx_gasoline_compile (GfxGslPurpose purpose,
         case GFX_GSL_PURPOSE_ADDITIONAL:
         return gfx_gasoline_compile_colour(backend, vert_prog, additional_prog, md, false, false);
 
-        case GFX_GSL_PURPOSE_SHADOW_CAST:
-        EXCEPTEX << "Not implemented yet." << ENDL;
-
         case GFX_GSL_PURPOSE_WIREFRAME: {
             std::string white_prog = "out.colour = Float3(1, 1, 1);\n";
             return gfx_gasoline_compile_colour(backend, vert_prog, white_prog, md, false, false);

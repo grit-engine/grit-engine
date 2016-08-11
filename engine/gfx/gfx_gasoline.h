@@ -481,7 +481,8 @@ enum GfxGslPurpose {
     GFX_GSL_PURPOSE_ADDITIONAL,
 
     // Rasterise model, use dangs but ignore result (discard only)
-    GFX_GSL_PURPOSE_SHADOW_CAST,
+    // Render appropriately-biased depth into a depth shadowmap (float32)
+    GFX_GSL_PURPOSE_CAST,
 
     // Rasterise model, fragments are all white
     GFX_GSL_PURPOSE_WIREFRAME,
@@ -498,10 +499,6 @@ enum GfxGslPurpose {
 
     // Fullscreen quad for deferred lighting, writes depth from gbuffer.
     GFX_GSL_PURPOSE_DEFERRED_AMBIENT_SUN,
-
-    // Render appropriately-biased depth into a depth shadowmap (float32), honours discard from
-    // dangs.
-    GFX_GSL_PURPOSE_CAST,
 };
 
 static inline bool gfx_gasoline_does_lighting(GfxGslPurpose p)
@@ -512,13 +509,12 @@ static inline bool gfx_gasoline_does_lighting(GfxGslPurpose p)
         case GFX_GSL_PURPOSE_FIRST_PERSON: return true;
         case GFX_GSL_PURPOSE_FIRST_PERSON_WIREFRAME: return false;
         case GFX_GSL_PURPOSE_ADDITIONAL: return false;
-        case GFX_GSL_PURPOSE_SHADOW_CAST: return false;
+        case GFX_GSL_PURPOSE_CAST: return false;
         case GFX_GSL_PURPOSE_WIREFRAME: return false;
         case GFX_GSL_PURPOSE_SKY: return false;
         case GFX_GSL_PURPOSE_HUD: return false;
         case GFX_GSL_PURPOSE_DECAL: return false;
         case GFX_GSL_PURPOSE_DEFERRED_AMBIENT_SUN: return true;
-        case GFX_GSL_PURPOSE_CAST: return false;
     }
     return false;  // Why does compiler need this?
 }
