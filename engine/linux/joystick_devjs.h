@@ -38,14 +38,6 @@ public:
                                std::vector<signed char> *axes_indexes,
                                std::vector<short int> *axes_values);
 
-        virtual void setPos(int x, int y);
-
-        virtual void setHide(bool toggle);
-        virtual bool getHide();
-
-        virtual void setGrab(bool toggle);
-        virtual bool getGrab();
-
 protected:
 
         Window win;

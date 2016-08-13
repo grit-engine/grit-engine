@@ -70,8 +70,6 @@ Details:
 */
 
 
-#if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -90,6 +88,7 @@ JoystickDevjs::JoystickDevjs(size_t window)
 {
         win = window;
 
+        // If this fails, fd will be < 0 and JoystickDevjs will be a stub.
         fd = open ("/dev/input/js0", O_RDONLY | O_NONBLOCK);
 }
 
@@ -166,32 +165,3 @@ bool JoystickDevjs::getEvents(std::vector<signed char> *buttons_indexes_and_valu
 
         return moved;
 }
-
-void JoystickDevjs::setPos(int x, int y)
-{
-}
-
-
-void JoystickDevjs::setHide(bool toggle)
-{
-}
-
-bool JoystickDevjs::getHide()
-{
-   return true;
-}
-
-
-void JoystickDevjs::setGrab(bool toggle)
-{
-}
-
-bool JoystickDevjs::getGrab()
-{
-        return true;
-}
-
-
-#endif //__linux && __JOYSTICK_DEVJS__
-
-
