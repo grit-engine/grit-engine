@@ -94,6 +94,7 @@ ENGINE_CPP_SRCS=\
 	linux/keyboard_x11.cpp \
 	linux/mouse_x11.cpp \
 	linux/x11_clipboard.cpp \
+	linux/joystick_devjs.cpp \
 	 \
 	physics/collision_mesh.cpp \
 	physics/lua_wrappers_physics.cpp \

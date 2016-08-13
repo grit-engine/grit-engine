@@ -33,6 +33,9 @@
 #else
 #  include "linux/keyboard_x11.h"
 #  include "linux/mouse_x11.h"
+  #if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
+    #  include "linux/joystick_devjs.h"
+  #endif
 #endif
 
 #include "clipboard.h"
@@ -53,6 +56,10 @@ CentralisedLog clog;
 bool clicked_close = false;
 Mouse *mouse = NULL;
 Keyboard *keyboard = NULL;
+#if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
+Joystick *joystick = NULL;
+#endif
+
 lua_State *core_L = NULL;
 BulletDebugDrawer *debug_drawer = NULL;
 BackgroundLoader *bgl;
@@ -135,6 +142,11 @@ int main (int argc, const char **argv)
         mouse = new MouseX11(winid);
         keyboard = new KeyboardX11(winid);
         #endif
+
+        #if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
+        joystick = new JoystickDevjs(winid);
+        #endif
+
         clipboard_init();
 
         physics_init();
@@ -185,7 +197,9 @@ int main (int argc, const char **argv)
 
         if (mouse) delete mouse;
         if (keyboard) delete keyboard;
-
+        #if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
+        if (joystick) delete joystick;
+        #endif
         CVERB << "Shutting down clipboard..." << std::endl;
         clipboard_shutdown();
 

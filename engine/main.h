@@ -38,6 +38,9 @@ extern "C" {
 
 #include "mouse.h"
 #include "keyboard.h"
+#if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
+#include "joystick.h"
+#endif
 #include "background_loader.h"
 #include <centralised_log.h>
 #include "bullet_debug_drawer.h"
@@ -54,6 +57,11 @@ extern Mouse *mouse;
 
 /** A singleton for receiving keyboard input. */
 extern Keyboard *keyboard;
+
+/** A singleton for receiving joystick input. */
+#if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
+extern Joystick *joystick;
+#endif
 
 /** The core Lua state object, created when lua is initialised. */
 extern lua_State *core_L;
