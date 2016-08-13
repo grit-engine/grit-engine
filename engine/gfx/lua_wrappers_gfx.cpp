@@ -4526,6 +4526,15 @@ TRY_START
 
             if (static_value) uniform = uniform.setStatic();
 
+        } else if (uniform_kind == "TEXTURE1D") {
+            Vector3 c;
+            tab->get("defaultColour", c, Vector3(1, 1, 1));
+
+            lua_Number a;
+            tab->get("defaultAlpha", a, 1.0);
+
+            uniform = GfxGslParam(GFX_GSL_FLOAT_TEXTURE1, c.x, c.y, c.z, a);
+
         } else if (uniform_kind == "TEXTURE2D") {
             Vector3 c;
             tab->get("defaultColour", c, Vector3(1, 1, 1));
@@ -4534,6 +4543,33 @@ TRY_START
             tab->get("defaultAlpha", a, 1.0);
 
             uniform = GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, c.x, c.y, c.z, a);
+
+        } else if (uniform_kind == "TEXTURE4D") {
+            Vector3 c;
+            tab->get("defaultColour", c, Vector3(1, 1, 1));
+
+            lua_Number a;
+            tab->get("defaultAlpha", a, 1.0);
+
+            uniform = GfxGslParam(GFX_GSL_FLOAT_TEXTURE4, c.x, c.y, c.z, a);
+
+        } else if (uniform_kind == "TEXTURE3D") {
+            Vector3 c;
+            tab->get("defaultColour", c, Vector3(1, 1, 1));
+
+            lua_Number a;
+            tab->get("defaultAlpha", a, 1.0);
+
+            uniform = GfxGslParam(GFX_GSL_FLOAT_TEXTURE3, c.x, c.y, c.z, a);
+
+        } else if (uniform_kind == "TEXTURE_CUBE") {
+            Vector3 c;
+            tab->get("defaultColour", c, Vector3(1, 1, 1));
+
+            lua_Number a;
+            tab->get("defaultAlpha", a, 1.0);
+
+            uniform = GfxGslParam(GFX_GSL_FLOAT_TEXTURE_CUBE, c.x, c.y, c.z, a);
 
         } else {
             my_lua_error(L, "Did not understand 'uniformKind' value \"" + uniform_kind + "\"");
