@@ -74,7 +74,7 @@ class Node:
     return not (self == other)
 
 
-inline_tags = { 'def', 'web', 'issue', 'todo', 'sref', 'code', 'emph' }
+inline_tags = { 'def', 'web', 'issue', 'todo', 'sref', 'code', 'emph', 'italic' }
 
 def MinimiseWhiteSpace(n):
     """Convert any whitespace to a single space."""
@@ -175,6 +175,8 @@ def TranslateParagraphs(content, context_ast, dosplit=True):
                 r2.append(Node('Emph', context_ast, data=flattened))
             elif c.tag == "code":
                 r2.append(Node('Code', context_ast, data=flattened))
+            elif c.tag == "italic":
+                r2.append(Node('Italic', context_ast, data=flattened))
             elif c.tag == "sref":
                 target = c.get('id')
                 if not target:
@@ -241,8 +243,8 @@ def TranslateBlockContents(block, block_ast):
                 thumb_src = 'thumb_' + src
                 caption = MinimiseWhiteSpace(el.text or '')
                 title = MinimiseWhiteSpace(el.get('title'))
-                AssertFile(el, src)
-                AssertFile(el, thumb_src)
+                AssertFile(el, 'img/' + src)
+                AssertFile(el, 'img/' + thumb_src)
                 translated_content = Node('Image', block_ast, src=src, caption=caption, thumb_src=thumb_src, title=title)
             elif el.tag == "ul":
                 AssertNoBody(el)

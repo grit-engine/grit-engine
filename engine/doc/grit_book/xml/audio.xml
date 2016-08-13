@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<section title="Audio" id="audio">
+
+    Grit's audio support supports playing wav and OGG Vorbis files from disk.
+    Sound files can be mono or stereo.  Sounds can either be
+    <def>instantaneous</def> or <def>continuous</def>, and in addition, they
+    can either be <def>ambient</def> or <def>positional</def>.  Therefore there
+    are four combinations.
+
+    Instantaneous sounds are usually short, they are used for bangs and throw
+    away noises.  They cannot be stopped or paused, or have their volume or
+    pitch changed while the sound is playing.  Continuous sounds are the
+    opposite.
+
+    Ambient sounds play in the same manner everywhere.  They are typically used
+    for environmental noise.  They are usually stereo, and the channels are
+    mapped directly to the computer's speakers.
+
+    Positional sounds have a position in the 3D world, and their volume,
+    mapping to speakers, (and possibly other effects) is controlled
+    automatically based on the camera location and orientation.  Instantaneous
+    positional sounds play to completion at a fixed point, typically used for
+    impact sounds and similar events.  Typically these are mono sound effects.
+    If not, then two mono sound emitters are created on top of each other.  If
+    this is not what you want, you can use an audio body, or petition us to add
+    extra parameters to the call.
+
+    <lua>
+        volume = 1  -- multiplier
+        pitch = 1  -- multiplier
+        audio_play_ambient(`Thunderclap.wav`, volume, pitch)
+        pos = vec(0,0,0)
+        ref_dist = 3  -- Distance up to which the sound plays at max volume.
+        roll_off = 1  -- Rate that sound attenuates beyond ref_dist.
+        audio_play(`Smash.wav`, volume, pitch, pos, ref_dist, roll_off)
+    </lua>
+
+    <section title="Audio Bodies" id="audio_bodies">
+
+        Continuous sounds are implemented with <def>audio bodies</def>.
+        Playback is controlled via methods and fields of these objects.  Sounds
+        can be looped, paused / continued, and stopped / restarted.  The pitch
+        and volume can be changed at any time.
+
+        <lua>
+            a = audio_body_make_ambient(`BirdSong.wav`)
+            a.pitch = 1
+            a.volume = 1
+            a.looping = true
+            a:play()
+            a:pause()
+            a:stop()
+            ...
+            a:destroy()
+        </lua>
+
+        Audio bodies playing positional sounds are created with a different
+        constructor.  They have additional fields for updating position,
+        velocity, etc.  If the sound file is stereo, two sound emitters are
+        created in the game world.  The left and right channel are separated
+        along the world space X axis (left channel west, right channel east).
+        The separation (in metres) can be controlled.  There is also an
+        orientation parameter if you want them separated in a different
+        direction.
+
+        <lua>
+            a = audio_body_make(`CarEngine.wav`)
+            a.position = vec(0, 0, 0)
+            a.velocity = vec(0, 0, 0)
+            a.separation = 4
+            a.orientation = quat(90, vec(0,0,1))  -- Align north/south.
+            a.referenceDistance = 3  -- See audio_play, above.
+            a.rollOff = 1  -- See audio_play, above.
+        </lua>
+
+    </section>
+
+    <section title="Audio Options" id="audio_options">
+
+        The following global audio options can be controlled from Lua scripts:
+
+        <lua>
+            audio_option("DOPPLER_ENABLED", true)  -- Whether to use doppler shift.
+            audio_option("MUTE", false)  -- Mute all sounds
+            audio_option("MASTER_VOLUME", 1.0) -- Control all volumes.
+        </lua>
+
+    </section>
+
+</section>

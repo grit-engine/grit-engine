@@ -1,0 +1,501 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<section title="Miscellaneous" id="misc" splitbelow="true">
+
+    <section title="Lua" id="lua">
+
+        Lua is a general purpose scripting language. It is well-known for
+        having a small and fast implementation but a wide set of features
+        including co-operative threading (co-routines), closures, "self"-style
+        object orientation, and so on. Lua is more expressive and faster than
+        all of the mainstream scripting languages and is used in many computer
+        games.
+
+        To learn Lua quickly, read chapter 2 of <web
+        url="http://www.lua.org/manual/5.2/">its manual</web>.
+
+        Lua is used in Grit with some minor modifications that make Lua code
+        written for Grit incompatible with a regular Lua interpreter and
+        regular Lua programs potentially incompatible with Grit.  This is done
+        for performance and usability.
+
+        It should be possible to make regular Lua code work in Grit with
+        minor (probably zero) modifications and the same performance. It is
+        very unlikely that Grit Lua code will work outside of the
+        customized Grit Lua VM without running much more slowly.
+
+        This section details the Lua modifications.  You can skim it if you are
+        not already very familiar with Lua, and if you're not intending to port
+        Lua code from external sources to run in Grit.
+
+        <section title="Relative Path Literals" id="lua_paths">
+
+            It is convenient for Lua files to refer to resources via relative
+            paths.  This makes it possible to define packages of scripts and
+            resources, that can be downloaded and unpacked anywhere in the
+            directory hierarchy without having to edit the Lua files to correct
+            absolute paths.
+
+            However, when using strings to represent relative paths, the
+            strings can be passed by value through function calls and variable
+            assignments and end up being used in a different Lua file, where
+            the relative path no-longer resolved correctly.
+
+            In order for the relative paths to be resolved in the file where
+            they are defined, Lua has been extended to add another kind of
+            string literal:
+
+            <lua>
+                print(`foo`)
+                print(`/dir/foo`)
+                print(`../foo`)
+                print(`.`)
+            </lua>
+
+            This string is assumed to be a path.  If the path begins with a '/'
+            then it behaves the same as ordinary strings.  However other paths
+            are assumed to be relative, and will be resolved using the
+            directory of the currently-executing Lua file (or / if such a dir
+            cannot be found).
+
+            The path will also be canonicalised, i.e., use of . and .. will be
+            removed.  An error is raised if too many .. descend below the root
+            of the game directory.
+
+            <lua>
+                assert(`foo/../bar` == `bar`)
+                assert(`foo/../bar/.` == `bar`)
+                assert(`./foo/../bar` == `bar`)
+                assert(`/.` == `/`)
+            </lua>
+
+        </section>
+
+        <section title="Unicode" id="lua_unicode">
+
+            All Lua files are now UTF-8. The string class in Lua has been
+            rewritten to properly understand unicode. E.g. #"£" is 1, not
+            2. The most visible difference is that the syntax for regular
+            expressions has changed. The new syntax is that of <web
+            url="http://userguide.icu-project.org/strings/regexp">ICU's
+            regular expression engine</web>. For documentation, see
+            sections "Regular Expression Metacharacters", "Regular
+            Expression Operators" and "Replacement Text".
+
+        </section>
+
+        <section title="Vectors &amp; Quaternions" id="lua_vectors">
+
+            Grit Lua scripts are often used to transform and manipulate objects
+            in screen space and 3D space, as well as to manipulate colours.
+            This is easiest with primitive vector (2d, 3d, 4d) and quaternion
+            values.  For performance reasons, we cannot use userdata or tables
+            for our vector and quaternion values.  This puts too much pressure
+            on the garbage collector.  Thus, the VM has been modified so that
+            vector2,3,4, and quat are primitive types just like 'number',
+            'boolean' and 'nil'. They are copied by value and are not garbage
+            collected.  The following code shows some of the ways they can be
+            used:
+
+            <lua>
+                Q_ID = quat(1, 0, 0, 0)      -- constructing quaternions and 3d vectors
+                V_ID = vec(0, 0, 0)
+                V_NORTH = vec(0, 1, 0)
+                V_EAST  = vec(1, 0, 0)
+
+                local v = vec(1, 2, 3)
+                print(v)
+                print(v + v)
+                print(2 * v)
+                print(v * 2)
+                print(v / 2)
+                print(v * v)                   -- pointwise multiplication
+                print(dot(v, v))               -- dot product
+                print(norm(v))                 -- normalise
+                print(cross(V_NORTH, V_EAST))  -- cross product
+                print(-v)                      -- opposite direction, same length
+
+                print(Q_ID)
+
+                print(Q_ID * v2)               -- transform a vector
+
+                local q2 = quat(180, vector3(0, 0, 1))  -- angle/axis form
+                print(q2)
+                print(q2 * v2)  -- transform a vector by a quaternion
+
+                local q3 = Q_ID * q2 -- concatenate quaternion transformations
+                print(q3)
+                print(q3 * v2)
+                print(inv(q3) * q3 * v2)  -- invert a quaternion
+
+                print(v2 == v2)  -- equality is pointwise on the elements
+                print(q2 == q2)
+                print(q2 ~= q3)
+
+                print(#v2) -- length (pythagoras)
+                print(#q2) -- length (should be 1 for quaternions used to represent rotations)
+
+                print(unpack(v2)) -- explode into x, y, z
+                print(unpack(q2)) -- explode into w, x, y, z
+
+                print(quat(90, vector3(0,0,1)) * (V_NORTH + V_EAST)) -- angle/axis constructor form
+                print(quat(V_NORTH, V_EAST))                         -- quat between two direction vectors
+                print(quat(V_NORTH, V_EAST) * V_NORTH)
+
+                print(V_NORTH.yx) -- arbitrary swizzling is supported
+            </lua>
+
+        </section>
+
+        <section title="Not A Number (NaN)" id="lua_nan">
+
+            If you divide by zero in regular lua, you get a NaN value that goes
+            on to pollute other values, until it eventually causes a problem in
+            an unrelated area of code.  This makes debugging difficult because
+            it is hard to find the original cause of the NaN. In Grit we
+            instead trap the divide by zero with an error instead of returning
+            NaN.
+
+        </section>
+
+        <section title="Tail Call Optimisations" id="lua_tco">
+
+            If the last statement of a Lua function is a call to another
+            function (a <def>tail call</def>), the standard Lua compiler will
+            perform an optimisation that results in a small performance
+            improvement and allows unbounded tail call recursion (essentially
+            allowing more programs to be written).  Simply put, the interpreter
+            re-uses the existing stack frame for the new call, which avoids
+            using too many stack frames and therefore using too much memory.
+            Here is an example of such a program:
+
+            <lua>
+                function sum_1_to_n(x, sum)
+                    if x == 0 then return sum end
+                    sum = sum or 0
+                    return sum_1_to_n(x-1, sum+x)
+                end
+            </lua>
+
+            Note that it is only a single class of recursive functions that can
+            benefit from tail call optimisation.  The following code implements
+            the same function, using regular recursion.  This code will create
+            too many stack frames if given a high x input, as the tail call
+            optimisation cannot be applied.
+
+            <lua>
+                function sum_1_to_n(x)
+                    if x == 0 then return 0 end
+                    return x + sum_1_to_n(x-1)
+                end
+            </lua>
+
+            Tail call optimisation removes stack frames, and thus removes lines
+            from the stack trace if an error is generated.  This can be highly
+            confusing when debugging programs, as you can't find the line
+            number where the bad call occurred.
+
+            It is not only in the case of these "tail recursive" functions
+            where the loss of stack frame occurs, but in any function with a
+            tail call.  In almost all such cases the optimization does not
+            provide any benefit at all.
+
+            We consider the small overall benefit of this feature to be a poor
+            tradeoff for the productivity loss caused its effect on the
+            readability of stack traces.  Consequently, <def>it is
+            disabled</def> in Grit.  This means programs like the above must be
+            rewritten as follows, to avoid using too many stack frames:
+
+            <lua>
+                function sum_1_to_n(x)
+                    local counter
+                    for i=1, x do
+                        counter = counter + i
+                    end
+                    return counter
+                end
+            </lua>
+
+            For an example of where lost debugging information causes a
+            problem, see the following code, where the stack trace does not
+            mention the critical filename or line number where the function was
+            wrongly called.  Imagine that there are many calls to
+            do_something_tricky all over the program, and the arguments to the
+            call are computed in each case.  This means the stack trace is
+            extremely useful for finding out exactly what went wrong, but the
+            crucial stack frame is lost.
+
+            <lua>
+                function do_something_tricky(x, y)
+                    if x ~= y % 3 then
+                        error "You fool, you called do_something_tricky wrongly."
+                    end
+                end
+
+                function i_am_buried_somewhere_in_a_million_lines_of_code ()
+                    x = 42
+                    y = 666
+                    return do_something_tricky(x, y) -- problem is here
+                end
+            </lua>
+
+        </section>
+
+    </section>
+
+    <section title="Mathematics" id="maths">
+
+        <section title="Quaternion Basics" id="maths_quaternion">
+
+            Quaternions are used to represent rotations in 3d space. They may seem scary, especially if you read <web
+            url="http://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation">wikipedia articles</web> on the subject.
+            The maths behind them is advanced, but you don't need to understand that in order to use them in Grit.
+
+            Quaternions are just a clockwise rotation of a given number of degrees about a given axis (think like
+            screwing in a screw). Part of the reason they seem scary is that they are often given in 'raw' form like so:
+
+            <lua>
+                quat(1,0,0,0)
+            </lua>
+
+            These 4 floating point numbers are the in-memory representation of the rotation.  They are labeled
+            <def>w</def>, <def>x</def>, <def>y</def>, <def>z</def>, in that order.  The fact that only 4 numbers are
+            needed is the reason quaternions are popular.  The most reasonable alternative, rotation matrixes, require 9
+            numbers.  This particular quaternion is very important, as it is the <def>identity quaternion</def>.  It
+            represents a rotation of 0 degrees.  When writing Lua code you can use the <def>Q_ID</def> global variable
+            to make this more explicit.
+
+            It is possible to understand raw quaternions if you are reasonably good at mathematics, but it is much
+            clearer to give quaternions in their angle/axis form. Here is the same quaternion in angle/axis form (you
+            can choose any axis, since it is 0 degrees of rotation).  These quaternion values all test equal:
+
+            <lua>
+                quat(0, vec(0,0,1)) == Q_ID
+                quat(0, vec(1,0,0)) == Q_ID
+            </lua>
+
+            A rotation of 0 degrees about any axis is not very useful. The following is a more interesting quaternion:
+
+            <lua>
+                quat(90, vec(1,0,0))
+            </lua>
+
+            This means a clockwise rotation of 90 degrees about the 'X' axis.  To visualise this, imagine screwing a
+            screw in the direction of the X axis. If you turn the screw 90 degrees, what used to point in the direction
+            of the Y axis now points towards the Z axis. Likewise, what used to point in -Z now points towards Y.
+
+            To specify an anti-clockwise rotation about the X axis, one can invert either the angle or the axis.
+            Inverting both results in an identical quaternion.  The following are all equal:
+
+            <lua>
+                quat(-90, vec(1,0,0))
+                quat(90, vec(-1,0,0))
+                quat(0.7071068, -0.7071068, 0, 0)
+            </lua>
+
+            Generally, if you see a quaternion with 0.7 in the first value, it is a rotation by 90 degrees, whereas 0
+            indicates 180 degrees.  In both cases, the last 3 numbers taken as a vector3 give the axis of rotation.
+            Here are some example of 180 degree rotations:
+
+            <lua>
+                quat(0, 1, 0, 0) -- 180 degrees about X
+                quat(0, 0, 1, 0) -- 180 degrees about Y
+                quat(0, 0, 0, 1) -- 180 degrees about Z
+            </lua>
+
+            Note that there are many different ways of rotating by 180 degrees.  E.g. a barrel roll, turning on the
+            spot, and doing a backflip. You can in fact rotate by 180 degrees about any axis and the result is different
+            in each case.  On the other hand if you rotate by 0 degrees than it does not matter which axis you rotate
+            around, because you are not rotating at all.
+
+            You can also get the quaternion that would transform one vector into another: The following quaternions all
+            specify a rotation of 90 degrees about the 'X' axis.  In the first case Y is turned to Z, and in the second
+            case -Z is turned to X.
+
+            <lua>
+                quat(vec(0,1,0), vec(0,0,1))
+                quat(vec(0,0,-1), vec(0,1,0))
+            </lua>
+
+            It is possible to see the raw form of a quaternion by typing these other forms into the console.  Also, one
+            can easily extract the axis and angle from a quaternion using <def>q.axis</def> and <def>q.angle</def>.
+
+        </section>
+
+        <section title="Representing Orientations" id="maths_orientation">
+
+            The difference between a rotation and an orientation is that a rotation is a change in orientation. It is
+            like the difference between an absolute value and an offset. In order to use an offset as an absolute value,
+            we must assume a base value from which to offset to the value we want. In the case of simple numbers and
+            positions, it is clear that the base value should be 0, or vec(0,0,0) respectively. However with rotations,
+            one uses the identity quaternion, or quat(1,0,0,0) as a base.
+
+            For models, no rotation at all just means that XYZ in model space point in the same directions as XYZ in
+            world space.  However for lights, an unrotated light will shine in the +Y direction. Thus if you want it to
+            shine in the -Z direction then it needs to be rotated by the following quaternion:
+
+            <lua>
+                quat(vec(0,1,0), vec(0,0,-1))
+            </lua>
+
+            Having lights shine in +Y by default is an arbitrary decision.  Other applications instead prefer +Z, -Z,
+            etc., so one must be careful when converting lighting setups from other software into Grit.
+
+        </section>
+
+        <section title="Transforming Vectors With Quaternions" id="maths_transform">
+
+            If you have a point (or a direction, in the form of a direction vector) in model space, and you want to
+            transform it into world space, you use the orientation of the object to rotate that vector.  For example if
+            you want to know if a car is upside down, you can trotate the up vector for the car in model space,
+            vec(0,0,1), by the car's orientation, and test if it is still pointing up.
+
+            <lua>
+                (car_orientation * vec(0,0,1)).z > 0
+            </lua>
+
+            This operation can be chained.  If you have a turret on a tank, and the turret usually faces +Y in model
+            space, but you want to know where it points in world space given the turret angle (clockwise from the top)
+            and tank orientation, you could use:
+
+            <lua>
+                turret_point_model_space = quat(turret_angle, vec(0,0,-1)) * vec(0,1,0)
+                turret_point_world_space = tank_orientation * turret_point_model_space
+            </lua>
+
+            You can also combine the two quaternions into a single one that describes the complete rotation:
+
+            <lua>
+                turret_orientation_world_space = tank_orientation * quat(turret_angle, vec(0,0,-1))
+                turret_vector_world_space = turret_orientation_world_space * vec(0,1,0)
+            </lua>
+
+            You can also invert a quaternion, which simply is the opposite rotation, i.e. the opposite angle around the
+            same axis:
+
+            <lua>
+                inv(quat(35, vec(0,1,0))) == quat(-35, vec(0,1,0))
+            </lua>
+
+            This allows you to find out e.g. where the turret should point at in model space, in order for it point in a
+            particular direction in world space.  From there you can e.g.  use math.atan2 to figure out the angle for
+            the turret.
+
+            <lua>
+                turret_point_model_space = inv(turret_orientation_world_space) * vector_to_enemy
+            </lua>
+
+        </section>
+    </section>
+
+    <section title="Compilation Instructions" id="compilation">
+
+        This is the central repository for the <web url="http://www.gritengine.com">Grit Game Engine</web> project.
+
+        From here can be built the engine executable itself, the launcher, and various tools.  These are
+        mostly useless without the accompanying media tree (the <web url="https://sourceforge.net/projects/gritengine/">Game 
+        Directory</web> which is available on Sourceforge via Subversion.  Therefore to get everything, execute the following:
+
+        <lua>
+        git clone --recursive https://github.com/sparkprime/grit-engine.git grit-engine
+        svn checkout https://svn.code.sf.net/p/gritengine/code/trunk grit-engine/media
+        </lua>
+
+        The subversion tree also contains prebuilt up-to-date executables (Linux &amp; Windows) so the majority
+        of developers only need that.  Grit can be substantially modified through Lua scripting, and this
+        potential should be exhausted before modifying C++ code.
+
+        Build files are provided for Linux (<code>Makefile</code> and <code>.../*grit.mk</code>) and Visual Studio 2013 project
+        files.  Building C++ takes about an hour on Windows and 10 minutes on Linux.  Scripts are available
+        for copying new executables into Subversion, if it is checked out in the <code>media/</code> directory.
+
+
+        <section title="Windows" id="compilation_windows">
+
+                Only Visual Studio Express 2013 is supported. It is free (as in beer). Download it from the
+                Microsoft site.
+
+            <section title="Requirements" id="compilation_windows_requirements">
+                You will need the DirectX9 SDK (Google it), install that on your system (in <code>Program Files</code>). The
+                install adds a system-wide environment variable <code>DXSDK_DIR</code> pointing to the install directory. This
+                is used by the Visual Studio build.  If Visual studio is running, you will have to restart it to
+                make it 'see' the new environment variable.
+            </section>
+
+            <section title="Regular build" id="compilation_windows_building">
+                Open grit-engine.sln and build the whole solution with the <italic>Normal</italic> configuration.  This will build
+                all the tools and dependencies.
+            </section>
+
+            <section title="Debug Build" id="compilation_windows_debugging">
+                Debugging with Visual Studio requires the engine to be built with the <italic>Debug</italic> configuration.  To run
+                in the debugger, execute the <code>engine</code> project from inside Visual Studio.  You may need to set the
+                working directory to the <code>media/</code> directory (from the <code>engine</code> project properties).
+            </section>
+
+            <section title="Modifying the Build" id="compilation_windows_modifying">
+                The build uses hand-written MSVC build files.  Each executable and library has a project file, and
+                properties files are used to layer additional build options without duplicating them between project
+                files.  They are structured as follows:
+                <ul>    
+                    <li><code>grit-engine.sln</code>: Collects together all the projects.</li>    
+                    <li><code>solution.props</code>: Build options for all libraries and executables.  Options that are the
+                         same for both Debug and Normal configurations live here.</li>    
+                    <li><code>solution_debug.props</code>: Additional options when compiling in debug mode.  Options that are the
+                         same for all object files live here.</li>
+                    <li><code>solution_normal.props</code>: Additional options when compiling in normal mode.  Options that are
+                         the same for all object files live here.</li>    
+                    <li><code>pch.props</code>: Options for enabling the precompiled header, used for top-level apps.</li>    
+                    <li><code>path/to/my-project/my-project.vcxproj</code>: An executable or library to build.  Build options
+                         that are specific to the library itself (like warning levels) live here.</li>
+                    <li><code>path/to/my-project/my-project.props</code>: Build options required by clients of a library and the
+                         library itself (typically defines and include paths).</li>
+               </ul> 
+            </section>
+        </section>
+
+        <section title="Linux" id="compilation_linux">
+
+                The following instructions are for Ubuntu.  If you're using another distro, you'll have to figure it
+                out for yourself but hopefully the Ubuntu instructions will help.  Note that the make files require
+                GNU make, which may be called gmake on your system.
+
+            <section title="Requirements" id="compilation_linux_requirements">
+
+                <lua>
+                sudo apt-get install subversion g++ make pkg-config gdb valgrind \
+                libfreeimage-dev libzzip-dev libfreetype6-dev libglu1-mesa-dev \
+                libxt-dev libxaw7-dev libglew1.5-dev libxrandr-dev \
+                libgoogle-perftools-dev libopenal-dev libreadline-dev freeglut3-dev \
+                nvidia-cg-toolkit libvorbis-dev xutils-dev libicu-dev
+                </lua>
+            </section>
+
+            <section title="Building" id="compilation_linux_building">
+                Simply running <code>make -j 8</code> in the root (adjust for your number of cores) will build everything.
+                Executables for the current platform are left in the root directory.  You can add it to your PATH.
+            </section>
+
+            <section title="Debugging" id="compilation_linux_debugging">
+                You can debug Grit with <code>gdb</code> or <code>valgrind</code>.  If the assembly is too obscure, disable
+                optimizations by overriding the OPT variable as so:
+
+                <lua>
+                make -j 8 OPT=
+                </lua>
+
+                Note that this will not rebuild anything that is already built, so you might want to first delete
+                specific object files -- the ones containing the code you're debugging, and then rebuilding them
+                without optimizations.
+            </section>
+
+            <section title="Modifying the Build" id="compilation_linux_modifying">
+                The makefiles are handwritten.  They use a lot of GNU make specific features.  Each sub-project and
+                dependency defines a <code>grit.mk</code> file which defines the additional source files and required build
+                options.  These are all included by the root <code>Makefile</code> which computes the actual build rules.
+            </section>
+
+        </section>
+    </section>
+
+</section>

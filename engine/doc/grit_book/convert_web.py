@@ -6,13 +6,14 @@ import re
 import lxml.etree as ET
 from translate_xml import *
 from unparse_html import *
-
+from unparse_markdown import *
+from shutil import copyfile
 
 # libxml2 does not properly implement the XML standard, so do my own implementation here...
 def MyXInclude(tree):
     for n in tree:
         if n.tag == 'include':
-            src = n.get('src')
+            src = 'xml/' + n.get('src')
             print 'Parsing ' + src
             include_tree = ET.parse(src)
             include_tree.getroot().set('{http://www.w3.org/XML/1998/namespace}base', src)
@@ -58,8 +59,8 @@ def CheckRefIds(node):
         CheckRefIds(child)
 
 
-print 'Parsing index.xml'
-tree = ET.parse('index.xml')
+print 'Parsing xml/index.xml'
+tree = ET.parse('xml/index.xml')
 MyXInclude(tree.getroot())
 book = tree.getroot()
 
@@ -72,17 +73,35 @@ book_ast = Node('Book', None, split=True, data=False)
 book_ast.data = TranslateBlockContents(book, book_ast)
 ResolveReferences(book_ast)
 
-print 'Writing index.html'
+# Web .html
+print 'Writing html/index.html'
 index = '<h1> Contents </h1>\n'
 index += UnparseHtmlBlocks(book_ast, book_ast, True, False)
-contents = codecs.open('index.html', 'w', 'utf-8')
+contents = codecs.open('html/index.html', 'w', 'utf-8')
 contents.write(GeneratePage('Contents', index, book_ast))
 contents.close()
 
-print 'Writing complete.html'
+print 'Writing html/complete.html'
 index = UnparseHtmlBlocks(book_ast, book_ast, True, True)
-contents = codecs.open('complete.html', 'w', 'utf-8')
-contents.write(GeneratePage('Contents', index, None))
+contents = codecs.open('html/complete.html', 'w', 'utf-8')
+contents.write(GeneratePage('&copy; 2016 Grit Engine Community.', index, None))
 contents.close()
+
+# Markdown .md
+print 'Writing md/index.md'
+index = '# Contents\n'
+index += UnparseMarkdownBlocks(book_ast, book_ast, True, False)
+contents = codecs.open('md/index.md', 'w', 'utf-8')
+contents.write(UnparseMarkdownGeneratePage('Contents', index, book_ast))
+contents.close()
+
+print 'Writing md/complete.md'
+index = UnparseMarkdownBlocks(book_ast, book_ast, True, True)
+contents = codecs.open('md/complete.md', 'w', 'utf-8')
+contents.write(UnparseMarkdownGeneratePage('Contents', index, None))
+contents.close()
+
+# Main README.md from Compiling Instruction
+copyfile('md/README.md', '../../../README.md')
 
 print 'Done.'
