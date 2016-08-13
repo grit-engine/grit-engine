@@ -40,9 +40,7 @@
 #include "input_filter.h"
 #include "keyboard.h"
 #include "mouse.h"
-#if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
 #include "joystick.h"
-#endif
 #include "background_loader.h"
 #include "clipboard.h"
 #include <centralised_log.h>
@@ -302,7 +300,6 @@ TRY_START
 TRY_END
 }
 
-#if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
 static int global_get_joystick_events (lua_State *L)
 {
 TRY_START
@@ -369,7 +366,6 @@ TRY_START
         return 2;
 TRY_END
 }
-#endif // defined(__linux__) && defined(__JOYSTICK_DEVJS__)
 
 static int global_input_filter_trickle_mouse_move (lua_State *L)
 {
@@ -1048,9 +1044,7 @@ static const luaL_reg global[] = {
     {"set_keyb_verbose", global_set_keyb_verbose},
     {"get_keyb_verbose", global_get_keyb_verbose},
     {"get_mouse_events", global_get_mouse_events},
-#if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
     {"get_joystick_events", global_get_joystick_events},
-#endif
     {"micros", global_micros},
     {"seconds", global_seconds},
     {"sleep_seconds", global_sleep_seconds},

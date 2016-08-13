@@ -30,12 +30,11 @@
 #  include "win32/mouse_direct_input8.h"
 #  include "win32/keyboard_direct_input8.h"
 #  include "win32/keyboard_win_api.h"
+#  include "win32/joystick_direct_input8.h"
 #else
 #  include "linux/keyboard_x11.h"
 #  include "linux/mouse_x11.h"
-  #if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
-    #  include "linux/joystick_devjs.h"
-  #endif
+#  include "linux/joystick_devjs.h"
 #endif
 
 #include "clipboard.h"
@@ -56,9 +55,7 @@ CentralisedLog clog;
 bool clicked_close = false;
 Mouse *mouse = NULL;
 Keyboard *keyboard = NULL;
-#if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
 Joystick *joystick = NULL;
-#endif
 
 lua_State *core_L = NULL;
 BulletDebugDrawer *debug_drawer = NULL;
@@ -138,12 +135,10 @@ int main (int argc, const char **argv)
         bool use_dinput = getenv("GRIT_DINPUT")!=NULL;
         keyboard = use_dinput ? (Keyboard *)new KeyboardDirectInput8(winid)
                       : (Keyboard *)new KeyboardWinAPI(winid);
+        joystick = new JoystickDirectInput8(winid);
         #else
         mouse = new MouseX11(winid);
         keyboard = new KeyboardX11(winid);
-        #endif
-
-        #if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
         joystick = new JoystickDevjs(winid);
         #endif
 
@@ -197,9 +192,7 @@ int main (int argc, const char **argv)
 
         if (mouse) delete mouse;
         if (keyboard) delete keyboard;
-        #if defined(__linux__) && defined(__JOYSTICK_DEVJS__)
         if (joystick) delete joystick;
-        #endif
         CVERB << "Shutting down clipboard..." << std::endl;
         clipboard_shutdown();
 

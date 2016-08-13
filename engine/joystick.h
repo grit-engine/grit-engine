@@ -67,21 +67,6 @@ public:
          */
         virtual bool getEvents(std::vector<signed char> *buttons, std::vector<signed char> *axes, std::vector<short int> *values) = 0;
 
-        /** Set the joystick position to the given window coordinates. */
-        virtual void setPos(int x, int y) = 0;
-
-        /** Set whether or not the joystick cursor is hidden (invisible). */
-        virtual void setHide(bool toggle) = 0;
-
-        /** Get whether or not the joystick cursor is hidden (invisible). */
-        virtual bool getHide() = 0;
-
-        /** Set whether or not the joystick cursor is hidden (invisible). */
-        virtual void setGrab(bool toggle) = 0;
-
-        /** Get whether or not the joystick cursor is hidden (invisible). */
-        virtual bool getGrab() = 0;
-
 };
 
 #endif //Joystick_h
