@@ -45,7 +45,7 @@ do_check() {
 test_sky() {
     local TARGET="$1"
     local SHADER="$2"
-    local PARAMS="-p starfieldMap FloatTexture2 -p starfieldMask Float3 -p perlin FloatTexture2 -p perlinN FloatTexture2 -p emissiveMap FloatTexture2 -p emissiveMask Float3 -p alphaMask Float -p alphaRejectThreshold Float -p premultipliedAlpha StaticFloat -U emissiveMap"
+    local PARAMS="-p starfieldMap FloatTexture2 -p starfieldMask Float3 -p perlin FloatTexture2 -p perlinN FloatTexture2 -p emissiveMap FloatTexture2 -p emissiveMask Float3 -p alphaMask Float -p alphaRejectThreshold Float -p premultipliedAlpha StaticFloat -U emissiveMap -p volumeMap FloatTexture3"
     local UBT="-u perlinN"
     local TLANG=""
     test $TARGET == "cg" && TLANG="-C"

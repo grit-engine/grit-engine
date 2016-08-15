@@ -9,6 +9,9 @@ arr[3] = 7;
 arr[4] = arr[3];
 
 var test = abs(-3);
+var test2 = abs(-3.0);
+
+test2 = sample(mat.volumeMap, Float3(0.5, 0.5, 0.5)).x;
 
 out.colour = Float3(r, 0, 0);
 out.alpha = fract(0.0) + 1;
