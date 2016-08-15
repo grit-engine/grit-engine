@@ -1,18 +1,4 @@
 
-function gen_mipmaps(img)
-    local tab = {}
-    local counter = 1
-    local w = img.width
-    local h = img.height
-    while w>1 or h>1 do
-        tab[counter] = img:scale(vec(w, h), "BOX")
-        w = w == 1 and 1 or ceil(w/2)
-        h = h == 1 and 1 or ceil(h/2)
-        counter = counter + 1
-    end
-    return tab
-end
-
 longitude_planes = {}
 for longitude = 0, 359 do
     longitude_planes[longitude] = vec3(sin(rad(longitude)), cos(rad(longitude)), 0)
@@ -41,10 +27,10 @@ function v3_to_colour(pos)
 end;
 
 local sz = 256
-pos_x = gen_mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3( 1, p.y, -p.x)) end))
-neg_x = gen_mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3(-1, p.y, p.x)) end))
-pos_y = gen_mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3(p.x,  1, -p.y)) end))
-neg_y = gen_mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3(p.x, -1, p.y)) end))
-pos_z = gen_mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3(p.x, p.y,  1)) end))
-neg_z = gen_mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3(-p.x, p.y, -1)) end))
+pos_x = mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3( 1, p.y, -p.x)) end))
+neg_x = mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3(-1, p.y, p.x)) end))
+pos_y = mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3(p.x,  1, -p.y)) end))
+neg_y = mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3(p.x, -1, p.y)) end))
+pos_z = mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3(p.x, p.y,  1)) end))
+neg_z = mipmaps(make(vec(sz, sz), 3, function(p_) local p = p_/(sz - 1) * 2 - 1; return v3_to_colour(vec3(-p.x, p.y, -1)) end))
 dds_save_cube("cube.dds", "R8G8B8", pos_x, neg_x, pos_y, neg_y, pos_z, neg_z)
