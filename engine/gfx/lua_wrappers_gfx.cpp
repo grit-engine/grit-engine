@@ -3948,120 +3948,10 @@ static int global_gfx_particle_count (lua_State *L)
 
 
 
-#include "lua_wrappers_material.h"
-#include "lua_wrappers_gpuprog.h"
 #include "lua_wrappers_gfx.h"
 
 
-////////////////////float
-
-static int global_make_material (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        const char *name = luaL_checkstring(L,1);
-
-        Ogre::MaterialPtr m = Ogre::MaterialManager::getSingleton().create(
-                name,
-                "GRIT",
-                false,
-                NULL);
-        push(L, new Ogre::MaterialPtr(m),MAT_TAG);
-        return 1;
-TRY_END
-}
-
-static int global_load_material (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        const char *name = luaL_checkstring(L,1);
-        Ogre::MaterialPtr t =
-            Ogre::MaterialManager::getSingleton().load(name,"GRIT").staticCast<Ogre::Material>();
-        push(L, new Ogre::MaterialPtr(t),MAT_TAG);
-        return 1;
-TRY_END
-}
-
-static int global_get_all_materials (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        Ogre::MaterialManager::ResourceMapIterator rmi =
-                Ogre::MaterialManager::getSingleton().getResourceIterator();
-
-        // doesn't seem to be possible to find out how many there are in advance
-        lua_createtable(L, 0, 0);
-        int counter = 0;
-        while (rmi.hasMoreElements()) {
-                const Ogre::MaterialPtr &mat = rmi.getNext().staticCast<Ogre::Material>();
-                lua_pushnumber(L,counter+1);
-                push(L, new Ogre::MaterialPtr(mat), MAT_TAG);
-                lua_settable(L,-3);
-                counter++;
-        }
-
-        return 1;
-TRY_END
-}
-
-
-static int global_get_material (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        const char *name = luaL_checkstring(L,1);
-        Ogre::MaterialPtr m =
-                Ogre::MaterialManager::getSingleton().getByName(name);
-        if (m.isNull()) {
-                lua_pushnil(L);
-                return 1;
-        }
-        push(L,new Ogre::MaterialPtr(m),MAT_TAG);
-        return 1;
-TRY_END
-}
-
-static int global_get_material_usage (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-       lua_pushnumber(L,Ogre::MaterialManager::getSingleton().getMemoryUsage());
-        return 1;
-TRY_END
-}
-
-static int global_unload_all_materials (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        Ogre::MaterialManager::getSingleton().unloadAll();
-        return 0;
-TRY_END
-}
-
-static int global_unload_unused_materials (lua_State *L)
-{
-TRY_START
-        check_args(L,0);
-        Ogre::MaterialManager::getSingleton().unloadUnreferencedResources();
-        return 0;
-TRY_END
-}
-
-static int global_remove_material (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        const char *name = luaL_checkstring(L,1);
-        Ogre::MaterialManager::getSingleton().remove(name);
-        return 0;
-TRY_END
-}
-
 ////////////////////////////////////////////////////////////////////////////////
-
-// new material interface
 
 typedef std::map<std::string, ExternalTable> MatMap;
 static MatMap mat_map;
@@ -4225,7 +4115,7 @@ static void handle_param_binding(const std::string &kind, const std::string &mat
         break;
     }
 }
-static int global_register_material (lua_State *L)
+static int global_gfx_register_material (lua_State *L)
 {
 TRY_START
 
@@ -4321,49 +4211,6 @@ TRY_START
     gfxmat->buildOgreMaterials();
 
     return 0;
-TRY_END
-}
-
-static int global_dump_registered_material (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        std::string name = check_path(L,1);
-        if (mat_map.find(name) == mat_map.end())
-                my_lua_error(L, "Material does not exist: \""+std::string(name)+"\"");
-        ExternalTable &t = mat_map[name];
-        t.dump(L);
-        return 1;
-TRY_END
-}
-
-static int global_registered_material_get (lua_State *L)
-{
-TRY_START
-        check_args(L,2);
-        std::string name = check_path(L,1);
-        const char *key = luaL_checkstring(L,2);
-        if (mat_map.find(name) == mat_map.end())
-                my_lua_error(L, "Material does not exist: \""+std::string(name)+"\"");
-        ExternalTable &t = mat_map[name];
-        t.luaGet(L, key);
-        return 1;
-TRY_END
-}
-
-static int global_reprocess_all_registered_materials (lua_State *L)
-{
-TRY_START
-        check_args(L,1);
-        if (!lua_isfunction(L,1))
-                my_lua_error(L,"Parameter should be a function");
-        for (MatMap::iterator i=mat_map.begin(),i_=mat_map.end() ; i!=i_ ; ++i) {
-                lua_pushvalue(L,1);
-                lua_pushstring(L,i->first.c_str());
-                i->second.dump(L);
-                lua_call(L,2,0);
-        }
-        return 0;
 TRY_END
 }
 
@@ -4588,108 +4435,6 @@ TRY_END
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// make
-
-static int global_make_gpuprog (lua_State *L)
-{
-TRY_START
-    check_args(L,3);
-    const char *name = luaL_checkstring(L,1);
-    const char *language = luaL_checkstring(L,2);
-    std::string typestr = luaL_checkstring(L,3);
-    Ogre::GpuProgramType type;
-    if (typestr=="FRAGMENT") {
-        type = Ogre::GPT_FRAGMENT_PROGRAM;
-    } else if (typestr=="VERTEX") {
-        type = Ogre::GPT_VERTEX_PROGRAM;
-    } else if (typestr=="GEOMETRY") {
-        type = Ogre::GPT_GEOMETRY_PROGRAM;
-    } else {
-        my_lua_error(L,"Unrecognised GPU Program type: "+typestr);
-    }
-    Ogre::HighLevelGpuProgramPtr t = Ogre::HighLevelGpuProgramManager::getSingleton()
-                            .createProgram(name,"GRIT", language, type);
-    push(L, new Ogre::HighLevelGpuProgramPtr(t),GPUPROG_TAG);
-    return 1;
-TRY_END
-}
-
-static int global_get_all_gpuprogs (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    Ogre::HighLevelGpuProgramManager::ResourceMapIterator rmi =
-            Ogre::HighLevelGpuProgramManager::getSingleton().getResourceIterator();
-
-    // doesn't seem to be possible to find out how many there are in advance
-    lua_createtable(L, 0, 0);
-    int counter = 0;
-    while (rmi.hasMoreElements()) {
-        const Ogre::HighLevelGpuProgramPtr &self =
-            rmi.getNext().staticCast<Ogre::HighLevelGpuProgram>();
-        lua_pushnumber(L,counter+1);
-        push(L, new Ogre::HighLevelGpuProgramPtr(self), GPUPROG_TAG);
-        lua_settable(L,-3);
-        counter++;
-    }
-
-    return 1;
-TRY_END
-}
-
-
-static int global_get_gpuprog (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
-    Ogre::HighLevelGpuProgramPtr m = Ogre::HighLevelGpuProgramManager::getSingleton().getByName(name);
-    if (m.isNull()) {
-        lua_pushnil(L);
-        return 1;
-    }
-    push(L,new Ogre::HighLevelGpuProgramPtr(m),GPUPROG_TAG);
-    return 1;
-TRY_END
-}
-
-static int global_get_gpuprog_usage (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    lua_pushnumber(L,Ogre::GpuProgramManager::getSingleton().getMemoryUsage());
-    return 1;
-TRY_END
-}
-
-static int global_unload_all_gpuprogs (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    Ogre::GpuProgramManager::getSingleton().unloadAll();
-    return 0;
-TRY_END
-}
-
-static int global_unload_unused_gpuprogs (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    Ogre::GpuProgramManager::getSingleton().unloadUnreferencedResources();
-    return 0;
-TRY_END
-}
-
-static int global_remove_gpuprog (lua_State *L)
-{
-TRY_START
-    check_args(L,1);
-    const char *name = luaL_checkstring(L,1);
-    Ogre::GpuProgramManager::getSingleton().remove(name);
-    return 0;
-TRY_END
-}
-
 static int global_resource_exists (lua_State *L)
 {
 TRY_START
@@ -4702,28 +4447,6 @@ TRY_START
 TRY_END
 }
 
-static int global_add_resource_location (lua_State *L)
-{
-TRY_START
-    check_args(L,3);
-    const char *resource = luaL_checkstring(L,1);
-    const char *ext = luaL_checkstring(L,2);
-    bool recursive = check_bool(L,3);
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(resource,ext,"GRIT",recursive);
-    return 0;
-TRY_END
-}
-
-static int global_init_all_resource_groups (lua_State *L)
-{
-TRY_START
-    check_args(L,0);
-    Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-    return 0;
-TRY_END
-}
-
-
 
 static int global_gfx_d3d9 (lua_State *L)
 {
@@ -4734,6 +4457,39 @@ TRY_START
 TRY_END
 }
 
+static int global_gfx_describe_texture (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    std::string name = check_path(L,1);
+    Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().getByName(name.substr(1), RESGRP);
+    if (tex.isNull())
+        EXCEPT << "Texture does not exist: \"" << name << "\"" << std::endl;
+    if (!tex->isPrepared() && !tex->isLoaded())
+        EXCEPT << "Texture is not loaded: \"" << name << "\"" << std::endl;
+    if (!tex->isLoaded())
+        tex->load();
+    lua_newtable(L);
+    ExternalTable t;
+    t.set("height", lua_Number(tex->getHeight()));
+    t.set("width", lua_Number(tex->getWidth()));
+    t.set("depth", lua_Number(tex->getDepth()));
+    t.set("desiredFloatBitDepth", lua_Number(tex->getDesiredFloatBitDepth()));
+    t.set("desiredFormat", lua_Number(tex->getDesiredFormat()));
+    t.set("desiredIntegerBitDepth", lua_Number(tex->getDesiredIntegerBitDepth()));
+    t.set("format", lua_Number(tex->getFormat()));
+    t.set("numFaces", lua_Number(tex->getNumFaces()));
+    t.set("numMipmaps", lua_Number(tex->getNumMipmaps()));
+    t.set("srcDepth", lua_Number(tex->getSrcDepth()));
+    t.set("srcFormat", lua_Number(tex->getSrcFormat()));
+    t.set("srcHeight", lua_Number(tex->getSrcHeight()));
+    t.set("srcWidth", lua_Number(tex->getSrcWidth()));
+    t.set("textureType", lua_Number(tex->getTextureType()));
+    t.set("hasAlpha", tex->hasAlpha());
+    t.dump(L);
+    return 1;
+TRY_END
+}
 
 static const luaL_reg global[] = {
 
@@ -4751,6 +4507,7 @@ static const luaL_reg global[] = {
     {"gfx_decal_make", global_gfx_decal_make},
 
     {"gfx_register_sky_material", global_gfx_register_sky_material},
+    {"gfx_register_material", global_gfx_register_material},
     {"gfx_register_shader", global_gfx_register_shader},
 
     {"gfx_font_define", global_gfx_font_define},
@@ -4823,6 +4580,8 @@ static const luaL_reg global[] = {
 
     {"gfx_anim_rate", global_gfx_anim_rate},
 
+    {"gfx_describe_texture", global_gfx_describe_texture},
+
     {"RGBtoHSL", global_rgb_to_hsl},
     {"HSLtoRGB", global_hsl_to_rgb},
     {"HSBtoHSL", global_hsv_to_hsl},
@@ -4835,31 +4594,8 @@ static const luaL_reg global[] = {
 
 static const luaL_reg global_ogre_debug[] = {
 
-    {"load_material", global_load_material},
-    {"get_all_materials",global_get_all_materials},
-    {"get_material",global_get_material},
-    {"get_material_usage", global_get_material_usage},
-    {"unload_all_materials", global_unload_all_materials},
-    {"unload_unused_materials", global_unload_unused_materials},
-    {"remove_material",global_remove_material},
+    {"register_material", global_gfx_register_material},
 
-    {"make_gpuprog", global_make_gpuprog},
-    {"get_all_gpuprogs", global_get_all_gpuprogs},
-    {"get_gpuprog", global_get_gpuprog},
-    {"get_gpuprog_usage", global_get_gpuprog_usage},
-    {"unload_all_gpuprogs", global_unload_all_gpuprogs},
-    {"unload_unused_gpuprogs", global_unload_unused_gpuprogs},
-    {"remove_gpuprog", global_remove_gpuprog},
-
-    {"register_material", global_register_material},
-    {"dump_registered_material", global_dump_registered_material},
-    {"registered_material_get", global_registered_material_get},
-    {"reprocess_all_registered_materials", global_reprocess_all_registered_materials},
-
-    {"Material", global_make_material},
-
-    {"add_resource_location", global_add_resource_location},
-    {"initialise_all_resource_groups", global_init_all_resource_groups},
     {"resource_exists", global_resource_exists},
 
     {NULL, NULL}
@@ -4880,9 +4616,6 @@ void gfx_lua_init (lua_State *L)
     ADD_MT_MACRO(gfxhudobj,GFXHUDOBJECT_TAG);
     ADD_MT_MACRO(gfxhudtext,GFXHUDTEXT_TAG);
     ADD_MT_MACRO(gfxhudclass,GFXHUDCLASS_TAG);
-
-    ADD_MT_MACRO(mat,MAT_TAG);
-    ADD_MT_MACRO(gpuprog,GPUPROG_TAG);
 
     register_lua_globals(L, global);
     register_lua_globals(L, global_ogre_debug);

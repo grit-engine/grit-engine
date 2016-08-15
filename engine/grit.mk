@@ -72,8 +72,6 @@ ENGINE_CPP_SRCS=\
 	gfx/gfx_sky_material.cpp \
 	gfx/gfx_text_buffer.cpp \
 	gfx/lua_wrappers_gfx.cpp \
-	gfx/lua_wrappers_gpuprog.cpp \
-	gfx/lua_wrappers_material.cpp \
 	 \
 	navigation/chunky_tri_mesh.cpp \
 	navigation/crowd_manager.cpp \
