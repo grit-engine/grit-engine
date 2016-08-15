@@ -36,7 +36,7 @@ def CheckDupIds(node):
         if not _ID_REGEX.match(nid):
             Error(node, 'Section id uses invalid characters.')
         existing = ID_MAP.get(nid)
-        if existing:
+        if existing is not None:
             Error(node, 'Section id already exists: %s.  The other exists at %s:%d' % (nid, existing.base, existing.sourceline))
         ID_MAP[nid] = node
     elif node.tag in ['issue', 'sref']:
