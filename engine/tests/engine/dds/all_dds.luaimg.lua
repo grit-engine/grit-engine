@@ -1,19 +1,5 @@
-function gen_mipmaps(img)
-    local tab = {}
-    local counter = 1
-    local w = img.width
-    local h = img.height
-    while w>1 or h>1 do
-        tab[counter] = img:scale(vec(w, h), "BOX")
-        w = w == 1 and 1 or ceil(w/2)
-        h = h == 1 and 1 or ceil(h/2)
-        counter = counter + 1
-    end
-    return tab
-end
-
 function output(fmt, img)
-    dds_save_simple("all_dds."..fmt..".dds", fmt, gen_mipmaps(img))
+    dds_save_simple("all_dds."..fmt..".dds", fmt, mipmaps(img))
 end
 
 img1 = make(vec(128, 128), 1, function(p) return p.x/128 + p.y/128 / 2 end)
@@ -40,4 +26,9 @@ output("BC2", img3a)
 output("BC3", img3a)
 output("BC4", img1)
 output("BC5", img2)
+
+-- TODO: volume map
+-- TODO: cubemap
+-- TODO: images with no mipmaps
+-- TODO: images with partial mipmaps
 
