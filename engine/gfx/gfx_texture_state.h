@@ -33,7 +33,14 @@ enum GfxTextureAddrMode {
 
 static inline Ogre::TextureUnitState::TextureAddressingMode to_ogre(GfxTextureAddrMode m)
 {
-    return Ogre::TextureUnitState::TextureAddressingMode(m);
+    switch (m) {
+        case GFX_AM_WRAP: return Ogre::TextureUnitState::TAM_WRAP;
+        case GFX_AM_MIRROR: return Ogre::TextureUnitState::TAM_MIRROR;
+        case GFX_AM_CLAMP: return Ogre::TextureUnitState::TAM_CLAMP;
+        case GFX_AM_BORDER: return Ogre::TextureUnitState::TAM_BORDER;
+    }
+    EXCEPTEX << "Unreachable." << ENDL;
+    return Ogre::TextureUnitState::TAM_WRAP;
 }
 
 enum GfxTextureFilterMode {
@@ -42,7 +49,14 @@ enum GfxTextureFilterMode {
 
 static inline Ogre::FilterOptions to_ogre(GfxTextureFilterMode m)
 {
-    return Ogre::FilterOptions(m);
+    switch (m) {
+        case GFX_FILTER_NONE: return Ogre::FO_NONE;
+        case GFX_FILTER_POINT: return Ogre::FO_POINT;
+        case GFX_FILTER_LINEAR: return Ogre::FO_LINEAR;
+        case GFX_FILTER_ANISOTROPIC: return Ogre::FO_ANISOTROPIC;
+    }
+    EXCEPTEX << "Unreachable." << ENDL;
+    return Ogre::FO_NONE;
 }
 
 struct GfxTextureState {
@@ -58,7 +72,7 @@ static inline GfxTextureState gfx_texture_state_anisotropic(GfxBaseTextureDiskRe
     return {
         texture,
         mode, mode, mode,
-        GFX_FILTER_LINEAR, GFX_FILTER_LINEAR, GFX_FILTER_ANISOTROPIC,
+        GFX_FILTER_ANISOTROPIC, GFX_FILTER_ANISOTROPIC, GFX_FILTER_LINEAR,
         16,
     };
 }

@@ -4094,9 +4094,9 @@ static void handle_param_binding(const std::string &kind, const std::string &mat
             state.modeV = addr_mode_from_string(kind, mat_name, k, mode_v_str);
             state.modeW = addr_mode_from_string(kind, mat_name, k, mode_w_str);
             std::string filter_min_str, filter_max_str, filter_mip_str;
-            t2->get("filterMin", filter_min_str, std::string("LINEAR"));
-            t2->get("filterMax", filter_max_str, std::string("LINEAR"));
-            t2->get("filterMip", filter_mip_str, std::string("ANISOTROPIC"));
+            t2->get("filterMin", filter_min_str, std::string("ANISOTROPIC"));
+            t2->get("filterMax", filter_max_str, std::string("ANISOTROPIC"));
+            t2->get("filterMip", filter_mip_str, std::string("LINEAR"));
             state.filterMin = filter_mode_from_string(kind, mat_name, k, filter_min_str);
             state.filterMax = filter_mode_from_string(kind, mat_name, k, filter_max_str);
             state.filterMip = filter_mode_from_string(kind, mat_name, k, filter_mip_str);
