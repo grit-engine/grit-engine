@@ -44,7 +44,7 @@ def GeneratePage(title, content, book):
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
-    <title>Grit Book - ''' + title + '''</title>
+    <title>Grit Book V0.1 - ''' + title + '''</title>
     <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
     <link rel="stylesheet" type="text/css" href="grit_book.css" />
     <link rel="icon" type="image/png" href="logo_tiny.png" />
@@ -162,6 +162,8 @@ def UnparseHtmlInlines(parent, inner=False):
             s += '<a class="issue" href="%s">issue %d</a>' % (url, n.id)
         elif n.kind == 'Emph':
             s += '<span class="emph">%s</span>' % UnparseHtmlInlines(n.data, True)
+        elif n.kind == 'Italic':
+            s += '<span class="italic">%s</span>' % UnparseHtmlInlines(n.data, True)
         elif n.kind == 'Code':
             s += '<code>%s</code>' % UnparseHtmlInlines(n.data, True)
         elif n.kind == 'Todo':
@@ -184,8 +186,8 @@ def UnparseHtmlBlocks(book, parent, split_below, never_split):
         if n.kind == 'Image':
             s += '''<div class="image">
     <div class="image-title">''' + escape(n.title) + '''</div>
-    <a class="image-link" href="''' + escape(n.src) + '''">
-        <img class="thumbnail" src="''' + escape(n.thumb_src) + '''" />
+    <a class="image-link" href="''' + '../img/' + escape(n.src) + '''">
+        <img class="thumbnail" src="''' + '../img/' + escape(n.thumb_src) + '''" />
     </a>
     <div class="image-caption">''' + escape(n.caption) + '''</div>
 </div>\n\n'''
@@ -204,7 +206,7 @@ def UnparseHtmlBlocks(book, parent, split_below, never_split):
             inner_html = '<h%d id="%s">%s</h%d>\n\n' % (h, n.id, title, h)
             inner_html += UnparseHtmlBlocks(book, n, n.split, never_split)
             if split_below and not never_split:
-                filename = n.id + '.html'
+                filename = 'html/' + n.id + '.html'
                 print 'Writing ' + filename
                 f = codecs.open(filename, 'w', 'utf-8')
                 f.write(GeneratePage(n.title, inner_html, book))
@@ -214,6 +216,8 @@ def UnparseHtmlBlocks(book, parent, split_below, never_split):
         elif n.kind == 'Preformatted':
             s += '<pre>%s</pre>\n\n' % n.data
         elif n.kind == 'Lua':
+            s += '<pre class="lua">%s</pre>\n\n' % n.data
+        elif n.kind == 'Inline':
             s += '<pre class="lua">%s</pre>\n\n' % n.data
         elif n.kind == 'Paragraph':
             s += '<p>\n'

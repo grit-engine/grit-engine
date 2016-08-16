@@ -1,0 +1,78 @@
+<section title="Input" id="inputfilter">
+
+    <!-- Be sure to use the terminology "button press" in order to include both
+       - mouse buttons and keypresses.
+      -->
+
+    In Grit, user input, in the form of mouse movements and keyboard/mouse button presses, is
+    delivered to the scripting environment via a chain of <def>InputFilter</def> objects.  Each
+    InputFilter has a set of button bindings associated with it, e.g. "C+A+s" meaning Ctrl+Alt+S.
+    These buttons include both keyboard and mouse buttons.  Lua code registers callbacks to handle
+    these button presses.  The first function is called when the button is pressed down.  The second
+    is called when it is released, and the third is for key repeat events.  One can give 'true' for
+    the 3rd argument in order to use the button down callback for repeat events.
+
+    <lua>
+        my_filter = InputFilter(135, "My Bindings")
+        my_filter:bind("C+A+s", function() print("Hello World!") end, nil, true)
+    </lua>
+
+    The intent is that different modules of behaviour within Grit have their own InputFilter
+    objects, which are set up with callbacks that interact with that code and state.  Globally, the
+    InputFilters are chained according to a <def>order</def> value (135 in this case).  Each button
+    press trickles along the chain of InputFilters starting with the one with the lowest order value
+    and then trying the others in ascending order.  The first InputFilter with a binding for that
+    button has its callback invoked, and the button press is blocked from being received by the
+    lower InputFilters.
+
+    The intention is that the input filter for global button presses (such as to quit the game)
+    appear earlier in the chain and cannot be used to e.g.  control a car.  Any button presses that
+    get to the bottom of the chain without triggering a callback are delivered to the HUD system.
+
+    In addition to these mechanisms, it is possible to <def>disable</def> individual InputFilters.
+    This causes the input subsystem's behaviour to be as if the disabled InputFilter was removed
+    from the chain.  It is an easy way to control a set of bindings that only occur during a certain
+    state of game play.  For example, one can have a set of bindings for navigating through a menu
+    system, that is only enabled if the menu system is being displayed.
+
+    <lua>
+        my_filter.enabled = false
+    </lua>
+
+    It is also possible to set a <def>modal</def> flag on a given InputFilter.  This causes the
+    input subsystem's behaviour to be as if all later InputFilters (the ones with larger order
+    values) were disabled.  Continuing our menu system example, setting modal is useful for
+    disabling large amounts of functionality, so that e.g. a car is not being controlled while the
+    player is in the menu system.
+
+    <lua>
+        my_filter.modal = true
+    </lua>
+
+    To capture mouse movement events, an InputFilter must set the <def>capture</def> flag.  This
+    enables the calling of a mouse movement callback for receiving relative mouse cursors movements,
+    and prevents all input events (mouse movement and buttons) from reaching the HUD.  It also hides
+    the mouse cursor. 
+
+    <lua>
+        my_filter.mouseMoveCallback = function (rel) print("Mouse: "..tostring(rel)) end
+        my_filter.mouseCapture = true
+    </lua>
+
+    InputFilters will be garbage collected, but can also be destroyed earlier as usual:
+
+    <lua>
+        my_filter:destroy()
+    </lua>
+
+    For debugging purposes, it may be useful to examine the complete set of currently existing input
+    filters.  This can also give a clue as to what order value to give for your input filter.  The
+    following function returns a map from order number to the description string.  The only way to
+    get a reference to the actual input filter is to find which variable it is stored in, on the Lua
+    side, e.g. my_filter in the above examples.
+
+    <lua>
+        input_filter_map()
+    </lua>
+
+</section>
