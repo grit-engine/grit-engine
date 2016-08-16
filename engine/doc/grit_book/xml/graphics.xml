@@ -9,11 +9,694 @@
 
     <section title="Graphics Bodies" id="gfx_body">
 
-        <section title="Materials" id="gfx_material">
+    </section>
+
+    <section title="Materials and Shaders" id="gfx_materials_and_shaders">
+
+        <def>Materials</def> and <def>shaders</def> define how each GfxBody in the world visually
+        appears, e.g., their colour, how they react to light, etc.  Shaders run on the GPU and are
+        written in a special high-level programming language called <def>Gasoline</def>.  The name
+        Gasoline is derived from Grit Shading Language or GSL.  Materials are defined separately and
+        are assigned to the triangles of your mesh.  They instantiate their shader's
+        <def>parameters</def> with <def>texture</def> and <def>scalar</def> values to achieve the
+        desired appearance.  They also have <def>system attributes</def> which control how Grit
+        renders the material in a broader sense.
+
+        <section title="Materials" id="gfx_materials">
+
+            Materials have the following system attributes, shown below with their default values.
+
+            <lua>
+            material `Example` {
+
+                -- What shader to use when rendering these triangles?
+                shader = `/system/Default`,
+
+                -- Either "OPAQUE", "ALPHA", or "ALPHA_DEPTH" (which also writes to depth buffer).
+                sceneBlend = "OPAQUE",
+
+                -- Whether to render both faces of the triangle or just the front.
+                backfaces = false,
+
+                -- Whether these triangles are rendered into the shadow map.
+                castShadows = true,
+
+                -- How much extra distance to move the shadow away from the caster
+                -- (to avoid shadow acne).
+                shadowBias = 0,
+
+                -- Whether or not to check for discards from the dangs shader when drawing shadows.
+                -- Note: This annotation will be inferred in a future version of Grit.
+                shadowAlphaReject = true,
+
+                -- Whether or not to use the additional lighting part of the shader.
+                -- Note: This annotation will be inferred in a future version of Grit.
+                additionalLighting = false,
+
+                -- Number of bone blend weights at each vertex (for skeletal animation).
+                -- Note: This annotation will be inferred in a future version of Grit.
+                blendedBones = 0,
+            }
+            </lua>
+
+            Further attributes in the material must match the parameters defined in the referenced
+            shader.  One should find the definition of the shader to read what parameters are
+            available.  See the following section for more information.
 
         </section>
 
+        <section title="Shaders" id="gfx_shaders">
+
+            A shader must be defined before it is used by a given material.  A shader definition
+            contains three short Gasoline programs that run on the GPU -- <def>vertex</def>,
+            <def>dangs</def>, and <def>additional</def>.  These respectively control how the
+            vertexes are transformed to world space, how the inputs to the scene-wide lighting
+            equation are calculated (diffuse, alpha, normal, gloss, specular), and what additional
+            lighting if any is used, e.g., for effects like emissive lighting.  Note that in other
+            engines, the vertex shader transforms to clip space via view and projection matrixes,
+            but in Grit this latter part is handled automatically.  The user need only convert to
+            world space.  Also in other engines, a single "fragment shader" is used to compute both
+            the dangs, lighting equation, and additional lighting.  However in Grit, the lighting
+            equation is controlled by the engine itself, and due to the deferred shading is a
+            scene-wide lighting equation, and the additional lighting is separated so it can
+            potentially be run in a subsequent additive pass.
+
+            Gasoline is a high level language that makes it very easy to achieve special material
+            effects on the GPU without having to know about the rendering techniques used by
+            the engine itself.  The gasoline programs are automatically combined and augmented in
+            various ways to produce real shaders for low level draw calls in either Direct3D
+            or GL.  Internally, special shaders are generated for instanced geometry, shadow
+            casting, wireframe, skeletal animation, deferred shading "forward" passes, deferred
+            additional passes, alpha passes, first person rendering, skies, etc.  This is important,
+            because the specific techniques needed for those kinds of rendering passes depend on the
+            implementation of the engine itself and are subject to change in future versions while
+            still supporting the same user-defined gasoline shaders.
+
+            Gasoline has other features intended to make shader programming easier.  Type inference
+            makes shaders more concise with less bureaucracy.  Automatic interpolator packing means
+            that vertex attributes and variables defined in the vertex program are automatically
+            available in the scope of the dangs and additional programs.  Using Gasoline is
+            therefore similar to using the data-flow graphical shading languages (boxes and arrows)
+            offered by other engines, except it is more powerful and better suited to version
+            control tools.
+
+            The shader is parameterised by textures and scalar values  The intention is that shaders
+            can be generic enough to be used by a range materials, each achieving a different visual
+            effect by binding different scalar values and textures to these parameters.  Some
+            parameters are <def>static</def>.  This means a special low-level shader is generated in
+            the implementation with the material value baked and optimized in.  This avoids paying
+            the performance cost in in the case where e.g., a particular effect is not needed in a
+            given material.
+
+            The following example shows how to define shader parameters:
+
+            <lua>
+                shader `ExampleShader` {
+
+                    -- A texture parameter:
+                    -- Default: texture sampling will statically return Float4(r, g, b, a)
+                    -- The rgba values usually range between 0 and 1 inclusive.
+                    exampleTexture = uniform_texture_2d(r, g, b, a),
+
+                    -- 3D textures represent depth with a stack of identically-sized 2d textures.
+                    -- They are useful for geometry that is hard to wrap UVs around.
+                    example3DTexture = uniform_texture_3d(r, g, b, a),
+
+                    -- 1D textures are just a single line of texels.
+                    example1DTexture = uniform_texture_1d(r, g, b, a),
+
+                    -- Cube textures are the 6 faces of a cube.  They are useful for texture-mapping
+                    -- convex sphere-like shapes.
+                    example1DTexture = uniform_texture_cube(r, g, b, a),
+
+                    -- Floating point scalar parameters of various dimensionality:
+                    exampleFloat1 = uniform_float(0.5),
+                    exampleFloat2 = uniform_float(1, 0.5),
+                    exampleFloat3 = uniform_float(1, 1, 0.5),
+                    exampleFloat4 = uniform_float(1, 2, 3, 0.5),
+
+                    -- Static scalar parameters:
+                    exampleStaticFloat1 = static_float(0.5),
+                    exampleStaticFloat2 = static_float(1, 0.5),
+                    exampleStaticFloat3 = static_float(1, 1, 0.5),
+                    exampleStaticFloat4 = static_float(1, 2, 3, 0.5),
+
+                    -- Integer scalar parameters:
+                    exampleInt1 = uniform_int(4),
+                    exampleInt2 = uniform_int(1, 7),
+                    exampleInt3 = uniform_int(1, 1, 9),
+                    exampleInt4 = uniform_int(1, 2, 3, 4),
+                    exampleStaticInt1 = static_int(4),
+                    exampleStaticInt2 = static_int(1, 7),
+                    exampleStaticInt3 = static_int(1, 1, 9),
+                    exampleStaticInt4 = static_int(1, 2, 3, 4),
+                }
+            </lua>
+
+
+            A material can override the default value of a scalar parameter using a same-named
+            attribute whose value is a number or appropriately-sized vector.  There are two ways a
+            material can override textures:  Either referencing an image on disk, i.e. a <sref
+            id="disk_resource_management">disk resource</sref>, or giving a solid colour.
+
+            In the case of referencing an image, one can either give the image filename as a string,
+            or when more power is needed, the various parameters of texture binding can be
+            explicitly given in a table.
+
+            To use a solid colour in place of a texture, a vector4 value can be given, which will
+            appear as if a solid colour image was used.  As in the default texture colour, this
+            colour is usually specified in the normalised range of 0 to 1 inclusive.
+
+            <lua>
+                material `ExampleMaterial` {
+
+                    -- Explicit texture binding, various options can be overidden (defaults shown).
+                    exampleTexture = {
+
+                        -- Filename on disk.
+                        image = `SomeFile.dds`,
+
+                        -- "Maxification" filter.  Other options are "POINT" and "LINEAR".
+                        filterMax = "ANISOTROPIC",
+
+                        -- "Minification" filter.  Other options are "POINT" and "LINEAR".
+                        filterMin = "ANISOTROPIC",
+
+                        -- Mipmap filter.  Other options are "POINT" and "NONE".
+                        filterMip = "LINEAR",
+
+                        -- Anisotropy (only used if ANISOTROPIC filtering is used.
+                        anisotropy = 16,
+
+                        -- Addressing modes for the 3 texture coordinate components.
+                        -- Other options are "CLAMP" "MIRROR" and "BORDER".
+                        modeU = "WRAP",
+                        modeV = "WRAP",
+                        modeW = "WRAP",
+                    },
+
+                    -- Shorthand for the above, where all defaults are used.
+                    exampleTexture = `SomeFile.dds`,
+
+                    -- Solid colour (red, full alpha).
+                    exampleTexture = vec(1, 0, 0, 1),
+
+                    -- Override scalar parameters.
+                    exampleFloat = 0.7,
+                    exampleFloat2 = vec(0, 0),
+                    exampleFloat3 = vec(1, 0, 1),
+                    exampleFloat4 = vec(1, 2, 3, 4),
+                    exampleStaticFloat = 0.7,
+                    exampleStaticFloat2 = vec(0, 0),
+                    exampleStaticFloat3 = vec(1, 0, 1),
+                    exampleStaticFloat4 = vec(1, 2, 3, 4),
+                }
+            </lua>
+
+            <section title="Gasoline Language" id="gfx_gasoline_language">
+
+                Like all shading languages, Gasoline is a simple statically typed language that
+                relies heavily on compiler optimisations to run efficiently on the GPU.
+
+                Comments are ignored:
+
+                <pre>
+                    // This is a single line comment.
+
+                    /* This is a multi-line comment.
+                       It is terminated explicitly.
+                     */ 
+                </pre>
+
+                Variable definitions:
+
+                <pre>
+                    // The type is inferred here (Float).
+                    var my_variable = 8.0;
+
+                    // An optional type annotation is checked and may make the code more readable.
+                    var my_variable2 : Float = 8.0;
+
+                    // If the type is given, the initializer can be omitted (it is zero).
+                    var my_variable3 : Float;
+
+                    // Numbers without decimal points are integers, so the inferred type is Int.
+                    // If you wanted a Float, use 8.0 or type annotation.
+                    var my_int = 8;
+
+                    // Integers are automatically converted to floats if needed.
+                    var my_float = 1 + 1.0;  // This is 2.0.
+
+                    // Explicit conversion to a type is also possible.
+                    var my_float2 = Float(1) + 1.0;
+                </pre>
+
+                A variety of types are supported:
+
+                <pre>
+                    var my_array = []Float { 1.0, 2.0, 3.0 };
+                    var index = 1;
+                    var tmp = my_array[i];
+                    
+                    // Vector types are available up to 4 elements (Int2-4 are similar).
+                    var v2 = Float2(0, 10);
+                    var v3 = Float3(v2, 1);
+                    var v4 : Float4;  // All elements zero-initialized
+
+                    // There members are accessible via "swizzling".
+                    // The order is xyzw and rgba can also be used, mapping to the same values.
+                    var example1 : Float = v2.y;  // This is 10.
+                    var example2 : Float3 = v2.xxy;  // This is Float3(0, 0, 10).
+                    var example3 : Float3 = v4.rgb;  // This is Float3(0, 0, 0).
+
+                    // A value with a single dimension is automatically converted to fill all
+                    // required channels.
+                    var example4 : Float3 = 1.0;  // This is Float3(1, 1, 1).
+
+                    // There are also booleans (true or false):
+                    var b = true;
+                    var b2 : Bool;  // Initialized to false.
+                </pre>
+
+                Variables are mutable (can have their values updated):
+
+                <pre>
+                    index = 2;
+                    my_array[index] = 3;  // 3, an Int, is automatically converted to Float.
+                    example2.r = 3;
+                    example2.yz = Float2(1, 1);
+                </pre>
+
+                Functions can be called, using a C-like syntax:
+
+                <pre>
+                    out.normal = normalise(v);
+                </pre>
+
+                Listed below are all the functions with their type signatures (the parameters they
+                        must be given and what they return).  The notation <code>Floatn</code> and
+                <code>Intn</code> means that a version of the function is available for any size
+                <code>n</code>.  Most mathematical functions are lifted up to vector types by
+                performing the same operation on every element (pointwise).
+
+                <pre>
+                // Trigonometry
+                tan: (Floatn) -> Floatn
+                atan: (Floatn) -> Floatn
+                sin: (Floatn) -> Floatn
+                asin: (Floatn) -> Floatn
+                cos: (Floatn) -> Floatn
+                acos: (Floatn) -> Floatn
+                atan2: (Float, Float) -> Float
+
+                // Other simple math
+                abs: (Floatn) -> Floatn
+                abs: (Intn) -> Intn
+                fract: (Floatn) -> Floatn
+                floor: (Floatn) -> Floatn
+                ceil: (Floatn) -> Floatn
+                sqrt: (Floatn) -> Floatn
+
+                // Compare value to neighbouring fragment.
+                ddx: (Floatn) -> Floatn  // Fragment shader only
+                ddy: (Floatn) -> Floatn  // Fragment shader only
+
+                pow: (Floatn, Float) -> Floatn
+                strength: (Float, Float) -> Float  // Like pow() but clamps first param > 0
+                
+                // Vectors
+                dot: (Float2, Float2) -> Float
+                dot: (Float3, Float3) -> Float
+                normalise: (Float3) -> Float3
+                reflect: (Float3, Float3, Float3) -> Float3
+                cross: (Float3, Float3) -> Float3
+                rotate_to_world: (Float3) -> Float3  // Vertex shader only
+                transform_to_world: (Float3) -> Float3  // Vertex shader only
+                length: (Floatn) -> Float
+                mul: (Matrix2x2, Float2) -> Float2
+                mul: (Matrix2x3, Float2) -> Float3
+                mul: (Matrix2x4, Float2) -> Float4
+                mul: (Matrix3x2, Float3) -> Float2
+                mul: (Matrix3x3, Float3) -> Float3
+                mul: (Matrix3x4, Float3) -> Float4
+                mul: (Matrix4x2, Float4) -> Float2
+                mul: (Matrix4x3, Float4) -> Float3
+                mul: (Matrix4x4, Float4) -> Float4
+
+                // Colours
+                desaturate: (Float3, Float) -> Float3
+                pma_decode: (Float4) -> Float4  // Pre-multiplied alpha
+                gamma_decode: (Floatn) -> Floatn
+                gamma_encode: (Floatn) -> Floatn
+
+                clamp: (Floatn, Floatn, Floatn) -> Floatn
+                lerp: (Floatn, Floatn, Floatn) -> Floatn
+                max: (Floatn, Floatn) -> Floatn
+                min: (Floatn, Floatn) -> Floatn
+
+                // Constructors
+                Float, Float2, Float3, Float4
+
+                // Texture sampling
+                sample: (Texture1D, Float) -> Float4
+                sample: (Texture2D, Float2) -> Float4
+                sample: (Texture3D, Float3) -> Float4
+                sample: (TextureCube, Float3) -> Float4
+                // Explicitly specify x and y differentials.
+                sampleGrad: (Texture1D, Float, Float, Float) -> Float4
+                sampleGrad: (Texture2D, Float2, Float2, Float2) -> Float4
+                sampleGrad: (Texture3D, Float3, Float3, Float3) -> Float4
+                sampleGrad: (TextureCube, Float3, Float3, Float3) -> Float4
+                // Explicitly select a mipmap level.
+                sampleLod: (Texture1D, Float, Float) -> Float4
+                sampleLod: (Texture2D, Float2, Float) -> Float4
+                sampleLod: (Texture3D, Float3, Float) -> Float4
+                sampleLod: (TextureCube, Float3, Float) -> Float4
+                </pre>
+
+                The following arithmetic operators can be used, ordered by precedence.  Aside from
+                !, &amp;&amp; and ||, which apply only to booleans, the rest apply to Float, Float2,
+                Float3, Float4, Int, Int2, Int3, and Int4.  If a binary operator is applied to two
+                different types, either one of them is automatically converted to the other.
+
+                For example 3 + 5.0 becomes 3.0 + 5.0, and 3 + Int2(1, 0) becomes Int2(3, 3) +
+                Int2(1, 0).  However, Float2(1, 1) + Float3(1, 1, 1) is an error since neither can
+                be converted to the other.
+
+                <pre>
+                    Function application
+                    ! -  (unary negation)
+                    * / %
+                    + -
+                    &lt; &lt;= &gt; &gt;=
+                    == !=  (equal, not equal)
+                    &amp;&amp; ||  ('and' and 'or')
+                </pre>
+
+                The shader parameters are available through the <code>mat</code> object.  Accessing
+                uniform_float or uniform_int simply gets you a value of the appropriate type.
+                Accessing textures gets you a texture object of the appropriate type, which can be
+                used only as the first parameter of one of the <code>sample*</code> functions listed
+                above.  It is an error to access a field of mat that was not declared as a shader
+                parameter of some form.
+
+                <pre>
+                    out.colour = mat.myParameter * sample(mat.myTexture, uv);
+                </pre>
+
+                Scene-wide values are available through the <code>global</code> object.
+
+                <pre>
+                global.cameraPos : Float3  // World space position of the camera.
+                global.fovY : Float  // Field of view (degrees)
+                global.time : Float  // (see below)
+
+                // The visible depth range.
+                global.nearClipDistance : Float
+                global.farClipDistance : Float
+
+                // Lighting parameters.
+                global.particleAmbient : Float3
+                global.sunlightDiffuse : Float3
+                global.sunlightDirection : Float3
+                global.sunlightSpecular : Float3
+
+                // Fog parameters.
+                global.fogColour : Float3
+                global.fogDensity : Float
+
+                // Sky parameters.
+                global.hellColour : Float3
+                global.skyCloudColour : Float3
+                global.skyCloudCoverage : Float
+                global.skyGlareHorizonElevation : Float
+                global.skyGlareSunDistance : Float
+                global.sunAlpha : Float
+                global.sunColour : Float3
+                global.sunDirection : Float3
+                global.sunFalloffDistance : Float
+                global.sunSize : Float
+                global.skyDivider1 : Float
+                global.skyDivider2 : Float
+                global.skyDivider3 : Float
+                global.skyDivider4 : Float
+                global.skyColour0 : Float3
+                global.skyColour1 : Float3
+                global.skyColour2 : Float3
+                global.skyColour3 : Float3
+                global.skyColour4 : Float3
+                global.skyColour5 : Float3
+                global.skySunColour0 : Float3
+                global.skySunColour1 : Float3
+                global.skySunColour2 : Float3
+                global.skySunColour3 : Float3
+                global.skySunColour4 : Float3
+                </pre>
+
+                There are also properties associated with individual GfxBody objects.  Currently,
+                the following attributes are available for general use.  They are set using
+                <code>mybody:setPaintColour(i, vec(r, g, b), m, s, g)</code> for i in 0 to 3.  In
+                future, you will be able to define your own and call them whatever you want.
+
+                <pre>
+                paintDiffuse0 : Float3
+                paintDiffuse1 : Float3
+                paintDiffuse2 : Float3
+                paintDiffuse3 : Float3
+                paintMetallic0 : Float1
+                paintMetallic1 : Float1
+                paintMetallic2 : Float1
+                paintMetallic3 : Float1
+                paintSpecular0 : Float1
+                paintSpecular1 : Float1
+                paintSpecular2 : Float1
+                paintSpecular3 : Float1
+                paintGloss0 : Float1
+                paintGloss1 : Float1
+                paintGloss2 : Float1
+                paintGloss3 : Float1
+                </pre>
+
+                Gasoline also has control flow constructs, i.e. <def>conditionals</def>,
+                <def>discard</def>, and <def>loops</def>.  Since these constructs cause the
+                execution to diverge between neighbouring pixels, <code>ddx</code> /
+                <code>ddy</code> may not be used.  This also includes use of
+                <code>sample(...)</code> since that internally uses <code>ddx</code> and
+                <code>ddy</code>.
+
+                <pre>
+                if (expr) {
+                    // This part only executed if expr evaluated to true.
+                } else {
+                    // This part only if it was false.
+                }
+
+                // The else branch is also optional:
+                if (expr) {
+                    // This part only executed if expr evaluated to true.
+                }
+
+                // The discard statement causes the pixel to not be drawn.
+                // Typically it is used in a conditional, otherwise no pixels would be drawn.
+                if (alpha &lt; 0.5) {
+                    // Typically discard is used for alpha rejection effects.
+                    discard;
+                }
+                // Note that ddx / ddy / sample() cannot be used after a possible discard.
+
+                // For loops are similar to C:
+                for (var x = 0; x &lt; 10; x = x + 1) {
+                    // This part executed 10 times.
+                }
+                </pre>
+
+            </section>
+
+            <section title="Gasoline Vertex Shader" id="gfx_gasoline_vertex">
+
+                The <def>vertex shader</def> is run once for each vertex in the mesh.  It takes the
+                attributes at each vertex: position, normal, tangent, colours, texture coordinates,
+                and computes the following: 1) The world space position of this vertex within the
+                scene.  2) Any intermediate values that are used by the DANGS and additional
+                shaders, but are more efficiently computed in the vertex shader and linearly
+                interpolated across the triangle face.
+
+                The <code>vert</code> object provides access to the various values from the mesh,
+                each of which is a 4-dimensional vector.  The texture coordinates need not be used
+                for sampling textures.
+
+                <pre>
+                    vert.position  -- object space
+                    vert.colour 
+                    vert.normal
+                    vert.tangent
+                    vert.coord0
+                    vert.coord1
+                    vert.coord2
+                    vert.coord3
+                    vert.coord4
+                    vert.coord5
+                    vert.coord6
+                    vert.coord7
+                </pre>
+
+                The shader may write the world position of the vertex in <code>out.position</code>.
+                The function transform_to_world is available to do this, but the shader can modify
+                the position either before or after this transformation (or both) in order to
+                achieve special effects such as breathing, swaying, etc.  The following default
+                value is otherwise used:
+
+                <lua>
+                    // Default value:
+                    out.position = transform_to_world(vert.position);
+                </lua>
+
+            </section>
+
+            <section title="Gasoline DANGS Shader" id="gfx_gasoline_dangs">
+
+                The <def>DANGS</def> shader computes the diffuse, alpha, normal, gloss, and specular
+                components of the lighting equation.
+
+                The vert object is also available, the vertex attributes from the mesh are
+                interpolated across the triangle.  Likewise, all variables defined in the vertex
+                shader are also available and are interpolated.
+
+                The shader may write the following lighting equation parameters into the
+                <code>out</code> object.  Otherwise, the following defaults are used:
+
+                <pre>
+                    -- Proportion of light absorbed and re-emitted in an arbitrary
+                    -- direction due to being absorbed into the molecules of the surface.  Since
+                    -- this process often changes the colour of the light, this input to the
+                    -- lighting equation is broken down by channel.
+                    out.diffuse = Float3(0.5, 0.25, 0);
+
+                    -- 0 is totally transparent, 1 is totally opaque.  This has no effect if the
+                    -- material's sceneBlend attribute is OPAQUE.
+                    out.alpha = 1;
+
+                    -- The world-space vector perpendicular to the surface at this point.
+                    -- This vector will be normalised by the engine.
+                    out.normal = Float3(0, 0, 1);
+
+                    -- How polished is the surface (0 to 1).
+                    out.gloss = 1;
+
+                    -- Proportion of the light that is reflected off the surface of the material
+                    -- like a mirror.  This is usually high in metals and low in organic materials.
+                    out.specular = 0.04;
+                </pre>
+
+                Note that all these outputs are in <def>linear</def> space ready to be immediately
+                processed by the lighting equation.  Most textures have <def>gamma encoded</def> red
+                green and blue channels in order to concentrate more fidelity into the darker shades
+                where the human eye is most sensitive.  This is true of textures edited by hand in
+                image processing software and photo-sourced images.  Such textures must be
+                gamma-decoded before being used, with the gamma_decode(colour) function.
+
+                Note also that if a texture has <def>pre-multiplied alpha</def>, its red green and
+                blue channels must be divided by the alpha channel before use (but after gamma
+                decoding).
+
+            </section>
+
+            <section title="Gasoline Additional Shader" id="gfx_gasoline_additional">
+
+                The <def>additional shader</def> allows a surface to emit light for a reason other
+                than the scene-wide physically-based lighting equation.  For example if the surface
+                is hot and radiating light, or due to bioluminescence, flourescence in UV light,
+                LEDs or supernatural effects.  The colour output is in linear space:  0 to 1 in
+                standard range, higher for HDR.  The <code>additionalLighting</code> material
+                attribute must be set if this shader returns anything other than Float3(0, 0, 0).
+
+                The vert object and vertex shader variables are available, as in the DANGS shader.
+
+                <pre>
+                    -- Additional light originating from this point and entering the camera.
+                    out.colour = Float3(0, 0, 0);
+
+                    -- 0 is totally transparent, 1 is totally opaque.
+                    -- When rendering skies, this is used for blending purposes.
+                    out.alpha = 1;
+                </pre>
+
+            </section>
+
+        </section>
+
+        <section title="Complete Example" id="gfx_materials_example">
+
+            The following example is a simple shader and material that has a diffuse map and can
+            also emit "emissive" light, i.e. light that glows from the surface itself independently
+            of other light sources in the scene.
+
+            <lua>
+                shader `ExampleShader` {
+
+                    -- If a texture is not provided in the material, texture samples will return
+                    -- grey, i.e., Float4(0.5, 0.5, 0.5, 1).
+                    diffuseMap = uniform_texture_2d(0.5, 0.5, 0.5, 1),
+
+                    -- Useful for tinting the texture for variety.  The default of 1 has no effect.
+                    -- Note that this parameter requires a 3d vector.
+                    diffuseMask = uniform_float(1, 1, 1),
+
+                    -- If alpha &lt;= this then discard entire fragment.
+                    alphaRejectThreshold = uniform_float(-1),
+
+                    -- Note that the default colour's alpha channel can be omitted, in which case
+                    -- it defaults to 1.
+                    -- Note that emissiveMask defaults to zero so must be overridden or emissiveMap
+                    -- has no effect.
+                    emissiveMap = uniform_texture_2d(1, 1, 1),
+
+                    -- Note that this parameter can have values > 1 to power up an emissive texture
+                    -- to HDR levels.
+                    emissiveMask = uniform_float(0, 0, 0);
+
+                    -- How the vertexes are transformed from object space to world space.
+                    vertexCode = [[
+                        out.position = transform_to_world(vert.position.xyz);
+                        var normal_ws = rotate_to_world(vert.normal.xyz);
+                    ]],
+
+                    -- How the inputs to the lighting equation are computed.
+                    -- Diffuse Alpha Normal Gloss Specular (DANGS)
+                    dangsCode = [[
+                        var diff_texel = sample(mat.diffuseMap, vert.coord0.xy);
+                        out.diffuse = gamma_decode(diff_texel.rgb) * mat.diffuseMask;
+                        out.alpha = diff_texel.a;
+                        if (out.alpha &lt;= mat.alphaRejectThreshold) discard;
+                        out.normal = normal_ws;
+                        out.gloss = 0;
+                        out.specular = 0.04;
+                    ]],
+
+                    -- Any additional light not due to the scene-wide lighting equation.
+                    additionalCode = [[
+                        var c = sample(mat.emissiveMap, vert.coord0.xy);
+                        out.colour = gamma_decode(c.rgb) * mat.emissiveMask;
+                    ]],
+                }
+
+                material `Example` {
+                    // System attributes
+                    shader = `ExampleShader`,
+                    backfaces = true,
+
+                    // Shader attributes
+                    diffuseMap = `MyTexture.dds`,
+                    //
+                    diffuseMask = vec(0.8, 0.8, 0.5),
+                }
+            </lua>
+
+        </section>
+
+
     </section>
+
 
     <section title="Realtime Shadow Techniques Used By Grit" id="gfx_shadow">
 
@@ -310,9 +993,9 @@
         used to control the layering of sky bodies, rather they are layered
         explicitly.  Typically we use about 1 metre because that is easy to
         manipulate in modelling software.
-        
+
         Sky body materials refer to sky materials instead of <sref
-        id="gfx_material">regular materials</sref>.  Sky materials are defined
+        id="gfx_materials_and_shaders">regular materials</sref>.  Sky materials are defined
         in a special way, and are not interchangeable with regular materials,
         although they can share textures.  Here is an example:
 
@@ -386,7 +1069,7 @@
             of the light itself.  The corona's size (diameter) must be
             specified, as it defaults to 0 which means no corona.  The corona
             also has its own colour, which you must set otherwise it defaults
-            to white. 
+            to white.
 
             <lua>
                 l.coronaSize = 0.3 -- sphere diameter in metres
@@ -419,7 +1102,7 @@
         are reasonably heavy to render and you don't want to have too many
         behind each other in the case of alpha particles because that causes a
         lot of overdraw.
-        
+
         Use just enough particles to represent your 3D shape.  The key to
         particles is to use a great looking (preferably animated) texture, and
         then write enough behaviour into that particle class, that a cloud of
@@ -441,7 +1124,7 @@
         To create your own particles, define a <def>Particle Class</def> in Lua
         scripting, which provides the references textures, default fields, and provides a
         stepCallback to implement the behaviour of the particle.
-        
+
         Particle texture coordinates are used to implement animation.  When
         defining a particle, a list of coordinates are given, one for each
         frame.
