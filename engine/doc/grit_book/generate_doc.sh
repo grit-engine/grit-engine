@@ -4,7 +4,7 @@
 # Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
 
 # Generate Documentations from xml/*.xml
-# sudo apt-get install htmldoc python python-pip
+# sudo apt-get install htmldoc python python-pip markdown
 # pip install pygments
 
 # Convert xml/*.xml to md/*.md (for README.md ) and generate single file html/complete.md
@@ -14,6 +14,8 @@
 
 python convert_web.py
 
+mkdir -p md_html
+
 for FILENAME in md/*.md
 do
    HTML="${FILENAME##*/}"  # remove path and replace .md with .html
@@ -22,9 +24,11 @@ do
    markdown "$FILENAME" >"$HTML" 
 done
 
+cp html/*.png md_html
+
 
 cd html
-htmldoc --right 1.75cm --no-compression --headfootsize 9.0 --headfootfont courier --titleimage ../img/titleimage.jpg --logo ../img/logo.jpg --header ".l." --footer ".t1" -f ../pdf/gritbook.pdf complete.html
+htmldoc --right 1.75cm --no-compression --headfootsize 9.0 --headfootfont courier --titleimage ../pdf/titleimage.png --logo ../pdf/logo.png --header ".l." --footer ".t1" -f ../pdf/gritbook.pdf complete.html
 cd ..
 
 # other tests

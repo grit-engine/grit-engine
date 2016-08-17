@@ -243,8 +243,8 @@ def TranslateBlockContents(block, block_ast):
                 thumb_src = 'thumb_' + src
                 caption = MinimiseWhiteSpace(el.text or '')
                 title = MinimiseWhiteSpace(el.get('title'))
-                AssertFile(el, 'img/' + src)
-                AssertFile(el, 'img/' + thumb_src)
+                AssertFile(el, 'xml/' + src)
+                AssertFile(el, 'xml/' + thumb_src)
                 translated_content = Node('Image', block_ast, src=src, caption=caption, thumb_src=thumb_src, title=title)
             elif el.tag == "ul":
                 AssertNoBody(el)

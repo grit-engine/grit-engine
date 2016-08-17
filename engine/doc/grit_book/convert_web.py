@@ -2,6 +2,7 @@
 
 import codecs
 import re
+from shutil import copyfile
 
 import lxml.etree as ET
 from translate_xml import *
@@ -73,6 +74,21 @@ book_ast = Node('Book', None, split=True, data=False)
 book_ast.data = TranslateBlockContents(book, book_ast)
 ResolveReferences(book_ast)
 
+# Fetch all images
+def GetImgSrcs(ast):
+    if ast is None:
+        return []
+    if isinstance(ast, basestring):
+        return []
+    if isinstance(ast, list):
+        return [s for child in ast for s in GetImgSrcs(child)]
+    if ast.kind == 'Image':
+        return [ast.src]
+    return GetImgSrcs(ast.data)
+
+all_imgs = GetImgSrcs(book_ast)
+print all_imgs
+
 # Web .html
 print 'Writing html/index.html'
 index = '<h1> Contents </h1>\n'
@@ -89,6 +105,15 @@ index = UnparseHtmlBlocks(book_ast, book_ast, True, True)
 contents = codecs.open('html/complete.html', 'w', 'utf-8')
 contents.write(GeneratePage('&copy; 2016 Grit Engine Community.', index, None))
 contents.close()
+
+print 'Copyimg images to html'
+for img in all_imgs:
+    copyfile('xml/' + img, 'html/' + img)
+    copyfile('xml/thumb_' + img, 'html/thumb_' + img)
+
+print 'Copyimg images to md'
+for img in all_imgs:
+    copyfile('xml/' + img, 'md/' + img)
 
 # Markdown .md
 print 'Writing md/index.md'

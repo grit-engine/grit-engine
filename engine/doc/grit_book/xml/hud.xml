@@ -20,7 +20,7 @@
         common/hud directory, but you can also define your own.
         Instantiate it as follows:
 
-        <image src="hud_example1.jpg" title="Basic HUD object example">
+        <image src="hud_example1.png" title="Basic HUD object example">
             Use of /common/hud/Rect as shown in the Lua snippet.
         </image>
 
@@ -74,7 +74,7 @@
             }
         </lua>
 
-        <image src="hud_example2.jpg" title="Spinning Icon">
+        <image src="hud_example2.png" title="Spinning Icon">
             The icon on the right (faster_obj) spins faster than the one on the left (obj).
         </image>
 
@@ -107,7 +107,7 @@
         objects.  However, the filtering artefacts can look ugly for a lot of
         textures, especially when the texture is magnified a lot.
         
-        <image src="hud_example7.jpg" title="Corner Mapped Texture">
+        <image src="hud_example7.png" title="Corner Mapped Texture">
             The texture itself is shown to the right.  To the left is shown the
             HUD object mapping this texture with corner mapping.
         </image>
@@ -140,7 +140,7 @@
         terminal colour codes, hard tabs, new lines, wrapping according to a
         pixel width, and scrolling.
 
-        <image src="hud_example3.jpg" title="Basic Text Rendering">
+        <image src="hud_example3.png" title="Basic Text Rendering">
             A HUD text body using the simple misc.fixed font.
         </image>
 
@@ -171,7 +171,7 @@
             mask on the colour/alpha present in the texture.  This is the same as
             regular HUD objects.
             
-            <image src="hud_example4.jpg" title="Per-Letter Colouring">
+            <image src="hud_example4.png" title="Per-Letter Colouring">
                 Text with per-letter colouring.
             </image>
 
@@ -199,7 +199,7 @@
 
         <section title="Text Drop Shadows" id="gfx_hud_text_shad">
 
-            <image src="hud_example5.jpg" title="Drop Shadows">
+            <image src="hud_example5.png" title="Drop Shadows">
                 A drop shadow of 1 pixel towards the bottom right of the screen.
             </image>
 
@@ -257,7 +257,7 @@
         Like the 3D scene, the HUD objects exist in a hierarchy, i.e. one can
         be the child of another.  This is achieved by setting the parent field:
 
-        <image src="hud_example6.jpg" title="The Hierarchy">
+        <image src="hud_example6.png" title="The Hierarchy">
             The child is drawn relative to the parent.
         </image>
 
@@ -394,7 +394,7 @@
             follows.  Note the pressedCallback, which the code in this class
             executes when it receives a button press.  
 
-            <image src="hud_example8.jpg" title="Button">
+            <image src="hud_example8.png" title="Button">
                 The button created by the Lua snippet left.
             </image>
 
@@ -415,7 +415,7 @@
             It is also possible to customize some of the attributes of the
             button.  The following rather garish button demonstrates this.
 
-            <image src="hud_example9.jpg" title="Garish Button">
+            <image src="hud_example9.png" title="Garish Button">
                 The colours become more interesting upon mouse interaction.
             </image>
 
@@ -463,7 +463,7 @@
             mapping</sref>.  When instantiating the class, the child object is
             given and automatically has its parent set to the border object.
 
-            <image src="hud_example10.jpg" title="Border">
+            <image src="hud_example10.png" title="Border">
                 Putting a border around another HUD object.
             </image>
 
@@ -472,7 +472,7 @@
                     position = vec(200, 200);
                     padding = 8;  -- Extra space on the inside.
                     colour = 0.25 * vec(1, 1, 1);  -- Dark grey
-                    texture = "/common/hud/CornerTextures/Border04.jpg";
+                    texture = "/common/hud/CornerTextures/Border04.png";
                     -- The child object:
                     child = gfx_hud_object_add(`/common/hud/Button`, {
                         caption = "Some button.";
@@ -508,7 +508,7 @@
             to children whose size change at some time after the stack was
             created.
 
-            <image src="hud_example12.jpg" title="Border">
+            <image src="hud_example12.png" title="Border">
                 Three buttons laid out using StackY.  Note the extra gap of 10
                 pixels.
             </image>
@@ -565,7 +565,7 @@
             In this case, it specifies a 50 pixel padding, and the Stretcher
             has no parent, so it uses the screen dimensions as input.
 
-            <image src="hud_example11.jpg" title="Stretcher">
+            <image src="hud_example11.png" title="Stretcher">
                 Using the /common/hud/Stretcher class to resize a button to
                 fill the screen.
             </image>
