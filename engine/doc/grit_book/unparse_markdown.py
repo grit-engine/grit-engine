@@ -94,7 +94,7 @@ def UnparseMarkdownBlocks(book, parent, split_below, never_split):
     s = ""
     for n in parent:
         if n.kind == 'Image':
-            s += '![%s](../img/%s)%s\n' % (escape(n.title),escape(n.src),escape(n.caption))
+            s += '![%s](%s)%s\n' % (escape(n.title),escape(n.src),escape(n.caption))
         elif n.kind == 'UnorderedList':
             for item in n.data:
                 s += '* %s' % (UnparseMarkdownBlocks(book, item, split_below, never_split))

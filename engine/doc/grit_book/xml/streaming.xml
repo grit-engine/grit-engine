@@ -37,7 +37,7 @@
     the object streams out, and typically destroys these bodies.  Thus all of this extra state
     exists only while the turret is close enough to the player to be visible.
 
-    <image src="example_image.jpg" title="Turret">
+    <image src="example_image.png" title="Turret">
     Turret with a rendering distance of 100m.
     </image>
 

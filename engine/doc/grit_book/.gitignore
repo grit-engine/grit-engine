@@ -1,3 +1,6 @@
 *.pyc
 html/*.html
+html/*.png
 md/*.md
+md/*.png
+md_html

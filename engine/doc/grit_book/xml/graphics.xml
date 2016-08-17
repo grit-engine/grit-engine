@@ -818,7 +818,7 @@
 
         <section title="Shadow Texture Stretch" id="gfx_shadow_stretch">
 
-            <image src="shadow_stretch.jpg" title="Using SHADOWYNESS">
+            <image src="shadow_stretch.png" title="Using SHADOWYNESS">
                 Shadow texture stretch occurs where polygons do not face the
                 light.
             </image>
@@ -845,7 +845,7 @@
             stretched part of the shadow.  When animated, the moving sun causes
             these sawtooth artefacts to crawl in a very distracting way.
 
-            <image src="shadow_stretched_hidden.jpg" title="Using SHADOW_MASK">
+            <image src="shadow_stretched_hidden.png" title="Using SHADOW_MASK">
             Shadow texture stretch is usually hidden by the lighting equation.
             </image>
 
@@ -879,7 +879,7 @@
             smoothly interpolated around the cube causing a huge amount of
             normal bending at the edges and corners.
 
-            <image src="shadow_artefacts.jpg" title="Normal Bending">
+            <image src="shadow_artefacts.png" title="Normal Bending">
             Shadow artefacts caused by normal bending.
             </image>
 
@@ -912,7 +912,7 @@
 
         <section title="Shadow Acne" id="gfx_shadow_acne">
 
-            <image src="shadow_acne_diagram.jpg" title="Shadow Acne Diagram">
+            <image src="shadow_acne_diagram.png" title="Shadow Acne Diagram">
             An illustration of shadow acne.
             </image>
 
@@ -937,7 +937,7 @@
 
         <section title="Additional Bias" id="gfx_shadow_bias">
 
-            <image src="shadow_unwanted.jpg" title="Unwanted Shadow Fidelity">
+            <image src="shadow_unwanted.png" title="Unwanted Shadow Fidelity">
             Unwanted self-shadowing.
             </image>
 
@@ -959,7 +959,7 @@
 
         <section title="Shadow Disconnection" id="gfx_shadow_discon">
 
-            <image src="shadow_disconnection.jpg" title="Shadow Disconnection">
+            <image src="shadow_disconnection.png" title="Shadow Disconnection">
                 Too much bias causes the shadow to disconnect from the base of
                 the object.
             </image>
@@ -1060,7 +1060,7 @@
         nodes and have the same fields.  Like graphics bodies, they can be
         individually enabled/disabled and faded.
 
-        <image src="light_diagram.jpg" title="Light Diagram">
+        <image src="light_diagram.png" title="Light Diagram">
         Illustration of various light fields.
         </image>
 

@@ -191,8 +191,8 @@ def UnparseHtmlBlocks(book, parent, split_below, never_split):
         if n.kind == 'Image':
             s += '''<div class="image">
     <div class="image-title">''' + escape(n.title) + '''</div>
-    <a class="image-link" href="''' + '../img/' + escape(n.src) + '''">
-        <img class="thumbnail" src="''' + '../img/' + escape(n.thumb_src) + '''" />
+    <a class="image-link" href="''' + escape(n.src) + '''">
+        <img class="thumbnail" src="''' + escape(n.thumb_src) + '''" />
     </a>
     <div class="image-caption">''' + escape(n.caption) + '''</div>
 </div>\n\n'''
