@@ -471,18 +471,18 @@
                 body.paintDiffuse1 : Float3
                 body.paintDiffuse2 : Float3
                 body.paintDiffuse3 : Float3
-                body.paintMetallic0 : Float1
-                body.paintMetallic1 : Float1
-                body.paintMetallic2 : Float1
-                body.paintMetallic3 : Float1
-                body.paintSpecular0 : Float1
-                body.paintSpecular1 : Float1
-                body.paintSpecular2 : Float1
-                body.paintSpecular3 : Float1
-                body.paintGloss0 : Float1
-                body.paintGloss1 : Float1
-                body.paintGloss2 : Float1
-                body.paintGloss3 : Float1
+                body.paintMetallic0 : Float
+                body.paintMetallic1 : Float
+                body.paintMetallic2 : Float
+                body.paintMetallic3 : Float
+                body.paintSpecular0 : Float
+                body.paintSpecular1 : Float
+                body.paintSpecular2 : Float
+                body.paintSpecular3 : Float
+                body.paintGloss0 : Float
+                body.paintGloss1 : Float
+                body.paintGloss2 : Float
+                body.paintGloss3 : Float
                 </gasoline>
 
                 Gasoline also has control flow constructs, i.e. <def>conditionals</def>,
