@@ -186,7 +186,18 @@ span.todo {
         color: #f00;
 }
 
-pre {
+pre.gritpre {
+        background-color: #fff;
+        margin: 16px 16px 16px 16px;
+        padding: 16px;
+        font-size: small;
+        border-color: #000;
+        border-style: dotted;
+        border-width: 1px;
+        display: inline-block;
+}
+
+div.highlight {
         background-color: #fff;
         margin: 16px 16px 16px 16px;
         padding: 16px;

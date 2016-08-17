@@ -4,7 +4,8 @@
 # Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
 
 # Generate Documentations from xml/*.xml
-# sudo apt install htmldoc
+# sudo apt-get install htmldoc python python-pip
+# pip install pygments
 
 # Convert xml/*.xml to md/*.md (for README.md ) and generate single file html/complete.md
 # Convert xml/*.xml to html/*.html (for Web Site) and generate single file html/complete.html

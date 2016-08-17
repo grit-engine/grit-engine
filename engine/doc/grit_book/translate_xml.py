@@ -257,6 +257,8 @@ def TranslateBlockContents(block, block_ast):
                 translated_content.data = translated_items
             elif el.tag == "lua":
                 translated_content = Node('Lua', block_ast, data=textwrap.dedent(el.text))
+            elif el.tag == "gasoline":
+                translated_content = Node('Gasoline', block_ast, data=textwrap.dedent(el.text))
             elif el.tag == "pre":
                 translated_content = Node('Preformatted', block_ast, data=textwrap.dedent(el.text))
             else:

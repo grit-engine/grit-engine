@@ -122,6 +122,8 @@ def UnparseMarkdownBlocks(book, parent, split_below, never_split):
             s += '%s' % n.data
         elif n.kind == 'Lua':
             s += '\n```%s```\n' % (n.data)
+        elif n.kind == 'Gasoline':
+            s += '\n```%s```\n' % (n.data)
         elif n.kind == 'Paragraph':
             s += '\n'
             s += '\n'.join(textwrap.wrap(UnparseMarkdownInlines(n.data),100))

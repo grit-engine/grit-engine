@@ -80,6 +80,9 @@ index += UnparseHtmlBlocks(book_ast, book_ast, True, False)
 contents = codecs.open('html/index.html', 'w', 'utf-8')
 contents.write(GeneratePage('Contents', index, book_ast))
 contents.close()
+pygments_css = codecs.open('html/pygments.css', 'w', 'utf-8')
+pygments_css.write(HtmlFormatter().get_style_defs('.highlight'))
+pygments_css.close()
 
 print 'Writing html/complete.html'
 index = UnparseHtmlBlocks(book_ast, book_ast, True, True)

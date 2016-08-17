@@ -5,6 +5,10 @@ import textwrap
 from xml.sax.saxutils import escape
 import lxml.etree as ET
 
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+
+import pygments_lexers
 from translate_xml import *
 
 
@@ -47,6 +51,7 @@ def GeneratePage(title, content, book):
     <title>Grit Book V0.1 - ''' + title + '''</title>
     <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
     <link rel="stylesheet" type="text/css" href="grit_book.css" />
+    <link rel="stylesheet" type="text/css" href="pygments.css" />
     <link rel="icon" type="image/png" href="logo_tiny.png" />
     <script type="text/javascript">
 
@@ -214,11 +219,11 @@ def UnparseHtmlBlocks(book, parent, split_below, never_split):
             else:
                 s += inner_html
         elif n.kind == 'Preformatted':
-            s += '<pre>%s</pre>\n\n' % n.data
+            s += '<pre class="gritpre">%s</pre>\n\n' % n.data
+        elif n.kind == 'Gasoline':
+            s += highlight(n.data, pygments_lexers.GasolineLexer(), HtmlFormatter())
         elif n.kind == 'Lua':
-            s += '<pre class="lua">%s</pre>\n\n' % n.data
-        elif n.kind == 'Inline':
-            s += '<pre class="lua">%s</pre>\n\n' % n.data
+            s += highlight(n.data, pygments_lexers.GritLuaLexer(), HtmlFormatter())
         elif n.kind == 'Paragraph':
             s += '<p>\n'
             s += '\n'.join(textwrap.wrap(UnparseHtmlInlines(n.data)))
