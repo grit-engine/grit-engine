@@ -220,17 +220,17 @@
 
                 Comments are ignored:
 
-                <pre>
+                <gasoline>
                     // This is a single line comment.
 
                     /* This is a multi-line comment.
                        It is terminated explicitly.
                      */ 
-                </pre>
+                </gasoline>
 
                 Variable definitions:
 
-                <pre>
+                <gasoline>
                     // The type is inferred here (Float).
                     var my_variable = 8.0;
 
@@ -249,11 +249,11 @@
 
                     // Explicit conversion to a type is also possible.
                     var my_float2 = Float(1) + 1.0;
-                </pre>
+                </gasoline>
 
                 A variety of types are supported:
 
-                <pre>
+                <gasoline>
                     var my_array = []Float { 1.0, 2.0, 3.0 };
                     var index = 1;
                     var tmp = my_array[i];
@@ -276,30 +276,31 @@
                     // There are also booleans (true or false):
                     var b = true;
                     var b2 : Bool;  // Initialized to false.
-                </pre>
+                </gasoline>
 
                 Variables are mutable (can have their values updated):
 
-                <pre>
+                <gasoline>
                     index = 2;
                     my_array[index] = 3;  // 3, an Int, is automatically converted to Float.
                     example2.r = 3;
                     example2.yz = Float2(1, 1);
-                </pre>
+                </gasoline>
 
                 Functions can be called, using a C-like syntax:
 
-                <pre>
+                <gasoline>
                     out.normal = normalise(v);
-                </pre>
+                </gasoline>
 
                 Listed below are all the functions with their type signatures (the parameters they
-                        must be given and what they return).  The notation <code>Floatn</code> and
-                <code>Intn</code> means that a version of the function is available for any size
+                        must be given and what they return).  The short-hand notation
+                <code>Floatn</code> and <code>Intn</code> is not valid Gasoline but we use it here
+                for conciseness.  It means that a version of the function is available for any size
                 <code>n</code>.  Most mathematical functions are lifted up to vector types by
                 performing the same operation on every element (pointwise).
 
-                <pre>
+                <gasoline>
                 // Trigonometry
                 tan: (Floatn) -> Floatn
                 atan: (Floatn) -> Floatn
@@ -316,14 +317,13 @@
                 floor: (Floatn) -> Floatn
                 ceil: (Floatn) -> Floatn
                 sqrt: (Floatn) -> Floatn
+                pow: (Floatn, Float) -> Floatn
+                strength: (Float, Float) -> Float  // Like pow() but clamps first param > 0
 
                 // Compare value to neighbouring fragment.
                 ddx: (Floatn) -> Floatn  // Fragment shader only
                 ddy: (Floatn) -> Floatn  // Fragment shader only
 
-                pow: (Floatn, Float) -> Floatn
-                strength: (Float, Float) -> Float  // Like pow() but clamps first param > 0
-                
                 // Vectors
                 dot: (Float2, Float2) -> Float
                 dot: (Float3, Float3) -> Float
@@ -333,6 +333,8 @@
                 rotate_to_world: (Float3) -> Float3  // Vertex shader only
                 transform_to_world: (Float3) -> Float3  // Vertex shader only
                 length: (Floatn) -> Float
+                
+                // Matrix multiplication
                 mul: (Matrix2x2, Float2) -> Float2
                 mul: (Matrix2x3, Float2) -> Float3
                 mul: (Matrix2x4, Float2) -> Float4
@@ -349,42 +351,47 @@
                 gamma_decode: (Floatn) -> Floatn
                 gamma_encode: (Floatn) -> Floatn
 
+                // Limits
                 clamp: (Floatn, Floatn, Floatn) -> Floatn
                 lerp: (Floatn, Floatn, Floatn) -> Floatn
                 max: (Floatn, Floatn) -> Floatn
                 min: (Floatn, Floatn) -> Floatn
 
-                // Constructors
-                Float, Float2, Float3, Float4
-
                 // Texture sampling
-                sample: (Texture1D, Float) -> Float4
-                sample: (Texture2D, Float2) -> Float4
-                sample: (Texture3D, Float3) -> Float4
-                sample: (TextureCube, Float3) -> Float4
+                // sample(t, coord) == sampleGrad(t, coord, ddx(coord), ddy(coord))
+                sample: (FloatTexture1D, Float) -> Float4
+                sample: (FloatTexture2D, Float2) -> Float4
+                sample: (FloatTexture3D, Float3) -> Float4
+                sample: (FloatTextureCube, Float3) -> Float4
                 // Explicitly specify x and y differentials.
-                sampleGrad: (Texture1D, Float, Float, Float) -> Float4
-                sampleGrad: (Texture2D, Float2, Float2, Float2) -> Float4
-                sampleGrad: (Texture3D, Float3, Float3, Float3) -> Float4
-                sampleGrad: (TextureCube, Float3, Float3, Float3) -> Float4
+                sampleGrad: (FloatTexture1D, Float, Float, Float) -> Float4
+                sampleGrad: (FloatTexture2D, Float2, Float2, Float2) -> Float4
+                sampleGrad: (FloatTexture3D, Float3, Float3, Float3) -> Float4
+                sampleGrad: (FloatTextureCube, Float3, Float3, Float3) -> Float4
                 // Explicitly select a mipmap level.
-                sampleLod: (Texture1D, Float, Float) -> Float4
-                sampleLod: (Texture2D, Float2, Float) -> Float4
-                sampleLod: (Texture3D, Float3, Float) -> Float4
-                sampleLod: (TextureCube, Float3, Float) -> Float4
-                </pre>
+                sampleLod: (FloatTexture1D, Float, Float) -> Float4
+                sampleLod: (FloatTexture2D, Float2, Float) -> Float4
+                sampleLod: (FloatTexture3D, Float3, Float) -> Float4
+                sampleLod: (FloatTextureCube, Float3, Float) -> Float4
+                </gasoline>
 
-                The following arithmetic operators can be used, ordered by precedence.  Aside from
-                !, &amp;&amp; and ||, which apply only to booleans, the rest apply to Float, Float2,
-                Float3, Float4, Int, Int2, Int3, and Int4.  If a binary operator is applied to two
-                different types, either one of them is automatically converted to the other.
+                The following arithmetic operators can be used, ordered by precedence.  All are
+                left-associative, which means <code>A + B + C</code> is parsed as <code>(A + B) +
+                C</code>.  Aside from <code>!</code>, <code>&amp;&amp;</code>, and <code>||</code>,
+                which apply only to booleans, the rest apply to <code>Float</code>,
+                <code>Float2</code>, <code>Float3</code>, <code>Float4</code>, <code>Int</code>,
+                <code>Int2</code>, <code>Int3</code>, and <code>Int4</code>.  If a binary operator
+                is applied to two different types, either one of them is automatically converted to
+                the other.
 
-                For example 3 + 5.0 becomes 3.0 + 5.0, and 3 + Int2(1, 0) becomes Int2(3, 3) +
-                Int2(1, 0).  However, Float2(1, 1) + Float3(1, 1, 1) is an error since neither can
-                be converted to the other.
+                For example: <code>3 + 5.0</code> becomes <code>3.0 + 5.0</code>, and <code>3 +
+                Int2(1, 0) </code>becomes <code>Int2(3, 3) + Int2(1, 0)</code>.  However,
+                <code>Float2(1, 1) + Float3(1, 1, 1)</code> is an error since neither can be
+                converted to the other.
 
                 <pre>
-                    Function application
+                    Binding order:
+                    f() f.g arr[e]  (function application, field and array indexing)
                     ! -  (unary negation)
                     * / %
                     + -
@@ -400,16 +407,17 @@
                 above.  It is an error to access a field of mat that was not declared as a shader
                 parameter of some form.
 
-                <pre>
+                <gasoline>
                     out.colour = mat.myParameter * sample(mat.myTexture, uv);
-                </pre>
+                </gasoline>
 
                 Scene-wide values are available through the <code>global</code> object.
 
-                <pre>
+                <gasoline>
                 global.cameraPos : Float3  // World space position of the camera.
                 global.fovY : Float  // Field of view (degrees)
                 global.time : Float  // (see below)
+                global.viewportSize : Float2  // Resolution of screen
 
                 // The visible depth range.
                 global.nearClipDistance : Float
@@ -451,31 +459,31 @@
                 global.skySunColour2 : Float3
                 global.skySunColour3 : Float3
                 global.skySunColour4 : Float3
-                </pre>
+                </gasoline>
 
                 There are also properties associated with individual GfxBody objects.  Currently,
                 the following attributes are available for general use.  They are set using
                 <code>mybody:setPaintColour(i, vec(r, g, b), m, s, g)</code> for i in 0 to 3.  In
                 future, you will be able to define your own and call them whatever you want.
 
-                <pre>
-                paintDiffuse0 : Float3
-                paintDiffuse1 : Float3
-                paintDiffuse2 : Float3
-                paintDiffuse3 : Float3
-                paintMetallic0 : Float1
-                paintMetallic1 : Float1
-                paintMetallic2 : Float1
-                paintMetallic3 : Float1
-                paintSpecular0 : Float1
-                paintSpecular1 : Float1
-                paintSpecular2 : Float1
-                paintSpecular3 : Float1
-                paintGloss0 : Float1
-                paintGloss1 : Float1
-                paintGloss2 : Float1
-                paintGloss3 : Float1
-                </pre>
+                <gasoline>
+                body.paintDiffuse0 : Float3
+                body.paintDiffuse1 : Float3
+                body.paintDiffuse2 : Float3
+                body.paintDiffuse3 : Float3
+                body.paintMetallic0 : Float1
+                body.paintMetallic1 : Float1
+                body.paintMetallic2 : Float1
+                body.paintMetallic3 : Float1
+                body.paintSpecular0 : Float1
+                body.paintSpecular1 : Float1
+                body.paintSpecular2 : Float1
+                body.paintSpecular3 : Float1
+                body.paintGloss0 : Float1
+                body.paintGloss1 : Float1
+                body.paintGloss2 : Float1
+                body.paintGloss3 : Float1
+                </gasoline>
 
                 Gasoline also has control flow constructs, i.e. <def>conditionals</def>,
                 <def>discard</def>, and <def>loops</def>.  Since these constructs cause the
@@ -484,7 +492,7 @@
                 <code>sample(...)</code> since that internally uses <code>ddx</code> and
                 <code>ddy</code>.
 
-                <pre>
+                <gasoline>
                 if (expr) {
                     // This part only executed if expr evaluated to true.
                 } else {
@@ -508,7 +516,7 @@
                 for (var x = 0; x &lt; 10; x = x + 1) {
                     // This part executed 10 times.
                 }
-                </pre>
+                </gasoline>
 
             </section>
 
@@ -525,7 +533,7 @@
                 each of which is a 4-dimensional vector.  The texture coordinates need not be used
                 for sampling textures.
 
-                <pre>
+                <gasoline>
                     vert.position  -- object space
                     vert.colour 
                     vert.normal
@@ -538,7 +546,7 @@
                     vert.coord5
                     vert.coord6
                     vert.coord7
-                </pre>
+                </gasoline>
 
                 The shader may write the world position of the vertex in <code>out.position</code>.
                 The function transform_to_world is available to do this, but the shader can modify
@@ -546,17 +554,26 @@
                 achieve special effects such as breathing, swaying, etc.  The following default
                 value is otherwise used:
 
-                <lua>
+                <gasoline>
                     // Default value:
                     out.position = transform_to_world(vert.position);
-                </lua>
+                </gasoline>
 
             </section>
 
             <section title="Gasoline DANGS Shader" id="gfx_gasoline_dangs">
 
-                The <def>DANGS</def> shader computes the diffuse, alpha, normal, gloss, and specular
-                components of the lighting equation.
+                The <def>DANGS</def> shader computes the <def>diffuse</def>, <def>alpha</def>,
+                <def>normal</def>, <def>gloss</def>, and <def>specular</def> components of the
+                lighting equation for each pixel a triangle covers on the screen.
+
+                The following per-pixel values are available:
+
+                <gasoline>
+                    // The screen coordinate
+                    // Ranges from Float2(0, 0) at bottom left to global.viewportSize.
+                    frag.screen
+                </gasoline>
 
                 The vert object is also available, the vertex attributes from the mesh are
                 interpolated across the triangle.  Likewise, all variables defined in the vertex
@@ -565,28 +582,28 @@
                 The shader may write the following lighting equation parameters into the
                 <code>out</code> object.  Otherwise, the following defaults are used:
 
-                <pre>
-                    -- Proportion of light absorbed and re-emitted in an arbitrary
-                    -- direction due to being absorbed into the molecules of the surface.  Since
-                    -- this process often changes the colour of the light, this input to the
-                    -- lighting equation is broken down by channel.
+                <gasoline>
+                    // Proportion of light absorbed and re-emitted in an arbitrary
+                    // direction due to being absorbed into the molecules of the surface.  Since
+                    // this process often changes the colour of the light, this input to the
+                    // lighting equation is broken down by channel.
                     out.diffuse = Float3(0.5, 0.25, 0);
 
-                    -- 0 is totally transparent, 1 is totally opaque.  This has no effect if the
-                    -- material's sceneBlend attribute is OPAQUE.
+                    // 0 is totally transparent, 1 is totally opaque.  This has no effect if the
+                    // material's sceneBlend attribute is OPAQUE.
                     out.alpha = 1;
 
-                    -- The world-space vector perpendicular to the surface at this point.
-                    -- This vector will be normalised by the engine.
+                    // The world-space vector perpendicular to the surface at this point.
+                    // This vector will be normalised by the engine.
                     out.normal = Float3(0, 0, 1);
 
-                    -- How polished is the surface (0 to 1).
+                    // How polished is the surface (0 to 1).
                     out.gloss = 1;
 
-                    -- Proportion of the light that is reflected off the surface of the material
-                    -- like a mirror.  This is usually high in metals and low in organic materials.
+                    // Proportion of the light that is reflected off the surface of the material
+                    // like a mirror.  This is usually high in metals and low in organic materials.
                     out.specular = 0.04;
-                </pre>
+                </gasoline>
 
                 Note that all these outputs are in <def>linear</def> space ready to be immediately
                 processed by the lighting equation.  Most textures have <def>gamma encoded</def> red
@@ -612,14 +629,14 @@
 
                 The vert object and vertex shader variables are available, as in the DANGS shader.
 
-                <pre>
+                <gasoline>
                     -- Additional light originating from this point and entering the camera.
                     out.colour = Float3(0, 0, 0);
 
                     -- 0 is totally transparent, 1 is totally opaque.
                     -- When rendering skies, this is used for blending purposes.
                     out.alpha = 1;
-                </pre>
+                </gasoline>
 
             </section>
 
