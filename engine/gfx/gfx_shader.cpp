@@ -23,6 +23,7 @@
 
 #include "gfx.h"
 #include "gfx_gasoline.h"
+#include "gfx_gl.h"
 #include "gfx_internal.h"
 #include "gfx_shader.h"
 
@@ -320,16 +321,7 @@ NativePair GfxShader::getNativePair (GfxGslPurpose purpose,
         APP_ASSERT(fp->_getBindingDelegate() != nullptr);
 
         if (backend == GFX_GSL_BACKEND_GLSL) {
-
-            auto *vp_low = dynamic_cast<Ogre::GLSL::GLSLGpuProgram*>(vp_bd);
-            auto *fp_low = dynamic_cast<Ogre::GLSL::GLSLGpuProgram*>(fp_bd);
-            
-            if (vp_low != nullptr && fp_low != nullptr) {
-                // Force the actual compilation of it...
-                Ogre::GLSL::GLSLLinkProgramManager::getSingleton().setActiveVertexShader(vp_low);
-                Ogre::GLSL::GLSLLinkProgramManager::getSingleton().setActiveFragmentShader(fp_low);
-                Ogre::GLSL::GLSLLinkProgramManager::getSingleton().getActiveLinkProgram();
-            }
+            gfx_gl_force_shader_compilation(vp_bd, fp_bd);
         }
         NativePair np = {vp, fp};
         cachedShaders[split] = np;

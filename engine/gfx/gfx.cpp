@@ -29,6 +29,8 @@
 #include "clutter.h"
 #include "gfx_body.h"
 #include "gfx_decal.h"
+#include "gfx_gl.h"
+#include "gfx_gl3_plus.h"
 #include "gfx_hud.h"
 #include "gfx_internal.h"
 #include "gfx_light.h"
@@ -39,10 +41,11 @@
 #include "gfx_sky_material.h"
 
 #ifdef WIN32
-bool d3d9 = getenv("GRIT_GL")==NULL;
+bool d3d9 = getenv("GRIT_GL") == NULL;
 #else
 bool d3d9 = false;
 #endif
+bool gl3 = getenv("GRIT_GL3") != NULL;
 
 extern "C" { 
 #ifdef WIN32
@@ -647,6 +650,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
     }
 
     debug_drawer->frameEnded();
+    ogre_rs->markProfileEvent("end grit frame");
 }
 
 // }}}
@@ -976,6 +980,11 @@ bool gfx_d3d9 (void)
     return d3d9;
 }
 
+bool gfx_gl3 (void)
+{
+    return gl3;
+}
+
 size_t gfx_init (GfxCallback &cb_)
 {
     try {
@@ -998,18 +1007,22 @@ size_t gfx_init (GfxCallback &cb_)
         if (d3d9) {
             #ifdef WIN32
             ogre_rs = OGRE_NEW Ogre::D3D9RenderSystem(GetModuleHandle(NULL));
-            ogre_rs->setConfigOption("Allow NVPerfHUD","Yes");
-            ogre_rs->setConfigOption("Floating-point mode","Consistent");
-            ogre_rs->setConfigOption("Video Mode","1024 x 768 @ 32-bit colour");
+            ogre_rs->setConfigOption("Allow NVPerfHUD", "Yes");
+            ogre_rs->setConfigOption("Floating-point mode", "Consistent");
+            ogre_rs->setConfigOption("Video Mode", "1024 x 768 @ 32-bit colour");
             #endif
+        } else if (gl3) {
+            ogre_rs = gfx_gl3_plus_get_render_system();
+            ogre_rs->setConfigOption("RTT Preferred Mode", "FBO");
+            ogre_rs->setConfigOption("Video Mode", "1024 x 768");
         } else {
-            ogre_rs = OGRE_NEW Ogre::GLRenderSystem();
-            ogre_rs->setConfigOption("RTT Preferred Mode","FBO");
-            ogre_rs->setConfigOption("Video Mode","1024 x 768");
+            ogre_rs = gfx_gl_get_render_system();
+            ogre_rs->setConfigOption("RTT Preferred Mode", "FBO");
+            ogre_rs->setConfigOption("Video Mode", "1024 x 768");
         }
-        ogre_rs->setConfigOption("sRGB Gamma Conversion",use_hwgamma?"Yes":"No");
-        ogre_rs->setConfigOption("Full Screen","No");
-        ogre_rs->setConfigOption("VSync","Yes");
+        ogre_rs->setConfigOption("sRGB Gamma Conversion", use_hwgamma ? "Yes" : "No");
+        ogre_rs->setConfigOption("Full Screen", "No");
+        ogre_rs->setConfigOption("VSync", "Yes");
 
         Ogre::ConfigOptionMap &config_opts = ogre_rs->getConfigOptions();
         CLOG << "Rendersystem options:" << std::endl;

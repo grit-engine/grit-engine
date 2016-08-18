@@ -73,6 +73,7 @@ struct GfxCallback {
  * Can be used in static scope (i.e. to initialise globals before main().
  */
 bool gfx_d3d9 (void);
+bool gfx_gl3 (void);
 
 size_t gfx_init (GfxCallback &cb);
 
