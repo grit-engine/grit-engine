@@ -264,26 +264,37 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
                                 bool flat_z,
                                 bool das)
 {
+	GfxGslTypeMap vert_vars, frag_vars;
+    std::set<GfxGslTrans> trans_set;
+    std::stringstream header;
+    header << "// env: " << env << "\n";
+    header << "// flat_z: " << flat_z << "\n";
+    header << "// das: " << das << "\n";
+    header << "\n";
+
     GfxGslBackendUnparser vert_backend("user_");
-    vert_backend.unparse(vert_ast, 1);
     GfxGslBackendUnparser frag_backend("user_");
+
+    for (const auto &pair : vert_ts->getVars())
+        vert_vars["user_" + pair.first] = pair.second->type;
+    vert_backend.unparse(vert_ast, 1);
+
+    for (const auto &pair : frag_ts->getVars())
+        frag_vars["user_" + pair.first] = pair.second->type;
     frag_backend.unparse(frag_ast, 1);
 
-    GfxGslTypeMap vert_vars, frag_vars;
-    auto trans = frag_ts->getTransVector();
+    trans_set.insert(frag_ts->getTrans().begin(), frag_ts->getTrans().end());
+
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
     vert_in.insert("position");
-    if (env.instanced) {
-        vert_in.insert("coord1");
-        vert_in.insert("coord2");
-        vert_in.insert("coord3");
-        vert_in.insert("coord4");
-        vert_in.insert("coord5");
-    }
     if (env.boneWeights > 0) {
         vert_in.insert("boneAssignments");
         vert_in.insert("boneWeights");
     }
+
+    std::map<std::string, const GfxGslFloatType *> internals;
+
+    std::vector<GfxGslTrans> trans(trans_set.begin(), trans_set.end());
     for (const auto &tran : trans) {
         const std::string &tv = tran.path[0];
         switch (tran.kind) {
@@ -299,15 +310,15 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
             break;
         }
     }
-    for (const auto &pair : vert_ts->getVars())
-        vert_vars["user_" + pair.first] = pair.second->type;
-    for (const auto &pair : frag_ts->getVars())
-        frag_vars["user_" + pair.first] = pair.second->type;
+
+    gfx_gasoline_add_internal_trans(internals, trans, vert_vars, frag_vars);
+
 
     // VERTEX
 
     std::stringstream vert_ss;
     vert_ss << preamble();
+    vert_ss << header.str();
     vert_ss << generate_vert_header(ctx, vert_ts, trans, vert_in);
     vert_ss << generate_funcs(env);
     vert_ss << generate_funcs_vert(env);
@@ -331,6 +342,9 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     if (flat_z)
         vert_ss << "    clip_pos.z = clip_pos.w * (1 - 1.0/65536);\n";
     vert_ss << "    gl_Position = clip_pos;\n";
+    if (das) {
+        
+    }
     vert_ss << gfx_gasoline_generate_trans_encode(trans, "user_");
     vert_ss << "}\n";
 
@@ -341,6 +355,7 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
 
     std::stringstream frag_ss;
     frag_ss << preamble();
+    vert_ss << header.str();
     frag_ss << generate_frag_header(ctx, trans, false);
     frag_ss << generate_funcs(env);
     frag_ss << generate_funcs_frag(env);
@@ -369,8 +384,11 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
         // ogre gives us the view_proj in a 'standard' form, which is
         // right-handed with a depth range of [-1,+1].
         // Since we are outputing depth in the fragment shader, the range is [0,1]
-        frag_ss << "Float4 projected = mul(global_viewProj, Float4(user_pos_ws, 1));\n";
-        frag_ss << "gl_FragDepth = 0.5 + (projected.z / projected.w) / 2.0;\n";
+        // Note that this code pre-supposes that all DAS shaders create a user variable
+        // called pos_ws, but they are all internal shaders so we can guarantee that.
+        // The pos_ws needs to be a point within the frustum.
+        frag_ss << "    Float4 projected = mul(global_viewProj, Float4(user_pos_ws, 1));\n";
+        frag_ss << "    gl_FragDepth = 0.5 + (projected.z / projected.w) / 2.0;\n";
     }
     frag_ss << "}\n";
 

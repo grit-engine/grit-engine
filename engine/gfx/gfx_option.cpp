@@ -557,7 +557,7 @@ void gfx_option_init (void)
     valid_option(GFX_SHADOW_FILTER_TAPS, new ValidOptionList<int,int[5]>(filter_taps_list));
     valid_option(GFX_BLOOM_ITERATIONS, new ValidOptionRange<int>(0,255));
     valid_option(GFX_RAM, new ValidOptionRange<int>(0,16384));
-    valid_option(GFX_DEBUG_MODE, new ValidOptionRange<int>(0,5));
+    valid_option(GFX_DEBUG_MODE, new ValidOptionRange<int>(0,8));
 
 
     valid_option(GFX_FOV, new ValidOptionRange<float>(0.0000001f,179.0f));

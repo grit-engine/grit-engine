@@ -79,6 +79,7 @@ class GfxPipeline {
 
     // ultimate target
     Ogre::Viewport *targetViewport;
+    Ogre::RenderQueueInvocationSequence *rqisDebug;
     Ogre::RenderQueueInvocationSequence *rqisDeferred;
 
     CameraOpts opts;
