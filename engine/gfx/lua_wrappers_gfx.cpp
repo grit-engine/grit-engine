@@ -20,6 +20,7 @@
  */
 
 #include <colour_conversion.h>
+#include <io_util.h> 
 #include <unicode_util.h>
 
 #include "../grit_lua_util.h"
@@ -4491,6 +4492,35 @@ TRY_START
 TRY_END
 }
 
+static int global_gfx_dump_shadow_map (lua_State *L)
+{
+TRY_START
+    check_args(L, 2);
+    std::string filename = check_string(L,1);
+    int i = check_int(L, 2, 0, 3);
+    Ogre::TexturePtr tex = ogre_sm->getShadowTexture(i);
+    Ogre::Image image;
+    tex->convertToImage(image);
+    
+    uint32_t width = image.getWidth();
+    uint32_t height = image.getHeight();
+    uint8_t channels = 1;
+
+    OutFile out(filename);
+    out.write(width);
+    out.write(height);
+    out.write(channels);
+    out.write('a');  // No alpha.
+
+    float *raw = reinterpret_cast<float*>(image.getData());
+    for (size_t i = 0 ; i < width * height ; ++i) {
+        out.write(raw[i]);
+    }
+    
+    return 1;
+TRY_END
+}
+
 static const luaL_reg global[] = {
 
     {"gfx_d3d9", global_gfx_d3d9},
@@ -4581,6 +4611,7 @@ static const luaL_reg global[] = {
     {"gfx_anim_rate", global_gfx_anim_rate},
 
     {"gfx_describe_texture", global_gfx_describe_texture},
+    {"gfx_dump_shadow_map", global_gfx_dump_shadow_map},
 
     {"RGBtoHSL", global_rgb_to_hsl},
     {"HSLtoRGB", global_hsl_to_rgb},
