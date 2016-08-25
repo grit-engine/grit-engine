@@ -24,11 +24,12 @@
 #include "gfx.h"
 #include "gfx_gasoline.h"
 #include "gfx_gl.h"
+#include "gfx_gl3_plus.h"
 #include "gfx_internal.h"
 #include "gfx_shader.h"
 
-GfxGslBackend backend = (gfx_d3d9() || getenv("GRIT_GL_CG") != nullptr)
-                      ? GFX_GSL_BACKEND_CG : GFX_GSL_BACKEND_GLSL;
+GfxGslBackend backend = (gfx_d3d9() || getenv("GRIT_GL_CG") != nullptr) ? GFX_GSL_BACKEND_CG
+                      : gfx_gl3() ? GFX_GSL_BACKEND_GLSL33 : GFX_GSL_BACKEND_GLSL;
 
 static const std::string dump_shader(getenv("GRIT_DUMP_SHADER") == nullptr
                                      ? "" : getenv("GRIT_DUMP_SHADER"));
@@ -315,13 +316,10 @@ NativePair GfxShader::getNativePair (GfxGslPurpose purpose,
         vp->load();
         fp->load();
 
-        Ogre::GpuProgram *vp_bd = vp->_getBindingDelegate();
-        Ogre::GpuProgram *fp_bd = fp->_getBindingDelegate();
-        APP_ASSERT(vp->_getBindingDelegate() != nullptr);
-        APP_ASSERT(fp->_getBindingDelegate() != nullptr);
-
         if (backend == GFX_GSL_BACKEND_GLSL) {
-            gfx_gl_force_shader_compilation(vp_bd, fp_bd);
+            gfx_gl_force_shader_compilation(vp, fp);
+        } else if (backend == GFX_GSL_BACKEND_GLSL33) {
+            gfx_gl3_plus_force_shader_compilation(vp, fp);
         }
         NativePair np = {vp, fp};
         cachedShaders[split] = np;
@@ -366,7 +364,7 @@ void GfxShader::bindShaderParams (int counter,
                 hack_set_constant(vparams, fparams, "mat_" + name,
                                   Vector4(v.fs.r, v.fs.g, v.fs.b, v.fs.a));
             } else {
-                if (backend == GFX_GSL_BACKEND_GLSL) {
+                if (backend == GFX_GSL_BACKEND_GLSL || backend==GFX_GSL_BACKEND_GLSL33) {
                     hack_set_constant(vparams, fparams, "mat_" + name, counter);
                 }
                 counter++;
@@ -589,7 +587,7 @@ static void inc (const Ogre::GpuProgramParametersSharedPtr &vp,
                  int &counter,
                  const char *name)
 {
-    if (backend == GFX_GSL_BACKEND_GLSL)
+    if (backend == GFX_GSL_BACKEND_GLSL || backend==GFX_GSL_BACKEND_GLSL33)
         hack_set_constant(vp, fp, name, counter);
     counter++;
 }

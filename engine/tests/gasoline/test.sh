@@ -140,7 +140,7 @@ do_tests() {
 }
 
 if [ "$SKIP_GLSL" != "1" ] ; then
-    do_tests glsl
+    do_tests glsl33
 fi
 
 if [ "$SKIP_CG" != "1" ] ; then

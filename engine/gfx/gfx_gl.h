@@ -20,4 +20,5 @@
 
 Ogre::RenderSystem *gfx_gl_get_render_system (void);
 
-void gfx_gl_force_shader_compilation(Ogre::GpuProgram *vp_bd, Ogre::GpuProgram *fp_bd);
+void gfx_gl_force_shader_compilation(const Ogre::HighLevelGpuProgramPtr &vp,
+                                     const Ogre::HighLevelGpuProgramPtr &fp);

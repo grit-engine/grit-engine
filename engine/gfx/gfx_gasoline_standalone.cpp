@@ -204,6 +204,8 @@ int main (int argc, char **argv)
             backend = GFX_GSL_BACKEND_CG;
         } else if (language == "GLSL") {
             backend = GFX_GSL_BACKEND_GLSL;
+        } else if (language == "GLSL33") {
+            backend = GFX_GSL_BACKEND_GLSL33;
         } else {
             std::cerr << "Unrecognised shader target language: " << language << std::endl;
             return EXIT_FAILURE;

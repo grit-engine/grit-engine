@@ -24,16 +24,27 @@
 #include <OgreGLSLLinkProgramManager.h>
 #include <OgreGLSLProgram.h>
 
+#include <centralised_log.h>
+
 #include "gfx_gl.h"
 
 Ogre::RenderSystem *gfx_gl_get_render_system (void)
 {
+/*
+    return nullptr;
+*/
     return OGRE_NEW Ogre::GLRenderSystem();
 }
 
 
-void gfx_gl_force_shader_compilation(Ogre::GpuProgram *vp_bd, Ogre::GpuProgram *fp_bd)
+void gfx_gl_force_shader_compilation(const Ogre::HighLevelGpuProgramPtr &vp,
+                                     const Ogre::HighLevelGpuProgramPtr &fp)
 {
+	Ogre::GpuProgram *vp_bd = vp->_getBindingDelegate();
+	Ogre::GpuProgram *fp_bd = fp->_getBindingDelegate();
+	APP_ASSERT(vp_bd != nullptr);
+	APP_ASSERT(fp_bd != nullptr);
+
     auto *vp_low = dynamic_cast<Ogre::GLSL::GLSLGpuProgram*>(vp_bd);
     auto *fp_low = dynamic_cast<Ogre::GLSL::GLSLGpuProgram*>(fp_bd);
 

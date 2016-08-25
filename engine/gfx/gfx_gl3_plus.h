@@ -19,3 +19,6 @@
  */
 
 Ogre::RenderSystem *gfx_gl3_plus_get_render_system (void);
+
+void gfx_gl3_plus_force_shader_compilation(const Ogre::HighLevelGpuProgramPtr &vp,
+                                           const Ogre::HighLevelGpuProgramPtr &fp);
