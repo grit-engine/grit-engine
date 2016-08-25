@@ -40,10 +40,16 @@ static std::map<std::string, std::string> vert_global = {
     {"boneAssignments", "blendIndices"},
 };
 
-static std::string preamble (void)
+static std::string preamble (bool glsl33)
 {
     std::stringstream ss;
-    ss << "#version 130\n";
+    if (glsl33) {
+        ss << "#version 330\n";
+        ss << "#extension GL_ARB_separate_shader_objects: require\n";
+    } else {
+        ss << "#version 130\n";
+    }
+        
     ss << "// This GLSL shader compiled from Gasoline, the Grit shading language.\n";
     ss << "\n";
 
@@ -184,7 +190,8 @@ static std::string generate_funcs_frag (const GfxGslEnvironment &env)
     return ss.str();
 }
 
-static std::string generate_vert_header (const GfxGslContext &ctx,
+static std::string generate_vert_header (bool glsl33,
+                                         const GfxGslContext &ctx,
                                          const GfxGslTypeSystem *ts,
                                          const std::vector<GfxGslTrans> &trans,
                                          const std::set<std::string> &vert_in)
@@ -195,16 +202,30 @@ static std::string generate_vert_header (const GfxGslContext &ctx,
 
     // In (vertex attributes)
     for (const auto &f : vert_in) {
+        // I don't think it's possible to use the layout qualifier here, without
+        // changing (or at least examining) the way that Ogre::Mesh maps to gl buffers.
         ss << "in " << ts->getVertType(f) << " " << vert_global[f] << ";\n";
         ss << ts->getVertType(f) << " vert_" << f << ";\n";
     }
     ss << gfx_gasoline_generate_global_fields(ctx, false);
+    // Out (position)
+    if (glsl33) {
+        ss << "out gl_PerVertex\n";
+        ss << "{\n";
+        ss << "    vec4 gl_Position;\n";
+        ss << "    float gl_PointSize;\n";
+        ss << "    float gl_ClipDistance[];\n";
+        ss << "};\n";
+    }
     // Out (trans)
     for (unsigned i=0 ; i<trans.size() ; i+=4) {
         unsigned sz = trans.size()-i > 4 ? 4 : trans.size()-i;
         std::stringstream type;
         type << "Float";
         if (sz > 1) type << sz;
+        if (glsl33) {
+            ss << "layout(location = " << i / 4 << ") ";
+        }
         ss << "out " << type.str() << " trans" << i/4 << ";\n";
     }
 
@@ -213,7 +234,7 @@ static std::string generate_vert_header (const GfxGslContext &ctx,
     return ss.str();
 }
 
-static std::string generate_frag_header(const GfxGslContext &ctx,
+static std::string generate_frag_header(bool glsl33, const GfxGslContext &ctx,
                                         const std::vector<GfxGslTrans> &trans, bool gbuffer)
 {
     std::stringstream ss;
@@ -228,6 +249,9 @@ static std::string generate_frag_header(const GfxGslContext &ctx,
         std::stringstream type;
         type << "Float";
         if (sz > 1) type << sz;
+        if (glsl33) {
+            ss << "layout(location = " << i / 4 << ") ";
+        }
         ss << "in " << type.str() << " trans" << i/4 << ";\n";
     }
 
@@ -235,14 +259,18 @@ static std::string generate_frag_header(const GfxGslContext &ctx,
 
     // Out
     if (gbuffer) {
-        /*
-        ss << "layout(location = 0) out Float4 out_gbuffer0;\n";
-        ss << "layout(location = 1) out Float4 out_gbuffer1;\n";
-        ss << "layout(location = 2) out Float4 out_gbuffer2;\n";
-        */
-        // #version 130 only supports this:
-        ss << "out Float4 out_gbuffer0, out_gbuffer1, out_gbuffer2;\n";
+        if (glsl33) {
+            ss << "layout(location = 0) out Float4 out_gbuffer0;\n";
+            ss << "layout(location = 1) out Float4 out_gbuffer1;\n";
+            ss << "layout(location = 2) out Float4 out_gbuffer2;\n";
+        } else {
+            // #version 130 only supports this:
+            ss << "out Float4 out_gbuffer0, out_gbuffer1, out_gbuffer2;\n";
+        }
     } else {
+        if (glsl33) {
+            ss << "layout(location = 0) ";
+        }
         ss << "out Float4 out_colour_alpha;\n";
     }
     //ss << "layout (depth_any) out Float out_depth;\n";
@@ -261,6 +289,7 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
                                 const GfxGslAst *frag_ast,
                                 std::string &frag_output,
                                 const GfxGslEnvironment &env,
+                                bool glsl33,
                                 bool flat_z,
                                 bool das)
 {
@@ -317,9 +346,9 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     // VERTEX
 
     std::stringstream vert_ss;
-    vert_ss << preamble();
+    vert_ss << preamble(glsl33);
     vert_ss << header.str();
-    vert_ss << generate_vert_header(ctx, vert_ts, trans, vert_in);
+    vert_ss << generate_vert_header(glsl33, ctx, vert_ts, trans, vert_in);
     vert_ss << generate_funcs(env);
     vert_ss << generate_funcs_vert(env);
     vert_ss << gfx_gasoline_preamble_transformation(false, env);
@@ -354,9 +383,9 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     // FRAGMENT
 
     std::stringstream frag_ss;
-    frag_ss << preamble();
+    frag_ss << preamble(glsl33);
     vert_ss << header.str();
-    frag_ss << generate_frag_header(ctx, trans, false);
+    frag_ss << generate_frag_header(glsl33, ctx, trans, false);
     frag_ss << generate_funcs(env);
     frag_ss << generate_funcs_frag(env);
     if (ctx.lightingTextures)
@@ -405,6 +434,7 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
                                     std::string &vert_out,
                                     std::string &frag_out,
                                     const GfxGslEnvironment &env,
+                                    bool glsl33,
                                     bool first_person,
                                     bool wireframe,
                                     bool forward_only,
@@ -500,9 +530,9 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
     // VERTEX
 
     std::stringstream vert_ss;
-    vert_ss << preamble();
+    vert_ss << preamble(glsl33);
     vert_ss << header.str();
-    vert_ss << generate_vert_header(ctx, vert_ts, trans, vert_in);
+    vert_ss << generate_vert_header(glsl33, ctx, vert_ts, trans, vert_in);
     vert_ss << generate_funcs(env);
     vert_ss << generate_funcs_vert(env);
     vert_ss << gfx_gasoline_preamble_transformation(first_person, env);
@@ -539,9 +569,9 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
     // FRAGMENT
 
     std::stringstream frag_ss;
-    frag_ss << preamble();
+    frag_ss << preamble(glsl33);
     frag_ss << header.str();
-    frag_ss << generate_frag_header(ctx, trans, forward_only);
+    frag_ss << generate_frag_header(glsl33, ctx, trans, forward_only);
     frag_ss << generate_funcs(env);
     frag_ss << generate_funcs_frag(env);
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
@@ -565,6 +595,13 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
     if (using_additional)
         frag_ss << gfx_gasoline_generate_trans_decode(trans, "uadd_", GfxGslTrans::USER);
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "internal_", GfxGslTrans::INTERNAL);
+    if (cast) {
+        // Bias
+        // TODO: Consider using http://www.dissidentlogic.com/old/#Normal%20Offset%20Shadows
+        // Run ddx/ddy before possible discard.
+        frag_ss << "    Float slope_bias = abs(ddx(internal_light_dist))\n";
+        frag_ss << "                       + abs(ddy(internal_light_dist));\n";
+    }
     if (env.fadeDither) {
         frag_ss << "    fade();\n";
     }
@@ -576,11 +613,6 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
         frag_ss << "    Float g;\n";
         frag_ss << "    Float s;\n";
         frag_ss << "    func_user_dangs(d, a, n, g, s);\n";
-
-        // Bias
-        // TODO: Consider using http://www.dissidentlogic.com/old/#Normal%20Offset%20Shadows
-        frag_ss << "    Float slope_bias = abs(ddx(internal_light_dist))\n";
-        frag_ss << "                       + abs(ddy(internal_light_dist));\n";
 
         // On large flat surfaces, with the light coming in at an
         // oblique angle, the required bias can get very high.
@@ -654,7 +686,8 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
                                      const GfxGslAst *additional_ast,
                                      std::string &vert_out,
                                      std::string &frag_out,
-                                     const GfxGslEnvironment &env)
+                                     const GfxGslEnvironment &env,
+                                     bool glsl33)
 {
     GfxGslBackendUnparser dangs_backend( "udangs_");
     dangs_backend.unparse(dangs_ast, 1);
@@ -677,8 +710,8 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
     // VERTEX
 
     std::stringstream vert_ss;
-    vert_ss << preamble();
-    vert_ss << generate_vert_header(ctx, dangs_ts, trans, vert_in);
+    vert_ss << preamble(glsl33);
+    vert_ss << generate_vert_header(glsl33, ctx, dangs_ts, trans, vert_in);
     vert_ss << generate_funcs(env);
     vert_ss << generate_funcs_vert(env);
     vert_ss << gfx_gasoline_preamble_transformation(false, env);
@@ -702,8 +735,8 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
         frag_vars["uadd_" + pair.first] = pair.second->type;
 
     std::stringstream frag_ss;
-    frag_ss << preamble();
-    frag_ss << generate_frag_header(ctx, trans, false);
+    frag_ss << preamble(glsl33);
+    frag_ss << generate_frag_header(glsl33, ctx, trans, false);
     frag_ss << generate_funcs(env);
     frag_ss << generate_funcs_frag(env);
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);

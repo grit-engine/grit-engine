@@ -597,13 +597,67 @@ static GfxGasolineResult gfx_gasoline_compile_colour (const GfxGslBackend backen
             case GFX_GSL_BACKEND_GLSL:
             gfx_gasoline_unparse_glsl(
                 ctx, &vert_ts, vert_ast, vert_out, &additional_ts, additional_ast, frag_out, md.env,
-                flat_z, das);
+                false, flat_z, das);
+            break;
+
+            case GFX_GSL_BACKEND_GLSL33:
+            gfx_gasoline_unparse_glsl(
+                ctx, &vert_ts, vert_ast, vert_out, &additional_ts, additional_ast, frag_out, md.env,
+                true, flat_z, das);
             break;
         }
         return {vert_out, frag_out};
     };
 
     return type_check(vert_prog, "", colour_prog, md, cont);
+}
+
+static GfxGasolineResult gfx_gasoline_compile_body (const GfxGslBackend backend,
+                                                    const std::string &vert_prog,
+                                                    const std::string &dangs_prog,
+                                                    const std::string &additional_prog,
+                                                    const GfxGslMetadata &md,
+                                                    bool first_person,
+                                                    bool wireframe,
+                                                    bool forward_only,
+                                                    bool cast)
+{
+    auto cont = [backend, first_person, wireframe, forward_only, cast] (
+        const GfxGslContext &ctx,
+        const GfxGslTypeSystem &vert_ts,
+        const GfxGslAst *vert_ast,
+        const GfxGslTypeSystem &dangs_ts,
+        const GfxGslAst *dangs_ast,
+        const GfxGslTypeSystem &additional_ts,
+        const GfxGslAst *additional_ast,
+        const GfxGslMetadata &md)
+    -> GfxGasolineResult
+    {
+        std::string vert_out;
+        std::string frag_out;
+        switch (backend) {
+            case GFX_GSL_BACKEND_CG:
+            gfx_gasoline_unparse_body_cg(
+                ctx, &vert_ts, vert_ast, &dangs_ts, dangs_ast, &additional_ts, additional_ast,
+                vert_out, frag_out, md.env, first_person, wireframe, forward_only, cast);
+            break;
+
+            case GFX_GSL_BACKEND_GLSL:
+            gfx_gasoline_unparse_body_glsl(
+                ctx, &vert_ts, vert_ast, &dangs_ts, dangs_ast, &additional_ts, additional_ast,
+                vert_out, frag_out, md.env, false, first_person, wireframe, forward_only, cast);
+            break;
+
+            case GFX_GSL_BACKEND_GLSL33:
+            gfx_gasoline_unparse_body_glsl(
+                ctx, &vert_ts, vert_ast, &dangs_ts, dangs_ast, &additional_ts, additional_ast,
+                vert_out, frag_out, md.env, true, first_person, wireframe, forward_only, cast);
+            break;
+        }
+        return {vert_out, frag_out};
+    };
+
+    return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
 }
 
 GfxGasolineResult gfx_gasoline_compile (GfxGslPurpose purpose,
@@ -614,149 +668,18 @@ GfxGasolineResult gfx_gasoline_compile (GfxGslPurpose purpose,
                                         const GfxGslMetadata &md)
 {
     switch (purpose) {
-        case GFX_GSL_PURPOSE_FORWARD: {
-            auto cont = [backend] (const GfxGslContext &ctx,
-                                   const GfxGslTypeSystem &vert_ts,
-                                   const GfxGslAst *vert_ast,
-                                   const GfxGslTypeSystem &dangs_ts,
-                                   const GfxGslAst *dangs_ast,
-                                   const GfxGslTypeSystem &additional_ts,
-                                   const GfxGslAst *additional_ast,
-                                   const GfxGslMetadata &md)
-            -> GfxGasolineResult
-            {
-                std::string vert_out;
-                std::string frag_out;
-                switch (backend) {
-                    case GFX_GSL_BACKEND_CG:
-                    gfx_gasoline_unparse_body_cg(ctx, &vert_ts, vert_ast,
-                                                 &dangs_ts, dangs_ast,
-                                                 &additional_ts, additional_ast,
-                                                 vert_out, frag_out,
-                                                 md.env, false, false, true, false);
-                    break;
+        case GFX_GSL_PURPOSE_FORWARD:
+        return gfx_gasoline_compile_body(backend, vert_prog, dangs_prog, additional_prog, md, false, false, true, false);
 
-                    case GFX_GSL_BACKEND_GLSL:
-                    gfx_gasoline_unparse_body_glsl(ctx, &vert_ts, vert_ast,
-                                                   &dangs_ts, dangs_ast,
-                                                   &additional_ts, additional_ast,
-                                                   vert_out, frag_out,
-                                                   md.env, false, false, true, false);
-                    break;
-                }
-                return {vert_out, frag_out};
-            };
+        case GFX_GSL_PURPOSE_ALPHA:
+        return gfx_gasoline_compile_body(backend, vert_prog, dangs_prog, additional_prog, md, false, false, false, false);
 
-            return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
-        }
-
-        case GFX_GSL_PURPOSE_ALPHA: {
-            auto cont = [backend] (const GfxGslContext &ctx,
-                                   const GfxGslTypeSystem &vert_ts,
-                                   const GfxGslAst *vert_ast,
-                                   const GfxGslTypeSystem &dangs_ts,
-                                   const GfxGslAst *dangs_ast,
-                                   const GfxGslTypeSystem &additional_ts,
-                                   const GfxGslAst *additional_ast,
-                                   const GfxGslMetadata &md)
-            -> GfxGasolineResult
-            {
-                std::string vert_out;
-                std::string frag_out;
-                switch (backend) {
-                    case GFX_GSL_BACKEND_CG:
-                    gfx_gasoline_unparse_body_cg(ctx, &vert_ts, vert_ast,
-                                                 &dangs_ts, dangs_ast,
-                                                 &additional_ts, additional_ast,
-                                                 vert_out, frag_out,
-                                                 md.env, false, false, false, false);
-                    break;
-
-                    case GFX_GSL_BACKEND_GLSL:
-                    gfx_gasoline_unparse_body_glsl(ctx, &vert_ts, vert_ast,
-                                                   &dangs_ts, dangs_ast,
-                                                   &additional_ts, additional_ast,
-                                                   vert_out, frag_out,
-                                                   md.env, false, false, false, false);
-                    break;
-                }
-                return {vert_out, frag_out};
-            };
-
-            return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
-        }
-
-        case GFX_GSL_PURPOSE_FIRST_PERSON: {
-            auto cont = [backend] (const GfxGslContext &ctx,
-                                   const GfxGslTypeSystem &vert_ts,
-                                   const GfxGslAst *vert_ast,
-                                   const GfxGslTypeSystem &dangs_ts,
-                                   const GfxGslAst *dangs_ast,
-                                   const GfxGslTypeSystem &additional_ts,
-                                   const GfxGslAst *additional_ast,
-                                   const GfxGslMetadata &md)
-            -> GfxGasolineResult
-            {
-                std::string vert_out;
-                std::string frag_out;
-                switch (backend) {
-                    case GFX_GSL_BACKEND_CG:
-                    gfx_gasoline_unparse_body_cg(ctx, &vert_ts, vert_ast,
-                                                 &dangs_ts, dangs_ast,
-                                                 &additional_ts, additional_ast,
-                                                 vert_out, frag_out,
-                                                 md.env, true, false, false, false);
-                    break;
-
-                    case GFX_GSL_BACKEND_GLSL:
-                    gfx_gasoline_unparse_body_glsl(ctx, &vert_ts, vert_ast,
-                                                   &dangs_ts, dangs_ast,
-                                                   &additional_ts, additional_ast,
-                                                   vert_out, frag_out,
-                                                   md.env, true, false, false, false);
-                    break;
-                }
-                return {vert_out, frag_out};
-            };
-
-            return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
-        }
+        case GFX_GSL_PURPOSE_FIRST_PERSON:
+        return gfx_gasoline_compile_body(backend, vert_prog, dangs_prog, additional_prog, md, true, true, false, false);
 
         case GFX_GSL_PURPOSE_FIRST_PERSON_WIREFRAME: {
             std::string colour_prog = "out.colour = Float3(1, 1, 1);\n";
-            auto cont = [backend] (const GfxGslContext &ctx,
-                                   const GfxGslTypeSystem &vert_ts,
-                                   const GfxGslAst *vert_ast,
-                                   const GfxGslTypeSystem &dangs_ts,
-                                   const GfxGslAst *dangs_ast,
-                                   const GfxGslTypeSystem &additional_ts,
-                                   const GfxGslAst *additional_ast,
-                                   const GfxGslMetadata &md)
-            -> GfxGasolineResult
-            {
-                std::string vert_out;
-                std::string frag_out;
-                switch (backend) {
-                    case GFX_GSL_BACKEND_CG:
-                    gfx_gasoline_unparse_body_cg(ctx, &vert_ts, vert_ast,
-                                                 &dangs_ts, dangs_ast,
-                                                 &additional_ts, additional_ast,
-                                                 vert_out, frag_out,
-                                                 md.env, true, true, false, false);
-                    break;
-
-                    case GFX_GSL_BACKEND_GLSL:
-                    gfx_gasoline_unparse_body_glsl(ctx, &vert_ts, vert_ast,
-                                                   &dangs_ts, dangs_ast,
-                                                   &additional_ts, additional_ast,
-                                                   vert_out, frag_out,
-                                                   md.env, true, true, false, false);
-                    break;
-                }
-                return {vert_out, frag_out};
-            };
-
-            return type_check(vert_prog, "", colour_prog, md, cont);
+            return gfx_gasoline_compile_body(backend, vert_prog, "", colour_prog, md, true, true, false, false);
         }
 
         case GFX_GSL_PURPOSE_ADDITIONAL:
@@ -801,7 +724,14 @@ GfxGasolineResult gfx_gasoline_compile (GfxGslPurpose purpose,
                     gfx_gasoline_unparse_decal_glsl(ctx, &dangs_ts, dangs_ast,
                                                     &additional_ts, additional_ast,
                                                     vert_out, frag_out,
-                                                    md.env);
+                                                    md.env, false);
+                    break;
+
+                    case GFX_GSL_BACKEND_GLSL33:
+                    gfx_gasoline_unparse_decal_glsl(ctx, &dangs_ts, dangs_ast,
+                                                    &additional_ts, additional_ast,
+                                                    vert_out, frag_out,
+                                                    md.env, true);
                     break;
                 }
                 return {vert_out, frag_out};
@@ -813,41 +743,8 @@ GfxGasolineResult gfx_gasoline_compile (GfxGslPurpose purpose,
         case GFX_GSL_PURPOSE_DEFERRED_AMBIENT_SUN:
         return gfx_gasoline_compile_colour(backend, vert_prog, additional_prog, md, false, true);
 
-        case GFX_GSL_PURPOSE_CAST: {
-            auto cont = [backend] (const GfxGslContext &ctx,
-                                   const GfxGslTypeSystem &vert_ts,
-                                   const GfxGslAst *vert_ast,
-                                   const GfxGslTypeSystem &dangs_ts,
-                                   const GfxGslAst *dangs_ast,
-                                   const GfxGslTypeSystem &additional_ts,
-                                   const GfxGslAst *additional_ast,
-                                   const GfxGslMetadata &md)
-            -> GfxGasolineResult
-            {
-                std::string vert_out;
-                std::string frag_out;
-                switch (backend) {
-                    case GFX_GSL_BACKEND_CG:
-                    gfx_gasoline_unparse_body_cg(ctx, &vert_ts, vert_ast,
-                                                 &dangs_ts, dangs_ast,
-                                                 &additional_ts, additional_ast,
-                                                 vert_out, frag_out,
-                                                 md.env, false, false, false, true);
-                    break;
-
-                    case GFX_GSL_BACKEND_GLSL:
-                    gfx_gasoline_unparse_body_glsl(ctx, &vert_ts, vert_ast,
-                                                   &dangs_ts, dangs_ast,
-                                                   &additional_ts, additional_ast,
-                                                   vert_out, frag_out,
-                                                   md.env, false, false, false, true);
-                    break;
-                }
-                return {vert_out, frag_out};
-            };
-
-            return type_check(vert_prog, dangs_prog, additional_prog, md, cont);
-        }
+        case GFX_GSL_PURPOSE_CAST:
+        return gfx_gasoline_compile_body(backend, vert_prog, dangs_prog, additional_prog, md, false, false, false, true);
 
     }
 

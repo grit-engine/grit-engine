@@ -1,3 +1,4 @@
 *.cg
 *.cg.asm
 *.glsl
+*.glsl33
