@@ -37,7 +37,6 @@ template<class T> static inline size_t my_hash (const T &x) { return std::hash<T
 
 enum GfxGslBackend {
     GFX_GSL_BACKEND_CG,
-    GFX_GSL_BACKEND_GLSL,
     GFX_GSL_BACKEND_GLSL33,
 };
 

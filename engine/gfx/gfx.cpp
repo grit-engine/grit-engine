@@ -29,7 +29,6 @@
 #include "clutter.h"
 #include "gfx_body.h"
 #include "gfx_decal.h"
-#include "gfx_gl.h"
 #include "gfx_gl3_plus.h"
 #include "gfx_hud.h"
 #include "gfx_internal.h"
@@ -45,7 +44,6 @@ bool d3d9 = getenv("GRIT_GL") == NULL;
 #else
 bool d3d9 = false;
 #endif
-bool gl3 = getenv("GRIT_GL3") != NULL;
 
 extern "C" { 
 #ifdef WIN32
@@ -980,11 +978,6 @@ bool gfx_d3d9 (void)
     return d3d9;
 }
 
-bool gfx_gl3 (void)
-{
-    return gl3;
-}
-
 size_t gfx_init (GfxCallback &cb_)
 {
     try {
@@ -1011,12 +1004,8 @@ size_t gfx_init (GfxCallback &cb_)
             ogre_rs->setConfigOption("Floating-point mode", "Consistent");
             ogre_rs->setConfigOption("Video Mode", "1024 x 768 @ 32-bit colour");
             #endif
-        } else if (gl3) {
-            ogre_rs = gfx_gl3_plus_get_render_system();
-            ogre_rs->setConfigOption("RTT Preferred Mode", "FBO");
-            ogre_rs->setConfigOption("Video Mode", "1024 x 768");
         } else {
-            ogre_rs = gfx_gl_get_render_system();
+            ogre_rs = gfx_gl3_plus_get_render_system();
             ogre_rs->setConfigOption("RTT Preferred Mode", "FBO");
             ogre_rs->setConfigOption("Video Mode", "1024 x 768");
         }

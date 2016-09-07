@@ -100,7 +100,7 @@ int main (int argc, char **argv)
         unsigned env_boxes = 0;
         unsigned bones = 0;
         std::vector<std::string> args;
-        std::string language = "GLSL";
+        std::string language = "GLSL33";
         GfxGslRunParams params;
         GfxGslUnboundTextures ubt;
         GfxGslRunParams static_values;
@@ -202,8 +202,6 @@ int main (int argc, char **argv)
         GfxGslBackend backend;
         if (language == "CG") {
             backend = GFX_GSL_BACKEND_CG;
-        } else if (language == "GLSL") {
-            backend = GFX_GSL_BACKEND_GLSL;
         } else if (language == "GLSL33") {
             backend = GFX_GSL_BACKEND_GLSL33;
         } else {

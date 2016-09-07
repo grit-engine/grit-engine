@@ -58,7 +58,6 @@ ENGINE_CPP_SRCS=\
 	gfx/gfx_disk_resource.cpp \
 	gfx/gfx_fertile_node.cpp \
 	gfx/gfx_font.cpp \
-	gfx/gfx_gl.cpp \
 	gfx/gfx_gl3_plus.cpp \
 	gfx/gfx_hud.cpp \
 	gfx/gfx_instances.cpp \

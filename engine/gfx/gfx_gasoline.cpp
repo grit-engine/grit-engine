@@ -594,12 +594,6 @@ static GfxGasolineResult gfx_gasoline_compile_colour (const GfxGslBackend backen
                 flat_z, das);
             break;
 
-            case GFX_GSL_BACKEND_GLSL:
-            gfx_gasoline_unparse_glsl(
-                ctx, &vert_ts, vert_ast, vert_out, &additional_ts, additional_ast, frag_out, md.env,
-                false, flat_z, das);
-            break;
-
             case GFX_GSL_BACKEND_GLSL33:
             gfx_gasoline_unparse_glsl(
                 ctx, &vert_ts, vert_ast, vert_out, &additional_ts, additional_ast, frag_out, md.env,
@@ -640,12 +634,6 @@ static GfxGasolineResult gfx_gasoline_compile_body (const GfxGslBackend backend,
             gfx_gasoline_unparse_body_cg(
                 ctx, &vert_ts, vert_ast, &dangs_ts, dangs_ast, &additional_ts, additional_ast,
                 vert_out, frag_out, md.env, first_person, wireframe, forward_only, cast);
-            break;
-
-            case GFX_GSL_BACKEND_GLSL:
-            gfx_gasoline_unparse_body_glsl(
-                ctx, &vert_ts, vert_ast, &dangs_ts, dangs_ast, &additional_ts, additional_ast,
-                vert_out, frag_out, md.env, false, first_person, wireframe, forward_only, cast);
             break;
 
             case GFX_GSL_BACKEND_GLSL33:
@@ -718,13 +706,6 @@ GfxGasolineResult gfx_gasoline_compile (GfxGslPurpose purpose,
                                                   &additional_ts, additional_ast,
                                                   vert_out, frag_out,
                                                   md.env);
-                    break;
-
-                    case GFX_GSL_BACKEND_GLSL:
-                    gfx_gasoline_unparse_decal_glsl(ctx, &dangs_ts, dangs_ast,
-                                                    &additional_ts, additional_ast,
-                                                    vert_out, frag_out,
-                                                    md.env, false);
                     break;
 
                     case GFX_GSL_BACKEND_GLSL33:

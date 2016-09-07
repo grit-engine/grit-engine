@@ -33,15 +33,15 @@ Ogre::RenderSystem *gfx_gl3_plus_get_render_system (void)
 void gfx_gl3_plus_force_shader_compilation(const Ogre::HighLevelGpuProgramPtr &vp,
                                            const Ogre::HighLevelGpuProgramPtr &fp)
 {
-    auto *vp_low = dynamic_cast<Ogre::GL3PlusGLSLShader*>(&*vp);
-    auto *fp_low = dynamic_cast<Ogre::GL3PlusGLSLShader*>(&*fp);
+    auto *vp_low = dynamic_cast<Ogre::GLSLShader*>(&*vp);
+    auto *fp_low = dynamic_cast<Ogre::GLSLShader*>(&*fp);
 
     if (vp_low != nullptr && fp_low != nullptr) {
         // Force the actual compilation of it...
-        Ogre::GL3PlusGLSLSeparableProgramManager::getSingleton().setActiveVertexShader(vp_low);
-        Ogre::GL3PlusGLSLSeparableProgramManager::getSingleton().setActiveFragmentShader(fp_low);
+        Ogre::GLSLSeparableProgramManager::getSingleton().setActiveVertexShader(vp_low);
+        Ogre::GLSLSeparableProgramManager::getSingleton().setActiveFragmentShader(fp_low);
         auto *prog =
-			Ogre::GL3PlusGLSLSeparableProgramManager::getSingleton().getCurrentSeparableProgram();
+			Ogre::GLSLSeparableProgramManager::getSingleton().getCurrentSeparableProgram();
 		if (intptr_t(prog->getComputeShader()) > 0 && intptr_t(prog->getComputeShader()) < 10) abort();
     }
 }

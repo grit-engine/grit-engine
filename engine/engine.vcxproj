@@ -121,6 +121,7 @@
     <ClCompile Include="gfx\gfx_gasoline_backend_gsl.cpp" />
     <ClCompile Include="gfx\gfx_gasoline_parser.cpp" />
     <ClCompile Include="gfx\gfx_gasoline_type_system.cpp" />
+    <ClCompile Include="gfx\gfx_gl3_plus.cpp" />
     <ClCompile Include="gfx\gfx_instances.cpp" />
     <ClCompile Include="gfx\gfx_light.cpp" />
     <ClCompile Include="gfx\gfx_material.cpp" />
