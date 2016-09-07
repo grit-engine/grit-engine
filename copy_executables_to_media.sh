@@ -12,4 +12,4 @@ ${STRIP} grit -o media/Grit.linux.x86_64
 ${STRIP} gsl -o media/Tools/gsl.linux.x86_64
 ${STRIP} extract -o media/Tools/extract.linux.x86_64
 ${STRIP} grit_col_conv -o media/Tools/extract.linux.x86_64
-${STRIP} GritXMLConverter -o media/Tools/GritXMLConverter.x86_64
+${STRIP} GritXMLConverter -o media/Tools/GritXMLConverter.linux.x86_64

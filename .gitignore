@@ -24,3 +24,7 @@ ipch
 *.user
 *.VC.db
 *.VC.opendb
+
+# Blender
+exporters/blender_scripts/addons/grit_blender/GritXMLConverter.linux.x86_64
+exporters/blender_scripts/addons/grit_blender/__pycache__

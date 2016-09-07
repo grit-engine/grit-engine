@@ -750,12 +750,11 @@ def export_mesh_internal (scene, obj, tangents, filename, errors):
 
     if scene.grit_meshes_convert:
         current_py = inspect.getfile(inspect.currentframe())
-        exporter = os.path.abspath(os.path.join(os.path.dirname(current_py), "OgreXMLConverter" + executable_suffix))
-        args = [exporter, "-e"]
-        if tangents:
-            args.append("-t")
-            args.append("-ts")
-            args.append("4")
+        exporter = os.path.abspath(os.path.join(os.path.dirname(current_py), "GritXMLConverter" + executable_suffix))
+        args = [exporter]
+        # args.append("-e")
+        # if tangents:
+        #     args += ["-t", "-ts", "4"]
         args.append(filename)
         subprocess.call(args)
         if armature != None:
