@@ -1,4 +1,4 @@
-/* Copyright (c) David Cunningham and the Grit Game Engine project 2015
+/* Copyright (c) The Grit Game Engine authors 2016
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -17,12 +17,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- */
-
-/*
- * Derivative work based David Cunninghamon mouse_x11.h, mouse_x11.cpp and mouse.h 
- * Copyright (c) François Dorval fdorval@hotmail.com and the Grit Game Engine project 2016 
- * Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php 
  */
 
 #ifndef Joystick_h
