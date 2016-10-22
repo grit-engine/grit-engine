@@ -1,2 +1,4 @@
 *.props text
 *.vcxproj text
+*.cpp text
+*.h text
