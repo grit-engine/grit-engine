@@ -167,6 +167,13 @@ TRY_START
         push_cfunction(L, ifilter_unbind);
     } else if (key=="pressed") {
         push_cfunction(L, ifilter_pressed);
+    } else if (key=="binds") {
+        std::vector<std::string> binds = self.allBinds();
+        lua_createtable(L, binds.size(), 0);
+        for (unsigned i=0 ; i<binds.size() ; ++i) {
+            push_string(L, binds[i]);
+            lua_rawseti(L, -2, i + 1);
+        }
     } else if (key=="destroy") {
         push_cfunction(L, ifilter_destroy);
     } else {

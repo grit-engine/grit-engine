@@ -118,6 +118,15 @@ bool InputFilter::isBound (const std::string &ev)
     return buttonCallbacks.find(ev) != buttonCallbacks.end();
 }
 
+std::vector<std::string> InputFilter::allBinds (void)
+{
+    std::vector<std::string> r;
+    for (const auto &pair : buttonCallbacks) {
+        r.push_back(pair.first);
+    }
+    return r;
+}
+
 bool InputFilter::acceptButton (lua_State *L, const std::string &ev)
 {
     ensureAlive();
