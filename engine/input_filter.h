@@ -161,6 +161,10 @@ class InputFilter {
      */
     bool isButtonPressed (const std::string &b);
 
+    /** Get a list of all key-bindings in this InputFilter.
+     */
+    std::vector<std::string> allBinds(void);
+
     /** For internal use. */
     bool acceptButton (lua_State *L, const std::string &b);
     void triggerFunc (lua_State *L, const std::string &button, const LuaPtr &func);
