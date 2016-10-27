@@ -33,7 +33,7 @@
 
 #include "lua_wrappers_gfx.h"
 #include "gfx_option.h"
-#include "gfx_hud.h"
+#include "hud.h"
 #include "gfx_font.h"
 
 GfxNodePtr check_gfx_node (lua_State *L, int idx)
@@ -1503,7 +1503,7 @@ MT_MACRO_NEWINDEX(gfxlight);
 
 // GFXHUDCLASS ============================================================= {{{
 
-void push_gfxhudclass (lua_State *L, GfxHudClass *self)
+void push_hudclass (lua_State *L, HudClass *self)
 {
         if (self == NULL) {
                 lua_pushnil(L);
@@ -1512,24 +1512,24 @@ void push_gfxhudclass (lua_State *L, GfxHudClass *self)
         }
 }
 
-static int gfxhudclass_gc (lua_State *L)
+static int hudclass_gc (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        GET_UD_MACRO_OFFSET(GfxHudClass,self,1,GFXHUDCLASS_TAG,0);
+        GET_UD_MACRO_OFFSET(HudClass,self,1,GFXHUDCLASS_TAG,0);
         return 0;
 TRY_END
 }
 
-TOSTRING_GETNAME_MACRO(gfxhudclass,GfxHudClass,.name,GFXHUDCLASS_TAG)
+TOSTRING_GETNAME_MACRO(hudclass,HudClass,.name,GFXHUDCLASS_TAG)
 
 
 
-static int gfxhudclass_index (lua_State *L)
+static int hudclass_index (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(GfxHudClass,self,1,GFXHUDCLASS_TAG);
+        GET_UD_MACRO(HudClass,self,1,GFXHUDCLASS_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key=="name") {
                 lua_pushstring(L,self.name.c_str());
@@ -1542,17 +1542,17 @@ TRY_START
 TRY_END
 }
 
-static int gfxhudclass_newindex (lua_State *L)
+static int hudclass_newindex (lua_State *L)
 {
 TRY_START
         check_args(L,3);
-        GET_UD_MACRO(GfxHudClass,self,1,GFXHUDCLASS_TAG);
+        GET_UD_MACRO(HudClass,self,1,GFXHUDCLASS_TAG);
         std::string key = luaL_checkstring(L,2);
 
         if (key=="name") {
-                my_lua_error(L,"Not a writeable GfxHudClass member: "+key);
+                my_lua_error(L,"Not a writeable HudClass member: "+key);
         } else if (key=="dump") {
-                my_lua_error(L,"Not a writeable GfxHudClass member: "+key);
+                my_lua_error(L,"Not a writeable HudClass member: "+key);
         } else {
                 self.set(L,key);
         }
@@ -1561,16 +1561,16 @@ TRY_START
 TRY_END
 }
 
-EQ_PTR_MACRO(GfxHudClass,gfxhudclass,GFXHUDCLASS_TAG)
+EQ_PTR_MACRO(HudClass,hudclass,GFXHUDCLASS_TAG)
 
-MT_MACRO_NEWINDEX(gfxhudclass);
+MT_MACRO_NEWINDEX(hudclass);
 
 //}}}
 
 
 // GFXHUDOBJECT ============================================================== {{{
 
-void push_gfxhudobj (lua_State *L, GfxHudObject *self)
+void push_hudobj (lua_State *L, HudObject *self)
 {
     if (self==NULL)
         lua_pushnil(L);
@@ -1580,21 +1580,21 @@ void push_gfxhudobj (lua_State *L, GfxHudObject *self)
     }
 }
 
-static int gfxhudobj_gc (lua_State *L)
+static int hudobj_gc (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(HudObject,self,1,GFXHUDOBJECT_TAG);
     self.decRefCount(L);
     return 0;
 TRY_END
 }
 
-static int gfxhudobj_set_rect (lua_State *L)
+static int hudobj_set_rect (lua_State *L)
 {
 TRY_START
     check_args(L,5);
-    GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(HudObject,self,1,GFXHUDOBJECT_TAG);
     float left = check_float(L,2);
     float bottom = check_float(L,3);
     float right = check_float(L,4);
@@ -1609,11 +1609,11 @@ TRY_START
 TRY_END
 }
 
-static int gfxhudobj_destroy (lua_State *L)
+static int hudobj_destroy (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(HudObject,self,1,GFXHUDOBJECT_TAG);
     self.destroy(L);
     return 0;
 TRY_END
@@ -1621,14 +1621,14 @@ TRY_END
 
 
 
-TOSTRING_ADDR_MACRO (gfxhudobj,GfxHudObject,GFXHUDOBJECT_TAG)
+TOSTRING_ADDR_MACRO (hudobj,HudObject,GFXHUDOBJECT_TAG)
 
 
-static int gfxhudobj_index (lua_State *L)
+static int hudobj_index (lua_State *L)
 {
 TRY_START
     check_args(L,2);
-    GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(HudObject,self,1,GFXHUDOBJECT_TAG);
     if (lua_type(L,2) == LUA_TSTRING) {
         const char *key = lua_tostring(L,2);
         if (!::strcmp(key,"orientation")) {
@@ -1640,7 +1640,7 @@ TRY_START
         } else if (!::strcmp(key,"derivedOrientation")) {
             lua_pushnumber(L, self.getDerivedOrientation().inDegrees());
         } else if (!::strcmp(key,"size")) {
-            push_v2(L, self.GfxHudObject::getSize());
+            push_v2(L, self.HudObject::getSize());
         } else if (!::strcmp(key,"sizeSet")) {
             lua_pushboolean(L, self.getSizeSet());
         } else if (!::strcmp(key,"bounds")) {
@@ -1648,7 +1648,7 @@ TRY_START
         } else if (!::strcmp(key,"derivedBounds")) {
             push_v2(L, self.getDerivedBounds());
         } else if (!::strcmp(key,"setRect")) {
-            push_cfunction(L, gfxhudobj_set_rect);
+            push_cfunction(L, hudobj_set_rect);
         } else if (!::strcmp(key,"zOrder")) {
             lua_pushnumber(L, self.getZOrder());
         } else if (!::strcmp(key,"inheritOrientation")) {
@@ -1682,9 +1682,9 @@ TRY_START
             lua_pushboolean(L, self.isEnabled());
 
         } else if (!::strcmp(key,"parent")) {
-            push_gfxhudobj(L, self.getParent());
+            push_hudobj(L, self.getParent());
         } else if (!::strcmp(key,"class")) {
-            push_gfxhudclass(L, self.hudClass);
+            push_hudclass(L, self.hudClass);
         } else if (!::strcmp(key,"className")) {
             push_string(L, self.hudClass->name);
         } else if (!::strcmp(key,"table")) {
@@ -1693,9 +1693,9 @@ TRY_START
         } else if (!::strcmp(key,"destroyed")) {
             lua_pushboolean(L,self.destroyed());
         } else if (!::strcmp(key,"destroy")) {
-            push_cfunction(L,gfxhudobj_destroy);
+            push_cfunction(L,hudobj_destroy);
         } else {
-            if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
+            if (self.destroyed()) my_lua_error(L,"HudObject destroyed");
             self.table.push(L);
             lua_pushstring(L, key);
             lua_rawget(L, -2);
@@ -1707,7 +1707,7 @@ TRY_START
             self.hudClass->get(L,key);
         }
     } else {
-        if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
+        if (self.destroyed()) my_lua_error(L,"HudObject destroyed");
         self.table.push(L);
         lua_pushvalue(L, 2);
         lua_rawget(L, -2);
@@ -1724,11 +1724,11 @@ TRY_END
 }
 
 
-static int gfxhudobj_newindex (lua_State *L)
+static int hudobj_newindex (lua_State *L)
 {
 TRY_START
     check_args(L,3);
-    GET_UD_MACRO(GfxHudObject,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(HudObject,self,1,GFXHUDOBJECT_TAG);
     if (lua_type(L,2) == LUA_TSTRING) {
         const char *key = lua_tostring(L,2);
         if (!::strcmp(key,"orientation")) {
@@ -1767,7 +1767,7 @@ TRY_START
             if (lua_isnil(L,3)) {
                 self.setParent(L, NULL);
             } else {
-                GET_UD_MACRO(GfxHudObject,v,3,GFXHUDOBJECT_TAG);
+                GET_UD_MACRO(HudObject,v,3,GFXHUDOBJECT_TAG);
                 self.setParent(L, &v);
             }
         } else if (!::strcmp(key,"zOrder")) {
@@ -1792,17 +1792,17 @@ TRY_START
             bool v = check_bool(L,3);
             self.setEnabled(v);
         } else if (!::strcmp(key,"table")) {
-            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+            my_lua_error(L,"Not a writeable HudObject member: "+std::string(key));
         } else if (!::strcmp(key,"class")) {
-            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+            my_lua_error(L,"Not a writeable HudObject member: "+std::string(key));
         } else if (!::strcmp(key,"className")) {
-            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+            my_lua_error(L,"Not a writeable HudObject member: "+std::string(key));
         } else if (!::strcmp(key,"destroy")) {
-            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+            my_lua_error(L,"Not a writeable HudObject member: "+std::string(key));
         } else if (!::strcmp(key,"destroyed")) {
-            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+            my_lua_error(L,"Not a writeable HudObject member: "+std::string(key));
         } else {
-            if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
+            if (self.destroyed()) my_lua_error(L,"HudObject destroyed");
 
             self.table.push(L);
             lua_pushvalue(L, 2);
@@ -1810,7 +1810,7 @@ TRY_START
             lua_rawset(L, -3);
         }
     } else {
-        if (self.destroyed()) my_lua_error(L,"GfxHudObject destroyed");
+        if (self.destroyed()) my_lua_error(L,"HudObject destroyed");
 
         self.table.push(L);
         lua_pushvalue(L, 2);
@@ -1821,16 +1821,16 @@ TRY_START
 TRY_END
 }
 
-EQ_PTR_MACRO(GfxHudObject, gfxhudobj, GFXHUDOBJECT_TAG)
+EQ_PTR_MACRO(HudObject, hudobj, GFXHUDOBJECT_TAG)
 
-MT_MACRO_NEWINDEX(gfxhudobj);
+MT_MACRO_NEWINDEX(hudobj);
 
 //}}}
 
 
 // GFXHUDTEXT ============================================================== {{{
 
-void push_gfxhudtext (lua_State *L, GfxHudText *self)
+void push_hudtext (lua_State *L, HudText *self)
 {
     if (self==NULL)
         lua_pushnil(L);
@@ -1840,42 +1840,42 @@ void push_gfxhudtext (lua_State *L, GfxHudText *self)
     }
 }
 
-static int gfxhudtext_gc (lua_State *L)
+static int hudtext_gc (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
     self.decRefCount();
     return 0;
 TRY_END
 }
 
-static int gfxhudtext_destroy (lua_State *L)
+static int hudtext_destroy (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
     self.destroy();
     return 0;
 TRY_END
 }
 
-static int gfxhudtext_append (lua_State *L)
+static int hudtext_append (lua_State *L)
 {
 TRY_START
     check_args(L,2);
-    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
     std::string str = check_string(L,2);
     self.append(str);
     return 0;
 TRY_END
 }
 
-static int gfxhudtext_clear (lua_State *L)
+static int hudtext_clear (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
     self.clear();
     return 0;
 TRY_END
@@ -1883,14 +1883,14 @@ TRY_END
 
 
 
-TOSTRING_ADDR_MACRO (gfxhudtext,GfxHudText,GFXHUDTEXT_TAG)
+TOSTRING_ADDR_MACRO (hudtext,HudText,GFXHUDTEXT_TAG)
 
 
-static int gfxhudtext_index (lua_State *L)
+static int hudtext_index (lua_State *L)
 {
 TRY_START
     check_args(L,2);
-    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"orientation")) {
         lua_pushnumber(L, self.getOrientation().inDegrees());
@@ -1903,7 +1903,7 @@ TRY_START
     } else if (!::strcmp(key,"zOrder")) {
         lua_pushnumber(L, self.getZOrder());
     } else if (!::strcmp(key,"size")) {
-        push_v2(L, self.GfxHudText::getSize());
+        push_v2(L, self.HudText::getSize());
     } else if (!::strcmp(key,"textWrap")) {
         if (self.getTextWrap() == Vector2(0,0)) {
             lua_pushnil(L);
@@ -1952,33 +1952,33 @@ TRY_START
     } else if (!::strcmp(key,"text")) {
         push_string(L, self.getText());
     } else if (!::strcmp(key,"clear")) {
-        push_cfunction(L,gfxhudtext_clear);
+        push_cfunction(L,hudtext_clear);
     } else if (!::strcmp(key,"append")) {
-        push_cfunction(L,gfxhudtext_append);
+        push_cfunction(L,hudtext_append);
 
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self.isEnabled());
 
     } else if (!::strcmp(key,"parent")) {
-        push_gfxhudobj(L, self.getParent());
+        push_hudobj(L, self.getParent());
 
     } else if (!::strcmp(key,"destroyed")) {
         lua_pushboolean(L,self.destroyed());
     } else if (!::strcmp(key,"destroy")) {
-        push_cfunction(L,gfxhudtext_destroy);
+        push_cfunction(L,hudtext_destroy);
     } else {
-        my_lua_error(L,"Not a readable GfxHudText member: "+std::string(key));
+        my_lua_error(L,"Not a readable HudText member: "+std::string(key));
     }
     return 1;
 TRY_END
 }
 
 
-static int gfxhudtext_newindex (lua_State *L)
+static int hudtext_newindex (lua_State *L)
 {
 TRY_START
     check_args(L,3);
-    GET_UD_MACRO(GfxHudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"orientation")) {
         float v = check_float(L,3);
@@ -2053,7 +2053,7 @@ TRY_START
         if (lua_isnil(L,3)) {
             self.setParent(NULL);
         } else {
-            GET_UD_MACRO(GfxHudObject,v,3,GFXHUDOBJECT_TAG);
+            GET_UD_MACRO(HudObject,v,3,GFXHUDOBJECT_TAG);
             self.setParent(&v);
         }
     } else if (!::strcmp(key,"zOrder")) {
@@ -2064,15 +2064,15 @@ TRY_START
         bool v = check_bool(L,3);
         self.setEnabled(v);
     } else {
-        my_lua_error(L,"Not a writeable GfxHudText member: "+std::string(key));
+        my_lua_error(L,"Not a writeable HudText member: "+std::string(key));
     }
     return 0;
 TRY_END
 }
 
-EQ_PTR_MACRO(GfxBodyPtr,gfxhudtext,GFXHUDTEXT_TAG)
+EQ_PTR_MACRO(GfxBodyPtr,hudtext,GFXHUDTEXT_TAG)
 
-MT_MACRO_NEWINDEX(gfxhudtext);
+MT_MACRO_NEWINDEX(hudtext);
 
 //}}}
 
@@ -2086,7 +2086,7 @@ TRY_START
     Vector3 cam_pos = check_v3(L,2);
     Quaternion cam_dir = check_quat(L,3);
     gfx_window_events_pump();
-    gfx_hud_call_per_frame_callbacks(L, elapsed);
+    hud_call_per_frame_callbacks(L, elapsed);
     gfx_render(elapsed, cam_pos, cam_dir);
     return 0;
 TRY_END
@@ -2325,7 +2325,7 @@ TRY_START
 TRY_END
 }
 
-static int global_gfx_hud_text_add (lua_State *L)
+static int global_hud_text_add (lua_State *L)
 {
 TRY_START
     check_args(L,1);
@@ -2333,29 +2333,29 @@ TRY_START
     GfxFont *font = gfx_font_get(font_name);
     if (font == NULL) my_lua_error(L, "Font does not exist: \""+font_name+"\"");
     
-    GfxHudText *self = new GfxHudText(font);
-    push_gfxhudtext(L,self);
+    HudText *self = new HudText(font);
+    push_hudtext(L,self);
 
     return 1;
 TRY_END
 }
 
 
-static int global_gfx_hud_object_add (lua_State *L)
+static int global_hud_object_add (lua_State *L)
 {
 TRY_START
     if (lua_gettop(L) == 1) lua_newtable(L);
     check_args(L,2);
     std::string class_name = check_path(L,1);
-    GfxHudClass *hud_class = gfx_hud_class_get(class_name);
+    HudClass *hud_class = hud_class_get(class_name);
     int table_index = lua_gettop(L);
     if (!lua_istable(L,table_index)) my_lua_error(L,"Last parameter should be a table");
     
-    GfxHudObject *parent = NULL;
-    GfxHudObject *self = new GfxHudObject(hud_class);
+    HudObject *parent = NULL;
+    HudObject *self = new HudObject(hud_class);
 
     // push this now so that it will inc its internal ref counter and not be deleted if aliases are gc'd
-    push_gfxhudobj(L,self);
+    push_hudobj(L,self);
 
     bool have_orientation = false;
     bool have_position = false;
@@ -2407,7 +2407,7 @@ TRY_START
             if (lua_isnil(L,-1)) {
                 parent = NULL;
             } else {
-                GET_UD_MACRO(GfxHudObject,v,-1,GFXHUDOBJECT_TAG);
+                GET_UD_MACRO(HudObject,v,-1,GFXHUDOBJECT_TAG);
                 parent = &v;
             }
         } else if (!::strcmp(key,"colour")) {
@@ -2464,13 +2464,13 @@ TRY_START
                 my_lua_error(L, "enabled must be a boolean.");
             }
         } else if (!::strcmp(key,"class")) {
-            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+            my_lua_error(L,"Not a writeable HudObject member: "+std::string(key));
         } else if (!::strcmp(key,"className")) {
-            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+            my_lua_error(L,"Not a writeable HudObject member: "+std::string(key));
         } else if (!::strcmp(key,"destroy")) {
-            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+            my_lua_error(L,"Not a writeable HudObject member: "+std::string(key));
         } else if (!::strcmp(key,"destroyed")) {
-            my_lua_error(L,"Not a writeable GfxHudObject member: "+std::string(key));
+            my_lua_error(L,"Not a writeable HudObject member: "+std::string(key));
         } else {
             lua_pushvalue(L, -2); // push key
             lua_pushvalue(L, -2); // push value
@@ -2567,62 +2567,62 @@ TRY_START
     }
     self->setParent(L, parent);
 
-    push_gfxhudobj(L,self);
+    push_hudobj(L,self);
 
     return 1;
 TRY_END
 }
 
-static int global_gfx_hud_class_add (lua_State *L)
+static int global_hud_class_add (lua_State *L)
 {
 TRY_START
     check_args(L,2);
     std::string name = check_path(L,1);
     if (!lua_istable(L,2))
         my_lua_error(L,"Second parameter should be a table");
-    gfx_hud_class_add(L, name);
+    hud_class_add(L, name);
     return 1;
 TRY_END
 }
 
-static int global_gfx_hud_class_get (lua_State *L)
+static int global_hud_class_get (lua_State *L)
 {
 TRY_START
     check_args(L,1);
     std::string name = check_path(L,1);
-    push_gfxhudclass(L,gfx_hud_class_get(name));
+    push_hudclass(L,hud_class_get(name));
     return 1;
 TRY_END
 }
 
-static int global_gfx_hud_class_has (lua_State *L)
+static int global_hud_class_has (lua_State *L)
 {
 TRY_START
     check_args(L,1);
     std::string name = check_path(L,1);
-    lua_pushboolean(L,gfx_hud_class_has(name));
+    lua_pushboolean(L,hud_class_has(name));
     return 1;
 TRY_END
 }
 
-static int global_gfx_hud_class_count (lua_State *L)
+static int global_hud_class_count (lua_State *L)
 {
 TRY_START
     check_args(L,0);
-    lua_pushnumber(L, gfx_hud_class_count());
+    lua_pushnumber(L, hud_class_count());
     return 1;
 TRY_END
 }
 
-static int global_gfx_hud_class_all (lua_State *L)
+static int global_hud_class_all (lua_State *L)
 {
 TRY_START
     check_args(L,0);
     lua_newtable(L);
     unsigned int c = 0;
-    GfxHudClassMap::iterator i, i_;
-    for (gfx_hud_class_all(i,i_) ; i!=i_ ; ++i) {
-        push_gfxhudclass(L,i->second);
+    HudClassMap::iterator i, i_;
+    for (hud_class_all(i,i_) ; i!=i_ ; ++i) {
+        push_hudclass(L,i->second);
         lua_rawseti(L,-2,c+1);
         c++;
     }
@@ -2630,14 +2630,14 @@ TRY_START
 TRY_END
 }
 
-static int global_gfx_hud_ray (lua_State *L)
+static int global_hud_ray (lua_State *L)
 {
 TRY_START
     check_args(L,1);
     Vector2 pos = check_v2(L,1);
     // negative values occur when dragging out of the game window
     // casting to unsigned makes them go away...
-    push_gfxhudobj(L, gfx_hud_ray((unsigned)pos.x, (unsigned)pos.y));
+    push_hudobj(L, hud_ray((unsigned)pos.x, (unsigned)pos.y));
     return 1;
 TRY_END
 }
@@ -4545,14 +4545,24 @@ static const luaL_reg global[] = {
     {"gfx_font_list", global_gfx_font_list},
     {"gfx_font_text_width", global_gfx_font_text_width},
 
-    {"gfx_hud_object_add", global_gfx_hud_object_add},
-    {"gfx_hud_text_add", global_gfx_hud_text_add},
-    {"gfx_hud_class_add", global_gfx_hud_class_add},
-    {"gfx_hud_class_get", global_gfx_hud_class_get},
-    {"gfx_hud_class_has", global_gfx_hud_class_has},
-    {"gfx_hud_class_all", global_gfx_hud_class_all},
-    {"gfx_hud_class_count", global_gfx_hud_class_count},
-    {"gfx_hud_ray", global_gfx_hud_ray},
+    // TODO(dcunnin): Remove these.
+    {"gfx_hud_object_add", global_hud_object_add},
+    {"gfx_hud_text_add", global_hud_text_add},
+    {"gfx_hud_class_add", global_hud_class_add},
+    {"gfx_hud_class_get", global_hud_class_get},
+    {"gfx_hud_class_has", global_hud_class_has},
+    {"gfx_hud_class_all", global_hud_class_all},
+    {"gfx_hud_class_count", global_hud_class_count},
+    {"gfx_hud_ray", global_hud_ray},
+
+    {"hud_object_add", global_hud_object_add},
+    {"hud_text_add", global_hud_text_add},
+    {"hud_class_add", global_hud_class_add},
+    {"hud_class_get", global_hud_class_get},
+    {"hud_class_has", global_hud_class_has},
+    {"hud_class_all", global_hud_class_all},
+    {"hud_class_count", global_hud_class_count},
+    {"hud_ray", global_hud_ray},
 
     {"gfx_env_cube", global_gfx_env_cube},
     {"gfx_env_cube_cross_fade", global_gfx_env_cube_cross_fade},
@@ -4644,9 +4654,9 @@ void gfx_lua_init (lua_State *L)
     ADD_MT_MACRO(gfxrangedinstances,GFXRANGEDINSTANCES_TAG);
     ADD_MT_MACRO(gfxdecal,GFXDECAL_TAG);
 
-    ADD_MT_MACRO(gfxhudobj,GFXHUDOBJECT_TAG);
-    ADD_MT_MACRO(gfxhudtext,GFXHUDTEXT_TAG);
-    ADD_MT_MACRO(gfxhudclass,GFXHUDCLASS_TAG);
+    ADD_MT_MACRO(hudobj,GFXHUDOBJECT_TAG);
+    ADD_MT_MACRO(hudtext,GFXHUDTEXT_TAG);
+    ADD_MT_MACRO(hudclass,GFXHUDCLASS_TAG);
 
     register_lua_globals(L, global);
     register_lua_globals(L, global_ogre_debug);

@@ -30,7 +30,7 @@
 #include "gfx_body.h"
 #include "gfx_decal.h"
 #include "gfx_gl3_plus.h"
-#include "gfx_hud.h"
+#include "hud.h"
 #include "gfx_internal.h"
 #include "gfx_light.h"
 #include "gfx_material.h"
@@ -630,7 +630,7 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
             }
 
             if (gfx_option(GFX_RENDER_HUD))
-                gfx_hud_render(hud_vp);
+                hud_render(hud_vp);
 
             ogre_win->_endUpdate();
 
@@ -883,7 +883,7 @@ struct WindowEventListener : Ogre::WindowEventListener {
         if (shutting_down) return;
         gfx_cb->windowResized(rw->getWidth(),rw->getHeight());
 		reset_frame_buffer_on_next_render = true;
-        gfx_hud_signal_window_resized(rw->getWidth(),rw->getHeight());
+        hud_signal_window_resized(rw->getWidth(),rw->getHeight());
     }
 
     void windowClosed (Ogre::RenderWindow *rw)
@@ -1071,7 +1071,7 @@ size_t gfx_init (GfxCallback &cb_)
         gfx_pipeline_init();
         gfx_option_init();
         gfx_particle_init();
-        gfx_hud_init();
+        hud_init();
         gfx_decal_init();
  
         gfx_env_cube(0, DiskResourcePtr<GfxEnvCubeDiskResource>());
@@ -1112,7 +1112,7 @@ void gfx_material_add_dependencies (const std::string &name, DiskResource *into)
 
 void gfx_shutdown_lua (lua_State *L)
 {
-    gfx_hud_shutdown(L);
+    hud_shutdown(L);
 }
 
 void gfx_shutdown (void)

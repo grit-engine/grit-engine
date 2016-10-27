@@ -23,7 +23,7 @@
 #include "../path_util.h"
 
 #include "lua_wrappers_gfx.h"
-#include "gfx_hud.h"
+#include "hud.h"
 #include "gfx_internal.h"
 #include "gfx_shader.h"
 
@@ -31,12 +31,12 @@ static Vector2 win_size(0,0);
 
 // {{{ CLASSES
 
-static GfxHudClassMap classes;
+static HudClassMap classes;
 
-GfxHudClass *gfx_hud_class_add (lua_State *L, const std::string& name)
+HudClass *hud_class_add (lua_State *L, const std::string& name)
 {
-    GfxHudClass *ghc;
-    GfxHudClassMap::iterator i = classes.find(name);
+    HudClass *ghc;
+    HudClassMap::iterator i = classes.find(name);
     
     if (i!=classes.end()) {
         ghc = i->second;
@@ -46,32 +46,32 @@ GfxHudClass *gfx_hud_class_add (lua_State *L, const std::string& name)
         }
     } else {
         // add it and return it
-        ghc = new GfxHudClass(L,name);
+        ghc = new HudClass(L,name);
         classes[name] = ghc;
     }           
     return ghc;         
 }
 
-GfxHudClass *gfx_hud_class_get (const std::string &name)
+HudClass *hud_class_get (const std::string &name)
 {
-    GfxHudClassMap::iterator i = classes.find(name);
+    HudClassMap::iterator i = classes.find(name);
     if (i==classes.end())
         GRIT_EXCEPT("GfXHudClass does not exist: "+name);
     return i->second;   
 }
 
-bool gfx_hud_class_has (const std::string &name)
+bool hud_class_has (const std::string &name)
 {
     return classes.find(name)!=classes.end();
 }
 
-void gfx_hud_class_all (GfxHudClassMap::iterator &begin, GfxHudClassMap::iterator &end)
+void hud_class_all (HudClassMap::iterator &begin, HudClassMap::iterator &end)
 {
     begin = classes.begin();
     end = classes.end();
 }
 
-size_t gfx_hud_class_count (void)
+size_t hud_class_count (void)
 {
     return classes.size();
 }
@@ -80,9 +80,9 @@ size_t gfx_hud_class_count (void)
 
 
 // {{{ BASE
-static fast_erase_vector<GfxHudBase*> root_elements;
+static fast_erase_vector<HudBase*> root_elements;
 
-/** Get a std::vector of root_elemenets that are GfxHudObjects, and also inc
+/** Get a std::vector of root_elemenets that are HudObjects, and also inc
  * their ref counts.
  *
  * A common operation is to iterate over the hud objects and call a Lua
@@ -95,11 +95,11 @@ static fast_erase_vector<GfxHudBase*> root_elements;
  * increment the reference counters for all these objects before the iteration,
  * as well as using a copied std::vector.
  */
-static std::vector<GfxHudObject *> get_all_hud_objects (const fast_erase_vector<GfxHudBase*> &bases)
+static std::vector<HudObject *> get_all_hud_objects (const fast_erase_vector<HudBase*> &bases)
 {
-    std::vector<GfxHudObject*> r;
+    std::vector<HudObject*> r;
     for (unsigned i=0 ; i<bases.size() ; ++i) {
-        GfxHudObject *o = dynamic_cast<GfxHudObject*>(bases[i]);
+        HudObject *o = dynamic_cast<HudObject*>(bases[i]);
         if (o == NULL) continue;
         r.push_back(o);
         o->incRefCount();
@@ -110,7 +110,7 @@ static std::vector<GfxHudObject *> get_all_hud_objects (const fast_erase_vector<
 /** The companion to get_all_hud_objects.  This simply decs the reference count
  * for all the objects.
  */
-static void dec_all_hud_objects (lua_State *L, std::vector<GfxHudObject *> objs)
+static void dec_all_hud_objects (lua_State *L, std::vector<HudObject *> objs)
 {
     for (unsigned i=0 ; i<objs.size() ; ++i) {
         objs[i]->decRefCount(L);
@@ -118,9 +118,9 @@ static void dec_all_hud_objects (lua_State *L, std::vector<GfxHudObject *> objs)
 }
 
 
-void GfxHudBase::registerRemove (void)
+void HudBase::registerRemove (void)
 {
-    //CVERB << "GfxHud element unregistering its existence: " << this << std::endl;
+    //CVERB << "Hud element unregistering its existence: " << this << std::endl;
     if (parent != NULL) {
         parent->notifyChildRemove(this);
     } else {
@@ -128,9 +128,9 @@ void GfxHudBase::registerRemove (void)
     }
 }
 
-void GfxHudBase::registerAdd (void)
+void HudBase::registerAdd (void)
 {
-    //CVERB << "GfxHud element registering its existence: " << this << std::endl;
+    //CVERB << "Hud element registering its existence: " << this << std::endl;
     if (parent != NULL) {
         parent->notifyChildAdd(this);
     } else {
@@ -138,35 +138,35 @@ void GfxHudBase::registerAdd (void)
     }
 }
 
-GfxHudBase::GfxHudBase (void)
+HudBase::HudBase (void)
   : aliveness(ALIVE), parent(NULL), zOrder(3),
     position(0,0), orientation(0), inheritOrientation(true), enabled(true), snapPixels(true)
 {
-    //CVERB << "GfxHud element created: " << this << std::endl;
+    //CVERB << "Hud element created: " << this << std::endl;
     registerAdd();
 }
 
-GfxHudBase::~GfxHudBase (void)
+HudBase::~HudBase (void)
 {
     if (aliveness==ALIVE) destroy();
-    //CVERB << "GfxHud element deleted: " << this << std::endl;
+    //CVERB << "Hud element deleted: " << this << std::endl;
 }
 
-void GfxHudBase::destroy (void)
+void HudBase::destroy (void)
 {
     if (aliveness==DEAD) return;
     registerRemove();
     aliveness = DEAD;
-    //CVERB << "GfxHud element destroyed: " << this << std::endl;
+    //CVERB << "Hud element destroyed: " << this << std::endl;
 }
 
-void GfxHudBase::assertAlive (void) const
+void HudBase::assertAlive (void) const
 {
     if (aliveness == DEAD)
         GRIT_EXCEPT("Hud element destroyed.");
 }
 
-Radian GfxHudBase::getDerivedOrientation (void) const
+Radian HudBase::getDerivedOrientation (void) const
 {
     assertAlive();
     if (inheritOrientation && parent!=NULL) {
@@ -176,7 +176,7 @@ Radian GfxHudBase::getDerivedOrientation (void) const
     }
 }
 
-Vector2 GfxHudBase::getDerivedPosition (void) const
+Vector2 HudBase::getDerivedPosition (void) const
 {
     assertAlive();
     if (parent!=NULL) {
@@ -186,7 +186,7 @@ Vector2 GfxHudBase::getDerivedPosition (void) const
     }
 }
 
-Vector2 GfxHudBase::getBounds (void)
+Vector2 HudBase::getBounds (void)
 {
     assertAlive();
     float s = gritsin(orientation);
@@ -197,7 +197,7 @@ Vector2 GfxHudBase::getBounds (void)
     return Vector2(w,h);
 }
 
-Vector2 GfxHudBase::getDerivedBounds (void)
+Vector2 HudBase::getDerivedBounds (void)
 {
     assertAlive();
     float s = gritsin(getDerivedOrientation());
@@ -213,21 +213,21 @@ Vector2 GfxHudBase::getDerivedBounds (void)
 
 // {{{ OBJECTS
 
-GfxHudObject::GfxHudObject (GfxHudClass *hud_class)
-  : GfxHudBase(), hudClass(hud_class),
+HudObject::HudObject (HudClass *hud_class)
+  : HudBase(), hudClass(hud_class),
     uv1(0,0), uv2(1,1), cornered(false), size(32,32), sizeSet(false), colour(1,1,1), alpha(1),
     needsParentResizedCallbacks(false), needsInputCallbacks(false), needsFrameCallbacks(false),
     refCount(0)
 {
 }
 
-void GfxHudObject::incRefCount (void)
+void HudObject::incRefCount (void)
 {
     refCount++;
     //CVERB << "Inc ref count to "<<refCount<<": " << this << std::endl;
 }
 
-void GfxHudObject::decRefCount (lua_State *L)
+void HudObject::decRefCount (lua_State *L)
 {
     refCount--;
     //CVERB << "Dec ref count to "<<refCount<<": " << this << std::endl;
@@ -246,21 +246,21 @@ void GfxHudObject::decRefCount (lua_State *L)
 }
 
 
-void GfxHudObject::destroy (void)
+void HudObject::destroy (void)
 {
     if (aliveness != DEAD) {
         texture = nullptr;
-        GfxHudBase::destroy();
+        HudBase::destroy();
     }
 }
 
-void GfxHudObject::destroy (lua_State *L)
+void HudObject::destroy (lua_State *L)
 {
     if (aliveness == ALIVE) {
         aliveness = DYING;
         triggerDestroy(L);
         while (children.size() != 0) {
-            GfxHudBase *child = children[0];
+            HudBase *child = children[0];
             child->destroy(L);
         }
         table.setNil(L);
@@ -268,7 +268,7 @@ void GfxHudObject::destroy (lua_State *L)
     }
 }
 
-void GfxHudObject::triggerInit (lua_State *L)
+void HudObject::triggerInit (lua_State *L)
 {
     assertAlive();
 
@@ -296,7 +296,7 @@ void GfxHudObject::triggerInit (lua_State *L)
     //stack: err,callback
     STACK_CHECK_N(2);
 
-    push_gfxhudobj(L, this);
+    push_hudobj(L, this);
     //stack: err,callback,object
 
     STACK_CHECK_N(3);
@@ -324,7 +324,7 @@ void GfxHudObject::triggerInit (lua_State *L)
     STACK_CHECK;
 }
 
-void GfxHudObject::triggerParentResized (lua_State *L)
+void HudObject::triggerParentResized (lua_State *L)
 {
     assertAlive();
 
@@ -358,7 +358,7 @@ void GfxHudObject::triggerParentResized (lua_State *L)
 
     Vector2 parent_size = parent==NULL ? win_size : parent->getSize();
 
-    push_gfxhudobj(L, this);
+    push_hudobj(L, this);
     push_v2(L, parent_size);
     //stack: err,callback,object,size
 
@@ -391,38 +391,38 @@ void GfxHudObject::triggerParentResized (lua_State *L)
 
 }
 
-void GfxHudObject::setSize (lua_State *L, const Vector2 &v)
+void HudObject::setSize (lua_State *L, const Vector2 &v)
 {
     assertAlive();
     sizeSet = true;
     size = v;
 
     // use local_children copy since callbacks can alter hierarchy
-    std::vector<GfxHudObject*> local_children = get_all_hud_objects(children);
+    std::vector<HudObject*> local_children = get_all_hud_objects(children);
     for (unsigned j=0 ; j<local_children.size() ; ++j) {
-        GfxHudObject *obj = local_children[j];
+        HudObject *obj = local_children[j];
         if (!obj->destroyed()) obj->triggerParentResized(L);
     }
     dec_all_hud_objects(L, local_children);
 }
 
-void GfxHudObject::setParent (lua_State *L, GfxHudObject *v)
+void HudObject::setParent (lua_State *L, HudObject *v)
 {
-    GfxHudBase::setParent(v);
+    HudBase::setParent(v);
 
     triggerParentResized(L);
 }
 
-static GfxHudObject *ray (const Vector2 &screen_pos)
+static HudObject *ray (const Vector2 &screen_pos)
 {
     for (int i=GFX_HUD_ZORDER_MAX ; i>=0 ; --i) {
         for (unsigned j=0 ; j<root_elements.size() ; ++j) {
-            GfxHudBase *base = root_elements[j];
+            HudBase *base = root_elements[j];
             if (base->destroyed()) continue;
             if (base->getZOrder() != i) continue;
-            GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+            HudObject *obj = dynamic_cast<HudObject*>(base);
             if (obj == nullptr) continue;
-            GfxHudObject *hit = obj->shootRay(screen_pos);
+            HudObject *hit = obj->shootRay(screen_pos);
             if (hit != NULL) return hit;
         }
     }
@@ -430,7 +430,7 @@ static GfxHudObject *ray (const Vector2 &screen_pos)
     return NULL;
 }
 
-GfxHudObject *GfxHudObject::shootRay (const Vector2 &screen_pos)
+HudObject *HudObject::shootRay (const Vector2 &screen_pos)
 {
     if (!isEnabled()) return NULL; // can't hit any children either
 
@@ -444,14 +444,14 @@ GfxHudObject *GfxHudObject::shootRay (const Vector2 &screen_pos)
     // look at children, ensure not inside one of them
     for (int i=GFX_HUD_ZORDER_MAX ; i>=0 ; --i) {
         for (unsigned j=0 ; j<children.size() ; ++j) {
-            GfxHudBase *base = children[j];
+            HudBase *base = children[j];
 
             if (base->destroyed()) continue;
             if (base->getZOrder() != i) continue;
 
-            GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+            HudObject *obj = dynamic_cast<HudObject*>(base);
             if (obj == NULL) continue;
-            GfxHudObject *hit = obj->shootRay(screen_pos);
+            HudObject *hit = obj->shootRay(screen_pos);
             if (hit != NULL) return hit;
         }
     }
@@ -461,7 +461,7 @@ GfxHudObject *GfxHudObject::shootRay (const Vector2 &screen_pos)
     return getNeedsInputCallbacks() && inside ? this : NULL;
 }
 
-void GfxHudObject::triggerMouseMove (lua_State *L, const Vector2 &screen_pos)
+void HudObject::triggerMouseMove (lua_State *L, const Vector2 &screen_pos)
 {
     assertAlive();
 
@@ -497,7 +497,7 @@ void GfxHudObject::triggerMouseMove (lua_State *L, const Vector2 &screen_pos)
         //stack: err,callback
         STACK_CHECK_N(2);
 
-        push_gfxhudobj(L, this);
+        push_hudobj(L, this);
         Vector2 local_pos = (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
         push_v2(L, local_pos);
         push_v2(L, screen_pos);
@@ -535,15 +535,15 @@ void GfxHudObject::triggerMouseMove (lua_State *L, const Vector2 &screen_pos)
     // note if we destroyed ourselves due to an error in the callback, children should be empty
 
     // use local_children copy since callbacks can alter hierarchy
-    std::vector<GfxHudObject*> local_children = get_all_hud_objects(children);
+    std::vector<HudObject*> local_children = get_all_hud_objects(children);
     for (unsigned j=0 ; j<local_children.size() ; ++j) {
-        GfxHudObject *obj = local_children[j];
+        HudObject *obj = local_children[j];
         if (!obj->destroyed()) obj->triggerMouseMove(L, screen_pos);
     }
     dec_all_hud_objects(L, local_children);
 }
 
-void GfxHudObject::triggerButton (lua_State *L, const std::string &name)
+void HudObject::triggerButton (lua_State *L, const std::string &name)
 {
     assertAlive();
 
@@ -578,7 +578,7 @@ void GfxHudObject::triggerButton (lua_State *L, const std::string &name)
         //stack: err,callback
         STACK_CHECK_N(2);
 
-        push_gfxhudobj(L, this);
+        push_hudobj(L, this);
         push_string(L, name);
         //stack: err,callback,object,size
 
@@ -613,15 +613,15 @@ void GfxHudObject::triggerButton (lua_State *L, const std::string &name)
     // note if we destroyed ourselves due to an error in the callback, children should be empty
 
     // use local_children copy since callbacks can alter hierarchy
-    std::vector<GfxHudObject*> local_children = get_all_hud_objects(children);
+    std::vector<HudObject*> local_children = get_all_hud_objects(children);
     for (unsigned j=0 ; j<local_children.size() ; ++j) {
-        GfxHudObject *obj = local_children[j];
+        HudObject *obj = local_children[j];
         if (!obj->destroyed()) obj->triggerButton(L, name);
     }
     dec_all_hud_objects(L, local_children);
 }
 
-void GfxHudObject::triggerFrame (lua_State *L, float elapsed)
+void HudObject::triggerFrame (lua_State *L, float elapsed)
 {
     assertAlive();
 
@@ -656,7 +656,7 @@ void GfxHudObject::triggerFrame (lua_State *L, float elapsed)
         //stack: err,callback
         STACK_CHECK_N(2);
 
-        push_gfxhudobj(L, this);
+        push_hudobj(L, this);
         lua_pushnumber(L, elapsed);
         //stack: err,callback,object,size
 
@@ -691,26 +691,26 @@ void GfxHudObject::triggerFrame (lua_State *L, float elapsed)
     // note if we destroyed ourselves due to an error in the callback, children should be empty
 
     // use local_children copy since callbacks can alter hierarchy
-    std::vector<GfxHudObject*> local_children = get_all_hud_objects(children);
+    std::vector<HudObject*> local_children = get_all_hud_objects(children);
     for (unsigned j=0 ; j<local_children.size() ; ++j) {
-        GfxHudObject *obj = local_children[j];
+        HudObject *obj = local_children[j];
         if (!obj->destroyed()) obj->triggerFrame(L, elapsed);
     }
     dec_all_hud_objects(L, local_children);
 }
 
-void GfxHudObject::notifyChildAdd (GfxHudBase *child)
+void HudObject::notifyChildAdd (HudBase *child)
 {
     children.push_back(child);
 }
 
-void GfxHudObject::notifyChildRemove (GfxHudBase *child)
+void HudObject::notifyChildRemove (HudBase *child)
 {
     children.erase(child);
 }
 
 
-void GfxHudObject::triggerDestroy (lua_State *L)
+void HudObject::triggerDestroy (lua_State *L)
 {
     assertAlive();
     STACK_BASE;
@@ -737,7 +737,7 @@ void GfxHudObject::triggerDestroy (lua_State *L)
     //stack: err,callback
     STACK_CHECK_N(2);
 
-    push_gfxhudobj(L, this);
+    push_hudobj(L, this);
     //stack: err,callback,object
 
     STACK_CHECK_N(3);
@@ -765,7 +765,7 @@ void GfxHudObject::triggerDestroy (lua_State *L)
     STACK_CHECK;
 }
 
-void GfxHudObject::setTexture (const DiskResourcePtr<GfxTextureDiskResource> &v)
+void HudObject::setTexture (const DiskResourcePtr<GfxTextureDiskResource> &v)
 {
     assertAlive();
     if (v != nullptr) {
@@ -779,12 +779,12 @@ void GfxHudObject::setTexture (const DiskResourcePtr<GfxTextureDiskResource> &v)
 
 // {{{ TEXT
 
-void GfxHudText::incRefCount (void)
+void HudText::incRefCount (void)
 {
     refCount++;
 }
 
-void GfxHudText::decRefCount (void)
+void HudText::decRefCount (void)
 {
     refCount--;
     if (refCount == 0) {
@@ -793,26 +793,26 @@ void GfxHudText::decRefCount (void)
     }
 }
 
-void GfxHudText::destroy (void)
+void HudText::destroy (void)
 {
     if (aliveness==ALIVE) {
         buf.clear();
-        GfxHudBase::destroy();
+        HudBase::destroy();
     }
 }
 
-void GfxHudText::clear (void)
+void HudText::clear (void)
 {
     assertAlive();
     buf.clear();
 }
-void GfxHudText::append (const std::string &v)
+void HudText::append (const std::string &v)
 {
     assertAlive();
     buf.addFormattedString(v, letterTopColour, letterTopAlpha, letterBottomColour, letterBottomAlpha);
 }
 
-std::string GfxHudText::getText (void) const
+std::string HudText::getText (void) const
 {
     assertAlive();
     // TODO: support this, turn unicode cps into UTF8.
@@ -842,7 +842,7 @@ static Ogre::HardwareVertexBufferSharedPtr cornered_quad_vbuf;
 static Ogre::HardwareIndexBufferSharedPtr cornered_quad_ibuf;
 static unsigned cornered_quad_vdecl_size;
 
-void gfx_hud_init (void)
+void hud_init (void)
 {
     win_size = Vector2(ogre_win->getWidth(), ogre_win->getHeight());
 
@@ -933,7 +933,7 @@ void gfx_hud_init (void)
 
 }
 
-void gfx_hud_shutdown (lua_State *L)
+void hud_shutdown (lua_State *L)
 {
     quad_vbuf.setNull();
     OGRE_DELETE quad_vdata;
@@ -952,19 +952,19 @@ void gfx_hud_shutdown (lua_State *L)
         // First clean up all the non Lua ones.  This is the easy part.
 
         // Copy into an intermediate buffer, since calling destroy changes root_elements.
-        std::vector<GfxHudBase*> all_non_lua;
+        std::vector<HudBase*> all_non_lua;
         for (unsigned j=0 ; j<root_elements.size() ; ++j) {
-            GfxHudBase *base = root_elements[j];
-            if (dynamic_cast<GfxHudObject*>(base) == NULL) all_non_lua.push_back(base);
+            HudBase *base = root_elements[j];
+            if (dynamic_cast<HudObject*>(base) == NULL) all_non_lua.push_back(base);
         }
         for (unsigned j=0 ; j<all_non_lua.size() ; ++j) {
             all_non_lua[j]->destroy();
         }
 
         // Now kill the ones with lua callbacks.
-        std::vector<GfxHudObject*> local_root_objects = get_all_hud_objects(root_elements);
+        std::vector<HudObject*> local_root_objects = get_all_hud_objects(root_elements);
         for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
-            GfxHudObject *obj = local_root_objects[j];
+            HudObject *obj = local_root_objects[j];
             if (obj->destroyed()) continue;
             obj->destroy(L);
         }
@@ -1059,7 +1059,7 @@ static void set_cornered_vertex_data (GfxTextureDiskResource *tex,
                                   vdata_raw, true);
 }
 
-void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, const Vector2 &offset)
+void gfx_render_hud_text (HudText *text, const Vector3 &colour, float alpha, const Vector2 &offset)
 {
     GfxFont *font = text->getFont();
     GfxTextureDiskResource *tex = font->getTexture();
@@ -1139,12 +1139,12 @@ void gfx_render_hud_text (GfxHudText *text, const Vector3 &colour, float alpha, 
 }
 
 
-void gfx_render_hud_one (GfxHudBase *base)
+void gfx_render_hud_one (HudBase *base)
 {
     if (!base->isEnabled()) return;
     if (base->destroyed()) return;
 
-    GfxHudObject *obj = dynamic_cast<GfxHudObject*>(base);
+    HudObject *obj = dynamic_cast<HudObject*>(base);
     if (obj!=NULL) {
         GfxTextureDiskResource *tex = obj->getTexture();
         if (tex!=NULL && !tex->isLoaded()) {
@@ -1248,14 +1248,14 @@ void gfx_render_hud_one (GfxHudBase *base)
         for (unsigned i=0 ; i<=GFX_HUD_ZORDER_MAX ; ++i) {
             for (unsigned j=0 ; j<obj->children.size() ; ++j) {
                 // Draw in reverse order, for consistency with ray priority
-                GfxHudBase *child = obj->children[obj->children.size() - j - 1];
+                HudBase *child = obj->children[obj->children.size() - j - 1];
                 if (child->getZOrder() != i) continue;
                 gfx_render_hud_one(child);
             }
         }
     }
 
-    GfxHudText *text = dynamic_cast<GfxHudText*>(base);
+    HudText *text = dynamic_cast<HudText*>(base);
     if (text!=NULL) {
 
         text->buf.updateGPU(text->wrap == Vector2(0,0), text->scroll, text->scroll+text->wrap.y);
@@ -1267,7 +1267,7 @@ void gfx_render_hud_one (GfxHudBase *base)
     }
 }
 
-void gfx_hud_render (Ogre::Viewport *vp)
+void hud_render (Ogre::Viewport *vp)
 {
     ogre_rs->_setViewport(vp);
 
@@ -1277,7 +1277,7 @@ void gfx_hud_render (Ogre::Viewport *vp)
 
         for (unsigned i=0 ; i<=GFX_HUD_ZORDER_MAX ; ++i) {
             for (unsigned j=0 ; j<root_elements.size() ; ++j) {
-                GfxHudBase *el = root_elements[root_elements.size() - j - 1];
+                HudBase *el = root_elements[root_elements.size() - j - 1];
                 if (el->getZOrder() != i) continue;
                 gfx_render_hud_one(el);
             }
@@ -1301,7 +1301,7 @@ void gfx_hud_render (Ogre::Viewport *vp)
 // when true, triggers resize callbacks at the root
 static bool window_size_dirty;
 
-void gfx_hud_signal_window_resized (unsigned w, unsigned h)
+void hud_signal_window_resized (unsigned w, unsigned h)
 {
     Vector2 new_win_size = Vector2(float(w),float(h));
     if (win_size == new_win_size) return;
@@ -1309,22 +1309,22 @@ void gfx_hud_signal_window_resized (unsigned w, unsigned h)
     window_size_dirty = true;
 }
 
-void gfx_hud_call_per_frame_callbacks (lua_State *L, float elapsed)
+void hud_call_per_frame_callbacks (lua_State *L, float elapsed)
 {
 
-    std::vector<GfxHudObject*> local_root_objects = get_all_hud_objects(root_elements);
+    std::vector<HudObject*> local_root_objects = get_all_hud_objects(root_elements);
 
     if (window_size_dirty) {
         window_size_dirty = false;
         for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
-            GfxHudObject *obj = local_root_objects[j];
+            HudObject *obj = local_root_objects[j];
             if (obj->destroyed()) continue;
             obj->triggerParentResized(L);
         }
     }
 
     for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
-        GfxHudObject *obj = local_root_objects[j];
+        HudObject *obj = local_root_objects[j];
         if (obj->destroyed()) continue;
         obj->triggerFrame(L, elapsed);
     }
@@ -1337,20 +1337,20 @@ void gfx_hud_call_per_frame_callbacks (lua_State *L, float elapsed)
 
 // {{{ INPUT
 
-GfxHudObject *gfx_hud_ray (int x, int y)
+HudObject *hud_ray (int x, int y)
 {
     Vector2 screen_pos(x,y);
     return ray(screen_pos);
 }
 
 static Vector2 last_mouse_abs;
-void gfx_hud_signal_mouse_move (lua_State *L, const Vector2 &abs)
+void hud_signal_mouse_move (lua_State *L, const Vector2 &abs)
 {
     // make local copy because callbacks can destroy elements
-    std::vector<GfxHudObject*> local_root_objects = get_all_hud_objects(root_elements);
+    std::vector<HudObject*> local_root_objects = get_all_hud_objects(root_elements);
 
     for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
-        GfxHudObject *obj = local_root_objects[j];
+        HudObject *obj = local_root_objects[j];
         if (obj->destroyed()) continue;
         obj->triggerMouseMove(L, abs);
     }
@@ -1359,13 +1359,13 @@ void gfx_hud_signal_mouse_move (lua_State *L, const Vector2 &abs)
     last_mouse_abs = abs;
 }
 
-void gfx_hud_signal_button (lua_State *L, const std::string &key)
+void hud_signal_button (lua_State *L, const std::string &key)
 {
     // make local copy because callbacks can destroy elements
-    std::vector<GfxHudObject*> local_root_objects = get_all_hud_objects(root_elements);
+    std::vector<HudObject*> local_root_objects = get_all_hud_objects(root_elements);
 
     for (unsigned j=0 ; j<local_root_objects.size() ; ++j) {
-        GfxHudObject *obj = local_root_objects[j];
+        HudObject *obj = local_root_objects[j];
         if (obj->destroyed()) continue;
         obj->triggerMouseMove(L, last_mouse_abs);
         obj->triggerButton(L, key);
@@ -1374,7 +1374,7 @@ void gfx_hud_signal_button (lua_State *L, const std::string &key)
     dec_all_hud_objects(L, local_root_objects);
 }
 
-void gfx_hud_signal_flush (lua_State *L)
+void hud_signal_flush (lua_State *L)
 {
     (void) L;
     // TODO: issue 'fake' key up for any keys that are still down.
