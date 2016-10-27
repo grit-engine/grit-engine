@@ -59,7 +59,6 @@ ENGINE_CPP_SRCS=\
 	gfx/gfx_fertile_node.cpp \
 	gfx/gfx_font.cpp \
 	gfx/gfx_gl3_plus.cpp \
-	gfx/gfx_hud.cpp \
 	gfx/gfx_instances.cpp \
 	gfx/gfx_light.cpp \
 	gfx/gfx_material.cpp \
@@ -72,6 +71,7 @@ ENGINE_CPP_SRCS=\
 	gfx/gfx_sky_body.cpp \
 	gfx/gfx_sky_material.cpp \
 	gfx/gfx_text_buffer.cpp \
+	gfx/hud.cpp \
 	gfx/lua_wrappers_gfx.cpp \
 	 \
 	navigation/chunky_tri_mesh.cpp \

@@ -22,7 +22,7 @@
 #include "lua_util.h"
 #include "lua_ptr.h"
 #include "input_filter.h"
-#include "gfx/gfx_hud.h"
+#include "gfx/hud.h"
 
 typedef InputFilter::BindingSet BindingSet;
 typedef std::map<double, InputFilter *> IFMap;
@@ -381,7 +381,7 @@ void input_filter_trickle_button (lua_State *L, const std::string &ev)
         if (f->acceptButton(L, ev)) break;
         if (f->getModal()) break;
     }
-    if (!captured) gfx_hud_signal_button(L, ev);
+    if (!captured) hud_signal_button(L, ev);
 }
 
 void input_filter_trickle_mouse_move (lua_State *L, const Vector2 &rel, const Vector2 &abs)
@@ -398,7 +398,7 @@ void input_filter_trickle_mouse_move (lua_State *L, const Vector2 &rel, const Ve
         }
         if (f->getModal()) break;
     }
-    gfx_hud_signal_mouse_move(L, abs);
+    hud_signal_mouse_move(L, abs);
 }
 
 void input_filter_flush (lua_State *L)
@@ -409,7 +409,7 @@ void input_filter_flush (lua_State *L)
         InputFilter *f = i->second;
         f->flushAll(L);
     }
-    gfx_hud_signal_flush(L);
+    hud_signal_flush(L);
     update_grabbed();
 }
 
@@ -595,7 +595,7 @@ void InputFilter::setMouseCapture (lua_State *L, bool v)
     mouseCapture = v;
 
     if (mouseCapture) {
-        gfx_hud_signal_flush(L);
+        hud_signal_flush(L);
     }
     update_grabbed();
 }
