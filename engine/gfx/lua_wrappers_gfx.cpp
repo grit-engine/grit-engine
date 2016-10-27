@@ -1501,14 +1501,14 @@ MT_MACRO_NEWINDEX(gfxlight);
 
 
 
-// GFXHUDCLASS ============================================================= {{{
+// HUDCLASS ================================================================ {{{
 
 void push_hudclass (lua_State *L, HudClass *self)
 {
         if (self == NULL) {
                 lua_pushnil(L);
         } else {
-                push(L,self,GFXHUDCLASS_TAG);
+                push(L,self,HUDCLASS_TAG);
         }
 }
 
@@ -1516,12 +1516,12 @@ static int hudclass_gc (lua_State *L)
 {
 TRY_START
         check_args(L,1);
-        GET_UD_MACRO_OFFSET(HudClass,self,1,GFXHUDCLASS_TAG,0);
+        GET_UD_MACRO_OFFSET(HudClass,self,1,HUDCLASS_TAG,0);
         return 0;
 TRY_END
 }
 
-TOSTRING_GETNAME_MACRO(hudclass,HudClass,.name,GFXHUDCLASS_TAG)
+TOSTRING_GETNAME_MACRO(hudclass,HudClass,.name,HUDCLASS_TAG)
 
 
 
@@ -1529,7 +1529,7 @@ static int hudclass_index (lua_State *L)
 {
 TRY_START
         check_args(L,2);
-        GET_UD_MACRO(HudClass,self,1,GFXHUDCLASS_TAG);
+        GET_UD_MACRO(HudClass,self,1,HUDCLASS_TAG);
         std::string key = luaL_checkstring(L,2);
         if (key=="name") {
                 lua_pushstring(L,self.name.c_str());
@@ -1546,7 +1546,7 @@ static int hudclass_newindex (lua_State *L)
 {
 TRY_START
         check_args(L,3);
-        GET_UD_MACRO(HudClass,self,1,GFXHUDCLASS_TAG);
+        GET_UD_MACRO(HudClass,self,1,HUDCLASS_TAG);
         std::string key = luaL_checkstring(L,2);
 
         if (key=="name") {
@@ -1561,14 +1561,14 @@ TRY_START
 TRY_END
 }
 
-EQ_PTR_MACRO(HudClass,hudclass,GFXHUDCLASS_TAG)
+EQ_PTR_MACRO(HudClass,hudclass,HUDCLASS_TAG)
 
 MT_MACRO_NEWINDEX(hudclass);
 
 //}}}
 
 
-// GFXHUDOBJECT ============================================================== {{{
+// HUDOBJECT ============================================================== {{{
 
 void push_hudobj (lua_State *L, HudObject *self)
 {
@@ -1576,7 +1576,7 @@ void push_hudobj (lua_State *L, HudObject *self)
         lua_pushnil(L);
     else {
         self->incRefCount();
-        push(L,self,GFXHUDOBJECT_TAG);
+        push(L,self,HUDOBJECT_TAG);
     }
 }
 
@@ -1584,7 +1584,7 @@ static int hudobj_gc (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(HudObject,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(HudObject,self,1,HUDOBJECT_TAG);
     self.decRefCount(L);
     return 0;
 TRY_END
@@ -1594,7 +1594,7 @@ static int hudobj_set_rect (lua_State *L)
 {
 TRY_START
     check_args(L,5);
-    GET_UD_MACRO(HudObject,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(HudObject,self,1,HUDOBJECT_TAG);
     float left = check_float(L,2);
     float bottom = check_float(L,3);
     float right = check_float(L,4);
@@ -1613,7 +1613,7 @@ static int hudobj_destroy (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(HudObject,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(HudObject,self,1,HUDOBJECT_TAG);
     self.destroy(L);
     return 0;
 TRY_END
@@ -1621,14 +1621,14 @@ TRY_END
 
 
 
-TOSTRING_ADDR_MACRO (hudobj,HudObject,GFXHUDOBJECT_TAG)
+TOSTRING_ADDR_MACRO (hudobj,HudObject,HUDOBJECT_TAG)
 
 
 static int hudobj_index (lua_State *L)
 {
 TRY_START
     check_args(L,2);
-    GET_UD_MACRO(HudObject,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(HudObject,self,1,HUDOBJECT_TAG);
     if (lua_type(L,2) == LUA_TSTRING) {
         const char *key = lua_tostring(L,2);
         if (!::strcmp(key,"orientation")) {
@@ -1728,7 +1728,7 @@ static int hudobj_newindex (lua_State *L)
 {
 TRY_START
     check_args(L,3);
-    GET_UD_MACRO(HudObject,self,1,GFXHUDOBJECT_TAG);
+    GET_UD_MACRO(HudObject,self,1,HUDOBJECT_TAG);
     if (lua_type(L,2) == LUA_TSTRING) {
         const char *key = lua_tostring(L,2);
         if (!::strcmp(key,"orientation")) {
@@ -1767,7 +1767,7 @@ TRY_START
             if (lua_isnil(L,3)) {
                 self.setParent(L, NULL);
             } else {
-                GET_UD_MACRO(HudObject,v,3,GFXHUDOBJECT_TAG);
+                GET_UD_MACRO(HudObject,v,3,HUDOBJECT_TAG);
                 self.setParent(L, &v);
             }
         } else if (!::strcmp(key,"zOrder")) {
@@ -1821,14 +1821,14 @@ TRY_START
 TRY_END
 }
 
-EQ_PTR_MACRO(HudObject, hudobj, GFXHUDOBJECT_TAG)
+EQ_PTR_MACRO(HudObject, hudobj, HUDOBJECT_TAG)
 
 MT_MACRO_NEWINDEX(hudobj);
 
 //}}}
 
 
-// GFXHUDTEXT ============================================================== {{{
+// HUDTEXT ============================================================== {{{
 
 void push_hudtext (lua_State *L, HudText *self)
 {
@@ -1836,7 +1836,7 @@ void push_hudtext (lua_State *L, HudText *self)
         lua_pushnil(L);
     else {
         self->incRefCount();
-        push(L,self,GFXHUDTEXT_TAG);
+        push(L,self,HUDTEXT_TAG);
     }
 }
 
@@ -1844,7 +1844,7 @@ static int hudtext_gc (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,HUDTEXT_TAG);
     self.decRefCount();
     return 0;
 TRY_END
@@ -1854,7 +1854,7 @@ static int hudtext_destroy (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,HUDTEXT_TAG);
     self.destroy();
     return 0;
 TRY_END
@@ -1864,7 +1864,7 @@ static int hudtext_append (lua_State *L)
 {
 TRY_START
     check_args(L,2);
-    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,HUDTEXT_TAG);
     std::string str = check_string(L,2);
     self.append(str);
     return 0;
@@ -1875,7 +1875,7 @@ static int hudtext_clear (lua_State *L)
 {
 TRY_START
     check_args(L,1);
-    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,HUDTEXT_TAG);
     self.clear();
     return 0;
 TRY_END
@@ -1883,14 +1883,14 @@ TRY_END
 
 
 
-TOSTRING_ADDR_MACRO (hudtext,HudText,GFXHUDTEXT_TAG)
+TOSTRING_ADDR_MACRO (hudtext,HudText,HUDTEXT_TAG)
 
 
 static int hudtext_index (lua_State *L)
 {
 TRY_START
     check_args(L,2);
-    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,HUDTEXT_TAG);
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"orientation")) {
         lua_pushnumber(L, self.getOrientation().inDegrees());
@@ -1978,7 +1978,7 @@ static int hudtext_newindex (lua_State *L)
 {
 TRY_START
     check_args(L,3);
-    GET_UD_MACRO(HudText,self,1,GFXHUDTEXT_TAG);
+    GET_UD_MACRO(HudText,self,1,HUDTEXT_TAG);
     const char *key = luaL_checkstring(L,2);
     if (!::strcmp(key,"orientation")) {
         float v = check_float(L,3);
@@ -2053,7 +2053,7 @@ TRY_START
         if (lua_isnil(L,3)) {
             self.setParent(NULL);
         } else {
-            GET_UD_MACRO(HudObject,v,3,GFXHUDOBJECT_TAG);
+            GET_UD_MACRO(HudObject,v,3,HUDOBJECT_TAG);
             self.setParent(&v);
         }
     } else if (!::strcmp(key,"zOrder")) {
@@ -2070,7 +2070,7 @@ TRY_START
 TRY_END
 }
 
-EQ_PTR_MACRO(GfxBodyPtr,hudtext,GFXHUDTEXT_TAG)
+EQ_PTR_MACRO(GfxBodyPtr,hudtext,HUDTEXT_TAG)
 
 MT_MACRO_NEWINDEX(hudtext);
 
@@ -2407,7 +2407,7 @@ TRY_START
             if (lua_isnil(L,-1)) {
                 parent = NULL;
             } else {
-                GET_UD_MACRO(HudObject,v,-1,GFXHUDOBJECT_TAG);
+                GET_UD_MACRO(HudObject,v,-1,HUDOBJECT_TAG);
                 parent = &v;
             }
         } else if (!::strcmp(key,"colour")) {
@@ -4654,9 +4654,9 @@ void gfx_lua_init (lua_State *L)
     ADD_MT_MACRO(gfxrangedinstances,GFXRANGEDINSTANCES_TAG);
     ADD_MT_MACRO(gfxdecal,GFXDECAL_TAG);
 
-    ADD_MT_MACRO(hudobj,GFXHUDOBJECT_TAG);
-    ADD_MT_MACRO(hudtext,GFXHUDTEXT_TAG);
-    ADD_MT_MACRO(hudclass,GFXHUDCLASS_TAG);
+    ADD_MT_MACRO(hudobj,HUDOBJECT_TAG);
+    ADD_MT_MACRO(hudtext,HUDTEXT_TAG);
+    ADD_MT_MACRO(hudclass,HUDCLASS_TAG);
 
     register_lua_globals(L, global);
     register_lua_globals(L, global_ogre_debug);
