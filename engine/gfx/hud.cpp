@@ -46,7 +46,7 @@ HudClass *hud_class_add (lua_State *L, const std::string& name)
         }
     } else {
         // add it and return it
-        ghc = new HudClass(L,name);
+        ghc = new HudClass(L, name);
         classes[name] = ghc;
     }           
     return ghc;         

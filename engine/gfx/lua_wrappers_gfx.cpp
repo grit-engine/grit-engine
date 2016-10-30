@@ -2580,7 +2580,8 @@ TRY_START
     std::string name = check_path(L,1);
     if (!lua_istable(L,2))
         my_lua_error(L,"Second parameter should be a table");
-    hud_class_add(L, name);
+    HudClass *c = hud_class_add(L, name);
+    push_hudclass(L, c);
     return 1;
 TRY_END
 }

@@ -384,6 +384,7 @@ class ExternalTable {
                 SharedPtr<ExternalTable> t;
                 Plot plot;
                 PlotV3 plot_v3;
+                // TODO(dcunnin): This is not destroyed properly, as setNil() is not called.
                 LuaPtr func;
                 Vector2 v2;
                 Vector4 v4;
