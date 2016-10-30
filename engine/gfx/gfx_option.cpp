@@ -565,36 +565,37 @@ void gfx_option_init (void)
     valid_option(GFX_FAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
     valid_option(GFX_FIRST_PERSON_NEAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
     valid_option(GFX_FIRST_PERSON_FAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
+
     valid_option(GFX_EYE_SEPARATION, new ValidOptionRange<float>(0.0f,0.5f));
     valid_option(GFX_MONITOR_HEIGHT, new ValidOptionRange<float>(0.01f,1000.0f));
-
     valid_option(GFX_MONITOR_EYE_DISTANCE, new ValidOptionRange<float>(0.01f,1000.0f));
     valid_option(GFX_MIN_PERCEIVED_DEPTH, new ValidOptionRange<float>(0.01f,1000.0f));
     valid_option(GFX_MAX_PERCEIVED_DEPTH, new ValidOptionRange<float>(0.01f,1000.0f));
+
     valid_option(GFX_SHADOW_START, new ValidOptionRange<float>(0.0f,10000.0f));
     valid_option(GFX_SHADOW_END0, new ValidOptionRange<float>(0.0f,10000.0f));
-
     valid_option(GFX_SHADOW_END1, new ValidOptionRange<float>(0.0f,10000.0f));
     valid_option(GFX_SHADOW_END2, new ValidOptionRange<float>(0.0f,10000.0f));
     valid_option(GFX_SHADOW_FADE_START, new ValidOptionRange<float>(0.0f,10000.0f));
+
     valid_option(GFX_SHADOW_FILTER_SIZE, new ValidOptionRange<float>(0.0f,40.0f));
     valid_option(GFX_SHADOW_OPTIMAL_ADJUST0, new ValidOptionRange<float>(0.0f,10000.0f));
-
     valid_option(GFX_SHADOW_OPTIMAL_ADJUST1, new ValidOptionRange<float>(0.0f,10000.0f));
     valid_option(GFX_SHADOW_OPTIMAL_ADJUST2, new ValidOptionRange<float>(0.0f,10000.0f));
     valid_option(GFX_SHADOW_SPREAD_FACTOR0, new ValidOptionRange<float>(0.0f,20.0f));
+
     valid_option(GFX_SHADOW_SPREAD_FACTOR1, new ValidOptionRange<float>(0.0f,20.0f));
     valid_option(GFX_SHADOW_SPREAD_FACTOR2, new ValidOptionRange<float>(0.0f,20.0f));
-
     valid_option(GFX_SHADOW_LIGHT_DIRECTION_THRESHOLD, new ValidOptionRange<float>(0.0f,10000.0f));
     valid_option(GFX_SHADOW_PADDING, new ValidOptionRange<float>(0.0f,100.0f));
     valid_option(GFX_ANAGLYPH_LEFT_RED_MASK, new ValidOptionRange<float>(0.0f,1.0f));
+
     valid_option(GFX_ANAGLYPH_LEFT_GREEN_MASK, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_LEFT_BLUE_MASK, new ValidOptionRange<float>(0.0f,1.0f));
-
     valid_option(GFX_ANAGLYPH_RIGHT_RED_MASK, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_RIGHT_GREEN_MASK, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_ANAGLYPH_RIGHT_BLUE_MASK, new ValidOptionRange<float>(0.0f,1.0f));
+
     valid_option(GFX_ANAGLYPH_DESATURATION, new ValidOptionRange<float>(0.0f,1.0f));
     valid_option(GFX_BLOOM_THRESHOLD, new ValidOptionRange<float>(0.0f,255.0f));
 
@@ -628,9 +629,8 @@ void gfx_option_init (void)
     gfx_option(GFX_FULLSCREEN_WIDTH, 800);
     gfx_option(GFX_FULLSCREEN_HEIGHT, 600);
     gfx_option(GFX_SHADOW_RES, 1024);
-    gfx_option(GFX_BLOOM_ITERATIONS, 0);
     gfx_option(GFX_SHADOW_FILTER_TAPS, 4);
-
+    gfx_option(GFX_BLOOM_ITERATIONS, 0);
     gfx_option(GFX_RAM, 128);
     gfx_option(GFX_DEBUG_MODE, 0);
 
@@ -640,30 +640,37 @@ void gfx_option_init (void)
     gfx_option(GFX_FAR_CLIP, 1000.0f);
     gfx_option(GFX_FIRST_PERSON_NEAR_CLIP, 0.01f);
     gfx_option(GFX_FIRST_PERSON_FAR_CLIP, 10.0f);
+
     gfx_option(GFX_EYE_SEPARATION, 0.06f);
     gfx_option(GFX_MONITOR_HEIGHT, 0.27f);
-
     gfx_option(GFX_MONITOR_EYE_DISTANCE, 0.6f);
     gfx_option(GFX_MIN_PERCEIVED_DEPTH, 0.3f);
     gfx_option(GFX_MAX_PERCEIVED_DEPTH, 2.0f);
+
     gfx_option(GFX_SHADOW_START, 0.2f);
     gfx_option(GFX_SHADOW_END0, 20.0f);
-
     gfx_option(GFX_SHADOW_END1, 50.0f);
     gfx_option(GFX_SHADOW_END2, 200.0f);
+    gfx_option(GFX_SHADOW_FADE_START, 150.0f);
+
+    gfx_option(GFX_SHADOW_FILTER_SIZE, 4.0f);
     gfx_option(GFX_SHADOW_OPTIMAL_ADJUST0, 3.0f);
     gfx_option(GFX_SHADOW_OPTIMAL_ADJUST1, 1.0f);
     gfx_option(GFX_SHADOW_OPTIMAL_ADJUST2, 1.0f);
+    gfx_option(GFX_SHADOW_SPREAD_FACTOR0, 1.0f);
 
+    gfx_option(GFX_SHADOW_SPREAD_FACTOR1, 1.0f);
+    gfx_option(GFX_SHADOW_SPREAD_FACTOR2, 0.28f);
     gfx_option(GFX_SHADOW_LIGHT_DIRECTION_THRESHOLD, 35.0f);
     gfx_option(GFX_SHADOW_PADDING, 0.8f);
     gfx_option(GFX_ANAGLYPH_LEFT_RED_MASK, 1.0f);
+
     gfx_option(GFX_ANAGLYPH_LEFT_GREEN_MASK, 0.0f);
     gfx_option(GFX_ANAGLYPH_LEFT_BLUE_MASK, 0.0f);
-
     gfx_option(GFX_ANAGLYPH_RIGHT_RED_MASK, 0.0f);
     gfx_option(GFX_ANAGLYPH_RIGHT_GREEN_MASK, 1.0f);
     gfx_option(GFX_ANAGLYPH_RIGHT_BLUE_MASK, 1.0f);
+
     gfx_option(GFX_ANAGLYPH_DESATURATION, 0.5f);
     gfx_option(GFX_BLOOM_THRESHOLD, 1.0f);
 
