@@ -19,42 +19,29 @@
  * THE SOFTWARE.
  */
 
-#ifndef navigation_system_h
-#define navigation_system_h
+#ifndef GFX_DEBUG_H
+#define GFX_DEBUG_H
 
-#include"Ogre.h"
-#include"../gfx/gfx_body.h"
-#include"../physics/physics_world.h"
-#include<vector>
+#include <math_util.h>
 
-extern Ogre::Vector3 swap_yz(Ogre::Vector3 from);
-extern float* Vec3ToFloat(Ogre::Vector3 pos);
-extern Ogre::Vector3 FloatToVec3(float* pos);
+#include "gfx_pipeline.h"
 
-class NavigationSystem;
+// Call these functions at any time between frames to render basic polygons in the world.
 
-extern NavigationSystem* nvsys;
+void gfx_debug_point (Vector3 pos, float radius, Vector3 col, float alpha);
 
-void navigation_init(void);
-void navigation_update(const float tslf);
-void navigation_update_debug(const float tslf);
-void navigation_shutdown(void);
+void gfx_debug_line (Vector3 from, Vector3 to, Vector3 col, float alpha);
 
-namespace NavSysDebug
-{
-	extern bool Enabled;
-	extern bool ShowNavmesh;
-	extern bool NavmeshUseTileColours;
-	extern bool ShowBounds;
-	extern bool ShowTilingGrid;
-	extern bool ShowAgents;
-	extern bool ShowAgentArrows;
-	extern bool ShowObstacles;
-	extern bool ShowOffmeshConnections;
-	extern bool ShowConvexVolumes;
+void gfx_debug_triangle (Vector3 v1, Vector3 v2, Vector3 v3, Vector3 col, float alpha);
 
-	void init(void);
-	void destroy(void);
-}
+void gfx_debug_quad (Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, Vector3 col, float alpha);
 
-#endif // navigation_system_h
+// The following are called by the graphics subsystem.
+
+// Called every frame.
+void gfx_debug_render (GfxPipeline *p);
+
+void gfx_debug_init (void);
+void gfx_debug_shutdown (void);
+
+#endif

@@ -54,6 +54,7 @@ ENGINE_CPP_SRCS=\
 	 \
 	gfx/gfx_body.cpp \
 	gfx/gfx.cpp \
+	gfx/gfx_debug.cpp \
 	gfx/gfx_decal.cpp \
 	gfx/gfx_disk_resource.cpp \
 	gfx/gfx_fertile_node.cpp \

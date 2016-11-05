@@ -31,10 +31,11 @@
 #include "../lua_ptr.h"
 #include "../path_util.h"
 
-#include "lua_wrappers_gfx.h"
+#include "gfx_debug.h"
+#include "gfx_font.h"
 #include "gfx_option.h"
 #include "hud.h"
-#include "gfx_font.h"
+#include "lua_wrappers_gfx.h"
 
 GfxNodePtr check_gfx_node (lua_State *L, int idx)
 {
@@ -2182,6 +2183,61 @@ TRY_START
     GfxMaterial *mat = gfx_material_get(mat_name);
     push_gfxdecal(L, GfxDecal::make(mat));
     return 1;
+TRY_END
+}
+
+static int global_gfx_debug_point (lua_State *L)
+{
+TRY_START
+    check_args(L, 4);
+    Vector3 pos = check_v3(L, 1);
+    float radius = check_float(L, 2);
+    Vector3 col = check_v3(L, 3);
+    float alpha = check_float(L, 4);
+    gfx_debug_point(pos, radius, col, alpha);
+    return 0;
+TRY_END
+}
+
+static int global_gfx_debug_line (lua_State *L)
+{
+TRY_START
+    check_args(L, 4);
+    Vector3 pos0 = check_v3(L, 1);
+    Vector3 pos1 = check_v3(L, 2);
+    Vector3 col = check_v3(L, 3);
+    float alpha = check_float(L, 4);
+    gfx_debug_line(pos0, pos1, col, alpha);
+    return 0;
+TRY_END
+}
+
+static int global_gfx_debug_triangle (lua_State *L)
+{
+TRY_START
+    check_args(L, 5);
+    Vector3 pos0 = check_v3(L, 1);
+    Vector3 pos1 = check_v3(L, 2);
+    Vector3 pos2 = check_v3(L, 3);
+    Vector3 col = check_v3(L, 4);
+    float alpha = check_float(L, 5);
+    gfx_debug_triangle(pos0, pos1, pos2, col, alpha);
+    return 0;
+TRY_END
+}
+
+static int global_gfx_debug_quad (lua_State *L)
+{
+TRY_START
+    check_args(L, 6);
+    Vector3 pos0 = check_v3(L, 1);
+    Vector3 pos1 = check_v3(L, 2);
+    Vector3 pos2 = check_v3(L, 3);
+    Vector3 pos3 = check_v3(L, 4);
+    Vector3 col = check_v3(L, 5);
+    float alpha = check_float(L, 6);
+    gfx_debug_quad(pos0, pos1, pos2, pos3, col, alpha);
+    return 0;
 TRY_END
 }
 
@@ -4536,6 +4592,11 @@ static const luaL_reg global[] = {
     {"gfx_sky_body_make", global_gfx_sky_body_make},
     {"gfx_light_make", global_gfx_light_make},
     {"gfx_decal_make", global_gfx_decal_make},
+
+    {"gfx_debug_point", global_gfx_debug_point},
+    {"gfx_debug_line", global_gfx_debug_line},
+    {"gfx_debug_triangle", global_gfx_debug_triangle},
+    {"gfx_debug_quad", global_gfx_debug_quad},
 
     {"gfx_register_sky_material", global_gfx_register_sky_material},
     {"gfx_register_material", global_gfx_register_material},

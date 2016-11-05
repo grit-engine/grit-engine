@@ -403,9 +403,6 @@ void CrowdTool::update(const float dt)
 
 void CrowdTool::render()
 {
-	NavSysDebug::AgentsObject->clear();
-	NavSysDebug::DebugObject = NavSysDebug::AgentsObject;
-
 	DebugDrawGL dd;
 	const float rad = m_nvmgr->getAgentRadius();
 

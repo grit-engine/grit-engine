@@ -27,34 +27,39 @@
 
 #include <btBulletCollisionCommon.h>
 
+#include <math_util.h>
+
 class BulletDebugDrawer: public btIDebugDraw
 {
 public:
-    BulletDebugDrawer (Ogre::SceneManager *scm );
+    BulletDebugDrawer (void);
     ~BulletDebugDrawer (void);
-    virtual void    drawLine (const btVector3 &from, const btVector3 &to, const btVector3 &color);
-    virtual void    drawTriangle (const btVector3 &v0, const btVector3 &v1, const btVector3 &v2, const btVector3 &color, btScalar);
-    virtual void    drawContactPoint (const btVector3 &PointOnB, const btVector3 &normalOnB, btScalar distance, int lifeTime, const btVector3 &color);
-    virtual void    reportErrorWarning (const char *warningString);
-    virtual void    draw3dText (const btVector3 &location, const char *textString);
-    virtual void    setDebugMode (int debugMode);
-    virtual int     getDebugMode () const;
-    bool frameStarted (void);
-    bool frameEnded (void);
+    virtual void drawLine (const btVector3 &from, const btVector3 &to, const btVector3 &colour);
+    virtual void drawTriangle (const btVector3 &v0, const btVector3 &v1, const btVector3 &v2,
+                               const btVector3 &colour, btScalar alpha);
+    virtual void drawContactPoint (const btVector3 &PointOnB, const btVector3 &normalOnB,
+                                   btScalar distance, int lifeTime, const btVector3 &colour);
+    virtual void reportErrorWarning (const char *warningString);
+    virtual void draw3dText (const btVector3 &location, const char *textString);
+    virtual void setDebugMode (int debugMode);
+    virtual int getDebugMode () const;
+    void frameCallback (void);
 private:
     struct ContactPoint{
-        Ogre::Vector3 from;
-        Ogre::Vector3 to;
-        Ogre::ColourValue   color;
-        size_t        dieTime;
+        Vector3 from;
+        Vector3 to;
+        Vector3 colour;
+        size_t dieTime;
     };
-    DebugDrawModes             mDebugModes;
-    Ogre::ManualObject        *mLines;
-    Ogre::ManualObject        *mTriangles;
-    Ogre::MaterialPtr          mat;
-    std::vector<ContactPoint> *mContactPoints;
-    std::vector<ContactPoint>  mContactPoints1;
-    std::vector<ContactPoint>  mContactPoints2;
+    DebugDrawModes mDebugModes;
+    Ogre::ManualObject *mLines;
+    Ogre::ManualObject *mTriangles;
+    Ogre::MaterialPtr mat;
+    // Every frame we throw out some contact points that have been displayed for long enough.
+    // To implement that efficiently, we have a double buffer.
+    std::vector<ContactPoint> contactPoints1;
+    std::vector<ContactPoint> contactPoints2;
+    std::vector<ContactPoint> *contactPoints;
 };
 
 

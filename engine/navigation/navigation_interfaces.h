@@ -66,6 +66,11 @@ public:
 	virtual void vertex(const float* pos, unsigned int color, const float* uv);
 	virtual void vertex(const float x, const float y, const float z, unsigned int color, const float u, const float v);
 	virtual void end();
+private:
+    float currentSize;
+    unsigned currentVertex;
+    unsigned maxVertex;
+    float vertexes[4][3];
 };
 
 /// stdio file implementation.

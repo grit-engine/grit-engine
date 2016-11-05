@@ -111,6 +111,7 @@
     <ClCompile Include="external_table.cpp" />
     <ClCompile Include="gfx\gfx.cpp" />
     <ClCompile Include="gfx\gfx_body.cpp" />
+    <ClCompile Include="gfx\gfx_debug.cpp" />
     <ClCompile Include="gfx\gfx_decal.cpp" />
     <ClCompile Include="gfx\gfx_fertile_node.cpp" />
     <ClCompile Include="gfx\gfx_font.cpp" />

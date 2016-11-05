@@ -21,11 +21,12 @@
 
 // May have some code of Recast Demo
 
-#include"navigation.h"
-#include"DetourCommon.h"
-#include"DetourTileCache.h"
-#include"crowd_manager.h"
+#include <DetourCommon.h>
+#include <DetourTileCache.h>
+
+#include "crowd_manager.h"
 #include "input_geom.h"
+#include "navigation.h"
 
 NavigationSystem* nvsys = nullptr;
 
@@ -57,26 +58,8 @@ Ogre::Vector3 FloatToVec3(float* pos)
 	return Ogre::Vector3(pos[0], pos[1], pos[2]);
 }
 
-Ogre::ManualObject* createDebugObject(const char* name)
-{
-	Ogre::ManualObject* debug_obj = new Ogre::ManualObject(name);
-	APP_ASSERT(debug_obj);
-	debug_obj->setRenderQueueGroup(75);
-	debug_obj->setDynamic(true);
-	debug_obj->setCastShadows(false);
-	ogre_sm->getRootSceneNode()->attachObject(debug_obj);
-	return debug_obj;
-}
-
 namespace NavSysDebug
 {
-	bool RedrawNavmesh = true;
-	bool RedrawBounds = true;
-	bool RedrawTilingGrid = true;
-	bool RedrawObstacles = true;
-	bool RedrawOffmeshConnections = true;
-	bool RedrawConvexVolumes = true;
-
 	bool Enabled = false;
 	bool ShowNavmesh = true;
 	bool NavmeshUseTileColours = false;
@@ -88,112 +71,19 @@ namespace NavSysDebug
 	bool ShowTilingGrid = false;
 	bool ShowConvexVolumes = true;
 
-	Ogre::ManualObject* DebugObject;
-
-	Ogre::ManualObject* NavmeshObject;
-	Ogre::ManualObject* BoundsObject;
-	Ogre::ManualObject* TilingGridObject;
-	Ogre::ManualObject* ObstaclesObject;
-	Ogre::ManualObject* OffmeshConectionsObject;
-	Ogre::ManualObject* AgentsObject;
-	Ogre::ManualObject* ConvexVolumeObjects;
-
-	Ogre::MaterialPtr DebugMatObj;
-	Ogre::MaterialPtr DebugMatObjWireframe;
-
 	void init()
 	{
-		// Materials
-		DebugMatObj = Ogre::MaterialManager::getSingleton().create("debugobj", RESGRP);
-		DebugMatObj->getTechnique(0)->getPass(0)->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
-		//DebugMatObj->getTechnique(0)->getPass(0)->setLightingEnabled(true);
-		DebugMatObj->getTechnique(0)->getPass(0)->setDepthCheckEnabled(true);
-		DebugMatObj->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
-		DebugMatObj->getTechnique(0)->getPass(0)->setDiffuse(0, 1, 0, 0.4);
-		DebugMatObj->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(0, 0, 0, 0.4));
-		DebugMatObj->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(0, 0.9, 1, 0.4));
-		DebugMatObj->getTechnique(0)->createPass();
-		//DebugMatObj->getTechnique(0)->getPass(1)->setLightingEnabled(false);
-		DebugMatObj->getTechnique(0)->getPass(1)->setDiffuse(0, 1, 0, 0.4);
-		DebugMatObj->getTechnique(0)->getPass(1)->setAmbient(Ogre::ColourValue(0, 0, 0, 0.4));
-		DebugMatObj->getTechnique(0)->getPass(1)->setSelfIllumination(Ogre::ColourValue(0, 0.9, 1, 0.4));
-		DebugMatObj->getTechnique(0)->getPass(1)->setPolygonMode(Ogre::PolygonMode::PM_WIREFRAME);
-
-		DebugMatObjWireframe = Ogre::MaterialManager::getSingleton().create("debugobjwireframe", RESGRP);
-		DebugMatObjWireframe->getTechnique(0)->getPass(0)->setDepthCheckEnabled(true);
-		DebugMatObjWireframe->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-		DebugMatObjWireframe->getTechnique(0)->getPass(0)->setPolygonMode(Ogre::PolygonMode::PM_WIREFRAME);
-
-		updateNavmeshMaterial();
-
-		// Manual Objects
-		NavmeshObject = createDebugObject("NavigationMeshDebug");
-		ObstaclesObject = createDebugObject("ObstaclesDebug");
-		OffmeshConectionsObject = createDebugObject("OffmeshDebug");
-		AgentsObject = createDebugObject("AgentsDebug");
-		BoundsObject = createDebugObject("BoundsDebug");
-		TilingGridObject = createDebugObject("TilingGridDebug");
-		ConvexVolumeObjects = createDebugObject("ConvexVolumeDebug");
 	}
 
 	void clearAllObjects(void)
 	{
-		NavmeshObject->clear();
-		BoundsObject->clear();
-		TilingGridObject->clear();
-		ObstaclesObject->clear();
-		OffmeshConectionsObject->clear();
-		AgentsObject->clear();
-		ConvexVolumeObjects->clear();
 	}
 
 	void redrawAllActiveObjects(void)
 	{
-		RedrawNavmesh = ShowNavmesh;
-		RedrawBounds = ShowBounds;
-		RedrawTilingGrid = ShowTilingGrid;
-		RedrawObstacles = ShowObstacles;
-		RedrawOffmeshConnections = ShowOffmeshConnections;
-		RedrawConvexVolumes = ShowConvexVolumes;
 	}
-	void updateNavmeshMaterial(void)
-	{
-		if (NavmeshUseTileColours)
-		{
-			DebugMatObj->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-			DebugMatObj->getTechnique(0)->getPass(1)->setLightingEnabled(false);
-		}
-		else{
-			DebugMatObj->getTechnique(0)->getPass(0)->setLightingEnabled(true);
-			DebugMatObj->getTechnique(0)->getPass(1)->setLightingEnabled(true);
-		}
-	}
-
 	void destroy()
 	{
-		DebugObject = nullptr;
-
-		ogre_sm->destroyManualObject(NavmeshObject);
-		ogre_sm->destroyManualObject(BoundsObject);
-		ogre_sm->destroyManualObject(TilingGridObject);
-		ogre_sm->destroyManualObject(ObstaclesObject);
-		ogre_sm->destroyManualObject(OffmeshConectionsObject);
-		ogre_sm->destroyManualObject(AgentsObject);
-		ogre_sm->destroyManualObject(ConvexVolumeObjects);
-		NavmeshObject = nullptr;
-		BoundsObject = nullptr;
-		TilingGridObject = nullptr;
-		ObstaclesObject = nullptr;
-		OffmeshConectionsObject = nullptr;
-		AgentsObject = nullptr;
-		ConvexVolumeObjects = nullptr;
-
-		Ogre::MaterialManager::getSingletonPtr()->remove("debugobj");
-		Ogre::MaterialManager::getSingletonPtr()->unload("debugobj");
-		Ogre::MaterialManager::getSingletonPtr()->remove("debugobjwireframe");
-		Ogre::MaterialManager::getSingletonPtr()->unload("debugobjwireframe");
-		DebugMatObj.setNull();
-		DebugMatObjWireframe.setNull();
 	}
 }
 
@@ -269,9 +159,6 @@ void NavigationSystem::buildNavMesh()
 		if (nvmgr->build())
 		{
 			navMeshLoaded = true;
-
-			NavSysDebug::RedrawNavmesh = true;
-			NavSysDebug::RedrawObstacles = true;
 		}
 	}
 }
@@ -351,8 +238,6 @@ void NavigationSystem::addTempObstacle(Ogre::Vector3 pos)
 	if (anyNavmeshLoaded())
 	{
 		nvmgr->addTempObstacle(Vec3ToFloat(swap_yz(pos)));
-		NavSysDebug::RedrawObstacles = true;
-		NavSysDebug::RedrawNavmesh = true;
 	}
 }
 
@@ -363,8 +248,6 @@ void NavigationSystem::removeTempObstacle(Ogre::Vector3 pos)
 	if (anyNavmeshLoaded())
 	{
 		//nvmgr->removeTempObstacle(Vec3ToFloat(swap_yz(pos)));
-		NavSysDebug::RedrawObstacles = true;
-		NavSysDebug::RedrawNavmesh = true;
 	}
 }
 
@@ -375,7 +258,6 @@ void NavigationSystem::addOffmeshConection(Ogre::Vector3 pos, Ogre::Vector3 pos2
 		const unsigned char area = SAMPLE_POLYAREA_JUMP;
 		const unsigned short flags = SAMPLE_POLYFLAGS_JUMP;
 		geom->addOffMeshConnection(Vec3ToFloat(swap_yz(pos2)), Vec3ToFloat(swap_yz(pos)), nvmgr->getAgentRadius(), bidir ? 1 : 0, area, flags);
-		NavSysDebug::RedrawOffmeshConnections = true;
 	}
 }
 
@@ -617,10 +499,8 @@ void NavigationSystem::reset()
 void NavigationSystem::removeConvexVolume(Ogre::Vector3 pos)
 {
 	nvmgr->removeConvexVolume(Vec3ToFloat(pos));
-	NavSysDebug::RedrawConvexVolumes = true;
 }
 void NavigationSystem::createConvexVolume(Ogre::Vector3 pos)
 {
 	nvmgr->createConvexVolume(Vec3ToFloat(pos));
-	NavSysDebug::RedrawConvexVolumes = true;
 }
