@@ -22,141 +22,67 @@
 // Based on http://www.ogre3d.org/wiki/index.php/BulletDebugDrawer
 // copyright ownership unknown
 
-#include "bullet_debug_drawer.h"
 #include <centralised_log.h>
 
+#include "bullet_debug_drawer.h"
 #include "gfx/gfx.h"
+#include "gfx/gfx_debug.h"
 #include "gfx/gfx_internal.h"
 #include "physics/physics_world.h"
 
 static inline Vector3 from_bullet (const btVector3 &from)
-{ return Vector3 (from.x(), from.y(), from.z()); }
+{ return Vector3(from.x(), from.y(), from.z()); }
 
 static inline Quaternion from_bullet (const btQuaternion &from)
-{ return Quaternion (from.w(), from.x(), from.y(), from.z()); }
+{ return Quaternion(from.w(), from.x(), from.y(), from.z()); }
 
-static inline btVector3 to_bullet (const Vector3 &from)
-{ return btVector3(from.x,from.y,from.z); }
-
-static inline btQuaternion to_bullet (const Quaternion &from)
-{ return btQuaternion(from.x, from.y, from.z, from.w); }
-
-BulletDebugDrawer::BulletDebugDrawer (Ogre::SceneManager *sm)
+BulletDebugDrawer::BulletDebugDrawer (void)
 {
-    mContactPoints = &mContactPoints1;
-
-    mLines = new Ogre::ManualObject("physics lines");
-    APP_ASSERT(mLines);
-    mLines->setRenderQueueGroup(75);
-    mLines->setDynamic(true);
-    mLines->setCastShadows(false);
-    sm->getRootSceneNode()->attachObject(mLines);
-
-    mTriangles = new Ogre::ManualObject("physics triangles");
-    APP_ASSERT(mTriangles);
-    mTriangles->setRenderQueueGroup(75);
-    mTriangles->setDynamic(true);
-    mTriangles->setCastShadows(false);
-    sm->getRootSceneNode()->attachObject(mTriangles);
-
-    // We don't call update on the scenemanager anymore, so have to provide this ourselves.
-    sm->getRootSceneNode()->overrideCachedTransform(Ogre::Matrix4::IDENTITY);
-    
-    mat = Ogre::MaterialManager::getSingleton().create("/system/BulletDebugDrawer", RESGRP);
-    mat->getTechnique(0)->getPass(0)->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
-    mat->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
-    mat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-    mat->getTechnique(0)->getPass(0)->createTextureUnitState();
-    mat->getTechnique(0)->getPass(0)->setFog(true, Ogre::FOG_NONE);
-    mat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setColourOperationEx(Ogre::LBX_MODULATE, Ogre::LBS_DIFFUSE, Ogre::LBS_DIFFUSE);
-
-    mLines->begin(mat->getName(), Ogre::RenderOperation::OT_LINE_LIST);
-    mLines->position(Ogre::Vector3::ZERO);
-    mLines->colour(Ogre::ColourValue::Blue);
-    mLines->position(Ogre::Vector3::ZERO);
-    mLines->colour(Ogre::ColourValue::Blue);
-
-
-    mTriangles->begin(mat->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
-    mTriangles->position(Ogre::Vector3::ZERO);
-    mTriangles->colour(Ogre::ColourValue::Blue);
-    mTriangles->position(Ogre::Vector3::ZERO);
-    mTriangles->colour(Ogre::ColourValue::Blue);
-    mTriangles->position(Ogre::Vector3::ZERO);
-    mTriangles->colour(Ogre::ColourValue::Blue);
-
+    contactPoints = &contactPoints1;
     mDebugModes = (DebugDrawModes) DBG_NoDebug;
-
 }
 
 BulletDebugDrawer::~BulletDebugDrawer (void)
 {
-    delete mLines;
-    delete mTriangles;
 }
 
-void BulletDebugDrawer::drawLine (const btVector3 &from, const btVector3 &to, const btVector3 &color)
+void BulletDebugDrawer::drawLine (const btVector3 &from, const btVector3 &to,
+                                  const btVector3 &colour)
 {
-    Ogre::ColourValue c(color.getX(), color.getY(), color.getZ());  
-    c.saturate();
-    mLines->position(to_ogre(from_bullet(from)));
-    mLines->colour(c);
-    mLines->position(to_ogre(from_bullet(to)));
-    mLines->colour(c);
+    gfx_debug_line(from_bullet(from), from_bullet(to), from_bullet(colour), 1);
 }
 
 void BulletDebugDrawer::drawTriangle (const btVector3 &v0, const btVector3 &v1, const btVector3 &v2,
-                                    const btVector3 &color, btScalar alpha)
+                                      const btVector3 &colour, btScalar alpha)
 {
-    Ogre::ColourValue c(color.getX(), color.getY(), color.getZ(), alpha);
-    c.saturate();
-    mTriangles->position(to_ogre(from_bullet(v0)));
-    mTriangles->colour(c);
-    mTriangles->position(to_ogre(from_bullet(v1)));
-    mTriangles->colour(c);
-    mTriangles->position(to_ogre(from_bullet(v2)));
-    mTriangles->colour(c);
+    gfx_debug_triangle(from_bullet(v0), from_bullet(v1), from_bullet(v2),
+                       from_bullet(colour), alpha);
 }
 
-void BulletDebugDrawer::drawContactPoint (const btVector3 &PointOnB, const btVector3 &normalOnB,
-                                        btScalar distance, int lifeTime, const btVector3 &color)
+void BulletDebugDrawer::drawContactPoint (const btVector3 &point, const btVector3 &normal,
+                                          btScalar distance, int life_time, const btVector3 &colour)
 {
-    mContactPoints->resize(mContactPoints->size() + 1);
-    ContactPoint p = mContactPoints->back();
-    p.from = to_ogre(from_bullet(PointOnB));
-    p.to = p.from + to_ogre(from_bullet(normalOnB)) * distance;
-    p.dieTime = micros() + lifeTime*1000;
-    p.color.r = color.x();
-    p.color.g = color.y();
-    p.color.b = color.z();
+    contactPoints->push_back(ContactPoint{
+        from_bullet(point),
+        from_bullet(point) + from_bullet(normal) * distance,
+        from_bullet(colour),
+        micros() + life_time,
+    });
 }
 
-bool BulletDebugDrawer::frameStarted (void)
+void BulletDebugDrawer::frameCallback (void)
 {
     size_t now = micros();
-    std::vector<ContactPoint> *newCP = mContactPoints == &mContactPoints1 ? &mContactPoints2 : &mContactPoints1;
-    for ( std::vector<ContactPoint>::iterator i = mContactPoints->begin(); i < mContactPoints->end(); i++ ){
-        ContactPoint &cp = *i;
-        mLines->position(cp.from);
-        mLines->colour(cp.color);
-        mLines->position(cp.to);
+    std::vector<ContactPoint> *new_cps =
+        contactPoints == &contactPoints1 ? &contactPoints2 : &contactPoints1;
+    for (const auto &cp : *contactPoints) {
+        gfx_debug_point(cp.from, 0.1, Vector3(1, 1, 1), 0.3);
+        gfx_debug_line(cp.from, cp.to, cp.colour, 1.0);
         if (now <= cp.dieTime)
-            newCP->push_back(cp);
+            new_cps->push_back(cp);
     }
-    mContactPoints->clear();
-    mContactPoints = newCP;
-
-    mLines->end();
-    mTriangles->end();
-
-    return true;
-}
-
-bool BulletDebugDrawer::frameEnded (void)
-{
-    mLines->beginUpdate(0);
-    mTriangles->beginUpdate(0);
-    return true;
+    contactPoints->clear();
+    contactPoints = new_cps;
 }
 
 void BulletDebugDrawer::reportErrorWarning (const char *warningString)

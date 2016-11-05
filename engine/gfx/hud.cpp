@@ -944,7 +944,7 @@ void hud_shutdown (lua_State *L)
     // children end up being adopted by grandparents, and ultimately the root.  If
     // hud elements are left at the root until Lua state destruction, the gc
     // callbacks are called in an arbitrary order. That can cause undefined
-    // behvaiour on the c++ side (access of deleted objects).  So we aggressively
+    // behaviour on the c++ side (access of deleted objects).  So we aggressively
     // destroy all the root elements before the actual lua shutdown.  This causes
     // the callbacks to run in the correct order, and avoid segfaults.
 

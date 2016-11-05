@@ -19,15 +19,17 @@
 // This is a modified version of SampleInterfaces.cpp from Recast Demo
 
 #define _USE_MATH_DEFINES
-#include <math.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include "navigation_interfaces.h"
-#include "Recast.h"
-#include "RecastDebugDraw.h"
-#include "DetourDebugDraw.h"
+#include <cmath>
+#include <cstdio>
+#include <cstdarg>
 
-#include"navigation_system.h"
+#include <Recast.h>
+#include <RecastDebugDraw.h>
+#include <DetourDebugDraw.h>
+
+#include "navigation_interfaces.h"
+#include "navigation_system.h"
+#include "../gfx/gfx_debug.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -128,19 +130,13 @@ const char* BuildContext::getLogText(const int i) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //++
-Ogre::ColourValue uintColorToOgre(unsigned int colour)
+Vector4 uintColorToOgre(unsigned int colour)
 {
 	int r = colour & 0xff;
 	int g = (colour >> 8) & 0xff;
 	int b = (colour >> 16) & 0xff;
 	int a = (colour >> 24) & 0xff;
-
-	float fr = (float)r / 255;
-	float fg = (float)g / 255;
-	float fb = (float)b / 255;
-	float fa = (float)a / 255;
-
-	return Ogre::ColourValue(fr, fg, fb, fa);
+    return Vector4(r, g, b, a) / 255.0f;
 }
 
 void DebugDrawGL::depthMask(bool state)
@@ -155,53 +151,81 @@ void DebugDrawGL::texture(bool state)
 
 void DebugDrawGL::begin(duDebugDrawPrimitives prim, float size)
 {
-    (void)size;
-	switch (prim)
-	{
-		case DU_DRAW_POINTS:
-			NavSysDebug::DebugObject->begin("debugobjwireframe", Ogre::RenderOperation::OT_POINT_LIST);
-			break;
-		case DU_DRAW_LINES:
-			NavSysDebug::DebugObject->begin("debugobjwireframe", Ogre::RenderOperation::OT_LINE_LIST);
-			break;
-		case DU_DRAW_TRIS:
-			NavSysDebug::DebugObject->begin("debugobj", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-			break;
-		case DU_DRAW_QUADS:
-			NavSysDebug::DebugObject->begin("debugobjwireframe", Ogre::RenderOperation::OT_POINT_LIST);
-			break;
-	};
+    currentVertex = 0;
+    currentSize = size;
+	switch (prim) {
+		case DU_DRAW_POINTS: maxVertex = 1; break;
+		case DU_DRAW_LINES: maxVertex = 2; break;
+		case DU_DRAW_TRIS: maxVertex = 3; break;
+		case DU_DRAW_QUADS: maxVertex = 4; break;
+	}
 }
 
 void DebugDrawGL::vertex(const float* pos, unsigned int color)
 {
-	NavSysDebug::DebugObject->position(-pos[0], pos[2], pos[1]);
-	NavSysDebug::DebugObject->colour(uintColorToOgre(color));
+    vertex(-pos[0], pos[2], pos[1], color);
 }
 
 void DebugDrawGL::vertex(const float x, const float y, const float z, unsigned int color)
 {
-	NavSysDebug::DebugObject->position(-x, z, y);
-	NavSysDebug::DebugObject->colour(uintColorToOgre(color));
+	Vector4 colour = uintColorToOgre(color);
+    vertexes[currentVertex][0] = x;
+    vertexes[currentVertex][1] = y;
+    vertexes[currentVertex][2] = z;
+    vertexes[currentVertex][3] = colour.x;
+    vertexes[currentVertex][4] = colour.y;
+    vertexes[currentVertex][5] = colour.z;
+    vertexes[currentVertex][6] = colour.w;
+    currentVertex++;
+    
+    if (currentVertex >= maxVertex) {
+        currentVertex = 0;
+        switch (maxVertex) {
+            case 1:
+            gfx_debug_point(
+                Vector3(vertexes[0][0], vertexes[0][1], vertexes[0][2]), 
+                currentSize,
+                Vector3(colour.x, colour.y, colour.z), colour.w);
+            break;
+            case 2:
+            gfx_debug_line(
+                Vector3(vertexes[0][0], vertexes[0][1], vertexes[0][2]), 
+                Vector3(vertexes[1][0], vertexes[1][1], vertexes[1][2]), 
+                Vector3(colour.x, colour.y, colour.z), colour.w);
+            break;
+            case 3:
+            gfx_debug_triangle(
+                Vector3(vertexes[0][0], vertexes[0][1], vertexes[0][2]), 
+                Vector3(vertexes[1][0], vertexes[1][1], vertexes[1][2]), 
+                Vector3(vertexes[2][0], vertexes[2][1], vertexes[2][2]), 
+                Vector3(colour.x, colour.y, colour.z), colour.w);
+            break;
+            case 4:
+            gfx_debug_quad(
+                Vector3(vertexes[0][0], vertexes[0][1], vertexes[0][2]), 
+                Vector3(vertexes[1][0], vertexes[1][1], vertexes[1][2]), 
+                Vector3(vertexes[2][0], vertexes[2][1], vertexes[2][2]), 
+                Vector3(vertexes[3][0], vertexes[3][1], vertexes[3][2]), 
+                Vector3(colour.x, colour.y, colour.z), colour.w);
+            break;
+        }
+    }
 }
 
 void DebugDrawGL::vertex(const float* pos, unsigned int color, const float* uv)
 {
     (void) uv;
-	NavSysDebug::DebugObject->position(-pos[0], pos[2], pos[1]);
-	NavSysDebug::DebugObject->colour(uintColorToOgre(color));
+    vertex(-pos[0], pos[2], pos[1], color);
 }
-void DebugDrawGL::vertex(const float x, const float y, const float z, unsigned int color, const float u, const float v)
+void DebugDrawGL::vertex(const float x, const float y, const float z,
+                         unsigned int color, const float u, const float v)
 {
-    (void) u;
-    (void) v;
-	NavSysDebug::DebugObject->position(-x, z, y);
-	NavSysDebug::DebugObject->colour(uintColorToOgre(color));
+    (void) u; (void) v;
+    vertex(x, y, z, color);
 }
 
 void DebugDrawGL::end()
 {
-	NavSysDebug::DebugObject->end();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

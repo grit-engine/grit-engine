@@ -860,29 +860,21 @@ void NavigationManager::render()
 	if (!navmesh_from_disk)
 	{
 
-		if (m_drawMode != DRAWMODE_NAVMESH_TRANS &&
-			NavSysDebug::ShowOffmeshConnections &&
-			NavSysDebug::RedrawOffmeshConnections)
+		if (m_drawMode != DRAWMODE_NAVMESH_TRANS && NavSysDebug::ShowOffmeshConnections)
 		{
-			NavSysDebug::DebugObject = NavSysDebug::OffmeshConectionsObject;
-			NavSysDebug::DebugObject->clear();
 			m_geom->drawOffMeshConnections(&dd);
-			NavSysDebug::RedrawOffmeshConnections = false;
 		}
 
 		// Draw bounds
 		const float* bmin = m_geom->getNavMeshBoundsMin();
 		const float* bmax = m_geom->getNavMeshBoundsMax();
 
-		if (NavSysDebug::ShowBounds && NavSysDebug::RedrawBounds)
+		if (NavSysDebug::ShowBounds)
 		{
-			NavSysDebug::DebugObject = NavSysDebug::BoundsObject;
-			NavSysDebug::DebugObject->clear();
 			duDebugDrawBoxWire(&dd, bmin[0], bmin[1], bmin[2], bmax[0], bmax[1], bmax[2], duRGBA(255, 255, 255, 128), 1.0f);
-			NavSysDebug::RedrawBounds = false;
 		}
 
-		if (NavSysDebug::ShowTilingGrid && NavSysDebug::RedrawTilingGrid)
+		if (NavSysDebug::ShowTilingGrid)
 		{
 			// Tiling grid.
 			int gw = 0, gh = 0;
@@ -891,23 +883,16 @@ void NavigationManager::render()
 			const int th = (gh + (int)m_tileSize - 1) / (int)m_tileSize;
 			const float s = m_tileSize*m_cellSize;
 
-			NavSysDebug::DebugObject = NavSysDebug::TilingGridObject;
-			NavSysDebug::DebugObject->clear();
 			duDebugDrawGridXZ(&dd, bmin[0], bmin[1], bmin[2], tw, th, s, duRGBA(0, 0, 0, 64), 1.0f);
 		}
 
 		// TODO
-		if (NavSysDebug::ShowConvexVolumes && NavSysDebug::RedrawConvexVolumes)
+		if (NavSysDebug::ShowConvexVolumes)
 		{
-			NavSysDebug::DebugObject = NavSysDebug::ConvexVolumeObjects;
-			NavSysDebug::DebugObject->clear();
-
 			m_geom->drawConvexVolumes(&dd);
 			
 			// temporary convex volume
 			drawConvexVolume(&dd);
-
-			NavSysDebug::RedrawConvexVolumes = false;
 		}
 
 		m_crowdTool->render();
@@ -916,18 +901,13 @@ void NavigationManager::render()
 	//if (m_tileCache && m_drawMode == DRAWMODE_CACHE_BOUNDS)
 	//	drawTiles(&dd, m_tileCache);
 
-	if (m_tileCache && NavSysDebug::ShowObstacles && NavSysDebug::RedrawObstacles)
+	if (m_tileCache && NavSysDebug::ShowObstacles)
 	{
-		NavSysDebug::DebugObject = NavSysDebug::ObstaclesObject;
-		NavSysDebug::DebugObject->clear();
 		drawObstacles(&dd, m_tileCache);
-		NavSysDebug::RedrawObstacles = false;
 	}
 
-	if (NavSysDebug::ShowNavmesh && NavSysDebug::RedrawNavmesh)
+	if (NavSysDebug::ShowNavmesh)
 	{
-		NavSysDebug::DebugObject = NavSysDebug::NavmeshObject;
-		NavSysDebug::DebugObject->clear();
 
 		if (m_navMesh && m_navQuery &&
 			(m_drawMode == DRAWMODE_NAVMESH ||
@@ -951,8 +931,6 @@ void NavigationManager::render()
 			*/
 			//duDebugDrawNavMeshPolysWithFlags(&dd, *m_navMesh, SAMPLE_POLYFLAGS_DISABLED, duRGBA(0,0,0,128));
 		}
-
-		NavSysDebug::RedrawNavmesh = false;
 	}
 }
 

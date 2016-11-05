@@ -22,6 +22,7 @@
 #include <sleep.h>
 
 #include "gfx_body.h"
+#include "gfx_debug.h"
 #include "gfx_decal.h"
 #include "gfx_particle_system.h"
 #include "gfx_pipeline.h"
@@ -846,6 +847,29 @@ class DecalPasses : public Ogre::RenderQueueInvocation {
 
 
 
+// {{{ Debug passes 
+
+class DebugPasses : public Ogre::RenderQueueInvocation {
+    GfxPipeline *pipe;
+
+    public:
+    DebugPasses (GfxPipeline *pipe)
+      : Ogre::RenderQueueInvocation(0, ""), pipe(pipe)
+    {
+        setSuppressShadows(true);
+    }
+
+    void invoke (Ogre::RenderQueueGroup *, Ogre::SceneManager *)
+    {
+        gfx_debug_render(pipe);
+    }
+    
+};
+
+// }}}
+
+
+
 // {{{ Particles passes 
 
 class ParticlesPasses : public Ogre::RenderQueueInvocation {
@@ -1021,7 +1045,7 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_EMISSIVE));
     rqisDeferred->add(new ParticlesPasses(this));
     // Debug passes
-    rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_BULLET_DEBUG_DRAWER));
+    rqisDeferred->add(new DebugPasses(this));
     // First person passes
     rqisDeferred->add(new ResetPass(this, Ogre::FBT_DEPTH));
     rqisDeferred->add(new FirstPersonPasses(this, false));

@@ -355,27 +355,22 @@ TRY_START
 		if (!::strcmp(key, "enabled")) {
 			bool b = check_bool(L, 2);
 			NavSysDebug::Enabled = b;
-			if (!b) NavSysDebug::clearAllObjects(); else NavSysDebug::redrawAllActiveObjects();;
 		}
 		else if (!::strcmp(key, "navmesh")) {
 			bool b = check_bool(L, 2);
 			NavSysDebug::ShowNavmesh = b;
-			if (!b) NavSysDebug::NavmeshObject->clear(); else NavSysDebug::RedrawNavmesh = true;
 		}
 		else if (!::strcmp(key, "navmesh_use_tile_colours")) {
 			bool b = check_bool(L, 2);
 			NavSysDebug::NavmeshUseTileColours = b;
-			NavSysDebug::updateNavmeshMaterial();
 		}
 		else if (!::strcmp(key, "bounds")) {
 			bool b = check_bool(L, 2);
 			NavSysDebug::ShowBounds = b;
-			if (!b) NavSysDebug::BoundsObject->clear(); else NavSysDebug::RedrawBounds = true;
 		}
 		else if (!::strcmp(key, "tiling_grid")) {
 			bool b = check_bool(L, 2);
 			NavSysDebug::ShowTilingGrid = b;
-			if (!b) NavSysDebug::TilingGridObject->clear(); else NavSysDebug::RedrawTilingGrid = true;
 		}
 		else if (!::strcmp(key, "agent")) {
 			bool b = check_bool(L, 2);
@@ -388,17 +383,14 @@ TRY_START
 		else if (!::strcmp(key, "convex_volumes")) {
 			bool b = check_bool(L, 2);
 			NavSysDebug::ShowConvexVolumes = b;
-			if (!b) NavSysDebug::ConvexVolumeObjects->clear(); else NavSysDebug::RedrawConvexVolumes = true;
 		}
 		else if (!::strcmp(key, "obstacles")) {
 			bool b = check_bool(L, 2);
 			NavSysDebug::ShowObstacles = b;
-			if (!b) NavSysDebug::ObstaclesObject->clear(); else NavSysDebug::RedrawObstacles = true;
 		}
 		else if (!::strcmp(key, "offmesh_connections")) {
 			bool b = check_bool(L, 2);
 			NavSysDebug::ShowOffmeshConnections = b;
-			if (!b) NavSysDebug::OffmeshConectionsObject->clear(); else NavSysDebug::RedrawOffmeshConnections = true;
 		}
 		else {
 			my_lua_error(L, "Invalid Option: " + std::string(key));

@@ -128,7 +128,7 @@ int main (int argc, const char **argv)
 
         size_t winid = gfx_init(cb);
 
-        debug_drawer = new BulletDebugDrawer(ogre_sm); // FIXME: hack
+        debug_drawer = new BulletDebugDrawer(); // FIXME: hack
 
         #ifdef WIN32
         mouse = new MouseDirectInput8(winid);
@@ -171,28 +171,26 @@ int main (int argc, const char **argv)
         }
 
         // Lua returns - we quit.
-        
-        CVERB << "Shutting down Lua net subsystem..." << std::endl;
-
-        net_shutdown(core_L);
-
-        navigation_shutdown();
 
         object_all_del(core_L);  // Will remove all demands from background loader.
-
+        
         CVERB << "Shutting down Lua graphics subsystem..." << std::endl;
-
         gfx_shutdown_lua(core_L);
 
-        CVERB << "Shutting down Background Loader..." << std::endl;
+        CVERB << "Shutting down Lua net subsystem..." << std::endl;
+        net_shutdown(core_L);
 
+        CVERB << "Shutting down navigation subsystem..." << std::endl;
+        navigation_shutdown();
+
+        CVERB << "Shutting down Background Loader..." << std::endl;
         bgl->shutdown();
 
         CVERB << "Shutting down Mouse & Keyboard..." << std::endl;
-
         if (mouse) delete mouse;
         if (keyboard) delete keyboard;
         if (joystick) delete joystick;
+
         CVERB << "Shutting down clipboard..." << std::endl;
         clipboard_shutdown();
 

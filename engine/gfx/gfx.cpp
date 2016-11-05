@@ -28,6 +28,7 @@
 
 #include "clutter.h"
 #include "gfx_body.h"
+#include "gfx_debug.h"
 #include "gfx_decal.h"
 #include "gfx_gl3_plus.h"
 #include "hud.h"
@@ -543,7 +544,8 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
 
     clipboard_pump();
 
-    debug_drawer->frameStarted();
+    debug_drawer->frameCallback();
+    ogre_root_node->needUpdate();
 
     // try and do all "each object" processing in this loop
     for (unsigned long i=0 ; i<gfx_all_nodes.size() ; ++i) {
@@ -647,7 +649,6 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
         CERR << e << std::endl;
     }
 
-    debug_drawer->frameEnded();
     ogre_rs->markProfileEvent("end grit frame");
 }
 
@@ -1073,6 +1074,7 @@ size_t gfx_init (GfxCallback &cb_)
         gfx_particle_init();
         hud_init();
         gfx_decal_init();
+        gfx_debug_init();
  
         gfx_env_cube(0, DiskResourcePtr<GfxEnvCubeDiskResource>());
         gfx_env_cube(1, DiskResourcePtr<GfxEnvCubeDiskResource>());
@@ -1119,6 +1121,7 @@ void gfx_shutdown (void)
 {
     try {
         if (shutting_down) return;
+        gfx_debug_shutdown();
         gfx_decal_shutdown();
         shutting_down = true;
         delete eye_left;
