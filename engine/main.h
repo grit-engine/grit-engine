@@ -62,9 +62,6 @@ extern Joystick *joystick;
 /** The core Lua state object, created when lua is initialised. */
 extern lua_State *core_L;
 
-/** Used for garbage collecting Ogre objects properly in Lua. */
-//extern UserDataTables user_data_tables;
-
 /** Used by the bullet backend for drawing debug information.  This is a
  * conduit between the physics and graphics subsystems. */
 extern BulletDebugDrawer *debug_drawer;

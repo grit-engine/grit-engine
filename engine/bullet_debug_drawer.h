@@ -52,9 +52,6 @@ private:
         size_t dieTime;
     };
     DebugDrawModes mDebugModes;
-    Ogre::ManualObject *mLines;
-    Ogre::ManualObject *mTriangles;
-    Ogre::MaterialPtr mat;
     // Every frame we throw out some contact points that have been displayed for long enough.
     // To implement that efficiently, we have a double buffer.
     std::vector<ContactPoint> contactPoints1;
