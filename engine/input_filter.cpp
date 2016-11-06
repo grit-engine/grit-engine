@@ -373,15 +373,18 @@ void input_filter_trickle_button (lua_State *L, const std::string &ev)
 
     // copy because callbacks can alter the map while we're iterating over it
     IFMap m = ifmap;
-    bool captured = false;
+    bool signal_hud = true;
     for (IFMap::const_iterator i=m.begin(),i_=m.end() ; i!=i_ ; ++i) {
         InputFilter *f = i->second;
         if (!f->getEnabled()) continue;
-        if (f->getMouseCapture()) captured = true;
-        if (f->acceptButton(L, ev)) break;
+        if (f->getMouseCapture()) signal_hud = false;
+        if (f->acceptButton(L, ev)) {
+            signal_hud = false;
+            break;
+        }
         if (f->getModal()) break;
     }
-    if (!captured) hud_signal_button(L, ev);
+    if (signal_hud) hud_signal_button(L, ev);
 }
 
 void input_filter_trickle_mouse_move (lua_State *L, const Vector2 &rel, const Vector2 &abs)
