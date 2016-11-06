@@ -1765,6 +1765,7 @@ void RigidBody::setPosition (const Vector3 &v)
     if (body==NULL) return; // deactivated
     body->setCenterOfMassTransform(
         btTransform(body->getOrientation(), to_bullet(v)));
+    world->updateSingleAabb(body);
     body->activate();
 }
 
@@ -1773,6 +1774,7 @@ void RigidBody::setOrientation (const Quaternion &q)
     if (body==NULL) return; // deactivated
     body->setCenterOfMassTransform(
          btTransform(to_bullet(q),body->getCenterOfMassPosition()));
+    world->updateSingleAabb(body);
     body->activate();
 }
 
