@@ -4,7 +4,7 @@ git pull --recurse-submodules
 git submodule update
 msbuild /p:Configuration=Normal
 
-gsutil cp Normal/engine/engine.exe gs://grit-engine/
-gsutil cp Normal/launcher/launcher.exe gs://grit-engine/
-gsutil cp Normal/extract/extract.exe gs://grit-engine/
-gsutil cp Normal/GritXMLConverter/GritXMLConverter.exe gs://grit-engine/
+CALL gsutil cp Normal/engine/engine.exe gs://grit-engine/
+CALL gsutil cp Normal/launcher/launcher.exe gs://grit-engine/
+CALL gsutil cp Normal/extract/extract.exe gs://grit-engine/
+CALL gsutil cp Normal/GritXMLConverter/GritXMLConverter.exe gs://grit-engine/
