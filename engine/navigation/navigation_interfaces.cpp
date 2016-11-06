@@ -151,6 +151,7 @@ void DebugDrawGL::texture(bool state)
 
 void DebugDrawGL::begin(duDebugDrawPrimitives prim, float size)
 {
+    assert(currentVertex == 0);
     currentVertex = 0;
     currentSize = size;
 	switch (prim) {
@@ -172,13 +173,11 @@ void DebugDrawGL::vertex(const float x, const float y, const float z, unsigned i
     vertexes[currentVertex][0] = x;
     vertexes[currentVertex][1] = y;
     vertexes[currentVertex][2] = z;
-    vertexes[currentVertex][3] = colour.x;
-    vertexes[currentVertex][4] = colour.y;
-    vertexes[currentVertex][5] = colour.z;
-    vertexes[currentVertex][6] = colour.w;
     currentVertex++;
+
+    assert(currentVertex <= maxVertex);
     
-    if (currentVertex >= maxVertex) {
+    if (currentVertex == maxVertex) {
         currentVertex = 0;
         switch (maxVertex) {
             case 1:

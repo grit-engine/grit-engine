@@ -58,6 +58,9 @@ protected:
 class DebugDrawGL : public duDebugDraw
 {
 public:
+    DebugDrawGL(void)
+        : currentSize(0), currentVertex(0), maxVertex(0)
+    { }
 	virtual void depthMask(bool state);
 	virtual void texture(bool state);
 	virtual void begin(duDebugDrawPrimitives prim, float size = 1.0f);
