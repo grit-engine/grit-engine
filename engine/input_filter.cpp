@@ -187,6 +187,12 @@ bool InputFilter::acceptButton (lua_State *L, const std::string &ev)
             triggerFunc(L, bind, func);
         }
 
+    } else if (kind == ':') {
+
+        // Potentially let these go to the HUD.
+        return false;
+    } else {
+        CERR << "Unrecognized kind: \"" << std::string(1, kind) << "\"" << std::endl;
     }
 
     return true;
