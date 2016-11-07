@@ -160,6 +160,20 @@ static void options_update (bool flush)
 }
 
 
+void core_option_reset (void)
+{
+    core_option(CORE_FOREGROUND_WARNINGS, true);
+
+    core_option(CORE_STEP_SIZE, 20000);
+    core_option(CORE_RAM, 1024); // 1GB
+
+    core_option(CORE_VISIBILITY, 1.0f);
+    core_option(CORE_PREPARE_DISTANCE_FACTOR, 1.3f);
+    core_option(CORE_FADE_OUT_FACTOR, 0.7f);
+    core_option(CORE_FADE_OVERLAP_FACTOR, 0.7f);
+}
+
+
 void core_option_init (void)
 {
 
@@ -178,19 +192,9 @@ void core_option_init (void)
 
 
     core_option(CORE_AUTOUPDATE, false);
-
-    core_option(CORE_FOREGROUND_WARNINGS, true);
-
-    core_option(CORE_STEP_SIZE, 20000);
-    core_option(CORE_RAM, 1024); // 1GB
-
-    core_option(CORE_VISIBILITY, 1.0f);
-    core_option(CORE_PREPARE_DISTANCE_FACTOR, 1.3f);
-    core_option(CORE_FADE_OUT_FACTOR, 0.7f);
-    core_option(CORE_FADE_OVERLAP_FACTOR, 0.7f);
-
+    core_option_reset();
     options_update(true);
-
+    // This will call options_update(false) but it will be a no-op this time.
     core_option(CORE_AUTOUPDATE, true);
 
 }

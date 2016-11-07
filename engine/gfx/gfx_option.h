@@ -121,6 +121,7 @@ void gfx_option (GfxFloatOption o, float v);
 float gfx_option (GfxFloatOption o);
 
 void gfx_option_init (void);
+void gfx_option_reset (void);
 
 
 #endif

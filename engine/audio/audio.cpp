@@ -149,32 +149,30 @@ static void options_update (bool flush)
     options_float = new_options_float;
 }
 
-
-static void init_options (void)
+void audio_option_reset (void)
 {
-
-    for (unsigned i=0 ; i < sizeof(option_keys_bool) / sizeof(*option_keys_bool) ; ++i) {
-        valid_option(option_keys_bool[i], truefalse);
-
-    }
-
-    valid_option(AUDIO_MAX_SOUNDS, new ValidOptionRange<int>(1,1000));
-
-    valid_option(AUDIO_MASTER_VOLUME, new ValidOptionRange<float>(0, 2));
-
-    audio_option(AUDIO_AUTOUPDATE, false);
-
     audio_option(AUDIO_MUTE, false);
     audio_option(AUDIO_DOPPLER_ENABLED, true);
 
     audio_option(AUDIO_MAX_SOUNDS, 1000);
 
     audio_option(AUDIO_MASTER_VOLUME, 1.0f);
+}
 
+static void init_options (void)
+{
+    for (unsigned i=0 ; i < sizeof(option_keys_bool) / sizeof(*option_keys_bool) ; ++i) {
+        valid_option(option_keys_bool[i], truefalse);
+    }
+
+    valid_option(AUDIO_MAX_SOUNDS, new ValidOptionRange<int>(1,1000));
+    valid_option(AUDIO_MASTER_VOLUME, new ValidOptionRange<float>(0, 2));
+
+    audio_option(AUDIO_AUTOUPDATE, false);
+    audio_option_reset();
     options_update(true);
-
+    // This will call options_update(false) but it will be a no-op this time.
     audio_option(AUDIO_AUTOUPDATE, true);
-
 }
 
 

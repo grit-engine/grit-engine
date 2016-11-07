@@ -410,30 +410,8 @@ static void options_update (bool flush)
     }
 }
 
-static void init_options (void)
+void physics_option_reset (void)
 {
-
-    for (unsigned i=0 ; i < sizeof(option_keys_bool) / sizeof(*option_keys_bool) ; ++i) {
-        valid_option(option_keys_bool[i], truefalse);
-
-    }
-
-    valid_option(PHYSICS_SOLVER_ITERATIONS, new ValidOptionRange<int>(0,1000));
-
-    valid_option(PHYSICS_GRAVITY_X, new ValidOptionRange<float>(-1000, 1000));
-    valid_option(PHYSICS_GRAVITY_Y, new ValidOptionRange<float>(-1000, 1000));
-    valid_option(PHYSICS_GRAVITY_Z, new ValidOptionRange<float>(-1000, 1000));
-    valid_option(PHYSICS_STEP_SIZE, new ValidOptionRange<float>(0.00001f,100));
-    valid_option(PHYSICS_CONTACT_BREAKING_THRESHOLD, new ValidOptionRange<float>(0.00001f,100));
-    valid_option(PHYSICS_DEACTIVATION_TIME, new ValidOptionRange<float>(0.00001f,1000));
-    valid_option(PHYSICS_SOLVER_DAMPING, new ValidOptionRange<float>(0.00001f,1000));
-    valid_option(PHYSICS_SOLVER_ERP, new ValidOptionRange<float>(0.00001f,1000));
-    valid_option(PHYSICS_SOLVER_ERP2, new ValidOptionRange<float>(0.00001f,1000));
-    valid_option(PHYSICS_SOLVER_SPLIT_IMPULSE_THRESHOLD, new ValidOptionRange<float>(-1000,1000));
-    valid_option(PHYSICS_SOLVER_WARM_STARTING_FACTOR, new ValidOptionRange<float>(0.00001f,1000));
-
-    physics_option(PHYSICS_AUTOUPDATE, false);
-
     physics_option(PHYSICS_GIMPACT_ONE_WAY_MESH_HACK, true);
     physics_option(PHYSICS_BUMPY_TRIANGLE_MESH_HACK, false);
     physics_option(PHYSICS_USE_TRIANGLE_EDGE_INFO, false);
@@ -475,11 +453,35 @@ static void init_options (void)
     physics_option(PHYSICS_SOLVER_ERP2, 0.1f);
     physics_option(PHYSICS_SOLVER_SPLIT_IMPULSE_THRESHOLD, -0.02f);
     physics_option(PHYSICS_SOLVER_WARM_STARTING_FACTOR, 0.85f);
+}
 
+static void init_options (void)
+{
+
+    for (unsigned i=0 ; i < sizeof(option_keys_bool) / sizeof(*option_keys_bool) ; ++i) {
+        valid_option(option_keys_bool[i], truefalse);
+
+    }
+
+    valid_option(PHYSICS_SOLVER_ITERATIONS, new ValidOptionRange<int>(0,1000));
+
+    valid_option(PHYSICS_GRAVITY_X, new ValidOptionRange<float>(-1000, 1000));
+    valid_option(PHYSICS_GRAVITY_Y, new ValidOptionRange<float>(-1000, 1000));
+    valid_option(PHYSICS_GRAVITY_Z, new ValidOptionRange<float>(-1000, 1000));
+    valid_option(PHYSICS_STEP_SIZE, new ValidOptionRange<float>(0.00001f,100));
+    valid_option(PHYSICS_CONTACT_BREAKING_THRESHOLD, new ValidOptionRange<float>(0.00001f,100));
+    valid_option(PHYSICS_DEACTIVATION_TIME, new ValidOptionRange<float>(0.00001f,1000));
+    valid_option(PHYSICS_SOLVER_DAMPING, new ValidOptionRange<float>(0.00001f,1000));
+    valid_option(PHYSICS_SOLVER_ERP, new ValidOptionRange<float>(0.00001f,1000));
+    valid_option(PHYSICS_SOLVER_ERP2, new ValidOptionRange<float>(0.00001f,1000));
+    valid_option(PHYSICS_SOLVER_SPLIT_IMPULSE_THRESHOLD, new ValidOptionRange<float>(-1000,1000));
+    valid_option(PHYSICS_SOLVER_WARM_STARTING_FACTOR, new ValidOptionRange<float>(0.00001f,1000));
+
+    physics_option(PHYSICS_AUTOUPDATE, false);
+    physics_option_reset();
     options_update(true);
-
+    // This will call options_update(false) but it will be a no-op this time.
     physics_option(PHYSICS_AUTOUPDATE, true);
-
 }
 
 void physics_option (PhysicsBoolOption o, bool v)
