@@ -302,6 +302,11 @@ void gfx_option_from_string (const std::string &s,
     else t = -1;
 }
 
+/* Transfer settings to lower level components.
+ *
+ * Will regenerate anything if new_options differs to old_options, or the called can force
+ * regeneration by setting 'flush'.
+ */
 static void options_update (bool flush)
 {
     bool reset_fullscreen = flush;
@@ -544,63 +549,8 @@ static void options_update (bool flush)
 
 }
 
-void gfx_option_init (void)
+void gfx_option_reset (void)
 {
-    for (unsigned i=0 ; i<sizeof(gfx_bool_options)/sizeof(gfx_bool_options[0]) ; ++i)
-        valid_option(gfx_bool_options[i], truefalse);
-
-    valid_option(GFX_FULLSCREEN_WIDTH, new ValidOptionRange<int>(1,10000));
-    valid_option(GFX_FULLSCREEN_HEIGHT, new ValidOptionRange<int>(1,10000));
-    int res_list[] = {512,1024,2048,4096};
-    valid_option(GFX_SHADOW_RES, new ValidOptionList<int,int[4]>(res_list));
-    int filter_taps_list[] = {1,4,9,16,36};
-    valid_option(GFX_SHADOW_FILTER_TAPS, new ValidOptionList<int,int[5]>(filter_taps_list));
-    valid_option(GFX_BLOOM_ITERATIONS, new ValidOptionRange<int>(0,255));
-    valid_option(GFX_RAM, new ValidOptionRange<int>(0,16384));
-    valid_option(GFX_DEBUG_MODE, new ValidOptionRange<int>(0,8));
-
-
-    valid_option(GFX_FOV, new ValidOptionRange<float>(0.0000001f,179.0f));
-    valid_option(GFX_NEAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
-    valid_option(GFX_FAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
-    valid_option(GFX_FIRST_PERSON_NEAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
-    valid_option(GFX_FIRST_PERSON_FAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
-
-    valid_option(GFX_EYE_SEPARATION, new ValidOptionRange<float>(0.0f,0.5f));
-    valid_option(GFX_MONITOR_HEIGHT, new ValidOptionRange<float>(0.01f,1000.0f));
-    valid_option(GFX_MONITOR_EYE_DISTANCE, new ValidOptionRange<float>(0.01f,1000.0f));
-    valid_option(GFX_MIN_PERCEIVED_DEPTH, new ValidOptionRange<float>(0.01f,1000.0f));
-    valid_option(GFX_MAX_PERCEIVED_DEPTH, new ValidOptionRange<float>(0.01f,1000.0f));
-
-    valid_option(GFX_SHADOW_START, new ValidOptionRange<float>(0.0f,10000.0f));
-    valid_option(GFX_SHADOW_END0, new ValidOptionRange<float>(0.0f,10000.0f));
-    valid_option(GFX_SHADOW_END1, new ValidOptionRange<float>(0.0f,10000.0f));
-    valid_option(GFX_SHADOW_END2, new ValidOptionRange<float>(0.0f,10000.0f));
-    valid_option(GFX_SHADOW_FADE_START, new ValidOptionRange<float>(0.0f,10000.0f));
-
-    valid_option(GFX_SHADOW_FILTER_SIZE, new ValidOptionRange<float>(0.0f,40.0f));
-    valid_option(GFX_SHADOW_OPTIMAL_ADJUST0, new ValidOptionRange<float>(0.0f,10000.0f));
-    valid_option(GFX_SHADOW_OPTIMAL_ADJUST1, new ValidOptionRange<float>(0.0f,10000.0f));
-    valid_option(GFX_SHADOW_OPTIMAL_ADJUST2, new ValidOptionRange<float>(0.0f,10000.0f));
-    valid_option(GFX_SHADOW_SPREAD_FACTOR0, new ValidOptionRange<float>(0.0f,20.0f));
-
-    valid_option(GFX_SHADOW_SPREAD_FACTOR1, new ValidOptionRange<float>(0.0f,20.0f));
-    valid_option(GFX_SHADOW_SPREAD_FACTOR2, new ValidOptionRange<float>(0.0f,20.0f));
-    valid_option(GFX_SHADOW_LIGHT_DIRECTION_THRESHOLD, new ValidOptionRange<float>(0.0f,10000.0f));
-    valid_option(GFX_SHADOW_PADDING, new ValidOptionRange<float>(0.0f,100.0f));
-    valid_option(GFX_ANAGLYPH_LEFT_RED_MASK, new ValidOptionRange<float>(0.0f,1.0f));
-
-    valid_option(GFX_ANAGLYPH_LEFT_GREEN_MASK, new ValidOptionRange<float>(0.0f,1.0f));
-    valid_option(GFX_ANAGLYPH_LEFT_BLUE_MASK, new ValidOptionRange<float>(0.0f,1.0f));
-    valid_option(GFX_ANAGLYPH_RIGHT_RED_MASK, new ValidOptionRange<float>(0.0f,1.0f));
-    valid_option(GFX_ANAGLYPH_RIGHT_GREEN_MASK, new ValidOptionRange<float>(0.0f,1.0f));
-    valid_option(GFX_ANAGLYPH_RIGHT_BLUE_MASK, new ValidOptionRange<float>(0.0f,1.0f));
-
-    valid_option(GFX_ANAGLYPH_DESATURATION, new ValidOptionRange<float>(0.0f,1.0f));
-    valid_option(GFX_BLOOM_THRESHOLD, new ValidOptionRange<float>(0.0f,255.0f));
-
-
-    gfx_option(GFX_AUTOUPDATE, false);
     gfx_option(GFX_SHADOW_RECEIVE, true);
     gfx_option(GFX_SHADOW_CAST, true);
     gfx_option(GFX_VSYNC, true);
@@ -674,8 +624,67 @@ void gfx_option_init (void)
     gfx_option(GFX_ANAGLYPH_DESATURATION, 0.5f);
     gfx_option(GFX_BLOOM_THRESHOLD, 1.0f);
 
-    options_update(true);
+}
 
+void gfx_option_init (void)
+{
+    for (unsigned i=0 ; i<sizeof(gfx_bool_options)/sizeof(gfx_bool_options[0]) ; ++i)
+        valid_option(gfx_bool_options[i], truefalse);
+
+    valid_option(GFX_FULLSCREEN_WIDTH, new ValidOptionRange<int>(1,10000));
+    valid_option(GFX_FULLSCREEN_HEIGHT, new ValidOptionRange<int>(1,10000));
+    int res_list[] = {512,1024,2048,4096};
+    valid_option(GFX_SHADOW_RES, new ValidOptionList<int,int[4]>(res_list));
+    int filter_taps_list[] = {1,4,9,16,36};
+    valid_option(GFX_SHADOW_FILTER_TAPS, new ValidOptionList<int,int[5]>(filter_taps_list));
+    valid_option(GFX_BLOOM_ITERATIONS, new ValidOptionRange<int>(0,255));
+    valid_option(GFX_RAM, new ValidOptionRange<int>(0,16384));
+    valid_option(GFX_DEBUG_MODE, new ValidOptionRange<int>(0,8));
+
+
+    valid_option(GFX_FOV, new ValidOptionRange<float>(0.0000001f,179.0f));
+    valid_option(GFX_NEAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
+    valid_option(GFX_FAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
+    valid_option(GFX_FIRST_PERSON_NEAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
+    valid_option(GFX_FIRST_PERSON_FAR_CLIP, new ValidOptionRange<float>(0.0000001f,10000.0f));
+
+    valid_option(GFX_EYE_SEPARATION, new ValidOptionRange<float>(0.0f,0.5f));
+    valid_option(GFX_MONITOR_HEIGHT, new ValidOptionRange<float>(0.01f,1000.0f));
+    valid_option(GFX_MONITOR_EYE_DISTANCE, new ValidOptionRange<float>(0.01f,1000.0f));
+    valid_option(GFX_MIN_PERCEIVED_DEPTH, new ValidOptionRange<float>(0.01f,1000.0f));
+    valid_option(GFX_MAX_PERCEIVED_DEPTH, new ValidOptionRange<float>(0.01f,1000.0f));
+
+    valid_option(GFX_SHADOW_START, new ValidOptionRange<float>(0.0f,10000.0f));
+    valid_option(GFX_SHADOW_END0, new ValidOptionRange<float>(0.0f,10000.0f));
+    valid_option(GFX_SHADOW_END1, new ValidOptionRange<float>(0.0f,10000.0f));
+    valid_option(GFX_SHADOW_END2, new ValidOptionRange<float>(0.0f,10000.0f));
+    valid_option(GFX_SHADOW_FADE_START, new ValidOptionRange<float>(0.0f,10000.0f));
+
+    valid_option(GFX_SHADOW_FILTER_SIZE, new ValidOptionRange<float>(0.0f,40.0f));
+    valid_option(GFX_SHADOW_OPTIMAL_ADJUST0, new ValidOptionRange<float>(0.0f,10000.0f));
+    valid_option(GFX_SHADOW_OPTIMAL_ADJUST1, new ValidOptionRange<float>(0.0f,10000.0f));
+    valid_option(GFX_SHADOW_OPTIMAL_ADJUST2, new ValidOptionRange<float>(0.0f,10000.0f));
+    valid_option(GFX_SHADOW_SPREAD_FACTOR0, new ValidOptionRange<float>(0.0f,20.0f));
+
+    valid_option(GFX_SHADOW_SPREAD_FACTOR1, new ValidOptionRange<float>(0.0f,20.0f));
+    valid_option(GFX_SHADOW_SPREAD_FACTOR2, new ValidOptionRange<float>(0.0f,20.0f));
+    valid_option(GFX_SHADOW_LIGHT_DIRECTION_THRESHOLD, new ValidOptionRange<float>(0.0f,10000.0f));
+    valid_option(GFX_SHADOW_PADDING, new ValidOptionRange<float>(0.0f,100.0f));
+    valid_option(GFX_ANAGLYPH_LEFT_RED_MASK, new ValidOptionRange<float>(0.0f,1.0f));
+
+    valid_option(GFX_ANAGLYPH_LEFT_GREEN_MASK, new ValidOptionRange<float>(0.0f,1.0f));
+    valid_option(GFX_ANAGLYPH_LEFT_BLUE_MASK, new ValidOptionRange<float>(0.0f,1.0f));
+    valid_option(GFX_ANAGLYPH_RIGHT_RED_MASK, new ValidOptionRange<float>(0.0f,1.0f));
+    valid_option(GFX_ANAGLYPH_RIGHT_GREEN_MASK, new ValidOptionRange<float>(0.0f,1.0f));
+    valid_option(GFX_ANAGLYPH_RIGHT_BLUE_MASK, new ValidOptionRange<float>(0.0f,1.0f));
+
+    valid_option(GFX_ANAGLYPH_DESATURATION, new ValidOptionRange<float>(0.0f,1.0f));
+    valid_option(GFX_BLOOM_THRESHOLD, new ValidOptionRange<float>(0.0f,255.0f));
+
+    gfx_option(GFX_AUTOUPDATE, false);
+    gfx_option_reset();
+    options_update(true);
+    // This will trigger options_update(false) but it will be a no-op.
     gfx_option(GFX_AUTOUPDATE, true);
 }
 

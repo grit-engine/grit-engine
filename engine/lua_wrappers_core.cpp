@@ -885,7 +885,16 @@ static int global_current_dir (lua_State *L)
     return 1;
 }
 
-int global_core_option (lua_State *L)
+static int global_core_option_reset (lua_State *L)
+{
+TRY_START
+    check_args(L, 0);
+    core_option_reset();
+    return 0;
+TRY_END
+}
+
+static int global_core_option (lua_State *L)
 {
 TRY_START
     if (lua_gettop(L)==2) {
@@ -1034,6 +1043,7 @@ TRY_END
 
 static const luaL_reg global[] = {
 
+    {"core_option_reset", global_core_option_reset},
     {"core_option", global_core_option},
     {"import_str", global_import_str},
     {"include", global_include},

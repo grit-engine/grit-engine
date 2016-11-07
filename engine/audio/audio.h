@@ -124,6 +124,9 @@ void audio_option (AudioFloatOption o, float v);
 /** Return the current value of the option. */
 float audio_option (AudioFloatOption o);
 
+/** Reset all options to their defaults. */
+void audio_option_reset (void);
+
 /** A sound emitter whose parameters can be modified while the sound is
  * playing.  Stereo sounds are implemented using two emitters. */
 class AudioBody : public DiskResource::ReloadWatcher

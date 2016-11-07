@@ -83,4 +83,7 @@ float core_option (CoreFloatOption o);
 /** Initialise these options. */
 void core_option_init (void);
 
+/** Set every option to its default value. */
+void core_option_reset (void);
+
 #endif

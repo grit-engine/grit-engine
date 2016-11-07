@@ -2117,6 +2117,14 @@ TRY_START
 TRY_END
 }
 
+static int global_gfx_option_reset (lua_State *L)
+{
+TRY_START
+    check_args(L, 0);
+    gfx_option_reset();
+    return 0;
+TRY_END
+}
 static int global_gfx_option (lua_State *L)
 {
 TRY_START
@@ -4586,6 +4594,7 @@ static const luaL_reg global[] = {
     {"gfx_bake_env_cube", global_gfx_bake_env_cube},
     {"gfx_screenshot", global_gfx_screenshot},
     {"gfx_option", global_gfx_option},
+    {"gfx_option_reset", global_gfx_option_reset},
     {"gfx_body_make", global_gfx_body_make},
     {"gfx_instances_make", global_gfx_instances_make},
     {"gfx_ranged_instances_make", global_gfx_ranged_instances_make},

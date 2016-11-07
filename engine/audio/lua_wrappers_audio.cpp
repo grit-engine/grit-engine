@@ -223,6 +223,15 @@ TRY_START
 TRY_END
 }
 
+static int global_audio_option_reset (lua_State *L)
+{
+TRY_START
+    check_args(L, 0);
+    audio_option_reset();
+    return 0;
+TRY_END
+}
+
 int global_audio_option (lua_State *L)
 {
 TRY_START
@@ -268,6 +277,7 @@ static const luaL_reg global[] = {
     {"audio_play_ambient",global_audio_play_ambient},
     {"audio_update",global_audio_update},
     {"audio_option",global_audio_option},
+    {"audio_option_reset",global_audio_option_reset},
     {NULL,NULL}
 };
 

@@ -100,6 +100,8 @@ int physics_option (PhysicsIntOption o);
 void physics_option (PhysicsFloatOption o, float v);
 float physics_option (PhysicsFloatOption o);
 
+void physics_option_reset (void);
+
 
 #include <btBulletDynamicsCommon.h>
 

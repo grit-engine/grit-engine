@@ -855,7 +855,16 @@ TRY_END
 }
 
 
-int global_physics_option (lua_State *L)
+static int global_physics_option_reset (lua_State *L)
+{
+TRY_START
+        check_args(L, 0);
+        physics_option_reset();
+        return 0;
+TRY_END
+}
+
+static int global_physics_option (lua_State *L)
 {
 TRY_START
     if (lua_gettop(L)==2) {
@@ -990,6 +999,7 @@ static const luaL_reg global[] = {
 
         {"physics_body_make", global_physics_body_make},
         {"physics_get_gravity", global_physics_get_gravity},
+        {"physics_option_reset", global_physics_option_reset},
         {"physics_option", global_physics_option},
         {"physics_cast", global_physics_cast_ray},
         {"physics_sweep_sphere", global_physics_sweep_sphere},
