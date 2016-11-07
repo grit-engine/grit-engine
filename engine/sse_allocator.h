@@ -65,7 +65,7 @@ template <class T> class SSEAllocator {
                         throw std::bad_alloc();
                 //std::cout << "+block: " << (void*)block << std::endl;
                 unsigned char *aligned16 =
-                      (unsigned char*)((size_t)(block+1+15)&(size_t)0xFFFFFFF0);
+                      (unsigned char*)((size_t)(block+1+15)&(size_t)(-16));
                 //std::cout << "+aligned16: " << (void*)aligned16 << std::endl;
                 unsigned char offset = aligned16 - block;
                 aligned16[-1] = offset;
