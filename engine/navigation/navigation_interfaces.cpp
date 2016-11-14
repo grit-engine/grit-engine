@@ -164,15 +164,15 @@ void DebugDrawGL::begin(duDebugDrawPrimitives prim, float size)
 
 void DebugDrawGL::vertex(const float* pos, unsigned int color)
 {
-    vertex(-pos[0], pos[2], pos[1], color);
+    vertex(pos[0], pos[1], pos[2], color);
 }
 
 void DebugDrawGL::vertex(const float x, const float y, const float z, unsigned int color)
 {
 	Vector4 colour = uintColorToOgre(color);
-    vertexes[currentVertex][0] = x;
-    vertexes[currentVertex][1] = y;
-    vertexes[currentVertex][2] = z;
+    vertexes[currentVertex][0] = -x;
+    vertexes[currentVertex][1] = z;
+    vertexes[currentVertex][2] = y;
     currentVertex++;
 
     assert(currentVertex <= maxVertex);
@@ -214,7 +214,7 @@ void DebugDrawGL::vertex(const float x, const float y, const float z, unsigned i
 void DebugDrawGL::vertex(const float* pos, unsigned int color, const float* uv)
 {
     (void) uv;
-    vertex(-pos[0], pos[2], pos[1], color);
+    vertex(pos[0], pos[1], pos[2], color);
 }
 void DebugDrawGL::vertex(const float x, const float y, const float z,
                          unsigned int color, const float u, const float v)

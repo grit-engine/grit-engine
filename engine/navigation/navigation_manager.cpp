@@ -669,7 +669,9 @@ NavigationManager::NavigationManager() :
 	m_drawMode(DRAWMODE_NAVMESH),
 	m_maxTiles(0),
 	m_maxPolysPerTile(0),
-	m_tileSize(48)
+	m_tileSize(48),
+	m_npts(0),
+	m_nhull(0)
 {
 	m_navQuery = dtAllocNavMeshQuery();
 	m_crowd = dtAllocCrowd();
@@ -950,6 +952,8 @@ void NavigationManager::renderCachedTileOverlay(const int tx, const int ty, doub
 void NavigationManager::changeMesh(class InputGeom* geom)
 {
 	m_geom = geom;
+
+	m_tmproc->init(m_geom);
 
 	dtFreeTileCache(m_tileCache);
 	m_tileCache = 0;
@@ -1244,7 +1248,7 @@ bool NavigationManager::loadAll(const char* path)
 	// Read header.
 	TileCacheSetHeader header;
 	size_t bytes = fread(&header, sizeof(TileCacheSetHeader), 1, fp);
-    APP_ASSERT(bytes != sizeof(TileCacheSetHeader));
+	APP_ASSERT(bytes != sizeof(TileCacheSetHeader));
 	if (header.magic != TILECACHESET_MAGIC)
 	{
 		fclose(fp);
@@ -1287,7 +1291,7 @@ bool NavigationManager::loadAll(const char* path)
 	{
 		TileCacheTileHeader tileHeader;
 		bytes = fread(&tileHeader, sizeof(tileHeader), 1, fp);
-        APP_ASSERT(bytes != sizeof(tileHeader));
+		APP_ASSERT(bytes != sizeof(tileHeader));
 		if (!tileHeader.tileRef || !tileHeader.dataSize)
 			break;
 
@@ -1295,7 +1299,7 @@ bool NavigationManager::loadAll(const char* path)
 		if (!data) break;
 		memset(data, 0, tileHeader.dataSize);
 		bytes = fread(data, tileHeader.dataSize, 1, fp);
-        APP_ASSERT((long long)(bytes) != tileHeader.dataSize);
+		APP_ASSERT((long long)(bytes) != tileHeader.dataSize);
 		
 		dtCompressedTileRef tile = 0;
 		m_tileCache->addTile(data, tileHeader.dataSize, DT_COMPRESSEDTILE_FREE_DATA, &tile);

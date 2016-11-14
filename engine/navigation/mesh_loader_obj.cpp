@@ -247,9 +247,9 @@ bool rcMeshLoaderObj::load(const std::string& filename)
 // this method is a modified version of one taken from OgreCrowd http://ogre3d.org/forums/viewtopic.php?f=11&t=69781
 bool rcMeshLoaderObj::convertGfxBody(std::vector<GfxBodyPtr> srcBodies)
 {
-	Ogre::SceneNode *mReferenceNode;
+    // TODO: This function should probably return early if srcBodies.size() == 0?
+    APP_ASSERT(srcBodies.size() > 0);
 	GfxBodyPtr ent = srcBodies[0];
-	mReferenceNode = ent->getParentSceneNode()->getCreator()->getRootSceneNode();
 
 //Convert all vertices and triangles to recast format
 	const int numNodes = srcBodies.size();
@@ -259,7 +259,7 @@ bool rcMeshLoaderObj::convertGfxBody(std::vector<GfxBodyPtr> srcBodies)
 	unsigned long **meshIndices = new unsigned long*[numNodes];
 
 	m_vertCount = 0;
-	m_triCount = 0;
+    int index_count = 0;
 	size_t i = 0;
 	for (std::vector<GfxBodyPtr>::iterator iter = srcBodies.begin(); iter != srcBodies.end(); iter++) {
 		getMeshInformation((*iter)->mesh, meshVertexCount[i], meshVertices[i], meshIndexCount[i], meshIndices[i]);
@@ -267,17 +267,17 @@ bool rcMeshLoaderObj::convertGfxBody(std::vector<GfxBodyPtr> srcBodies)
 		//total number of verts
 		m_vertCount += meshVertexCount[i];
 		//total number of indices
-		m_triCount += meshIndexCount[i];
+		index_count += meshIndexCount[i];
 
 		i++;
 	}
 
 // DECLARE RECAST DATA BUFFERS USING THE INFO WE GRABBED ABOVE
 	m_verts = new float[m_vertCount * 3];// *3 as verts holds x,y,&z for each verts in the array
-	m_tris = new int[m_triCount];// tris in recast is really indices like ogre
+	m_tris = new int[index_count];// tris in recast is really indices like ogre
 
 	//convert index count into tri count
-	m_triCount = m_triCount / 3; //although the tris array are indices the ntris is actual number of triangles, eg. indices/3;
+	m_triCount = index_count / 3; //although the tris array are indices the ntris is actual number of triangles, eg. indices/3;
 
 	//copy all meshes verticies into single buffer and transform to world space relative to parentNode
 	int vertsIndex = 0;
@@ -287,12 +287,12 @@ bool rcMeshLoaderObj::convertGfxBody(std::vector<GfxBodyPtr> srcBodies)
 	for (std::vector<GfxBodyPtr>::iterator iter = srcBodies.begin(); iter != srcBodies.end(); iter++) {
 		GfxBodyPtr ent = *iter;
 		//find the transform between the reference node and this node
-		Ogre::Matrix4 transform = mReferenceNode->_getFullTransform().inverse() * ent->getParentSceneNode()->_getFullTransform();
-		Ogre::Vector3 vertexPos;
+		Transform transform = ent->getWorldTransform();
+		Vector3 vertexPos;
 		for (size_t j = 0; j < meshVertexCount[i]; j++)
 		{
-			vertexPos = transform*meshVertices[i][j];
-			m_verts[vertsIndex] = -vertexPos.x;
+			vertexPos = transform*from_ogre(meshVertices[i][j]);
+			m_verts[vertsIndex + 0] = -vertexPos.x;
 			m_verts[vertsIndex + 1] = vertexPos.z;
 			m_verts[vertsIndex + 2] = vertexPos.y;
 			vertsIndex += 3;
@@ -305,8 +305,12 @@ bool rcMeshLoaderObj::convertGfxBody(std::vector<GfxBodyPtr> srcBodies)
 		prevIndexCountTotal += meshIndexCount[i];
 		prevVerticiesCount += meshVertexCount[i];
 
+        APP_ASSERT(vertsIndex == prevVerticiesCount * 3);
+
 		i++;
 	}
+    APP_ASSERT(prevVerticiesCount == m_vertCount);
+    APP_ASSERT(prevIndexCountTotal == m_triCount * 3);
 
 	//delete tempory arrays
 	//TODO These probably could member variables, this would increase performance slightly
@@ -318,7 +322,7 @@ bool rcMeshLoaderObj::convertGfxBody(std::vector<GfxBodyPtr> srcBodies)
 	m_normals = new float[m_triCount * 3];
 	for (int i = 0; i < m_triCount * 3; i += 3)
 	{
-		const float* v0 = &m_verts[m_tris[i] * 3];
+		const float* v0 = &m_verts[m_tris[i + 0] * 3];
 		const float* v1 = &m_verts[m_tris[i + 1] * 3];
 		const float* v2 = &m_verts[m_tris[i + 2] * 3];
 		float e0[3], e1[3];
@@ -433,24 +437,22 @@ void getMeshInformation(const Ogre::MeshPtr mesh, size_t &vertex_count, Ogre::Ve
 
 		bool use32bitindexes = (ibuf->getType() == Ogre::HardwareIndexBuffer::IT_32BIT);
 
-		unsigned long* pLong = static_cast<unsigned long*>(ibuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
-		unsigned short* pShort = reinterpret_cast<unsigned short*>(pLong);
-
 		size_t offset = (submesh->useSharedVertices) ? shared_offset : current_offset;
 
 		if (use32bitindexes)
 		{
+            auto *pLong = static_cast<uint32_t*>(ibuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
 			for (size_t k = 0; k < numTris * 3; ++k)
 			{
-				indices[index_offset++] = pLong[k] + static_cast<unsigned long>(offset);
+				indices[index_offset++] = pLong[k] + offset;
 			}
 		}
 		else
 		{
+            auto *pShort = static_cast<uint16_t*>(ibuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
 			for (size_t k = 0; k < numTris * 3; ++k)
 			{
-				indices[index_offset++] = static_cast<unsigned long>(pShort[k]) +
-					static_cast<unsigned long>(offset);
+				indices[index_offset++] = static_cast<unsigned long>(pShort[k]) + offset;
 			}
 		}
 
