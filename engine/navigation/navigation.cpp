@@ -492,7 +492,7 @@ void NavigationSystem::reset()
 	delete geom;
 	geom = 0;
 	NavSysDebug::clearAllObjects();
-	nvmgr->freeNavmesh();
+	nvmgr->changeMesh(nullptr);
 	navMeshLoaded = false;
 }
 
