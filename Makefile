@@ -24,6 +24,7 @@ ARCH?= -march=native -mtune=native
 include engine/grit.mk
 include gtasa/grit.mk
 
+include dependencies/grit-freeimage/grit.mk
 include dependencies/grit-bullet/grit.mk
 include dependencies/grit-lua/grit.mk
 include dependencies/grit-ogre/grit.mk
@@ -35,9 +36,6 @@ include dependencies/recastnavigation_grit.mk
 
 PKGCONFIG_DEPS = freetype2 gl glu glew xaw7 zlib zziplib xrandr xrender
 
-
-FREEIMAGE_LDFLAGS= \
-    -lfreeimage \
 
 ICU_LDLIBS= \
     /usr/lib/x86_64-linux-gnu/libicui18n.a \
@@ -52,6 +50,7 @@ VORBIS_LDLIBS   ?= -lvorbisfile
 
 
 GRIT_WEAK_C_SRCS= \
+    $(addprefix dependencies/grit-freeimage/,$(FREEIMAGE_WEAK_C_SRCS)) \
     $(addprefix dependencies/grit-bullet/,$(BULLET_WEAK_C_SRCS)) \
     $(addprefix dependencies/grit-lua/,$(LUA_WEAK_C_SRCS)) \
     $(addprefix dependencies/grit-ogre/,$(OGRE_WEAK_C_SRCS)) \
@@ -59,12 +58,12 @@ GRIT_WEAK_C_SRCS= \
     $(addprefix dependencies/jsonxx/,$(JSONXX_WEAK_C_SRCS)) \
     $(addprefix dependencies/quex-0.34.1/,$(QUEX_WEAK_C_SRCS)) \
     $(addprefix dependencies/recastnavigation/,$(RECAST_WEAK_C_SRCS)) \
-    $(FREEIMAGE_WEAK_C_SRCS) \
     $(ICU_WEAK_C_SRCS) \
     $(OPENAL_WEAK_C_SRCS) \
     $(VORBIS_WEAK_C_SRCS) \
 
 GRIT_WEAK_CPP_SRCS= \
+    $(addprefix dependencies/grit-freeimage/,$(FREEIMAGE_WEAK_CPP_SRCS)) \
     $(addprefix dependencies/grit-bullet/,$(BULLET_WEAK_CPP_SRCS)) \
     $(addprefix dependencies/grit-lua/,$(LUA_WEAK_CPP_SRCS)) \
     $(addprefix dependencies/grit-ogre/,$(OGRE_WEAK_CPP_SRCS)) \
@@ -72,12 +71,12 @@ GRIT_WEAK_CPP_SRCS= \
     $(addprefix dependencies/jsonxx/,$(JSONXX_WEAK_CPP_SRCS)) \
     $(addprefix dependencies/quex-0.34.1/,$(QUEX_WEAK_CPP_SRCS)) \
     $(addprefix dependencies/recastnavigation/,$(RECAST_WEAK_CPP_SRCS)) \
-    $(FREEIMAGE_WEAK_CPP_SRCS) \
     $(ICU_WEAK_CPP_SRCS) \
     $(OPENAL_WEAK_CPP_SRCS) \
     $(VORBIS_WEAK_CPP_SRCS) \
 
 GRIT_C_SRCS= \
+    $(addprefix dependencies/grit-freeimage/,$(FREEIMAGE_C_SRCS)) \
     $(addprefix dependencies/grit-bullet/,$(BULLET_C_SRCS)) \
     $(addprefix dependencies/grit-lua/,$(LUA_C_SRCS)) \
     $(addprefix dependencies/grit-ogre/,$(OGRE_C_SRCS)) \
@@ -85,12 +84,12 @@ GRIT_C_SRCS= \
     $(addprefix dependencies/jsonxx/,$(JSONXX_C_SRCS)) \
     $(addprefix dependencies/quex-0.34.1/,$(QUEX_C_SRCS)) \
     $(addprefix dependencies/recastnavigation/,$(RECAST_C_SRCS)) \
-    $(FREEIMAGE_C_SRCS) \
     $(ICU_C_SRCS) \
     $(OPENAL_C_SRCS) \
     $(VORBIS_C_SRCS) \
 
 GRIT_CPP_SRCS= \
+    $(addprefix dependencies/grit-freeimage/,$(FREEIMAGE_CPP_SRCS)) \
     $(addprefix dependencies/grit-bullet/,$(BULLET_CPP_SRCS)) \
     $(addprefix dependencies/grit-lua/,$(LUA_CPP_SRCS)) \
     $(addprefix dependencies/grit-ogre/,$(OGRE_CPP_SRCS)) \
@@ -98,7 +97,6 @@ GRIT_CPP_SRCS= \
     $(addprefix dependencies/jsonxx/,$(JSONXX_CPP_SRCS)) \
     $(addprefix dependencies/quex-0.34.1/,$(QUEX_CPP_SRCS)) \
     $(addprefix dependencies/recastnavigation/,$(RECAST_CPP_SRCS)) \
-    $(FREEIMAGE_CPP_SRCS) \
     $(ICU_CPP_SRCS) \
     $(OPENAL_CPP_SRCS) \
     $(VORBIS_CPP_SRCS) \
@@ -108,6 +106,7 @@ GRIT_CPP_SRCS= \
 # TODO: remove EXTRACT_INCLUDE_DIRS from here, refactor to put stuff in dependencies/
 INCLUDE_DIRS= \
     $(addprefix gtasa/,$(EXTRACT_INCLUDE_DIRS)) \
+    $(addprefix dependencies/grit-freeimage/,$(FREEIMAGE_INCLUDE_DIRS)) \
     $(addprefix dependencies/grit-bullet/,$(BULLET_INCLUDE_DIRS)) \
     $(addprefix dependencies/grit-lua/,$(LUA_INCLUDE_DIRS)) \
     $(addprefix dependencies/grit-ogre/,$(OGRE_INCLUDE_DIRS)) \
@@ -115,7 +114,6 @@ INCLUDE_DIRS= \
     $(addprefix dependencies/jsonxx/,$(JSONXX_INCLUDE_DIRS)) \
     $(addprefix dependencies/quex-0.34.1/,$(QUEX_INCLUDE_DIRS)) \
     $(addprefix dependencies/recastnavigation/,$(RECAST_INCLUDE_DIRS)) \
-    $(FREEIMAGE_INCLUDE_DIRS) \
     $(ICU_INCLUDE_DIRS) \
     $(OPENAL_INCLUDE_DIRS) \
     $(VORBIS_INCLUDE_DIRS) \
@@ -141,7 +139,6 @@ LDFLAGS= \
 	$(UTIL_LDFLAGS) \
 	$(JSONXX_LDFLAGS) \
 	$(QUEX_LDFLAGS) \
-	$(FREEIMAGE_LDFLAGS) \
 	$(ICU_LDFLAGS) \
 	$(OPENAL_LDFLAGS) \
 	$(VORBIS_LDFLAGS) \
@@ -167,6 +164,10 @@ COL_CONV_OBJECTS= \
 
 EXTRACT_OBJECTS= \
 	$(addprefix build/gtasa/,$(EXTRACT_CPP_SRCS)) \
+    $(addprefix build/dependencies/grit-freeimage/,$(FREEIMAGE_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
+    $(addprefix build/dependencies/grit-freeimage/,$(FREEIMAGE_WEAK_C_SRCS:%.c=%.weak_c)) \
+    $(addprefix build/dependencies/grit-freeimage/,$(FREEIMAGE_CPP_SRCS)) \
+    $(addprefix build/dependencies/grit-freeimage/,$(FREEIMAGE_C_SRCS)) \
 	$(addprefix build/dependencies/grit-ogre/,$(OGRE_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
 	$(addprefix build/dependencies/grit-ogre/,$(OGRE_WEAK_C_SRCS:%.c=%.weak_c)) \
 	$(addprefix build/dependencies/grit-ogre/,$(OGRE_CPP_SRCS)) \
@@ -182,6 +183,10 @@ GSL_OBJECTS= \
 	$(addprefix build/engine/,$(GSL_STANDALONE_CPP_SRCS)) \
 
 XMLCONVERTER_OBJECTS= \
+    $(addprefix build/dependencies/grit-freeimage/,$(FREEIMAGE_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
+    $(addprefix build/dependencies/grit-freeimage/,$(FREEIMAGE_WEAK_C_SRCS:%.c=%.weak_c)) \
+    $(addprefix build/dependencies/grit-freeimage/,$(FREEIMAGE_CPP_SRCS)) \
+    $(addprefix build/dependencies/grit-freeimage/,$(FREEIMAGE_C_SRCS)) \
 	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_WEAK_CPP_SRCS:%.cpp=%.weak_cpp)) \
 	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_WEAK_C_SRCS:%.c=%.weak_c)) \
 	$(addprefix build/dependencies/grit-ogre/,$(XMLCONVERTER_CPP_SRCS)) \
@@ -239,7 +244,7 @@ build/%.c.o: %.c
 build/%.weak_cpp.o: %.cpp
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) -c $(CODEGEN) -std=c++11 $(CFLAGS) $< -o $@
+	@$(CXX) -c $(CODEGEN) -std=c++11 -Wno-narrowing -Wno-literal-suffix -Wno-unused-result -Wno-format -Wno-terminate -Wno-write-strings -Wno-deprecated-declarations -Wno-pedantic -Wno-int-to-pointer-cast $(CFLAGS) $< -o $@
 
 # Hack to also support dependencies that use .cc
 build/%.weak_cpp.o: %.cc
@@ -250,7 +255,7 @@ build/%.weak_cpp.o: %.cc
 build/%.weak_c.o: %.c
 	@$(COMPILING)
 	@mkdir -p $(shell dirname $@)
-	@$(CC) -c $(CODEGEN) $(CFLAGS) $< -o $@
+	@$(CC) -c $(CODEGEN) -Wno-implicit-function-declaration $(CFLAGS) $< -o $@
 
 extract: $(addsuffix .o,$(EXTRACT_OBJECTS))
 	@$(LINKING)
