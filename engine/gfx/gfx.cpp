@@ -260,9 +260,9 @@ void gfx_env_cube (unsigned i, const DiskResourcePtr<GfxEnvCubeDiskResource> &v)
     auto &ec = i == 0 ? global_env_cube0 : global_env_cube1;
     if (ec == v) return;
     //CVERB << "Setting scene env cube to " << v << std::endl;
+    ec = v;
     env_cube_count = unsigned(global_env_cube0 != nullptr)
                    + unsigned(global_env_cube1 != nullptr);
-    ec = v;
 }
 
 GfxTextureDiskResource *gfx_shadow_pcf_noise_map (void)
