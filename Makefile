@@ -199,6 +199,8 @@ ALL_OBJECTS= \
 	$(GSL_OBJECTS) \
 	$(XMLCONVERTER_OBJECTS) \
 
+# Caution: -ffast-math broke btContinuousConvexCollision::calcTimeOfImpact, and there seems to be
+# no easy way to disable it on a per-file basis.
 CODEGEN= \
     $(OPT) \
     $(ARCH) \
@@ -206,7 +208,6 @@ CODEGEN= \
     -Wno-type-limits \
     -Wno-deprecated \
     -g \
-    -ffast-math \
 
 
 # -----------
