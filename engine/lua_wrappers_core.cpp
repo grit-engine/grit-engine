@@ -819,21 +819,21 @@ TRY_START
     check_args(L, 1);
     std::string filename = check_path(L, 1);
 
-    // stack: []
-    int status = aux_include(L,filename);
+    // stack: [filename]
+    int status = aux_include(L, filename);
     if (status) {
-        // stack: [error_string]
+        // stack: [filename, error_string]
         const char *str = lua_tostring(L, -1);
         // call error function manually, lua will not do this for us in lua_load
         my_lua_error(L, str);
+        // stack: [filename]
+        return 0;
     } else {
-        // stack: [function]
-        lua_call(L, 0, 0);
-        // stack: []
+        // stack: [filename, function]
+        lua_call(L, 0, LUA_MULTRET);
+        // stack: [filename, ?]
+        return lua_gettop(L) - 1;
     }
-    // stack: []
-
-    return 0;
 TRY_END
 }
 
@@ -843,32 +843,32 @@ TRY_START
     check_args(L, 1);
     std::string filename = check_path(L, 1);
 
-    bool successful;
+    lua_pushboolean(L, true);
 
-    // stack: []
+    // stack: [filename, true]
     int status = aux_include(L,filename);
     if (status) {
-        successful = false;
-        // stack: [error_string]
-        // call error function manually, lua will not do this for us in lua_load
-        // (but we want to fail silently if it's a file not found)
-        if (status!=LUA_ERRFILE) {
-            const char *str = lua_tostring(L,-1);
-            my_lua_error(L,str);
-        }
-        // stack: [error_string]
-        lua_pop(L,1);
-        // stack: []
-    } else {
-        successful = true;
-        // stack: [function]
-        lua_call(L, 0, 0);
-        // stack: []
-    }
-    // stack: []
+        // stack: [filename, true, error_string]
+        // The 'true' on the stack never gets used in this case.
 
-    lua_pushboolean(L, successful);
-    return 1;
+        // Propagate errors that aren't "file not found".
+        if (status != LUA_ERRFILE) {
+            const char *str = lua_tostring(L, -1);
+            my_lua_error(L, str);
+        }
+        // stack: [filename, true, error_string]
+        lua_pop(L, 1);
+        // stack: [filename, true]
+        lua_pushboolean(L, false);
+        // stack: [filename, true, false]
+        return 1;
+
+    } else {
+        // stack: [filename, true, function]
+        lua_call(L, 0, LUA_MULTRET);
+        // stack: [filename, true, ?]
+        return lua_gettop(L) - 1;
+    }
 TRY_END
 }
 
