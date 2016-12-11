@@ -406,8 +406,10 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     frag_ss << "    func_user_colour(out_colour, out_alpha);\n";
     if (env.fadeDither) {
         frag_ss << "    fade();\n";
+    } else {
+        frag_ss << "    out_alpha *= internal_fade;\n";
     }
-    frag_ss << "    out_colour_alpha = Float4(out_colour, out_alpha);\n";
+    frag_ss << "    out_colour_alpha = Float4(out_colour * out_alpha, out_alpha);\n";
     if (das) {
         // Whether we are using d3d9 or gl rendersystems,
         // ogre gives us the view_proj in a 'standard' form, which is
@@ -664,9 +666,20 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
                 frag_ss << "                                fw * Float3(1, 1, 1));\n",
 
                 frag_ss << "    out_colour_alpha.w = a;\n";
+                if (!env.fadeDither) {
+                    // Fade out the contribution of sun / env light according to internal fade.
+                    frag_ss << "    out_colour_alpha.w *= internal_fade;\n";
+                }
+                // Pre-multiply alpha.
+                frag_ss << "    out_colour_alpha.xyz *= out_colour_alpha.w;\n";
+
                 frag_ss << "    Float3 additional;\n";
                 frag_ss << "    Float unused;\n";
                 frag_ss << "    func_user_colour(additional, unused);\n";
+                if (!env.fadeDither) {
+                    // Fade out the contribution of additional light according to internal fade.
+                    frag_ss << "    additional *= internal_fade;\n";
+                }
                 // Fog applied here too.
                 frag_ss << "    out_colour_alpha.xyz += additional\n";
                 frag_ss << "                            * fog_weakness(internal_cam_dist);\n";

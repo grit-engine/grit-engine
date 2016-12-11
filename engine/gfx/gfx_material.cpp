@@ -157,7 +157,9 @@ void GfxMaterial::buildOgreMaterials (void)
         shader->initPass(p, GFX_GSL_PURPOSE_ALPHA, fade_dither, false, boneBlendWeights,
                          textures, bindings);
         p->setDepthWriteEnabled(sceneBlend == GFX_MATERIAL_ALPHA_DEPTH);
-        p->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+        // Use pre-multiplied alpha to allow applying alpha to regular lighting pass and not to
+        // emissive when both are done in the same pass.
+        p->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
         p->setTransparentSortingForced(true);
     }
     if (backfaces)
@@ -173,7 +175,9 @@ void GfxMaterial::buildOgreMaterials (void)
         shader->initPass(p, GFX_GSL_PURPOSE_ALPHA, fade_dither, true, boneBlendWeights,
                          textures, bindings);
         p->setDepthWriteEnabled(sceneBlend == GFX_MATERIAL_ALPHA_DEPTH);
-        p->setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+        // Use pre-multiplied alpha to allow applying alpha to regular lighting pass and not to
+        // emissive when both are done in the same pass.
+        p->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
         p->setTransparentSortingForced(true);
     }
     if (backfaces)

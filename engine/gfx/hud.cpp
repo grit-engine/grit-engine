@@ -1125,7 +1125,7 @@ void gfx_render_hud_text (HudText *text, const Vector3 &colour, float alpha, con
     ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
     ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
 
-    ogre_rs->_setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+    ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
 
     ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
     ogre_rs->setStencilCheckEnabled(false);
@@ -1220,7 +1220,7 @@ void gfx_render_hud_one (HudBase *base)
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);
         ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
 
-        ogre_rs->_setSceneBlending(Ogre::SBF_SOURCE_ALPHA, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+        ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
 
         ogre_rs->_setDepthBias(0, 0);
         ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
