@@ -461,7 +461,7 @@ std::string gfx_gasoline_generate_global_fields (const GfxGslContext &ctx, bool 
         } else {
             auto it2 = ctx.staticValues.find(pair.first);
             if (it2 != ctx.staticValues.end()) {
-                ss << pair.second << " mat_" << pair.first << " = "
+                ss << "const " << pair.second << " mat_" << pair.first << " = "
                    << unparse_param_value(it2->second);
             } else {
                 ss << "uniform " << pair.second << " mat_" << pair.first;
