@@ -74,9 +74,6 @@ executable_suffix = ".exe" if os.sep == "\\" else (".linux."+platform)
 def my_abspath(x):
     return os.path.abspath(bpy.path.abspath(x))
 
-def path_to_os(x):
-    return x.replace("/",os.sep).replace("\\",os.sep)
-
 def path_to_grit(x):
     return x.replace("\\","/")
 
@@ -90,16 +87,16 @@ def grit_path_from_data(scene, data):
 # or takes e.g. "//../base.blend" "Fish"
 # returns "../Fish"
 def grit_path(scene, remote_blend, remote_resource_name):
-    root = my_abspath("//"+scene.grit_root_dir)+"/"
+    root = my_abspath("//" + scene.grit_root_dir) + os.sep
     this_blend_dir = my_abspath("//")
     that_blend = my_abspath(remote_blend)
     that_blend_dir = os.path.dirname(that_blend)
-    #print(root, this_blend_dir, that_blend_dir)
+    print(root, this_blend_dir, that_blend_dir)
     if not this_blend_dir.startswith(root):
-        error_msg("Invalid root directory: \""+scene.grit_root_dir+"\"\n(expands to \""+root+"\")\n does not contain \""+this_blend_dir+"\"")
+        error_msg('Invalid root directory: "%s"\n(expands to "%s")\n does not contain "%s"' % (scene.grit_root_dir, root, this_blend_dir))
         return "UNKNOWN"
     if not that_blend_dir.startswith(root):
-        error_msg("Invalid root directory: \""+scene.grit_root_dir+"\"\n(expands to \""+root+"\")\n does not contain \""+that_blend+"\"")
+        error_msg('Invalid root directory: "%s"\n(expands to "%s")\n does not contain "%s"' % (scene.grit_root_dir, root, that_blend_dir))
         return "UNKNOWN"
 
     # make paths use game's root
