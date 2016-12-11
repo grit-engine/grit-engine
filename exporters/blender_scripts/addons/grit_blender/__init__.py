@@ -168,7 +168,8 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material, scale):
     mesh.update(calc_tessface=True)
 
     num_uv = len(mesh.tessface_uv_textures)
-    diffuse_colour = mesh.tessface_vertex_colors.get("GritColour", None)
+    rgb = mesh.tessface_vertex_colors.get("diffuse_colour_rgb")
+    aaa = mesh.tessface_vertex_colors.get("diffuse_colour_aaa")
     class Empty: pass
 
     # list of vertexes with their attributes
@@ -186,45 +187,54 @@ def get_vertexes_faces(scene, mesh, no_normals, default_material, scale):
 
         triangles = []
 
-        tri = ([f.vertices[0], f.vertices[1], f.vertices[2]], [0,1,2])
+        tri = ([f.vertices[0], f.vertices[1], f.vertices[2]], [0, 1, 2])
         triangles.append(tri)
 
         if len(f.vertices) == 4:
-            tri = ([f.vertices[0], f.vertices[2], f.vertices[3]], [0,2,3])
+            tri = ([f.vertices[0], f.vertices[2], f.vertices[3]], [0, 2, 3])
             triangles.append(tri)
 
         for triangle in triangles:
-            face = [0,0,0]
+            face = [0, 0, 0]
             for fvi, vi in enumerate(triangle[0]):
                 fvi2 = triangle[1][fvi]
                 v = mesh.vertices[vi]
                 vert = Empty()
                 vert.pos =  (v.co.x * scale.x, v.co.y * scale.y, v.co.z * scale.z)
-                vert.colour = (1,1,1)
+                vert.colour = (1, 1, 1)
                 vert.alpha = 1
                 if no_normals:
-                    vert.normal = (0,0,0)
+                    vert.normal = (0, 0, 0)
                 else:
                     vert.normal = (v.normal.x, v.normal.y, v.normal.z)
                 if num_uv == 0:
-                    vert.uv = (0,0)
+                    vert.uv = (0, 0)
                 else:
                     the_uv = mesh.tessface_uv_textures[0].data[fi].uv[fvi2]
                     vert.uv = (the_uv[0], the_uv[1])
-                if diffuse_colour != None:
+                if rgb != None:
                     if fvi2 == 0:
-                        vert.colour = diffuse_colour.data[fi].color1
+                        vert.colour = rgb.data[fi].color1
                     elif fvi2 == 1:
-                        vert.colour = diffuse_colour.data[fi].color2
+                        vert.colour = rgb.data[fi].color2
                     elif fvi2 == 2:
-                        vert.colour = diffuse_colour.data[fi].color3
+                        vert.colour = rgb.data[fi].color3
                     elif fvi2 == 3:
-                        vert.colour = diffuse_colour.data[fi].color4
+                        vert.colour = rgb.data[fi].color4
+                if aaa != None:
+                    if fvi2 == 0:
+                        vert.alpha = sum(aaa.data[fi].color1) / 3
+                    elif fvi2 == 1:
+                        vert.alpha = sum(aaa.data[fi].color2) / 3
+                    elif fvi2 == 2:
+                        vert.alpha = sum(aaa.data[fi].color3) / 3
+                    elif fvi2 == 3:
+                        vert.alpha = sum(aaa.data[fi].color4) / 3
                 vert.groups = None
                 if len(v.groups) > 0:
                     vert.groups = []
                     for gi, g in enumerate(v.groups):
-                        vert.groups.append((g.group,g.weight))
+                        vert.groups.append((g.group, g.weight))
                         
 
                 def tostr (v):
@@ -647,20 +657,26 @@ def export_mesh_internal (scene, obj, tangents, filename, errors):
     filename = my_abspath("//" + filename+".xml")
 
     (vertexes, faces) = get_vertexes_faces(scene, mesh, False, "/system/FallbackMaterial", obj.scale)
-    colour = mesh.tessface_vertex_colors.get("GritColour", None) 
+    rgb = mesh.tessface_vertex_colors.get("diffuse_colour_rgb") 
+    aaa = mesh.tessface_vertex_colors.get("diffuse_colour_aaa") 
 
     file = open(filename, "w")
     file.write("<mesh>\n")
     file.write("    <sharedgeometry>\n")
-    file.write("        <vertexbuffer positions=\"true\" normals=\"true\" colours_diffuse=\""+("false" if colour == None else "true")+"\" texture_coord_dimensions_0=\"float2\" texture_coords=\"1\">\n")
+    file.write('        <vertexbuffer positions="true" normals="true" colours_diffuse="%s" texture_coord_dimensions_0="float2" texture_coords="1">\n'
+               % bool(rgb or aaa))
     for v in vertexes:
         file.write("            <vertex>\n")
         file.write("                <position x=\""+str(v.pos[0])+"\" y=\""+str(v.pos[1])+"\" z=\""+str(v.pos[2])+"\" />\n")
         file.write("                <normal x=\""+str(v.normal[0])+"\" y=\""+str(v.normal[1])+"\" z=\""+str(v.normal[2])+"\" />\n")
         file.write("                <texcoord u=\""+str(v.uv[0])+"\" v=\""+str(1-v.uv[1])+"\" />\n")
-        if colour != None:
-            col = str(v.colour[0])+" "+str(v.colour[1])+" "+str(v.colour[2])+" 1.0"
-            file.write("                <colour_diffuse value=\""+col+"\" />\n")
+        if rgb != None or aaa != None:
+            r, g, b, a = 1, 1, 1, 1
+            if rgb != None:
+                r, g, b = v.colour
+            if aaa != None:
+                a = v.alpha
+            file.write('                <colour_diffuse value="%f %f %f %f" />\n' % (r, g, b, a))
         file.write("            </vertex>\n")
     file.write("        </vertexbuffer>\n")
     file.write("    </sharedgeometry>\n")
@@ -1111,6 +1127,7 @@ class ExportSelected(bpy.types.Operator):
         error_msg(err)
         return {'FINISHED'}
 
+
 class ImportXML(bpy.types.Operator):
     '''Import from a .mesh.xml file'''
     bl_idname = "grit.import_xml"
@@ -1133,15 +1150,24 @@ class ImportXML(bpy.types.Operator):
             return {'FINISHED'}
         blender_verts = []
         blender_uvs = []
+        blender_cols = []
         for vertexbuffer in sharedgeometry.iterfind("vertexbuffer"):
+            has_positions = vertexbuffer.get('positions') == 'true'
+            num_coords = int(vertexbuffer.get('texture_coords'))
+            has_colours_diffuse = vertexbuffer.get('colours_diffuse') == 'true'
             for vert in vertexbuffer.iterfind("vertex"):
-                x = float(vert.find("position").get("x"))
-                y = float(vert.find("position").get("y"))
-                z = float(vert.find("position").get("z"))
-                blender_verts.append((x,y,z))
-                u = float(vert.find("texcoord").get("u"))
-                v = float(vert.find("texcoord").get("v"))
-                blender_uvs.append((u,1-v))
+                if has_positions:
+                    x = float(vert.find("position").get("x"))
+                    y = float(vert.find("position").get("y"))
+                    z = float(vert.find("position").get("z"))
+                    blender_verts.append((x,y,z))
+                if num_coords >= 1:
+                    u = float(vert.find("texcoord").get("u"))
+                    v = float(vert.find("texcoord").get("v"))
+                    blender_uvs.append((u,1-v))
+                if has_colours_diffuse:
+                    value = vert.find('colour_diffuse').get('value')
+                    blender_cols.append(tuple([float(x) for x in value.split(' ')]))
 
         submeshes = root.find("submeshes")
         if submeshes == None:
@@ -1180,7 +1206,7 @@ class ImportXML(bpy.types.Operator):
         #for fi in range(0,len(blender_faces)-1):
         #    mesh.tessfaces[fi].material_index = blender_face_materials[fi]
 
-        mesh.tessface_uv_textures.new()
+        mesh.tessface_uv_textures.new('coord0_uv')
 
         for fi in range(0,len(blender_faces)-1):
             f = blender_faces[fi]
@@ -1188,7 +1214,17 @@ class ImportXML(bpy.types.Operator):
             mesh.tessface_uv_textures[0].data[fi].uv2 = blender_uvs[f[1]]
             mesh.tessface_uv_textures[0].data[fi].uv3 = blender_uvs[f[2]]
 
-        #mesh.tessface_vertex_colors.new("GritColour")
+        if len(blender_cols) > 0:
+            aaa = mesh.tessface_vertex_colors.new('diffuse_colour_aaa')
+            rgb = mesh.tessface_vertex_colors.new('diffuse_colour_rgb')
+            for fi in range(0,len(blender_faces)-1):
+                f = blender_faces[fi]
+                rgb.data[fi].color1 = blender_cols[f[0]][0:3]
+                rgb.data[fi].color2 = blender_cols[f[1]][0:3]
+                rgb.data[fi].color3 = blender_cols[f[2]][0:3]
+                aaa.data[fi].color1 = blender_cols[f[0]][3:4] * 3
+                aaa.data[fi].color2 = blender_cols[f[1]][3:4] * 3
+                aaa.data[fi].color3 = blender_cols[f[2]][3:4] * 3
 
         mesh.update()
         
