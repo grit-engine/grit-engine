@@ -661,17 +661,27 @@ void GfxShader::initPass (Ogre::Pass *p,
 }
 
 void GfxShader::updatePass (Ogre::Pass *p,
-                            GfxGslPurpose purpose,
                             const GfxShaderGlobals &globs,
+                            GfxGslPurpose purpose,
+                            bool fade_dither,
+                            bool instanced,
+                            unsigned bone_weights,
                             const GfxTextureStateMap &textures,
                             const GfxShaderBindings &bindings)
 {
-    (void) textures;
-    (void) bindings;
-    const Ogre::GpuProgramParametersSharedPtr &vparams = p->getVertexProgramParameters();
-    const Ogre::GpuProgramParametersSharedPtr &fparams = p->getFragmentProgramParameters();
+    auto np = getNativePair(purpose, fade_dither, env_cube_count, instanced, bone_weights,
+                            textures, bindings);
 
-    updatePassGlobals(vparams, fparams, globs, purpose);
+    if (p->getFragmentProgram() != np.fp || p->getVertexProgram() != np.vp) {
+        // Need a whole new shader, so do the slow path.
+        p->removeAllTextureUnitStates();
+        initPass(p, purpose, fade_dither, instanced, bone_weights, textures, bindings);
+
+    }
+    const Ogre::GpuProgramParametersSharedPtr &vp = p->getVertexProgramParameters();
+    const Ogre::GpuProgramParametersSharedPtr &fp = p->getFragmentProgramParameters();
+
+    updatePassGlobals(vp, fp, globs, purpose);
     //bindGlobals(vparams, fparams, globs, purpose);
     updatePassGlobalTextures(p, purpose);
 }

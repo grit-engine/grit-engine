@@ -184,8 +184,12 @@ class GfxShader {
                    const GfxShaderBindings &bindings);
 
     // Every frame
-    void updatePass (Ogre::Pass *p, GfxGslPurpose purpose,
+    void updatePass (Ogre::Pass *p,
                      const GfxShaderGlobals &globs,
+                     GfxGslPurpose purpose,
+                     bool fade_dither,
+                     bool instanced,
+                     unsigned bone_weights,
                      const GfxTextureStateMap &textures,
                      const GfxShaderBindings &bindings);
 
