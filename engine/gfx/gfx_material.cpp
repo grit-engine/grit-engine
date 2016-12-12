@@ -201,34 +201,43 @@ void GfxMaterial::buildOgreMaterials (void)
 void GfxMaterial::updateOgreMaterials (const GfxShaderGlobals &globs)
 {
     Ogre::Pass *p;
+    bool fade_dither = sceneBlend == GFX_MATERIAL_OPAQUE;
 
     // TODO: wireframe for instanced geometry?
     p = wireframeMat->getTechnique(0)->getPass(0);
-    shader->updatePass(p, GFX_GSL_PURPOSE_WIREFRAME, globs, textures, bindings);
+    shader->updatePass(p, globs, GFX_GSL_PURPOSE_WIREFRAME, fade_dither, false, boneBlendWeights,
+                       textures, bindings);
 
     p = castMat->getTechnique(0)->getPass(0);
-    shader->updatePass(p, GFX_GSL_PURPOSE_CAST, globs, textures, bindings);
+    shader->updatePass(p, globs, GFX_GSL_PURPOSE_CAST, fade_dither, false, boneBlendWeights,
+                       textures, bindings);
 
     p = instancingCastMat->getTechnique(0)->getPass(0);
-    shader->updatePass(p, GFX_GSL_PURPOSE_CAST, globs, textures, bindings);
+    shader->updatePass(p, globs, GFX_GSL_PURPOSE_CAST, fade_dither, false, boneBlendWeights,
+                       textures, bindings);
 
     p = regularMat->getTechnique(0)->getPass(0);
     if (sceneBlend == GFX_MATERIAL_OPAQUE) {
-        shader->updatePass(p, GFX_GSL_PURPOSE_FORWARD, globs, textures, bindings);
+        shader->updatePass(p, globs, GFX_GSL_PURPOSE_FORWARD, fade_dither, false, boneBlendWeights,
+                           textures, bindings);
     } else {
-        shader->updatePass(p, GFX_GSL_PURPOSE_ALPHA, globs, textures, bindings);
+        shader->updatePass(p, globs, GFX_GSL_PURPOSE_ALPHA, fade_dither, false, boneBlendWeights,
+                           textures, bindings);
     }
 
     p = instancingMat->getTechnique(0)->getPass(0);
     if (sceneBlend == GFX_MATERIAL_OPAQUE) {
-        shader->updatePass(p, GFX_GSL_PURPOSE_FORWARD, globs, textures, bindings);
+        shader->updatePass(p, globs, GFX_GSL_PURPOSE_FORWARD, fade_dither, false, boneBlendWeights,
+                           textures, bindings);
     } else {
-        shader->updatePass(p, GFX_GSL_PURPOSE_ALPHA, globs, textures, bindings);
+        shader->updatePass(p, globs, GFX_GSL_PURPOSE_ALPHA, fade_dither, false, boneBlendWeights,
+                           textures, bindings);
     }
 
     // TODO: additional lighting for instanced geometry?
     p = additionalMat->getTechnique(0)->getPass(0);
-    shader->updatePass(p, GFX_GSL_PURPOSE_ADDITIONAL, globs, textures, bindings);
+    shader->updatePass(p, globs, GFX_GSL_PURPOSE_ADDITIONAL, fade_dither, false, boneBlendWeights,
+                       textures, bindings);
 }
 
 GfxMaterial *gfx_material_add (const std::string &name)
