@@ -63,6 +63,14 @@ class GfxSkyBody : public fast_erase_index {
 
     static GfxSkyBodyPtr make (const std::string &mesh_name, short z_order);
 
+    const Ogre::MeshPtr &getMesh (void) {
+        return mesh;
+    }
+
+    const std::string &getMeshName (void) {
+        return mesh->getName();
+    }
+
     unsigned getNumSubMeshes (void) { return materials.size(); }
     GfxSkyMaterial *getMaterial (unsigned i);
     void setMaterial (unsigned i, GfxSkyMaterial *m);
