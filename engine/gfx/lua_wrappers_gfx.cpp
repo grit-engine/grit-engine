@@ -1303,6 +1303,9 @@ TRY_START
     } else if (!::strcmp(key,"enabled")) {
         lua_pushboolean(L, self->isEnabled());
 
+    } else if (!::strcmp(key,"meshName")) {
+        push_string(L, self->getMeshName());
+
     } else if (!::strcmp(key,"getMaterials")) {
         push_cfunction(L,gfxskybody_get_materials);
     } else if (!::strcmp(key,"setMaterial")) {
