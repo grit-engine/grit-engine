@@ -1,12 +1,10 @@
 #!/usr/bin/python
 
 import codecs
-import textwrap
 import re
 import string
-
+import textwrap
 from xml.sax.saxutils import escape
-import lxml.etree as ET
 
 from translate_xml import *
 

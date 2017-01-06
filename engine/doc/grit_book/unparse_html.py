@@ -3,7 +3,6 @@
 import codecs
 import textwrap
 from xml.sax.saxutils import escape
-import lxml.etree as ET
 
 from pygments import highlight
 from pygments.formatters import HtmlFormatter

@@ -5,10 +5,11 @@ import re
 from shutil import copyfile
 
 import lxml.etree as ET
+
 from translate_xml import *
 from unparse_html import *
 from unparse_markdown import *
-from shutil import copyfile
+
 
 # libxml2 does not properly implement the XML standard, so do my own implementation here...
 def MyXInclude(tree):

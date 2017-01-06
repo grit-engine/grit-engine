@@ -1,11 +1,7 @@
-import re
-
-from pygments.lexer import Lexer, RegexLexer, ExtendedRegexLexer, \
-     LexerContext, include, combined, do_insertions, bygroups, using
-from pygments.token import Error, Text, Other, \
-     Comment, Operator, Keyword, Name, String, Number, Generic, Punctuation
-from pygments.util import get_bool_opt, get_list_opt, shebang_matches
-from pygments import unistring as uni
+from pygments.lexer import bygroups, combined, include, RegexLexer
+from pygments.token import (Comment, Keyword, Name, Number, Operator,
+                            Punctuation, String, Text)
+from pygments.util import get_bool_opt, get_list_opt
 
 
 class GritLuaLexer(RegexLexer):
