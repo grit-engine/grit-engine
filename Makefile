@@ -38,9 +38,9 @@ PKGCONFIG_DEPS = freetype2 gl glu glew xaw7 zlib zziplib xrandr xrender
 
 
 ICU_LDLIBS= \
-    /usr/lib/x86_64-linux-gnu/libicui18n.a \
-    /usr/lib/x86_64-linux-gnu/libicuuc.a \
-    /usr/lib/x86_64-linux-gnu/libicudata.a \
+    /usr/lib/libicui18n.a \
+    /usr/lib/libicuuc.a \
+    /usr/lib/libicudata.a \
     -ldl \
 
 OPENAL_LDLIBS   ?= -lopenal -lvorbisfile
