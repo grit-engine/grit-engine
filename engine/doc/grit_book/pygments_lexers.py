@@ -117,7 +117,10 @@ class GritLuaLexer(RegexLexer):
 
         self._functions = set()
         if self.func_name_highlighting:
-            from pygments.lexers._luabuiltins import MODULES
+            try:
+                from pygments.lexers._luabuiltins import MODULES
+            except ImportError:  # pygments 2.x
+                from pygments.lexers._lua_builtins import MODULES
             for mod, func in MODULES.iteritems():
                 if mod not in self.disabled_modules:
                     self._functions.update(func)
