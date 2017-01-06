@@ -12,7 +12,7 @@
 # Convert md/.md to md_html/*.html (test)
 # Convert html/complete.html to pdf/gritbook.pdf 
 
-python convert_web.py
+python2 convert_web.py
 
 mkdir -p md_html
 
