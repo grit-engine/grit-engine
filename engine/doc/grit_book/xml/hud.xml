@@ -54,23 +54,23 @@
         <def>HUD class</def>, which has fields and methods much like a game
         class.  The HUD class can be instantiated into as many <def>HUD
         objects</def> as we want.  The following HUD class implements a
-        spinning icon;
+        spinning icon:
 
         <lua>
             hud_class `SpinningIcon` {
-                texture = `/common/hud/textures/Icon064.jpg`;
-                speed = 20;
+                texture = `/common/hud/textures/Icon064.jpg`,
+                speed = 20,
                 init = function (self)
                     self.needsFrameCallbacks = true
                     self.angle = 0
-                end;
+                end,
                 destroy = function (self)
                     -- nothing to do
-                end;
+                end,
                 frameCallback = function(self, elapsed)
                     self.angle = (self.angle + elapsed*self.speed) % 360
                     self.orientation = self.angle
-                end;
+                end,
             }
         </lua>
 
@@ -263,14 +263,14 @@
 
         <lua>
             p = gfx_hud_object_add(`/common/hud/Rect`, {
-                colour = vec(1,0,0);
-                position = vec(400,150);
-                size = vec(40,40);
+                colour = vec(1, 0, 0),
+                position = vec(400, 150),
+                size = vec(40, 40),
             })
             c = gfx_hud_object_add(`/common/hud/Rect`, {
-                alpha = 0.5;
-                position = vec(10,10);
-                size = vec(15,15);
+                alpha = 0.5,
+                position = vec(10, 10),
+                size = vec(15, 15),
             })
             c.parent = p
             p.orientation = 45
@@ -283,11 +283,12 @@
         thus formed, with HUD objects at the nodes, and either HUD objects or
         HUD text at the leaves.
 
-        The position of the child is relative to its parent.  It thus displays
-        on top of the parent, in its upper right corner.  The child is always
-        drawn on top of the parent, so setting zOrder is only necessary to
-        disambiguate the draw order of siblings.  Disabling a parent causes all
-        children to effectively be disabled as well.
+        The position of the child is relative to its parent and is always drawn
+        on top of the parent.  In this case it displays in the parent's upper
+        right corner.  Setting <code>zOrder</code> is only necessary to
+        disambiguate the draw order of siblings, as it is never possible to draw
+        a parent on top of a child.  Disabling a parent causes all children to
+        effectively be disabled as well.
 
         Typically, this hierarchy is used to implement more high-level GUI
         elements in terms of low-level ones.  For example, a GUI dialog might
@@ -297,20 +298,49 @@
         
         As the parent's position (or orientation) is updated, the child's
         derived position and orientation are recalculated.  It is also possible
-        to set inheritOrientation to false, which is useful to avoid icons
-        rotating within a spinning mini-map, or to keep text looking crisp and
-        clear.
+        to set <code>inheritOrientation</code> to <code>false</code>, which is useful to
+        avoid icons rotating within a spinning mini-map, or to keep text looking
+        crisp and clear (rotated text can be slightly blurred).
 
-        Note that the child will be garbage collected if there is no link to
-        it, so it is standard to store a link from the parent to the child in
-        order to keep it alive.  The link from child to parent is a
-        <def>weak</def> link, in that it does not in itself prevent the parent
-        from being garbage collected.  Typically, however, one does not link to
-        children without also linking to the parent.
+        Note that the child will be garbage collected if there is no link to it,
+        so it is standard to store a link from the parent to the child in order
+        to keep it alive.  The 'parent' field itself is a <def>weak</def> link,
+        in that it does not in itself prevent the parent from being garbage
+        collected.  However usually the parent is accessible from somewhere else
+        (perhaps another parent or some top level variable).
 
         When a HUD object is destroyed, its children are automatically
         destroyed with it.  If you don't want this behaviour, you can unlink
         the children in the destroy callback by setting their parent to nil.
+
+        <section title="The parentResizedCallback" id="gfxhud_tree_callback">
+
+            Finally, children can react to parent resize events.  This is useful
+            to build "responsive" dialogs that re-arrange their contents upon
+            resize.  For example, a HUD object that is supposed to fill its
+            parent can resize itself when the parent resizes.
+
+            This is achieved by setting <code>needsParentResizedCallbacks</code>
+            to <code>true</code> and then defining a method called
+            <code>parentResizedCallbacks</code> that (other than
+                    <code>self</code>) has a single parameter giving the parent
+            size as a vector2.
+
+            <lua>
+                hud_class `Expanding` {
+                    init = function (self)
+                        self.needsParentResizedCallbacks = true
+                    end,
+                    destroy = function (self)
+                        -- nothing to do
+                    end,
+                    parentResizedCallback = function(self, psize)
+                        self.size = psize
+                    end,
+                }
+            </lua>
+
+        </section>
 
     </section>
 
@@ -327,19 +357,19 @@
                 init = function (self)
                     self.needsInputCallbacks = true
                     self.inside = false
-                end;
+                end,
                 destroy = function (self)
                     -- nothing to do
-                end;
+                end,
                 mouseMoveCallback = function(self, local, screen, inside)
                     print(local, screen, inside)
                     self.inside = inside
-                end;
+                end,
                 buttonCallback = function(self, event)
                     if inside then
                         print(event)
                     end
-                end;
+                end,
             }
         </lua>
 
@@ -400,10 +430,10 @@
 
             <lua>
                 b = gfx_hud_object_add(`/common/hud/Button`, {
-                    caption = "Click Me!";
+                    caption = "Click Me!",
                     pressedCallback = function (self)
                         print("You clicked me!")
-                    end;
+                    end,
                 })
                 -- By default, size is chosen based on the caption size.
                 b.parent = my_dialog
@@ -421,15 +451,15 @@
 
             <lua>
                 b = gfx_hud_object_add(`/common/hud/Button`, {
-                    size = vec(100,40);
-                    font = `/common/fonts/Impact24`;
-                    caption = "Click Me!";
-                    baseColour = vec(0, 0, 0);  -- Black
-                    hoverColour = vec(1, 0, 0);  -- Red
-                    clickColour = vec(1, 1, 0);  -- Yellow
-                    borderColour = vec(1, 1, 1);  -- White
-                    captionColour = vec(1, 1, 1);
-                    captionColourGreyed = vec(0.5, 0.5, 0.5);  -- Grey
+                    size = vec(100, 40),
+                    font = `/common/fonts/Impact24`,
+                    caption = "Click Me!",
+                    baseColour = vec(0, 0, 0),  -- Black
+                    hoverColour = vec(1, 0, 0),  -- Red
+                    clickColour = vec(1, 1, 0),  -- Yellow
+                    borderColour = vec(1, 1, 1),  -- White
+                    captionColour = vec(1, 1, 1),
+                    captionColourGreyed = vec(0.5, 0.5, 0.5),  -- Grey
                 })
             </lua>
 
@@ -444,11 +474,11 @@
 
             <lua>
                 label = gfx_hud_object_add(`/common/hud/Label`, {
-                    size = vec(100, 40);
-                    alignment = "LEFT";  -- Also, "CENTRE", or "RIGHT".
-                    value = "Enter number of things here: ";
-                    position = vec(30, 30);
-                    greyed = true;
+                    size = vec(100, 40),
+                    alignment = "LEFT",  -- Also, "CENTRE", or "RIGHT".
+                    value = "Enter number of things here: ",
+                    position = vec(30, 30),
+                    greyed = true,
                 })
                 label:setValue("Changed value: ")
                 label:setGreyed(false)
@@ -469,13 +499,13 @@
 
             <lua>
                 o = gfx_hud_object_add(`/common/hud/Border`, {
-                    position = vec(200, 200);
-                    padding = 8;  -- Extra space on the inside.
-                    colour = 0.25 * vec(1, 1, 1);  -- Dark grey
-                    texture = "/common/hud/CornerTextures/Border04.png";
+                    position = vec(200, 200),
+                    padding = 8,  -- Extra space on the inside.
+                    colour = 0.25 * vec(1, 1, 1),  -- Dark grey
+                    texture = "/common/hud/CornerTextures/Border04.png",
                     -- The child object:
                     child = gfx_hud_object_add(`/common/hud/Button`, {
-                        caption = "Some button.";
+                        caption = "Some button.",
                     })
                 })
             </lua>
@@ -516,21 +546,21 @@
             <lua>
 
                 o = gfx_hud_object_add(`/common/hud/StackY`, {
-                    position = vec(200, 200);
-                    padding = 8;  -- Default space between elements (defaults to 0)
+                    position = vec(200, 200),
+                    padding = 8,  -- Default space between elements (defaults to 0)
 
                     -- The child objects:
-                    { align="LEFT" };  -- "RIGHT" and "CENTRE" (default) also available.
+                    { align="LEFT" },  -- "RIGHT" and "CENTRE" (default) also available.
                     gfx_hud_object_add(`/common/hud/Button`, {
-                        caption = "Shoot Missile.";
-                    });
+                        caption = "Shoot Missile.",
+                    }),
                     gfx_hud_object_add(`/common/hud/Button`, {
-                        caption = "Shoot Laser.";
-                    });
-                    vec(0, 10);  -- It's also possible to add extra space (or subtract it).
+                        caption = "Shoot Laser.",
+                    }),
+                    vec(0, 10),  -- It's also possible to add extra space (or subtract it).
                     gfx_hud_object_add(`/common/hud/Button`, {
-                        caption = "Place Mine.";
-                    });
+                        caption = "Place Mine.",
+                    }),
                 })
 
             </lua>
@@ -574,9 +604,9 @@
                 o = gfx_hud_object_add(`/common/hud/Stretcher`, {
                     calcRect = function(self, psize)
                         return 50, 50, psize.x-50, psize.y-50
-                    end;
+                    end,
                     child = gfx_hud_object_add(`/common/hud/Button`, {
-                        caption = "Some button.";
+                        caption = "Some button.",
                     })  
                 })  
             </lua>
@@ -595,9 +625,9 @@
 
             <lua>
                 o = gfx_hud_object_add(`/common/hud/Rect`, {
-                    size = vec(100, 100);
-                    parent = hud_top_left;
-                    position = vec(50, -50);
+                    size = vec(100, 100),
+                    parent = hud_top_left,
+                    position = vec(50, -50),
                 })
             </lua>
 
@@ -606,6 +636,8 @@
     </section>
 
     <section title="Bringing it all together" id="gfx_hud_summary">
+
+        <todo>Some sort of complete example.</todo>
 
     </section>
 
