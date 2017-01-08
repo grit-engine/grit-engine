@@ -413,6 +413,11 @@ void HudObject::setParent (lua_State *L, HudObject *v)
     triggerParentResized(L);
 }
 
+Vector2 HudObject::screenToLocal (const Vector2 &screen_pos)
+{
+    return (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
+}
+
 static HudObject *ray (const Vector2 &screen_pos)
 {
     for (int i=GFX_HUD_ZORDER_MAX ; i>=0 ; --i) {
@@ -434,7 +439,7 @@ HudObject *HudObject::shootRay (const Vector2 &screen_pos)
 {
     if (!isEnabled()) return NULL; // can't hit any children either
 
-    Vector2 local_pos = (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
+    Vector2 local_pos = screenToLocal(screen_pos);
     bool inside = fabsf(local_pos.x) < getSize().x / 2
                 && fabsf(local_pos.y) < getSize().y / 2;
 
@@ -498,7 +503,7 @@ void HudObject::triggerMouseMove (lua_State *L, const Vector2 &screen_pos)
         STACK_CHECK_N(2);
 
         push_hudobj(L, this);
-        Vector2 local_pos = (screen_pos - getDerivedPosition()).rotateBy(-getDerivedOrientation());
+        Vector2 local_pos = screenToLocal(screen_pos);
         push_v2(L, local_pos);
         push_v2(L, screen_pos);
         lua_pushboolean(L, ray(screen_pos)==this);

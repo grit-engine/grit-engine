@@ -274,6 +274,9 @@ class HudObject : public HudBase {
     bool getNeedsFrameCallbacks (void) const { assertAlive(); return needsFrameCallbacks; }
     void setNeedsFrameCallbacks (bool v) { assertAlive(); needsFrameCallbacks = v; }
 
+    // Transform screen co-ordinates (e.g. from the mouse) to co-ordinates local to the HudObject.
+    Vector2 screenToLocal (const Vector2 &screen_pos);
+
     /** Return NULL for a miss, otherwise return the object hit, which can be a child.  Must have needsInputCallbacks otherwise ignored. */
     HudObject *shootRay (const Vector2 &screen_pos);
 

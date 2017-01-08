@@ -2701,12 +2701,14 @@ TRY_END
 static int global_hud_ray (lua_State *L)
 {
 TRY_START
-    check_args(L,1);
-    Vector2 pos = check_v2(L,1);
+    check_args(L, 1);
+    Vector2 pos = check_v2(L, 1);
     // negative values occur when dragging out of the game window
     // casting to unsigned makes them go away...
-    push_hudobj(L, hud_ray((unsigned)pos.x, (unsigned)pos.y));
-    return 1;
+    HudObject *obj = hud_ray((unsigned)pos.x, (unsigned)pos.y);
+    push_hudobj(L, obj);
+    push_v2(L, obj->screenToLocal(pos));
+    return 2;
 TRY_END
 }
 
