@@ -6,6 +6,7 @@ media
 .*.swp
 
 # Linux build files
+user.mk
 build
 extract
 grit

@@ -11,6 +11,9 @@
 # User-overrideable parts
 # -----------------------
 
+# Override stuff in a user.mk
+-include user.mk
+
 CXX?= g++
 CC?= gcc
 OPT?=-O3 -DNDEBUG
@@ -36,12 +39,8 @@ include dependencies/recastnavigation_grit.mk
 
 PKGCONFIG_DEPS = freetype2 gl glu glew xaw7 zlib zziplib xrandr xrender
 
-
-ICU_LDLIBS= \
-    /usr/lib/x86_64-linux-gnu/libicui18n.a \
-    /usr/lib/x86_64-linux-gnu/libicuuc.a \
-    /usr/lib/x86_64-linux-gnu/libicudata.a \
-    -ldl \
+# Allow overriding with static deps since this one moves about between distros.
+ICU_LDLIBS      = $(shell pkg-config icu-uc icu-i18n --libs)
 
 OPENAL_LDLIBS   ?= -lopenal -lvorbisfile
 
