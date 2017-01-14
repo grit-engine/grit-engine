@@ -6,6 +6,7 @@ import textwrap
 
 import lxml.etree as ET
 
+
 class TranslateError:
     def __init__(self, el, problem):
         self.filename = el.base

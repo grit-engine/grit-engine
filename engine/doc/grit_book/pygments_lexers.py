@@ -1,11 +1,7 @@
-import re
-
-from pygments.lexer import Lexer, RegexLexer, ExtendedRegexLexer, \
-     LexerContext, include, combined, do_insertions, bygroups, using
-from pygments.token import Error, Text, Other, \
-     Comment, Operator, Keyword, Name, String, Number, Generic, Punctuation
-from pygments.util import get_bool_opt, get_list_opt, shebang_matches
-from pygments import unistring as uni
+from pygments.lexer import bygroups, combined, include, RegexLexer
+from pygments.token import (Comment, Keyword, Name, Number, Operator,
+                            Punctuation, String, Text)
+from pygments.util import get_bool_opt, get_list_opt
 
 
 class GritLuaLexer(RegexLexer):
@@ -117,7 +113,10 @@ class GritLuaLexer(RegexLexer):
 
         self._functions = set()
         if self.func_name_highlighting:
-            from pygments.lexers._luabuiltins import MODULES
+            try:
+                from pygments.lexers._luabuiltins import MODULES
+            except ImportError:  # pygments 2.x
+                from pygments.lexers._lua_builtins import MODULES
             for mod, func in MODULES.iteritems():
                 if mod not in self.disabled_modules:
                     self._functions.update(func)
