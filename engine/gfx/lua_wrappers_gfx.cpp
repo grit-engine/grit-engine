@@ -2706,9 +2706,14 @@ TRY_START
     // negative values occur when dragging out of the game window
     // casting to unsigned makes them go away...
     HudObject *obj = hud_ray((unsigned)pos.x, (unsigned)pos.y);
-    push_hudobj(L, obj);
-    push_v2(L, obj->screenToLocal(pos));
-    return 2;
+    if (obj != nullptr) {
+        push_hudobj(L, obj);
+        push_v2(L, obj->screenToLocal(pos));
+        return 2;
+    } else {
+        lua_pushnil(L);
+        return 1;
+    }
 TRY_END
 }
 
