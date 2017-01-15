@@ -506,13 +506,23 @@ void HudObject::triggerMouseMove (lua_State *L, const Vector2 &screen_pos)
         Vector2 local_pos = screenToLocal(screen_pos);
         push_v2(L, local_pos);
         push_v2(L, screen_pos);
-        lua_pushboolean(L, ray(screen_pos)==this);
+        HudObject *ray_hit_obj = ray(screen_pos);
+        bool hit_us = ray_hit_obj == this;
+        bool hit_child = false;
+        for (HudObject *p = ray_hit_obj ; p != nullptr ; p = p->getParent()) {
+            if (p == this) {
+                hit_child = true;
+                break;
+            }
+        }
+        lua_pushboolean(L, hit_us);
+        lua_pushboolean(L, hit_child);
         //stack: err,callback,object,local_pos,screen_pos,inside
 
-        STACK_CHECK_N(6);
+        STACK_CHECK_N(7);
 
         // call (1 arg), pops function too
-        int status = lua_pcall(L,4,0,error_handler);
+        int status = lua_pcall(L,5,0,error_handler);
         if (status) {
             STACK_CHECK_N(2);
             //stack: err,error
