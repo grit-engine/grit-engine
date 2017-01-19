@@ -302,9 +302,8 @@ void GfxInstances::_updateRenderQueue(Ogre::RenderQueue *queue)
     }
 }
 
-const std::string &GfxInstances::getMeshName (void)
+std::string GfxInstances::getMeshName (void) const
 {   
-    static std::string empty_string = "";
-    return mesh.isNull() ? empty_string : mesh->getName();
+    return "/" + mesh->getName();
 }
 

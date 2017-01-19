@@ -739,9 +739,9 @@ void GfxBody::setEnabled (bool v)
     enabled = v;
 }
 
-const std::string &GfxBody::getMeshName (void)
+std::string GfxBody::getMeshName (void) const
 {
-    return mesh->getName();
+    return "/" + mesh->getName();
 }
 
 

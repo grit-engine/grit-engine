@@ -204,7 +204,7 @@ class GfxBody : public GfxFertileNode, public Ogre::MovableObject {
 
     bool hasGraphics (void) const { return true; }
 
-    const std::string &getMeshName (void);
+    std::string getMeshName (void) const;
 
     friend class SharedPtr<GfxBody>;
     friend class GfxMeshDiskResource;

@@ -67,8 +67,8 @@ class GfxSkyBody : public fast_erase_index {
         return mesh;
     }
 
-    const std::string &getMeshName (void) {
-        return mesh->getName();
+    std::string getMeshName (void) const {
+        return "/" + mesh->getName();
     }
 
     unsigned getNumSubMeshes (void) { return materials.size(); }

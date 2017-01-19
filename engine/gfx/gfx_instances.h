@@ -118,7 +118,7 @@ class GfxInstances : public GfxNode, public Ogre::MovableObject {
     virtual void _updateRenderQueue(Ogre::RenderQueue *q);
 
 
-    const std::string &getMeshName (void);
+    std::string getMeshName (void) const;
 
     friend class SharedPtr<GfxInstances>;
 };
