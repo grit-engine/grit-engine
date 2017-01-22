@@ -122,7 +122,6 @@ void GfxMaterial::buildOgreMaterials (void)
     p->setCullingMode(Ogre::CULL_NONE);
     p->setPolygonMode(Ogre::PM_WIREFRAME);
     p->setDepthWriteEnabled(false);
-    p->setDepthBias(1, 1);
     wireframeMat = Ogre::MaterialManager::getSingleton().getByName(name + ":wireframe", "GRIT");
 
 
@@ -192,7 +191,6 @@ void GfxMaterial::buildOgreMaterials (void)
     if (backfaces)
         p->setCullingMode(Ogre::CULL_NONE);
     p->setDepthWriteEnabled(false);
-    p->setDepthBias(1, 1);
     p->setDepthFunction(Ogre::CMPF_LESS_EQUAL);
     p->setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE);
     additionalMat = Ogre::MaterialManager::getSingleton().getByName(name + ":additional", "GRIT");

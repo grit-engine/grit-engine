@@ -670,7 +670,7 @@ class DeferredLightingPasses : public Ogre::RenderQueueInvocation {
             }
 
             ogre_rs->_setCullingMode(Ogre::CULL_NONE);
-            ogre_rs->_setDepthBufferParams(true, true, Ogre::CMPF_LESS_EQUAL);
+            ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
             ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
             ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
             ogre_rs->setStencilCheckEnabled(false);
@@ -1019,6 +1019,8 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
                     Ogre::TU_RENDERTARGET,
                     NULL,
                     false);
+        hdrFb[i]->getBuffer()->getRenderTarget()->setDepthBufferPool(
+            Ogre::DepthBuffer::POOL_MANUAL_USAGE);
     }
 
     cam = ogre_sm->createCamera(name+":cam");
@@ -1251,7 +1253,9 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
     }
 
     // render from gbuffer, the alpha passes, sky, etc into hdr viewport
+    hdrFb[0]->getBuffer()->getRenderTarget()->attachDepthBuffer(gBuffer->getDepthBuffer());
     vp = hdrFb[0]->getBuffer()->getRenderTarget()->addViewport(cam);
+    vp->setClearEveryFrame(true, Ogre::FBT_COLOUR);
     vp->setBackgroundColour(Ogre::ColourValue(0.3, 0.3, 0.3));
     vp->setShadowsEnabled(false);
     vp->setRenderQueueInvocationSequenceName(rqisDeferred->getName());
@@ -1261,6 +1265,7 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
     deferredStats.triangles = ogre_rs->_getFaceCount();
     deferredStats.micros = micros_after_deferred - micros_after_gbuffer;
     hdrFb[0]->getBuffer()->getRenderTarget()->removeViewport(vp->getZOrder());
+    hdrFb[0]->getBuffer()->getRenderTarget()->detachDepthBuffer();
 
 
     Ogre::SceneBlendFactor target_blend = additive ? Ogre::SBF_ONE : Ogre::SBF_ZERO;

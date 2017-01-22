@@ -415,8 +415,8 @@ void gfx_gasoline_unparse_cg(const GfxGslContext &ctx,
         // ogre gives us the view_proj in a 'standard' form, which is
         // right-handed with a depth range of [-1,+1].
         // Since we are outputing depth in the fragment shader, the range either way is [0,1]
-        frag_ss << "    Float4 projected = mul(global_viewProj, Float4(user_pos_ws, 1));\n";
-        frag_ss << "    out_depth = 0.5 + (projected.z / projected.w) / 2.0;\n";
+        //frag_ss << "    Float4 projected = mul(global_viewProj, Float4(user_pos_ws, 1));\n";
+        //frag_ss << "    out_depth = 0.5 + (projected.z / projected.w) / 2.0;\n";
     }
     frag_ss << "}\n";
 

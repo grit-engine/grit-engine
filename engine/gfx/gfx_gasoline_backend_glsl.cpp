@@ -212,7 +212,7 @@ static std::string generate_vert_header (bool glsl33,
     if (glsl33) {
         ss << "out gl_PerVertex\n";
         ss << "{\n";
-        ss << "    vec4 gl_Position;\n";
+        ss << "    invariant vec4 gl_Position;\n";
         ss << "    float gl_PointSize;\n";
         ss << "    float gl_ClipDistance[];\n";
         ss << "};\n";
@@ -363,7 +363,10 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     if (das) {
         vert_ss << "    Float4 clip_pos = Float4(world_pos, 1);\n";
     } else {
-        vert_ss << "    Float4 clip_pos = mul(global_viewProj, Float4(world_pos, 1));\n";
+        // For additive passes to compute same depth as the gbuffer passes, do not
+        // multiple by viewproj here.
+        vert_ss << "    Float3 pos_vs = mul(global_view, Float4(world_pos, 1)).xyz;\n";
+        vert_ss << "    Float4 clip_pos = mul(global_proj, Float4(pos_vs, 1));\n";
     }
     vert_ss << "    clip_pos.y *= internal_rt_flip;\n";
     // Hack to maximum depth, but avoid hitting the actual backplane.
@@ -371,9 +374,6 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     if (flat_z)
         vert_ss << "    clip_pos.z = clip_pos.w * (1 - 1.0/65536);\n";
     vert_ss << "    gl_Position = clip_pos;\n";
-    if (das) {
-        
-    }
     vert_ss << gfx_gasoline_generate_trans_encode(trans, "user_");
     vert_ss << "}\n";
 
@@ -418,8 +418,8 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
         // Note that this code pre-supposes that all DAS shaders create a user variable
         // called pos_ws, but they are all internal shaders so we can guarantee that.
         // The pos_ws needs to be a point within the frustum.
-        frag_ss << "    Float4 projected = mul(global_viewProj, Float4(user_pos_ws, 1));\n";
-        frag_ss << "    gl_FragDepth = 0.5 + (projected.z / projected.w) / 2.0;\n";
+        // frag_ss << "    Float4 projected = mul(global_viewProj, Float4(user_pos_ws, 1));\n";
+        // frag_ss << "    gl_FragDepth = 0.5 + (projected.z / projected.w) / 2.0;\n";
     }
     frag_ss << "}\n";
 

@@ -1083,6 +1083,10 @@ size_t gfx_init (GfxCallback &cb_)
 
         shader_scene_env.shadowFactor = 5000;  // See uber.cgh also
 
+        CVERB << "Ogre::RSC_RTT_MAIN_DEPTHBUFFER_ATTACHABLE = " << ogre_rs->getCapabilities()->hasCapability(Ogre::RSC_RTT_SEPARATE_DEPTHBUFFER) << std::endl;
+        CVERB << "Ogre::RSC_RTT_SEPARATE_DEPTHBUFFER = " << ogre_rs->getCapabilities()->hasCapability(Ogre::RSC_RTT_SEPARATE_DEPTHBUFFER) << std::endl;
+        CVERB << "Ogre::RSC_RTT_DEPTHBUFFER_RESOLUTION_LESSEQUAL = " << ogre_rs->getCapabilities()->hasCapability(Ogre::RSC_RTT_DEPTHBUFFER_RESOLUTION_LESSEQUAL) << std::endl;
+
         return winid;
     } catch (Ogre::Exception &e) {
         GRIT_EXCEPT("Couldn't initialise graphics subsystem: "+e.getFullDescription());
