@@ -356,7 +356,10 @@ void gfx_gasoline_unparse_cg(const GfxGslContext &ctx,
     if (das) {
         vert_ss << "    Float4 clip_pos = Float4(world_pos, 1);\n";
     } else {
-        vert_ss << "    Float4 clip_pos = mul(global_viewProj, Float4(world_pos, 1));\n";
+        // For additive passes to compute same depth as the gbuffer passes, do not
+        // multiple by viewproj here.
+        vert_ss << "    Float3 pos_vs = mul(global_view, Float4(world_pos, 1)).xyz;\n";
+        vert_ss << "    Float4 clip_pos = mul(global_proj, Float4(pos_vs, 1));\n";
     }
     if (flat_z) {
         // Hack to maximum depth, but avoid hitting the actual backplane.
