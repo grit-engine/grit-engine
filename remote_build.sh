@@ -18,7 +18,7 @@ while ! echo exit | nc "$ENDPOINT" "$PORT"; do sleep 1; done
 echo 'RDP up!'
 echo 'Use shutdown /s /t 0 from the Windows console to shut down.'
 # This works for xfreerdp 1.0.2
-xfreerdp  -u "$USERNAME" -K -g "$RES" -p "$PASSWORD" grit-build.gritengine.com
+xfreerdp  -u "$USERNAME" -K -g "$RES" -p "$PASSWORD" "ENDPOINT"
 # This one is a later version (I think)
 # xfreerdp /u:"$USERNAME" -grab-keyboard /size:"$RES" /p:"$PASSWORD" /v:"${ENDPOINT}:${PORT}"
 echo 'Waiting for instance to stop...'
