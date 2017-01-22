@@ -1,4 +1,5 @@
 #include <Ogre.h>
+#include <OgreDepthBuffer.h>
 #include <OgreMeshFileFormat.h>
 #include <OgreOptimisedUtil.h>
 #include <OgrePredefinedControllers.h>
