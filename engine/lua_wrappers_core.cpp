@@ -668,8 +668,8 @@ TRY_END
 static int global_error_handler (lua_State *L)
 {
 TRY_START
-        my_lua_error_handler(L);
-        return 0;
+    my_lua_error_handler(L);
+    return 0;
 TRY_END
 }
 
@@ -702,9 +702,100 @@ TRY_END
 static int global_console_poll (lua_State *L)
 {
 TRY_START
-        check_args(L,0);
-        lua_pushstring(L,clog.consolePoll().c_str());
-        return 1;
+    check_args(L,0);
+    lua_pushstring(L,clog.consolePoll().c_str());
+    return 1;
+TRY_END
+}
+
+
+static int global_check_nan (lua_State *L)
+{
+TRY_START
+    std::stringstream msg;
+    for (int i=1 ; i <= lua_gettop(L) ; ++i) {
+        float w, x, y, z;
+        switch (lua_type(L, i)) {
+            case LUA_TNUMBER:
+            if (isnan(lua_tonumber(L, i))) {
+                msg << "Got NaN in number, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            break;
+
+            case LUA_TVECTOR2:
+            lua_checkvector2(L, i, &x, &y);
+            if (isnan(x)) {
+                msg << "Got NaN in vec2 x coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            if (isnan(y)) {
+                msg << "Got NaN in vec2 y coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            break;
+
+            case LUA_TVECTOR3:
+            lua_checkvector3(L, i, &x, &y, &z);
+            if (isnan(x)) {
+                msg << "Got NaN in vec3 x coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            if (isnan(y)) {
+                msg << "Got NaN in vec3 y coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            if (isnan(z)) {
+                msg << "Got NaN in vec3 z coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            break;
+
+            case LUA_TVECTOR4:
+            lua_checkvector4(L, i, &x, &y, &z, &w);
+            if (isnan(x)) {
+                msg << "Got NaN in vec4 x coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            if (isnan(y)) {
+                msg << "Got NaN in vec4 y coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            if (isnan(z)) {
+                msg << "Got NaN in vec4 z coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            if (isnan(w)) {
+                msg << "Got NaN in vec4 w coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            break;
+
+            case LUA_TQUAT:
+            lua_checkquat(L, i, &x, &y, &z, &w);
+            if (isnan(w)) {
+                msg << "Got NaN in quat w coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            if (isnan(x)) {
+                msg << "Got NaN in quat x coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            if (isnan(y)) {
+                msg << "Got NaN in quat y coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            if (isnan(z)) {
+                msg << "Got NaN in quat z coord, index " << i;
+                my_lua_error(L, msg.str());
+            }
+            break;
+
+            default:;
+            // No other types can have NaN.
+        }
+    }
+    return 0;
 TRY_END
 }
 
@@ -1053,6 +1144,7 @@ static const luaL_reg global[] = {
     {"error_handler", global_error_handler},
     {"print", global_print},
     {"console_poll", global_console_poll},
+    {"check_nan", global_check_nan},
 
     {"clicked_close", global_clicked_close},
     {"have_focus", global_have_focus},
