@@ -1096,6 +1096,7 @@ void physics_sweep_cylinder (const Vector3 &start, const Quaternion &startq,
     world->convexSweepTest(&tmpShape,from,to,bscb);
 }
 
+// Currently only supports a single hull.
 void physics_sweep_colmesh (const Vector3 &startp, const Quaternion &startq,
                             const Vector3 &endp, const Quaternion &endq,
                             SweepCallback &scb, const CollisionMesh *col_mesh)
@@ -1103,9 +1104,11 @@ void physics_sweep_colmesh (const Vector3 &startp, const Quaternion &startq,
     BulletSweepCallback bscb(scb);
     btTransform start(to_bullet(startq),to_bullet(startp));
     btTransform end(to_bullet(endq),to_bullet(endp));
-    btConvexShape *conv =dynamic_cast<btConvexShape*>(col_mesh->getMasterShape());
-    if (conv==NULL) return;
-    world->convexSweepTest(conv,start,end,bscb);
+    btCompoundShape *compound = col_mesh->getMasterShape();
+    if (compound->getNumChildShapes() == 0) return;
+    btConvexHullShape *conv = dynamic_cast<btConvexHullShape*>(compound->getChildShape(0));
+    if (conv == nullptr) return;
+    world->convexSweepTest(conv, start, end, bscb);
 }
 
 class BulletTestCallback : public btCollisionWorld::ContactResultCallback {

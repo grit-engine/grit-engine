@@ -420,6 +420,30 @@ TRY_END
 }
 
 
+static int global_physics_sweep_col_mesh (lua_State *L)
+{
+TRY_START
+        int base_line = 6;
+        check_args_min(L, base_line);
+
+        Vector3 size = check_v3(L, 1);
+        Quaternion q = check_quat(L, 2);
+        Vector3 start = check_v3(L, 3);
+        Vector3 ray = check_v3(L, 4);
+        bool nearest_only = check_bool(L, 5);
+        unsigned long flags = check_t<unsigned long>(L, 6);
+
+        LuaSweepCallback lcb(flags);
+        init_cast_blacklist(L, base_line, lcb);
+
+        physics_sweep_box(start, q, start+ray, lcb, size);
+
+        return push_cast_results(L, lcb, nearest_only);
+
+TRY_END
+}
+
+
 static int global_physics_sweep_cylinder (lua_State *L)
 {
 TRY_START
@@ -1005,6 +1029,7 @@ static const luaL_reg global[] = {
         {"physics_sweep_sphere", global_physics_sweep_sphere},
         {"physics_sweep_cylinder", global_physics_sweep_cylinder},
         {"physics_sweep_box", global_physics_sweep_box},
+        {"physics_sweep_col_mesh", global_physics_sweep_col_mesh},
         {NULL, NULL}
 };
 
