@@ -212,7 +212,10 @@ static std::string generate_vert_header (bool glsl33,
     if (glsl33) {
         ss << "out gl_PerVertex\n";
         ss << "{\n";
-        ss << "    invariant vec4 gl_Position;\n";
+        // invariant is required to avoid z fighitng on multi-pass rendering techniques.
+        // Unfortunately it is broken on Intel GL.
+        // ss << "    invariant vec4 gl_Position;\n";
+        ss << "    vec4 gl_Position;\n";
         ss << "    float gl_PointSize;\n";
         ss << "    float gl_ClipDistance[];\n";
         ss << "};\n";
