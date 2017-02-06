@@ -56,11 +56,12 @@ bl_info = {
 
 import bpy
 import bpy.path
-import os.path
-import os
-import sys
 import inspect
+import os
+import os.path
 import subprocess
+import sys
+import tempfile
 import xml.etree.ElementTree
 
 from bpy.props import *
@@ -115,6 +116,14 @@ def strip_leading_exc(x):
     return x[1:] if x[0]=='!' else x
 
 
+def grit_xml_converter (*args):
+    """Run the GritXMLConverter with the given command-line arguments."""
+    current_py = inspect.getfile(inspect.currentframe())
+    exporter = os.path.abspath(os.path.join(os.path.dirname(current_py), "GritXMLConverter" + executable_suffix))
+    args = [exporter] + list(args)
+    subprocess.call(args)
+
+
 class MessageOperator(bpy.types.Operator):
     bl_idname = "error.message"
     bl_label = "Message"
@@ -135,6 +144,7 @@ class MessageOperator(bpy.types.Operator):
         row.label(self.title, icon=self.icon)
         for line in self.message.split("\n"):
             self.layout.label(line)
+
 
 def error_msg(msg, title="ERROR!", icon="ERROR"):
     if msg == None: return
@@ -762,18 +772,9 @@ def export_mesh_internal (scene, obj, tangents, filename, errors):
         file.close()
 
     if scene.grit_meshes_convert:
-        current_py = inspect.getfile(inspect.currentframe())
-        exporter = os.path.abspath(os.path.join(os.path.dirname(current_py), "GritXMLConverter" + executable_suffix))
-        args = [exporter]
-        # args.append("-e")
-        # if tangents:
-        #     args += ["-t", "-ts", "4"]
-        args.append(filename)
-        subprocess.call(args)
+        grit_xml_converter(filename)
         if armature != None:
-            args = [exporter]
-            args.append(skel_filename)
-            subprocess.call(args)
+            grit_xml_converter(skel_filename)
 
     bpy.data.meshes.remove(mesh)
 
@@ -1038,7 +1039,7 @@ class ScenePanel(bpy.types.Panel): #{{{
         row = row.row()
         row.prop(context.scene, "grit_gcols_convert", text="Convert", expand=True)
         row.enabled = False
-        col.operator("grit.import_xml", icon="SCRIPT")
+        col.operator("grit.import_mesh", icon="SCRIPT")
         col.operator("grit.export_as_gcol", icon="SCRIPT")
         col.operator("grit.export_as_mesh", icon="SCRIPT")
         col = box.column(align = True)
@@ -1126,9 +1127,9 @@ class ExportSelected(bpy.types.Operator):
 
 
 class ImportXML(bpy.types.Operator):
-    '''Import from a .mesh.xml file'''
-    bl_idname = "grit.import_xml"
-    bl_label = "Import XML"
+    '''Import from a .mesh or .xml file'''
+    bl_idname = "grit.import_mesh"
+    bl_label = "Import mesh"
 
     filepath = StringProperty(subtype='FILE_PATH')
 
@@ -1137,95 +1138,121 @@ class ImportXML(bpy.types.Operator):
         wm.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
-    def execute(self, context):
-        tree = xml.etree.ElementTree.parse(self.filepath)
-        root = tree.getroot()
+    def execute(self, contxmlext):
+        xml_filepath = self.filepath
+        try:
+            if self.filepath[-5:] == '.mesh':
+                xml_file, xml_filepath = tempfile.mkstemp('.xml', self.filepath, dir=None, text=True)
+                os.close(xml_file)
+                grit_xml_converter(self.filepath, xml_filepath)
+            elif self.filepath[-4:] != '.xml':
+                error_msg("Can only import .mesh or .xml")
+                return {'FINISHED'}
 
-        sharedgeometry = root.find("sharedgeometry")
-        if sharedgeometry == None:
-            error_msg("Can only import mesh.xml with shared geometry")
+
+            tree = xml.etree.ElementTree.parse(xml_filepath)
+            root = tree.getroot()
+
+            sharedgeometry = root.find("sharedgeometry")
+            if sharedgeometry == None:
+                error_msg("Can only import mesh.xml with shared geometry")
+                return {'FINISHED'}
+            blender_verts = []
+            blender_uvs = []
+            blender_cols = []
+            for vertexbuffer in sharedgeometry.iterfind("vertexbuffer"):
+                has_positions = vertexbuffer.get('positions') == 'true'
+                num_coords = int(vertexbuffer.get('texture_coords'))
+                has_colours_diffuse = vertexbuffer.get('colours_diffuse') == 'true'
+                for vert in vertexbuffer.iterfind("vertex"):
+                    if has_positions:
+                        x = float(vert.find("position").get("x"))
+                        y = float(vert.find("position").get("y"))
+                        z = float(vert.find("position").get("z"))
+                        blender_verts.append((x, y, z))
+                    if num_coords >= 1:
+                        u = float(vert.find("texcoord").get("u"))
+                        v = float(vert.find("texcoord").get("v"))
+                        blender_uvs.append((u, 1 - v))
+                    if has_colours_diffuse:
+                        value = vert.find('colour_diffuse').get('value')
+                        blender_cols.append(tuple([float(x) for x in value.split(' ')]))
+
+            submeshes = root.find("submeshes")
+            if submeshes == None:
+                error_msg("Could not find submeshes element in .mesh.xml")
+
+            blender_faces = []
+            blender_materials = []
+            blender_face_materials = []
+            for submesh in submeshes.iterfind("submesh"):
+                matname = submesh.get("material")
+                mat = bpy.data.materials.get(matname, None)
+                if mat == None:
+                    mat = bpy.data.materials.new(matname)
+                blender_materials.append(mat)
+                for faces in submesh.iterfind("faces"):
+                    for face in faces.iterfind("face"):
+                        v1 = int(face.get("v1"))
+                        v2 = int(face.get("v2"))
+                        v3 = int(face.get("v3"))
+                        # unpack_face_list() will re-arrange verts if the 3rd one has index 0.
+                        # This then breaks the uv assignment we do further down this function
+                        # because that code assumes the original arrangement.  So to avoid this,
+                        # we make sure we never have a 0 in the 3rd face, otherwise re-arrange
+                        # verts ourselves before both of them.
+                        if v3 == 0:
+                            v1, v2, v3 = v2, v3, v1
+                        blender_faces.append((v1, v2, v3))
+                        blender_face_materials.append(len(blender_materials) - 1)
+
+            meshname = bpy.path.basename(self.filepath)
+            mesh = bpy.data.meshes.new(meshname)
+            for mat in blender_materials:
+                mesh.materials.append(mat)
+
+            print(blender_faces)
+            print(unpack_face_list(blender_faces))
+            print(list(enumerate(unpack_list(blender_verts))))
+            print(list(enumerate(blender_uvs)))
+
+            mesh.vertices.add(len(blender_verts))
+            mesh.vertices.foreach_set("co", unpack_list(blender_verts))
+
+            mesh.tessfaces.add(len(blender_faces))
+            unpacked = unpack_face_list(blender_faces)
+            mesh.tessfaces.foreach_set("vertices_raw", unpacked)
+            mesh.tessfaces.foreach_set("material_index", blender_face_materials)
+
+            #for fi in range(0,len(blender_faces)-1):
+            #    mesh.tessfaces[fi].material_index = blender_face_materials[fi]
+
+            mesh.tessface_uv_textures.new('coord0_uv')
+
+            for fi, f in enumerate(blender_faces):
+                print(fi, f, [blender_uvs[x] for x in f])
+                mesh.tessface_uv_textures[0].data[fi].uv1 = blender_uvs[f[0]]
+                mesh.tessface_uv_textures[0].data[fi].uv2 = blender_uvs[f[1]]
+                mesh.tessface_uv_textures[0].data[fi].uv3 = blender_uvs[f[2]]
+
+            if len(blender_cols) > 0:
+                aaa = mesh.tessface_vertex_colors.new('diffuse_colour_aaa')
+                rgb = mesh.tessface_vertex_colors.new('diffuse_colour_rgb')
+                for fi, f in enumerate(blender_faces):
+                    rgb.data[fi].color1 = blender_cols[f[0]][0:3]
+                    rgb.data[fi].color2 = blender_cols[f[1]][0:3]
+                    rgb.data[fi].color3 = blender_cols[f[2]][0:3]
+                    aaa.data[fi].color1 = blender_cols[f[0]][3:4] * 3
+                    aaa.data[fi].color2 = blender_cols[f[1]][3:4] * 3
+                    aaa.data[fi].color3 = blender_cols[f[2]][3:4] * 3
+
+            mesh.update()
+            
             return {'FINISHED'}
-        blender_verts = []
-        blender_uvs = []
-        blender_cols = []
-        for vertexbuffer in sharedgeometry.iterfind("vertexbuffer"):
-            has_positions = vertexbuffer.get('positions') == 'true'
-            num_coords = int(vertexbuffer.get('texture_coords'))
-            has_colours_diffuse = vertexbuffer.get('colours_diffuse') == 'true'
-            for vert in vertexbuffer.iterfind("vertex"):
-                if has_positions:
-                    x = float(vert.find("position").get("x"))
-                    y = float(vert.find("position").get("y"))
-                    z = float(vert.find("position").get("z"))
-                    blender_verts.append((x,y,z))
-                if num_coords >= 1:
-                    u = float(vert.find("texcoord").get("u"))
-                    v = float(vert.find("texcoord").get("v"))
-                    blender_uvs.append((u,1-v))
-                if has_colours_diffuse:
-                    value = vert.find('colour_diffuse').get('value')
-                    blender_cols.append(tuple([float(x) for x in value.split(' ')]))
 
-        submeshes = root.find("submeshes")
-        if submeshes == None:
-            error_msg("Could not find submeshes element in .mesh.xml")
-
-        blender_faces = []
-        blender_materials = []
-        blender_face_materials = []
-        for submesh in submeshes.iterfind("submesh"):
-            matname = submesh.get("material")
-            mat = bpy.data.materials.get(matname, None)
-            if mat == None:
-                mat = bpy.data.materials.new(matname)
-            blender_materials.append(mat)
-            for faces in submesh.iterfind("faces"):
-                for face in faces.iterfind("face"):
-                    v1 = int(face.get("v1"))
-                    v2 = int(face.get("v2"))
-                    v3 = int(face.get("v3"))
-                    blender_faces.append((v1,v2,v3))
-                    blender_face_materials.append(len(blender_materials)-1)
-
-        meshname = bpy.path.basename(self.filepath)
-        mesh = bpy.data.meshes.new(meshname)
-        for mat in blender_materials:
-            mesh.materials.append(mat)
-
-
-        mesh.vertices.add(len(blender_verts))
-        mesh.vertices.foreach_set("co", unpack_list(blender_verts))
-
-        mesh.tessfaces.add(len(blender_faces))
-        mesh.tessfaces.foreach_set("vertices_raw", unpack_face_list(blender_faces))
-        mesh.tessfaces.foreach_set("material_index", blender_face_materials)
-
-        #for fi in range(0,len(blender_faces)-1):
-        #    mesh.tessfaces[fi].material_index = blender_face_materials[fi]
-
-        mesh.tessface_uv_textures.new('coord0_uv')
-
-        for fi in range(0,len(blender_faces)-1):
-            f = blender_faces[fi]
-            mesh.tessface_uv_textures[0].data[fi].uv1 = blender_uvs[f[0]]
-            mesh.tessface_uv_textures[0].data[fi].uv2 = blender_uvs[f[1]]
-            mesh.tessface_uv_textures[0].data[fi].uv3 = blender_uvs[f[2]]
-
-        if len(blender_cols) > 0:
-            aaa = mesh.tessface_vertex_colors.new('diffuse_colour_aaa')
-            rgb = mesh.tessface_vertex_colors.new('diffuse_colour_rgb')
-            for fi in range(0,len(blender_faces)-1):
-                f = blender_faces[fi]
-                rgb.data[fi].color1 = blender_cols[f[0]][0:3]
-                rgb.data[fi].color2 = blender_cols[f[1]][0:3]
-                rgb.data[fi].color3 = blender_cols[f[2]][0:3]
-                aaa.data[fi].color1 = blender_cols[f[0]][3:4] * 3
-                aaa.data[fi].color2 = blender_cols[f[1]][3:4] * 3
-                aaa.data[fi].color3 = blender_cols[f[2]][3:4] * 3
-
-        mesh.update()
-        
-        return {'FINISHED'}
+        finally:
+            if xml_filepath != self.filepath:
+                os.remove(xml_filepath)
 
 
 class ToolsPanel(bpy.types.Panel):
