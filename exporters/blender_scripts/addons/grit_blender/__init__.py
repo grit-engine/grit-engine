@@ -92,7 +92,6 @@ def grit_path(scene, remote_blend, remote_resource_name):
     this_blend_dir = my_abspath("//")
     that_blend = my_abspath(remote_blend)
     that_blend_dir = os.path.dirname(that_blend)
-    print(root, this_blend_dir, that_blend_dir)
     if not this_blend_dir.startswith(root):
         error_msg('Invalid root directory: "%s"\n(expands to "%s")\n does not contain "%s"' % (scene.grit_root_dir, root, this_blend_dir))
         return "UNKNOWN"
@@ -1211,11 +1210,6 @@ class ImportXML(bpy.types.Operator):
             for mat in blender_materials:
                 mesh.materials.append(mat)
 
-            print(blender_faces)
-            print(unpack_face_list(blender_faces))
-            print(list(enumerate(unpack_list(blender_verts))))
-            print(list(enumerate(blender_uvs)))
-
             mesh.vertices.add(len(blender_verts))
             mesh.vertices.foreach_set("co", unpack_list(blender_verts))
 
@@ -1230,7 +1224,6 @@ class ImportXML(bpy.types.Operator):
             mesh.tessface_uv_textures.new('coord0_uv')
 
             for fi, f in enumerate(blender_faces):
-                print(fi, f, [blender_uvs[x] for x in f])
                 mesh.tessface_uv_textures[0].data[fi].uv1 = blender_uvs[f[0]]
                 mesh.tessface_uv_textures[0].data[fi].uv2 = blender_uvs[f[1]]
                 mesh.tessface_uv_textures[0].data[fi].uv3 = blender_uvs[f[2]]
