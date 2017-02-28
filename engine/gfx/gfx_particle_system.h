@@ -76,4 +76,7 @@ std::vector<std::string> gfx_particle_all (void);
 // called every frame
 void gfx_particle_render (GfxPipeline *p);
 
+// Remove all particles in flight now.
+void gfx_particle_reset (void);
+
 #endif

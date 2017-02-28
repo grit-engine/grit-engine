@@ -277,6 +277,11 @@ class GfxParticleSystem {
     {
     }
 
+    void reset (void)
+    {
+        particles.clear();
+    }
+
     GfxParticle *emit (void)
     {
         GfxParticle *nu = new GfxParticle (this);
@@ -443,6 +448,14 @@ void gfx_particle_render (GfxPipeline *p)
     for (PSysMap::iterator i=psystems.begin(),i_=psystems.end() ; i!=i_ ; ++i) {
         GfxParticleSystem *psys = i->second;
         psys->render(p, g);
+    }
+}
+
+void gfx_particle_reset (void)
+{
+    for (PSysMap::iterator i=psystems.begin(),i_=psystems.end() ; i!=i_ ; ++i) {
+        GfxParticleSystem *psys = i->second;
+        psys->reset();
     }
 }
 

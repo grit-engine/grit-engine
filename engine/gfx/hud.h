@@ -216,6 +216,7 @@ class HudObject : public HudBase {
     Vector3 colour;
     float alpha;
 
+    bool needsResizedCallbacks;
     bool needsParentResizedCallbacks;
     bool needsInputCallbacks;
     bool needsFrameCallbacks;
@@ -232,6 +233,7 @@ class HudObject : public HudBase {
     void destroy (lua_State *L);
 
     void triggerInit (lua_State *L);
+    void triggerResized (lua_State *L);
     void triggerParentResized (lua_State *L);
     void triggerMouseMove (lua_State *L, const Vector2 &abs);
     void triggerButton (lua_State *L, const std::string &key);
@@ -265,8 +267,13 @@ class HudObject : public HudBase {
 
     void setParent (lua_State *L, HudObject *v);
 
-    bool getNeedsParentResizedCallbacks (void) const { assertAlive(); return needsParentResizedCallbacks; }
-    void setNeedsParentResizedCallbacks (bool v) { assertAlive(); needsParentResizedCallbacks = v; }
+    bool getNeedsResizedCallbacks (void) const { assertAlive(); return needsResizedCallbacks; }
+    void setNeedsResizedCallbacks (bool v) { assertAlive(); needsResizedCallbacks = v; }
+
+    bool getNeedsParentResizedCallbacks (void) const
+    { assertAlive(); return needsParentResizedCallbacks; }
+    void setNeedsParentResizedCallbacks (bool v)
+    { assertAlive(); needsParentResizedCallbacks = v; }
 
     bool getNeedsInputCallbacks (void) const { assertAlive(); return needsInputCallbacks; }
     void setNeedsInputCallbacks (bool v) { assertAlive(); needsInputCallbacks = v; }

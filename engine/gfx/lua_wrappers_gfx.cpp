@@ -6,10 +6,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,7 +20,7 @@
  */
 
 #include <colour_conversion.h>
-#include <io_util.h> 
+#include <io_util.h>
 #include <unicode_util.h>
 
 #include "../grit_lua_util.h"
@@ -1623,10 +1623,15 @@ TRY_START
 TRY_END
 }
 
-
-
-TOSTRING_ADDR_MACRO (hudobj,HudObject,HUDOBJECT_TAG)
-
+static int hudobj_tostring (lua_State *L)
+{
+    check_args(L, 1);
+    GET_UD_MACRO(HudObject, self, 1, HUDOBJECT_TAG);
+    std::stringstream ss;
+    ss << HUDOBJECT_TAG << " \"" << self.hudClass->name << "\" " << static_cast<void*>(&self);
+    lua_pushstring(L, ss.str().c_str());
+    return 1;
+}
 
 static int hudobj_index (lua_State *L)
 {
@@ -1676,6 +1681,8 @@ TRY_START
             lua_pushboolean(L, self.getNeedsInputCallbacks());
         } else if (!::strcmp(key,"needsFrameCallbacks")) {
             lua_pushboolean(L, self.getNeedsFrameCallbacks());
+        } else if (!::strcmp(key,"needsResizedCallbacks")) {
+            lua_pushboolean(L, self.getNeedsResizedCallbacks());
         } else if (!::strcmp(key,"needsParentResizedCallbacks")) {
             lua_pushboolean(L, self.getNeedsParentResizedCallbacks());
 
@@ -1784,6 +1791,9 @@ TRY_START
         } else if (!::strcmp(key,"needsFrameCallbacks")) {
             bool v = check_bool(L,3);
             self.setNeedsFrameCallbacks(v);
+        } else if (!::strcmp(key,"needsResizedCallbacks")) {
+            bool v = check_bool(L,3);
+            self.setNeedsResizedCallbacks(v);
         } else if (!::strcmp(key,"needsParentResizedCallbacks")) {
             bool v = check_bool(L,3);
             self.setNeedsParentResizedCallbacks(v);
@@ -2399,7 +2409,7 @@ TRY_START
     std::string font_name = check_path(L,1);
     GfxFont *font = gfx_font_get(font_name);
     if (font == NULL) my_lua_error(L, "Font does not exist: \""+font_name+"\"");
-    
+
     HudText *self = new HudText(font);
     push_hudtext(L,self);
 
@@ -2417,7 +2427,7 @@ TRY_START
     HudClass *hud_class = hud_class_get(class_name);
     int table_index = lua_gettop(L);
     if (!lua_istable(L,table_index)) my_lua_error(L,"Last parameter should be a table");
-    
+
     HudObject *parent = NULL;
     HudObject *self = new HudObject(hud_class);
 
@@ -2445,7 +2455,7 @@ TRY_START
         if (lua_type(L,-2)==LUA_TSTRING) {
             key = luaL_checkstring(L,-2);
         }
-        
+
         if (!::strcmp(key,"orientation")) {
             if (lua_isnumber(L,-1)) {
                 float v = check_float(L,-1);
@@ -3501,7 +3511,7 @@ static int global_gfx_anim_rate (lua_State *L)
         default:
         my_lua_error(L, "Expected number or vec2/3/4.");
     }
-    
+
     return 1;
 }
 
@@ -3586,7 +3596,7 @@ namespace {
             table.takeTableFromLuaStack(L, t);
         }
         void destroy (lua_State *L);
-                    
+
         std::string material;
         std::vector<UVRect> frames;
         ExternalTable table;
@@ -3801,6 +3811,16 @@ namespace {
         table.destroy(L);
     }
 
+    void reset_particles (lua_State *L)
+    {
+        // remove any particles that used to belong to this definition
+        for (unsigned i=0 ; i<particles.size() ; ++i) {
+            LuaParticle *p = particles[i];
+            p->destroy(L);
+            delete p;
+        }
+        particles.clear();
+    }
 }
 
 static int global_gfx_particle_define (lua_State *L)
@@ -3861,7 +3881,7 @@ TRY_START
 
     lua_getfield(L, 2, "behaviour");
     if (!lua_isfunction(L,-1)) my_lua_error(L,"Particle behaviour must be a function.");
-    
+
     ParticleDefinition *&pd = particle_defs[name];
     if (pd != NULL) {
         pd->destroy(L);
@@ -3870,7 +3890,7 @@ TRY_START
 
     ParticleDefinition *newpd = new ParticleDefinition(name, frames, L, 2);
     pd = newpd;
-    gfx_particle_define(name, dr); // will invalidate 
+    gfx_particle_define(name, dr); // will invalidate
     return 0;
 TRY_END
 }
@@ -3888,6 +3908,15 @@ TRY_START
         counter++;
     }
     return 1;
+TRY_END
+}
+
+static int global_gfx_particle_reset (lua_State *L)
+{
+TRY_START
+    check_args(L, 0);
+    reset_particles(L);
+    return 0;
 TRY_END
 }
 
@@ -3926,7 +3955,7 @@ TRY_START
     }
     // stack: particle
 
-    
+
     LuaParticle *lp = new LuaParticle(L, gfx_particle_emit(pd->material), pd);
     particles.push_back(lp);
 
@@ -4232,7 +4261,7 @@ TRY_START
         my_lua_error(L, "Unknown sceneBlend: " + scene_blend_str);
     }
     gfxmat->setSceneBlend(scene_blend);
-    
+
     bool backfaces;
     t.get("backfaces", backfaces, false);
     gfxmat->setBackfaces(backfaces);
@@ -4240,25 +4269,25 @@ TRY_START
     bool shadow_alpha_reject;
     t.get("shadowAlphaReject", shadow_alpha_reject, false);
     gfxmat->setShadowAlphaReject(shadow_alpha_reject);
-   
+
     bool cast_shadows;
     t.get("castShadows", cast_shadows, true);
     gfxmat->setCastShadows(cast_shadows);
-   
+
     lua_Number shadow_bias;
     t.get("shadowBias", shadow_bias, 0.0);
     gfxmat->setShadowBias(shadow_bias);
-   
+
     bool additional_lighting;
     t.get("additionalLighting", additional_lighting, false);
-   
+
     lua_Number blended_bones;
     t.get("blendedBones", blended_bones, 0.0);
     if (blended_bones != floor(blended_bones) || blended_bones < 0) {
         my_lua_error(L,"blendedBones must be a non-negative integer");
     }
     gfxmat->setBoneBlendWeights(blended_bones);
-  
+
     gfxmat->setAdditionalLighting(additional_lighting);
 
 
@@ -4401,7 +4430,7 @@ TRY_START
 
     typedef ExternalTable::KeyIterator KI;
     for (KI i=t.begin(), i_=t.end() ; i!=i_ ; ++i) {
-        const std::string &key = i->first; 
+        const std::string &key = i->first;
         if (key == "vertexCode") continue;
         if (key == "dangsCode") continue;
         if (key == "additionalCode") continue;
@@ -4576,7 +4605,7 @@ TRY_START
     Ogre::TexturePtr tex = ogre_sm->getShadowTexture(i);
     Ogre::Image image;
     tex->convertToImage(image);
-    
+
     uint32_t width = image.getWidth();
     uint32_t height = image.getHeight();
     uint8_t channels = 1;
@@ -4591,7 +4620,7 @@ TRY_START
     for (size_t i = 0 ; i < width * height ; ++i) {
         out.write(raw[i]);
     }
-    
+
     return 1;
 TRY_END
 }
@@ -4685,6 +4714,7 @@ static const luaL_reg global[] = {
     {"gfx_particle_count", global_gfx_particle_count},
     {"gfx_particle_step_size", global_gfx_particle_step_size},
     {"gfx_particle_all", global_gfx_particle_all},
+    {"gfx_particle_reset", global_gfx_particle_reset},
 
     {"gfx_last_frame_stats", global_gfx_last_frame_stats},
 

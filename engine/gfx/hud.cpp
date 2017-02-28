@@ -216,8 +216,8 @@ Vector2 HudBase::getDerivedBounds (void)
 HudObject::HudObject (HudClass *hud_class)
   : HudBase(), hudClass(hud_class),
     uv1(0,0), uv2(1,1), cornered(false), size(32,32), sizeSet(false), colour(1,1,1), alpha(1),
-    needsParentResizedCallbacks(false), needsInputCallbacks(false), needsFrameCallbacks(false),
-    refCount(0)
+    needsResizedCallbacks(false), needsParentResizedCallbacks(false), needsInputCallbacks(false),
+    needsFrameCallbacks(false), refCount(0)
 {
 }
 
@@ -324,6 +324,75 @@ void HudObject::triggerInit (lua_State *L)
     STACK_CHECK;
 }
 
+void HudObject::triggerResized (lua_State *L)
+{
+    assertAlive();
+
+    if (!needsResizedCallbacks) return;
+
+    STACK_BASE;
+    //stack is empty
+
+    // error handler in case there is a problem during 
+    // the callback
+    push_cfunction(L, my_lua_error_handler);
+    int error_handler = lua_gettop(L);
+
+    //stack: err
+
+    // get the function
+    hudClass->get(L,"resizedCallback");
+    //stack: err,callback
+    if (lua_isnil(L,-1)) {
+        // no resized callback -- our work is done
+        lua_pop(L,2);
+        CERR << "Hud object of class: \"" << hudClass->name
+             << "\" has no resizedCallback, disabling callback." << std::endl;
+        needsResizedCallbacks = false;
+        STACK_CHECK;
+        return;
+    }
+
+
+    //stack: err,callback
+    STACK_CHECK_N(2);
+
+    Vector2 size = getSize();
+
+    push_hudobj(L, this);
+    push_v2(L, size);
+    //stack: err,callback,object,size
+
+    STACK_CHECK_N(4);
+
+    // call (1 arg), pops function too
+    int status = lua_pcall(L,2,0,error_handler);
+    if (status) {
+        STACK_CHECK_N(2);
+        //stack: err,error
+        // pop the error message since the error handler will
+        // have already printed it out
+        lua_pop(L,1);
+        CERR << "Hud object of class: \"" << hudClass->name
+             << "\" raised an error on resizedCallback, disabling callback." << std::endl;
+        // will call destroy callback
+        needsResizedCallbacks = false;
+        //stack: err
+        STACK_CHECK_N(1);
+    } else {
+        //stack: err
+        STACK_CHECK_N(1);
+    }
+
+    //stack: err
+    STACK_CHECK_N(1);
+    lua_pop(L,1);
+
+    //stack is empty
+    STACK_CHECK;
+
+}
+
 void HudObject::triggerParentResized (lua_State *L)
 {
     assertAlive();
@@ -404,6 +473,14 @@ void HudObject::setSize (lua_State *L, const Vector2 &v)
         if (!obj->destroyed()) obj->triggerParentResized(L);
     }
     dec_all_hud_objects(L, local_children);
+
+    // Run this last because there is a common pattern where a parent positions its child
+    // according to the child's size, and the child's size is controlled in the child's
+    // parentResizedCallback as a function of the parent size.  This happens for example in a
+    // FileExplorer IconFlow.  To make this work, we let the child know about he size change before
+    // we call the parent's resizedCallback, which can then position the child properly.
+    triggerResized(L);
+
 }
 
 void HudObject::setParent (lua_State *L, HudObject *v)
