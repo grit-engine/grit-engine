@@ -40,24 +40,92 @@
 struct SweepResult { RigidBody *rb; float dist; Vector3 n; int material; };
 typedef std::vector<SweepResult> SweepResults;
 
+static void push_sweep_result (lua_State *L, const SweepResult &r)
+{
+        lua_pushnumber(L, r.dist);
+        push_rbody(L, r.rb);
+        // normal is documented as being object space but is actually world space
+        Vector3 normal = /*r.rb->getOrientation()* */r.n.normalisedCopy();
+        push_v3(L, normal);
+        push_string(L, phys_mats.getMaterial(r.material)->name);
+}
+
 class LuaSweepCallback : public SweepCallback {
     public:           
-        LuaSweepCallback (unsigned long flags)
-              : ignoreDynamic((flags & 0x1) != 0)
-        { }
-        virtual void result (RigidBody &rb, float dist, const Vector3 &n, int m) {
-                if (ignoreDynamic && rb.getMass()>0) return;
-                if (blacklist.find(&rb) != blacklist.end()) return;
-                SweepResult r;
-                r.rb = &rb;
-                r.dist = dist;
-                r.n = n;
-                r.material = m;
-                results.push_back(r);
+    LuaSweepCallback (bool nearest_only, unsigned long flags)
+          : nearestOnly(nearest_only), ignoreDynamic((flags & 0x1) != 0)
+    { }
+
+    virtual void result (RigidBody &rb, float dist, const Vector3 &n, int m)
+    {
+            if (ignoreDynamic && rb.getMass()>0) return;
+            if (blacklist.find(&rb) != blacklist.end()) return;
+            SweepResult r;
+            r.rb = &rb;
+            r.dist = dist;
+            r.n = n;
+            r.material = m;
+            results.push_back(r);
+    }
+
+    void pushResults (lua_State *L, int func_index, int err_handler)
+    {
+        if (nearestOnly) {
+            if (results.size()==0) return;
+            SweepResult nearest;
+            nearest.material = 0;  // Not neessary, but avoids a compler warning.
+            nearest.rb = nullptr;  // Not neessary, but avoids a compler warning.
+            nearest.dist = FLT_MAX;
+            for (const auto &r : results) {
+                if (r.dist <= nearest.dist) nearest = r;
+            }
+            lua_pushvalue(L, func_index);
+            push_sweep_result(L, nearest);
+            int status = lua_pcall(L, 4, 0, err_handler);
+            if (status) {
+                lua_pop(L, 1); // error message, already printed
+            }
+        } else {
+            lua_checkstack(L, results.size() * 4);
+            for (const auto &r : results) {
+                lua_pushvalue(L, func_index);
+                push_sweep_result(L, r);
+                int status = lua_pcall(L, 4, 0, err_handler);
+                if (status) {
+                    lua_pop(L, 1); // error message, already printed
+                    break;
+                }
+            }
         }
-        std::set<RigidBody *> blacklist;
-        SweepResults results;
-        bool ignoreDynamic;
+    }
+
+    int pushResults (lua_State *L)
+    {
+
+        if (nearestOnly) {
+            if (results.size()==0) return 0;
+            SweepResult nearest;
+            nearest.dist = FLT_MAX;
+            nearest.material = 0;  // Not neessary, but avoids a compler warning.
+            nearest.rb = nullptr;  // Not neessary, but avoids a compler warning.
+            for (const auto &r : results) {
+                if (r.dist <= nearest.dist) nearest = r;
+            }
+            push_sweep_result(L, nearest);
+            return 4;
+        } else {
+            lua_checkstack(L, results.size() * 4);
+            for (const auto &r : results) {
+                push_sweep_result(L, r);
+            }
+            return results.size() * 4;
+        }
+    }
+
+    std::set<RigidBody *> blacklist;
+    SweepResults results;
+    bool nearestOnly;
+    bool ignoreDynamic;
 };
 
 // }}}
@@ -309,39 +377,6 @@ TRY_END
 }
 
 
-static void push_sweep_result (lua_State *L, const SweepResult &r)
-{
-        lua_pushnumber(L, r.dist);
-        push_rbody(L, r.rb);
-        // normal is documented as being object space but is actually world space
-        Vector3 normal = /*r.rb->getOrientation()* */r.n.normalisedCopy();
-        push_v3(L, normal);
-        push_string(L, phys_mats.getMaterial(r.material)->name);
-}
-
-static int push_cast_results (lua_State *L, const LuaSweepCallback &lcb, bool nearest_only)
-{
-        if (lcb.results.size()==0) return 0;
-
-        SweepResult nearest;
-        nearest.dist = FLT_MAX;
-        if (!nearest_only) lua_checkstack(L, lcb.results.size()*4);
-        for (size_t i=0 ; i<lcb.results.size() ; ++i) {
-                const SweepResult &r = lcb.results[i];
-                if (nearest_only) {
-                        if (r.dist<nearest.dist) nearest = r;
-                } else {
-                        push_sweep_result(L, r);
-                }
-        }
-        if (nearest_only) {
-                // push nearest
-                push_sweep_result(L, nearest);
-                return 4;
-        }
-        return lcb.results.size() * 4;
-}
-
 static void init_cast_blacklist (lua_State *L, int base_line, LuaSweepCallback &lcb)
 {
         int blacklist_number = lua_gettop(L) - base_line;
@@ -362,12 +397,12 @@ TRY_START
         bool nearest_only = check_bool(L, 3);
         unsigned long flags = check_t<unsigned long>(L, 4);
 
-        LuaSweepCallback lcb(flags);
+        LuaSweepCallback lcb(nearest_only, flags);
         init_cast_blacklist(L, base_line, lcb);
 
         physics_ray(start, start+ray, lcb);
 
-        return push_cast_results(L, lcb, nearest_only);
+        return lcb.pushResults(L);
 
 TRY_END
 }
@@ -385,12 +420,12 @@ TRY_START
         bool nearest_only = check_bool(L, 4);
         unsigned long flags = check_t<unsigned long>(L, 5);
 
-        LuaSweepCallback lcb(flags);
+        LuaSweepCallback lcb(nearest_only, flags);
         init_cast_blacklist(L, base_line, lcb);
 
         physics_sweep_sphere(start, start+ray, lcb, radius);
 
-        return push_cast_results(L, lcb, nearest_only);
+        return lcb.pushResults(L);
 
 TRY_END
 }
@@ -409,12 +444,12 @@ TRY_START
         bool nearest_only = check_bool(L, 5);
         unsigned long flags = check_t<unsigned long>(L, 6);
 
-        LuaSweepCallback lcb(flags);
+        LuaSweepCallback lcb(nearest_only, flags);
         init_cast_blacklist(L, base_line, lcb);
 
         physics_sweep_box(start, q, start+ray, lcb, size);
 
-        return push_cast_results(L, lcb, nearest_only);
+        return lcb.pushResults(L);
 
 TRY_END
 }
@@ -423,23 +458,30 @@ TRY_END
 static int global_physics_sweep_col_mesh (lua_State *L)
 {
 TRY_START
-        int base_line = 6;
+        int base_line = 7;
         check_args_min(L, base_line);
 
-        Vector3 size = check_v3(L, 1);
+        std::string col_mesh_name = check_path(L, 1);
+        DiskResource *col_mesh_ = disk_resource_get_or_make(col_mesh_name);
+        CollisionMesh *col_mesh = dynamic_cast<CollisionMesh*>(col_mesh_);
         Quaternion q = check_quat(L, 2);
         Vector3 start = check_v3(L, 3);
         Vector3 ray = check_v3(L, 4);
         bool nearest_only = check_bool(L, 5);
         unsigned long flags = check_t<unsigned long>(L, 6);
+        if (lua_type(L, 7) != LUA_TFUNCTION)
+                my_lua_error(L, "Parameter 5 should be a function.");
 
-        LuaSweepCallback lcb(flags);
+        LuaSweepCallback lcb(nearest_only, flags);
         init_cast_blacklist(L, base_line, lcb);
 
-        physics_sweep_box(start, q, start+ray, lcb, size);
+        physics_sweep_col_mesh(start, q, start + ray, q, lcb, col_mesh);
 
-        return push_cast_results(L, lcb, nearest_only);
+        push_cfunction(L, my_lua_error_handler);
+        int error_handler = lua_gettop(L);
 
+        lcb.pushResults(L, 7, error_handler);
+        return 0;
 TRY_END
 }
 
@@ -458,12 +500,12 @@ TRY_START
         bool nearest_only = check_bool(L, 6);
         unsigned long flags = check_t<unsigned long>(L, 7);
 
-        LuaSweepCallback lcb(flags);
+        LuaSweepCallback lcb(nearest_only, flags);
         init_cast_blacklist(L, base_line, lcb);
 
         physics_sweep_cylinder(start, q, start+ray, lcb, radius, height);
 
-        return push_cast_results(L, lcb, nearest_only);
+        return lcb.pushResults(L);
 
 TRY_END
 }

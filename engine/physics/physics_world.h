@@ -150,12 +150,12 @@ void physics_sweep_box (const Vector3 &start, const Quaternion &startq,
                         const Vector3 &end,
                         SweepCallback &scb, const Vector3 &size);
 
-void physics_sweep_colmesh (const Vector3 &startp,
-                            const Quaternion &startq,
-                            const Vector3 &endp,
-                            const Quaternion &endq,
-                            SweepCallback &scb,
-                            const CollisionMesh *col_mesh);
+void physics_sweep_col_mesh (const Vector3 &startp,
+                             const Quaternion &startq,
+                             const Vector3 &endp,
+                             const Quaternion &endq,
+                             SweepCallback &scb,
+                             const CollisionMesh *col_mesh);
 
 class TestCallback {
     public:

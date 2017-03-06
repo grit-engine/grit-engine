@@ -1097,17 +1097,19 @@ void physics_sweep_cylinder (const Vector3 &start, const Quaternion &startq,
 }
 
 // Currently only supports a single hull.
-void physics_sweep_colmesh (const Vector3 &startp, const Quaternion &startq,
-                            const Vector3 &endp, const Quaternion &endq,
-                            SweepCallback &scb, const CollisionMesh *col_mesh)
+void physics_sweep_col_mesh (const Vector3 &startp, const Quaternion &startq,
+                             const Vector3 &endp, const Quaternion &endq,
+                             SweepCallback &scb, const CollisionMesh *col_mesh)
 {
     BulletSweepCallback bscb(scb);
     btTransform start(to_bullet(startq),to_bullet(startp));
     btTransform end(to_bullet(endq),to_bullet(endp));
     btCompoundShape *compound = col_mesh->getMasterShape();
-    if (compound->getNumChildShapes() == 0) return;
+    if (compound->getNumChildShapes() != 1)
+        EXCEPT << "Can only sweep collision meshes comprised of a single convex hull." << std::endl;
     btConvexHullShape *conv = dynamic_cast<btConvexHullShape*>(compound->getChildShape(0));
-    if (conv == nullptr) return;
+    if (conv == nullptr)
+        EXCEPT << "Can only sweep collision meshes comprised of a single convex hull." << std::endl;
     world->convexSweepTest(conv, start, end, bscb);
 }
 
