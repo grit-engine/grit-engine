@@ -625,8 +625,11 @@ void GfxShader::initPass (Ogre::Pass *p,
     hack_set_constant(vp, fp, "global_rayBottomLeft", Vector3(0, 0, 0));
     hack_set_constant(vp, fp, "global_rayBottomRight", Vector3(0, 0, 0));
     hack_set_constant(vp, fp, "global_particleAmbient", Vector3(0, 0, 0));
-    hack_set_constant(vp, fp, "global_sunlightDiffuse", Ogre::GpuProgramParameters::ACT_LIGHT_DIFFUSE_COLOUR, 0);
-    hack_set_constant(vp, fp, "global_sunlightSpecular", Ogre::GpuProgramParameters::ACT_LIGHT_SPECULAR_COLOUR, 0);
+    // TODO(dcunnin): Apparently this isn't working -- alpha textures (which need it) are not
+    // getting valid values for sunlight.  No idea why, working around it by setting it every frame
+    // (see updatePass below).
+    // hack_set_constant(vp, fp, "global_sunlightDiffuse", Ogre::GpuProgramParameters::ACT_LIGHT_DIFFUSE_COLOUR, 0);
+    // hack_set_constant(vp, fp, "global_sunlightSpecular", Ogre::GpuProgramParameters::ACT_LIGHT_SPECULAR_COLOUR, 0);
     hack_set_constant(vp, fp, "global_hellColour", Vector3(0, 0, 0));
     // For some reason fog was too intense this way
     //hack_set_constant(vp, fp, "global_fogColour", Ogre::GpuProgramParameters::ACT_FOG_COLOUR);
@@ -778,7 +781,7 @@ void GfxShader::updatePassGlobals (const Ogre::GpuProgramParametersSharedPtr &vp
                                    const Ogre::GpuProgramParametersSharedPtr &fp,
                                    const GfxShaderGlobals &g, GfxGslPurpose purpose)
 {
-    (void) purpose;
+    bool lighting = gfx_gasoline_does_lighting(purpose);
     Ogre::Matrix4 view_proj = g.proj * g.view; 
     /*
     Vector4 viewport_size(g.viewportDim.x, g.viewportDim.y,
@@ -800,11 +803,14 @@ void GfxShader::updatePassGlobals (const Ogre::GpuProgramParametersSharedPtr &vp
     hack_set_constant(vp, fp, "global_farClipDistance", gfx_option(GFX_FAR_CLIP));
     */
 
-    /*
-    hack_set_constant(vp, fp, "global_sunlightDiffuse", sunlight_diffuse);
-    hack_set_constant(vp, fp, "global_sunlightSpecular", sunlight_specular);
-    */
-    hack_set_constant(vp, fp, "global_sunlightDirection", sunlight_direction);
+    if (true || lighting) {
+        // Why do shadows disappear when I remove the 'true' from the condition?
+
+        // All of these should be update by Ogre...
+        hack_set_constant(vp, fp, "global_sunlightDiffuse", sunlight_diffuse);
+        hack_set_constant(vp, fp, "global_sunlightSpecular", sunlight_specular);
+        hack_set_constant(vp, fp, "global_sunlightDirection", sunlight_direction);
+    }
 
     hack_set_constant(vp, fp, "global_fogColour", fog_colour);
     hack_set_constant(vp, fp, "global_fogDensity", fog_density);
