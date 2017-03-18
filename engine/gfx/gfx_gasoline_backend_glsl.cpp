@@ -654,11 +654,13 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
                 frag_ss << "                  internal_cam_dist, g);\n";
             } else {
                 frag_ss << "    Float3 v2c = normalise(internal_vertex_to_cam);\n";
+                frag_ss << "    Float3 pos_ws = global_cameraPos - internal_vertex_to_cam;\n";
                 if (first_person) {
                     // Always use 'near' shadows.
                     frag_ss << "    Float internal_cam_dist = 0;\n";
+                    frag_ss << "    pos_ws = global_cameraPos;\n";
                 }
-                frag_ss << "    Float3 sun = sunlight(global_cameraPos, v2c, d, n, g, s,\n";
+                frag_ss << "    Float3 sun = sunlight(pos_ws, v2c, d, n, g, s,\n";
                 frag_ss << "                          internal_cam_dist);\n";
                 frag_ss << "    Float3 env = envlight(v2c, d, n, g, s);\n";
                 frag_ss << "    out_colour_alpha.xyz = sun + env;\n";
