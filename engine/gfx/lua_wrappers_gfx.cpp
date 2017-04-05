@@ -825,6 +825,194 @@ MT_MACRO_NEWINDEX(gfxbody);
 //}}}
 
 
+// GFXTEXTBODY ============================================================== {{{
+
+void push_gfxtextbody (lua_State *L, const GfxTextBodyPtr &self)
+{
+    if (self.isNull())
+        lua_pushnil(L);
+    else
+        push(L, new GfxTextBodyPtr(self), GFXTEXTBODY_TAG);
+}
+
+GC_MACRO(GfxTextBodyPtr, gfxtextbody, GFXTEXTBODY_TAG)
+
+static int gfxtextbody_clear (lua_State *L)
+{
+TRY_START
+    check_args(L, 1);
+    GET_UD_MACRO(GfxTextBodyPtr, self, 1, GFXTEXTBODY_TAG);
+    self->clear();
+    return 0;
+TRY_END
+}
+
+static int gfxtextbody_update_gpu (lua_State *L)
+{
+TRY_START
+    check_args(L, 1);
+    GET_UD_MACRO(GfxTextBodyPtr, self, 1, GFXTEXTBODY_TAG);
+    self->updateGpu();
+    return 0;
+TRY_END
+}
+
+static int gfxtextbody_append (lua_State *L)
+{
+TRY_START
+    if (lua_gettop(L) == 2) {
+        GET_UD_MACRO(GfxTextBodyPtr, self, 1, GFXTEXTBODY_TAG);
+        std::string str = check_string(L, 2);
+        Vector3 colour(0, 0, 0);
+        float alpha = 1;
+        self->append(str, colour, alpha, colour, alpha);
+    } else {
+        check_args(L, 6);
+        GET_UD_MACRO(GfxTextBodyPtr, self, 1, GFXTEXTBODY_TAG);
+        std::string str = check_string(L, 2);
+        Vector3 top_colour = check_v3(L, 3);
+        float top_alpha = check_float(L, 4);
+        Vector3 bot_colour = check_v3(L, 5);
+        float bot_alpha = check_float(L, 6);
+        self->append(str, top_colour, top_alpha, bot_colour, bot_alpha);
+    }
+    return 0;
+TRY_END
+}
+
+static int gfxtextbody_destroy (lua_State *L)
+{
+TRY_START
+    check_args(L, 1);
+    GET_UD_MACRO(GfxTextBodyPtr, self, 1, GFXTEXTBODY_TAG);
+    self->destroy();
+    return 0;
+TRY_END
+}
+
+TOSTRING_SMART_PTR_MACRO (gfxtextbody, GfxTextBodyPtr, GFXTEXTBODY_TAG)
+
+static int gfxtextbody_index (lua_State *L)
+{
+TRY_START
+    check_args(L, 2);
+    GET_UD_MACRO(GfxTextBodyPtr, self, 1, GFXTEXTBODY_TAG);
+    const char *key = luaL_checkstring(L, 2);
+    if (!::strcmp(key, "localPosition")) {
+        push_v3(L, self->getLocalPosition());
+    } else if (!::strcmp(key, "localOrientation")) {
+        push_quat(L, self->getLocalOrientation());
+    } else if (!::strcmp(key, "localScale")) {
+        push_v3(L, self->getLocalScale());
+    } else if (!::strcmp(key, "parent")) {
+        push_gfx_node_concrete(L, self->getParent());
+    } else if (!::strcmp(key, "batches")) {
+        lua_pushnumber(L, self->getBatches());
+    } else if (!::strcmp(key, "batchesWithChildren")) {
+        lua_pushnumber(L, self->getBatchesWithChildren());
+    } else if (!::strcmp(key, "triangles")) {
+        lua_pushnumber(L, self->getTriangles());
+    } else if (!::strcmp(key, "trianglesWithChildren")) {
+        lua_pushnumber(L, self->getTrianglesWithChildren());
+    } else if (!::strcmp(key, "vertexes")) {
+        lua_pushnumber(L, self->getVertexes());
+    } else if (!::strcmp(key, "vertexesWithChildren")) {
+        lua_pushnumber(L, self->getVertexesWithChildren());
+    } else if (!::strcmp(key, "material")) {
+        push_string(L, self->getMaterial()->name);
+    } else if (!::strcmp(key, "emissiveEnabled")) {
+        lua_pushboolean(L, self->getEmissiveEnabled());
+    } else if (!::strcmp(key,"font")) {
+        GfxFont *font = self->getFont();
+        push_string(L, font->name);
+
+    } else if (!::strcmp(key, "fade")) {
+        lua_pushnumber(L, self->getFade());
+    } else if (!::strcmp(key, "castShadows")) {
+        lua_pushboolean(L, self->getCastShadows());
+    } else if (!::strcmp(key, "enabled")) {
+        lua_pushboolean(L, self->isEnabled());
+    } else if (!::strcmp(key, "clear")) {
+        push_cfunction(L, gfxtextbody_clear);
+    } else if (!::strcmp(key, "updateGpu")) {
+        push_cfunction(L, gfxtextbody_update_gpu);
+    } else if (!::strcmp(key, "append")) {
+        push_cfunction(L, gfxtextbody_append);
+
+    } else if (!::strcmp(key, "destroyed")) {
+        lua_pushboolean(L, self->destroyed());
+    } else if (!::strcmp(key, "destroy")) {
+        push_cfunction(L, gfxtextbody_destroy);
+    } else {
+        EXCEPT << "Not a readable GfxTextBody member: " << std::string(key) << ENDL;
+    }
+    return 1;
+TRY_END
+}
+
+
+static int gfxtextbody_newindex (lua_State *L)
+{
+TRY_START
+    check_args(L, 3);
+    GET_UD_MACRO(GfxTextBodyPtr, self, 1, GFXTEXTBODY_TAG);
+    const char *key = luaL_checkstring(L, 2);
+    if (!::strcmp(key, "localPosition")) {
+        Vector3 v = check_v3(L, 3);
+        self->setLocalPosition(v);
+    } else if (!::strcmp(key, "localOrientation")) {
+        Quaternion v = check_quat(L, 3);
+        self->setLocalOrientation(v);
+    } else if (!::strcmp(key, "localScale")) {
+        Vector3 v = check_v3(L, 3);
+        self->setLocalScale(v);
+    } else if (!::strcmp(key, "fade")) {
+        float v = check_float(L, 3);
+        self->setFade(v);
+    } else if (!::strcmp(key, "parent")) {
+        if (lua_isnil(L, 3)) {
+            self->setParent(GfxNodePtr(NULL));
+        } else {
+            GfxNodePtr par = check_gfx_node(L, 3);
+            self->setParent(par);
+        }
+    } else if (!::strcmp(key, "emissiveEnabled")) {
+        bool v = check_bool(L, 3);
+        self->setEmissiveEnabled(v);
+    } else if (!::strcmp(key, "material")) {
+        const char *mname = luaL_checkstring(L, 3);
+        GfxMaterial *m = gfx_material_get(mname);
+        self->setMaterial(m);
+    } else if (!::strcmp(key, "castShadows")) {
+        bool v = check_bool(L, 3);
+        self->setCastShadows(v);
+    } else if (!::strcmp(key,"font")) {
+        std::string v = check_string(L, 3);
+        GfxFont *font = gfx_font_get(v);
+        if (font == NULL) my_lua_error(L, "Font does not exist \""+v+"\"");
+        self->setFont(font);
+    } else if (!::strcmp(key,"text")) {
+        std::string v = check_string(L, 3);
+        self->clear();
+        self->append(v, Vector3(0, 0, 0), 1, Vector3(0, 0, 0), 1);
+        self->updateGpu();
+    } else if (!::strcmp(key, "enabled")) {
+        bool v = check_bool(L, 3);
+        self->setEnabled(v);
+    } else {
+        EXCEPT << "Not a writeable GfxTextBody member: " << std::string(key) << ENDL;
+    }
+    return 0;
+TRY_END
+}
+
+EQ_MACRO(GfxTextBodyPtr, gfxtextbody, GFXTEXTBODY_TAG)
+
+MT_MACRO_NEWINDEX(gfxtextbody);
+
+//}}}
+
+
 // GFXDECAL ============================================================== {{{
 
 void push_gfxdecal (lua_State *L, const GfxDecalPtr &self)
@@ -2294,6 +2482,20 @@ TRY_START
             push_gfxbody(L, GfxBody::make(meshname, sm));
         }
     }
+    return 1;
+TRY_END
+}
+
+static int global_gfx_text_body_make (lua_State *L)
+{
+TRY_START
+    check_args(L, 2);
+    std::string font_name = check_path(L, 1);
+    std::string mat_name = check_path(L, 2);
+    GfxFont *font = gfx_font_get(font_name);
+    if (font == NULL) my_lua_error(L, "Font does not exist \"" + font_name + "\"");
+    GfxMaterial *mat = gfx_material_get(mat_name);
+    push_gfxtextbody(L, GfxTextBody::make(font, mat));
     return 1;
 TRY_END
 }
@@ -4635,6 +4837,7 @@ static const luaL_reg global[] = {
     {"gfx_option", global_gfx_option},
     {"gfx_option_reset", global_gfx_option_reset},
     {"gfx_body_make", global_gfx_body_make},
+    {"gfx_text_body_make", global_gfx_text_body_make},
     {"gfx_instances_make", global_gfx_instances_make},
     {"gfx_ranged_instances_make", global_gfx_ranged_instances_make},
     {"gfx_sky_body_make", global_gfx_sky_body_make},
@@ -4759,6 +4962,7 @@ void gfx_lua_init (lua_State *L)
 {
     ADD_MT_MACRO(gfxnode,GFXNODE_TAG);
     ADD_MT_MACRO(gfxbody,GFXBODY_TAG);
+    ADD_MT_MACRO(gfxtextbody,GFXTEXTBODY_TAG);
     ADD_MT_MACRO(gfxskybody,GFXSKYBODY_TAG);
     ADD_MT_MACRO(gfxlight,GFXLIGHT_TAG);
     ADD_MT_MACRO(gfxinstances,GFXINSTANCES_TAG);

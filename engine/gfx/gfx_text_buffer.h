@@ -102,8 +102,6 @@ class GfxTextBuffer {
      */
     void updateGPU (bool no_scroll, long top, long bottom);
 
-    public:
-
     /** Reset the buffer. */
     void clear (void)
     {
@@ -111,6 +109,12 @@ class GfxTextBuffer {
         recalculatePositions();
         dirty = true;
     }
+
+    /** Return number of vertexes required to render the text. */
+    unsigned getVertexes (void) const { return vData.vertexCount; }
+
+    /** Return number of triangles required to render the text. */
+    unsigned getTriangles (void) const { return iData.indexCount / 3; }
 
     /** Sets the font. */
     void setFont (GfxFont *v) { font = v; recalculatePositions(); }

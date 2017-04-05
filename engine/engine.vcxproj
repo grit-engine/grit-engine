@@ -133,6 +133,7 @@
     <ClCompile Include="gfx\gfx_shader.cpp" />
     <ClCompile Include="gfx\gfx_sky_body.cpp" />
     <ClCompile Include="gfx\gfx_sky_material.cpp" />
+    <ClCompile Include="gfx\gfx_text_body.cpp" />
     <ClCompile Include="gfx\gfx_text_buffer.cpp" />
     <ClCompile Include="gfx\gfx_disk_resource.cpp" />
     <ClCompile Include="gfx\hud.cpp" />

@@ -33,6 +33,7 @@
 #include "gfx_ranged_instances.h"
 #include "gfx_sky_body.h"
 #include "gfx_sky_material.h"
+#include "gfx_text_body.h"
 
 
 void gfx_lua_init (lua_State *L);
@@ -40,6 +41,9 @@ void gfx_lua_init (lua_State *L);
 
 #define GFXBODY_TAG "Grit/GfxBody"
 void push_gfxbody (lua_State *L, const GfxBodyPtr &self);
+
+#define GFXTEXTBODY_TAG "Grit/GfxTextBody"
+void push_gfxtextbody (lua_State *L, const GfxTextBodyPtr &self);
 
 #define GFXDECAL_TAG "Grit/GfxDecal"
 void push_gfxdecal (lua_State *L, const GfxDecalPtr &self);

@@ -911,6 +911,7 @@ std::string HudText::getText (void) const
     //return buf.getText();
     return "";
 }
+
 // }}}
 
 
@@ -919,8 +920,8 @@ std::string HudText::getText (void) const
 // {{{ RENDERING
 
 
-GfxShader *shader_text, *shader_rect;
-GfxShaderBindings shader_text_binds, shader_tex_binds;
+static GfxShader *shader_text, *shader_rect;
+static GfxShaderBindings shader_text_binds, shader_tex_binds;
 
 // vdata/idata be allocated later because constructor requires ogre to be initialised
 static Ogre::VertexData *quad_vdata;
