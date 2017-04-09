@@ -71,6 +71,7 @@ ENGINE_CPP_SRCS=\
 	gfx/gfx_shader.cpp \
 	gfx/gfx_sky_body.cpp \
 	gfx/gfx_sky_material.cpp \
+	gfx/gfx_sprite_body.cpp \
 	gfx/gfx_text_body.cpp \
 	gfx/gfx_text_buffer.cpp \
 	gfx/hud.cpp \

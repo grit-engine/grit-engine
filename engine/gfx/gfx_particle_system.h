@@ -40,13 +40,13 @@ protected:
 public:
     Vector3 pos;
     Vector3 dimensions;
-    Vector3 diffuse;
+    Vector3 diffuse;  // More like ambient colour than diffuse.
     Vector3 emissive;
     float alpha;
     float angle;
     float u1, v1, u2, v2;
 
-    // these guys computed at rending time
+    // these guys computed at rendering time
     Vector3 fromCamNorm;
     float fromCamDist;
     // by this function
@@ -54,7 +54,7 @@ public:
 
     GfxParticle (GfxParticleSystem *sys);
 
-    std::pair<unsigned,unsigned> getTextureSize (void);
+    std::pair<unsigned, unsigned> getTextureSize (void) const;
     void setDefaultUV (void);
     void release (void);
     bool inside (const Vector3 &v);
@@ -75,8 +75,5 @@ std::vector<std::string> gfx_particle_all (void);
 
 // called every frame
 void gfx_particle_render (GfxPipeline *p);
-
-// Remove all particles in flight now.
-void gfx_particle_reset (void);
 
 #endif

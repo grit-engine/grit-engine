@@ -264,22 +264,24 @@ class GfxParticleSystem {
 
     public:
     GfxParticleSystem (const std::string &name, const DiskResourcePtr<GfxTextureDiskResource> &tex)
-         : name(name), tex(tex)
+         : name(name)
     {
-        tex->getOgreTexturePtr()->unload();
-        tex->getOgreTexturePtr()->setHardwareGammaEnabled(true);
-        tex->getOgreTexturePtr()->load();
-        texHeight = tex->getOgreTexturePtr()->getHeight();
-        texWidth = tex->getOgreTexturePtr()->getWidth();
+        setTexture(tex);
     }
 
     ~GfxParticleSystem (void)
     {
     }
 
-    void reset (void)
+    // Old particles will have wrong uvs if texture changes dimensions.
+    void setTexture (const DiskResourcePtr<GfxTextureDiskResource> &v)
     {
-        particles.clear();
+        tex = v;
+        tex->getOgreTexturePtr()->unload();
+        tex->getOgreTexturePtr()->setHardwareGammaEnabled(true);
+        tex->getOgreTexturePtr()->load();
+        texHeight = tex->getOgreTexturePtr()->getHeight();
+        texWidth = tex->getOgreTexturePtr()->getWidth();
     }
 
     GfxParticle *emit (void)
@@ -373,7 +375,7 @@ class GfxParticleSystem {
 
     }
 
-    std::pair<unsigned,unsigned> getTextureSize (void)
+    std::pair<unsigned, unsigned> getTextureSize (void) const
     {
         return std::pair<unsigned,unsigned>(texWidth, texHeight);
     }
@@ -405,7 +407,7 @@ void GfxParticle::release (void)
     sys->release(this);
 }
 
-std::pair<unsigned,unsigned> GfxParticle::getTextureSize (void)
+std::pair<unsigned, unsigned> GfxParticle::getTextureSize (void) const
 {
     return sys->getTextureSize(); 
 }
@@ -413,7 +415,7 @@ std::pair<unsigned,unsigned> GfxParticle::getTextureSize (void)
 
 void GfxParticle::setDefaultUV (void)
 {
-    std::pair<unsigned,unsigned> tex_sz = sys->getTextureSize(); 
+    std::pair<unsigned,unsigned> tex_sz = getTextureSize(); 
     u1 = 0;
     v1 = 0;
     u2 = float(tex_sz.first);
@@ -430,8 +432,12 @@ void gfx_particle_define (const std::string &pname,
                           const DiskResourcePtr<GfxTextureDiskResource> &tex)
 {
     GfxParticleSystem *&psys = psystems[pname];
-    if (psys != NULL) delete psys;
-    psys = new GfxParticleSystem(pname, tex);
+    if (psys != NULL) {
+        // Old particles will have wrong uvs if texture changes dimensions.
+        psys->setTexture(tex);
+    } else {
+        psys = new GfxParticleSystem(pname, tex);
+    }
 }
 
 GfxParticle *gfx_particle_emit (const std::string &pname)
@@ -448,14 +454,6 @@ void gfx_particle_render (GfxPipeline *p)
     for (PSysMap::iterator i=psystems.begin(),i_=psystems.end() ; i!=i_ ; ++i) {
         GfxParticleSystem *psys = i->second;
         psys->render(p, g);
-    }
-}
-
-void gfx_particle_reset (void)
-{
-    for (PSysMap::iterator i=psystems.begin(),i_=psystems.end() ; i!=i_ ; ++i) {
-        GfxParticleSystem *psys = i->second;
-        psys->reset();
     }
 }
 

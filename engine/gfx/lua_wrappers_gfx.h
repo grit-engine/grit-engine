@@ -21,19 +21,19 @@
 
 #include "../grit_lua_util.h"
 
-#include "gfx.h"
-
 #include "gfx_body.h"
 #include "gfx_decal.h"
 #include "gfx_fertile_node.h"
-#include "hud.h"
+#include "gfx.h"
 #include "gfx_instances.h"
 #include "gfx_light.h"
 #include "gfx_material.h"
 #include "gfx_ranged_instances.h"
 #include "gfx_sky_body.h"
 #include "gfx_sky_material.h"
+#include "gfx_sprite_body.h"
 #include "gfx_text_body.h"
+#include "hud.h"
 
 
 void gfx_lua_init (lua_State *L);
@@ -62,6 +62,9 @@ void push_gfxrangedinstances (lua_State *L, const GfxRangedInstancesPtr &self);
 
 #define GFXSKYBODY_TAG "Grit/GfxSkyBody"
 void push_gfxskybody (lua_State *L, const GfxSkyBodyPtr &self);
+
+#define GFXSPRITEBODY_TAG "Grit/GfxSpriteBody"
+void push_gfxspritebody (lua_State *L, const GfxSpriteBodyPtr &self);
 
 
 #define HUDCLASS_TAG "Grit/HudClass"

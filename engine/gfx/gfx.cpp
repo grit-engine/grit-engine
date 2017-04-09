@@ -39,6 +39,7 @@
 #include "gfx_pipeline.h"
 #include "gfx_sky_body.h"
 #include "gfx_sky_material.h"
+#include "gfx_sprite_body.h"
 
 #ifdef WIN32
 bool d3d9 = getenv("GRIT_GL") == NULL;
@@ -547,20 +548,23 @@ void gfx_render (float elapsed, const Vector3 &cam_pos, const Quaternion &cam_di
     debug_drawer->frameCallback();
     ogre_root_node->needUpdate();
 
-    // try and do all "each object" processing in this loop
+    // try and do all "each object" processing in these loops
     for (unsigned long i=0 ; i<gfx_all_nodes.size() ; ++i) {
         GfxNode *node = gfx_all_nodes[i];
 
-        GfxBody *b = dynamic_cast<GfxBody*>(node);
-        if (b != NULL) b->updateBoneMatrixes();
-
-        GfxLight *l = dynamic_cast<GfxLight*>(node);
-        if (l != NULL) l->updateCorona(cam_pos);
+        if (auto *b = dynamic_cast<GfxBody*>(node))
+            b->updateBoneMatrixes();
     }
     // must be done after updating bone matrixes
     for (unsigned long i=0 ; i<gfx_all_nodes.size() ; ++i) {
         GfxNode *node = gfx_all_nodes[i];
         node->updateWorldTransform();
+
+        if (auto *l = dynamic_cast<GfxLight*>(node))
+            l->update(cam_pos);
+
+        if (auto *sb = dynamic_cast<GfxSpriteBody*>(node))
+            sb->update();
     }
 
     try {
