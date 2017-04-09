@@ -59,7 +59,7 @@ GfxLight::GfxLight (const GfxNodePtr &par_)
     corona->setDefaultUV();
     corona->alpha = 1;
     corona->angle = 0;
-    updateCorona(Vector3(0,0,0));
+    update(Vector3(0,0,0));
 }
 
 GfxLight::~GfxLight (void)
@@ -76,7 +76,7 @@ void GfxLight::destroy (void)
     GfxNode::destroy();
 }
 
-void GfxLight::updateCorona (const Vector3 &cam_pos)
+void GfxLight::update (const Vector3 &cam_pos)
 {
     if (dead) THROW_DEAD(className);
     light->setPosition(to_ogre(getWorldTransform().pos));

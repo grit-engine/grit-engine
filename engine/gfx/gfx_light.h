@@ -35,7 +35,6 @@ class GfxLight : public GfxNode {
     bool enabled;
     float fade;
     Vector3 coronaLocalPos;
-    Vector3 coronaPos;
     float coronaSize;
     Vector3 coronaColour;
     Vector3 diffuse;
@@ -79,7 +78,7 @@ class GfxLight : public GfxNode {
     float getFade (void);
     void setFade (float f);
 
-    void updateCorona (const Vector3 &cam_pos);
+    void update (const Vector3 &cam_pos);
 
     Vector3 getCoronaLocalPosition (void);
     void setCoronaLocalPosition (const Vector3 &v);
