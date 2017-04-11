@@ -98,7 +98,11 @@ template<class T> class fast_erase_vector {
     /** Prepare the vector for holding the given number of objects. */
     void reserve (size_t n) { vect.reserve(n); }
 
-    /** Return the number of objects this vector can hold before it must reallocate its internal memory. */
+    /** Vector capacity.
+     *
+     * Return the number of objects this vector can hold before it must reallocate its internal
+     * memory.
+     */
     size_t capacity (void) const { return vect.capacity(); }
 
     /** Look up a particular index, this is only useful for iterations because the indexes change during remove operations. */

@@ -36,6 +36,7 @@ typedef fast_erase_vector<Demand*> Demands;
 #include <thread>
 
 #include <centralised_log.h>
+
 #include "disk_resource.h"
 
 /** A least recently used queue, used to select resources to unload in the
@@ -48,69 +49,72 @@ template<typename T> class LRUQueue {
 
     protected:
 
-        typedef std::list<T> Queue;
+    typedef std::list<T> Queue;
 
-        typedef typename Queue::size_type size_type;
+    typedef typename Queue::size_type size_type;
 
 
     public:
 
-        /** Create an empty queue. */
-        LRUQueue () : mSize(0) { }
+    /** Create an empty queue. */
+    LRUQueue () : mSize(0) { }
 
-        /** Destructor. */
-        ~LRUQueue () { }
+    /** Destructor. */
+    ~LRUQueue () { }
 
-        /** If v is in the queue, remove it, otherwise a no-op. */
-        inline void removeIfPresent (const T &v)
-        {
-                //if already in queue, remove
-                typename Queue::iterator end = mQueue.end();
-                typename Queue::iterator i = std::find(mQueue.begin(), end, v);
-                if (i!=end) {
-                        mQueue.erase(i);
-                        mSize--;
-                }
+    /** If v is in the queue, remove it, otherwise a no-op. */
+    inline void removeIfPresent (const T &v)
+    {
+        //if already in queue, remove
+        typename Queue::iterator end = mQueue.end();
+        typename Queue::iterator i = std::find(mQueue.begin(), end, v);
+        if (i!=end) {
+            mQueue.erase(i);
+            mSize--;
         }
+    }
 
-        /** Add a new object v to the queue.  This means you're not intending to use it anymore, but it is the most recently used thing. */
-        inline void push (const T &v)
-        {
-                //it only gets pushed if it's not referenced anywhere
-                //so the following line is a waste of time
-                //removeIfPresent(v);
+    /** Add a new object v to the queue.
+     *
+     * This means you're not intending to use it anymore, but it is the most recently used thing.
+     */
+    inline void push (const T &v)
+    {
+        //it only gets pushed if it's not referenced anywhere
+        //so the following line is a waste of time
+        //removeIfPresent(v);
 
-                //add to young end of queue
-                mQueue.push_front(v);
-                mSize++;
-        }
+        //add to young end of queue
+        mQueue.push_front(v);
+        mSize++;
+    }
 
-        /** Retrieve the least-recently used thing, and remove it from the queue. */
-        inline T pop ()
-        {
-                //remove from old end of queue
-                T v = mQueue.back();
-                mQueue.pop_back();
-                mSize--;
-                return v;
-        }
+    /** Retrieve the least-recently used thing, and remove it from the queue. */
+    inline T pop ()
+    {
+        //remove from old end of queue
+        T v = mQueue.back();
+        mQueue.pop_back();
+        mSize--;
+        return v;
+    }
 
-        /** Return the number of elements in the queue.  This is the number of
-         * resources that are loaded but not being used (i.e. it's a cache in case they
-         * need to be used again. */
-        inline size_type size () const { return mSize; }
+    /** Return the number of elements in the queue.  This is the number of
+     * resources that are loaded but not being used (i.e. it's a cache in case they
+     * need to be used again. */
+    inline size_type size () const { return mSize; }
 
-        /** Make the queue empty. */
-        inline void clear () { mQueue.clear() ; mSize=0; }
+    /** Make the queue empty. */
+    inline void clear () { mQueue.clear() ; mSize=0; }
 
 
     protected:
 
-        /** Cache of the number of elements in the queue. */
-        size_t mSize;
+    /** Cache of the number of elements in the queue. */
+    size_t mSize;
 
-        /** The queue itself, a linked list. */
-        Queue mQueue;
+    /** The queue itself, a linked list. */
+    Queue mQueue;
 };
 
 
@@ -159,7 +163,7 @@ class Demand : public fast_erase_index {
     bool requestLoad (float dist);
 
     /** Is the demand registered to be procesed by the background thread?  If
-     * true, the background thread will (eventually,) process this demand.  If
+     * true, the background thread will (eventually) process this demand.  If
      * false, either 1) the demand has never been registered, 2) it was registered
      * and the loading has already completed, or 3) it was registered and all the
      * resources were actually loaded and there was no background loading to be
@@ -229,68 +233,65 @@ class BackgroundLoader {
     public:
 
 
-        BackgroundLoader (void);
+    BackgroundLoader (void);
 
-        ~BackgroundLoader (void);
+    ~BackgroundLoader (void);
 
-        void shutdown (void);
+    void shutdown (void);
 
-        void add (Demand *d);
+    void add (Demand *d);
 
-        void remove (Demand *d);
+    void remove (Demand *d);
 
-        void handleBastards (void);
+    void handleBastards (void);
 
-        size_t size (void) { return mDemands.size(); }
+    size_t size (void) { return mDemands.size(); }
 
-        void setAllowance (float m);
+    void setAllowance (float m);
 
 
-        // background thread entry point
-        static void thread_main (BackgroundLoader *self);
+    // background thread entry point
+    static void thread_main (BackgroundLoader *self);
 
-        void thread_main (void);
+    void thread_main (void);
 
-        std::recursive_mutex lock;
-        std::condition_variable_any cVar;
+    std::recursive_mutex lock;
+    std::condition_variable_any cVar;
 
     protected:
 
-        bool nearestDemand (Demand * volatile &return_demand);
+    bool nearestDemand (Demand * volatile &return_demand);
 
-        DiskResources mBastards;
-        volatile unsigned short mNumBastards;
+    DiskResources mBastards;
+    volatile unsigned short mNumBastards;
 
-        Demands mDemands;
+    Demands mDemands;
 
-        std::thread *mThread;
+    std::thread *mThread;
 
-        Demand * volatile mCurrent;
-        volatile bool mQuit;
+    Demand * volatile mCurrent;
+    volatile bool mQuit;
 
-        float mAllowance;
+    float mAllowance;
 
 
     public:
 
-        size_t getLRUQueueSizeGPU (void) const
-        { return mDeathRowGPU.size(); }
-        size_t getLRUQueueSizeHost (void) const
-        { return mDeathRowHost.size(); }
+    size_t getLRUQueueSizeGPU (void) const
+    { return mDeathRowGPU.size(); }
+    size_t getLRUQueueSizeHost (void) const
+    { return mDeathRowHost.size(); }
 
-        void finishedWith (DiskResource *);
+    void finishedWith (DiskResource *);
 
-        void checkRAMHost (void);
-        void checkRAMGPU (void);
+    void checkRAMHost (void);
+    void checkRAMGPU (void);
 
     protected:
 
-        LRUQueue<DiskResource*> mDeathRowGPU;
-        LRUQueue<DiskResource*> mDeathRowHost;
+    LRUQueue<DiskResource*> mDeathRowGPU;
+    LRUQueue<DiskResource*> mDeathRowHost;
 
 };
 
-
 #endif
-
-// vim: shiftwidth=4:tabstop=4:expandtab

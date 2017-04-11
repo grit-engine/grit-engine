@@ -28,7 +28,7 @@
 
 class GritObject;
 typedef SharedPtr<GritObject> GritObjectPtr;
-typedef std::map<std::string,GritObjectPtr> GObjMap;
+typedef std::map<std::string, GritObjectPtr> GObjMap;
 typedef std::vector<GritObjectPtr> GObjPtrs;
 typedef std::set<GritObjectPtr> GObjSet;
 
@@ -36,9 +36,9 @@ typedef std::set<GritObjectPtr> GObjSet;
 #ifndef GritObject_h
 #define GritObject_h
 
-#include "streamer.h"
-#include "external_table.h"
 #include "background_loader.h"
+#include "external_table.h"
+#include "streamer.h"
 
 /** A streamed game object, occupying a place in the map.
  *
@@ -126,7 +126,9 @@ class GritObject {
                        const GritObjectPtr &self,
                        const float time);
 
-    /** Call the Lua fade callback.  This is called whenever the object changes its fade state (0.0f to 1.0f).
+    /** Call the Lua fade callback. 
+     *
+     * This is called whenever the object changes its fade state (0.0f to 1.0f).
      */
     void notifyFade (lua_State *L,
                      const GritObjectPtr &self,
@@ -249,21 +251,21 @@ class GritObject {
             // note that v cannot be null since near!=v
             // adding a near
             nearObj = v;
-            nearObj->setFarObj(nearObj,self);
+            nearObj->setFarObj(nearObj, self);
         } else {
             if (v.isNull()) {
                 // removing near
                 GritObjectPtr tmp = nearObj;
                 nearObj.setNull();
-                tmp->setFarObj(tmp,nearObj);
+                tmp->setFarObj(tmp, nearObj);
             } else {
                 // changing nearObj
                 // first set to null
                 GritObjectPtr tmp = nearObj;
                 nearObj.setNull();
-                tmp->setFarObj(tmp,nearObj);
+                tmp->setFarObj(tmp, nearObj);
                 // then set to new value
-                setNearObj(self,v);
+                setNearObj(self, v);
             }
         }
     }
@@ -281,21 +283,21 @@ class GritObject {
         if (farObj.isNull()) {
             // adding a far
             farObj = v;
-            farObj->setNearObj(farObj,self);
+            farObj->setNearObj(farObj, self);
         } else {
             if (v.isNull()) {
                 // removing far
                 GritObjectPtr tmp = farObj;
                 farObj.setNull();
-                tmp->setNearObj(tmp,farObj);
+                tmp->setNearObj(tmp, farObj);
             } else {
                 // changing far
                 // first set to null
                 GritObjectPtr tmp = farObj;
                 farObj.setNull();
-                tmp->setNearObj(tmp,farObj);
+                tmp->setNearObj(tmp, farObj);
                 // then set to new value
-                setFarObj(self,v);
+                setFarObj(self, v);
             }
         }
     }
@@ -354,14 +356,18 @@ class GritObject {
     /** The lod companion that should be activated when the player is closer to the object. */
     GritObjectPtr nearObj;
 
-    /** The lod companion that should be activated when the player is outside of this object's rendering distance. */
+    /** The lod companion that should be activated when the player is outside of this object's
+     * rendering distance.
+     */
     GritObjectPtr farObj;
             
     /** Appears to be unused? */
     bool demandRegistered;
     Demand demand;
 
-    /** The fade imposed upon a far lod companion because we are the near lod and we are taking over. */
+    /** The fade imposed upon a far lod companion because we are the near lod and we are taking
+     * over.
+     */
     float imposedFarFade;
 
     /** Used to tell if the fade has changed when recalculating it.  The

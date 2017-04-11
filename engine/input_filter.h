@@ -199,7 +199,7 @@ bool input_filter_pressed (const std::string &button);
 void input_filter_flush (lua_State *L);
 
 /** Return a list of all the input filters in existence. */
-std::vector<std::pair<double,std::string>> input_filter_list (void);
+std::vector<std::pair<double, std::string>> input_filter_list (void);
 
 /** Suppress system mouse cursor.  The system mouse cursor is usually more
  * responsive than anything you can render in game.  However, if the style is

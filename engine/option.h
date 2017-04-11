@@ -55,7 +55,10 @@ template<class T> struct ValidOption {
     }
 };
 
-/** An implementation of ValidOption that allows a dense range of values [min,max].  T must have <= and >= defined.*/
+/** An implementation of ValidOption that allows a dense range of values [min,max].
+ *
+ * T must have <= and >= defined.
+ */
 template<class T> struct ValidOptionRange : ValidOption<T> {
     T min, max;
     ValidOptionRange (T min_, T max_) : min(min_), max(max_) { }
@@ -63,7 +66,10 @@ template<class T> struct ValidOptionRange : ValidOption<T> {
     virtual void err (ExceptionStream &o) { o << "must be between "<<min<<" and "<<max; }
 };
 
-/** An implementation of ValidOption that allows a defined list of values.  A must be of type T[n] for some literal n. */
+/** An implementation of ValidOption that allows a defined list of values.
+ *
+ * A must be of type T[n] for some literal n.
+ */
 template<class T, class A> struct ValidOptionList : ValidOption<T> {
     A list;
     /** The array of valid options is passed by reference. */
@@ -86,8 +92,6 @@ template<class T, class A> struct ValidOptionList : ValidOption<T> {
         o << "]";
     }   
 };  
-
-
 
 #endif
 

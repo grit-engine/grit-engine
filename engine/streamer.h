@@ -85,7 +85,7 @@ int streamer_object_activated_count (void);
 
 /** Called whenever someone calls streamer_centre. */
 struct StreamerCallback {
-        virtual void update(const Vector3 &new_pos) = 0;
+    virtual void update(const Vector3 &new_pos) = 0;
 };
 
 /** Register a StreamerCallback callback. */

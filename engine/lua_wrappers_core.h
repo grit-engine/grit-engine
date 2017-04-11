@@ -26,5 +26,3 @@ extern "C" {
 void init_lua (const char *filename, const std::vector<std::string> &args, lua_State *&L);
 
 void shutdown_lua (lua_State *L);
-
-// vim: shiftwidth=8:tabstop=8:expandtab
