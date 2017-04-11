@@ -49,7 +49,7 @@ void ExternalTable::clear (lua_State *L)
         fields.clear();
         elements.clear();
 }
-const char *ExternalTable::luaGet (lua_State *L)
+const char *ExternalTable::luaGet (lua_State *L) const
 {
         if (lua_type(L,-1)==LUA_TSTRING) {
                 std::string key = lua_tostring(L,-1);
@@ -102,22 +102,24 @@ static void push (lua_State *L, const ExternalTable::Value &v)
         }
 }
 
-const char *ExternalTable::luaGet (lua_State *L, const std::string &key)
+const char *ExternalTable::luaGet (lua_State *L, const std::string &key) const
 {
-        if (!has(key)) {
+        auto it = fields.find(key);
+        if (it == fields.end()) {
                 lua_pushnil(L);
         } else {
-                push(L, fields[key]);
+                push(L, it->second);
         }
         return NULL;
 }
 
-const char *ExternalTable::luaGet (lua_State *L, lua_Number key)
+const char *ExternalTable::luaGet (lua_State *L, lua_Number key) const
 {
-        if (!has(key)) {
+        auto it = elements.find(key);
+        if (it == elements.end()) {
                 lua_pushnil(L);
         } else {
-                push(L, elements[key]);
+                push(L, it->second);
         }
         return NULL;
 }

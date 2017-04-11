@@ -347,13 +347,13 @@ class ExternalTable {
                 elements[key].v4 = v4;
         }
 
-        const char *luaGet (lua_State *L);
+        const char *luaGet (lua_State *L) const;
         const char *luaSet (lua_State *L);
 
-        const char *luaGet (lua_State *L, const std::string &key);
+        const char *luaGet (lua_State *L, const std::string &key) const;
         const char *luaSet (lua_State *L, const std::string &key);
 
-        const char *luaGet (lua_State *L, lua_Number key);
+        const char *luaGet (lua_State *L, lua_Number key) const;
         const char *luaSet (lua_State *L, lua_Number key);
 
         void unset (const std::string &key) { fields.erase(key); }
