@@ -39,7 +39,7 @@ template<class T> class SharedPtr {
      * a counter inside the T object. */
     unsigned int *cnt;
 
-public:
+    public:
 
     /** Deference to the target. */
     T& operator*() const { return *ptr; }
@@ -80,7 +80,10 @@ public:
     /** Destructor (decrements the reference counter). */
     ~SharedPtr (void) { setNull(); }
 
-    /** Make this SharedPtr reference the target of SharedPtr p (incrementing the reference counter). */
+    /** Make this SharedPtr reference the target of SharedPtr p.
+     *
+     * This increments the reference counter.
+     */
     SharedPtr &operator= (const SharedPtr<T> &p) {
         // The next line is not just an optimisation, it is needed for correctness
         // without it if *cnt==1 then the setNull() would free the storage,
@@ -95,7 +98,10 @@ public:
         return *this;
     }
 
-    /** Return a SharedPtr to the same object that has a supertype (according to c++ static_cast rules). */
+    /** Return a SharedPtr to the same object that has a supertype.
+     *
+     * Follows C++ static_cast rules.
+     */
     template<class U> SharedPtr<U> staticCast (void) const
     {
         SharedPtr<U> r;

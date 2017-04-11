@@ -1248,7 +1248,7 @@ void init_lua (const char *filename, const std::vector<std::string> &args, lua_S
     audio_lua_init(L);
     disk_resource_lua_init(L);
     net_lua_init(L);
-	navigation_lua_init(L);
+    navigation_lua_init(L);
 
     int status = aux_include(L, filename);
     if (status) {

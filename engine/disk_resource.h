@@ -159,7 +159,10 @@ class DiskResource {
         return false;
     }
 
-    /** Register yourself as a user.  This stops the resource being unloaded while you're using it. */
+    /** Register yourself as a user.
+     *
+     * This stops the resource being unloaded while you're using it.
+     * */
     void increment (void)
     {
         users++;

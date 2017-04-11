@@ -227,7 +227,7 @@ void audio_init (const char *devname)
 
 void audio_shutdown()
 {
-	alcCloseDevice(alDevice);
+    alcCloseDevice(alDevice);
 }
 
 struct OneShotSound {

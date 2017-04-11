@@ -41,7 +41,8 @@ void gfx_gl3_plus_force_shader_compilation(const Ogre::HighLevelGpuProgramPtr &v
         Ogre::GLSLSeparableProgramManager::getSingleton().setActiveVertexShader(vp_low);
         Ogre::GLSLSeparableProgramManager::getSingleton().setActiveFragmentShader(fp_low);
         auto *prog =
-			Ogre::GLSLSeparableProgramManager::getSingleton().getCurrentSeparableProgram();
-		if (intptr_t(prog->getComputeShader()) > 0 && intptr_t(prog->getComputeShader()) < 10) abort();
+            Ogre::GLSLSeparableProgramManager::getSingleton().getCurrentSeparableProgram();
+        if (intptr_t(prog->getComputeShader()) > 0 && intptr_t(prog->getComputeShader()) < 10)
+            abort();
     }
 }

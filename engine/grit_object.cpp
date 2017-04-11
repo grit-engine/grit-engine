@@ -141,7 +141,8 @@ void GritObject::activate (lua_State *L,
             demand.immediateLoad();
         } catch (Exception &e) {
             CERR << e << std::endl;
-            CERR << "Object: \"" << name << "\" raised an error on activation, so destroying it." << std::endl;
+            CERR << "Object: \"" << name << "\" raised an error on activation, so destroying it."
+                 << std::endl;
             // will deactivate us
             object_del(L,self);
             return;

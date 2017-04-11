@@ -35,28 +35,28 @@ class AudioDiskResource : public DiskResource {
 
 public:
     /** To create a resource, call disk_resource_get_or_make.  This function is for internal use only. */
-	AudioDiskResource (const std::string &name)
-		: name(name), stereo(false)
-	{
-	}
+    AudioDiskResource (const std::string &name)
+        : name(name), stereo(false)
+    {
+    }
 
     /** Specialised loading functionality for audio files. */
-	virtual void loadImpl (void);
+    virtual void loadImpl (void);
 
     /** Specialised unloading functionality for audio files. */
-	virtual void unloadImpl (void);
+    virtual void unloadImpl (void);
 
     /** The name of the resource, i.e. the filename on disk as an absolute Grit path. */
-	virtual const std::string &getName (void) const { return name; }
+    virtual const std::string &getName (void) const { return name; }
 
     /** A buffer containing either both channels interleaved (in the case of stereo) or just the single channel. */
-	ALuint getALBufferAll(void) { return stereo ? alBuffer : alBufferLeft; }
+    ALuint getALBufferAll(void) { return stereo ? alBuffer : alBufferLeft; }
 
     /** A buffer containing just the left channel. */
-	ALuint getALBufferLeft(void) { return alBufferLeft; }
+    ALuint getALBufferLeft(void) { return alBufferLeft; }
 
     /** A buffer containing just the right channel, or 0 if sound is mono. */
-	ALuint getALBufferRight(void) { return alBufferRight; }
+    ALuint getALBufferRight(void) { return alBufferRight; }
 
     /** Is the loaded file a stereo one?  Discovered at loading time. */
     bool getStereo (void) { return stereo; }
@@ -64,22 +64,22 @@ public:
 private:
 
     /** Utility function to load a PCM file with .wav header from the byte stream. */
-	void loadWAV (Ogre::DataStreamPtr &file);
-	
+    void loadWAV (Ogre::DataStreamPtr &file);
+    
     /** Utility function to load and decode Ogg Vorbis file. */
-	void loadOGG (Ogre::DataStreamPtr &file);
-	
+    void loadOGG (Ogre::DataStreamPtr &file);
+    
     /** Cache of the name. */
-	const std::string name;
+    const std::string name;
 
     /** The buffer containing interleaved left and right channels, used for stereo playback.  If resource is not stereo, is unused. */
-	ALuint alBuffer;
+    ALuint alBuffer;
 
     /** The buffer containing only the left channel, or the mono channel in the case of a mono resource. */
-	ALuint alBufferLeft;
+    ALuint alBufferLeft;
 
     /** The buffer containing only the right channel, unused if the resource is not stereo. */
-	ALuint alBufferRight;
+    ALuint alBufferRight;
 
     /** Is the loaded file a stereo one? */
     bool stereo;

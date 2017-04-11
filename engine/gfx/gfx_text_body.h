@@ -65,11 +65,11 @@ class GfxTextBody : public GfxFertileNode, public Ogre::MovableObject {
     };
 
 
-	void recomputeBounds (void);
+    void recomputeBounds (void);
 
     const Ogre::AxisAlignedBox& getBoundingBox (void) const
-	{ return bounds; }
-	
+    { return bounds; }
+    
     float getBoundingRadius (void) const;
 
     void _updateRenderQueue (Ogre::RenderQueue* queue);
@@ -89,8 +89,8 @@ class GfxTextBody : public GfxFertileNode, public Ogre::MovableObject {
     // Hack to pass material into queue->addRenderable
     Ogre::MaterialPtr renderMaterial;
     GfxTextBuffer textBuffer;
-	// Ogre API requires us to return a reference to this.
-	Ogre::AxisAlignedBox bounds;
+    // Ogre API requires us to return a reference to this.
+    Ogre::AxisAlignedBox bounds;
     bool enabled;
     bool castShadows;
 
@@ -108,7 +108,7 @@ class GfxTextBody : public GfxFertileNode, public Ogre::MovableObject {
 
     void updateGpu (void) {
         textBuffer.updateGPU(true, 0, 0);
-		recomputeBounds();
+        recomputeBounds();
     }
 
     void clear (void) {

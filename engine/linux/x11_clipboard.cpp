@@ -151,7 +151,8 @@ static std::string clipboard_get (Atom source)
                 &len, &bytes_left,
                 &data);
             if (result != Success) {
-                EXCEPTEX << "Could not XGetWindowProperty: " << get_xlib_error(display, result) << ENDL;
+                EXCEPTEX << "Could not XGetWindowProperty: " << get_xlib_error(display, result)
+                         << ENDL;
             }
 
             if (bytes_left != 0) {
@@ -162,7 +163,8 @@ static std::string clipboard_get (Atom source)
                     AnyPropertyType, &type, &format,
                     &len, &dummy, &data);
                 if (result != Success) {
-                    EXCEPTEX << "Could not XGetWindowProperty: " << get_xlib_error(display, result) << ENDL;
+                    EXCEPTEX << "Could not XGetWindowProperty: " << get_xlib_error(display, result)
+                             << ENDL;
                 }
                 s = std::string(data, data+len);
             }

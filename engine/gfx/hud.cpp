@@ -1286,7 +1286,7 @@ void gfx_render_hud_one (HudBase *base)
         } else {
             matrix_d3d_offset.setTrans(Ogre::Vector3(-win_size.x/2, -win_size.y/2, 0));
         }
-		
+
         Ogre::Matrix4 matrix_scale = I;
         matrix_scale.setScale(Ogre::Vector3(2/win_size.x, 2/win_size.y, 1));
 

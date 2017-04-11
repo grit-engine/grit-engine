@@ -86,49 +86,49 @@ void GfxTextBody::_updateRenderQueue(Ogre::RenderQueue* queue)
 
     if (shadow_cast) {
 
-		// Ogre chases ->getTechnique(0)->getShadowCasterMaterial() to get the actual one
-		// which is material->castMat
+        // Ogre chases ->getTechnique(0)->getShadowCasterMaterial() to get the actual one
+        // which is material->castMat
         renderMaterial = material->regularMat;
         queue->addRenderable(&sub, 0, 0);
-		renderMaterial.setNull();
-		return;
+        renderMaterial.setNull();
+        return;
     }
 
-	if (do_regular) {
-		// TODO: Warn if mesh does not have required vertex attributes for this material
-		// taking into account dead code due to particular uniform values.
-		// E.g. vertex colours, alpha, normals, tangents, extra tex coords.
+    if (do_regular) {
+        // TODO: Warn if mesh does not have required vertex attributes for this material
+        // taking into account dead code due to particular uniform values.
+        // E.g. vertex colours, alpha, normals, tangents, extra tex coords.
 
 
-		/* TODO(dcunnin): Pick a specific material by
-		 * Fading: false/true
-		 */
+        /* TODO(dcunnin): Pick a specific material by
+         * Fading: false/true
+         */
 
-		renderMaterial = material->regularMat;
+        renderMaterial = material->regularMat;
 
-		int queue_group = RQ_GBUFFER_OPAQUE;
-		switch (material->getSceneBlend()) {
-			case GFX_MATERIAL_OPAQUE:      queue_group = RQ_GBUFFER_OPAQUE; break;
-			case GFX_MATERIAL_ALPHA:       queue_group = RQ_FORWARD_ALPHA; break;
-			case GFX_MATERIAL_ALPHA_DEPTH: queue_group = RQ_FORWARD_ALPHA_DEPTH; break;
-		}
-		queue->addRenderable(&sub, queue_group, 0);
+        int queue_group = RQ_GBUFFER_OPAQUE;
+        switch (material->getSceneBlend()) {
+            case GFX_MATERIAL_OPAQUE:      queue_group = RQ_GBUFFER_OPAQUE; break;
+            case GFX_MATERIAL_ALPHA:       queue_group = RQ_FORWARD_ALPHA; break;
+            case GFX_MATERIAL_ALPHA_DEPTH: queue_group = RQ_FORWARD_ALPHA_DEPTH; break;
+        }
+        queue->addRenderable(&sub, queue_group, 0);
 
-		if (material->getAdditionalLighting() && emissiveEnabled) {
-			renderMaterial = material->additionalMat;
-			switch (material->getSceneBlend()) {
-				case GFX_MATERIAL_OPAQUE:      queue_group = RQ_FORWARD_OPAQUE_EMISSIVE; break;
-				case GFX_MATERIAL_ALPHA:       queue_group = RQ_FORWARD_ALPHA_EMISSIVE; break;
-				case GFX_MATERIAL_ALPHA_DEPTH: queue_group = RQ_FORWARD_ALPHA_DEPTH_EMISSIVE; break;
-			}
-			queue->addRenderable(&sub, queue_group, 0);
-		}
-	}
+        if (material->getAdditionalLighting() && emissiveEnabled) {
+            renderMaterial = material->additionalMat;
+            switch (material->getSceneBlend()) {
+                case GFX_MATERIAL_OPAQUE:      queue_group = RQ_FORWARD_OPAQUE_EMISSIVE; break;
+                case GFX_MATERIAL_ALPHA:       queue_group = RQ_FORWARD_ALPHA_EMISSIVE; break;
+                case GFX_MATERIAL_ALPHA_DEPTH: queue_group = RQ_FORWARD_ALPHA_DEPTH_EMISSIVE; break;
+            }
+            queue->addRenderable(&sub, queue_group, 0);
+        }
+    }
 
-	if (do_wireframe) {
-		renderMaterial = material->wireframeMat;
-		queue->addRenderable(&sub, RQ_FORWARD_ALPHA, 0);
-	}
+    if (do_wireframe) {
+        renderMaterial = material->wireframeMat;
+        queue->addRenderable(&sub, RQ_FORWARD_ALPHA, 0);
+    }
 
     renderMaterial.setNull();
 
@@ -137,7 +137,7 @@ void GfxTextBody::_updateRenderQueue(Ogre::RenderQueue* queue)
 void GfxTextBody::visitRenderables(Ogre::Renderable::Visitor* visitor, bool)
 {
     // Internally accesses renderMaterial.
-	renderMaterial = material->regularMat;
+    renderMaterial = material->regularMat;
     visitor->visit(&sub, 0, false);
     renderMaterial.setNull();
 }
@@ -148,7 +148,7 @@ void GfxTextBody::recomputeBounds (void)
     Vector2 dim = textBuffer.getDrawnDimensions();
     Vector3 min_bound(0, -dim.y, 0);
     Vector3 max_bound(dim.x, 0, 0);
-	bounds = Ogre::AxisAlignedBox(to_ogre(min_bound), to_ogre(max_bound));
+    bounds = Ogre::AxisAlignedBox(to_ogre(min_bound), to_ogre(max_bound));
 }
 
 Ogre::Real GfxTextBody::getBoundingRadius(void) const

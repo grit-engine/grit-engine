@@ -560,11 +560,11 @@ void gfx_gasoline_unparse_body_cg(const GfxGslContext &ctx,
     } else {
         vert_ss << "    Float3 pos_vs = mul(global_view, Float4(pos_ws, 1)).xyz;\n";
         vert_ss << "    Float4 clip_pos = mul(global_proj, Float4(pos_vs, 1));\n";
-		if (ctx.d3d9) {
-			vert_ss << "    clip_pos.z = (clip_pos.z + clip_pos.w) / 2.0;\n";
-		} else {
-			vert_ss << "    clip_pos.y *= internal_rt_flip;\n";
-		}
+        if (ctx.d3d9) {
+            vert_ss << "    clip_pos.z = (clip_pos.z + clip_pos.w) / 2.0;\n";
+        } else {
+            vert_ss << "    clip_pos.y *= internal_rt_flip;\n";
+        }
         if (!wireframe)
             vert_ss << "    internal_vertex_to_cam = global_cameraPos - pos_ws;\n";
         if (!first_person)
@@ -602,13 +602,13 @@ void gfx_gasoline_unparse_body_cg(const GfxGslContext &ctx,
     // Main function
     frag_ss << "void main (\n";
     frag_ss << "    in Float2 wpos : WPOS,\n";
-	if (forward_only) {
-		frag_ss << "    out Float4 out_gbuffer0 : COLOR0,\n";
-		frag_ss << "    out Float4 out_gbuffer1 : COLOR1,\n";
-		frag_ss << "    out Float4 out_gbuffer2 : COLOR2\n";
-	} else {
-		frag_ss << "    out Float4 out_colour_alpha : COLOR\n";
-	}
+    if (forward_only) {
+        frag_ss << "    out Float4 out_gbuffer0 : COLOR0,\n";
+        frag_ss << "    out Float4 out_gbuffer1 : COLOR1,\n";
+        frag_ss << "    out Float4 out_gbuffer2 : COLOR2\n";
+    } else {
+        frag_ss << "    out Float4 out_colour_alpha : COLOR\n";
+    }
     frag_ss << ") {\n";
 
     frag_ss << "    frag_screen = wpos.xy + Float2(0.5, 0.5);\n";
@@ -618,9 +618,9 @@ void gfx_gasoline_unparse_body_cg(const GfxGslContext &ctx,
     }
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "vert_", GfxGslTrans::VERT);
     if (!wireframe)
-		frag_ss << gfx_gasoline_generate_trans_decode(trans, "udangs_", GfxGslTrans::USER);
+        frag_ss << gfx_gasoline_generate_trans_decode(trans, "udangs_", GfxGslTrans::USER);
     if (using_additional)
-		frag_ss << gfx_gasoline_generate_trans_decode(trans, "uadd_", GfxGslTrans::USER);
+        frag_ss << gfx_gasoline_generate_trans_decode(trans, "uadd_", GfxGslTrans::USER);
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "internal_", GfxGslTrans::INTERNAL);
 
     if (cast) {

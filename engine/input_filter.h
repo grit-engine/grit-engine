@@ -45,7 +45,8 @@ extern "C" {
 //   * goes into modal when tab pressed
 //   * changes enable status of console, etc
 //   * never captures mouse
-//   * can handle screenshot and simple things also, e.g. physics pause, any global bindings that work in debug mode
+//   * can handle screenshot and simple things also, e.g. physics pause,
+//     any global bindings that work in debug mode
 //   * can be disabled to disallow cheating
 // Playing General
 //   * just game binds, set up by configuration.lua

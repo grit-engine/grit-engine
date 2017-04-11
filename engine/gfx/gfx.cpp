@@ -887,7 +887,7 @@ struct WindowEventListener : Ogre::WindowEventListener {
     {
         if (shutting_down) return;
         gfx_cb->windowResized(rw->getWidth(),rw->getHeight());
-		reset_frame_buffer_on_next_render = true;
+        reset_frame_buffer_on_next_render = true;
         hud_signal_window_resized(rw->getWidth(),rw->getHeight());
     }
 

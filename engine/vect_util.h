@@ -32,11 +32,11 @@
 template<class T> void vect_remove_fast (std::vector<T> &vect, size_t index)
 {
     APP_ASSERT(index < vect.size());
-	// I would use std::swap at this point, but apparently that makes visual studio crash...
-	if (index != vect.size()-1) {
-		T tmp = vect[vect.size()-1];
-		vect[index] = tmp;
-	}
+    // I would use std::swap at this point, but apparently that makes visual studio crash...
+    if (index != vect.size()-1) {
+        T tmp = vect[vect.size()-1];
+        vect[index] = tmp;
+    }
     vect.pop_back();
 }
 
@@ -105,10 +105,16 @@ template<class T> class fast_erase_vector {
      */
     size_t capacity (void) const { return vect.capacity(); }
 
-    /** Look up a particular index, this is only useful for iterations because the indexes change during remove operations. */
+    /** Look up a particular index.
+     * Warning: This is only useful for iterations because the indexes are not stable.  They change
+     * during remove operations.
+     */
     T &operator[] (size_t i) { return vect[i]; }
 
-    /** Look up a particular index, this is only useful for iterations because the indexes change during remove operations. */
+    /** Look up a particular index.
+     * Warning: This is only useful for iterations because the indexes are not stable.  They change
+     * during remove operations.
+     */
     const T &operator[] (size_t i) const { return vect[i]; }
 
     const std::vector<T> &rawVector (void) { return vect; }

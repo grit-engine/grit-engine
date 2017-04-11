@@ -34,32 +34,34 @@ class Joystick {
 
 public:
 
-        /** The kind of joystick boolean button being pressed(1=on) or unpressed(0=off). */
-        enum Button
-        {
-                JOYSTICK_BUTTON1 = 1, JOYSTICK_BUTTON2, JOYSTICK_BUTTON3,
-                JOYSTICK_BUTTON4, JOYSTICK_BUTTON5, JOYSTICK_BUTTON6,
-                JOYSTICK_BUTTON7, JOYSTICK_BUTTON8, JOYSTICK_BUTTON9,
-                JOYSTICK_BUTTON10,JOYSTICK_BUTTON11
-        };
+    /** The kind of joystick boolean button being pressed(1=on) or unpressed(0=off). */
+    enum Button {
+        JOYSTICK_BUTTON1 = 1, JOYSTICK_BUTTON2, JOYSTICK_BUTTON3,
+        JOYSTICK_BUTTON4, JOYSTICK_BUTTON5, JOYSTICK_BUTTON6,
+        JOYSTICK_BUTTON7, JOYSTICK_BUTTON8, JOYSTICK_BUTTON9,
+        JOYSTICK_BUTTON10,JOYSTICK_BUTTON11
+    };
 
-        /** The kind of joystick analog axes being moved */
-        enum Axe
-        {
-                JOYSTICK_AXE1 = 1, JOYSTICK_AXE2, JOYSTICK_AXE3,
-                JOYSTICK_AXE4, JOYSTICK_AXE5, JOYSTICK_AXE6,
-                JOYSTICK_AXE7, JOYSTICK_AXE8
-        };
+    /** The kind of joystick analog axes being moved */
+    enum Axis {
+        JOYSTICK_AXE1 = 1, JOYSTICK_AXE2, JOYSTICK_AXE3,
+        JOYSTICK_AXE4, JOYSTICK_AXE5, JOYSTICK_AXE6,
+        JOYSTICK_AXE7, JOYSTICK_AXE8
+    };
 
-        /** Empty destructor. */
-        virtual ~Joystick() { }
+    /** Empty destructor. */
+    virtual ~Joystick() { }
 
-        /** Return the joystick events since the last call.  Should be called frequently (e.g. every graphics frame).
-         * \param buttons A list of joystick buttons pressed since the last call.
-         * \param axes    A list of joystick buttons pressed since the last call.
-         * \param axes    A list of joystick buttons pressed since the last call.
-         */
-        virtual bool getEvents(std::vector<signed char> *buttons, std::vector<signed char> *axes, std::vector<short int> *values) = 0;
+    /** Return the joystick events since the last call.
+     *
+     * Should be called frequently (e.g. every graphics frame).
+     *
+     * \param buttons A list of joystick buttons pressed since the last call.
+     * \param axes    A list of joystick buttons pressed since the last call.
+     * \param axes    A list of joystick buttons pressed since the last call.
+     */
+    virtual bool getEvents(std::vector<signed char> *buttons, std::vector<signed char> *axes,
+                           std::vector<short int> *values) = 0;
 
 };
 

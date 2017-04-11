@@ -23,7 +23,7 @@
 #include <map>
 
 class GritClass;
-typedef std::map<std::string,GritClass*> GritClassMap;
+typedef std::map<std::string, GritClass*> GritClassMap;
 
 #ifndef GritClass_h
 #define GritClass_h
@@ -31,9 +31,9 @@ typedef std::map<std::string,GritClass*> GritClassMap;
 #include <string>
 
 extern "C" {
-        #include <lua.h>
-        #include <lauxlib.h>
-        #include <lualib.h>
+    #include <lua.h>
+    #include <lauxlib.h>
+    #include <lualib.h>
 }
 
 #include "external_table.h"
@@ -57,98 +57,104 @@ class GritClass {
 
     public:
 
-        /** Create a class using class_add, this function is internal. */
-        GritClass (lua_State *L, const std::string &name_)
-              : name(name_), refCount(1)
-        {
-                int index = lua_gettop(L);
-                for (lua_pushnil(L) ; lua_next(L,index)!=0 ; lua_pop(L,1)) {
-                        const char *err = table.luaSet(L);
-                        if (err) my_lua_error(L, err);
-                }
-                lua_pop(L,1); // the table we just iterated through
-                parentClass.set(L);
+    /** Create a class using class_add, this function is internal. */
+    GritClass (lua_State *L, const std::string &name_)
+          : name(name_), refCount(1)
+    {
+        int index = lua_gettop(L);
+        for (lua_pushnil(L) ; lua_next(L, index)!=0 ; lua_pop(L, 1)) {
+            const char *err = table.luaSet(L);
+            if (err) my_lua_error(L, err);
         }
+        lua_pop(L, 1); // the table we just iterated through
+        parentClass.set(L);
+    }
 
-        /** The parent class is a table at the top of the Lua stack. */
-        void setParent (lua_State *L)
-        {
-                parentClass.set(L);
+    /** The parent class is a table at the top of the Lua stack. */
+    void setParent (lua_State *L)
+    {
+        parentClass.set(L);
+    }
+
+    /** Push the parent to the top of the Lua stack. */
+    void pushParent (lua_State *L)
+    {
+        parentClass.push(L);
+    }
+
+    /** Look up the given key, pushing the value on the stack, or nil if it
+     * is unbound. */
+    void get (lua_State *L, const std::string &key)
+    {
+        const char *err = table.luaGet(L, key);
+        if (err) my_lua_error(L, err);
+        // check the parent
+        if (lua_isnil(L, -1)) {
+            lua_pop(L, 1);
+            pushParent(L);
+            lua_getfield(L, -1, key.c_str());
+            lua_replace(L, -2); // pop the parent
         }
+    }
 
-        /** Push the parent to the top of the Lua stack. */
-        void pushParent (lua_State *L)
-        {
-                parentClass.push(L);
-        }
+    /** Set the given key to the value at the top of the Lua stack. */
+    void set (lua_State *L, const std::string &key)
+    {
+        const char *err = table.luaSet(L, key);
+        if (err) my_lua_error(L, err);
+    }
 
-        /** Look up the given key, pushing the value on the stack, or nil if it
-         * is unbound. */
-        void get (lua_State *L, const std::string &key)
-        {
-                const char *err = table.luaGet(L, key);
-                if (err) my_lua_error(L,err);
-                // check the parent
-                if (lua_isnil(L,-1)) {
-                        lua_pop(L,1);
-                        pushParent(L);
-                        lua_getfield(L, -1, key.c_str());
-                        lua_replace(L,-2); // pop the parent
-                }
-        }
+    /** Set the key at Lua stack position -2 to the value at Lua stack position -1. */
+    void set (lua_State *L)
+    {
+        const char *err = table.luaSet(L);
+        if (err) my_lua_error(L, err);
+    }
 
-        /** Set the given key to the value at the top of the Lua stack. */
-        void set (lua_State *L, const std::string &key)
-        {
-                const char *err = table.luaSet(L, key);
-                if (err) my_lua_error(L,err);
-        }
+    /** Push a table to the stack containing the key/value mappings in this class. */
+    void dump (lua_State *L)
+    {
+        table.dump(L);
+    }
 
-        /** Set the key at Lua stack position -2 to the value at Lua stack position -1. */
-        void set (lua_State *L)
-        {
-                const char *err = table.luaSet(L);
-                if (err) my_lua_error(L,err);
-        }
+    /** Indicate that you are using this class.
+     *
+     * A class will not be completely destroyed until noone is using it. */
+    void acquire ()
+    {
+        refCount++;
+    }
 
-        /** Push a table to the stack containing the key/value mappings in this class. */
-        void dump (lua_State *L)
-        {
-                table.dump(L);
-        }
+    /** Indicate that you are no-longer using this class (e.g. you are an
+     * object that is in the process of being destroyed).  The class may be
+     * destroyed if it is no-longer being used by anyone and has been removed via
+     * class_del. */
+    void release (lua_State *L)
+    {
+        refCount--;
+        if (refCount>0) return;
+        table.destroy(L);
+        parentClass.setNil(L);
+        delete this;
+    }
 
-        /** Indicate that you are using this class.  A class will not be completely destroyed until noone is using it. */
-        void acquire ()
-        {
-                refCount++;
-        }
-
-        /** Indicate that you are no-longer using this class (e.g. you are an
-         * object that is in the process of being destroyed).  The class may be
-         * destroyed if it is no-longer being used by anyone and has been removed via
-         * class_del. */
-        void release (lua_State *L)
-        {
-                refCount--;
-                if (refCount>0) return;
-                table.destroy(L);
-                parentClass.setNil(L);
-                delete this;
-        }
-
-        /** The name of the class, as a Grit path. */
-        const std::string name;
+    /** The name of the class, as a Grit path. */
+    const std::string name;
 
     protected:
 
-        /** The number of objects using this class, +1 if it has not yet been 'deleted' and thus the system is using it. */
-        int refCount;
+    /** The number of objects using this class.
+     *
+     * Includes an additional, +1 if it has not yet been 'deleted' and thus the system is using
+     * it. */
+    int refCount;
 
-        /** A reference to the parent class, which is a Lua table and therefore exists on the Lua heap. */
-        LuaPtr parentClass;
+    /** A reference to the parent class, which is a Lua table and therefore exists on the Lua
+     * heap. */
+    LuaPtr parentClass;
 
-        /** The class's key/value mappings. */
-        ExternalTable table;
+    /** The class's key/value mappings. */
+    ExternalTable table;
 
 };
 
@@ -168,7 +174,7 @@ GritClass *class_get (const std::string &name);
 
 /** Does the class exist? */
 bool class_has (const std::string &name);
-        
+
 /** Remove all classes from the system. */
 void class_all_del (lua_State *L);
 
@@ -180,5 +186,3 @@ size_t class_count (void);
 
 
 #endif
-
-// vim: shiftwidth=4:tabstop=4:expandtab

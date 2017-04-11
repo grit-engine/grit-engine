@@ -194,12 +194,12 @@ bool MouseDirectInput8::getEvents(std::vector<int> *clicks,
                                 scroll += (int)d;
                                 while (scroll>=WHEEL_DELTA) {
                                         clicks->push_back(MOUSE_SCROLL_UP);
-										clicks->push_back(-MOUSE_SCROLL_UP);
+                                        clicks->push_back(-MOUSE_SCROLL_UP);
                                         scroll -= WHEEL_DELTA;
                                 }
                                 while (scroll<=-WHEEL_DELTA) {
                                         clicks->push_back(MOUSE_SCROLL_DOWN);
-										clicks->push_back(-MOUSE_SCROLL_DOWN);
+                                        clicks->push_back(-MOUSE_SCROLL_DOWN);
                                         scroll += WHEEL_DELTA;
                                 }
                         }

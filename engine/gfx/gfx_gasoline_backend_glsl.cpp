@@ -296,7 +296,7 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
                                 bool flat_z,
                                 bool das)
 {
-	GfxGslTypeMap vert_vars, frag_vars;
+    GfxGslTypeMap vert_vars, frag_vars;
     std::set<GfxGslTrans> trans_set;
     std::stringstream header;
     header << "// env: " << env << "\n";
@@ -445,7 +445,7 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
                                     bool forward_only,
                                     bool cast)
 {
-	GfxGslTypeMap vert_vars, frag_vars;
+    GfxGslTypeMap vert_vars, frag_vars;
     std::set<GfxGslTrans> trans_set;
     std::stringstream header;
     header << "// env: " << env << "\n";
@@ -720,10 +720,10 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
     std::vector<GfxGslTrans> trans;
     // TODO: When batching, more will need to be interpolated.
     GfxGslType *f2 = ctx.alloc.makeType<GfxGslFloatType>(2);
-	trans.emplace_back(GfxGslTrans{ GfxGslTrans::VERT, { "coord0", "x" }, f2 });
-	trans.emplace_back(GfxGslTrans{ GfxGslTrans::VERT, { "coord0", "y" }, f2 });
-	trans.emplace_back(GfxGslTrans{ GfxGslTrans::VERT, { "coord1", "x" }, f2 });
-	trans.emplace_back(GfxGslTrans{ GfxGslTrans::VERT, { "coord1", "y" }, f2 });
+    trans.emplace_back(GfxGslTrans{ GfxGslTrans::VERT, { "coord0", "x" }, f2 });
+    trans.emplace_back(GfxGslTrans{ GfxGslTrans::VERT, { "coord0", "y" }, f2 });
+    trans.emplace_back(GfxGslTrans{ GfxGslTrans::VERT, { "coord1", "x" }, f2 });
+    trans.emplace_back(GfxGslTrans{ GfxGslTrans::VERT, { "coord1", "y" }, f2 });
 
     // VERTEX
 
@@ -746,7 +746,7 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
 
     // FRAGMENT
 
-	GfxGslTypeMap frag_vars;
+    GfxGslTypeMap frag_vars;
     for (const auto &pair : dangs_ts->getVars())
         frag_vars["udangs_" + pair.first] = pair.second->type;
     for (const auto &pair : additional_ts->getVars())
