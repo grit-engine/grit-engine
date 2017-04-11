@@ -88,36 +88,38 @@ void GritObject::notifyFade (lua_State *L,
     //stack: err
 
     // call into lua...
-    push_gritcls(L,gritClass);
-    //stack: err,class
-    gritClass->get(L,"setFade");
+    //stack: err
+    getField(L, "setFade");
     //stack: err,class,callback
-    if (lua_isnil(L,-1)) {
+    if (lua_isnil(L, -1)) {
+        // TODO(dcunnin): We should add needsFadeCallbacks.
+        // This might be part of a genreal overhaul of lod levels, etc.
+
         // no setFade function, do nothing
-        lua_pop(L,3);
+        lua_pop(L, 2);
         //stack is empty
         STACK_CHECK;
         return;
     }
 
-    //stack: err,class,callback
+    //stack: err,callback
     // we now have the callback to play with
     
-    push_gritobj(L,self); // persistent grit obj
-    lua_pushnumber(L,fade); // fade
-    //stack: err,class,callback,persistent, fade
-    int status = lua_pcall(L,2,0,error_handler);
+    push_gritobj(L, self); // persistent grit obj
+    lua_pushnumber(L, fade); // fade
+    //stack: err,callback,persistent, fade
+    int status = lua_pcall(L, 2, 0, error_handler);
     if (status) {
-        //stack: err,class,msg
+        //stack: err,msg
         // pop the error message since the error handler will
         // have already printed it out
-        lua_pop(L,1);
-        object_del(L,self);
-        //stack: err,class
+        lua_pop(L, 1);
+        object_del(L, self);
+        //stack: err
     }
-    //stack: err,class
+    //stack: err
 
-    lua_pop(L,2);
+    lua_pop(L, 1);
     //stack is empty
     STACK_CHECK;
 
@@ -157,16 +159,14 @@ void GritObject::activate (lua_State *L,
 
     //stack: err
 
-    // get the activate function
-    push_gritcls(L,gritClass);
-    //stack: err,class
-    gritClass->get(L,"activate");
-    //stack: err,class,callback
-    if (lua_isnil(L,-1)) {
+    //stack: err
+    getField(L,"activate");
+    //stack: err,callback
+    if (lua_isnil(L, -1)) {
         // don't activate it as class does not have activate function
         // pop both the error handler and the nil activate function
         // and the table
-        lua_pop(L,3);
+        lua_pop(L, 3);
         CERR << "activating object: \""<<name<<"\": "
              << "class \""<<gritClass->name<<"\" "
              << "does not have activate function" << std::endl;
@@ -175,58 +175,55 @@ void GritObject::activate (lua_State *L,
         return;
     }
 
-    //stack: err,class,callback
-    STACK_CHECK_N(3);
+    //stack: err,callback
+    STACK_CHECK_N(2);
 
-    // we now have the callback to play with
+    // Call activate callback:
 
     // push 4 args
-    lua_checkstack(L,5);
-    //stack: err,class,callback
-    push_gritobj(L,self); // persistent
-    //stack: err,class,callback,persistent
+    lua_checkstack(L, 5);
+    //stack: err,callback
+    push_gritobj(L, self); // persistent
+    //stack: err,callback,persistent
     lua_newtable(L); // instance
-    //stack: err,class,callback,persistent,instance
-    lua_pushvalue(L,-1);
-    //stack: err,class,callback,persistent,instance,instance
-    lua = luaL_ref(L,LUA_REGISTRYINDEX); // set up the lua ref to the new instance while we're at it
-    //stack: err,class,callback,persistent,instance
-    STACK_CHECK_N(5);
+    //stack: err,callback,persistent,instance
+    lua_pushvalue(L, -1);
+    //stack: err,callback,persistent,instance,instance
+    lua = luaL_ref(L, LUA_REGISTRYINDEX); // set up the lua ref to the new instance
+    //stack: err,callback,persistent,instance
+    STACK_CHECK_N(4);
 
     // call (2 args), pops function too
-    int status = lua_pcall(L,2,0,error_handler);
+    int status = lua_pcall(L, 2, 0, error_handler);
     if (status) {
-        STACK_CHECK_N(3);
-        //stack: err,class,error
+        STACK_CHECK_N(2);
+        //stack: err,error
         // pop the error message since the error handler will
         // have already printed it out
-        lua_pop(L,1);
-        CERR << "Object: \"" << name << "\" raised an error on activation, so destroying it." << std::endl;
+        lua_pop(L, 1);
+        CERR << "Object: \"" << name << "\" raised an error on activation, so destroying it."
+             << std::endl;
         // will deactivate us
-        object_del(L,self);
-        //stack: err,class
-        STACK_CHECK_N(2);
+        object_del(L, self);
+        //stack: err
+        STACK_CHECK_N(1);
     } else {
-        STACK_CHECK_N(2);
-        //stack: err,class,object
+        STACK_CHECK_N(1);
+        //stack: err
         streamer_list_as_activated(self);
-        // pop and store the new object returned       
         lastFade = -1;
-        //stack: err,class
-        STACK_CHECK_N(2);
     }
-    //stack: err,class
+    //stack: err
 
-    STACK_CHECK_N(2);
-    lua_pop(L,2);
+    STACK_CHECK_N(1);
+    lua_pop(L, 1);
     //stack is empty
     STACK_CHECK;
 }
 
 float GritObject::calcFade (const float range2, bool &overlap)
 {
-
-    // windows prohibits use of near and far
+    // Windows prohibits use of variables called 'near' and 'far'.
     const GritObjectPtr &the_near = getNearObj();
     const GritObjectPtr &the_far = getFarObj();
 
@@ -284,18 +281,16 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
 
     //stack: err
 
-    // call into lua...
-    push_gritcls(L,gritClass);
-    //stack: err,class
-    gritClass->get(L,"deactivate");
-    //stack: err,class,callback
-    if (lua_isnil(L,-1)) {
-        lua_pop(L,3);
+    //stack: err
+    getField(L, "deactivate");
+    //stack: err, callback
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 2);
         //stack is empty
         CERR << "deactivating object: \""<<name<<"\": "
              << "class \""<<gritClass->name<<"\" "
              << "does not have deactivate function" << std::endl;
-        luaL_unref(L,LUA_REGISTRYINDEX,lua);
+        luaL_unref(L, LUA_REGISTRYINDEX, lua);
         lua = LUA_NOREF;
 
         STACK_CHECK;
@@ -304,31 +299,31 @@ bool GritObject::deactivate (lua_State *L, const GritObjectPtr &self)
         return true;
     }
 
-    //stack: err,class,callback
-    // we now have the callback to play with
+    //stack: err, callback
+    // Make the call.
 
-    push_gritobj(L,self); // persistent grit obj
-    //stack: err,class,callback
-    int status = lua_pcall(L,1,1,error_handler);
+    push_gritobj(L, self); // persistent grit obj
+    //stack: err, callback, self
+    int status = lua_pcall(L, 1, 1, error_handler);
     if (status) {
-        //stack: err,class,msg
+        //stack: err, msg
         // pop the error message since the error handler will
         // have already printed it out
-        lua_pop(L,1);
+        lua_pop(L, 1);
         killme = true;
-        //stack: err,class
+        //stack: err
     } else {
-        //stack: err,class,killme
-        killme = 0!=lua_toboolean(L,-1);
-        lua_pop(L,1);
-        //stack: err,class
+        //stack: err, killme
+        killme = 0 != lua_toboolean(L, -1);
+        lua_pop(L, 1);
+        //stack: err
     }
-    //stack: err,class
+    //stack: err
 
-    luaL_unref(L,LUA_REGISTRYINDEX,lua);
+    luaL_unref(L, LUA_REGISTRYINDEX, lua);
     lua = LUA_NOREF;
 
-    lua_pop(L,2);
+    lua_pop(L, 1);
     //stack is empty
     STACK_CHECK;
 
@@ -348,45 +343,40 @@ void GritObject::init (lua_State *L, const GritObjectPtr &self)
 
     //stack: err
 
-    // could get the init function from the object itself, but
-    // this would only lead to pulling the function from the class
-    // indirectly which is a waste of time, may as well get it straight
-    // from the class
-    push_gritcls(L,gritClass);
-    //stack: err,class
-    gritClass->get(L,"init");
-    //stack: err,class,callback
-    if (lua_isnil(L,-1)) {
-        lua_pop(L,3);
+    //stack: err
+    getField(L, "init");
+    //stack: err, callback
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 2);
         //stack is empty
         STACK_CHECK;
         CERR << "initializing object: \""<<name<<"\": "
              << "class \""<<gritClass->name<<"\" "
              << "does not have init function" << std::endl;
-        object_del(L,self);
+        object_del(L, self);
         return;
     }
 
-    //stack: err,class,callback
-    // we now have the callback to play with
+    // Call the callback.
 
-    lua_checkstack(L,2);
-    push_gritobj(L,self); // persistent grit obj
-    //stack: err,class,callback,persistent
-    int status = lua_pcall(L,1,0,error_handler);
+    lua_checkstack(L, 2);
+    push_gritobj(L, self); // persistent grit obj
+    //stack: err, callback, persistent
+    int status = lua_pcall(L, 1, 0, error_handler);
     if (status) {
-        //stack: err,class,msg
+        //stack: err, msg
         // pop the error message since the error handler will
         // have already printed it out
-        lua_pop(L,1);
-        CERR << "Object: \"" << name << "\" raised an error on initialization, so destroying it." << std::endl;
+        lua_pop(L, 1);
+        CERR << "Object: \"" << name << "\" raised an error on initialization, so destroying it."
+             << std::endl;
         // will deactivate us
-        object_del(L,self);
-        //stack: err,class
+        object_del(L, self);
+        //stack: err
     }
-    //stack: err,class
+    //stack: err
 
-    lua_pop(L,2);
+    lua_pop(L, 1);
     //stack is empty
     STACK_CHECK;
 
@@ -403,44 +393,36 @@ bool GritObject::frameCallback (lua_State *L, const GritObjectPtr &self, float e
     int error_handler = lua_gettop(L);
 
     //stack: err
-
-    // could get the init function from the object itself, but
-    // this would only lead to pulling the function from the class
-    // indirectly which is a waste of time, may as well get it straight
-    // from the class
-    push_gritcls(L,gritClass);
-    //stack: err,class
-    gritClass->get(L,"frameCallback");
-    //stack: err,class,callback
-    if (lua_isnil(L,-1)) {
-        lua_pop(L,3);
+    getField(L, "frameCallback");
+    //stack: err, callback
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 2);
         //stack is empty
         STACK_CHECK;
         return false;
     }
 
-    //stack: err,class,callback
-    // we now have the callback to play with
+    // Call the callback.
 
-    lua_checkstack(L,2);
-    push_gritobj(L,self); // persistent grit obj
+    lua_checkstack(L, 2);
+    push_gritobj(L, self); // persistent grit obj
     lua_pushnumber(L, elapsed); // time since last frame
-    //stack: err,class,callback,instance,elapsed
-    int status = lua_pcall(L,2,0,error_handler);
+    //stack: err, callback, instance, elapsed
+    int status = lua_pcall(L, 2, 0, error_handler);
     if (status) {
-        //stack: err,class,msg
+        //stack: err, msg
         // pop the error message since the error handler will
         // have already printed it out
-        lua_pop(L,1);
-        //stack: err,class
+        lua_pop(L, 1);
+        //stack: err
     }
-    //stack: err,class
+    //stack: err
 
-    lua_pop(L,2);
+    lua_pop(L, 1);
     //stack is empty
     STACK_CHECK;
 
-    return status==0;
+    return status == 0;
 }
 
 bool GritObject::stepCallback (lua_State *L, const GritObjectPtr &self, float elapsed)
@@ -455,43 +437,36 @@ bool GritObject::stepCallback (lua_State *L, const GritObjectPtr &self, float el
 
     //stack: err
 
-    // could get the init function from the object itself, but
-    // this would only lead to pulling the function from the class
-    // indirectly which is a waste of time, may as well get it straight
-    // from the class
-    push_gritcls(L,gritClass);
-    //stack: err,class
-    gritClass->get(L,"stepCallback");
-    //stack: err,class,callback
-    if (lua_isnil(L,-1)) {
-        lua_pop(L,3);
+    getField(L, "stepCallback");
+    //stack: err, callback
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 2);
         //stack is empty
         STACK_CHECK;
         return false;
     }
 
-    //stack: err,class,callback
-    // we now have the callback to play with
+    // Call the callback.
 
-    lua_checkstack(L,2);
-    push_gritobj(L,self); // persistent grit obj
+    lua_checkstack(L, 2);
+    push_gritobj(L, self); // persistent grit obj
     lua_pushnumber(L, elapsed); // time since last frame
-    //stack: err,class,callback,instance,elapsed
-    int status = lua_pcall(L,2,0,error_handler);
+    //stack: err, callback, instance, elapsed
+    int status = lua_pcall(L, 2, 0, error_handler);
     if (status) {
-        //stack: err,class,msg
+        //stack: err, msg
         // pop the error message since the error handler will
         // have already printed it out
-        lua_pop(L,1);
-        //stack: err,class
+        lua_pop(L, 1);
+        //stack: err
     }
-    //stack: err,class
+    //stack: err
 
-    lua_pop(L,2);
+    lua_pop(L, 1);
     //stack is empty
     STACK_CHECK;
 
-    return status==0;
+    return status == 0;
 }
 
 void GritObject::updateSphere (const Vector3 &pos_, float r_)
@@ -536,6 +511,18 @@ void GritObject::setNeedsStepCallbacks (const GritObjectPtr &self, bool v)
     } else {
         objs_needing_step_callbacks.insert(self);
     }
+}
+
+void GritObject::getField (lua_State *L, const std::string &f) const
+{
+    if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
+
+    const char *err = userValues.luaGet(L, f);
+    if (err) my_lua_error(L, err);
+    if (!lua_isnil(L, -1)) return;
+    lua_pop(L, 1);
+    // try class instead
+    gritClass->get(L, f);
 }
 
 

@@ -133,12 +133,12 @@ class GritObject {
                      const float fade);
 
     /** Is the object activated (close enough to the player)? */
-    bool isActivated (void) const { return lua!=LUA_NOREF; }
+    bool isActivated (void) const { return lua != LUA_NOREF; }
 
     /** Push the object's Lua table state, which only exists when it is activated. */
     void pushLuaTable (lua_State *L)
     {
-         lua_rawgeti(L,LUA_REGISTRYINDEX,lua);
+         lua_rawgeti(L, LUA_REGISTRYINDEX, lua);
     }
 
 
@@ -323,6 +323,8 @@ class GritObject {
 
     /** Whether or not this object had a generated name. */
     bool anonymous;
+
+    void getField (lua_State *L, const std::string &f) const;
 
     protected:
 

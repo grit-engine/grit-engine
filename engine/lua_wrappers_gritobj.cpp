@@ -141,18 +141,6 @@ TRY_START
 TRY_END
 }
 
-static int gritobj_update_sphere (lua_State *L)
-{
-TRY_START
-        check_args(L,3);
-        GET_UD_MACRO(GritObjectPtr,self,1,GRITOBJ_TAG);
-        Vector3 pos = check_v3(L,2);
-        float r = check_float(L,3);
-        self->updateSphere(pos, r);
-        return 0;
-TRY_END
-}
-
 static int gritobj_add_disk_resource (lua_State *L)
 {
 TRY_START
@@ -227,8 +215,6 @@ TRY_START
                 push_gritobj(L,self->getFarObj());
         } else if (key=="fade") {
                 lua_pushnumber(L,self->getFade());
-        } else if (key=="updateSphere") {
-                push_cfunction(L,gritobj_update_sphere);
         } else if (key=="pos") {
                 push_v3(L, self->getPos());
         } else if (key=="renderingDistance") {
@@ -266,14 +252,7 @@ TRY_START
         } else if (key=="dump") {
                 self->userValues.dump(L);
         } else {
-                GritClass *c = self->getClass();
-                if (c==NULL) my_lua_error(L,"GritObject destroyed");
-                const char *err = self->userValues.luaGet(L);
-                if (err) my_lua_error(L, err);
-                if (!lua_isnil(L,-1)) return 1;
-                lua_pop(L,1);
-                // try class instead
-                c->get(L,key);
+                self->getField(L, key);
         }
         return 1;
 TRY_END
@@ -303,8 +282,6 @@ TRY_START
                         self->setFarObj(self,v);
                 }
         } else if (key=="fade") {
-                my_lua_error(L,"Not a writeable GritObject member: "+key);
-        } else if (key=="updateSphere") {
                 my_lua_error(L,"Not a writeable GritObject member: "+key);
         } else if (key=="pos") {
                 self->updateSphere(check_v3(L,3));
@@ -338,7 +315,7 @@ TRY_START
                 self->setNeedsStepCallbacks(self, check_bool(L,3));
         } else {
                 GritClass *c = self->getClass();
-                if (c==NULL) my_lua_error(L,"GritObject destroyed");
+                if (c==NULL) my_lua_error(L, "GritObject destroyed");
                 const char *err = self->userValues.luaSet(L);
                 if (err) my_lua_error(L, err);
         }
@@ -459,61 +436,73 @@ TRY_END
 static int global_object_add (lua_State *L)
 {
 TRY_START
-        if (lua_gettop(L)==2) lua_newtable(L);
-        check_args(L,3);
-        std::string className = check_path(L,1);
+        if (lua_gettop(L) == 2) lua_newtable(L);
+        check_args(L, 3);
+        std::string className = check_path(L, 1);
         Vector3 spawnPos = check_v3(L, 2);
         int table_index = lua_gettop(L);
-        if (!lua_istable(L,table_index)) my_lua_error(L,"Last parameter should be a table");
-        lua_getfield(L,table_index,"name");
+        if (!lua_istable(L,table_index)) my_lua_error(L, "Last parameter should be a table");
+        lua_getfield(L, table_index, "name");
         std::string name;
         if (lua_isnil(L,-1)) {
                 name = "";
         } else {
-                if (lua_type(L,-1)!=LUA_TSTRING) my_lua_error(L,"Name wasn't a string!");
+                if (lua_type(L,-1) != LUA_TSTRING) my_lua_error(L,"Name wasn't a string!");
                 name = lua_tostring(L,-1);
         }
         lua_pop(L,1);
 
-        GritObjectPtr o = object_add(L,name,class_get(className));
+        GritObjectPtr o = object_add(L, name, class_get(className));
         o->userValues.set("spawnPos", spawnPos);
-        o->getClass()->get(L,"renderingDistance");
-        if (lua_isnil(L,-1)) {
-                object_del(L,o);
-                my_lua_error(L,"no renderingDistance in class \""
-                               +className+"\"");
+        lua_getfield(L, table_index, "near");
+        // Use renderingDistance from table if provided
+        if (lua_isnil(L, -1)) {
+                lua_pop(L, 1);
+                // Otherwise, use class.
+                o->getClass()->get(L, "renderingDistance");
+                if (lua_isnil(L, -1)) {
+                        object_del(L, o);
+                        my_lua_error(L, "no renderingDistance in class \""
+                                        + className + "\"");
+                }
+                if (lua_type(L, -1) != LUA_TNUMBER) {
+                        object_del(L, o);
+                        my_lua_error(L, "renderingDistance not a number in class \""
+                                        + className + "\"");
+                }
+        } else {
+                if (lua_type(L, -1) != LUA_TNUMBER) {
+                        object_del(L, o);
+                        my_lua_error(L, "renderingDistance not a number in object \""
+                                        + name + "\"");
+                }
         }
-        if (lua_type(L,-1)!=LUA_TNUMBER) {
-                object_del(L,o);
-                my_lua_error(L,"renderingDistance not a number in class \""
-                               +className+"\"");
-        }
-        float r = lua_tonumber(L,-1);
+        float r = lua_tonumber(L, -1);
         o->updateSphere(spawnPos, r);
-        lua_pop(L,1);
+        lua_pop(L, 1);
 
         // TODO move near and far into the loop below ('name' must remain above)
-        lua_getfield(L,table_index,"near");
-        if (!lua_isnil(L,-1)) {
-                if (is_userdata(L,-1,GRITOBJ_TAG)) {
-                        GET_UD_MACRO(GritObjectPtr,the_near,-1,GRITOBJ_TAG);
+        lua_getfield(L, table_index, "near");
+        if (!lua_isnil(L, -1)) {
+                if (is_userdata(L, -1, GRITOBJ_TAG)) {
+                        GET_UD_MACRO(GritObjectPtr, the_near, -1, GRITOBJ_TAG);
                         o->setNearObj(o, the_near);
                 } else {
-                        my_lua_error(L,"Field 'near' must be a grit object.");
+                        my_lua_error(L, "Field 'near' must be a grit object.");
                 }
         }
-        lua_pop(L,1);
+        lua_pop(L, 1);
 
-        lua_getfield(L,table_index,"far");
-        if (!lua_isnil(L,-1)) {
-                if (is_userdata(L,-1,GRITOBJ_TAG)) {
-                        GET_UD_MACRO(GritObjectPtr,the_far,-1,GRITOBJ_TAG);
+        lua_getfield(L, table_index, "far");
+        if (!lua_isnil(L, -1)) {
+                if (is_userdata(L, -1, GRITOBJ_TAG)) {
+                        GET_UD_MACRO(GritObjectPtr, the_far, -1, GRITOBJ_TAG);
                         o->setFarObj(o, the_far);
                 } else {
-                        my_lua_error(L,"Field 'far' must be a grit object.");
+                        my_lua_error(L, "Field 'far' must be a grit object.");
                 }
         }
-        lua_pop(L,1);
+        lua_pop(L, 1);
 
         // scan through table adding lua data to o
         for (lua_pushnil(L) ; lua_next(L,table_index)!=0 ; lua_pop(L,1)) {
@@ -526,6 +515,7 @@ TRY_START
                 if (key=="name") continue;
                 if (key=="near") continue;
                 if (key=="far") continue;
+                if (key=="renderingDistance") continue;
                 const char *err = o->userValues.luaSet(L);
                 if (err) {
                         object_del(L,o);
