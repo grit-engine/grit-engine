@@ -26,72 +26,72 @@
 
 struct CrowdToolParams
 {
-	bool m_expandSelectedDebugDraw;
-	bool m_showCorners;
-	bool m_showCollisionSegments;
-	bool m_showPath;
-	bool m_showVO;
-	bool m_showOpt;
-	bool m_showNeis;
-	
-	bool m_expandDebugDraw;
-	bool m_showLabels;
-	bool m_showGrid;
-	bool m_showNodes;
-	bool m_showPerfGraph;
-	bool m_showDetailAll;
-	
-	bool m_expandOptions;
-	bool m_anticipateTurns;
-	bool m_optimizeVis;
-	bool m_optimizeTopo;
-	bool m_obstacleAvoidance;
-	float m_obstacleAvoidanceType;
-	bool m_separation;
-	float m_separationWeight;
+    bool m_expandSelectedDebugDraw;
+    bool m_showCorners;
+    bool m_showCollisionSegments;
+    bool m_showPath;
+    bool m_showVO;
+    bool m_showOpt;
+    bool m_showNeis;
+    
+    bool m_expandDebugDraw;
+    bool m_showLabels;
+    bool m_showGrid;
+    bool m_showNodes;
+    bool m_showPerfGraph;
+    bool m_showDetailAll;
+    
+    bool m_expandOptions;
+    bool m_anticipateTurns;
+    bool m_optimizeVis;
+    bool m_optimizeTopo;
+    bool m_obstacleAvoidance;
+    float m_obstacleAvoidanceType;
+    bool m_separation;
+    float m_separationWeight;
 };
 
 class CrowdTool
 {
-	NavigationManager* m_nvmgr;
-	
-	enum ToolMode
-	{
-		TOOLMODE_CREATE,
-		TOOLMODE_MOVE_TARGET,
-		TOOLMODE_SELECT,
-		TOOLMODE_TOGGLE_POLYS,
-	};
-	ToolMode m_mode;
+    NavigationManager* m_nvmgr;
+    
+    enum ToolMode
+    {
+        TOOLMODE_CREATE,
+        TOOLMODE_MOVE_TARGET,
+        TOOLMODE_SELECT,
+        TOOLMODE_TOGGLE_POLYS,
+    };
+    ToolMode m_mode;
 
-	dtNavMesh* m_nav;
-	dtCrowd* m_crowd;
-	float m_targetPos[3];
-	dtPolyRef m_targetRef;
-	dtCrowdAgentDebugInfo m_agentDebug;
-	dtObstacleAvoidanceDebugData* m_vod;
-	static const int MAX_AGENTS = 128;
+    dtNavMesh* m_nav;
+    dtCrowd* m_crowd;
+    float m_targetPos[3];
+    dtPolyRef m_targetRef;
+    dtCrowdAgentDebugInfo m_agentDebug;
+    dtObstacleAvoidanceDebugData* m_vod;
+    static const int MAX_AGENTS = 128;
 
-	CrowdToolParams m_toolParams;
+    CrowdToolParams m_toolParams;
 
 public:
-	CrowdTool();
-	~CrowdTool();
-	
-	virtual void init(NavigationManager* nvmgr);
-	virtual void reset();
-	virtual void step();
-	virtual void update(const float dt);
-	virtual void render();
+    CrowdTool();
+    ~CrowdTool();
+    
+    virtual void init(NavigationManager* nvmgr);
+    virtual void reset();
+    virtual void step();
+    virtual void update(const float dt);
+    virtual void render();
 
-	int addAgent(const float* pos);
-	void removeAgent(const int idx);
-	void hilightAgent(const int idx);
-	void updateAgentParams();
-	int hitTestAgents(const float* s, const float* p);
-	void setMoveTarget(const float* p, bool adjust);
-	void updateTick(const float dt);
-	inline CrowdToolParams* getToolParams() { return &m_toolParams; }
+    int addAgent(const float* pos);
+    void removeAgent(const int idx);
+    void hilightAgent(const int idx);
+    void updateAgentParams();
+    int hitTestAgents(const float* s, const float* p);
+    void setMoveTarget(const float* p, bool adjust);
+    void updateTick(const float dt);
+    inline CrowdToolParams* getToolParams() { return &m_toolParams; }
 };
 
 #endif // CROWDMANAGER_H

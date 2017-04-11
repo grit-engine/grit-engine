@@ -24,45 +24,45 @@
 class rcMeshLoaderObj
 {
 public:
-	rcMeshLoaderObj();
-	~rcMeshLoaderObj();
-	
-	bool load(const std::string& fileName);
+    rcMeshLoaderObj();
+    ~rcMeshLoaderObj();
+    
+    bool load(const std::string& fileName);
 
-	bool convertGfxBody(std::vector<GfxBodyPtr> srcBodies);
-	bool convertRigidBody(std::vector<RigidBody*> srcBodies);
+    bool convertGfxBody(std::vector<GfxBodyPtr> srcBodies);
+    bool convertRigidBody(std::vector<RigidBody*> srcBodies);
 
-	const float* getVerts() const { return m_verts; }
-	const float* getNormals() const { return m_normals; }
-	const int* getTris() const { return m_tris; }
-	int getVertCount() const { return m_vertCount; }
-	int getTriCount() const { return m_triCount; }
-	const std::string& getFileName() const { return m_filename; }
+    const float* getVerts() const { return m_verts; }
+    const float* getNormals() const { return m_normals; }
+    const int* getTris() const { return m_tris; }
+    int getVertCount() const { return m_vertCount; }
+    int getTriCount() const { return m_triCount; }
+    const std::string& getFileName() const { return m_filename; }
 
 private:
-	// Explicitly disabled copy constructor and copy assignment operator.
-	rcMeshLoaderObj(const rcMeshLoaderObj&);
-	rcMeshLoaderObj& operator=(const rcMeshLoaderObj&);
-	
-	void addVertex(float x, float y, float z, int& cap);
-	void addTriangle(int a, int b, int c, int& cap);
-	
-	std::string m_filename;
-	float m_scale;	
-	float* m_verts;
-	int* m_tris;
-	float* m_normals;
-	int m_vertCount;
-	int m_triCount;
+    // Explicitly disabled copy constructor and copy assignment operator.
+    rcMeshLoaderObj(const rcMeshLoaderObj&);
+    rcMeshLoaderObj& operator=(const rcMeshLoaderObj&);
+    
+    void addVertex(float x, float y, float z, int& cap);
+    void addTriangle(int a, int b, int c, int& cap);
+    
+    std::string m_filename;
+    float m_scale;    
+    float* m_verts;
+    int* m_tris;
+    float* m_normals;
+    int m_vertCount;
+    int m_triCount;
 };
 
 extern void getMeshInformation(const Ogre::MeshPtr mesh,
-	size_t &vertex_count,
-	Ogre::Vector3* &vertices,
-	size_t &index_count,
-	unsigned long* &indices,
-	const Ogre::Vector3 &position = Ogre::Vector3::ZERO,
-	const Ogre::Quaternion &orient = Ogre::Quaternion::IDENTITY,
-	const Ogre::Vector3 &scale = Ogre::Vector3::UNIT_SCALE);
+    size_t &vertex_count,
+    Ogre::Vector3* &vertices,
+    size_t &index_count,
+    unsigned long* &indices,
+    const Ogre::Vector3 &position = Ogre::Vector3::ZERO,
+    const Ogre::Quaternion &orient = Ogre::Quaternion::IDENTITY,
+    const Ogre::Vector3 &scale = Ogre::Vector3::UNIT_SCALE);
 
 #endif // MESHLOADER_OBJ

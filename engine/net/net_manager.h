@@ -14,43 +14,43 @@ class NetManager;
 class NetManager
 {
 private:
-	struct NetPacket
-	{
-		NetAddress addr;
-		std::string data;
-		uint64_t time;
+    struct NetPacket
+    {
+        NetAddress addr;
+        std::string data;
+        uint64_t time;
 
-		NetPacket(NetAddress& from, std::string& data_);
-	};
+        NetPacket(NetAddress& from, std::string& data_);
+    };
 
-	SOCKET netSocket;
+    SOCKET netSocket;
 
-	int forcedLatency;
+    int forcedLatency;
 
-	std::queue<NetPacket> receiveQueue;
-	std::queue<NetPacket> sendQueue;
+    std::queue<NetPacket> receiveQueue;
+    std::queue<NetPacket> sendQueue;
 
-	std::queue<std::string> clientLoopQueue;
-	std::queue<std::string> serverLoopQueue;
+    std::queue<std::string> clientLoopQueue;
+    std::queue<std::string> serverLoopQueue;
 
-	ExternalTable netCBTable;
+    ExternalTable netCBTable;
 
-	void sendLoopbackPacket(NetChannel channel, std::string& packet);
-	void sendPacketInternal(NetAddress& netAddress, std::string& packet);
+    void sendLoopbackPacket(NetChannel channel, std::string& packet);
+    void sendPacketInternal(NetAddress& netAddress, std::string& packet);
 
 public:
-	NetManager();
-	virtual ~NetManager();
+    NetManager();
+    virtual ~NetManager();
 
-	void process(lua_State* L);
-	void processPacket(lua_State* L, NetAddress& from, std::string& data);
+    void process(lua_State* L);
+    void processPacket(lua_State* L, NetAddress& from, std::string& data);
 
-	void sendPacket(NetChannel channel, NetAddress& address, std::string& data);
+    void sendPacket(NetChannel channel, NetAddress& address, std::string& data);
 
-	void setCBTable(ExternalTable& table);
-	ExternalTable& getCBTable();
+    void setCBTable(ExternalTable& table);
+    ExternalTable& getCBTable();
 
-	bool getLoopbackPacket(NetChannel channel, std::string& packet);
+    bool getLoopbackPacket(NetChannel channel, std::string& packet);
 };
 
 #endif

@@ -34,10 +34,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BuildContext::BuildContext() :
-	m_messageCount(0),
-	m_textPoolSize(0)
+    m_messageCount(0),
+    m_textPoolSize(0)
 {
-	resetTimers();
+    resetTimers();
 }
 
 BuildContext::~BuildContext()
@@ -47,95 +47,95 @@ BuildContext::~BuildContext()
 // Virtual functions for custom implementations.
 void BuildContext::doResetLog()
 {
-	m_messageCount = 0;
-	m_textPoolSize = 0;
+    m_messageCount = 0;
+    m_textPoolSize = 0;
 }
 
 void BuildContext::doLog(const rcLogCategory category, const char* msg, const int len)
 {
-	if (!len) return;
-	if (m_messageCount >= MAX_MESSAGES)
-		return;
-	char* dst = &m_textPool[m_textPoolSize];
-	int n = TEXT_POOL_SIZE - m_textPoolSize;
-	if (n < 2)
-		return;
-	char* cat = dst;
-	char* text = dst+1;
-	const int maxtext = n-1;
-	// Store category
-	*cat = (char)category;
-	// Store message
-	const int count = rcMin(len+1, maxtext);
-	memcpy(text, msg, count);
-	text[count-1] = '\0';
-	m_textPoolSize += 1 + count;
-	m_messages[m_messageCount++] = dst;
+    if (!len) return;
+    if (m_messageCount >= MAX_MESSAGES)
+        return;
+    char* dst = &m_textPool[m_textPoolSize];
+    int n = TEXT_POOL_SIZE - m_textPoolSize;
+    if (n < 2)
+        return;
+    char* cat = dst;
+    char* text = dst+1;
+    const int maxtext = n-1;
+    // Store category
+    *cat = (char)category;
+    // Store message
+    const int count = rcMin(len+1, maxtext);
+    memcpy(text, msg, count);
+    text[count-1] = '\0';
+    m_textPoolSize += 1 + count;
+    m_messages[m_messageCount++] = dst;
 }
 
 void BuildContext::dumpLog(const char* format, ...)
 {
-	// Print header.
-	va_list ap;
-	va_start(ap, format);
-	vprintf(format, ap);
-	va_end(ap);
-	printf("\n");
-	
-	// Print messages
-	const int TAB_STOPS[4] = { 28, 36, 44, 52 };
-	for (int i = 0; i < m_messageCount; ++i)
-	{
-		const char* msg = m_messages[i]+1;
-		int n = 0;
-		while (*msg)
-		{
-			if (*msg == '\t')
-			{
-				int count = 1;
-				for (int j = 0; j < 4; ++j)
-				{
-					if (n < TAB_STOPS[j])
-					{
-						count = TAB_STOPS[j] - n;
-						break;
-					}
-				}
-				while (--count)
-				{
-					putchar(' ');
-					n++;
-				}
-			}
-			else
-			{
-				putchar(*msg);
-				n++;
-			}
-			msg++;
-		}
-		putchar('\n');
-	}
+    // Print header.
+    va_list ap;
+    va_start(ap, format);
+    vprintf(format, ap);
+    va_end(ap);
+    printf("\n");
+    
+    // Print messages
+    const int TAB_STOPS[4] = { 28, 36, 44, 52 };
+    for (int i = 0; i < m_messageCount; ++i)
+    {
+        const char* msg = m_messages[i]+1;
+        int n = 0;
+        while (*msg)
+        {
+            if (*msg == '\t')
+            {
+                int count = 1;
+                for (int j = 0; j < 4; ++j)
+                {
+                    if (n < TAB_STOPS[j])
+                    {
+                        count = TAB_STOPS[j] - n;
+                        break;
+                    }
+                }
+                while (--count)
+                {
+                    putchar(' ');
+                    n++;
+                }
+            }
+            else
+            {
+                putchar(*msg);
+                n++;
+            }
+            msg++;
+        }
+        putchar('\n');
+    }
 }
 
 int BuildContext::getLogCount() const
 {
-	return m_messageCount;
+    return m_messageCount;
 }
 
 const char* BuildContext::getLogText(const int i) const
 {
-	return m_messages[i]+1;
+    return m_messages[i]+1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //++
 Vector4 uintColorToOgre(unsigned int colour)
 {
-	int r = colour & 0xff;
-	int g = (colour >> 8) & 0xff;
-	int b = (colour >> 16) & 0xff;
-	int a = (colour >> 24) & 0xff;
+    int r = colour & 0xff;
+    int g = (colour >> 8) & 0xff;
+    int b = (colour >> 16) & 0xff;
+    int a = (colour >> 24) & 0xff;
     return Vector4(r, g, b, a) / 255.0f;
 }
 
@@ -154,12 +154,12 @@ void DebugDrawGL::begin(duDebugDrawPrimitives prim, float size)
     assert(currentVertex == 0);
     currentVertex = 0;
     currentSize = size;
-	switch (prim) {
-		case DU_DRAW_POINTS: maxVertex = 1; break;
-		case DU_DRAW_LINES: maxVertex = 2; break;
-		case DU_DRAW_TRIS: maxVertex = 3; break;
-		case DU_DRAW_QUADS: maxVertex = 4; break;
-	}
+    switch (prim) {
+        case DU_DRAW_POINTS: maxVertex = 1; break;
+        case DU_DRAW_LINES: maxVertex = 2; break;
+        case DU_DRAW_TRIS: maxVertex = 3; break;
+        case DU_DRAW_QUADS: maxVertex = 4; break;
+    }
 }
 
 void DebugDrawGL::vertex(const float* pos, unsigned int color)
@@ -169,7 +169,7 @@ void DebugDrawGL::vertex(const float* pos, unsigned int color)
 
 void DebugDrawGL::vertex(const float x, const float y, const float z, unsigned int color)
 {
-	Vector4 colour = uintColorToOgre(color);
+    Vector4 colour = uintColorToOgre(color);
     vertexes[currentVertex][0] = -x;
     vertexes[currentVertex][1] = z;
     vertexes[currentVertex][2] = y;
@@ -230,56 +230,56 @@ void DebugDrawGL::end()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FileIO::FileIO() :
-	m_fp(0),
-	m_mode(-1)
+    m_fp(0),
+    m_mode(-1)
 {
 }
 
 FileIO::~FileIO()
 {
-	if (m_fp) fclose(m_fp);
+    if (m_fp) fclose(m_fp);
 }
 
 bool FileIO::openForWrite(const char* path)
 {
-	if (m_fp) return false;
-	m_fp = fopen(path, "wb");
-	if (!m_fp) return false;
-	m_mode = 1;
-	return true;
+    if (m_fp) return false;
+    m_fp = fopen(path, "wb");
+    if (!m_fp) return false;
+    m_mode = 1;
+    return true;
 }
 
 bool FileIO::openForRead(const char* path)
 {
-	if (m_fp) return false;
-	m_fp = fopen(path, "rb");
-	if (!m_fp) return false;
-	m_mode = 2;
-	return true;
+    if (m_fp) return false;
+    m_fp = fopen(path, "rb");
+    if (!m_fp) return false;
+    m_mode = 2;
+    return true;
 }
 
 bool FileIO::isWriting() const
 {
-	return m_mode == 1;
+    return m_mode == 1;
 }
 
 bool FileIO::isReading() const
 {
-	return m_mode == 2;
+    return m_mode == 2;
 }
 
 bool FileIO::write(const void* ptr, const size_t size)
 {
-	if (!m_fp || m_mode != 1) return false;
-	fwrite(ptr, size, 1, m_fp);
-	return true;
+    if (!m_fp || m_mode != 1) return false;
+    fwrite(ptr, size, 1, m_fp);
+    return true;
 }
 
 bool FileIO::read(void* ptr, const size_t size)
 {
-	if (!m_fp || m_mode != 2) return false;
-	size_t readLen = fread(ptr, size, 1, m_fp);
-	return readLen == 1;
+    if (!m_fp || m_mode != 2) return false;
+    size_t readLen = fread(ptr, size, 1, m_fp);
+    return readLen == 1;
 }
 
 

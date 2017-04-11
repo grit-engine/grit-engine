@@ -42,19 +42,19 @@ void navigation_shutdown(void);
 
 namespace NavSysDebug
 {
-	extern bool Enabled;
-	extern bool ShowNavmesh;
-	extern bool NavmeshUseTileColours;
-	extern bool ShowBounds;
-	extern bool ShowTilingGrid;
-	extern bool ShowAgents;
-	extern bool ShowAgentArrows;
-	extern bool ShowObstacles;
-	extern bool ShowOffmeshConnections;
-	extern bool ShowConvexVolumes;
+    extern bool Enabled;
+    extern bool ShowNavmesh;
+    extern bool NavmeshUseTileColours;
+    extern bool ShowBounds;
+    extern bool ShowTilingGrid;
+    extern bool ShowAgents;
+    extern bool ShowAgentArrows;
+    extern bool ShowObstacles;
+    extern bool ShowOffmeshConnections;
+    extern bool ShowConvexVolumes;
 
-	void init(void);
-	void destroy(void);
+    void init(void);
+    void destroy(void);
 }
 
 #endif // navigation_system_h

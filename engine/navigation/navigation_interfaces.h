@@ -28,30 +28,30 @@
 /// Recast build context.
 class BuildContext : public rcContext
 {
-	static const int MAX_MESSAGES = 1000;
-	const char* m_messages[MAX_MESSAGES];
-	int m_messageCount;
-	static const int TEXT_POOL_SIZE = 8000;
-	char m_textPool[TEXT_POOL_SIZE];
-	int m_textPoolSize;
-	
+    static const int MAX_MESSAGES = 1000;
+    const char* m_messages[MAX_MESSAGES];
+    int m_messageCount;
+    static const int TEXT_POOL_SIZE = 8000;
+    char m_textPool[TEXT_POOL_SIZE];
+    int m_textPoolSize;
+    
 public:
-	BuildContext();
-	virtual ~BuildContext();
-	
-	/// Dumps the log to stdout.
-	void dumpLog(const char* format, ...);
-	/// Returns number of log messages.
-	int getLogCount() const;
-	/// Returns log message text.
-	const char* getLogText(const int i) const;
-	
-protected:	
-	/// Virtual functions for custom implementations.
-	///@{
-	virtual void doResetLog();
-	virtual void doLog(const rcLogCategory /*category*/, const char* /*msg*/, const int /*len*/);
-	///@}
+    BuildContext();
+    virtual ~BuildContext();
+    
+    /// Dumps the log to stdout.
+    void dumpLog(const char* format, ...);
+    /// Returns number of log messages.
+    int getLogCount() const;
+    /// Returns log message text.
+    const char* getLogText(const int i) const;
+    
+protected:    
+    /// Virtual functions for custom implementations.
+    ///@{
+    virtual void doResetLog();
+    virtual void doLog(const rcLogCategory /*category*/, const char* /*msg*/, const int /*len*/);
+    ///@}
 };
 
 /// OpenGL debug draw implementation.
@@ -61,14 +61,14 @@ public:
     DebugDrawGL(void)
         : currentSize(0), currentVertex(0), maxVertex(0)
     { }
-	virtual void depthMask(bool state);
-	virtual void texture(bool state);
-	virtual void begin(duDebugDrawPrimitives prim, float size = 1.0f);
-	virtual void vertex(const float* pos, unsigned int color);
-	virtual void vertex(const float x, const float y, const float z, unsigned int color);
-	virtual void vertex(const float* pos, unsigned int color, const float* uv);
-	virtual void vertex(const float x, const float y, const float z, unsigned int color, const float u, const float v);
-	virtual void end();
+    virtual void depthMask(bool state);
+    virtual void texture(bool state);
+    virtual void begin(duDebugDrawPrimitives prim, float size = 1.0f);
+    virtual void vertex(const float* pos, unsigned int color);
+    virtual void vertex(const float x, const float y, const float z, unsigned int color);
+    virtual void vertex(const float* pos, unsigned int color, const float* uv);
+    virtual void vertex(const float x, const float y, const float z, unsigned int color, const float u, const float v);
+    virtual void end();
 private:
     float currentSize;
     unsigned currentVertex;
@@ -79,17 +79,17 @@ private:
 /// stdio file implementation.
 class FileIO : public duFileIO
 {
-	FILE* m_fp;
-	int m_mode;
+    FILE* m_fp;
+    int m_mode;
 public:
-	FileIO();
-	virtual ~FileIO();
-	bool openForWrite(const char* path);
-	bool openForRead(const char* path);
-	virtual bool isWriting() const;
-	virtual bool isReading() const;
-	virtual bool write(const void* ptr, const size_t size);
-	virtual bool read(void* ptr, const size_t size);
+    FileIO();
+    virtual ~FileIO();
+    bool openForWrite(const char* path);
+    bool openForRead(const char* path);
+    virtual bool isWriting() const;
+    virtual bool isReading() const;
+    virtual bool write(const void* ptr, const size_t size);
+    virtual bool read(void* ptr, const size_t size);
 };
 
 #endif // NAVIGATIONINTERFACES_H
