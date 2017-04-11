@@ -454,7 +454,7 @@ TRY_START
 
     GritObjectPtr o = object_add(L, name, class_get(className));
     o->userValues.set("spawnPos", spawnPos);
-    lua_getfield(L, table_index, "near");
+    lua_getfield(L, table_index, "renderingDistance");
     // Use renderingDistance from table if provided
     if (lua_isnil(L, -1)) {
         lua_pop(L, 1);
