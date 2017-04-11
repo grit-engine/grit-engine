@@ -276,8 +276,4 @@ int main (int argc, char **argv)
         return EXIT_FAILURE;
 
     }
-
-
 }
-
-// vim: shiftwidth=4:tabstop=4:expandtab

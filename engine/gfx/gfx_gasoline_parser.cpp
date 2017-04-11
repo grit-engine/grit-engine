@@ -920,5 +920,3 @@ GfxGslShader *gfx_gasoline_parse (GfxGslAllocator &alloc, const std::string &sha
     Parser parser(alloc, tokens);
     return parser.parseShader();
 }
-
-// vim: shiftwidth=4:tabstop=4:expandtab

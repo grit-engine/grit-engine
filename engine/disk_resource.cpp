@@ -53,7 +53,7 @@ int disk_resource_num_loaded (void)
 {
     int r = 0;
     DiskResourceMap &m = disk_resource_map;
-    for (DiskResourceMap::iterator i=m.begin(),i_=m.end() ; i!=i_ ; ++i) {
+    for (DiskResourceMap::iterator i=m.begin(), i_=m.end() ; i != i_ ; ++i) {
         if (i->second->isLoaded()) r++;
     }
     return r;
@@ -63,7 +63,7 @@ DiskResources disk_resource_all (void)
 {
     DiskResources r;
     DiskResourceMap &m = disk_resource_map;
-    for (DiskResourceMap::iterator i=m.begin(),i_=m.end() ; i!=i_ ; ++i) {
+    for (DiskResourceMap::iterator i=m.begin(), i_=m.end() ; i != i_ ; ++i) {
         r.push_back(i->second);
     }
     return r;
@@ -73,7 +73,7 @@ DiskResources disk_resource_all_loaded (void)
 {
     DiskResources r;
     DiskResourceMap &m = disk_resource_map;
-    for (DiskResourceMap::iterator i=m.begin(),i_=m.end() ; i!=i_ ; ++i) {
+    for (DiskResourceMap::iterator i=m.begin(), i_=m.end() ; i != i_ ; ++i) {
         if (i->second->isLoaded())
             r.push_back(i->second);
     }
@@ -95,7 +95,7 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
     if (pos == rn.npos) {
         EXCEPT << "Disk resource \"" << rn << "\" does not have a file extension." << ENDL;
     }
-    std::string suffix(rn, pos+1);
+    std::string suffix(rn, pos + 1);
 
     const char *texture_formats[] = { "jpg", "png", "tga", "tiff", "hdr", "dds" };
     unsigned num_texture_formats = sizeof(texture_formats)/sizeof(*texture_formats);
@@ -127,8 +127,8 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
             if (i>0) ss << ", ";
             ss << texture_formats[i];
         }
-        GRIT_EXCEPT("Ignoring resource \""+rn+"\" as "
-                    "its file extension was not recognised.  Recognised extensions: "+ss.str());
+        GRIT_EXCEPT("Ignoring resource \"" + rn + "\" as "
+                    "its file extension was not recognised.  Recognised extensions: " + ss.str());
     }
     disk_resource_map[rn] = dr;
     return dr;
@@ -137,7 +137,7 @@ DiskResource *disk_resource_get_or_make (const std::string &rn)
 void DiskResource::callReloadWatchers (void) const
 {
     typedef ReloadWatcherSet::iterator I;
-    for (I i=reloadWatchers.begin(),i_=reloadWatchers.end() ; i!=i_ ; ++i) {
+    for (I i=reloadWatchers.begin(), i_=reloadWatchers.end() ; i != i_ ; ++i) {
         (*i)->notifyReloaded(this);
     }
 }
@@ -207,5 +207,3 @@ double host_ram_used (void)
     // TODO: Implement this by requiring each DiskReosurce to specify its in-memory size.
     return 0;
 }
-
-

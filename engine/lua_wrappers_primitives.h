@@ -35,5 +35,3 @@ int plot_make(lua_State *L);
 MT_MACRO_DECLARE(plot_v3);
 int plot_v3_make(lua_State *L);
 
-
-// vim: shiftwidth=8:tabstop=8:expandtab

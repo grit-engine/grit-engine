@@ -19,8 +19,8 @@
  * THE SOFTWARE.
  */
 
-#include "streamer.h"
 #include "core_option.h"
+#include "streamer.h"
 
 static CoreBoolOption option_keys_bool[] = {
     CORE_AUTOUPDATE,
@@ -40,23 +40,23 @@ static CoreIntOption option_keys_int[] = {
 };
 
 
-static std::map<CoreBoolOption,bool> options_bool;
-static std::map<CoreIntOption,int> options_int;
-static std::map<CoreFloatOption,float> options_float;
-static std::map<CoreBoolOption,bool> new_options_bool;
-static std::map<CoreIntOption,int> new_options_int;
-static std::map<CoreFloatOption,float> new_options_float;
+static std::map<CoreBoolOption, bool> options_bool;
+static std::map<CoreIntOption, int> options_int;
+static std::map<CoreFloatOption, float> options_float;
+static std::map<CoreBoolOption, bool> new_options_bool;
+static std::map<CoreIntOption, int> new_options_int;
+static std::map<CoreFloatOption, float> new_options_float;
 
-static std::map<CoreBoolOption,ValidOption<bool>*> valid_option_bool;
-static std::map<CoreIntOption,ValidOption<int>*> valid_option_int;
-static std::map<CoreFloatOption,ValidOption<float>*> valid_option_float;
+static std::map<CoreBoolOption, ValidOption<bool>*> valid_option_bool;
+static std::map<CoreIntOption, ValidOption<int>*> valid_option_int;
+static std::map<CoreFloatOption, ValidOption<float>*> valid_option_float;
 
 static void valid_option (CoreBoolOption o, ValidOption<bool> *v) { valid_option_bool[o] = v; }
 static void valid_option (CoreIntOption o, ValidOption<int> *v) { valid_option_int[o] = v; }
 static void valid_option (CoreFloatOption o, ValidOption<float> *v) { valid_option_float[o] = v; }
     
 static bool truefalse_[] = { false, true };
-static ValidOptionList<bool,bool[2]> *truefalse = new ValidOptionList<bool,bool[2]>(truefalse_);
+static ValidOptionList<bool, bool[2]> *truefalse = new ValidOptionList<bool, bool[2]>(truefalse_);
 
         
 std::string core_option_to_string (CoreBoolOption o)
@@ -92,16 +92,16 @@ void core_option_from_string (const std::string &s,
                                CoreIntOption &o1,
                                CoreFloatOption &o2)
 {
-    if (s=="AUTOUPDATE") { t = 0; o0 = CORE_AUTOUPDATE; }
-    else if (s=="FOREGROUND_WARNINGS") { t = 0; o0 = CORE_FOREGROUND_WARNINGS; }
+    if (s == "AUTOUPDATE") { t = 0; o0 = CORE_AUTOUPDATE; }
+    else if (s == "FOREGROUND_WARNINGS") { t = 0; o0 = CORE_FOREGROUND_WARNINGS; }
 
-    else if (s=="STEP_SIZE") { t = 1 ; o1 = CORE_STEP_SIZE; }
-    else if (s=="RAM") { t = 1 ; o1 = CORE_RAM; }
+    else if (s == "STEP_SIZE") { t = 1 ; o1 = CORE_STEP_SIZE; }
+    else if (s == "RAM") { t = 1 ; o1 = CORE_RAM; }
 
-    else if (s=="VISIBILITY") { t = 2 ; o2 = CORE_VISIBILITY; }
-    else if (s=="PREPARE_DISTANCE_FACTOR") { t = 2 ; o2 = CORE_PREPARE_DISTANCE_FACTOR; }
-    else if (s=="FADE_OUT_FACTOR") { t = 2 ; o2 = CORE_FADE_OUT_FACTOR; }
-    else if (s=="FADE_OVERLAP_FACTOR") { t = 2 ; o2 = CORE_FADE_OVERLAP_FACTOR; }
+    else if (s == "VISIBILITY") { t = 2 ; o2 = CORE_VISIBILITY; }
+    else if (s == "PREPARE_DISTANCE_FACTOR") { t = 2 ; o2 = CORE_PREPARE_DISTANCE_FACTOR; }
+    else if (s == "FADE_OUT_FACTOR") { t = 2 ; o2 = CORE_FADE_OUT_FACTOR; }
+    else if (s == "FADE_OVERLAP_FACTOR") { t = 2 ; o2 = CORE_FADE_OVERLAP_FACTOR; }
 
     else t = -1;
 }
@@ -176,14 +176,12 @@ void core_option_reset (void)
 
 void core_option_init (void)
 {
-
     for (unsigned i=0 ; i < sizeof(option_keys_bool) / sizeof(*option_keys_bool) ; ++i) {
         valid_option(option_keys_bool[i], truefalse);
-
     }
 
-    valid_option(CORE_STEP_SIZE, new ValidOptionRange<int>(0,20000));
-    valid_option(CORE_RAM, new ValidOptionRange<int>(0,1024*1024)); // 1TB
+    valid_option(CORE_STEP_SIZE, new ValidOptionRange<int>(0, 20000));
+    valid_option(CORE_RAM, new ValidOptionRange<int>(0, 1024*1024)); // 1TB
 
     valid_option(CORE_VISIBILITY, new ValidOptionRange<float>(0, 10));
     valid_option(CORE_PREPARE_DISTANCE_FACTOR, new ValidOptionRange<float>(1, 3));
@@ -196,7 +194,6 @@ void core_option_init (void)
     options_update(true);
     // This will call options_update(false) but it will be a no-op this time.
     core_option(CORE_AUTOUPDATE, true);
-
 }
 
 

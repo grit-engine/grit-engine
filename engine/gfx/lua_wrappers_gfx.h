@@ -75,5 +75,3 @@ void push_hudobj (lua_State *L, HudObject *self);
 
 #define HUDTEXT_TAG "Grit/HudText"
 void push_hudtext (lua_State *L, HudText *self);
-
-// vim: shiftwidth=8:tabstop=8:expandtab

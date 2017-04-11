@@ -30,7 +30,7 @@ void ExternalTable::destroy (lua_State *L)
 
 void ExternalTable::clear (lua_State *L)
 {
-    for (StringMap::iterator i=fields.begin(), i_=fields.end() ; i!=i_ ; ++i) {
+    for (StringMap::iterator i=fields.begin(), i_=fields.end() ; i != i_ ; ++i) {
         Value &v = i->second;
         if (v.type == 8) {
             v.func.setNil(L);
@@ -38,7 +38,7 @@ void ExternalTable::clear (lua_State *L)
             v.t->destroy(L);
         }
     }
-    for (NumberMap::iterator i=elements.begin(), i_=elements.end() ; i!=i_ ; ++i) {
+    for (NumberMap::iterator i=elements.begin(), i_=elements.end() ; i != i_ ; ++i) {
         Value &v = i->second;
         if (v.type == 8) {
             v.func.setNil(L);
@@ -51,10 +51,10 @@ void ExternalTable::clear (lua_State *L)
 }
 const char *ExternalTable::luaGet (lua_State *L) const
 {
-    if (lua_type(L, -1)==LUA_TSTRING) {
+    if (lua_type(L, -1) == LUA_TSTRING) {
         std::string key = lua_tostring(L, -1);
         return luaGet(L, key);
-    } else if (lua_type(L, -1)==LUA_TNUMBER) {
+    } else if (lua_type(L, -1) == LUA_TNUMBER) {
         lua_Number key = luaL_checknumber(L, -1);
         return luaGet(L, key);
     }
@@ -126,10 +126,10 @@ const char *ExternalTable::luaGet (lua_State *L, lua_Number key) const
 
 const char *ExternalTable::luaSet (lua_State *L)
 {
-    if (lua_type(L, -2)==LUA_TSTRING) {
+    if (lua_type(L, -2) == LUA_TSTRING) {
         std::string key = lua_tostring(L, -2);
         return luaSet(L, key);
-    } else if (lua_type(L, -2)==LUA_TNUMBER) {
+    } else if (lua_type(L, -2) == LUA_TNUMBER) {
         lua_Number key = luaL_checknumber(L, -2);
         return luaSet(L, key);
     }
@@ -138,21 +138,21 @@ const char *ExternalTable::luaSet (lua_State *L)
 
 const char *ExternalTable::luaSet (lua_State *L, const std::string &key)
 {
-    if (lua_type(L, -1)==LUA_TNIL) {
+    if (lua_type(L, -1) == LUA_TNIL) {
         unset(key);
-    } else if (lua_type(L, -1)==LUA_TSTRING) {
+    } else if (lua_type(L, -1) == LUA_TSTRING) {
         std::string val = lua_tostring(L, -1);
         set(key, val);
-    } else if (lua_type(L, -1)==LUA_TNUMBER) {
+    } else if (lua_type(L, -1) == LUA_TNUMBER) {
         lua_Number val = luaL_checknumber(L, -1);
         set(key, val);
-    } else if (lua_type(L, -1)==LUA_TBOOLEAN) {
+    } else if (lua_type(L, -1) == LUA_TBOOLEAN) {
         bool val = check_bool(L, -1);
         set(key, val);
-    } else if (lua_type(L, -1)==LUA_TVECTOR3) {
+    } else if (lua_type(L, -1) == LUA_TVECTOR3) {
         Vector3 val = check_v3(L, -1);
         set(key, val);
-    } else if (lua_type(L, -1)==LUA_TQUAT) {
+    } else if (lua_type(L, -1) == LUA_TQUAT) {
         Quaternion val = check_quat(L, -1);
         set(key, val);
     } else if (is_userdata(L, -1, PLOT_TAG)) {
@@ -161,18 +161,18 @@ const char *ExternalTable::luaSet (lua_State *L, const std::string &key)
     } else if (is_userdata(L, -1, PLOT_V3_TAG)) {
         GET_UD_MACRO(PlotV3, self, -1, PLOT_V3_TAG);
         set(key, self);
-    } else if (lua_type(L, -1)==LUA_TTABLE) {
+    } else if (lua_type(L, -1) == LUA_TTABLE) {
         SharedPtr<ExternalTable> self = SharedPtr<ExternalTable>(new ExternalTable());
         self->takeTableFromLuaStack(L, lua_gettop(L));
         set(key, self);
-    } else if (lua_type(L, -1)==LUA_TFUNCTION) {
+    } else if (lua_type(L, -1) == LUA_TFUNCTION) {
         Value &v = fields[key];
         v.func.setNoPop(L);
         v.type = 8;
-    } else if (lua_type(L, -1)==LUA_TVECTOR2) {
+    } else if (lua_type(L, -1) == LUA_TVECTOR2) {
         Vector2 val = check_v2(L, -1);
         set(key, val);
-    } else if (lua_type(L, -1)==LUA_TVECTOR4) {
+    } else if (lua_type(L, -1) == LUA_TVECTOR4) {
         Vector4 val = check_v4(L, -1);
         set(key, val);
     } else {
@@ -183,21 +183,21 @@ const char *ExternalTable::luaSet (lua_State *L, const std::string &key)
 
 const char *ExternalTable::luaSet (lua_State *L, lua_Number key)
 {
-    if (lua_type(L, -1)==LUA_TNIL) {
+    if (lua_type(L, -1) == LUA_TNIL) {
         unset(key);
-    } else if (lua_type(L, -1)==LUA_TSTRING) {
+    } else if (lua_type(L, -1) == LUA_TSTRING) {
         std::string val = lua_tostring(L, -1);
         set(key, val);
-    } else if (lua_type(L, -1)==LUA_TNUMBER) {
+    } else if (lua_type(L, -1) == LUA_TNUMBER) {
         lua_Number val = luaL_checknumber(L, -1);
         set(key, val);
-    } else if (lua_type(L, -1)==LUA_TBOOLEAN) {
+    } else if (lua_type(L, -1) == LUA_TBOOLEAN) {
         bool val = check_bool(L, -1);
         set(key, val);
-    } else if (lua_type(L, -1)==LUA_TVECTOR3) {
+    } else if (lua_type(L, -1) == LUA_TVECTOR3) {
         Vector3 val = check_v3(L, -1);
         set(key, val);
-    } else if (lua_type(L, -1)==LUA_TQUAT) {
+    } else if (lua_type(L, -1) == LUA_TQUAT) {
         Quaternion val = check_quat(L, -1);
         set(key, val);
     } else if (is_userdata(L, -1, PLOT_TAG)) {
@@ -206,18 +206,18 @@ const char *ExternalTable::luaSet (lua_State *L, lua_Number key)
     } else if (is_userdata(L, -1, PLOT_V3_TAG)) {
         GET_UD_MACRO(PlotV3, self, -1, PLOT_V3_TAG);
         set(key, self);
-    } else if (lua_type(L, -1)==LUA_TTABLE) {
+    } else if (lua_type(L, -1) == LUA_TTABLE) {
         SharedPtr<ExternalTable> self = SharedPtr<ExternalTable>(new ExternalTable());
         self->takeTableFromLuaStack(L, -1);
         set(key, self);
-    } else if (lua_type(L, -1)==LUA_TFUNCTION) {
+    } else if (lua_type(L, -1) == LUA_TFUNCTION) {
         Value &v = elements[key];
         v.func.setNoPop(L);
         v.type = 8;
-    } else if (lua_type(L, -1)==LUA_TVECTOR2) {
+    } else if (lua_type(L, -1) == LUA_TVECTOR2) {
         Vector2 val = check_v2(L, -1);
         set(key, val);
-    } else if (lua_type(L, -1)==LUA_TVECTOR4) {
+    } else if (lua_type(L, -1) == LUA_TVECTOR4) {
         Vector4 val = check_v4(L, -1);
         set(key, val);
     } else {
@@ -229,14 +229,14 @@ const char *ExternalTable::luaSet (lua_State *L, lua_Number key)
 void ExternalTable::dump (lua_State *L) const
 {
     lua_createtable(L, elements.size(), fields.size());
-    for (StringMap::const_iterator i=fields.begin(), i_=fields.end() ; i!=i_ ; ++i) {
+    for (StringMap::const_iterator i=fields.begin(), i_=fields.end() ; i != i_ ; ++i) {
         const std::string &key = i->first;
         const Value &v = i->second;
         lua_pushstring(L, key.c_str());
         push(L, v);
         lua_rawset(L, -3);
     }
-    for (NumberMap::const_iterator i=elements.begin(), i_=elements.end() ; i!=i_ ; ++i) {
+    for (NumberMap::const_iterator i=elements.begin(), i_=elements.end() ; i != i_ ; ++i) {
         lua_Number key = i->first;
         const Value &v = i->second;
         lua_pushnumber(L, key);
@@ -249,7 +249,7 @@ void ExternalTable::takeTableFromLuaStack (lua_State *L, int tab)
 {
     if (tab<0) tab += 1 + lua_gettop(L);
     lua_checkstack(L, 2);
-    for (lua_pushnil(L) ; lua_next(L, tab)!=0 ; lua_pop(L, 1)) {
+    for (lua_pushnil(L) ; lua_next(L, tab) != 0 ; lua_pop(L, 1)) {
         const char *err = luaSet(L);
         if (err) my_lua_error(L, err);
     }

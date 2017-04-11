@@ -34,6 +34,3 @@ void push_gritobj (lua_State *L, const GritObjectPtr &self);
 
 void gritobj_lua_init (lua_State *L);
 
-
-
-// vim: shiftwidth=8:tabstop=8:expandtab

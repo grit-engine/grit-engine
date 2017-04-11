@@ -36,7 +36,7 @@ extern "C" {
  */
 class LuaPtr {
 
-  public:
+    public:
 
     /** The pointer initially points to nil */
     LuaPtr (void)
@@ -101,13 +101,11 @@ class LuaPtr {
         lua_rawgeti(L, LUA_REGISTRYINDEX, ptr);
     }
 
-  protected:
+    protected:
 
     /** The location of the lua object in the lua registry.
      */
     int ptr;
-
 };
 
 #endif
-// vim: shiftwidth=4:tabstop=4:expandtab

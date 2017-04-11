@@ -27,36 +27,35 @@
 
 class MouseDirectInput8 : public Mouse {
 
-public:
+    public:
 
-        MouseDirectInput8 (size_t);
-        virtual ~MouseDirectInput8 ();
+    MouseDirectInput8 (size_t);
+    virtual ~MouseDirectInput8 ();
 
-        virtual bool getEvents(std::vector<int> *clicks,
-                               int *x, int *y, int *rel_x, int *rel_y);
+    virtual bool getEvents(std::vector<int> *clicks,
+                           int *x, int *y, int *rel_x, int *rel_y);
 
-        virtual void setPos(int x, int y);
+    virtual void setPos(int x, int y);
 
-        virtual void setHide(bool toggle);
-        virtual bool getHide();
+    virtual void setHide(bool toggle);
+    virtual bool getHide();
 
-        virtual void setGrab(bool toggle);
-        virtual bool getGrab();
+    virtual void setGrab(bool toggle);
+    virtual bool getGrab();
 
-protected:
 
-        HWND win;
+    protected:
 
-        IDirectInput8 *directInput;
+    HWND win;
 
-        IDirectInputDevice8 *dev;
+    IDirectInput8 *directInput;
 
-        int current_x, current_y;
+    IDirectInputDevice8 *dev;
 
-        int scroll;
+    int current_x, current_y;
 
-        bool hidden;
-        bool grabbed;
+    int scroll;
+
+    bool hidden;
+    bool grabbed;
 };
-
-// vim: shiftwidth=8:tabstop=8:expandtab

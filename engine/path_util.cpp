@@ -88,5 +88,3 @@ std::string pwd_full_ex (std::string rel, const std::string &path, const std::st
     }
     return r;
 }
-
-// vim: ts=4:sw=4:et

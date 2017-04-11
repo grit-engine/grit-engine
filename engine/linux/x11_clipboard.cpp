@@ -24,8 +24,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
-#include "../clipboard.h"
 #include <centralised_log.h>
+
+#include "../clipboard.h"
+
 
 static Display *display = NULL;
 Window window = None;

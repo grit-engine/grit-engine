@@ -148,33 +148,33 @@ TRY_START
     check_args(L, 2);
     GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
     std::string key  = luaL_checkstring(L, 2);
-    if (key=="order") {
+    if (key == "order") {
         lua_pushnumber(L, self.order);
-    } else if (key=="description") {
+    } else if (key == "description") {
         push_string(L, self.description);
-    } else if (key=="enabled") {
+    } else if (key == "enabled") {
         lua_pushboolean(L, self.getEnabled());
-    } else if (key=="modal") {
+    } else if (key == "modal") {
         lua_pushboolean(L, self.getModal());
-    } else if (key=="mouseCapture") {
+    } else if (key == "mouseCapture") {
         lua_pushboolean(L, self.getMouseCapture());
-    } else if (key=="bind") {
+    } else if (key == "bind") {
         push_cfunction(L, ifilter_bind);
-    } else if (key=="unbind") {
+    } else if (key == "unbind") {
         push_cfunction(L, ifilter_unbind);
-    } else if (key=="pressed") {
+    } else if (key == "pressed") {
         push_cfunction(L, ifilter_pressed);
-    } else if (key=="binds") {
+    } else if (key == "binds") {
         std::vector<std::string> binds = self.allBinds();
         lua_createtable(L, binds.size(), 0);
         for (unsigned i=0 ; i<binds.size() ; ++i) {
             push_string(L, binds[i]);
             lua_rawseti(L, -2, i + 1);
         }
-    } else if (key=="destroy") {
+    } else if (key == "destroy") {
         push_cfunction(L, ifilter_destroy);
     } else {
-        my_lua_error(L, "Not a readable InputFilter member: "+key);
+        my_lua_error(L, "Not a readable InputFilter member: " + key);
     }
     return 1;
 TRY_END
@@ -186,16 +186,16 @@ TRY_START
     check_args(L, 3);
     GET_UD_MACRO(InputFilter, self, 1, IFILTER_TAG);
     std::string key  = luaL_checkstring(L, 2);
-    if (key=="enabled") {
+    if (key == "enabled") {
         bool v = check_bool(L, 3);
         self.setEnabled(L, v);
-    } else if (key=="modal") {
+    } else if (key == "modal") {
         bool v = check_bool(L, 3);
         self.setModal(L, v);
-    } else if (key=="mouseCapture") {
+    } else if (key == "mouseCapture") {
         bool v = check_bool(L, 3);
         self.setMouseCapture(L, v);
-    } else if (key=="mouseMoveCallback") {
+    } else if (key == "mouseMoveCallback") {
         if (lua_type(L, 3) != LUA_TFUNCTION) {
             EXCEPT << "mouseMoveCallback expects a function." << ENDL;
         }
@@ -235,7 +235,7 @@ TRY_START
     lua_createtable(L, presses.size(), 0);
     for (unsigned int i=0 ; i<presses.size() ; i++) {
         const char *key = presses[i].c_str();
-        lua_pushnumber(L, i+1);
+        lua_pushnumber(L, i + 1);
         lua_pushstring(L, key);
         lua_settable(L, -3);
     }
@@ -277,7 +277,7 @@ TRY_START
     lua_createtable(L, clicks.size(), 0);
     for (unsigned int i=0 ; i<clicks.size() ; i++) {
         int button = clicks[i];
-        lua_pushnumber(L, i+1);
+        lua_pushnumber(L, i + 1);
         const char *button_ = "unknown";
         switch (button) {
             case Mouse::MOUSE_LEFT: button_="+left" ; break;
@@ -321,7 +321,7 @@ TRY_START
     lua_createtable(L, buttons_indexes_and_values.size(), 0);
     for (unsigned int i=0 ; i<buttons_indexes_and_values.size() ; i++) {
         int button = buttons_indexes_and_values[i];
-        lua_pushnumber(L, i+1);
+        lua_pushnumber(L, i + 1);
         const char *button_ = "unknown";
         
         switch (button) {
@@ -359,7 +359,7 @@ TRY_START
             double axe_index = axes_indexes[i];
             double axe_value = axes_values[i];
             double pushvalue = (axe_value/32767.0);  
-            lua_pushnumber(L, i+1);
+            lua_pushnumber(L, i + 1);
             lua_pushvector2(L, axe_index, pushvalue);
             lua_settable(L, -3);
        }
@@ -646,13 +646,13 @@ TRY_END
 static int global_error (lua_State *L)
 {
 TRY_START
-    if (lua_gettop(L)!=1 && lua_gettop(L)!=2) {
+    if (lua_gettop(L) != 1 && lua_gettop(L) != 2) {
         check_args(L, 2);
     }
 
     const char *msg = luaL_checkstring(L, 1);
     unsigned long level = 1;
-    if (lua_gettop(L)==2) {
+    if (lua_gettop(L) == 2) {
         level = check_t<unsigned long>(L, 2);
     }
     my_lua_error(L, msg, level);
@@ -986,7 +986,7 @@ TRY_END
 static int global_core_option (lua_State *L)
 {
 TRY_START
-    if (lua_gettop(L)==2) {
+    if (lua_gettop(L) == 2) {
         std::string opt = check_string(L, 1);
         int t;
         CoreBoolOption o0;
@@ -994,7 +994,7 @@ TRY_START
         CoreFloatOption o2;
         core_option_from_string(opt, t, o0, o1, o2);
         switch (t) {
-            case -1: my_lua_error(L, "Unrecognised core option: \""+opt+"\"");
+            case -1: my_lua_error(L, "Unrecognised core option: \"" + opt + "\"");
             case 0: core_option(o0, check_bool(L, 2)); break;
             case 1: core_option(o1, check_t<int>(L, 2)); break;
             case 2: core_option(o2, check_float(L, 2)); break;
@@ -1010,7 +1010,7 @@ TRY_START
         CoreFloatOption o2;
         core_option_from_string(opt, t, o0, o1, o2);
         switch (t) {
-            case -1: my_lua_error(L, "Unrecognised core option: \""+opt+"\"");
+            case -1: my_lua_error(L, "Unrecognised core option: \"" + opt + "\"");
             case 0: lua_pushboolean(L, core_option(o0)); break;
             case 1: lua_pushnumber(L, core_option(o1)); break;
             case 2: lua_pushnumber(L, core_option(o2)); break;
@@ -1048,7 +1048,7 @@ static int global_clear_events (lua_State *L)
 {
 TRY_START
     check_args(L, 0);
-    for (EventMap::iterator i=event_map.begin(), i_=event_map.end() ; i!=i_ ; ++i) {
+    for (EventMap::iterator i=event_map.begin(), i_=event_map.end() ; i != i_ ; ++i) {
         for (unsigned j=0 ; j<i->second.size() ; ++j) {
             i->second[j]->setNil(L);
             delete i->second[j];
@@ -1065,7 +1065,7 @@ TRY_START
     check_args(L, 0);
     lua_newtable(L);
     int counter = 1;
-    for (EventMap::iterator i=event_map.begin(), i_=event_map.end() ; i!=i_ ; ++i) {
+    for (EventMap::iterator i=event_map.begin(), i_=event_map.end() ; i != i_ ; ++i) {
         for (unsigned j=0 ; j<i->second.size() ; ++j) {
             i->second[j]->push(L);
             lua_rawseti(L, -2, counter++);
@@ -1090,7 +1090,7 @@ TRY_START
     do {
         // stack: eh
         EventMap::iterator i = event_map.begin();
-        if (i==event_map.end()) break;
+        if (i == event_map.end()) break;
         lua_Number time = i->first;
         std::vector<LuaPtr*> &events = i->second;
         if (time > game_time) break;
@@ -1210,7 +1210,7 @@ static int lua_panic(lua_State *L)
 {
 TRY_START
     lua_checkstack(L, 2);
-    if (lua_type(L, -1)==LUA_TTABLE) {
+    if (lua_type(L, -1) == LUA_TTABLE) {
         lua_rawgeti(L, -1, 2);
     }
 

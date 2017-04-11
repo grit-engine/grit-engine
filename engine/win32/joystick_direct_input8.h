@@ -27,16 +27,15 @@
 // Temporary stub implementation.
 class JoystickDirectInput8 : public Joystick {
 
-public:
+    public:
 
-        JoystickDirectInput8 (size_t) { }
-        virtual ~JoystickDirectInput8 () { };
+    JoystickDirectInput8 (size_t) { }
+    virtual ~JoystickDirectInput8 (void) { };
 
-        virtual bool getEvents(std::vector<signed char> *,
-                               std::vector<signed char> *,
-                               std::vector<short int> *) { return false; }
+    virtual bool getEvents (std::vector<signed char> *,
+                            std::vector<signed char> *,
+                            std::vector<short int> *) { return false; }
 
 };
 
-#endif //JOYSTICK_DIRECT_INPUT8_H
-
+#endif  //JOYSTICK_DIRECT_INPUT8_H

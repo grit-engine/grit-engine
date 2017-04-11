@@ -26,31 +26,28 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 
-
 #include "../keyboard.h"
 
 
 class KeyboardX11 : public Keyboard {
 
-public:
+    public:
 
-        KeyboardX11 (size_t window);
-        ~KeyboardX11 ();
+    KeyboardX11 (size_t window);
+    ~KeyboardX11 (void);
 
-        Presses getPresses();
+    Presses getPresses();
 
-        bool hasFocus (void);
+    bool hasFocus (void);
 
-protected:
+    protected:
 
-        void add_key (Keyboard::Presses &keys, XEvent event, int kind);
+    void add_key (Keyboard::Presses &keys, XEvent event, int kind);
 
-        Display *display;
-        Window win;
+    Display *display;
+    Window win;
 
-        std::map<KeySym,const char*> myKeyMap;
+    std::map<KeySym, const char*> myKeyMap;
 
-        bool focussed;
+    bool focussed;
 };
-
-// vim: shiftwidth=8:tabstop=8:expandtab

@@ -1841,5 +1841,3 @@ void physics_shutdown (void)
     delete col_disp;
     delete col_conf;
 }
-
-// vim: shiftwidth=4:tabstop=4:expandtab:tw=100

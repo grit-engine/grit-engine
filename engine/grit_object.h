@@ -103,11 +103,11 @@ class GritObject {
     /** Called to tell the object that its distance to the player has changed. */
     void notifyRange2 (lua_State *L, const GritObjectPtr &self, const float range2)
     {
-        if (gritClass==NULL) GRIT_EXCEPT("Object destroyed");
+        if (gritClass == NULL) GRIT_EXCEPT("Object destroyed");
         bool overlap = false;
         float fade = calcFade(range2, overlap);
         // if fade is sufficiently different
-        if (fade!=lastFade) {
+        if (fade != lastFade) {
             notifyFade(L, self, fade);
             lastFade = fade;
         }
@@ -246,9 +246,9 @@ class GritObject {
     {
         // this function is recursive and mutually recursive
         // but always terminates due to the early return below
-        if (nearObj==v) return;
+        if (nearObj == v) return;
         if (nearObj.isNull()) {
-            // note that v cannot be null since near!=v
+            // note that v cannot be null since near != v
             // adding a near
             nearObj = v;
             nearObj->setFarObj(nearObj, self);
@@ -279,7 +279,7 @@ class GritObject {
     {
         // this function is recursive and mutually recursive
         // but always terminates due to the early return below
-        if (farObj==v) return;
+        if (farObj == v) return;
         if (farObj.isNull()) {
             // adding a far
             farObj = v;
@@ -405,5 +405,3 @@ void object_do_frame_callbacks (lua_State *L, float elapsed);
 void object_do_step_callbacks (lua_State *L, float elapsed);
 
 #endif
-
-// vim: shiftwidth=4:tabstop=4:expandtab

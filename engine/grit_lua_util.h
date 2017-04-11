@@ -22,9 +22,9 @@
 #include <string>
 
 extern "C" {
-        #include "lua.h"
-        #include <lauxlib.h>
-        #include <lualib.h>
+    #include "lua.h"
+    #include <lauxlib.h>
+    #include <lualib.h>
 }
 
 #include <centralised_log.h>
@@ -34,12 +34,12 @@ extern "C" {
 
 #define TRY_START try {
 #define TRY_END } catch (Ogre::Exception &e) { \
-        std::string msg = e.getFullDescription(); \
-        my_lua_error(L,msg); \
-        return 0; \
+    std::string msg = e.getFullDescription(); \
+    my_lua_error(L,msg); \
+    return 0; \
 } catch (Exception &e) { \
-        my_lua_error(L,e.msg); \
-        return 0; \
+    my_lua_error(L,e.msg); \
+    return 0; \
 }
 
 std::string check_path (lua_State *l, int stack_index);

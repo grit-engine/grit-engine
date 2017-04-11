@@ -24,6 +24,3 @@
 void push_rbody (lua_State *L, RigidBody *self);
 
 void physics_lua_init (lua_State *L);
-
-
-// vim: shiftwidth=8:tabstop=8:expandtab

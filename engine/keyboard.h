@@ -29,31 +29,29 @@
 
 class Keyboard {
 
-public:
+    public:
 
-        typedef std::string Press;
+    typedef std::string Press;
 
-        typedef std::vector<Press> Presses;
+    typedef std::vector<Press> Presses;
 
-        Keyboard() : verbose(false) { }
+    Keyboard() : verbose(false) { }
 
-        virtual ~Keyboard() = 0;
+    virtual ~Keyboard() = 0;
 
-        virtual Presses getPresses() = 0;
+    virtual Presses getPresses() = 0;
 
-        virtual bool hasFocus() = 0;
+    virtual bool hasFocus() = 0;
 
-        virtual void setVerbose (bool v) { verbose = v; }
-        virtual bool getVerbose (void) { return verbose; }
+    virtual void setVerbose (bool v) { verbose = v; }
+    virtual bool getVerbose (void) { return verbose; }
 
-protected:
+    protected:
 
-        bool verbose;
+    bool verbose;
 
 };
 
 inline Keyboard::~Keyboard() {}
 
 #endif
-
-// vim: shiftwidth=8:tabstop=8:expandtab

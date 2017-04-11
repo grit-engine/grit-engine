@@ -68,7 +68,7 @@ template<typename T> class LRUQueue {
         //if already in queue, remove
         typename Queue::iterator end = mQueue.end();
         typename Queue::iterator i = std::find(mQueue.begin(), end, v);
-        if (i!=end) {
+        if (i != end) {
             mQueue.erase(i);
             mSize--;
         }
@@ -174,7 +174,7 @@ class Demand : public fast_erase_index {
 
     /* Cancel a requestLoad call, or indicate the resources are no-longer
      * required.  They may be unloaded if necessary according to memory pressure.
-     * May be called when isInBackgroundQueue()==true in which case the demand is
+     * May be called when isInBackgroundQueue() == true in which case the demand is
      * removed from the background queue and any partially completed loading is
      * correctly undone.
      */

@@ -33,7 +33,7 @@ class DenseIndexMap;
 // are retained in a free list for future use.
 class DenseIndexMap {
     
-protected:
+    protected:
 
     // CLASS INVARIANT: freeList.size() + sparseIndexes.size() == denseIndexes.size()
 
@@ -47,7 +47,7 @@ protected:
     std::vector<unsigned int> freeList;
 
 
-public:
+    public:
     
     // Class does not do range checking internally, since indexes are often not computed
     // This utility function will check if an index is valid.  Call it if you want.
@@ -75,11 +75,11 @@ public:
 
 template<class T> class DenseIndexMapWithCargo : public DenseIndexMap {
 
-protected:
+    protected:
 
     std::vector<T> cargo;
 
-public:
+    public:
 
     T &operator [] (unsigned i) { return cargo[i]; }
     const T &operator [] (unsigned i) const { return cargo[i]; }

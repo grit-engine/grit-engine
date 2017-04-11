@@ -30,7 +30,7 @@
 #include "grit_lua_util.h"
 #include "path_util.h"
 
-typedef std::map<int (*)(lua_State*),LuaPtr> FuncMap;
+typedef std::map<int (*)(lua_State*), LuaPtr> FuncMap;
 static FuncMap func_map;
 void push_cfunction (lua_State *L, int (*func)(lua_State*))
 {
@@ -44,7 +44,7 @@ void push_cfunction (lua_State *L, int (*func)(lua_State*))
 
 void func_map_leak_all (void)
 {
-    for (FuncMap::iterator i=func_map.begin(), i_=func_map.end() ; i!=i_ ; ++i) {
+    for (FuncMap::iterator i=func_map.begin(), i_=func_map.end() ; i != i_ ; ++i) {
         i->second.leak();
     }
 }
@@ -65,29 +65,29 @@ std::string check_path (lua_State *L, int stack_index)
 
 int my_lua_error_handler (lua_State *l)
 {
-    return my_lua_error_handler(l,l,1);
+    return my_lua_error_handler(l, l, 1);
 }
 
 int my_lua_error_handler (lua_State *l, lua_State *coro, int levelhack)
 {
-    //check_args(l,1);
+    //check_args(l, 1);
     int level = 0;
-    if (lua_type(l,-1)==LUA_TTABLE) {
-        lua_rawgeti(l,-1,1);
-        level = luaL_checkinteger(l,-1);
-        lua_pop(l,1);
-        lua_rawgeti(l,-1,2);
+    if (lua_type(l, -1)==LUA_TTABLE) {
+        lua_rawgeti(l, -1, 1);
+        level = luaL_checkinteger(l, -1);
+        lua_pop(l, 1);
+        lua_rawgeti(l, -1, 2);
     }   
-    level+=levelhack; // to remove the current function as well
+    level += levelhack;  // To remove the current function as well.
     
-    std::string str = check_string(l,-1);
+    std::string str = check_string(l, -1);
 
-    std::vector<struct stack_frame> tb = traceback(coro,level);
+    std::vector<struct stack_frame> tb = traceback(coro, level);
 
     if (tb.size()==0) {
         CERR<<"getting traceback: ERROR LEVEL TOO HIGH!"<<std::endl;
         level=0;
-        tb = traceback(coro,level);
+        tb = traceback(coro, level);
     }   
         
     if (tb.size()==0) {
@@ -98,7 +98,7 @@ int my_lua_error_handler (lua_State *l, lua_State *coro, int levelhack)
     // strip file:line from message if it is there
     std::stringstream ss; ss<<tb[0].file<<":"<<tb[0].line<<": ";
     std::string str_prefix1 = ss.str();
-    std::string str_prefix2 = str.substr(0,str_prefix1.size());
+    std::string str_prefix2 = str.substr(0, str_prefix1.size());
     if (str_prefix1==str_prefix2)
         str = str.substr(str_prefix1.size());
     

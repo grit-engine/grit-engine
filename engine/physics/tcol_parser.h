@@ -39,101 +39,101 @@ typedef std::vector<Vector3> Vertexes;
 
 
 struct TColHasMargin {
-        float margin;
+    float margin;
 };
 
 struct TColHasMaterial {
-        TColHasMaterial () { }
-        TColHasMaterial (const std::string &material_) : material(material_) { }
-        std::string material;
+    TColHasMaterial () { }
+    TColHasMaterial (const std::string &material_) : material(material_) { }
+    std::string material;
 };
 
 struct TColHull : public TColHasMargin, public TColHasMaterial {
-        Vertexes vertexes;
+    Vertexes vertexes;
 };
 typedef std::vector<TColHull> TColHulls;
 
 
 struct TColBox : public TColHasMargin, public TColHasMaterial {
-        float px, py, pz;
-        float qw, qx, qy, qz;
-        float dx, dy, dz;
+    float px, py, pz;
+    float qw, qx, qy, qz;
+    float dx, dy, dz;
 };
 typedef std::vector<TColBox> TColBoxes;
 
 
 struct TColCylinder : public TColHasMargin, public TColHasMaterial {
-        float px, py, pz;
-        float qw, qx, qy, qz;
-        float dx, dy, dz;
+    float px, py, pz;
+    float qw, qx, qy, qz;
+    float dx, dy, dz;
 };
 typedef std::vector<TColCylinder> TColCylinders;
 
 
 struct TColCone : public TColHasMargin, public TColHasMaterial {
-        float px, py, pz;
-        float qw, qx, qy, qz;
-        float radius;
-        float height;
+    float px, py, pz;
+    float qw, qx, qy, qz;
+    float radius;
+    float height;
 };
 typedef std::vector<TColCone> TColCones;
 
 
 struct TColPlane : public TColHasMaterial {
-        float nx, ny, nz, d;
+    float nx, ny, nz, d;
 };
 typedef std::vector<TColPlane> TColPlanes;
 
 
 struct TColSphere : public TColHasMaterial {
-        float px, py, pz;
-        float radius;
+    float px, py, pz;
+    float radius;
 };
 typedef std::vector<TColSphere> TColSpheres;
 
 
 struct TColCompound {
-        TColHulls hulls;
-        TColBoxes boxes;
-        TColCylinders cylinders;
-        TColCones cones;
-        TColPlanes planes;
-        TColSpheres spheres;
+    TColHulls hulls;
+    TColBoxes boxes;
+    TColCylinders cylinders;
+    TColCones cones;
+    TColPlanes planes;
+    TColSpheres spheres;
 };
 
 
 struct TColFace : TColHasMaterial {
-        TColFace (int v1_, int v2_, int v3_, const std::string &material_)
-              : TColHasMaterial(material_), v1(v1_), v2(v2_), v3(v3_) { }
-        int v1, v2, v3;
+    TColFace (int v1_, int v2_, int v3_, const std::string &material_)
+      : TColHasMaterial(material_), v1(v1_), v2(v2_), v3(v3_) { }
+    int v1, v2, v3;
 };
 typedef std::vector<TColFace> TColFaces;
 
 
 struct TColTriMesh {
-        float margin;
-        float edgeDistanceThreshold;
-        Vertexes vertexes;
-        TColFaces faces;
+    float margin;
+    float edgeDistanceThreshold;
+    Vertexes vertexes;
+    TColFaces faces;
 };
 
 
 struct TColFile {
-        float mass;
-        bool hasInertia;
-        float inertia_x;
-        float inertia_y;
-        float inertia_z;
-        float linearDamping;
-        float angularDamping;
-        float linearSleepThreshold;
-        float angularSleepThreshold;
-        float ccdMotionThreshold;
-        float ccdSweptSphereRadius;
-        bool usingCompound;
-        bool usingTriMesh;
-        TColCompound compound;
-        TColTriMesh triMesh;
+    float mass;
+    bool hasInertia;
+    float inertia_x;
+    float inertia_y;
+    float inertia_z;
+    float linearDamping;
+    float angularDamping;
+    float linearSleepThreshold;
+    float angularSleepThreshold;
+    float ccdMotionThreshold;
+    float ccdSweptSphereRadius;
+    bool usingCompound;
+    bool usingTriMesh;
+    TColCompound compound;
+    TColTriMesh triMesh;
 };
 
 // useful help with using a different centre of mass
@@ -144,5 +144,3 @@ void tcol_offset (TColFile &tcol, float x, float y, float z);
 void tcol_triangles_to_hulls (TColFile &tcol, float extrude_by, float margin);
 
 #endif
-
-// vim: shiftwidth=8:tabstop=8:expandtab

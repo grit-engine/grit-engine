@@ -5111,7 +5111,3 @@ void gfx_lua_init (lua_State *L)
     register_lua_globals(L, global_ogre_debug);
 
 }
-
-
-
-// vim: shiftwidth=4:tabstop=4:expandtab

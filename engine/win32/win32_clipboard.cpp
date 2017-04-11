@@ -75,5 +75,3 @@ std::string clipboard_selection_get (void)
 {
     return clipboard_get();
 }
-
-// vim: shiftwidth=8:tabstop=8:expandtab

@@ -1051,8 +1051,6 @@ TRY_END
 }
 
 
-
-
 static const luaL_reg global[] = {
         {"physics_get_material", global_physics_get_material},
         {"physics_set_material", global_physics_set_material},
@@ -1076,11 +1074,8 @@ static const luaL_reg global[] = {
 };
 
 
-
 void physics_lua_init (lua_State *L)
 {
     ADD_MT_MACRO(rbody, RBODY_TAG);
     register_lua_globals(L, global);
 }
-
-// vim: shiftwidth=4:tabstop=4:expandtab

@@ -30,28 +30,27 @@ class KeyboardWinAPI : public Keyboard {
 
     public:
 
-        KeyboardWinAPI (size_t);
+    KeyboardWinAPI (size_t);
 
-        virtual ~KeyboardWinAPI (void);
+    virtual ~KeyboardWinAPI (void);
 
-        virtual Presses getPresses (void);
+    virtual Presses getPresses (void);
 
-        virtual bool hasFocus (void);
+    virtual bool hasFocus (void);
 
-        virtual LRESULT wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lParam);
+    virtual LRESULT wndproc (HWND msgwin, UINT msg, WPARAM wParam, LPARAM lParam);
+
 
     protected:
 
-        virtual Press getPress (WPARAM wParam, LPARAM scan_code);
+    virtual Press getPress (WPARAM wParam, LPARAM scan_code);
 
-        HWND win;
+    HWND win;
 
-        WNDPROC old_wndproc;
+    WNDPROC old_wndproc;
 
-        LONG_PTR old_user_data;
+    LONG_PTR old_user_data;
 
-        Keyboard::Presses presses;
+    Keyboard::Presses presses;
 
 };
-
-// vim: shiftwidth=8:tabstop=8:expandtab

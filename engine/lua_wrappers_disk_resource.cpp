@@ -49,7 +49,7 @@ TRY_START
     check_args(L, 2);
     GET_UD_MACRO(DiskResourcePtr<DiskResource>, self, 1, DISKRESHOLD_TAG);
     std::string key = check_string(L, 2);
-    if (key=="name") {
+    if (key == "name") {
         push_string(L, self->getName());
     } else {
         EXCEPT << "DiskResourceHold no such field: " << key << ENDL;
@@ -80,90 +80,82 @@ MT_MACRO_NEWINDEX(diskreshold);
 //}}}
 
 
-
-
-
 // {{{ FLAGS
 
 static int global_disk_resource_get_gfx_verbose_loads (lua_State *L)
 {
 TRY_START
-        check_args(L, 0);
-        lua_pushboolean(L, gfx_disk_resource_verbose_loads);
-        return 1;
+    check_args(L, 0);
+    lua_pushboolean(L, gfx_disk_resource_verbose_loads);
+    return 1;
 TRY_END
 }
 
 static int global_disk_resource_set_gfx_verbose_loads (lua_State *L)
 {
 TRY_START
-        check_args(L, 1);
-        gfx_disk_resource_verbose_loads = check_bool(L, 1);
-        return 0;
+    check_args(L, 1);
+    gfx_disk_resource_verbose_loads = check_bool(L, 1);
+    return 0;
 TRY_END
 }
 
 static int global_disk_resource_get_verbose_loads (lua_State *L)
 {
 TRY_START
-        check_args(L, 0);
-        lua_pushboolean(L, disk_resource_verbose_loads);
-        return 1;
+    check_args(L, 0);
+    lua_pushboolean(L, disk_resource_verbose_loads);
+    return 1;
 TRY_END
 }
 
 static int global_disk_resource_set_verbose_loads (lua_State *L)
 {
 TRY_START
-        check_args(L, 1);
-        disk_resource_verbose_loads = check_bool(L, 1);
-        return 0;
+    check_args(L, 1);
+    disk_resource_verbose_loads = check_bool(L, 1);
+    return 0;
 TRY_END
 }
 
 static int global_disk_resource_get_verbose_incs (lua_State *L)
 {
 TRY_START
-        check_args(L, 0);
-        lua_pushboolean(L, disk_resource_verbose_incs);
-        return 1;
+    check_args(L, 0);
+    lua_pushboolean(L, disk_resource_verbose_incs);
+    return 1;
 TRY_END
 }
 
 static int global_disk_resource_set_verbose_incs (lua_State *L)
 {
 TRY_START
-        check_args(L, 1);
-        disk_resource_verbose_incs = check_bool(L, 1);
-        return 0;
+    check_args(L, 1);
+    disk_resource_verbose_incs = check_bool(L, 1);
+    return 0;
 TRY_END
 }
 
 // }}}
 
 
-// {{{ COUNTERS
-
 static int global_disk_resource_num (lua_State *L)
 {
 TRY_START
-        check_args(L, 0);
-        lua_pushnumber(L, disk_resource_num());
-        return 1;
+    check_args(L, 0);
+    lua_pushnumber(L, disk_resource_num());
+    return 1;
 TRY_END
 }
 
 static int global_disk_resource_num_loaded (lua_State *L)
 {
 TRY_START
-        check_args(L, 0);
-        lua_pushnumber(L, disk_resource_num_loaded());
-        return 1;
+    check_args(L, 0);
+    lua_pushnumber(L, disk_resource_num_loaded());
+    return 1;
 TRY_END
 }
-
-// }}}
-
 
 static int global_disk_resource_all (lua_State *L)
 {
@@ -172,7 +164,7 @@ TRY_START
     DiskResources drs = disk_resource_all();
     lua_newtable(L);
     int counter = 1;
-    for (DiskResources::iterator i=drs.begin(), i_=drs.end() ; i!=i_ ; ++i) {
+    for (DiskResources::iterator i=drs.begin(), i_=drs.end() ; i != i_ ; ++i) {
         lua_pushstring(L, (*i)->getName().c_str());
         lua_rawseti(L, -2, counter++);
     }
@@ -187,7 +179,7 @@ TRY_START
     DiskResources drs = disk_resource_all_loaded();
     lua_newtable(L);
     int counter = 1;
-    for (DiskResources::iterator i=drs.begin(), i_=drs.end() ; i!=i_ ; ++i) {
+    for (DiskResources::iterator i=drs.begin(), i_=drs.end() ; i != i_ ; ++i) {
         lua_pushstring(L, (*i)->getName().c_str());
         lua_rawseti(L, -2, counter++);
     }
@@ -201,7 +193,7 @@ TRY_START
     check_args(L, 1);
     std::string name = check_path(L, 1);
     DiskResource *dr = disk_resource_get_or_make(name);
-    if (!dr->isLoaded()) my_lua_error(L, "Resource not loaded: \""+std::string(name)+"\"");
+    if (!dr->isLoaded()) my_lua_error(L, "Resource not loaded: \"" + std::string(name) + "\"");
     dr->reload();
     return 0;
 TRY_END
@@ -213,7 +205,7 @@ TRY_START
     check_args(L, 1);
     std::string name = check_path(L, 1);
     DiskResource *dr = disk_resource_get_or_make(name);
-    if (dr->isLoaded()) my_lua_error(L, "Resource already loaded: \""+std::string(name)+"\"");
+    if (dr->isLoaded()) my_lua_error(L, "Resource already loaded: \"" + std::string(name) + "\"");
     dr->loadForeground();
     return 0;
 TRY_END
@@ -237,7 +229,7 @@ TRY_START
     check_args(L, 1);
     std::string name = check_path(L, 1);
     DiskResource *dr = disk_resource_get_or_make(name);
-    if (!dr->isLoaded()) my_lua_error(L, "Resource not loaded: \""+std::string(name)+"\"");
+    if (!dr->isLoaded()) my_lua_error(L, "Resource not loaded: \"" + std::string(name) + "\"");
     dr->unload();
     return 0;
 TRY_END
@@ -330,8 +322,6 @@ TRY_END
 
 
 
-
-
 static const luaL_reg global[] = {
 
     // global flags
@@ -372,7 +362,4 @@ void disk_resource_lua_init (lua_State *L)
     register_lua_globals(L, global);
 
     ADD_MT_MACRO(diskreshold, DISKRESHOLD_TAG);
-
 }
-
-// vim: ts=4:sw=4:et

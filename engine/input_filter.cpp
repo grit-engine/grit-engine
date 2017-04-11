@@ -44,7 +44,7 @@ static bool cursor_hidden = false;
 static void update_grabbed (void)
 {
     bool should_be_captured = false;
-    for (IFMap::iterator i=ifmap.begin(), i_=ifmap.end() ; i!=i_ ; ++i) {
+    for (IFMap::iterator i=ifmap.begin(), i_=ifmap.end() ; i != i_ ; ++i) {
         InputFilter *f = i->second;
         if (!f->getEnabled()) continue;
         if (f->getMouseCapture()) should_be_captured = true;
@@ -142,7 +142,7 @@ bool InputFilter::acceptButton (lua_State *L, const std::string &ev)
             if (c.ctrl && !input_filter_pressed("Ctrl")) continue;
             if (c.alt && !input_filter_pressed("Alt")) continue;
             if (c.shift && !input_filter_pressed("Shift")) continue;
-            if (isBound(c.prefix+button)) found.push_back(c);
+            if (isBound(c.prefix + button)) found.push_back(c);
         }
         // if no bindings match, fall through
         if (found.size() == 0) return false;
@@ -307,8 +307,8 @@ void InputFilter::flushAll (lua_State *L)
     ensureAlive();
     // 'down' modified by acceptButton (and also potentially by callbacks).
     ButtonStatus d = down;
-    for (ButtonStatus::iterator i=d.begin(), i_=d.end() ; i!=i_ ; ++i) {
-        acceptButton(L, "-"+i->first);
+    for (ButtonStatus::iterator i=d.begin(), i_=d.end() ; i != i_ ; ++i) {
+        acceptButton(L, "-" + i->first);
     }
     APP_ASSERT(down.size() == 0);
 }
@@ -328,9 +328,9 @@ static std::pair<Combo, std::string> split_bind (const std::string &bind)
     // This code assumes keys do not contain - and are non-empty.
     size_t last = bind.rfind('-');
     if (last == std::string::npos) return std::pair<Combo, std::string>(empty_combo, bind);
-    APP_ASSERT(last+1 < bind.length());
-    std::string prefix = bind.substr(0, last+1);
-    std::string button = bind.substr(last+1);
+    APP_ASSERT(last + 1 < bind.length());
+    std::string prefix = bind.substr(0, last + 1);
+    std::string button = bind.substr(last + 1);
     return std::pair<Combo, std::string>(prefix_to_combo(prefix), button);
 }
 
@@ -349,7 +349,7 @@ static bool masked_by (const std::string &maskee_, const std::string &masker_)
 /** Is the given bind maskee masked by something in the set masker? */
 static bool masked_by (const std::string &maskee, const BindingSet &masker)
 {
-    for (BindingSet::iterator i=masker.begin(), i_=masker.end() ; i!=i_ ; ++i) {
+    for (BindingSet::iterator i=masker.begin(), i_=masker.end() ; i != i_ ; ++i) {
         if (masked_by(maskee, *i)) return true;
     }
     return false;
@@ -360,9 +360,9 @@ void InputFilter::flushSet (lua_State *L, const BindingSet &s)
     ensureAlive();
     // 'down' modified by acceptButton (and also potentially by callbacks).
     ButtonStatus d = down;
-    for (ButtonStatus::iterator i=d.begin(), i_=d.end() ; i!=i_ ; ++i) {
+    for (ButtonStatus::iterator i=d.begin(), i_=d.end() ; i != i_ ; ++i) {
         if (masked_by(i->second, s))
-            acceptButton(L, "-"+i->first);
+            acceptButton(L, "-" + i->first);
     }
     APP_ASSERT(down.size() == 0);
 }
@@ -380,7 +380,7 @@ void input_filter_trickle_button (lua_State *L, const std::string &ev)
     // copy because callbacks can alter the map while we're iterating over it
     IFMap m = ifmap;
     bool signal_hud = true;
-    for (IFMap::const_iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
+    for (IFMap::const_iterator i=m.begin(), i_=m.end() ; i != i_ ; ++i) {
         InputFilter *f = i->second;
         if (!f->getEnabled()) continue;
         if (f->getMouseCapture()) signal_hud = false;
@@ -398,7 +398,7 @@ void input_filter_trickle_mouse_move (lua_State *L, const Vector2 &rel, const Ve
     // copy because callbacks can alter the map while we're iterating over it
     last_mouse_pos = abs;
     IFMap m = ifmap;
-    for (IFMap::const_iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
+    for (IFMap::const_iterator i=m.begin(), i_=m.end() ; i != i_ ; ++i) {
         InputFilter *f = i->second;
         if (!f->getEnabled()) continue;
         if (f->getMouseCapture()) {
@@ -414,7 +414,7 @@ void input_filter_flush (lua_State *L)
 {
     pressed.clear();
     IFMap m = ifmap;
-    for (IFMap::const_iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
+    for (IFMap::const_iterator i=m.begin(), i_=m.end() ; i != i_ ; ++i) {
         InputFilter *f = i->second;
         f->flushAll(L);
     }
@@ -425,7 +425,7 @@ void input_filter_flush (lua_State *L)
 std::vector<std::pair<double, std::string>> input_filter_list (void)
 {
     std::vector<std::pair<double, std::string>> r;
-    for (IFMap::const_iterator i=ifmap.begin(), i_=ifmap.end() ; i!=i_ ; ++i) {
+    for (IFMap::const_iterator i=ifmap.begin(), i_=ifmap.end() ; i != i_ ; ++i) {
         r.emplace_back(i->second->order, i->second->description);
     }
     return r;
@@ -445,7 +445,7 @@ bool input_filter_get_cursor_hidden (void)
 void input_filter_shutdown (lua_State *L)
 {
     IFMap m = ifmap;
-    for (IFMap::const_iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
+    for (IFMap::const_iterator i=m.begin(), i_=m.end() ; i != i_ ; ++i) {
         InputFilter *f = i->second;
         f->destroy(L);
     }
@@ -473,7 +473,7 @@ InputFilter::~InputFilter (void)
              << std::endl;
         mouseMoveCallback.leak();
         CallbackMap &m = buttonCallbacks;
-        for (CallbackMap::iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
+        for (CallbackMap::iterator i=m.begin(), i_=m.end() ; i != i_ ; ++i) {
             i->second.down.leak();
             i->second.up.leak();
             i->second.repeat.leak();
@@ -489,7 +489,7 @@ void InputFilter::destroy (lua_State *L)
     destroyed = true;
     mouseMoveCallback.setNil(L);
     CallbackMap &m = buttonCallbacks;
-    for (CallbackMap::iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
+    for (CallbackMap::iterator i=m.begin(), i_=m.end() ; i != i_ ; ++i) {
         i->second.down.setNil(L);
         i->second.up.setNil(L);
         i->second.repeat.setNil(L);
@@ -566,12 +566,12 @@ void InputFilter::setEnabled (lua_State *L, bool v)
     if (enabled) {
         // If enabling, release all masked buttons below.
         BindingSet masked;
-        for (auto i=buttonCallbacks.begin(), i_=buttonCallbacks.end() ; i!=i_ ; ++i) {
+        for (auto i=buttonCallbacks.begin(), i_=buttonCallbacks.end() ; i != i_ ; ++i) {
             masked.insert(i->first);
         }
         IFMap::iterator i = ifmap.find(this->order);
         i++;
-        for ( ; i!=ifmap.end(); ++i) {
+        for ( ; i != ifmap.end(); ++i) {
             i->second->flushSet(L, masked);
         }
     } else {
@@ -591,7 +591,7 @@ void InputFilter::setModal (lua_State *L, bool v)
     if (modal) {
         IFMap::iterator i = ifmap.find(this->order);
         i++;
-        for ( ; i!=ifmap.end(); ++i) {
+        for ( ; i != ifmap.end(); ++i) {
             i->second->flushAll(L);
         }
     }

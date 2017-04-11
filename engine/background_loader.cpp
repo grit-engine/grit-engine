@@ -177,11 +177,11 @@ void BackgroundLoader::handleBastards (void)
 {
     // access volatile field without taking lock first
     // worst case we return early, i.e. will pick up bastards next time
-    if (mNumBastards==0) return;
+    if (mNumBastards == 0) return;
     DiskResources s;
     {
         SYNCHRONISED;
-        if (mNumBastards==0) return;
+        if (mNumBastards == 0) return;
         s = mBastards;
         mBastards.clear();
         mNumBastards = 0;
@@ -222,7 +222,7 @@ void BackgroundLoader::thread_main (void)
                 // (this can also get called before the first wait,
                 // in which case pending is empty)
                 typedef DiskResources::const_iterator DRCI;
-                for (DRCI i=pending.begin(), i_=pending.end() ; i!=i_ ; ++i) {
+                for (DRCI i=pending.begin(), i_=pending.end() ; i != i_ ; ++i) {
                     //CVERB << "Poor bastard: " << (*i)->getName() << " (" << (*i)->getUsers()
                     //      << ")" << std::endl;
                     mBastards.push_back(*i);
@@ -237,9 +237,9 @@ void BackgroundLoader::thread_main (void)
             }
             pending = mCurrent->resources;
         }
-        //APP_VERBOSE("BackgroundLoader: loading: "+name);
+        //APP_VERBOSE("BackgroundLoader: loading: " + name);
         caused_error = false;
-        for (DiskResources::iterator i=pending.begin(), i_=pending.end() ; i!=i_ ; ++i) {
+        for (DiskResources::iterator i=pending.begin(), i_=pending.end() ; i != i_ ; ++i) {
             DiskResource *rp = *i;
             try {
                 if (!rp->isLoaded()) {
@@ -286,7 +286,7 @@ bool BackgroundLoader::nearestDemand (Demand * volatile &return_demand)
 void BackgroundLoader::setAllowance (float m)
 {
     SYNCHRONISED;
-    mAllowance = std::max(mAllowance+m, m);
+    mAllowance = std::max(mAllowance + m, m);
     cVar.notify_one();
 }
 
@@ -307,7 +307,6 @@ void BackgroundLoader::finishedWith (DiskResource *de)
 
 void BackgroundLoader::checkRAMGPU ()
 {
-
     double budget = gfx_gpu_ram_available();
 
     while (true) {
@@ -320,12 +319,10 @@ void BackgroundLoader::checkRAMGPU ()
 
         if (r->noUsers() && r->isLoaded()) r->unload();
     }
-
 }
 
 void BackgroundLoader::checkRAMHost ()
 {
-
     double budget = host_ram_available();
 
     while (true) {
@@ -339,5 +336,4 @@ void BackgroundLoader::checkRAMHost ()
         if (r->noUsers() && r->isLoaded())
             r->unload();
     }
-
 }

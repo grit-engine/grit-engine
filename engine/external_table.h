@@ -51,8 +51,8 @@ class ExternalTable {
 
     void destroy (lua_State *L);
 
-    bool has (const std::string &key) const { return fields.find(key)!=fields.end(); }
-    bool has (lua_Number key) const { return elements.find(key)!=elements.end(); }
+    bool has (const std::string &key) const { return fields.find(key) != fields.end(); }
+    bool has (lua_Number key) const { return elements.find(key) != elements.end(); }
 
     template<class U> void get (const std::string &key, U &val, const U &def) const
     {

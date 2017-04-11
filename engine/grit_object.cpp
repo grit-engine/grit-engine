@@ -59,9 +59,9 @@ void GritObject::destroy (lua_State *L, const GritObjectPtr &self)
     if (needsStepCallbacks) {
         objs_needing_step_callbacks.erase(self);
     }
-    setNearObj(self,GritObjectPtr());
-    setFarObj(self,GritObjectPtr());
-    deactivate(L,self);
+    setNearObj(self, GritObjectPtr());
+    setFarObj(self, GritObjectPtr());
+    deactivate(L, self);
     gritClass->release(L);
     gritClass = NULL;
     tryUnloadResources();
@@ -90,7 +90,7 @@ void GritObject::notifyFade (lua_State *L,
     // call into lua...
     //stack: err
     getField(L, "setFade");
-    //stack: err,class,callback
+    //stack: err, class, callback
     if (lua_isnil(L, -1)) {
         // TODO(dcunnin): We should add needsFadeCallbacks.
         // This might be part of a genreal overhaul of lod levels, etc.
@@ -102,15 +102,15 @@ void GritObject::notifyFade (lua_State *L,
         return;
     }
 
-    //stack: err,callback
+    //stack: err, callback
     // we now have the callback to play with
     
     push_gritobj(L, self); // persistent grit obj
     lua_pushnumber(L, fade); // fade
-    //stack: err,callback,persistent, fade
+    //stack: err, callback, persistent, fade
     int status = lua_pcall(L, 2, 0, error_handler);
     if (status) {
-        //stack: err,msg
+        //stack: err, msg
         // pop the error message since the error handler will
         // have already printed it out
         lua_pop(L, 1);
@@ -144,7 +144,7 @@ void GritObject::activate (lua_State *L,
             CERR << "Object: \"" << name << "\" raised an error on activation, so destroying it."
                  << std::endl;
             // will deactivate us
-            object_del(L,self);
+            object_del(L, self);
             return;
         }
 
@@ -161,8 +161,8 @@ void GritObject::activate (lua_State *L,
     //stack: err
 
     //stack: err
-    getField(L,"activate");
-    //stack: err,callback
+    getField(L, "activate");
+    //stack: err, callback
     if (lua_isnil(L, -1)) {
         // don't activate it as class does not have activate function
         // pop both the error handler and the nil activate function
@@ -171,34 +171,34 @@ void GritObject::activate (lua_State *L,
         CERR << "activating object: \""<<name<<"\": "
              << "class \""<<gritClass->name<<"\" "
              << "does not have activate function" << std::endl;
-        object_del(L,self);
+        object_del(L, self);
         STACK_CHECK;
         return;
     }
 
-    //stack: err,callback
+    //stack: err, callback
     STACK_CHECK_N(2);
 
     // Call activate callback:
 
     // push 4 args
     lua_checkstack(L, 5);
-    //stack: err,callback
+    //stack: err, callback
     push_gritobj(L, self); // persistent
-    //stack: err,callback,persistent
+    //stack: err, callback, persistent
     lua_newtable(L); // instance
-    //stack: err,callback,persistent,instance
+    //stack: err, callback, persistent, instance
     lua_pushvalue(L, -1);
-    //stack: err,callback,persistent,instance,instance
+    //stack: err, callback, persistent, instance, instance
     lua = luaL_ref(L, LUA_REGISTRYINDEX); // set up the lua ref to the new instance
-    //stack: err,callback,persistent,instance
+    //stack: err, callback, persistent, instance
     STACK_CHECK_N(4);
 
     // call (2 args), pops function too
     int status = lua_pcall(L, 2, 0, error_handler);
     if (status) {
         STACK_CHECK_N(2);
-        //stack: err,error
+        //stack: err, error
         // pop the error message since the error handler will
         // have already printed it out
         lua_pop(L, 1);
@@ -249,7 +249,7 @@ float GritObject::calcFade (const float range2, bool &overlap)
         imposedFarFade = 1.0;
     } else {
         //TODO: generalise hte following 2 options together
-        const float overmid = (over+1)/2;
+        const float overmid = (over + 1)/2;
         if (range > overmid) {
             fade = (1-range) / (1-overmid);
             imposedFarFade = 1;
@@ -475,7 +475,7 @@ void GritObject::updateSphere (const Vector3 &pos_, float r_)
     if (index==-1) return;
     pos = pos_;
     r = r_;
-    streamer_update_sphere(index,pos,r);
+    streamer_update_sphere(index, pos, r);
 }
 
 void GritObject::updateSphere (const Vector3 &pos_)
@@ -485,7 +485,7 @@ void GritObject::updateSphere (const Vector3 &pos_)
 
 void GritObject::updateSphere (float r_)
 {
-    updateSphere(pos,r_);
+    updateSphere(pos, r_);
 }
 
 void GritObject::setNeedsFrameCallbacks (const GritObjectPtr &self, bool v)
@@ -540,16 +540,16 @@ GritObjectPtr object_add (lua_State *L, std::string name, GritClass *grit_class)
             ss << "Unnamed:" << grit_class->name
                << ":" << name_generation_counter++;
             name = ss.str();
-        } while (objs.find(name)!=objs.end());
+        } while (objs.find(name) != objs.end());
     }
 
     GObjMap::iterator i = objs.find(name);
 
-    if (i!=objs.end()) {
-        object_del(L,i->second);
+    if (i != objs.end()) {
+        object_del(L, i->second);
     }
 
-    GritObjectPtr self = GritObjectPtr(new GritObject(name,grit_class));
+    GritObjectPtr self = GritObjectPtr(new GritObject(name, grit_class));
     self->anonymous = anonymous;
     objs[name] = self;
     streamer_list(self);
@@ -559,28 +559,28 @@ GritObjectPtr object_add (lua_State *L, std::string name, GritClass *grit_class)
 
 void object_del (lua_State *L, const GritObjectPtr &o)
 {
-    o->destroy(L,o);
+    o->destroy(L, o);
     streamer_unlist(o);
 
     GObjMap::iterator i = objs.find(o->name);
     // Since object deactivation can trigger other objects to be destroyed,
     // sometimes when quitting, due to the order in which the objects are destroyed,
     // we destroy an object that is already dead...
-    if (i!=objs.end()) objs.erase(o->name);
+    if (i != objs.end()) objs.erase(o->name);
 }
 
 const GritObjectPtr &object_get (const std::string &name)
 {
     GObjMap::iterator i = objs.find(name);
     if (i==objs.end())
-        GRIT_EXCEPT("GritObject does not exist: "+name);
+        GRIT_EXCEPT("GritObject does not exist: " + name);
 
     return i->second;
 }
 
 bool object_has (const std::string &name)
 {
-    return objs.find(name)!=objs.end();
+    return objs.find(name) != objs.end();
 }
 
 
@@ -593,8 +593,8 @@ void object_all (GObjMap::iterator &begin, GObjMap::iterator &end)
 void object_all_del (lua_State *L)
 {
     GObjMap m = objs;
-    for (GObjMap::iterator i=m.begin(), i_=m.end() ; i!=i_ ; ++i) {
-        object_del(L,i->second);
+    for (GObjMap::iterator i=m.begin(), i_=m.end() ; i != i_ ; ++i) {
+        object_del(L, i->second);
     }
 }
 
@@ -604,24 +604,22 @@ int object_count (void) {
 
 void object_do_frame_callbacks (lua_State *L, float elapsed)
 {
-        GObjSet victims = objs_needing_frame_callbacks;
-        typedef GObjSet::iterator I;
-        for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
-                if (!(*i)->frameCallback(L, *i, elapsed)) {
-                        (*i)->setNeedsFrameCallbacks(*i, false);
-                }
+    GObjSet victims = objs_needing_frame_callbacks;
+    typedef GObjSet::iterator I;
+    for (I i=victims.begin(), i_=victims.end() ; i != i_ ; ++i) {
+        if (!(*i)->frameCallback(L, *i, elapsed)) {
+            (*i)->setNeedsFrameCallbacks(*i, false);
         }
+    }
 }
 
 void object_do_step_callbacks (lua_State *L, float elapsed)
 {
-        GObjSet victims = objs_needing_step_callbacks;
-        typedef GObjSet::iterator I;
-        for (I i=victims.begin(), i_=victims.end() ; i!=i_ ; ++i) {
-                if (!(*i)->stepCallback(L, *i, elapsed)) {
-                        (*i)->setNeedsStepCallbacks(*i, false);
-                }
+    GObjSet victims = objs_needing_step_callbacks;
+    typedef GObjSet::iterator I;
+    for (I i=victims.begin(), i_=victims.end() ; i != i_ ; ++i) {
+        if (!(*i)->stepCallback(L, *i, elapsed)) {
+            (*i)->setNeedsStepCallbacks(*i, false);
         }
+    }
 }
-
-// vim: shiftwidth=4:tabstop=4:expandtab

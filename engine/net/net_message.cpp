@@ -186,13 +186,12 @@ void NetMessage::readBits(int bits, void* out)
 
         int remain = curBit & 7;
 
-        if ((minBit + remain) <= 8)
-        {
+        if ((minBit + remain) <= 8) {
             outputStuff[curOut] = (uint8_t)((0xFF >> (8 - minBit)) & (thisByte >> remain));
-        }
-        else
-        {
-            outputStuff[curOut] = (uint8_t)(((0xFF >> (8 - minBit)) & (buffer[curByte] << (8 - remain))) | (thisByte >> remain));
+        } else {
+            outputStuff[curOut] = (uint8_t)(
+                ((0xFF >> (8 - minBit)) & (buffer[curByte] << (8 - remain)))
+                | (thisByte >> remain));
         }
 
         curOut++;

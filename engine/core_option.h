@@ -62,10 +62,10 @@ enum CoreIntOption {
 /** Returns the enum value of the option described by s.  Only one of o0, o1,
  * o2 is modified, and t is used to tell the caller which one. */
 void core_option_from_string (const std::string &s,
-                             int &t,
-                             CoreBoolOption &o0,
-                             CoreIntOption &o1,
-                             CoreFloatOption &o2);
+                              int &t,
+                              CoreBoolOption &o0,
+                              CoreIntOption &o1,
+                              CoreFloatOption &o2);
 
 /** Set the option to a particular value. */
 void core_option (CoreBoolOption o, bool v);

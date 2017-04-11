@@ -22,8 +22,9 @@
 #include <algorithm>
 #include <sstream>
 
-#include "dense_index_map.h"
 #include <centralised_log.h>
+
+#include "dense_index_map.h"
 
 unsigned DenseIndexMap::reserve (unsigned new_capacity)
 {
@@ -53,7 +54,7 @@ void DenseIndexMap::sparseIndexValid (unsigned sparse_index) const
 unsigned DenseIndexMap::newSparseIndex (void)
 {
     if (size() >= capacity()) reserve(std::max(128u, unsigned(capacity() * 1.3)));
-    unsigned sparse_index = freeList[freeList.size()-1];
+    unsigned sparse_index = freeList[freeList.size() - 1];
     freeList.pop_back();
     unsigned dense_index = sparseIndexes.size();
     denseIndexes[sparse_index] = dense_index;
@@ -64,9 +65,9 @@ unsigned DenseIndexMap::newSparseIndex (void)
 void DenseIndexMap::delSparseIndex (unsigned sparse_index)
 {
     unsigned dense_index = denseIndexes[sparse_index];
-    unsigned last = sparseIndexes.size()-1;
+    unsigned last = sparseIndexes.size() - 1;
     if (dense_index != last) {
-        // reorganise buffers to move last instance into the position of the one just removed
+        // Reorganise buffers to move last instance into the position of the one just removed.
         sparseIndexes[dense_index] = sparseIndexes[last];
         denseIndexes[sparseIndexes[last]] = dense_index;
     }
@@ -75,6 +76,3 @@ void DenseIndexMap::delSparseIndex (unsigned sparse_index)
     freeList.push_back(sparse_index);
 
 }
-
-
-

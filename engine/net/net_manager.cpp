@@ -3,14 +3,14 @@
 #include <sleep.h>
 
 #include <centralised_log.h>
+
 #include "../grit_lua_util.h"
 
 #include "net.h"
 #include "net_manager.h"
 #include "lua_wrappers_net.h"
 
-NetManager::NetPacket::NetPacket(NetAddress& from, std::string& data_)
-{
+NetManager::NetPacket::NetPacket(NetAddress& from, std::string& data_) {
     addr = from;
     data = data_;
     time = micros();
@@ -35,8 +35,7 @@ NetManager::NetManager()
 {
 #if defined(WIN32)
     WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-    {
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
         GRIT_EXCEPT("WSAStartup failed");
     }
 #endif
@@ -51,23 +50,18 @@ NetManager::NetManager()
 
     uint16_t port = 48960;
 
-    while (true)
-    {
+    while (true) {
         sockaddr_in bindEP;
         memset(&bindEP, 0, sizeof(bindEP));
         bindEP.sin_family = AF_INET;
         bindEP.sin_addr.s_addr = INADDR_ANY;
         bindEP.sin_port = htons(port);
 
-        if (bind(netSocket, (sockaddr*)&bindEP, sizeof(bindEP)) != 0)
-        {
-            if (sock_errno == ADDRESS_ALREADY_USED)
-            {
+        if (bind(netSocket, (sockaddr*)&bindEP, sizeof(bindEP)) != 0) {
+            if (sock_errno == ADDRESS_ALREADY_USED) {
                 port++;
                 continue;
-            }
-            else
-            {
+            } else {
                 GRIT_EXCEPT("binding socket failed");
             }
         }
@@ -104,8 +98,7 @@ void NetManager::processPacket(lua_State* L, NetAddress& from, std::string& data
 
     const char* err = netCBTable.luaGet(L, "process_packet");
 
-    if (err)
-    {
+    if (err) {
         my_lua_error(L, err);
     }
 
@@ -141,31 +134,24 @@ void NetManager::process(lua_State* L)
     sockaddr_storage remoteEP;
     socklen_t remoteEPLength = sizeof(remoteEP);
 
-    while (true)
-    {
-        if ((bytes = recvfrom(netSocket, buffer, sizeof(buffer), 0, (sockaddr*)&remoteEP, &remoteEPLength)) < 0)
-        {
-            if (sock_errno != WOULD_BLOCK && sock_errno != CONNECTION_RESET)
-            {
+    while (true) {
+        bytes = recvfrom(netSocket, buffer, sizeof(buffer), 0, (sockaddr*)&remoteEP,
+                         &remoteEPLength);
+        if (bytes < 0) {
+            if (sock_errno != WOULD_BLOCK && sock_errno != CONNECTION_RESET) {
                 CLOG << "socket error " << sock_errno << std::endl;
-            }
-            else
-            {
+            } else {
                 break;
             }
         }
 
-        if (bytes > 0)
-        {
+        if (bytes > 0) {
             std::string data(buffer, bytes);
             NetAddress from((sockaddr*)&remoteEP, remoteEPLength);
 
-            if (forcedLatency == 0)
-            {
+            if (forcedLatency == 0) {
                 processPacket(L, from, data);
-            }
-            else
-            {
+            } else {
                 receiveQueue.push(NetPacket(from, data));
             }
         }
@@ -173,39 +159,29 @@ void NetManager::process(lua_State* L)
         // process queues
         uint64_t time = micros();
 
-        if (!sendQueue.empty())
-        {
-            do 
-            {
+        if (!sendQueue.empty()) {
+            do {
                 NetPacket packet = sendQueue.front();
 
-                if (time >= (packet.time + (forcedLatency * 1000)))
-                {
+                if (time >= (packet.time + (forcedLatency * 1000))) {
                     sendPacketInternal(packet.addr, packet.data);
 
                     sendQueue.pop();
-                }
-                else
-                {
+                } else {
                     break;
                 }
             } while (!sendQueue.empty());
         }
 
-        if (!receiveQueue.empty())
-        {
-            do 
-            {
+        if (!receiveQueue.empty()) {
+            do {
                 NetPacket packet = receiveQueue.front();
 
-                if (time >= (packet.time + (forcedLatency * 1000)))
-                {
+                if (time >= (packet.time + (forcedLatency * 1000))) {
                     processPacket(L, packet.addr, packet.data);
 
                     receiveQueue.pop();
-                }
-                else
-                {
+                } else {
                     break;
                 }
             } while (!receiveQueue.empty());
@@ -215,18 +191,12 @@ void NetManager::process(lua_State* L)
 
 void NetManager::sendPacket(NetChannel channel, NetAddress& address, std::string& data)
 {
-    if (address.getType() == NetAddress_Loopback)
-    {
+    if (address.getType() == NetAddress_Loopback) {
         sendLoopbackPacket(channel, data);
-    }
-    else
-    {
-        if (forcedLatency > 0)
-        {
+    } else {
+        if (forcedLatency > 0) {
             sendQueue.push(NetPacket(address, data));
-        }
-        else
-        {
+        } else {
             //sendPacketInternal(address, data);
             sockaddr_storage to;
             int toLen;
@@ -250,12 +220,9 @@ void NetManager::sendPacketInternal(NetAddress& netAddress, std::string& packet)
 
 void NetManager::sendLoopbackPacket(NetChannel channel, std::string& packet)
 {
-    if (channel == NetChan_ClientToServer)
-    {
+    if (channel == NetChan_ClientToServer) {
         serverLoopQueue.push(packet);
-    }
-    else if (channel == NetChan_ServerToClient)
-    {
+    } else if (channel == NetChan_ServerToClient) {
         clientLoopQueue.push(packet);
     }
 }
@@ -264,19 +231,14 @@ bool NetManager::getLoopbackPacket(NetChannel channel, std::string& packet)
 {
     std::queue<std::string>* queue = NULL;
 
-    if (channel == NetChan_ClientToServer)
-    {
+    if (channel == NetChan_ClientToServer) {
         queue = &serverLoopQueue;
-    }
-    else if (channel == NetChan_ServerToClient)
-    {
+    } else if (channel == NetChan_ServerToClient) {
         queue = &clientLoopQueue;
     }
 
-    if (queue != NULL)
-    {
-        if (!queue->empty())
-        {
+    if (queue != NULL) {
+        if (!queue->empty()) {
             packet = queue->front();
             queue->pop();
 

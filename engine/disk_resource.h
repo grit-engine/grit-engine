@@ -188,7 +188,7 @@ class DiskResource {
     /** Subclasses should register dependencies at load time.  This also loads the dependencies. */
     void addDependency (const std::string &name)
     {
-        APP_ASSERT(name!="");
+        APP_ASSERT(name != "");
         DiskResource *dep = disk_resource_get_or_make(name);
         addDependency(dep);
     }
@@ -245,9 +245,9 @@ inline std::ostream &operator << (std::ostream &o, const DiskResources &dr)
 {
     o << "[";
     for (unsigned i=0 ; i<dr.size() ; ++i) {
-        o << (i==0?" ":", ") << (*dr[i]);
+        o << (i == 0 ? " " : ", ") << (*dr[i]);
     }
-    return o << (dr.size()==0?"]":" ]");
+    return o << (dr.size() == 0 ? "]" : " ]");
 }
 
 

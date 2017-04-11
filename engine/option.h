@@ -55,7 +55,7 @@ template<class T> struct ValidOption {
     }
 };
 
-/** An implementation of ValidOption that allows a dense range of values [min,max].
+/** An implementation of ValidOption that allows a dense range of values [min, max].
  *
  * T must have <= and >= defined.
  */

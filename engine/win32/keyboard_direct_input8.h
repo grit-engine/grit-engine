@@ -30,28 +30,27 @@
 
 class KeyboardDirectInput8 : public Keyboard {
 
-public:
+    public:
 
-        KeyboardDirectInput8 (size_t);
-        virtual ~KeyboardDirectInput8 ();
+    KeyboardDirectInput8 (size_t);
+    virtual ~KeyboardDirectInput8 (void);
 
-        virtual Presses getPresses();
+    virtual Presses getPresses(void);
 
-        virtual bool hasFocus (void);
+    virtual bool hasFocus (void);
 
-protected:
 
-        HWND win;
+    protected:
 
-        IDirectInput8 *directInput;
+    HWND win;
 
-        IDirectInputDevice8 *dev;
+    IDirectInput8 *directInput;
 
-        std::map<DWORD,const char *> keysUp, keysDown, keysRep, keysText, keysTextShifted;
-        std::map<Press,DWORD> keyCode;
-        std::map<DWORD, ULONGLONG> pressTime;
+    IDirectInputDevice8 *dev;
 
-        ULONGLONG lastTime;
+    std::map<DWORD, const char *> keysUp, keysDown, keysRep, keysText, keysTextShifted;
+    std::map<Press, DWORD> keyCode;
+    std::map<DWORD, ULONGLONG> pressTime;
+
+    ULONGLONG lastTime;
 };
-
-// vim: shiftwidth=8:tabstop=8:expandtab

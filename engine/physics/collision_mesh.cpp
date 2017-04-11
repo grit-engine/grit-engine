@@ -522,6 +522,3 @@ PhysicalMaterial *CollisionMesh::getMaterialFromFace (unsigned int id) const
     if (id >= faceMaterials.size()) return 0;
     return faceMaterials[id];
 }
-
-
-// vim: ts=4:sw=4:et

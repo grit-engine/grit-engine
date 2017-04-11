@@ -31,7 +31,7 @@
 
 class BulletDebugDrawer: public btIDebugDraw
 {
-public:
+    public:
     BulletDebugDrawer (void);
     ~BulletDebugDrawer (void);
     virtual void drawLine (const btVector3 &from, const btVector3 &to, const btVector3 &colour);
@@ -44,7 +44,8 @@ public:
     virtual void setDebugMode (int debugMode);
     virtual int getDebugMode () const;
     void frameCallback (void);
-private:
+
+    private:
     struct ContactPoint{
         Vector3 from;
         Vector3 to;
@@ -58,6 +59,5 @@ private:
     std::vector<ContactPoint> contactPoints2;
     std::vector<ContactPoint> *contactPoints;
 };
-
 
 #endif
