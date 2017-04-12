@@ -32,7 +32,7 @@ const std::string GfxInstances::className = "GfxInstances";
 const unsigned instance_data_floats = 13;
 const unsigned instance_data_bytes = instance_data_floats*4;
 
-// One of these for each amterial in the original mesh
+// One of these for each material in the original mesh.
 class GfxInstances::Section : public Ogre::Renderable {
 
     GfxInstances *parent;
@@ -276,7 +276,6 @@ void GfxInstances::updateProperties (void)
             s->queueID = RQ_FORWARD_ALPHA_DEPTH;
             break;
         }
-
     }
 }
 

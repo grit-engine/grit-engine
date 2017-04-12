@@ -137,7 +137,7 @@ void GfxMaterial::buildOgreMaterials (void)
     castMat = Ogre::MaterialManager::getSingleton().getByName(name + ":cast", "GRIT");
 
     p = create_or_reset_material(name + ":instancing_cast");
-    shader->initPass(p, GFX_GSL_PURPOSE_CAST, fade_dither, false, boneBlendWeights,
+    shader->initPass(p, GFX_GSL_PURPOSE_CAST, fade_dither, true, boneBlendWeights,
                      textures, bindings);
     if (backfaces)
         p->setCullingMode(Ogre::CULL_NONE);
@@ -211,7 +211,7 @@ void GfxMaterial::updateOgreMaterials (const GfxShaderGlobals &globs)
                        textures, bindings);
 
     p = instancingCastMat->getTechnique(0)->getPass(0);
-    shader->updatePass(p, globs, GFX_GSL_PURPOSE_CAST, fade_dither, false, boneBlendWeights,
+    shader->updatePass(p, globs, GFX_GSL_PURPOSE_CAST, fade_dither, true, boneBlendWeights,
                        textures, bindings);
 
     p = regularMat->getTechnique(0)->getPass(0);
@@ -225,10 +225,10 @@ void GfxMaterial::updateOgreMaterials (const GfxShaderGlobals &globs)
 
     p = instancingMat->getTechnique(0)->getPass(0);
     if (sceneBlend == GFX_MATERIAL_OPAQUE) {
-        shader->updatePass(p, globs, GFX_GSL_PURPOSE_FORWARD, fade_dither, false, boneBlendWeights,
+        shader->updatePass(p, globs, GFX_GSL_PURPOSE_FORWARD, fade_dither, true, boneBlendWeights,
                            textures, bindings);
     } else {
-        shader->updatePass(p, globs, GFX_GSL_PURPOSE_ALPHA, fade_dither, false, boneBlendWeights,
+        shader->updatePass(p, globs, GFX_GSL_PURPOSE_ALPHA, fade_dither, true, boneBlendWeights,
                            textures, bindings);
     }
 
