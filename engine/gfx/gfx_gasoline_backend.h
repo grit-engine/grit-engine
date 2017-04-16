@@ -101,9 +101,7 @@ std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGs
 
 typedef std::map<std::string, const GfxGslFloatType *> GfxGslInternalMap;
 static inline void gfx_gasoline_add_internal_trans(const GfxGslInternalMap &internals,
-                                                   std::vector<GfxGslTrans> &trans,
-                                                   GfxGslTypeMap &vert_vars,
-                                                   GfxGslTypeMap &frag_vars)
+                                                   std::vector<GfxGslTrans> &trans)
 {
     for (const auto &pair : internals) {
         if (pair.second->dim == 1) {
@@ -115,8 +113,6 @@ static inline void gfx_gasoline_add_internal_trans(const GfxGslInternalMap &inte
                     GfxGslTrans{ GfxGslTrans::INTERNAL, {pair.first, chars[i]}, pair.second });
             }
         }
-        frag_vars["internal_" + pair.first] = pair.second;
-        vert_vars["internal_" + pair.first] = pair.second;
     }
 }
 

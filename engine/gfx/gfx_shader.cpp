@@ -274,6 +274,7 @@ NativePair GfxShader::getNativePair (GfxGslPurpose purpose,
                 vp_profs.push_back("gpu_vp");
                 fp_profs.push_back("gp4fp");
             }
+
             Ogre::CgProgram *tmp_vp = static_cast<Ogre::CgProgram*>(&*vp);
             tmp_vp->setEntryPoint("main");
             tmp_vp->setProfiles(vp_profs);

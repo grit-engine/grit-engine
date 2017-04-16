@@ -158,6 +158,11 @@ void GfxDecal::setFade (float f)
 }
 
 
+/*
+ * Read depth.  Write diffuse, normal, spec, gloss.  Alpha = 1.
+ * Read depth, normal.  Write diffuse, spec, gloss.  Alpha = 1.
+ * Read everything.  Write colour.  Alpha < 1.
+ */
 void GfxDecal::render (const GfxShaderGlobals &g)
 {
     if (!enabled) return;
@@ -170,10 +175,19 @@ void GfxDecal::render (const GfxShaderGlobals &g)
         material->getShader()->bindShader(
             GFX_GSL_PURPOSE_DECAL, 0, false,  false, g, world, nullptr, 0, 1,
             mat_texs, material->getBindings());
+        
+        
+        float dist = (world * Ogre::Vector4(1, 1, 1, 0)).xyz().length();
+        Ogre::Vector3 decal_to_cam = (world * Ogre::Vector4(0, 0, 0, 1)).xyz() - to_ogre(g.camPos);
+        bool inside = decal_to_cam.length() - 0.4 < dist;
 
-        ogre_rs->_setCullingMode(Ogre::CULL_NONE);
+        ogre_rs->_setCullingMode(inside ? Ogre::CULL_ANTICLOCKWISE : Ogre::CULL_CLOCKWISE);
         // read but don't write depth buffer
-        ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
+        if (inside) {
+            ogre_rs->_setDepthBufferParams(false, false);
+        } else {
+            ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
+        }
         switch (material->getSceneBlend()) {
             case GFX_MATERIAL_OPAQUE:
             ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ZERO);
