@@ -27,8 +27,7 @@
 #include "gfx_internal.h"
 #include "gfx_shader.h"
 
-GfxGslBackend backend = (gfx_d3d9() || getenv("GRIT_GL_CG") != nullptr)
-                      ? GFX_GSL_BACKEND_CG : GFX_GSL_BACKEND_GLSL33;
+GfxGslBackend backend = gfx_d3d9() ? GFX_GSL_BACKEND_CG : GFX_GSL_BACKEND_GLSL33;
 
 static const std::string dump_shader(getenv("GRIT_DUMP_SHADER") == nullptr
                                      ? "" : getenv("GRIT_DUMP_SHADER"));
