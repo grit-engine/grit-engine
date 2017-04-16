@@ -573,7 +573,7 @@ void GfxShader::bindShader (GfxGslPurpose purpose,
     bindShaderParams(counter, vparams, fparams, textures, bindings);
     bindShaderParamsRs(counter, textures);
     bindBodyParamsRS(vparams, fparams, globs, world, bone_world_matrixes, num_bone_world_matrixes,
-                     fade, paint_colours);
+                     fade, paint_colours, purpose);
 
     ogre_rs->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM, vparams, Ogre::GPV_ALL);
     ogre_rs->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM, fparams, Ogre::GPV_ALL);
@@ -657,7 +657,7 @@ void GfxShader::initPass (Ogre::Pass *p,
     }
 
     initPassTextures(p, textures);
-    initPassBodyParams(vp, fp);
+    initPassBodyParams(vp, fp, purpose);
     bindShaderParams(counter, vp, fp, textures, bindings);
     updatePassTextures(p, counter, textures);
 
@@ -696,7 +696,8 @@ void GfxShader::bindBodyParamsRS (const Ogre::GpuProgramParametersSharedPtr &vp,
                                   const Ogre::Matrix4 *bone_world_matrixes,
                                   unsigned num_bone_world_matrixes,
                                   float fade,
-                                  const GfxPaintColour *paint_colours)
+                                  const GfxPaintColour *paint_colours,
+                                  GfxGslPurpose purpose)
 {   
     Ogre::Matrix4 world_view = p.view * world;
     Ogre::Matrix4 world_view_proj = p.proj * world_view;
@@ -704,6 +705,10 @@ void GfxShader::bindBodyParamsRS (const Ogre::GpuProgramParametersSharedPtr &vp,
     hack_set_constant(vp, fp, "body_worldViewProj", world_view_proj);
     hack_set_constant(vp, fp, "body_worldView", world_view);
     hack_set_constant(vp, fp, "body_world", world);
+    if (purpose == GFX_GSL_PURPOSE_DECAL) {
+        Ogre::Matrix4 inv_world = world.inverse();
+        hack_set_constant(vp, fp, "internal_inv_world", inv_world);
+    }
     hack_set_constant(vp, fp, "body_boneWorlds", bone_world_matrixes, num_bone_world_matrixes);
     hack_set_constant(vp, fp, "internal_fade", fade);
     hack_set_constant(vp, fp, "body_paintDiffuse0", paint_colours[0].diff);
@@ -726,7 +731,8 @@ void GfxShader::bindBodyParamsRS (const Ogre::GpuProgramParametersSharedPtr &vp,
 
 
 void GfxShader::initPassBodyParams (const Ogre::GpuProgramParametersSharedPtr &vp,
-                                    const Ogre::GpuProgramParametersSharedPtr &fp)
+                                    const Ogre::GpuProgramParametersSharedPtr &fp,
+                                    GfxGslPurpose purpose)
 {
     std::array<Ogre::GpuProgramParametersSharedPtr, 2> params = {vp, fp};
 
@@ -737,6 +743,10 @@ void GfxShader::initPassBodyParams (const Ogre::GpuProgramParametersSharedPtr &v
                                 Ogre::GpuProgramParameters::ACT_WORLDVIEW_MATRIX);
         p->setNamedAutoConstant("body_world",
                                 Ogre::GpuProgramParameters::ACT_WORLD_MATRIX);
+        if (purpose == GFX_GSL_PURPOSE_DECAL) {
+            p->setNamedAutoConstant("internal_inv_world",
+                                    Ogre::GpuProgramParameters::ACT_INVERSE_WORLD_MATRIX);
+        }
         p->setNamedAutoConstant("body_boneWorlds",
                                 Ogre::GpuProgramParameters::ACT_WORLD_MATRIX_ARRAY);
         p->setNamedAutoConstant("internal_fade",

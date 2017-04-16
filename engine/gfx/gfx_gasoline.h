@@ -513,7 +513,7 @@ static inline bool gfx_gasoline_does_lighting(GfxGslPurpose p)
         case GFX_GSL_PURPOSE_WIREFRAME: return false;
         case GFX_GSL_PURPOSE_SKY: return false;
         case GFX_GSL_PURPOSE_HUD: return false;
-        case GFX_GSL_PURPOSE_DECAL: return false;
+        case GFX_GSL_PURPOSE_DECAL: return true;
         case GFX_GSL_PURPOSE_DEFERRED_AMBIENT_SUN: return true;
     }
     return false;  // Why does compiler need this?

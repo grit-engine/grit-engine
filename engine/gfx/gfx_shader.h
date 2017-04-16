@@ -229,13 +229,15 @@ class GfxShader {
                            const Ogre::Matrix4 *bone_world_matrixes,
                            unsigned num_bone_world_matrixes,
                            float fade,
-                           const GfxPaintColour *paint_colours);  // Array of 4
+                           const GfxPaintColour *paint_colours,  // Array of 4
+                           GfxGslPurpose purpose);
 
     // Init pass (set up everything)
     void initPassGlobalTextures (Ogre::Pass *p, GfxGslPurpose purpose);
     void initPassTextures (Ogre::Pass *p, const GfxTextureStateMap &textures);
     void initPassBodyParams (const Ogre::GpuProgramParametersSharedPtr &vparams,
-                             const Ogre::GpuProgramParametersSharedPtr &fparams);
+                             const Ogre::GpuProgramParametersSharedPtr &fparams,
+                             GfxGslPurpose purpose);
 
     void updatePassGlobalTextures (Ogre::Pass *p, GfxGslPurpose purpose);
     void updatePassTextures (Ogre::Pass *p, int counter, const GfxTextureStateMap &textures);
