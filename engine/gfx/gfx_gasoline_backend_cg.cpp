@@ -400,8 +400,8 @@ void gfx_gasoline_unparse_cg(const GfxGslContext &ctx,
     frag_ss << "    frag_screen = wpos.xy;\n";
     if (ctx.d3d9) {
         // CG targeting ps_3_0 exposes VPOS as WPOS, which is not what we want.
-        frag_ss << "    frag_screen = frag_screen + Float2(0.5, 0.5);\n";
         frag_ss << "    frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
+        frag_ss << "    frag_screen += Float2(0.5, -0.5);\n";
     }
     frag_ss << "    if (internal_rt_flip < 0)\n";
     frag_ss << "        frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
@@ -860,11 +860,16 @@ void gfx_gasoline_unparse_decal_cg(const GfxGslContext &ctx,
     frag_ss << "    in Float2 wpos : WPOS,\n";
     frag_ss << "    out Float4 out_colour_alpha : COLOR\n";
     frag_ss << ") {\n";
-    frag_ss << "    frag_screen = wpos.xy + Float2(0.5, 0.5);\n";
-    // Due to a bug in CG targeting ps_3_0, wpos is origin top right, so correct that:
+    // frag_screen should be origin bottom left, centered in the middle of pixels.
+    frag_ss << "    frag_screen = wpos.xy;\n";
     if (ctx.d3d9) {
         frag_ss << "    frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
+        // It turned out to be very important to do the 0.5 correction after inverting the screen.
+        // Otherwise, there were places where the decal did not match up with the geometry underneath.
+        frag_ss << "    frag_screen += Float2(0.5, -0.5);\n";
     }
+    frag_ss << "    if (internal_rt_flip < 0)\n";
+    frag_ss << "        frag_screen.y = global_viewportSize.y - frag_screen.y;\n";
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "vert_", GfxGslTrans::VERT);
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "frag_", GfxGslTrans::USER);
     frag_ss << gfx_gasoline_generate_trans_decode(trans, "internal_", GfxGslTrans::INTERNAL);
@@ -875,11 +880,11 @@ void gfx_gasoline_unparse_decal_cg(const GfxGslContext &ctx,
     frag_ss << "        lerp(global_rayTopLeft, global_rayTopRight, Float3(uv.x)),\n";
     frag_ss << "        Float3(uv.y));\n";
     frag_ss << "    uv.y = 1 - uv.y;\n";
-    frag_ss << "    Float3 bytes = 255 * sample(global_gbuffer0, uv).xyz;\n";
-    frag_ss << "    Float depth_int = 256.0*256.0*bytes.x + 256.0*bytes.y + bytes.z;\n";
-    frag_ss << "    Float normalised_cam_dist = depth_int / (256.0*256.0*256.0 - 1);\n";
+    frag_ss << "    Float4 texel0 = sample(global_gbuffer0, uv);\n";
+    frag_ss << "    Float4 texel1 = Float4(0, 0, 0, 0);\n";
+    frag_ss << "    Float4 texel2 = Float4(0, 0, 0, 0);\n";
+    frag_ss << "    Float normalised_cam_dist = unpack_deferred_cam_dist(texel0, texel1, texel2);\n";
     frag_ss << "    Float3 pos_ws = normalised_cam_dist * ray + global_cameraPos;\n";
-
     // Apply world backwards
     frag_ss << "    Float3 pos_os = mul(internal_inv_world, Float4(pos_ws, 1)).xyz;\n";
     frag_ss << "    pos_os += Float3(0.5, 0, 0.5);\n";
