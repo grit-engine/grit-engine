@@ -111,7 +111,7 @@ void gfx_pipeline_init (void)
         gbuffer_shader_params,
         true);
 
-
+    // Diffuse only.
     deferred_ambient_sun[1] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun1",
         das_vertex_code,
@@ -121,6 +121,7 @@ void gfx_pipeline_init (void)
         gbuffer_shader_params,
         true);
 
+    // Normal
     deferred_ambient_sun[2] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun2",
         das_vertex_code,
@@ -130,6 +131,7 @@ void gfx_pipeline_init (void)
         gbuffer_shader_params,
         true);
 
+    // Specular
     deferred_ambient_sun[3] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun3",
         das_vertex_code,
@@ -139,6 +141,7 @@ void gfx_pipeline_init (void)
         gbuffer_shader_params,
         true);
 
+    // Gloss
     deferred_ambient_sun[4] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun4",
         das_vertex_code,
@@ -148,6 +151,7 @@ void gfx_pipeline_init (void)
         gbuffer_shader_params,
         true);
 
+    // Position (world space)
     deferred_ambient_sun[5] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun5",
         das_vertex_code,
@@ -157,7 +161,7 @@ void gfx_pipeline_init (void)
         gbuffer_shader_params,
         true);
 
-    // Render the shadow map in the middle of the screen.
+    // Render shadow map 0 in the middle of the screen.
     deferred_ambient_sun[6] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun6",
         "out.position = Float3(vert.position.xy, 0.5);\n",
@@ -178,6 +182,7 @@ void gfx_pipeline_init (void)
         gbuffer_shader_params,
         true);
 
+    // Render shadow map 1 in the middle of the screen.
     deferred_ambient_sun[7] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun7",
         "out.position = Float3(vert.position.xy, 0.5);\n",
@@ -198,6 +203,7 @@ void gfx_pipeline_init (void)
         gbuffer_shader_params,
         true);
 
+    // Render shadow map 2 in the middle of the screen.
     deferred_ambient_sun[8] = gfx_shader_make_or_reset(
         "/system/DeferredAmbientSun8",
         "out.position = Float3(vert.position.xy, 0.5);\n",
