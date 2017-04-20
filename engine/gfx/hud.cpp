@@ -216,6 +216,7 @@ Vector2 HudBase::getDerivedBounds (void)
 HudObject::HudObject (HudClass *hud_class)
   : HudBase(), hudClass(hud_class),
     uv1(0,0), uv2(1,1), cornered(false), size(32,32), sizeSet(false), colour(1,1,1), alpha(1),
+    stencil(false),
     needsResizedCallbacks(false), needsParentResizedCallbacks(false), needsInputCallbacks(false),
     needsFrameCallbacks(false), refCount(0)
 {
@@ -866,6 +867,15 @@ void HudObject::setTexture (const DiskResourcePtr<GfxTextureDiskResource> &v)
     texture = v;
 }
 
+void HudObject::setStencilTexture (const DiskResourcePtr<GfxTextureDiskResource> &v)
+{
+    assertAlive();
+    if (v != nullptr) {
+        if (!v->isLoaded()) v->load();
+    }
+    stencilTexture = v;
+}
+
 // }}}
 
 
@@ -920,8 +930,8 @@ std::string HudText::getText (void) const
 // {{{ RENDERING
 
 
-static GfxShader *shader_text, *shader_rect;
-static GfxShaderBindings shader_text_binds, shader_tex_binds;
+static GfxShader *shader_text, *shader_rect, *shader_stencil;
+static GfxShaderBindings shader_text_binds, shader_rect_binds, shader_stencil_binds;
 
 // vdata/idata be allocated later because constructor requires ogre to be initialised
 static Ogre::VertexData *quad_vdata;
@@ -987,14 +997,17 @@ void hud_init (void)
     };
     #undef QUAD
 
-    cornered_quad_ibuf->writeData(0, cornered_quad_indexes*sizeof(uint16_t), &cornered_quad_idata_raw[0], true);
+    cornered_quad_ibuf->writeData(
+        0, cornered_quad_indexes*sizeof(uint16_t), &cornered_quad_idata_raw[0], true);
 
-    GfxGslRunParams shader_tex_params = {
+    GfxGslRunParams shader_rect_params = {
         {"colour", GfxGslParam::float3(1, 1, 1)},
         {"alpha", GfxGslParam::float1(1.0f)},
         {"tex", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)}
     };
-
+    GfxGslRunParams shader_stencil_params = {
+        {"tex", GfxGslParam(GFX_GSL_FLOAT_TEXTURE2, 1, 1, 1, 1)}
+    };
     GfxGslRunParams shader_text_params = {
         {"colour", GfxGslParam::float3(1, 1, 1)},
         {"alpha", GfxGslParam::float1(1.0f)},
@@ -1004,25 +1017,37 @@ void hud_init (void)
     std::string vertex_code =
         "out.position = transform_to_world(Float3(vert.position.xy, 0));\n";
 
-    std::string colour_code1 =
+    // Note this never discards, even if alpha == 0.  This is important because we use it
+    // to populate the stencil buffer to mask children at the bounds of the object.
+    std::string rect_colour_code =
         "var texel = sample(mat.tex, vert.coord0.xy);\n"
         "out.colour = texel.rgb * mat.colour;\n"
         "out.alpha = texel.a * mat.alpha;\n";
 
-    std::string colour_code2 =
+    std::string stencil_colour_code =
+        "var texel = sample(mat.tex, vert.coord0.xy);\n"
+        "if (texel.a < 0.5) discard;\n";
+
+    std::string text_colour_code =
         "var texel = sample(mat.tex, vert.coord0.xy);\n"
         "out.colour = texel.rgb * vert.coord1.rgb * mat.colour;\n"
         "out.alpha = texel.a * vert.coord1.a * mat.alpha;\n";
 
-    gfx_shader_check("/system/HudRect", vertex_code, "", colour_code1, shader_tex_params, false);
-    gfx_shader_check("/system/HudText", vertex_code, "", colour_code2, shader_text_params, false);
+    gfx_shader_check(
+        "/system/HudRect", vertex_code, "", rect_colour_code, shader_rect_params, false);
+    gfx_shader_check(
+        "/system/HudStencil", vertex_code, "", stencil_colour_code, shader_stencil_params, false);
+    gfx_shader_check(
+        "/system/HudText", vertex_code, "", text_colour_code, shader_text_params, false);
 
-    shader_rect = gfx_shader_make_or_reset("/system/HudRect",
-                                          vertex_code, "", colour_code1, shader_tex_params, false);
+    shader_rect = gfx_shader_make_or_reset(
+        "/system/HudRect", vertex_code, "", rect_colour_code, shader_rect_params, false);
 
+    shader_stencil = gfx_shader_make_or_reset(
+        "/system/HudStencil", vertex_code, "", stencil_colour_code, shader_stencil_params, false);
     
-    shader_text = gfx_shader_make_or_reset("/system/HudText",
-                                          vertex_code, "", colour_code2, shader_text_params, false);
+    shader_text = gfx_shader_make_or_reset(
+        "/system/HudText", vertex_code, "", text_colour_code, shader_text_params, false);
 
 }
 
@@ -1152,7 +1177,8 @@ static void set_cornered_vertex_data (GfxTextureDiskResource *tex,
                                   vdata_raw, true);
 }
 
-void gfx_render_hud_text (HudText *text, const Vector3 &colour, float alpha, const Vector2 &offset)
+void gfx_render_hud_text (HudText *text, const Vector3 &colour, float alpha, const Vector2 &offset,
+                          int parent_stencil_ref)
 {
     GfxFont *font = text->getFont();
     GfxTextureDiskResource *tex = font->getTexture();
@@ -1215,14 +1241,9 @@ void gfx_render_hud_text (HudText *text, const Vector3 &colour, float alpha, con
     shader_text->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
                             globs, matrix, nullptr, 0, 1, texs, shader_text_binds);
 
-    ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
-    ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
 
-    ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+    ogre_rs->setStencilBufferParams(Ogre::CMPF_EQUAL, parent_stencil_ref);
 
-    ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
-    ogre_rs->setStencilCheckEnabled(false);
-    ogre_rs->_setDepthBias(0, 0);
 
     if (text->buf.getRenderOperation().indexData->indexCount > 0) {
         ogre_rs->_render(text->buf.getRenderOperation());
@@ -1232,21 +1253,21 @@ void gfx_render_hud_text (HudText *text, const Vector3 &colour, float alpha, con
 }
 
 
-void gfx_render_hud_one (HudBase *base)
+void gfx_render_hud_one (HudBase *base, int parent_stencil_ref)
 {
     if (!base->isEnabled()) return;
     if (base->destroyed()) return;
 
     HudObject *obj = dynamic_cast<HudObject*>(base);
-    if (obj!=NULL) {
+    if (obj != nullptr) {
         GfxTextureDiskResource *tex = obj->getTexture();
-        if (tex!=NULL && !tex->isLoaded()) {
+        if (tex != nullptr && !tex->isLoaded()) {
             CERR << "Hud object using unloaded texture: \"" << (*tex) << "\"" << std::endl;
             obj->setTexture(DiskResourcePtr<GfxTextureDiskResource>());
             tex = nullptr;
         }
 
-        bool is_cornered = obj->isCornered() && tex != NULL;
+        bool is_cornered = obj->isCornered();
 
         Vector2 uv1 = obj->getUV1();
         Vector2 uv2 = obj->getUV2();
@@ -1265,7 +1286,7 @@ void gfx_render_hud_one (HudBase *base)
                 pos.y -= 0.5f;
         }
 
-        if (is_cornered) {
+        if (is_cornered && tex != nullptr) {
             set_cornered_vertex_data(tex, obj->getSize(), uv1, uv2);
         } else {
             set_vertex_data(obj->getSize(), uv1, uv2);
@@ -1295,9 +1316,9 @@ void gfx_render_hud_one (HudBase *base)
         bool render_target_flipping = false;
         Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin;
 
-        shader_tex_binds.clear();
-        shader_tex_binds["colour"] = obj->getColour();
-        shader_tex_binds["alpha"] = GfxGslParam::float1(obj->getAlpha());
+        shader_rect_binds.clear();
+        shader_rect_binds["colour"] = obj->getColour();
+        shader_rect_binds["alpha"] = GfxGslParam::float1(obj->getAlpha());
 
         GfxTextureStateMap texs;
         if (tex != nullptr)
@@ -1307,21 +1328,6 @@ void gfx_render_hud_one (HudBase *base)
         GfxShaderGlobals globs = { zv, I, I, I, zv, zv, zv, zv, win_size, render_target_flipping,
                                    nullptr };
 
-        shader_rect->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
-                                globs, matrix, nullptr, 0, 1, texs, shader_tex_binds);
-
-        ogre_rs->_setCullingMode(Ogre::CULL_NONE);
-        ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
-
-        ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
-
-        ogre_rs->_setDepthBias(0, 0);
-        ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
-        ogre_rs->setStencilCheckEnabled(false);
-
-        // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
-
-        // render the rectangle
         Ogre::RenderOperation op;
         if (is_cornered) {
             op.useIndexes = true;
@@ -1332,7 +1338,54 @@ void gfx_render_hud_one (HudBase *base)
             op.vertexData = quad_vdata;
         }
         op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+
+
+        shader_rect->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
+                                globs, matrix, nullptr, 0, 1, texs, shader_rect_binds);
+
+        // First only draw our colour if we fit inside our parent.
+        ogre_rs->setStencilBufferParams(
+            Ogre::CMPF_EQUAL, parent_stencil_ref, 0xffffffff, 0xffffffff,
+            Ogre::SOP_KEEP, Ogre::SOP_KEEP, Ogre::SOP_KEEP);
+
         ogre_rs->_render(op);
+
+        int child_stencil_ref = parent_stencil_ref;
+        if (obj->isStencil()) {
+            GfxTextureDiskResource *stencil_tex = obj->getStencilTexture();
+            if (stencil_tex != nullptr && !stencil_tex->isLoaded()) {
+                CERR << "Hud object using unloaded stencil texture: \""
+                     << (*stencil_tex) << "\"" << std::endl;
+                obj->setStencilTexture(DiskResourcePtr<GfxTextureDiskResource>());
+                stencil_tex = nullptr;
+            }
+
+            if (is_cornered && stencil_tex != nullptr) {
+                set_cornered_vertex_data(stencil_tex, obj->getSize(), uv1, uv2);
+            } else {
+                set_vertex_data(obj->getSize(), uv1, uv2);
+            }
+
+            GfxTextureStateMap stencil_texs;
+            if (stencil_tex != nullptr)
+                stencil_texs["tex"] = gfx_texture_state_anisotropic(stencil_tex);
+
+            // Paint a rectangle in the stencil buffer to mask our children, but we
+            // ourselves are still masked by our parent.
+            child_stencil_ref += 1;
+
+            ogre_rs->setStencilBufferParams(
+                Ogre::CMPF_EQUAL, parent_stencil_ref, 0xffffffff, 0xffffffff,
+                Ogre::SOP_KEEP, Ogre::SOP_KEEP, Ogre::SOP_INCREMENT);
+
+            ogre_rs->_setColourBufferWriteEnabled(false, false, false, false);
+            shader_stencil->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
+                                       globs, matrix, nullptr, 0, 1, stencil_texs,
+                                       shader_stencil_binds);
+
+            ogre_rs->_render(op);
+            ogre_rs->_setColourBufferWriteEnabled(true, true, true, true);
+        }
 
         if (tex != NULL) {
             ogre_rs->_disableTextureUnit(0);
@@ -1343,20 +1396,35 @@ void gfx_render_hud_one (HudBase *base)
                 // Draw in reverse order, for consistency with ray priority
                 HudBase *child = obj->children[obj->children.size() - j - 1];
                 if (child->getZOrder() != i) continue;
-                gfx_render_hud_one(child);
+                gfx_render_hud_one(child, child_stencil_ref);
             }
+        }
+
+        if (obj->isStencil()) {
+            ogre_rs->setStencilBufferParams(
+                Ogre::CMPF_LESS_EQUAL, parent_stencil_ref, 0xffffffff, 0xffffffff,
+                Ogre::SOP_KEEP, Ogre::SOP_KEEP, Ogre::SOP_REPLACE);
+
+            ogre_rs->_setColourBufferWriteEnabled(false, false, false, false);
+            shader_rect->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
+                                    globs, matrix, nullptr, 0, 1, texs, shader_rect_binds);
+
+            ogre_rs->_render(op);
+            ogre_rs->_setColourBufferWriteEnabled(true, true, true, true);
         }
     }
 
     HudText *text = dynamic_cast<HudText*>(base);
-    if (text!=NULL) {
+    if (text != nullptr) {
 
-        text->buf.updateGPU(text->wrap == Vector2(0,0), text->scroll, text->scroll+text->wrap.y);
+        text->buf.updateGPU(text->wrap == Vector2(0, 0), text->scroll, text->scroll+text->wrap.y);
 
-        if (text->getShadow() != Vector2(0,0)) {
-            gfx_render_hud_text(text, text->getShadowColour(), text->getShadowAlpha(), text->getShadow());
+        if (text->getShadow() != Vector2(0, 0)) {
+            gfx_render_hud_text(text, text->getShadowColour(), text->getShadowAlpha(),
+                                text->getShadow(), parent_stencil_ref);
         }
-        gfx_render_hud_text(text, text->getColour(), text->getAlpha(), Vector2(0,0));
+        gfx_render_hud_text(
+            text, text->getColour(), text->getAlpha(), Vector2(0, 0), parent_stencil_ref);
     }
 }
 
@@ -1366,13 +1434,23 @@ void hud_render (Ogre::Viewport *vp)
 
     ogre_rs->_beginFrame();
 
+
+    ogre_rs->clearFrameBuffer(Ogre::FBT_STENCIL);
+
+    ogre_rs->_setDepthBias(0, 0);
+    ogre_rs->_setPolygonMode(Ogre::PM_SOLID);
+    ogre_rs->setStencilCheckEnabled(true);
+    ogre_rs->_setCullingMode(Ogre::CULL_NONE);
+    ogre_rs->_setDepthBufferParams(false, false, Ogre::CMPF_LESS_EQUAL);
+    ogre_rs->_setSceneBlending(Ogre::SBF_ONE, Ogre::SBF_ONE_MINUS_SOURCE_ALPHA);
+
     try {
 
         for (unsigned i=0 ; i<=GFX_HUD_ZORDER_MAX ; ++i) {
             for (unsigned j=0 ; j<root_elements.size() ; ++j) {
                 HudBase *el = root_elements[root_elements.size() - j - 1];
                 if (el->getZOrder() != i) continue;
-                gfx_render_hud_one(el);
+                gfx_render_hud_one(el, 0);
             }
         }
 
@@ -1381,6 +1459,8 @@ void hud_render (Ogre::Viewport *vp)
     } catch (const Ogre::Exception &e) {
         CERR << "Rendering HUD, got: " << e.getDescription() << std::endl;
     }
+
+    ogre_rs->setStencilCheckEnabled(false);
 
     ogre_rs->_endFrame();
 

@@ -46,9 +46,7 @@ GfxNodePtr check_gfx_node (lua_State *L, int idx)
         GET_UD_MACRO(GfxBodyPtr,self,idx,GFXBODY_TAG);
         return self.staticCast<GfxFertileNode>();
     } else {
-        std::stringstream ss;
-        ss << "Expected a GfxFertileNode or GfxBody at position " << idx;
-        my_lua_error(L, ss.str());
+        EXCEPT << "Expected a GfxFertileNode or GfxBody at position " << idx << ENDL;
     }
 }
 
@@ -1974,6 +1972,15 @@ TRY_START
             lua_pushboolean(L, self.getInheritOrientation());
         } else if (!::strcmp(key,"snapPixels")) {
             lua_pushboolean(L, self.snapPixels);
+        } else if (!::strcmp(key,"stencil")) {
+            lua_pushboolean(L, self.isStencil());
+        } else if (!::strcmp(key,"stencilTexture")) {
+            GfxTextureDiskResource *d = self.getStencilTexture();
+            if (d == NULL) {
+                lua_pushnil(L);
+            } else {
+                push_string(L, d->getName());
+            }
 
         } else if (!::strcmp(key,"colour")) {
             push_v3(L, self.getColour());
@@ -1981,7 +1988,7 @@ TRY_START
             lua_pushnumber(L, self.getAlpha());
         } else if (!::strcmp(key,"texture")) {
             GfxTextureDiskResource *d = self.getTexture();
-            if (d==NULL) {
+            if (d == NULL) {
                 lua_pushnil(L);
             } else {
                 push_string(L, d->getName());
@@ -2067,6 +2074,19 @@ TRY_START
         } else if (!::strcmp(key,"snapPixels")) {
             bool v = check_bool(L, 3);
             self.snapPixels = v;
+
+        } else if (!::strcmp(key,"stencil")) {
+            bool v = check_bool(L, 3);
+            self.setStencil(v);
+        } else if (!::strcmp(key,"stencilTexture")) {
+            if (lua_isnil(L,3)) {
+                self.setStencilTexture(DiskResourcePtr<GfxTextureDiskResource>());
+            } else {
+                std::string v = check_path(L, 3);
+                auto d = disk_resource_use<GfxTextureDiskResource>(v);
+                if (d == nullptr) my_lua_error(L, "Resource not a texture: \"" + v + "\"");
+                self.setStencilTexture(d);
+            }
 
         } else if (!::strcmp(key,"colour")) {
             Vector3 v = check_v3(L,3);
@@ -2755,7 +2775,8 @@ TRY_START
     HudObject *parent = NULL;
     HudObject *self = new HudObject(hud_class);
 
-    // push this now so that it will inc its internal ref counter and not be deleted if aliases are gc'd
+    // Push this now, so that it will increment its internal reference counter and not be deleted
+    // if aliases are gc'd.
     push_hudobj(L,self);
 
     bool have_orientation = false;
@@ -2767,6 +2788,8 @@ TRY_START
     bool have_zorder = false;
     bool have_cornered = false;
     bool have_enabled = false;
+    bool have_stencil = false;
+    bool have_stencil_texture = false;
 
     lua_newtable(L);
     int new_table_index = lua_gettop(L);
@@ -2864,6 +2887,24 @@ TRY_START
             } else {
                 my_lua_error(L, "enabled must be a boolean.");
             }
+        } else if (!::strcmp(key,"stencil")) {
+            if (lua_isboolean(L,-1)) {
+                bool v = check_bool(L,-1);
+                self->setStencil(v);
+                have_stencil = true;
+            } else {
+                my_lua_error(L, "enabled must be a boolean.");
+            }
+        } else if (!::strcmp(key,"stencilTexture")) {
+            if (lua_type(L,-1) == LUA_TSTRING) {
+                std::string v = check_path(L,-1);
+                auto d = disk_resource_use<GfxTextureDiskResource>(v);
+                if (d == nullptr) my_lua_error(L, "Resource not a texture: \"" + v + "\"");
+                self->setStencilTexture(d);
+                have_stencil_texture = true;
+            } else {
+                my_lua_error(L, "texture must be a string.");
+            }
         } else if (!::strcmp(key,"class")) {
             my_lua_error(L,"Not a writeable HudObject member: "+std::string(key));
         } else if (!::strcmp(key,"className")) {
@@ -2878,87 +2919,97 @@ TRY_START
             lua_rawset(L, new_table_index);
         }
     }
-    ExternalTable &tab = hud_class->getTable();
+    ExternalTable &class_tab = hud_class->getTable();
+    std::string msg = "Wrong type for %s field in hud class \"" + hud_class->name + "\".";
     if (!have_orientation) {
-        if (tab.has("orientation")) {
+        if (class_tab.has("orientation")) {
             lua_Number v;
-            bool success = tab.get("orientation",v);
-            if (!success) my_lua_error(L, "Wrong type for orientation field in hud class \""+hud_class->name+"\".");
+            class_tab.getOrExcf("orientation", v, msg, "orientation");
             self->setOrientation(Degree(v));
         }
     }
     if (!have_position) {
-        if (tab.has("position")) {
+        if (class_tab.has("position")) {
             Vector2 v;
-            bool success = tab.get("position",v);
-            if (!success) my_lua_error(L, "Wrong type for position field in hud class \""+hud_class->name+"\".");
+            class_tab.getOrExcf("position", v, msg, "position");
             self->setPosition(v);
         }
     }
     if (!have_size) {
-        if (tab.has("size")) {
+        if (class_tab.has("size")) {
             Vector2 v;
-            bool success = tab.get("size",v);
-            if (!success) my_lua_error(L, "Wrong type for size field in hud class \""+hud_class->name+"\".");
+            class_tab.getOrExcf("size", v, msg, "size");
             self->setSize(L, v);
             have_size = true;
         }
     }
     if (!have_colour) {
-        if (tab.has("colour")) {
+        if (class_tab.has("colour")) {
             Vector3 v;
-            bool success = tab.get("colour",v);
-            if (!success) my_lua_error(L, "Wrong type for colour field in hud class \""+hud_class->name+"\".");
+            class_tab.getOrExcf("colour", v, msg, "colour");
             self->setColour(v);
         }
     }
     if (!have_alpha) {
-        if (tab.has("alpha")) {
+        if (class_tab.has("alpha")) {
             lua_Number v;
-            bool success = tab.get("alpha",v);
-            if (!success) my_lua_error(L, "Wrong type for alpha field in hud class \""+hud_class->name+"\".");
+            class_tab.getOrExcf("alpha", v, msg, "alpha");
             self->setAlpha(v);
         }
     }
     if (!have_texture) {
-        if (tab.has("texture")) {
+        if (class_tab.has("texture")) {
             std::string v;
-            bool success = tab.get("texture",v);
-            if (!success) my_lua_error(L, "Wrong type for texture field in hud class \""+hud_class->name+"\".");
+            class_tab.getOrExcf("texture", v, msg, "texture");
             auto d = disk_resource_use<GfxTextureDiskResource>(v);
             if (d == nullptr) my_lua_error(L, "Resource not a texture: \""+std::string(v)+"\"");
             self->setTexture(d);
         }
     }
     if (!have_zorder) {
-        if (tab.has("zOrder")) {
+        if (class_tab.has("zOrder")) {
             lua_Number v;
-            bool success = tab.get("zOrder",v);
-            if (!success) my_lua_error(L, "Wrong type for zOrder field in hud class \""+hud_class->name+"\".");
-            if ((unsigned char)(v) != v) my_lua_error(L, "zOrder must be an integer in range 0 to 255 in class \""+hud_class->name+"\".");
+            class_tab.getOrExcf("zOrder", v, msg, "zOrder");
+            if ((unsigned char)(v) != v)
+                EXCEPT << "zOrder must be an integer in range 0 to 255 in class \""
+                       << hud_class->name << "\"." << ENDL;
             self->setZOrder((unsigned char)v);
         }
     }
     if (!have_cornered) {
-        if (tab.has("cornered")) {
+        if (class_tab.has("cornered")) {
             bool v;
-            bool success = tab.get("cornered",v);
-            if (!success) my_lua_error(L, "Wrong type for cornered field in hud class \""+hud_class->name+"\".");
+            class_tab.getOrExcf("cornered", v, msg, "cornered");
             self->setCornered(v);
         }
     }
     if (!have_enabled) {
-        if (tab.has("enabled")) {
+        if (class_tab.has("enabled")) {
             bool v;
-            bool success = tab.get("enabled",v);
-            if (!success) my_lua_error(L, "Wrong type for enabled field in hud class \""+hud_class->name+"\".");
+            class_tab.getOrExcf("enabled", v, msg, "enabled");
             self->setEnabled(v);
+        }
+    }
+    if (!have_stencil) {
+        if (class_tab.has("stencil")) {
+            bool v;
+            class_tab.getOrExcf("stencil", v, msg, "stencil");
+            self->setStencil(v);
+        }
+    }
+    if (!have_stencil_texture) {
+        if (class_tab.has("stencilTexture")) {
+            std::string v;
+            class_tab.getOrExcf("stencilTexture", v, msg, "stencilTexture");
+            auto d = disk_resource_use<GfxTextureDiskResource>(v);
+            if (d == nullptr) EXCEPT << "Resource not a texture: \"" << v << "\"" << ENDL;
+            self->setStencilTexture(d);
         }
     }
 
     self->triggerInit(L);
     if (!have_size && !self->getSizeSet() && self->getTexture()!=NULL) {
-        // set size from texture
+        // Set size from texture.
         GfxTextureDiskResource *dr = self->getTexture();
         if (dr->isLoaded()) {
             Ogre::TexturePtr tex = dr->getOgreTexturePtr();

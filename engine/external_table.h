@@ -33,11 +33,13 @@ extern "C" {
     #include <lauxlib.h>
 }
 
-#include "math_util.h"
-#include "shared_ptr.h"
-#include "lua_ptr.h"
+#include <math_util.h>
+#include <spline_table.h>
+#include <stringf.h>
 
-#include "spline_table.h"
+#include "lua_ptr.h"
+#include "shared_ptr.h"
+
 
 // Purpose of this class is to store lua data outside of lua so as to avoid
 // putting stress on the garbage collector.  Only certain kinds of primitive data
@@ -64,6 +66,18 @@ class ExternalTable {
     {
         if (!get(key, val)) val = def;
         
+    }
+
+    template<class U, typename ...Args>
+    void getOrExcf (const std::string &key, U &val, const std::string &msgf, Args... args) const
+    {
+        if (!get(key, val)) EXCEPTF(msgf, args...);
+    }
+
+    template<class U, typename ...Args>
+    void getOrExcf (lua_Number key, U &val, const std::string &msgf, Args... args) const
+    {
+        if (!get(key, val)) EXCEPTF(msgf, args...);
     }
 
     bool get (const std::string &key, lua_Number &v) const

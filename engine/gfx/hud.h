@@ -170,8 +170,7 @@ class HudBase : public fast_erase_index {
     bool isEnabled (void) { assertAlive(); return enabled; }
 
     void setInheritOrientation (bool v) { assertAlive(); inheritOrientation = v; }
-    bool getInheritOrientation (void) const { assertAlive(); return inheritOrientation; }
-
+    bool getInheritOrientation (void) const { assertAlive(); return inheritOrientation; } 
     void setOrientation (Radian v) { assertAlive(); orientation = v; }
     Radian getOrientation (void) const { assertAlive(); return orientation; }
     Radian getDerivedOrientation (void) const;
@@ -215,6 +214,10 @@ class HudObject : public HudBase {
     bool sizeSet;
     Vector3 colour;
     float alpha;
+    bool stencil;
+    // If no texture, children will be visible only within the rect.
+    // If texture, children will be visible only where texture alpha > 0.5
+    DiskResourcePtr<GfxTextureDiskResource> stencilTexture;
 
     bool needsResizedCallbacks;
     bool needsParentResizedCallbacks;
@@ -261,6 +264,13 @@ class HudObject : public HudBase {
     GfxTextureDiskResource *getTexture (void) const { assertAlive(); return &*texture; }
     void setTexture (const DiskResourcePtr<GfxTextureDiskResource> &v);
 
+    bool isStencil (void) const { assertAlive(); return stencil; }
+    void setStencil (bool v) { assertAlive(); stencil = v; }
+
+    GfxTextureDiskResource *getStencilTexture (void) const
+    { assertAlive(); return &*stencilTexture; }
+    void setStencilTexture (const DiskResourcePtr<GfxTextureDiskResource> &v);
+
     void setSize (lua_State *L, const Vector2 &v);
     Vector2 getSize (void) { assertAlive(); return size; }
     bool getSizeSet (void) { assertAlive(); return sizeSet; }
@@ -292,8 +302,8 @@ class HudObject : public HudBase {
     unsigned refCount;
 
     // internal function
-    friend void gfx_render_hud_one (HudBase *base);
-    friend void gfx_render_hud_text (HudText *text, const Vector3 &colour_mask, const Vector2 &offset);
+    friend void gfx_render_hud_one (HudBase *, int);
+    friend void gfx_render_hud_text (HudText *, const Vector3 &, const Vector2 &, int);
     
 };
 
@@ -409,8 +419,8 @@ class HudText : public HudBase {
     
 
     // internal function
-    friend void gfx_render_hud_one (HudBase *base);
-    friend void gfx_render_hud_text (HudText *text, const Vector3 &colour, float alpha, const Vector2 &offset);
+    friend void gfx_render_hud_one (HudBase *, int);
+    friend void gfx_render_hud_text (HudText *, const Vector3 &, float, const Vector2 &, int);
 };
 
 /** Called in the frame loop by the graphics code to render the HUD on top of the 3d graphics. */
