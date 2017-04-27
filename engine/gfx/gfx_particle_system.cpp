@@ -37,11 +37,6 @@ const unsigned quad_vertexes = 4;
 static Ogre::HardwareVertexBufferSharedPtr quadVertexBuffer;
 static Ogre::IndexData quadIndexData;
 
-static inline Ogre::HighLevelGpuProgramPtr get_shader(const std::string &name)
-{
-    return Ogre::HighLevelGpuProgramManager::getSingleton().getByName(name, RESGRP);
-}
-
 #define QUAD(a,b,c,d) a, b, d, d, b, c
 
 static GfxShader *shader;
