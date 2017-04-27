@@ -36,7 +36,6 @@ class GfxDecal : public GfxNode {
     static const std::string className;
     bool enabled;
     float fade;
-    Quaternion aim;
     GfxMaterial *material;
     
     protected:

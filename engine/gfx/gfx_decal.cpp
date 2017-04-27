@@ -105,7 +105,6 @@ GfxDecal::GfxDecal (GfxMaterial *material, const GfxNodePtr &par_)
   : GfxNode(par_),
     enabled(true),
     fade(1),
-    aim(1,0,0,0),
     material(material)
 {
     all_decals.insert(this);
