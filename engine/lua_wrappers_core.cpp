@@ -25,6 +25,15 @@
     #include <google/profiler.h>
 #endif
 
+#ifndef isnan
+        static inline bool isnan(float f)
+        {
+            // std::isnan() is C99, not supported by all compilers
+            // However NaN always fails this next test, no other number does.
+            return f != f;
+        }
+#endif
+
 #ifndef WIN32
     #include <sys/mman.h>
 #endif
