@@ -136,6 +136,7 @@
     <ClCompile Include="gfx\gfx_sprite_body.cpp" />
     <ClCompile Include="gfx\gfx_text_body.cpp" />
     <ClCompile Include="gfx\gfx_text_buffer.cpp" />
+    <ClCompile Include="gfx\gfx_tracer_body.cpp" />
     <ClCompile Include="gfx\gfx_disk_resource.cpp" />
     <ClCompile Include="gfx\hud.cpp" />
     <ClCompile Include="gfx\gfx_option.cpp" />

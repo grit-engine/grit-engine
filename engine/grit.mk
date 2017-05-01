@@ -74,6 +74,7 @@ ENGINE_CPP_SRCS=\
 	gfx/gfx_sprite_body.cpp \
 	gfx/gfx_text_body.cpp \
 	gfx/gfx_text_buffer.cpp \
+	gfx/gfx_tracer_body.cpp \
 	gfx/hud.cpp \
 	gfx/lua_wrappers_gfx.cpp \
 	 \

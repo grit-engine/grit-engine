@@ -27,6 +27,7 @@
 #include "gfx_particle_system.h"
 #include "gfx_pipeline.h"
 #include "gfx_sky_body.h"
+#include "gfx_tracer_body.h"
 
 Ogre::VertexData *screen_quad_vdata;
 Ogre::HardwareVertexBufferSharedPtr screen_quad_vbuf;
@@ -899,6 +900,29 @@ class ParticlesPasses : public Ogre::RenderQueueInvocation {
 
 
 
+// {{{ Tracer passes 
+
+class TracerPasses : public Ogre::RenderQueueInvocation {
+    GfxPipeline *pipe;
+
+    public:
+    TracerPasses (GfxPipeline *pipe)
+      : Ogre::RenderQueueInvocation(0, ""), pipe(pipe)
+    {
+        setSuppressShadows(true);
+    }
+
+    void invoke (Ogre::RenderQueueGroup *, Ogre::SceneManager *)
+    {
+        if (pipe->getCameraOpts().tracers) gfx_tracer_body_render(pipe);
+    }
+    
+};
+
+// }}}
+
+
+
 // {{{ Sky passes 
 
 class SkyPasses : public Ogre::RenderQueueInvocation {
@@ -1052,6 +1076,7 @@ GfxPipeline::GfxPipeline (const std::string &name, Ogre::Viewport *target_viewpo
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA));
     rqisDeferred->add(OGRE_NEW Ogre::RenderQueueInvocation(RQ_FORWARD_ALPHA_EMISSIVE));
     rqisDeferred->add(new ParticlesPasses(this));
+    rqisDeferred->add(new TracerPasses(this));
     // Debug passes
     rqisDeferred->add(new DebugPasses(this));
     // First person passes

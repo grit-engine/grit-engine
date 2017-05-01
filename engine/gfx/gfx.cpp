@@ -40,6 +40,7 @@
 #include "gfx_sky_body.h"
 #include "gfx_sky_material.h"
 #include "gfx_sprite_body.h"
+#include "gfx_tracer_body.h"
 
 #ifdef WIN32
 bool d3d9 = getenv("GRIT_GL") == NULL;
@@ -1076,6 +1077,7 @@ size_t gfx_init (GfxCallback &cb_)
         gfx_pipeline_init();
         gfx_option_init();
         gfx_particle_init();
+        gfx_tracer_body_init();
         hud_init();
         gfx_decal_init();
         gfx_debug_init();

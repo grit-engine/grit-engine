@@ -48,6 +48,7 @@ struct CameraOpts {
     bool bloomAndToneMap;
     bool pointLights;
     bool particles;
+    bool tracers;
     bool sky;
     bool sun;
     bool firstPerson;
@@ -59,9 +60,10 @@ struct CameraOpts {
     CameraOpts (void)
       : fovY(55), nearClip(0.3f), farClip(800),
         frustumOffset(0), saturationMask(1), mask(1,1,1), decals(true), debugMode(0),
-        bloomAndToneMap(true), pointLights(true), particles(true), sky(true), sun(true),
-        firstPerson(true), reflect(false), reflectPlaneNormal(0,0,1), reflectPlaneDist(0),
-        pos(0,0,0), dir(0,0,0,1) { }
+        bloomAndToneMap(true), pointLights(true), particles(true), tracers(true), sky(true),
+        sun(true), firstPerson(true), reflect(false), reflectPlaneNormal(0,0,1),
+        reflectPlaneDist(0), pos(0,0,0), dir(0,0,0,1)
+    { }
 };
 
 /** The pipeline handles complete rendering of the scene for one 'eye' of a stereographic view. */
@@ -96,7 +98,7 @@ class GfxPipeline {
 
     const CameraOpts &getCameraOpts (void) const { return opts; }
     Ogre::Camera *getCamera (void) const { return cam; }
-    const Ogre::TexturePtr &getGBufferTexture (unsigned i) { return gBufferElements[i]; }
+    const Ogre::TexturePtr &getGBufferTexture (unsigned i) const { return gBufferElements[i]; }
 };
 
 #endif 

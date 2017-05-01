@@ -33,6 +33,7 @@
 #include "gfx_sky_material.h"
 #include "gfx_sprite_body.h"
 #include "gfx_text_body.h"
+#include "gfx_tracer_body.h"
 #include "hud.h"
 
 
@@ -47,6 +48,9 @@ void push_gfxtextbody (lua_State *L, const GfxTextBodyPtr &self);
 
 #define GFXDECAL_TAG "Grit/GfxDecal"
 void push_gfxdecal (lua_State *L, const GfxDecalPtr &self);
+
+#define GFXTRACERBODY_TAG "Grit/TracerBody"
+void push_gfxtracerbody (lua_State *L, const SharedPtr<GfxTracerBody> &self);
 
 #define GFXINSTANCES_TAG "Grit/GfxInstances"
 void push_gfxinstances (lua_State *L, const GfxInstancesPtr &self);

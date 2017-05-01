@@ -1118,6 +1118,146 @@ MT_MACRO_NEWINDEX(gfxdecal);
 //}}}
 
 
+// GFXTRACERBODY ============================================================== {{{
+
+void push_gfxtracerbody (lua_State *L, const SharedPtr<GfxTracerBody> &self)
+{
+    if (self.isNull())
+        lua_pushnil(L);
+    else
+        push(L,new SharedPtr<GfxTracerBody>(self),GFXTRACERBODY_TAG);
+}
+
+GC_MACRO(SharedPtr<GfxTracerBody>,gfxtracerbody,GFXTRACERBODY_TAG)
+
+static int gfxtracerbody_destroy (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(SharedPtr<GfxTracerBody>,self,1,GFXTRACERBODY_TAG);
+    self->destroy();
+    return 0;
+TRY_END
+}
+
+TOSTRING_SMART_PTR_MACRO (gfxtracerbody,SharedPtr<GfxTracerBody>,GFXTRACERBODY_TAG)
+
+static int gfxtracerbody_index (lua_State *L)
+{
+TRY_START
+    check_args(L,2);
+    GET_UD_MACRO(SharedPtr<GfxTracerBody>,self,1,GFXTRACERBODY_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"localPosition")) {
+        push_v3(L, self->getLocalPosition());
+    } else if (!::strcmp(key,"localOrientation")) {
+        push_quat(L, self->getLocalOrientation());
+    } else if (!::strcmp(key,"localScale")) {
+        push_v3(L, self->getLocalScale());
+    } else if (!::strcmp(key,"texture")) {
+        GfxTextureDiskResource *d = self->getTexture();
+        if (d == NULL) {
+            lua_pushnil(L);
+        } else {
+            push_string(L, d->getName());
+        }
+
+    } else if (!::strcmp(key,"fade")) {
+        lua_pushnumber(L, self->getFade());
+    } else if (!::strcmp(key,"enabled")) {
+        lua_pushboolean(L, self->isEnabled());
+    } else if (!::strcmp(key,"parent")) {
+        push_gfx_node_concrete(L, self->getParent());
+
+    } else if (!::strcmp(key,"diffuseColour")) {
+        push_v3(L, self->getDiffuseColour());
+    } else if (!::strcmp(key,"emissiveColour")) {
+        push_v3(L, self->getEmissiveColour());
+    } else if (!::strcmp(key,"alpha")) {
+        lua_pushnumber(L, self->getAlpha());
+    } else if (!::strcmp(key,"size")) {
+        lua_pushnumber(L, self->getSize());
+    } else if (!::strcmp(key,"length")) {
+        lua_pushnumber(L, self->getLength());
+
+    } else if (!::strcmp(key,"destroyed")) {
+        lua_pushboolean(L,self->destroyed());
+    } else if (!::strcmp(key,"destroy")) {
+        push_cfunction(L,gfxtracerbody_destroy);
+    } else {
+        my_lua_error(L,"Not a readable GfxTracerBody member: "+std::string(key));
+    }
+    return 1;
+TRY_END
+}
+
+
+static int gfxtracerbody_newindex (lua_State *L)
+{
+TRY_START
+    check_args(L,3);
+    GET_UD_MACRO(SharedPtr<GfxTracerBody>,self,1,GFXTRACERBODY_TAG);
+    const char *key = luaL_checkstring(L,2);
+    if (!::strcmp(key,"localPosition")) {
+        Vector3 v = check_v3(L,3);
+        self->setLocalPosition(v);
+    } else if (!::strcmp(key,"localOrientation")) {
+        Quaternion v = check_quat(L,3);
+        self->setLocalOrientation(v);
+    } else if (!::strcmp(key,"localScale")) {
+        Vector3 v = check_v3(L,3);
+        self->setLocalScale(v);
+    } else if (!::strcmp(key,"texture")) {
+        if (lua_isnil(L,3)) {
+            self->setTexture(DiskResourcePtr<GfxTextureDiskResource>());
+        } else {
+            std::string v = check_path(L,3);
+            auto d = disk_resource_use<GfxTextureDiskResource>(v);
+            if (d == nullptr) my_lua_error(L, "Resource not a texture: \"" + v + "\"");
+            self->setTexture(d);
+        }
+    } else if (!::strcmp(key,"emissiveColour")) {
+        Vector3 v = check_v3(L,3);
+        self->setEmissiveColour(v);
+    } else if (!::strcmp(key,"diffuseColour")) {
+        Vector3 v = check_v3(L,3);
+        self->setDiffuseColour(v);
+    } else if (!::strcmp(key,"alpha")) {
+        float v = check_float(L,3);
+        self->setAlpha(v);
+    } else if (!::strcmp(key,"size")) {
+        float v = check_float(L,3);
+        self->setSize(v);
+    } else if (!::strcmp(key,"fade")) {
+        float v = check_float(L,3);
+        self->setFade(v);
+    } else if (!::strcmp(key,"length")) {
+        int v = check_t<unsigned>(L,3);
+        self->setLength(v);
+    } else if (!::strcmp(key,"enabled")) {
+        bool v = check_bool(L,3);
+        self->setEnabled(v);
+    } else if (!::strcmp(key,"parent")) {
+        if (lua_isnil(L,3)) {
+            self->setParent(GfxNodePtr(NULL));
+        } else {
+            GfxNodePtr par = check_gfx_node(L, 3);
+            self->setParent(par);
+        }
+    } else {
+           my_lua_error(L,"Not a writeable GfxTracerBody member: "+std::string(key));
+    }
+    return 0;
+TRY_END
+}
+
+EQ_MACRO(SharedPtr<GfxTracerBody>,gfxtracerbody,GFXTRACERBODY_TAG)
+
+MT_MACRO_NEWINDEX(gfxtracerbody);
+
+//}}}
+
+
 // GFXRANGEDINSTANCES ============================================================== {{{
 
 void push_gfxrangedinstances (lua_State *L, const GfxRangedInstancesPtr &self)
@@ -2533,6 +2673,24 @@ TRY_START
     std::string mat_name = check_path(L,1);
     GfxMaterial *mat = gfx_material_get(mat_name);
     push_gfxdecal(L, GfxDecal::make(mat));
+    return 1;
+TRY_END
+}
+
+static int global_gfx_tracer_body_make (lua_State *L)
+{
+TRY_START
+    check_args(L, 0);
+    push_gfxtracerbody(L, GfxTracerBody::make());
+    return 1;
+TRY_END
+}
+
+static int global_gfx_tracer_body_pump (lua_State *L)
+{
+TRY_START
+    check_args(L, 0);
+    gfx_tracer_body_pump();
     return 1;
 TRY_END
 }
@@ -5027,6 +5185,9 @@ static const luaL_reg global[] = {
     {"gfx_light_make", global_gfx_light_make},
     {"gfx_sprite_body_make", global_gfx_sprite_body_make},
     {"gfx_decal_make", global_gfx_decal_make},
+    {"gfx_tracer_body_make", global_gfx_tracer_body_make},
+
+    {"gfx_tracer_body_pump", global_gfx_tracer_body_pump},
 
     {"gfx_debug_point", global_gfx_debug_point},
     {"gfx_debug_line", global_gfx_debug_line},
@@ -5103,6 +5264,8 @@ static const luaL_reg global[] = {
     {"gfx_particle_all", global_gfx_particle_all},
     {"gfx_particle_reset", global_gfx_particle_reset},
 
+    {"gfx_particle_reset", global_gfx_particle_reset},
+
     {"gfx_last_frame_stats", global_gfx_last_frame_stats},
 
     {"gfx_colour_grade_look_up", global_gfx_colour_grade_look_up},
@@ -5152,6 +5315,7 @@ void gfx_lua_init (lua_State *L)
     ADD_MT_MACRO(gfxinstances,GFXINSTANCES_TAG);
     ADD_MT_MACRO(gfxrangedinstances,GFXRANGEDINSTANCES_TAG);
     ADD_MT_MACRO(gfxdecal,GFXDECAL_TAG);
+    ADD_MT_MACRO(gfxtracerbody,GFXTRACERBODY_TAG);
     ADD_MT_MACRO(gfxspritebody,GFXSPRITEBODY_TAG);
 
     ADD_MT_MACRO(hudobj,HUDOBJECT_TAG);
