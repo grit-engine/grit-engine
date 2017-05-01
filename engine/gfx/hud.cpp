@@ -1329,7 +1329,7 @@ void gfx_render_hud_one (HudBase *base, int parent_stencil_ref)
                                    nullptr };
 
         Ogre::RenderOperation op;
-        if (is_cornered) {
+        if (is_cornered && tex != nullptr) {
             op.useIndexes = true;
             op.vertexData = cornered_quad_vdata;
             op.indexData = cornered_quad_idata;
