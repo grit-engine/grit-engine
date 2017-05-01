@@ -25,15 +25,6 @@
     #include <google/profiler.h>
 #endif
 
-#ifndef isnan
-        static inline bool isnan(float f)
-        {
-            // std::isnan() is C99, not supported by all compilers
-            // However NaN always fails this next test, no other number does.
-            return f != f;
-        }
-#endif
-
 #ifndef WIN32
     #include <sys/mman.h>
 #endif
@@ -723,7 +714,7 @@ TRY_START
         float w, x, y, z;
         switch (lua_type(L, i)) {
             case LUA_TNUMBER:
-            if (isnan(lua_tonumber(L, i))) {
+            if (std::isnan(lua_tonumber(L, i))) {
                 msg << "Got NaN in number, index " << i;
                 my_lua_error(L, msg.str());
             }
@@ -731,11 +722,11 @@ TRY_START
 
             case LUA_TVECTOR2:
             lua_checkvector2(L, i, &x, &y);
-            if (isnan(x)) {
+            if (std::isnan(x)) {
                 msg << "Got NaN in vec2 x coord, index " << i;
                 my_lua_error(L, msg.str());
             }
-            if (isnan(y)) {
+            if (std::isnan(y)) {
                 msg << "Got NaN in vec2 y coord, index " << i;
                 my_lua_error(L, msg.str());
             }
@@ -743,15 +734,15 @@ TRY_START
 
             case LUA_TVECTOR3:
             lua_checkvector3(L, i, &x, &y, &z);
-            if (isnan(x)) {
+            if (std::isnan(x)) {
                 msg << "Got NaN in vec3 x coord, index " << i;
                 my_lua_error(L, msg.str());
             }
-            if (isnan(y)) {
+            if (std::isnan(y)) {
                 msg << "Got NaN in vec3 y coord, index " << i;
                 my_lua_error(L, msg.str());
             }
-            if (isnan(z)) {
+            if (std::isnan(z)) {
                 msg << "Got NaN in vec3 z coord, index " << i;
                 my_lua_error(L, msg.str());
             }
@@ -759,19 +750,19 @@ TRY_START
 
             case LUA_TVECTOR4:
             lua_checkvector4(L, i, &x, &y, &z, &w);
-            if (isnan(x)) {
+            if (std::isnan(x)) {
                 msg << "Got NaN in vec4 x coord, index " << i;
                 my_lua_error(L, msg.str());
             }
-            if (isnan(y)) {
+            if (std::isnan(y)) {
                 msg << "Got NaN in vec4 y coord, index " << i;
                 my_lua_error(L, msg.str());
             }
-            if (isnan(z)) {
+            if (std::isnan(z)) {
                 msg << "Got NaN in vec4 z coord, index " << i;
                 my_lua_error(L, msg.str());
             }
-            if (isnan(w)) {
+            if (std::isnan(w)) {
                 msg << "Got NaN in vec4 w coord, index " << i;
                 my_lua_error(L, msg.str());
             }
@@ -779,19 +770,19 @@ TRY_START
 
             case LUA_TQUAT:
             lua_checkquat(L, i, &x, &y, &z, &w);
-            if (isnan(w)) {
+            if (std::isnan(w)) {
                 msg << "Got NaN in quat w coord, index " << i;
                 my_lua_error(L, msg.str());
             }
-            if (isnan(x)) {
+            if (std::isnan(x)) {
                 msg << "Got NaN in quat x coord, index " << i;
                 my_lua_error(L, msg.str());
             }
-            if (isnan(y)) {
+            if (std::isnan(y)) {
                 msg << "Got NaN in quat y coord, index " << i;
                 my_lua_error(L, msg.str());
             }
-            if (isnan(z)) {
+            if (std::isnan(z)) {
                 msg << "Got NaN in quat z coord, index " << i;
                 my_lua_error(L, msg.str());
             }
