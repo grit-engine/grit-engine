@@ -96,7 +96,10 @@ void gfx_debug_init (void)
     tri_op.vertexData->vertexBufferBinding->setBinding(0, tri_vbuf);
 
     std::string vertex_code = "out.position = transform_to_world(vert.position.xyz);";
-    std::string colour_code = "out.colour = vert.colour.xyz; out.alpha = vert.colour.w;";
+    std::string colour_code =
+        "out.colour = vert.colour.xyz;\n"
+        "out.alpha = vert.colour.w;\n"
+        "out.colour = out.colour * out.alpha;\n";
     shader = gfx_shader_make_or_reset("/system/Debug",
                                       vertex_code, "", colour_code, GfxGslRunParams{}, false);
 }

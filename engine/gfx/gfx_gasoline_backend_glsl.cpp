@@ -413,7 +413,9 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     } else {
         frag_ss << "    out_alpha *= internal_fade;\n";
     }
-    frag_ss << "    out_colour_alpha = Float4(out_colour * out_alpha, out_alpha);\n";
+    // Shaders should do out.colour = out.colour * out.alpha if they are rendered with
+    // scene blending of ONE, ONE_MINUS_DEST_ALPHA
+    frag_ss << "    out_colour_alpha = Float4(out_colour, out_alpha);\n";
     if (das) {
         // Whether we are using d3d9 or gl rendersystems,
         // ogre gives us the view_proj in a 'standard' form, which is

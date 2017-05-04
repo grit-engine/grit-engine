@@ -109,7 +109,8 @@ void gfx_particle_init (void)
         "var part_exposed = clamp(part_exposed_, 0.0, 1.0);\n"
         "var texel = sample(mat.particleAtlas, fragment_uv);\n"
         "out.colour = texel.rgb * part_colour * part_exposed;\n"
-        "out.alpha = texel.a * part_alpha * part_exposed;\n";
+        "out.alpha = texel.a * part_alpha * part_exposed;\n"
+        "out.colour = out.colour * out.alpha;\n";
 
     shader = gfx_shader_make_or_reset("/system/Particle",
                                       vertex_code, "", colour_code, shader_params, true);

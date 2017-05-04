@@ -1130,6 +1130,16 @@ void push_gfxtracerbody (lua_State *L, const SharedPtr<GfxTracerBody> &self)
 
 GC_MACRO(SharedPtr<GfxTracerBody>,gfxtracerbody,GFXTRACERBODY_TAG)
 
+static int gfxtracerbody_pump (lua_State *L)
+{
+TRY_START
+    check_args(L,1);
+    GET_UD_MACRO(SharedPtr<GfxTracerBody>,self,1,GFXTRACERBODY_TAG);
+    self->pump();
+    return 0;
+TRY_END
+}
+
 static int gfxtracerbody_destroy (lua_State *L)
 {
 TRY_START
@@ -1179,6 +1189,8 @@ TRY_START
         lua_pushnumber(L, self->getSize());
     } else if (!::strcmp(key,"length")) {
         lua_pushnumber(L, self->getLength());
+    } else if (!::strcmp(key,"pump")) {
+        push_cfunction(L,gfxtracerbody_pump);
 
     } else if (!::strcmp(key,"destroyed")) {
         lua_pushboolean(L,self->destroyed());
@@ -1232,7 +1244,7 @@ TRY_START
         float v = check_float(L,3);
         self->setFade(v);
     } else if (!::strcmp(key,"length")) {
-        int v = check_t<unsigned>(L,3);
+        float v = check_float(L, 3);
         self->setLength(v);
     } else if (!::strcmp(key,"enabled")) {
         bool v = check_bool(L,3);
@@ -2689,8 +2701,19 @@ TRY_END
 static int global_gfx_tracer_body_pump (lua_State *L)
 {
 TRY_START
-    check_args(L, 0);
-    gfx_tracer_body_pump();
+    check_args(L, 1);
+    float elapsed = check_float(L, 1);
+    gfx_tracer_body_pump(elapsed);
+    return 1;
+TRY_END
+}
+
+static int global_gfx_tracer_body_set_left_over_time (lua_State *L)
+{
+TRY_START
+    check_args(L, 1);
+    float time = check_float(L, 1);
+    gfx_tracer_body_set_left_over_time(time);
     return 1;
 TRY_END
 }
@@ -5188,6 +5211,7 @@ static const luaL_reg global[] = {
     {"gfx_tracer_body_make", global_gfx_tracer_body_make},
 
     {"gfx_tracer_body_pump", global_gfx_tracer_body_pump},
+    {"gfx_tracer_body_set_left_over_time", global_gfx_tracer_body_set_left_over_time},
 
     {"gfx_debug_point", global_gfx_debug_point},
     {"gfx_debug_line", global_gfx_debug_line},

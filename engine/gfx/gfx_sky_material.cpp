@@ -79,7 +79,8 @@ void gfx_sky_material_init (void)
                      "             * Float4(1, 1, 1, mat.alphaMask);\n"
                      "if (c.a <= mat.alphaRejectThreshold) discard;\n"
                      "out.colour = gamma_decode(c.rgb) * mat.emissiveMask;\n"
-                     "out.alpha = c.a;\n";
+                     "out.alpha = c.a;\n"
+                     "out.colour = out.colour * out.alpha;\n";
 
     gfx_shader_make_or_reset("/system/SkyDefault", vs, "", fs, {
         { "alphaMask", GfxGslParam::float1(1.0f) },

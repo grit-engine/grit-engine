@@ -1022,7 +1022,8 @@ void hud_init (void)
     std::string rect_colour_code =
         "var texel = sample(mat.tex, vert.coord0.xy);\n"
         "out.colour = texel.rgb * mat.colour;\n"
-        "out.alpha = texel.a * mat.alpha;\n";
+        "out.alpha = texel.a * mat.alpha;\n"
+        "out.colour = out.colour * out.alpha;\n";
 
     std::string stencil_colour_code =
         "var texel = sample(mat.tex, vert.coord0.xy);\n"
@@ -1031,7 +1032,8 @@ void hud_init (void)
     std::string text_colour_code =
         "var texel = sample(mat.tex, vert.coord0.xy);\n"
         "out.colour = texel.rgb * vert.coord1.rgb * mat.colour;\n"
-        "out.alpha = texel.a * vert.coord1.a * mat.alpha;\n";
+        "out.alpha = texel.a * vert.coord1.a * mat.alpha;\n"
+        "out.colour = out.colour * out.alpha;\n";
 
     gfx_shader_check(
         "/system/HudRect", vertex_code, "", rect_colour_code, shader_rect_params, false);
