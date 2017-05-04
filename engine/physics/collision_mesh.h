@@ -213,13 +213,13 @@ class CollisionMesh : public DiskResource {
                 if (p.x > max.x) abort();
                 if (p.y > max.y) abort();
                 if (p.z > max.z) abort();
-                APP_ASSERT(!isnan(p.x));
-                APP_ASSERT(!isnan(p.y));
-                APP_ASSERT(!isnan(p.z));
-                APP_ASSERT(!isnan(base_q.w));
-                APP_ASSERT(!isnan(base_q.x));
-                APP_ASSERT(!isnan(base_q.y));
-                APP_ASSERT(!isnan(base_q.z));
+                APP_ASSERT(!std::isnan(p.x));
+                APP_ASSERT(!std::isnan(p.y));
+                APP_ASSERT(!std::isnan(p.z));
+                APP_ASSERT(!std::isnan(base_q.w));
+                APP_ASSERT(!std::isnan(base_q.x));
+                APP_ASSERT(!std::isnan(base_q.y));
+                APP_ASSERT(!std::isnan(base_q.z));
                 #endif
 
                 if (rotate) {
