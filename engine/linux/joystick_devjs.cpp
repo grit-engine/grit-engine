@@ -47,40 +47,32 @@
 /*
 Created once after you have done the calibration, execute this script to restore your calibration
 after reboot if necessary
-
 # create
-echo "#!/bin/bash" >calibrate.sh
-jscal -p /dev/input/js0 >>calibrate.sh
-chmod +x calibrate.sh
-
+echo "#!/bin/bash" >joystick_calibrate.sh
+jscal -p /dev/input/js0 >>joystick_calibrate.sh
+chmod +x joystick_calibrate.sh
 # restore
-./calibrate.sh
-
+./joystick_calibrate.sh
 */
 
 /*
 Calibrate reset script for Rock Candy.  (Warning! this script erase the current linux joystick
 calibration to default neutral value.  You may need to adapt this script to the number of
 buttons/axes of your device.)
-
 #!/bin/bash
 jscal -s 8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 /dev/input/js0
 jscal -p /dev/input/js0
 jscal -c /dev/input/js0
-
 */
 
 /*
-
 In the event that jscal did not compute the correct values, here is manually calibrated values for
 Rock Candy.  (Warning! this command overwrite the current linux joystick calibration and reduce
 precision/range of your device.  Reuse calibaration procedure or reset procedure to recover full
 precision/range of your device.  You may need to adapt this command to the number of buttons/axes of
 your device.)
-
 jscal -s 8,1,8000,-4000,4000,18663,18663,1,8000,-4000,4000,18663,18663,0,0,1,8000,-4000,4000,\
 18663,18663,1,8000,-4000,4000,18663,18663,0,0,0,0,0,0 /dev/input/js0
-
 Details:
 8         number of axes
 # First axis:
@@ -103,6 +95,7 @@ Details:
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include <sstream>
 
@@ -135,12 +128,11 @@ bool JoystickDevjs::getEvents(std::vector<signed char> *buttons_indexes_and_valu
     if (axes_indexes) axes_indexes->clear();
     if (axes_values) axes_values->clear();
 
-    if (fd < 0) return false;
-
-    bool moved = false;
+    if (fd < 0) return false; // joystick connection state is: detached
+    int n;
 
     while (true) {
-        int n = read(fd, &event, sizeof(struct JoystickDevjsEvent));
+        n = read(fd, &event, sizeof(struct JoystickDevjsEvent));
         if (n != sizeof(struct JoystickDevjsEvent)) break;
 
         // event.type &= ~ JOYSTICK_DEVJS_EVENT_TYPE_INIT; /* discard init events */
@@ -157,7 +149,6 @@ bool JoystickDevjs::getEvents(std::vector<signed char> *buttons_indexes_and_valu
                         pushed_button_index_and_value = button_index;
                         pushed_button_index_and_value = pushed_button_index_and_value * mod;
                         buttons_indexes_and_values->push_back(pushed_button_index_and_value);
-                        moved = true;
                         // printf("B%02d:%02d:%02d\n",
                         //        button_index, event.value, pushed_button_index_and_value);
                     }
@@ -173,7 +164,6 @@ bool JoystickDevjs::getEvents(std::vector<signed char> *buttons_indexes_and_valu
                     if (axes_indexes && axes_values) {
                        axes_indexes->push_back(pushed_axe_index);
                        axes_values->push_back(pushed_axe_value);
-                       moved = true;
                        // printf("J%02d:%06d:%d\n",
                        //        pushed_axe_index, event.value, pushed_axe_value);
                     }
@@ -183,5 +173,10 @@ bool JoystickDevjs::getEvents(std::vector<signed char> *buttons_indexes_and_valu
         }
     }
 
-    return moved;
+    if( n==sizeof(struct JoystickDevjsEvent) || (n == -1 && errno==EAGAIN) ) {
+       return true; // joystick connection state is: attached 
+    }
+    else {
+       return false; // joystick connection state is: detached 
+    }
 }
