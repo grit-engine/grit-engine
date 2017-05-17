@@ -776,6 +776,8 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
         bool mat_alpha = mat->getSceneBlend() != GFX_MATERIAL_OPAQUE;
         if (alpha_blend != mat_alpha) continue;
 
+        bool pass_fade_dither = fade_dither && !mat_alpha;
+
         Ogre::SubMesh *sm = mesh->getSubMesh(i);
 
         if (do_regular) {
@@ -783,7 +785,7 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
             // render sm using mat
             const GfxTextureStateMap &mat_texs = mat->getTextures();
             mat->getShader()->bindShader(
-                GFX_GSL_PURPOSE_FIRST_PERSON, fade_dither, instanced, bone_weights, g, world,
+                GFX_GSL_PURPOSE_FIRST_PERSON, pass_fade_dither, instanced, bone_weights, g, world,
                 boneWorldMatrixes, numBoneMatrixes, fade, colours, mat_texs, mat->getBindings());
 
             switch (mat->getSceneBlend()) {
@@ -817,7 +819,7 @@ void GfxBody::renderFirstPerson (const GfxShaderGlobals &g,
         if (do_wireframe) {
 
             mat->getShader()->bindShader(
-                GFX_GSL_PURPOSE_FIRST_PERSON_WIREFRAME, fade_dither, instanced, bone_weights, g,
+                GFX_GSL_PURPOSE_FIRST_PERSON_WIREFRAME, pass_fade_dither, instanced, bone_weights, g,
                 world, boneWorldMatrixes, numBoneMatrixes, fade, colours, GfxTextureStateMap(),
                 mat->getBindings());
 
