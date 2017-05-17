@@ -46,6 +46,8 @@ OPENAL_LDLIBS   ?= -lopenal -lvorbisfile
 
 VORBIS_LDLIBS   ?= -lvorbisfile
 
+GOOGLE_PERF_TOOLS_LDLIBS ?= -lprofiler
+
 
 
 GRIT_WEAK_C_SRCS= \
@@ -154,6 +156,7 @@ LDLIBS= \
 	$(ICU_LDLIBS) \
 	$(OPENAL_LDLIBS) \
 	$(VORBIS_LDLIBS) \
+	$(GOOGLE_PERF_TOOLS_LDLIBS) \
 	$(shell pkg-config $(PKGCONFIG_DEPS) --libs-only-l) \
 	-lreadline \
 	-lm \
