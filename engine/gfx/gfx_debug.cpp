@@ -163,7 +163,7 @@ void gfx_debug_render (GfxPipeline *p)
             static const GfxTextureStateMap no_texs;
             static const GfxShaderBindings bindings;
             shader->bindShader(
-                GFX_GSL_PURPOSE_HUD, 0, false,  false, g, world, nullptr, 0, 1, no_texs, bindings);
+                GFX_GSL_PURPOSE_HUD, false, false,  0, g, world, nullptr, 0, 1, no_texs, bindings);
 
             // Read but don't write depth buffer.
             ogre_rs->_setDepthBufferParams(true, false, Ogre::CMPF_LESS_EQUAL);
@@ -200,7 +200,7 @@ void gfx_debug_render (GfxPipeline *p)
             static const GfxTextureStateMap no_texs;
             static const GfxShaderBindings bindings;
             shader->bindShader(
-                GFX_GSL_PURPOSE_HUD, 0, false,  false, g, world, nullptr, 0, 1, no_texs, bindings);
+                GFX_GSL_PURPOSE_HUD, false, false,  0, g, world, nullptr, 0, 1, no_texs, bindings);
 
             ogre_rs->_setCullingMode(Ogre::CULL_NONE);
             // Read but don't write depth buffer.
@@ -237,7 +237,7 @@ void gfx_debug_render (GfxPipeline *p)
             static const GfxTextureStateMap no_texs;
             static const GfxShaderBindings bindings;
             shader->bindShader(
-                GFX_GSL_PURPOSE_HUD, 0, false,  false, g, world, nullptr, 0, 1, no_texs, bindings);
+                GFX_GSL_PURPOSE_HUD, false, false,  0, g, world, nullptr, 0, 1, no_texs, bindings);
 
             ogre_rs->_setCullingMode(Ogre::CULL_CLOCKWISE);
             // Read but don't write depth buffer.

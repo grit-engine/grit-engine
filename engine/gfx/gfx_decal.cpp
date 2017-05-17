@@ -172,7 +172,7 @@ void GfxDecal::render (const GfxShaderGlobals &g)
     try {
         const GfxTextureStateMap &mat_texs = material->getTextures();
         material->getShader()->bindShader(
-            GFX_GSL_PURPOSE_DECAL, 0, false,  false, g, world, nullptr, 0, 1,
+            GFX_GSL_PURPOSE_DECAL, false, false,  0, g, world, nullptr, 0, 1,
             mat_texs, material->getBindings());
         
         

@@ -176,7 +176,7 @@ void GfxSkyBody::render (const GfxShaderGlobals &g)
         // render sm using mat
  
         const GfxTextureStateMap &mat_texs = mat->getTextures();
-        mat->getShader()->bindShader(GFX_GSL_PURPOSE_SKY, 0, false, false,
+        mat->getShader()->bindShader(GFX_GSL_PURPOSE_SKY, false, false, 0,
                                      g, world, nullptr, 0, 1, mat_texs, mat->getBindings());
 
         ogre_rs->_setCullingMode(Ogre::CULL_NONE);
