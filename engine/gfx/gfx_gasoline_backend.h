@@ -91,13 +91,14 @@ std::string gfx_gasoline_generate_trans_decode (const std::vector<GfxGslTrans> &
                                                 GfxGslTrans::Kind only);
 
 /** Generate general purpose utility functions for computing lighting. */
-std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env);
+std::string gfx_gasoline_preamble_lighting (const GfxGslConfigEnvironment &cfg_env);
 
 /** Generate general purpose utility functions for dither fading. */
-std::string gfx_gasoline_preamble_fade (const GfxGslEnvironment &env);
+std::string gfx_gasoline_preamble_fade (void);
 
 /** Generate general purpose utility functions for transforming geometry to world space. */
-std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGslEnvironment &env);
+std::string gfx_gasoline_preamble_transformation (bool first_person,
+                                                  const GfxGslMeshEnvironment &mesh_env);
 
 typedef std::map<std::string, const GfxGslFloatType *> GfxGslInternalMap;
 static inline void gfx_gasoline_add_internal_trans(const GfxGslInternalMap &internals,

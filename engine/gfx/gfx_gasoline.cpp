@@ -508,8 +508,8 @@ static GfxGasolineResult type_check (const std::string &vert_prog,
     GfxGslAllocator alloc;
     GfxGslContext ctx = {
         alloc, make_func_types(alloc), make_global_fields(alloc),
-        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.env.ubt,
-        md.env.staticValues, md.d3d9, md.internal, md.lightingTextures
+        make_mat_fields(alloc, md.params), make_body_fields(alloc), md.matEnv.ubt,
+        md.matEnv.staticValues, md.d3d9, md.internal, md.lightingTextures
     };
 
     GfxGslShader *vert_ast;
@@ -590,14 +590,14 @@ static GfxGasolineResult gfx_gasoline_compile_colour (const GfxGslBackend backen
         switch (backend) {
             case GFX_GSL_BACKEND_CG:
             gfx_gasoline_unparse_cg(
-                ctx, &vert_ts, vert_ast, vert_out, &additional_ts, additional_ast, frag_out, md.env,
-                flat_z, das);
+                ctx, &vert_ts, vert_ast, vert_out, &additional_ts, additional_ast, frag_out,
+                md.cfgEnv, md.matEnv, md.meshEnv, flat_z, das);
             break;
 
             case GFX_GSL_BACKEND_GLSL33:
             gfx_gasoline_unparse_glsl(
-                ctx, &vert_ts, vert_ast, vert_out, &additional_ts, additional_ast, frag_out, md.env,
-                true, flat_z, das);
+                ctx, &vert_ts, vert_ast, vert_out, &additional_ts, additional_ast, frag_out,
+                md.cfgEnv, md.matEnv, md.meshEnv, true, flat_z, das);
             break;
         }
         return {vert_out, frag_out};
@@ -633,13 +633,15 @@ static GfxGasolineResult gfx_gasoline_compile_body (const GfxGslBackend backend,
             case GFX_GSL_BACKEND_CG:
             gfx_gasoline_unparse_body_cg(
                 ctx, &vert_ts, vert_ast, &dangs_ts, dangs_ast, &additional_ts, additional_ast,
-                vert_out, frag_out, md.env, first_person, wireframe, forward_only, cast);
+                vert_out, frag_out, md.cfgEnv, md.matEnv, md.meshEnv, first_person, wireframe,
+                forward_only, cast);
             break;
 
             case GFX_GSL_BACKEND_GLSL33:
             gfx_gasoline_unparse_body_glsl(
                 ctx, &vert_ts, vert_ast, &dangs_ts, dangs_ast, &additional_ts, additional_ast,
-                vert_out, frag_out, md.env, true, first_person, wireframe, forward_only, cast);
+                vert_out, frag_out, md.cfgEnv, md.matEnv, md.meshEnv, true, first_person, wireframe,
+                forward_only, cast);
             break;
         }
         return {vert_out, frag_out};
@@ -705,14 +707,14 @@ GfxGasolineResult gfx_gasoline_compile (GfxGslPurpose purpose,
                     gfx_gasoline_unparse_decal_cg(ctx, &dangs_ts, dangs_ast,
                                                   &additional_ts, additional_ast,
                                                   vert_out, frag_out,
-                                                  md.env);
+                                                  md.cfgEnv, md.matEnv, md.meshEnv);
                     break;
 
                     case GFX_GSL_BACKEND_GLSL33:
                     gfx_gasoline_unparse_decal_glsl(ctx, &dangs_ts, dangs_ast,
                                                     &additional_ts, additional_ast,
                                                     vert_out, frag_out,
-                                                    md.env, true);
+                                                    md.cfgEnv, md.matEnv, md.meshEnv, true);
                     break;
                 }
                 return {vert_out, frag_out};

@@ -80,6 +80,7 @@ GfxShaderGlobals gfx_shader_globals_cam (GfxPipeline *pipe);
 // E.g. dangs shader for sky is not needed (no lighting equation)
 // 
 
+
 /** Represents the behavioural information provided by the user
  * (artist) for rendering a particular pass.
  *
@@ -100,33 +101,49 @@ class GfxShader {
     GfxGslRunParams params;
     bool internal;
 
-    public:
+
     struct Split {
         GfxGslPurpose purpose;
-        GfxGslEnvironment env;
+        GfxGslMeshEnvironment meshEnv;
         bool operator== (const Split &other) const
         {
             return other.purpose == purpose
-                && other.env == env;
+                && other.meshEnv == meshEnv;
         }
     };
-    private:
+
     struct SplitHash {
         size_t operator()(const Split &s) const
         {
             size_t r = my_hash(unsigned(s.purpose));
-            r = r * 31 + my_hash(s.env);
+            r = r * 31 + my_hash(s.meshEnv);
             return r;
         }
     };
-    public:
+
     struct NativePair {
         Ogre::HighLevelGpuProgramPtr vp, fp;
     };
 
-    private:
+    typedef std::unordered_map<Split, NativePair, SplitHash> ShaderCacheBySplit;
 
-    std::unordered_map<Split, NativePair, SplitHash> cachedShaders;
+    struct GfxGslMaterialEnvironmentHash {
+        size_t operator()(const GfxGslMaterialEnvironment &mat_env) const
+        { return my_hash(mat_env); }
+    };
+    typedef std::unordered_map
+        <GfxGslMaterialEnvironment, ShaderCacheBySplit, GfxGslMaterialEnvironmentHash>
+            ShaderCacheByMaterial;
+
+    struct GfxGslConfigEnvironmentHash {
+        size_t operator()(const GfxGslConfigEnvironment &cfg_env) const
+        { return my_hash(cfg_env); }
+    };
+    typedef std::unordered_map
+        <GfxGslConfigEnvironment, ShaderCacheByMaterial, GfxGslConfigEnvironmentHash>
+            ShaderCacheByConfig;
+
+    ShaderCacheByConfig shaderCache;
 
     public:
 
@@ -156,8 +173,21 @@ class GfxShader {
 
     // New API, may throw compilation errors if not checked previously.
     void bindShader (GfxGslPurpose purpose,
+                     const GfxGslMaterialEnvironment &mat_env,
+                     const GfxGslMeshEnvironment &mesh_env,
+                     const GfxShaderGlobals &globs,
+                     const Ogre::Matrix4 &world,
+                     const Ogre::Matrix4 *bone_world_matrixes,
+                     unsigned num_bone_world_matrixes,
+                     float fade,
+                     const GfxPaintColour *paint_colours,  // Array of 4
+                     const GfxTextureStateMap &textures,
+                     const GfxShaderBindings &bindings);
+
+    // New API, may throw compilation errors if not checked previously. (DEPRECATED)
+    void bindShader (GfxGslPurpose purpose,
                      bool fade_dither, bool instanced, unsigned bone_weights,
-                     const GfxShaderGlobals &params,
+                     const GfxShaderGlobals &globs,
                      const Ogre::Matrix4 &world,
                      const Ogre::Matrix4 *bone_world_matrixes,
                      unsigned num_bone_world_matrixes,
@@ -168,8 +198,20 @@ class GfxShader {
 
     // Defaults the paint_colours for the many cases that don't use them.
     void bindShader (GfxGslPurpose purpose,
+                     const GfxGslMaterialEnvironment &mat_env,
+                     const GfxGslMeshEnvironment &mesh_env,
+                     const GfxShaderGlobals &globs,
+                     const Ogre::Matrix4 &world,
+                     const Ogre::Matrix4 *bone_world_matrixes,
+                     unsigned num_bone_world_matrixes,
+                     float fade,
+                     const GfxTextureStateMap &textures,
+                     const GfxShaderBindings &bindings);
+
+    // Defaults the paint_colours for the many cases that don't use them. (DEPRECATED)
+    void bindShader (GfxGslPurpose purpose,
                      bool fade_dither, bool instanced, unsigned bone_weights,
-                     const GfxShaderGlobals &params,
+                     const GfxShaderGlobals &globs,
                      const Ogre::Matrix4 &world,
                      const Ogre::Matrix4 *bone_world_matrixes,
                      unsigned num_bone_world_matrixes,
@@ -179,7 +221,8 @@ class GfxShader {
 
     // When the material is created (or reset)
     void initPass (Ogre::Pass *p, GfxGslPurpose purpose,
-                   bool fade_dither, bool instanced, unsigned bone_weights,
+                   const GfxGslMaterialEnvironment &mat_env,
+                   const GfxGslMeshEnvironment &mesh_env,
                    const GfxTextureStateMap &textures,
                    const GfxShaderBindings &bindings);
 
@@ -187,25 +230,25 @@ class GfxShader {
     void updatePass (Ogre::Pass *p,
                      const GfxShaderGlobals &globs,
                      GfxGslPurpose purpose,
-                     bool fade_dither,
-                     bool instanced,
-                     unsigned bone_weights,
+                     const GfxGslMaterialEnvironment &mat_env,
+                     const GfxGslMeshEnvironment &mesh_env,
                      const GfxTextureStateMap &textures,
                      const GfxShaderBindings &bindings);
 
+    void populateMatEnv (bool fade_dither,
+                         const GfxTextureStateMap &textures,
+                         const GfxShaderBindings &bindings,
+                         GfxGslMaterialEnvironment &mat_env);
+
+    void populateMeshEnv (bool instanced, unsigned bone_weights,
+                          GfxGslMeshEnvironment &mesh_env);
+
     protected:
+
     NativePair getNativePair (GfxGslPurpose purpose,
-                              bool fade_dither, unsigned env_boxes,
-                              bool instanced, unsigned bone_weights,
-                              const GfxGslUnboundTextures &ubt,
-                              const GfxShaderBindings &statics);
-    public:
-    NativePair getNativePair (GfxGslPurpose purpose,
-                              bool fade_dither, unsigned env_boxes,
-                              bool instanced, unsigned bone_weights,
-                              const GfxTextureStateMap &textures,
-                              const GfxShaderBindings &statics);
-    protected:
+                              const GfxGslMaterialEnvironment &mat_env,
+                              const GfxGslMeshEnvironment &mesh_env);
+
     // Generic: binds uniforms (not textures, but texture indexes) for both RS and passes
     void bindGlobals (const Ogre::GpuProgramParametersSharedPtr &vparams,
                       const Ogre::GpuProgramParametersSharedPtr &fparams,
@@ -245,7 +288,9 @@ class GfxShader {
                             const Ogre::GpuProgramParametersSharedPtr &fparams,
                             const GfxShaderGlobals &params, GfxGslPurpose purpose);
     
+    friend std::ostream &operator << (std::ostream &, const Split &);
 };
+
 
 // Ensure the given source code is statically correct.
 void gfx_shader_check (const std::string &name,

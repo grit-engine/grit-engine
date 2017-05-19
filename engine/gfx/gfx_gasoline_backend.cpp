@@ -573,7 +573,7 @@ std::string gfx_gasoline_generate_trans_decode(const std::vector<GfxGslTrans> &t
     return ss.str();
 }
 
-std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env) 
+std::string gfx_gasoline_preamble_lighting (const GfxGslConfigEnvironment &cfg_env) 
 {
     std::stringstream ss;
 
@@ -586,24 +586,24 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
     ss << "                  Float spread)\n";
     ss << "{\n";
     ss << "    Float sun_dist = dot(pos_ws, global_sunlightDirection)\n";
-    ss << "                     / " << env.shadowFactor << ";\n";
+    ss << "                     / " << cfg_env.shadowFactor << ";\n";
     ss << "    Float3 pos_ls = mul(shadow_view_proj, Float4(pos_ws, 1)).xyw;\n";
     ss << "    pos_ls.xy /= pos_ls.z;\n";
-    auto filter_taps_side = unsigned(::sqrt(env.shadowFilterTaps) + 0.5);
+    auto filter_taps_side = unsigned(::sqrt(cfg_env.shadowFilterTaps) + 0.5);
     float half_filter_taps_side = filter_taps_side / 2.0;
     ss << "    Int filter_taps_side = " << filter_taps_side << ";\n";
     ss << "    Float half_filter_taps_side = " << half_filter_taps_side << ";\n";
-    switch (env.shadowDitherMode) {
-        case GfxGslEnvironment::SHADOW_DITHER_NONE:
+    switch (cfg_env.shadowDitherMode) {
+        case GfxGslConfigEnvironment::SHADOW_DITHER_NONE:
         ss << "    Float2 fragment_uv_offset = Float2(0,0);\n";
         break;
-        case GfxGslEnvironment::SHADOW_DITHER_NOISE:
+        case GfxGslConfigEnvironment::SHADOW_DITHER_NOISE:
         ss << "    Float2 noise_uv = frag_screen.xy / 64;\n";
         ss << "    Float2 noise_texel = sampleLod(global_shadowPcfNoiseMap, noise_uv, 0).rg;\n";
         ss << "    Float2 noise_offset = (2 * noise_texel - 1);  // length(offset) <= 1\n";
         ss << "    Float2 fragment_uv_offset = 0.8 * noise_offset;\n";
         break;
-        case GfxGslEnvironment::SHADOW_DITHER_PLAIN:
+        case GfxGslConfigEnvironment::SHADOW_DITHER_PLAIN:
         ss << "    Float2 dithered_offset;\n";
         ss << "    if ((Int(frag_screen.x) % 2) == 1) {\n";
         ss << "        if ((Int(frag_screen.y)%2)==1) {\n";
@@ -621,36 +621,39 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
         ss << "    Float2 fragment_uv_offset = 0.6 * dithered_offset;\n";
         break;
     }
-    ss << "    fragment_uv_offset *= spread / filter_taps_side / " << env.shadowRes << ";\n";
+    ss << "    fragment_uv_offset *= spread / filter_taps_side / " << cfg_env.shadowRes << ";\n";
     ss << "    Float total = 0;\n";
     ss << "    for (Int y=0 ; y < filter_taps_side ; y++) {\n";
     ss << "        for (Int x=0 ; x < filter_taps_side ; x++) {\n";
     ss << "            Float2 tap_uv = Float2(x - half_filter_taps_side + 0.5,\n";
     ss << "                                   y - half_filter_taps_side + 0.5);\n";
-    ss << "            tap_uv *= spread / " << env.shadowRes << " / half_filter_taps_side;\n";
+    ss << "            tap_uv *= spread / " << cfg_env.shadowRes << " / half_filter_taps_side;\n";
     ss << "            tap_uv += pos_ls.xy + fragment_uv_offset;\n";
     ss << "            total += sun_dist > sampleLod(tex, tap_uv, 0).r ? 1.0 : 0.0;\n";
     ss << "        }\n";
     ss << "    }\n";
-    ss << "    return total / " << env.shadowFilterTaps << ";\n";
+    ss << "    return total / " << cfg_env.shadowFilterTaps << ";\n";
     ss << "}\n";
 
     ss << "Float unshadowyness(Float3 pos_ws, Float cam_dist)\n";
     ss << "{\n";
     ss << "    Float shadowyness = 0.0;\n";
-    ss << "    if (cam_dist < " << env.shadowDist[0] << ") {\n";
+    ss << "    if (cam_dist < " << cfg_env.shadowDist[0] << ") {\n";
     ss << "        shadowyness = test_shadow(pos_ws, global_shadowViewProj0,\n";
-    ss << "                                  global_shadowMap0, " << env.shadowSpread[0] << ");\n";
-    ss << "    } else if (cam_dist < " << env.shadowDist[1] << ") {\n";
+    ss << "                                  global_shadowMap0,\n";
+    ss << "                                  " << cfg_env.shadowSpread[0] << ");\n";
+    ss << "    } else if (cam_dist < " << cfg_env.shadowDist[1] << ") {\n";
     ss << "        shadowyness = test_shadow(pos_ws, global_shadowViewProj1,\n";
-    ss << "                                  global_shadowMap1, " << env.shadowSpread[1] << ");\n";
-    ss << "    } else if (cam_dist < " << env.shadowDist[2] << ") {\n";
+    ss << "                                  global_shadowMap1,\n";
+    ss << "                                  " << cfg_env.shadowSpread[1] << ");\n";
+    ss << "    } else if (cam_dist < " << cfg_env.shadowDist[2] << ") {\n";
     ss << "        shadowyness = test_shadow(pos_ws, global_shadowViewProj2,\n";
-    ss << "                                  global_shadowMap2, " << env.shadowSpread[2] << ");\n";
+    ss << "                                  global_shadowMap2,\n";
+    ss << "                                  " << cfg_env.shadowSpread[2] << ");\n";
     ss << "    }\n";
     ss << "    Float fade = 1;\n";
-    ss << "    Float sf_end = " << env.shadowFadeEnd << ";\n";
-    ss << "    Float sf_start = " << env.shadowFadeStart << ";\n";
+    ss << "    Float sf_end = " << cfg_env.shadowFadeEnd << ";\n";
+    ss << "    Float sf_start = " << cfg_env.shadowFadeStart << ";\n";
     ss << "    if (sf_end != sf_start) {\n";
     ss << "        fade = min(1.0, (sf_end - cam_dist) / (sf_end - sf_start));\n";
     ss << "    }\n";
@@ -688,10 +691,10 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
 
     ss << "Float3 envlight(Float3 s2c, Float3 d, Float3 n, Float g, Float s)\n";
     ss << "{\n";
-    if (env.envBoxes == 1) {
+    if (cfg_env.envBoxes == 1) {
         ss << "    Float3 env = env_lighting(s2c,\n";
         ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
-    } else if (env.envBoxes == 2) {
+    } else if (cfg_env.envBoxes == 2) {
         ss << "    Float3 env0 = env_lighting(s2c,\n";
         ss << "        d, n, g, s, global_envCube0, global_envCubeMipmaps0);\n";
         ss << "    Float3 env1 = env_lighting(s2c,\n";
@@ -713,9 +716,8 @@ std::string gfx_gasoline_preamble_lighting (const GfxGslEnvironment &env)
 }
 
 
-std::string gfx_gasoline_preamble_fade (const GfxGslEnvironment &env) 
+std::string gfx_gasoline_preamble_fade (void) 
 {
-    (void) env;
     std::stringstream ss;
 
     ss << "void fade (void)\n";
@@ -735,7 +737,8 @@ std::string gfx_gasoline_preamble_fade (const GfxGslEnvironment &env)
 }
 
 
-std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGslEnvironment &env)
+std::string gfx_gasoline_preamble_transformation (bool first_person,
+                                                  const GfxGslMeshEnvironment &mesh_env)
 {
     std::stringstream ss;
     ss << "// Standard library (vertex shader specific calls)\n";
@@ -743,18 +746,18 @@ std::string gfx_gasoline_preamble_transformation (bool first_person, const GfxGs
     ss << "Float4 transform_to_world_aux (Float4 v)\n";
     ss << "{\n";
 
-    if (env.instanced) {
+    if (mesh_env.instanced) {
         ss << "    v = mul(get_inst_matrix(), v);\n";
     }
 
-    if (env.boneWeights == 0) {
+    if (mesh_env.boneWeights == 0) {
         ss << "    v = mul(body_world, v);\n";
     } else {
         // The bone weights are supposed to sum to 1, we could remove this overconservative divide
         // if we could assert that property at mesh loading time.
         ss << "    Float total = 0;\n";
         ss << "    Float4 r = Float4(0, 0, 0, 0);\n";
-        for (unsigned i=0 ; i < env.boneWeights ; ++i) {
+        for (unsigned i=0 ; i < mesh_env.boneWeights ; ++i) {
             ss << "    r += vert_boneWeights[" << i << "]\n";
             ss << "         * mul(body_boneWorlds[int(vert_boneAssignments[" << i << "])], v);\n";
             ss << "    total += vert_boneWeights[" << i << "];\n";

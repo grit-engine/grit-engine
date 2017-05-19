@@ -235,12 +235,12 @@ int main (int argc, char **argv)
             }
             GfxGslMetadata md;
             md.params = params;
-            md.env.ubt = ubt;
-            md.env.staticValues = static_values;
-            md.env.fadeDither = alpha_dither;
-            md.env.envBoxes = env_boxes;
-            md.env.instanced = instanced;
-            md.env.boneWeights = bones;
+            md.matEnv.ubt = ubt;
+            md.matEnv.staticValues = static_values;
+            md.matEnv.fadeDither = alpha_dither;
+            md.cfgEnv.envBoxes = env_boxes;
+            md.meshEnv.instanced = instanced;
+            md.meshEnv.boneWeights = bones;
             md.d3d9 = true;
             md.internal = internal;
             md.lightingTextures = gfx_gasoline_does_lighting(purpose);

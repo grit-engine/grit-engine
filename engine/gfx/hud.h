@@ -48,6 +48,7 @@ extern "C" {
 
 #include "gfx_pipeline.h"
 #include "gfx_font.h"
+#include "gfx_shader.h"
 #include "gfx_text_buffer.h"
 
 #define GFX_HUD_ZORDER_MAX 15
@@ -145,6 +146,7 @@ class HudBase : public fast_erase_index {
     Radian orientation;
     bool inheritOrientation;
     bool enabled;
+
     public:
     bool snapPixels;
     protected:
@@ -208,6 +210,11 @@ class HudObject : public HudBase {
     fast_erase_vector<HudBase*> children;
 
     DiskResourcePtr<GfxTextureDiskResource> texture;
+    GfxShaderBindings shaderBinds;
+    GfxTextureStateMap texs;
+    GfxTextureStateMap stencilTexs;
+
+    GfxGslMaterialEnvironment matEnvRect, matEnvStencil;
     Vector2 uv1, uv2;
     bool cornered;
     Vector2 size;
@@ -247,10 +254,10 @@ class HudObject : public HudBase {
     void notifyChildAdd (HudBase *child);
 
     float getAlpha (void) const { assertAlive(); return alpha; }
-    void setAlpha (float v) { assertAlive(); alpha = v; }
+    void setAlpha (float v);
     
     Vector3 getColour (void) const { assertAlive(); return colour; }
-    void setColour (const Vector3 &v) { assertAlive(); colour = v; }
+    void setColour (const Vector3 &v);
     
     Vector2 getUV1 (void) const { assertAlive(); return uv1; }
     void setUV1 (const Vector2 &v) { assertAlive(); uv1 = v; }
@@ -324,20 +331,16 @@ class HudText : public HudBase {
     Vector2 shadow;
     Vector3 shadowColour;
     float shadowAlpha;
+    GfxShaderBindings shaderBinds, shaderBindsShadow;
+    GfxTextureStateMap texs;
+    GfxGslMaterialEnvironment matEnv, matEnvShadow;
+
 
     unsigned refCount;
 
     public:
 
-    HudText (GfxFont *font)
-      : buf(font), colour(1,1,1), alpha(1),
-        letterTopColour(1,1,1), letterTopAlpha(1),
-        letterBottomColour(1,1,1), letterBottomAlpha(1),
-        wrap(0,0), scroll(0),
-        shadow(0,0), shadowColour(0,0,0), shadowAlpha(1),
-        refCount(0)
-    {
-    }
+    HudText (GfxFont *font);
 
     ~HudText (void) { }
 
@@ -394,19 +397,19 @@ class HudText : public HudBase {
     }
 
     float getAlpha (void) const { assertAlive(); return alpha; }
-    void setAlpha (float v) { assertAlive(); alpha = v; }
+    void setAlpha (float v);
     
     Vector3 getColour (void) const { assertAlive(); return colour; }
-    void setColour (const Vector3 &v) { assertAlive(); colour = v; }
+    void setColour (const Vector3 &v);
 
     Vector2 getShadow (void) const { assertAlive(); return shadow; }
     void setShadow (const Vector2 &v) { assertAlive(); shadow = v; }
 
     Vector3 getShadowColour (void) const { assertAlive(); return shadowColour; }
-    void setShadowColour (const Vector3 &v) { assertAlive(); shadowColour = v; }
+    void setShadowColour (const Vector3 &v);
 
     float getShadowAlpha (void) const { assertAlive(); return shadowAlpha; }
-    void setShadowAlpha (float v) { assertAlive(); shadowAlpha = v; }
+    void setShadowAlpha (float v);
 
     Vector3 getLetterTopColour (void) const { assertAlive(); return letterTopColour; }
     void setLetterTopColour (const Vector3 &v) { assertAlive(); letterTopColour = v; }
@@ -420,7 +423,7 @@ class HudText : public HudBase {
 
     // internal function
     friend void gfx_render_hud_one (HudBase *, int);
-    friend void gfx_render_hud_text (HudText *, const Vector3 &, float, const Vector2 &, int);
+    friend void gfx_render_hud_text (HudText *, bool, const Vector2 &, int);
 };
 
 /** Called in the frame loop by the graphics code to render the HUD on top of the 3d graphics. */

@@ -27,6 +27,9 @@
 #include "gfx_internal.h"
 #include "gfx_shader.h"
 
+static GfxShader *shader_text, *shader_rect, *shader_stencil;
+static GfxShaderBindings shader_text_binds, empty_binds;
+
 static Vector2 win_size(0,0);
 
 // {{{ CLASSES
@@ -220,6 +223,8 @@ HudObject::HudObject (HudClass *hud_class)
     needsResizedCallbacks(false), needsParentResizedCallbacks(false), needsInputCallbacks(false),
     needsFrameCallbacks(false), refCount(0)
 {
+    shader_rect->populateMatEnv(false, texs, shaderBinds, matEnvRect);
+    shader_stencil->populateMatEnv(false, stencilTexs, empty_binds, matEnvStencil);
 }
 
 void HudObject::incRefCount (void)
@@ -246,6 +251,19 @@ void HudObject::decRefCount (lua_State *L)
     }
 }
 
+void HudObject::setColour (const Vector3 &v)
+{
+    assertAlive();
+    colour = v;
+    shaderBinds["colour"] = v;
+}
+
+void HudObject::setAlpha (float v)
+{
+    assertAlive();
+    alpha = v;
+    shaderBinds["alpha"] = GfxGslParam::float1(v);
+}
 
 void HudObject::destroy (void)
 {
@@ -865,6 +883,10 @@ void HudObject::setTexture (const DiskResourcePtr<GfxTextureDiskResource> &v)
         if (!v->isLoaded()) v->load();
     }
     texture = v;
+    texs.clear();
+    if (v != nullptr)
+        texs["tex"] = gfx_texture_state_anisotropic(&*v);
+    shader_rect->populateMatEnv(false, texs, shaderBinds, matEnvRect);
 }
 
 void HudObject::setStencilTexture (const DiskResourcePtr<GfxTextureDiskResource> &v)
@@ -874,12 +896,66 @@ void HudObject::setStencilTexture (const DiskResourcePtr<GfxTextureDiskResource>
         if (!v->isLoaded()) v->load();
     }
     stencilTexture = v;
+    stencilTexs.clear();
+    if (v != nullptr)
+        stencilTexs["tex"] = gfx_texture_state_anisotropic(&*v);
+    shader_stencil->populateMatEnv(false, stencilTexs, empty_binds, matEnvStencil);
+
 }
 
 // }}}
 
 
 // {{{ TEXT
+
+HudText::HudText (GfxFont *font)
+  : buf(font), colour(1,1,1), alpha(1),
+    letterTopColour(1,1,1), letterTopAlpha(1),
+    letterBottomColour(1,1,1), letterBottomAlpha(1),
+    wrap(0,0), scroll(0),
+    shadow(0,0), shadowColour(0,0,0), shadowAlpha(1),
+    refCount(0)
+{
+    shaderBinds["colour"] = colour;
+    shaderBinds["alpha"] = GfxGslParam::float1(alpha);
+
+    shaderBindsShadow["colour"] = shadowColour;
+    shaderBindsShadow["alpha"] = GfxGslParam::float1(shadowAlpha);
+
+    GfxTextureDiskResource *tex = font->getTexture();
+    texs["tex"] = gfx_texture_state_anisotropic(tex);
+
+    shader_text->populateMatEnv(false, texs, shaderBinds, matEnv);
+    shader_text->populateMatEnv(false, texs, shaderBindsShadow, matEnvShadow);
+}
+
+void HudText::setAlpha (float v)
+{
+    assertAlive();
+    alpha = v;
+    shaderBinds["alpha"] = GfxGslParam::float1(alpha);
+}
+
+void HudText::setColour (const Vector3 &v)
+{
+    assertAlive();
+    colour = v;
+    shaderBinds["colour"] = colour;
+}
+
+void HudText::setShadowColour (const Vector3 &v)
+{
+    assertAlive();
+    shadowColour = v;
+    shaderBindsShadow["colour"] = shadowColour;
+}
+
+void HudText::setShadowAlpha (float v)
+{
+    assertAlive();
+    shadowAlpha = v;
+    shaderBindsShadow["alpha"] = GfxGslParam::float1(shadowAlpha);
+}
 
 void HudText::incRefCount (void)
 {
@@ -930,8 +1006,7 @@ std::string HudText::getText (void) const
 // {{{ RENDERING
 
 
-static GfxShader *shader_text, *shader_rect, *shader_stencil;
-static GfxShaderBindings shader_text_binds, shader_rect_binds, shader_stencil_binds;
+GfxGslMeshEnvironment simple_mesh_env;
 
 // vdata/idata be allocated later because constructor requires ogre to be initialised
 static Ogre::VertexData *quad_vdata;
@@ -1179,11 +1254,16 @@ static void set_cornered_vertex_data (GfxTextureDiskResource *tex,
                                   vdata_raw, true);
 }
 
-void gfx_render_hud_text (HudText *text, const Vector3 &colour, float alpha, const Vector2 &offset,
+void gfx_render_hud_text (HudText *text, bool shadow, const Vector2 &offset,
                           int parent_stencil_ref)
 {
     GfxFont *font = text->getFont();
     GfxTextureDiskResource *tex = font->getTexture();
+
+    // In case the font has changed texture.
+    // Note that we do not have to rebuild the GfxGasolineMaterialEnvironments because
+    // they only care about whether a texture was bound, not which one.
+    text->texs["tex"] = gfx_texture_state_anisotropic(tex);
 
     Vector2 pos = text->getDerivedPosition();
     if (text->snapPixels) {
@@ -1232,16 +1312,13 @@ void gfx_render_hud_text (HudText *text, const Vector3 &colour, float alpha, con
         zv, I, I, I, zv, zv, zv, zv, win_size, render_target_flipping, nullptr
     };
 
-    shader_text_binds.clear();
-    shader_text_binds["colour"] = colour;
-    shader_text_binds["alpha"] = GfxGslParam::float1(alpha);
-
-    GfxTextureStateMap texs;
-    if (tex != nullptr)
-        texs["tex"] = gfx_texture_state_anisotropic(tex);
-
-    shader_text->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
-                            globs, matrix, nullptr, 0, 1, texs, shader_text_binds);
+    if (shadow) {
+        shader_text->bindShader(GFX_GSL_PURPOSE_HUD, text->matEnvShadow, simple_mesh_env,
+                                globs, matrix, nullptr, 0, 1, text->texs, text->shaderBindsShadow);
+    } else {
+        shader_text->bindShader(GFX_GSL_PURPOSE_HUD, text->matEnv, simple_mesh_env,
+                                globs, matrix, nullptr, 0, 1, text->texs, text->shaderBinds);
+    }
 
 
     ogre_rs->setStencilBufferParams(Ogre::CMPF_EQUAL, parent_stencil_ref);
@@ -1262,12 +1339,6 @@ void gfx_render_hud_one (HudBase *base, int parent_stencil_ref)
 
     HudObject *obj = dynamic_cast<HudObject*>(base);
     if (obj != nullptr) {
-        GfxTextureDiskResource *tex = obj->getTexture();
-        if (tex != nullptr && !tex->isLoaded()) {
-            CERR << "Hud object using unloaded texture: \"" << (*tex) << "\"" << std::endl;
-            obj->setTexture(DiskResourcePtr<GfxTextureDiskResource>());
-            tex = nullptr;
-        }
 
         bool is_cornered = obj->isCornered();
 
@@ -1288,6 +1359,7 @@ void gfx_render_hud_one (HudBase *base, int parent_stencil_ref)
                 pos.y -= 0.5f;
         }
 
+        GfxTextureDiskResource *tex = obj->getTexture();
         if (is_cornered && tex != nullptr) {
             set_cornered_vertex_data(tex, obj->getSize(), uv1, uv2);
         } else {
@@ -1318,14 +1390,6 @@ void gfx_render_hud_one (HudBase *base, int parent_stencil_ref)
         bool render_target_flipping = false;
         Ogre::Matrix4 matrix = matrix_scale * matrix_d3d_offset * matrix_trans * matrix_spin;
 
-        shader_rect_binds.clear();
-        shader_rect_binds["colour"] = obj->getColour();
-        shader_rect_binds["alpha"] = GfxGslParam::float1(obj->getAlpha());
-
-        GfxTextureStateMap texs;
-        if (tex != nullptr)
-            texs["tex"] = gfx_texture_state_anisotropic(tex);
-
         Vector3 zv(0,0,0);
         GfxShaderGlobals globs = { zv, I, I, I, zv, zv, zv, zv, win_size, render_target_flipping,
                                    nullptr };
@@ -1341,9 +1405,8 @@ void gfx_render_hud_one (HudBase *base, int parent_stencil_ref)
         }
         op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
 
-
-        shader_rect->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
-                                globs, matrix, nullptr, 0, 1, texs, shader_rect_binds);
+        shader_rect->bindShader(GFX_GSL_PURPOSE_HUD, obj->matEnvRect, simple_mesh_env,
+                                globs, matrix, nullptr, 0, 1, obj->texs, obj->shaderBinds);
 
         // First only draw our colour if we fit inside our parent.
         ogre_rs->setStencilBufferParams(
@@ -1354,23 +1417,14 @@ void gfx_render_hud_one (HudBase *base, int parent_stencil_ref)
 
         int child_stencil_ref = parent_stencil_ref;
         if (obj->isStencil()) {
-            GfxTextureDiskResource *stencil_tex = obj->getStencilTexture();
-            if (stencil_tex != nullptr && !stencil_tex->isLoaded()) {
-                CERR << "Hud object using unloaded stencil texture: \""
-                     << (*stencil_tex) << "\"" << std::endl;
-                obj->setStencilTexture(DiskResourcePtr<GfxTextureDiskResource>());
-                stencil_tex = nullptr;
-            }
 
+            GfxTextureDiskResource *stencil_tex = obj->getStencilTexture();
             if (is_cornered && stencil_tex != nullptr) {
                 set_cornered_vertex_data(stencil_tex, obj->getSize(), uv1, uv2);
             } else {
                 set_vertex_data(obj->getSize(), uv1, uv2);
             }
 
-            GfxTextureStateMap stencil_texs;
-            if (stencil_tex != nullptr)
-                stencil_texs["tex"] = gfx_texture_state_anisotropic(stencil_tex);
 
             // Paint a rectangle in the stencil buffer to mask our children, but we
             // ourselves are still masked by our parent.
@@ -1381,9 +1435,9 @@ void gfx_render_hud_one (HudBase *base, int parent_stencil_ref)
                 Ogre::SOP_KEEP, Ogre::SOP_KEEP, Ogre::SOP_INCREMENT);
 
             ogre_rs->_setColourBufferWriteEnabled(false, false, false, false);
-            shader_stencil->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
-                                       globs, matrix, nullptr, 0, 1, stencil_texs,
-                                       shader_stencil_binds);
+            shader_stencil->bindShader(GFX_GSL_PURPOSE_HUD, obj->matEnvStencil, simple_mesh_env,
+                                       globs, matrix, nullptr, 0, 1, obj->stencilTexs,
+                                       empty_binds);
 
             ogre_rs->_render(op);
             ogre_rs->_setColourBufferWriteEnabled(true, true, true, true);
@@ -1408,8 +1462,9 @@ void gfx_render_hud_one (HudBase *base, int parent_stencil_ref)
                 Ogre::SOP_KEEP, Ogre::SOP_KEEP, Ogre::SOP_REPLACE);
 
             ogre_rs->_setColourBufferWriteEnabled(false, false, false, false);
-            shader_rect->bindShader(GFX_GSL_PURPOSE_HUD, false, false, 0,
-                                    globs, matrix, nullptr, 0, 1, texs, shader_rect_binds);
+            shader_stencil->bindShader(GFX_GSL_PURPOSE_HUD, obj->matEnvStencil, simple_mesh_env,
+                                       globs, matrix, nullptr, 0, 1, obj->stencilTexs,
+                                       empty_binds);
 
             ogre_rs->_render(op);
             ogre_rs->_setColourBufferWriteEnabled(true, true, true, true);
@@ -1422,11 +1477,9 @@ void gfx_render_hud_one (HudBase *base, int parent_stencil_ref)
         text->buf.updateGPU(text->wrap == Vector2(0, 0), text->scroll, text->scroll+text->wrap.y);
 
         if (text->getShadow() != Vector2(0, 0)) {
-            gfx_render_hud_text(text, text->getShadowColour(), text->getShadowAlpha(),
-                                text->getShadow(), parent_stencil_ref);
+            gfx_render_hud_text(text, true, text->getShadow(), parent_stencil_ref);
         }
-        gfx_render_hud_text(
-            text, text->getColour(), text->getAlpha(), Vector2(0, 0), parent_stencil_ref);
+        gfx_render_hud_text(text, false, Vector2(0, 0), parent_stencil_ref);
     }
 }
 

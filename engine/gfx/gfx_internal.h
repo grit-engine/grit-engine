@@ -123,7 +123,7 @@ typedef std::map<std::string,GfxShader*> GfxShaderDB;
 
 extern GfxShaderDB shader_db;
 
-extern GfxGslEnvironment shader_scene_env;
+extern GfxGslConfigEnvironment shader_scene_env;
 
 
 template<class T> void try_set_named_constant_ (const Ogre::GpuProgramParametersSharedPtr &p,

@@ -114,7 +114,7 @@ DiskResourcePtr<GfxTextureDiskResource> fade_dither_map;
 DiskResourcePtr<GfxTextureDiskResource> corona_map;
 DiskResourcePtr<GfxTextureDiskResource> shadow_pcf_noise_map;
 
-GfxGslEnvironment shader_scene_env;
+GfxGslConfigEnvironment shader_scene_env;
 
 // abuse ogre fog params to store several things
 static void set_ogre_fog (void)

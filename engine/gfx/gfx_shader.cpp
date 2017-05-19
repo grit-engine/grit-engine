@@ -32,11 +32,10 @@ GfxGslBackend backend = gfx_d3d9() ? GFX_GSL_BACKEND_CG : GFX_GSL_BACKEND_GLSL33
 static const std::string dump_shader(getenv("GRIT_DUMP_SHADER") == nullptr
                                      ? "" : getenv("GRIT_DUMP_SHADER"));
 
-typedef GfxShader::NativePair NativePair;
-
-static std::ostream &operator << (std::ostream &o, const GfxShader::Split &s)
+std::ostream &operator << (std::ostream &o, const GfxShader::Split &s)
 {
-    o << s.env;
+    o << s.purpose;
+    o << s.meshEnv;
     return o;
 }
 
@@ -198,63 +197,67 @@ void GfxShader::reset (const GfxGslRunParams &p,
     internal = internal_;
 
     // Destroy all currently built shaders
-    for (const auto &pair : cachedShaders) {
-        const NativePair &np = pair.second;
-        Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.vp->getName());
-        Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.fp->getName());
+    for (const auto &pair1 : shaderCache) {
+        for (const auto &pair2 : pair1.second) {
+            for (const auto &pair3 : pair2.second) {
+                const NativePair &np = pair3.second;
+                Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.vp->getName());
+                Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.fp->getName());
+            }
+        }
     }
-    cachedShaders.clear();
+    shaderCache.clear();
 
     // all mats must reset now
 }
 
-
-NativePair GfxShader::getNativePair (GfxGslPurpose purpose,
-                                     bool fade_dither, unsigned env_boxes,
-                                     bool instanced, unsigned bone_weights,
-                                     const GfxTextureStateMap &textures,
-                                     const GfxShaderBindings &bindings)
+// Build a list of texture params that are not satisfied by actual textures.
+// Build a list of static params and the values that satisfy them.
+void GfxShader::populateMatEnv (bool fade_dither,
+                                const GfxTextureStateMap &textures,
+                                const GfxShaderBindings &bindings,
+                                GfxGslMaterialEnvironment &mat_env)
 {
-    GfxGslUnboundTextures ubt;
+    mat_env.ubt.clear();
+    mat_env.fadeDither = fade_dither;
     for (const auto &u : params) {
         // Find undefined textures.
         if (gfx_gasoline_param_is_texture(u.second)) {
             if (textures.find(u.first) == textures.end()) {
-                ubt[u.first] = bindings.find(u.first) != bindings.end();
+                mat_env.ubt[u.first] = bindings.find(u.first) != bindings.end();
             }
         }
     }
-    GfxShaderBindings statics;
+    mat_env.staticValues.clear();
     for (const auto &bind : bindings) {
         // Find statics.
         if (gfx_gasoline_param_is_static(bind.second)) {
-            statics[bind.first] = bind.second;
+            mat_env.staticValues[bind.first] = bind.second;
         }
     }
-    return getNativePair(purpose, fade_dither, env_boxes, instanced, bone_weights, ubt, statics);
 }
 
-NativePair GfxShader::getNativePair (GfxGslPurpose purpose,
-                                     bool fade_dither, unsigned env_boxes,
-                                     bool instanced, unsigned bone_weights,
-                                     const GfxGslUnboundTextures &ubt,
-                                     const GfxShaderBindings &statics)
+void GfxShader::populateMeshEnv (bool instanced, unsigned bone_weights,
+                                 GfxGslMeshEnvironment &mesh_env)
+{
+    mesh_env.instanced = instanced;
+    mesh_env.boneWeights = bone_weights;
+}
+
+GfxShader::NativePair GfxShader::getNativePair (GfxGslPurpose purpose,
+                                                const GfxGslMaterialEnvironment &mat_env,
+                                                const GfxGslMeshEnvironment &mesh_env)
 {
     // Need to choose / maybe compile a shader for this combination of textures and bindings.
-    GfxGslEnvironment env = shader_scene_env;
-    env.fadeDither = fade_dither;
-    env.envBoxes = env_boxes;
-    env.instanced = instanced;
-    env.boneWeights = bone_weights;
-    env.ubt = ubt;
-    env.staticValues = statics;
-
+    //
+    //
+    ShaderCacheBySplit &cache = shaderCache[shader_scene_env][mat_env];
     Split split;
     split.purpose = purpose;
-    split.env = env;
-    auto it = cachedShaders.find(split);
+    split.meshEnv = mesh_env;
+    auto it = cache.find(split);
 
-    if (it == cachedShaders.end()) {
+    if (it == cache.end()) {
         // Need to build it.
         Ogre::HighLevelGpuProgramPtr vp;
         Ogre::HighLevelGpuProgramPtr fp;
@@ -294,7 +297,9 @@ NativePair GfxShader::getNativePair (GfxGslPurpose purpose,
 
         GfxGslMetadata md;
         md.params = params;
-        md.env = env;
+        md.cfgEnv = shader_scene_env;
+        md.matEnv = mat_env;
+        md.meshEnv = mesh_env;
         md.d3d9 = gfx_d3d9();
         md.internal = internal;
         md.lightingTextures = gfx_gasoline_does_lighting(purpose);
@@ -319,7 +324,7 @@ NativePair GfxShader::getNativePair (GfxGslPurpose purpose,
             gfx_gl3_plus_force_shader_compilation(vp, fp);
         }
         NativePair np = {vp, fp};
-        cachedShaders[split] = np;
+        cache[split] = np;
 
         return np;
         
@@ -521,6 +526,28 @@ void GfxShader::bindShaderParamsRs (int counter, const GfxTextureStateMap &textu
 }
 
 void GfxShader::bindShader (GfxGslPurpose purpose,
+                            const GfxGslMaterialEnvironment &mat_env,
+                            const GfxGslMeshEnvironment &mesh_env,
+                            const GfxShaderGlobals &globs,
+                            const Ogre::Matrix4 &world,
+                            const Ogre::Matrix4 *bone_world_matrixes,
+                            unsigned num_bone_world_matrixes,
+                            float fade,
+                            const GfxTextureStateMap &textures,
+                            const GfxShaderBindings &bindings)
+{
+    GfxPaintColour white[] = {
+        { Vector3(1, 1, 1), 1, 1, 1, },
+        { Vector3(1, 1, 1), 1, 1, 1, },
+        { Vector3(1, 1, 1), 1, 1, 1, },
+        { Vector3(1, 1, 1), 1, 1, 1, },
+    };
+    bindShader(purpose, mat_env, mesh_env, globs, world,
+               bone_world_matrixes, num_bone_world_matrixes, fade, white,
+               textures, bindings);
+}
+
+void GfxShader::bindShader (GfxGslPurpose purpose,
                             bool fade_dither,
                             bool instanced,
                             unsigned bone_weights,
@@ -556,8 +583,29 @@ void GfxShader::bindShader (GfxGslPurpose purpose,
                             const GfxTextureStateMap &textures,
                             const GfxShaderBindings &bindings)
 {
-    auto np = getNativePair(purpose, fade_dither, env_cube_count, instanced, bone_weights,
-                            textures, bindings);
+    GfxGslMaterialEnvironment mat_env;
+    populateMatEnv(fade_dither, textures, bindings, mat_env);
+
+    GfxGslMeshEnvironment mesh_env;
+    populateMeshEnv(instanced, bone_weights, mesh_env);
+    
+    bindShader(purpose, mat_env, mesh_env, globs, world, bone_world_matrixes,
+               num_bone_world_matrixes, fade, paint_colours, textures, bindings);
+}
+
+void GfxShader::bindShader (GfxGslPurpose purpose,
+                            const GfxGslMaterialEnvironment &mat_env,
+                            const GfxGslMeshEnvironment &mesh_env,
+                            const GfxShaderGlobals &globs,
+                            const Ogre::Matrix4 &world,
+                            const Ogre::Matrix4 *bone_world_matrixes,
+                            unsigned num_bone_world_matrixes,
+                            float fade,
+                            const GfxPaintColour *paint_colours,  // Array of 4
+                            const GfxTextureStateMap &textures,
+                            const GfxShaderBindings &bindings)
+{
+    auto np = getNativePair(purpose, mat_env, mesh_env);
 
     // both programs must be bound before we bind the params, otherwise some params are 'lost' in gl
     ogre_rs->bindGpuProgram(np.vp->_getBindingDelegate());
@@ -591,14 +639,12 @@ static void inc (const Ogre::GpuProgramParametersSharedPtr &vp,
 
 void GfxShader::initPass (Ogre::Pass *p,
                           GfxGslPurpose purpose,
-                          bool fade_dither,
-                          bool instanced,
-                          unsigned bone_weights,
+                          const GfxGslMaterialEnvironment &mat_env,
+                          const GfxGslMeshEnvironment &mesh_env,
                           const GfxTextureStateMap &textures,
                           const GfxShaderBindings &bindings)
 {
-    auto np = getNativePair(purpose, fade_dither, env_cube_count, instanced, bone_weights,
-                            textures, bindings);
+    auto np = getNativePair(purpose, mat_env, mesh_env);
 
     p->setFragmentProgram(np.fp->getName());
     p->setVertexProgram(np.vp->getName());
@@ -666,20 +712,20 @@ void GfxShader::initPass (Ogre::Pass *p,
 void GfxShader::updatePass (Ogre::Pass *p,
                             const GfxShaderGlobals &globs,
                             GfxGslPurpose purpose,
-                            bool fade_dither,
-                            bool instanced,
-                            unsigned bone_weights,
+                            const GfxGslMaterialEnvironment &mat_env,
+                            const GfxGslMeshEnvironment &mesh_env,
                             const GfxTextureStateMap &textures,
                             const GfxShaderBindings &bindings)
 {
-    auto np = getNativePair(purpose, fade_dither, env_cube_count, instanced, bone_weights,
-                            textures, bindings);
+    auto np = getNativePair(purpose, mat_env, mesh_env);
 
+    // TODO(dcunnin): Not 100% sure why this is being done, but if it is so that materials
+    // are updated when their shaders change, this should be done at the time of shader update, not
+    // checked every material every frame as the getNativePair call is too slow for that.
     if (p->getFragmentProgram() != np.fp || p->getVertexProgram() != np.vp) {
         // Need a whole new shader, so do the slow path.
         p->removeAllTextureUnitStates();
-        initPass(p, purpose, fade_dither, instanced, bone_weights, textures, bindings);
-
+        initPass(p, purpose, mat_env, mesh_env, textures, bindings);
     }
     const Ogre::GpuProgramParametersSharedPtr &vp = p->getVertexProgramParameters();
     const Ogre::GpuProgramParametersSharedPtr &fp = p->getFragmentProgramParameters();
@@ -1231,6 +1277,13 @@ int GfxShader::bindGlobalTexturesRs (const GfxShaderGlobals &g, GfxGslPurpose pu
     return counter;
 
 }
+
+/*
+void GfxShaderInstance::rebuild (void)
+{
+    
+}
+*/
 
 GfxShader *gfx_shader_make_or_reset (const std::string &name,
                                      const std::string &new_vertex_code,

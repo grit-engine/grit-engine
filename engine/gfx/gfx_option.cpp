@@ -467,11 +467,11 @@ static void options_update (bool flush)
 
     if (reset_shadow_dither_mode) {
         if (gfx_option(GFX_SHADOW_FILTER_DITHER_TEXTURE)) {
-            shader_scene_env.shadowDitherMode = GfxGslEnvironment::SHADOW_DITHER_NOISE;
+            shader_scene_env.shadowDitherMode = GfxGslConfigEnvironment::SHADOW_DITHER_NOISE;
         } else if (gfx_option(GFX_SHADOW_FILTER_DITHER)) {
-            shader_scene_env.shadowDitherMode = GfxGslEnvironment::SHADOW_DITHER_PLAIN;
+            shader_scene_env.shadowDitherMode = GfxGslConfigEnvironment::SHADOW_DITHER_PLAIN;
         } else {
-            shader_scene_env.shadowDitherMode = GfxGslEnvironment::SHADOW_DITHER_NONE;
+            shader_scene_env.shadowDitherMode = GfxGslConfigEnvironment::SHADOW_DITHER_NONE;
         }
     }
 

@@ -80,7 +80,7 @@ static std::string preamble (bool glsl33)
     return ss.str();
 }
 
-static std::string generate_funcs (const GfxGslEnvironment &env)
+static std::string generate_funcs (const GfxGslMeshEnvironment &mesh_env)
 {
     std::stringstream ss;
 
@@ -110,7 +110,7 @@ static std::string generate_funcs (const GfxGslEnvironment &env)
 
     ss << "uniform Float internal_rt_flip;\n";
     ss << "uniform Float4x4 internal_inv_world;\n";
-    if (!env.instanced) {
+    if (!mesh_env.instanced) {
         // When instanced, comes from vertex coord.
         ss << "uniform Float internal_fade;\n";
     }
@@ -121,13 +121,13 @@ static std::string generate_funcs (const GfxGslEnvironment &env)
     return ss.str();
 }
 
-static std::string generate_funcs_vert (const GfxGslEnvironment &env)
+static std::string generate_funcs_vert (const GfxGslMeshEnvironment &mesh_env)
 {
     std::stringstream ss;
     ss << "// Standard library (vertex shader specific calls)\n";
     ss << "\n";
 
-    if (env.instanced) {
+    if (mesh_env.instanced) {
         ss << "Float4x4 get_inst_matrix()\n";
         ss << "{\n";
         ss << "    return Float4x4(\n";
@@ -291,7 +291,9 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
                                 const GfxGslTypeSystem *frag_ts,
                                 const GfxGslAst *frag_ast,
                                 std::string &frag_output,
-                                const GfxGslEnvironment &env,
+                                const GfxGslConfigEnvironment &cfg_env,
+                                const GfxGslMaterialEnvironment &mat_env,
+                                const GfxGslMeshEnvironment &mesh_env,
                                 bool glsl33,
                                 bool flat_z,
                                 bool das)
@@ -299,7 +301,9 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     GfxGslTypeMap vert_vars, frag_vars;
     std::set<GfxGslTrans> trans_set;
     std::stringstream header;
-    header << "// env: " << env << "\n";
+    header << "// cfg_env: " << cfg_env << "\n";
+    header << "// mat_env: " << mat_env << "\n";
+    header << "// mesh_env: " << mesh_env << "\n";
     header << "// flat_z: " << flat_z << "\n";
     header << "// das: " << das << "\n";
     header << "\n";
@@ -319,7 +323,7 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
 
     std::set<std::string> vert_in = vert_ts->getVertFieldsRead();
     vert_in.insert("position");
-    if (env.boneWeights > 0) {
+    if (mesh_env.boneWeights > 0) {
         vert_in.insert("boneAssignments");
         vert_in.insert("boneWeights");
     }
@@ -353,9 +357,9 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     vert_ss << preamble(glsl33);
     vert_ss << header.str();
     vert_ss << generate_vert_header(glsl33, ctx, vert_ts, trans, vert_in);
-    vert_ss << generate_funcs(env);
-    vert_ss << generate_funcs_vert(env);
-    vert_ss << gfx_gasoline_preamble_transformation(false, env);
+    vert_ss << generate_funcs(mesh_env);
+    vert_ss << generate_funcs_vert(mesh_env);
+    vert_ss << gfx_gasoline_preamble_transformation(false, mesh_env);
     vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
     vert_ss << vert_backend.getUserVertexFunction();
     vert_ss << "void main (void)\n";
@@ -390,11 +394,11 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     frag_ss << preamble(glsl33);
     vert_ss << header.str();
     frag_ss << generate_frag_header(glsl33, ctx, trans, false);
-    frag_ss << generate_funcs(env);
+    frag_ss << generate_funcs(mesh_env);
     frag_ss << generate_funcs_frag();
     if (ctx.lightingTextures)
-        frag_ss << gfx_gasoline_preamble_lighting(env);
-    frag_ss << gfx_gasoline_preamble_fade(env);
+        frag_ss << gfx_gasoline_preamble_lighting(cfg_env);
+    frag_ss << gfx_gasoline_preamble_fade();
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
     frag_ss << frag_backend.getUserColourAlphaFunction();
     frag_ss << "void main (void)\n";
@@ -408,7 +412,7 @@ void gfx_gasoline_unparse_glsl (const GfxGslContext &ctx,
     frag_ss << "    Float3 out_colour;\n";
     frag_ss << "    Float out_alpha;\n";
     frag_ss << "    func_user_colour(out_colour, out_alpha);\n";
-    if (env.fadeDither) {
+    if (mat_env.fadeDither) {
         frag_ss << "    fade();\n";
     } else {
         frag_ss << "    out_alpha *= internal_fade;\n";
@@ -441,7 +445,9 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
                                     const GfxGslAst *additional_ast,
                                     std::string &vert_out,
                                     std::string &frag_out,
-                                    const GfxGslEnvironment &env,
+                                    const GfxGslConfigEnvironment &cfg_env,
+                                    const GfxGslMaterialEnvironment &mat_env,
+                                    const GfxGslMeshEnvironment &mesh_env,
                                     bool glsl33,
                                     bool first_person,
                                     bool wireframe,
@@ -451,7 +457,9 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
     GfxGslTypeMap vert_vars, frag_vars;
     std::set<GfxGslTrans> trans_set;
     std::stringstream header;
-    header << "// env: " << env << "\n";
+    header << "// cfg_env: " << cfg_env << "\n";
+    header << "// mat_env: " << mat_env << "\n";
+    header << "// mesh_env: " << mesh_env << "\n";
     header << "// first_person: " << first_person << "\n";
     header << "// wireframe: " << wireframe << "\n";
     header << "// forward_only: " << forward_only << "\n";
@@ -495,21 +503,21 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
         if (!first_person)
             internals["cam_dist"] = f1;
     }
-    if (env.instanced) {
+    if (mesh_env.instanced) {
         internals["fade"] = f1;
     }
 
     gfx_gasoline_add_internal_trans(internals, trans);
 
     vert_in.insert("position");
-    if (env.instanced) {
+    if (mesh_env.instanced) {
         vert_in.insert("coord1");
         vert_in.insert("coord2");
         vert_in.insert("coord3");
         vert_in.insert("coord4");
         vert_in.insert("coord5");
     }
-    if (env.boneWeights > 0) {
+    if (mesh_env.boneWeights > 0) {
         vert_in.insert("boneAssignments");
         vert_in.insert("boneWeights");
     }
@@ -543,9 +551,9 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
     vert_ss << preamble(glsl33);
     vert_ss << header.str();
     vert_ss << generate_vert_header(glsl33, ctx, vert_ts, trans, vert_in);
-    vert_ss << generate_funcs(env);
-    vert_ss << generate_funcs_vert(env);
-    vert_ss << gfx_gasoline_preamble_transformation(first_person, env);
+    vert_ss << generate_funcs(mesh_env);
+    vert_ss << generate_funcs_vert(mesh_env);
+    vert_ss << gfx_gasoline_preamble_transformation(first_person, mesh_env);
     vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
     vert_ss << vert_backend.getUserVertexFunction();
     vert_ss << "void main (void)\n";
@@ -566,7 +574,7 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
         if (!first_person)
             vert_ss << "    internal_cam_dist = -pos_vs.z;\n";
     }
-    if (env.instanced) {
+    if (mesh_env.instanced) {
         // The 0.5/255 is necessary because apparently we lose some precision through rasterisation.
         vert_ss << "    internal_fade = vert_coord5.x + 0.5/255;\n";
     }
@@ -582,12 +590,12 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
     frag_ss << preamble(glsl33);
     frag_ss << header.str();
     frag_ss << generate_frag_header(glsl33, ctx, trans, forward_only);
-    frag_ss << generate_funcs(env);
+    frag_ss << generate_funcs(mesh_env);
     frag_ss << generate_funcs_frag();
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
     if (ctx.lightingTextures)
-        frag_ss << gfx_gasoline_preamble_lighting(env);
-    frag_ss << gfx_gasoline_preamble_fade(env);
+        frag_ss << gfx_gasoline_preamble_lighting(cfg_env);
+    frag_ss << gfx_gasoline_preamble_fade();
     if (!wireframe)
         frag_ss << dangs_backend.getUserDangsFunction();
     if (using_additional)
@@ -612,7 +620,7 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
         frag_ss << "    Float slope_bias = abs(ddx(internal_light_dist))\n";
         frag_ss << "                       + abs(ddy(internal_light_dist));\n";
     }
-    if (env.fadeDither) {
+    if (mat_env.fadeDither) {
         frag_ss << "    fade();\n";
     }
     if (cast) {
@@ -631,11 +639,12 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
         // cover a large amount of space, and low shadow resolutions too.
         // - the 0.5 is the error due to the rounding to discrete texels
         frag_ss << "    Float bias = internal_shadow_additional_bias\n";
-        frag_ss << "                 + (0.5 + " << env.shadowFilterSize << ") * slope_bias;\n";
+        frag_ss << "                 + (0.5 + " << cfg_env.shadowFilterSize << ") * slope_bias;\n";
         frag_ss << "    bias = min(bias, 1.0);\n";
         frag_ss << "    internal_light_dist += bias;\n";
 
-        frag_ss << "    out_colour_alpha.x = internal_light_dist / " << env.shadowFactor << ";\n";
+        frag_ss << "    out_colour_alpha.x = internal_light_dist\n"
+                << "                         / " << cfg_env.shadowFactor << ";\n";
     } else {
         if (wireframe) {
             frag_ss << "    Float3 additional;\n";
@@ -676,7 +685,7 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
                 frag_ss << "                                fw * Float3(1, 1, 1));\n",
 
                 frag_ss << "    out_colour_alpha.w = a;\n";
-                if (!env.fadeDither) {
+                if (!mat_env.fadeDither) {
                     // Fade out the contribution of sun / env light according to internal fade.
                     frag_ss << "    out_colour_alpha.w *= internal_fade;\n";
                 }
@@ -686,7 +695,7 @@ void gfx_gasoline_unparse_body_glsl(const GfxGslContext &ctx,
                 frag_ss << "    Float3 additional;\n";
                 frag_ss << "    Float unused;\n";
                 frag_ss << "    func_user_colour(additional, unused);\n";
-                if (!env.fadeDither) {
+                if (!mat_env.fadeDither) {
                     // Fade out the contribution of additional light according to internal fade.
                     frag_ss << "    additional *= internal_fade;\n";
                 }
@@ -709,7 +718,9 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
                                      const GfxGslAst *additional_ast,
                                      std::string &vert_out,
                                      std::string &frag_out,
-                                     const GfxGslEnvironment &env,
+                                     const GfxGslConfigEnvironment &cfg_env,
+                                     const GfxGslMaterialEnvironment &mat_env,
+                                     const GfxGslMeshEnvironment &mesh_env,
                                      bool glsl33)
 {
     GfxGslBackendUnparser dangs_backend("udangs_");
@@ -719,7 +730,9 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
 
     std::stringstream header;
     header << "// decal shader\n";
-    header << "// env: " << env << "\n";
+    header << "// cfg_env: " << cfg_env << "\n";
+    header << "// mat_env: " << mat_env << "\n";
+    header << "// mesh_env: " << mesh_env << "\n";
     header << "\n";
 
     std::set<std::string> vert_in;
@@ -777,9 +790,9 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
     vert_ss << preamble(glsl33);
     vert_ss << header.str();
     vert_ss << generate_vert_header(glsl33, ctx, dangs_ts, trans, vert_in);
-    vert_ss << generate_funcs(env);
-    vert_ss << generate_funcs_vert(env);
-    vert_ss << gfx_gasoline_preamble_transformation(false, env);
+    vert_ss << generate_funcs(mesh_env);
+    vert_ss << generate_funcs_vert(mesh_env);
+    vert_ss << gfx_gasoline_preamble_transformation(false, mesh_env);
     vert_ss << gfx_gasoline_generate_var_decls(vert_vars);
     vert_ss << "void main (void)\n";
     vert_ss << "{\n";
@@ -801,12 +814,12 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
     frag_ss << preamble(glsl33);
     frag_ss << header.str();
     frag_ss << generate_frag_header(glsl33, ctx, trans, false);
-    frag_ss << generate_funcs(env);
+    frag_ss << generate_funcs(mesh_env);
     frag_ss << generate_funcs_frag();
     frag_ss << gfx_gasoline_generate_var_decls(frag_vars);
     if (ctx.lightingTextures)
-        frag_ss << gfx_gasoline_preamble_lighting(env);
-    frag_ss << gfx_gasoline_preamble_fade(env);
+        frag_ss << gfx_gasoline_preamble_lighting(cfg_env);
+    frag_ss << gfx_gasoline_preamble_fade();
     frag_ss << dangs_backend.getUserDangsFunction();
     frag_ss << additional_backend.getUserColourAlphaFunction();
 
@@ -865,7 +878,7 @@ void gfx_gasoline_unparse_decal_glsl(const GfxGslContext &ctx,
     // frag_ss << "    out_colour_alpha = Float4(fract(pos_ws), 1);\n";
     // frag_ss << "    out_colour_alpha = Float4(vert_coord0.xy, 0, 0.5);\n";
 
-    if (env.fadeDither) {
+    if (mat_env.fadeDither) {
         frag_ss << "    fade();\n";
     }
 

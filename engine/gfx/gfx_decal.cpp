@@ -171,8 +171,16 @@ void GfxDecal::render (const GfxShaderGlobals &g)
     // ISSUE RENDER COMMANDS
     try {
         const GfxTextureStateMap &mat_texs = material->getTextures();
+        GfxShader *shader = material->getShader();
+
+        // TODO(dcunnin): What if we don't want the dither fade?
+        const GfxGslMaterialEnvironment &mat_env = material->getMaterialEnvironment();
+
+        GfxGslMeshEnvironment mesh_env;
+        shader->populateMeshEnv(false, 0, mesh_env);
+
         material->getShader()->bindShader(
-            GFX_GSL_PURPOSE_DECAL, false, false,  0, g, world, nullptr, 0, 1,
+            GFX_GSL_PURPOSE_DECAL, mat_env, mesh_env, g, world, nullptr, 0, 1,
             mat_texs, material->getBindings());
         
         
