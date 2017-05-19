@@ -46,6 +46,7 @@ OPENAL_LDLIBS   ?= -lopenal -lvorbisfile
 
 VORBIS_LDLIBS   ?= -lvorbisfile
 
+GOOGLE_PERF_TOOLS_DEFS ?= USE_GOOGLE_PERF_TOOLS=1
 GOOGLE_PERF_TOOLS_LDLIBS ?= -lprofiler
 
 
@@ -131,6 +132,7 @@ CFLAGS= \
 	$(ICU_DEFS:%=-D%) \
 	$(OPENAL_DEFS:%=-D%) \
 	$(VORBIS_DEFS:%=-D%) \
+	$(GOOGLE_PERF_TOOLS_DEFS:%=-D%) \
 	$(shell pkg-config $(PKGCONFIG_DEPS) --cflags) \
 
 LDFLAGS= \
