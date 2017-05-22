@@ -5,6 +5,7 @@ git submodule update
 msbuild /p:Configuration=Normal
 
 CALL gsutil cp Normal/engine/engine.exe gs://grit-engine/
+CALL gsutil cp Normal/engine/engine.pdb gs://grit-engine/
 CALL gsutil cp Normal/launcher/launcher.exe gs://grit-engine/
 CALL gsutil cp Normal/extract/extract.exe gs://grit-engine/
 CALL gsutil cp Normal/GritXMLConverter/GritXMLConverter.exe gs://grit-engine/
