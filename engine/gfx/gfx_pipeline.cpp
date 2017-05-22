@@ -1242,12 +1242,14 @@ void GfxPipeline::render (const CameraOpts &cam_opts, bool additive)
     // populate gbuffer
     vp = gBuffer->addViewport(cam);
 
-    GfxShaderGlobals globs = gfx_shader_globals_cam(this);
-    for (const auto &pair : material_db) {
-        GfxMaterial *m = dynamic_cast<GfxMaterial*>(pair.second);
-        if (m == nullptr) continue;
-        // CVERB << "Rebuilding: " << m->name << std::endl;
-        m->updateOgreMaterials(globs);
+    if (gfx_option(GFX_UPDATE_MATERIALS)) {
+        GfxShaderGlobals globs = gfx_shader_globals_cam(this);
+        for (const auto &pair : material_db) {
+            GfxMaterial *m = dynamic_cast<GfxMaterial*>(pair.second);
+            if (m == nullptr) continue;
+            // CVERB << "Rebuilding: " << m->name << std::endl;
+            m->updateOgreMaterials(globs);
+        }
     }
 
     vp->setShadowsEnabled(true);
