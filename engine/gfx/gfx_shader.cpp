@@ -859,12 +859,13 @@ void GfxShader::updatePassGlobals (const Ogre::GpuProgramParametersSharedPtr &vp
     hack_set_constant(vp, fp, "global_farClipDistance", gfx_option(GFX_FAR_CLIP));
     */
 
-    if (true || lighting) {
-        // Why do shadows disappear when I remove the 'true' from the condition?
-
-        // All of these should be update by Ogre...
+    if (lighting) {
+        // All of these should be updated by Ogre...
         hack_set_constant(vp, fp, "global_sunlightDiffuse", sunlight_diffuse);
         hack_set_constant(vp, fp, "global_sunlightSpecular", sunlight_specular);
+    }
+
+    if (lighting || purpose == GFX_GSL_PURPOSE_CAST) {
         hack_set_constant(vp, fp, "global_sunlightDirection", sunlight_direction);
     }
 
