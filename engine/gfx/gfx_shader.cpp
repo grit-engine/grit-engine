@@ -201,8 +201,8 @@ void GfxShader::reset (const GfxGslRunParams &p,
         for (const auto &pair2 : pair1.second) {
             for (const auto &pair3 : pair2.second) {
                 const NativePair &np = pair3.second;
-                Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.vp->getName());
-                Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.fp->getName());
+                Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.vp);
+                Ogre::HighLevelGpuProgramManager::getSingleton().remove(np.fp);
             }
         }
     }

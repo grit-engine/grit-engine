@@ -1091,11 +1091,11 @@ GfxPipeline::~GfxPipeline (void) {
     // destroy MRT
     ogre_rs->destroyRenderTarget(gBuffer->getName());
     for (unsigned i=0 ; i<3 ; ++i) {
-         Ogre::TextureManager::getSingleton().remove(gBufferElements[i]->getName());
+         Ogre::TextureManager::getSingleton().remove(gBufferElements[i]);
     }
 
     for (unsigned i=0 ; i<sizeof(hdrFb)/sizeof(*hdrFb) ; ++i) {
-        Ogre::TextureManager::getSingleton().remove(hdrFb[i]->getName());
+        Ogre::TextureManager::getSingleton().remove(hdrFb[i]);
     }
 
     ogre_root->destroyRenderQueueInvocationSequence(rqisGbuffer->getName());
