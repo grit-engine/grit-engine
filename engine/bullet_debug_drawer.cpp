@@ -66,7 +66,7 @@ void BulletDebugDrawer::drawContactPoint (const btVector3 &point, const btVector
         from_bullet(point),
         from_bullet(point) + from_bullet(normal) * distance,
         from_bullet(colour),
-        micros() + life_time,
+        size_t(micros() + life_time),
     });
 }
 
