@@ -25,8 +25,8 @@ for copying new executables into Subversion, if it is checked out in the `media/
 
 # Windows
 
-Only Visual Studio Express 2013 is supported. It is free (as in beer). Download it from the
-Microsoft site.
+Only Visual Studio Express 2017 is supported. The "Community" version is free (as in beer). Download
+it from the Microsoft site.
 
 
 ## Requirements
