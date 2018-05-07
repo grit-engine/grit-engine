@@ -915,7 +915,7 @@ void physics_update (lua_State *L)
             unsigned mat1 = p.m_partId1;
             Info infoA = {
                 rb_a, rb_b, 
-                (float)p.getLifeTime(), p.getAppliedImpulse(), -p.getDistance(),
+                (float)p.getLifeTime(), p.getAppliedImpulse(), p.getDistance(),
                 mat0, mat1, from_bullet(p.m_positionWorldOnA),
                 from_bullet(p.m_positionWorldOnB), -from_bullet(p.m_normalWorldOnB)
             };
